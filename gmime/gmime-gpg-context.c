@@ -320,7 +320,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	
 	stream = g_mime_stream_mem_new ();
 	gpg->diag = GMIME_STREAM_MEM (stream)->buffer;
-	charset = g_mime_locale_charset ();
+	charset = g_mime_charset_locale_name ();
 	if (strcasecmp (charset, "UTF-8") != 0) {
 		GMimeStream *fstream;
 		GMimeFilter *filter;

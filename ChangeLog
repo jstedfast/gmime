@@ -1,5 +1,11 @@
 2003-04-15  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Bumped version to 2.0.6
+
+	* configure.in: Bumped version to 2.0.6
+
+2003-04-15  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* configure.in: Check for netdb.h, gethostname and gethostbyname.
 
 	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Guard
