@@ -1,3 +1,8 @@
+2001-10-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.h: buflen should be an ssize_t not a
+	size_t. Thanks to Chanrles for catching this.
+
 2001-10-01  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-filter.c: include <string.h> to pick up memcpy prototype.
