@@ -589,6 +589,10 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 			*outptr++ = c;
 	}
 	
+	/* strip \r */
+	if (c == '\n' && outptr > buf && outptr[-1] == '\r')
+		outptr--;
+	
 	if (outptr <= outend) {
 		/* this should always be true unless @max == 0 */
 		*outptr = '\0';
