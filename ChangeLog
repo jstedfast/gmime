@@ -6,6 +6,16 @@
 
 	* gmime.m4: Removed.
 
+2002-09-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-charset.c (filter_filter): Rewritten, don't set
+	errno to 0 before calling iconv (we can't assume that on success
+	errno will not be set?). Also, don't grow the buffer here, save
+	any un-converted text in the backup buffer to be converted next
+	time through.
+	(filter_continue): Pick up the slack of filter_filter by
+	converting anything left over.
+
 2002-09-29  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter[c,h]: Ported to GObject.
