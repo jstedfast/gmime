@@ -384,6 +384,8 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 				
 				inptr += received_tokens[i].len;
 				received_tokens[i].skip (&inptr);
+				decode_lwsp (&inptr);
+				inptr--;
 				
 				break;
 			}
