@@ -25,60 +25,13 @@
 #include "gmime.h"
 #include "gmime-filter-html.h"
 
-/* 1 = non-email-address chars: ()<>@,;:\\\"[]`'|  */
-/* 2 = trailing url garbage:    ,.!?;:>)]}\\`'-_|  */
-static unsigned short special_chars[256] = {
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    /*  nul - 0x0f */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    /* 0x10 - 0x1f */
-	1, 2, 1, 0, 0, 0, 0, 3, 1, 3, 0, 0, 3, 2, 2, 0,    /*   sp - /    */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 3, 1, 0, 3, 2,    /*    0 - ?    */
-	1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    /*    @ - O    */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 3, 0, 2,    /*    P - _    */
-	3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,    /*    ` - o    */
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 0     /*    p - del  */
-};
-
-#define IS_NON_ADDR   (1 << 0)
-#define IS_NON_URL    (1 << 1)
-#define IS_GARBAGE    (1 << 2)
-
-#define NON_EMAIL_CHARS         "()<>@,;:\\\"/[]`'|\n\t "
-#define NON_URL_CHARS           "()<>,;\\\"[]`'|\n\t "
-#define TRAILING_URL_GARBAGE    ",.!?;:>)}\\`'-_|\n\t "
-
-static void
-table_init (void)
-{
-	char *c;
-	int i;
-	
-	memset (special_chars, 0, sizeof (special_chars));
-	for (c = NON_EMAIL_CHARS; *c; c++)
-		special_chars[(int) *c] |= IS_NON_ADDR;
-	for (c = NON_URL_CHARS; *c; c++)
-		special_chars[(int) *c] |= IS_NON_URL;
-	for (c = TRAILING_URL_GARBAGE; *c; c++)
-		special_chars[(int) *c] |= IS_GARBAGE;
-	
-	fprintf (stderr, "static unsigned short special_chars[256] = {");
-	for (i = 0; i < 256; i++) {
-		fprintf (stderr, "%s%2d%s", (i % 16) ? "" : "\n\t",
-			 special_chars[i], i != 255 ? "," : "\n");
-	}
-	fprintf (stderr, "};\n");
-}
-
-
 int main (int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
 	GMimeFilter *html;
 	int i;
 	
-	if (argc == 1) {
-		table_init ();
-		return 0;
-	}
+	g_mime_init (0);
 	
 	fstream = g_mime_stream_file_new (stdout);
 	ostream = g_mime_stream_filter_new_with_stream (fstream);

@@ -1,3 +1,8 @@
+2002-10-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-html.c (html_convert): Rewrote to use regex for
+	url/addr extraction. Outputs more correct html now too.
+
 2002-10-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-filter.c (stream_read): Change presize from an int
