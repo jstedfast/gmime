@@ -20,6 +20,7 @@ gmime.h
 gmime-config
 gmimeConf.sh
 gen-table
+gen-multibyte
 test-parser
 test-mime
 test-streams

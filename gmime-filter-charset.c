@@ -141,7 +141,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		if (errno == E2BIG)
 			g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
 		
-	} while (errno == E2BIG);
+	} while (errno == E2BIG && inleft > 0);
 	
 	/*
 	 * EINVAL  An  incomplete  multibyte sequence has been encoun­

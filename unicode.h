@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __GMIME_CHARSET_H__
-#define __GMIME_CHARSET_H__
+#ifndef __UNICODE_H__
+#define __UNICODE_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,18 +30,23 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include <sys/types.h>
+#include <string.h>
 
-void        g_mime_charset_init (void);
+/* unicode_* and unichar are stolen from glib2... */
+typedef guint32 unichar;
 
-const char *g_mime_charset_locale_name (void);
+extern const char unicode_skip[256];
 
-const char *g_mime_charset_name (const char *charset);
+#define unicode_next_char(p) (char *)((p) + unicode_skip[*(unsigned char *)(p)])
 
-const char *g_mime_charset_best (const char *in, size_t inlen);
+unichar unicode_get_char (const char  *p);
+
+gboolean unichar_validate (unichar ch);
+
+#define unichar_isspace(c)  (strchr (" \t\r\n", c) != NULL)
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_CHARSET_H__ */
+#endif /* __UNICODE_H__ */

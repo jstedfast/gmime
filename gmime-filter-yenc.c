@@ -204,6 +204,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			inptr = in;
 			inend = inptr + len;
 			
+			/* we cannot start decoding until we have found an =ybegin line */
 			if (!(yenc->state & GMIME_YDECODE_STATE_BEGIN)) {
 				while (inptr < inend) {
 					left = inend - inptr;
@@ -216,7 +217,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 						if (inptr < inend) {
 							inptr++;
 							yenc->state |= GMIME_YDECODE_STATE_BEGIN;
-							/* we can start ydecoding if the next line isn't a ypart... */
+							/* we can start ydecoding if the next line isn't
+							   a ypart... */
 							in = inptr;
 							len = inend - in;
 						} else {
@@ -235,8 +237,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			left = inend - inptr;
 			if ((yenc->state & GMIME_YDECODE_STATE_BEGIN) && left > 0) {
-				/* we have found an '=ybegin' line but we may yet have an "=ypart" line to yield
-				   before decoding the content */
+				/* we have found an '=ybegin' line but we may yet have an "=ypart" line to
+				   yield before decoding the content */
 				if (left < 7 && !strncmp (inptr, "=ypart ", left)) {
 					g_mime_filter_backup (filter, inptr, left);
 				} else if (!strncmp (inptr, "=ypart ", 7)) {

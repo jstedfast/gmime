@@ -1,3 +1,84 @@
+2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-param.c (rfc2184_decode): Don't bother using
+	g_mime_charset_name here either because g_mime_iconv_open does it
+	for us.
+	(encode_param): And again here.
+
+	* gmime-utils.c (rfc2047_decode_word): Don't bother with a
+	charenc, we don't need to get the iconv-friednly
+	name. g_mime_iconv_open does that for us.
+	(rfc2047_encode_word): Same.
+
+	* gmime-charset.c (main): Added support for multibyte charsets.
+
+	* gen-multibyte.c: Generates character tables for multibyte
+	charsets such as iso-2022-jp and euc-kr.
+
+2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* unicode.[c,h]: New private source files to do some unicode
+	shiz. Ripped out of gmime-charset.c
+
+	* gmime-charset.c: Removed unicode stuff.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_encode): Rewritten to be
+	smarter about grouping like-words.
+	(rfc2047_encode_phrase_get_words): Splits out words.
+	(rfc2047_encode_phrase_merge_words): Merges like-words.
+	(rfc2047_encode_phrase): This is the muscle behind
+	8bit_header_encode.
+	(rfc2047_encode_word): Modified to write data to a GString instead
+	of returning a buffer. Also now takes a charset parameter.
+	(g_mime_utils_8bit_header_encode_phrase): Updated to use the new
+	rfc2047_encode_word API and also to pick an appropriate charset.
+
+2002-03-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c: Moved tables[] into the #ifdef
+	BUILD_CHARSET_MAP block.
+
+	* gmime-filter-charset.c (filter_filter): Same fix as I made
+	earlier to g_mime_iconv_strndup.
+
+2002-03-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Don't forget to
+	update the outbuf pointer after reallocing. Exit the loop when
+	inleft == 0 even if errno is E2BIG.
+
+	* gmime-charset.c: Changed the canonical format for
+	CANONINICAL_ISO_S_FORMAT for Solaris.
+
+	* gmime-utils.c (rfc2047_decode_word): strcasecmp on charenc, not
+	charset because charset has not yet been initialized.
+
+2002-03-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_mailbox): If gmime was initialized to
+	use UTF-8 interfaces and we encountered illegal 8bit text, attempt
+	to convert it to UTF-8 using the user's locale charset.
+
+	* gmime-charset.c (g_mime_charset_name): Fixed the ISO parser.
+	(g_mime_charset_best): New function to compute the best charset
+	for a given text input.
+
+	* gmime-param.c (rfc2184_decode): If gmime was initialized to use
+	UTF-8 interfaces, then convert the decoded text to UTF-8 here.
+	(decode_param): If gmime was initialized to use UTF-8 interfaces
+	and we encounter illegal 8bit text, attempt to convert it to
+	UTF-8.
+	(encode_param): If gmime was initialized to use UTF-8 interfaces,
+	convert the input buffer to the locale charset before encoding.
+
+	* gmime-utils.c (rfc2047_decode_word): Renamed from
+	decoded_encoded_8bit_word. If gmime was initialized to use UTF-8
+	interfaces, then convert the header to UTF-8 here.
+	(rfc2047_encode_word): Renamed from encode_8bit_word. If gmime was
+	initialized to use UTF-8 interfaces, convert input text to locale
+	charset before encoding.
+	(g_mime_utils_8bit_header_encode): Avoid excess mallocing.
+
 2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (g_mime_message_write_to_stream): fixed doc

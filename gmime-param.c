@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -35,11 +36,15 @@
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
 #include "gmime-utils.h"
+#include "gmime-iconv.h"
+#include "gmime-iconv-utils.h"
 
 #include "strlib.h"
 
-#define d(x)
+#define d(x) x
 #define w(x)
+
+extern int gmime_interfaces_utf8;
 
 static unsigned char tohex[16] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
@@ -73,18 +78,18 @@ g_mime_param_new (const char *name, const char *value)
 
 #define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
 
-static char *
-hex_decode (const char *in, unsigned int len)
+static size_t
+hex_decode (const unsigned char *in, size_t len, unsigned char *out)
 {
-	register unsigned char *inptr, *outptr;
+	register const unsigned char *inptr;
+	register unsigned char *outptr;
 	const unsigned char *inend;
-	char *outbuf;
 	
-	inend = (const unsigned char *) in + len;
+	inptr = in;
+	inend = in + len;
 	
-	outptr = outbuf = g_malloc (len);
+	outptr = out;
 	
-	inptr = (unsigned char *) in;
 	while (inptr < inend) {
 		if (*inptr == '%') {
 			if (isxdigit (inptr[1]) && isxdigit (inptr[2])) {
@@ -98,41 +103,72 @@ hex_decode (const char *in, unsigned int len)
 	
 	*outptr = '\0';
 	
-	return outbuf;
+	return outptr - out;
 }
 
 /* an rfc2184 encoded string looks something like:
  * us-ascii'en'This%20is%20even%20more%20
  */
 static char *
-rfc2184_decode (const char *in, unsigned int len)
+rfc2184_decode (const char *in, size_t len)
 {
 	const char *inptr = in;
 	const char *inend = in + len;
-	/*const char *charset;*/
+	const char *charset = NULL;
 	char *decoded = NULL;
-	/*char *encoding;*/
+	char *charenc;
 	
 	/* skips to the end of the charset / beginning of the locale */
 	inptr = memchr (inptr, '\'', len);
 	if (!inptr)
 		return NULL;
 	
-#if 0
-	/* someday we'll need to do something with the charset... */
-	encoding = g_strndup (in, (unsigned) (inptr - in));
-	charset = g_mime_iconv_charset_name (encoding);
-	g_free (encoding);
-#endif
+	/* save the charset */
+	len = inptr - in;
+	charenc = alloca (len + 1);
+	memcpy (charenc, in, len);
+	charenc[len] = '\0';
+	charset = charenc;
 	
 	/* skip to the end of the locale */
-	inptr = memchr (inptr + 1, '\'', (unsigned) (inend - inptr - 1));
+	inptr = memchr (inptr + 1, '\'', (unsigned int) (inend - inptr - 1));
 	if (!inptr)
 		return NULL;
 	
 	inptr++;
-	if (inptr < inend)
-		decoded = hex_decode (inptr, (unsigned) (inend - inptr));
+	if (inptr < inend) {
+		len = inend - inptr;
+		if (gmime_interfaces_utf8 && strcasecmp (charset, "UTF-8") != 0) {
+			char *udecoded;
+			iconv_t cd;
+			
+			decoded = alloca (len + 1);
+			len = hex_decode (inptr, len, decoded);
+			
+			cd = g_mime_iconv_open ("UTF-8", charset);
+			if (cd == (iconv_t) -1) {
+				d(g_warning ("Cannot convert from %s to UTF-8, param display may "
+					     "be corrupt: %s", charset, g_strerror (errno)));
+				charset = g_mime_charset_locale_name ();
+				cd = g_mime_iconv_open ("UTF-8", charset);
+				if (cd == (iconv_t) -1)
+					return NULL;
+			}
+			
+			udecoded = g_mime_iconv_strndup (cd, decoded, len);
+			g_mime_iconv_close (cd);
+			
+			if (!udecoded) {
+				d(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
+					     "corrupt: %s", len, decoded, g_strerror (errno)));
+			}
+			
+			decoded = udecoded;
+		} else {
+			decoded = g_malloc (len + 1);
+			hex_decode (inptr, len, decoded);
+		}
+	}
 	
 	return decoded;
 }
@@ -202,11 +238,11 @@ decode_quoted_string (const char **in)
 		
 		if (*inptr == '"') {
 			start++;
-			out = g_strndup (start, (unsigned) (inptr - start));
+			out = g_strndup (start, (unsigned int) (inptr - start));
 			inptr++;
 		} else {
 			/* string wasn't properly quoted */
-			out = g_strndup (start, (unsigned) (inptr - start));
+			out = g_strndup (start, (unsigned int) (inptr - start));
 		}
 	}
 	
@@ -228,7 +264,7 @@ decode_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, (unsigned) (inptr - start));
+		return g_strndup (start, (unsigned int) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -266,7 +302,7 @@ decode_param_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, (unsigned) (inptr - start));
+		return g_strndup (start, (unsigned int) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -324,6 +360,7 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 {
 	gboolean is_rfc2184_encoded = FALSE;
 	gboolean is_rfc2184 = FALSE;
+	gboolean valid_utf8 = FALSE;
 	const char *inptr = *in;
 	char *param, *value = NULL;
 	int rfc2184_part = -1;
@@ -348,6 +385,7 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 				
 				val = rfc2184_decode (value, strlen (value));
 				if (val) {
+					valid_utf8 = TRUE;
 					g_free (value);
 					value = val;
 				}
@@ -366,9 +404,29 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 			
 			val = g_mime_utils_8bit_header_decode (value);
 			if (val) {
+				valid_utf8 = TRUE;
 				g_free (value);
 				value = val;
 			}
+		} else {
+			if (gmime_interfaces_utf8)
+				valid_utf8 = !g_mime_utils_text_is_8bit (value, strlen (value));
+		}
+	}
+	
+	if (gmime_interfaces_utf8 && value && !valid_utf8) {
+		/* A (broken) mailer has sent us an unencoded 8bit value.
+		 * Attempt to save it by assuming it's in the user's
+		 * locale and converting to UTF-8 */
+		char *buf;
+		
+		buf = g_mime_iconv_locale_to_utf8 (value);
+		if (buf) {
+			g_free (value);
+			value = buf;
+		} else {
+			d(g_warning ("Failed to convert %s param value (\"%s\") to UTF-8: %s",
+				     param, value, g_strerror (errno)));
 		}
 	}
 	
@@ -399,8 +457,12 @@ decode_param_list (const char **in)
 		char *name, *value;
 		
 		/* invalid format? */
-		if (decode_param (&inptr, &name, &value, &is_rfc2184) != 0)
+		if (decode_param (&inptr, &name, &value, &is_rfc2184) != 0) {
+			if (*inptr == ';') {
+				continue;
+			}
 			break;
+		}
 		
 		if (is_rfc2184 && tail && !strcasecmp (name, tail->name)) {
 			/* rfc2184 allows a parameter to be broken into multiple parts
@@ -571,14 +633,14 @@ g_mime_param_append_param (GMimeParam *params, GMimeParam *param)
 static char *
 encode_param (const unsigned char *in, gboolean *encoded)
 {
-	const unsigned char *inptr;
-	char *outstr, *charset;
-	int encoding;
+	register const unsigned char *inptr;
+	unsigned char *outbuf = NULL;
+	iconv_t cd = (iconv_t) -1;
+	const char *charset = NULL;
+	char *outstr;
 	GString *out;
 	
 	*encoded = FALSE;
-	
-	g_return_val_if_fail (in != NULL, NULL);
 	
 	for (inptr = in; *inptr && inptr - in < GMIME_FOLD_LEN; inptr++)
 		if (*inptr > 127)
@@ -587,29 +649,51 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	if (*inptr == '\0')
 		return g_strdup (in);
 	
-	out = g_string_new ("");
-	inptr = in;
-	encoding = 0;
-	while (inptr && *inptr) {
-		unsigned int c = *inptr++ & 0xff;
+	if (*inptr > 127) {
+		if (gmime_interfaces_utf8)
+			charset = g_mime_charset_best (in, strlen (in));
+		else
+			charset = g_mime_charset_locale_name ();
+	}
+	
+	if (!charset)
+		charset = "iso-8859-1";
+	
+	if (gmime_interfaces_utf8) {
+		if (strcasecmp (charset, "UTF-8") != 0)
+			cd = g_mime_iconv_open (charset, "UTF-8");
 		
-		if (c > 127 && c < 256) {
-			encoding = MAX (encoding, 1);
+		if (cd == (iconv_t) -1)
+			charset = "UTF-8";
+	}
+	
+	if (cd != (iconv_t) -1) {
+		outbuf = g_mime_iconv_strdup (cd, in);
+		g_mime_iconv_close (cd);
+		inptr = outbuf;
+	} else {
+		inptr = in;
+	}
+	
+	/* FIXME: set the 'language' as well, assuming we can get that info...? */
+	out = g_string_new ("");
+	g_string_sprintfa (out, "%s''", charset);
+	
+	while (inptr && *inptr) {
+		unsigned char c = *inptr++;
+		
+		/* FIXME: make sure that '\'', '*', and ';' are also encoded */
+		
+		if (c > 127) {
 			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
 		} else if (is_lwsp (c) || !(gmime_special_table[c] & IS_ESAFE)) {
 			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
 		} else {
-			g_string_append_c (out, (char) c);
+			g_string_append_c (out, c);
 		}
 	}
 	
-	if (encoding) {
-		charset = g_strdup_printf ("%s''", g_mime_charset_locale_name ());
-		g_string_prepend (out, charset);
-		g_free (charset);
-	} else {
-		g_string_prepend (out, "iso-8859-1''");
-	}
+	g_free (outbuf);
 	
 	outstr = out->str;
 	g_string_free (out, FALSE);

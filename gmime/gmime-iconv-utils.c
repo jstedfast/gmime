@@ -25,8 +25,10 @@
 #endif
 
 #include <glib.h>
-#include <errno.h>
+#include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
 #include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 
@@ -89,7 +91,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		outbuf = out + converted;
 		outleft = outlen - converted;
 		
-		converted = iconv (cd, (char**)&inbuf, &inleft, &outbuf, &outleft);
+		converted = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
 		if (converted == (size_t) -1) {
 			if (errno != E2BIG && errno != EINVAL)
 				goto fail;
@@ -105,9 +107,10 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		if (errno == E2BIG) {
 			outlen += inleft * 2 + 16;
 			out = g_realloc (out, outlen + 1);
+			outbuf = out + converted;
 		}
 		
-	} while (errno == E2BIG);
+	} while (errno == E2BIG && inleft > 0);
 	
 	/*
 	 * EINVAL  An  incomplete  multibyte sequence has been encoun­
