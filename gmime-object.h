@@ -68,6 +68,9 @@ struct _GMimeObjectClass {
 };
 
 
+typedef void (*GMimePartFunc) (GMimeObject *part, gpointer data);
+
+
 GType g_mime_object_get_type (void);
 
 void g_mime_object_ref (GMimeObject *object);
@@ -84,6 +87,7 @@ void g_mime_object_remove_header (GMimeObject *object, const char *header);
 char *g_mime_object_get_headers (GMimeObject *object);
 
 ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
+char *g_mime_object_to_string (GMimeObject *object);
 
 #ifdef __cplusplus
 }

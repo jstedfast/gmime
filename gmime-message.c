@@ -30,6 +30,8 @@
 #include <locale.h>
 
 #include "gmime-message.h"
+#include "gmime-multipart.h"
+#include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
 
@@ -81,7 +83,7 @@ g_mime_message_get_type (void)
 			(GClassInitFunc) g_mime_message_class_init,
 			(GClassFinalizeFunc) g_mime_message_class_finalize,
 			NULL, /* class_data */
-			sizeof (GMimeMesage),
+			sizeof (GMimeMessage),
 			0,   /* n_preallocs */
 			(GInstanceInitFunc) g_mime_message_init,
 		};
@@ -116,7 +118,7 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	
 	gobject_class->finalize = g_mime_message_finalize;
 	
-	object_class->init = init;
+	object_class->init = message_init;
 	object_class->add_header = message_add_header;
 	object_class->set_header = message_set_header;
 	object_class->get_header = message_get_header;
@@ -156,7 +158,7 @@ recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 }
 
 static void
-g_mime_object_finalize (GObject *object)
+g_mime_message_finalize (GObject *object)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
@@ -250,6 +252,7 @@ message_get_headers (GMimeObject *object)
 static ssize_t
 message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
+	GMimeMessage *message = (GMimeMessage *) object;
 	ssize_t nwritten, total = 0;
 	
 	/* write the content headers */
@@ -489,7 +492,7 @@ InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	g_return_val_if_fail (type != NULL);
+	g_return_val_if_fail (type != NULL, NULL);
 	
 	return g_hash_table_lookup (message->recipients, type);
 }
@@ -691,7 +694,7 @@ g_mime_message_get_header (GMimeMessage *message, const char *header)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (header != NULL, NULL);
 	
-	return g_mime_object_get_header (GMIME_OBJECT (message->header), header);
+	return g_mime_object_get_header (GMIME_OBJECT (message), header);
 }
 
 
@@ -732,7 +735,7 @@ g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return g_mime_object_write_to_stream (GMIME_OBJECT (mesage));
+	return g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
 }
 
 
@@ -783,9 +786,9 @@ g_mime_message_to_string (GMimeMessage *message)
  * guarenteed to always be correct.
  **/
 static char *
-multipart_get_body (GMimeMultiart *multipart, gboolean want_plain, gboolean *is_html)
+multipart_get_body (GMimeMultipart *multipart, gboolean want_plain, gboolean *is_html)
 {
-	GMimePart *first = NULL;
+	GMimeObject *first = NULL;
 	const char *content;
 	char *body = NULL;
 	GList *subpart;

@@ -63,8 +63,6 @@ typedef struct _GMimePart GMimePart;
 #define GMIME_IS_PART(object) (object && ((GMimeObject *) object)->type == GMIME_PART_TYPE)
 #define GMIME_PART(object)    ((GMimePart *) object)
 
-typedef void (*GMimePartFunc) (GMimePart *part, gpointer data);
-
 /* constructors */
 GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
