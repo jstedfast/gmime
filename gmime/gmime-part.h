@@ -33,16 +33,14 @@ extern "C" {
 #include "gmime-param.h"
 #include "gmime-content-type.h"
 
-enum _GMimePartEncodingType {
+typedef enum {
         GMIME_PART_ENCODING_DEFAULT,
         GMIME_PART_ENCODING_7BIT,
         GMIME_PART_ENCODING_8BIT,
         GMIME_PART_ENCODING_BASE64,
         GMIME_PART_ENCODING_QUOTEDPRINTABLE,
         GMIME_PART_NUM_ENCODINGS
-};
-
-typedef enum _GMimePartEncodingType GMimePartEncodingType;
+} GMimePartEncodingType;
 
 typedef struct _GMimePartDispositionParam GMimePartDispositionParam;
 
