@@ -28,6 +28,7 @@
 #include "gmime-utils.h"
 #include "gmime-header.h"
 #include "gmime-stream-mem.h"
+#include "gmime-stream-buffer.h"
 #include <string.h>
 #include <ctype.h>
 
@@ -114,29 +115,6 @@ special_header (const char *field)
 	return (!g_strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
 }
 
-static const char *
-g_strstrbound (const char *haystack, const char *needle, const char *end)
-{
-	gboolean matches = FALSE;
-	const char *ptr;
-	guint nlen;
-	
-	nlen = strlen (needle);
-	ptr = haystack;
-	
-	while (ptr + nlen <= end) {
-		if (!strncmp (ptr, needle, nlen)) {
-			matches = TRUE;
-			break;
-		}
-		ptr++;
-	}
-	
-	if (matches)
-		return ptr;
-	else
-		return NULL;
-}
 
 static void
 parser_readln (GMimeStream *stream, GByteArray *buffer)

@@ -69,7 +69,7 @@ g_mime_param_new_from_string (const gchar *string)
 	g_strstrip (name);
 	
 	/* skip any whitespace */
-	for (ptr = eptr + 1; *ptr && isspace (*ptr); ptr++);
+	for (ptr = eptr + 1; *ptr && isspace ((int)*ptr); ptr++);
 	
 	if (*ptr == '"') {
 		/* value is in quotes */

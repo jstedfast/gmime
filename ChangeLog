@@ -1,3 +1,27 @@
+2001-10-01  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter.c: include <string.h> to pick up memcpy prototype.
+	* gmime-stream-mem.c: same.
+	* gmime-stream-buffer.c: same.
+	* gmime-stream-filter.c: same.
+
+	* gmime-stream-mem.c (stream_flush): added a retval of 0.
+
+	* gmime-filter-crlf.h (g_mime_filter_crlf_new_type): renamed
+	prototype as g_mime_filter_crlf_new to sync with .c
+
+	* gmime-part.h: added g_mime_part_set_content_object() prototype.
+
+	* gmime-content-type.h: Replaced <> with "" in #include <gmime-param.h>
+
+	* pan-mime-parser.c: added #include gmime-stream-buffer.h to
+	pick up prototype for g_mime_stream_buffer_gets.
+	* pan-mime-parser.c (g_strstrbound): removed unused func.
+
+	* gmime-utils.c: on calls to ctype functions, explicitly upcast the
+	char arguments as ints to shut up gcc warnings on Solaris.
+	* gmime-param.c: same.
+
 2001-09-29  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pan-mime-parser.c: New parser (with exactly the same API as

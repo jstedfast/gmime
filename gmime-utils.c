@@ -160,10 +160,10 @@ datetok (const gchar *date)
 	start = (gchar *) date;
 	while (*start) {
 		/* kill leading whitespace */
-		for ( ; *start && isspace (*start); start++);
+		for ( ; *start && isspace ((int)*start); start++);
 		
 		/* find the end of this token */
-		for (end = start; *end && !isspace (*end); end++);
+		for (end = start; *end && !isspace ((int)*end); end++);
 		
 		token = g_strndup (start, (end - start));
 		
@@ -233,7 +233,7 @@ get_mday (gchar *str)
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (p = str; *p; p++)
-		if (!isdigit (*p))
+		if (!isdigit ((int)*p))
 			return -1;
 	
 	mday = atoi (str);
@@ -265,7 +265,7 @@ get_year (const gchar *str)
 	const gchar * p;
 	
 	for (p = str; *p; p++)
-		if (!isdigit (*p))
+		if (!isdigit ((int)*p))
 			return -1;
 	
 	year = atoi (str);
@@ -289,7 +289,7 @@ get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 	for (p = in; *p && digits; p++) {
 		if (*p == ':')
 			colons++;
-		else if (!isdigit (*p))
+		else if (!isdigit ((int)*p))
 			digits = FALSE;
 	}
 	

@@ -51,7 +51,7 @@ typedef struct _GMimeFilterCRLF {
 	gboolean saw_dot;
 } GMimeFilterCRLF;
 
-GMimeFilter *g_mime_filter_crlf_new_type (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode);
+GMimeFilter *g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode);
 
 #ifdef __cplusplus
 }

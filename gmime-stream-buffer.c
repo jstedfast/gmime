@@ -20,7 +20,7 @@
  *
  */
 
-
+#include <string.h>
 #include "gmime-stream-buffer.h"
 
 #define BLOCK_BUFFER_LEN   4096
@@ -253,7 +253,7 @@ static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	/* FIXME: implement me */
-	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	/*xGMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;*/
 	
 	return -1;
 }

@@ -45,7 +45,7 @@ static GMimeFilter template = {
 
 
 /**
- * g_mime_filter_crlf_new_type:
+ * g_mime_filter_crlf_new:
  * @direction:
  * @mode:
  *

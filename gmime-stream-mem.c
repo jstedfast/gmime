@@ -20,7 +20,7 @@
  *
  */
 
-
+#include <string.h>
 #include "gmime-stream-mem.h"
 
 static void stream_destroy (GMimeStream *stream);
@@ -103,6 +103,7 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	/* no-op */
+	return 0;
 }
 
 static int

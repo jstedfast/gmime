@@ -20,7 +20,7 @@
  *
  */
 
-
+#include <string.h>
 #include "gmime-stream-filter.h"
 
 #define READ_PAD (64)		/* bytes padded before buffer */
@@ -252,7 +252,7 @@ stream_reset (GMimeStream *stream)
 static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
-	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
+	/*GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;*/
 	
 	return -1;
 }
@@ -274,7 +274,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	GMimeStreamFilter *sub;
-	struct _filter *f, *fn;
+	/*struct _filter *f, *fn;*/
 	
 	sub = g_new (GMimeStreamFilter, 1);
 	sub->source = filter->source;
