@@ -1,3 +1,8 @@
+2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): Fixed a bug that
+	crept in during my simplification.
+
 2002-04-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (g_mime_message_add_recipients_from_string):

@@ -1823,12 +1823,14 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 {
 	register unsigned char *outptr, *bufptr;
 	register guint32 saved;
-	int uulen, i;
+	int uulen, uufill, i;
 	
 	outptr = out;
 	
 	if (inlen > 0)
 		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save);
+	
+	uufill = 0;
 	
 	saved = *save;
 	i = *state & 0xff;
@@ -1839,6 +1841,7 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 	if (i > 0) {
 		while (i < 3) {
 			saved <<= 8 | 0;
+			uufill++;
 			i++;
 		}
 		
@@ -1864,7 +1867,7 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 	if (uulen > 0) {
 		int cplen = ((uulen / 3) * 4);
 		
-		*outptr++ = GMIME_UUENCODE_CHAR (uulen & 0xff);
+		*outptr++ = GMIME_UUENCODE_CHAR ((uulen - uufill) & 0xff);
 		memcpy (outptr, uubuf, cplen);
 		outptr += cplen;
 		*outptr++ = '\n';
