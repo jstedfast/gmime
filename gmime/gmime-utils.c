@@ -751,12 +751,11 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #define MUTEX_UNLOCK()
 #endif
 	static unsigned int count = 0;
-#if defined (HAVE_GETHOSTBYNAME)
 	char host[MAXHOSTNAMELEN + 1];
+#ifdef HAVE_GETHOSTBYNAME
 	struct hostent *h = NULL;
 #else
-	char host[2];
-	void *h;
+	void *h = NULL;
 #endif
 	char *msgid;
 	
@@ -771,7 +770,6 @@ g_mime_utils_generate_message_id (const char *fqdn)
 		}
 #else
 		host[0] = '\0';
-		h = NULL;
 #endif /* HAVE_GETHOSTNAME */
 		
 		fqdn = h ? h->h_name : (*host ? host : "localhost.localdomain");
