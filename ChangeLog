@@ -1,3 +1,9 @@
+2000-10-26  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.h: made const the input ptrs for encode/decode funcs.
+
+	* gmime-utils.c: Updated to reflect const changes.
+
 2000-10-26  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-mime.c: Also updated.

@@ -546,7 +546,7 @@ quoted_decode (const guchar *in, gint len, guchar *out)
 static guchar *
 decode_8bit_word (const guchar *word)
 {
-	guchar *inptr, *inend, *p;
+	guchar *inptr, *inend;
 	guint len;
 	
 	len = strlen (word);
@@ -690,7 +690,6 @@ encode_8bit_word (guchar *word)
 	gint state = 0;
 	gint save = 0;
 	gchar encoding;
-	int i;
 	
 	len = strlen (word);
 	
@@ -816,7 +815,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 /* call this when finished encoding everything, to
    flush off the last little bit */
 gint
-g_mime_utils_base64_encode_close (guchar *in, gint inlen, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
 	guchar *outptr = out;
 	gint c1, c2;
@@ -854,9 +853,10 @@ g_mime_utils_base64_encode_close (guchar *in, gint inlen, guchar *out, gint *sta
   0 on first invocation).
 */
 gint
-g_mime_utils_base64_encode_step (guchar *in, gint len, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_step (const guchar *in, gint len, guchar *out, gint *state, gint *save)
 {
-	register guchar *inptr, *outptr;
+	const register guchar *inptr;
+	register guchar *outptr;
 	
 	if (len <= 0)
 		return 0;
@@ -867,8 +867,8 @@ g_mime_utils_base64_encode_step (guchar *in, gint len, guchar *out, gint *state,
 	d(printf("we have %d chars, and %d saved chars\n", len, ((gchar *)save)[0]));
 	
 	if (len + ((guchar *)save)[0] > 2) {
-		guchar *inend = in + len - 2;
-		register gint c1, c2, c3;
+		const guchar *inend = in + len - 2;
+		register gint c1=0, c2=0, c3=0;
 		register gint already;
 		
 		already = *state;
@@ -937,10 +937,12 @@ g_mime_utils_base64_encode_step (guchar *in, gint len, guchar *out, gint *state,
  * Decodes a chunk of base64 encoded data
  **/
 gint
-g_mime_utils_base64_decode_step (guchar *in, gint len, guchar *out, gint *state, guint *save)
+g_mime_utils_base64_decode_step (const guchar *in, gint len, guchar *out, gint *state, guint *save)
 {
-	register guchar *inptr, *outptr;
-	guchar *inend, c;
+	const register guchar *inptr;
+	register guchar *outptr;
+	const guchar *inend;
+	guchar c;
 	register guint v;
 	int i;
 	
@@ -999,10 +1001,12 @@ g_mime_utils_base64_decode_step (guchar *in, gint len, guchar *out, gint *state,
  * has been stripped off.
  **/
 gint
-g_mime_utils_uudecode_step (guchar *in, gint len, guchar *out, gint *state, guint32 *save, gchar *uulen)
+g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state, guint32 *save, gchar *uulen)
 {
-	register guchar *inptr, *outptr;
-	guchar *inend, ch;
+	const register guchar *inptr;
+	register guchar *outptr;
+	const guchar *inend;
+	guchar ch;
 	register guint32 saved;
 	gboolean last_was_eoln;
 	int i;
@@ -1074,7 +1078,7 @@ g_mime_utils_uudecode_step (guchar *in, gint len, guchar *out, gint *state, guin
 }
 
 gint
-g_mime_utils_quoted_encode_close (guchar *in, gint len, guchar *out, gint *state, gint *save)
+g_mime_utils_quoted_encode_close (const guchar *in, gint len, guchar *out, gint *state, gint *save)
 {
 	register guchar *outptr = out;
 	int last;
@@ -1104,9 +1108,10 @@ g_mime_utils_quoted_encode_close (guchar *in, gint len, guchar *out, gint *state
 }
 
 gint
-g_mime_utils_quoted_encode_step (guchar *in, gint len, guchar *out, gint *statep, gint *save)
+g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *statep, gint *save)
 {
-	register guchar *inptr, *outptr, *inend;
+	const register guchar *inptr, *inend;
+	register guchar *outptr;
 	guchar c;
 	register int sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *statep; /* keeps track if last char to end was a space cr etc */
@@ -1190,10 +1195,12 @@ g_mime_utils_quoted_encode_step (guchar *in, gint len, guchar *out, gint *statep
 */
 
 gint
-g_mime_utils_quoted_decode_step (guchar *in, gint len, guchar *out, gint *savestate, gint *saveme)
+g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *savestate, gint *saveme)
 {
-	register guchar *inptr, *outptr;
-	guchar *inend, c;
+	const register guchar *inptr;
+	register guchar *outptr;
+	const guchar *inend;
+	guchar c;
 	int state, save;
 	
 	inend = in + len;
