@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="2 Mar 2002">
+<refentry id="gmime-gmime-message">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -111,6 +111,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -126,6 +127,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <tbody>
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -614,7 +616,7 @@ Set the root-level MIME part of the message.</para>
 <programlisting>void        g_mime_message_write_to_stream  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-Write the contents of the MIME Message to <parameter>string</parameter>.</para>
+Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

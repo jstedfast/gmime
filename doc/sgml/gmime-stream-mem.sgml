@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-mem" revision="2 Mar 2002">
+<refentry id="gmime-gmime-stream-mem">
 <refmeta>
 <refentrytitle>gmime-stream-mem</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -63,6 +63,7 @@ void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_s
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -78,6 +79,7 @@ void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_s
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

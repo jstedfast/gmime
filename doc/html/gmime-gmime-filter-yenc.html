@@ -1,0 +1,1838 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-filter-yenc</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-filter-html"
+HREF="gmime-gmime-filter-html.html"><LINK
+REL="NEXT"
+TITLE="gmime-param"
+HREF="gmime-gmime-param.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-filter-html.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-param.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-FILTER-YENC"
+>gmime-filter-yenc</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN2176"
+></A
+><H2
+>Name</H2
+>gmime-filter-yenc&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN2179"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YENCODE-CRC-INIT-CAPS"
+>GMIME_YENCODE_CRC_INIT</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YENCODE-CRC-FINAL-CAPS"
+>GMIME_YENCODE_CRC_FINAL</A
+>         (crc)
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-YDECODE-STEP"
+>g_mime_ydecode_step</A
+>             (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-YENCODE-STEP"
+>g_mime_yencode_step</A
+>             (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-YENCODE-CLOSE"
+>g_mime_yencode_close</A
+>            (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);
+enum        <A
+HREF="gmime-gmime-filter-yenc.html#GMIMEFILTERYENCDIRECTION"
+>GMimeFilterYencDirection</A
+>;
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YENCODE-STATE-INIT-CAPS"
+>GMIME_YENCODE_STATE_INIT</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-INIT-CAPS"
+>GMIME_YDECODE_STATE_INIT</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-EOLN-CAPS"
+>GMIME_YDECODE_STATE_EOLN</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-ESCAPE-CAPS"
+>GMIME_YDECODE_STATE_ESCAPE</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-BEGIN-CAPS"
+>GMIME_YDECODE_STATE_BEGIN</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-PART-CAPS"
+>GMIME_YDECODE_STATE_PART</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-DECODE-CAPS"
+>GMIME_YDECODE_STATE_DECODE</A
+>
+#define     <A
+HREF="gmime-gmime-filter-yenc.html#GMIME-YDECODE-STATE-END-CAPS"
+>GMIME_YDECODE_STATE_END</A
+>
+<A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+>* <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-FILTER-YENC-NEW"
+>g_mime_filter_yenc_new</A
+>         (<A
+HREF="gmime-gmime-filter-yenc.html#GMIMEFILTERYENCDIRECTION"
+>GMimeFilterYencDirection</A
+> direction);
+void        <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-FILTER-YENC-SET-STATE"
+>g_mime_filter_yenc_set_state</A
+>    (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc,
+                                             int state);
+void        <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-FILTER-YENC-SET-CRC"
+>g_mime_filter_yenc_set_crc</A
+>      (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> crc);
+<GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-FILTER-YENC-GET-CRC"
+>g_mime_filter_yenc_get_crc</A
+>      (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc);
+<GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-filter-yenc.html#G-MIME-FILTER-YENC-GET-PCRC"
+>g_mime_filter_yenc_get_pcrc</A
+>     (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN2222"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN2225"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2227"
+></A
+><H3
+><A
+NAME="GMIME-YENCODE-CRC-INIT-CAPS"
+></A
+>GMIME_YENCODE_CRC_INIT</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YENCODE_CRC_INIT       (~0)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2232"
+></A
+><H3
+><A
+NAME="GMIME-YENCODE-CRC-FINAL-CAPS"
+></A
+>GMIME_YENCODE_CRC_FINAL()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YENCODE_CRC_FINAL(crc) (~crc)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2237"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2246"
+></A
+><H3
+><A
+NAME="G-MIME-YDECODE-STEP"
+></A
+>g_mime_ydecode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_ydecode_step             (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Performs a 'decode step' on a chunk of yEncoded data of length
+<TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+> pointed to by <TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+> and writes to <TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>. Assumes the =ybegin
+and =ypart lines have already been stripped off.</P
+><P
+>To get the crc32 value of the part, use GMIME_YENCODE_CRC_FINAL
+(<TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+>). If there are more parts, you should reuse <TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+> without
+re-initializing. Once all parts have been decoded, you may get the
+combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
+(<TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>).</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2263"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> ydecode state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> part crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes decoded.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2296"
+></A
+><H3
+><A
+NAME="G-MIME-YENCODE-STEP"
+></A
+>g_mime_yencode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_yencode_step             (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Performs an yEncode 'encode step' on a chunk of raw data of length
+<TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+> pointed to by <TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+> and writes to <TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>.</P
+><P
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+> should be initialized to GMIME_YENCODE_STATE_INIT before
+beginning making the first call to this function. Subsequent calls
+should reuse <TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>.</P
+><P
+>Along the same lines, <TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+> should be initialized to
+GMIME_YENCODE_CRC_INIT before using.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2315"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> yencode state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> part crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2348"
+></A
+><H3
+><A
+NAME="G-MIME-YENCODE-CLOSE"
+></A
+>g_mime_yencode_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_yencode_close            (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *pcrc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *crc);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Call this function when finished encoding data with
+g_mime_yencode_step to flush off the remaining state.</P
+><P
+>GMIME_YENCODE_CRC_FINAL (<TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+>) will give you the crc32 of the
+encoded "part". If there are more "parts" to encode, you should
+re-use <TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+> when encoding the next "parts" and then use
+GMIME_YENCODE_CRC_FINAL (<TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>) to get the combined crc32 value of
+all the parts.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2362"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> yencode state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>pcrc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> part crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> crc state</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2395"
+></A
+><H3
+><A
+NAME="GMIMEFILTERYENCDIRECTION"
+></A
+>enum GMimeFilterYencDirection</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	GMIME_FILTER_YENC_DIRECTION_ENCODE,
+	GMIME_FILTER_YENC_DIRECTION_DECODE,
+} GMimeFilterYencDirection;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2400"
+></A
+><H3
+><A
+NAME="GMIME-YENCODE-STATE-INIT-CAPS"
+></A
+>GMIME_YENCODE_STATE_INIT</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YENCODE_STATE_INIT     (0)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2405"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-INIT-CAPS"
+></A
+>GMIME_YDECODE_STATE_INIT</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_INIT     (0)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2410"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-EOLN-CAPS"
+></A
+>GMIME_YDECODE_STATE_EOLN</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_EOLN     (1 &lt;&lt; 8)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2415"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-ESCAPE-CAPS"
+></A
+>GMIME_YDECODE_STATE_ESCAPE</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_ESCAPE   (1 &lt;&lt; 9)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2420"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-BEGIN-CAPS"
+></A
+>GMIME_YDECODE_STATE_BEGIN</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_BEGIN    (1 &lt;&lt; 12)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2425"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-PART-CAPS"
+></A
+>GMIME_YDECODE_STATE_PART</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_PART     (1 &lt;&lt; 13)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2430"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-DECODE-CAPS"
+></A
+>GMIME_YDECODE_STATE_DECODE</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_DECODE   (1 &lt;&lt; 14)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2435"
+></A
+><H3
+><A
+NAME="GMIME-YDECODE-STATE-END-CAPS"
+></A
+>GMIME_YDECODE_STATE_END</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_YDECODE_STATE_END      (1 &lt;&lt; 15)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2440"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-YENC-NEW"
+></A
+>g_mime_filter_yenc_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+>* g_mime_filter_yenc_new         (<A
+HREF="gmime-gmime-filter-yenc.html#GMIMEFILTERYENCDIRECTION"
+>GMimeFilterYencDirection</A
+> direction);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new yEnc filter.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2448"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>direction</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> encode direction</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new yEnc filter.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2461"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-YENC-SET-STATE"
+></A
+>g_mime_filter_yenc_set_state ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_filter_yenc_set_state    (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc,
+                                             int state);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the current state of the yencoder/ydecoder</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2468"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>yenc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> yEnc filter</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> encode/decode state</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2481"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-YENC-SET-CRC"
+></A
+>g_mime_filter_yenc_set_crc ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_filter_yenc_set_crc      (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> crc);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2488"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>yenc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>crc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2501"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-YENC-GET-CRC"
+></A
+>g_mime_filter_yenc_get_crc ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+>     g_mime_filter_yenc_get_crc      (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Get the computed crc or (guint32) -1 on fail.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2509"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>yenc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> yEnc filter</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the computed crc or (guint32) -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2522"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-YENC-GET-PCRC"
+></A
+>g_mime_filter_yenc_get_pcrc ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+>     g_mime_filter_yenc_get_pcrc     (<GTKDOCLINK
+HREF="GMIMEFILTERYENC"
+>GMimeFilterYenc</GTKDOCLINK
+> *yenc);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Get the computed part crc or (guint32) -1 on fail.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2530"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>yenc</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> yEnc filter</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the computed part crc or (guint32) -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-filter-html.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-param.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-filter-html</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-param</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

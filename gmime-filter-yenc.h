@@ -31,7 +31,7 @@ extern "C" {
 
 #include "gmime-filter.h"
 
-typedef enum _GMimeFilterYencDirection {
+typedef enum {
 	GMIME_FILTER_YENC_DIRECTION_ENCODE,
 	GMIME_FILTER_YENC_DIRECTION_DECODE,
 } GMimeFilterYencDirection;
@@ -72,7 +72,7 @@ GMimeFilter *g_mime_filter_yenc_new (GMimeFilterYencDirection direction);
 void g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state);
 void g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc);
 
-int     g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc);
+/*int     g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc);*/
 guint32 g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc);
 guint32 g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc);
 

@@ -1,3 +1,4 @@
+    &gmime-gmime;
     &gmime-gmime-stream;
     &gmime-gmime-stream-buffer;
     &gmime-gmime-stream-file;
@@ -13,6 +14,7 @@
     &gmime-gmime-filter-crlf;
     &gmime-gmime-filter-from;
     &gmime-gmime-filter-html;
+    &gmime-gmime-filter-yenc;
     &gmime-gmime-data-wrapper;
     &gmime-gmime-param;
     &gmime-gmime-header;

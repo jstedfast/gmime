@@ -1,4 +1,11 @@
 <SECTION>
+<FILE>gmime</FILE>
+GMIME_CHECK_VERSION
+GMIME_INIT_FLAG_UTF8
+g_mime_init
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream</FILE>
 GMimeStream
 GMimeSeekWhence
@@ -144,6 +151,30 @@ GMIME_FILTER_HTML_CONVERT_ADDRESSES
 GMIME_FILTER_HTML_ESCAPE_8BIT
 GMIME_FILTER_HTML_CITE
 g_mime_filter_html_new
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-yenc</FILE>
+GMIME_YENCODE_CRC_INIT
+GMIME_YENCODE_CRC_FINAL
+g_mime_ydecode_step
+g_mime_yencode_step
+g_mime_yencode_close
+GMimeFilterYencDirection
+GMIME_YENCODE_STATE_INIT
+GMIME_YDECODE_STATE_INIT
+GMIME_YDECODE_STATE_EOLN
+GMIME_YDECODE_STATE_ESCAPE
+GMIME_YDECODE_STATE_BEGIN
+GMIME_YDECODE_STATE_PART
+GMIME_YDECODE_STATE_DECODE
+GMIME_YDECODE_STATE_END
+g_mime_filter_yenc_new
+g_mime_filter_yenc_set_state
+g_mime_filter_yenc_get_part
+g_mime_filter_yenc_set_crc
+g_mime_filter_yenc_get_crc
+g_mime_filter_yenc_get_pcrc
 </SECTION>
 
 <SECTION>
@@ -323,6 +354,10 @@ g_mime_utils_8bit_header_encode_phrase
 g_mime_utils_base64_decode_step
 g_mime_utils_base64_encode_step
 g_mime_utils_base64_encode_close
+GMIME_UUDECODE_STATE_INIT
+GMIME_UUDECODE_STATE_BEGIN
+GMIME_UUDECODE_STATE_END
+GMIME_UUDECODE_STATE_MASK
 g_mime_utils_uudecode_step
 g_mime_utils_uuencode_step
 g_mime_utils_uuencode_close
@@ -366,6 +401,7 @@ g_mime_parser_construct_message
 g_mime_charset_init
 g_mime_charset_locale_name
 g_mime_charset_name
+g_mime_charset_best
 </SECTION>
 
 <SECTION>

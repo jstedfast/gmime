@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-exception" revision="2 Mar 2002">
+<refentry id="gmime-gmime-exception">
 <refmeta>
 <refentrytitle>gmime-exception</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -244,6 +244,7 @@ If <parameter>ex</parameter> is NULL, return NULL;</para>
 <tbody>
 <row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

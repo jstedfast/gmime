@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="2 Mar 2002">
+<refentry id="gmime-gmime-utils">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -50,6 +50,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
                                              unsigned char *out,
                                              int *state,
                                              <link linkend="guint32">guint32</link> *save);
+#define     <link linkend="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</link>
 <link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
@@ -113,6 +117,7 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -128,6 +133,7 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <tbody>
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -473,6 +479,34 @@ flush off the last little bit.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</title>
+<programlisting>#define GMIME_UUDECODE_STATE_INIT   (0)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</title>
+<programlisting>#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</title>
+<programlisting>#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</title>
+<programlisting>#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step ()</title>
 <programlisting><link linkend="size-t">size_t</link>      g_mime_utils_uudecode_step      (unsigned char *in,

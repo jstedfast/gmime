@@ -118,11 +118,16 @@ g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
 }
 
 
+#if 0
+/* FIXME: once we parse out the yenc part id, we can re-enable this interface */
 /**
  * g_mime_filter_yenc_get_part:
  * @yenc: yEnc filter
  *
  * Gets the part id of the current decoded yEnc stream or -1 on fail.
+ *
+ * Returns the part id of the current decoded yEnc stream or -1 on
+ * fail.
  **/
 int
 g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
@@ -134,13 +139,15 @@ g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
 	
 	return -1;
 }
-
+#endif
 
 /**
  * g_mime_filter_yenc_get_pcrc:
  * @yenc: yEnc filter
  *
  * Get the computed part crc or (guint32) -1 on fail.
+ *
+ * Returns the computed part crc or (guint32) -1 on fail.
  **/
 guint32
 g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
@@ -156,6 +163,8 @@ g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
  * @yenc: yEnc filter
  *
  * Get the computed crc or (guint32) -1 on fail.
+ *
+ * Returns the computed crc or (guint32) -1 on fail.
  **/
 guint32
 g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc)
@@ -365,6 +374,28 @@ static const int yenc_crc_table[256] = {
 
 #define YENC_NEWLINE_ESCAPE (GMIME_YDECODE_STATE_EOLN | GMIME_YDECODE_STATE_ESCAPE)
 
+
+/**
+ * g_mime_ydecode_step:
+ * @in: input buffer
+ * @inlen: input buffer length
+ * @out: output buffer
+ * @state: ydecode state
+ * @pcrc: part crc state
+ * @crc: crc state
+ *
+ * Performs a 'decode step' on a chunk of yEncoded data of length
+ * @inlen pointed to by @in and writes to @out. Assumes the =ybegin
+ * and =ypart lines have already been stripped off.
+ *
+ * To get the crc32 value of the part, use GMIME_YENCODE_CRC_FINAL
+ * (@pcrc). If there are more parts, you should reuse @crc without
+ * re-initializing. Once all parts have been decoded, you may get the
+ * combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
+ * (@crc).
+ *
+ * Returns the number of bytes decoded.
+ **/
 size_t
 g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 		     int *state, guint32 *pcrc, guint32 *crc)
@@ -423,6 +454,28 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	return outptr - out;
 }
 
+
+/**
+ * g_mime_yencode_step:
+ * @in: input buffer
+ * @inlen: input buffer length
+ * @out: output buffer
+ * @state: yencode state
+ * @pcrc: part crc state
+ * @crc: crc state
+ *
+ * Performs an yEncode 'encode step' on a chunk of raw data of length
+ * @inlen pointed to by @in and writes to @out.
+ *
+ * @state should be initialized to GMIME_YENCODE_STATE_INIT before
+ * beginning making the first call to this function. Subsequent calls
+ * should reuse @state.
+ *
+ * Along the same lines, @pcrc and @crc should be initialized to
+ * GMIME_YENCODE_CRC_INIT before using.
+ *
+ * Returns the number of bytes encoded.
+ **/
 size_t
 g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 		     int *state, guint32 *pcrc, guint32 *crc)
@@ -467,6 +520,27 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	return outptr - out;
 }
 
+
+/**
+ * g_mime_yencode_close:
+ * @in: input buffer
+ * @inlen: input buffer length
+ * @out: output buffer
+ * @state: yencode state
+ * @pcrc: part crc state
+ * @crc: crc state
+ *
+ * Call this function when finished encoding data with
+ * g_mime_yencode_step to flush off the remaining state.
+ *
+ * GMIME_YENCODE_CRC_FINAL (@pcrc) will give you the crc32 of the
+ * encoded "part". If there are more "parts" to encode, you should
+ * re-use @crc when encoding the next "parts" and then use
+ * GMIME_YENCODE_CRC_FINAL (@crc) to get the combined crc32 value of
+ * all the parts.
+ *
+ * Returns the number of bytes encoded.
+ **/
 size_t
 g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
 		      int *state, guint32 *pcrc, guint32 *crc)
