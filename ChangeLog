@@ -1,3 +1,8 @@
+2002-05-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_scan_mime_part_content): Only compensate
+	for the '\n' if we found a boundary.
+
 2002-05-16  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-filter-yenc.c: fixed regression that caused end line of
