@@ -27,6 +27,7 @@
 
 #include "gmime-parser.h"
 #include "gmime-utils.h"
+#include "gmime-header.h"
 
 #include <string.h>
 #include <ctype.h>
@@ -42,6 +43,21 @@ enum {
 	CONTENT_MD5,
 	CONTENT_ID
 };
+
+#if 0
+static char *rfc822_headers[] = {
+	"Return-Path",
+	"Received",
+	"Date",
+	"From",
+	"Reply-To",
+	"Subject",
+	"Sender",
+	"To",
+	"Cc",
+	NULL
+};
+#endif
 
 static gchar *content_headers[] = {
 	"Content-Type:",
@@ -109,6 +125,7 @@ g_strstrbound (const gchar *haystack, const gchar *needle, const gchar *end)
 }
 
 #define GMIME_PARSER_MAX_LINE_WIDTH 1024
+
 
 /**
  * get_header_block_from_file: Get the header block from a message.
@@ -386,7 +403,9 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 	parse_content_headers (headers, headers_len, mime_part, &is_multipart, &boundary, &end_boundary);
 	
 	/* Body */
-	if (is_multipart && boundary!=NULL && end_boundary!=NULL) { /* is a multipart */
+	if (is_multipart && boundary != NULL && end_boundary != NULL) {
+		/* is a multipart */
+
 		/* get all the subparts */
 		gchar buf[GMIME_PARSER_MAX_LINE_WIDTH];
 		
@@ -456,8 +475,10 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 	return mime_part;
 }
 
+
 /* we pass the length here so that we can avoid dup'ing in the caller
    as mime parts can be BIG (tm) */
+
 /**
  * g_mime_parser_construct_part: Construct a GMimePart object
  * @in: raw MIME Part data
@@ -469,25 +490,29 @@ GMimePart *
 g_mime_parser_construct_part (const gchar *in, guint inlen)
 {
 	GMimePart *mime_part;
-	GArray *headers;
 	gchar *boundary;
 	gchar *end_boundary;
 	gboolean is_multipart;
 	const gchar *inptr;
 	const gchar *inend = in + inlen;
+	const gchar *hdr_end;
 	
 	g_return_val_if_fail (in != NULL, NULL);
 	g_return_val_if_fail (inlen != 0, NULL);
 	
 	/* Headers */
-	headers = get_header_block (in);
+	hdr_end = g_strstrbound (in, "\n\n", inend);
+	if (!hdr_end)
+		return NULL;
+	
+	
 	mime_part = g_mime_part_new ();
 	is_multipart = FALSE;
-	parse_content_headers (headers->data, headers->len, mime_part,
+	parse_content_headers (in, hdr_end - in, mime_part,
 			       &is_multipart, &boundary, &end_boundary);
 	
 	/* Body */
-	inptr = in + headers->len;
+	inptr = hdr_end;
 	
 	if (is_multipart && boundary && end_boundary) {
 		/* get all the subparts */
@@ -511,6 +536,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 			}
 			
 			/* get the subpart */
+			part_begin += strlen (boundary);
 			subpart = g_mime_parser_construct_part (part_begin, (guint) (part_end - part_begin));
 			g_mime_part_add_subpart (mime_part, subpart);
 			
@@ -545,8 +571,6 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 		if (len > 0)
 			g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
 	}
-	
-	g_array_free (headers, TRUE);	
 	
 	return mime_part;
 }
@@ -652,11 +676,14 @@ construct_headers (GMimeMessage *message, const gchar *headers, gint inlen, gboo
 			break;
 		case HEADER_UNKNOWN:
 		default:
-			if (save_extra_headers && !special_header (field)) {
-				field[strlen (field) - 1] = '\0'; /* kill the ':' */
-				g_mime_message_add_arbitrary_header (message, field, value);
-			}
 			break;
+		}
+		
+		/* possibly save the raw header */
+		if ((save_extra_headers || fields[i]) && !special_header (field)) {
+			field[strlen (field) - 1] = '\0'; /* kill the ';' */
+			g_strstrip (field);
+			g_mime_header_set (message->header->headers, field, value);
 		}
 		
 		g_free (field);
@@ -672,29 +699,28 @@ construct_headers (GMimeMessage *message, const gchar *headers, gint inlen, gboo
 
 /**
  * g_mime_parser_construct_message: Construct a GMimeMessage object
- * @data: an rfc0822 message
+ * @in: an rfc0822 message stream
+ * @inlen: stream length
  * @save_extra_headers: if TRUE, then store the arbitrary headers
  *
  * Returns a GMimeMessage object based on the rfc0822 data.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers)
+g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_extra_headers)
 {
 	GMimeMessage *message = NULL;
-	GArray *headers;
+	const gchar *hdr_end;
 	
-	g_return_val_if_fail (data != NULL, NULL);
+	g_return_val_if_fail (in != NULL, NULL);
 	
-	headers = get_header_block (data);
-	if (headers != NULL) {
-		GMimePart * part;
+	hdr_end = g_strstrbound (in, "\n\n", in + inlen);
+	if (hdr_end != NULL) {
+		GMimePart *part;
 		
 		message = g_mime_message_new ();
-		construct_headers (message, headers->data, headers->len, save_extra_headers);
-		part = g_mime_parser_construct_part (data, strlen(data));
+		construct_headers (message, in, hdr_end - in, save_extra_headers);
+		part = g_mime_parser_construct_part (in, inlen);
 		g_mime_message_set_mime_part (message, part);
-		
-		g_array_free (headers, TRUE);
 	}
 	
 	return message;

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="24 May 2001">
+<refentry id="gmime-gmime-message" revision="25 May 2001">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -51,10 +51,11 @@ void        <link linkend="g-mime-message-get-date">g_mime_message_get_date</lin
 void        <link linkend="g-mime-message-set-message-id">g_mime_message_set_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const <link linkend="gchar">gchar</link> *id);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-message-id">g_mime_message_get_message_id</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
-void        <link linkend="g-mime-message-add-arbitrary-header">g_mime_message_add_arbitrary_header</link>
-                                            (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+void        <link linkend="g-mime-message-set-header">g_mime_message_set_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const <link linkend="gchar">gchar</link> *field,
                                              const <link linkend="gchar">gchar</link> *value);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-header">g_mime_message_get_header</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const <link linkend="gchar">gchar</link> *field);
 void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime_part</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePart">GMimePart</link> *mime_part);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
@@ -104,11 +105,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMimeHeader">struct GMimeHeader</title>
-<programlisting>struct GMimeHeader {
-	gchar *name;
-	gchar *value;
-};
-</programlisting>
+<programlisting>struct GMimeHeader;</programlisting>
 <para>
 
 </para></refsect2>
@@ -127,7 +124,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 	
 	gchar *message_id;
 	
-	GPtrArray *arbitrary_headers;    /* of type GMimeHeader */
+	GMimeHeader *headers;
 };
 </programlisting>
 <para>
@@ -482,9 +479,8 @@ Set the Message-Id on a message.</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="g-mime-message-add-arbitrary-header">g_mime_message_add_arbitrary_header ()</title>
-<programlisting>void        g_mime_message_add_arbitrary_header
-                                            (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+<title><anchor id="g-mime-message-set-header">g_mime_message_set_header ()</title>
+<programlisting>void        g_mime_message_set_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const <link linkend="gchar">gchar</link> *field,
                                              const <link linkend="gchar">gchar</link> *value);</programlisting>
 <para>
@@ -505,6 +501,28 @@ X-Priority, or In-Reply-To.</para>
 </entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
 <entry> the contents of the header field
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-get-header">g_mime_message_get_header ()</title>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_header      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const <link linkend="gchar">gchar</link> *field);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
+<entry> MIME Message
+</entry></row>
+<row><entry align="right"><parameter>field</parameter>&nbsp;:</entry>
+<entry> rfc822 header field
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the requested header (or NULL if it isn't set)
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

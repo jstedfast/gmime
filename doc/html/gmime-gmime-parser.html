@@ -111,7 +111,7 @@ NAME="GMIME-GMIME-PARSER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2890"
+NAME="AEN3049"
 ></A
 ><H2
 >Name</H2
@@ -119,7 +119,7 @@ NAME="AEN2890"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2893"
+NAME="AEN3052"
 ></A
 ><H2
 >Synopsis</H2
@@ -158,7 +158,11 @@ HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
                                             (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *data,
+> *in,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> inlen,
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -185,7 +189,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2908"
+NAME="AEN3068"
 ></A
 ><H2
 >Description</H2
@@ -195,14 +199,14 @@ NAME="AEN2908"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2911"
+NAME="AEN3071"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2913"
+NAME="AEN3073"
 ></A
 ><H3
 ><A
@@ -239,7 +243,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2922"
+NAME="AEN3082"
 ></A
 ><P
 ></P
@@ -309,7 +313,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2939"
+NAME="AEN3099"
 ></A
 ><H3
 ><A
@@ -332,7 +336,11 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
                                             (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *data,
+> *in,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> inlen,
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -347,7 +355,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2948"
+NAME="AEN3109"
 ></A
 ><P
 ></P
@@ -367,14 +375,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->data</I
+>in</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message</TD
+> an rfc0822 message stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream length</TD
 ></TR
 ><TR
 ><TD
@@ -417,7 +442,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2965"
+NAME="AEN3130"
 ></A
 ><H3
 ><A
@@ -455,7 +480,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2974"
+NAME="AEN3139"
 ></A
 ><P
 ></P

@@ -32,18 +32,11 @@ extern "C" {
 #include <stdarg.h>
 #include <time.h>
 #include "gmime-part.h"
-
+#include "gmime-header.h"
 
 #define	GMIME_RECIPIENT_TYPE_TO  "To"
 #define	GMIME_RECIPIENT_TYPE_CC  "Cc"
 #define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
-
-struct _GMimeHeader {
-	gchar *name;
-	gchar *value;
-};
-
-typedef struct _GMimeHeader GMimeHeader;
 
 struct _GMimeMessageHeader {
 	gchar *from;
@@ -58,7 +51,7 @@ struct _GMimeMessageHeader {
 	
 	gchar *message_id;
 	
-	GPtrArray *arbitrary_headers;    /* of type GMimeHeader */
+	GMimeHeader *headers;
 };
 
 typedef struct _GMimeMessageHeader GMimeMessageHeader;
@@ -94,7 +87,8 @@ gchar *g_mime_message_get_date_string (GMimeMessage *message);
 void g_mime_message_set_message_id (GMimeMessage *message, const gchar *id);
 const gchar *g_mime_message_get_message_id (GMimeMessage *message);
 
-void g_mime_message_add_arbitrary_header (GMimeMessage *message, const gchar *field, const gchar *value);
+void g_mime_message_set_header (GMimeMessage *message, const gchar *field, const gchar *value);
+const gchar *g_mime_message_get_header (GMimeMessage *message, const gchar *field);
 
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part);
 

@@ -1,0 +1,145 @@
+<refentry id="gmime-gmime-header" revision="25 May 2001">
+<refmeta>
+<refentrytitle>gmime-header</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-header</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="GMimeHeader">GMimeHeader</link>* <link linkend="g-mime-header-new">g_mime_header_new</link>              (void);
+void        <link linkend="g-mime-header-destroy">g_mime_header_destroy</link>           (<link linkend="GMimeHeader">GMimeHeader</link> *header);
+void        <link linkend="g-mime-header-set">g_mime_header_set</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name,
+                                             const char *value);
+const char* <link linkend="g-mime-header-get">g_mime_header_get</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name);
+void        <link linkend="g-mime-header-write-to-string">g_mime_header_write_to_string</link>   (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             <link linkend="GString">GString</link> *string);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-header-new">g_mime_header_new ()</title>
+<programlisting><link linkend="GMimeHeader">GMimeHeader</link>* g_mime_header_new              (void);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new header object.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-destroy">g_mime_header_destroy ()</title>
+<programlisting>void        g_mime_header_destroy           (<link linkend="GMimeHeader">GMimeHeader</link> *header);</programlisting>
+<para>
+Destroy the header object</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-set">g_mime_header_set ()</title>
+<programlisting>void        g_mime_header_set               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name,
+                                             const char *value);</programlisting>
+<para>
+Set the value of the specified header</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> header name
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> header value (or <literal>NULL</literal> to remove header)
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-get">g_mime_header_get ()</title>
+<programlisting>const char* g_mime_header_get               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> header name
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the header requested
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-write-to-string">g_mime_header_write_to_string ()</title>
+<programlisting>void        g_mime_header_write_to_string   (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             <link linkend="GString">GString</link> *string);</programlisting>
+<para>
+Write the headers to a string</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

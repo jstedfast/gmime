@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus } */
 
 #include <stdio.h> /* for FILE */
 #include <glib.h>
@@ -35,11 +35,12 @@ extern "C" {
 #include "gmime-content-type.h"
 #include "gmime-param.h"
 
+
 GMimePart *g_mime_parser_construct_part (const gchar *in, guint inlen);
 
-GMimeMessage *g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers);
+GMimeMessage *g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_extra_headers);
 
-GMimeMessage * g_mime_parser_construct_message_from_file (FILE *fp, gboolean save_extra_headers);
+GMimeMessage *g_mime_parser_construct_message_from_file (FILE *fp, gboolean save_extra_headers);
 
 #ifdef __cplusplus
 }

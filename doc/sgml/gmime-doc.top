@@ -1,4 +1,5 @@
 <!entity gmime-gmime-param SYSTEM "sgml/gmime-param.sgml">
+<!entity gmime-gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
 <!entity gmime-gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-gmime-message SYSTEM "sgml/gmime-message.sgml">

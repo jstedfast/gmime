@@ -32,7 +32,9 @@ test_parser (gchar *data)
 	gchar *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	message = g_mime_parser_construct_message (data, TRUE);
+	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
+	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
+		 g_mime_message_get_header (message, "To"));
 	text = g_mime_message_to_string (message);
 	fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);
 	g_free (text);
@@ -78,7 +80,7 @@ test_multipart (void)
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, multi_part);
 	
 	text = g_mime_message_to_string (message);
@@ -124,7 +126,7 @@ test_onepart (void)
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, mime_part);
 	
 	text = g_mime_message_to_string (message);
