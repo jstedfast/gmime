@@ -1,0 +1,6 @@
+Makefile
+Makefile.in
+basic-example
+imap-example
+*.lo
+*.o
