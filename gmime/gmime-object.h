@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximain, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -52,6 +52,8 @@ struct _GMimeObject {
 	
 	GMimeContentType *content_type;
 	GMimeHeader *headers;
+	
+	char *content_id;
 };
 
 struct _GMimeObjectClass {
@@ -86,6 +88,9 @@ const GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
 
 void g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value);
 const char *g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name);
+
+void g_mime_object_set_content_id (GMimeObject *object, const char *content_id);
+const char *g_mime_object_get_content_id (GMimeObject *object);
 
 void g_mime_object_add_header (GMimeObject *object, const char *header, const char *value);
 void g_mime_object_set_header (GMimeObject *object, const char *header, const char *value);

@@ -55,7 +55,6 @@ struct _GMimePart {
 	char *content_description;
 	char *content_location;
 	char *content_md5;
-	char *content_id;
 	
 	GMimeDataWrapper *content;
 };

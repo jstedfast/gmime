@@ -31,7 +31,6 @@
 #include <fcntl.h>
 
 #include "gmime-multipart.h"
-#include "gmime-part.h"
 #include "gmime-utils.h"
 
 #define d(x) x
@@ -697,10 +696,14 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
 const GMimeObject *
 g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)
 {
+	GMimeObject *object = (GMimeObject *) multipart;
 	GList *subparts;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (content_id != NULL, NULL);
+	
+	if (object->content_id && !strcmp (object->content_id, content_id))
+		return object;
 	
 	subparts = multipart->subparts;
 	while (subparts) {
@@ -714,8 +717,7 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 		if (g_mime_content_type_is_type (type, "multipart", "*")) {
 			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart),
 									     content_id);
-		} else if (GMIME_PART (subpart)->content_id &&
-			   !strcmp (GMIME_PART (subpart)->content_id, content_id)) {
+		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
 			part = subpart;
 		}
 		

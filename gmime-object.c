@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001,2002 Ximain, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -148,6 +148,7 @@ g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
 	object->content_type = NULL;
 	object->headers = g_mime_header_new ();
+	object->content_id = NULL;
 }
 
 static void
@@ -160,6 +161,8 @@ g_mime_object_finalize (GObject *object)
 	
 	if (mime->headers)
 		g_mime_header_destroy (mime->headers);
+	
+	g_free (mime->content_id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -384,9 +387,50 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
 }
 
 
+/**
+ * g_mime_object_set_content_id:
+ * @object: MIME object
+ * @content_id: content-id
+ *
+ * Sets the Content-Id of the MIME object.
+ **/
+void
+g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	
+	g_free (object->content_id);
+	object->content_id = g_strdup (content_id);
+	
+	g_mime_object_set_header (object, "Content-Id", content_id);
+}
+
+
+/**
+ * g_mime_object_get_content_id:
+ * @object: MIME object
+ *
+ * Gets the Content-Id of the MIME object or NULL if one is not set.
+ *
+ * Returns a const pointer to the Content-Id header.
+ **/
+const char *
+g_mime_object_get_content_id (GMimeObject *object)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	
+	return object->content_id;
+}
+
+
 static void
 add_header (GMimeObject *object, const char *header, const char *value)
 {
+	if (!strcasecmp (header, "Content-Id")) {
+		g_free (object->content_id);
+		object->content_id = g_strstrip (g_strdup (value));
+	}
+	
 	g_mime_header_add (object->headers, header, value);
 }
 
@@ -412,6 +456,11 @@ g_mime_object_add_header (GMimeObject *object, const char *header, const char *v
 static void
 set_header (GMimeObject *object, const char *header, const char *value)
 {
+	if (!strcasecmp (header, "Content-Id")) {
+		g_free (object->content_id);
+		object->content_id = g_strstrip (g_strdup (value));
+	}
+	
 	g_mime_header_set (object->headers, header, value);
 }
 

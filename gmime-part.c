@@ -131,7 +131,6 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content_description = NULL;
 	mime_part->content_location = NULL;
 	mime_part->content_md5 = NULL;
-	mime_part->content_id = NULL;
 	mime_part->content = NULL;
 }
 
@@ -146,7 +145,6 @@ g_mime_part_finalize (GObject *object)
 	g_free (mime_part->content_description);
 	g_free (mime_part->content_location);
 	g_free (mime_part->content_md5);
-	g_free (mime_part->content_id);
 	
 	if (mime_part->content)
 		g_mime_data_wrapper_destroy (mime_part->content);
@@ -457,11 +455,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->content_id)
-		g_free (mime_part->content_id);
-	
-	mime_part->content_id = g_strdup (content_id);
-	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Id", content_id);
+	g_mime_object_set_content_id (GMIME_OBJECT (mime_part), content_id);
 }
 
 
@@ -479,7 +473,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	return mime_part->content_id;
+	return g_mime_object_get_content_id (GMIME_OBJECT (mime_part));
 }
 
 

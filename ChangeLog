@@ -1,5 +1,20 @@
 2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-part.c (g_mime_part_set_content_id): Wrap the object
+	set_content_id.
+	(g_mime_part_get_content_id): Same.
+
+	* gmime-multipart.c
+	(g_mime_multipart_get_subpart_from_content_id): Compare the
+	object->content_id's.
+
+	* gmime-object.c (g_mime_object_set_content_id): New function
+	since the Content-Id should really be stored on the object class.
+	(g_mime_object_get_content_id): Same.
+	(set_header): If we are setting the Content-Id header, also set
+	our internal content_id member.
+	(add_header): Same.
+
 	* gmime-content-type.c (g_mime_content_type_set_parameter):
 	Renamed from g_mime_content_type_add_parameter.
 
