@@ -490,9 +490,15 @@ decode_domain (const char **in)
 			} else
 				g_warning ("Missing ']' in domain-literal: %s", *in);
 		} else {
-			atom = decode_atom (&inptr);
-			if (atom)
-				g_string_append (domain, atom);
+			if (!(atom = decode_atom (&inptr))) {
+				g_warning ("Unexpeced char '%c' in domain: %s", *inptr, *in);
+				/* remove the last '.' */
+				if (domain->str[domain->len - 1] == '.')
+					g_string_truncate (domain, domain->len - 1);
+				break;
+			}
+			
+			g_string_append (domain, atom);
 			g_free (atom);
 		}
 		
@@ -507,7 +513,11 @@ decode_domain (const char **in)
 		inptr++;
 	}
 	
-	dom = domain->str;
+	if (domain->len)
+		dom = domain->str;
+	else
+		dom = NULL;
+	
 	g_string_free (domain, FALSE);
 	
 	*in = inptr;
@@ -585,12 +595,13 @@ decode_mailbox (const char **in)
 	if (*inptr == '@') {
 		char *domain;
 		
-		g_string_append_c (addr, '@');
 		inptr++;
-		
 		domain = decode_domain (&inptr);
-		g_string_append (addr, domain);
-		g_free (domain);
+		if (domain) {
+			g_string_append_c (addr, '@');
+			g_string_append (addr, domain);
+			g_free (domain);
+		}
 	} else {
 		g_warning ("No domain in email address: %s", *in);
 	}
@@ -603,9 +614,14 @@ decode_mailbox (const char **in)
 			g_warning ("Missing closing '>' bracket for email address: %s", *in);
 	}
 	
-	if (!name) {
+	if (!name || !name->len) {
 		/* look for a trailing comment to use as the name? */
 		char *comment;
+		
+		if (name) {
+			g_string_free (name, TRUE);
+			name = NULL;
+		}
 		
 		comment = (char *) inptr;
 		decode_lwsp (&inptr);

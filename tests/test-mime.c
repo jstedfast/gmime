@@ -254,6 +254,7 @@ static gchar *addresses[] = {
 	"Charles Kerr <charles@[127.0.0.1]>",
 	"Charles <charles@[127..0.1]>",
 	"<charles@>",
+	"<charles@broken.host.com.> (Charles Kerr)",
 	NULL
 };
 

@@ -1,3 +1,11 @@
+2001-04-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_domain): Try to only get
+	"fully-qualified" domain names, or ones that "look" like they are
+	at least ;-)
+	(decode_mailbox): If decode_domain() returns NULL, don't append
+	the '@' char. Also make sure that the name is non-empty.
+
 2001-04-01  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (g_mime_utils_quote_string): Made smarter.
