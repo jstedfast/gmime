@@ -109,7 +109,7 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	return mem->buffer ? stream->position == stream->bound_end : TRUE;
+	return mem->buffer ? stream->position >= stream->bound_end : TRUE;
 }
 
 static int

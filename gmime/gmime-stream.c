@@ -147,6 +147,9 @@ g_mime_stream_eos (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, TRUE);
 	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+		return TRUE;
+	
 	return stream->eos (stream);
 }
 

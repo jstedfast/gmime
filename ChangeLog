@@ -1,5 +1,11 @@
 2001-09-20  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-mem.c (stream_eos): Check for position >= instead
+	of == bound_end
+
+	* gmime-stream.c (g_mime_stream_eos): Do some simple bounds
+	checking.
+
 	* doc/*: Updated.
 
 	* gmime-part.c (g_mime_part_get_content_object): Added.
