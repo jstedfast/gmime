@@ -511,6 +511,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		break;
 	case GPG_CTX_MODE_VERIFY:
 		if (!g_mime_session_is_online (gpg->session)) {
+			/* this is a deprecated flag to gpg since 1.0.7 */
 			/*g_ptr_array_add (argv, "--no-auto-key-retrieve");*/
 			g_ptr_array_add (argv, "--keyserver-options");
 			g_ptr_array_add (argv, "no-auto-key-retrieve");
@@ -828,7 +829,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 					gpg->trust = GPG_TRUST_FULLY;
 				} else if (!strncmp (status, "ULTIMATE", 8)) {
 					gpg->trust = GPG_TRUST_ULTIMATE;
-				} 
+				}
 				
 				/* Since verifying a signature will never produce output
 				   on gpg's stdout descriptor, we use this EOF bit for
