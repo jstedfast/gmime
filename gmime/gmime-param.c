@@ -893,6 +893,9 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 		
 		param = param->next;
 	}
+	
+	if (fold)
+		g_string_append_c (out, '\n');
 }
 
 

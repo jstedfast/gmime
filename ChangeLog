@@ -1,3 +1,8 @@
+2005-01-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-param.c (param_list_format): If folding mode is
+	enabled, terminate the header with a \n.
+
 2005-01-19  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-part.c (g_mime_part_init): Register a writer for
