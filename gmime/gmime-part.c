@@ -794,10 +794,8 @@ void
 g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 				     guint len, GMimePartEncodingType encoding)
 {
-	char *raw;
-	gint save = 0, state = 0;
-	GMimeStream *stream;
-	GByteArray *array;
+	GMimeStream *stream, *filtered_stream;
+	GMimeFilter *filter;
 	
 	g_return_if_fail (mime_part != NULL);
 	g_return_if_fail (content != NULL);
@@ -805,30 +803,28 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 	if (!mime_part->content)
 		mime_part->content = g_mime_data_wrapper_new ();
 	
-	array = g_byte_array_new ();
-	stream = g_mime_stream_mem_new_with_byte_array (array);
-	g_byte_array_set_size (array, len);
-	raw = array->data;
+	stream = g_mime_stream_mem_new ();
+	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	switch (encoding) {
 	case GMIME_PART_ENCODING_BASE64:
-		len = g_mime_utils_base64_decode_step (content, len, raw, &state, &save);
-		g_byte_array_set_size (array, len);
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		len = g_mime_utils_quoted_decode_step (content, len, raw, &state, &save);
-		g_byte_array_set_size (array, len);
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
 	default:
-		memcpy (raw, content, len);
-		
-		/* do some smart 8bit detection */
-		if (encoding == GMIME_PART_ENCODING_DEFAULT && g_mime_utils_text_is_8bit (raw, len))
-			encoding = GMIME_PART_ENCODING_8BIT;
+		break;
 	}
 	
-	g_mime_stream_set_bounds (stream, 0, len);
+	g_mime_stream_write (filtered_stream, (char *) content, len);
+	g_mime_stream_flush (filtered_stream);
+	g_mime_stream_unref (filtered_stream);
+	
+	g_mime_stream_reset (stream);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
-	g_mime_data_wrapper_set_encoding (mime_part->content, encoding);
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
 	g_mime_stream_unref (stream);
 	
 	mime_part->encoding = encoding;

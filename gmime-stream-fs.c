@@ -217,7 +217,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 static off_t
 stream_tell (GMimeStream *stream)
 {
-	return stream->position - stream->bound_start;
+	return stream->position;
 }
 
 static ssize_t

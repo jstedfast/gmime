@@ -1,4 +1,5 @@
     &gmime-gmime-stream;
+    &gmime-gmime-stream-buffer;
     &gmime-gmime-stream-file;
     &gmime-gmime-stream-fs;
     &gmime-gmime-stream-mem;

@@ -303,13 +303,17 @@ g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
 {
 	g_return_if_fail (stream != NULL);
 	
+	printf ("setting bounds: %d, %d\n", start, end);
+	
 	stream->bound_start = start;
 	stream->bound_end = end;
 	
 	if (stream->position < start)
 		stream->position = start;
-	else if (stream->position > end)
+	else if (stream->position > end && end != -1)
 		stream->position = end;
+	
+	printf ("setting position: %d\n", stream->position);
 }
 
 

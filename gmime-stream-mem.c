@@ -169,7 +169,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			stream->position = bound_end;
 	}
 	
-	return 0;
+	return stream->position;
 }
 
 static off_t
@@ -179,7 +179,7 @@ stream_tell (GMimeStream *stream)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	return stream->position - stream->bound_start;
+	return stream->position;
 }
 
 static ssize_t

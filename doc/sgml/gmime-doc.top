@@ -1,4 +1,5 @@
 <!entity gmime-gmime-stream SYSTEM "sgml/gmime-stream.sgml">
+<!entity gmime-gmime-stream-buffer SYSTEM "sgml/gmime-stream-buffer.sgml">
 <!entity gmime-gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
 <!entity gmime-gmime-stream-fs SYSTEM "sgml/gmime-stream-fs.sgml">
 <!entity gmime-gmime-stream-mem SYSTEM "sgml/gmime-stream-mem.sgml">

@@ -298,9 +298,9 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 	const char *in;
 	int inlen;
 	
-	in = mem->buffer->data + GMIME_STREAM (mem)->position;
-	inend = mem->buffer->data + GMIME_STREAM (mem)->bound_end;
-	inlen = inend - in;
+	in = mem->buffer->data + g_mime_stream_tell (GMIME_STREAM (mem));
+	inlen = g_mime_stream_length (GMIME_STREAM (mem));
+	inend = in + inlen;
 	
 	/* Headers */
 	/* if the beginning of the input is a '\n' then there are no content headers */
@@ -323,7 +323,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		const char *part_end;
 		off_t start, end, pos;
 		
-		pos = GMIME_STREAM (mem)->position;
+		pos = g_mime_stream_tell (GMIME_STREAM (mem));
 		start = GMIME_STREAM (mem)->bound_start;
 		end = GMIME_STREAM (mem)->bound_end;
 		
@@ -393,7 +393,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 				
 				offset = g_mime_stream_tell (stream);
 				if (stream != GMIME_STREAM (mem))
-					offset += GMIME_STREAM (mem)->position;
+					offset += g_mime_stream_tell (GMIME_STREAM (mem));
 				
 				start = offset + (content - in);
 				end = start + len;
@@ -434,6 +434,7 @@ g_mime_parser_construct_part (GMimeStream *stream)
 		offset = g_mime_stream_tell (stream);
 		g_mime_stream_write_to_stream (stream, GMIME_STREAM (mem));
 		g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_SET);
+		g_mime_stream_reset (GMIME_STREAM (mem));
 	}
 	
 	part = g_mime_parser_construct_part_internal (stream, mem);
@@ -578,6 +579,7 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean save_extra_header
 	GMimeStreamMem *mem;
 	const char *hdr_end;
 	const char *in;
+	off_t offset;
 	int inlen;
 	
 	g_return_val_if_fail (stream != NULL, NULL);
@@ -586,16 +588,17 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean save_extra_header
 		mem = GMIME_STREAM_MEM (stream);
 		g_mime_stream_ref (stream);
 	} else {
-		off_t offset;
-		
 		mem = (GMimeStreamMem *) g_mime_stream_mem_new ();
 		offset = g_mime_stream_tell (stream);
 		g_mime_stream_write_to_stream (stream, GMIME_STREAM (mem));
 		g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_SET);
+		g_mime_stream_reset (GMIME_STREAM (mem));
 	}
 	
-	in = mem->buffer->data + GMIME_STREAM (mem)->position;
-	inlen = GMIME_STREAM (mem)->bound_end - GMIME_STREAM (mem)->position;
+	offset = g_mime_stream_tell (GMIME_STREAM (mem));
+	in = mem->buffer->data + offset;
+	inlen = g_mime_stream_seek (GMIME_STREAM (mem), 0, GMIME_STREAM_SEEK_END) - offset;
+	g_mime_stream_seek (GMIME_STREAM (mem), offset, GMIME_STREAM_SEEK_SET);
 	
 	hdr_end = find_header_part_end (in, inlen);
 	if (hdr_end != NULL) {

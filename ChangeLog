@@ -1,3 +1,30 @@
+2001-09-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-file.c (stream_tell): Return stream->position here
+	too.
+
+	* gmime-part.c (g_mime_part_set_pre_encoded_content): Don't decode
+	into a stream and then set the data wrapper encoding to the
+	incoming encoding type, instead use filters to decode into the
+	stream and set the data wrapper encoding to the default.
+
+	* gmime-stream.c (g_mime_stream_set_bounds): Don't set the
+	position equal to end if end == -1.
+
+	* gmime-parser.c (g_mime_parser_construct_message): Use the stream
+	functions to find the beginning and end of the stream rather than
+	breaking abstractions. Also reset the mem stream after writing to
+	it.
+	(g_mime_parser_construct_part): Reset the mem stream here too.
+	(g_mime_parser_construct_part_internal): Use the stream interfaces
+	to get the position instead of breaking abstractions.
+
+	* gmime-stream-fs.c (stream_tell): Return stream->position.
+
+	* gmime-stream-mem.c (stream_seek): Return the new syteam
+	position.
+	(stream_tell): Return stream->position.
+
 2001-09-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/gmime-docs.sgml: Documented streams.
@@ -13,8 +40,9 @@
 	(stream_eos): Only return feof() if our end boundary is unlimited.
 
 	* gmime-stream-mem.c (stream_write): Start writing data at
-	stream->position rather always appending it to the end of the mem
-	stream. Also don't go writing past the end boundary if it's set.
+	stream->position rather than always appending it to the end of the
+	mem stream. Also don't go writing past the end boundary if it's
+	set.
 	(stream_length): Use a relative bound_end.
 	(stream_seek): Same.
 	(stream_eos): Here too.

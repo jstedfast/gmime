@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream" revision="20 Sep 2001">
+<refentry id="gmime-gmime-stream" revision="24 Sep 2001">
 <refmeta>
 <refentrytitle>gmime-stream</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -146,16 +146,16 @@ from <parameter>template</parameter>, with bounds <parameter>start</parameter> a
 <entry> stream
 </entry></row>
 <row><entry align="right"><parameter>template</parameter>&nbsp;:</entry>
-<entry> 
+<entry> stream template
 </entry></row>
 <row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> 
+<entry> stream type
 </entry></row>
 <row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
-<entry> 
+<entry> start boundary
 </entry></row>
 <row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
-<entry> 
+<entry> end boundary
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -271,18 +271,15 @@ the argument <parameter>offset</parameter> according to the
 directive <parameter>whence</parameter> as follows:
 </para>
 <para>
-GMIME_STREAM_SEEK_SET
-The offset is set to <parameter>offset</parameter> bytes.
+GMIME_STREAM_SEEK_SET: The offset is set to <parameter>offset</parameter> bytes.
 </para>
 <para>
-GMIME_STREAM_SEEK_CUR
-The offset is set to its current location
-plus <parameter>offset</parameter> bytes.
+GMIME_STREAM_SEEK_CUR: The offset is set to its current
+location plus <parameter>offset</parameter> bytes.
 </para>
 <para>
-GMIME_STREAM_SEEK_END
-The offset is set to the size of the stream
-plus <parameter>offset</parameter> bytes.</para>
+GMIME_STREAM_SEEK_END: The offset is set to the size of the
+stream plus <parameter>offset</parameter> bytes.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -410,10 +407,10 @@ Closes the stream.</para>
 <entry> stream
 </entry></row>
 <row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
-<entry>
+<entry> start boundary
 </entry></row>
 <row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
-<entry>
+<entry> end boundary
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
 </entry></row>
@@ -436,10 +433,10 @@ Set the bounds on a stream.</para>
 <entry> stream
 </entry></row>
 <row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
-<entry>
+<entry> start boundary
 </entry></row>
 <row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
-<entry>
+<entry> end boundary
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -447,7 +444,7 @@ Set the bounds on a stream.</para>
 <programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_write_string      (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              const char *string);</programlisting>
 <para>
-Write's <parameter>string</parameter> to <parameter>stream</parameter>.</para>
+Writes <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -459,7 +456,7 @@ Write's <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 <entry> stream
 </entry></row>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry>
+<entry> string to write
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
 </entry></row>
@@ -482,10 +479,10 @@ Write formatted output to a stream.</para>
 <entry> stream
 </entry></row>
 <row><entry align="right"><parameter>fmt</parameter>&nbsp;:</entry>
-<entry> 
+<entry> format
 </entry></row>
 <row><entry align="right"><parameter>...</parameter>&nbsp;:</entry>
-<entry> 
+<entry> arguments
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
 </entry></row>
