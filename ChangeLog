@@ -1,5 +1,9 @@
 2004-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped the version to 2.1.7
+
 	* gmime/gmime-parser.c (parser_construct_leaf_part): Removed code
 	to check that the content_type argument is NULL - it can never be
 	NULL.
