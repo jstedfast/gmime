@@ -1,3 +1,15 @@
+2003-05-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-mmap.h: Removed sys/mman.h and unistd.h from
+	the #includes. These are needed in the ehader and will break the
+	build on win32.
+
+	* configure.in: Check for sys/param.
+
+	* gmime/gmime-utils.c: Only #include sys/param.h if the system has
+	it. If the build environment is win32, #include process.h for
+	pid_t.
+
 2003-05-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.

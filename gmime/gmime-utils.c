@@ -28,10 +28,21 @@
 
 #define _GNU_SOURCE
 
+#include <glib.h>
+#ifdef G_OS_WIN32
+#include <process.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h> /* for MAXHOSTNAMELEN */
+#else
+#define MAXHOSTNAMELEN 64
+#endif
+#include <sys/types.h>
 #include <string.h>
+#include <unistd.h>
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
