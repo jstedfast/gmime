@@ -1,3 +1,8 @@
+2002-04-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_step_headers): Take advantage of the same
+	optimization as parser_scan_content.
+
 2002-04-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_scan_content): Optimized by a good 15% by

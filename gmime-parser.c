@@ -527,12 +527,15 @@ parser_step_headers (GMimeParser *parser)
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
+		/* Note: see optimization comment [1] */
+		*inend = '\n';
 		
 		g_assert (inptr <= inend);
 		
 		while (inptr < inend) {
 			start = inptr;
-			while (inptr < inend && *inptr != '\n')
+			/* Note: see optimization comment [1] */
+			while (*inptr != '\n')
 				inptr++;
 			
 			if (inptr + 1 >= inend) {
