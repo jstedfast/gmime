@@ -1,3 +1,7 @@
+2002-03-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-yenc.c: New filter to encode/decode yEnc streams.
+
 2002-03-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	Thanks to Carlos Morgado <chbm@chbm.nu>
