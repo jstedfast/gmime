@@ -1,3 +1,8 @@
+2004-06-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* util/url-scanner.c (g_url_web_end): Some fixes that I had to do
+	recently for Camel as well.
+
 2004-06-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c (parser_construct_leaf_part): Only destroy
