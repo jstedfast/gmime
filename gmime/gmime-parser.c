@@ -47,7 +47,7 @@
 #define w(x)
 #endif /* ENABLE_WARNINGS */
 
-#define d(x)
+#define d(x) x
 
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);
@@ -102,12 +102,13 @@ struct _GMimeParserPrivate {
 	off_t headers_start;
 	off_t header_start;
 	
-	unsigned int unstep:27;
+	unsigned int unstep:26;
 	unsigned int midline:1;
 	unsigned int seekable:1;
 	unsigned int scan_from:1;
 	unsigned int have_regex:1;
 	unsigned int persist_stream:1;
+	unsigned int respect_content_length:1;
 	
 	GMimeContentType *content_type;
 	struct _header_raw *headers;
@@ -121,6 +122,7 @@ struct _boundary_stack {
 	unsigned int boundarylen;
 	unsigned int boundarylenfinal;
 	unsigned int boundarylenmax;
+	off_t content_end;
 };
 
 static void
@@ -147,6 +149,8 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 	}
 	
 	s->boundarylenmax = MAX (s->boundarylenfinal, max);
+	
+	s->content_end = -1;
 }
 
 static void
@@ -456,6 +460,24 @@ g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
 
 
 /**
+ * g_mime_parser_get_scan_from:
+ * @parser: MIME parser object
+ *
+ * Gets whether or not @parser is set to scan mbox-style From-lines.
+ *
+ * Returns whether or not @parser is set to scan mbox-style
+ * From-lines.
+ **/
+gboolean
+g_mime_parser_get_scan_from (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
+	
+	return parser->priv->scan_from;
+}
+
+
+/**
  * g_mime_parser_set_scan_from:
  * @parser: MIME parser object
  * @scan_from: %TRUE to scan From-lines or %FALSE otherwise
@@ -472,20 +494,42 @@ g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
 
 
 /**
- * g_mime_parser_get_scan_from:
+ * g_mime_parser_get_respect_content_length:
  * @parser: MIME parser object
  *
- * Gets whether or not @parser is set to scan mbox-style From-lines.
+ * Gets whether or not @parser is set to use Content-Length for
+ * determining the offset of the end of the message.
  *
- * Returns whether or not @parser is set to scan mbox-style
- * From-lines.
+ * Returns whether or not @parser is set to use Content-Length for
+ * determining the offset of the end of the message.
  **/
 gboolean
-g_mime_parser_get_scan_from (GMimeParser *parser)
+g_mime_parser_get_respect_content_length (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
 	
-	return parser->priv->scan_from;
+	return parser->priv->respect_content_length;
+}
+
+
+/**
+ * g_mime_parser_get_respect_content_length:
+ * @parser: MIME parser object
+ * @use_content_length: %TRUE if the parser should use Content-Length headers or %FALSE otherwise.
+ *
+ * Sets whether or not @parser should respect Content-Length headers
+ * when deciding where to look for the start of the next message. Only
+ * used when the parser is also set to scan for From-lines.
+ *
+ * Most notably useful when parsing broken Solaris mbox files (See
+ * http://www.jwz.org/doc/content-length.html for details).
+ **/
+void
+g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length)
+{
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+	
+	parser->priv->respect_content_length = respect_content_length ? 1 : 0;
 }
 
 
@@ -578,11 +622,8 @@ parser_fill (GMimeParser *parser)
 
 
 static off_t
-parser_offset (GMimeParser *parser, unsigned char *cur)
+parser_offset (struct _GMimeParserPrivate *priv, unsigned char *inptr)
 {
-	struct _GMimeParserPrivate *priv = parser->priv;
-	unsigned char *inptr = cur;
-	
 	if (!inptr)
 		inptr = priv->inptr;
 	
@@ -605,7 +646,7 @@ g_mime_parser_tell (GMimeParser *parser)
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), -1);
 	
-	return parser_offset (parser, NULL);
+	return parser_offset (parser->priv, NULL);
 }
 
 
@@ -666,7 +707,7 @@ parser_step_from (GMimeParser *parser)
 			inptr++;
 			
 			if (len >= 5 && !strncmp (start, "From ", 5)) {
-				priv->from_offset = parser_offset (parser, start);
+				priv->from_offset = parser_offset (priv, start);
 				g_byte_array_append (priv->from_line, start, len);
 				goto got_from;
 			}
@@ -754,8 +795,8 @@ parser_step_headers (GMimeParser *parser)
 	
 	priv->midline = FALSE;
 	hend = (struct _header_raw *) &priv->headers;
-	priv->headers_start = parser_offset (parser, NULL);
-	priv->header_start = parser_offset (parser, NULL);
+	priv->headers_start = parser_offset (priv, NULL);
+	priv->header_start = parser_offset (priv, NULL);
 	
 	inptr = priv->inptr;
 	inend = priv->inend;
@@ -801,7 +842,7 @@ parser_step_headers (GMimeParser *parser)
 				} else {
 					priv->midline = FALSE;
 					header_parse (parser, priv, hend);
-					priv->header_start = parser_offset (parser, inptr);
+					priv->header_start = parser_offset (priv, inptr);
 				}
 			} else {
 				priv->midline = TRUE;
@@ -927,6 +968,8 @@ enum {
 static int
 check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, int len)
 {
+	off_t offset = parser_offset (priv, (unsigned char *) start);
+	
 	if (possible_boundary (priv->scan_from, start, len)) {
 		struct _boundary_stack *s;
 		
@@ -935,10 +978,12 @@ check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, in
 		s = priv->bounds;
 		while (s) {
 			/* we use >= here because From lines are > 5 chars */
-			if (len >= s->boundarylenfinal &&
+			if (offset >= s->content_end &&
+			    len >= s->boundarylenfinal &&
 			    !strncmp (s->boundary, start,
 				      s->boundarylenfinal)) {
-				d(printf ("found end boundary\n"));
+				d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
+					  "end of content" : "end boundary"));
 				return FOUND_END_BOUNDARY;
 			}
 			
@@ -1058,7 +1103,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	off_t start, end;
 	
 	if (priv->persist_stream && priv->seekable)
-		start = parser_offset (parser, NULL);
+		start = parser_offset (priv, NULL);
 	else
 		content = g_byte_array_new ();
 	
@@ -1066,11 +1111,11 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	if (*found != FOUND_EOS) {
 		/* last '\n' belongs to the boundary */
 		if (priv->persist_stream && priv->seekable)
-			end = parser_offset (parser, NULL) - 1;
+			end = parser_offset (priv, NULL) - 1;
 		else
 			g_byte_array_set_size (content, MAX (content->len - 1, 0));
 	} else if (priv->persist_stream && priv->seekable) {
-		end = parser_offset (parser, NULL);
+		end = parser_offset (priv, NULL);
 	}
 	
 	encoding = g_mime_part_get_encoding (mime_part);
@@ -1339,6 +1384,7 @@ parser_construct_message (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentType *content_type;
 	struct _header_raw *header;
+	int content_length = -1;
 	GMimeMessage *message;
 	GMimeObject *object;
 	int found;
@@ -1350,12 +1396,18 @@ parser_construct_message (GMimeParser *parser)
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
+		if (priv->respect_content_length && !strcasecmp (header->name, "Content-Length"))
+			content_length = strtoul (header->value, NULL, 10);
+		
 		g_mime_object_add_header (GMIME_OBJECT (message), header->name, header->value);
 		header = header->next;
 	}
 	
-	if (priv->scan_from)
+	if (priv->scan_from) {
 		parser_push_boundary (parser, "From ");
+		if (priv->respect_content_length && content_length != -1)
+			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
+	}
 	
 	content_type = parser_content_type (parser);
 	if (!content_type)

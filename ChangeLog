@@ -1,5 +1,23 @@
 2004-02-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-parser.c (parser_construct_message): If we've been
+	told to respect the Content-Length header, then parse the length
+	value and calculate the offset of the beginning of the next
+	message.
+	(g_mime_parser_get_respect_content_length): New function to get
+	whether we've been told to respect the Content-Length header.
+	(g_mime_parser_set_respect_content_length): New function to set
+	this option.
+	(parser_offset): Now takes a private struct pointer rather than
+	the parser object since it didn't really need it. Also makes it
+	usable from check_boundary().
+	(g_mime_parser_tell): Updated.
+	(check_boundary): Only scan for end-boundaries if we've reached
+	the projected end-of-content offset as calculated using the
+	Content-Length header.
+
+2004-02-06  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* configure.in: Generate examples/Makefile
 
 	* gmime/gmime-utils.c (g_mime_utils_generate_message_id):

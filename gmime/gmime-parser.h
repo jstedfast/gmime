@@ -74,8 +74,11 @@ void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
 gboolean g_mime_parser_get_persist_stream (GMimeParser *parser);
 void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
 
-void g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from);
 gboolean g_mime_parser_get_scan_from (GMimeParser *parser);
+void g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from);
+
+gboolean g_mime_parser_get_respect_content_length (GMimeParser *parser);
+void g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length);
 
 void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 				     GMimeParserHeaderRegexFunc header_cb,
