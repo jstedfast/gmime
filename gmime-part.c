@@ -742,6 +742,8 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len)
 	
 	stream = g_mime_stream_mem_new_with_buffer (content, len);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
+	g_mime_stream_unref (stream);
 }
 
 
@@ -764,6 +766,8 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 	
 	stream = g_mime_stream_mem_new_with_byte_array (content);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
+	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
+	g_mime_stream_unref (stream);
 }
 
 
@@ -815,6 +819,7 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 	g_mime_stream_set_bounds (stream, 0, len);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
 	g_mime_data_wrapper_set_encoding (mime_part->content, encoding);
+	g_mime_stream_unref (stream);
 	
 	mime_part->encoding = encoding;
 }
@@ -853,7 +858,6 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 const char *
 g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
-	GMimeStream *stream;
 	GByteArray *buf;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
@@ -862,7 +866,7 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 		return NULL;
 	
 	stream = mime_part->content->stream;
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
+	if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
 		/* Decode and cache this mime part's contents... */
 		GMimeStream *cache;
 		int len, save = 0, state = 0;
@@ -895,6 +899,7 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 		
 		g_mime_data_wrapper_set_stream (mime_part->content, cache);
 		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
+		g_mime_stream_unref (cache);
 	} else {
 		buf = GMIME_STREAM_MEM (mime_part->content->stream)->buffer;
 	}
@@ -1026,6 +1031,8 @@ write_content (GMimePart *part, GMimeStream *stream)
 		return;
 	
 	content = g_mime_part_get_content (part, &len);
+	if (!content)
+		return;
 	
 	switch (part->encoding) {
 	case GMIME_PART_ENCODING_BASE64:
@@ -1042,7 +1049,9 @@ write_content (GMimePart *part, GMimeStream *stream)
 		memcpy (outbuf, content, len);
 	}
 	
+	g_warning ("write_content(): writing outbuf...%.*s", 20, outbuf);
 	g_mime_stream_write (stream, outbuf, len);
+	g_warning ("write_content(): done.");
 	
 	g_free (outbuf);
 }

@@ -29,6 +29,9 @@
  * g_mime_stream_construct:
  * @stream:
  * @template:
+ * @type:
+ * @start:
+ * @end:
  *
  **/
 void
@@ -306,6 +309,7 @@ ssize_t
 g_mime_stream_write_string (GMimeStream *stream, const char *string)
 {
 	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (string != NULL, -1);
 	
 	return g_mime_stream_write (stream, (char *) string, strlen (string));
 }
@@ -326,6 +330,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
 	ssize_t ret;
 	
 	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (fmt != NULL, -1);
 	
 	va_start (args, fmt);
 	string = g_strdup_vprintf (fmt, args);

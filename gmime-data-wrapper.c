@@ -24,6 +24,11 @@
 #include "gmime-data-wrapper.h"
 
 
+/**
+ * g_mime_data_wrapper_new:
+ *
+ * Returns a new data wrapper object.
+ **/
 GMimeDataWrapper *
 g_mime_data_wrapper_new (void)
 {
@@ -31,6 +36,15 @@ g_mime_data_wrapper_new (void)
 }
 
 
+/**
+ * g_mime_data_wrapper_new_with_stream:
+ * @stream:
+ * @encoding:
+ *
+ * Returns a data wrapper around @stream. Since the wrapper owns it's
+ * own reference on the stream, caller is responsible for unrefing
+ * it's own copy.
+ **/
 GMimeDataWrapper *
 g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding)
 {
@@ -39,11 +53,19 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
 	wrapper = g_new (GMimeDataWrapper, 1);
 	wrapper->encoding = encoding;
 	wrapper->stream = stream;
+	if (stream)
+		g_mime_stream_ref (stream);
 	
 	return wrapper;
 }
 
 
+/**
+ * g_mime_data_wrapper_destroy:
+ * @wrapper:
+ *
+ * Destroys the data wrapper and unref's its internal stream.
+ **/
 void
 g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
 {
@@ -55,6 +77,15 @@ g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
 }
 
 
+/**
+ * g_mime_data_wrapper_set_stream:
+ * @wrapper:
+ * @stream:
+ *
+ * Replaces the wrapper's internal stream with @stream.
+ * Note: caller is responsible for it's own reference on
+ * @stream.
+ **/
 void
 g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
@@ -63,13 +94,74 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	if (wrapper->stream)
 		g_mime_stream_unref (wrapper->stream);
 	wrapper->stream = stream;
+	if (stream)
+		g_mime_stream_ref (stream);
 }
 
 
+/**
+ * g_mime_data_wrapper_get_stream:
+ * @wrapper:
+ *
+ * Returns a reference to the internal stream. Caller is responsable
+ * for unrefing it.
+ **/
+GMimeStream *
+g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
+{
+	g_return_val_if_fail (wrapper != NULL, NULL);
+	
+	if (wrapper->stream == NULL)
+		return NULL;
+	
+	g_mime_stream_ref (wrapper->stream);
+	
+	return wrapper->stream;
+}
+
+
+/**
+ * g_mime_data_wrapper_set_encoding:
+ * @wrapper:
+ * @encoding:
+ *
+ * Sets the encoding type of the internal stream.
+ **/
 void
 g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding)
 {
 	g_return_if_fail (wrapper != NULL);
 	
 	wrapper->encoding = encoding;
+}
+
+
+/**
+ * g_mime_data_wrapper_get_encoding:
+ * @wrapper:
+ *
+ * Returns the encoding type of the internal stream.
+ **/
+GMimePartEncodingType
+g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
+{
+	g_return_val_if_fail (wrapper != NULL, GMIME_PART_ENCODING_DEFAULT);
+	
+	return wrapper->encoding;
+}
+
+
+/**
+ * g_mime_data_wrapper_write_to_stream:
+ * @wrapper:
+ * @stream: output stream
+ *
+ * Write's the raw (decoded) data to the output stream.
+ *
+ * Returns the number of bytes written or -1 on failure.
+ **/
+ssize_t
+g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
+{
+	return -1;
 }

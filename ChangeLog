@@ -1,7 +1,27 @@
-2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_new_with_stream): Ref
+	the stream.
+	(g_mime_data_wrapper_set_stream): Same.
+	(g_mime_data_wrapper_get_stream): Return the internal stream.
+	(g_mime_data_wrapper_get_encoding): Return the internal stream's
+	encoding.
+	(g_mime_data_wrapper_write_to_stream): Not-yet-implemented.
+
+	* gmime-filter.[c,h]: Abstract class for filters.
+
+	* gmime-stream-filter.[c,h]: Abstract stream for filtering.
+
+	* gmime-part.c (g_mime_part_set_content): Updated for data-wrapper
+	changes.
+	(g_mime_part_set_content_byte_array): Same.
+	(g_mime_part_set_pre_encoded_content): And here.
+	(g_mime_part_get_content): And here too.
 
 	* gmime-parser.c (g_mime_parser_construct_part_internal): Fix
 	offset calculations.
+	(g_mime_parser_construct_part_internal): Updated for data-wrapper
+	changes.
 
 2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
 

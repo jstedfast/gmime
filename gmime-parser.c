@@ -401,6 +401,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 				substream = g_mime_stream_substream (stream, start, end);
 				wrapper = g_mime_data_wrapper_new_with_stream (substream, encoding);
 				g_mime_part_set_content_object (mime_part, wrapper);
+				g_mime_stream_unref (substream);
 			}
 		}
 	}

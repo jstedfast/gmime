@@ -21,39 +21,36 @@
  */
 
 
-#ifndef __GMIME_DATA_WRAPPER_H__
-#define __GMIME_DATA_WRAPPER_H__
+#ifndef __GMIME_STREAM_FILTER_H__
+#define __GMIME_STREAM_FILTER_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
-#include "gmime-content-type.h"
-#include "gmime-utils.h"
 #include "gmime-stream.h"
+#include "gmime-filter.h"
 
-typedef struct _GMimeDataWrapper {
-	GMimePartEncodingType encoding;
-	GMimeStream *stream;
-} GMimeDataWrapper;
+typedef struct _GMimeStreamFilter {
+	GMimeStream parent;
+	
+	struct _GMimeStreamFilterPrivate *priv;
+	
+	GMimeStream *source;
+} GMimeStreamFilter;
 
-GMimeDataWrapper *g_mime_data_wrapper_new (void);
-GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding);
+#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
+#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILTER_TYPE)
+#define GMIME_STREAM_FILTER(stream) ((GMimeStreamMem *) stream)
 
-void g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper);
+GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
 
-void g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
-GMimeStream *g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper);
-
-void g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding);
-GMimePartEncodingType g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper);
-
-ssize_t g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
+int g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter);
+void g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_DATA_WRAPPER_H__ */
+#endif /* __GMIME_STREAM_FILTER_H__ */

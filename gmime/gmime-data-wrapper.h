@@ -45,7 +45,12 @@ GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMim
 void g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper);
 
 void g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
+GMimeStream *g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper);
+
 void g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding);
+GMimePartEncodingType g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper);
+
+ssize_t g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
 
 #ifdef __cplusplus
 }
