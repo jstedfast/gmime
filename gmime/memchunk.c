@@ -108,14 +108,14 @@ memchunk_alloc (MemChunk *memchunk)
 	char *block;
 	
 	if (memchunk->free) {
-		node = memchunk->free;
+		block = (char *) node = memchunk->free;
 		node->atoms--;
 		if (node->atoms > 0)
-			return (void *) node + (node->atoms * memchunk->atomsize);
+			return (void *) block + (node->atoms * memchunk->atomsize);
 		
 		memchunk->free = node->next;
 		
-		return (void *) node;
+		return (void *) block;
 	} else {
 		block = g_malloc (memchunk->blocksize);
 		g_ptr_array_add (memchunk->blocks, block);

@@ -585,10 +585,11 @@ g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t c
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	for (i = 0; i < count; i++) {
+		const char *buffer = vector[i].data;
 		ssize_t n, nwritten = 0;
 		
 		while (nwritten < vector[i].len) {
-			n = g_mime_stream_write (stream, vector[i].data + nwritten,
+			n = g_mime_stream_write (stream, buffer + nwritten,
 						 vector[i].len - nwritten);
 			if (n > 0)
 				nwritten += n;
