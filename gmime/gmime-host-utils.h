@@ -27,7 +27,11 @@
 #include <glib.h>
 
 #include <sys/types.h>
+#ifdef G_OS_WIN32
+#include <winsock2.h>
+#else
 #include <netdb.h>
+#endif
 
 #ifdef __cplusplus
 extern "C" {

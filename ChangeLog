@@ -1,5 +1,10 @@
 2004-05-15  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-host-utils.h: Wrap inclusion of netdb.h with G_OS_WIN32
+
+	* util/memchunk.c (memchunk_alloc): Fixed another cast warning on
+	win32.
+
 	* gmime/gmime-message.c (g_mime_message_get_mime_part): New
 	function.
 	(g_mime_message_get_body): Fixed a bug where is_html could get set
