@@ -43,7 +43,7 @@ test_parser (char *data)
 	text = g_mime_message_to_string (message);
 	fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);
 	g_free (text);
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
 void
@@ -106,7 +106,7 @@ test_multipart (void)
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 	
 	test_parser (text);
 	
@@ -143,7 +143,7 @@ test_onepart (void)
 	fprintf (stdout, "Trying to get message body:\n%s\n\n", body ? body : "(null)");
 	g_free (body);
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 	
 	test_parser (text);
 	

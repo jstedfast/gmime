@@ -58,8 +58,8 @@ test_parser (GMimeStream *stream)
 	message = g_mime_parser_construct_message (stream, TRUE);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::parser_construct_message");
-	ZenTimerStart();
 	
+	ZenTimerStart();
 	text = g_mime_message_to_string (message);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::message_to_string");
@@ -86,7 +86,7 @@ test_parser (GMimeStream *stream)
 		char *body;
 		
 		body = g_mime_message_get_body (message, FALSE, &is_html);
-		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
+		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n\n",
 			 body && is_html ? "found" : "not found",
 			 body ? body : "No message body found");
 		
@@ -99,16 +99,17 @@ test_parser (GMimeStream *stream)
 	print_mime_struct (message->mime_part, 0);
 #endif
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
 
 
 /* you can only enable one of these at a time... */
-#define STREAM_BUFFER
+/*#define STREAM_BUFFER*/
+/*#define STREAM_MEM*/
 /*#define STREAM_MMAP*/
 
-int main (int argc, char *argv[])
+int main (int argc, char **argv)
 {
 	char *filename = NULL;
 	GMimeStream *stream, *istream;
@@ -129,6 +130,14 @@ int main (int argc, char *argv[])
 #else
 	stream = g_mime_stream_fs_new (fd);
 #endif /* STREAM_MMAP */
+	
+#ifdef STREAM_MEM
+	istream = g_mime_stream_mem_new ();
+	g_mime_stream_write_to_stream (stream, istream);
+	g_mime_stream_reset (istream);
+	g_mime_stream_unref (stream);
+	stream = istream;
+#endif
 	
 #ifdef STREAM_BUFFER
 	istream = g_mime_stream_buffer_new (stream,

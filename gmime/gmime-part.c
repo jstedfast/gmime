@@ -40,6 +40,8 @@
 #include "md5-utils.h"
 
 
+static void g_mime_part_destroy (GMimeObject *object);
+
 static GMimeObject object_template = {
 	0, 0, g_mime_part_destroy
 };
@@ -111,16 +113,12 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 }
 
 
-/**
- * g_mime_part_destroy:
- * @mime_part: Mime part to destroy
- *
- * Releases all memory used by this mime part and all child mime parts.
- **/
-void
-g_mime_part_destroy (GMimePart *mime_part)
+static void
+g_mime_part_destroy (GMimeObject *object)
 {
-	g_return_if_fail (GMIME_IS_PART (mime_part));
+	GMimePart *mime_part = (GMimePart *) object;
+	
+	g_return_if_fail (GMIME_IS_PART (object));
 	
 	g_mime_header_destroy (mime_part->headers);
 	
