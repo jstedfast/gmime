@@ -728,6 +728,58 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 
 
 /**
+ * g_mime_part_append_pre_encoded_content:
+ * @mime_part: Mime part
+ * @content: content to append
+ * @len: content length
+ * @encoding: encoding type
+ *
+ * Append some pre-encoded content
+ **/
+void
+g_mime_part_append_pre_encoded_content (GMimePart *mime_part, const gchar *content,
+					guint len, GMimePartEncodingType encoding)
+{
+	gchar *raw;
+	guint clen;
+	
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (content != NULL);
+	
+	/* make sure we've got a content byte array */
+	if (mime_part->content == NULL)
+		mime_part->content = g_byte_array_new ();
+	
+	/* make sure we've got enough room for the new decoded data */
+	clen = mime_part->content->len;
+	g_byte_array_set_size (mime_part->content, clen + len);
+	
+	/* write the decoded data */
+	raw = mime_part->content->data + clen;
+	switch (encoding) {
+	case GMIME_PART_ENCODING_BASE64:
+		len = g_mime_utils_base64_decode_step (content, len, raw, &mime_part->append_state,
+						       &mime_part->append_save);
+		g_byte_array_set_size (mime_part->content, clen + len);
+		break;
+	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		len = g_mime_utils_quoted_decode_step (content, len, raw, &mime_part->append_state,
+						       &mime_part->append_save);
+		g_byte_array_set_size (mime_part->content, clen + len);
+		break;
+	default:
+		memcpy (raw, content, len);
+		
+		/* do some smart 8bit detection */
+		if (encoding == GMIME_PART_ENCODING_DEFAULT && g_mime_utils_text_is_8bit (raw, len))
+			encoding = GMIME_PART_ENCODING_8BIT;
+	}
+	
+	mime_part->encoding = encoding;
+}
+
+
+/**
  * g_mime_part_set_pre_encoded_content: Set the pre-encoded content of the mime part
  * @mime_part: Mime part
  * @content: encoded mime part content

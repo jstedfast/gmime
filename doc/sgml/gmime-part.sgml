@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="27 May 2001">
+<refentry id="gmime-gmime-part" revision="17 Jun 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -73,6 +73,11 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-boundar
 void        <link linkend="g-mime-part-set-content">g_mime_part_set_content</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const <link linkend="gchar">gchar</link> *content,
                                              <link linkend="guint">guint</link> len);
+void        <link linkend="g-mime-part-append-pre-encoded-content">g_mime_part_append_pre_encoded_content</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content,
+                                             <link linkend="guint">guint</link> len,
+                                             <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
 void        <link linkend="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const <link linkend="gchar">gchar</link> *content,
@@ -156,6 +161,9 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 	gchar *content_location;
 	
 	GByteArray *content;
+	
+	guint append_save;
+	guint append_state;
 	
 	GList *children;   /* of type GMimePart */
 };
@@ -729,6 +737,35 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 </entry></row>
 <row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
 <entry> raw content length
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-append-pre-encoded-content">g_mime_part_append_pre_encoded_content ()</title>
+<programlisting>void        g_mime_part_append_pre_encoded_content
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content,
+                                             <link linkend="guint">guint</link> len,
+                                             <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);</programlisting>
+<para>
+Append some pre-encoded content</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
+<entry> content to append
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> content length
+</entry></row>
+<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
+<entry> encoding type
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

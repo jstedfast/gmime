@@ -107,6 +107,27 @@ g_mime_header_destroy (GMimeHeader *header)
 
 
 /**
+ * g_mime_header_foreach:
+ * @header: header object
+ * @func: function to be called for each header.
+ * @data: User data to be passed to the func.
+ *
+ * Calls @func for each header name/value pair.
+ */
+void
+g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer data)
+{
+	const struct raw_header *h;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (header->hash != NULL);
+	
+	for (h = header->headers; h != NULL; h = h->next)
+		(*func) (h->name, h->value, data);
+}
+
+
+/**
  * g_mime_header_set:
  * @header: header object
  * @name: header name
@@ -172,9 +193,9 @@ g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
  * Returns the value of the header requested
  **/
 const gchar *
-g_mime_header_get (GMimeHeader *header, const gchar *name)
+g_mime_header_get (const GMimeHeader *header, const gchar *name)
 {
-	struct raw_header *h;
+	const struct raw_header *h;
 	
 	g_return_val_if_fail (header != NULL, NULL);
 	g_return_val_if_fail (name != NULL, NULL);
@@ -193,7 +214,7 @@ g_mime_header_get (GMimeHeader *header, const gchar *name)
  * Write the headers to a string
  **/
 void
-g_mime_header_write_to_string (GMimeHeader *header, GString *string)
+g_mime_header_write_to_string (const GMimeHeader *header, GString *string)
 {
 	struct raw_header *h;
 	
@@ -222,7 +243,7 @@ g_mime_header_write_to_string (GMimeHeader *header, GString *string)
  * Returns a string containing the header block
  **/
 gchar *
-g_mime_header_to_string (GMimeHeader *header)
+g_mime_header_to_string (const GMimeHeader *header)
 {
 	GString *string;
 	gchar *str;

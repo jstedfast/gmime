@@ -63,6 +63,9 @@ struct _GMimePart {
 	
 	GByteArray *content;
 	
+	guint append_save;
+	guint append_state;
+	
 	GList *children;   /* of type GMimePart */
 };
 
@@ -113,6 +116,8 @@ const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
 
 void g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content);
 void g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len);
+void g_mime_part_append_pre_encoded_content (GMimePart *mime_part, const gchar *content,
+					     guint len, GMimePartEncodingType encoding);
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content,
 					  guint len, GMimePartEncodingType encoding);
 const gchar *g_mime_part_get_content (const GMimePart *mime_part, guint *len);

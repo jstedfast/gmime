@@ -1,18 +1,5 @@
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
-/* Define if using alloca.c. */
-#undef C_ALLOCA
-
-/* Define if you have alloca, as a function or macro. */
-#undef HAVE_ALLOCA
-
-/* Define if you have <alloca.h> and it should be used (not on Ultrix). */
-#undef HAVE_ALLOCA_H
-
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 /* Define if you have the strftime function.  */
 #undef HAVE_STRFTIME
 
@@ -24,6 +11,7 @@
 
 #undef HAVE_TIMEZONE
 #undef HAVE_TM_GMTOFF
+#undef HAVE_ISBLANK
 
 /* Define if you have the isblank function.  */
 #undef HAVE_ISBLANK
