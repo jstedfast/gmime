@@ -41,7 +41,7 @@
 
 #include "strlib.h"
 
-#define d(x) x
+#define d(x)
 #define w(x)
 
 extern int gmime_interfaces_utf8;
