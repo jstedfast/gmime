@@ -1037,4 +1037,6 @@ g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpoi
 	
 	if (GMIME_IS_MULTIPART (message->mime_part))
 		g_mime_multipart_foreach (GMIME_MULTIPART (message->mime_part), callback, data);
+	else
+		callback (message->mime_part, data);
 }
