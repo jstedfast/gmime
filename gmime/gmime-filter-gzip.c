@@ -164,6 +164,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterGZip *gzip = (GMimeFilterGZip *) filter;
 	struct _GMimeFilterGZipPrivate *priv = gzip->priv;
+	int retval;
 	
 	if (!priv->state.zip.wrote_hdr) {
 		priv->hdr.v.id1 = 31;
@@ -194,7 +195,8 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	do {
 		/* FIXME: handle error cases? */
-		deflate (priv->stream, flush);
+		if ((retval = deflate (priv->stream, flush)) != Z_OK)
+			fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg);
 		
 		if (flush == Z_FULL_FLUSH) {
 			size_t outlen;
@@ -203,7 +205,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				break;
 			
 			outlen = filter->outsize - priv->stream->avail_out;
-			g_mime_filter_set_size (filter, (priv->stream->avail_in * 2) + 12, TRUE);
+			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
 			priv->stream->avail_out = filter->outsize - outlen;
 			priv->stream->next_out = filter->outbuf + outlen;
 		} else {
@@ -225,6 +227,7 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterGZip *gzip = (GMimeFilterGZip *) filter;
 	struct _GMimeFilterGZipPrivate *priv = gzip->priv;
+	int retval;
 	
 	if (!priv->state.unzip.got_hdr) {
 		if (len < 10) {
@@ -326,7 +329,8 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	do {
 		/* FIXME: handle error cases? */
-		inflate (priv->stream, flush);
+		if ((retval = inflate (priv->stream, flush)) != Z_OK)
+			fprintf (stderr, "gunzip: %d: %s\n", retval, priv->stream->msg);
 		
 		if (flush == Z_FULL_FLUSH) {
 			size_t outlen;
@@ -335,7 +339,7 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				break;
 			
 			outlen = filter->outsize - priv->stream->avail_out;
-			g_mime_filter_set_size (filter, (priv->stream->avail_in * 2) + 12, TRUE);
+			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
 			priv->stream->avail_out = filter->outsize - outlen;
 			priv->stream->next_out = filter->outbuf + outlen;
 		} else {
@@ -361,9 +365,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	GMimeFilterGZip *gzip = (GMimeFilterGZip *) filter;
 	
 	if (gzip->mode == GMIME_FILTER_GZIP_MODE_ZIP)
-		gzip_filter (filter, in, len, prespace, out, outlen, outprespace, 0);
+		gzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_SYNC_FLUSH);
 	else
-		gunzip_filter (filter, in, len, prespace, out, outlen, outprespace, 0);
+		gunzip_filter (filter, in, len, prespace, out, outlen, outprespace, Z_SYNC_FLUSH);
 }
 
 static void
