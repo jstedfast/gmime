@@ -484,6 +484,79 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
 
 
 /**
+ * g_mime_utils_quote_string: Quote a string.
+ * @string:
+ * @do_quotes: wrap string in quotes.
+ * 
+ * Escapes and optionally quotes the given string.
+ **/
+gchar *
+g_mime_utils_quote_string (const gchar *string, gboolean do_quotes)
+{
+	GString *out;
+	gchar *qstring, *ptr;
+	
+	out = g_string_new ("");
+	
+	if (do_quotes)
+		g_string_append_c (out, '"');
+	
+	for (ptr = (gchar *) string; *ptr; ptr++) {
+		if (*ptr == '"' || *ptr == '\\')
+			g_string_append_c (out, '\\');
+		g_string_append_c (out, *ptr);
+	}
+	
+	if (do_quotes)
+		g_string_append_c (out, '"');
+	
+	qstring = out->str;
+	g_string_free (out, FALSE);
+	
+	return qstring;
+}
+
+
+/**
+ * g_mime_utils_unquote_string: Unquote a string.
+ * @string:
+ * 
+ * Unquotes and unescapes a string.
+ **/
+void
+g_mime_utils_unquote_string (gchar *string)
+{
+	/* if the string is quoted, unquote it */
+	gchar *inptr, *inend;
+	
+	if (!string)
+		return;
+	
+	inptr = string;
+	inend = string + strlen (string);
+	
+	/* get rid of the wrapping quotes */
+	if (*inptr == '"' && *(inend - 1) == '"') {
+		inend--;
+		*inend = '\0';
+		if (*inptr)
+			memmove (inptr, inptr + 1, inend - inptr);
+	}
+	
+	/* un-escape the string */
+	inend--;
+	while (inptr < inend) {
+		if (*inptr == '\\') {
+			memmove (inptr, inptr + 1, inend - inptr);
+			inend--;
+		}
+		
+		inptr++;
+	}
+}
+
+
+/**
  * g_mime_utils_text_is_8bit: Determine if a string contains 8bit chars
  * @text:
  *

@@ -45,10 +45,12 @@ internet_address_new (const gchar *name, const gchar *address)
 	
 	ia = g_new (InternetAddress, 1);
 	
-	if (name)
+	if (name) {
 		ia->name = g_mime_utils_8bit_header_decode (name);
-	else
+		g_mime_utils_unquote_string (ia->name);
+	} else {
 		ia->name = NULL;
+	}
 	
 	ia->address = g_strdup (address);
 	
@@ -116,6 +118,7 @@ rfc822_tokenize (const gchar *in, guint inlen)
 	
 	return tokens;
 }
+
 
 /**
  * internet_address_new_from_string: Create a new Internet Address object
@@ -206,14 +209,15 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
 	if (rfc2047_encode && g_mime_utils_text_is_8bit (raw)) {
 		name = g_mime_utils_8bit_header_encode_phrase (raw);
 	} else {
-		if (strchr (raw, ',') || strchr (raw, '.'))
-			name = g_strdup_printf ("\"%s\"", raw);
+		if (strchr (raw, ',') || strchr (raw, '.') || strchr (raw, '\\'))
+			name = g_mime_utils_quote_string (raw, TRUE);
 		else
 			name = g_strdup (raw);
 	}
 	
 	return name;
 }
+
 
 /**
  * internet_address_to_string: Write the InternetAddress object to a string

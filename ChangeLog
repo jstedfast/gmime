@@ -2,6 +2,35 @@
 
 	* TODO: Updated.
 
+	* test-mime.c: Added test of the new quote/unquote functions.
+	
+	* gmime-message.c (g_mime_message_add_recipients_from_string):
+	Check for escaped quotes.
+	
+	* gmime-part.c (get_content_type): Correctly quote params.
+	(get_content_disposition): Same.
+
+	* gmime-param.c (g_mime_param_new_from_string): Check for escaped
+	quotes. Also use unquote_string() to unquote the value.
+	(g_mime_param_to_string): Correctly quote the value.
+
+	* gmime-parser.c (get_mime_part): Check for escaped quotes and
+	correctly unquote strings where appropriate.
+
+	* gmime-utils.c (g_mime_utils_quote_string): New convenience
+	function to escape and quote a string.
+	(g_mime_utils_unquote_string): New convenience function to
+	un-escape and un-quote a string.
+
+	* internet-address.c (encoded_name): Use quote_string().
+	(internet_address_new): Use unquote_string() to unquote and
+	unescape the name component (it will be re-escaped and re-quoted
+	when it's written to a string later).
+
+2000-11-09  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* TODO: Updated.
+
 2000-11-08  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-parser.c (construct_headers): Oops. Set the subject with

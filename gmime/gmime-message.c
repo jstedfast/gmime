@@ -243,10 +243,13 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
 		/* skip through leading whitespace */
 		for ( ; *ptr && isspace (*ptr); ptr++);
 		
+		if (*ptr == '"')
+			in_quotes = TRUE;
+		
 		/* find the end of this address */
-		eptr = ptr;
+		eptr = ptr + 1;
 		while (*eptr) {
-			if (*eptr == '"')
+			if (*eptr == '"' && *(eptr - 1) != '\\')
 				in_quotes = !in_quotes;
 			else if (*eptr == ',' && !in_quotes)
 				break;

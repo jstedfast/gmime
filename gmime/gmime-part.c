@@ -555,7 +555,8 @@ get_content_disposition (GMimePart *mime_part)
 		gchar *buf;
 		
 		param = params->data;
-		buf = g_strdup_printf (" %s=\"%s\"", param->name, param->value);
+		buf = g_mime_param_to_string (param);
+		g_string_append_c (string, ' ');
 		g_string_append (string, buf);
 		g_free (buf);
 		
@@ -596,7 +597,8 @@ get_content_type (GMimeContentType *mime_type)
 		gchar *buf;
 		
 		param = params->data;
-		buf = g_strdup_printf (" %s=\"%s\"", param->name, param->value);
+		buf = g_mime_param_to_string (param);
+		g_string_append_c (string, ' ');
 		g_string_append (string, buf);
 		g_free (buf);
 		

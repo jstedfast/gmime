@@ -8,6 +8,7 @@ tasks are presented in.
 - rfc2047 encode parameters in the MIME Content fields where
 appropriate. This means we can't always wrap parameter values in
 quotes (it is illegal to quote rfc2047 encoded atoms).
+** I think this is fixed now.
 
 - Expand InternetAddress to correctly handle rfc0822 address 'groups'
 (Are these even in use still?).
@@ -25,7 +26,7 @@ escaped quotes and such.
 - InternetAddress needs to be smarter about quoting an address - what
 if the name component of the address has embedded quotes? They need to
 be escaped.
-
+** I think this is fixed now.
 
 All questions and comments should be directed toward the author,
 Jeffrey Stedfast <fejj@helixcode.com>

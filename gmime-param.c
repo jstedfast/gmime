@@ -21,6 +21,7 @@
  */
 
 #include "gmime-param.h"
+#include "gmime-utils.h"
 #include <config.h>
 #include <string.h>
 #include <ctype.h>
@@ -70,9 +71,12 @@ g_mime_param_new_from_string (const gchar *string)
 	if (*ptr == '"') {
 		/* value is in quotes */
 		value = ptr + 1;
-		for (eptr = value; *eptr && *eptr != '"'; eptr++);
+		for (eptr = value; *eptr; eptr++)
+			if (*eptr == '"' && *(eptr - 1) != '\\')
+				break;
 		value = g_strndup (value, (gint) (eptr - value));
 		g_strstrip (value);
+		g_mime_utils_unquote_string (value);
 	} else {
 		/* value is not in quotes */
 		value = g_strdup (ptr);
@@ -85,6 +89,7 @@ g_mime_param_new_from_string (const gchar *string)
 	
 	return param;
 }
+
 
 /**
  * g_mime_param_destroy: Destroy the MIME Param
@@ -114,7 +119,13 @@ g_mime_param_destroy (GMimeParam *param)
 gchar *
 g_mime_param_to_string (GMimeParam *param)
 {
+	gchar *ret, *val;
+	
 	g_return_val_if_fail (param != NULL, NULL);
 	
-	return g_strdup_printf ("%s=\"%s\"", param->name, param->value);
+	val = g_mime_utils_quote_string (param->value, TRUE);
+	ret = g_strdup_printf ("%s=%s", param->name, val);
+	g_free (val);
+	
+	return ret;
 }

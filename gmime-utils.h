@@ -37,6 +37,9 @@ extern "C" {
 time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
 gchar *g_mime_utils_header_format_date (time_t time, gint offset);
 
+gchar *g_mime_utils_quote_string (const gchar *string, gboolean do_quotes);
+void   g_mime_utils_unquote_string (gchar *string);
+
 /* encoding decision making utilities ;-) */
 gboolean g_mime_utils_text_is_8bit (const guchar *text);
 GMimePartEncodingType g_mime_utils_best_encoding (const guchar *text);

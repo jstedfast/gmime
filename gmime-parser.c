@@ -200,9 +200,12 @@ get_mime_part (const gchar *in, guint inlen)
 				if (*value == '"') {
 					/* value is in quotes */
 					value++;
-					for (ptr = value; *ptr && *ptr != '"'; ptr++);
+					for (ptr = value; *ptr; ptr++)
+						if (*ptr == '"' && *(ptr - 1) != '\\')
+							break;
 					value = g_strndup (value, (gint) (ptr - value));
 					g_strstrip (value);
+					g_mime_utils_unquote_string (value);
 					
 					for ( ; *ptr && *ptr != ';'; ptr++);
 				} else {

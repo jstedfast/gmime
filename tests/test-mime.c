@@ -193,6 +193,12 @@ int main (int argc, char *argv[])
 	g_free (enc);
 	g_free (dec);
 	
+	enc = g_mime_utils_quote_string ("this is an \"embedded\" quoted string.", TRUE);
+	fprintf (stderr, "quoted: %s\n", enc);
+	g_mime_utils_unquote_string (enc);
+	fprintf (stderr, "decoded: %s\n", enc);
+	g_free (enc);
+	
 	enc = g_malloc (strlen (string) * 3);
 	pos = g_mime_utils_quoted_encode_close (string, strlen (string), enc, &state, &save);
 	enc[pos] = '\0';
