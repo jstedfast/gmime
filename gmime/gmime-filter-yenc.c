@@ -61,7 +61,7 @@ g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
 {
 	GMimeFilterYenc *new;
 	
-	new = g_new (GMimeFilterBasic, 1);
+	new = g_new (GMimeFilterYenc, 1);
 	
 	new->direction = direction;
 	new->part = 0;
@@ -85,7 +85,7 @@ g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
 void
 g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state)
 {
-	g_return_if_fail (GMIME_IS_FILTER_YENC (yenc));
+	g_return_if_fail (yenc != NULL);
 	
 	yenc->state = state;
 }
@@ -99,9 +99,9 @@ g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state)
  * Sets the current crc32 value on the yEnc filter.
  **/
 void
-g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32)
+g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
 {
-	g_return_if_fail (GMIME_IS_FILTER_YENC (yenc));
+	g_return_if_fail (yenc != NULL);
 	
 	yenc->crc = crc;
 }
@@ -116,7 +116,7 @@ g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32)
 int
 g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
 {
-	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	g_return_val_if_fail (yenc != NULL, -1);
 	
 	if (yenc->state & GMIME_YDECODE_STATE_PART)
 		return yenc->part;
@@ -134,7 +134,7 @@ g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
 guint32
 g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
 {
-	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	g_return_val_if_fail (yenc != NULL, -1);
 	
 	return GMIME_YENCODE_CRC_FINAL (yenc->pcrc);
 }
@@ -149,7 +149,7 @@ g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
 guint32
 g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc)
 {
-	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	g_return_val_if_fail (yenc != NULL, -1);
 	
 	return GMIME_YENCODE_CRC_FINAL (yenc->crc);
 }
@@ -181,7 +181,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_yencode_step (in, len, filter->outbuf, yenc->uubuf, &yenc->state,
+		newlen = g_mime_yencode_step (in, len, filter->outbuf, &yenc->state,
 					      &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
@@ -270,15 +270,16 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_utils_uuencode_close (in, len, filter->outbuf, yenc->uubuf, &yenc->state,
-						      &yenc->save);
+		newlen = g_mime_yencode_close (in, len, filter->outbuf, &yenc->state,
+					       &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
 	case GMIME_FILTER_YENC_DIRECTION_DECODE:
 		if ((yenc->state & GMIME_YDECODE_STATE_DECODE) && !(yenc->state & GMIME_YDECODE_STATE_END)) {
 			/* all yEnc headers have been found so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
-			newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &yenc->state, &yenc->save);
+			newlen = g_mime_ydecode_step (in, len, filter->outbuf, &yenc->state,
+						      &yenc->pcrc, &yenc->crc);
 			g_assert (newlen <= len + 3);
 		} else {
 			newlen = 0;
@@ -344,7 +345,7 @@ static int yenc_crc_table[256] = {
 
 size_t
 g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
-		     int *state, int *pcrc, int *crc)
+		     int *state, guint32 *pcrc, guint32 *crc)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -409,7 +410,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 
 size_t
 g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
-		     int *state, int *pcrc, int *crc)
+		     int *state, guint32 *pcrc, guint32 *crc)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -453,7 +454,7 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 
 size_t
 g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
-		      int *state, int *pcrc, int *crc)
+		      int *state, guint32 *pcrc, guint32 *crc)
 {
 	register unsigned char *outptr;
 	
@@ -465,7 +466,7 @@ g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
 	if (*state)
 		*outptr++ = '\n';
 	
-	*state = GMIME_YENC_STATE_INIT;
+	*state = GMIME_YENCODE_STATE_INIT;
 	
 	return outptr - out;
 }

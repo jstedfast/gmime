@@ -1,3 +1,7 @@
+2002-03-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-yenc.c: Compile fixes.
+
 2002-03-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-yenc.c (g_mime_filter_yenc_get_pcrc): Finalize the
