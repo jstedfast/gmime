@@ -43,7 +43,7 @@ struct _GMimeHeader {
 };
 
 
-static gint
+static int
 header_equal (gconstpointer v, gconstpointer v2)
 {
 	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
@@ -65,6 +65,8 @@ header_hash (gconstpointer key)
 
 /**
  * g_mime_header_new:
+ *
+ * Creates a new GMimeHeader object.
  *
  * Returns a new header object.
  **/
@@ -211,7 +213,9 @@ g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
  * @header: header object
  * @name: header name
  *
- * Returns the value of the header requested
+ * Gets the value of the header requested.
+ *
+ * Returns the value of the header requested.
  **/
 const char *
 g_mime_header_get (const GMimeHeader *header, const char *name)
@@ -232,7 +236,7 @@ g_mime_header_get (const GMimeHeader *header, const char *name)
  * @header: header object
  * @name: header name
  *
- * Remove the specified header
+ * Remove the specified header.
  **/
 void
 g_mime_header_remove (GMimeHeader *header, const char *name)
@@ -296,6 +300,9 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 /**
  * g_mime_header_to_string:
  * @header: header object
+ *
+ * Allocates a string buffer containing the raw rfc822 headers
+ * contained in @header.
  *
  * Returns a string containing the header block
  **/

@@ -94,6 +94,8 @@ g_mime_filter_destroy (GMimeFilter *filter)
  * g_mime_filter_copy:
  * @filter: filter
  *
+ * Copies @filter into a new GMimeFilter object.
+ *
  * Returns a duplicate of @filter.
  **/
 GMimeFilter *

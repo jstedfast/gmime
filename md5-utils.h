@@ -31,21 +31,21 @@
 typedef struct {
 	guint32 buf[4];
 	guint32 bits[2];
-	guchar in[64];
-	gint doByteReverse;
+	unsigned char in[64];
+	int doByteReverse;
 } MD5Context ;
 
 
-void md5_get_digest (const gchar *buffer, gint buffer_size, guchar digest[16]);
+void md5_get_digest (const char *buffer, int buffer_size, unsigned char digest[16]);
 
 /* use this one when speed is needed */
 /* for use in provider code only */
-void md5_get_digest_from_file (const gchar *filename, guchar digest[16]);
+void md5_get_digest_from_file (const char *filename, unsigned char digest[16]);
 
 /* raw routines */
 void md5_init (MD5Context *ctx);
-void md5_update (MD5Context *ctx, const guchar *buf, guint32 len);
-void md5_final (MD5Context *ctx, guchar digest[16]);
+void md5_update (MD5Context *ctx, const unsigned char *buf, guint32 len);
+void md5_final (MD5Context *ctx, unsigned char digest[16]);
 
 
 #endif	/* MD5_UTILS_H */

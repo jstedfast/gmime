@@ -102,10 +102,16 @@ test_parser (GMimeStream *stream)
 	g_mime_message_destroy (message);
 }
 
+
+
+/* you can only enable one of these at a time... */
+#define STREAM_BUFFER
+/*#define STREAM_MMAP*/
+
 int main (int argc, char *argv[])
 {
 	char *filename = NULL;
-	GMimeStream *stream;
+	GMimeStream *stream, *istream;
 	int fd;
 	
 	if (argc > 1)
@@ -117,7 +123,19 @@ int main (int argc, char *argv[])
 	if (fd == -1)
 		return 0;
 	
+#ifdef STREAM_MMAP
+	stream = g_mime_stream_mmap_new (fd, PROT_READ, MAP_PRIVATE);
+	g_assert (stream != NULL);
+#else
 	stream = g_mime_stream_fs_new (fd);
+#endif /* STREAM_MMAP */
+	
+#ifdef STREAM_BUFFER
+	istream = g_mime_stream_buffer_new (stream,
+					    GMIME_STREAM_BUFFER_BLOCK_READ);
+	g_mime_stream_unref (stream);
+	stream = istream;
+#endif
 	
 	test_parser (stream);
 	

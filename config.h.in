@@ -1,24 +1,100 @@
 /* config.h.in.  Generated automatically from configure.in by autoheader.  */
 
-/* Name of package */
-#undef PACKAGE
-
-/* Version number of package */
-#undef VERSION
-
-#undef _POSIX_SOURCE
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
 
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+#undef STDC_HEADERS
+
+#undef HAVE_TIMEZONE
+#undef HAVE_TM_GMTOFF
+#undef HAVE_ISBLANK
+#undef HAVE_STRFTIME
+#undef HAVE_LOCALTIME
+#undef HAVE_ALLOCA
+
+/* Define if you have the alloca function.  */
+#undef HAVE_ALLOCA
+
+/* Define if you have the isblank function.  */
+#undef HAVE_ISBLANK
+
+/* Define if you have the localtime function.  */
+#undef HAVE_LOCALTIME
+
+/* Define if you have the memchr function.  */
+#undef HAVE_MEMCHR
+
+/* Define if you have the memmem function.  */
+#undef HAVE_MEMMEM
+
+/* Define if you have the memrchr function.  */
+#undef HAVE_MEMRCHR
+
+/* Define if you have the mmap function.  */
+#undef HAVE_MMAP
+
+/* Define if you have the msync function.  */
+#undef HAVE_MSYNC
+
+/* Define if you have the munmap function.  */
+#undef HAVE_MUNMAP
+
+/* Define if you have the stpcpy function.  */
+#undef HAVE_STPCPY
+
+/* Define if you have the strcasecmp function.  */
+#undef HAVE_STRCASECMP
+
+/* Define if you have the strcasestr function.  */
+#undef HAVE_STRCASESTR
+
+/* Define if you have the strcat function.  */
+#undef HAVE_STRCAT
+
+/* Define if you have the strchr function.  */
+#undef HAVE_STRCHR
+
+/* Define if you have the strcpy function.  */
+#undef HAVE_STRCPY
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you have the strlcat function.  */
+#undef HAVE_STRLCAT
+
+/* Define if you have the strlcpy function.  */
+#undef HAVE_STRLCPY
+
+/* Define if you have the strlen function.  */
+#undef HAVE_STRLEN
+
+/* Define if you have the strncasecmp function.  */
+#undef HAVE_STRNCASECMP
+
+/* Define if you have the strncasestr function.  */
+#undef HAVE_STRNCASESTR
+
+/* Define if you have the strncat function.  */
+#undef HAVE_STRNCAT
+
+/* Define if you have the strncpy function.  */
+#undef HAVE_STRNCPY
+
+/* Define if you have the strnstr function.  */
+#undef HAVE_STRNSTR
+
+/* Define if you have the strrchr function.  */
+#undef HAVE_STRRCHR
+
+/* Define if you have the strstr function.  */
+#undef HAVE_STRSTR
+
 /* Define if you have the <alloca.h> header file.  */
 #undef HAVE_ALLOCA_H
-
-/* Define if you have the <string.h> header file.  */
-#undef HAVE_STRING_H
-
-/* Define if you have the <stdlib.h> header file.  */
-#undef HAVE_STDLIB_H
 
 /* Define if you have the <ctype.h> header file.  */
 #undef HAVE_CTYPE_H
@@ -26,83 +102,21 @@
 /* Define if you have the <dlfcn.h> header file.  */
 #undef HAVE_DLFCN_H
 
+/* Define if you have the <stdlib.h> header file.  */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the <string.h> header file.  */
+#undef HAVE_STRING_H
+
+/* Define if you have the <sys/mman.h> header file.  */
+#undef HAVE_SYS_MMAN_H
+
 /* Define if you have the <time.h> header file.  */
 #undef HAVE_TIME_H
 
-/* Define if you have the timezone variable.  */
-#undef HAVE_TIMEZONE
+/* Name of package */
+#undef PACKAGE
 
-/* Define if you have struct tm with member tm_gmtoff.  */ 
-#undef HAVE_TM_GMTOFF
+/* Version number of package */
+#undef VERSION
 
-/* Define if you have the isblank function.  */
-#undef HAVE_ISBLANK
-
-/* Define if you have the strftime function.  */
-#undef HAVE_STRFTIME
-
-/* Define if you have the localtime function.  */
-#undef HAVE_LOCALTIME
-
-/* Define if you have the alloca function.  */
-#undef HAVE_ALLOCA
-
-/* Define if you have the alloca function.  */
-#undef HAVE_ALLOCA
-
-/* Define if you have the memchr function.  */
-#undef HAVE_MEMCHR
-
-/* Define if you have the memrchr function.  */
-#undef HAVE_MEMRCHR
-
-/* Define if you have the memmem function.  */
-#undef HAVE_MEMMEM
-
-/* Define if you have the strlen function.  */
-#undef HAVE_STRLEN
-
-/* Define if you have the strcpy function.  */
-#undef HAVE_STRCPY
-
-/* Define if you have the strncpy function.  */
-#undef HAVE_STRNCPY
-
-/* Define if you have the strlcpy function.  */
-#undef HAVE_STRLCPY
-
-/* Define if you have the stpcpy function.  */
-#undef HAVE_STPCPY
-
-/* Define if you have the strcat function.  */
-#undef HAVE_STRCAT
-
-/* Define if you have the strncat function.  */
-#undef HAVE_STRNCAT
-
-/* Define if you have the strlcat function.  */
-#undef HAVE_STRLCAT
-
-/* Define if you have the strchr function.  */
-#undef HAVE_STRCHR
-
-/* Define if you have the strrchr function.  */
-#undef HAVE_STRRCHR
-
-/* Define if you have the strnstr function.  */
-#undef HAVE_STRNSTR
-
-/* Define if you have the strstr function.  */
-#undef HAVE_STRSTR
-
-/* Define if you have the strncasestr function.  */
-#undef HAVE_STRNCASESTR
-
-/* Define if you have the strcasestr function.  */
-#undef HAVE_STRCASESTR
-
-/* Define if you have the strncasecmp function.  */
-#undef HAVE_STRNCASECMP
-
-/* Define if you have the strcasecmp function.  */
-#undef HAVE_STRCASECMP

@@ -92,6 +92,8 @@ g_mime_charset_init (void)
 /**
  * g_mime_charset_locale_name:
  *
+ * Gets the user's locale charset (or iso-8859-1 by default).
+ *
  * Returns the user's locale charset (or iso-8859-1 by default).
  **/
 const char *

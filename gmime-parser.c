@@ -87,7 +87,7 @@ content_header (const char *field)
 }
 
 static const char *
-find_header_part_end (const char *in, guint inlen)
+find_header_part_end (const char *in, size_t inlen)
 {
 	const char *pch;
 	const char *hdr_end = NULL;
@@ -131,13 +131,14 @@ parse_content_headers (const char *headers, int inlen,
 		const int type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
-		char *field, *value;
+		char *header = NULL;
+		char *value;
 		
 		if (type == -1) {
 			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
 				break;
-			field = g_strndup (inptr, hvalptr - inptr);
-			g_strstrip (field);
+			header = g_strndup (inptr, hvalptr - inptr);
+			g_strstrip (header);
 			hvalptr++;
 		} else {
 			hvalptr = inptr + strlen (content_headers[type]);
@@ -147,7 +148,7 @@ parse_content_headers (const char *headers, int inlen,
 			if (*hvalend == '\n' && !isblank (*(hvalend + 1)))
 				break;
 		
-		value = g_strndup (hvalptr, (gint) (hvalend - hvalptr));
+		value = g_strndup (hvalptr, (int) (hvalend - hvalptr));
 		
 		header_unfold (value);
 		g_strstrip (value);
@@ -212,10 +213,9 @@ parse_content_headers (const char *headers, int inlen,
 		}
 		default:
 			/* possibly save the raw header */
-			if (!strncasecmp (field, "Content-", 8)) {
-				g_mime_part_set_content_header (mime_part, field, value);
-				g_free (field);
-			}
+			if (!strncasecmp (header, "Content-", 8))
+				g_mime_part_set_content_header (mime_part, header, value);
+			g_free (header);
 			break;
 		}
 		
@@ -302,7 +302,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 	} else {
 		GMimePartEncodingType encoding;
 		const char *content = NULL;
-		guint len = 0;
+		size_t len = 0;
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
@@ -350,8 +350,10 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 
 
 /**
- * g_mime_parser_construct_part: Construct a GMimePart object
+ * g_mime_parser_construct_part:
  * @stream: raw MIME Part stream
+ *
+ * Constructs a GMimePart object based on @stream.
  *
  * Returns a GMimePart object based on the data.
  **/
@@ -407,13 +409,13 @@ static char *fields[] = {
 };
 
 static gboolean
-special_header (const char *field)
+special_header (const char *header)
 {
-	return (!strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
+	return (!strcasecmp (header, "MIME-Version:") || content_header (header) != -1);
 }
 
 static void
-construct_message_headers (GMimeMessage *message, const char *headers, gint inlen, gboolean preserve_headers)
+construct_message_headers (GMimeMessage *message, const char *headers, int inlen, gboolean preserve_headers)
 {
 	char *field, *value, *raw, *q;
 	char *inptr, *inend;
@@ -432,7 +434,7 @@ construct_message_headers (GMimeMessage *message, const char *headers, gint inle
 		if (!fields[i]) {
 			field = inptr;
 			for (q = field; q < inend && *q != ':'; q++);
-			field = g_strndup (field, (gint) (q - field + 1));
+			field = g_strndup (field, (int) (q - field + 1));
 			g_strstrip (field);
 		} else {
 			field = g_strdup (fields[i]);
@@ -443,7 +445,7 @@ construct_message_headers (GMimeMessage *message, const char *headers, gint inle
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
 		
-		value = g_strndup (value, (gint) (q - value));
+		value = g_strndup (value, (int) (q - value));
 		g_strstrip (value);
 		header_unfold (value);
 		
@@ -504,9 +506,11 @@ construct_message_headers (GMimeMessage *message, const char *headers, gint inle
 
 
 /**
- * g_mime_parser_construct_message: Construct a GMimeMessage object
+ * g_mime_parser_construct_message:
  * @stream: an rfc0822 message stream
  * @preserve_headers: if TRUE, then store the arbitrary headers
+ *
+ * Constructs a GMimeMessage object based on @stream.
  *
  * Returns a GMimeMessage object based on the rfc0822 data.
  **/

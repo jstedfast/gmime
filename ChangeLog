@@ -1,3 +1,38 @@
+2001-11-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* strlib.c (strlcpy): BSD defines the prototype as returning
+	size_t, the strlen of the resultant string.
+	(strlcat): Same.
+
+	* gmime-stream-buffer.c (stream_flush): Oops, memmove the buffer
+	too and a smidgen of code cleanup.
+	(stream_reset): Fix reset for block write mode.
+
+	* configure.in: Bumped the version to 0.7.4 and added checks for
+	system mmap functions.
+
+	* gmime-stream-mmap.[c,h]: New stream that uses an mmaped buffer.
+
+2001-11-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/gmime-docs.sgml: Added documentation of the use of filters.
+
+2001-11-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.c (stream_seek): Implemented.
+
+	* gmime-parser.c (parse_content_headers): Fixed another memory
+	leak here.
+
+	* gmime-param.c (decode_param_list): Fixed a small memory leak.
+
+2001-11-22  Jeffrey stedfast  <fejj@ximian.com>
+
+	* gmime-filter-from.[c,h]: New filter to escape from-lines.
+
+	* pan-mime-parser.c (parser_read_until_boundary): Slight
+	optimization.
+
 2001-11-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (is_8bit_word_encoded): Make into a macro, we

@@ -5,6 +5,7 @@
 
 #undef STDC_HEADERS
 
+#undef HAVE_SYS_MMAN_H
 #undef HAVE_ALLOCA_H
 #undef HAVE_STRING_H
 #undef HAVE_STDLIB_H
@@ -17,6 +18,10 @@
 #undef HAVE_STRFTIME
 #undef HAVE_LOCALTIME
 #undef HAVE_ALLOCA
+
+#undef HAVE_MMAP
+#undef HAVE_MUNMAP
+#undef HAVE_MSYNC
 
 #undef HAVE_MEMCHR
 #undef HAVE_MEMRCHR

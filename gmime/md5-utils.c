@@ -31,8 +31,8 @@
 
 static void md5_transform (guint32 buf[4], const guint32 in[16]);
 
-static gint _ie = 0x44332211;
-static union _endian { gint i; gchar b[4]; } *_endian = (union _endian *)&_ie;
+static int _ie = 0x44332211;
+static union _endian { int i; char b[4]; } *_endian = (union _endian *)&_ie;
 #define	IS_BIG_ENDIAN()		(_endian->b[0] == '\x44')
 #define	IS_LITTLE_ENDIAN()	(_endian->b[0] == '\x11')
 
@@ -41,9 +41,10 @@ static union _endian { gint i; gchar b[4]; } *_endian = (union _endian *)&_ie;
  * Note: this code is harmless on little-endian machines.
  */
 static void 
-_byte_reverse (guchar *buf, guint32 longs)
+_byte_reverse (unsigned char *buf, guint32 longs)
 {
 	guint32 t;
+	
 	do {
 		t = (guint32) ((guint32) buf[3] << 8 | buf[2]) << 16 |
 			((guint32) buf[1] << 8 | buf[0]);
@@ -88,7 +89,7 @@ md5_init (MD5Context *ctx)
  * of bytes. Use this to progressively construct an md5 hash.
  **/
 void 
-md5_update (MD5Context *ctx, const guchar *buf, guint32 len)
+md5_update (MD5Context *ctx, const unsigned char *buf, guint32 len)
 {
 	guint32 t;
 	
@@ -102,7 +103,7 @@ md5_update (MD5Context *ctx, const guchar *buf, guint32 len)
 	
 	/* Handle any leading odd-sized chunks */
 	if (t) {
-		guchar *p = (guchar *) ctx->in + t;
+		unsigned char *p = (unsigned char *) ctx->in + t;
 		
 		t = 64 - t;
 		if (len < t) {
@@ -144,10 +145,10 @@ md5_update (MD5Context *ctx, const guchar *buf, guint32 len)
  * copy the final md5 hash to a bufer
  **/
 void 
-md5_final (MD5Context *ctx, guchar digest[16])
+md5_final (MD5Context *ctx, unsigned char digest[16])
 {
 	guint32 count;
-	guchar *p;
+	unsigned char *p;
 	
 	/* Compute number of bytes mod 64 */
 	count = (ctx->bits[0] >> 3) & 0x3F;
@@ -183,7 +184,7 @@ md5_final (MD5Context *ctx, guchar digest[16])
 	
 	md5_transform (ctx->buf, (guint32 *) ctx->in);
 	if (ctx->doByteReverse)
-		_byte_reverse ((guchar *) ctx->buf, 4);
+		_byte_reverse ((unsigned char *) ctx->buf, 4);
 	memcpy (digest, ctx->buf, 16);
 }
 
@@ -300,7 +301,7 @@ md5_transform (guint32 buf[4], const guint32 in[16])
  * the 16 bytes buffer @digest .
  **/
 void
-md5_get_digest (const gchar *buffer, gint buffer_size, guchar digest[16])
+md5_get_digest (const char *buffer, int buffer_size, unsigned char digest[16])
 {	
 	MD5Context ctx;
 
@@ -320,25 +321,25 @@ md5_get_digest (const gchar *buffer, gint buffer_size, guchar digest[16])
  * the 16 bytes buffer @digest .
  **/
 void
-md5_get_digest_from_file (const gchar *filename, guchar digest[16])
+md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 {	
 	MD5Context ctx;
-	guchar tmp_buf[1024];
-	gint nb_bytes_read;
+	unsigned char tmp_buf[1024];
+	int nb_bytes_read;
 	FILE *fp;
 	
 	d(fprintf (stderr, "generating checksum\n"));
 	
 	md5_init (&ctx);
-	fp = fopen(filename, "r");
+	fp = fopen (filename, "r");
 	if (!fp)
 		return;
 	
-	while ((nb_bytes_read = fread (tmp_buf, sizeof (guchar), 1024, fp)) > 0)
+	while ((nb_bytes_read = fread (tmp_buf, 1, 1024, fp)) > 0)
 		md5_update (&ctx, tmp_buf, nb_bytes_read);
 	
-	if (ferror(fp)) {
-		fclose(fp);
+	if (ferror (fp)) {
+		fclose (fp);
 		return;
 	}
 	

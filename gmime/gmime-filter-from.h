@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __G_MIME_FILTER_BASIC_H__
-#define __G_MIME_FILTER_BASIC_H__
+#ifndef __GMIME_FILTER_FROM_H__
+#define __GMIME_FILTER_FROM_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -31,30 +31,16 @@ extern "C" {
 
 #include "gmime-filter.h"
 
-typedef enum {
-	GMIME_FILTER_BASIC_BASE64_ENC = 1,
-	GMIME_FILTER_BASIC_BASE64_DEC,
-	GMIME_FILTER_BASIC_QP_ENC,
-	GMIME_FILTER_BASIC_QP_DEC,
-	GMIME_FILTER_BASIC_UU_ENC,
-	GMIME_FILTER_BASIC_UU_DEC,
-} GMimeFilterBasicType;
-
-typedef struct _GMimeFilterBasic {
+typedef struct _GMimeFilterFrom {
 	GMimeFilter parent;
 	
-	GMimeFilterBasicType type;
-	
-	unsigned char uubuf[60];
-	int state;
-	int save;
-	char uulen;
-} GMimeFilterBasic;
+	gboolean midline;
+} GMimeFilterFrom;
 
-GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);
+GMimeFilter *g_mime_filter_from_new (void);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_FILTER_BASIC_H__ */
+#endif /* __GMIME_FILTER_FROM_H__ */

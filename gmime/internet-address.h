@@ -38,9 +38,9 @@ typedef enum {
 
 struct _InternetAddress {
 	InternetAddressType type;
-	gchar *name;
+	char *name;
 	union {
-		gchar *addr;
+		char *addr;
 		GList *members;
 	} value;
 };
@@ -48,19 +48,19 @@ struct _InternetAddress {
 typedef struct _InternetAddress InternetAddress;
 
 InternetAddress *internet_address_new (void);
-InternetAddress *internet_address_new_name (const gchar *name, const gchar *addr);
-InternetAddress *internet_address_new_group (const gchar *name);
+InternetAddress *internet_address_new_name (const char *name, const char *addr);
+InternetAddress *internet_address_new_group (const char *name);
 
 void internet_address_destroy (InternetAddress *ia);
 
-void internet_address_set_name (InternetAddress *ia, const gchar *name);
-void internet_address_set_addr (InternetAddress *ia, const gchar *addr);
+void internet_address_set_name (InternetAddress *ia, const char *name);
+void internet_address_set_addr (InternetAddress *ia, const char *addr);
 void internet_address_set_group (InternetAddress *ia, GList *group);
 void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 
-GList *internet_address_parse_string (const gchar *string);
+GList *internet_address_parse_string (const char *string);
 
-gchar *internet_address_to_string (InternetAddress *ia, gboolean encode);
+char *internet_address_to_string (InternetAddress *ia, gboolean encode);
 
 #ifdef __cplusplus
 }

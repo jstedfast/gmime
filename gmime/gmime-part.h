@@ -116,11 +116,11 @@ void g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t 
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 					  size_t len, GMimePartEncodingType encoding);
 
-void g_mime_part_set_content_stream (GMimePart *mime_part, GMimeStream *content);
+/*void g_mime_part_set_content_stream (GMimePart *mime_part, GMimeStream *content);*/
 
 void g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
 const GMimeDataWrapper *g_mime_part_get_content_object (const GMimePart *mime_part);
-const char *g_mime_part_get_content (const GMimePart *mime_part, guint *len);
+const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
 
 void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 

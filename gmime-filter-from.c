@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@
 #include <config.h>
 #endif
 
-#include "gmime-filter-crlf.h"
+#include "gmime-filter-from.h"
+#include "strlib.h"
 
 static void filter_destroy (GMimeFilter *filter);
 static GMimeFilter *filter_copy (GMimeFilter *filter);
@@ -49,26 +50,20 @@ static GMimeFilter filter_template = {
 
 
 /**
- * g_mime_filter_crlf_new:
- * @direction: encode direction
- * @mode: crlf or crlf & dot mode
+ * g_mime_filter_from_new:
  *
- * Creates a new GMimeFilterCRLF filter.
+ * Creates a new GMimeFilterFrom filter.
  *
- * Returns a new crlf(/dot) filter.
+ * Returns a new from filter.
  **/
 GMimeFilter *
-g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode)
+g_mime_filter_from_new ()
 {
-	GMimeFilterCRLF *new;
+	GMimeFilterFrom *new;
 	
-	new = g_new (GMimeFilterCRLF, 1);
+	new = g_new (GMimeFilterFrom, 1);
 	
-	new->direction = direction;
-	new->mode = mode;
-	new->saw_cr = FALSE;
-	new->saw_lf = FALSE;
-	new->saw_dot = FALSE;
+	new->midline = FALSE;
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
@@ -85,97 +80,102 @@ filter_destroy (GMimeFilter *filter)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
-	
-	return g_mime_filter_crlf_new (crlf->direction, crlf->mode);
+	return g_mime_filter_from_new ();
 }
+
+struct fromnode {
+	struct fromnode *next;
+	char *pointer;
+};
 
 static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
-	gboolean do_dots;
-	char *p, *q;
+	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
+	struct fromnode *head = NULL, *tail = (struct fromnode *) &head, *node;
+	register char *inptr, *inend;
+	int fromcount, left;
+	char *outptr;
 	
-	do_dots = crlf->mode == GMIME_FILTER_CRLF_MODE_CRLF_DOTS;
+	inptr = in;
+	inend = inptr + len;
 	
-	if (crlf->direction == GMIME_FILTER_CRLF_ENCODE) {
-		g_mime_filter_set_size (filter, 3 * len, FALSE);
+	while (inptr < inend) {
+		register int c = -1;
 		
-		p = in;
-		q = filter->outbuf;
-		while (p < in + len) {
-			if (*p == '\n') {
-				crlf->saw_lf = TRUE;
-				*q++ = '\r';
-			} else {
-				if (do_dots && *p == '.' && crlf->saw_lf)
-					*q++ = '.';
-				
-				crlf->saw_lf = FALSE;
-			}
-			
-			*q++ = *p++;
+		if (from->midline) {
+			while (inptr < inend && (c = *inptr++) != '\n')
+				;
 		}
-	} else {
-		g_mime_filter_set_size (filter, len, FALSE);
 		
-		p = in;
-		q = filter->outbuf;
-		while (p < in + len) {
-			if (*p == '\r') {
-				crlf->saw_cr = TRUE;
+		if (c == '\n' || !from->midline) {
+			left = inend - inptr;
+			if (left > 0) {
+				from->midline = TRUE;
+				if (left < 5) {
+					if (*inptr == 'F') {
+						g_mime_filter_backup (filter, inptr, left);
+						from->midline = FALSE;
+						inend = inptr;
+						break;
+					}
+				} else {
+					if (!strncmp (inptr, "From ", 5)) {
+						fromcount++;
+						
+						node = alloca (sizeof (struct fromnode));
+						node->pointer = inptr;
+						node->next = NULL;
+						tail->next = node;
+						tail = node;
+						
+						inptr += 5;
+					}
+				}
 			} else {
-				if (crlf->saw_cr) {
-					crlf->saw_cr = FALSE;
-					
-					if (*p == '\n') {
-						crlf->saw_lf = TRUE;
-						*q++ = *p++;
-						continue;
-					} else
-						*q++ = '\r';
-				}
-				
-				*q++ = *p;
+				from->midline = FALSE;
 			}
-			
-			if (do_dots && *p == '.') {
-				if (crlf->saw_lf) {
-					crlf->saw_dot = TRUE;
-					crlf->saw_lf = FALSE;
-					p++;
-				} else if (crlf->saw_dot) {
-					crlf->saw_dot = FALSE;
-				}
-			}
-			
-			crlf->saw_lf = FALSE;
-			
-			p++;
 		}
 	}
 	
-	*out = filter->outbuf;
-	*outlen = q - filter->outbuf;
-	*outprespace = filter->outpre;
+	if (fromcount > 0) {
+		g_mime_filter_set_size (filter, len + fromcount, FALSE);
+		
+		node = head;
+		inptr = in;
+		outptr = filter->outbuf;
+		while (node) {
+			memcpy (outptr, inptr, node->pointer - inptr);
+			outptr += node->pointer - inptr;
+			*outptr++ = '>';
+			inptr = node->pointer;
+			node = node->next;
+		}
+		
+		memcpy (outptr, inptr, inend - inptr);
+		outptr += inend - inptr;
+		*out = filter->outbuf;
+		*outlen = outptr - filter->outbuf;
+		*outprespace = filter->outbuf - filter->outreal;
+	} else {
+		*out = in;
+		*outlen = inend - in;
+		*outprespace = prespace;
+	}
 }
 
 static void 
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	if (in && len)
-		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
+	filter_filter (filter, in, len, prespace, out, outlen, outprespace);
 }
 
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
+	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
 	
-	crlf->saw_cr = FALSE;
-	crlf->saw_lf = TRUE;
-	crlf->saw_dot = FALSE;
+	from->midline = FALSE;
 }

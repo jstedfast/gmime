@@ -32,8 +32,11 @@
 
 #define w(x) x
 
+
 /**
- * internet_address_new: Create a new Internet Address object
+ * internet_address_new:
+ *
+ * Creates a new InternetAddress object
  * 
  * Returns a new Internet Address object.
  **/
@@ -45,8 +48,8 @@ internet_address_new ()
 
 
 /**
- * internet_address_destroy: Destroy an Internet Address object
- * @ia: Internet Address object to destroy
+ * internet_address_destroy:
+ * @ia: InternetAddress object to destroy
  * 
  * Destroy the InternetAddress object pointed to by @ia.
  **/
@@ -79,9 +82,12 @@ internet_address_destroy (InternetAddress *ia)
 
 
 /**
- * internet_address_new_name: Create a new Internet Address object
+ * internet_address_new_name:
  * @name: person's name
  * @addr: person's address
+ *
+ * Creates a new InternetAddress object with name @name and address
+ * @addr.
  * 
  * Returns a new Internet Address object.
  **/
@@ -105,8 +111,10 @@ internet_address_new_name (const char *name, const char *addr)
 
 
 /**
- * internet_address_new_group: Create a new Internet Address object
+ * internet_address_new_group:
  * @name: group name
+ *
+ * Creates a new InternetAddress object with group name @name.
  * 
  * Returns a new Internet Address object.
  **/
@@ -231,9 +239,12 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 
 
 /**
- * internet_address_to_string: Write the InternetAddress object to a string
+ * internet_address_to_string:
  * @ia: Internet Address object
  * @encode: TRUE if the address should be rfc2047 encoded
+ *
+ * Allocates a string containing the contents of the InternetAddress
+ * object.
  * 
  * Returns the InternetAddress object as an allocated string in rfc822
  * format.
@@ -734,12 +745,13 @@ decode_address (const char **in)
 
 
 /**
- * internet_address_paarse_string:
+ * internet_address_parse_string:
  * @string: a string containing internet addresses
  *
  * Construct a list of internet addresses from the given string.
  *
- * Returns a linked list of internet addresses.
+ * Returns a linked list of internet addresses. *Must* be free'd by
+ * the caller.
  **/
 GList *
 internet_address_parse_string (const char *string)

@@ -246,6 +246,8 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
  * g_mime_stream_file_new:
  * @fp: file pointer
  *
+ * Creates a new GMimeStreamFile object around @fp.
+ *
  * Returns a stream using @fp.
  **/
 GMimeStream *
@@ -268,6 +270,9 @@ g_mime_stream_file_new (FILE *fp)
  * @fp: file pointer
  * @start: start boundary
  * @end: end boundary
+ *
+ * Creates a new GMimeStreamFile object around @fp with bounds @start
+ * and @end.
  *
  * Returns a stream using @fp with bounds @start and @end.
  **/

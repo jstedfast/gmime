@@ -40,10 +40,12 @@
 #include "gmime-stream-filter.h"
 #include "gmime-stream-fs.h"
 #include "gmime-stream-mem.h"
+#include "gmime-stream-mmap.h"
 #include "gmime-stream-null.h"
 #include "gmime-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-crlf.h"
+#include "gmime-filter-from.h"
 #include "gmime-filter-html.h"
 
 /* GMIME version */

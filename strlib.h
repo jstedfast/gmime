@@ -59,7 +59,7 @@ char *strncpy (char *dest, const char *src, size_t n);
 #endif
 
 #if !defined (HAVE_STRLCPY) || !defined (strlcpy)
-char *strlcpy (char *dest, const char *src, size_t n);
+size_t strlcpy (char *dest, const char *src, size_t n);
 #endif
 
 #if !defined (HAVE_STPCPY) || !defined (stpcpy)
@@ -75,7 +75,7 @@ char *strncat (char *dest, const char *src, size_t n);
 #endif
 
 #if !defined (HAVE_STRLCAT) || !defined (strlcat)
-char *strlcat (char *dest, const char *src, size_t n);
+size_t strlcat (char *dest, const char *src, size_t n);
 #endif
 
 #if !defined (HAVE_STRCHR) || !defined (strchr)

@@ -56,8 +56,10 @@ static GMimeFilter filter_template = {
 
 /**
  * g_mime_filter_html_new:
- * @flags:
- * @colour:
+ * @flags: html flags
+ * @colour: citation colour
+ *
+ * Creates a new GMimeFilterHTML filter.
  *
  * Returns a new html filter.
  **/

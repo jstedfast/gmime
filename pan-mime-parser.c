@@ -110,15 +110,15 @@ static char *fields[] = {
 };
 
 static gboolean
-special_header (const char *field)
+special_header (const char *header)
 {
-	return (!strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
+	return (!strcasecmp (header, "MIME-Version:") || content_header (header) != -1);
 }
 
 static void
 parser_read_headers (GMimeStream *stream, GByteArray *buffer)
 {
-	guint offset;
+	size_t offset;
 	
 	do {
 		offset = buffer->len;
@@ -135,11 +135,12 @@ enum {
 	FOUND_EOS,
 };
 
-static guint
+static size_t
 parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 			    const char *boundary, const char *end_boundary, int *found)
 {
-	guint offset, len, total = 0;
+	size_t boundary_len, end_boundary_len;
+	size_t offset, len, total = 0;
 	gboolean internal;
 	
 	*found = FOUND_EOS;
@@ -150,19 +151,22 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 	} else
 		internal = FALSE;
 	
+	boundary_len = strlen (boundary);
+	end_boundary_len = strlen (end_boundary);
+	
 	do {
 		offset = buffer->len;
 		g_mime_stream_buffer_readln (stream, buffer);
 		len = buffer->len - offset;
 		
-		if (boundary && len == strlen (boundary) &&
+		if (boundary && len == boundary_len &&
 		    !memcmp (buffer->data + offset, boundary, len)) {
 			g_byte_array_set_size (buffer, offset);
 			*found = FOUND_BOUNDARY;
 			break;
 		}
 		
-		if (end_boundary && len == strlen (end_boundary) &&
+		if (end_boundary && len == end_boundary_len &&
 		    !memcmp (buffer->data + offset, end_boundary, len)) {
 			g_byte_array_set_size (buffer, offset);
 			*found = FOUND_END_BOUNDARY;
@@ -205,16 +209,17 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 	*end_boundary = NULL;
 	
 	while (inptr < inend) {
-		const gint type = content_header (inptr);
+		const int type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
-		char *field, *value;
+		char *header = NULL;
+		char *value;
 		
 		if (type == -1) {
 			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
 				break;
-			field = g_strndup (inptr, hvalptr - inptr);
-			g_strstrip (field);
+			header = g_strndup (inptr, hvalptr - inptr);
+			g_strstrip (header);
 			hvalptr++;
 		} else {
 			hvalptr = inptr + strlen (content_headers[type]);
@@ -224,7 +229,7 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			if (*hvalend == '\n' && !isblank (*(hvalend + 1)))
 				break;
 		
-		value = g_strndup (hvalptr, (gint) (hvalend - hvalptr));
+		value = g_strndup (hvalptr, (int) (hvalend - hvalptr));
 		
 		header_unfold (value);
 		g_strstrip (value);
@@ -288,10 +293,9 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			break;
 		}
 		default:
-			if (!strncasecmp (field, "Content-", 8)) {
-				g_mime_part_set_content_header (mime_part, field, value);
-				g_free (field);
-			}
+			if (!strncasecmp (header, "Content-", 8))
+				g_mime_part_set_content_header (mime_part, header, value);
+			g_free (header);
 			break;
 		}
 		
@@ -364,7 +368,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GByteArray *headers,
 		GMimeDataWrapper *wrapper;
 		GMimeStream *substream;
 		off_t start, end;
-		guint len;
+		size_t len;
 		
 		start = g_mime_stream_tell (stream);		
 		
@@ -435,7 +439,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 		if (!fields[i]) {
 			field = inptr;
 			for (q = field; q < inend && *q != ':'; q++);
-			field = g_strndup (field, (gint) (q - field + 1));
+			field = g_strndup (field, (int) (q - field + 1));
 			g_strstrip (field);
 		} else {
 			field = g_strdup (fields[i]);
@@ -446,7 +450,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
 		
-		value = g_strndup (value, (gint) (q - value));
+		value = g_strndup (value, (int) (q - value));
 		g_strstrip (value);
 		header_unfold (value);
 		

@@ -258,6 +258,8 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
  * g_mime_stream_fs_new:
  * @fd: file descriptor
  *
+ * Creates a new GMimeStreamFs object around @fd.
+ *
  * Returns a stream using @fd.
  **/
 GMimeStream *
@@ -284,6 +286,9 @@ g_mime_stream_fs_new (int fd)
  * @fd: file descriptor
  * @start: start boundary
  * @end: end boundary
+ *
+ * Creates a new GMimeStreamFs object around @fd with bounds @start
+ * and @end.
  *
  * Returns a stream using @fd with bounds @start and @end.
  **/

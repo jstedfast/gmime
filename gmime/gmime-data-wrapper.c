@@ -33,6 +33,8 @@
 /**
  * g_mime_data_wrapper_new:
  *
+ * Creates a new GMimeDataWrapper object.
+ *
  * Returns a new data wrapper object.
  **/
 GMimeDataWrapper *
@@ -44,8 +46,10 @@ g_mime_data_wrapper_new (void)
 
 /**
  * g_mime_data_wrapper_new_with_stream:
- * @stream:
- * @encoding:
+ * @stream: stream
+ * @encoding: stream's encoding
+ *
+ * Creates a new GMimeDataWrapper object around @stream.
  *
  * Returns a data wrapper around @stream. Since the wrapper owns it's
  * own reference on the stream, caller is responsible for unrefing
@@ -68,7 +72,7 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
 
 /**
  * g_mime_data_wrapper_destroy:
- * @wrapper:
+ * @wrapper: data wrapper
  *
  * Destroys the data wrapper and unref's its internal stream.
  **/
@@ -85,8 +89,8 @@ g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
 
 /**
  * g_mime_data_wrapper_set_stream:
- * @wrapper:
- * @stream:
+ * @wrapper: data wrapper
+ * @stream: stream
  *
  * Replaces the wrapper's internal stream with @stream.
  * Note: caller is responsible for it's own reference on
@@ -108,7 +112,9 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 
 /**
  * g_mime_data_wrapper_get_stream:
- * @wrapper:
+ * @wrapper: data wrapper
+ *
+ * Gets a reference to the stream wrapped by @wrapper.
  *
  * Returns a reference to the internal stream. Caller is responsable
  * for unrefing it.
@@ -129,8 +135,8 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 
 /**
  * g_mime_data_wrapper_set_encoding:
- * @wrapper:
- * @encoding:
+ * @wrapper: data wrapper
+ * @encoding: encoding
  *
  * Sets the encoding type of the internal stream.
  **/
@@ -145,7 +151,9 @@ g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingTy
 
 /**
  * g_mime_data_wrapper_get_encoding:
- * @wrapper:
+ * @wrapper: data wrapper
+ *
+ * Gets the encoding type of the stream wrapped by @wrapper.
  *
  * Returns the encoding type of the internal stream.
  **/
@@ -160,7 +168,7 @@ g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
 
 /**
  * g_mime_data_wrapper_write_to_stream:
- * @wrapper:
+ * @wrapper: data wrapper
  * @stream: output stream
  *
  * Write's the raw (decoded) data to the output stream.

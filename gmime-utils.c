@@ -127,6 +127,9 @@ static char *tm_days[] = {
  * @time: time_t date representation
  * @offset: Timezone offset
  *
+ * Allocates a string buffer containing the rfc822 formatted date
+ * string represented by @time and @offset.
+ *
  * Returns a valid string representation of the date.
  **/
 char *
@@ -427,12 +430,15 @@ parse_broken_date (GList *tokens, int *tzone)
 
 
 /**
- * g_mime_utils_header_decode_date: Decode a date string
+ * g_mime_utils_header_decode_date:
  * @in: input date string
- * @saveoffset: 
+ * @saveoffset:
+ *
+ * Decodes the rfc822 date string and saves the GMT offset into
+ * @saveoffset if non-NULL.
  *
  * Returns the time_t representation of the date string specified by
- * #in. If 'saveoffset' is non-NULL, the value of the timezone offset
+ * @in. If 'saveoffset' is non-NULL, the value of the timezone offset
  * will be stored.
  **/
 time_t
@@ -460,8 +466,10 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 
 
 /**
- * g_mime_utils_header_fold: Fold a header.
+ * g_mime_utils_header_fold:
  * @in: input header string
+ *
+ * Folds a header according to the rules in rfc822.
  *
  * Returns an allocated string containing the folded header.
  **/
@@ -515,12 +523,15 @@ g_mime_utils_header_fold (const char *in)
 
 
 /**
- * g_mime_utils_header_printf: Format a header.
+ * g_mime_utils_header_printf:
  * @format: string format
  * @Varargs: arguments
  *
+ * Allocates a buffer containing a formatted header specified by the
+ * @Varargs.
+ *
  * Returns an allocated string containing the folded header specified
- * by #format and the following arguments.
+ * by @format and the following arguments.
  **/
 char *
 g_mime_utils_header_printf (const char *format, ...)
@@ -562,8 +573,10 @@ need_quotes (const char *string)
 }
 
 /**
- * g_mime_utils_quote_string: Quote a string.
+ * g_mime_utils_quote_string:
  * @string: input string
+ *
+ * Quotes @string as needed according to the rules in rfc2045.
  * 
  * Returns an allocated string containing the escaped and quoted (if
  * needed to be) input string. The decision to quote the string is
@@ -602,7 +615,7 @@ g_mime_utils_quote_string (const char *string)
 
 /**
  * g_mime_utils_unquote_string: Unquote a string.
- * @string:
+ * @string: string
  * 
  * Unquotes and unescapes a string.
  **/
@@ -640,9 +653,12 @@ g_mime_utils_unquote_string (char *string)
 
 
 /**
- * g_mime_utils_text_is_8bit: Determine if a string contains 8bit chars
+ * g_mime_utils_text_is_8bit:
  * @text: text to check for 8bit chars
  * @len: text length
+ *
+ * Determines if @text contains 8bit characters within the first @len
+ * bytes.
  *
  * Returns TRUE if the text contains 8bit characters or FALSE
  * otherwise.
@@ -664,9 +680,12 @@ g_mime_utils_text_is_8bit (const guchar *text, guint len)
 
 
 /**
- * g_mime_utils_best_encoding: Determine the best encoding
+ * g_mime_utils_best_encoding:
  * @text: text to encode
  * @len: text length
+ *
+ * Determines the best content encoding for the first @len bytes of
+ * @text.
  *
  * Returns a GMimePartEncodingType that is determined to be the best
  * encoding type for the specified block of text. ("best" in this
@@ -790,8 +809,10 @@ decode_encoded_8bit_word (const guchar *word)
 
 
 /**
- * g_mime_utils_8bit_header_decode: Decode an encoded header.
+ * g_mime_utils_8bit_header_decode:
  * @in: header to decode
+ *
+ * Decodes and rfc2047 encoded header.
  *
  * Returns the mime encoded header as 8bit text.
  **/
@@ -983,8 +1004,10 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 
 
 /**
- * g_mime_utils_8bit_header_encode_phrase: Encode a string.
+ * g_mime_utils_8bit_header_encode_phrase:
  * @in: header to encode
+ *
+ * Encodes a header phrase according to the rules in rfc2047.
  *
  * Returns the header phrase as 1 encoded atom. Useful for encoding
  * internet addresses.
@@ -997,8 +1020,10 @@ g_mime_utils_8bit_header_encode_phrase (const guchar *in)
 
 
 /**
- * g_mime_utils_8bit_header_encode: Encode a string.
+ * g_mime_utils_8bit_header_encode:
  * @in: header to encode
+ *
+ * Encodes a header according to the rules in rfc2047.
  *
  * Returns the header as several encoded atoms. Useful for encoding
  * headers like "Subject".
@@ -1115,9 +1140,11 @@ g_mime_utils_8bit_header_encode (const guchar *in)
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Returns the number of bytes encoded. Call this when finished
- * encoding data with base64_encode_step to flush off the last little
- * bit.
+ * Base64 encodes the input stream to the output stream. Call this
+ * when finished encoding data with g_mime_utils_base64_encode_step to
+ * flush off the last little bit.
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
@@ -1154,17 +1181,19 @@ g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gin
 
 
 /**
- * g_mime_utils_base64_encode_step: Base64 encode a chunk of data.
+ * g_mime_utils_base64_encode_step:
  * @in: input stream
  * @inlen: length of the input
  * @out: output string
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Returns the number of bytes encoded. Performs an 'encode step',
- * only encodes blocks of 3 characters to the output at a time, saves
+ * Base64 encodes a chunk of data. Performs an 'encode step', only
+ * encodes blocks of 3 characters to the output at a time, saves
  * left-over state in state and save (initialise to 0 on first
  * invocation).
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
@@ -1241,14 +1270,16 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 }
 
 /**
- * g_mime_utils_base64_decode_step: decode a chunk of base64 encoded data
+ * g_mime_utils_base64_decode_step:
  * @in: input stream
  * @inlen: max length of data to decode
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  *
- * Returns the number of bytes decoded (which have been dumped in #out).
+ * Decodes a chunk of base64 encoded data.
+ *
+ * Returns the number of bytes decoded (which have been dumped in @out).
  **/
 gint
 g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
@@ -1302,7 +1333,7 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
 
 
 /**
- * g_mime_utils_uuencode_close: uuencode a chunk of data
+ * g_mime_utils_uuencode_close:
  * @in: input stream
  * @inlen: input stream length
  * @out: output stream
@@ -1312,9 +1343,10 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * Returns the number of bytes encoded. Call this when finished
- * encoding data with uuencode_step to flush off the last little
- * bit.
+ * Uuencodes a chunk of data. Call this when finished encoding data
+ * with g_mime_utils_uuencode_step to flush off the last little bit.
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
@@ -1374,7 +1406,7 @@ g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *
 
 
 /**
- * g_mime_utils_uuencode_step: uuencode a chunk of data
+ * g_mime_utils_uuencode_step:
  * @in: input stream
  * @inlen: input stream length
  * @out: output stream
@@ -1384,10 +1416,12 @@ g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * Returns the number of bytes encoded. Performs an 'encode step',
- * only encodes blocks of 45 characters to the output at a time, saves
- * left-over state in @uubuf, @state and @save (initialize to 0 on first
+ * Uuencodes a chunk of data. Performs an 'encode step', only encodes
+ * blocks of 45 characters to the output at a time, saves left-over
+ * state in @uubuf, @state and @save (initialize to 0 on first
  * invocation).
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_uuencode_step (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
@@ -1455,18 +1489,20 @@ g_mime_utils_uuencode_step (const guchar *in, gint inlen, guchar *out, guchar *u
 
 
 /**
- * g_mime_utils_uudecode_step: uudecode a chunk of data
+ * g_mime_utils_uudecode_step:
  * @in: input stream
- * @inlen: max length of data to decode ( normally strlen(in) ??)
+ * @inlen: max length of data to decode (normally strlen (in) ??)
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * Returns the number of bytes decoded. Performs a 'decode step' on
- * a chunk of uuencoded data. Assumes the "begin <mode> <file name>"
- * line has been stripped off.
+ * Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
+ * uuencoded data. Assumes the "begin <mode> <file name>" line has
+ * been stripped off.
+ *
+ * Returns the number of bytes decoded.
  **/
 gint
 g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save, gchar *uulen)
@@ -1554,9 +1590,11 @@ g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *sta
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Returns the number of bytes encoded. Call this when finished
- * encoding data with quoted_encode_step to flush off the last little
- * bit.
+ * Quoted-printable encodes a block of text. Call this when finished
+ * encoding data with g_mime_utils_quoted_encode_step to flush off the
+ * last little bit.
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
@@ -1590,16 +1628,18 @@ g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gin
 
 
 /**
- * g_mime_utils_quoted_encode_step: QP encode a chunk of data.
+ * g_mime_utils_quoted_encode_step:
  * @in: input stream
  * @inlen: length of the input
  * @out: output string
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Returns the number of bytes encoded. Performs an 'encode step',
- * saves left-over state in state and save (initialise to -1 on first
- * invocation).
+ * Quoted-printable encodes a block of text. Performs an 'encode
+ * step', saves left-over state in state and save (initialise to -1 on
+ * first invocation).
+ *
+ * Returns the number of bytes encoded.
  **/
 gint
 g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
@@ -1690,8 +1730,10 @@ g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint
  * @savestate: holds the number of bits that are stored in @save
  * @saved: leftover bits that have not yet been decoded
  *
- * Returns the number of bytes decoded. Performs a 'decode step' on a
- * chunk of QP encoded data.
+ * Decodes a block of quoted-printable encoded data. Performs a
+ * 'decode step' on a chunk of QP encoded data.
+ *
+ * Returns the number of bytes decoded.
  **/
 gint
 g_mime_utils_quoted_decode_step (const guchar *in, gint inlen, guchar *out, gint *savestate, gint *saved)

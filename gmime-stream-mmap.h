@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,40 +21,38 @@
  */
 
 
-#ifndef __G_MIME_FILTER_BASIC_H__
-#define __G_MIME_FILTER_BASIC_H__
+#ifndef __GMIME_STREAM_MMAP_H__
+#define __GMIME_STREAM_MMAP_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-filter.h"
+#include <sys/mman.h>
+#include <unistd.h>
+#include "gmime-stream.h"
 
-typedef enum {
-	GMIME_FILTER_BASIC_BASE64_ENC = 1,
-	GMIME_FILTER_BASIC_BASE64_DEC,
-	GMIME_FILTER_BASIC_QP_ENC,
-	GMIME_FILTER_BASIC_QP_DEC,
-	GMIME_FILTER_BASIC_UU_ENC,
-	GMIME_FILTER_BASIC_UU_DEC,
-} GMimeFilterBasicType;
-
-typedef struct _GMimeFilterBasic {
-	GMimeFilter parent;
+typedef struct _GMimeStreamMmap {
+	GMimeStream parent;
 	
-	GMimeFilterBasicType type;
+	gboolean owner;
+	gboolean eos;
+	int fd;
 	
-	unsigned char uubuf[60];
-	int state;
-	int save;
-	char uulen;
-} GMimeFilterBasic;
+	char *map;
+	size_t maplen;
+} GMimeStreamMmap;
 
-GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);
+#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")
+#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MMAP_TYPE)
+#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)
+
+GMimeStream *g_mime_stream_mmap_new (int fd, int prot, int flags);
+GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, off_t end);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_FILTER_BASIC_H__ */
+#endif /* __GMIME_STREAM_MMAP_H__ */
