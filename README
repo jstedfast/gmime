@@ -1,4 +1,4 @@
-                            GMime, version 0.8.0
+                            GMime, version 2.0.0
                    by Jeffrey Stedfast <fejj@helixcode.com>
 
 
@@ -42,6 +42,7 @@ Other RFCs of interest:
  * 2312: S/MIME Version 2 Certificate Handling
  * 2387: The Multipart/Related Content-Type.
  * 2424: Content Duration MIME Header Definition
+ * 2630: Cryptographic Message Syntax
  * 2632: S/MIME Version 3 Certificate Handling
  * 2633: S/MIME Version 3 Message Specification
  * 2634: Enhanced Security Services for S/MIME
@@ -49,9 +50,11 @@ Other RFCs of interest:
 
 Cryptography related RFCs:
 
+ * 2268: A Description of the RC2(r) Encryption Algorithm
  * 2313: PKCS #1: RSA Encryption
  * 2314: PKCS #10: Certification Request Syntax
  * 2315: PKCS #7: Cryptographic Message Syntax
+ * 2631: Diffie-Hellman Key Agreement Method
 
 LICENSE INFORMATION
 -------------------
