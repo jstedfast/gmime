@@ -1,5 +1,9 @@
 2002-07-27  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-cat.c (stream_read): Initialize `n' at the
+	beginning of the while-loop so that it can't be used
+	uninitialized.
+
 	* gmime-parser.c (header_parse): Check to make sure that the
 	header was valid (ie, `colon' == ':'). If not, then set
 	header->value to "".
