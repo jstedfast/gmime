@@ -269,8 +269,9 @@ struct _GpgCtx {
 	unsigned int goodsig:1;
 	unsigned int validsig:1;
 	unsigned int nopubkey:1;
+	unsigned int nodata:1;
 	
-	unsigned int padding:15;
+	unsigned int padding:14;
 };
 
 static struct _GpgCtx *
@@ -888,6 +889,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		else
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
 				     _("No data provided"));
+		
+		gpg->nodata = TRUE;
 		
 		return -1;
 	} else {
@@ -1527,14 +1530,16 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	validity = g_mime_signature_validity_new ();
 	g_mime_signature_validity_set_details (validity, diagnostics);
 	
-	if (gpg->goodsig && !(gpg->badsig || gpg->errsig)) {
+	if (gpg->goodsig && !(gpg->badsig || gpg->errsig || gpg->nodata)) {
 		/* all signatures were good */
 		validity->status = GMIME_SIGNATURE_STATUS_GOOD;
 	} else if (gpg->badsig && !(gpg->goodsig && !gpg->errsig)) {
 		/* all signatures were bad */
 		validity->status = GMIME_SIGNATURE_STATUS_BAD;
-	} else {
+	} else if (!gpg->nodata) {
 		validity->status = GMIME_SIGNATURE_STATUS_UNKNOWN;
+	} else {
+		validity->status = GMIME_SIGNATURE_STATUS_BAD;
 	}
 	
 	validity->signers = gpg->signers;
