@@ -1,0 +1,92 @@
+Index: acconfig.h
+===================================================================
+RCS file: /cvs/gnome/gmime/acconfig.h,v
+retrieving revision 1.6
+diff -u -r1.6 acconfig.h
+--- acconfig.h	2001/11/25 22:56:01	1.6
++++ acconfig.h	2002/01/17 01:37:50
+@@ -42,3 +42,6 @@
+ #undef HAVE_STRCASESTR
+ #undef HAVE_STRNCASECMP
+ #undef HAVE_STRCASECMP
++
++/* this is a kludge to allow building using glib2 */
++#undef HAVE_GLIB2
+Index: config.h.in
+===================================================================
+RCS file: /cvs/gnome/gmime/config.h.in,v
+retrieving revision 1.12
+diff -u -r1.12 config.h.in
+--- config.h.in	2002/01/08 17:44:50	1.12
++++ config.h.in	2002/01/17 01:37:51
+@@ -124,3 +124,6 @@
+ /* Version number of package */
+ #undef VERSION
+ 
++
++/* this is a kludge to allow building using glib2 */
++#undef HAVE_GLIB2
+Index: configure.in
+===================================================================
+RCS file: /cvs/gnome/gmime/configure.in,v
+retrieving revision 1.24
+diff -u -r1.24 configure.in
+--- configure.in	2002/01/15 02:39:43	1.24
++++ configure.in	2002/01/17 01:37:51
+@@ -107,9 +107,10 @@
+   CFLAGS="$CFLAGS -Werror -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
+ fi
+ 
+-dnl We need at *least* glib 1.2.0
+-AM_PATH_GLIB(1.2.0, ,
+-             AC_MSG_ERROR(Cannot find GLIB: Is glib-config in path?))
++dnl We need at *least* glib 1.3.6?
++AM_PATH_GLIB_2_0(1.3.6, ,
++		 AC_MSG_ERROR(Cannot find GLIB: Is glib-config in path?),
++		 gmodule, gobject, gthread)
+ 
+ glib_cflags=`$GLIB_CONFIG glib --cflags`
+ glib_libs=`$GLIB_CONFIG glib --libs`
+Index: gmime-param.c
+===================================================================
+RCS file: /cvs/gnome/gmime/gmime-param.c,v
+retrieving revision 1.15
+diff -u -r1.15 gmime-param.c
+--- gmime-param.c	2002/01/09 15:40:57	1.15
++++ gmime-param.c	2002/01/17 01:37:51
+@@ -629,6 +629,8 @@
+ 	g_string_append_c (out, '"');
+ }
+ 
++#ifndef HAVE_GLIB2
++/* glib2 has this function */
+ static void
+ g_string_append_len (GString *out, const char *in, size_t len)
+ {
+@@ -639,6 +641,7 @@
+ 	
+ 	g_string_append (out, buf);
+ }
++#endif
+ 
+ static void
+ param_list_format (GString *out, GMimeParam *param, gboolean fold)
+Index: memchunk.c
+===================================================================
+RCS file: /cvs/gnome/gmime/memchunk.c,v
+retrieving revision 1.6
+diff -u -r1.6 memchunk.c
+--- memchunk.c	2002/01/04 23:41:26	1.6
++++ memchunk.c	2002/01/17 01:37:51
+@@ -31,6 +31,11 @@
+ #include "memchunk.h"
+ 
+ 
++#ifdef HAVE_GLIB2
++/* in glib2, GSearchFunc was combined with GCompareFunc */
++typedef GCompareFunc GSearchFunc;
++#endif
++
+ typedef struct _MemChunkFreeNode {
+ 	struct _MemChunkFreeNode *next;
+ 	unsigned int atoms;
