@@ -440,9 +440,8 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 			}
 		}
 	} else {
-		/* not a multipart */
+		/* a single part */
 		GMimePartEncodingType encoding = g_mime_part_get_encoding (mime_part);
-		GArray *a = g_array_new (TRUE, FALSE, 1);
 		gchar buf [GMIME_PARSER_MAX_LINE_WIDTH];
 		
 		/* keep reading lines until we reach a boundary or EOF, we're populating a part */
@@ -451,21 +450,14 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 							parent_boundary,
 							parent_end_boundary);
 			if (ps == PARSER_LINE) {
-				g_array_append_vals (a, buf, strlen (buf));
+				if (*buf != '\0')
+					g_mime_part_append_pre_encoded_content (mime_part, buf,
+										strlen (buf), encoding);
 			} else {
 				*setme_state = ps;
 				break;
 			}
 		}
-		
-		/* trim off excess trailing \n's */
-		while (a->len > 2  && a->data[a->len-1] == '\n' && a->data[a->len - 2] == '\n')
-			g_array_set_size (a, a->len - 1);
-		
-		if (a->len > 0)
-			g_mime_part_set_pre_encoded_content (mime_part, a->data, a->len, encoding);
-		
-		g_array_free (a, TRUE);
 	}
 	
 	g_free (boundary);	

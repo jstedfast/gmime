@@ -1,3 +1,18 @@
+2001-05-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Fixes on behalf of Charles Kerr of Pan fame:
+	
+	* gmime-parser.c (g_mime_parser_construct_part_from_file):
+	Use g_mime_part_append_pre_encoded_content().
+
+	* gmime-part.c (g_mime_part_append_pre_encoded_content): New
+	function so that the FILE parser doesn't need to manage it's own
+	content array.
+
+	* gmime-header.[c,h]: const'ify.
+	(g_mime_header_foreach): New function to call a chosen function
+	for each header in the header object.
+
 2001-05-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Updated version to 0.6.0.

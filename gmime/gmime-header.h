@@ -32,17 +32,21 @@ extern "C" {
 
 typedef struct _GMimeHeader GMimeHeader;
 
+typedef void (*GMimeHeaderFunc) (const gchar *name, const gchar *value, gpointer data);
+
 GMimeHeader *g_mime_header_new (void);
 
 void g_mime_header_destroy (GMimeHeader *header);
 
+void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer data);
+
 void g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value);
 
-const gchar *g_mime_header_get (GMimeHeader *header, const gchar *name);
+const gchar *g_mime_header_get (const GMimeHeader *header, const gchar *name);
 
-void g_mime_header_write_to_string (GMimeHeader *header, GString *string);
+void g_mime_header_write_to_string (const GMimeHeader *header, GString *string);
 
-gchar *g_mime_header_to_string (GMimeHeader *header);
+gchar *g_mime_header_to_string (const GMimeHeader *header);
 
 #ifdef __cplusplus
 }
