@@ -942,8 +942,6 @@ pgp_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 		argv[i++] = "--no-secmem-warning";
 		argv[i++] = "--no-greeting";
 		argv[i++] = "--no-tty";
-		/*if (!g_mime_session_is_online (ctx->session))
-		  argv[i++] = "--no-auto-key-retrieve";*/
 		
 		argv[i++] = "--yes";
 		argv[i++] = "--batch";
@@ -1094,6 +1092,7 @@ pgp_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArr
 		g_ptr_array_add (argv, "--verbose");
 		g_ptr_array_add (argv, "--no-secmem-warning");
 		g_ptr_array_add (argv, "--no-greeting");
+		g_ptr_array_add (argv, "--always-trust");
 		g_ptr_array_add (argv, "--yes");
 		g_ptr_array_add (argv, "--batch");
 		
@@ -1147,6 +1146,7 @@ pgp_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArr
 	case GMIME_PGP_TYPE_PGP2:
 	case GMIME_PGP_TYPE_PGP6:
 		g_ptr_array_add (argv, "pgp");
+		
 		g_ptr_array_add (argv, "-f");
 		g_ptr_array_add (argv, "-e");
 		g_ptr_array_add (argv, "-a");
@@ -1288,6 +1288,7 @@ pgp_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 		break;
 	case GMIME_PGP_TYPE_PGP5:
 		argv[i++] = "pgpv";
+		
 		argv[i++] = "-f";
 		argv[i++] = "+batchmode=1";
 		
@@ -1297,6 +1298,7 @@ pgp_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 	case GMIME_PGP_TYPE_PGP2:
 	case GMIME_PGP_TYPE_PGP6:
 		argv[i++] = "pgp";
+		
 		argv[i++] = "-f";
 		
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
