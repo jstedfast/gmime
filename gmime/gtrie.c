@@ -63,7 +63,7 @@ trie_utf8_getc (const unsigned char **in, size_t inlen)
 	register const unsigned char *inptr = *in;
 	const unsigned char *inend = inptr + inlen;
 	register unsigned char c, r;
-	register gunichar u, m;
+	register gunichar m, u = 0;
 	
 	if (inlen == 0)
 		return 0;
@@ -82,10 +82,8 @@ trie_utf8_getc (const unsigned char **in, size_t inlen)
 				return 0;
 			
 			c = *inptr++;
-			if ((c & 0xc0) != 0x80) {
-				r = c;
-				goto loop;
-			}
+			if ((c & 0xc0) != 0x80)
+				goto error;
 			
 			u = (u << 6) | (c & 0x3f);
 			r <<= 1;
@@ -96,7 +94,9 @@ trie_utf8_getc (const unsigned char **in, size_t inlen)
 		
 		u &= ~m;
 	} else {
-		goto again;
+	error:
+		*in = (*in) + 1;
+		u = 0xfffe;
 	}
 	
 	return u;
@@ -226,6 +226,12 @@ g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 	q = &trie->root;
 	
 	while ((c = trie_utf8_getc (&inptr, -1))) {
+		if (c == 0xfffe) {
+			g_warning ("Invalid UTF-8 sequence in pattern '%s' at %s",
+				   pattern, (inptr - 1));
+			continue;
+		}
+		
 		if (trie->icase)
 			c = g_unichar_tolower (c);
 		
@@ -313,6 +319,14 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 	pat = prev = inptr;
 	while ((c = trie_utf8_getc (&inptr, inlen))) {
 		inlen = (inend - inptr);
+		
+		if (c == 0xfffe) {
+			prev = (inptr - 1);
+			pat = (const unsigned char *) buffer + buflen;
+			g_warning ("Invalid UTF-8 in buffer '%.*s' at %.*s",
+				   buflen, buffer, pat - prev, prev);
+			pat = prev = inptr;
+		}
 		
 		if (trie->icase)
 			c = g_unichar_tolower (c);

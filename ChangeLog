@@ -1,3 +1,17 @@
+2003-02-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c: Fixed the table to treat >=127 as a CTRL
+	character.
+
+	* gmime/gtrie.c (trie_utf8_getc): When we encounter an invalid
+	UTF-8 sequence, update in to point to in+1 and return 0xffff.
+	(g_trie_add): Handle invalid UTF-8 sequences (ie, c == 0xffff).
+	(g_trie_search): Same.
+
+	* gmime/gmime-filter-html.c (html_utf8_getc): Shortcut if inptr ==
+	inend by returning 0 and treating it as if we found the
+	terminating nul-char.
+
 2003-02-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 2.0.1
