@@ -27,7 +27,7 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
 #include <glib.h>
 #include <stdarg.h>
@@ -38,9 +38,30 @@ extern "C" {
 #include "gmime-stream.h"
 #include "internet-address.h"
 
+
+/**
+ * GMIME_RECIPIENT_TYPE_TO:
+ *
+ * Recipients in the To: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_TO  "To"
+
+
+/**
+ * GMIME_RECIPIENT_TYPE_CC:
+ *
+ * Recipients in the Cc: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+
+
+/**
+ * GMIME_RECIPIENT_TYPE_BCC:
+ *
+ * Recipients in the Bcc: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+
 
 struct _GMimeMessageHeader {
 	char *from;
