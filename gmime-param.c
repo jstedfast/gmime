@@ -29,10 +29,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-param.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
@@ -125,7 +121,7 @@ rfc2184_decode (const char *in, size_t len)
 	
 	/* save the charset */
 	len = inptr - in;
-	charenc = alloca (len + 1);
+	charenc = g_alloca (len + 1);
 	memcpy (charenc, in, len);
 	charenc[len] = '\0';
 	charset = charenc;
@@ -142,7 +138,7 @@ rfc2184_decode (const char *in, size_t len)
 			char *udecoded;
 			iconv_t cd;
 			
-			decoded = alloca (len + 1);
+			decoded = g_alloca (len + 1);
 			len = hex_decode (inptr, len, decoded);
 			
 			cd = g_mime_iconv_open ("UTF-8", charset);

@@ -25,10 +25,6 @@
 #include <config.h>
 #endif
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include <stdio.h>
 
 #include "gmime-filter-strip.h"

@@ -25,7 +25,6 @@ lib_LTLIBRARIES = libgmime-2.0.la
 libgmime_2_0_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_2_0_la_SOURCES = 		\
-	alloca.c			\
 	strlib.c			\
 	memchunk.c			\
 	gmime.c				\

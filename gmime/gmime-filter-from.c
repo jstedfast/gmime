@@ -25,10 +25,6 @@
 #include <config.h>
 #endif
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-filter-from.h"
 #include "strlib.h"
 
@@ -139,7 +135,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 					if (!strncmp (inptr, "From ", 5)) {
 						fromcount++;
 						
-						node = alloca (sizeof (struct fromnode));
+						node = g_alloca (sizeof (struct fromnode));
 						node->pointer = inptr;
 						node->next = NULL;
 						tail->next = node;

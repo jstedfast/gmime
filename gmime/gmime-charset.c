@@ -30,10 +30,6 @@
 #include <string.h>
 #include <locale.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-charset-map-private.h"
 #include "gmime-charset.h"
 #include "unicode.h"
@@ -210,7 +206,7 @@ g_mime_charset_name (const char *charset)
 	if (!iconv_charsets)
 		return charset;
 	
-	name = alloca (strlen (charset) + 1);
+	name = g_alloca (strlen (charset) + 1);
 	strcpy (name, charset);
 	g_strdown (name);
 	

@@ -28,10 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "memchunk.h"
 
 
@@ -192,7 +188,7 @@ memchunk_clean (MemChunk *memchunk)
 	
 	tree = g_tree_new ((GCompareFunc) tree_compare);
 	for (i = 0; i < memchunk->blocks->len; i++) {
-		info = alloca (sizeof (MemChunkNodeInfo));
+		info = g_alloca (sizeof (MemChunkNodeInfo));
 		info->next = next;
 		info->block = memchunk->blocks->pdata[i];
 		info->blocksize = memchunk->blocksize;

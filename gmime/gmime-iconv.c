@@ -30,10 +30,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "memchunk.h"
@@ -332,7 +328,7 @@ g_mime_iconv_open (const char *to, const char *from)
 	
 	from = g_mime_charset_name (from);
 	to = g_mime_charset_name (to);
-	key = alloca (strlen (from) + strlen (to) + 2);
+	key = g_alloca (strlen (from) + strlen (to) + 2);
 	sprintf (key, "%s:%s", from, to);
 	
 	bucket = g_hash_table_lookup (iconv_cache, key);

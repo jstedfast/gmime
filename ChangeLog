@@ -1,3 +1,15 @@
+2002-05-26  Charles Kerr <charles@rebelbase.com>
+
+	* alloca.c: removed.
+	* gmime-charset.c: use g_alloca instead of alloca.
+	* gmime-filter-from.c: same.
+	* gmime-filter-strip.c: same.
+	* gmime-iconv.c: same.
+	* gmime-param.c: same.
+	* gmime-part.c: same.
+	* gmime-utils.c: same.
+	* memchunk.c: same.
+
 2002-07-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-crlf.c (filter_filter): Fix to not add an extra \r

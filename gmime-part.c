@@ -33,10 +33,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
@@ -188,7 +184,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	
 	switch (i) {
 	case HEADER_CONTENT_TRANSFER_ENCODING:
-		text = alloca (strlen (value) + 1);
+		text = g_alloca (strlen (value) + 1);
 		strcpy (text, value);
 		g_strstrip (text);
 		mime_part->encoding = g_mime_part_encoding_from_string (text);

@@ -32,10 +32,6 @@
 #include <ctype.h>
 #include <errno.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-utils.h"
 #include "gmime-table-private.h"
 #include "gmime-part.h"
@@ -1039,13 +1035,13 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		case 'B':
 		case 'b':
 			inptr += 2;
-			decoded = alloca (inend - inptr);
+			decoded = g_alloca (inend - inptr);
 			declen = g_mime_utils_base64_decode_step (inptr, inend - inptr, decoded, &state, &save);
 			break;
 		case 'Q':
 		case 'q':
 			inptr += 2;
-			decoded = alloca (inend - inptr);
+			decoded = g_alloca (inend - inptr);
 			declen = quoted_decode (inptr, inend - inptr, decoded);
 			
 			if (declen == -1) {
@@ -1059,7 +1055,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		}
 		
 		len = (inptr - 3) - (in + 2);
-		charenc = alloca (len + 1);
+		charenc = g_alloca (len + 1);
 		memcpy (charenc, in + 2, len);
 		charenc[len] = '\0';
 		charset = charenc;
@@ -1281,7 +1277,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	switch (g_mime_utils_best_encoding (word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
 		enclen = BASE64_ENCODE_LEN (len);
-		encoded = alloca (enclen);
+		encoded = g_alloca (enclen);
 		
 		encoding = 'b';
 		
@@ -1296,7 +1292,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		enclen = QP_ENCODE_LEN (len);
-		encoded = alloca (enclen);
+		encoded = g_alloca (enclen);
 		
 		encoding = 'q';
 		
