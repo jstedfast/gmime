@@ -1,3 +1,18 @@
+2000-12-14  Charles Kerr <charles@superpimp.org>
+
+	* gmime-messge.c (g_mime_message_get_message_id):  change
+	g_return_if_fail() to g_return_val_if_fail() to ensure that
+	a value is always returned.
+
+	* gmime-part.h (g_mime_part_get_content_description): make
+	the GMimePart argument const.
+	* gmime-part.h (g_mime_part_get_content): same.
+
+	* test-mime.c (test_addresses): fix bad printf statement.
+
+	* test-parser.c (test_parser): fixed the printf type of a time_t
+	from an int to unsigned long to avoid compiler warnings.
+
 2000-12-13  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/sgml/*:

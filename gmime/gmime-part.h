@@ -79,7 +79,7 @@ void g_mime_part_destroy (GMimePart *mime_part);
 /* accessor functions */
 
 void g_mime_part_set_content_description (GMimePart *mime_part, const gchar *description);
-const gchar *g_mime_part_get_content_description (GMimePart *mime_part);
+const gchar *g_mime_part_get_content_description (const GMimePart *mime_part);
 
 void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
 const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
@@ -107,7 +107,7 @@ const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
 void g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len);
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 					  guint len, GMimePartEncodingType encoding);
-const gchar *g_mime_part_get_content (GMimePart *mime_part, guint *len);
+const gchar *g_mime_part_get_content (const GMimePart *mime_part, guint *len);
 
 void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 #define g_mime_part_add_child(mime_part, child) g_mime_part_add_subpart (mime_part, child)

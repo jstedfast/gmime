@@ -246,7 +246,7 @@ test_addresses (void)
 	for (i = 0; addresses[i]; i++) {
 		ia = internet_address_new_from_string (addresses[i]);
 		if (!ia) {
-			fprintf (stderr, "failed to parse '%s'.\n");
+			fprintf (stderr, "failed to parse '%s'.\n", addresses[i]);
 			continue;
 		}
 		fprintf (stderr, "Original: %s\n", addresses[i]);

@@ -155,7 +155,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const gchar *descript
  * Returns the content description for the specified mime part.
  **/
 const gchar *
-g_mime_part_get_content_description (GMimePart *mime_part)
+g_mime_part_get_content_description (const GMimePart *mime_part)
 {
 	return mime_part->description;
 }
@@ -611,7 +611,7 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content, 
  * and sets %len to the length of the buffer.
  **/
 const gchar *
-g_mime_part_get_content (GMimePart *mime_part, guint *len)
+g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	g_return_val_if_fail (mime_part->content != NULL, NULL);

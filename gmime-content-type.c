@@ -102,7 +102,7 @@ g_mime_content_type_new_from_string (const gchar *string)
 	
 	while (*eptr == ';') {
 		/* looks like we've got some parameters */
-		guchar *name, *value, *ch;
+		guchar *name, *value;
 		
 		while (*eptr && (*eptr == ';' || isspace (*eptr)))
 			eptr++;

@@ -419,7 +419,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const gchar *id)
 const gchar *
 g_mime_message_get_message_id (GMimeMessage *message)
 {
-	g_return_if_fail (message != NULL);
+	g_return_val_if_fail (message != NULL, NULL);
 	
 	return message->header->message_id;
 }

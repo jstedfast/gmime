@@ -51,11 +51,11 @@ test_parser (gchar *data)
 	time (&past);
 	message = g_mime_parser_construct_message (data, TRUE);
 	time (&now);
-	fprintf (stderr, "parsed message in %ds.\n", now - past);
+	fprintf (stderr, "parsed message in %lus.\n", now - past);
 	time (&past);
 	text = g_mime_message_to_string (message);
 	time (&now);
-	fprintf (stderr, "wrote message in %ds\n", now - past);
+	fprintf (stderr, "wrote message in %lus\n", now - past);
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	
