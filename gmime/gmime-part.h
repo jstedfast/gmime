@@ -123,8 +123,8 @@ void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 #define g_mime_part_add_child(mime_part, child) g_mime_part_add_subpart (mime_part, child)
 
 /* utility functions */
-void g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStream *stream);
-char *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
+void g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
+char *g_mime_part_to_string (GMimePart *mime_part);
 
 void g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data);
 

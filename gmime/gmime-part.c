@@ -1073,15 +1073,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 /**
  * g_mime_part_write_to_stream: Write the MIME Part to a string
  * @mime_part: MIME Part
- * @toplevel: mime part is the root mime part
  * @stream: output stream
  *
- * Writes the contents of the MIME Part to @stream. If toplevel is set
- * to TRUE, then the MIME Part header will contain needed MIME headers
- * for rfc822 messages.
+ * Writes the contents of the MIME Part to @stream.
  **/
 void
-g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStream *stream)
+g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 {
 	g_return_if_fail (mime_part != NULL);
 	g_return_if_fail (stream != NULL);
@@ -1099,22 +1096,13 @@ g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStrea
 		}
 		
 		content_type = get_content_type (mime_part->mime_type);
-		
-		if (toplevel) {
-			g_mime_stream_printf (stream, "MIME-Version: 1.0\n"
-					      "%s\n"  /* content-type */
-					      "This is a multi-part message in MIME format.\n\n",
-					      content_type);
-		} else {
-			g_mime_stream_printf (stream, "%s\n", content_type);
-		}
-		
+		g_mime_stream_printf (stream, "%s\n", content_type);		
 		g_free (content_type);
 		
 		child = mime_part->children;
 		while (child) {
 			g_mime_stream_printf (stream, "--%s\n", boundary);
-			g_mime_part_write_to_stream (child->data, FALSE, stream);
+			g_mime_part_write_to_stream (child->data, stream);
 			g_mime_stream_write (stream, "\n", 1);
 			
 			child = child->next;
@@ -1129,9 +1117,6 @@ g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStrea
 		char *content_md5;
 		char *content_location;
 		char *text;
-		
-		if (toplevel)
-			g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
 		
 		/* Content-Type: */
 		content_type = get_content_type (mime_part->mime_type);
@@ -1201,14 +1186,11 @@ g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStrea
 /**
  * g_mime_part_to_string: Write the MIME Part to a string
  * @mime_part: MIME Part
- * @toplevel: mime part is the root mime part
  *
- * Returns an allocated string containing the MIME Part. If toplevel
- * is set to TRUE, then the MIME Part header will contain needed MIME
- * headers for rfc822 messages.
+ * Returns an allocated string containing the MIME Part.
  **/
 char *
-g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
+g_mime_part_to_string (GMimePart *mime_part)
 {
 	GMimeStream *stream;
 	GByteArray *buf;
@@ -1219,7 +1201,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 	buf = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), buf);
-	g_mime_part_write_to_stream (mime_part, toplevel, stream);
+	g_mime_part_write_to_stream (mime_part, stream);
 	g_mime_stream_unref (stream);
 	g_byte_array_append (buf, "", 1);
 	str = buf->data;

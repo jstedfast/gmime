@@ -1,5 +1,13 @@
 2001-10-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-part.c (g_mime_part_write_to_stream): No longer takes a
+	'toplevel' argument.
+	(g_mime_part_to_string): No longer takes a 'toplevel' argument.
+
+	* gmime-message.c (g_mime_message_write_to_stream): Write the
+	MIME-Version header here instead of needing to pass a 'toplevel'
+	argument to g_mime_part_write_to_stream().
+
 	* gmime-charset.c (g_mime_charset_init): Fix for Debian and
 	Solaris.
 

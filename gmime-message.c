@@ -539,9 +539,10 @@ g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 	
 	g_mime_header_write_to_stream (message->header->headers, stream);
 	
-	if (message->mime_part)
-		g_mime_part_write_to_stream (message->mime_part, TRUE, stream);
-	else
+	if (message->mime_part) {
+		g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+		g_mime_part_write_to_stream (message->mime_part, stream);
+	} else
 		g_mime_stream_write (stream, "\n", 1);
 }
 
