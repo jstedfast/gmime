@@ -169,6 +169,7 @@ g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *str
 	ssize_t written;
 	
 	g_return_val_if_fail (wrapper != NULL, -1);
+	g_return_val_if_fail (stream != NULL, -1);
 	g_return_val_if_fail (wrapper->stream != NULL, -1);
 	
 	filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);

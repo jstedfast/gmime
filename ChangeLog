@@ -1,5 +1,10 @@
 2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-fs.c (stream_reset): Reset the position offset. Doh!
+
+	* gmime-stream.c (g_mime_stream_write_to_stream): Don't increment
+	total if no bytes were read/written.
+
 	* gmime-stream-filter.c (stream_substream): Copy over the filters.
 
 	* gmime-part.c (g_mime_part_verify_content_md5): Updated.

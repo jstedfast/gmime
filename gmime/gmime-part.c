@@ -241,14 +241,14 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	
 	if (content_md5) {
 		mime_part->content_md5 = g_strdup (content_md5);
-	} else if (mime_part->content->stream) {
+	} else if (mime_part->content && mime_part->content->stream) {
 		char digest[16], b64digest[32];
 		int len, state, save;
 		GMimeStream *stream;
 		GByteArray *buf;
 		
 		stream = mime_part->content->stream;
-		if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
+		if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
 			stream = g_mime_stream_mem_new ();
 			g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
 		} else {
@@ -295,7 +295,10 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	g_return_val_if_fail (mime_part->content_md5 != NULL, FALSE);
 	
 	stream = mime_part->content->stream;
-	if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
+	if (!stream)
+		return FALSE;
+	
+	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
 		stream = g_mime_stream_mem_new ();
 		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
 	} else {
@@ -867,11 +870,13 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
-	if (!mime_part->content || !mime_part->content->stream)
+	if (!mime_part->content || !mime_part->content->stream) {
+		g_warning ("no content set on this mime part");
 		return NULL;
+	}
 	
 	stream = mime_part->content->stream;
-	if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
+	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
 		/* Decode and cache this mime part's contents... */
 		GMimeStream *cache;
 		
@@ -1027,6 +1032,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 	}
 	
 	written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
+	g_mime_stream_flush (filtered_stream);
 	g_mime_stream_unref (filtered_stream);
 	
 	/* this is just so that I get a warning on fail... */

@@ -380,9 +380,9 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 				
 				nwritten += len;
 			}
+			
+			total += nwritten;
 		}
-		
-		total += nwritten;
 	}
 	
 	return total;

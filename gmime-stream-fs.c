@@ -158,6 +158,8 @@ stream_reset (GMimeStream *stream)
 	if (ret != -1)
 		fstream->eos = FALSE;
 	
+	stream->position = stream->bound_start;
+	
 	return ret;
 }
 
