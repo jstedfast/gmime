@@ -30,7 +30,6 @@
 
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
-#include "strlib.h"
 
 struct _type_bucket {
 	char *type;
@@ -430,7 +429,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	int i;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_strcasecmp (headers[i], header))
 			break;
 	}
 	

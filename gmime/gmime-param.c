@@ -36,8 +36,6 @@
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
 
-#include "strlib.h"
-
 #define d(x) x
 #define w(x)
 
@@ -134,7 +132,7 @@ rfc2184_decode (const char *in, size_t len)
 	inptr++;
 	if (inptr < inend) {
 		len = inend - inptr;
-		if (strcasecmp (charset, "UTF-8") != 0) {
+		if (g_strcasecmp (charset, "UTF-8") != 0) {
 			char *udecoded;
 			iconv_t cd;
 			
@@ -454,7 +452,7 @@ decode_param_list (const char **in)
 			break;
 		}
 		
-		if (is_rfc2184 && tail && !strcasecmp (name, tail->name)) {
+		if (is_rfc2184 && tail && !g_strcasecmp (name, tail->name)) {
 			/* rfc2184 allows a parameter to be broken into multiple parts
 			 * and it looks like we've found one. Append this value to the
 			 * last value.
@@ -645,7 +643,7 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	if (!charset)
 		charset = "iso-8859-1";
 	
-	if (strcasecmp (charset, "UTF-8") != 0)
+	if (g_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
 	if (cd != (iconv_t) -1) {

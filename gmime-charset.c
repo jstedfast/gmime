@@ -33,7 +33,6 @@
 #include "gmime-charset-map-private.h"
 #include "gmime-charset.h"
 #include "unicode.h"
-#include "strlib.h"
 
 #ifdef HAVE_ICONV_DETECT_H
 #include "iconv-detect.h"

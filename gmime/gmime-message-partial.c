@@ -32,7 +32,6 @@
 #include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
 #include "gmime-parser.h"
-#include "strlib.h"
 
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
@@ -119,13 +118,13 @@ static void
 message_partial_add_header (GMimeObject *object, const char *header, const char *value)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!strcasecmp ("Content-MD5", header))
+	if (!g_strcasecmp ("Content-MD5", header))
 		return;
 	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
 }
 
@@ -133,13 +132,13 @@ static void
 message_partial_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!strcasecmp ("Content-MD5", header))
+	if (!g_strcasecmp ("Content-MD5", header))
 		return;
 	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 }
 

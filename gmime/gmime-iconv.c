@@ -323,7 +323,7 @@ g_mime_iconv_open (const char *to, const char *from)
 		return (iconv_t) -1;
 	}
 	
-	if (!strcasecmp (from, "x-unknown"))
+	if (!g_strcasecmp (from, "x-unknown"))
 		from = g_mime_charset_locale_name ();
 	
 	from = g_mime_charset_name (from);

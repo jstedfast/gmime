@@ -25,7 +25,6 @@ lib_LTLIBRARIES = libgmime-2.0.la
 libgmime_2_0_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_2_0_la_SOURCES = 		\
-	strlib.c			\
 	memchunk.c			\
 	gmime.c				\
 	gmime-charset.c			\
@@ -117,7 +116,6 @@ gmimeinclude_HEADERS = 			\
 	internet-address.h
 
 noinst_HEADERS = 			\
-	strlib.h			\
 	memchunk.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h	\

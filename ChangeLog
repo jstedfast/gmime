@@ -1,5 +1,13 @@
 2002-07-29  Charles Kerr  <charles@rebelbase.com>
 
+	* remove strlib.[ch]
+	* use g_strcasecmp instead of strcasecmp
+	* use g_strncasecmp instead of strncasecmp
+	* use g_stpcpy instead of stpcpy
+	* added "#include <string.h>" where needed
+
+2002-07-29  Charles Kerr  <charles@rebelbase.com>
+
 	* gmime-filter-strip: fix trivial compiler warning.
 	* gmime-message-part.c: same.
 	* gmime-multipart-signed.c: same.

@@ -26,15 +26,15 @@
 #endif
 
 #include <ctype.h>
+#include <string.h>
 
 #include "gmime-disposition.h"
-#include "strlib.h"
 
 
 static int
 param_equal (gconstpointer v, gconstpointer v2)
 {
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
+	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 static guint

@@ -178,7 +178,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	int i;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -219,7 +219,7 @@ mime_part_add_header (GMimeObject *object, const char *header, const char *value
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8)) {
+	if (!g_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_add (object->headers, header, value);
 		else
@@ -233,7 +233,7 @@ mime_part_set_header (GMimeObject *object, const char *header, const char *value
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8)) {
+	if (!g_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_set (object->headers, header, value);
 		else
@@ -247,7 +247,7 @@ mime_part_get_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else
 		return NULL;
@@ -259,7 +259,7 @@ mime_part_remove_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 

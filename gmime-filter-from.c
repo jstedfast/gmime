@@ -25,8 +25,9 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-filter-from.h"
-#include "strlib.h"
 
 static void filter_destroy (GMimeFilter *filter);
 static GMimeFilter *filter_copy (GMimeFilter *filter);

@@ -25,6 +25,7 @@
 #include <config.h>
 #endif
 
+#include <string.h>
 #include <sys/types.h>
 #include <regex.h>
 #include <ctype.h>
@@ -35,8 +36,6 @@
 #include "gmime-message-part.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
-
-#include "strlib.h"
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) ((c) == ' ' || (c) == '\t')
@@ -175,7 +174,7 @@ header_raw_find (struct _header_raw *headers, const char *name, off_t *offset)
 	
 	h = headers;
 	while (h) {
-		if (!strcasecmp (h->name, name)) {
+		if (!g_strcasecmp (h->name, name)) {
 			if (offset)
 				*offset = h->offset;
 			return h->value;

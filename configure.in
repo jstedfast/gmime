@@ -60,9 +60,6 @@ AC_CHECK_TYPE(size_t, unsigned int)
 AC_CHECK_TYPE(ssize_t, int)
 
 AC_CHECK_FUNCS(isblank strftime localtime mmap munmap msync)
-
-AC_CHECK_FUNCS(memchr memrchr memmem strlen strcpy strncpy strlcpy stpcpy strcat strncat strlcat strchr strrchr strnstr strstr strncasestr strcasestr strncasecmp strcasecmp)
-
 AC_CHECK_FUNCS(gmtime_r)
 
 dnl Specific dir for HTML output ?

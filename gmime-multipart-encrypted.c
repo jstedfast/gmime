@@ -25,6 +25,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-multipart-encrypted.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-crlf.h"
@@ -33,7 +35,6 @@
 #include "gmime-stream-mem.h"
 #include "gmime-parser.h"
 #include "gmime-part.h"
-#include "strlib.h"
 
 #define d(x)
 
@@ -307,7 +308,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	if (protocol) {
 		/* make sure the protocol matches the cipher encrypt protocol */
-		if (strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
+		if (g_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
 			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 					      "Failed to decrypt MIME part: protocol error");
 			
@@ -322,7 +323,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
-	if (strcasecmp (content_type, protocol) != 0) {
+	if (g_strcasecmp (content_type, protocol) != 0) {
 		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 				      "Failed to decrypt MIME part: protocol error");
 		

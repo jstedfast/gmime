@@ -28,7 +28,6 @@
 #include <stdio.h>
 
 #include "gmime-filter-strip.h"
-#include "strlib.h"
 
 static void filter_destroy (GMimeFilter *filter);
 static GMimeFilter *filter_copy (GMimeFilter *filter);

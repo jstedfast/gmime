@@ -203,7 +203,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	time_t date;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -247,13 +247,13 @@ process_header (GMimeObject *object, const char *header, const char *value)
 static void
 message_add_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (strncasecmp ("Content-", header, 8)) {
+	if (g_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_add (object->headers, header, value);
 		else
@@ -264,13 +264,13 @@ message_add_header (GMimeObject *object, const char *header, const char *value)
 static void
 message_set_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (strncasecmp ("Content-", header, 8)) {
+	if (g_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_set (object->headers, header, value);
 		else
@@ -284,10 +284,10 @@ message_get_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_strcasecmp ("MIME-Version", header))
 		return "1.0";
 	
-	if (strncasecmp ("Content-", header, 8))
+	if (g_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else
 		return NULL;
@@ -296,13 +296,13 @@ message_get_header (GMimeObject *object, const char *header)
 static void
 message_remove_header (GMimeObject *object, const char *header)
 {
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a multipart */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 

@@ -24,13 +24,14 @@
 #include <config.h>
 #endif
 
+#include <ctype.h>
+#include <string.h>
+
 #include "gmime-parser.h"
 #include "gmime-utils.h"
 #include "gmime-header.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-buffer.h"
-#include "strlib.h"
-#include <ctype.h>
 
 #define d(x) x
 
@@ -79,7 +80,7 @@ content_header (const char *field)
 	int i;
 	
 	for (i = 0; content_headers[i]; i++)
-		if (!strncasecmp (field, content_headers[i], strlen (content_headers[i])))
+		if (!g_strncasecmp (field, content_headers[i], strlen (content_headers[i])))
 			return i;
 	
 	return -1;
@@ -112,7 +113,7 @@ static char *fields[] = {
 static gboolean
 special_header (const char *header)
 {
-	return (!strcasecmp (header, "MIME-Version:") || content_header (header) != -1);
+	return (!g_strcasecmp (header, "MIME-Version:") || content_header (header) != -1);
 }
 
 static void
@@ -293,7 +294,7 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			break;
 		}
 		default:
-			if (!strncasecmp (header, "Content-", 8))
+			if (!g_strncasecmp (header, "Content-", 8))
 				g_mime_part_set_content_header (mime_part, header, value);
 			g_free (header);
 			break;
@@ -435,7 +436,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 	
 	for ( ; inptr < inend; inptr++) {
 		for (i = 0; fields[i]; i++)
-			if (!strncasecmp (fields[i], inptr, strlen (fields[i])))
+			if (!g_strncasecmp (fields[i], inptr, strlen (fields[i])))
 				break;
 		
 		if (!fields[i]) {

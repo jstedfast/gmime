@@ -313,7 +313,7 @@ get_wday (const unsigned char *in, unsigned int inlen)
 		return -1;
 	
 	for (wday = 0; wday < 7; wday++)
-		if (!strncasecmp (in, tm_days[wday], 3))
+		if (!g_strncasecmp (in, tm_days[wday], 3))
 			return wday;
 	
 	return -1;  /* unknown week day */
@@ -345,7 +345,7 @@ get_month (const unsigned char *in, unsigned int inlen)
 		return -1;
 	
 	for (i = 0; i < 12; i++)
-		if (!strncasecmp (in, tm_months[i], 3))
+		if (!g_strncasecmp (in, tm_months[i], 3))
 			return i;
 	
 	return -1;  /* unknown month */
@@ -1073,7 +1073,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			*p = '\0';
 		
 		/* slight optimization */
-		if (!strcasecmp (charset, "UTF-8"))
+		if (!g_strcasecmp (charset, "UTF-8"))
 			return g_strndup (decoded, declen);
 		
 		cd = g_mime_iconv_open ("UTF-8", charset);
@@ -1259,7 +1259,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	char encoding;
 	
 	
-	if (strcasecmp (charset, "UTF-8") != 0)
+	if (g_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
 	if (cd != (iconv_t) -1) {

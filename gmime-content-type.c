@@ -37,7 +37,7 @@
 static int
 param_equal (gconstpointer v, gconstpointer v2)
 {
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
+	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 static guint
@@ -221,12 +221,12 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!strcasecmp (mime_type->type, type)) {
+	if (!g_strcasecmp (mime_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;
 		} else {
-			if (!strcasecmp (mime_type->subtype, subtype))
+			if (!g_strcasecmp (mime_type->subtype, subtype))
 				return TRUE;
 			else
 				return FALSE;

@@ -27,8 +27,6 @@
 
 #include "gmime-filter-html.h"
 
-#include "strlib.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -267,12 +265,12 @@ static gboolean
 is_protocol (char *inptr, char *inend, gboolean *backup)
 {
 	if (inend - inptr >= 8) {
-		if (!strncasecmp (inptr, "http://", 7) ||
-		    !strncasecmp (inptr, "https://", 8) ||
-		    !strncasecmp (inptr, "ftp://", 6) ||
-		    !strncasecmp (inptr, "nntp://", 7) ||
-		    !strncasecmp (inptr, "mailto:", 7) ||
-		    !strncasecmp (inptr, "news:", 5))
+		if (!g_strncasecmp (inptr, "http://", 7) ||
+		    !g_strncasecmp (inptr, "https://", 8) ||
+		    !g_strncasecmp (inptr, "ftp://", 6) ||
+		    !g_strncasecmp (inptr, "nntp://", 7) ||
+		    !g_strncasecmp (inptr, "mailto:", 7) ||
+		    !g_strncasecmp (inptr, "news:", 5))
 			return TRUE;
 	} else if (backup) {
 		*backup = TRUE;
@@ -298,7 +296,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	outend = filter->outbuf + filter->outsize;
 	
 	if (html->flags & GMIME_FILTER_HTML_PRE && !html->pre_open) {
-		outptr = stpcpy (outptr, "<pre>");
+		outptr = g_stpcpy (outptr, "<pre>");
 		html->pre_open = TRUE;
 	}
 	
@@ -318,12 +316,12 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					g_snprintf (font, 25, "<font color=\"#%06x\">", html->colour);
 					
 					outptr = check_size (filter, outptr, &outend, 25);
-					outptr = stpcpy (outptr, font);
+					outptr = g_stpcpy (outptr, font);
 					html->coloured = TRUE;
 				}
 			} else if (html->coloured) {
 				outptr = check_size (filter, outptr, &outend, 10);
-				outptr = stpcpy (outptr, "</font>");
+				outptr = g_stpcpy (outptr, "</font>");
 				html->coloured = FALSE;
 			}
 			
@@ -332,7 +330,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				inptr++;
 		} else if (html->flags & GMIME_FILTER_HTML_CITE && html->column == 0) {
 			outptr = check_size (filter, outptr, &outend, 6);
-			outptr = stpcpy (outptr, "&gt; ");
+			outptr = g_stpcpy (outptr, "&gt; ");
 		}
 		
 		if (html->flags & GMIME_FILTER_HTML_CONVERT_URLS && isalpha ((int) *inptr)) {
@@ -350,7 +348,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				if (backup)
 					break;
 				
-				if (!strncasecmp (inptr, "www.", 4) && ((unsigned char) inptr[4]) < 0x80
+				if (!g_strncasecmp (inptr, "www.", 4) && ((unsigned char) inptr[4]) < 0x80
 				    && isalnum ((int) inptr[4])) {
 					dispurl = url_extract (&inptr, inend - inptr, FALSE,
 							       flush ? &backup : NULL);
@@ -390,7 +388,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				outaddr = g_strdup_printf ("<a href=\"mailto:%s\">%s</a>",
 							   addr, dispaddr);
 				outptr = check_size (filter, outptr, &outend, strlen (outaddr));
-				outptr = stpcpy (outptr, outaddr);
+				outptr = g_stpcpy (outptr, outaddr);
 				html->column += strlen (addr);
 				g_free (addr);
 				g_free (dispaddr);
@@ -402,28 +400,28 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		
 		switch ((u = (unsigned char) *inptr++)) {
 		case '<':
-			outptr = stpcpy (outptr, "&lt;");
+			outptr = g_stpcpy (outptr, "&lt;");
 			html->column++;
 			break;
 			
 		case '>':
-			outptr = stpcpy (outptr, "&gt;");
+			outptr = g_stpcpy (outptr, "&gt;");
 			html->column++;
 			break;
 			
 		case '&':
-			outptr = stpcpy (outptr, "&amp;");
+			outptr = g_stpcpy (outptr, "&amp;");
 			html->column++;
 			break;
 			
 		case '"':
-			outptr = stpcpy (outptr, "&quot;");
+			outptr = g_stpcpy (outptr, "&quot;");
 			html->column++;
 			break;
 			
 		case '\n':
 			if (html->flags & GMIME_FILTER_HTML_CONVERT_NL)
-				outptr = stpcpy (outptr, "<br>");
+				outptr = g_stpcpy (outptr, "<br>");
 			
 			*outptr++ = '\n';
 			start = inptr;
@@ -434,7 +432,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			if (html->flags & (GMIME_FILTER_HTML_CONVERT_SPACES)) {
 				do {
 					outptr = check_size (filter, outptr, &outend, 7);
-					outptr = stpcpy (outptr, "&nbsp;");
+					outptr = g_stpcpy (outptr, "&nbsp;");
 					html->column++;
 				} while (html->column % 8);
 				break;
@@ -446,7 +444,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				if (inptr == in || (inptr < inend && (*(inptr + 1) == ' ' ||
 								      *(inptr + 1) == '\t' ||
 								      *(inptr - 1) == '\n'))) {
-					outptr = stpcpy (outptr, "&nbsp;");
+					outptr = g_stpcpy (outptr, "&nbsp;");
 					html->column++;
 					break;
 				}
@@ -474,7 +472,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	
 	if (flush && html->pre_open) {
 		outptr = check_size (filter, outptr, &outend, 10);
-		outptr = stpcpy (outptr, "</pre>");
+		outptr = g_stpcpy (outptr, "</pre>");
 	}
 	
 	*out = filter->outbuf;
