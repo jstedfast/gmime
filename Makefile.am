@@ -6,7 +6,16 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-mbox test-streams test-html test-iconv test-partial
+noinst_PROGRAMS = 	\
+	gen-table 	\
+	test-mime 	\
+	test-parser 	\
+	test-mbox 	\
+	test-streams 	\
+	test-html 	\
+	test-iconv 	\
+	test-partial	\
+	test-pgp
 
 bin_SCRIPTS = gmime-config
 
@@ -67,6 +76,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-data-wrapper.h	\
 	gmime-disposition.h	\
 	gmime-exception.h	\
+	gmime-exception-list.def\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-charset.h	\
@@ -144,6 +154,11 @@ test_partial_LDFLAGS =
 test_partial_DEPENDENCIES = $(DEPS)
 test_partial_LDADD = $(LDADDS)
 
+test_pgp_SOURCES = test-pgp.c
+test_pgp_LDFLAGS = 
+test_pgp_DEPENDENCIES = $(DEPS)
+test_pgp_LDADD = $(LDADDS)
+
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
@@ -153,7 +168,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests
+tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests PGPtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -178,6 +193,11 @@ FILTERtests : test-html
 ICONVtests : test-iconv
 	@echo "##"
 	@echo "## iconv cache regression tests"
+	@echo "##"
+
+PGPtests : test-pgp
+	@echo "##"
+	@echo "## PGP tests"
 	@echo "##"
 
 dist-hook: gmime.spec
