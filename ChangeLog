@@ -1,3 +1,179 @@
+2002-03-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-chomp.c (g_mime_filter_chomp_new): New stream
+	filter that chomps excess trailing whitespace from the end of the
+	stream. This is needed to update the PGP/MIME code to comply with
+	rfc3156.
+
+	* gmime-pgp-mime.c (g_mime_pgp_mime_part_verify): Don't attach a
+	from-filter, if it ain't from-filtered already, then we'll just be
+	breaking stuff. To become rfc3156 compliant, add a chomp filter
+	here.
+	(g_mime_pgp_mime_part_sign): Add a chomp filter here too.
+
+	* gmime-part.c (write_content): Don't flush the output stream
+	here.
+
+2002-02-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+	* configure.in: Updated version to 0.8.0
+
+2002-01-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c (g_mime_charset_name): Updated for AIX, HPUX,
+	IRIX, and Sun systems.
+
+2002-01-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c (iconv_cache_bucket_add_node): Fixed an oops.
+	(iconv_cache_bucket_get_first_unused): Fixed another oops.
+
+2002-01-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_write_to_stream):
+	Handle the x-uuencode encoding type.
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): No longer needs a
+	uulen argument since it is now compacted into the state argument.
+	(g_mime_utils_uuencode_step): Same here.
+
+	* gmime-filter-basic.c (filter_filter): Ignore data until we have
+	found the "begin" line. Also, we no longer need uulen.
+	(filter_complete): Same.
+
+	* gmime-part.c (g_mime_part_encoding_to_string): Handle
+	x-uuencode.
+	(g_mime_part_encoding_from_string): Same.
+	(g_mime_part_set_pre_encoded_content): Here too.
+	(write_content): And again here.
+
+2002-01-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c (iconv_node_new): Return the node - how did I miss
+	this!?
+
+2002-01-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Fixed more silliness.
+
+	* acconfig.h: Added #undef's for some iconv stuff.
+
+	* gmime-filter-charset.c (g_mime_filter_charset_new): Put the
+	charset aruments in the right order.
+
+	* gmime-iconv.c (g_mime_iconv_open): Swap the to/from arguments so
+	that they are in the same order as iconv_open.
+
+	* gmime-iconv-utils.c (iconv_utils_init): Put the to/from
+	arguments in the right order.
+
+2002-01-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): If we get an EILSEQ,
+	just return NULL rather than g_strndup'ing the original
+	string. We'd rather get back NULL and know it failed than get back
+	a string thinking everything went okay.
+
+	* configure.in: Fixed some silliness, thanks to Charles Schmidt.
+
+2002-01-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): New utility function
+	to iconv n bytes of a string and return a buffer containing the
+	converted string.
+	(g_mime_iconv_strdup): Same but for the whole string.
+	(g_mime_iconv_locale_to_utf8): Converts a string in the locale
+	charset to utf8.
+	(g_mime_iconv_locale_to_utf8_length): Same but for a sublength of
+	the string.
+	(g_mime_iconv_utf8_to_locale): Converts a string from utf8 to the
+	locale charset.
+	(g_mime_iconv_utf8_to_locale_length): Same but for a sublength of
+	the string.
+
+2002-01-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-iconv.c: test suite to make sure that the gmime-iconv cache
+	works.
+
+	* gmime-iconv.c (g_mime_iconv_init): Initialize the iconv_node
+	memchunk.
+	(g_mime_iconv_shutdown): Destroy the iconv_node memchunk.
+	(iconv_node_destroy): Use memchunk_free instead of g_free.
+	(iconv_node_new): Use memchunk_alloc.
+	(iconv_node_set_used): Add/Remove the node to the iconv_open_hash.
+
+2002-01-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped the version to 0.7.7
+
+	* doc/*: Updated to document the new gmime-iconv interfaces.
+
+	* gmime-filter-charset.c (g_mime_filter_charset_new): Use
+	g_mime_iconv_open instead of iconv_open. Also no longer need to
+	use g_mime_charset_name() since gmime-iconv does this for us.
+	(filter_destroy): Use g_mime_iconv_close() instead of
+	iconv_close().
+
+	* gmime-iconv.c (g_mime_iconv_open): New wrapper around
+	iconv_open() so that we can cache the results. This'll be a major
+	speedup for systems like Solaris where iconv_open() must dlopen a
+	module for each of the charsets. Also uses g_mime_charset_name()
+	to get the iconv-friendly charset name for you.
+	(g_mime_iconv_close): New wrapper around iconv_close().
+
+2002-01-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 0.7.6
+
+	* doc/*: Updated to document the new charset code.
+
+	* gmime.h.in: Added #includes for gmime-charset.h and
+	gmime-filter-charset.h.
+
+	* gmime-filter-charset.c: New filter for converting text between
+	charsets using iconv.
+
+	* gmime-charset.c (g_mime_charset_name): New function to derive
+	the iconv-friendly name for a given charset.
+
+2002-01-09  Charles Kerr <charles@rebelbase.com>
+
+	* internet-address.c (internet_address_list_prepend): replaced
+	"g_return_if_fail" with "g_return_val_if_fail".
+	* internet-address.c (internet_address_list_append): same.
+
+	* internet-address.c (internet_address_set_group): removed
+	unused variables to shut up compiler.
+	* gmime-param.c (rfc2184_decode): same.
+
+2002-01-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* config.h.in: Added a #include <alloca.h> if HAVE_ALLOCA_H is
+	defined - this limits the number of places I have to conditionally
+	add #include <alloca.h> in the source files.
+
+2002-01-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (parse_broken_date): Implemented.
+
+2002-01-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.c (memchunk_clean): Oops, when tree_search() returns 0
+	we want to prune it, not the other way around :-)
+
+2002-01-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.c (memchunk_clean): Fixed a logic mistake that
+	prevented pruning of the head node.
+
+2002-01-01  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-message (g_mime_message_get_body): added g_return_val_if_fail
+	checks in the entry point.
+
 2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (decode_address): Optimized group parsing.

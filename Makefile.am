@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html test-pgp test-pgpmime
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html test-iconv test-pgp test-pgpmime
 
 bin_SCRIPTS = gmime-config
 
@@ -25,10 +25,14 @@ libgmime_la_SOURCES = 		\
 	gmime-exception.c	\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
+	gmime-filter-charset.c	\
+	gmime-filter-chomp.c	\
 	gmime-filter-crlf.c	\
 	gmime-filter-from.c	\
 	gmime-filter-html.c	\
 	gmime-header.c		\
+	gmime-iconv.c		\
+	gmime-iconv-utils.c	\
 	gmime-message.c		\
 	gmime-object.c		\
 	gmime-param.c		\
@@ -59,10 +63,14 @@ gmimeinclude_HEADERS = 		\
 	gmime-exception.h	\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
+	gmime-filter-charset.h	\
+	gmime-filter-chomp.h	\
 	gmime-filter-crlf.h	\
 	gmime-filter-from.h	\
 	gmime-filter-html.h	\
 	gmime-header.h		\
+	gmime-iconv.h		\
+	gmime-iconv-utils.h	\
 	gmime-message.h		\
 	gmime-object.h		\
 	gmime-param.h		\
@@ -111,6 +119,11 @@ test_html_LDFLAGS =
 test_html_DEPENDENCIES = $(DEPS)
 test_html_LDADD = $(LDADDS)
 
+test_iconv_SOURCES = test-iconv.c
+test_iconv_LDFLAGS = 
+test_iconv_DEPENDENCIES = $(DEPS)
+test_iconv_LDADD = $(LDADDS)
+
 test_pgp_SOURCES = test-pgp.c
 test_pgp_LDFLAGS = 
 test_pgp_DEPENDENCIES = $(DEPS)
@@ -130,7 +143,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests STREAMtests FILTERtests PGPtests PGPMIMEtests
+tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests PGPtests PGPMIMEtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -150,6 +163,11 @@ STREAMtests : test-streams
 FILTERtests : test-html
 	@echo "##"
 	@echo "## Filter regression tests"
+	@echo "##"
+
+ICONVtests : test-iconv
+	@echo "##"
+	@echo "## iconv cache regression tests"
 	@echo "##"
 
 PGPtests : test-pgp
@@ -178,7 +196,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4
+EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4 zentimer.h zenprofiler.h
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.

@@ -35,6 +35,8 @@ void        g_mime_charset_init (void);
 
 const char *g_mime_charset_locale_name (void);
 
+const char *g_mime_charset_name (const char *charset);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

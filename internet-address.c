@@ -20,15 +20,22 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#include <string.h>
+#include <ctype.h>
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
 #endif
 
 #include "internet-address.h"
 #include "gmime-table-private.h"
 #include "gmime-utils.h"
-#include <string.h>
-#include <ctype.h>
+
 
 #define w(x) x
 
@@ -211,7 +218,7 @@ internet_address_set_addr (InternetAddress *ia, const char *addr)
 void
 internet_address_set_group (InternetAddress *ia, InternetAddressList *group)
 {
-	InternetAddressList *members, *next;
+	/*InternetAddressList *members, *next; */
 	
 	g_return_if_fail (ia != NULL);
 	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
@@ -256,7 +263,7 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node;
 	
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia!=NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);
@@ -282,7 +289,7 @@ internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node, *n;
 	
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia!=NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);
@@ -698,7 +705,7 @@ decode_domain (const char **in)
 				w(g_warning ("Missing ']' in domain-literal: %s", *in));
 		} else {
 			if (!(atom = decode_atom (&inptr))) {
-				w(g_warning ("Unexpeced char '%c' in domain: %s", *inptr, *in));
+				w(g_warning ("Unexpected char '%c' in domain: %s", *inptr, *in));
 				/* remove the last '.' */
 				if (domain->str[domain->len - 1] == '.')
 					g_string_truncate (domain, domain->len - 1);

@@ -29,6 +29,10 @@
 #include <ctype.h>
 #include <locale.h>
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "gmime-message.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
@@ -710,6 +714,9 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 	const char *content;
 	char *body = NULL;
 	size_t len = 0;
+
+	g_return_val_if_fail (message!=NULL, NULL);
+	g_return_val_if_fail (is_html!=NULL, NULL);
 	
 	type = g_mime_part_get_content_type (message->mime_part);
 	if (g_mime_content_type_is_type (type, "text", "*")) {

@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,24 +21,25 @@
  */
 
 
-#ifndef __GMIME_CHARSET_H__
-#define __GMIME_CHARSET_H__
+#ifndef __GMIME_FILTER_CHOMP_H__
+#define __GMIME_FILTER_CHOMP_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
+#include "gmime-filter.h"
 
-void        g_mime_charset_init (void);
+typedef struct _GMimeFilterChomp {
+	GMimeFilter parent;
+	
+} GMimeFilterChomp;
 
-const char *g_mime_charset_locale_name (void);
-
-const char *g_mime_charset_name (const char *charset);
+GMimeFilter *g_mime_filter_chomp_new (void);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_CHARSET_H__ */
+#endif /* __GMIME_FILTER_CHOMP_H__ */

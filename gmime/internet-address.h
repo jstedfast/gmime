@@ -60,7 +60,6 @@ InternetAddress *internet_address_new_group (const char *name);
 
 void internet_address_ref (InternetAddress *ia);
 void internet_address_unref (InternetAddress *ia);
-/*void internet_address_destroy (InternetAddress *ia);*/
 
 void internet_address_set_name (InternetAddress *ia, const char *name);
 void internet_address_set_addr (InternetAddress *ia, const char *addr);

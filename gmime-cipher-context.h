@@ -39,7 +39,8 @@ typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
 	GMIME_CIPHER_HASH_MD2,
 	GMIME_CIPHER_HASH_MD5,
-	GMIME_CIPHER_HASH_SHA1
+	GMIME_CIPHER_HASH_SHA1,
+	GMIME_CIPHER_HASH_RIPEMD160
 } GMimeCipherHash;
 
 typedef struct _GMimeCipherContext GMimeCipherContext;
@@ -106,7 +107,7 @@ gboolean             g_mime_cipher_validity_get_valid (GMimeCipherValidity *vali
 
 void                 g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid);
 
-char                *g_mime_cipher_validity_get_description (GMimeCipherValidity *validity);
+const char          *g_mime_cipher_validity_get_description (GMimeCipherValidity *validity);
 
 void                 g_mime_cipher_validity_set_description (GMimeCipherValidity *validity,
 							     const char *description);
@@ -114,7 +115,6 @@ void                 g_mime_cipher_validity_set_description (GMimeCipherValidity
 void                 g_mime_cipher_validity_clear (GMimeCipherValidity *validity);
 
 void                 g_mime_cipher_validity_free (GMimeCipherValidity *validity);
-
 
 #ifdef __cplusplus
 }

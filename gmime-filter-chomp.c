@@ -29,7 +29,9 @@
 #include <alloca.h>
 #endif
 
-#include "gmime-filter-from.h"
+#include <stdio.h>
+
+#include "gmime-filter-chomp.h"
 #include "strlib.h"
 
 static void filter_destroy (GMimeFilter *filter);
@@ -54,20 +56,18 @@ static GMimeFilter filter_template = {
 
 
 /**
- * g_mime_filter_from_new:
+ * g_mime_filter_chomp_new:
  *
- * Creates a new GMimeFilterFrom filter.
+ * Creates a new GMimeFilterChomp filter.
  *
- * Returns a new from filter.
+ * Returns a new chomp filter.
  **/
 GMimeFilter *
-g_mime_filter_from_new ()
+g_mime_filter_chomp_new ()
 {
-	GMimeFilterFrom *new;
+	GMimeFilterChomp *new;
 	
-	new = g_new (GMimeFilterFrom, 1);
-	
-	new->midline = FALSE;
+	new = g_new (GMimeFilterChomp, 1);
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
@@ -84,103 +84,85 @@ filter_destroy (GMimeFilter *filter)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	return g_mime_filter_from_new ();
+	return g_mime_filter_chomp_new ();
 }
-
-struct fromnode {
-	struct fromnode *next;
-	char *pointer;
-};
 
 static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
-	struct fromnode *head = NULL, *tail = (struct fromnode *) &head, *node;
-	register char *inptr, *inend;
-	unsigned int left;
-	int fromcount = 0;
-	char *outptr;
+	register unsigned char *inptr, *s;
+	const unsigned char *inend;
+	register char *outptr;
 	
+	g_mime_filter_set_size (filter, len + prespace, FALSE);
+	
+	inend = in + len;
 	inptr = in;
-	inend = inptr + len;
+	
+	outptr = filter->outbuf;
 	
 	while (inptr < inend) {
-		register int c = -1;
+		s = inptr;
+		while (inptr < inend && isspace ((int) *inptr))
+			inptr++;
 		
-		if (from->midline) {
-			while (inptr < inend && (c = *inptr++) != '\n')
-				;
-		}
-		
-		if (c == '\n' || !from->midline) {
-			left = inend - inptr;
-			if (left > 0) {
-				from->midline = TRUE;
-				if (left < 5) {
-					if (*inptr == 'F') {
-						g_mime_filter_backup (filter, inptr, left);
-						from->midline = FALSE;
-						inend = inptr;
-						break;
-					}
-				} else {
-					if (!strncmp (inptr, "From ", 5)) {
-						fromcount++;
-						
-						node = alloca (sizeof (struct fromnode));
-						node->pointer = inptr;
-						node->next = NULL;
-						tail->next = node;
-						tail = node;
-						
-						inptr += 5;
-					}
-				}
-			} else {
-				from->midline = FALSE;
-			}
+		if (inptr < inend) {
+			while (s < inptr)
+				*outptr++ = (char) *s++;
+			
+			while (inptr < inend && !isspace ((int) *inptr))
+				*outptr++ = (char) *inptr++;
+		} else {
+#if 0
+			if ((inend - s) >= 2 && *s == '\r' && *(s + 1) == '\n')
+				*outptr++ = *s++;
+			if (*s == '\n')
+				*outptr++ = *s++;
+#endif		
+			if (s < inend)
+				g_mime_filter_backup (filter, s, inend - s);
+			break;
 		}
 	}
 	
-	if (fromcount > 0) {
-		g_mime_filter_set_size (filter, len + fromcount, FALSE);
-		
-		node = head;
-		inptr = in;
-		outptr = filter->outbuf;
-		while (node) {
-			memcpy (outptr, inptr, (unsigned) (node->pointer - inptr));
-			outptr += node->pointer - inptr;
-			*outptr++ = '>';
-			inptr = node->pointer;
-			node = node->next;
-		}
-		
-		memcpy (outptr, inptr, (unsigned) (inend - inptr));
-		outptr += inend - inptr;
-		*out = filter->outbuf;
-		*outlen = outptr - filter->outbuf;
-		*outprespace = filter->outbuf - filter->outreal;
-	} else {
-		*out = in;
-		*outlen = inend - in;
-		*outprespace = prespace;
-	}
+	*out = filter->outbuf;
+	*outlen = outptr - filter->outbuf;
+	*outprespace = filter->outpre;
 }
 
 static void 
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	filter_filter (filter, in, len, prespace, out, outlen, outprespace);
+	unsigned char *inptr;
+	char *outptr;
+	
+	if (len)
+		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
+	
+	if (filter->backlen) {
+		inptr = (unsigned char *) filter->backbuf;
+		outptr = filter->outbuf + *outlen;
+		
+		/* in the case of a canonical eoln */
+		if (*inptr == '\r' && *(inptr + 1) == '\n') {
+			*outptr++ = (char) *inptr++;
+			(*outlen)++;
+		}
+		
+		if (*inptr == '\n') {
+			*outptr++ = (char) *inptr++;
+			(*outlen)++;
+		}
+		
+		/* to protect against further complete calls */
+		g_mime_filter_backup (filter, "", 0);
+	}
 }
 
 static void
 filter_reset (GMimeFilter *filter)
 {
-	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
-	
-	from->midline = FALSE;
+	/* no-op */
 }

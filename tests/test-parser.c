@@ -15,6 +15,26 @@
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
+#define VALIDATE_PGP_MIME_SIGNATURES
+
+#ifdef VALIDATE_PGP_MIME_SIGNATURES
+#include "gmime-pgp-mime.h"
+
+/* we have to disable getting the body cuz it kills the raw data */
+#ifdef TEST_GET_BODY
+#undef TEST_GET_BODY
+#endif
+
+static char *pgp_path = "/usr/bin/gpg";
+static GMimePgpType pgp_type = GMIME_PGP_TYPE_GPG;
+static char *userid = "pgp-mime@xtorshun.org";
+static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+
+static char *
+get_passwd (const char *prompt, gpointer data)
+{	return g_strdup (passphrase);
+}
+#endif
 
 void
 print_depth (int depth)
@@ -32,7 +52,35 @@ print_mime_struct (GMimePart *part, int depth)
 	
 	print_depth (depth);
 	type = g_mime_part_get_content_type (part);
-	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
+	
+	fprintf (stdout, "Content-Type: %s/%s", type->type, type->subtype);
+	
+#ifdef VALIDATE_PGP_MIME_SIGNATURES
+	if (g_mime_content_type_is_type (type, "multipart", "signed")) {
+		GMimeCipherValidity *validity;
+		GMimePgpContext *ctx;
+		int valid;
+		
+		ctx = g_mime_pgp_context_new (pgp_type, pgp_path, get_passwd, NULL);
+		
+		validity = g_mime_pgp_mime_part_verify (ctx, part, NULL);
+		valid = g_mime_cipher_validity_get_valid (validity);
+		fprintf (stdout, "  [%s signature]\n", valid ? "GOOD" : "BAD");
+		if (!valid) {
+			const char *desc;
+			
+			desc = g_mime_cipher_validity_get_description (validity);
+			fprintf (stderr, "%s", desc ? desc : "");
+		}
+		g_mime_cipher_validity_free (validity);
+		
+		g_mime_object_unref (GMIME_OBJECT (ctx));
+	} else {
+		printf ("\n");
+	}
+#else
+	printf ("\n");
+#endif
 	
 	if (g_mime_content_type_is_type (type, "multipart", "*")) {
 		GList *child;

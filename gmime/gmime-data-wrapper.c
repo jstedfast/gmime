@@ -199,6 +199,10 @@ g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *str
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
+	case GMIME_PART_ENCODING_UUENCODE:
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		break;
 	default:
 		break;
 	}

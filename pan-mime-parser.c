@@ -394,8 +394,10 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GByteArray *headers,
 
 
 /**
- * g_mime_parser_construct_part: Construct a GMimePart object
+ * g_mime_parser_construct_part:
  * @stream: raw MIME Part stream
+ *
+ * Constructs a GMimePart object based on @stream.
  *
  * Returns a GMimePart object based on the data.
  **/
@@ -511,11 +513,13 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 
 
 /**
- * g_mime_parser_construct_message: Construct a GMimeMessage object
+ * g_mime_parser_construct_message:
  * @stream: an rfc0822 message stream
- * @preserve_headers: if TRUE, then store the arbitrary headers
+ * @preserve_headers: if %TRUE, then store the arbitrary headers
  *
- * Returns a GMimeMessage object based on the rfc0822 data.
+ * Constructs a GMimeMessage object based on @stream.
+ *
+ * Returns a GMimeMessage object based on the rfc0822 message stream.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)

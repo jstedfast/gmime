@@ -27,6 +27,7 @@
 
 #include "gmime-pgp-mime.h"
 #include "gmime-stream-filter.h"
+#include "gmime-filter-chomp.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-stream-mem.h"
@@ -240,7 +241,7 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	GMimeContentType *mime_type;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter, *from_filter;
+	GMimeFilter *crlf_filter, *from_filter, *chomp_filter;
 	GMimeStream *stream, *sigstream;
 	GSList *encodings = NULL;
 	char *hash_type = NULL;
@@ -256,13 +257,23 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
+	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	
+	/* Note: see rfc3156, section 3 - second note */
+	from_filter = g_mime_filter_from_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
+	
+	/* Note: see rfc3156, section 5.4 (this is the big thing that changed between rfc2015 and rfc3156) */
+	chomp_filter = g_mime_filter_chomp_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), chomp_filter);
+	
+	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-	from_filter = g_mime_filter_from_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
+	
 	g_mime_part_write_to_stream (part, filtered_stream);
+	g_mime_stream_flush (filtered_stream);
 	g_mime_stream_unref (filtered_stream);
 	
 	/* reset the stream */
@@ -272,6 +283,9 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	sigstream = g_mime_stream_mem_new ();
 	
 	switch (hash) {
+	case GMIME_CIPHER_HASH_MD2:
+		hash_type = "pgp-md2";
+		break;
 	case GMIME_CIPHER_HASH_MD5:
 		hash_type = "pgp-md5";
 		break;
@@ -348,7 +362,7 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 	GMimeDataWrapper *wrapper;
 	GMimePart *part, *multipart, *sigpart;
 	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter, *from_filter;
+	GMimeFilter *crlf_filter, *chomp_filter;
 	GMimeStream *stream, *sigstream;
 	GMimeCipherValidity *valid;
 	
@@ -362,14 +376,19 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 	/* get the plain part */
 	part = GMIME_PART (multipart->children->data);
 	stream = g_mime_stream_mem_new ();
+	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	
+	/* Note: see rfc3156, section 5.4 (this is the big thing that changed between rfc2015 and rfc3156) */
+	chomp_filter = g_mime_filter_chomp_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), chomp_filter);
+	
+	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-	from_filter = g_mime_filter_from_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
 	
 	g_mime_part_write_to_stream (part, filtered_stream);
+	g_mime_stream_flush (filtered_stream);
 	g_mime_stream_unref (filtered_stream);
 	g_mime_stream_reset (stream);
 	
@@ -382,6 +401,9 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 	
 	/* verify */
 	valid = g_mime_pgp_verify (context, stream, sigstream, ex);
+	
+	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
+		  GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
 	g_mime_stream_unref (sigstream);
 	g_mime_stream_unref (stream);
@@ -530,9 +552,10 @@ g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GM
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
 	
 	/* FIXME: this kludge is only needed by the in-memory mime
-           parser in gmime-parser.c (it needs to be able to seek in
-           the stream), it's not needed by the parser in
-           pan-mime-parser.c I don't think... */
+	 * parser in gmime-parser.c (it needs to be able to seek in
+	 * the stream), it's not needed by the parser in
+	 * pan-mime-parser.c I don't think...
+	 */
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_write_to_stream (filtered_stream, stream);
 	g_mime_stream_unref (filtered_stream);

@@ -88,7 +88,7 @@ content_header (const char *header)
 
 
 /**
- * parse_content_heaaders:
+ * parse_content_headers:
  * @headers: content header string
  * @inlen: length of the header block.
  * @mime_part: mime part to populate with the information we get from the Content-* headers.

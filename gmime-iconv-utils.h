@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,24 +21,28 @@
  */
 
 
-#ifndef __GMIME_CHARSET_H__
-#define __GMIME_CHARSET_H__
+#ifndef __GMIME_ICONV_UTILS_H__
+#define __GMIME_ICONV_UTILS_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
+#include <sys/types.h>
+#include <iconv.h>
 
-void        g_mime_charset_init (void);
+char *g_mime_iconv_strdup (iconv_t cd, const char *string);
+char *g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n);
 
-const char *g_mime_charset_locale_name (void);
+char *g_mime_iconv_locale_to_utf8 (const char *string);
+char *g_mime_iconv_locale_to_utf8_length (const char *string, size_t n);
 
-const char *g_mime_charset_name (const char *charset);
+char *g_mime_iconv_utf8_to_locale (const char *string);
+char *g_mime_iconv_utf8_to_locale_length (const char *string, size_t n);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_CHARSET_H__ */
+#endif /* __GMIME_ICONV_UTILS_H__ */

@@ -477,9 +477,49 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 }
 
 
-/*----------------------------------------------------------------------*
- *                     Public crypto functions
- *----------------------------------------------------------------------*/
+static char *
+hash_string (GMimePgpContext *ctx, GMimeCipherHash hash)
+{
+	if (hash == GMIME_CIPHER_HASH_DEFAULT)
+		return NULL;
+	
+	switch (ctx->type) {
+	case GMIME_PGP_TYPE_GPG:
+		switch (hash) {
+		case GMIME_CIPHER_HASH_MD2:
+			return "MD2";
+		case GMIME_CIPHER_HASH_MD5:
+			return "MD5";
+		case GMIME_CIPHER_HASH_SHA1:
+			return "SHA1";
+		case GMIME_CIPHER_HASH_RIPEMD160:
+			return "RIPEMD160";
+		default:
+			g_assert_not_reached ();
+		}
+		break;
+	case GMIME_PGP_TYPE_PGP2:
+		/* FIXME: find a way to specify a hash algorithm for pgp2 */
+		return NULL;
+	case GMIME_PGP_TYPE_PGP5:
+	case GMIME_PGP_TYPE_PGP6:
+		switch (hash) {
+		case GMIME_CIPHER_HASH_MD2:
+			return "+hashnum=5";
+		case GMIME_CIPHER_HASH_MD5:
+			return "+hashnum=1";
+		case GMIME_CIPHER_HASH_SHA1:
+			return "+hashnum=2";
+		case GMIME_CIPHER_HASH_RIPEMD160:
+			return "+hashnum=3";
+		default:
+			g_assert_not_reached ();
+		}
+		break;
+	}
+	
+	return NULL;
+}
 
 static int
 pgp_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
@@ -531,20 +571,7 @@ pgp_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
 		goto exception;
 	}
 	
-	switch (hash) {
-	case GMIME_CIPHER_HASH_DEFAULT:
-		hash_str = NULL;
-		break;
-	case GMIME_CIPHER_HASH_MD5:
-		hash_str = "MD5";
-		break;
-	case GMIME_CIPHER_HASH_SHA1:
-		hash_str = "SHA1";
-		break;
-	default:
-		g_assert_not_reached ();
-		break;
-	}
+	hash_str = hash_string (context, hash);
 	
 	i = 0;
 	switch (context->type) {
@@ -579,38 +606,44 @@ pgp_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
 		argv[i++] = passwd_fd;
 		break;
 	case GMIME_PGP_TYPE_PGP5:
-		/* FIXME: respect hash */
 		argv[i++] = "pgps";
+		
+		if (hash_str)
+			argv[i++] = hash_str;
 		
 		if (userid) {
 			argv[i++] = "-u";
 			argv[i++] = (char *) userid;
 		}
 		
-		argv[i++] = "-b";
-		argv[i++] = "-f";
-		argv[i++] = "-z";
-		argv[i++] = "-a";
-		argv[i++] = "-o";
-		argv[i++] = "-";        /* output to stdout */
+		argv[i++] = "-b";  /* -b means break off (detach) the signature */
+		argv[i++] = "-f";  /* -f means act as a unix-style filter */
+		argv[i++] = "-v";  /* -v means verbose diagnostic messages */
+		argv[i++] = "-z";  /* FIXME: do we want this option!? */
+		argv[i++] = "-a";  /* -a means ascii armor */
+		argv[i++] = "-o";  /* -o specifies an output stream */
+		argv[i++] = "-";   /* ...in this case, stdout */
 		
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
 	case GMIME_PGP_TYPE_PGP2:
 	case GMIME_PGP_TYPE_PGP6:
-		/* FIXME: respect hash */
 		argv[i++] = "pgp";
+		
+		if (hash_str)
+			argv[i++] = hash_str;
 		
 		if (userid) {
 			argv[i++] = "-u";
 			argv[i++] = (char *) userid;
 		}
 		
-		argv[i++] = "-f";
-		argv[i++] = "-a";
-		argv[i++] = "-o";
-		argv[i++] = "-";
+		argv[i++] = "-f";  /* -f means act as a unix-style filter */
+		argv[i++] = "-l";  /* -l means show longer more descriptive diagnostic messages */
+		argv[i++] = "-a";  /* -a means ascii armor */
+		argv[i++] = "-o";  /* -o specifies an output stream */
+		argv[i++] = "-";   /* ...in this case, stdout */
 		
 		argv[i++] = "-sb"; /* create a detached signature */
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
@@ -707,20 +740,7 @@ pgp_clearsign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash
 		goto exception;
 	}
 	
-	switch (hash) {
-	case GMIME_CIPHER_HASH_DEFAULT:
-		hash_str = NULL;
-		break;
-	case GMIME_CIPHER_HASH_MD5:
-		hash_str = "MD5";
-		break;
-	case GMIME_CIPHER_HASH_SHA1:
-		hash_str = "SHA1";
-		break;
-	default:
-		g_assert_not_reached ();
-		break;
-	}
+	hash_str = hash_string (context, hash);
 	
 	i = 0;
 	switch (context->type) {
@@ -755,39 +775,46 @@ pgp_clearsign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash
 		argv[i++] = passwd_fd;
 		break;
 	case GMIME_PGP_TYPE_PGP5:
-		/* FIXME: modify to respect hash */
 		argv[i++] = "pgps";
+		
+		if (hash_str)
+			argv[i++] = hash_str;
 		
 		if (userid) {
 			argv[i++] = "-u";
 			argv[i++] = (char *) userid;
 		}
 		
-		argv[i++] = "-f";
-		argv[i++] = "-z";
-		argv[i++] = "-a";
-		argv[i++] = "-o";
-		argv[i++] = "-";        /* output to stdout */
+		argv[i++] = "-f";  /* -f means act as a unix-style filter */
+		argv[i++] = "-v";  /* -v means verbose diagnostic messages */
+		argv[i++] = "-z";  /* FIXME: do we want this option!? */
+		argv[i++] = "-a";  /* -a means ascii armor */
+		argv[i++] = "-o";  /* -o specifies an output stream */
+		argv[i++] = "-";   /* ...in this case, stdout */
 		
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
 	case GMIME_PGP_TYPE_PGP2:
 	case GMIME_PGP_TYPE_PGP6:
-		/* FIXME: modify to respect hash */
+		/* +PGP_MIME or PGP_MIMEPARSE might be interesting options? */
 		argv[i++] = "pgp";
+		
+		if (hash_str)
+			argv[i++] = hash_str;
 		
 		if (userid) {
 			argv[i++] = "-u";
 			argv[i++] = (char *) userid;
 		}
 		
-		argv[i++] = "-f";
-		argv[i++] = "-a";
-		argv[i++] = "-o";
-		argv[i++] = "-";
+		argv[i++] = "-f";  /* -f means act as a unix-style filter */
+		argv[i++] = "-l";  /* -l means show longer more descriptive diagnostic messages */
+		argv[i++] = "-a";  /* -a means ascii armor */
+		argv[i++] = "-o";  /* -o specifies an output stream */
+		argv[i++] = "-";   /* ...in this case, stdout */
 		
-		argv[i++] = "-st";
+		argv[i++] = "-st"; 
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;

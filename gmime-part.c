@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -31,6 +32,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "gmime-part.h"
 #include "gmime-utils.h"
@@ -47,7 +52,8 @@ static GMimeObject object_template = {
 };
 
 
-#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||  \
+#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
+				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
 
 
@@ -429,7 +435,9 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 	return mime_part->content_location;
 }
 
-
+#if 0
+/* don't really need this anymore but keeping it just in case I find
+   it useful later... */
 static void
 unfold (char *str)
 {
@@ -446,6 +454,7 @@ unfold (char *str)
 	
 	*d = '\0';
 }
+#endif
 
 static void
 sync_content_type (GMimePart *mime_part)
@@ -566,7 +575,8 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  * Returns the encoding type as a string. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
+ * and GMIME_PART_ENCODING_UUENCODE.
  **/
 const char *
 g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
@@ -580,6 +590,8 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 		return "base64";
         case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		return "quoted-printable";
+	case GMIME_PART_ENCODING_UUENCODE:
+		return "x-uuencode";
 	default:
 		/* I guess this is a good default... */
 		return NULL;
@@ -594,11 +606,11 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * Gets the content encoding enumeration value based on the input
  * string.
  *
- * Returns the encoding string as a GMimePartEncodingType.
- * Available values for the encoding are:
- * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
- * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 and
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * Returns the encoding string as a GMimePartEncodingType.  Available
+ * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
+ * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
+ * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_encoding_from_string (const char *encoding)
@@ -611,6 +623,8 @@ g_mime_part_encoding_from_string (const char *encoding)
 		return GMIME_PART_ENCODING_BASE64;
 	else if (!g_strcasecmp (encoding, "quoted-printable"))
 		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+	else if (!g_strcasecmp (encoding, "x-uuencode"))
+		return GMIME_PART_ENCODING_UUENCODE;
 	else return GMIME_PART_ENCODING_DEFAULT;
 }
 
@@ -618,7 +632,7 @@ g_mime_part_encoding_from_string (const char *encoding)
 static void
 sync_content_disposition (GMimePart *mime_part)
 {
-	char *str, *buf;
+	char *str;
 	
 	str = g_mime_disposition_header (mime_part->disposition, FALSE);
 	g_mime_header_set (mime_part->headers, "Content-Disposition", str);
@@ -699,8 +713,6 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 void
 g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute, const char *value)
 {
-	GMimeParam *param = NULL;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (attribute != NULL);
 	
@@ -727,8 +739,6 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 const char *
 g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
 {
-	GMimeParam *param;
-	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	g_return_val_if_fail (attribute != NULL, NULL);
 	
@@ -750,8 +760,6 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
-	GMimeParam *param = NULL;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)
@@ -823,7 +831,7 @@ read_random_pool (char *buffer, size_t bytes)
 void
 g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 {
-	char bbuf[27];
+	char bbuf[35];
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*"));
@@ -946,6 +954,10 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		break;
+	case GMIME_PART_ENCODING_UUENCODE:
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
 	default:
@@ -1102,6 +1114,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 	
 	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
 		GMimeStream *filtered_stream;
+		const char *filename;
 		GMimeFilter *filter;
 		
 		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
@@ -1114,6 +1127,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 			break;
+		case GMIME_PART_ENCODING_UUENCODE:
+			filename = g_mime_part_get_filename (part);
+			g_mime_stream_printf (stream, "begin 0644 %s\n", filename ? filename : "unknown");
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
 		default:
 			break;
 		}
@@ -1121,6 +1140,11 @@ write_content (GMimePart *part, GMimeStream *stream)
 		written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
 		g_mime_stream_flush (filtered_stream);
 		g_mime_stream_unref (filtered_stream);
+		
+		if (part->encoding == GMIME_PART_ENCODING_UUENCODE) {
+			/* FIXME: get rid of this special-case x-uuencode crap */
+			g_mime_stream_write (stream, "end\n", 4);
+		}
 	} else {
 		GMimeStream *content_stream;
 		
@@ -1128,7 +1152,6 @@ write_content (GMimePart *part, GMimeStream *stream)
 		g_mime_stream_reset (content_stream);
 		written = g_mime_stream_write_to_stream (content_stream, stream);
 		g_mime_stream_unref (content_stream);
-		g_mime_stream_flush (stream);
 	}
 	
 	/* this is just so that I get a warning on fail... */

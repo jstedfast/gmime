@@ -5,6 +5,7 @@
 
 #undef STDC_HEADERS
 
+/* needed headers */
 #undef HAVE_SYS_MMAN_H
 #undef HAVE_ALLOCA_H
 #undef HAVE_STRING_H
@@ -12,6 +13,7 @@
 #undef HAVE_CTYPE_H
 #undef HAVE_TIME_H
 
+/* needed functions */
 #undef HAVE_TIMEZONE
 #undef HAVE_TM_GMTOFF
 #undef HAVE_ISBLANK
@@ -19,10 +21,14 @@
 #undef HAVE_LOCALTIME
 #undef HAVE_ALLOCA
 
+#undef HAVE_ICONV
+#undef ICONV_CONST
+
 #undef HAVE_MMAP
 #undef HAVE_MUNMAP
 #undef HAVE_MSYNC
 
+/* strlib functions */
 #undef HAVE_MEMCHR
 #undef HAVE_MEMRCHR
 #undef HAVE_MEMMEM
