@@ -29,7 +29,7 @@
 #include "gmime-stream-buffer.h"
 
 #define BLOCK_BUFFER_LEN   4096
-#define BUFFER_GROW_SIZE   1024
+#define BUFFER_GROW_SIZE   1024  /* should this also be 4k? */
 
 static void stream_destroy (GMimeStream *stream);
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -70,6 +70,7 @@ stream_destroy (GMimeStream *stream)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
+	/* FIXME: this could be better optimized in the case where @len > the block size */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t n, nread = 0;
 	
@@ -140,6 +141,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 static ssize_t
 stream_write (GMimeStream *stream, char *buf, size_t len)
 {
+	/* FIXME: this could be better optimized for the case where @len > block size */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t written = 0, n;
 	
@@ -175,17 +177,17 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	
-	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE) {
+	if (buffer->mode == GMIME_STREAM_BUFFER_BLOCK_WRITE && buffer->buflen > 0) {
 		ssize_t written = 0;
 		
-		if (!buffer->buflen > 0) {
-			written = g_mime_stream_write (buffer->source, buffer->buffer, buffer->buflen);
-			if (written > 0)
-				buffer->buflen -= written;
-			
-			if (buffer->buflen != 0)
-				return -1;
+		written = g_mime_stream_write (buffer->source, buffer->buffer, buffer->buflen);
+		if (written > 0) {
+			memmove (buffer->buffer, buffer->buffer + written, buffer->buflen - written);
+			buffer->buflen -= written;
 		}
+		
+		if (buffer->buflen != 0)
+			return -1;
 	}
 	
 	return g_mime_stream_flush (buffer->source);
@@ -232,6 +234,7 @@ stream_reset (GMimeStream *stream)
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
+	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
 		reset = g_mime_stream_reset (buffer->source);
 		if (reset == -1)
 			return -1;
@@ -540,8 +543,8 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 
 /**
  * g_mime_stream_buffer_readln:
- * @stream:
- * @buffer:
+ * @stream: stream
+ * @buffer: output buffer
  *
  * Reads a single line into @buffer.
  **/

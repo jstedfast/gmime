@@ -1,5 +1,13 @@
 2001-11-25  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* strlib.c (strlcpy): BSD defines the prototype as returning
+	size_t, the strlen of the resultant string.
+	(strlcat): Same.
+
+	* gmime-stream-buffer.c (stream_flush): Oops, memmove the buffer
+	too and a smidgen of code cleanup.
+	(stream_reset): Fix reset for block write mode.
+
 	* configure.in: Bumped the version to 0.7.4 and added checks for
 	system mmap functions.
 

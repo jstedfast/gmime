@@ -297,9 +297,9 @@ strncpy (char *dest, const char *src, size_t n)
  * @dest. The strings may not overlap and the destination string @dest
  * must be large enough to receive the copy.
  *
- * Returns a pointer to the resulting destination string @dest.
+ * Returns the size of the resultant string, @dest.
  **/
-char *
+size_t
 strlcpy (char *dest, const char *src, size_t n)
 {
 	register const char *s = src;
@@ -310,7 +310,7 @@ strlcpy (char *dest, const char *src, size_t n)
 	
 	*d = '\0';
 	
-	return dest;
+	return d - dest;
 }
 #endif
 
@@ -421,9 +421,9 @@ strncat (char *dest, const char *src, size_t n)
  * and the destination string dest must have enough space for the
  * result.
  *
- * Returns a pointer to the resulting destination string @dest.
+ * Returns the size of the resultant string, @dest.
  **/
-char *
+size_t
 strlcat (char *dest, const char *src, size_t n)
 {
 	register const char *s = src;
@@ -437,7 +437,7 @@ strlcat (char *dest, const char *src, size_t n)
 	
 	*d = '\0';
 	
-	return dest;
+	return d - dest;
 }
 #endif
 
