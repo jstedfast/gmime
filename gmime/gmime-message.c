@@ -182,7 +182,7 @@ typedef void (*token_skip_t) (const char **in);
 
 struct _received_token {
 	char *token;
-	int len;
+	size_t len;
 	token_skip_t skip;
 };
 
@@ -190,7 +190,7 @@ extern void decode_lwsp   (const char **in);
 
 static void skip_atom     (const char **in);
 static void skip_domain   (const char **in);
-static void skip_addrspec (const char **in);
+static void skip_addr     (const char **in);
 static void skip_msgid    (const char **in);
 
 static struct _received_token received_tokens[] = {
@@ -199,10 +199,8 @@ static struct _received_token received_tokens[] = {
 	{ "via ",  4, skip_atom     },
 	{ "with ", 5, skip_atom     },
 	{ "id ",   3, skip_msgid    },
-	{ "for ",  4, skip_addrspec }
+	{ "for ",  4, skip_addr     }
 };
-
-#define NUM_RECEIVED_TOKENS (sizeof (received_tokens) / sizeof (received_tokens[0]))
 
 static void
 skip_atom (const char **in)
@@ -213,6 +211,29 @@ skip_atom (const char **in)
 	inptr = *in;
 	while (is_atom (*inptr))
 		inptr++;
+	*in = inptr;
+}
+
+static void
+skip_comment (const char **in)
+{
+	register const char *inptr = *in;
+	int depth = 1;
+	
+	if (*inptr == '(')
+		inptr++;
+	
+	while (*inptr && depth > 0) {
+		if (*inptr == '(')
+			depth++;
+		else if (*inptr == ')')
+			depth--;
+		inptr++;
+	}
+	
+	if (*inptr == ')')
+		inptr++;
+	
 	*in = inptr;
 }
 
@@ -337,6 +358,24 @@ skip_addrspec (const char **in)
 }
 
 static void
+skip_addr (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	if (*inptr == '<') {
+		inptr++;
+		skip_addrspec (&inptr);
+		if (*inptr == '>')
+			inptr++;
+	} else {
+		skip_addrspec (&inptr);
+	}
+	
+	*in = inptr;
+}
+
+static void
 skip_msgid (const char **in)
 {
 	const char *inptr = *in;
@@ -344,82 +383,126 @@ skip_msgid (const char **in)
 	decode_lwsp (&inptr);
 	if (*inptr == '<') {
 		inptr++;
-		decode_lwsp (&inptr);
 		skip_addrspec (&inptr);
 		if (*inptr == '>')
 			inptr++;
+	} else {
+		skip_atom (&inptr);
 	}
 	
 	*in = inptr;
 }
 
 
+struct _received_part {
+	struct _received_part *next;
+	const char *start;
+	size_t len;
+};
+
 static ssize_t
 write_received (GMimeStream *stream, const char *name, const char *value)
 {
-	const char *start, *inptr;
+	struct _received_part *parts, *part, *tail;
+	const char *lwsp, *inptr;
 	ssize_t nwritten;
 	GString *str;
 	int len, i;
+	
+	while (is_lwsp (*value))
+		value++;
+	
+	if (*value == '\0')
+		return 0;
 	
 	str = g_string_new (name);
 	g_string_append_len (str, ": ", 2);
 	len = 10;
 	
-	start = inptr = value;
+	tail = parts = part = g_alloca (sizeof (struct _received_part));
+	part->start = inptr = value;
+	part->next = NULL;
+	
 	while (*inptr) {
-		while (is_lwsp (*inptr))
-			inptr++;
-		
-		for (i = 0; i < NUM_RECEIVED_TOKENS; i++) {
+		for (i = 0; i < G_N_ELEMENTS (received_tokens); i++) {
 			if (!strncmp (inptr, received_tokens[i].token, received_tokens[i].len)) {
-				if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
-					g_string_append (str, "\n\t");
-					while (is_lwsp (*start))
-						start++;
-					len = 1;
+				if (inptr > part->start) {
+					part->len = lwsp - part->start;
+					
+					part = g_alloca (sizeof (struct _received_part));
+					part->start = inptr;
+					part->next = NULL;
+					
+					tail->next = part;
+					tail = part;
 				}
-				
-				/* write the last section */
-				g_string_append_len (str, start, inptr - start);
-				len += (inptr - start);
-				start = inptr;
 				
 				inptr += received_tokens[i].len;
 				received_tokens[i].skip (&inptr);
-				decode_lwsp (&inptr);
-				inptr--;
+				
+				lwsp = inptr;
+				while (is_lwsp (*inptr))
+					inptr++;
+				
+				if (*inptr == ';') {
+					inptr++;
+					
+					part->len = inptr - part->start;
+					
+					lwsp = inptr;
+					while (is_lwsp (*inptr))
+						inptr++;
+					
+					part = g_alloca (sizeof (struct _received_part));
+					part->start = inptr;
+					part->next = NULL;
+					
+					tail->next = part;
+					tail = part;
+				}
 				
 				break;
 			}
 		}
 		
-		if (*inptr == ';') {
-			if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
-				g_string_append (str, "\n\t");
-				while (is_lwsp (*start))
-					start++;
-				len = 1;
-			}
+		if (i == G_N_ELEMENTS (received_tokens)) {
+			while (*inptr && !is_lwsp (*inptr))
+				inptr++;
 			
-			inptr++;
-			g_string_append_len (str, start, inptr - start);
-			len += (inptr - start);
-			start = inptr;
-		} else {
-			inptr++;
+			lwsp = inptr;
+			while (is_lwsp (*inptr))
+				inptr++;
+		}
+		
+		if (*inptr == '(') {
+			skip_comment (&inptr);
+			
+			lwsp = inptr;
+			while (is_lwsp (*inptr))
+				inptr++;
 		}
 	}
 	
-	if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
-		g_string_append (str, "\n\t");
-		while (is_lwsp (*start))
-			start++;
-		len = 1;
-	}
+	part->len = lwsp - part->start;
 	
-	if ((inptr - start) > 0)
-		g_string_append_len (str, start, inptr - start);
+	lwsp = NULL;
+	part = parts;
+	do {
+		len += lwsp ? part->start - lwsp : 0;
+		if (len + part->len > GMIME_FOLD_LEN && part != parts) {
+			g_string_append (str, "\n\t");
+			len = 1;
+		} else if (lwsp) {
+			g_string_append_len (str, lwsp, part->start - lwsp);
+		}
+		
+		g_string_append_len (str, part->start, part->len);
+		lwsp = part->start + part->len;
+		len += part->len;
+		
+		part = part->next;
+	} while (part != NULL);
+	
 	g_string_append_c (str, '\n');
 	
 	nwritten = g_mime_stream_write (stream, str->str, str->len);
@@ -1206,8 +1289,7 @@ g_mime_message_to_string (GMimeMessage *message)
 }
 
 
-/**
- * The proper way to handle a multipart/alternative part is to return
+/* The proper way to handle a multipart/alternative part is to return
  * the last part that we know how to render. For our purposes, we are
  * going to assume:
  *
