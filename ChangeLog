@@ -1,3 +1,8 @@
+2001-10-09  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter.c (g_mime_filter_construct): make sure outptr is
+	zeroed out before we read it in g_mime_filter_set_size().
+
 2001-10-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-basic.c (filter_filter): Implemented uuencoding.

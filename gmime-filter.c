@@ -49,6 +49,7 @@ g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template)
 	g_return_if_fail (filter_template != NULL);
 	
 	filter->priv = g_new0 (struct _GMimeFilterPrivate, 1);
+	filter->outptr = NULL;
 	filter->outreal = NULL;
 	filter->outbuf = NULL;
 	filter->outsize = 0;
