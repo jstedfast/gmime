@@ -63,7 +63,7 @@ struct _GMimeMultipartClass {
 	void (*add_part_at) (GMimeMultipart *multipart, GMimeObject *part, int index);
 	void (*remove_part) (GMimeMultipart *multipart, GMimeObject *part);
 	
-	GMimeObject * (*remove_part_at) (GMimelMultipart *multipart, int index);
+	GMimeObject * (*remove_part_at) (GMimeMultipart *multipart, int index);
 	GMimeObject * (*get_part) (GMimeMultipart *multipart, int index);
 	
 	int  (*get_number) (GMimeMultipart *multipart);
@@ -81,7 +81,7 @@ void g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index);
 void g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);
 
-GMimeObject *g_mime_multipart_remove_part_at (GMimelMultipart *multipart, int index);
+GMimeObject *g_mime_multipart_remove_part_at (GMimeMultipart *multipart, int index);
 GMimeObject *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);
 
 int g_mime_multipart_get_number (GMimeMultipart *multipart);

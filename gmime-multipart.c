@@ -25,8 +25,15 @@
 #include <config.h>
 #endif
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+
 #include "gmime-multipart.h"
 #include "gmime-utils.h"
+
+#define d(x) x
 
 /* GObject class methods */
 static void g_mime_multipart_base_class_init (GMimeMultipartClass *klass);
@@ -48,7 +55,7 @@ static int multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
 static void multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
 static void multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index);
 static void multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);
-static GMimeObject *multipart_remove_part_at (GMimelMultipart *multipart, int index);
+static GMimeObject *multipart_remove_part_at (GMimeMultipart *multipart, int index);
 static GMimeObject *multipart_get_part (GMimeMultipart *multipart, int index);
 static ssize_t multipart_get_number (GMimeMultipart *multipart);
 static void multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
@@ -104,7 +111,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_OBJECT);
 	
-	gobject_class->finalize = g_mime_object_finalize;
+	gobject_class->finalize = g_mime_multipart_finalize;
 	
 	object_class->init = multipart_init;
 	object_class->add_header = multipart_add_header;
@@ -121,7 +128,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	klass->get_part = multipart_get_part;
 	klass->get_number = multipart_get_number;
 	klass->set_boundary = multipart_set_boundary;
-	klass->get_boundary = multipart->get_boundary;
+	klass->get_boundary = multipart_get_boundary;
 	
 	g_mime_object_register_type ("multipart", "*", GMIME_TYPE_MULTIPART);
 }
@@ -159,7 +166,7 @@ g_mime_multipart_finalize (GObject *object)
 	}
 	g_list_free (multipart->parts);
 	
-	GMIME_OBJECT_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 
@@ -242,7 +249,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	/* write the preface */
 	buffer = multipart->preface ? multipart->preface : "This is a multipart message in MIME format.\n";
-	nwritten = g_mime_stream_write (stream, buffer, strlen (buffer));
+	nwritten = g_mime_stream_write_string (stream, buffer);
 	if (nwritten == -1)
 		return -1;
 	
@@ -305,7 +312,7 @@ g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (GMIME_IS_OBJECT (part));
 	
-	GMIME_MULTIPART_CLASS_GET (multipart)->add_part (multipart, part);
+	GMIME_MULTIPART_GET_CLASS (multipart)->add_part (multipart, part);
 }
 
 
@@ -332,7 +339,7 @@ g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int 
 	g_return_if_fail (GMIME_IS_OBJECT (part));
 	g_return_if_fail (index >= 0);
 	
-	GMIME_MULTIPART_CLASS_GET (multipart)->add_part_at (multipart, part, index);
+	GMIME_MULTIPART_GET_CLASS (multipart)->add_part_at (multipart, part, index);
 }
 
 
@@ -384,12 +391,12 @@ g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (GMIME_IS_OBJECT (part));
 	
-	GMIME_MULTIPART_CLASS_GET (multipart)->remove_part (multipart, part);
+	GMIME_MULTIPART_GET_CLASS (multipart)->remove_part (multipart, part);
 }
 
 
 static GMimeObject *
-multipart_remove_part_at (GMimelMultipart *multipart, int index)
+multipart_remove_part_at (GMimeMultipart *multipart, int index)
 {
 	GMimeObject *part;
 	GList *node;
@@ -432,12 +439,12 @@ g_mime_multipart_remove_part_at (GMimeMultipart *multipart, int index)
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
-	return GMIME_MULTIPART_CLASS_GET (multipart)->remove_part_at (multipart, index);
+	return GMIME_MULTIPART_GET_CLASS (multipart)->remove_part_at (multipart, index);
 }
 
 
 static GMimeObject *
-multipart_get_part (GMimelMultipart *multipart, int index)
+multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	GMimeObject *part;
 	GList *node;
@@ -471,7 +478,7 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
-	return GMIME_MULTIPART_CLASS_GET (multipart)->get_part (multipart, index);
+	return GMIME_MULTIPART_GET_CLASS (multipart)->get_part (multipart, index);
 }
 
 
@@ -498,7 +505,7 @@ g_mime_multipart_get_number (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), -1);
 	
-	return GMIME_MULTIPART_CLASS_GET (multipart)->get_number (multipart);
+	return GMIME_MULTIPART_GET_CLASS (multipart)->get_number (multipart);
 }
 
 
@@ -557,7 +564,7 @@ g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	
-	GMIME_MULTIPART_CLASS_GET (multipart)->set_boundary (multipart, boundary);
+	GMIME_MULTIPART_GET_CLASS (multipart)->set_boundary (multipart, boundary);
 }
 
 
@@ -586,5 +593,5 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return GMIME_MULTIPART_CLASS_GET (multipart)->get_boundary (multipart);
+	return GMIME_MULTIPART_GET_CLASS (multipart)->get_boundary (multipart);
 }

@@ -49,7 +49,7 @@ const char *g_mime_header_get (const GMimeHeader *header, const char *name);
 
 void g_mime_header_remove (GMimeHeader *header, const char *name);
 
-void g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
+ssize_t g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
 
 char *g_mime_header_to_string (const GMimeHeader *header);
 

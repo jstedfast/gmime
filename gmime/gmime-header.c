@@ -273,14 +273,17 @@ g_mime_header_remove (GMimeHeader *header, const char *name)
  * @stream: output stream
  *
  * Write the headers to a stream.
+ *
+ * Returns the number of bytes written or -1 on fail.
  **/
-void
+ssize_t
 g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 {
+	ssize_t nwritten, total = 0;
 	struct raw_header *h;
 	
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (stream != NULL);
+	g_return_val_if_fail (header != NULL, -1);
+	g_return_val_if_fail (stream != NULL, -1);
 	
 	h = header->headers;
 	while (h) {
@@ -288,12 +291,19 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 		
 		if (h->value) {
 			val = g_mime_utils_header_printf ("%s: %s\n", h->name, h->value);
-			g_mime_stream_write_string (stream, val);
+			nwritten = g_mime_stream_write_string (stream, val);
 			g_free (val);
+			
+			if (nwritten == -1)
+				return -1;
+			
+			total += nwritten;
 		}
 		
 		h = h->next;
 	}
+	
+	return total;
 }
 
 
