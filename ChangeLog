@@ -1,5 +1,9 @@
 2002-03-20  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Don't forget to
+	update the outbuf pointer after reallocing. Exit the loop when
+	inleft == 0 even if errno is E2BIG.
+
 	* gmime-charset.c: Changed the canonical format for
 	CANONINICAL_ISO_S_FORMAT for Solaris.
 
