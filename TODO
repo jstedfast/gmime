@@ -9,6 +9,8 @@ tasks are presented in.
 
 - Write a broken date parser. (job for lex/bison?)
 
+- make thread-safe
+
 - modify address parser:
 
 <charles> on usenet it's not uncommon to have header like "From: Joe Bob"

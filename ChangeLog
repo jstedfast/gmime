@@ -1,5 +1,9 @@
 2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Bumped version number to 0.7.5 since the
+	internet-address API and bits of the gmime-message API have
+	changed.
+
 	* internet-address.c (internet_address_new): Initialize the
 	refcount to 1.
 	(internet_address_destroy): This is now an internal function.
