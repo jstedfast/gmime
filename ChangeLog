@@ -1,3 +1,12 @@
+2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-pgpmime.c: Implemented.
+
+	* pgp-mime.c (pgp_mime_part_sign): Oops. Forgot to set the
+	mime_type on the multipart.
+	(pgp_mime_part_encrypt): And here too. Also set the version_part
+	encoding to 7bit.
+
 2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-pgp.c (test_encrypt): Updated to reflect argument changes

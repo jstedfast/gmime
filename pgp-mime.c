@@ -123,6 +123,7 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	}
 	g_mime_content_type_add_parameter (mime_type, "micalg", hash_type);
 	g_mime_content_type_add_parameter (mime_type, "protocol", "application/pgp-signature");
+	g_mime_part_set_content_type (multipart, mime_type);
 	
 	/* add the parts to the multipart */
 	g_mime_part_add_child (multipart, part);
@@ -170,6 +171,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	/* construct the version part */
 	version_part = g_mime_part_new_with_type ("application", "pgp-encrypted");
 	g_mime_part_set_content (version_part, "Version: 1", strlen ("Version: 1"));
+	g_mime_part_set_encoding (version_part, GMIME_PART_ENCODING_7BIT);
 	
 	/* construct the pgp-encrypted mime part */
 	encrypted_part = g_mime_part_new_with_type ("application", "octet-stream");
@@ -183,6 +185,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	mime_type = g_mime_content_type_new ("multipart", "encrypted");
 	g_mime_part_set_boundary (multipart, NULL);
 	g_mime_content_type_add_parameter (mime_type, "protocol", "application/pgp-encrypted");
+	g_mime_part_set_content_type (multipart, mime_type);
 	
 	/* add the parts to the multipart */
 	g_mime_part_add_child (multipart, version_part);
