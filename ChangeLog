@@ -1,3 +1,9 @@
+2003-12-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): If scanning for eoln
+	results in finding inend, request a refill and try again (changed
+	from inptr + 1 >= inend).
+
 2003-12-05  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/internet-address.c (decode_domain): Make sure domain->len

@@ -772,7 +772,7 @@ parser_step_headers (GMimeParser *parser)
 			while (*inptr != '\n')
 				inptr++;
 			
-			if (inptr + 1 >= inend) {
+			if (inptr == inend) {
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
 				priv->inptr = start;
@@ -810,7 +810,6 @@ parser_step_headers (GMimeParser *parser)
 	inend = priv->inend;
 	
 	header_backup (priv, inptr, inend - inptr);
-	/*header_parse (priv, hend);*/
 	
  headers_end:
 	
