@@ -513,7 +513,7 @@ sync_headers (GMimeMessage *message)
 	if (recipients) {
 		GString *recip;
 		
-		recip = g_string_new ("Cc: ");
+		recip = g_string_new ("");
 		while (recipients) {
 			InternetAddress *ia;
 			gchar *address;
