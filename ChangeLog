@@ -1,3 +1,21 @@
+2003-02-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Bumped version to 1.0.7
+
+	* configure.in: Link with -liconv for systems that need it and
+	bumped version to 1.0.7
+
+	* gmime-filter-charset.c: Backported from gmime-2.0
+	(filter_filter): Rewritten, don't set errno to 0 before calling
+	iconv (we can't assume that on success errno will not be
+	set?). Also, don't grow the buffer here, save any un-converted
+	text in the backup buffer to be converted next time through.
+	(filter_complete): Pick up the slack of filter_filter by
+	converting anything left over.
+
+	* gmime-param.c (decode_param): Make sure 'value' is non-NULL
+	before checking that it is 7bit ascii.
+
 2002-10-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.0.6

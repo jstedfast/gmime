@@ -409,7 +409,7 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 				value = val;
 			}
 		} else {
-			if (gmime_interfaces_utf8)
+			if (gmime_interfaces_utf8 && value)
 				valid_utf8 = !g_mime_utils_text_is_8bit (value, strlen (value));
 		}
 	}
