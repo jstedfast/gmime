@@ -1,3 +1,8 @@
+2002-08-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c: Get rid of a #include "unicode.h". This is no
+	longer needed since we use glib2's unicode stuff.
+
 2002-08-02  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-message.c (gmime_message_foreach_part): if the message
