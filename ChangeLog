@@ -1,3 +1,9 @@
+2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.[c,h]: New stream that buffers reads or
+	writes to/from another stream. Will also implement a gets() method
+	for Charles.
+
 2001-09-20  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-mem.c (stream_eos): Check for position >= instead
