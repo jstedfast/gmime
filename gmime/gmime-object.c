@@ -234,8 +234,15 @@ g_mime_object_new_type (const char *type, const char *subtype)
 			obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, "*"));
 	}
 	
-	if (!obj_type)
-		return NULL;
+	if (!obj_type) {
+		/* use the default mime object */
+		bucket = g_hash_table_lookup (type_hash, "*");
+		if (bucket)
+			obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, "*"));
+		
+		if (!obj_type)
+			return NULL;
+	}
 	
 	object = g_object_new (obj_type, NULL, NULL);
 	

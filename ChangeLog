@@ -1,3 +1,14 @@
+2002-05-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message-partial.c: New class to handle MIME parts with a
+	content-type of message/partial.
+
+	* gmime.c (g_mime_init): Register the message/partial class.
+
+	* gmime-object.c (g_mime_object_new_type): If we fail to find an
+	appropriate mime object class, try falling back to the */*
+	handler. Only if that fails do we return NULL.
+
 2002-05-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* Makefile.am: Added gmime-stream-cat.c to the build.

@@ -54,4 +54,5 @@ g_mime_init (guint32 flags)
 	/* register our default mime object types */
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
 	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
+	g_mime_object_register_type ("message", "partial", g_mime_message_partial_get_type ());
 }
