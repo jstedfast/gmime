@@ -1,3 +1,11 @@
+2002-12-01  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c: #define _GNU_SOURCE for isblank on GNU
+	systems.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_wait): Fixed the errno
+	saving.
+
 2002-11-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-message.c (write_received): After skipping the

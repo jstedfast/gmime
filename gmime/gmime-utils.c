@@ -26,6 +26,8 @@
 #include <config.h>
 #endif
 
+#define _GNU_SOURCE
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/param.h> /* for MAXHOSTNAMELEN */
@@ -758,7 +760,7 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	}
 	
 	MUTEX_LOCK ();
-	msgid = g_strdup_printf ("%ul.%ul.%ul@%s", time (NULL), getpid (), count++, fqdn);
+	msgid = g_strdup_printf ("%ul.%ul.%ul@%s", (unsigned int) time (NULL), getpid (), count++, fqdn);
 	MUTEX_UNLOCK ();
 	
 	return msgid;
@@ -1507,6 +1509,8 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 		
 		break;
 	default:
+		encoded = NULL;
+		encoding = '\0';
 		g_assert_not_reached ();
 	}
 	

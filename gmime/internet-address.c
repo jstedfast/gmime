@@ -267,7 +267,7 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node;
 	
-	g_return_val_if_fail (ia!=NULL, NULL);
+	g_return_val_if_fail (ia != NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);
@@ -293,7 +293,7 @@ internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node, *n;
 	
-	g_return_val_if_fail (ia!=NULL, NULL);
+	g_return_val_if_fail (ia != NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);

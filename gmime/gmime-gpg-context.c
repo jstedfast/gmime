@@ -1183,7 +1183,7 @@ gpg_ctx_op_wait (struct _GpgCtx *gpg)
 		
 		alarm (1);
 		retval = waitpid (gpg->pid, &status, 0);
-		errno = errnosave;
+		errnosave = errno;
 		alarm (0);
 		
 		sigprocmask (SIG_SETMASK, &omask, NULL);
