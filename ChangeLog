@@ -1,5 +1,44 @@
 2004-05-15  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.1.5
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Updated.
+
+	* gmime/gmime-cipher-context.h: Added a new GMimeSignatureValidity
+	which replaces the now deprecated GMimeCipherValidity. Typedef
+	GMimeCipherValidity to GMimeSignatureValidity and wrap deprecated
+	functions with #ifndef GMIME_DISABLE_DEPRECATED.
+
+	* gmime/gmime-cipher-context.c (g_mime_signature_validity_new):
+	New function.
+	(g_mime_signature_validity_free): New.
+	(g_mime_signature_validity_get_status): New.
+	(g_mime_signature_validity_set_status): New.
+	(g_mime_signature_validity_get_details): New.
+	(g_mime_signature_validity_set_details): New.
+	(g_mime_signature_validity_get_signers): New.
+	(g_mime_signature_validity_add_signer): New.
+	(g_mime_cipher_validity_new): Deprecated.
+	(g_mime_cipher_validity_init): Deprecated.
+	(g_mime_cipher_validity_get_valid): Deprecated.
+	(g_mime_cipher_validity_set_valid): Deprecated.
+	(g_mime_cipher_validity_get_description): Deprecated.
+	(g_mime_cipher_validity_set_description): Deprecated.
+	(g_mime_cipher_validity_clear): Deprecated.
+	(g_mime_cipher_validity_free): Deprecated.
+	(g_mime_signer_new): New function
+	(g_mime_signer_free): New function.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Save more
+	state.
+	(gpg_verify): Updated to fill out the new GMimeSignatureValidity
+	structure with more details.
+
+2004-05-15  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime-host-utils.h: Wrap inclusion of netdb.h with G_OS_WIN32
 
 	* util/memchunk.c (memchunk_alloc): Fixed another cast warning on

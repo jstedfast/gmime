@@ -372,7 +372,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
  * fail. If the signing fails, an exception will be set on @err to
  * provide information as to why the failure occured.
  **/
-GMimeCipherValidity *
+GMimeSignatureValidity *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *ctx,
 				GError **err)
 {
@@ -382,7 +382,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	GMimeFilter *crlf_filter;
 	GMimeStream *stream, *sigstream;
 	const char *protocol, *micalg;
-	GMimeCipherValidity *valid;
+	GMimeSignatureValidity *valid;
 	GMimeCipherHash hash;
 	char *content_type;
 	

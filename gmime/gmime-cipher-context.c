@@ -41,9 +41,9 @@ static int cipher_sign (GMimeCipherContext *ctx, const char *userid,
 			GMimeCipherHash hash, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
 	
-static GMimeCipherValidity *cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					   GMimeStream *istream, GMimeStream *sigstream,
-					   GError **err);
+static GMimeSignatureValidity *cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+					      GMimeStream *istream, GMimeStream *sigstream,
+					      GError **err);
 	
 static int cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			   const char *userid, GPtrArray *recipients,
@@ -212,7 +212,7 @@ g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash
 }
 
 
-static GMimeCipherValidity *
+static GMimeSignatureValidity *
 cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 	       GMimeStream *sigstream, GError **err)
 {
@@ -236,11 +236,11 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
  * @sigstream is assumed to be the signature stream and is used to
  * verify the integirity of the @istream.
  *
- * Returns a GMimeCipherValidity structure containing information
+ * Returns a GMimeSignatureValidity structure containing information
  * about the integrity of the input stream or %NULL on failure to
  * execute at all.
  **/
-GMimeCipherValidity *
+GMimeSignatureValidity *
 g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 		      GMimeStream *sigstream, GError **err)
 {
@@ -390,11 +390,214 @@ g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 }
 
 
-/* Cipher Validity stuff */
-struct _GMimeCipherValidity {
-	gboolean valid;
-	char *description;
-};
+/**
+ * g_mime_signer_new:
+ *
+ * Allocates an new GMimeSigner.
+ *
+ * Returns a new GMimeSigner.
+ **/
+GMimeSigner *
+g_mime_signer_new (void)
+{
+	GMimeSigner *signer;
+	
+	signer = g_new (GMimeSigner, 1);
+	signer->status = GMIME_SIGNER_STATUS_NONE;
+	signer->errors = GMIME_SIGNER_ERROR_NONE;
+	signer->trust = GMIME_SIGNER_TRUST_NONE;
+	signer->sig_created = (time_t) 0;
+	signer->sig_expire = (time_t) 0;
+	signer->fingerprint = NULL;
+	signer->keyid = NULL;
+	signer->name = NULL;
+	signer->next = NULL;
+	
+	return signer;
+}
+
+
+/**
+ * g_mime_signer_free:
+ * @signer: signer
+ *
+ * Free's the singleton signer.
+ **/
+void
+g_mime_signer_free (GMimeSigner *signer)
+{
+	g_free (signer->fingerprint);
+	g_free (signer->keyid);
+	g_free (signer->name);
+	g_free (signer);
+}
+
+
+/**
+ * g_mime_signature_validity_new:
+ *
+ * Creates a new validity structure.
+ *
+ * Returns a new validity structure.
+ **/
+GMimeSignatureValidity *
+g_mime_signature_validity_new (void)
+{
+	GMimeSignatureValidity *validity;
+	
+	validity = g_new (GMimeSignatureValidity, 1);
+	validity->status = GMIME_SIGNATURE_STATUS_NONE;
+	validity->signers = NULL;
+	validity->details = NULL;
+	
+	return validity;
+}
+
+
+/**
+ * g_mime_signature_validity_free:
+ * @validity: signature validity
+ *
+ * Frees the memory used by @validity back to the system.
+ **/
+void
+g_mime_signature_validity_free (GMimeSignatureValidity *validity)
+{
+	GMimeSigner *signer, *next;
+	
+	if (validity == NULL)
+		return;
+	
+	signer = validity->signers;
+	while (signer != NULL) {
+		next = signer->next;
+		g_free (signer->fingerprint);
+		g_free (signer->keyid);
+		g_free (signer->name);
+		g_free (signer);
+		signer = next;
+	}
+	
+	g_free (validity->details);
+	
+	g_free (validity);
+}
+
+
+/**
+ * g_mime_signature_validity_get_status:
+ * @validity: signature validity
+ *
+ * Gets the signature status (GOOD, BAD, UNKNOWN).
+ *
+ * Returns the signature status.
+ **/
+GMimeSignatureStatus
+g_mime_signature_validity_get_status (GMimeSignatureValidity *validity)
+{
+	g_return_val_if_fail (validity != NULL, GMIME_SIGNATURE_STATUS_NONE);
+	
+	return validity->status;
+}
+
+
+/**
+ * g_mime_signature_validity_set_status:
+ * @validity: signature validity
+ * @status: GOOD, BAD or UNKNOWN
+ *
+ * Sets the status of the signature on @validity.
+ **/
+void
+g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSignatureStatus status)
+{
+	g_return_if_fail (status != GMIME_SIGNATURE_STATUS_NONE);
+	g_return_if_fail (validity != NULL);
+	
+	validity->status = status;
+}
+
+
+/**
+ * g_mime_signature_validity_get_details:
+ * @validity: signature validity
+ *
+ * Gets any user-readable status details.
+ *
+ * Returns a user-readable string containing any status information.
+ **/
+const char *
+g_mime_signature_validity_get_details (GMimeSignatureValidity *validity)
+{
+	g_return_val_if_fail (validity != NULL, NULL);
+	
+	return validity->details;
+}
+
+
+/**
+ * g_mime_signature_validity_set_details:
+ * @validity: signature validity
+ * @details: details string
+ *
+ * Sets @details as the status details string on @validity.
+ **/
+void
+g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details)
+{
+	g_return_if_fail (validity != NULL);
+	
+	g_free (validity->details);
+	validity->details = g_strdup (details);
+}
+
+
+/**
+ * g_mime_signature_validity_get_signers:
+ * @validity: signature validity
+ *
+ * Gets the list of signers.
+ *
+ * Returns a list of signers which contain further information such as
+ * trust and cipher keys.
+ **/
+const GMimeSigner *
+g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity)
+{
+	g_return_val_if_fail (validity != NULL, NULL);
+	
+	return validity->signers;
+}
+
+
+/**
+ * g_mime_signature_validity_add_signer:
+ * @validity: signature validity
+ * @signer: signer
+ *
+ * Adds @signer to the list of signers on @validity.
+ **/
+void
+g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer)
+{
+	GMimeSigner *s;
+	
+	g_return_if_fail (validity != NULL);
+	g_return_if_fail (signer != NULL);
+	
+	if (validity->signers == NULL) {
+		validity->signers = signer;
+	} else {
+		s = validity->signers;
+		while (s->next != NULL)
+			s = s->next;
+		
+		s->next = signer;
+	}
+}
+
+
+
 
 
 /**
@@ -402,18 +605,15 @@ struct _GMimeCipherValidity {
  *
  * Creates a new validity structure.
  *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_new instead.
+ *
  * Returns a new validity structure.
  **/
 GMimeCipherValidity *
 g_mime_cipher_validity_new (void)
 {
-	GMimeCipherValidity *validity;
-	
-	validity = g_new (GMimeCipherValidity, 1);
-	validity->valid = FALSE;
-	validity->description = NULL;
-	
-	return validity;
+	return g_mime_signature_validity_new ();
 }
 
 
@@ -422,14 +622,17 @@ g_mime_cipher_validity_new (void)
  * @validity: validity structure
  *
  * Initializes the validity structure.
+ *
+ * WARNING: This interface has been deprecated.
  **/ 
 void
 g_mime_cipher_validity_init (GMimeCipherValidity *validity)
 {
 	g_assert (validity != NULL);
 	
-	validity->valid = FALSE;
-	validity->description = NULL;
+	validity->status = GMIME_SIGNATURE_STATUS_NONE;
+	validity->details = NULL;
+	validity->signers = NULL;
 }
 
 
@@ -439,6 +642,9 @@ g_mime_cipher_validity_init (GMimeCipherValidity *validity)
  *
  * Gets the validity of the validity structure @validity.
  *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_get_status instead.
+ *
  * Returns %TRUE if @validity is valid or %FALSE otherwise.
  **/
 gboolean
@@ -447,7 +653,7 @@ g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
 	if (validity == NULL)
 		return FALSE;
 	
-	return validity->valid;
+	return validity->status == GMIME_SIGNATURE_STATUS_GOOD;
 }
 
 
@@ -457,13 +663,16 @@ g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
  * @valid: %TRUE if valid else %FALSE
  *
  * Sets the validness on the validity structure.
+ *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_set_status instead.
  **/
 void
 g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
 {
 	g_assert (validity != NULL);
 	
-	validity->valid = valid;
+	validity->status = valid ? GMIME_SIGNATURE_STATUS_GOOD : GMIME_SIGNATURE_STATUS_BAD;
 }
 
 
@@ -473,15 +682,15 @@ g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
  *
  * Gets the description set on the validity structure @validity.
  *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_get_details instead.
+ *
  * Returns any description set on the validity structure.
  **/
 const char *
 g_mime_cipher_validity_get_description (GMimeCipherValidity *validity)
 {
-	if (validity == NULL)
-		return NULL;
-	
-	return validity->description;
+	return g_mime_signature_validity_get_details (validity);
 }
 
 
@@ -491,14 +700,14 @@ g_mime_cipher_validity_get_description (GMimeCipherValidity *validity)
  * @description: validity description
  *
  * Sets the description on the validity structure.
+ *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_set_details instead.
  **/
 void
 g_mime_cipher_validity_set_description (GMimeCipherValidity *validity, const char *description)
 {
-	g_assert (validity != NULL);
-	
-	g_free (validity->description);
-	validity->description = g_strdup (description);
+	g_mime_signature_validity_set_details (validity, description);
 }
 
 
@@ -507,15 +716,29 @@ g_mime_cipher_validity_set_description (GMimeCipherValidity *validity, const cha
  * @validity: validity structure
  *
  * Clears the contents of the validity structure.
+ *
+ * WARNING: This interface has been deprecated.
  **/
 void
 g_mime_cipher_validity_clear (GMimeCipherValidity *validity)
 {
+	GMimeSigner *signer, *next;
+	
 	g_assert (validity != NULL);
 	
-	validity->valid = FALSE;
-	g_free (validity->description);
-	validity->description = NULL;
+	validity->status = GMIME_SIGNATURE_STATUS_NONE;
+	g_free (validity->details);
+	validity->details = NULL;
+	
+	signer = validity->signers;
+	while (signer != NULL) {
+		next = signer->next;
+		g_free (signer->fingerprint);
+		g_free (signer->keyid);
+		g_free (signer->name);
+		g_free (signer);
+		signer = next;
+	}
 }
 
 
@@ -524,13 +747,12 @@ g_mime_cipher_validity_clear (GMimeCipherValidity *validity)
  * @validity: validity structure
  *
  * Frees the memory used by @validity back to the system.
+ *
+ * WARNING: This interface has been deprecated. Use
+ * #g_mime_signature_validity_free instead.
  **/
 void
 g_mime_cipher_validity_free (GMimeCipherValidity *validity)
 {
-	if (validity == NULL)
-		return;
-	
-	g_free (validity->description);
-	g_free (validity);
+	g_mime_signature_validity_free (validity);
 }

@@ -68,9 +68,9 @@ int g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *conten
 				  GMimeCipherContext *ctx, const char *userid,
 				  GMimeCipherHash hash, GError **err);
 
-GMimeCipherValidity *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps,
-						     GMimeCipherContext *ctx,
-						     GError **err);
+GMimeSignatureValidity *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps,
+							GMimeCipherContext *ctx,
+							GError **err);
 
 #ifdef __cplusplus
 }

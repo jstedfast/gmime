@@ -27,6 +27,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <time.h>
+
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-session.h>
 
@@ -45,7 +47,8 @@ extern "C" {
 typedef struct _GMimeCipherContext GMimeCipherContext;
 typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
 
-typedef struct _GMimeCipherValidity GMimeCipherValidity;
+typedef struct _GMimeSigner GMimeSigner;
+typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
 
 typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
@@ -71,31 +74,31 @@ struct _GMimeCipherContext {
 struct _GMimeCipherContextClass {
 	GObjectClass parent_class;
 	
-	GMimeCipherHash       (* hash_id)     (GMimeCipherContext *ctx, const char *hash);
+	GMimeCipherHash          (* hash_id)     (GMimeCipherContext *ctx, const char *hash);
 	
-	const char *          (* hash_name)   (GMimeCipherContext *ctx, GMimeCipherHash hash);
+	const char *             (* hash_name)   (GMimeCipherContext *ctx, GMimeCipherHash hash);
 	
-	int                   (* sign)        (GMimeCipherContext *ctx, const char *userid,
-					       GMimeCipherHash hash, GMimeStream *istream,
-					       GMimeStream *ostream, GError **err);
+	int                      (* sign)        (GMimeCipherContext *ctx, const char *userid,
+						  GMimeCipherHash hash, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
-	GMimeCipherValidity * (* verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					       GMimeStream *istream, GMimeStream *sigstream,
-					       GError **err);
+	GMimeSignatureValidity * (* verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
+						  GMimeStream *istream, GMimeStream *sigstream,
+						  GError **err);
 	
-	int                   (* encrypt)     (GMimeCipherContext *ctx, gboolean sign,
-					       const char *userid, GPtrArray *recipients,
-					       GMimeStream *istream, GMimeStream *ostream,
-					       GError **err);
+	int                      (* encrypt)     (GMimeCipherContext *ctx, gboolean sign,
+						  const char *userid, GPtrArray *recipients,
+						  GMimeStream *istream, GMimeStream *ostream,
+						  GError **err);
 	
-	int                   (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
-					       GMimeStream *ostream, GError **err);
+	int                      (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
-	int                   (* import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
-					       GError **err);
+	int                      (* import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
+						  GError **err);
 	
-	int                   (* export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
-					       GMimeStream *ostream, GError **err);
+	int                      (* export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
+						  GMimeStream *ostream, GError **err);
 };
 
 
@@ -112,9 +115,9 @@ int                  g_mime_cipher_sign (GMimeCipherContext *ctx, const char *us
 					 GMimeCipherHash hash, GMimeStream *istream,
 					 GMimeStream *ostream, GError **err);
 
-GMimeCipherValidity *g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					   GMimeStream *istream, GMimeStream *sigstream,
-					   GError **err);
+GMimeSignatureValidity *g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+					      GMimeStream *istream, GMimeStream *sigstream,
+					      GError **err);
 
 int                  g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
 					    const char *userid, GPtrArray *recipients,
@@ -132,7 +135,82 @@ int                  g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArr
 						GMimeStream *ostream, GError **err);
 
 
-/* GMimeCipherValidity utility functions */
+
+/* signature status structures and functions */
+typedef enum {
+	GMIME_SIGNER_TRUST_NONE,
+	GMIME_SIGNER_TRUST_NEVER,
+	GMIME_SIGNER_TRUST_UNDEFINED,
+	GMIME_SIGNER_TRUST_MARGINAL,
+	GMIME_SIGNER_TRUST_FULLY,
+	GMIME_SIGNER_TRUST_ULTIMATE
+} GMimeSignerTrust;
+
+typedef enum {
+	GMIME_SIGNER_STATUS_NONE,
+	GMIME_SIGNER_STATUS_GOOD,
+	GMIME_SIGNER_STATUS_BAD,
+	GMIME_SIGNER_STATUS_ERROR
+} GMimeSignerStatus;
+
+typedef enum {
+	GMIME_SIGNER_ERROR_NONE,
+	GMIME_SIGNER_ERROR_EXPSIG     = (1 << 0),  /* expire signature */
+	GMIME_SIGNER_ERROR_NO_PUBKEY  = (1 << 1),  /* no public key */
+	GMIME_SIGNER_ERROR_EXPKEYSIG  = (1 << 2),  /* expired key */
+	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 << 3),  /* revoked key */
+} GMimeSignerError;
+
+struct _GMimeSigner {
+	struct _GMimeSigner *next;
+	unsigned int status:2;    /* GMimeSignerStatus */
+	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
+	unsigned int trust:3;     /* GMimeSignerTrust */
+	unsigned int unused:23;   /* unused expansion bits */
+	time_t sig_created;
+	time_t sig_expire;
+	char *fingerprint;
+	char *keyid;
+	char *name;
+};
+
+
+GMimeSigner *g_mime_signer_new (void);
+void         g_mime_signer_free (GMimeSigner *signer);
+
+
+typedef enum {
+	GMIME_SIGNATURE_STATUS_NONE,
+	GMIME_SIGNATURE_STATUS_GOOD,
+	GMIME_SIGNATURE_STATUS_BAD,
+	GMIME_SIGNATURE_STATUS_UNKNOWN
+} GMimeSignatureStatus;
+
+struct _GMimeSignatureValidity {
+	GMimeSignatureStatus status;
+	GMimeSigner *signers;
+	char *details;
+};
+
+
+GMimeSignatureValidity *g_mime_signature_validity_new (void);
+void                    g_mime_signature_validity_free (GMimeSignatureValidity *validity);
+
+GMimeSignatureStatus    g_mime_signature_validity_get_status (GMimeSignatureValidity *validity);
+void                    g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSignatureStatus status);
+
+const char             *g_mime_signature_validity_get_details (GMimeSignatureValidity *validity);
+void                    g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);
+
+const GMimeSigner      *g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity);
+void                    g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer);
+
+
+#ifndef GMIME_DISABLE_DEPRECATED
+
+/* for backward compatability */
+typedef struct _GMimeSignatureValidity GMimeCipherValidity;
+
 GMimeCipherValidity *g_mime_cipher_validity_new (void);
 
 void                 g_mime_cipher_validity_init (GMimeCipherValidity *validity);
@@ -149,6 +227,8 @@ void                 g_mime_cipher_validity_set_description (GMimeCipherValidity
 void                 g_mime_cipher_validity_clear (GMimeCipherValidity *validity);
 
 void                 g_mime_cipher_validity_free (GMimeCipherValidity *validity);
+
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 #ifdef __cplusplus
 }
