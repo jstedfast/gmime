@@ -195,7 +195,7 @@ static char *headers[] = {
 	NULL
 };
 
-static void
+static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;	
@@ -235,8 +235,11 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		message_set_message_id (message, value);
 		break;
 	default:
+		return FALSE;
 		break;
 	}
+	
+	return TRUE;
 }
 
 static void
@@ -249,8 +252,10 @@ message_add_header (GMimeObject *object, const char *header, const char *value)
            doesn't belong on a message */
 	
 	if (strncasecmp ("Content-", header, 8)) {
-		process_header (object, header, value);
-		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+		if (process_header (object, header, value))
+			g_mime_header_add (object->headers, header, value);
+		else
+			GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
 	}
 }
 
@@ -264,8 +269,10 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
            doesn't belong on a message */
 	
 	if (strncasecmp ("Content-", header, 8)) {
-		process_header (object, header, value);
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+		if (process_header (object, header, value))
+			g_mime_header_set (object->headers, header, value);
+		else
+			GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 	}
 }
 

@@ -174,7 +174,7 @@ set_disposition (GMimePart *mime_part, const char *disposition)
 	g_mime_disposition_set (mime_part->disposition, disposition);
 }
 
-static void
+static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimePart *mime_part = (GMimePart *) object;
@@ -211,8 +211,11 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		mime_part->content_md5 = g_strstrip (g_strdup (value));
 		break;
 	default:
+		return FALSE;
 		break;
 	}
+	
+	return TRUE;
 }
 
 static void
@@ -222,8 +225,10 @@ mime_part_add_header (GMimeObject *object, const char *header, const char *value
            doesn't belong on a mime part */
 	
 	if (!strncasecmp ("Content-", header, 8)) {
-		process_header (object, header, value);
-		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+		if (process_header (object, header, value))
+			g_mime_header_add (object->headers, header, value);
+		else
+			GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
 	}
 }
 
@@ -234,8 +239,10 @@ mime_part_set_header (GMimeObject *object, const char *header, const char *value
            doesn't belong on a mime part */
 	
 	if (!strncasecmp ("Content-", header, 8)) {
-		process_header (object, header, value);
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+		if (process_header (object, header, value))
+			g_mime_header_set (object->headers, header, value);
+		else
+			GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 	}
 }
 
