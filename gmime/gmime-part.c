@@ -375,8 +375,6 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
 	
-	sync_content_disposition (mime_part);
-	
 	/* write the content headers */
 	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 		return -1;

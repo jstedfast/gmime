@@ -1179,14 +1179,14 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _header_raw *header;
 	GMimeObject *object;
+	const char *ctype;
 	
 	/* get the headers */
 	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
 		;
 	
 	if (!content_type) {
-		content_type = parser_content_type (parser);
-		if (!content_type)
+		if (!(content_type = parser_content_type (parser)))
 			content_type = g_mime_content_type_new ("text", "plain");
 	}
 	
@@ -1199,7 +1199,8 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_object_set_content_type (object, content_type);
+	g_mime_content_type_destroy (object->content_type);
+	object->content_type = content_type;
 	
 	/* skip empty line after headers */
 	parser_skip_line (parser);
@@ -1305,7 +1306,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_object_set_content_type (object, content_type);
+	g_mime_content_type_destroy (object->content_type);
+	object->content_type = content_type;
 	
 	multipart = (GMimeMultipart *) object;
 	

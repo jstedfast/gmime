@@ -1,3 +1,16 @@
+2004-06-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_construct_multipart): Instead of
+	using g_mime_object_set_content_type(), destroy the current
+	content_type object and set our own on it directly. This prevents
+	the raw Content-Type header value from being overridden by the
+	re-written version from our parsed object.
+	(parser_construct_leaf_part): Same.
+
+	* gmime/gmime-part.c (mime_part_write_to_stream): Don't sync the
+	GMimeDisposition object to the header here anymore. We want to try
+	and keep the original raw header if this is a parsed message.
+
 2004-06-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-part.c (sync_content_disposition): Moved. Also
