@@ -73,7 +73,6 @@ typedef struct _GMimePart GMimePart;
 
 GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const gchar *type, const gchar *subtype);
-GMimePart *g_mime_part_new_from_string (const gchar *in, guint inlen);
 void g_mime_part_destroy (GMimePart *mime_part);
 
 /* accessor functions */

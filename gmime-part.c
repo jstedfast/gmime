@@ -31,7 +31,7 @@
 /**
  * g_mime_part_new: Create a new MIME Part object
  *
- * Creates an empty MIME Part object with a default content-type of
+ * Returns an empty MIME Part object with a default content-type of
  * text/plain.
  **/
 GMimePart *
@@ -54,7 +54,7 @@ g_mime_part_new ()
  * @type: content-type
  * @subtype: content-subtype
  *
- * Creates an empty MIME Part object with the specified content-type.
+ * Returns an empty MIME Part object with the specified content-type.
  **/
 GMimePart *
 g_mime_part_new_with_type (const gchar *type, const gchar *subtype)
@@ -73,7 +73,7 @@ g_mime_part_new_with_type (const gchar *type, const gchar *subtype)
  * g_mime_part_destroy: Destroy the MIME Part
  * @mime_part: Mime part to destroy
  *
- * Releases all memory used by this mime part and all child mime parts
+ * Releases all memory used by this mime part and all child mime parts.
  **/
 void
 g_mime_part_destroy (GMimePart *mime_part)
@@ -133,7 +133,7 @@ g_mime_part_destroy (GMimePart *mime_part)
  * @mime_part: Mime part
  * @description: content description
  *
- * Set the content description for the specified mime part
+ * Set the content description for the specified mime part.
  **/
 void
 g_mime_part_set_content_description (GMimePart *mime_part, const gchar *description)
@@ -149,7 +149,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const gchar *descript
  * g_mime_part_get_content_description: Get the content description
  * @mime_part: Mime part
  *
- * Get the content description for the specified mime part
+ * Returns the content description for the specified mime part.
  **/
 const gchar *
 g_mime_part_get_content_description (GMimePart *mime_part)
@@ -163,7 +163,7 @@ g_mime_part_get_content_description (GMimePart *mime_part)
  * @mime_part: Mime part
  * @content_id: content id
  *
- * Set the content id for the specified mime part
+ * Set the content id for the specified mime part.
  **/
 void
 g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id)
@@ -179,7 +179,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id)
  * g_mime_part_get_content_id: Get the content id
  * @mime_part: Mime part
  *
- * Get the content id for the specified mime part
+ * Returns the content id for the specified mime part.
  **/
 const gchar *
 g_mime_part_get_content_id (GMimePart *mime_part)
@@ -193,7 +193,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
  * @mime_part: Mime part
  * @mime_type: Mime content-type
  *
- * Set the content type/subtype for the specified mime part
+ * Set the content type/subtype for the specified mime part.
  **/
 void
 g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
@@ -209,7 +209,7 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
  * g_mime_part_get_content_type: Get the content type/subtype
  * @mime_part: Mime part
  *
- * Get the content-type object for the specified mime part
+ * Returns the content-type object for the specified mime part.
  **/
 const GMimeContentType *
 g_mime_part_get_content_type (GMimePart *mime_part)
@@ -239,10 +239,11 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
  * g_mime_part_get_encoding: Get the content encoding
  * @mime_part: Mime part
  *
- * Get the content encoding for the specified mime part. Return
- * value will be one of the following: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64 or GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * Returns the content encoding for the specified mime part. The
+ * return value will be one of the following:
+ * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
+ * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 or
+ * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
  **/
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
@@ -255,7 +256,7 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  * g_mime_part_encoding_to_string:
  * @encoding: Mime encoding
  *
- * Translate the encoding type to a string. Available
+ * Returns the encoding type as a string. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
  * GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
@@ -283,7 +284,7 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * g_mime_part_encoding_from_string:
  * @encoding: Mime encoding in string format
  *
- * Translate the encoding string into a GMimePartEncodingType.
+ * Returns the encoding string as a GMimePartEncodingType.
  * Available values for the encoding are:
  * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
  * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 and
@@ -331,7 +332,7 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const gchar *disposit
  * g_mime_part_get_content_disposition: Get the content disposition
  * @mime_part: Mime part
  *
- * Get the content disposition for the specified mime part
+ * Returns the content disposition for the specified mime part.
  **/
 const gchar *
 g_mime_part_get_content_disposition (GMimePart *mime_part)
@@ -383,7 +384,8 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const gchar
  * @mime_part: Mime part
  * @name: parameter name
  *
- * Get the value of a previously defined content-disposition parameter.
+ * Returns the value of a previously defined content-disposition
+ * parameter specified by #name.
  **/
 const gchar *
 g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const gchar *name)
@@ -470,7 +472,7 @@ g_mime_part_get_filename (GMimePart *mime_part)
  * @mime_part: Mime part
  * @boundary: the boundary for the multi-part
  *
- * Sets the boundary on the mime part
+ * Sets the boundary on the mime part.
  **/
 void
 g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary)
@@ -486,7 +488,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary)
  * g_mime_part_get_boundary: Get the multi-part boundary
  * @mime_part: Mime part
  *
- * Gets the boundary on the mime part
+ * Returns the boundary on the mime part.
  **/
 const gchar *
 g_mime_part_get_boundary (GMimePart *mime_part)

@@ -1,5 +1,21 @@
 2000-11-10  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* doc/gmime-docs.sgml: Added a new paragraph explaining the
+	difference between functions that return const and the ones that
+	don't.
+	
+	* doc/html/*.html: Updated.
+
+	* gmime-message.c: 
+	* gmime-part.c: 
+	* gmime-parser.c: 
+	* internet-address.c: 
+	* gmime-param.c: Updated Gtk-Doc comments.
+
+	* gmime-content-type.c: Wrote Gtk-Doc comments.
+
+2000-11-10  Jeffrey Stedfast  <fejj@helixcode.com>
+	
 	* Makefile.am (SUBDIRS): Added doc
 
 	* configure.in: Generate doc/Makefile

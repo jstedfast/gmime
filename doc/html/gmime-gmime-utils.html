@@ -122,7 +122,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1546"
+NAME="AEN1535"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +130,7 @@ NAME="AEN1546"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1549"
+NAME="AEN1538"
 ></A
 ><H2
 >Synopsis</H2
@@ -259,7 +259,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -285,7 +285,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -338,7 +338,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -368,7 +368,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -394,7 +394,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -421,7 +421,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -441,7 +441,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1631"
+NAME="AEN1620"
 ></A
 ><H2
 >Description</H2
@@ -451,14 +451,14 @@ NAME="AEN1631"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1634"
+NAME="AEN1623"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1636"
+NAME="AEN1625"
 ></A
 ><H3
 ><A
@@ -489,14 +489,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Convert a date string to time_t representation. If 'saveoffset' is
-non-NULL, the value of the timezone offset will be stored.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1645"
+NAME="AEN1634"
 ></A
 ><P
 ></P
@@ -555,7 +554,12 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the time_t representation of the date string specified by
+<GTKDOCLINK
+HREF="IN"
+>in</GTKDOCLINK
+>. If 'saveoffset' is non-NULL, the value of the timezone offset
+will be stored.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -566,7 +570,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1662"
+NAME="AEN1652"
 ></A
 ><H3
 ><A
@@ -597,13 +601,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Creates a valid string representation of the date.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1671"
+NAME="AEN1661"
 ></A
 ><P
 ></P
@@ -662,7 +666,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>a valid string representation of the date.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -673,7 +677,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1688"
+NAME="AEN1678"
 ></A
 ><H3
 ><A
@@ -704,13 +708,13 @@ HREF="GBOOLEAN"
 ></TR
 ></TABLE
 ><P
->Escapes and optionally quotes the given string.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1697"
+NAME="AEN1687"
 ></A
 ><P
 ></P
@@ -737,7 +741,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> input string</TD
 ></TR
 ><TR
 ><TD
@@ -769,7 +773,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>an allocated string containing the escaped and (optionally)
+quoted input string.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -780,7 +785,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1714"
+NAME="AEN1704"
 ></A
 ><H3
 ><A
@@ -810,7 +815,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1721"
+NAME="AEN1711"
 ></A
 ><P
 ></P
@@ -848,7 +853,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1730"
+NAME="AEN1720"
 ></A
 ><H3
 ><A
@@ -875,13 +880,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
->Determine if a string contains 8bit characters.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1738"
+NAME="AEN1728"
 ></A
 ><P
 ></P
@@ -908,7 +913,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> text to check for 8bit chars</TD
 ></TR
 ><TR
 ><TD
@@ -923,7 +928,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>TRUE if the text contains 8bit characters or FALSE
+otherwise.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -934,7 +940,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1751"
+NAME="AEN1741"
 ></A
 ><H3
 ><A
@@ -962,14 +968,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
->Determine the best encoding for the specified block of
-text. Returns a GMimePartEncodingType.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1759"
+NAME="AEN1749"
 ></A
 ><P
 ></P
@@ -996,7 +1001,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> text to encode</TD
 ></TR
 ><TR
 ><TD
@@ -1011,7 +1016,9 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>a GMimePartEncodingType that is determined to be the best
+encoding type for the specified block of text. ("best" in this
+particular case means best compression)</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1022,7 +1029,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1772"
+NAME="AEN1762"
 ></A
 ><H3
 ><A
@@ -1049,13 +1056,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
->Decode the mime encoded header into it's original 8bit text.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1780"
+NAME="AEN1770"
 ></A
 ><P
 ></P
@@ -1097,7 +1104,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the mime encoded header as 8bit text.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1108,7 +1115,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1793"
+NAME="AEN1783"
 ></A
 ><H3
 ><A
@@ -1135,14 +1142,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
->Encodes a string as several atoms. Useful for encoding headers like
-"Subject".</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1801"
+NAME="AEN1791"
 ></A
 ><P
 ></P
@@ -1184,7 +1190,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the header as several encoded atoms. Useful for encoding
+headers like "Subject".</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1195,7 +1202,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1814"
+NAME="AEN1804"
 ></A
 ><H3
 ><A
@@ -1223,14 +1230,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
->Encodes an entire header phrase as 1 atom. Useful for encoding
-internet addresses.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1822"
+NAME="AEN1812"
 ></A
 ><P
 ></P
@@ -1272,7 +1278,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the header phrase as 1 encoded atom. Useful for encoding
+internet addresses.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1283,7 +1290,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1835"
+NAME="AEN1825"
 ></A
 ><H3
 ><A
@@ -1309,7 +1316,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -1326,13 +1333,13 @@ HREF="GUINT"
 ></TR
 ></TABLE
 ><P
->Decodes a chunk of base64 encoded data.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1847"
+NAME="AEN1837"
 ></A
 ><P
 ></P
@@ -1369,7 +1376,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->len</I
+>inlen</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -1447,7 +1454,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes decoded (which have been dumped in <GTKDOCLINK
+HREF="OUT"
+>out</GTKDOCLINK
+>).</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1458,7 +1468,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1877"
+NAME="AEN1868"
 ></A
 ><H3
 ><A
@@ -1484,184 +1494,6 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *save);</PRE
-></TD
-></TR
-></TABLE
-><P
->Performs an 'encode step', only encodes blocks of 3 characters to
-the output at a time, saves left-over state in state and save
-(initialise to 0 on first invocation).</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1889"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->in</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> input stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->len</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->out</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> output string</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->state</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> holds the number of bits that are stored in <TT
-CLASS="PARAMETER"
-><I
->save</I
-></TT
-></TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->save</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> leftover bits that have not yet been encoded</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1919"
-></A
-><H3
-><A
-NAME="G-MIME-UTILS-BASE64-ENCODE-CLOSE"
-></A
->g_mime_utils_base64_encode_close ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_base64_encode_close
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
 > inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
@@ -1679,14 +1511,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Call this when finished encoding data with base64_encode_step to
-flush off the last little bit.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1931"
+NAME="AEN1880"
 ></A
 ><P
 ></P
@@ -1801,7 +1632,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes encoded. Performs an 'encode step',
+only encodes blocks of 3 characters to the output at a time, saves
+left-over state in state and save (initialise to 0 on first
+invocation).</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1812,13 +1646,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1961"
+NAME="AEN1910"
 ></A
 ><H3
 ><A
-NAME="G-MIME-UTILS-UUDECODE-STEP"
+NAME="G-MIME-UTILS-BASE64-ENCODE-CLOSE"
 ></A
->g_mime_utils_uudecode_step ()</H3
+>g_mime_utils_base64_encode_close ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1831,14 +1665,15 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
->        g_mime_utils_uudecode_step      (const <GTKDOCLINK
+>        g_mime_utils_base64_encode_close
+                                            (const <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
 > *in,
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -1848,25 +1683,20 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GUINT32"
->guint32</GTKDOCLINK
-> *save,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *uulen);</PRE
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->uudecodes a chunk of data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line
-has been stripped off.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1974"
+NAME="AEN1922"
 ></A
 ><P
 ></P
@@ -1903,7 +1733,188 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->len</I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> length of the input</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded. Call this when finished
+encoding data with base64_encode_step to flush off the last little
+bit.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1952"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUDECODE-STEP"
+></A
+>g_mime_utils_uudecode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_uudecode_step      (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1965"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -1999,7 +2010,9 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes decoded. Performs a 'uudecode step' on
+a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
+line has been stripped off.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2010,7 +2023,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2008"
+NAME="AEN1999"
 ></A
 ><H3
 ><A
@@ -2036,7 +2049,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -2053,13 +2066,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Decodes a chunk of QP encoded data.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2020"
+NAME="AEN2011"
 ></A
 ><P
 ></P
@@ -2096,7 +2109,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->len</I
+>inlen</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -2174,7 +2187,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes decoded. Performs a 'decode step' on a
+chunk of QP encoded data.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2185,7 +2199,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2050"
+NAME="AEN2041"
 ></A
 ><H3
 ><A
@@ -2211,7 +2225,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -2228,14 +2242,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Performs an 'encode step', saves left-over state in state and save
-(initialise to -1 on first invocation).</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2062"
+NAME="AEN2053"
 ></A
 ><P
 ></P
@@ -2272,14 +2285,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->len</I
+>inlen</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> length of the input</TD
 ></TR
 ><TR
 ><TD
@@ -2350,7 +2363,9 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes encoded. Performs an 'encode step',
+saves left-over state in state and save (initialise to -1 on first
+invocation).</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2361,7 +2376,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2092"
+NAME="AEN2083"
 ></A
 ><H3
 ><A
@@ -2388,7 +2403,7 @@ HREF="GUCHAR"
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
-> len,
+> inlen,
                                              <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
@@ -2405,14 +2420,13 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
->Call this when finished encoding data with quoted_encode_step to
-flush off the last little bit.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2104"
+NAME="AEN2095"
 ></A
 ><P
 ></P
@@ -2449,14 +2463,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->len</I
+>inlen</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> length of the input</TD
 ></TR
 ><TR
 ><TD
@@ -2527,7 +2541,9 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the number of bytes encoded. Call this when finished
+encoding data with quoted_encode_step to flush off the last little
+bit.</TD
 ></TR
 ></TBODY
 ></TABLE

@@ -31,11 +31,11 @@
 /**
  * g_mime_message_new: Create a new MIME Message object
  *
- * Creates an empty MIME Message object with no headers nor content
+ * Returns an empty MIME Message object with no headers nor content
  * set by default.
  **/
 GMimeMessage *
-g_mime_message_new (void)
+g_mime_message_new ()
 {
 	GMimeMessage *message;
 	
@@ -118,9 +118,9 @@ g_mime_message_destroy (GMimeMessage *message)
  * g_mime_message_set_sender: Set the name/address of the sender
  * @message: MIME Message to change
  * @sender: The name and address of the sender
- * (ex: "\"Joe Sixpack\" <joe@sixpack.org>")
  *
  * Set the sender's name and address on the MIME Message.
+ * (ex: "\"Joe Sixpack\" <joe@sixpack.org>")
  **/
 void
 g_mime_message_set_sender (GMimeMessage *message, const gchar *sender)
@@ -138,7 +138,7 @@ g_mime_message_set_sender (GMimeMessage *message, const gchar *sender)
  * g_mime_message_get_sender: Get the name/address of the sender
  * @message: MIME Message
  *
- * Get the sender's name and address of the MIME Message.
+ * Returns the sender's name and address of the MIME Message.
  **/
 const gchar *
 g_mime_message_get_sender (GMimeMessage *message)
@@ -150,7 +150,7 @@ g_mime_message_get_sender (GMimeMessage *message)
 
 
 /**
- * g_mime_message_set_sender: Set the Reply-To header of the MIME Message
+ * g_mime_message_set_reply_to: Set the Reply-To header of the MIME Message
  * @message: MIME Message to change
  * @reply_to: The Reply-To address
  *
@@ -172,7 +172,7 @@ g_mime_message_set_reply_to (GMimeMessage *message, const gchar *reply_to)
  * g_mime_message_get_reply_to: Get the Reply-To address (if available)
  * @message: MIME Message
  *
- * Get the sender's Reply-To address from the MIME Message.
+ * Returns the sender's Reply-To address from the MIME Message.
  **/
 const gchar *
 g_mime_message_get_reply_to (GMimeMessage *message)
@@ -277,7 +277,7 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
  * @message: MIME Message
  * @type: Recipient type
  *
- * Get a list of recipients of a chosen type from the MIME
+ * Returns a list of recipients of a chosen type from the MIME
  * Message. Available recipient types include:
  * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
  * GMIME_RECIPIENT_TYPE_BCC.
@@ -314,7 +314,7 @@ g_mime_message_set_subject (GMimeMessage *message, const gchar *subject)
  * g_mime_message_get_subject: Get the message subject
  * @message: MIME Message
  *
- * Get the Subject field on a MIME Message.
+ * Returns the Subject field on a MIME Message.
  **/
 const gchar *
 g_mime_message_get_subject (GMimeMessage *message)
@@ -329,7 +329,7 @@ g_mime_message_get_subject (GMimeMessage *message)
  * g_mime_message_set_date: Set the message sent-date
  * @message: MIME Message
  * @date: Sent-date (ex: gotten from time (NULL);)
- * gmt_offset: GMT date offset (in +/- hours)
+ * @gmt_offset: GMT date offset (in +/- hours)
  * 
  * Set the sent-date on a MIME Message.
  **/
@@ -347,9 +347,10 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
  * g_mime_message_get_date: Get the message sent-date
  * @message: MIME Message
  * @date: Sent-date
- * gmt_offset: GMT date offset (in +/- hours)
+ * @gmt_offset: GMT date offset (in +/- hours)
  * 
- * Get the sent-date on a MIME Message.
+ * Stores the date in time_t format in #date and the GMT offset in
+ * #gmt_offset.
  **/
 void
 g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
@@ -365,7 +366,7 @@ g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
  * g_mime_message_get_date_string: Get the message sent-date
  * @message: MIME Message
  * 
- * Get the sent-date from a MIME Message in string format.
+ * Returns the sent-date of the MIME Message in string format.
  **/
 gchar *
 g_mime_message_get_date_string (GMimeMessage *message)
@@ -418,7 +419,7 @@ g_mime_message_add_arbitrary_header (GMimeMessage *message, const gchar *field, 
  * @message: MIME Message
  * @mime_part: The root-level MIME Part
  *
- * 
+ * Set the root-level MIME part of the message.
  **/
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
@@ -646,10 +647,12 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
  * @want_plain: request text/plain
  * @is_html: body returned is in html format
  *
- * Tries to find the prefered form of the message body and return it.
- * Note: This function is NOT guarenteed to always work as it makes
- * some assumptions that are not necessarily true. It is recommended
- * that you traverse the MIME structure yourself.
+ * Returns the prefered form of the message body. Sets the value of
+ * #is_html to TRUE if the part returned is in HTML format, otherwise
+ * FALSE.
+ * Note: This function is NOT guarenteed to always work as it
+ * makes some assumptions that are not necessarily true. It is
+ * recommended that you traverse the MIME structure yourself.
  **/
 gchar *
 g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html)
@@ -697,7 +700,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
  * g_mime_message_get_headers: Return the raw message headers
  * @message: MIME Message
  *
- * Return an allocated string containing the raw message headers.
+ * Returns an allocated string containing the raw message headers.
  **/
 gchar *
 g_mime_message_get_headers (GMimeMessage *message)

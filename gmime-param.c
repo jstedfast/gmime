@@ -32,7 +32,7 @@
  * @name: parameter name
  * @value: parameter value
  *
- * Creates an new paramter structure.
+ * Returns a new paramter structure.
  **/
 GMimeParam *
 g_mime_param_new (const gchar *name, const gchar *value)
@@ -52,7 +52,7 @@ g_mime_param_new (const gchar *name, const gchar *value)
  * g_mime_param_new_from_string: Create a new MIME Param object
  * @string: string to parse into a GMimeParam structure
  *
- * Parse the string into a GMimeParam structure.
+ * Returns a GMimeParam structure based on #string.
  **/
 GMimeParam *
 g_mime_param_new_from_string (const gchar *string)

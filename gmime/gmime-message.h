@@ -78,7 +78,7 @@ void g_mime_message_set_reply_to (GMimeMessage *message, const gchar *reply_to);
 const gchar *g_mime_message_get_reply_to (GMimeMessage *message);
 
 void g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *name, const gchar *address);
-void g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, const gchar *recipients);
+void g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, const gchar *string);
 GList *g_mime_message_get_recipients (GMimeMessage *message, const gchar *type);
 
 void g_mime_message_set_subject (GMimeMessage *message, const gchar *subject);

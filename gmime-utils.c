@@ -173,7 +173,7 @@ static char *tm_days[] = {
  * @time: time_t date representation
  * @offset: Timezone offset
  *
- * Creates a valid string representation of the date.
+ * Returns a valid string representation of the date.
  **/
 gchar *
 g_mime_utils_header_format_date (time_t time, gint offset)
@@ -456,8 +456,9 @@ parse_broken_date (GList *tokens, int *tzone)
  * @in: input date string
  * @saveoffset: 
  *
- * Convert a date string to time_t representation. If 'saveoffset' is
- * non-NULL, the value of the timezone offset will be stored.
+ * Returns the time_t representation of the date string specified by
+ * #in. If 'saveoffset' is non-NULL, the value of the timezone offset
+ * will be stored.
  **/
 time_t
 g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
@@ -485,10 +486,11 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
 
 /**
  * g_mime_utils_quote_string: Quote a string.
- * @string:
+ * @string: input string
  * @do_quotes: wrap string in quotes.
  * 
- * Escapes and optionally quotes the given string.
+ * Returns an allocated string containing the escaped and (optionally)
+ * quoted input string.
  **/
 gchar *
 g_mime_utils_quote_string (const gchar *string, gboolean do_quotes)
@@ -558,9 +560,10 @@ g_mime_utils_unquote_string (gchar *string)
 
 /**
  * g_mime_utils_text_is_8bit: Determine if a string contains 8bit chars
- * @text:
+ * @text: text to check for 8bit chars
  *
- * Determine if a string contains 8bit characters.
+ * Returns TRUE if the text contains 8bit characters or FALSE
+ * otherwise.
  **/
 gboolean
 g_mime_utils_text_is_8bit (const guchar *text)
@@ -577,10 +580,11 @@ g_mime_utils_text_is_8bit (const guchar *text)
 
 /**
  * g_mime_utils_best_encoding: Determine the best encoding
- * @text:
+ * @text: text to encode
  *
- * Determine the best encoding for the specified block of
- * text. Returns a GMimePartEncodingType.
+ * Returns a GMimePartEncodingType that is determined to be the best
+ * encoding type for the specified block of text. ("best" in this
+ * particular case means best compression)
  **/
 GMimePartEncodingType
 g_mime_utils_best_encoding (const guchar *text)
@@ -712,7 +716,7 @@ decode_8bit_word (const guchar *word, gboolean *was_encoded)
  * g_mime_utils_8bit_header_decode: Decode an encoded header.
  * @in: header to decode
  *
- * Decode the mime encoded header into it's original 8bit text.
+ * Returns the mime encoded header as 8bit text.
  **/
 gchar *
 g_mime_utils_8bit_header_decode (const guchar *in)
@@ -881,7 +885,7 @@ encode_8bit_word (const guchar *word)
  * g_mime_utils_8bit_header_encode_phrase: Encode a string.
  * @in: header to encode
  *
- * Encodes an entire header phrase as 1 atom. Useful for encoding
+ * Returns the header phrase as 1 encoded atom. Useful for encoding
  * internet addresses.
  **/
 gchar *
@@ -895,8 +899,8 @@ g_mime_utils_8bit_header_encode_phrase (const guchar *in)
  * g_mime_utils_8bit_header_encode: Encode a string.
  * @in: header to encode
  *
- * Encodes a string as several atoms. Useful for encoding headers like
- * "Subject".
+ * Returns the header as several encoded atoms. Useful for encoding
+ * headers like "Subject".
  **/
 gchar *
 g_mime_utils_8bit_header_encode (const guchar *in)
@@ -992,8 +996,9 @@ g_mime_utils_8bit_header_encode (const guchar *in)
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Call this when finished encoding data with base64_encode_step to
- * flush off the last little bit.
+ * Returns the number of bytes encoded. Call this when finished
+ * encoding data with base64_encode_step to flush off the last little
+ * bit.
  **/
 gint
 g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
@@ -1037,26 +1042,27 @@ g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gin
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Performs an 'encode step', only encodes blocks of 3 characters to
- * the output at a time, saves left-over state in state and save
- * (initialise to 0 on first invocation).
+ * Returns the number of bytes encoded. Performs an 'encode step',
+ * only encodes blocks of 3 characters to the output at a time, saves
+ * left-over state in state and save (initialise to 0 on first
+ * invocation).
  **/
 gint
-g_mime_utils_base64_encode_step (const guchar *in, gint len, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
 	const register guchar *inptr;
 	register guchar *outptr;
 	
-	if (len <= 0)
+	if (inlen <= 0)
 		return 0;
 	
 	inptr = in;
 	outptr = out;
 	
-	d(printf("we have %d chars, and %d saved chars\n", len, ((gchar *)save)[0]));
+	d(printf("we have %d chars, and %d saved chars\n", inlen, ((gchar *)save)[0]));
 	
-	if (len + ((guchar *)save)[0] > 2) {
-		const guchar *inend = in + len - 2;
+	if (inlen + ((guchar *)save)[0] > 2) {
+		const guchar *inend = in + inlen - 2;
 		register gint c1=0, c2=0, c3=0;
 		register gint already;
 		
@@ -1087,24 +1093,24 @@ g_mime_utils_base64_encode_step (const guchar *in, gint len, guchar *out, gint *
 		}
 		
 		((guchar *)save)[0] = 0;
-		len = 2 - (inptr - inend);
+		inlen = 2 - (inptr - inend);
 		*state = already;
 	}
 	
-	d(printf ("state = %d, len = %d\n", (gint)((gchar *)save)[0], len));
+	d(printf ("state = %d, inlen = %d\n", (gint)((gchar *)save)[0], inlen));
 	
-	if (len > 0) {
+	if (inlen > 0) {
 		register gchar *saveout;
 		
 		/* points to the slot for the next char to save */
 		saveout = & (((gchar *)save)[1]) + ((gchar *)save)[0];
 		
-		/* len can only be 0 1 or 2 */
-		switch (len) {
+		/* inlen can only be 0 1 or 2 */
+		switch (inlen) {
 		case 2:	*saveout++ = *inptr++;
 		case 1:	*saveout++ = *inptr++;
 		}
-		((gchar *)save)[0] += len;
+		((gchar *)save)[0] += inlen;
 	}
 	
 	d(printf ("mode = %d\nc1 = %c\nc2 = %c\n",
@@ -1118,15 +1124,15 @@ g_mime_utils_base64_encode_step (const guchar *in, gint len, guchar *out, gint *
 /**
  * g_mime_utils_base64_decode_step: decode a chunk of base64 encoded data
  * @in: input stream
- * @len: max length of data to decode
+ * @inlen: max length of data to decode
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  *
- * Decodes a chunk of base64 encoded data.
+ * Returns the number of bytes decoded (which have been dumped in #out).
  **/
 gint
-g_mime_utils_base64_decode_step (const guchar *in, gint len, guchar *out, gint *state, guint *save)
+g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint *save)
 {
 	const register guchar *inptr;
 	register guchar *outptr;
@@ -1135,7 +1141,7 @@ g_mime_utils_base64_decode_step (const guchar *in, gint len, guchar *out, gint *
 	register guint v;
 	int i;
 	
-	inend = in + len;
+	inend = in + inlen;
 	outptr = out;
 	
 	/* convert 4 base64 bytes to 3 normal bytes */
@@ -1179,18 +1185,19 @@ g_mime_utils_base64_decode_step (const guchar *in, gint len, guchar *out, gint *
 /**
  * g_mime_utils_uudecode_step: uudecode a chunk of data
  * @in: input stream
- * @len: max length of data to decode ( normally strlen(in) ??)
+ * @inlen: max length of data to decode ( normally strlen(in) ??)
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * uudecodes a chunk of data. Assumes the "begin <mode> <file name>" line
- * has been stripped off.
+ * Returns the number of bytes decoded. Performs a 'uudecode step' on
+ * a chunk of uuencoded data. Assumes the "begin <mode> <file name>"
+ * line has been stripped off.
  **/
 gint
-g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state, guint32 *save, gchar *uulen)
+g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save, gchar *uulen)
 {
 	const register guchar *inptr;
 	register guchar *outptr;
@@ -1205,7 +1212,7 @@ g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state
 	else
 		last_was_eoln = FALSE;
 	
-	inend = in + len;
+	inend = in + inlen;
 	outptr = out;
 	saved = *save;
 	i = *state;
@@ -1275,17 +1282,18 @@ g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Call this when finished encoding data with quoted_encode_step to
- * flush off the last little bit.
+ * Returns the number of bytes encoded. Call this when finished
+ * encoding data with quoted_encode_step to flush off the last little
+ * bit.
  **/
 gint
-g_mime_utils_quoted_encode_close (const guchar *in, gint len, guchar *out, gint *state, gint *save)
+g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
 	register guchar *outptr = out;
 	int last;
 
-	if (len > 0)
-		outptr += g_mime_utils_quoted_encode_step (in, len, outptr, state, save);
+	if (inlen > 0)
+		outptr += g_mime_utils_quoted_encode_step (in, inlen, outptr, state, save);
 	
 	last = *state;
 	if (last != -1) {
@@ -1317,11 +1325,12 @@ g_mime_utils_quoted_encode_close (const guchar *in, gint len, guchar *out, gint 
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
- * Performs an 'encode step', saves left-over state in state and save
- * (initialise to -1 on first invocation).
+ * Returns the number of bytes encoded. Performs an 'encode step',
+ * saves left-over state in state and save (initialise to -1 on first
+ * invocation).
  **/
 gint
-g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *state, gint *save)
+g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
 	const register guchar *inptr, *inend;
 	register guchar *outptr;
@@ -1330,7 +1339,7 @@ g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
 	
 	inptr = in;
-	inend = in + len;
+	inend = in + inlen;
 	outptr = out;
 	while (inptr < inend) {
 		c = *inptr++;
@@ -1404,15 +1413,16 @@ g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *
 /**
  * g_mime_utils_quoted_decode_step: decode a chunk of QP encoded data
  * @in: input stream
- * @len: max length of data to decode
+ * @inlen: max length of data to decode
  * @out: output stream
  * @savestate: holds the number of bits that are stored in @save
  * @saved: leftover bits that have not yet been decoded
  *
- * Decodes a chunk of QP encoded data.
+ * Returns the number of bytes decoded. Performs a 'decode step' on a
+ * chunk of QP encoded data.
  **/
 gint
-g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *savestate, gint *saved)
+g_mime_utils_quoted_decode_step (const guchar *in, gint inlen, guchar *out, gint *savestate, gint *saved)
 {
 	/* FIXME: this does not strip trailing spaces from lines (as
 	 * it should, rfc 2045, section 6.7) Should it also
@@ -1427,10 +1437,10 @@ g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *
 	guchar c;
 	int state, save;
 	
-	inend = in + len;
+	inend = in + inlen;
 	outptr = out;
 	
-	d(printf ("quoted-printable, decoding text '%.*s'\n", len, in));
+	d(printf ("quoted-printable, decoding text '%.*s'\n", inlen, in));
 	
 	state = *savestate;
 	save = *saved;

@@ -395,7 +395,7 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
  * @data: an rfc0822 message
  * @save_extra_headers: if TRUE, then store the arbitrary headers
  *
- * Constructs a GMimeMessage object based on the rfc0822 data.
+ * Returns a GMimeMessage object based on the rfc0822 data.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers)

@@ -114,6 +114,12 @@ NAME="LIBGMIME"
     libgmime. All the public interfaces are documented here. This
     reference guide is built by extracting Gtk-Doc comments from the
     source code.</P
+><P
+>All public functions that return const pointers are not to
+    be free'd, they point to data internal to the structure. Functions
+    that don't return const pointers MUST be free'd by the caller -
+    the ONLY exception to this are functions that return GList
+    structures.</P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"

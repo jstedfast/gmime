@@ -34,7 +34,7 @@
  * @name: person's name
  * @address: person's address
  * 
- * Creates a new Internet Address object.
+ * Returns a new Internet Address object.
  **/
 InternetAddress *
 internet_address_new (const gchar *name, const gchar *address)
@@ -124,7 +124,7 @@ rfc822_tokenize (const gchar *in, guint inlen)
  * internet_address_new_from_string: Create a new Internet Address object
  * @string: rfc822 internet address string
  * 
- * Create a new Internet Address object based upon the rfc822 address
+ * Returns a new Internet Address object based upon the rfc822 address
  * string.
  **/
 InternetAddress *
@@ -222,8 +222,10 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
 /**
  * internet_address_to_string: Write the InternetAddress object to a string
  * @ia: Internet Address object
+ * @rfc2047_encode: TRUE if the address should be encoded
  * 
- * Writes the InternetAddress object to a string in rfc822 format.
+ * Returns the InternetAddress object as an allocated string in rfc822
+ * format.
  **/
 gchar *
 internet_address_to_string (InternetAddress *ia, gboolean rfc2047_encode)
