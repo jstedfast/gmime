@@ -31,8 +31,10 @@
 
 #include <gmime/gmime.h>
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
 
-#if 0
+#if 1
 static char *charsets[] = {
 	"iso-8859-1",
 	"iso-8859-2",
@@ -64,15 +66,17 @@ static int num_charsets = sizeof (charsets) / sizeof (charsets[0]);
 #endif
 
 
-#if 0
+#if 1
 static void
 test_cache (void)
 {
-	GSList *node, *open_cds = NULL;
+	GSList *node, *next, *open_cds = NULL;
 	iconv_t cd;
 	int i;
 	
-	for (i = 0; i < 500; i++) {
+	srand (time (NULL));
+	
+	for (i = 0; i < 5000; i++) {
 		const char *from, *to;
 		int which;
 		
@@ -98,12 +102,12 @@ test_cache (void)
 	
 	node = open_cds;
 	while (node) {
+		next = node->next;
 		cd = node->data;
 		g_mime_iconv_close (cd);
-		node = node->next;
+		g_slist_free_1 (node);
+		node = next;
 	}
-	
-	g_slist_free (open_cds);
 }
 #endif
 
@@ -193,8 +197,12 @@ int main (int argc, char **argv)
 {
 	g_mime_iconv_init ();
 	
-	/*test_cache ();*/
+	ZenTimerStart();
+	test_cache ();
+	ZenTimerStop();
+	ZenTimerReport("test_cache()");
 	
 	test_utils ();
+	
 	return 0;
 }

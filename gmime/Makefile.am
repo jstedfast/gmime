@@ -59,9 +59,11 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-stream-null.c		\
 	gmime-utils.c			\
 	internet-address.c		\
+	cache.c				\
+	gtrie.c				\
+	list.c				\
 	md5-utils.c			\
 	memchunk.c			\
-	gtrie.c				\
 	url-scanner.c
 
 gmimeinclude_HEADERS = 			\
@@ -112,7 +114,9 @@ gmimeinclude_HEADERS = 			\
 	md5-utils.h
 
 noinst_HEADERS = 			\
+	cache.h				\
 	gtrie.h				\
+	list.h				\
 	memchunk.h			\
 	url-scanner.h			\
 	gmime-table-private.h		\

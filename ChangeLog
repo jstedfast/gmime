@@ -1,3 +1,18 @@
+2003-03-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-filter-charset.c (filter_filter): Use outbuf -
+	filter-outbuf to calculate how much data we've written - simpler
+	and less likely to be wrong.
+	(filter_complete): Same.
+
+	* gmime/gmime-iconv.c: Modified to use the new cache
+	implementation in cache.c
+
+	* gmime/cache.[c,h]: New source files implementing an LRU cache.
+
+	* gmime/list.[c,h]: New source files containing a really nice/fast
+	linked-list implementation.
+
 2003-03-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-iconv.c (iconv_cache_bucket_new): If the current
