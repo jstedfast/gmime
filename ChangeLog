@@ -1,3 +1,10 @@
+2022-10-24  Jeffrey Stedfast  <fejj@helixcode.com>
+	Thanks to Charles Kerr of Pan fame for the following fixes.
+
+	* gmime-utils.c (encode_8bit_word): Oops, encode 'word' and not 'ptr'.
+
+	* gmime-part.c (g_mime_part_destroy): Free the content-id.
+
 2000-10-21  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime.h.in: Wrap definitions in #ifndef __GMIME_H__

@@ -701,7 +701,7 @@ encode_8bit_word (guchar *word)
 		
 		encoding = 'b';
 		
-		pos = g_mime_utils_base64_encode_close (ptr, len, encoded, &state, &save);
+		pos = g_mime_utils_base64_encode_close (word, len, encoded, &state, &save);
 		encoded[pos] = '\0';
 		
 		/* remove \n chars as headers need to be wrapped differently */

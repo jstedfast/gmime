@@ -79,6 +79,7 @@ void
 g_mime_part_destroy (GMimePart *mime_part)
 {
 	g_free (mime_part->description);
+	g_free (mime_part->content_id);
 	
 	if (mime_part->mime_type)
 		g_mime_content_type_destroy (mime_part->mime_type);
