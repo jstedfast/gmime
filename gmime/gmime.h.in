@@ -73,6 +73,7 @@ extern "C" {
 #include <gmime/gmime-filter-windows.h>
 #include <gmime/gmime-filter-yenc.h>
 #include <gmime/gmime-session.h>
+#include <gmime/gmime-session-simple.h>
 #include <gmime/gmime-cipher-context.h>
 #include <gmime/gmime-gpg-context.h>
 

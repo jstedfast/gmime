@@ -19,7 +19,7 @@ headers.
 
 - make thread-safe? some stuff already is, like the gmime-iconv code
 and some of the other charset stuff. Streams and other objects,
-however, are not. How can I do this...?
+however, are not. How can I do this...? And is it really needed?
 
 - Possibly make the GMime parser incremental.
 

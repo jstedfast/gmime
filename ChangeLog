@@ -1,3 +1,13 @@
+2004-08-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime.h.in: #include <gmime/gmime-session-simple.h> for
+	ia64 build fix on Debian (required because of the way gtk-doc's
+	scan program works).
+
+	* gmime/gmime-filter-enriched.c (enriched_to_html): Don't replace
+	<nofill> with <pre>. Also, replace lone '\n's with a space as
+	suggested by rfc1896.
+
 2004-08-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-multipart-encrypted.c

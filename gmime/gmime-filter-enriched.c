@@ -334,12 +334,29 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			
 			break;
 		case '\n':
-			if (!(enriched->flags & IS_RICHTEXT) && enriched->nofill <= 0) {
+			if (!(enriched->flags & IS_RICHTEXT)) {
 				/* text/enriched */
-				while (inptr < inend && (outptr + 4) < outend && *inptr == '\n') {
-					memcpy (outptr, "<br>", 4);
-					outptr += 4;
-					inptr++;
+				if (enriched->nofill > 0) {
+					if ((outptr + 4) < outend) {
+						memcpy (outptr, "<br>", 4);
+						outptr += 4;
+					} else {
+						inptr--;
+						goto backup;
+					}
+				} else if (*inptr == '\n') {
+					if ((outptr + 4) >= outend) {
+						inptr--;
+						goto backup;
+					}
+					
+					while (inptr < inend && (outptr + 4) < outend && *inptr == '\n') {
+						memcpy (outptr, "<br>", 4);
+						outptr += 4;
+						inptr++;
+					}
+				} else {
+					*outptr++ = ' ';
 				}
 			} else {
 				/* text/richtext */
@@ -409,18 +426,14 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			
 			if (!strncasecmp (tag, "nofill>", 7)) {
 				if ((outptr + 5) < outend) {
-					memcpy (outptr, "<pre>", 5);
 					enriched->nofill++;
-					outptr += 5;
 				} else {
 					inptr = tag - 1;
 					goto backup;
 				}
 			} else if (!strncasecmp (tag, "/nofill>", 8)) {
 				if ((outptr + 6) < outend) {
-					memcpy (outptr, "</pre>", 6);
 					enriched->nofill--;
-					outptr += 6;
 				} else {
 					inptr = tag - 1;
 					goto backup;
