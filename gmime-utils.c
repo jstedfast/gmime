@@ -199,9 +199,9 @@ datetok (const gchar *date)
 {
 	GList *tokens = NULL;
 	gchar *token, *start, *end;
-	
+
 	start = (gchar *) date;
-	while (*start) {
+	while (start!=NULL && *start) {
 		/* kill leading whitespace */
 		for ( ; *start && isspace (*start); start++);
 		

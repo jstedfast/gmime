@@ -1,3 +1,8 @@
+2000-11-16  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.c (datetok): don't crash if the date string passed
+	in is NULL.
+
 2000-11-15  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_decode_contents): New convenience
