@@ -1,5 +1,9 @@
 2001-11-26  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-parser.c (g_mime_parser_construct_part_internal): Fixed a
+	bug - don't set bounds on the original stream, set the bounds on
+	our temporary memory stream. Also got rid of find_header_end().
+
 	* gmime-filter-from.c (filter_filter): initialize fromcount to 0.
 
 	* test-pgpmime.c: Updated to use gmime-pgp-mime instead of
