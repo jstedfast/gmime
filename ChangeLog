@@ -1,5 +1,11 @@
 2001-09-29  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* pan-mime-parser.c: New parser (with exactly the same API as
+	gmime-parser.c) that is meant to parse MIME objects without
+	needing them to be memory mapped. Quite a bit slower on average,
+	but is vastly sped up by using a GMimeStreamBuffer in BLOCK_READ
+	mode.
+
 	* gmime-stream-buffer.c (stream_write): Incremement the stream
 	position by the number of bytes we wrote.
 	(stream_tell): Return stream->position.
