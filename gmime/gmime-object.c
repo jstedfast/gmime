@@ -38,6 +38,11 @@ struct _type_bucket {
 	GHashTable *subtype_hash;
 };
 
+struct _subtype_bucket {
+	char *subtype;
+	GType object_type;
+};
+
 static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
@@ -177,6 +182,7 @@ void
 g_mime_object_register_type (const char *type, const char *subtype, GType object_type)
 {
 	struct _type_bucket *bucket;
+	struct _subtype_bucket *sub;
 	
 	g_return_if_fail (object_type != 0);
 	g_return_if_fail (subtype != NULL);
@@ -193,7 +199,10 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 		g_hash_table_insert (type_hash, bucket->type, bucket);
 	}
 	
-	g_hash_table_insert (bucket->subtype_hash, g_strdup (subtype), GINT_TO_POINTER (object_type));
+	sub = g_new (struct _subtype_bucket, 1);
+	sub->subtype = g_strdup (subtype);
+	sub->object_type = object_type;
+	g_hash_table_insert (bucket->subtype_hash, sub->subtype, sub);
 }
 
 
@@ -223,6 +232,7 @@ GMimeObject *
 g_mime_object_new_type (const char *type, const char *subtype)
 {
 	struct _type_bucket *bucket;
+	struct _subtype_bucket *sub;
 	GMimeObject *object;
 	GType obj_type;
 	
@@ -235,16 +245,19 @@ g_mime_object_new_type (const char *type, const char *subtype)
 		bucket = g_hash_table_lookup (type_hash, "*");
 		obj_type = bucket ? bucket->object_type : 0;
 	} else {
-		obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, subtype));
-		if (!obj_type)
-			obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, "*"));
+		if (!(sub = g_hash_table_lookup (bucket->subtype_hash, subtype)))
+			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
+		
+		obj_type = sub ? sub->object_type : 0;
 	}
 	
 	if (!obj_type) {
 		/* use the default mime object */
 		bucket = g_hash_table_lookup (type_hash, "*");
-		if (bucket)
-			obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, "*"));
+		if (bucket) {
+			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
+			obj_type = sub ? sub->object_type : 0;
+		}
 		
 		if (!obj_type)
 			return NULL;
