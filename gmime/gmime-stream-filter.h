@@ -32,17 +32,31 @@ extern "C" {
 #include "gmime-stream.h"
 #include "gmime-filter.h"
 
-typedef struct _GMimeStreamFilter {
-	GMimeStream parent;
+#define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
+#define GMIME_STREAM_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
+#define GMIME_STREAM_FILTER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+#define GMIME_IS_STREAM_FILTER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
+#define GMIME_IS_STREAM_FILTER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
+#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+
+typedef struct _GMimeStreamFilter GMimeStreamFilter;
+typedef struct _GMimeStreamFilterClass GMimeStreamFilterClass;
+
+struct _GMimeStreamFilter {
+	GMimeStream parent_object;
 	
 	struct _GMimeStreamFilterPrivate *priv;
 	
 	GMimeStream *source;
-} GMimeStreamFilter;
+};
 
-#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
-#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILTER_TYPE)
-#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
+struct _GMimeStreamFilterClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_filter_get_type (void);
 
 GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
 

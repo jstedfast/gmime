@@ -26,6 +26,7 @@
 #endif
 
 #include <string.h>
+
 #include "gmime-stream-filter.h"
 
 #define READ_PAD (64)		/* bytes padded before buffer */
@@ -52,7 +53,13 @@ struct _GMimeStreamFilterPrivate {
 	int last_was_read;	/* was the last op read or write? */
 };
 
-static void stream_destroy (GMimeStream *stream);
+static void g_mime_stream_filter_base_class_init (GMimeStreamFilterClass *klass);
+static void g_mime_stream_filter_base_class_finalize (GMimeStreamFilterClass *klass);
+static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
+static void g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass);
+static void g_mime_stream_filter_destroy (GMimeStreamFilter *stream);
+static void g_mime_stream_filter_finalize (GObject *object);
+
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
@@ -64,15 +71,114 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream stream_template = {
-	NULL, 0,
-	1, 0, 0, 0, stream_destroy,
-	stream_read, stream_write,
-	stream_flush, stream_close,
-	stream_eos, stream_reset,
-	stream_seek, stream_tell,
-	stream_length, stream_substream,
-};
+
+static GMimeStreamClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_filter_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamFilterClass),
+			(GBaseInitFunc) g_mime_stream_filter_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_filter_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_filter_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStreamFilter),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_filter_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamFilter", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_stream_filter_base_class_init (GMimeStreamFilterClass *klass)
+{
+	/* reset instance specifc methods that don't get inherited */
+	;
+}
+
+static void
+g_mime_stream_filter_base_class_finalize (GMimeStreamFilterClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_stream_filter_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+	
+	klass->destroy = g_mime_stream_filter_destroy;
+}
+
+static void
+g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass)
+{
+	stream->source = NULL;
+	stream->priv = g_new (struct _GMimeFilterPrivate, 1);
+	stream->priv->filters = NULL;
+	stream->priv->filterid = 0;
+	stream->priv->realbuffer = g_malloc (READ_SIZE + READ_PAD);
+	stream->priv->buffer = stream->priv->realbuffer + READ_PAD;
+	stream->priv->last_was_read = TRUE;
+	stream->priv->filteredlen = 0;
+}
+
+static void
+g_mime_stream_filter_destroy (GMimeStreamFilter *stream)
+{
+	g_signal_handlers_destroy (G_OBJECT (stream));
+}
+
+static void
+g_mime_stream_filter_finalize (GObject *object)
+{
+	GMimeStreamFilter *filter = (GMimeStreamFilter *) object;
+	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _filter *fn, *f;
+	
+	f = p->filters;
+	while (f) {
+		fn = f->next;
+		g_mime_filter_destroy (f->filter);
+		g_free (f);
+		f = fn;
+	}
+	
+	g_free (p->realbuffer);
+	g_free (p);
+	
+	if (filter->source)
+		g_mime_stream_unref (filter->source);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static void
 stream_destroy (GMimeStream *stream)
@@ -281,17 +387,9 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	GMimeStreamFilter *sub;
 	/*struct _filter *f, *fn;*/
 	
-	sub = g_new (GMimeStreamFilter, 1);
+	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
 	sub->source = filter->source;
 	g_mime_stream_ref (sub->source);
-	
-	sub->priv = g_new (struct _GMimeStreamFilterPrivate, 1);
-	sub->priv->filters = NULL;
-	sub->priv->filterid = 0;
-	sub->priv->realbuffer = g_malloc (READ_SIZE + READ_PAD);
-	sub->priv->buffer = sub->priv->realbuffer + READ_PAD;
-	sub->priv->last_was_read = TRUE;
-	sub->priv->filteredlen = 0;
 	
 	if (filter->priv->filters) {
 		struct _filter *f, *sn, *s = NULL;
@@ -317,8 +415,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 		sub->priv->filterid = filter->priv->filterid;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (filter), &stream_template,
-				 GMIME_STREAM_FILTER_TYPE,
+	g_mime_stream_construct (GMIME_STREAM (filter),
 				 sub->source->bound_start,
 				 sub->source->bound_end);
 	
@@ -340,22 +437,13 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter;
 	
-	g_return_val_if_fail (stream != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
-	filter = g_new (GMimeStreamFilter, 1);
+	filter = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
 	filter->source = stream;
 	g_mime_stream_ref (stream);
 	
-	filter->priv = g_new (struct _GMimeStreamFilterPrivate, 1);
-	filter->priv->filters = NULL;
-	filter->priv->filterid = 0;
-	filter->priv->realbuffer = g_malloc (READ_SIZE + READ_PAD);
-	filter->priv->buffer = filter->priv->realbuffer + READ_PAD;
-	filter->priv->last_was_read = TRUE;
-	filter->priv->filteredlen = 0;
-	
-	g_mime_stream_construct (GMIME_STREAM (filter), &stream_template,
-				 GMIME_STREAM_FILTER_TYPE,
+	g_mime_stream_construct (GMIME_STREAM (filter),
 				 stream->bound_start,
 				 stream->bound_end);
 	
@@ -378,7 +466,7 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 	struct _GMimeStreamFilterPrivate *p;
 	struct _filter *f, *fn;
 	
-	g_return_val_if_fail (fstream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (fstream), -1);
 	g_return_val_if_fail (filter != NULL, -1);
 	
 	p = fstream->priv;
@@ -413,7 +501,7 @@ g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id)
 	struct _GMimeStreamFilterPrivate *p;
 	struct _filter *f, *fn;
 	
-	g_return_if_fail (fstream != NULL);
+	g_return_if_fail (GMIME_IS_STREAM_FILTER (fstream));
 	
 	p = fstream->priv;
 	
