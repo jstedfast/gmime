@@ -3,7 +3,7 @@
 SUBDIRS = util gmime src 
 
 if ENABLE_MONO
-	SUBDIRS += mono
+SUBDIRS += mono
 endif
 
 SUBDIRS += tests docs examples .
