@@ -78,6 +78,8 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -147,17 +149,13 @@ strictly a cosmetic thing, so if you are unsure, it is safe to say
 no (<literal>FALSE</literal>).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>pretty_headers</parameter>&nbsp;:</entry>
-<entry> make pretty headers 
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Message object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>pretty_headers</parameter>&nbsp;:</term>
+<listitem><para> make pretty headers 
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME Message object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-sender">g_mime_message_set_sender ()</title>
 <programlisting>void        g_mime_message_set_sender       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -167,18 +165,14 @@ Set the sender's name and address on the MIME Message.
 (ex: "\"Joe Sixpack\" &lt;joe<parameter>sixpack</parameter>.org&gt;")</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message to change
-</entry></row>
-<row><entry align="right"><parameter>sender</parameter>&nbsp;:</entry>
-<entry> The name and address of the sender
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message to change
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>sender</parameter>&nbsp;:</term>
+<listitem><para> The name and address of the sender
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-sender">g_mime_message_get_sender ()</title>
 <programlisting>const char* g_mime_message_get_sender       (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -186,17 +180,13 @@ Set the sender's name and address on the MIME Message.
 Gets the email address of the sender from <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the sender's name and address of the MIME Message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the sender's name and address of the MIME Message.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-reply-to">g_mime_message_set_reply_to ()</title>
 <programlisting>void        g_mime_message_set_reply_to     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -205,18 +195,14 @@ Gets the email address of the sender from <parameter>message</parameter>.</para>
 Set the sender's Reply-To address on the MIME Message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message to change
-</entry></row>
-<row><entry align="right"><parameter>reply_to</parameter>&nbsp;:</entry>
-<entry> The Reply-To address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message to change
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>reply_to</parameter>&nbsp;:</term>
+<listitem><para> The Reply-To address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-reply-to">g_mime_message_get_reply_to ()</title>
 <programlisting>const char* g_mime_message_get_reply_to     (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -224,17 +210,13 @@ Set the sender's Reply-To address on the MIME Message.</para>
 Gets the Reply-To address from <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the sender's Reply-To address from the MIME Message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the sender's Reply-To address from the MIME Message.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-add-recipient">g_mime_message_add_recipient ()</title>
 <programlisting>void        g_mime_message_add_recipient    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -247,24 +229,20 @@ recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECI
 <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message to change
-</entry></row>
-<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> Recipient type
-</entry></row>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> The recipient's name
-</entry></row>
-<row><entry align="right"><parameter>address</parameter>&nbsp;:</entry>
-<entry> The recipient's address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message to change
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><para> Recipient type
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> The recipient's name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>address</parameter>&nbsp;:</term>
+<listitem><para> The recipient's address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-add-recipients-from-string">g_mime_message_add_recipients_from_string ()</title>
 <programlisting>void        g_mime_message_add_recipients_from_string
@@ -279,21 +257,17 @@ Message. Available recipient types include:
 specified in rfc822.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> Recipient type
-</entry></row>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> A string of recipient names and addresses.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><para> Recipient type
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> A string of recipient names and addresses.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-recipients">g_mime_message_get_recipients ()</title>
 <programlisting><link linkend="InternetAddressList">InternetAddressList</link>* g_mime_message_get_recipients
@@ -305,21 +279,17 @@ recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECI
 <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> Recipient type
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a list of recipients of a chosen type from the MIME
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><para> Recipient type
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a list of recipients of a chosen type from the MIME
 Message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-subject">g_mime_message_set_subject ()</title>
 <programlisting>void        g_mime_message_set_subject      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -328,18 +298,14 @@ Message.
 Set the Subject field on a MIME Message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>subject</parameter>&nbsp;:</entry>
-<entry> Subject string
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>subject</parameter>&nbsp;:</term>
+<listitem><para> Subject string
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-subject">g_mime_message_get_subject ()</title>
 <programlisting>const char* g_mime_message_get_subject      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -347,17 +313,13 @@ Set the Subject field on a MIME Message.</para>
 Gets the message's subject.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the Subject field on a MIME Message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the Subject field on a MIME Message.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-date">g_mime_message_set_date ()</title>
 <programlisting>void        g_mime_message_set_date         (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -367,21 +329,17 @@ Gets the message's subject.</para>
 Sets the sent-date on a MIME Message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>date</parameter>&nbsp;:</entry>
-<entry> Sent-date (ex: gotten from time (NULL))
-</entry></row>
-<row><entry align="right"><parameter>gmt_offset</parameter>&nbsp;:</entry>
-<entry> GMT date offset (in +/- hours)
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>date</parameter>&nbsp;:</term>
+<listitem><para> Sent-date (ex: gotten from time (NULL))
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>gmt_offset</parameter>&nbsp;:</term>
+<listitem><para> GMT date offset (in +/- hours)
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-date">g_mime_message_get_date ()</title>
 <programlisting>void        g_mime_message_get_date         (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -392,21 +350,17 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 <parameter>gmt_offset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>date</parameter>&nbsp;:</entry>
-<entry> Sent-date
-</entry></row>
-<row><entry align="right"><parameter>gmt_offset</parameter>&nbsp;:</entry>
-<entry> GMT date offset (in +/- hours)
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>date</parameter>&nbsp;:</term>
+<listitem><para> Sent-date
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>gmt_offset</parameter>&nbsp;:</term>
+<listitem><para> GMT date offset (in +/- hours)
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-date-string">g_mime_message_get_date_string ()</title>
 <programlisting>char*       g_mime_message_get_date_string  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -414,17 +368,13 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 Gets the message's sent date in string format.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the sent-date of the MIME Message in string format.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the sent-date of the MIME Message in string format.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-message-id">g_mime_message_set_message_id ()</title>
 <programlisting>void        g_mime_message_set_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -433,18 +383,14 @@ Gets the message's sent date in string format.</para>
 Set the Message-Id on a message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>message_id</parameter>&nbsp;:</entry>
-<entry> message-id (addr-spec portion)
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>message_id</parameter>&nbsp;:</term>
+<listitem><para> message-id (addr-spec portion)
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-message-id">g_mime_message_get_message_id ()</title>
 <programlisting>const char* g_mime_message_get_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -452,17 +398,13 @@ Set the Message-Id on a message.</para>
 Gets the Message-Id header of <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the Message-Id of a message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the Message-Id of a message.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-add-header">g_mime_message_add_header ()</title>
 <programlisting>void        g_mime_message_add_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -473,21 +415,17 @@ Add an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry> rfc822 header field
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> the contents of the header field
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para> rfc822 header field
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> the contents of the header field
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-header">g_mime_message_set_header ()</title>
 <programlisting>void        g_mime_message_set_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -498,21 +436,17 @@ Set an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry> rfc822 header field
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> the contents of the header field
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para> rfc822 header field
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> the contents of the header field
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-header">g_mime_message_get_header ()</title>
 <programlisting>const char* g_mime_message_get_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -522,20 +456,16 @@ Gets the value of the requested header <parameter>header</parameter> if it exist
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry> rfc822 header field
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the requested header (or <literal>NULL</literal> if it isn't set)
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para> rfc822 header field
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the requested header (or <literal>NULL</literal> if it isn't set)
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-set-mime-part">g_mime_message_set_mime_part ()</title>
 <programlisting>void        g_mime_message_set_mime_part    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -544,18 +474,14 @@ Gets the value of the requested header <parameter>header</parameter> if it exist
 Set the root-level MIME part of the message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> The root-level MIME Part
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> The root-level MIME Part
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-write-to-stream">g_mime_message_write_to_stream ()</title>
 <programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_message_write_to_stream  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -564,20 +490,16 @@ Set the root-level MIME part of the message.</para>
 Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> output stream
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>-1 on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> output stream
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>-1 on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-to-string">g_mime_message_to_string ()</title>
 <programlisting>char*       g_mime_message_to_string        (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -585,17 +507,13 @@ Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 Allocates a string buffer containing the mime message <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Message.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the MIME Message.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-body">g_mime_message_get_body ()</title>
 <programlisting>char*       g_mime_message_get_body         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -606,29 +524,25 @@ Attempts to get the body of the message in the preferred format
 specified by <parameter>want_plain</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><parameter>want_plain</parameter>&nbsp;:</entry>
-<entry> request text/plain
-</entry></row>
-<row><entry align="right"><parameter>is_html</parameter>&nbsp;:</entry>
-<entry> body returned is in html format
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the prefered form of the message body. Sets the value of
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>want_plain</parameter>&nbsp;:</term>
+<listitem><para> request text/plain
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>is_html</parameter>&nbsp;:</term>
+<listitem><para> body returned is in html format
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the prefered form of the message body. Sets the value of
 <parameter>is_html</parameter> to <literal>TRUE</literal> if the part returned is in HTML format, otherwise
 <literal>FALSE</literal>.
 
 Note: This function is NOT guarenteed to always work as it
 makes some assumptions that are not necessarily true. It is
 recommended that you traverse the MIME structure yourself.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-headers">g_mime_message_get_headers ()</title>
 <programlisting>char*       g_mime_message_get_headers      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
@@ -636,17 +550,13 @@ recommended that you traverse the MIME structure yourself.
 Allocates a string buffer containing the raw message headers.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the raw message headers.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME Message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the raw message headers.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-foreach-part">g_mime_message_foreach_part ()</title>
 <programlisting>void        g_mime_message_foreach_part     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -656,21 +566,17 @@ Allocates a string buffer containing the raw message headers.</para>
 Calls <parameter>callback</parameter> on each of the mime parts in the mime message.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME message
-</entry></row>
-<row><entry align="right"><parameter>callback</parameter>&nbsp;:</entry>
-<entry> function to call on each of the mime parts contained by the mime message
-</entry></row>
-<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
-<entry> extra data to pass to the callback
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> MIME message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>callback</parameter>&nbsp;:</term>
+<listitem><para> function to call on each of the mime parts contained by the mime message
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>data</parameter>&nbsp;:</term>
+<listitem><para> extra data to pass to the callback
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

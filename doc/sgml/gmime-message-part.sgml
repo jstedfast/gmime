@@ -32,6 +32,8 @@ void        <link linkend="g-mime-message-part-set-message">g_mime_message_part_
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -60,18 +62,14 @@ Creates a new MIME message part object with a default content-type
 of message/<parameter>subtype</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>subtype</parameter>&nbsp;:</entry>
-<entry> message subtype or <literal>NULL</literal> for "rfc822"
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME message part object with a default
+</para><variablelist role="params">
+<varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
+<listitem><para> message subtype or <literal>NULL</literal> for "rfc822"
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME message part object with a default
 content-type of message/<parameter>subtype</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-new-with-message">g_mime_message_part_new_with_message ()</title>
 <programlisting><link linkend="GMimeMessagePart">GMimeMessagePart</link>* g_mime_message_part_new_with_message
@@ -82,21 +80,17 @@ Creates a new MIME message part object with a default content-type
 of message/<parameter>subtype</parameter> containing <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>subtype</parameter>&nbsp;:</entry>
-<entry> message subtype or <literal>NULL</literal> for "rfc822"
-</entry></row>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> message
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a MIME message part object with a default content-type of
+</para><variablelist role="params">
+<varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
+<listitem><para> message subtype or <literal>NULL</literal> for "rfc822"
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> message
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME message part object with a default content-type of
 message/<parameter>subtype</parameter> containing <parameter>message</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-get-message">g_mime_message_part_get_message ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_message_part_get_message
@@ -105,17 +99,13 @@ message/<parameter>subtype</parameter> containing <parameter>message</parameter>
 Gets the message object on the message part object <parameter>part</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
-<entry> message part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the message part contained within <parameter>part</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>part</parameter>&nbsp;:</term>
+<listitem><para> message part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the message part contained within <parameter>part</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-set-message">g_mime_message_part_set_message ()</title>
 <programlisting>void        g_mime_message_part_set_message (<link linkend="GMimeMessagePart">GMimeMessagePart</link> *part,
@@ -124,18 +114,14 @@ Gets the message object on the message part object <parameter>part</parameter>.<
 Sets the <parameter>message</parameter> object on the message part object <parameter>part</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
-<entry> message part
-</entry></row>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> message
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>part</parameter>&nbsp;:</term>
+<listitem><para> message part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>message</parameter>&nbsp;:</term>
+<listitem><para> message
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

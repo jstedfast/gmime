@@ -39,6 +39,8 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -67,14 +69,10 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 Creates a new GMimeDataWrapper object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new data wrapper object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new data wrapper object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-new-with-stream">g_mime_data_wrapper_new_with_stream ()</title>
 <programlisting><link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* g_mime_data_wrapper_new_with_stream
@@ -84,22 +82,18 @@ Creates a new GMimeDataWrapper object.</para>
 Creates a new GMimeDataWrapper object around <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> stream
-</entry></row>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> stream's encoding
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a data wrapper around <parameter>stream</parameter>. Since the wrapper owns it's
+</para><variablelist role="params">
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> stream
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> stream's encoding
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a data wrapper around <parameter>stream</parameter>. Since the wrapper owns it's
 own reference on the stream, caller is responsible for unrefing
 it's own copy.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-set-stream">g_mime_data_wrapper_set_stream ()</title>
 <programlisting>void        g_mime_data_wrapper_set_stream  (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper,
@@ -110,18 +104,14 @@ Note: caller is responsible for it's own reference on
 <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
-</entry></row>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> stream
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>wrapper</parameter>&nbsp;:</term>
+<listitem><para> data wrapper
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> stream
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-get-stream">g_mime_data_wrapper_get_stream ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_data_wrapper_get_stream (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);</programlisting>
@@ -129,18 +119,14 @@ Note: caller is responsible for it's own reference on
 Gets a reference to the stream wrapped by <parameter>wrapper</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a reference to the internal stream. Caller is responsable
+</para><variablelist role="params">
+<varlistentry><term><parameter>wrapper</parameter>&nbsp;:</term>
+<listitem><para> data wrapper
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a reference to the internal stream. Caller is responsable
 for unrefing it.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper_set_encoding ()</title>
 <programlisting>void        g_mime_data_wrapper_set_encoding
@@ -150,18 +136,14 @@ for unrefing it.
 Sets the encoding type of the internal stream.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
-</entry></row>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> encoding
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>wrapper</parameter>&nbsp;:</term>
+<listitem><para> data wrapper
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> encoding
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-get-encoding">g_mime_data_wrapper_get_encoding ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_data_wrapper_get_encoding
@@ -170,17 +152,13 @@ Sets the encoding type of the internal stream.</para>
 Gets the encoding type of the stream wrapped by <parameter>wrapper</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding type of the internal stream.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>wrapper</parameter>&nbsp;:</term>
+<listitem><para> data wrapper
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the encoding type of the internal stream.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-write-to-stream">g_mime_data_wrapper_write_to_stream ()</title>
 <programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_data_wrapper_write_to_stream
@@ -190,20 +168,16 @@ Gets the encoding type of the stream wrapped by <parameter>wrapper</parameter>.<
 Write's the raw (decoded) data to the output stream.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
-</entry></row>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> output stream
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on failure.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>wrapper</parameter>&nbsp;:</term>
+<listitem><para> data wrapper
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> output stream
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on failure.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

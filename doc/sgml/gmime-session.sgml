@@ -19,15 +19,17 @@ char*       <link linkend="g-mime-session-request-passwd">g_mime_session_request
                                              const char *prompt,
                                              <link linkend="gboolean">gboolean</link> secret,
                                              const char *item,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 void        <link linkend="g-mime-session-forget-passwd">g_mime_session_forget_passwd</link>    (<link linkend="GMimeSession">GMimeSession</link> *session,
                                              const char *item,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-session-is-online">g_mime_session_is_online</link>        (<link linkend="GMimeSession">GMimeSession</link> *session);
 
 
 </synopsis>
 </refsynopsisdiv>
+
+
 
 
 
@@ -58,59 +60,51 @@ void        <link linkend="g-mime-session-forget-passwd">g_mime_session_forget_p
                                              const char *prompt,
                                              <link linkend="gboolean">gboolean</link> secret,
                                              const char *item,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Requests the password for item <parameter>item</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>session</parameter>&nbsp;:</entry>
-<entry> session object
-</entry></row>
-<row><entry align="right"><parameter>prompt</parameter>&nbsp;:</entry>
-<entry> prompt to present to the user
-</entry></row>
-<row><entry align="right"><parameter>secret</parameter>&nbsp;:</entry>
-<entry> <literal>TRUE</literal> if the characters the user types should be hidden
-</entry></row>
-<row><entry align="right"><parameter>item</parameter>&nbsp;:</entry>
-<entry> item name
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string buffer containing the password for the requested
+</para><variablelist role="params">
+<varlistentry><term><parameter>session</parameter>&nbsp;:</term>
+<listitem><para> session object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>prompt</parameter>&nbsp;:</term>
+<listitem><para> prompt to present to the user
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>secret</parameter>&nbsp;:</term>
+<listitem><para> <literal>TRUE</literal> if the characters the user types should be hidden
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>item</parameter>&nbsp;:</term>
+<listitem><para> item name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string buffer containing the password for the requested
 item or <literal>NULL</literal> on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-session-forget-passwd">g_mime_session_forget_passwd ()</title>
 <programlisting>void        g_mime_session_forget_passwd    (<link linkend="GMimeSession">GMimeSession</link> *session,
                                              const char *item,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Forgets the password for item <parameter>item</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>session</parameter>&nbsp;:</entry>
-<entry> session object
-</entry></row>
-<row><entry align="right"><parameter>item</parameter>&nbsp;:</entry>
-<entry> item name
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>session</parameter>&nbsp;:</term>
+<listitem><para> session object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>item</parameter>&nbsp;:</term>
+<listitem><para> item name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-session-is-online">g_mime_session_is_online ()</title>
 <programlisting><link linkend="gboolean">gboolean</link>    g_mime_session_is_online        (<link linkend="GMimeSession">GMimeSession</link> *session);</programlisting>
@@ -119,17 +113,13 @@ Gets whether or not the session is 'online' or not (online meaning
 that we are connected to the internet).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>session</parameter>&nbsp;:</entry>
-<entry> session object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> if the session is online or <literal>FALSE</literal> otherwise.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>session</parameter>&nbsp;:</term>
+<listitem><para> session object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> if the session is online or <literal>FALSE</literal> otherwise.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

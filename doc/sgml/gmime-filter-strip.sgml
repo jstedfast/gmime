@@ -25,6 +25,8 @@ struct      <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>;
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -51,14 +53,10 @@ struct      <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>;
 Creates a new GMimeFilterStrip filter.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new strip filter.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new strip filter.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -34,7 +34,6 @@ extern "C" {
 
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-session.h>
-#include <gmime/gmime-exception.h>
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
 #define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
@@ -78,25 +77,25 @@ struct _GMimeCipherContextClass {
 	
 	int                   (*sign)        (GMimeCipherContext *ctx, const char *userid,
 					      GMimeCipherHash hash, GMimeStream *istream,
-					      GMimeStream *ostream, GMimeException *ex);
+					      GMimeStream *ostream, GError **err);
 	
 	GMimeCipherValidity * (*verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
 					      GMimeStream *istream, GMimeStream *sigstream,
-					      GMimeException *ex);
+					      GError **err);
 	
 	int                   (*encrypt)     (GMimeCipherContext *ctx, gboolean sign,
 					      const char *userid, GPtrArray *recipients,
 					      GMimeStream *istream, GMimeStream *ostream,
-					      GMimeException *ex);
+					      GError **err);
 	
 	int                   (*decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
-					      GMimeStream *ostream, GMimeException *ex);
+					      GMimeStream *ostream, GError **err);
 	
 	int                   (*import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
-					      GMimeException *ex);
+					      GError **err);
 	
 	int                   (*export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
-					      GMimeStream *ostream, GMimeException *ex);
+					      GMimeStream *ostream, GError **err);
 };
 
 
@@ -111,26 +110,26 @@ const char *         g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCiph
 /* cipher routines */
 int                  g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid,
 					 GMimeCipherHash hash, GMimeStream *istream,
-					 GMimeStream *ostream, GMimeException *ex);
+					 GMimeStream *ostream, GError **err);
 
 GMimeCipherValidity *g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
 					   GMimeStream *istream, GMimeStream *sigstream,
-					   GMimeException *ex);
+					   GError **err);
 
 int                  g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
 					    const char *userid, GPtrArray *recipients,
 					    GMimeStream *istream, GMimeStream *ostream,
-					    GMimeException *ex);
+					    GError **err);
 
 int                  g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-					    GMimeStream *ostream, GMimeException *ex);
+					    GMimeStream *ostream, GError **err);
 
 /* key/certificate routines */
 int                  g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
-						GMimeException *ex);
+						GError **err);
 
 int                  g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
-						GMimeStream *ostream, GMimeException *ex);
+						GMimeStream *ostream, GError **err);
 
 
 /* GMimeCipherValidity utility functions */

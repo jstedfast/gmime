@@ -34,6 +34,8 @@ struct      <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>;
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -141,20 +143,16 @@ Cites text by prepending "&gt; " to each cited line.</para>
 Creates a new GMimeFilterHTML filter.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry> html flags
-</entry></row>
-<row><entry align="right"><parameter>colour</parameter>&nbsp;:</entry>
-<entry> citation colour
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new html filter.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
+<listitem><para> html flags
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>colour</parameter>&nbsp;:</term>
+<listitem><para> citation colour
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new html filter.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

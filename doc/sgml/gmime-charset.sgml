@@ -31,6 +31,8 @@ const char* <link linkend="g-mime-charset-best">g_mime_charset_best</link>      
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -57,14 +59,10 @@ iso-8859-1 locales.</para>
 Gets the user's locale charset (or iso-8859-1 by default).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the user's locale charset (or iso-8859-1 by default).
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the user's locale charset (or iso-8859-1 by default).
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-name">g_mime_charset_name ()</title>
 <programlisting>const char* g_mime_charset_name             (const char *charset);</programlisting>
@@ -72,17 +70,13 @@ Gets the user's locale charset (or iso-8859-1 by default).</para>
 Attempts to find an iconv-friendly charset name for <parameter>charset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>charset</parameter>&nbsp;:</entry>
-<entry> charset name
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an iconv-friendly charset name for <parameter>charset</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
+<listitem><para> charset name
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an iconv-friendly charset name for <parameter>charset</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-init">g_mime_charset_init ()</title>
 <programlisting>void        g_mime_charset_init             (<link linkend="GMimeCharset">GMimeCharset</link> *charset);</programlisting>
@@ -90,15 +84,11 @@ Attempts to find an iconv-friendly charset name for <parameter>charset</paramete
 Initializes a charset mask structure.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>charset</parameter>&nbsp;:</entry>
-<entry> charset mask
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
+<listitem><para> charset mask
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-step">g_mime_charset_step ()</title>
 <programlisting>void        g_mime_charset_step             (<link linkend="GMimeCharset">GMimeCharset</link> *charset,
@@ -111,21 +101,17 @@ time (ie, not necessarily 1 byte at a time). Bitwise 'and' our
 limiting what charsets our <parameter>charset</parameter>-&gt;mask can match.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>charset</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> input text buffer (must be in UTF-8)
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> input buffer length
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><para> input text buffer (must be in UTF-8)
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>len</parameter>&nbsp;:</term>
+<listitem><para> input buffer length
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-best-name">g_mime_charset_best_name ()</title>
 <programlisting>const char* g_mime_charset_best_name        (<link linkend="GMimeCharset">GMimeCharset</link> *charset);</programlisting>
@@ -133,18 +119,14 @@ limiting what charsets our <parameter>charset</parameter>-&gt;mask can match.</p
 Gets the best charset name based on the charset mask <parameter>charset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>charset</parameter>&nbsp;:</entry>
-<entry> charset mask
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a pointer to a string containing the best charset name that
+</para><variablelist role="params">
+<varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
+<listitem><para> charset mask
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a pointer to a string containing the best charset name that
 can represent the charset mask <parameter>charset</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-best">g_mime_charset_best ()</title>
 <programlisting>const char* g_mime_charset_best             (const char *in,
@@ -153,21 +135,17 @@ can represent the charset mask <parameter>charset</parameter>.
 Computes the best charset to use to encode this text buffer.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> a UTF-8 text buffer
-</entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> length of <parameter>in</parameter>
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the charset name best suited for the input text or <literal>NULL</literal> if
+</para><variablelist role="params">
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><para> a UTF-8 text buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
+<listitem><para> length of <parameter>in</parameter>
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the charset name best suited for the input text or <literal>NULL</literal> if
 it is US-ASCII safe.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

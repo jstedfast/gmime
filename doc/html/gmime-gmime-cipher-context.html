@@ -13,8 +13,8 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-exception"
-HREF="gmime-gmime-exception.html"><LINK
+TITLE="gmime-iconv-utils"
+HREF="gmime-gmime-iconv-utils.html"><LINK
 REL="NEXT"
 TITLE="gmime-gpg-context"
 HREF="gmime-gmime-gpg-context.html"></HEAD
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-exception.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-CIPHER-CONTEXT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN8972"
+NAME="AEN8335"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN8972"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN8975"
+NAME="AEN8338"
 ></A
 ><H2
 >Synopsis</H2
@@ -200,10 +200,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 <A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
@@ -226,10 +226,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *sigstream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 int         <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-ENCRYPT"
 >g_mime_cipher_encrypt</A
@@ -254,10 +254,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 int         <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-DECRYPT"
 >g_mime_cipher_decrypt</A
@@ -273,10 +273,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 int         <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-IMPORT-KEYS"
 >g_mime_cipher_import_keys</A
@@ -288,10 +288,10 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *istream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 int         <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-EXPORT-KEYS"
 >g_mime_cipher_export_keys</A
@@ -307,10 +307,10 @@ HREF="GPTRARRAY"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 void        <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-INIT"
 >g_mime_cipher_validity_init</A
@@ -388,7 +388,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9039"
+NAME="AEN8402"
 ></A
 ><H2
 >Description</H2
@@ -398,14 +398,14 @@ NAME="AEN9039"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9042"
+NAME="AEN8405"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9044"
+NAME="AEN8407"
 ></A
 ><H3
 ><A
@@ -439,7 +439,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9049"
+NAME="AEN8412"
 ></A
 ><H3
 ><A
@@ -474,7 +474,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9054"
+NAME="AEN8417"
 ></A
 ><H3
 ><A
@@ -500,7 +500,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9059"
+NAME="AEN8422"
 ></A
 ><H3
 ><A
@@ -536,83 +536,93 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9068"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8432"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8437"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >hash</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> hash name</TD
+WIDTH="80%"
+><P
+> hash name</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8442"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 >the equivalent hash id or <GTKDOCLINK
 HREF="GMIME-CIPHER-HASH-DEFAULT-CAPS"
 >GMIME_CIPHER_HASH_DEFAULT</GTKDOCLINK
-> on fail.</TD
+> on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9086"
+NAME="AEN8448"
 ></A
 ><H3
 ><A
@@ -648,83 +658,93 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9095"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8458"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8463"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >hash</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> hash id</TD
+WIDTH="80%"
+><P
+> hash id</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8468"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 >the equivalent hash name or <TT
 CLASS="LITERAL"
 >NULL</TT
-> on fail.</TD
+> on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9113"
+NAME="AEN8474"
 ></A
 ><H3
 ><A
@@ -757,10 +777,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -768,148 +788,182 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 >Signs the input stream and writes the resulting signature to the output stream.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9124"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8486"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8491"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >userid</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> private key to use to sign the stream</TD
+WIDTH="80%"
+><P
+> private key to use to sign the stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8496"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >hash</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> preferred Message-Integrity-Check hash algorithm</TD
+WIDTH="80%"
+><P
+> preferred Message-Integrity-Check hash algorithm</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8501"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >istream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input stream</TD
+WIDTH="80%"
+><P
+> input stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8506"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ostream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output stream</TD
+WIDTH="80%"
+><P
+> output stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8511"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8516"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->0 on success or -1 on fail.</TD
+WIDTH="80%"
+><P
+>0 on success or -1 on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9157"
+NAME="AEN8521"
 ></A
 ><H3
 ><A
@@ -944,10 +998,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *sigstream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -976,136 +1030,164 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9173"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8538"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8543"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >hash</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> secure hash used</TD
+WIDTH="80%"
+><P
+> secure hash used</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8548"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >istream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input stream</TD
+WIDTH="80%"
+><P
+> input stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8553"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >sigstream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> optional detached-signature stream</TD
+WIDTH="80%"
+><P
+> optional detached-signature stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8558"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8563"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 >a GMimeCipherValidity structure containing information
 about the integrity of the input stream or <TT
 CLASS="LITERAL"
 >NULL</TT
 > on failure to
-execute at all.</TD
+execute at all.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9203"
+NAME="AEN8569"
 ></A
 ><H3
 ><A
@@ -1142,10 +1224,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1154,70 +1236,82 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 writes the resulting ciphertext to the output stream.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9215"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8582"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8587"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >sign</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> sign as well as encrypt</TD
+WIDTH="80%"
+><P
+> sign as well as encrypt</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8592"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >userid</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 > key id (or email address) to use when signing (assuming <TT
 CLASS="PARAMETER"
 ><I
@@ -1226,101 +1320,129 @@ CLASS="PARAMETER"
 > is <TT
 CLASS="LITERAL"
 >TRUE</TT
->)</TD
+>)</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8599"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >recipients</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an array of recipient key ids and/or email addresses</TD
+WIDTH="80%"
+><P
+> an array of recipient key ids and/or email addresses</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8604"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >istream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> cleartext input stream</TD
+WIDTH="80%"
+><P
+> cleartext input stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8609"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ostream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> ciphertext output stream</TD
+WIDTH="80%"
+><P
+> ciphertext output stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8614"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8619"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->0 on success or -1 on fail.</TD
+WIDTH="80%"
+><P
+>0 on success or -1 on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9254"
+NAME="AEN8624"
 ></A
 ><H3
 ><A
@@ -1348,10 +1470,10 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1360,114 +1482,136 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 cleartext to the output stream.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9264"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8635"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8640"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >istream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input/ciphertext stream</TD
+WIDTH="80%"
+><P
+> input/ciphertext stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8645"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ostream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output/cleartext stream</TD
+WIDTH="80%"
+><P
+> output/cleartext stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8650"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8655"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->0 on success or -1 for fail.</TD
+WIDTH="80%"
+><P
+>0 on success or -1 for fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9289"
+NAME="AEN8660"
 ></A
 ><H3
 ><A
@@ -1491,10 +1635,10 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *istream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1513,97 +1657,113 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9300"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8672"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8677"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >istream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input stream (containing keys)</TD
+WIDTH="80%"
+><P
+> input stream (containing keys)</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8682"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8687"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->0 on success or -1 on fail.</TD
+WIDTH="80%"
+><P
+>0 on success or -1 on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9321"
+NAME="AEN8692"
 ></A
 ><H3
 ><A
@@ -1631,10 +1791,10 @@ HREF="GPTRARRAY"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *ostream,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1658,114 +1818,136 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9334"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8706"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Cipher Context</TD
+WIDTH="80%"
+><P
+> Cipher Context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8711"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >keys</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an array of key ids</TD
+WIDTH="80%"
+><P
+> an array of key ids</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8716"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ostream</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output stream</TD
+WIDTH="80%"
+><P
+> output stream</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8721"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8726"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->0 on success or -1 on fail.</TD
+WIDTH="80%"
+><P
+>0 on success or -1 on fail.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9359"
+NAME="AEN8731"
 ></A
 ><H3
 ><A
@@ -1792,48 +1974,46 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >Initializes the validity structure.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9366"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8739"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9375"
+NAME="AEN8744"
 ></A
 ><H3
 ><A
@@ -1861,46 +2041,44 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >Creates a new validity structure.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9382"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8752"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new validity structure.</TD
+WIDTH="80%"
+><P
+>a new validity structure.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9391"
+NAME="AEN8757"
 ></A
 ><H3
 ><A
@@ -1927,48 +2105,46 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >Clears the contents of the validity structure.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9398"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8765"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9407"
+NAME="AEN8770"
 ></A
 ><H3
 ><A
@@ -2000,48 +2176,46 @@ CLASS="PARAMETER"
 > back to the system.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9415"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8779"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9424"
+NAME="AEN8784"
 ></A
 ><H3
 ><A
@@ -2077,51 +2251,57 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9433"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8794"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8799"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 ><TT
 CLASS="LITERAL"
 >TRUE</TT
@@ -2133,18 +2313,16 @@ CLASS="PARAMETER"
 > is valid or <TT
 CLASS="LITERAL"
 >FALSE</TT
-> otherwise.</TD
+> otherwise.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9449"
+NAME="AEN8807"
 ></A
 ><H3
 ><A
@@ -2176,71 +2354,75 @@ HREF="GBOOLEAN"
 >Sets the validness on the validity structure.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9457"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8816"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8821"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >valid</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 > <TT
 CLASS="LITERAL"
 >TRUE</TT
 > if valid else <TT
 CLASS="LITERAL"
 >FALSE</TT
+></P
 ></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9472"
+NAME="AEN8828"
 ></A
 ><H3
 ><A
@@ -2273,63 +2455,67 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9480"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8837"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8842"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->any description set on the validity structure.</TD
+WIDTH="80%"
+><P
+>any description set on the validity structure.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9493"
+NAME="AEN8847"
 ></A
 ><H3
 ><A
@@ -2358,60 +2544,64 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >Sets the description on the validity structure.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9500"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8855"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >validity</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity structure</TD
+WIDTH="80%"
+><P
+> validity structure</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN8860"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >description</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> validity description</TD
+WIDTH="80%"
+><P
+> validity description</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ></DIV
 ><DIV
@@ -2429,7 +2619,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-exception.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -2501,7 +2691,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-exception</B
+>gmime-iconv-utils</B
 ></FONT
 ></TD
 ><TD

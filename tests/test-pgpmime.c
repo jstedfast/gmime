@@ -50,7 +50,7 @@ static void test_session_finalize (GObject *object);
 
 static char *request_passwd (GMimeSession *session, const char *prompt,
 			     gboolean secret, const char *item,
-			     GMimeException *ex);
+			     GError **err);
 
 
 static GMimeSessionClass *parent_class = NULL;
@@ -93,7 +93,7 @@ test_session_class_init (TestSessionClass *klass)
 }
 
 static char *
-request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GMimeException *ex)
+request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
 {
 #if 0
 	char buffer[256];
@@ -118,7 +118,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	GMimeDataWrapper *content;
 	GMimeStream *stream;
 	GMimeParser *parser;
-	GMimeException *ex;
+	GError *err = NULL;
 	
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
@@ -145,16 +145,14 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	mps = g_mime_multipart_signed_new ();
 	
 	/* sign the part */
-	ex = g_mime_exception_new ();
 	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (text_part), ctx, userid,
-				      GMIME_CIPHER_HASH_SHA1, ex);
+				      GMIME_CIPHER_HASH_SHA1, &err);
 	g_mime_object_unref (GMIME_OBJECT (text_part));
 	
-	if (g_mime_exception_is_set (ex)) {
+	if (err != NULL) {
 		g_mime_object_unref (GMIME_OBJECT (mps));
-		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
+		g_error_free (err);
 		return;
 	}
 	
@@ -208,17 +206,17 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
-	validity = g_mime_multipart_signed_verify (mps, ctx, ex);
+	validity = g_mime_multipart_signed_verify (mps, ctx, &err);
 	fprintf (stdout, "Trying to verify signature...%s\n",
 		 g_mime_cipher_validity_get_valid (validity) ? "valid" : "invalid");
 	fprintf (stdout, "Validity diagnostics: \n%s\n",
 		 g_mime_cipher_validity_get_description (validity));
 	g_mime_cipher_validity_free (validity);
 	
-	if (g_mime_exception_is_set (ex))
-		fprintf (stdout, "error: %s\n", g_mime_exception_get_description (ex));
-	
-	g_mime_exception_free (ex);
+	if (err != NULL) {
+		fprintf (stdout, "error: %s\n", err->message);
+		g_error_free (err);
+	}
 	
 	g_mime_object_unref (GMIME_OBJECT (message));
 }
@@ -231,8 +229,8 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	GMimeObject *decrypted_part;
 	GMimePart *text_part;
 	GMimeContentType *mime_type;
-	GMimeException *ex;
 	GPtrArray *recipients;
+	GError *err = NULL;
 	char *text;
 	
 	text_part = g_mime_part_new ();
@@ -245,19 +243,17 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	mpe = g_mime_multipart_encrypted_new ();
 	
 	/* encrypt the part */
-	ex = g_mime_exception_new ();
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, userid);
 	
-	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (text_part), ctx, recipients, ex);
+	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (text_part), ctx, recipients, &err);
 	g_mime_object_unref (GMIME_OBJECT (text_part));
 	g_ptr_array_free (recipients, TRUE);
 	
-	if (g_mime_exception_is_set (ex)) {
+	if (err != NULL) {
 		g_mime_object_unref (GMIME_OBJECT (text_part));
-		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
+		g_error_free (err);
 		return;
 	}
 	
@@ -275,16 +271,16 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	g_free (text);
 	
 	/* okay, now to test our decrypt function... */
-	decrypted_part = g_mime_multipart_encrypted_decrypt (mpe, ctx, ex);
-	if (!decrypted_part || g_mime_exception_is_set (ex)) {
-		fprintf (stdout, "failed to decrypt part.\n");
+	decrypted_part = g_mime_multipart_encrypted_decrypt (mpe, ctx, &err);
+	if (!decrypted_part || err != NULL) {
+		fprintf (stdout, "failed to decrypt part: %s\n", err->message);
+		g_error_free (err);
 	} else {
 		text = g_mime_object_to_string (decrypted_part);
 		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
 		g_free (text);
 		g_mime_object_unref (GMIME_OBJECT (decrypted_part));
 	}
-	g_mime_exception_free (ex);
 	
 	g_mime_object_unref (GMIME_OBJECT (mpe));
 	g_mime_object_unref (GMIME_OBJECT (message));

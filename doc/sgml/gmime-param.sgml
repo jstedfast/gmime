@@ -34,6 +34,8 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -62,20 +64,16 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 Creates a new GMimeParam node with name <parameter>name</parameter> and value <parameter>value</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> parameter name
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> parameter value
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new paramter structure.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> parameter name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> parameter value
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new paramter structure.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-new-from-string">g_mime_param_new_from_string ()</title>
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new_from_string    (const char *string);</programlisting>
@@ -83,17 +81,13 @@ Creates a new GMimeParam node with name <parameter>name</parameter> and value <p
 Creates a parameter list based on the input string.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> input string
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeParam structure based on <parameter>string</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> input string
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a GMimeParam structure based on <parameter>string</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-destroy">g_mime_param_destroy ()</title>
 <programlisting>void        g_mime_param_destroy            (<link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
@@ -102,15 +96,11 @@ Releases all memory used by this mime param back to the Operating
 System.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
-<entry> Mime param list to destroy
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>param</parameter>&nbsp;:</term>
+<listitem><para> Mime param list to destroy
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-append">g_mime_param_append ()</title>
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_append             (<link linkend="GMimeParam">GMimeParam</link> *params,
@@ -121,24 +111,20 @@ Appends a new parameter with name <parameter>name</parameter> and value <paramet
 parameter list <parameter>params</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>params</parameter>&nbsp;:</entry>
-<entry> param list
-</entry></row>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> new param name
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> new param value
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a param list with the new param of name <parameter>name</parameter> and value
+</para><variablelist role="params">
+<varlistentry><term><parameter>params</parameter>&nbsp;:</term>
+<listitem><para> param list
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> new param name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> new param value
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a param list with the new param of name <parameter>name</parameter> and value
 <parameter>value</parameter> appended to the list of params <parameter>params</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-append-param">g_mime_param_append_param ()</title>
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_append_param       (<link linkend="GMimeParam">GMimeParam</link> *params,
@@ -147,21 +133,17 @@ parameter list <parameter>params</parameter>.</para>
 Appends <parameter>param</parameter> to the param list <parameter>params</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>params</parameter>&nbsp;:</entry>
-<entry> param list
-</entry></row>
-<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
-<entry> param to append
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a param list with the new param <parameter>param</parameter> appended to the list
+</para><variablelist role="params">
+<varlistentry><term><parameter>params</parameter>&nbsp;:</term>
+<listitem><para> param list
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>param</parameter>&nbsp;:</term>
+<listitem><para> param to append
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a param list with the new param <parameter>param</parameter> appended to the list
 of params <parameter>params</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-write-to-string">g_mime_param_write_to_string ()</title>
 <programlisting>void        g_mime_param_write_to_string    (<link linkend="GMimeParam">GMimeParam</link> *param,
@@ -175,21 +157,17 @@ it's immediate value.
 Writes the params out to the string <parameter>string</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
-<entry> MIME Param list
-</entry></row>
-<row><entry align="right"><parameter>fold</parameter>&nbsp;:</entry>
-<entry> specifies whether or not to fold headers
-</entry></row>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> output string
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>param</parameter>&nbsp;:</term>
+<listitem><para> MIME Param list
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>fold</parameter>&nbsp;:</term>
+<listitem><para> specifies whether or not to fold headers
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> output string
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

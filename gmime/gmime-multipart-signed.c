@@ -246,7 +246,7 @@ sign_prepare (GMimeObject *mime_part)
  * @ctx: encryption cipher context
  * @userid: user id to sign with
  * @hash: preferred digest algorithm
- * @ex: exception
+ * @err: exception
  *
  * Attempts to sign the @content MIME part with @userid's private key
  * using the @ctx signing context with the @hash algorithm. If
@@ -254,13 +254,13 @@ sign_prepare (GMimeObject *mime_part)
  * the multipart/signed object @mps.
  *
  * Returns 0 on success or -1 on fail. If the signing fails, an
- * exception will be set on @ex to provide information as to why the
+ * exception will be set on @err to provide information as to why the
  * failure occured.
  **/
 int
 g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCipherContext *ctx, const char *userid,
-			      GMimeCipherHash hash, GMimeException *ex)
+			      GMimeCipherHash hash, GError **err)
 {
 	GMimeObject *signature;
 	GMimeDataWrapper *wrapper;
@@ -308,7 +308,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if (g_mime_cipher_sign (ctx, userid, hash, filtered_stream, sigstream, ex) == -1) {
+	if (g_mime_cipher_sign (ctx, userid, hash, filtered_stream, sigstream, err) == -1) {
 		g_mime_stream_unref (filtered_stream);
 		g_mime_stream_unref (sigstream);
 		g_mime_stream_unref (stream);
@@ -362,18 +362,18 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
  * g_mime_multipart_signed_verify:
  * @mps: multipart/signed object
  * @ctx: encryption cipher context
- * @ex: exception
+ * @err: exception
  *
  * Attempts to verify the signed MIME part contained within the
  * multipart/signed object @mps using the @ctx cipher context.
  *
  * Returns a new #GMimeCipherValidity object on success or %NULL on
- * fail. If the signing fails, an exception will be set on @ex to
+ * fail. If the signing fails, an exception will be set on @err to
  * provide information as to why the failure occured.
  **/
 GMimeCipherValidity *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *ctx,
-				GMimeException *ex)
+				GError **err)
 {
 	GMimeObject *content, *signature;
 	GMimeDataWrapper *wrapper;
@@ -445,7 +445,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	/* verify the signature */
 	hash = g_mime_cipher_hash_id (ctx, mps->micalg);
-	valid = g_mime_cipher_verify (ctx, hash, stream, sigstream, ex);
+	valid = g_mime_cipher_verify (ctx, hash, stream, sigstream, err);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));

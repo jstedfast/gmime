@@ -24,6 +24,8 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -38,23 +40,19 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 <programlisting>#define     GMIME_CHECK_VERSION(major,minor,micro)</programlisting>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>major</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>minor</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>micro</parameter>&nbsp;:</entry>
-<entry>
+</para><variablelist role="params">
+<varlistentry><term><parameter>major</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>minor</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>micro</parameter>&nbsp;:</term>
+<listitem><para>
 
 
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="GMIME-INIT-FLAG-UTF8-CAPS">GMIME_INIT_FLAG_UTF8</title>
 <programlisting>#define GMIME_INIT_FLAG_UTF8  (1 &lt;&lt; 0)
@@ -76,15 +74,11 @@ not.</para>
 Initializes GMime.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry> initialization flags
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
+<listitem><para> initialization flags
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

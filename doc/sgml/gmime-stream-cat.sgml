@@ -27,6 +27,8 @@ int         <link linkend="g-mime-stream-cat-add-source">g_mime_stream_cat_add_s
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -55,14 +57,10 @@ int         <link linkend="g-mime-stream-cat-add-source">g_mime_stream_cat_add_s
 Creates a new GMimeStreamCat object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new cat stream.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new cat stream.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-cat-add-source">g_mime_stream_cat_add_source ()</title>
 <programlisting>int         g_mime_stream_cat_add_source    (<link linkend="GMimeStreamCat">GMimeStreamCat</link> *cat,
@@ -71,20 +69,16 @@ Creates a new GMimeStreamCat object.</para>
 Adds the <parameter>source</parameter> stream to the cat stream <parameter>cat</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>cat</parameter>&nbsp;:</entry>
-<entry> cat stream
-</entry></row>
-<row><entry align="right"><parameter>source</parameter>&nbsp;:</entry>
-<entry> a source stream
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>cat</parameter>&nbsp;:</term>
+<listitem><para> cat stream
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>source</parameter>&nbsp;:</term>
+<listitem><para> a source stream
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

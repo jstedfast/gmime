@@ -37,6 +37,5 @@
     &gmime-gmime-charset;
     &gmime-gmime-iconv;
     &gmime-gmime-iconv-utils;
-    &gmime-gmime-exception;
     &gmime-gmime-cipher-context;
     &gmime-gmime-gpg-context;

@@ -66,11 +66,11 @@ GMimeMultipartSigned *g_mime_multipart_signed_new (void);
 
 int g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 				  GMimeCipherContext *ctx, const char *userid,
-				  GMimeCipherHash hash, GMimeException *ex);
+				  GMimeCipherHash hash, GError **err);
 
 GMimeCipherValidity *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps,
 						     GMimeCipherContext *ctx,
-						     GMimeException *ex);
+						     GError **err);
 
 #ifdef __cplusplus
 }

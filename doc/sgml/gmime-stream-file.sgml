@@ -29,6 +29,8 @@ struct      <link linkend="GMimeStreamFile">GMimeStreamFile</link>;
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -57,17 +59,13 @@ struct      <link linkend="GMimeStreamFile">GMimeStreamFile</link>;
 Creates a new GMimeStreamFile object around <parameter>fp</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fp</parameter>&nbsp;:</entry>
-<entry> file pointer
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a stream using <parameter>fp</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fp</parameter>&nbsp;:</term>
+<listitem><para> file pointer
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fp</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-file-new-with-bounds">g_mime_stream_file_new_with_bounds ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_file_new_with_bounds
@@ -79,23 +77,19 @@ Creates a new GMimeStreamFile object around <parameter>fp</parameter> with bound
 and <parameter>end</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fp</parameter>&nbsp;:</entry>
-<entry> file pointer
-</entry></row>
-<row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
-<entry> start boundary
-</entry></row>
-<row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
-<entry> end boundary
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a stream using <parameter>fp</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fp</parameter>&nbsp;:</term>
+<listitem><para> file pointer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><para> start boundary
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>end</parameter>&nbsp;:</term>
+<listitem><para> end boundary
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fp</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -30,6 +30,8 @@ const char* <link linkend="g-mime-filter-best-charset">g_mime_filter_best_charse
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -96,17 +98,13 @@ Note: In order for the #<link linkend="g-mime-filter-best-charset">g_mime_filter
 work, the stream being filtered MUST already be encoded in UTF-8.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry> filter flags
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new best filter with flags <parameter>flags</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
+<listitem><para> filter flags
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new best filter with flags <parameter>flags</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-best-charset">g_mime_filter_best_charset ()</title>
 <programlisting>const char* g_mime_filter_best_charset      (<link linkend="GMimeFilterBest">GMimeFilterBest</link> *best);</programlisting>
@@ -115,18 +113,14 @@ Calculates the best charset for encoding the stream filtered
 through the <parameter>best</parameter> filter.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>best</parameter>&nbsp;:</entry>
-<entry> best filter
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a pointer to a string containing the name of the charset
+</para><variablelist role="params">
+<varlistentry><term><parameter>best</parameter>&nbsp;:</term>
+<listitem><para> best filter
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a pointer to a string containing the name of the charset
 best suited for the text filtered through <parameter>best</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-best-encoding">g_mime_filter_best_encoding ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_filter_best_encoding
@@ -137,20 +131,16 @@ Calculates the best Content-Transfer-Encoding for the stream
 filtered through <parameter>best</parameter> that fits within the <parameter>required</parameter> encoding.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>best</parameter>&nbsp;:</entry>
-<entry> best filter
-</entry></row>
-<row><entry align="right"><parameter>required</parameter>&nbsp;:</entry>
-<entry> encoding that all data must fit within
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the best encoding for the stream filtered by <parameter>best</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>best</parameter>&nbsp;:</term>
+<listitem><para> best filter
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>required</parameter>&nbsp;:</term>
+<listitem><para> encoding that all data must fit within
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the best encoding for the stream filtered by <parameter>best</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

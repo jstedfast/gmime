@@ -34,6 +34,8 @@ char*       <link linkend="g-mime-iconv-locale-to-utf8-length">g_mime_iconv_loca
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -52,21 +54,17 @@ Allocates a new string buffer containing <parameter>string</parameter> converted
 the destination charset described in <parameter>cd</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
-<entry> conversion descriptor
-</entry></row>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in source charset
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the original string
+</para><variablelist role="params">
+<varlistentry><term><parameter>cd</parameter>&nbsp;:</term>
+<listitem><para> conversion descriptor
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in source charset
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the original string
 converted to the new charset.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-strndup">g_mime_iconv_strndup ()</title>
 <programlisting>char*       g_mime_iconv_strndup            (<link linkend="iconv-t">iconv_t</link> cd,
@@ -78,25 +76,21 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 conversion descriptor <parameter>cd</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
-<entry> conversion descriptor
-</entry></row>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in source charset
-</entry></row>
-<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
-<entry> number of bytes to convert
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+</para><variablelist role="params">
+<varlistentry><term><parameter>cd</parameter>&nbsp;:</term>
+<listitem><para> conversion descriptor
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in source charset
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>n</parameter>&nbsp;:</term>
+<listitem><para> number of bytes to convert
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to the destination charset as described by the
 conversion descriptor <parameter>cd</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-utf8-to-locale">g_mime_iconv_utf8_to_locale ()</title>
 <programlisting>char*       g_mime_iconv_utf8_to_locale     (const char *string);</programlisting>
@@ -105,18 +99,14 @@ Allocates a new string buffer containing <parameter>string</parameter> converted
 user's locale charset.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in UTF-8 charset
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing <parameter>string</parameter> converted to the
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in UTF-8 charset
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing <parameter>string</parameter> converted to the
 user's locale charset.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-utf8-to-locale-length">g_mime_iconv_utf8_to_locale_length ()</title>
 <programlisting>char*       g_mime_iconv_utf8_to_locale_length
@@ -127,21 +117,17 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 <parameter>string</parameter> converted to the user's locale charset.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in UTF-8 charset
-</entry></row>
-<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
-<entry> number of bytes to convert
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in UTF-8 charset
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>n</parameter>&nbsp;:</term>
+<listitem><para> number of bytes to convert
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to the user's locale charset.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-locale-to-utf8">g_mime_iconv_locale_to_utf8 ()</title>
 <programlisting>char*       g_mime_iconv_locale_to_utf8     (const char *string);</programlisting>
@@ -149,17 +135,13 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 Allocates a new string buffer containing <parameter>string</parameter> in UTF-8.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in locale charset
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing <parameter>string</parameter> converted to UTF-8.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in locale charset
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing <parameter>string</parameter> converted to UTF-8.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-locale-to-utf8-length">g_mime_iconv_locale_to_utf8_length ()</title>
 <programlisting>char*       g_mime_iconv_locale_to_utf8_length
@@ -170,21 +152,17 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 <parameter>string</parameter> converted to UTF-8.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string in locale charset
-</entry></row>
-<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
-<entry> number of bytes to convert
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> string in locale charset
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>n</parameter>&nbsp;:</term>
+<listitem><para> number of bytes to convert
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to UTF-8.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -22,15 +22,17 @@ int         <link linkend="g-mime-multipart-signed-sign">g_mime_multipart_signed
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              const char *userid,
                                              <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-multipart-signed-verify">g_mime_multipart_signed_verify</link>
                                             (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 
 
 </synopsis>
 </refsynopsisdiv>
+
+
 
 
 
@@ -65,14 +67,10 @@ int         <link linkend="g-mime-multipart-signed-sign">g_mime_multipart_signed
 Creates a new MIME multipart/signed object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME multipart/signed object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart/signed object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-signed-sign">g_mime_multipart_signed_sign ()</title>
 <programlisting>int         g_mime_multipart_signed_sign    (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
@@ -80,7 +78,7 @@ Creates a new MIME multipart/signed object.</para>
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              const char *userid,
                                              <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Attempts to sign the <parameter>content</parameter> MIME part with <parameter>userid</parameter>'s private key
 using the <parameter>ctx</parameter> signing context with the <parameter>hash</parameter> algorithm. If
@@ -88,64 +86,56 @@ successful, the signed <link linkend="GMimeObject">GMimeObject</link> is set as 
 the multipart/signed object <parameter>mps</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mps</parameter>&nbsp;:</entry>
-<entry> multipart/signed object
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> MIME part to sign
-</entry></row>
-<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry> encryption cipher context
-</entry></row>
-<row><entry align="right"><parameter>userid</parameter>&nbsp;:</entry>
-<entry> user id to sign with
-</entry></row>
-<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
-<entry> preferred digest algorithm
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail. If the signing fails, an
-exception will be set on <parameter>ex</parameter> to provide information as to why the
+</para><variablelist role="params">
+<varlistentry><term><parameter>mps</parameter>&nbsp;:</term>
+<listitem><para> multipart/signed object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> MIME part to sign
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
+<listitem><para> encryption cipher context
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>userid</parameter>&nbsp;:</term>
+<listitem><para> user id to sign with
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
+<listitem><para> preferred digest algorithm
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail. If the signing fails, an
+exception will be set on <parameter>err</parameter> to provide information as to why the
 failure occured.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-signed-verify">g_mime_multipart_signed_verify ()</title>
 <programlisting><link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* g_mime_multipart_signed_verify
                                             (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Attempts to verify the signed MIME part contained within the
 multipart/signed object <parameter>mps</parameter> using the <parameter>ctx</parameter> cipher context.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mps</parameter>&nbsp;:</entry>
-<entry> multipart/signed object
-</entry></row>
-<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry> encryption cipher context
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="GMimeCipherValidity">GMimeCipherValidity</link> object on success or <literal>NULL</literal> on
-fail. If the signing fails, an exception will be set on <parameter>ex</parameter> to
+</para><variablelist role="params">
+<varlistentry><term><parameter>mps</parameter>&nbsp;:</term>
+<listitem><para> multipart/signed object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
+<listitem><para> encryption cipher context
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="GMimeCipherValidity">GMimeCipherValidity</link> object on success or <literal>NULL</literal> on
+fail. If the signing fails, an exception will be set on <parameter>err</parameter> to
 provide information as to why the failure occured.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -50,7 +50,7 @@ static void test_session_finalize (GObject *object);
 
 static char *request_passwd (GMimeSession *session, const char *prompt,
 			     gboolean secret, const char *item,
-			     GMimeException *ex);
+			     GError **err);
 
 
 static GMimeSessionClass *parent_class = NULL;
@@ -94,7 +94,7 @@ test_session_class_init (TestSessionClass *klass)
 
 
 static char *
-request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GMimeException *ex)
+request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
 {
 #if 0
 	char buffer[256];
@@ -113,24 +113,21 @@ test_sign (GMimeCipherContext *ctx, const char *cleartext, GMimeCipherHash hash)
 {
 	GMimeStream *stream, *ciphertext;
 	GByteArray *buffer;
-	GMimeException *ex;
+	GError *err = NULL;
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_write_string (stream, cleartext);
 	g_mime_stream_reset (stream);
 	ciphertext = g_mime_stream_mem_new ();
 	
-	ex = g_mime_exception_new ();
-	g_mime_cipher_sign (ctx, userid, hash, stream, ciphertext, ex);
+	g_mime_cipher_sign (ctx, userid, hash, stream, ciphertext, &err);
 	g_mime_stream_unref (stream);
-	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_sign failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+	if (err != NULL) {
+		fprintf (stderr, "pgp_sign failed: %s\n", err->message);
+		g_error_free (err);
 		return 0;
 	}
 	
-	g_mime_exception_free (ex);
 	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
 	fprintf (stderr, "signature:\n%.*s\n", buffer->len, buffer->data);
 	g_mime_stream_unref (ciphertext);
@@ -144,27 +141,23 @@ test_encrypt (GMimeCipherContext *ctx, const char *in, int inlen)
 	GMimeStream *stream, *ciphertext;
 	GPtrArray *recipients;
 	GByteArray *buffer;
-	GMimeException *ex;
+	GError *err = NULL;
 	
 	stream = g_mime_stream_mem_new_with_buffer (in, inlen);
 	ciphertext = g_mime_stream_mem_new ();
 	
-	ex = g_mime_exception_new ();
-	
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, userid);
 	
-	g_mime_cipher_encrypt (ctx, FALSE, userid, recipients, stream, ciphertext, ex);
+	g_mime_cipher_encrypt (ctx, FALSE, userid, recipients, stream, ciphertext, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_mime_stream_unref (stream);
-	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_encrypt failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+	if (err != NULL) {
+		fprintf (stderr, "pgp_encrypt failed: %s\n", err->message);
+		g_error_free (err);
 		return 0;
 	}
 	
-	g_mime_exception_free (ex);
 	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
 	fprintf (stderr, "ciphertext:\n%.*s\n", buffer->len, buffer->data);
 	g_mime_stream_unref (ciphertext);
@@ -177,24 +170,20 @@ test_decrypt (GMimeCipherContext *ctx, const char *ciphertext)
 {
 	GMimeStream *stream, *cleartext;
 	GByteArray *buffer;
-	GMimeException *ex;
+	GError *err = NULL;
 	int len;
 	
 	stream = g_mime_stream_mem_new_with_buffer (ciphertext, strlen (ciphertext));
 	cleartext = g_mime_stream_mem_new ();
 	
-	ex = g_mime_exception_new ();
-	
-	g_mime_cipher_decrypt (ctx, stream, cleartext, ex);
+	g_mime_cipher_decrypt (ctx, stream, cleartext, &err);
 	g_mime_stream_unref (stream);
-	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_encrypt failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+	if (err != NULL) {
+		fprintf (stderr, "pgp_encrypt failed: %s\n", err->message);
+		g_error_free (err);
 		return 0;
 	}
 	
-	g_mime_exception_free (ex);
 	buffer = GMIME_STREAM_MEM (cleartext)->buffer;
 	fprintf (stderr, "cleartext:\n%*.s\n", buffer->len, buffer->data);
 	g_mime_stream_unref (cleartext);
@@ -205,24 +194,19 @@ test_decrypt (GMimeCipherContext *ctx, const char *ciphertext)
 static int
 test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
 {
-	GMimeException *ex;
 	GPtrArray *keys;
+	GError *err = NULL;
 	
 	keys = g_ptr_array_new ();
 	g_ptr_array_add (keys, userid);
 	
-	ex = g_mime_exception_new ();
-	
-	g_mime_cipher_export_keys (ctx, keys, ostream, ex);
+	g_mime_cipher_export_keys (ctx, keys, ostream, &err);
 	g_ptr_array_free (keys, TRUE);
-	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_export failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+	if (err != NULL) {
+		fprintf (stderr, "pgp_export failed: %s\n", err->message);
+		g_error_free (err);
 		return 0;
 	}
-	
-	g_mime_exception_free (ex);
 	
 	return 1;
 }
@@ -230,19 +214,14 @@ test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
 static int
 test_import (GMimeCipherContext *ctx, GMimeStream *istream)
 {
-	GMimeException *ex;
+	GError *err = NULL;
 	
-	ex = g_mime_exception_new ();
-	
-	g_mime_cipher_import_keys (ctx, istream, ex);
-	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_import failed: %s\n",
-			 g_mime_exception_get_description (ex));
-		g_mime_exception_free (ex);
+	g_mime_cipher_import_keys (ctx, istream, &err);
+	if (err != NULL) {
+		fprintf (stderr, "pgp_import failed: %s\n", err->message);
+		g_error_free (err);
 		return 0;
 	}
-	
-	g_mime_exception_free (ex);
 	
 	return 1;
 }

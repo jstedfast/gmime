@@ -55,6 +55,8 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -107,14 +109,10 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 Creates a new <link linkend="InternetAddress">InternetAddress</link> object</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-name">internet_address_new_name ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const char *name,
@@ -124,20 +122,16 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 <parameter>addr</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> person's name
-</entry></row>
-<row><entry align="right"><parameter>addr</parameter>&nbsp;:</entry>
-<entry> person's address
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> person's name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>addr</parameter>&nbsp;:</term>
+<listitem><para> person's address
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const char *name);</programlisting>
@@ -145,17 +139,13 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 Creates a new <link linkend="InternetAddress">InternetAddress</link> object with group name <parameter>name</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> group name
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> group name
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-ref">internet_address_ref ()</title>
 <programlisting>void        internet_address_ref            (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
@@ -163,15 +153,11 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 Ref's the internet address.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-unref">internet_address_unref ()</title>
 <programlisting>void        internet_address_unref          (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
@@ -179,15 +165,11 @@ Ref's the internet address.</para>
 Unref's the internet address.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-name">internet_address_set_name ()</title>
 <programlisting>void        internet_address_set_name       (<link linkend="InternetAddress">InternetAddress</link> *ia,
@@ -196,18 +178,14 @@ Unref's the internet address.</para>
 Set the name of the internet address.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry> group or contact's name
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>name</parameter>&nbsp;:</term>
+<listitem><para> group or contact's name
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-addr">internet_address_set_addr ()</title>
 <programlisting>void        internet_address_set_addr       (<link linkend="InternetAddress">InternetAddress</link> *ia,
@@ -216,18 +194,14 @@ Set the name of the internet address.</para>
 Set the internet address's address.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-<row><entry align="right"><parameter>addr</parameter>&nbsp;:</entry>
-<entry> contact's email address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>addr</parameter>&nbsp;:</term>
+<listitem><para> contact's email address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-group">internet_address_set_group ()</title>
 <programlisting>void        internet_address_set_group      (<link linkend="InternetAddress">InternetAddress</link> *ia,
@@ -236,18 +210,14 @@ Set the internet address's address.</para>
 Set the members of the internet address group.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-<row><entry align="right"><parameter>group</parameter>&nbsp;:</entry>
-<entry> a list of internet addresses
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>group</parameter>&nbsp;:</term>
+<listitem><para> a list of internet addresses
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-add-member">internet_address_add_member ()</title>
 <programlisting>void        internet_address_add_member     (<link linkend="InternetAddress">InternetAddress</link> *ia,
@@ -256,18 +226,14 @@ Set the members of the internet address group.</para>
 Add a contact to the internet address group.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address
-</entry></row>
-<row><entry align="right"><parameter>member</parameter>&nbsp;:</entry>
-<entry> group member's internet address
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>member</parameter>&nbsp;:</term>
+<listitem><para> group member's internet address
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-prepend">internet_address_list_prepend ()</title>
 <programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_prepend
@@ -278,20 +244,16 @@ Prepends the internet address to the list of internet addresses
 pointed to by <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
-<entry> a list of internet addresses
-</entry></row>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address to prepend
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resultant list.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>list</parameter>&nbsp;:</term>
+<listitem><para> a list of internet addresses
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address to prepend
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resultant list.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-append">internet_address_list_append ()</title>
 <programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_append
@@ -302,20 +264,16 @@ Appends the internet address to the list of internet addresses
 pointed to by <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
-<entry> a list of internet addresses
-</entry></row>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> internet address to append
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resultant list.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>list</parameter>&nbsp;:</term>
+<listitem><para> a list of internet addresses
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> internet address to append
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resultant list.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-concat">internet_address_list_concat ()</title>
 <programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_concat
@@ -325,20 +283,16 @@ pointed to by <parameter>list</parameter>.</para>
 Concatenates a copy of list <parameter>b</parameter> onto the end of list <parameter>a</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>a</parameter>&nbsp;:</entry>
-<entry> first list
-</entry></row>
-<row><entry align="right"><parameter>b</parameter>&nbsp;:</entry>
-<entry> second list
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resulting list.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>a</parameter>&nbsp;:</term>
+<listitem><para> first list
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>b</parameter>&nbsp;:</term>
+<listitem><para> second list
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resulting list.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-length">internet_address_list_length ()</title>
 <programlisting>int         internet_address_list_length    (<link linkend="InternetAddressList">InternetAddressList</link> *list);</programlisting>
@@ -346,17 +300,13 @@ Concatenates a copy of list <parameter>b</parameter> onto the end of list <param
 Calculates the length of the list of addresses.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
-<entry> list of internet addresses
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of internet addresses in <parameter>list</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>list</parameter>&nbsp;:</term>
+<listitem><para> list of internet addresses
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of internet addresses in <parameter>list</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-destroy">internet_address_list_destroy ()</title>
 <programlisting>void        internet_address_list_destroy   (<link linkend="InternetAddressList">InternetAddressList</link> *list);</programlisting>
@@ -364,15 +314,11 @@ Calculates the length of the list of addresses.</para>
 Destroys the list of internet addresses.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
-<entry> address list
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>list</parameter>&nbsp;:</term>
+<listitem><para> address list
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
 <programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_parse_string
@@ -381,18 +327,14 @@ Destroys the list of internet addresses.</para>
 Construct a list of internet addresses from the given string.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> a string containing internet addresses
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a linked list of internet addresses. *Must* be free'd by
+</para><variablelist role="params">
+<varlistentry><term><parameter>string</parameter>&nbsp;:</term>
+<listitem><para> a string containing internet addresses
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a linked list of internet addresses. *Must* be free'd by
 the caller.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-to-string">internet_address_to_string ()</title>
 <programlisting>char*       internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
@@ -402,21 +344,17 @@ Allocates a string containing the contents of the <link linkend="InternetAddress
 object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> Internet Address object
-</entry></row>
-<row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
-<entry> TRUE if the address should be rfc2047 encoded
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the <link linkend="InternetAddress">InternetAddress</link> object as an allocated string in
+</para><variablelist role="params">
+<varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
+<listitem><para> Internet Address object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encode</parameter>&nbsp;:</term>
+<listitem><para> TRUE if the address should be rfc2047 encoded
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the <link linkend="InternetAddress">InternetAddress</link> object as an allocated string in
 rfc822 format.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-to-string">internet_address_list_to_string ()</title>
 <programlisting>char*       internet_address_list_to_string (<link linkend="InternetAddressList">InternetAddressList</link> *list,
@@ -426,20 +364,16 @@ Allocates a string buffer containing the rfc822 formatted addresses
 in <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
-<entry> list of internet addresses
-</entry></row>
-<row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
-<entry> <literal>TRUE</literal> if the address should be rfc2047 encoded
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the list of addresses in rfc822 format.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>list</parameter>&nbsp;:</term>
+<listitem><para> list of internet addresses
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encode</parameter>&nbsp;:</term>
+<listitem><para> <literal>TRUE</literal> if the address should be rfc2047 encoded
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string containing the list of addresses in rfc822 format.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -30,6 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <gmime/gmime-error.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-iconv.h>
 #include <gmime/gmime-iconv-utils.h>
@@ -66,7 +67,6 @@ extern "C" {
 #include <gmime/gmime-filter-html.h>
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-yenc.h>
-#include <gmime/gmime-exception.h>
 #include <gmime/gmime-session.h>
 #include <gmime/gmime-cipher-context.h>
 #include <gmime/gmime-gpg-context.h>

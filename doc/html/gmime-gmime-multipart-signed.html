@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-MULTIPART-SIGNED"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN5472"
+NAME="AEN5224"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN5472"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN5475"
+NAME="AEN5227"
 ></A
 ><H2
 >Synopsis</H2
@@ -178,10 +178,10 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
 >GMimeCipherHash</A
 > hash,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 <A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
@@ -197,10 +197,10 @@ HREF="gmime-gmime-multipart-signed.html#GMIMEMULTIPARTSIGNED"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 >GMimeCipherContext</A
 > *ctx,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);
 &#13;</PRE
 ></TD
 ></TR
@@ -209,7 +209,7 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5492"
+NAME="AEN5244"
 ></A
 ><H2
 >Description</H2
@@ -219,14 +219,14 @@ NAME="AEN5492"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5495"
+NAME="AEN5247"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5497"
+NAME="AEN5249"
 ></A
 ><H3
 ><A
@@ -257,7 +257,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5502"
+NAME="AEN5254"
 ></A
 ><H3
 ><A
@@ -285,46 +285,44 @@ HREF="gmime-gmime-multipart-signed.html#GMIMEMULTIPARTSIGNED"
 >Creates a new MIME multipart/signed object.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN5509"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5262"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an empty MIME multipart/signed object.</TD
+WIDTH="80%"
+><P
+>an empty MIME multipart/signed object.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5518"
+NAME="AEN5267"
 ></A
 ><H3
 ><A
@@ -357,10 +355,10 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
 >GMimeCipherHash</A
 > hash,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -399,155 +397,189 @@ CLASS="PARAMETER"
 >.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN5535"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5285"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >mps</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> multipart/signed object</TD
+WIDTH="80%"
+><P
+> multipart/signed object</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5290"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >content</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME part to sign</TD
+WIDTH="80%"
+><P
+> MIME part to sign</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5295"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> encryption cipher context</TD
+WIDTH="80%"
+><P
+> encryption cipher context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5300"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >userid</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> user id to sign with</TD
+WIDTH="80%"
+><P
+> user id to sign with</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5305"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >hash</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> preferred digest algorithm</TD
+WIDTH="80%"
+><P
+> preferred digest algorithm</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5310"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5315"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 >0 on success or -1 on fail. If the signing fails, an
 exception will be set on <TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
 > to provide information as to why the
-failure occured.</TD
+failure occured.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5569"
+NAME="AEN5321"
 ></A
 ><H3
 ><A
@@ -575,10 +607,10 @@ HREF="gmime-gmime-multipart-signed.html#GMIMEMULTIPARTSIGNED"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 >GMimeCipherContext</A
 > *ctx,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+                                             <GTKDOCLINK
+HREF="GERROR"
+>GError</GTKDOCLINK
+> **err);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -597,85 +629,103 @@ CLASS="PARAMETER"
 > cipher context.</P
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN5581"
-></A
 ><P
 ></P
 ><TABLE
+CLASS="VARIABLELIST"
 BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 CELLSPACING="0"
 CELLPADDING="4"
-CLASS="CALSTABLE"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5334"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >mps</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> multipart/signed object</TD
+WIDTH="80%"
+><P
+> multipart/signed object</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5339"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
 >ctx</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> encryption cipher context</TD
+WIDTH="80%"
+><P
+> encryption cipher context</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5344"><SPAN
+STYLE="white-space: nowrap"
 ><TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
->&nbsp;:</TD
+>&nbsp;:</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> exception</TD
+WIDTH="80%"
+><P
+> exception</P
+></TD
 ></TR
 ><TR
 ><TD
-WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN5349"><SPAN
+STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
-> :</TD
+> :</SPAN
+></TD
 ><TD
-WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+WIDTH="80%"
+><P
 >a new <A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
@@ -686,16 +736,14 @@ CLASS="LITERAL"
 fail. If the signing fails, an exception will be set on <TT
 CLASS="PARAMETER"
 ><I
->ex</I
+>err</I
 ></TT
 > to
-provide information as to why the failure occured.</TD
+provide information as to why the failure occured.</P
+></TD
 ></TR
 ></TBODY
 ></TABLE
-><P
-></P
-></DIV
 ></DIV
 ></DIV
 ><DIV

@@ -38,6 +38,8 @@ char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header<
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -83,17 +85,13 @@ Standard inline disposition.</para>
 Creates a new GMimeDisposition object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition header (and params)
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new disposition object
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition header (and params)
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new disposition object
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-destroy">g_mime_disposition_destroy ()</title>
 <programlisting>void        g_mime_disposition_destroy      (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
@@ -101,15 +99,11 @@ Creates a new GMimeDisposition object.</para>
 Destroy the disposition object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-set">g_mime_disposition_set ()</title>
 <programlisting>void        g_mime_disposition_set          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
@@ -121,18 +115,14 @@ choice, any other string which would indicate how the MIME part
 should be displayed by the MUA.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> disposition value
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> disposition value
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-get">g_mime_disposition_get ()</title>
 <programlisting>const char* g_mime_disposition_get          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
@@ -140,18 +130,14 @@ should be displayed by the MUA.</para>
 Gets the disposition or <literal>NULL</literal> on fail.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the disposition string which is probably one of
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the disposition string which is probably one of
 GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-add-parameter">g_mime_disposition_add_parameter ()</title>
 <programlisting>void        g_mime_disposition_add_parameter
@@ -163,21 +149,17 @@ Adds a new parameter of name <parameter>name</parameter> and value <parameter>va
 disposition.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
-<entry> parameter name
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> parameter value
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
+<listitem><para> parameter name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> parameter value
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-get-parameter">g_mime_disposition_get_parameter ()</title>
 <programlisting>const char* g_mime_disposition_get_parameter
@@ -187,20 +169,16 @@ disposition.</para>
 Gets the value of the parameter <parameter>attribute</parameter>, or <literal>NULL</literal> on fail.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
-<entry> parameter name
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the parameter of name <parameter>attribute</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
+<listitem><para> parameter name
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the parameter of name <parameter>attribute</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-header">g_mime_disposition_header ()</title>
 <programlisting>char*       g_mime_disposition_header       (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
@@ -210,20 +188,16 @@ Allocates a string buffer containing the Content-Disposition header
 represented by the disposition object <parameter>disposition</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-<row><entry align="right"><parameter>fold</parameter>&nbsp;:</entry>
-<entry> fold header if needed
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the disposition header
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>fold</parameter>&nbsp;:</term>
+<listitem><para> fold header if needed
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string containing the disposition header
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

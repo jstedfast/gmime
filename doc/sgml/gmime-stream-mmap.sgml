@@ -33,6 +33,8 @@ struct      <link linkend="GMimeStreamMmap">GMimeStreamMmap</link>;
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -67,23 +69,19 @@ struct      <link linkend="GMimeStreamMmap">GMimeStreamMmap</link>;
 Creates a new GMimeStreamMmap object around <parameter>fd</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fd</parameter>&nbsp;:</entry>
-<entry> file descriptor
-</entry></row>
-<row><entry align="right"><parameter>prot</parameter>&nbsp;:</entry>
-<entry> protection flags
-</entry></row>
-<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry> map flags
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a stream using <parameter>fd</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
+<listitem><para> file descriptor
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>prot</parameter>&nbsp;:</term>
+<listitem><para> protection flags
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
+<listitem><para> map flags
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mmap-new-with-bounds">g_mime_stream_mmap_new_with_bounds ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mmap_new_with_bounds
@@ -97,29 +95,25 @@ Creates a new GMimeStreamMmap object around <parameter>fd</parameter> with bound
 and <parameter>end</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fd</parameter>&nbsp;:</entry>
-<entry> file descriptor
-</entry></row>
-<row><entry align="right"><parameter>prot</parameter>&nbsp;:</entry>
-<entry> protection flags
-</entry></row>
-<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry> map flags
-</entry></row>
-<row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
-<entry> start boundary
-</entry></row>
-<row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
-<entry> end boundary
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
+<listitem><para> file descriptor
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>prot</parameter>&nbsp;:</term>
+<listitem><para> protection flags
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
+<listitem><para> map flags
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>start</parameter>&nbsp;:</term>
+<listitem><para> start boundary
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>end</parameter>&nbsp;:</term>
+<listitem><para> end boundary
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

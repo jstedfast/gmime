@@ -46,6 +46,8 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -75,29 +77,25 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
                                              <link linkend="gpointer">gpointer</link> user_data);</programlisting>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>offset</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
-<entry>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>offset</parameter>&nbsp;:</term>
+<listitem><para>
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
+<listitem><para>
 
 
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-new">g_mime_parser_new ()</title>
 <programlisting><link linkend="GMimeParser">GMimeParser</link>* g_mime_parser_new              (void);</programlisting>
@@ -105,14 +103,10 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 Creates a new parser object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new parser object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new parser object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-init-with-stream">g_mime_parser_init_with_stream ()</title>
 <programlisting>void        g_mime_parser_init_with_stream  (<link linkend="GMimeParser">GMimeParser</link> *parser,
@@ -137,18 +131,14 @@ recommended that you use <link linkend="g-mime-parser-tell">g_mime_parser_tell</
 to need the current offset of the <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> raw message or part stream
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> raw message or part stream
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-set-scan-from">g_mime_parser_set_scan_from ()</title>
 <programlisting>void        g_mime_parser_set_scan_from     (<link linkend="GMimeParser">GMimeParser</link> *parser,
@@ -157,18 +147,14 @@ to need the current offset of the <parameter>parser</parameter>.</para>
 Sets whether or not <parameter>parser</parameter> should scan mbox-style From-lines.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><parameter>scan_from</parameter>&nbsp;:</entry>
-<entry> <literal>TRUE</literal> to scan From-lines or <literal>FALSE</literal> otherwise
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>scan_from</parameter>&nbsp;:</term>
+<listitem><para> <literal>TRUE</literal> to scan From-lines or <literal>FALSE</literal> otherwise
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-scan-from">g_mime_parser_get_scan_from ()</title>
 <programlisting><link linkend="gboolean">gboolean</link>    g_mime_parser_get_scan_from     (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -176,18 +162,14 @@ Sets whether or not <parameter>parser</parameter> should scan mbox-style From-li
 Gets whether or not <parameter>parser</parameter> is set to scan mbox-style From-lines.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>whether or not <parameter>parser</parameter> is set to scan mbox-style
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>whether or not <parameter>parser</parameter> is set to scan mbox-style
 From-lines.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-set-header-regex">g_mime_parser_set_header_regex ()</title>
 <programlisting>void        g_mime_parser_set_header_regex  (<link linkend="GMimeParser">GMimeParser</link> *parser,
@@ -200,24 +182,20 @@ header matching the pattern <parameter>regex</parameter> is parsed, <parameter>h
 with <parameter>user_data</parameter> as the user_data argument.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><parameter>regex</parameter>&nbsp;:</entry>
-<entry> regular expression
-</entry></row>
-<row><entry align="right"><parameter>header_cb</parameter>&nbsp;:</entry>
-<entry> callback function
-</entry></row>
-<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
-<entry> user data
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>regex</parameter>&nbsp;:</term>
+<listitem><para> regular expression
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header_cb</parameter>&nbsp;:</term>
+<listitem><para> callback function
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
+<listitem><para> user data
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-tell">g_mime_parser_tell ()</title>
 <programlisting><link linkend="off-t">off_t</link>       g_mime_parser_tell              (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -225,18 +203,14 @@ with <parameter>user_data</parameter> as the user_data argument.</para>
 Gets the current stream offset from the parser's internal stream.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the current stream offset from the parser's internal stream
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the current stream offset from the parser's internal stream
 or -1 on error.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-eos">g_mime_parser_eos ()</title>
 <programlisting><link linkend="gboolean">gboolean</link>    g_mime_parser_eos               (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -244,17 +218,13 @@ or -1 on error.
 Tests the end-of-stream indicator for <parameter>parser</parameter>'s internal stream.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
 <programlisting><link linkend="GMimeObject">GMimeObject</link>* g_mime_parser_construct_part   (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -262,17 +232,13 @@ Tests the end-of-stream indicator for <parameter>parser</parameter>'s internal s
 Constructs a MIME part from <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a MIME part based on <parameter>parser</parameter> or <literal>NULL</literal> on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME part based on <parameter>parser</parameter> or <literal>NULL</literal> on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-message">g_mime_parser_construct_message ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_parser_construct_message
@@ -281,17 +247,13 @@ Constructs a MIME part from <parameter>parser</parameter>.</para>
 Constructs a MIME message from <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a MIME message or <literal>NULL</literal> on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME message or <literal>NULL</literal> on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-from">g_mime_parser_get_from ()</title>
 <programlisting>char*       g_mime_parser_get_from          (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -300,18 +262,14 @@ Gets the mbox-style From-line of the most recently parsed message
 (gotten from <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the mbox-style From-line of the most recently parsed
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the mbox-style From-line of the most recently parsed
 message or <literal>NULL</literal> on error.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-from-offset">g_mime_parser_get_from_offset ()</title>
 <programlisting><link linkend="off-t">off_t</link>       g_mime_parser_get_from_offset   (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
@@ -320,18 +278,14 @@ Gets the offset of the most recently parsed mbox-style From-line
 (gotten from <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
-<entry> MIME parser object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the offset of the most recently parsed mbox-style From-line
+</para><variablelist role="params">
+<varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
+<listitem><para> MIME parser object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the offset of the most recently parsed mbox-style From-line
 or -1 on error.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

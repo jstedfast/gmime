@@ -60,6 +60,8 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -82,17 +84,13 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
 </programlisting>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry>
+</para><variablelist role="params">
+<varlistentry><term><parameter>crc</parameter>&nbsp;:</term>
+<listitem><para>
 
 
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-ydecode-step">g_mime_ydecode_step ()</title>
 <programlisting><link linkend="size-t">size_t</link>      g_mime_ydecode_step             (unsigned char *in,
@@ -114,32 +112,28 @@ combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
 (<parameter>crc</parameter>).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> input buffer
-</entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> input buffer length
-</entry></row>
-<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
-<entry> output buffer
-</entry></row>
-<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
-<entry> ydecode state
-</entry></row>
-<row><entry align="right"><parameter>pcrc</parameter>&nbsp;:</entry>
-<entry> part crc state
-</entry></row>
-<row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry> crc state
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><para> input buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
+<listitem><para> input buffer length
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>out</parameter>&nbsp;:</term>
+<listitem><para> output buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>state</parameter>&nbsp;:</term>
+<listitem><para> ydecode state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>pcrc</parameter>&nbsp;:</term>
+<listitem><para> part crc state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>crc</parameter>&nbsp;:</term>
+<listitem><para> crc state
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes decoded.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-yencode-step">g_mime_yencode_step ()</title>
 <programlisting><link linkend="size-t">size_t</link>      g_mime_yencode_step             (unsigned char *in,
@@ -162,32 +156,28 @@ Along the same lines, <parameter>pcrc</parameter> and <parameter>crc</parameter>
 GMIME_YENCODE_CRC_INIT before using.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> input buffer
-</entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> input buffer length
-</entry></row>
-<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
-<entry> output buffer
-</entry></row>
-<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
-<entry> yencode state
-</entry></row>
-<row><entry align="right"><parameter>pcrc</parameter>&nbsp;:</entry>
-<entry> part crc state
-</entry></row>
-<row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry> crc state
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><para> input buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
+<listitem><para> input buffer length
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>out</parameter>&nbsp;:</term>
+<listitem><para> output buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>state</parameter>&nbsp;:</term>
+<listitem><para> yencode state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>pcrc</parameter>&nbsp;:</term>
+<listitem><para> part crc state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>crc</parameter>&nbsp;:</term>
+<listitem><para> crc state
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-yencode-close">g_mime_yencode_close ()</title>
 <programlisting><link linkend="size-t">size_t</link>      g_mime_yencode_close            (unsigned char *in,
@@ -208,32 +198,28 @@ GMIME_YENCODE_CRC_FINAL (<parameter>crc</parameter>) to get the combined crc32 v
 all the parts.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> input buffer
-</entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> input buffer length
-</entry></row>
-<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
-<entry> output buffer
-</entry></row>
-<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
-<entry> yencode state
-</entry></row>
-<row><entry align="right"><parameter>pcrc</parameter>&nbsp;:</entry>
-<entry> part crc state
-</entry></row>
-<row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry> crc state
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>in</parameter>&nbsp;:</term>
+<listitem><para> input buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
+<listitem><para> input buffer length
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>out</parameter>&nbsp;:</term>
+<listitem><para> output buffer
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>state</parameter>&nbsp;:</term>
+<listitem><para> yencode state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>pcrc</parameter>&nbsp;:</term>
+<listitem><para> part crc state
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>crc</parameter>&nbsp;:</term>
+<listitem><para> crc state
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="GMimeFilterYenc">struct GMimeFilterYenc</title>
 <programlisting>struct GMimeFilterYenc {
@@ -324,17 +310,13 @@ all the parts.</para>
 Creates a new yEnc filter.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>direction</parameter>&nbsp;:</entry>
-<entry> encode direction
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new yEnc filter.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>direction</parameter>&nbsp;:</term>
+<listitem><para> encode direction
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new yEnc filter.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-yenc-set-state">g_mime_filter_yenc_set_state ()</title>
 <programlisting>void        g_mime_filter_yenc_set_state    (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc,
@@ -343,18 +325,14 @@ Creates a new yEnc filter.</para>
 Sets the current state of the yencoder/ydecoder</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>yenc</parameter>&nbsp;:</entry>
-<entry> yEnc filter
-</entry></row>
-<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
-<entry> encode/decode state
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>yenc</parameter>&nbsp;:</term>
+<listitem><para> yEnc filter
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>state</parameter>&nbsp;:</term>
+<listitem><para> encode/decode state
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_crc ()</title>
 <programlisting>void        g_mime_filter_yenc_set_crc      (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc,
@@ -363,18 +341,14 @@ Sets the current state of the yencoder/ydecoder</para>
 Sets the current crc32 value on the yEnc filter <parameter>yenc</parameter> to <parameter>crc</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>yenc</parameter>&nbsp;:</entry>
-<entry> yEnc filter
-</entry></row>
-<row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry> crc32
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>yenc</parameter>&nbsp;:</term>
+<listitem><para> yEnc filter
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>crc</parameter>&nbsp;:</term>
+<listitem><para> crc32
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-yenc-get-crc">g_mime_filter_yenc_get_crc ()</title>
 <programlisting><link linkend="guint32">guint32</link>     g_mime_filter_yenc_get_crc      (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc);</programlisting>
@@ -382,17 +356,13 @@ Sets the current crc32 value on the yEnc filter <parameter>yenc</parameter> to <
 Get the computed crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>yenc</parameter>&nbsp;:</entry>
-<entry> yEnc filter
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the computed crc or (guint32) -1 on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>yenc</parameter>&nbsp;:</term>
+<listitem><para> yEnc filter
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the computed crc or (guint32) -1 on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-yenc-get-pcrc">g_mime_filter_yenc_get_pcrc ()</title>
 <programlisting><link linkend="guint32">guint32</link>     g_mime_filter_yenc_get_pcrc     (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc);</programlisting>
@@ -400,17 +370,13 @@ Get the computed crc or (guint32) -1 on fail.</para>
 Get the computed part crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>yenc</parameter>&nbsp;:</entry>
-<entry> yEnc filter
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the computed part crc or (guint32) -1 on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>yenc</parameter>&nbsp;:</term>
+<listitem><para> yEnc filter
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the computed part crc or (guint32) -1 on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

@@ -67,11 +67,11 @@ GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
 int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 					GMimeCipherContext *ctx, GPtrArray *recipients,
-					GMimeException *ex);
+					GError **err);
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeCipherContext *ctx,
-						 GMimeException *ex);
+						 GError **err);
 
 #ifdef __cplusplus
 }

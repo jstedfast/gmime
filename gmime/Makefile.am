@@ -23,7 +23,6 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-content-type.c		\
 	gmime-data-wrapper.c		\
 	gmime-disposition.c		\
-	gmime-exception.c		\
 	gmime-filter.c			\
 	gmime-filter-basic.c		\
 	gmime-filter-best.c		\
@@ -68,8 +67,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-content-type.h		\
 	gmime-data-wrapper.h		\
 	gmime-disposition.h		\
-	gmime-exception.h		\
-	gmime-exception-list.def	\
+	gmime-error.h			\
 	gmime-filter.h			\
 	gmime-filter-basic.h		\
 	gmime-filter-best.h		\

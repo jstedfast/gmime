@@ -33,6 +33,8 @@ void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_s
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -61,14 +63,10 @@ void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_s
 Creates a new GMimeStreamMem object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-new-with-byte-array">g_mime_stream_mem_new_with_byte_array ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mem_new_with_byte_array
@@ -77,17 +75,13 @@ Creates a new GMimeStreamMem object.</para>
 Creates a new GMimeStreamMem with data <parameter>array</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>array</parameter>&nbsp;:</entry>
-<entry> source data
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream using <parameter>array</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>array</parameter>&nbsp;:</term>
+<listitem><para> source data
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream using <parameter>array</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-new-with-buffer">g_mime_stream_mem_new_with_buffer ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mem_new_with_buffer
@@ -98,20 +92,16 @@ Creates a new GMimeStreamMem object and initializes the stream
 contents with the first <parameter>len</parameter> bytes of <parameter>buffer</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>buffer</parameter>&nbsp;:</entry>
-<entry> stream data
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> data length
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream initialized with <parameter>buffer</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>buffer</parameter>&nbsp;:</term>
+<listitem><para> stream data
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>len</parameter>&nbsp;:</term>
+<listitem><para> data length
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream initialized with <parameter>buffer</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_set_byte_array ()</title>
 <programlisting>void        g_mime_stream_mem_set_byte_array
@@ -122,18 +112,14 @@ Sets the byte array on the memory stream. Note: The memory stream
 is not responsible for freeing the byte array.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mem</parameter>&nbsp;:</entry>
-<entry> memory stream
-</entry></row>
-<row><entry align="right"><parameter>array</parameter>&nbsp;:</entry>
-<entry> stream data
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mem</parameter>&nbsp;:</term>
+<listitem><para> memory stream
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>array</parameter>&nbsp;:</term>
+<listitem><para> stream data
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

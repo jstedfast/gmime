@@ -41,9 +41,12 @@
 
 #include "gmime-gpg-context.h"
 #include "gmime-stream-fs.h"
+#include "gmime-error.h"
 
 #define d(x) x
 #define _(x) x
+
+#define GMIME_ERROR_QUARK (g_quark_from_static_string ("gmime"))
 
 static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
@@ -55,25 +58,25 @@ static const char *gpg_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 
 static int gpg_sign (GMimeCipherContext *ctx, const char *userid,
 		     GMimeCipherHash hash, GMimeStream *istream,
-		     GMimeStream *ostream, GMimeException *ex);
+		     GMimeStream *ostream, GError **err);
 	
 static GMimeCipherValidity *gpg_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
 					GMimeStream *istream, GMimeStream *sigstream,
-					GMimeException *ex);
+					GError **err);
 	
 static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			const char *userid, GPtrArray *recipients,
 			GMimeStream *istream, GMimeStream *ostream,
-			GMimeException *ex);
+			GError **err);
 
 static int gpg_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-			GMimeStream *ostream, GMimeException *ex);
+			GMimeStream *ostream, GError **err);
 
 static int gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
-			    GMimeException *ex);
+			    GError **err);
 
 static int gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
-			    GMimeStream *ostream, GMimeException *ex);
+			    GMimeStream *ostream, GError **err);
 
 
 static GMimeCipherContextClass *parent_class = NULL;
@@ -581,7 +584,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	for (i = 0; i < 10; i++)
 		fds[i] = -1;
 	
-	if (stat (gpg->path, &st) == -1)
+	if (*gpg->path == '/' && stat (gpg->path, &st) == -1)
 		goto exception;
 	
 	/* FIXME: check permissions on st.st_mode ? */
@@ -696,7 +699,7 @@ next_token (const char *in, char **token)
 }
 
 static int
-gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
+gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 {
 	register unsigned char *inptr;
 	const unsigned char *status;
@@ -719,9 +722,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 	d(printf ("status: %s\n", status));
 	
 	if (strncmp (status, "[GNUPG:] ", 9) != 0) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Unexpected GnuPG status message encountered:\n\n%s"),
-				       status);
+		g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PARSE_ERROR,
+			     _("Unexpected GnuPG status message encountered:\n\n%s"),
+			     status);
 		return -1;
 	}
 	
@@ -733,8 +736,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 		status += 12;
 		status = next_token (status, &hint);
 		if (!hint) {
-			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("Failed to parse gpg userid hint."));
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PARSE_ERROR,
+				     _("Failed to parse gpg userid hint."));
 			return -1;
 		}
 		
@@ -756,8 +759,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 		
 		status = next_token (status, &userid);
 		if (!userid) {
-			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("Failed to parse gpg passphrase request."));
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PARSE_ERROR,
+				     _("Failed to parse gpg passphrase request."));
 			return -1;
 		}
 		
@@ -768,15 +771,15 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 		prompt = g_strdup_printf (_("You need a passphrase to unlock the key for\n"
 					    "user: \"%s\""), name);
 		
-		passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, userid, ex);
+		passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, userid, err);
 		g_free (prompt);
 		
 		g_free (gpg->userid);
 		gpg->userid = userid;
 		
 		if (passwd == NULL) {
-			if (!g_mime_exception_is_set (ex))
-				g_mime_exception_set (ex, GMIME_EXCEPTION_USER_CANCEL, _("Cancelled."));
+			if (err && *err == NULL)
+				g_set_error (err, GMIME_ERROR_QUARK, ECANCELED, _("Canceled."));
 			
 			return -1;
 		}
@@ -791,26 +794,27 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 	} else if (!strncmp (status, "BAD_PASSPHRASE", 14)) {
 		gpg->bad_passwds++;
 		
-		g_mime_session_forget_passwd (gpg->session, gpg->userid, ex);
+		g_mime_session_forget_passwd (gpg->session, gpg->userid, err);
 		
 		if (gpg->bad_passwds == 3) {
-			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("Failed to unlock secret key: 3 bad passphrases given."));
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_BAD_PASSWORD,
+				     _("Failed to unlock secret key: 3 bad passphrases given."));
 			return -1;
 		}
 	} else if (!strncmp (status, "UNEXPECTED ", 11)) {
 		/* this is an error */
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Unexpected response from GnuPG: %s"),
-				       status + 11);
+		g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL,
+			     _("Unexpected response from GnuPG: %s"),
+			     status + 11);
 		return -1;
 	} else if (!strncmp (status, "NODATA", 6)) {
 		/* this is an error */
 		if (gpg->diagnostics->len)
-			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM, "%.*s",
-					       gpg->diagnostics->len, gpg->diagnostics->data);
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL, "%.*s",
+				     gpg->diagnostics->len, gpg->diagnostics->data);
 		else
-			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, _("No data provided"));
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL,
+				     _("No data provided"));
 		
 		return -1;
 	} else {
@@ -852,8 +856,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 			} else if (!strncmp (status, "END_ENCRYPTION", 14)) {
 				/* nothing to do, but we know the end is near? */
 			} else if (!strncmp (status, "NO_RECP", 7)) {
-				g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-						      _("Failed to encrypt: No valid recipients specified."));
+				g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NO_VALID_RECIPIENTS,
+					     _("Failed to encrypt: No valid recipients specified."));
 				return -1;
 			}
 			break;
@@ -914,7 +918,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 } G_STMT_END
 
 static int
-gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
+gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 {
 	fd_set rdset, wrset, *wrsetp = NULL;
 	struct timeval timeout;
@@ -981,7 +985,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		
 		if (nread > 0) {
 			status_backup (gpg, buffer, nread);
-			if (gpg_ctx_parse_status (gpg, ex) == -1)
+			if (gpg_ctx_parse_status (gpg, err) == -1)
 				return -1;
 		} else {
 			gpg->complete = TRUE;
@@ -1115,15 +1119,15 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 	}
 	
 	if (gpg->diagnostics->len) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to GPG %s: %s\n\n%.*s"),
-				       mode, g_strerror (errno),
-				       gpg->diagnostics->len,
-				       gpg->diagnostics->data);
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to GPG %s: %s\n\n%.*s"),
+			     mode, g_strerror (errno),
+			     gpg->diagnostics->len,
+			     gpg->diagnostics->data);
 	} else {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to GPG %s: %s\n"),
-				       mode, g_strerror (errno));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to GPG %s: %s\n"),
+			     mode, g_strerror (errno));
 	}
 	
 	return -1;
@@ -1174,26 +1178,31 @@ gpg_ctx_op_cancel (struct _GpgCtx *gpg)
 static int
 gpg_ctx_op_wait (struct _GpgCtx *gpg)
 {
+	int errnosave, status;
 	sigset_t mask, omask;
 	pid_t retval;
-	int status;
 	
 	if (!gpg->exited) {
 		sigemptyset (&mask);
 		sigaddset (&mask, SIGALRM);
 		sigprocmask (SIG_BLOCK, &mask, &omask);
+		
 		alarm (1);
 		retval = waitpid (gpg->pid, &status, 0);
+		errno = errnosave;
 		alarm (0);
+		
 		sigprocmask (SIG_SETMASK, &omask, NULL);
+		errno = errnosave;
 		
 		if (retval == (pid_t) -1 && errno == EINTR) {
-			/* The child is hanging: send a friendly reminder. */
+			/* gpg is hanging... */
 			kill (gpg->pid, SIGTERM);
 			sleep (1);
+			
 			retval = waitpid (gpg->pid, &status, WNOHANG);
 			if (retval == (pid_t) 0) {
-				/* Still hanging; use brute force. */
+				/* still hanging... */
 				kill (gpg->pid, SIGKILL);
 				sleep (1);
 				retval = waitpid (gpg->pid, &status, WNOHANG);
@@ -1213,7 +1222,7 @@ gpg_ctx_op_wait (struct _GpgCtx *gpg)
 
 static int
 gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
-	  GMimeStream *istream, GMimeStream *ostream, GMimeException *ex)
+	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1227,16 +1236,16 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 	gpg_ctx_set_ostream (gpg, ostream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
@@ -1248,7 +1257,7 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 		char *diagnostics;
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
 		g_free (diagnostics);
 		
 		gpg_ctx_free (gpg);
@@ -1297,7 +1306,7 @@ swrite (GMimeStream *istream)
 static GMimeCipherValidity *
 gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	    GMimeStream *istream, GMimeStream *sigstream,
-	    GMimeException *ex)
+	    GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeCipherValidity *validity;
@@ -1311,10 +1320,10 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 		   the signature to a temp file. */
 		sigfile = swrite (sigstream);
 		if (sigfile == NULL) {
-			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					       _("Cannot verify message signature: "
-						 "could not create temp file: %s"),
-					       g_strerror (errno));
+			g_set_error (err, GMIME_ERROR_QUARK, errno,
+				     _("Cannot verify message signature: "
+				       "could not create temp file: %s"),
+				     g_strerror (errno));
 			return NULL;
 		}
 	}
@@ -1326,15 +1335,15 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	gpg_ctx_set_istream (gpg, istream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		goto exception;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg) && !gpg_ctx_op_exited (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			goto exception;
 		}
@@ -1375,7 +1384,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 static int
 gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	     GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-	     GMimeException *ex)
+	     GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1394,16 +1403,16 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	}
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
@@ -1415,7 +1424,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 		char *diagnostics;
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
 		g_free (diagnostics);
 		
 		gpg_ctx_free (gpg);
@@ -1431,7 +1440,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 
 static int
 gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
-	     GMimeStream *ostream, GMimeException *ex)
+	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1442,16 +1451,16 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	gpg_ctx_set_ostream (gpg, ostream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
@@ -1463,7 +1472,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 		char *diagnostics;
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
 		g_free (diagnostics);
 		
 		gpg_ctx_free (gpg);
@@ -1477,7 +1486,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 }
 
 static int
-gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GMimeException *ex)
+gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1487,16 +1496,16 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GMimeExcepti
 	gpg_ctx_set_istream (gpg, istream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
@@ -1508,7 +1517,7 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GMimeExcepti
 		char *diagnostics;
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
 		g_free (diagnostics);
 		
 		gpg_ctx_free (gpg);
@@ -1522,7 +1531,7 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GMimeExcepti
 }
 
 static int
-gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostream, GMimeException *ex)
+gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1538,16 +1547,16 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 	}
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to execute gpg: %s"),
-				       errno ? g_strerror (errno) : _("Unknown"));
+		g_set_error (err, GMIME_ERROR_QUARK, errno,
+			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
-		if (gpg_ctx_op_step (gpg, ex) == -1) {
+		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
@@ -1559,7 +1568,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 		char *diagnostics;
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
 		g_free (diagnostics);
 		
 		gpg_ctx_free (gpg);

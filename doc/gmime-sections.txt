@@ -862,22 +862,6 @@ g_mime_iconv_locale_to_utf8_length
 </SECTION>
 
 <SECTION>
-<FILE>gmime-exception</FILE>
-ExceptionId
-GMimeException
-g_mime_exception_new
-g_mime_exception_init
-g_mime_exception_clear
-g_mime_exception_set
-g_mime_exception_setv
-g_mime_exception_get_id
-g_mime_exception_get_description
-g_mime_exception_is_set
-g_mime_exception_xfer
-g_mime_exception_free
-</SECTION>
-
-<SECTION>
 <FILE>gmime-cipher-context</FILE>
 GMimeCipherHash
 GMimeCipherContext

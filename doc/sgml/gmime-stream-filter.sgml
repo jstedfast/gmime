@@ -30,6 +30,8 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -61,17 +63,13 @@ Creates a new GMimeStreamFilter object using <parameter>stream</parameter> as th
 stream.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> source stream
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new filter stream with <parameter>stream</parameter> as its source.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> source stream
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new filter stream with <parameter>stream</parameter> as its source.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-filter-add">g_mime_stream_filter_add ()</title>
 <programlisting>int         g_mime_stream_filter_add        (<link linkend="GMimeStreamFilter">GMimeStreamFilter</link> *fstream,
@@ -80,20 +78,16 @@ stream.</para>
 Adds a <parameter>filter</parameter> to <parameter>fstream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fstream</parameter>&nbsp;:</entry>
-<entry> filter stream
-</entry></row>
-<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
-<entry> filter
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an id for the filter.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fstream</parameter>&nbsp;:</term>
+<listitem><para> filter stream
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
+<listitem><para> filter
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an id for the filter.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-filter-remove">g_mime_stream_filter_remove ()</title>
 <programlisting>void        g_mime_stream_filter_remove     (<link linkend="GMimeStreamFilter">GMimeStreamFilter</link> *fstream,
@@ -103,18 +97,14 @@ Removed a filter from the stream based on the id (as returned from
 filter_add).</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fstream</parameter>&nbsp;:</entry>
-<entry> filter stream
-</entry></row>
-<row><entry align="right"><parameter>id</parameter>&nbsp;:</entry>
-<entry> filter id
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>fstream</parameter>&nbsp;:</term>
+<listitem><para> filter stream
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>id</parameter>&nbsp;:</term>
+<listitem><para> filter id
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

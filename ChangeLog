@@ -1,3 +1,23 @@
+2002-11-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+	* gmime/gmime-error.h: Added.
+
+	* gmime/gmime-multipart-encrypted.[c,h]: Use GError instead of
+	GMimeException.
+
+	* gmime/gmime-multipart-signed.[c,h]: Same.
+
+	* gmime/gmime-session.[c,h]: Here too.
+
+	* gmime/gmime-gpg-context.[c,h]: Don't use GMimeException anymore,
+	instead use GError.
+
+	* gmime/gmime-cipher-context.[c,h]: Same here.
+
+	* gmime/gmime.h.in: Remove gmime-exception.h and add gmime-error.h
+
 2002-11-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Generate src/Makefile.

@@ -98,6 +98,8 @@ char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>  
 
 
 
+
+
 <refsect1>
 <title>Description</title>
 <para>
@@ -132,15 +134,11 @@ Creates a new MIME Part object with a default content-type of
 text/plain.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Part object with a default content-type of
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME Part object with a default content-type of
 text/plain.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-new-with-type">g_mime_part_new_with_type ()</title>
 <programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_part_new_with_type       (const char *type,
@@ -149,20 +147,16 @@ text/plain.
 Creates a new MIME Part with a sepcified type.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> content-type
-</entry></row>
-<row><entry align="right"><parameter>subtype</parameter>&nbsp;:</entry>
-<entry> content-subtype
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Part object with the specified content-type.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>type</parameter>&nbsp;:</term>
+<listitem><para> content-type
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
+<listitem><para> content-subtype
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME Part object with the specified content-type.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-header">g_mime_part_set_content_header ()</title>
 <programlisting>void        g_mime_part_set_content_header  (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -172,21 +166,17 @@ Creates a new MIME Part with a sepcified type.</para>
 Set an arbitrary MIME content header.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> mime part
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry> header name
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> header value
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para> header name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> header value
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-header">g_mime_part_get_content_header ()</title>
 <programlisting>const char* g_mime_part_get_content_header  (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -196,20 +186,16 @@ Gets the value of the requested header if it exists, or <literal>NULL</literal>
 otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> mime part
-</entry></row>
-<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
-<entry> header name
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the content header <parameter>header</parameter>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>header</parameter>&nbsp;:</term>
+<listitem><para> header name
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the content header <parameter>header</parameter>.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-description">g_mime_part_set_content_description ()</title>
 <programlisting>void        g_mime_part_set_content_description
@@ -219,18 +205,14 @@ otherwise.</para>
 Set the content description for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>description</parameter>&nbsp;:</entry>
-<entry> content description
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>description</parameter>&nbsp;:</term>
+<listitem><para> content description
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-description">g_mime_part_get_content_description ()</title>
 <programlisting>const char* g_mime_part_get_content_description
@@ -240,17 +222,13 @@ Gets the value of the Content-Description for the specified mime
 part if it exists or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content description for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content description for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-id">g_mime_part_set_content_id ()</title>
 <programlisting>void        g_mime_part_set_content_id      (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -259,18 +237,14 @@ part if it exists or <literal>NULL</literal> otherwise.</para>
 Set the content id for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content_id</parameter>&nbsp;:</entry>
-<entry> content id
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content_id</parameter>&nbsp;:</term>
+<listitem><para> content id
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-id">g_mime_part_get_content_id ()</title>
 <programlisting>const char* g_mime_part_get_content_id      (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
@@ -279,17 +253,13 @@ Gets the content-id of the specified mime part if it exists, or
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content id for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content id for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-md5">g_mime_part_set_content_md5 ()</title>
 <programlisting>void        g_mime_part_set_content_md5     (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -298,18 +268,14 @@ Gets the content-id of the specified mime part if it exists, or
 Set the content md5 for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content_md5</parameter>&nbsp;:</entry>
-<entry> content md5 or NULL to generate the md5 digest.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content_md5</parameter>&nbsp;:</term>
+<listitem><para> content md5 or NULL to generate the md5 digest.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-md5">g_mime_part_get_content_md5 ()</title>
 <programlisting>const char* g_mime_part_get_content_md5     (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
@@ -318,17 +284,13 @@ Gets the md5sum contained in the Content-Md5 header of the
 specified mime part if it exists, or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content md5 for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content md5 for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-verify-content-md5">g_mime_part_verify_content_md5 ()</title>
 <programlisting><link linkend="gboolean">gboolean</link>    g_mime_part_verify_content_md5  (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
@@ -336,18 +298,14 @@ specified mime part if it exists, or <literal>NULL</literal> otherwise.</para>
 Verify the content md5 for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE if the md5 is valid or FALSE otherwise. Note: will
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>TRUE if the md5 is valid or FALSE otherwise. Note: will
 return FALSE if the mime part does not contain a Content-MD5.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-location">g_mime_part_set_content_location ()</title>
 <programlisting>void        g_mime_part_set_content_location
@@ -357,18 +315,14 @@ return FALSE if the mime part does not contain a Content-MD5.
 Set the content location for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content_location</parameter>&nbsp;:</entry>
-<entry> content location
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content_location</parameter>&nbsp;:</term>
+<listitem><para> content location
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-location">g_mime_part_get_content_location ()</title>
 <programlisting>const char* g_mime_part_get_content_location
@@ -378,17 +332,13 @@ Gets the value of the Content-Location header if it exists, or
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content location for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content location for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-type">g_mime_part_set_content_type ()</title>
 <programlisting>void        g_mime_part_set_content_type    (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -397,18 +347,14 @@ Gets the value of the Content-Location header if it exists, or
 Set the content type/subtype for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>mime_type</parameter>&nbsp;:</entry>
-<entry> Mime content-type
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
+<listitem><para> Mime content-type
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-type">g_mime_part_get_content_type ()</title>
 <programlisting>const <link linkend="GMimeContentType">GMimeContentType</link>* g_mime_part_get_content_type
@@ -418,17 +364,13 @@ Gets the Content-Type object for the given mime part or <literal>NULL</literal> 
 error.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content-type object for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content-type object for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-encoding">g_mime_part_set_encoding ()</title>
 <programlisting>void        g_mime_part_set_encoding        (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -441,18 +383,14 @@ GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64 and
 GMIME_PART_ENCODING_QUOTEDPRINTABLE.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> Mime encoding
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> Mime encoding
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-encoding">g_mime_part_get_encoding ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_part_get_encoding
@@ -461,22 +399,18 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</para>
 Gets the content encoding of the mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content encoding for the specified mime part. The
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content encoding for the specified mime part. The
 return value will be one of the following:
 GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
 GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BINARY,
 GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
 or GMIME_PART_ENCODING_UUENCODE.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-encoding-to-string">g_mime_part_encoding_to_string ()</title>
 <programlisting>const char* g_mime_part_encoding_to_string  (<link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);</programlisting>
@@ -484,22 +418,18 @@ or GMIME_PART_ENCODING_UUENCODE.
 Gets the string value of the content encoding.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> Mime encoding
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding type as a string. Available
+</para><variablelist role="params">
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> Mime encoding
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the encoding type as a string. Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
 GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
 GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
 GMIME_PART_ENCODING_QUOTEDPRINTABLE and
 GMIME_PART_ENCODING_UUENCODE.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-encoding-from-string">g_mime_part_encoding_from_string ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_part_encoding_from_string
@@ -509,22 +439,18 @@ Gets the content encoding enumeration value based on the input
 string.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> Mime encoding in string format
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding string as a GMimePartEncodingType.  Available
+</para><variablelist role="params">
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> Mime encoding in string format
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the encoding string as a GMimePartEncodingType.  Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
 GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
 GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
 GMIME_PART_ENCODING_QUOTEDPRINTABLE and
 GMIME_PART_ENCODING_UUENCODE.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-disposition-object">g_mime_part_set_content_disposition_object ()</title>
 <programlisting>void        g_mime_part_set_content_disposition_object
@@ -534,18 +460,14 @@ GMIME_PART_ENCODING_UUENCODE.
 Set the content disposition for the specified mime part</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition object
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition object
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-disposition">g_mime_part_set_content_disposition ()</title>
 <programlisting>void        g_mime_part_set_content_disposition
@@ -555,18 +477,14 @@ Set the content disposition for the specified mime part</para>
 Set the content disposition for the specified mime part</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> disposition
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
+<listitem><para> disposition
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-disposition">g_mime_part_get_content_disposition ()</title>
 <programlisting>const char* g_mime_part_get_content_disposition
@@ -575,17 +493,13 @@ Set the content disposition for the specified mime part</para>
 Gets the content disposition if set or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content disposition for the specified mime part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content disposition for the specified mime part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-add-content-disposition-parameter">g_mime_part_add_content_disposition_parameter ()</title>
 <programlisting>void        g_mime_part_add_content_disposition_parameter
@@ -596,21 +510,17 @@ Gets the content disposition if set or <literal>NULL</literal> otherwise.</para>
 Add a content-disposition parameter to the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
-<entry> parameter name
-</entry></row>
-<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> parameter value
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
+<listitem><para> parameter name
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>value</parameter>&nbsp;:</term>
+<listitem><para> parameter value
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-disposition-parameter">g_mime_part_get_content_disposition_parameter ()</title>
 <programlisting>const char* g_mime_part_get_content_disposition_parameter
@@ -621,21 +531,17 @@ Gets the value of the Content-Disposition parameter specified by
 <parameter>attribute</parameter>, or <literal>NULL</literal> if the parameter does not exist.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
-<entry> parameter name
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of a previously defined content-disposition
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
+<listitem><para> parameter name
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of a previously defined content-disposition
 parameter specified by <link linkend="name">name</link>.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-filename">g_mime_part_set_filename ()</title>
 <programlisting>void        g_mime_part_set_filename        (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -645,18 +551,14 @@ Sets the "filename" parameter on the Content-Disposition and also sets the
 "name" parameter on the Content-Type.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>filename</parameter>&nbsp;:</entry>
-<entry> the filename of the Mime Part's content
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
+<listitem><para> the filename of the Mime Part's content
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-filename">g_mime_part_get_filename ()</title>
 <programlisting>const char* g_mime_part_get_filename        (const <link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
@@ -665,19 +567,15 @@ Gets the filename of the specificed mime part, or <literal>NULL</literal> if the
 part does not have the filename or name parameter set.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the filename of the specified MIME Part. It first checks to
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the filename of the specified MIME Part. It first checks to
 see if the "filename" parameter was set on the Content-Disposition
 and if not then checks the "name" parameter in the Content-Type.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content">g_mime_part_set_content ()</title>
 <programlisting>void        g_mime_part_set_content         (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -687,21 +585,17 @@ and if not then checks the "name" parameter in the Content-Type.
 Sets the content of the Mime Part (only non-multiparts)</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> raw mime part content
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> raw content length
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> raw mime part content
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>len</parameter>&nbsp;:</term>
+<listitem><para> raw content length
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content ()</title>
 <programlisting>void        g_mime_part_set_pre_encoded_content
@@ -713,24 +607,20 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 Sets the encoding type and raw content on the mime part after decoding the content.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> encoded mime part content
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> length of the content
-</entry></row>
-<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry> content encoding
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> encoded mime part content
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>len</parameter>&nbsp;:</term>
+<listitem><para> length of the content
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
+<listitem><para> content encoding
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-byte-array">g_mime_part_set_content_byte_array ()</title>
 <programlisting>void        g_mime_part_set_content_byte_array
@@ -740,18 +630,14 @@ Sets the encoding type and raw content on the mime part after decoding the conte
 Sets the content of the Mime Part (only non-multiparts)</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> raw mime part content.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> Mime part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> raw mime part content.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content">g_mime_part_get_content ()</title>
 <programlisting>const char* g_mime_part_get_content         (const <link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -761,21 +647,17 @@ Gets the raw contents of the mime part and sets <parameter>len</parameter> to th
 of the raw data buffer.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> MIME part object
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> pointer to the content length
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a const char * pointer to the raw contents of the MIME Part
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> MIME part object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>len</parameter>&nbsp;:</term>
+<listitem><para> pointer to the content length
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a const char * pointer to the raw contents of the MIME Part
 and sets <literal>len</literal> to the length of the buffer.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-object">g_mime_part_get_content_object ()</title>
 <programlisting><link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* g_mime_part_get_content_object
@@ -785,17 +667,13 @@ Gets the internal data-wrapper of the specified mime part, or <literal>NULL</lit
 on error.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> MIME part object
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the data-wrapper for the mime part's contents.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> MIME part object
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the data-wrapper for the mime part's contents.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-object">g_mime_part_set_content_object ()</title>
 <programlisting>void        g_mime_part_set_content_object  (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -804,18 +682,14 @@ on error.</para>
 Sets the content object on the mime part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> MIME Part
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> content object
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> MIME Part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> content object
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-write-to-stream">g_mime_part_write_to_stream ()</title>
 <programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_part_write_to_stream     (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -824,20 +698,16 @@ Sets the content object on the mime part.</para>
 Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> MIME Part
-</entry></row>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry> output stream
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> MIME Part
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> output stream
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-to-string">g_mime_part_to_string ()</title>
 <programlisting>char*       g_mime_part_to_string           (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
@@ -845,17 +715,13 @@ Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 Allocates a string buffer containing the MIME Part.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> MIME Part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Part.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
+<listitem><para> MIME Part
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the MIME Part.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 

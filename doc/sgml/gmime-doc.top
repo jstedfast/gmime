@@ -37,6 +37,5 @@
 <!ENTITY gmime-gmime-charset SYSTEM "sgml/gmime-charset.sgml">
 <!ENTITY gmime-gmime-iconv SYSTEM "sgml/gmime-iconv.sgml">
 <!ENTITY gmime-gmime-iconv-utils SYSTEM "sgml/gmime-iconv-utils.sgml">
-<!ENTITY gmime-gmime-exception SYSTEM "sgml/gmime-exception.sgml">
 <!ENTITY gmime-gmime-cipher-context SYSTEM "sgml/gmime-cipher-context.sgml">
 <!ENTITY gmime-gmime-gpg-context SYSTEM "sgml/gmime-gpg-context.sgml">

@@ -26,6 +26,8 @@
 #endif
 
 #include "gmime-session.h"
+#include "gmime-error.h"
+
 
 static void g_mime_session_class_init (GMimeSessionClass *klass);
 static void g_mime_session_init (GMimeSession *session, GMimeSessionClass *klass);
@@ -34,9 +36,9 @@ static void g_mime_session_finalize (GObject *object);
 static gboolean session_is_online (GMimeSession *session);
 static char *session_request_passwd (GMimeSession *session, const char *prompt,
 				     gboolean secret, const char *item,
-				     GMimeException *ex);
+				     GError **err);
 static void session_forget_passwd (GMimeSession *session, const char *item,
-				   GMimeException *ex);
+				   GError **err);
 
 
 static GObjectClass *parent_class = NULL;
@@ -122,8 +124,10 @@ g_mime_session_is_online (GMimeSession *session)
 static char *
 session_request_passwd (GMimeSession *session, const char *prompt,
 			gboolean secret, const char *item,
-			GMimeException *ex)
+			GError **err)
 {
+	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+		     "Password request mechanism is not implemented.");
 	return NULL;
 }
 
@@ -134,7 +138,7 @@ session_request_passwd (GMimeSession *session, const char *prompt,
  * @prompt: prompt to present to the user
  * @secret: %TRUE if the characters the user types should be hidden
  * @item: item name
- * @ex: exception
+ * @err: exception
  *
  * Requests the password for item @item.
  *
@@ -144,18 +148,19 @@ session_request_passwd (GMimeSession *session, const char *prompt,
 char *
 g_mime_session_request_passwd (GMimeSession *session, const char *prompt,
 			       gboolean secret, const char *item,
-			       GMimeException *ex)
+			       GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_SESSION (session), NULL);
 	
-	return GMIME_SESSION_GET_CLASS (session)->request_passwd (session, prompt, secret, item, ex);
+	return GMIME_SESSION_GET_CLASS (session)->request_passwd (session, prompt, secret, item, err);
 }
 
 
 static void
-session_forget_passwd (GMimeSession *session, const char *item, GMimeException *ex)
+session_forget_passwd (GMimeSession *session, const char *item, GError **err)
 {
-	;
+	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+		     "Password forget mechanism is not implemented.");
 }
 
 
@@ -163,14 +168,14 @@ session_forget_passwd (GMimeSession *session, const char *item, GMimeException *
  * g_mime_session_forget_passwd:
  * @session: session object
  * @item: item name
- * @ex: exception
+ * @err: exception
  *
  * Forgets the password for item @item.
  **/
 void
-g_mime_session_forget_passwd (GMimeSession *session, const char *item, GMimeException *ex)
+g_mime_session_forget_passwd (GMimeSession *session, const char *item, GError **err)
 {
 	g_return_if_fail (GMIME_IS_SESSION (session));
 	
-	GMIME_SESSION_GET_CLASS (session)->forget_passwd (session, item, ex);
+	GMIME_SESSION_GET_CLASS (session)->forget_passwd (session, item, err);
 }

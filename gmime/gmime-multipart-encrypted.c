@@ -35,8 +35,11 @@
 #include "gmime-stream-mem.h"
 #include "gmime-parser.h"
 #include "gmime-part.h"
+#include "gmime-error.h"
+
 
 #define d(x)
+
 
 /* GObject class methods */
 static void g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass);
@@ -208,7 +211,7 @@ g_mime_multipart_encrypted_new ()
  * @content: MIME part to encrypt
  * @ctx: encryption cipher context
  * @recipients: an array of recipients to encrypt to
- * @ex: exception
+ * @err: exception
  *
  * Attempts to encrypt the @content MIME part to the public keys of
  * @recipients using the @ctx encryption context. If successful, the
@@ -216,13 +219,13 @@ g_mime_multipart_encrypted_new ()
  * multipart/encrypted object @mpe.
  *
  * Returns 0 on success or -1 on fail. If the encryption fails, an
- * exception will be set on @ex to provide information as to why the
+ * exception will be set on @err to provide information as to why the
  * failure occured.
  **/
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 				    GMimeCipherContext *ctx, GPtrArray *recipients,
-				    GMimeException *ex)
+				    GError **err)
 {
 	GMimePart *version_part, *encrypted_part;
 	GMimeContentType *content_type;
@@ -254,7 +257,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_cipher_encrypt (ctx, FALSE, NULL, recipients, stream, ciphertext, ex) == -1) {
+	if (g_mime_cipher_encrypt (ctx, FALSE, NULL, recipients, stream, ciphertext, err) == -1) {
 		g_mime_stream_unref (ciphertext);
 		g_mime_stream_unref (stream);
 		return -1;
@@ -303,18 +306,18 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
  * @ctx: decryption cipher context
- * @ex: exception
+ * @err: exception
  *
  * Attempts to decrypt the encrypted MIME part contained within the
  * multipart/encrypted object @mpe using the @ctx decryption context.
  *
  * Returns the decrypted MIME part on success or %NULL on fail. If the
- * decryption fails, an exception will be set on @ex to provide
+ * decryption fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherContext *ctx,
-				    GMimeException *ex)
+				    GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	const GMimeContentType *mime_type;
@@ -341,8 +344,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	if (protocol) {
 		/* make sure the protocol matches the cipher encrypt protocol */
 		if (g_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
-			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-					      "Failed to decrypt MIME part: protocol error");
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PROTOCOL_ERROR,
+				     "Failed to decrypt MIME part: protocol error");
 			
 			return NULL;
 		}
@@ -356,8 +359,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
 	if (g_strcasecmp (content_type, protocol) != 0) {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      "Failed to decrypt MIME part: protocol error");
+		g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PROTOCOL_ERROR,
+			     "Failed to decrypt MIME part: protocol error");
 		
 		g_mime_object_unref (version);
 		g_free (content_type);
@@ -389,7 +392,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (crlf_filter);
 	
 	/* get the cleartext */
-	if (g_mime_cipher_decrypt (ctx, ciphertext, filtered_stream, ex) == -1) {
+	if (g_mime_cipher_decrypt (ctx, ciphertext, filtered_stream, err) == -1) {
 		g_mime_stream_unref (filtered_stream);
 		g_mime_stream_unref (ciphertext);
 		g_mime_stream_unref (stream);
@@ -413,8 +416,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		g_mime_object_ref (decrypted);
 		mpe->decrypted = decrypted;
 	} else {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      "Failed to decrypt MIME part: parse error");
+		g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PARSE_ERROR,
+			     "Failed to decrypt MIME part: parse error");
 	}
 	
 	return decrypted;

@@ -33,7 +33,6 @@ extern "C" {
 #include <glib-object.h>
 
 #include <gmime/gmime-type-utils.h>
-#include <gmime/gmime-exception.h>
 
 #define GMIME_TYPE_SESSION            (g_mime_session_get_type ())
 #define GMIME_SESSION(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))
@@ -57,10 +56,10 @@ struct _GMimeSessionClass {
 	
 	char *   (*request_passwd) (GMimeSession *session, const char *prompt,
 				    gboolean secret, const char *item,
-				    GMimeException *ex);
+				    GError **err);
 	
 	void     (*forget_passwd)  (GMimeSession *session, const char *item,
-				    GMimeException *ex);
+				    GError **err);
 };
 
 
@@ -71,10 +70,10 @@ gboolean g_mime_session_is_online (GMimeSession *session);
 
 char *g_mime_session_request_passwd (GMimeSession *session, const char *prompt,
 				     gboolean secret, const char *item,
-				     GMimeException *ex);
+				     GError **err);
 
 void g_mime_session_forget_passwd (GMimeSession *session, const char *item,
-				   GMimeException *ex);
+				   GError **err);
 
 
 #ifdef __cplusplus

@@ -41,7 +41,6 @@
 <!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
 <!entity gmime-filter-strip SYSTEM "sgml/gmime-filter-strip.sgml">
 <!entity gmime-filter-yenc SYSTEM "sgml/gmime-filter-yenc.sgml">
-<!entity gmime-exception SYSTEM "sgml/gmime-exception.sgml">
 <!entity gmime-cipher-context SYSTEM "sgml/gmime-cipher-context.sgml">
 <!entity gmime-gpg-context SYSTEM "sgml/gmime-gpg-context.sgml">
 ]>
@@ -262,7 +261,6 @@
     &gmime-charset;
     &gmime-iconv;
     &gmime-iconv-utils;
-    &gmime-exception;
     &gmime-cipher-context;
     &gmime-gpg-context;
     &gmime-session;

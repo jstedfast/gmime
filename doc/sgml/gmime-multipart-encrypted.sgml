@@ -22,15 +22,17 @@ int         <link linkend="g-mime-multipart-encrypted-encrypt">g_mime_multipart_
                                              <link linkend="GMimeObject">GMimeObject</link> *content,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              <link linkend="GPtrArray">GPtrArray</link> *recipients,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 <link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-multipart-encrypted-decrypt">g_mime_multipart_encrypted_decrypt</link>
                                             (<link linkend="GMimeMultipartEncrypted">GMimeMultipartEncrypted</link> *mpe,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);
+                                             <link linkend="GError">GError</link> **err);
 
 
 </synopsis>
 </refsynopsisdiv>
+
+
 
 
 
@@ -66,14 +68,10 @@ int         <link linkend="g-mime-multipart-encrypted-encrypt">g_mime_multipart_
 Creates a new MIME multipart/encrypted object.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME multipart/encrypted object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart/encrypted object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-encrypted-encrypt">g_mime_multipart_encrypted_encrypt ()</title>
 <programlisting>int         g_mime_multipart_encrypted_encrypt
@@ -81,7 +79,7 @@ Creates a new MIME multipart/encrypted object.</para>
                                              <link linkend="GMimeObject">GMimeObject</link> *content,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              <link linkend="GPtrArray">GPtrArray</link> *recipients,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Attempts to encrypt the <parameter>content</parameter> MIME part to the public keys of
 <parameter>recipients</parameter> using the <parameter>ctx</parameter> encryption context. If successful, the
@@ -89,61 +87,53 @@ encrypted <link linkend="GMimeObject">GMimeObject</link> is set as the encrypted
 multipart/encrypted object <parameter>mpe</parameter>.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mpe</parameter>&nbsp;:</entry>
-<entry> multipart/encrypted object
-</entry></row>
-<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> MIME part to encrypt
-</entry></row>
-<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry> encryption cipher context
-</entry></row>
-<row><entry align="right"><parameter>recipients</parameter>&nbsp;:</entry>
-<entry> an array of recipients to encrypt to
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail. If the encryption fails, an
-exception will be set on <parameter>ex</parameter> to provide information as to why the
+</para><variablelist role="params">
+<varlistentry><term><parameter>mpe</parameter>&nbsp;:</term>
+<listitem><para> multipart/encrypted object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>content</parameter>&nbsp;:</term>
+<listitem><para> MIME part to encrypt
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
+<listitem><para> encryption cipher context
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>recipients</parameter>&nbsp;:</term>
+<listitem><para> an array of recipients to encrypt to
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail. If the encryption fails, an
+exception will be set on <parameter>err</parameter> to provide information as to why the
 failure occured.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-encrypted-decrypt">g_mime_multipart_encrypted_decrypt ()</title>
 <programlisting><link linkend="GMimeObject">GMimeObject</link>* g_mime_multipart_encrypted_decrypt
                                             (<link linkend="GMimeMultipartEncrypted">GMimeMultipartEncrypted</link> *mpe,
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
-                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+                                             <link linkend="GError">GError</link> **err);</programlisting>
 <para>
 Attempts to decrypt the encrypted MIME part contained within the
 multipart/encrypted object <parameter>mpe</parameter> using the <parameter>ctx</parameter> decryption context.</para>
 <para>
 
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mpe</parameter>&nbsp;:</entry>
-<entry> multipart/encrypted object
-</entry></row>
-<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry> decryption cipher context
-</entry></row>
-<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry> exception
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the decrypted MIME part on success or <literal>NULL</literal> on fail. If the
-decryption fails, an exception will be set on <parameter>ex</parameter> to provide
+</para><variablelist role="params">
+<varlistentry><term><parameter>mpe</parameter>&nbsp;:</term>
+<listitem><para> multipart/encrypted object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
+<listitem><para> decryption cipher context
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>err</parameter>&nbsp;:</term>
+<listitem><para> exception
+</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the decrypted MIME part on success or <literal>NULL</literal> on fail. If the
+decryption fails, an exception will be set on <parameter>err</parameter> to provide
 information as to why the failure occured.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></listitem></varlistentry>
+</variablelist></refsect2>
 
 </refsect1>
 
