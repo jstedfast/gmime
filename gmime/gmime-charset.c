@@ -38,20 +38,23 @@
 #include "gmime-charset.h"
 #include "strlib.h"
 
-
+#ifdef HAVE_ICONV_DETECT_H
+#include "iconv-detect.h"
+#else /* use old-style detection */
 #if defined (__aix__) || defined (__irix__) || defined (__sun__)
-#define CANONICAL_ISO_D_FORMAT "ISO%d-%d"
+#define ICONV_ISO_D_FORMAT "ISO%d-%d"
 /* this one is for charsets like ISO-2022-JP, for which at least
    Solaris wants a - after the ISO */
-#define CANONICAL_ISO_S_FORMAT "ISO-%d-%s"
+#define ICONV_ISO_S_FORMAT "ISO-%d-%s"
 #elif defined (__hpux__)
-#define CANONICAL_ISO_D_FORMAT "iso%d%d"
-#define CANONICAL_ISO_S_FORMAT "iso%d%s"
+#define ICONV_ISO_D_FORMAT "iso%d%d"
+#define ICONV_ISO_S_FORMAT "iso%d%s"
 #else
-#define CANONICAL_ISO_D_FORMAT "iso-%d-%d"
-#define CANONICAL_ISO_S_FORMAT "iso-%d-%s"
+#define ICONV_ISO_D_FORMAT "iso-%d-%d"
+#define ICONV_ISO_S_FORMAT "iso-%d-%s"
 #endif /* __aix__, __irix__, __sun__ */
-
+#define ICONV_10646 "iso-10646"
+#endif /* USE_ICONV_DETECT */
 
 struct {
 	char *charset;
@@ -226,25 +229,30 @@ g_mime_charset_name (const char *charset)
 		
 		g_assert (p > buf);
 		
-		buf = p;
-		if (*buf == '-' || *buf == '_')
-			buf++;
-		
-		codepage = strtoul (buf, &p, 10);
-		
-		if (p > buf) {
-			/* codepage is numeric */
-#ifdef __aix__
-			if (codepage == 13)
-				iconv_name = g_strdup ("IBM-921");
-			else
-#endif /* __aix__ */
-				iconv_name = g_strdup_printf (CANONICAL_ISO_D_FORMAT,
-							      iso, codepage);
+		if (iso == 10646) {
+			/* they all become ICONV_10646 */
+			iconv_name = g_strdup (ICONV_10646);
 		} else {
-			/* codepage is a string - probably iso-2022-jp or something */
-			iconv_name = g_strdup_printf (CANONICAL_ISO_S_FORMAT,
-						      iso, p);
+			buf = p;
+			if (*buf == '-' || *buf == '_')
+				buf++;
+			
+			codepage = strtoul (buf, &p, 10);
+			
+			if (p > buf) {
+				/* codepage is numeric */
+#ifdef __aix__
+				if (codepage == 13)
+					iconv_name = g_strdup ("IBM-921");
+				else
+#endif /* __aix__ */
+					iconv_name = g_strdup_printf (ICONV_ISO_D_FORMAT,
+								      iso, codepage);
+			} else {
+				/* codepage is a string - probably iso-2022-jp or something */
+				iconv_name = g_strdup_printf (ICONV_ISO_S_FORMAT,
+							      iso, p);
+			}
 		}
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
@@ -281,6 +289,18 @@ charset_init (Charset *charset)
 	charset->level = 0;
 }
 
+
+/**
+ * charset_step:
+ * @charset:
+ * @in: input text buffer (must be in UTF-8)
+ * @len: input buffer length
+ *
+ * Steps through the input buffer 1 unicode character (glyph) at a
+ * time (ie, not necessarily 1 byte at a time). Bitwise 'and' our
+ * @charset->mask with the mask for each glyph. This has the effect of
+ * limiting what charsets our @charset->mask can match.
+ **/
 static void
 charset_step (Charset *charset, const char *in, size_t len)
 {
