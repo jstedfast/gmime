@@ -1,3 +1,19 @@
+2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c: Hmmm, why weren't multiparts using the internal
+	get_content_type function rather than ...content_type_to_string?
+	Possible FIXME: Should content_type_to_string do what
+	get_content_type does? or should it remain untouched and just
+	return "type/subtype"?
+
+	* gmime-part.h: No more boundary data member.
+
+	* gmime-part.c (g_mime_part_get_boundary): Updated, as we no
+	longer store the boundary on the MIME Part and instead only on the
+	content-type (where it belongs).
+	(g_mime_part_set_boundary): And here too.
+	(g_mime_part_destroy): No longer need to destroy the boundary.
+
 2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_get_subpart_from_content_id): Erm,

@@ -60,7 +60,6 @@ struct _GMimePart {
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
-	gchar *boundary;
 	
 	GByteArray *content;
 	
