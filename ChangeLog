@@ -1,5 +1,9 @@
 2004-04-24  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated
+
+	* configure.in: Bumped version to 2.1.4
+
 	* gmime/gmime-part.c (g_mime_part_get_content): Disable debug
 	warning.
 
@@ -15,7 +19,7 @@
 
 	* gmime/gmime-content-type.c
 	(g_mime_content_type_new_from_string): Chew up lwsp between the
-	end of the cubtype and the ';' token, if there is any.
+	end of the subtype and the ';' token, if there is any.
 
 2004-04-13  Jeffrey Stedfast  <fejj@ximian.com>
 
