@@ -1,3 +1,10 @@
+2001-01-11  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.c (get_year): small patch to handle 2-digit year
+	representation a little better -- "71" now translates to 1971,
+	but "01" now translates to 2001.  Thanks to Ihar Viarheichyk for
+	suggesting this change.
+
 2001-01-07  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_content_md5): Don't allow the
