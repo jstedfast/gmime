@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -39,6 +40,7 @@ struct raw_header {
 
 struct _GMimeHeader {
 	GHashTable *hash;
+	GHashTable *write_hash;
 	struct raw_header *headers;
 };
 
@@ -77,9 +79,17 @@ g_mime_header_new ()
 	
 	new = g_new (GMimeHeader, 1);
 	new->hash = g_hash_table_new (header_hash, header_equal);
+	new->write_hash = g_hash_table_new (header_hash, header_equal);
 	new->headers = NULL;
 	
 	return new;
+}
+
+
+static void
+writer_free (gpointer key, gpointer value, gpointer user_data)
+{
+	g_free (key);
 }
 
 
@@ -105,29 +115,10 @@ g_mime_header_destroy (GMimeHeader *header)
 		}
 		
 		g_hash_table_destroy (header->hash);
+		g_hash_table_foreach (header->write_hash, writer_free, NULL);
+		g_hash_table_destroy (header->write_hash);
 		g_free (header);
 	}
-}
-
-
-/**
- * g_mime_header_foreach:
- * @header: header object
- * @func: function to be called for each header.
- * @data: User data to be passed to the func.
- *
- * Calls @func for each header name/value pair.
- */
-void
-g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer data)
-{
-	const struct raw_header *h;
-	
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (header->hash != NULL);
-	
-	for (h = header->headers; h != NULL; h = h->next)
-		(*func) (h->name, h->value, data);
 }
 
 
@@ -267,6 +258,20 @@ g_mime_header_remove (GMimeHeader *header, const char *name)
 }
 
 
+static ssize_t
+write_default (GMimeStream *stream, const char *name, const char *value)
+{
+	ssize_t nwritten;
+	char *val;
+	
+	val = g_mime_utils_header_printf ("%s: %s\n", name, value);
+	nwritten = g_mime_stream_write_string (stream, val);
+	g_free (val);
+	
+	return nwritten;
+}
+
+
 /**
  * g_mime_header_write_to_stream:
  * @header: header object
@@ -279,6 +284,7 @@ g_mime_header_remove (GMimeHeader *header, const char *name)
 ssize_t
 g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 {
+	GMimeHeaderWriteFunc header_write;
 	ssize_t nwritten, total = 0;
 	struct raw_header *h;
 	
@@ -287,12 +293,12 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 	
 	h = header->headers;
 	while (h) {
-		char *val;
-		
 		if (h->value) {
-			val = g_mime_utils_header_printf ("%s: %s\n", h->name, h->value);
-			nwritten = g_mime_stream_write_string (stream, val);
-			g_free (val);
+			header_write = g_hash_table_lookup (header->write_hash, h->name);
+			if (header_write)
+				nwritten = (*header_write) (stream, h->name, h->value);
+			else
+				nwritten = write_default (stream, h->name, h->value);
 			
 			if (nwritten == -1)
 				return -1;
@@ -335,4 +341,54 @@ g_mime_header_to_string (const GMimeHeader *header)
 	g_byte_array_free (array, FALSE);
 	
 	return str;
+}
+
+
+/**
+ * g_mime_header_foreach:
+ * @header: header object
+ * @func: function to be called for each header.
+ * @user_data: User data to be passed to the func.
+ *
+ * Calls @func for each header name/value pair.
+ */
+void
+g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, gpointer user_data)
+{
+	const struct raw_header *h;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (header->hash != NULL);
+	g_return_if_fail (func != NULL);
+	
+	for (h = header->headers; h != NULL; h = h->next)
+		(*func) (h->name, h->value, user_data);
+}
+
+
+/**
+ * g_mime_header_set_write_func:
+ * @header: header object
+ * @name: header name
+ * @func: writer function
+ *
+ * Changes the function used to write @name headers to @func. This is
+ * useful if you want to change the default header folding style for a
+ * particular header.
+ **/
+void
+g_mime_header_set_write_func (GMimeHeader *header, const char *name, GMimeHeaderWriteFunc func)
+{
+	gpointer okey, oval;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (name != NULL);
+	
+	if (g_hash_table_lookup (header->write_hash, name)) {
+		g_hash_table_lookup_extended (header->write_hash, name, &okey, &oval);
+		g_hash_table_remove (header->write_hash, name);
+		g_free (okey);
+	}
+	
+	g_hash_table_insert (header->write_hash, g_strdup (name), func);
 }
