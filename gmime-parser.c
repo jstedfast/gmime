@@ -354,7 +354,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 		g_free (end_boundary);
 	} else {
 		GMimePartEncodingType encoding;
-		gchar *content;
+		gchar *content = NULL;
 		guint len = 0;
 		
 		/* from here to the end is the content */
