@@ -627,20 +627,24 @@ g_mime_part_get_content (GMimePart *mime_part, guint *len)
 
 
 /**
- * g_mime_part_add_child: Add a child mime part to a multipart
+ * g_mime_part_add_subpart: Add a subpart to a multipart
  * @mime_part: Parent Mime part
- * @child: Child Mime part
+ * @subpart: Child Mime part
  *
- * Adds a child mime part to the parent mime part which *must* be a
+ * Adds a subpart to the parent mime part which *must* be a
  * multipart.
  **/
 void
-g_mime_part_add_child (GMimePart *mime_part, GMimePart *child)
+g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
 {
-	g_return_if_fail (mime_part != NULL);
-	g_return_if_fail (child != NULL);
+	const GMimeContentType *type;
 	
-	mime_part->children = g_list_append (mime_part->children, child);
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (subpart != NULL);
+	
+	type = g_mime_part_get_content_type (mime_part);
+	if (g_mime_content_type_is_type (type, "multipart", "*"))
+		mime_part->children = g_list_append (mime_part->children, subpart);
 }
 
 static gchar *
@@ -915,38 +919,34 @@ g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data
 
 
 /**
- * g_mime_part_get_child_from_content_id: 
- * @part: the MIME part
+ * g_mime_part_get_subpart_from_content_id: 
+ * @mime_part: the MIME part
  * @content_id: the content id of the part to look for
  *
  * Returns the GMimePart whose content-id matches the search string,
  * or NULL if a match cannot be found.
  **/
-GMimePart*
-g_mime_part_get_child_from_content_id (GMimePart * part,
-                                       const gchar * content_id)
+const GMimePart *
+g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const gchar *content_id)
 {
-	GMimePart * retval = NULL;
-
-	g_return_val_if_fail (part!=NULL, NULL);
-	g_return_val_if_fail (content_id!=NULL, NULL);
-
-	if (part->content_id!=NULL && !strcmp (part->content_id, content_id))
-		retval = part;
-
-	else if (part->children)
-	{
-		GList * l;
-
-		for (l=part->children; l!=NULL && retval==NULL; l=l->next)
-		{
-			GMimePart * child = (GMimePart*) l->data;
-			gchar * cid = child->content_id;
-
-			if (cid!=NULL && !strcmp(cid, content_id))
-				retval = child;
-		}
+	GList *child;
+	
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (content_id != NULL, NULL);
+	
+	if (mime_part->content_id && !strcmp (mime_part->content_id, content_id))
+		return mime_part;
+	
+	child = mime_part->children;
+	while (child) {
+		GMimePart *part = (GMimePart *) child->data;
+		const gchar *cid = part->content_id;
+		
+		if (cid && !strcmp (cid, content_id))
+			return part;
+		
+		child = child->next;
 	}
-
-	return retval;
+	
+	return NULL;
 }

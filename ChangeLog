@@ -1,3 +1,25 @@
+2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* configure.in (GMIME_MINOR_VERSION): Updated to 0.3.0
+
+	* gmime-parser.c (get_mime_part): Updated to reflect the
+	add_subpart API change.
+
+	* test-mime.c (test_multipart): And here too.
+
+	* gmime-part.h (g_mime_part_add_child): Macro added for backward
+	source compatability.
+
+	* gmime-part.c (g_mime_part_get_subpart_from_content_id): Renamed
+	from g_mime_part_get_child_from_content_id as I think I'm gonna
+	start calling them subparts in the API as it's a bit clearer than
+	calling them children. Also fixed up some of the logic (what if
+	the parent mime part had a content-id? The way the code was before
+	it'd never search the subparts). Oh, it also returns const now.
+	(g_mime_part_add_subpart): Renamed from g_mime_part_add_child and
+	also now does some error checking to make sure the parent part is
+	a multipart.
+
 2000-12-10  Charles Kerr <charles@superpimp.org>
 
 	* gmime-part.c (g_mime_part_get_child_by_content_id): new

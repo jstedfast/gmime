@@ -84,7 +84,6 @@ const gchar *g_mime_part_get_content_description (GMimePart *mime_part);
 
 void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
 const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
-GMimePart * g_mime_part_get_child_from_content_id (GMimePart * mime_part, const gchar * content_id);
 
 void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);
@@ -106,17 +105,20 @@ const gchar *g_mime_part_get_filename (GMimePart *mime_part);
 void g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary);
 const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
 
-/* utility functions */
 void g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len);
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 					  guint len, GMimePartEncodingType encoding);
 const gchar *g_mime_part_get_content (GMimePart *mime_part, guint *len);
 
-void g_mime_part_add_child (GMimePart *mime_part, GMimePart *child);
+void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
+#define g_mime_part_add_child(mime_part, child) g_mime_part_add_subpart (mime_part, child)
 
+/* utility functions */
 gchar *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
 
 void g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data);
+
+const GMimePart *g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const gchar *content_id);
 
 #ifdef __cplusplus
 }

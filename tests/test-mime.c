@@ -59,7 +59,7 @@ test_multipart (void)
 	g_mime_part_set_content (text_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
-	g_mime_part_add_child (multi_part, text_part);
+	g_mime_part_add_subpart (multi_part, text_part);
 	
 	html_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "html");
@@ -70,7 +70,7 @@ test_multipart (void)
 				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
 	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
 	
-	g_mime_part_add_child (multi_part, html_part);
+	g_mime_part_add_subpart (multi_part, html_part);
 	
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
