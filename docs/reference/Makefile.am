@@ -20,10 +20,26 @@ HTML_IMAGES =
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS = --deprecated-guards="GMIME_DISABLE_DEPRECATED"
 
+# Extra options to pass to gtkdoc-scangobj
+SCANGOBJ_OPTIONS=--type-init-func="g_mime_init (0)"
+
 #SCANOBJ_FILES = $(DOC_MODULE).hierarchy
 
 # Extra options to supply to gtkdoc-mkdb
 MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files=trio
+
+# CFLAGS and LDFLAGS for compiling scan program. Only needed
+# if $(DOC_MODULE).types is non-empty.
+INCLUDES = \
+	-I$(top_srcdir) 	\
+	-I$(top_builddir) 	\
+	-I$(top_builddir)/gmime \
+	$(GLIB_CFLAGS)
+
+GTKDOC_LIBS = 					\
+	$(top_builddir)/util/libutil.la		\
+	$(top_builddir)/gmime/libgmime-2.0.la 	\
+	$(GLIB_LIBS)
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
 content_files = 			\
