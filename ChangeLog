@@ -1,3 +1,13 @@
+2001-09-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-streams.c: New test suite for streams.
+
+	* gmime-stream-buffer.c (stream_read): Fixed some logic bugs
+	(including forgetting a break statement at the end of a case).
+	(g_mime_stream_buffer_gets): Fixed some logic bugs.
+
+	* gmime-stream-mem.c (stream_read): Fixed logic error.
+
 2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-buffer.c (g_mime_stream_buffer_gets): Implemented.

@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams
 
 bin_SCRIPTS = gmime-config
 
@@ -75,6 +75,11 @@ test_parser_LDFLAGS =
 test_parser_DEPENDENCIES = $(DEPS)
 test_parser_LDADD = $(LDADDS)
 
+test_streams_SOURCES = test-streams.c
+test_streams_LDFLAGS = 
+test_streams_DEPENDENCIES = $(DEPS)
+test_streams_LDADD = $(LDADDS)
+
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
@@ -84,7 +89,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests
+tests: MIMEtests PARSERtests STREAMtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -94,6 +99,11 @@ MIMEtests : test-mime
 PARSERtests : test-parser
 	@echo "##"
 	@echo "## MIME Parser regression tests"
+	@echo "##"
+
+STREAMtests : test-streams
+	@echo "##"
+	@echo "## Stream regression tests"
 	@echo "##"
 
 dist-hook: gmime.spec

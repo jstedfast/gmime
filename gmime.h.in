@@ -33,9 +33,14 @@
 #include "gmime-parser.h"
 #include "gmime-utils.h"
 #include "gmime-stream.h"
+#include "gmime-stream-buffer.h"
 #include "gmime-stream-file.h"
+#include "gmime-stream-filter.h"
 #include "gmime-stream-fs.h"
 #include "gmime-stream-mem.h"
+#include "gmime-filter.h"
+#include "gmime-filter-basic.h"
+#include "gmime-filter-crlf.h"
 
 /* GMIME version */
 static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;
