@@ -778,6 +778,7 @@ decode_msgid (const char **in)
 	
 	decode_lwsp (&inptr);
 	if (*inptr == '<') {
+		inptr++;
 		decode_lwsp (&inptr);
 		if ((msgid = decode_addrspec (&inptr))) {
 			decode_lwsp (&inptr);

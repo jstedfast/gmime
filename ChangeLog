@@ -1,3 +1,8 @@
+2002-11-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (decode_msgid): Eat the '<' before
+	continuing to parse the addr-spec.
+
 2002-11-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-content-type.c
