@@ -19,9 +19,9 @@ config.h
 gmime.h
 gmime-config
 gmimeConf.sh
+gen-table
 test-parser
 test-mime
-test-pgp
-test-pgpmime
-gen-table
-libgmime.spec
+test-streams
+test-html
+gmime.spec

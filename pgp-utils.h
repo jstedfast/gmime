@@ -37,6 +37,7 @@ typedef enum {
 	PGP_TYPE_NONE,
 	PGP_TYPE_PGP2,
 	PGP_TYPE_PGP5,
+	PGP_TYPE_PGP6,
 	PGP_TYPE_GPG
 } PgpType;
 
@@ -46,7 +47,11 @@ typedef enum {
 	PGP_HASH_TYPE_SHA1
 } PgpHashType;
 
-typedef char* (*PgpPasswdFunc) (const char *prompt, gpointer data);
+typedef char *(*PgpPasswdFunc) (const char *prompt, gpointer data);
+
+PgpType pgp_type_detect_from_path (const char *path);
+
+void pgp_autodetect (char **pgp_path, PgpType *pgp_type);
 
 void pgp_init (const char *path, PgpType type, PgpPasswdFunc callback, gpointer data);
 

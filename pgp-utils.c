@@ -49,7 +49,7 @@
 #define d(x)
 #define _(x) x
 
-static const char *pgp_path = NULL;
+static char *pgp_path = NULL;
 static PgpType pgp_type = PGP_TYPE_NONE;
 static PgpPasswdFunc pgp_passwd_func = NULL;
 static gpointer pgp_data = NULL;
@@ -64,13 +64,17 @@ pgp_get_passphrase (const char *userid)
 	case PGP_TYPE_GPG:
 		type = "GnuPG";
 		break;
-	case PGP_TYPE_PGP5:
-		type = "PGP5";
-		break;
 	case PGP_TYPE_PGP2:
-		type = "PGP2.x";
+		type = "PGP 2.6.x";
+		break;
+	case PGP_TYPE_PGP5:
+		type = "PGP 5.0";
+		break;
+	case PGP_TYPE_PGP6:
+		type = "PGP 6.5.8";
 		break;
 	}
+	
 	prompt = g_strdup_printf (_("Please enter your %s passphrase%s%s"),
 				  type, userid ? _(" for ") : "",
 				  userid ? userid : "");
@@ -79,6 +83,283 @@ pgp_get_passphrase (const char *userid)
 	g_free (prompt);
 	
 	return passphrase;
+}
+
+
+struct {
+	char *bin;
+	char *version;
+	PgpType type;
+} binaries[] = {
+	{ "gpg", NULL, PGP_TYPE_GPG },
+	{ "pgp", "6.5.8", PGP_TYPE_PGP6 },
+	{ "pgp", "5.0", PGP_TYPE_PGP5 },
+	{ "pgp", "2.6", PGP_TYPE_PGP2 },
+	{ NULL, NULL, PGP_TYPE_NONE }
+};
+
+
+typedef struct _PGPFILE {
+	FILE *fp;
+	pid_t pid;
+} PGPFILE;
+
+static PGPFILE *
+pgpopen (const char *command, const char *mode)
+{
+	int in_fds[2], out_fds[2];
+	PGPFILE *pgp = NULL;
+	char **argv = NULL;
+	pid_t child;
+	int fd;
+	
+	g_return_val_if_fail (command != NULL, NULL);
+	
+	if (*mode != 'r' || *mode != 'w')
+		return NULL;
+	
+	argv = g_strsplit (command, " ", 0);
+	if (!argv)
+		return NULL;
+	
+	if (pipe (in_fds) == -1)
+		goto error;
+	
+	if (pipe (out_fds) == -1) {
+		close (in_fds[0]);
+		close (in_fds[1]);
+		goto error;
+	}
+	
+	if ((child = fork ()) == 0) {
+		/* In child */
+		int maxfd;
+		
+		if ((dup2 (in_fds[0], STDIN_FILENO) < 0 ) ||
+		    (dup2 (out_fds[1], STDOUT_FILENO) < 0 ) ||
+		    (dup2 (out_fds[1], STDERR_FILENO) < 0 )) {
+			_exit (255);
+		}
+		
+		/* Dissociate from evolution-mail's controlling
+		 * terminal so that pgp/gpg won't be able to read from
+		 * it: PGP 2 will fall back to asking for the password
+		 * on /dev/tty if the passed-in password is incorrect.
+		 * This will make that fail rather than hanging.
+		 */
+		setsid ();
+		
+		/* close all open fds that we aren't using */
+		maxfd = sysconf (_SC_OPEN_MAX);
+		for (fd = 0; fd < maxfd; fd++) {
+			if (fd != STDIN_FILENO && fd != STDOUT_FILENO && fd != STDERR_FILENO)
+				close (fd);
+		}
+		
+		execvp (argv[0], argv);
+		fprintf (stderr, "Could not execute %s: %s\n", argv[0],
+			 g_strerror (errno));
+		_exit (255);
+	} else if (child < 0) {
+		close (in_fds[0]);
+		close (in_fds[1]);
+		close (out_fds[0]);
+		close (out_fds[1]);
+		goto error;
+	}
+	
+	/* Parent */
+	g_strfreev (argv);
+	
+	close (in_fds[0]);   /* pgp's stdin */
+	close (out_fds[1]);  /* pgp's stdout */
+	
+	if (mode[0] == 'r') {
+		/* opening in read-mode */
+		fd = out_fds[0];
+		close (in_fds[1]);
+	} else {
+		/* opening in write-mode */
+		fd = in_fds[1];
+		close (out_fds[0]);
+	}
+	
+	pgp = g_new (PGPFILE, 1);
+	pgp->fp = fdopen (fd, mode);
+	pgp->pid = child;
+	
+	return pgp;
+ error:
+	g_strfreev (argv);
+	
+	return NULL;
+}
+
+static int
+pgpclose (PGPFILE *pgp)
+{
+	sigset_t mask, omask;
+	pid_t wait_result;
+	int status;
+	
+	if (pgp->fp) {
+		fclose (pgp->fp);
+		pgp->fp = NULL;
+	}
+	
+	/* PGP5 closes fds before exiting, meaning this might be called
+	 * too early. So wait a bit for the result.
+	 */
+	sigemptyset (&mask);
+	sigaddset (&mask, SIGALRM);
+	sigprocmask (SIG_BLOCK, &mask, &omask);
+	alarm (1);
+	wait_result = waitpid (pgp->pid, &status, 0);
+	alarm (0);
+	sigprocmask (SIG_SETMASK, &omask, NULL);
+	
+	if (wait_result == -1 && errno == EINTR) {
+		/* PGP is hanging: send a friendly reminder. */
+		kill (pgp->pid, SIGTERM);
+		sleep (1);
+		wait_result = waitpid (pgp->pid, &status, WNOHANG);
+		if (wait_result == 0) {
+			/* Still hanging; use brute force. */
+			kill (pgp->pid, SIGKILL);
+			sleep (1);
+			wait_result = waitpid (pgp->pid, &status, WNOHANG);
+		}
+	}
+	
+	if (wait_result != -1 && WIFEXITED (status)) {
+		g_free (pgp);
+		return 0;
+	} else
+		return -1;
+}
+
+PgpType
+pgp_type_detect_from_path (const char *path)
+{
+	const char *bin = g_basename (path);
+	struct stat st;
+	int i;
+	
+	/* make sure the file exists *and* is executable? */
+	if (stat (path, &st) == -1 || !(st.st_mode & (S_IXOTH | S_IXGRP | S_IXUSR)))
+		return PGP_TYPE_NONE;
+	
+	for (i = 0; binaries[i].bin; i++) {
+		if (binaries[i].version) {
+			/* compare version strings */
+			char buffer[256], *command;
+			gboolean found = FALSE;
+			PGPFILE *fp;
+			
+			command = g_strdup_printf ("%s --version", path);
+			fp = pgpopen (command, "r");
+			g_free (command);
+			if (fp) {
+				while (!feof (fp->fp) && !found) {
+					memset (buffer, 0, sizeof (buffer));
+					fgets (buffer, sizeof (buffer), fp->fp);
+					found = strstr (buffer, binaries[i].version) != NULL;
+				}
+				
+				pgpclose (fp);
+				
+				if (found)
+					return binaries[i].type;
+			}
+		} else if (!strcmp (binaries[i].bin, bin)) {
+			/* no version string to compare against... */
+			return binaries[i].type;
+		}
+	}
+	
+	return PGP_TYPE_NONE;
+}
+
+void
+pgp_autodetect (char **pgp_path, PgpType *pgp_type)
+{
+	PgpType type = PGP_TYPE_NONE;
+	const char *PATH, *path;
+	char *pgp = NULL;
+	
+	PATH = getenv ("PATH");
+	
+	path = PATH;
+	while (path && *path && !type) {
+		const char *pend = strchr (path, ':');
+		gboolean found = FALSE;
+		char *dirname;
+		int i;
+		
+		if (pend) {
+			/* don't even think of using "." */
+			if (!strncmp (path, ".", pend - path)) {
+				path = pend + 1;
+				continue;
+			}
+			
+			dirname = g_strndup (path, pend - path);
+			path = pend + 1;
+		} else {
+			/* don't even think of using "." */
+			if (!strcmp (path, "."))
+				break;
+			
+			dirname = g_strdup (path);
+			path = NULL;
+		}
+		
+		for (i = 0; binaries[i].bin; i++) {
+			struct stat st;
+			
+			pgp = g_strdup_printf ("%s/%s", dirname, binaries[i].bin);
+			/* make sure the file exists *and* is executable? */
+			if (stat (pgp, &st) != -1 && st.st_mode & (S_IXOTH | S_IXGRP | S_IXUSR)) {
+				if (binaries[i].version) {
+					/* compare version strings */
+					char buffer[256], *command;
+					PGPFILE *fp;
+					
+					command = g_strdup_printf ("%s --version", pgp);
+					fp = pgpopen (command, "r");
+					g_free (command);
+					if (fp) {
+						while (!feof (fp->fp) && !found) {
+							memset (buffer, 0, sizeof (buffer));
+							fgets (buffer, sizeof (buffer), fp->fp);
+							found = strstr (buffer, binaries[i].version) != NULL;
+						}
+						
+						pgpclose (fp);
+					}
+				} else {
+					/* no version string to compare against... */
+					found = TRUE;
+				}
+				
+				if (found) {
+					type = binaries[i].type;
+					break;
+				}
+			}
+			
+			g_free (pgp);
+			pgp = NULL;
+		}
+		
+		g_free (dirname);
+	}
+	
+	if (pgp && type) {
+		*pgp_path = pgp;
+		*pgp_type = type;
+	} else
+		g_free (pgp);
 }
 
 
@@ -94,7 +375,7 @@ pgp_get_passphrase (const char *userid)
 void
 pgp_init (const char *path, PgpType type, PgpPasswdFunc callback, gpointer data)
 {
-	pgp_path = path;
+	pgp_path = g_strdup (path);
 	pgp_type = type;
 	pgp_passwd_func = callback;
 	pgp_data = data;

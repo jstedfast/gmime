@@ -23,8 +23,13 @@
  * USA
  */
 
+
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
 #include "gmime-exception.h"
+
 
 /**
  * g_mime_exception_new: allocate a new exception object. 
@@ -36,15 +41,16 @@ GMimeException *
 g_mime_exception_new (void)
 {
 	GMimeException *ex;
-
+	
 	ex = g_new (GMimeException, 1);
 	ex->desc = NULL;
-
+	
 	/* set the Exception Id to NULL */
 	ex->id = GMIME_EXCEPTION_NONE;
-
+	
 	return ex;
 }
+
 
 /**
  * g_mime_exception_init: init a (statically allocated) exception.
@@ -58,7 +64,7 @@ void
 g_mime_exception_init (GMimeException *ex)
 {
 	ex->desc = NULL;
-
+	
 	/* set the Exception Id to NULL */
 	ex->id = GMIME_EXCEPTION_NONE;
 }
@@ -75,18 +81,17 @@ g_mime_exception_init (GMimeException *ex)
 void 
 g_mime_exception_clear (GMimeException *exception)
 {
-	if (!exception) return;
+	if (!exception)
+		return;
 	
 	/* free the description text */
 	if (exception->desc)
 		g_free (exception->desc);
 	exception->desc = NULL;
-
+	
 	/* set the Exception Id to NULL */
 	exception->id = GMIME_EXCEPTION_NONE;
 }
-
-
 
 
 /**
@@ -99,14 +104,17 @@ g_mime_exception_clear (GMimeException *exception)
 void 
 g_mime_exception_free (GMimeException *exception)
 {
-	if (!exception) return;
+	if (!exception)
+		return;
 	
 	/* free the description text */
 	if (exception->desc)
 		g_free (exception->desc);
-       	/* free the exeption itself */
+	
+	/* free the exeption itself */
 	g_free (exception);
 }
+
 
 /**
  * g_mime_exception_set: set an exception 
@@ -125,18 +133,20 @@ g_mime_exception_free (GMimeException *exception)
  **/
 void
 g_mime_exception_set (GMimeException *ex,
-		     ExceptionId id,
-		     const char *desc)
+		      ExceptionId id,
+		      const char *desc)
 {
 	/* if no exception is given, do nothing */
-	if (!ex) return;
-
+	if (!ex)
+		return;
+	
 	ex->id = id;
-
+	
 	/* remove the previous exception description */
-	if (ex->desc)
+	if (desc != ex->desc) {
 		g_free (ex->desc);
-	ex->desc = g_strdup (desc);
+		ex->desc = g_strdup (desc);
+	}
 }
 
 
@@ -163,30 +173,28 @@ g_mime_exception_set (GMimeException *ex,
  **/
 void
 g_mime_exception_setv (GMimeException *ex,
-		      ExceptionId id,
-		      const char *format, 
-		      ...)
+		       ExceptionId id,
+		       const char *format, 
+		       ...)
 {
 	va_list args;
+	char *buf;
 	
 	/* if no exception is given, do nothing */
-	if (!ex) return;
+	if (!ex)
+		return;
 	
-	if (ex->desc)
-		g_free (ex->desc);
+	buf = ex->desc;
 	
 	/* create the temporary exception string */
 	va_start(args, format);
 	ex->desc = g_strdup_vprintf (format, args);
 	va_end (args);
-
+	
+	g_free (buf);
+	
 	ex->id = id;
 }
-
-
-
-
-
 
 
 /**
@@ -201,22 +209,17 @@ g_mime_exception_setv (GMimeException *ex,
  **/
 void 
 g_mime_exception_xfer (GMimeException *ex_dst,
-		      GMimeException *ex_src)
+		       GMimeException *ex_src)
 {
 	if (ex_dst->desc)
 		g_free (ex_dst->desc);
-
+	
 	ex_dst->id = ex_src->id;
 	ex_dst->desc = ex_src->desc;
-
-	ex_src->desc = NULL;
+	
 	ex_src->id = GMIME_EXCEPTION_NONE;
+	ex_src->desc = NULL;
 }
-
-
-
-
-
 
 
 /**
@@ -238,8 +241,6 @@ g_mime_exception_get_id (GMimeException *ex)
 }
 
 
-
-
 /**
  * g_mime_exception_get_description: get the description of an exception.
  * @ex: The exception object
@@ -247,10 +248,9 @@ g_mime_exception_get_id (GMimeException *ex)
  * Return the exception description text. 
  * If @ex is NULL, return NULL;
  * 
- * 
  * Return value: Exception description text.
  **/
-const gchar *
+const char *
 g_mime_exception_get_description (GMimeException *ex)
 {
 	if (ex)
