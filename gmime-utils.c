@@ -736,6 +736,7 @@ g_string_append_len (GString *out, const char *in, size_t len)
 char *
 g_mime_utils_header_fold (const char *in)
 {
+	gboolean last_was_lwsp = FALSE;
 	register const char *inptr;
 	size_t len, outlen, i;
 	GString *out;
@@ -751,7 +752,10 @@ g_mime_utils_header_fold (const char *in)
 	while (*inptr) {
 		len = strcspn (inptr, " \t");
 		
-		if (outlen + len > GMIME_FOLD_LEN) {
+		if (outlen + len > GMIME_FOLD_LEN) {			
+			if (last_was_lwsp)
+				g_string_truncate (out, out->len - 1);
+			
 			g_string_append (out, "\n\t");
 			outlen = 1;
 			
@@ -764,19 +768,33 @@ g_mime_utils_header_fold (const char *in)
 				g_string_append (out, "\n\t");
 				outlen = 1;
 			}
+			last_was_lwsp = FALSE;
 		} else if (len > 0) {
 			outlen += len;
 			g_string_append_len (out, inptr, len);
 			inptr += len;
+			last_was_lwsp = FALSE;
 		} else {
-			g_string_append_c (out, *inptr++);
+			if (*inptr == '\t') {
+				/* tabs are a good place to fold, odds
+                                   are that this is where the previous
+                                   mailer folded it */
+				g_string_append (out, "\n\t");
+				outlen = 1;
+				inptr++;
+				last_was_lwsp = FALSE;
+			} else {
+				g_string_append_c (out, *inptr++);
+				outlen++;
+				last_was_lwsp = TRUE;
+			}
 		}
 	}
 	
 	ret = out->str;
 	g_string_free (out, FALSE);
 	
-	return ret;	
+	return ret;
 }
 
 

@@ -1,3 +1,23 @@
+2002-04-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c: New implementation, backported from my glib2
+	version of gmime (which is still a work-in-progress).
+
+	* old-parser.c: Old version of gmime-parser.c - keeping it around
+	in for reference.
+	
+	* gmime-utils.c (g_mime_utils_header_fold): If we find a \t, that
+	is a good place to wrap since odds are that this is where the
+	previous mailer had wrapped the header.
+
+2002-04-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c (g_mime_parser_construct_message): No longer
+	takes a 'preserve_headers' argument.
+
+	* gmime-parser.c (g_mime_parser_construct_message): No longer
+	takes a 'preserve_headers' argument.
+
 2002-04-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* docs/*: Updated.
