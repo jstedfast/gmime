@@ -9,13 +9,6 @@ a way for the app to tell gmime how to handle these. perhaps a
 callback set on the parser object that gets called if gmime fails to
 be able to convert i to UTF-8 (after trying locale charset of course).
 
-- rename g_mime_charset_name() to g_mime_charset_iconv_name() to make
-it clearer. Probably make a macro for backward compat.
-
-- implement g_mime_charset_canonical_name() to get the canonical
-charset name given the iconv-friendly name (basically does the reverse
-of g_mime_charset_iconv_name).
-
 - have gmime-filter-charset auto-detect windows charsets and change
 the iconv_t if/when needed? will this work?
 
