@@ -57,7 +57,10 @@ static void set_content_type (GMimeObject *object, GMimeContentType *content_typ
 static char *get_headers (GMimeObject *object);
 static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
+static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
+
 static void type_registry_init (void);
+
 
 static GHashTable *type_hash = NULL;
 
@@ -116,6 +119,8 @@ g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 	object->content_type = NULL;
 	object->headers = g_mime_header_new ();
 	object->content_id = NULL;
+	
+	g_mime_header_register_writer (object->headers, "Content-Type", write_content_type);
 }
 
 static void
@@ -132,6 +137,33 @@ g_mime_object_finalize (GObject *object)
 	g_free (mime->content_id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+static ssize_t
+write_content_type (GMimeStream *stream, const char *name, const char *value)
+{
+	GMimeContentType *content_type;
+	ssize_t nwritten;
+	GString *out;
+	char *val;
+	
+	out = g_string_new ("");
+	g_string_printf (out, "%s: ", name);
+	
+	content_type = g_mime_content_type_new_from_string (value);
+	
+	val = g_mime_content_type_to_string (content_type);
+	g_string_append (out, val);
+	g_free (val);
+	
+	g_mime_param_write_to_string (content_type->params, TRUE, out);
+	g_mime_content_type_destroy (content_type);
+	
+	nwritten = g_mime_stream_write (stream, out->str, out->len);
+	g_string_free (out, TRUE);
+	
+	return nwritten;
 }
 
 

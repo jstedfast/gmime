@@ -58,6 +58,8 @@ static void mime_part_remove_header (GMimeObject *object, const char *header);
 static char *mime_part_get_headers (GMimeObject *object);
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
+static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
+
 #define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
@@ -119,6 +121,8 @@ g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 	mime_part->content_location = NULL;
 	mime_part->content_md5 = NULL;
 	mime_part->content = NULL;
+	
+	g_mime_header_register_writer (((GMimeObject *) mime_part)->headers, "Content-Disposition", write_disposition);
 }
 
 static void
@@ -164,6 +168,28 @@ static char *headers[] = {
 	"Content-Md5",
 	NULL
 };
+
+static ssize_t
+write_disposition (GMimeStream *stream, const char *name, const char *value)
+{
+	GMimeDisposition *disposition;
+	ssize_t nwritten;
+	GString *out;
+	
+	out = g_string_new ("");
+	g_string_printf (out, "%s: ", name);
+	
+	disposition = g_mime_disposition_new (value);
+	g_string_append (out, disposition->disposition);
+	
+	g_mime_param_write_to_string (disposition->params, TRUE, out);
+	g_mime_disposition_destroy (disposition);
+	
+	nwritten = g_mime_stream_write (stream, out->str, out->len);
+	g_string_free (out, TRUE);
+	
+	return nwritten;
+}
 
 static void
 set_disposition (GMimePart *mime_part, const char *disposition)

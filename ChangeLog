@@ -1,3 +1,12 @@
+2005-01-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-part.c (g_mime_part_init): Register a writer for
+	Content-Disposition.
+
+	* gmime/gmime-object.c (g_mime_object_init): Register a new writer
+	func for Content-Type headers so that we don't accidently fold in
+	the middle of a parameter value.
+
 2005-01-13  Joe Shaw  <joeshaw@novell.com>
 
 	* autogen.sh: Allow automake 1.9
