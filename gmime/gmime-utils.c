@@ -790,19 +790,15 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #ifdef HAVE_GETHOSTNAME
 		if (gethostname (host, sizeof (host)) == 0) {
 #ifdef HAVE_GETHOSTBYNAME
-			int ret, buflen = 1024, herr = 0;
+			size_t buflen = 1024;
+			int retval;
 			
-			do {
-				if (buf != NULL)
-					buf = g_realloc (buf, buflen);
-				else
-					buf = g_malloc (buflen);
-				
-				if ((ret = g_gethostbyname_r (host, &hostbuf, buf, buflen, &herr)) == ERANGE)
-					buflen += 256;
-			} while (ret != 0 && buflen < 8192);
+			buf = g_malloc (buflen);
 			
-			if (ret != 0) {
+			while ((retval = g_gethostbyname_r (host, &hostbuf, buf, buflen, NULL)) == ERANGE && buflen < 8192)
+				buf = g_realloc (buf, (buflen += 1024));
+			
+			if (retval == -1) {
 				g_free (buf);
 				buf = NULL;
 			}

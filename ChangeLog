@@ -1,5 +1,8 @@
 2004-02-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id):
+	Simplified and updated for g_gethostbyname_r() API changes.
+
 	* gmime/gmime-error.h: Changed the #define of GMIME_ERROR_QUARK to
 	just be the GQuark variable. Also added GMIME_ERROR_IS_SYSTEM() to
 	decide if an error is a system error (aka errno) or a GMime error.
