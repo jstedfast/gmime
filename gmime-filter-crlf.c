@@ -95,57 +95,65 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
+	register const char *inptr;
+	const char *inend;
 	gboolean do_dots;
-	char *p, *q;
+	char *outptr;
 	
 	do_dots = crlf->mode == GMIME_FILTER_CRLF_MODE_CRLF_DOTS;
+	
+	inptr = in;
+	inend = in + len;
 	
 	if (crlf->direction == GMIME_FILTER_CRLF_ENCODE) {
 		g_mime_filter_set_size (filter, 3 * len, FALSE);
 		
-		p = in;
-		q = filter->outbuf;
-		while (p < in + len) {
-			if (*p == '\n') {
+		outptr = filter->outbuf;
+		while (inptr < inend) {
+			if (*inptr == '\r') {
+				crlf->saw_cr = TRUE;
+			} else if (*inptr == '\n') {
 				crlf->saw_lf = TRUE;
-				*q++ = '\r';
+				if (!crlf->saw_cr)
+					*outptr++ = '\r';
+				crlf->saw_cr = FALSE;
 			} else {
-				if (do_dots && *p == '.' && crlf->saw_lf)
-					*q++ = '.';
+				if (do_dots && *inptr == '.' && crlf->saw_lf)
+					*outptr++ = '.';
 				
+				crlf->saw_cr = FALSE;
 				crlf->saw_lf = FALSE;
 			}
 			
-			*q++ = *p++;
+			*outptr++ = *inptr++;
 		}
 	} else {
 		g_mime_filter_set_size (filter, len, FALSE);
 		
-		p = in;
-		q = filter->outbuf;
-		while (p < in + len) {
-			if (*p == '\r') {
+		outptr = filter->outbuf;
+		while (inptr < inend) {
+			if (*inptr == '\r') {
 				crlf->saw_cr = TRUE;
 			} else {
 				if (crlf->saw_cr) {
 					crlf->saw_cr = FALSE;
 					
-					if (*p == '\n') {
+					if (*inptr == '\n') {
 						crlf->saw_lf = TRUE;
-						*q++ = *p++;
+						*outptr++ = *inptr++;
 						continue;
 					} else
-						*q++ = '\r';
+						*outptr++ = '\r';
 				}
 				
-				*q++ = *p;
+				*outptr++ = *inptr;
 			}
 			
-			if (do_dots && *p == '.') {
+			if (do_dots && *inptr == '.') {
 				if (crlf->saw_lf) {
 					crlf->saw_dot = TRUE;
 					crlf->saw_lf = FALSE;
-					p++;
+					inptr++;
 				} else if (crlf->saw_dot) {
 					crlf->saw_dot = FALSE;
 				}
@@ -153,12 +161,12 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			crlf->saw_lf = FALSE;
 			
-			p++;
+			inptr++;
 		}
 	}
 	
 	*out = filter->outbuf;
-	*outlen = q - filter->outbuf;
+	*outlen = outptr - filter->outbuf;
 	*outprespace = filter->outpre;
 }
 

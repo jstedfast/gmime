@@ -1,6 +1,19 @@
+2002-07-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (header_parse): Check to make sure that the
+	header was valid (ie, `colon' == ':'). If not, then set
+	header->value to "".
+	(parser_step_headers): When refilling, make sure that the refilled
+	buffer is larger than the buffer was before refilling, otherwise
+	break out of the loop and parse whatever is left. Fixes bug #89260
+	on bugzilla.gnome.org
+
+	* gmime-filter-crlf.c (filter_filter): Fix to not add an extra \r
+	for pre-canonicalised streams.
+
 2002-07-19  Jeffrey Stedfast  <fejj@ximian.com>
 
-	* configure.in: Bumped version to 1.0.3
+	* configure.in: Bumped version to 1.0.4
 
 	* README: Updated.
 
