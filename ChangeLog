@@ -1,3 +1,8 @@
+2000-12-10  Charles Kerr <charles@superpimp.org>
+
+	* gmime-part.c (g_mime_part_get_child_by_content_id): new
+	utility function.
+
 2000-12-09  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_boundary): Generate a random

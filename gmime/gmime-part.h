@@ -84,6 +84,7 @@ const gchar *g_mime_part_get_content_description (GMimePart *mime_part);
 
 void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
 const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
+GMimePart * g_mime_part_get_child_from_content_id (GMimePart * mime_part, const gchar * content_id);
 
 void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);

@@ -912,3 +912,41 @@ g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data
 		}
 	}
 }
+
+
+/**
+ * g_mime_part_get_child_from_content_id: 
+ * @part: the MIME part
+ * @content_id: the content id of the part to look for
+ *
+ * Returns the GMimePart whose content-id matches the search string,
+ * or NULL if a match cannot be found.
+ **/
+GMimePart*
+g_mime_part_get_child_from_content_id (GMimePart * part,
+                                       const gchar * content_id)
+{
+	GMimePart * retval = NULL;
+
+	g_return_val_if_fail (part!=NULL, NULL);
+	g_return_val_if_fail (content_id!=NULL, NULL);
+
+	if (part->content_id!=NULL && !strcmp (part->content_id, content_id))
+		retval = part;
+
+	else if (part->children)
+	{
+		GList * l;
+
+		for (l=part->children; l!=NULL && retval==NULL; l=l->next)
+		{
+			GMimePart * child = (GMimePart*) l->data;
+			gchar * cid = child->content_id;
+
+			if (cid!=NULL && !strcmp(cid, content_id))
+				retval = child;
+		}
+	}
+
+	return retval;
+}
