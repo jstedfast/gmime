@@ -303,8 +303,6 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 			if (inptr < inend && *inptr == '.' && is_domain (inptr[1]))
 				inptr++;
 		}
-		
-		fprintf (stderr, "domain is '%.*s'\n", inptr - pos, pos);
 	} else {
 		return FALSE;
 	}
