@@ -203,10 +203,16 @@ int main (int argc, char *argv[])
 	g_free (enc);
 	g_free (dec);
 	
-	enc = g_mime_utils_quote_string ("this is an \"embedded\" quoted string.", TRUE);
+	enc = g_mime_utils_quote_string ("this is an \"embedded\" quoted string.");
 	fprintf (stderr, "quoted: %s\n", enc);
 	g_mime_utils_unquote_string (enc);
-	fprintf (stderr, "decoded: %s\n", enc);
+	fprintf (stderr, "unquoted: %s\n", enc);
+	g_free (enc);
+	
+	enc = g_mime_utils_quote_string ("Jeffrey \"The Fejjinator\" Stedfast");
+	fprintf (stderr, "quoted: %s\n", enc);
+	g_mime_utils_unquote_string (enc);
+	fprintf (stderr, "unquoted: %s\n", enc);
 	g_free (enc);
 	
 	enc = g_malloc (strlen (string) * 3);

@@ -209,10 +209,7 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
 	if (rfc2047_encode && g_mime_utils_text_is_8bit (raw)) {
 		name = g_mime_utils_8bit_header_encode_phrase (raw);
 	} else {
-		if (strchr (raw, ',') || strchr (raw, '.') || strchr (raw, '\\'))
-			name = g_mime_utils_quote_string (raw, TRUE);
-		else
-			name = g_strdup (raw);
+		name = g_mime_utils_quote_string (raw);
 	}
 	
 	return name;

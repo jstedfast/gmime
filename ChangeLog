@@ -1,5 +1,23 @@
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* test-mime.c: Updated.
+
+	* gmime-utils.c (g_mime_utils_quote_string): Do the detection on
+	whether or not to wrap the string in quotes here rather than
+	requiring a boolean argument specifying whether the string should
+	be quoted. RFC2045 provides us with a list of characters that are
+	not safe.
+
+	* gmime-param.c (g_mime_param_to_string): Updated to reflect
+	changes to g_mime_utils_quote_string. This function is the main
+	reason for the change - parameter values should really only be
+	quoted if they have to be else they should remain unquoted.
+
+	* internet-address.c (encoded_name): Updated to reflect changes to
+	g_mime_utils_quote_string.
+
+2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* TODO: Updated.
 
 	* gmime-utils.c: Updated gmime_special_table.

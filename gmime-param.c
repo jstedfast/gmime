@@ -123,7 +123,8 @@ g_mime_param_to_string (GMimeParam *param)
 	
 	g_return_val_if_fail (param != NULL, NULL);
 	
-	val = g_mime_utils_quote_string (param->value, TRUE);
+	val = g_mime_utils_quote_string (param->value);
+	
 	ret = g_strdup_printf ("%s=%s", param->name, val);
 	g_free (val);
 	

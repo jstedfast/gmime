@@ -555,30 +555,36 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
 /**
  * g_mime_utils_quote_string: Quote a string.
  * @string: input string
- * @do_quotes: wrap string in quotes.
  * 
- * Returns an allocated string containing the escaped and (optionally)
- * quoted input string.
+ * Returns an allocated string containing the escaped and quoted (if
+ * needed to be) input string. The decision to quote the string is
+ * based on whether or not the input string contains any 'tspecials'
+ * as defined by rfc2045.
  **/
 gchar *
-g_mime_utils_quote_string (const gchar *string, gboolean do_quotes)
+g_mime_utils_quote_string (const gchar *string)
 {
 	GString *out;
-	gchar *qstring, *ptr;
+	gchar *qstring;
+	guchar *c;
+	gboolean quote = FALSE;
 	
 	out = g_string_new ("");
 	
-	if (do_quotes)
-		g_string_append_c (out, '"');
-	
-	for (ptr = (gchar *) string; *ptr; ptr++) {
-		if (*ptr == '"' || *ptr == '\\')
+	for (c = (guchar *) string; *c; c++) {
+		if (is_tspecial (*c))
+			quote = TRUE;
+		
+		if (*c == '"' || *c == '\\')
 			g_string_append_c (out, '\\');
-		g_string_append_c (out, *ptr);
+		
+		g_string_append_c (out, *c);
 	}
 	
-	if (do_quotes)
+	if (quote) {
+		g_string_prepend_c (out, '"');
 		g_string_append_c (out, '"');
+	}
 	
 	qstring = out->str;
 	g_string_free (out, FALSE);
