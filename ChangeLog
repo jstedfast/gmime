@@ -1,3 +1,12 @@
+2003-12-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_start): Modified the code
+	that closes the child's fds to use fcntl and also to start at fd =
+	3 so as to get rid of the need to check for stdin/out/err.
+
+	* gmime/gmime-filter-from.c (filter_filter): Fixed to malloc the
+	correct buffer length.
+
 2003-10-28  Pawel Salek  <pawsa@theochem.kth.se>
 
 	* gmime.h.in: Use macros rather than the global variables to
