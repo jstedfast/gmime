@@ -34,6 +34,12 @@
 #include "gmime-iconv.h"
 #include "cache.h"
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 
 #define ICONV_CACHE_SIZE   (16)
 
@@ -51,7 +57,10 @@ static GHashTable *iconv_open_hash = NULL;
 #ifdef GMIME_ICONV_DEBUG
 static int cache_misses = 0;
 static int shutdown = 0;
-#endif
+#define d(x) x
+#else
+#define d(x)
+#endif /* GMIME_ICONV_DEBUG */
 
 #ifdef G_THREADS_ENABLED
 static GStaticMutex iconv_cache_lock = G_STATIC_MUTEX_INIT;
@@ -249,11 +258,13 @@ g_mime_iconv_open (const char *to, const char *from)
 	
 	ICONV_CACHE_UNLOCK ();
 	
+#if w(!)0
 	if (errno == EINVAL)
 		g_warning ("Conversion from '%s' to '%s' is not supported", from, to);
 	else
 		g_warning ("Could not open converter from '%s' to '%s': %s",
-			   from, to, g_strerror (errno));
+			   from, to, strerror (errno));
+#endif
 	
 	return cd;
 }
@@ -300,7 +311,7 @@ g_mime_iconv_close (iconv_t cd)
 	} else {
 		ICONV_CACHE_UNLOCK ();
 		
-		g_warning ("This iconv context wasn't opened using g_mime_iconv_open()");
+		d(g_warning ("This iconv context wasn't opened using g_mime_iconv_open()"));
 		
 		return iconv_close (cd);
 	}

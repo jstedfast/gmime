@@ -42,6 +42,8 @@
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-md5.h"
 
+#define d(x)
+
 /* GObject class methods */
 static void g_mime_part_class_init (GMimePartClass *klass);
 static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
@@ -1227,7 +1229,7 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (!mime_part->content || !mime_part->content->stream) {
-		g_warning ("no content set on this mime part");
+		d(g_warning ("no content set on this mime part"));
 		return NULL;
 	}
 	

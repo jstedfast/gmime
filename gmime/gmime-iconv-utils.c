@@ -33,6 +33,12 @@
 #include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #ifdef G_THREADS_ENABLED
 static GStaticMutex lock = G_STATIC_MUTEX_INIT;
 #define LOCK()   g_static_mutex_lock (&lock)
@@ -148,7 +154,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	
  fail:
 	
-	g_warning ("g_mime_iconv_strndup: %s", g_strerror (errno));
+	w(g_warning ("g_mime_iconv_strndup: %s", strerror (errno)));
 	
 	g_free (out);
 	
