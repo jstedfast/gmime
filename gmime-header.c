@@ -20,8 +20,9 @@
  *
  */
 
-
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include "gmime-header.h"
 #include "gmime-utils.h"
@@ -111,10 +112,13 @@ g_mime_header_destroy (GMimeHeader *header)
  * @name: header name
  * @value: header value (or %NULL to remove header)
  *
- * Set the value of the specified header
+ * Set the value of the specified header. If @value is %NULL and the
+ * header, @name, had not been previously set, a space will be set
+ * aside for it (useful for setting the order of headers before values
+ * can be obtained for them) otherwise the header will be removed.
  **/
 void
-g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
+g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
 {
 	struct raw_header *h, *n;
 	
@@ -124,7 +128,7 @@ g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
 	if ((h = g_hash_table_lookup (header->hash, name))) {
 		if (value) {
 			g_free (h->value);
-			h->value = g_strdup (value);
+			h->value = g_mime_utils_8bit_header_encode (value);
 		} else {
 			/* remove the header */
 			g_hash_table_remove (header->hash, name);
@@ -167,8 +171,8 @@ g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
  *
  * Returns the value of the header requested
  **/
-const char *
-g_mime_header_get (GMimeHeader *header, const char *name)
+const gchar *
+g_mime_header_get (GMimeHeader *header, const gchar *name)
 {
 	struct raw_header *h;
 	
@@ -179,7 +183,6 @@ g_mime_header_get (GMimeHeader *header, const char *name)
 	
 	return h ? h->value : NULL;
 }
-
 
 
 /**
@@ -209,4 +212,27 @@ g_mime_header_write_to_string (GMimeHeader *header, GString *string)
 		
 		h = h->next;
 	}
+}
+
+
+/**
+ * g_mime_header_to_string:
+ * @header: header object
+ *
+ * Returns a string containing the header block
+ **/
+gchar *
+g_mime_header_to_string (GMimeHeader *header)
+{
+	GString *string;
+	gchar *str;
+	
+	g_return_val_if_fail (header != NULL, NULL);
+	
+	string = g_string_new ("");
+	g_mime_header_write_to_string (header, string);
+	str = string->str;
+	g_string_free (string, FALSE);
+	
+	return str;
 }

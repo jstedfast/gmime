@@ -93,6 +93,7 @@ const gchar *g_mime_message_get_header (GMimeMessage *message, const gchar *fiel
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part);
 
 /* utility functions */
+void g_mime_message_write_to_string (GMimeMessage *message, GString *string);
 gchar *g_mime_message_to_string (GMimeMessage *message);
 
 gchar *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="25 May 2001">
+<refentry id="gmime-gmime-part" revision="26 May 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -86,6 +86,9 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content
 void        <link linkend="g-mime-part-add-subpart">g_mime_part_add_subpart</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimePart">GMimePart</link> *subpart);
 #define     <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (mime_part, child)
+void        <link linkend="g-mime-part-write-to-string">g_mime_part_write_to_string</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="gboolean">gboolean</link> toplevel,
+                                             <link linkend="GString">GString</link> *string);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="gboolean">gboolean</link> toplevel);
 void        <link linkend="g-mime-part-foreach">g_mime_part_foreach</link>             (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -837,6 +840,32 @@ multipart.</para>
 <row><entry align="right"><parameter>child</parameter>&nbsp;:</entry>
 <entry>
 
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-write-to-string">g_mime_part_write_to_string ()</title>
+<programlisting>void        g_mime_part_write_to_string     (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="gboolean">gboolean</link> toplevel,
+                                             <link linkend="GString">GString</link> *string);</programlisting>
+<para>
+Writes the contents of the MIME Part to <parameter>string</parameter>. If toplevel is set
+to TRUE, then the MIME Part header will contain needed MIME headers
+for rfc822 messages.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> MIME Part
+</entry></row>
+<row><entry align="right"><parameter>toplevel</parameter>&nbsp;:</entry>
+<entry> mime part is the root mime part
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> output string
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

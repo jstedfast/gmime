@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-header" revision="25 May 2001">
+<refentry id="gmime-gmime-header" revision="26 May 2001">
 <refmeta>
 <refentrytitle>gmime-header</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -17,12 +17,13 @@
 <link linkend="GMimeHeader">GMimeHeader</link>* <link linkend="g-mime-header-new">g_mime_header_new</link>              (void);
 void        <link linkend="g-mime-header-destroy">g_mime_header_destroy</link>           (<link linkend="GMimeHeader">GMimeHeader</link> *header);
 void        <link linkend="g-mime-header-set">g_mime_header_set</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const char *name,
-                                             const char *value);
-const char* <link linkend="g-mime-header-get">g_mime_header_get</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const char *name);
+                                             const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *value);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-header-get">g_mime_header_get</link>              (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const <link linkend="gchar">gchar</link> *name);
 void        <link linkend="g-mime-header-write-to-string">g_mime_header_write_to_string</link>   (<link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              <link linkend="GString">GString</link> *string);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-header-to-string">g_mime_header_to_string</link>         (<link linkend="GMimeHeader">GMimeHeader</link> *header);
 </synopsis>
 </refsynopsisdiv>
 
@@ -73,8 +74,8 @@ Destroy the header object</para>
 <refsect2>
 <title><anchor id="g-mime-header-set">g_mime_header_set ()</title>
 <programlisting>void        g_mime_header_set               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const char *name,
-                                             const char *value);</programlisting>
+                                             const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
 <para>
 Set the value of the specified header</para>
 <para>
@@ -96,8 +97,8 @@ Set the value of the specified header</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-get">g_mime_header_get ()</title>
-<programlisting>const char* g_mime_header_get               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const char *name);</programlisting>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_header_get              (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
 <para>
 </para>
 <para>
@@ -134,6 +135,24 @@ Write the headers to a string</para>
 </entry></row>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
 <entry> string
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-to-string">g_mime_header_to_string ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_header_to_string         (<link linkend="GMimeHeader">GMimeHeader</link> *header);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the header block
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

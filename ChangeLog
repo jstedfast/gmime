@@ -1,3 +1,26 @@
+2001-05-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Updated version to 0.6.0.
+
+	* README: Updated version to 0.6.0.
+
+	* doc/*: Updated again.
+
+	* gmime-header.c (g_mime_header_to_string): New function - mostly
+	for the sake of keeping with the API of the rest of GMime.
+	(g_mime_header_set): Make sure to always encode the header value
+	before we set it.
+
+	* gmime-part.c (g_mime_part_write_to_string): New function to
+	write the mime part to a GString.
+	(g_mime_part_to_string): Use g_mime_part_write_to_string.
+
+	* gmime-message.c (g_mime_message_get_headers): Use the new
+	g_mime_header_to_string function.
+	(g_mime_message_write_to_string): New function to write the
+	message to a GString.
+	(g_mime_message_to_string): Use write_to_string.
+
 2001-05-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.

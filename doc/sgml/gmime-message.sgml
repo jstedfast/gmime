@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="25 May 2001">
+<refentry id="gmime-gmime-message" revision="26 May 2001">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -58,6 +58,8 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-head
                                              const <link linkend="gchar">gchar</link> *field);
 void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime_part</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePart">GMimePart</link> *mime_part);
+void        <link linkend="g-mime-message-write-to-string">g_mime_message_write_to_string</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             <link linkend="GString">GString</link> *string);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-body">g_mime_message_get_body</link>         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="gboolean">gboolean</link> want_plain,
@@ -543,6 +545,26 @@ Set the root-level MIME part of the message.</para>
 </entry></row>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> The root-level MIME Part
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-write-to-string">g_mime_message_write_to_string ()</title>
+<programlisting>void        g_mime_message_write_to_string  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             <link linkend="GString">GString</link> *string);</programlisting>
+<para>
+Write the contents of the MIME Message to <parameter>string</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
+<entry> MIME Message
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> output string
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

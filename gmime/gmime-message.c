@@ -27,7 +27,6 @@
 #include "gmime-message.h"
 #include "gmime-utils.h"
 #include "internet-address.h"
-
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
@@ -45,6 +44,7 @@ static char *rfc822_headers[] = {
 	"Cc",
 	NULL
 };
+
 
 /**
  * g_mime_message_new: Create a new MIME Message object
@@ -541,6 +541,29 @@ sync_headers (GMimeMessage *message)
 
 
 /**
+ * g_mime_message_write_to_string: Write the MIME Message to a string
+ * @message: MIME Message
+ * @string: output string
+ *
+ * Write the contents of the MIME Message to @string.
+ **/
+void
+g_mime_message_write_to_string (GMimeMessage *message, GString *string)
+{
+	g_return_if_fail (message != NULL);
+	g_return_if_fail (string != NULL);
+	
+	sync_headers (message);
+	g_mime_header_write_to_string (message->header->headers, string);
+	
+	if (message->mime_part)
+		g_mime_part_write_to_string (message->mime_part, TRUE, string);
+	else
+		g_string_append (string, "\n");
+}
+
+
+/**
  * g_mime_message_to_string: Write the MIME Message to a string
  * @message: MIME Message
  *
@@ -550,21 +573,12 @@ gchar *
 g_mime_message_to_string (GMimeMessage *message)
 {
 	GString *string;
-	gchar *str, *body;
+	gchar *str;
 	
 	g_return_val_if_fail (message != NULL, NULL);
 	
 	string = g_string_new ("");
-	sync_headers (message);
-	g_mime_header_write_to_string (message->header->headers, string);
-	
-	body = g_mime_part_to_string (message->mime_part, TRUE);
-	if (body)
-		g_string_append (string, body);
-	else
-		g_string_append (string, "\n");
-	g_free (body);
-	
+	g_mime_message_write_to_string (message, string);
 	str = string->str;
 	g_string_free (string, FALSE);
 	
@@ -654,6 +668,7 @@ multipart_get_body (GMimePart *multipart, gboolean want_plain, gboolean *is_html
 	return body;
 }
 
+
 /**
  * g_mime_message_get_body: Return the body of the message
  * @message: MIME Message
@@ -703,18 +718,10 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 gchar *
 g_mime_message_get_headers (GMimeMessage *message)
 {
-	GString *string;
-	gchar *str;
-	
 	g_return_val_if_fail (message != NULL, NULL);
 	
 	sync_headers (message);
-	string = g_string_new ("");
-	g_mime_header_write_to_string (message->header->headers, string);
-	str = string->str;
-	g_string_free (string, FALSE);
-	
-	return str;
+	return g_mime_header_to_string (message->header->headers);
 }
 
 

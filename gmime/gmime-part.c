@@ -20,8 +20,10 @@
  *
  */
 
-
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -931,25 +933,25 @@ get_content (GMimePart *part)
 	return content;
 }
 
+
 /**
- * g_mime_part_to_string: Write the MIME Part to a string
+ * g_mime_part_write_to_string: Write the MIME Part to a string
  * @mime_part: MIME Part
  * @toplevel: mime part is the root mime part
+ * @string: output string
  *
- * Returns an allocated string containing the MIME Part. If toplevel
- * is set to TRUE, then the MIME Part header will contain needed MIME
- * headers for rfc822 messages.
+ * Writes the contents of the MIME Part to @string. If toplevel is set
+ * to TRUE, then the MIME Part header will contain needed MIME headers
+ * for rfc822 messages.
  **/
-gchar *
-g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
+void
+g_mime_part_write_to_string (GMimePart *mime_part, gboolean toplevel, GString *string)
 {
-	gchar *str;
-	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (string != NULL);
 	
 	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
 		const gchar *boundary;
-		GString *contents;
 		GList *child;
 		gchar *content_type;
 		
@@ -962,43 +964,27 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		
 		content_type = get_content_type (mime_part->mime_type);
 		
-		contents = g_string_new ("");
+		if (toplevel) {
+			g_string_sprintfa (string, "MIME-Version: 1.0\n"
+					   "%s\n"  /* content-type */
+					   "This is a multi-part message in MIME format.\n\n",
+					   content_type);
+		} else {
+			g_string_sprintfa (string, "%s\n", content_type);
+		}
+		
+		g_free (content_type);
 		
 		child = mime_part->children;
 		while (child) {
-			gchar *part, *mime_string;
-			
-			mime_string = g_mime_part_to_string (child->data, FALSE);
-			
-			part = g_strdup_printf ("--%s\n%s\n", boundary, mime_string);
-			
-			g_string_append (contents, part);
-			
-			g_free (mime_string);
-			g_free (part);
+			g_string_sprintfa (string, "--%s\n", boundary);
+			g_mime_part_write_to_string (child->data, FALSE, string);
+			g_string_append_c (string, '\n');
 			
 			child = child->next;
 		}
 		
-		if (toplevel) {
-			/* add message header stuff first */
-			str = g_strdup_printf ("MIME-Version: 1.0\n"
-					       "%s\n"  /* content-type */
-					       "This is a multi-part message in MIME format.\n\n"
-					       "%s\n--%s--\n",
-					       content_type,
-					       contents->str,
-					       boundary);
-		} else {
-			str = g_strdup_printf ("%s\n"  /* content-type */
-					       "%s\n--%s--\n",
-					       content_type,
-					       contents->str,
-					       boundary);
-		}
-		
-		g_free (content_type);
-		g_string_free (contents, TRUE);
+		g_string_sprintfa (string, "\n--%s--\n", boundary);
 	} else {
 		gchar *content_type;
 		gchar *disposition;
@@ -1008,9 +994,6 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		gchar *content_location;
 		gchar *content;
 		gchar *text;
-		GString *string;
-		
-		string = g_string_new ("");
 		
 		if (toplevel)
 			g_string_append (string, "MIME-Version: 1.0\n");
@@ -1080,10 +1063,31 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		g_string_append_c (string, '\n');
 		
 		g_free (content);
-		
-		str = string->str;
-		g_string_free (string, FALSE);
 	}
+}
+
+
+/**
+ * g_mime_part_to_string: Write the MIME Part to a string
+ * @mime_part: MIME Part
+ * @toplevel: mime part is the root mime part
+ *
+ * Returns an allocated string containing the MIME Part. If toplevel
+ * is set to TRUE, then the MIME Part header will contain needed MIME
+ * headers for rfc822 messages.
+ **/
+gchar *
+g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
+{
+	GString *string;
+	gchar *str;
+	
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
+	string = g_string_new ("");
+	g_mime_part_write_to_string (mime_part, toplevel, string);
+	str = string->str;
+	g_string_free (string, FALSE);
 	
 	return str;
 }

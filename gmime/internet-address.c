@@ -27,7 +27,6 @@
 #include "internet-address.h"
 #include "gmime-table-private.h"
 #include "gmime-utils.h"
-
 #include <string.h>
 #include <ctype.h>
 

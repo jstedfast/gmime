@@ -28,7 +28,6 @@
 #include "gmime-parser.h"
 #include "gmime-utils.h"
 #include "gmime-header.h"
-
 #include <string.h>
 #include <ctype.h>
 
@@ -501,10 +500,10 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 	g_return_val_if_fail (inlen != 0, NULL);
 	
 	/* Headers */
-	hdr_end = g_strstrbound (in, "\n\n", inend);
+	/* if the beginning of the input is a '\n' then there are no content headers */
+	hdr_end = *in == '\n' ? in : g_strstrbound (in, "\n\n", inend);
 	if (!hdr_end)
 		return NULL;
-	
 	
 	mime_part = g_mime_part_new ();
 	is_multipart = FALSE;

@@ -36,11 +36,13 @@ GMimeHeader *g_mime_header_new (void);
 
 void g_mime_header_destroy (GMimeHeader *header);
 
-void g_mime_header_set (GMimeHeader *header, const char *name, const char *value);
+void g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value);
 
-const char *g_mime_header_get (GMimeHeader *header, const char *name);
+const gchar *g_mime_header_get (GMimeHeader *header, const gchar *name);
 
 void g_mime_header_write_to_string (GMimeHeader *header, GString *string);
+
+gchar *g_mime_header_to_string (GMimeHeader *header);
 
 #ifdef __cplusplus
 }
