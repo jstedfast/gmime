@@ -126,9 +126,10 @@ const char *g_mime_message_get_header (GMimeMessage *message, const char *header
 
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
 
-/* utility functions */
+#ifndef GMIME_DISABLE_DEPRECATED
 ssize_t g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream);
 char *g_mime_message_to_string (GMimeMessage *message);
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 char *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);
 char *g_mime_message_get_headers (GMimeMessage *message);

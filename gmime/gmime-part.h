@@ -107,20 +107,21 @@ const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part,
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (const GMimePart *mime_part);
 
+#ifndef GMIME_DISABLE_DEPRECATED
 void g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content);
 void g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len);
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 					  size_t len, GMimePartEncodingType encoding);
-
-/*void g_mime_part_set_content_stream (GMimePart *mime_part, GMimeStream *content);*/
+const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 void g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
 GMimeDataWrapper *g_mime_part_get_content_object (const GMimePart *mime_part);
-const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
 
-/* utility functions */
+#ifndef GMIME_DISABLE_DEPRECATED
 ssize_t g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
 char *g_mime_part_to_string (GMimePart *mime_part);
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 #ifdef __cplusplus
 }
