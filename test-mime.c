@@ -160,6 +160,13 @@ test_encodings (void)
 
 	fprintf (stderr, "hello\n");
 
+	enc = g_strdup ("fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
