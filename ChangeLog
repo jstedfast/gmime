@@ -1,3 +1,11 @@
+2002-06-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-gpg-context.c (gpg_ctx_op_step): If we get an EOF from the
+	status-fd, then set gpg->complete to TRUE.
+	(gpg_ctx_get_argv): Use --charset=UTF-8 and --keyserver-options to
+	disable auto-key-retrieve rather than the deprecated
+	--no-auto-key-retrieve flag.
+
 2002-06-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-gpg-context.c (gpg_ctx_op_step): Loop on our reads while

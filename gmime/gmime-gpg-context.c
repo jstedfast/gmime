@@ -483,6 +483,8 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		g_ptr_array_add (argv, "--yes");
 	}
 	
+	g_ptr_array_add (argv, "--charset=UTF-8");
+	
 	*sfd = buf = g_strdup_printf ("--status-fd=%d", status_fd);
 	g_ptr_array_add (argv, buf);
 	
@@ -508,8 +510,11 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		g_ptr_array_add (argv, "-");
 		break;
 	case GPG_CTX_MODE_VERIFY:
-		if (!g_mime_session_is_online (gpg->session))
-			g_ptr_array_add (argv, "--no-auto-key-retrieve");
+		if (!g_mime_session_is_online (gpg->session)) {
+			/*g_ptr_array_add (argv, "--no-auto-key-retrieve");*/
+			g_ptr_array_add (argv, "--keyserver-options");
+			g_ptr_array_add (argv, "no-auto-key-retrieve");
+		}
 		g_ptr_array_add (argv, "--verify");
 		if (gpg->sigfile)
 			g_ptr_array_add (argv, gpg->sigfile);
@@ -951,6 +956,8 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 			
 			if (gpg_ctx_parse_status (gpg, ex) == -1)
 				return -1;
+		} else {
+			gpg->complete = TRUE;
 		}
 	}
 	

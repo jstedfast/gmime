@@ -216,7 +216,7 @@ int main (int argc, char **argv)
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
 	if (!test_sign (ctx, "This is a test of pgp sign using md5\r\n",
-			GMIME_CIPHER_HASH_DEFAULT))
+			GMIME_CIPHER_HASH_MD5))
 		return 1;
 	
 	if (!test_sign (ctx, "This is a test of pgp sign using sha1\r\n",
