@@ -124,15 +124,13 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-PART-TYPE-CAPS">GMIME_PART_TYPE</title>
-<programlisting>#define GMIME_PART_TYPE       g_str_hash ("GMimePart")
-</programlisting>
+<programlisting>#define     GMIME_PART_TYPE</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-PART-CAPS">GMIME_IS_PART()</title>
-<programlisting>#define GMIME_IS_PART(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_PART_TYPE)
-</programlisting>
+<programlisting>#define     GMIME_IS_PART(object)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -148,8 +146,7 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-PART-CAPS">GMIME_PART()</title>
-<programlisting>#define GMIME_PART(object)    ((GMimePart *) object)
-</programlisting>
+<programlisting>#define     GMIME_PART(object)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

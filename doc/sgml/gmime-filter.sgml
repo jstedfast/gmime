@@ -93,8 +93,7 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-CAPS">GMIME_FILTER()</title>
-<programlisting>#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
-</programlisting>
+<programlisting>#define     GMIME_FILTER(filter)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

@@ -68,15 +68,13 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-CRC-INIT-CAPS">GMIME_YENCODE_CRC_INIT</title>
-<programlisting>#define GMIME_YENCODE_CRC_INIT       (~0)
-</programlisting>
+<programlisting>#define     GMIME_YENCODE_CRC_INIT</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-CRC-FINAL-CAPS">GMIME_YENCODE_CRC_FINAL()</title>
-<programlisting>#define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
-</programlisting>
+<programlisting>#define     GMIME_YENCODE_CRC_FINAL(crc)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -243,57 +241,49 @@ all the parts.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-STATE-INIT-CAPS">GMIME_YENCODE_STATE_INIT</title>
-<programlisting>#define GMIME_YENCODE_STATE_INIT     (0)
-</programlisting>
+<programlisting>#define     GMIME_YENCODE_STATE_INIT</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-INIT-CAPS">GMIME_YDECODE_STATE_INIT</title>
-<programlisting>#define GMIME_YDECODE_STATE_INIT     (0)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_INIT</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-EOLN-CAPS">GMIME_YDECODE_STATE_EOLN</title>
-<programlisting>#define GMIME_YDECODE_STATE_EOLN     (1 &lt;&lt; 8)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_EOLN</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-ESCAPE-CAPS">GMIME_YDECODE_STATE_ESCAPE</title>
-<programlisting>#define GMIME_YDECODE_STATE_ESCAPE   (1 &lt;&lt; 9)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_ESCAPE</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-BEGIN-CAPS">GMIME_YDECODE_STATE_BEGIN</title>
-<programlisting>#define GMIME_YDECODE_STATE_BEGIN    (1 &lt;&lt; 12)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_BEGIN</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-PART-CAPS">GMIME_YDECODE_STATE_PART</title>
-<programlisting>#define GMIME_YDECODE_STATE_PART     (1 &lt;&lt; 13)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_PART</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-DECODE-CAPS">GMIME_YDECODE_STATE_DECODE</title>
-<programlisting>#define GMIME_YDECODE_STATE_DECODE   (1 &lt;&lt; 14)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_DECODE</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-END-CAPS">GMIME_YDECODE_STATE_END</title>
-<programlisting>#define GMIME_YDECODE_STATE_END      (1 &lt;&lt; 15)
-</programlisting>
+<programlisting>#define     GMIME_YDECODE_STATE_END</programlisting>
 <para>
 
 </para></refsect2>

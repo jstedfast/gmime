@@ -39,8 +39,7 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-OBJECT-CAPS">GMIME_OBJECT()</title>
-<programlisting>#define GMIME_OBJECT(object) ((GMimeObject *) object)
-</programlisting>
+<programlisting>#define     GMIME_OBJECT(object)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

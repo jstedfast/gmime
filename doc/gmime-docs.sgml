@@ -28,6 +28,7 @@
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
+<!entity gmime-filter-yenc SYSTEM "sgml/gmime-filter-yenc.sgml">
 ]>
 
 <book>
@@ -226,6 +227,7 @@
     &gmime-filter-crlf;
     &gmime-filter-from;
     &gmime-filter-html;
+    &gmime-filter-yenc;
     &gmime-param;
     &gmime-header;
     &gmime-content-type;

@@ -125,8 +125,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-CAPS">GMIME_STREAM()</title>
-<programlisting>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)
-</programlisting>
+<programlisting>#define     GMIME_STREAM(stream)</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
