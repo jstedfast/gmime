@@ -228,13 +228,13 @@ internet_address_to_string (InternetAddress *ia, gboolean rfc2047_encode)
 	
 	g_return_val_if_fail (ia != NULL, NULL);
 	
-	name = encoded_name (ia->name, rfc2047_encode);
-	if (ia->name)
+	if (ia->name) {
+		name = encoded_name (ia->name, rfc2047_encode);
 		string = g_strdup_printf ("%s <%s>", name, ia->address);
-	else
+		g_free (name);
+	} else {
 		string = g_strdup (ia->address);
-	
-	g_free (name);
+	}
 	
 	return string;
 }

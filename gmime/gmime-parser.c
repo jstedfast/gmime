@@ -124,6 +124,7 @@ get_mime_part (const gchar *in, guint inlen)
 					break;
 			
 			type = g_strndup (type, (gint) (eptr - type));
+			g_strstrip (type);
 			
 			mime_type = g_mime_content_type_new_from_string (type);
 			g_free (type);
