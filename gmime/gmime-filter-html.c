@@ -183,7 +183,7 @@ citation_depth (const char *in)
 	return depth;
 }
 
-static __inline__ gunichar
+static inline gunichar
 html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 {
 	register const unsigned char *inptr = *in;
