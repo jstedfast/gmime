@@ -900,7 +900,7 @@ gchar *
 g_mime_utils_8bit_header_decode (const guchar *in)
 {
 	GString *out, *whtspc, *word;
-	guchar *inptr;
+	const guchar *inptr;
 	guchar *decoded;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
@@ -908,7 +908,7 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 	out = g_string_new ("");
 	whtspc = g_string_new ("");
 	word = g_string_new ("");
-	inptr = (guchar *) in;
+	inptr = in;
 	
 	while (inptr && *inptr) {
 		guchar c = *inptr++;

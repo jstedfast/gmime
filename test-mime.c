@@ -273,6 +273,7 @@ test_addresses (void)
 		fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
 		fprintf (stderr, "EMail: %s\n", ia->address ? ia->address : "");
 		str = internet_address_to_string (ia, TRUE);
+		internet_address_destroy (ia);
 		fprintf (stderr, "Rewritten: %s\n\n", str ? str : "(null)");
 		g_free (str);
 	}
