@@ -21,11 +21,15 @@
  */
 
 
-#include "gmime-part.h"
-#include "gmime-utils.h"
 #include <config.h>
+#include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 #include <string.h>
 #include <ctype.h>
+#include "gmime-part.h"
+#include "gmime-utils.h"
 
 
 /**
@@ -468,19 +472,55 @@ g_mime_part_get_filename (GMimePart *mime_part)
 }
 
 
+static void
+read_random_pool (gchar *buffer, size_t bytes)
+{
+	int fd;
+	
+	fd = open ("/dev/urandom", O_RDONLY);
+	if (fd == -1) {
+		fd = open ("/dev/random", O_RDONLY);
+		if (fd == -1)
+			return;
+	}
+	
+	read (fd, buffer, bytes);
+	close (fd);
+}
+
+
 /**
  * g_mime_part_set_boundary: Set the multi-part boundary (not used on non-multiparts)
  * @mime_part: Mime part
- * @boundary: the boundary for the multi-part
+ * @boundary: the boundary for the multi-part or NULL to generate a random one.
  *
  * Sets the boundary on the mime part.
  **/
 void
 g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary)
 {
+	gchar bbuf[27];
+	
 	g_return_if_fail (mime_part != NULL);
 	
 	g_free (mime_part->boundary);
+	
+	if (!boundary) {
+		/* Generate a fairly random boundary string. */
+		char digest[16], *p;
+		int state, save;
+		
+		read_random_pool (digest, 16);
+		
+		strcpy (bbuf, "=-");
+		p = bbuf + 2;
+		state = save = 0;
+		p += g_mime_utils_base64_encode_step (digest, 16, p, &state, &save);
+		*p = '\0';
+		
+		boundary = bbuf;
+	}
+	
 	mime_part->boundary = g_strdup (boundary);
 }
 
@@ -735,6 +775,10 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		GString *contents;
 		GList *child;
 		gchar *content_type;
+		
+		/* make sure there's a boundary, else force a random boundary */
+		if (!mime_part->boundary)
+			g_mime_part_set_boundary (mime_part, NULL);
 		
 		content_type = g_mime_content_type_to_string (mime_part->mime_type);
 		

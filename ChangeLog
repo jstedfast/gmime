@@ -1,3 +1,8 @@
+2000-12-09  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_set_boundary): Generate a random
+	boundary if passed boundary is NULL.
+
 2000-12-07  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-message.c (multipart_get_body): Traverses a MIME Part and

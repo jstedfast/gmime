@@ -50,7 +50,7 @@ test_multipart (void)
 	gboolean is_html;
 	
 	multi_part = g_mime_part_new_with_type ("multipart", "alternative");
-	g_mime_part_set_boundary (multi_part, "spruce1234567890ABCDEFGHIJK");
+	/*g_mime_part_set_boundary (multi_part, "spruce1234567890ABCDEFGHIJK");*/
 	
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
