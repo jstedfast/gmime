@@ -16,6 +16,7 @@ config.guess
 config.status
 config.log
 config.h
+config.h.in
 gmime.h
 gmime-config
 gmimeConf.sh
