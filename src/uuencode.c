@@ -36,6 +36,18 @@
  * real	0m3.563s
  * user	0m3.240s
  * sys 	0m0.200s
+ *
+ * And here are the results of base64 encoding the same file:
+ *
+ * uuencode - GNU sharutils 4.2.1
+ * real	0m8.920s
+ * user	0m8.750s
+ * sys	0m0.160s
+ *
+ * uuencode - GMime 1.90.4
+ * real	0m1.173s
+ * user	0m0.940s
+ * sys	0m0.180s
  */
 
 
