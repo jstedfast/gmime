@@ -53,6 +53,7 @@ dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
 
@@ -65,6 +66,9 @@ AC_CHECK_FUNCS(isblank)
 
 dnl Check for some time functions
 AC_CHECK_FUNCS(strftime localtime gmtime_r)
+
+dnl Check for some network functions
+AC_CHECK_FUNCS(gethostname gethostbyname)
 
 dnl Check for working mmap
 AC_FUNC_MMAP

@@ -32,7 +32,9 @@
 #include <stdlib.h>
 #include <sys/param.h> /* for MAXHOSTNAMELEN */
 #include <string.h>
+#ifdef HAVE_NETDB_H
 #include <netdb.h>
+#endif
 #include <ctype.h>
 #include <errno.h>
 
@@ -749,16 +751,28 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #define MUTEX_UNLOCK()
 #endif
 	static unsigned int count = 0;
+#if defined (HAVE_GETHOSTBYNAME)
 	char host[MAXHOSTNAMELEN + 1];
 	struct hostent *h = NULL;
+#else
+	char host[2];
+	void *h;
+#endif
 	char *msgid;
 	
 	if (!fqdn) {
+#ifdef HAVE_GETHOSTNAME
 		if (gethostname (host, sizeof (host)) == 0) {
+#ifdef HAVE_GETHOSTBYNAME
 			h = gethostbyname (host);
+#endif /* HAVE_GETHOSTBYNAME */
 		} else {
 			host[0] = '\0';
 		}
+#else
+		host[0] = '\0';
+		h = NULL;
+#endif /* HAVE_GETHOSTNAME */
 		
 		fqdn = h ? h->h_name : (*host ? host : "localhost.localdomain");
 	}

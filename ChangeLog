@@ -1,5 +1,11 @@
 2003-04-15  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Check for netdb.h, gethostname and gethostbyname.
+
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Guard
+	against systems without netdb.h, gethostname() and/or
+	gethostbyname(). Seems MingW does not have these things.
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_get_diagnostics): Flush the
 	diagnostics stream and append a nul-byte. This allows us to return
 	a const char * which will allow us to avoid strdup/free later.
