@@ -1,3 +1,9 @@
+2004-09-28  Peter Bloomfield  <PeterBloomfield@bellsouth.net>
+
+	* gmime/gmime-multipart-signed.c (sign_prepare): Must treat
+	multipart/signed and multipart/encrypetd parts as opaque
+	(e.g. don't even attempt to change their encodings).
+
 2004-09-13  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (write_addrspec): New folding callback to
