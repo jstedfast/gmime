@@ -70,3 +70,5 @@ enum {
 #define CHARS_DSPECIAL "[]\\\r \t"	   /* not in domains */
 #define CHARS_ESPECIAL "()<>@,;:\"/[]?.="  /* encoded word specials (rfc2047 5.1) */
 #define CHARS_PSPECIAL "!*+-/"             /* encoded phrase specials (rfc2047 5.3) */
+
+#define GMIME_FOLD_LEN 76

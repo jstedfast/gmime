@@ -1,4 +1,4 @@
-                             GMime, version 0.6.5
+                            GMime, version 0.7.0
                    by Jeffrey Stedfast <fejj@helixcode.com>
 
 
@@ -10,6 +10,9 @@ the Multipurpose Internet Mail Extension (MIME) as defined by the
 following RFCs:
 
  * 0822: Standard for the Format of Arpa Internet Text Messages
+ * 1521: MIME (Multipurpose Internet Mail Extensions) Part One:
+         Mechanisms for Specifying and Describing the Format of 
+         Internet Message Bodies
  * 2045: Multipurpose Internet Mail Extensions (MIME) Part One:
          Format of Internet Message Bodies
  * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two:
@@ -22,6 +25,10 @@ following RFCs:
          Conformance Criteria and Examples
  * 2183: Communicating Presentation Information in Internet Messages:
          The Content-Disposition Header Field
+ * 2184: MIME Parameter Value and Encoded Word Extensions: Character
+         Sets, Languages, and Continuations
+ * 2231: MIME Parameter Value and Encoded Word Extensions: Character
+         Sets, Languages, and Continuations (Obsoletes rfc2184)
 
 Other RFCs of interest:
 
@@ -32,6 +39,7 @@ Other RFCs of interest:
  * 2015: MIME Security with Pretty Good Privacy (PGP)
  * 2311: S/MIME Version 2 Message Specification
  * 2312: S/MIME Version 2 Certificate Handling
+ * 2387: The Multipart/Related Content-Type.
  * 2424: Content Duration MIME Header Definition
  * 2632: S/MIME Version 3 Certificate Handling
  * 2633: S/MIME Version 3 Message Specification
@@ -41,7 +49,7 @@ Other RFCs of interest:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000,2001 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

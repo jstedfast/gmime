@@ -41,7 +41,7 @@
  * Initializes pgp-utils (same as calling pgp_init with the same args)
  **/
 void
-pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data)
+pgp_mime_init (const char *path, PgpType type, PgpPasswdFunc callback, gpointer data)
 {
 	pgp_init (path, type, callback, data);
 }
@@ -58,7 +58,7 @@ pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part)
 {
 	GMimePart *multipart, *part;
 	const GMimeContentType *type;
-	const gchar *param;
+	const char *param;
 	GList *child;
 	int nparts;
 	
@@ -108,7 +108,7 @@ pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
 {
 	GMimePart *multipart, *part;
 	const GMimeContentType *type;
-	const gchar *param;
+	const char *param;
 	GList *child;
 	int nparts;
 	
@@ -149,7 +149,7 @@ pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
 static void
 make_pgp_safe (GString *string, gboolean encode_from)
 {
-	gchar *ptr;
+	char *ptr;
 	
 	ptr = string->str;
 	while ((ptr = strchr (ptr, '\n'))) {
@@ -188,7 +188,6 @@ pgp_mime_part_sign_restore_part (GMimePart *mime_part, GSList *encodings)
 		
 		g_mime_part_set_encoding (mime_part, encoding);
 	}
-
 }
 
 static void
@@ -217,7 +216,6 @@ pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
 		
 		*encodings = g_slist_append (*encodings, GINT_TO_POINTER (encoding));
 	}
-
 }
 
 
@@ -233,14 +231,14 @@ pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
  * #ex will be set and #part will remain untouched.
  **/
 void
-pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash, GMimeException *ex)
+pgp_mime_part_sign (GMimePart **mime_part, const char *userid, PgpHashType hash, GMimeException *ex)
 {
 	GMimePart *multipart, *part, *signed_part;
 	GMimeContentType *mime_type;
-	gchar *cleartext, *signature;
+	char *cleartext, *signature;
 	GSList *encodings = NULL;
 	GString *string;
-	gchar *hash_type;
+	char *hash_type;
 	
 	g_return_if_fail (*mime_part != NULL);
 	g_return_if_fail (userid != NULL);
@@ -322,7 +320,7 @@ pgp_mime_part_verify_signature (GMimePart *mime_part, GMimeException *ex)
 	GMimePart *content_part = NULL;
 	GMimePart *signed_part = NULL;
 	GMimePart *multipart, *part;
-	gchar *content, *signature;
+	char *content, *signature;
 	GString *string;
 	gboolean retval;
 	GList *child;
@@ -386,7 +384,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 {
 	GMimePart *part, *multipart, *version_part, *encrypted_part;
 	GMimeContentType *mime_type;
-	gchar *cleartext, *ciphertext;
+	char *cleartext, *ciphertext;
 	GString *string;
 	
 	g_return_if_fail (*mime_part != NULL);
@@ -437,10 +435,10 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 
 
 static void
-strip (gchar *string, gchar c)
+strip (char *string, char c)
 {
 	/* strip all occurances of c from the string */
-	gchar *src, *dst;
+	char *src, *dst;
 	
 	if (!string)
 		return;
@@ -464,7 +462,7 @@ pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 {
 	GMimePart *multipart, *encrypted_part, *part;
 	const GMimeContentType *mime_type;
-	gchar *cleartext, *ciphertext = NULL;
+	char *cleartext, *ciphertext = NULL;
 	gint outlen, cipherlen;
 	GList *child;
 	
@@ -482,7 +480,7 @@ pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 		encrypted_part = child->data;
 		mime_type = g_mime_part_get_content_type (encrypted_part);
 		if (g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
-			ciphertext = (gchar *) g_mime_part_get_content (encrypted_part, &cipherlen);
+			ciphertext = (char *) g_mime_part_get_content (encrypted_part, &cipherlen);
 			ciphertext = g_strndup (ciphertext, cipherlen);
 			if (pgp_detect (ciphertext))
 				break;

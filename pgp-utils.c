@@ -23,7 +23,7 @@
 
 
 #ifdef HAVE_CONFIG_H
-#	include <config.h>
+#include <config.h>
 #endif
 
 #include "pgp-utils.h"
@@ -49,16 +49,16 @@
 #define d(x)
 #define _(x) x
 
-static const gchar *pgp_path = NULL;
+static const char *pgp_path = NULL;
 static PgpType pgp_type = PGP_TYPE_NONE;
 static PgpPasswdFunc pgp_passwd_func = NULL;
 static gpointer pgp_data = NULL;
 
 
-static gchar *
-pgp_get_passphrase (const gchar *userid)
+static char *
+pgp_get_passphrase (const char *userid)
 {
-	gchar *passphrase, *prompt, *type;
+	char *passphrase, *prompt, *type;
 	
 	switch (pgp_type) {
 	case PGP_TYPE_GPG:
@@ -92,7 +92,7 @@ pgp_get_passphrase (const gchar *userid)
  * Initializes pgp variables
  **/
 void
-pgp_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data)
+pgp_init (const char *path, PgpType type, PgpPasswdFunc callback, gpointer data)
 {
 	pgp_path = path;
 	pgp_type = type;
@@ -109,7 +109,7 @@ pgp_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data
  * block otherwise returns FALSE.
  **/
 gboolean
-pgp_detect (const gchar *text)
+pgp_detect (const char *text)
 {
 	if (strstr (text, "-----BEGIN PGP MESSAGE-----"))
 		return TRUE;
@@ -125,7 +125,7 @@ pgp_detect (const gchar *text)
  * block otherwise returns FALSE.
  **/
 gboolean
-pgp_sign_detect (const gchar *text)
+pgp_sign_detect (const char *text)
 {
 	if (strstr (text, "-----BEGIN PGP SIGNED MESSAGE-----"))
 		return TRUE;
@@ -413,8 +413,8 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
  * string as it will be NUL terminated, however #outlen is also set in
  * the case that the cleartext is a binary stream.
  **/
-gchar *
-pgp_decrypt (const gchar *ciphertext, gint cipherlen, gint *outlen, GMimeException *ex)
+char *
+pgp_decrypt (const char *ciphertext, size_t cipherlen, size_t *outlen, GMimeException *ex)
 {
 	char *argv[15];
 	char *plaintext = NULL;
@@ -512,9 +512,9 @@ pgp_decrypt (const gchar *ciphertext, gint cipherlen, gint *outlen, GMimeExcepti
  *
  * Returns an allocated string containing the ciphertext.
  **/
-gchar *
-pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
-	     gboolean sign, const gchar *userid, GMimeException *ex)
+char *
+pgp_encrypt (const char *in, size_t inlen, const GPtrArray *recipients,
+	     gboolean sign, const char *userid, GMimeException *ex)
 {
 	GPtrArray *recipient_list = NULL;
 	GPtrArray *argv = NULL;
@@ -714,8 +714,8 @@ pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
  * Returns an allocated string containing the clearsigned plaintext
  * using the preferred hash.
  **/
-gchar *
-pgp_clearsign (const gchar *plaintext, const gchar *userid,
+char *
+pgp_clearsign (const char *plaintext, const char *userid,
 	       PgpHashType hash, GMimeException *ex)
 {
 	char *argv[15];
@@ -859,8 +859,8 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
  * Returns an allocated string containing the detached signature using
  * the preferred hash.
  **/
-gchar *
-pgp_sign (const gchar *in, gint inlen, const gchar *userid,
+char *
+pgp_sign (const char *in, size_t inlen, const char *userid,
 	  PgpHashType hash, GMimeException *ex)
 {
 	char *argv[20];
@@ -1013,7 +1013,7 @@ swrite (const char *data, int len)
 }
 
 gboolean
-pgp_verify (const gchar *in, gint inlen, const gchar *sigin, gint siglen, GMimeException *ex)
+pgp_verify (const char *in, size_t inlen, const char *sigin, size_t siglen, GMimeException *ex)
 {
 	char *argv[20];
 	char *cleartext = NULL;

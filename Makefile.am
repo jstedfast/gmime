@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-pgp test-pgpmime
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html
 
 bin_SCRIPTS = gmime-config
 
@@ -16,34 +16,69 @@ libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_la_SOURCES = 		\
 	alloca.c		\
+	strlib.c		\
+	gmime-charset.c		\
 	gmime-content-type.c	\
+	gmime-data-wrapper.c	\
+	gmime-disposition.c	\
+	gmime-exception.c	\
+	gmime-filter.c		\
+	gmime-filter-basic.c	\
+	gmime-filter-crlf.c	\
+	gmime-filter-html.c	\
 	gmime-header.c		\
 	gmime-message.c		\
+	gmime-object.c		\
 	gmime-param.c		\
 	gmime-parser.c		\
 	gmime-part.c		\
+	gmime-stream.c		\
+	gmime-stream-buffer.c	\
+	gmime-stream-file.c	\
+	gmime-stream-filter.c	\
+	gmime-stream-fs.c	\
+	gmime-stream-mem.c	\
+	gmime-stream-null.c	\
 	gmime-utils.c		\
 	internet-address.c	\
 	md5-utils.c		\
-	gmime-exception.c	\
 	pgp-utils.c		\
 	pgp-mime.c
 
-gmimeincdir = $(includedir)/gmime
-gmimeinc_HEADERS = 		\
+gmimeincludedir = $(includedir)/gmime
+gmimeinclude_HEADERS = 		\
 	gmime.h			\
+	gmime-charset.h		\
 	gmime-content-type.h	\
+	gmime-data-wrapper.h	\
+	gmime-disposition.h	\
+	gmime-exception.h	\
+	gmime-filter.h		\
+	gmime-filter-basic.h	\
+	gmime-filter-crlf.h	\
+	gmime-filter-html.h	\
 	gmime-header.h		\
 	gmime-message.h		\
+	gmime-object.h		\
 	gmime-param.h		\
 	gmime-parser.h		\
 	gmime-part.h		\
+	gmime-stream.h		\
+	gmime-stream-buffer.h	\
+	gmime-stream-file.h	\
+	gmime-stream-filter.h	\
+	gmime-stream-fs.h	\
+	gmime-stream-mem.h	\
+	gmime-stream-null.h	\
 	gmime-utils.h		\
 	internet-address.h	\
-	md5-utils.h		\
-	gmime-exception.h	\
 	pgp-utils.h		\
 	pgp-mime.h
+
+noinst_HEADERS = 		\
+	strlib.h		\
+	gmime-table-private.h	\
+	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime.la
 LDADDS = $(top_builddir)/libgmime.la @GLIB_LIBS@
@@ -58,10 +93,15 @@ test_parser_LDFLAGS =
 test_parser_DEPENDENCIES = $(DEPS)
 test_parser_LDADD = $(LDADDS)
 
-gen_table_SOURCES = gen-table.c
-gen_table_LDFLAGS = 
-gen_table_DEPENDENCIES = 
-gen_table_LDADD = 
+test_streams_SOURCES = test-streams.c
+test_streams_LDFLAGS = 
+test_streams_DEPENDENCIES = $(DEPS)
+test_streams_LDADD = $(LDADDS)
+
+test_html_SOURCES = test-html.c
+test_html_LDFLAGS = 
+test_html_DEPENDENCIES = $(DEPS)
+test_html_LDADD = $(LDADDS)
 
 test_pgp_SOURCES = test-pgp.c
 test_pgp_LDFLAGS = 
@@ -73,11 +113,16 @@ test_pgpmime_LDFLAGS =
 test_pgpmime_DEPENDENCIES = $(DEPS)
 test_pgpmime_LDADD = $(LDADDS)
 
+gen_table_SOURCES = gen-table.c
+gen_table_LDFLAGS = 
+gen_table_DEPENDENCIES = 
+gen_table_LDADD = 
+
 check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests PGPtests PGPMIMEtests
+tests: MIMEtests PARSERtests STREAMtests FILTERtests PGPtests PGPMIMEtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -89,18 +134,28 @@ PARSERtests : test-parser
 	@echo "## MIME Parser regression tests"
 	@echo "##"
 
+STREAMtests : test-streams
+	@echo "##"
+	@echo "## Stream regression tests"
+	@echo "##"
+
+FILTERtests : test-html
+	@echo "##"
+	@echo "## Filter regression tests"
+	@echo "##"
+
 PGPtests : test-pgp
 	@echo "##"
-	@echo "## PGP regression tests"
+	@echo "## PGP tests"
 	@echo "##"
 
 PGPMIMEtests : test-pgpmime
 	@echo "##"
-	@echo "## PGP/MIME regression tests"
+	@echo "## PGP/MIME tests"
 	@echo "##"
 
-dist-hook: libgmime.spec
-	-cp libgmime.spec $(distdir)
+dist-hook: gmime.spec
+	-cp gmime.spec $(distdir)
 	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)
 
 ## We create gmimeConf.sh here and not from configure because we want
@@ -115,7 +170,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in libgmime.spec.in libgmime.spec gmime.m4
+EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.

@@ -26,13 +26,18 @@
 #include "gmime.h"
 
 void
-test_parser (gchar *data)
+test_parser (char *data)
 {
 	GMimeMessage *message;
-	gchar *text;
+	GMimeStream *stream;
+	char *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
+	
+	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
+	message = g_mime_parser_construct_message (stream, TRUE);
+	g_mime_stream_unref (stream);
+	
 	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
 		 g_mime_message_get_header (message, "To"));
 	text = g_mime_message_to_string (message);
@@ -58,6 +63,8 @@ test_multipart (void)
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
 	g_mime_part_set_content_id (text_part, "1");
+	g_mime_part_set_content_header (text_part, "Content-Test", "test-mime");
+	g_mime_part_set_content_description (text_part, "this is a text part");
 	g_mime_part_set_content (text_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
@@ -66,15 +73,16 @@ test_multipart (void)
 	html_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "html");
 	g_mime_part_set_content_type (html_part, mime_type);
+	g_mime_part_set_filename (html_part, "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html");
 	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
-	g_mime_part_set_content_id (html_part, "2");
 	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>",
 				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
 	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
+	g_mime_part_set_content_id (html_part, "2");
 	
 	g_mime_part_add_subpart (multi_part, html_part);
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
@@ -120,7 +128,7 @@ test_onepart (void)
 	g_mime_part_set_content (mime_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
@@ -159,6 +167,47 @@ test_encodings (void)
 {
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
+	
+	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_mime_utils_8bit_header_encode ("OT - ich weiﬂ, trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("=?iso-8859-1?Q?=DE?=:\t=?iso-8859-1?Q?=AD=BE=EF?= spells 0xdeadbeef");
+	fprintf (stderr, "incorrect: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	enc = g_mime_utils_8bit_header_encode (dec);
+	g_free (dec);
+	fprintf (stderr, "correct: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
 	
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
@@ -244,7 +293,7 @@ static gchar *addresses[] = {
 	"\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	"fejj@helixcode.com (Jeffrey Stedfast)",
 	"Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
-	"=?iso-8859-1?q?Kristoffer=20Br=E5nemyr?= <ztion@swipenet.se>",
+	"=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>",
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
 	"GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
 	"Local recipients: phil, joe, alex, bob",
@@ -258,6 +307,8 @@ static gchar *addresses[] = {
 	"Charles Kerr,, likes illegal commas <charles@superpimp.org>", /* ouch this is bad... */
 	"<charles@>",
 	"<charles@broken.host.com.> (Charles Kerr)",
+	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
+	"Tıivo Leedj‰rv <leedjarv@interest.ee>",
 	NULL
 };
 
@@ -347,15 +398,15 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
-	test_date ();
-
-	test_onepart ();
+	/*test_date ();
+	
+	  test_onepart ();*/
 	
 	test_multipart ();
 	
-	test_encodings ();
+	/*test_encodings ();
 	
-	test_addresses ();
+	  test_addresses ();*/
 	
 	return 0;
 }

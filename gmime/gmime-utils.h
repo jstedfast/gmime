@@ -33,19 +33,26 @@ extern "C" {
 #include <time.h>
 #include <stdarg.h>
 
-#include "gmime-part.h"
+typedef enum {
+        GMIME_PART_ENCODING_DEFAULT,
+        GMIME_PART_ENCODING_7BIT,
+        GMIME_PART_ENCODING_8BIT,
+        GMIME_PART_ENCODING_BASE64,
+        GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+        GMIME_PART_NUM_ENCODINGS
+} GMimePartEncodingType;
 
 #define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 
-time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
-gchar *g_mime_utils_header_format_date (time_t time, gint offset);
+time_t g_mime_utils_header_decode_date (const char *in, int *saveoffset);
+char  *g_mime_utils_header_format_date (time_t time, int offset);
 
-gchar *g_mime_utils_header_fold (const gchar *in);
-gchar *g_mime_utils_header_printf (const gchar *format, ...);
+char  *g_mime_utils_header_fold (const char *in);
+char  *g_mime_utils_header_printf (const char *format, ...);
 
-gchar *g_mime_utils_quote_string (const gchar *string);
-void   g_mime_utils_unquote_string (gchar *string);
+char  *g_mime_utils_quote_string (const char *string);
+void   g_mime_utils_unquote_string (char *string);
 
 /* encoding decision making utilities ;-) */
 gboolean g_mime_utils_text_is_8bit (const guchar *text, guint len);
@@ -57,12 +64,14 @@ gchar *g_mime_utils_8bit_header_encode (const guchar *in);
 gchar *g_mime_utils_8bit_header_encode_phrase (const guchar *in);
 
 /* do incremental base64 (de/en)coding */
-gint g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint *save);
-gint g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save);
-gint g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save);
+gint g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save);
+gint g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save);
+gint g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save);
 
-/* do incremental uudecoding */
+/* do incremental uu (de/en)coding */
 gint g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save, gchar *uulen);
+gint g_mime_utils_uuencode_step (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen);
+gint g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen);
 
 /* do incremental quoted-printable (de/en)coding */
 gint g_mime_utils_quoted_decode_step (const guchar *in, gint inlen, guchar *out, gint *savestate, gint *saved);

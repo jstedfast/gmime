@@ -9,6 +9,13 @@
 
 #include "gmime.h"
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
+
+#define TEST_PRESERVE_HEADERS
+#define TEST_GET_BODY
+#define PRINT_MIME_STRUCT
+
 void
 print_depth (int depth)
 {
@@ -39,36 +46,58 @@ print_mime_struct (GMimePart *part, int depth)
 }
 
 void
-test_parser (gchar *data)
+test_parser (GMimeStream *stream)
 {
 	GMimeMessage *message;
 	gboolean is_html;
-	gchar *text;
-	gchar *body;
-	time_t now, past;
+	char *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	time (&past);
-	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
-	time (&now);
-	fprintf (stderr, "parsed message in %lus.\n", now - past);
-	time (&past);
+	
+	ZenTimerStart();
+	message = g_mime_parser_construct_message (stream, TRUE);
+	ZenTimerStop();
+	ZenTimerReport ("gmime::parser_construct_message");
+	ZenTimerStart();
+	
 	text = g_mime_message_to_string (message);
-	time (&now);
-	fprintf (stderr, "wrote message in %lus\n", now - past);
+	ZenTimerStop();
+	ZenTimerReport ("gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	
-	/* test of get_body */
-	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stderr, "Testing get_body (looking for html...%s)\n\n%s\n",
-		 body && is_html ? "found" : "not found",
-		 body ? body : "No message body found");
+#ifdef TEST_PRESERVE_HEADERS
+	{
+		GMimeStream *stream;
+		
+		fprintf (stdout, "\nTesting preservation of headers...\n\n");
+		stream = g_mime_stream_file_new (stdout);
+		g_mime_header_write_to_stream (message->header->headers, stream);
+		g_mime_stream_flush (stream);
+		GMIME_STREAM_FILE (stream)->fp = NULL;
+		g_mime_stream_unref (stream);
+		fprintf (stdout, "\n");
+	}
+#endif
 	
-	g_free (body);
+#ifdef TEST_GET_BODY
+	{
+		/* test of get_body */
+		char *body;
+		
+		body = g_mime_message_get_body (message, FALSE, &is_html);
+		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
+			 body && is_html ? "found" : "not found",
+			 body ? body : "No message body found");
+		
+		g_free (body);
+	}
+#endif
 	
+#ifdef PRINT_MIME_STRUCT
 	/* print mime structure */
 	print_mime_struct (message->mime_part, 0);
+#endif
 	
 	g_mime_message_destroy (message);
 }
@@ -76,8 +105,7 @@ test_parser (gchar *data)
 int main (int argc, char *argv[])
 {
 	char *filename = NULL;
-	char *data;
-	struct stat st;
+	GMimeStream *stream;
 	int fd;
 	
 	if (argc > 1)
@@ -89,20 +117,11 @@ int main (int argc, char *argv[])
 	if (fd == -1)
 		return 0;
 	
-	if (fstat (fd, &st) == -1)
-		return 0;
+	stream = g_mime_stream_fs_new (fd);
 	
-	data = g_malloc0 (st.st_size + 1);
+	test_parser (stream);
 	
-	read (fd, data, st.st_size);
-	
-	close (fd);
-	
-	/*fprintf (stdout, "%s\n", data);*/
-	
-	test_parser (data);
-	
-	g_free (data);
+	g_mime_stream_unref (stream);
 	
 	return 0;
 }

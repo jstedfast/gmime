@@ -28,6 +28,7 @@
 #include "gmime-utils.h"
 #include "gmime-table-private.h"
 #include "gmime-part.h"
+#include "gmime-charset.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,9 +36,8 @@
 
 #define d(x)
 
+#define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
-
-#define GMIME_FOLD_LEN  76
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
@@ -129,8 +129,8 @@ static char *tm_days[] = {
  *
  * Returns a valid string representation of the date.
  **/
-gchar *
-g_mime_utils_header_format_date (time_t time, gint offset)
+char *
+g_mime_utils_header_format_date (time_t time, int offset)
 {
 	struct tm tm;
 	
@@ -149,20 +149,20 @@ g_mime_utils_header_format_date (time_t time, gint offset)
 /* This is where it gets ugly... */
 
 static GList *
-datetok (const gchar *date)
+datetok (const char *date)
 {
 	GList *tokens = NULL;
-	gchar *token, *start, *end;
+	char *token, *start, *end;
 	
 	g_return_val_if_fail (date != NULL, NULL);
 	
-	start = (gchar *) date;
+	start = (char *) date;
 	while (*start) {
 		/* kill leading whitespace */
-		for ( ; *start && isspace (*start); start++);
+		for ( ; *start && isspace ((int)*start); start++);
 		
 		/* find the end of this token */
-		for (end = start; *end && !isspace (*end); end++);
+		for (end = start; *end && !isspace ((int)*end); end++);
 		
 		token = g_strndup (start, (end - start));
 		
@@ -209,30 +209,30 @@ get_days_in_month (gint month, gint year)
 }
 #endif
 
-static gint
-get_wday (gchar *str)
+static int
+get_wday (char *str)
 {
 	gint i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (i = 0; i < 7; i++)
-		if (!g_strncasecmp (str, tm_days[i], 3))
+		if (!strncasecmp (str, tm_days[i], 3))
 			return i;
 	
 	return -1;  /* unknown week day */
 }
 
-static gint
-get_mday (gchar *str)
+static int
+get_mday (char *str)
 {
-	gchar *p;
-	gint mday;
+	char *p;
+	int mday;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (p = str; *p; p++)
-		if (!isdigit (*p))
+		if (!isdigit ((int) *p))
 			return -1;
 	
 	mday = atoi (str);
@@ -243,28 +243,28 @@ get_mday (gchar *str)
 	return mday;
 }
 
-static gint
-get_month (gchar *str)
+static int
+get_month (char *str)
 {
-	gint i;
+	int i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (i = 0; i < 12; i++)
-		if (!g_strncasecmp (str, tm_months[i], 3))
+		if (!strncasecmp (str, tm_months[i], 3))
 			return i;
 	
 	return -1;  /* unknown month */
 }
 
-static gint
-get_year (const gchar *str)
+static int
+get_year (const char *str)
 {
-	gint year;
-	const gchar * p;
+	const char *p;
+	int year;
 	
 	for (p = str; *p; p++)
-		if (!isdigit (*p))
+		if (!isdigit ((int) *p))
 			return -1;
 	
 	year = atoi (str);
@@ -279,16 +279,16 @@ get_year (const gchar *str)
 }
 
 static gboolean
-get_time (const gchar *in, gint *hour, gint *min, gint *sec)
+get_time (const char *in, int *hour, int *min, int *sec)
 {
-	const gchar *p;
-	gint colons = 0;
+	const char *p;
+	int colons = 0;
 	gboolean digits = TRUE;
 	
 	for (p = in; *p && digits; p++) {
 		if (*p == ':')
 			colons++;
-		else if (!isdigit (*p))
+		else if (!isdigit ((int) *p))
 			digits = FALSE;
 	}
 	
@@ -304,20 +304,20 @@ get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 	}
 }
 
-static gint
+static int
 get_tzone (GList **token)
 {
-	gint tz = -1;
-	gint i;
+	int tz = -1;
+	int i;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
-		gchar *str = (*token)->data;
+		char *str = (*token)->data;
 		
 		if (*str == '+' || *str == '-') {
 			tz = atoi (str);
 			return tz;
 		} else {
-			gint t;
+			int t;
 			
 			if (*str == '(')
 				str++;
@@ -339,13 +339,13 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	GList *token;
 	struct tm tm;
 	time_t t;
-	gint hour, min, sec, offset, n;
+	int hour, min, sec, offset, n;
 	
 	g_return_val_if_fail (tokens != NULL, (time_t) 0);
 	
 	token = tokens;
 	
-	memset ((void *)&tm, 0, sizeof (struct tm));
+	memset ((void *) &tm, 0, sizeof (struct tm));
 	
 	if ((n = get_wday (token->data)) != -1) {
 		/* not all dates may have this... */
@@ -417,7 +417,7 @@ parse_broken_date (GList *tokens, int *tzone)
 #if 0
 	GList *token;
 	struct tm tm;
-	gint hour, min, sec, n;
+	int hour, min, sec, n;
 	
 	if (tzone)
 		*tzone = 0;
@@ -436,7 +436,7 @@ parse_broken_date (GList *tokens, int *tzone)
  * will be stored.
  **/
 time_t
-g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
+g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 {
 	GList *token, *tokens;
 	time_t date;
@@ -465,13 +465,13 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
  *
  * Returns an allocated string containing the folded header.
  **/
-gchar *
-g_mime_utils_header_fold (const gchar *in)
+char *
+g_mime_utils_header_fold (const char *in)
 {
-	const gchar *inptr, *space;
-	gint len, outlen, i;
+	const char *inptr, *space;
+	size_t len, outlen, i;
 	GString *out;
-	gchar *ret;
+	char *ret;
 	
 	inptr = in;
 	len = strlen (in);
@@ -481,11 +481,7 @@ g_mime_utils_header_fold (const gchar *in)
 	out = g_string_new ("");
 	outlen = 0;
 	while (*inptr) {
-		space = strchr (inptr, ' ');
-		if (space)
-			len = space - inptr + 1;
-		else
-			len = strlen (inptr);
+		len = strcspn (inptr, " \t");
 		
 		if (outlen + len > GMIME_FOLD_LEN) {
 			g_string_append (out, "\n\t");
@@ -500,13 +496,15 @@ g_mime_utils_header_fold (const gchar *in)
 				g_string_append (out, "\n\t");
 				outlen = 1;
 			}
+		} else if (len > 0) {
+			outlen += len;
+			for (i = 0; i < len; i++) {
+				g_string_append_c (out, inptr[i]);
+			}
+			inptr += len;
+		} else {
+			g_string_append_c (out, *inptr++);
 		}
-		
-		outlen += len;
-		for (i = 0; i < len; i++) {
-			g_string_append_c (out, inptr[i]);
-		}
-		inptr += len;
 	}
 	
 	ret = out->str;
@@ -524,10 +522,10 @@ g_mime_utils_header_fold (const gchar *in)
  * Returns an allocated string containing the folded header specified
  * by #format and the following arguments.
  **/
-gchar *
-g_mime_utils_header_printf (const gchar *format, ...)
+char *
+g_mime_utils_header_printf (const char *format, ...)
 {
-	gchar *buf, *ret;
+	char *buf, *ret;
 	va_list ap;
 	
 	va_start (ap, format);
@@ -572,12 +570,12 @@ need_quotes (const char *string)
  * based on whether or not the input string contains any 'tspecials'
  * as defined by rfc2045.
  **/
-gchar *
-g_mime_utils_quote_string (const gchar *string)
+char *
+g_mime_utils_quote_string (const char *string)
 {
 	gboolean quote;
-	const gchar *c;
-	gchar *qstring;
+	const char *c;
+	char *qstring;
 	GString *out;
 	
 	out = g_string_new ("");
@@ -609,10 +607,10 @@ g_mime_utils_quote_string (const gchar *string)
  * Unquotes and unescapes a string.
  **/
 void
-g_mime_utils_unquote_string (gchar *string)
+g_mime_utils_unquote_string (char *string)
 {
 	/* if the string is quoted, unquote it */
-	gchar *inptr, *inend;
+	char *inptr, *inend;
 	
 	if (!string)
 		return;
@@ -738,10 +736,11 @@ quoted_decode (const guchar *in, gint len, guchar *out)
 }
 
 static gboolean
-is_8bit_word_encoded (const guchar * word)
+is_8bit_word_encoded (const guchar *atom)
 {
-	guint len = strlen (word);
-	return len>=7 && word[0]=='=' && word[1]=='?' && word[len-2]=='?' && word[len-1]=='=';
+	guint len = strlen (atom);
+	
+	return len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2);
 }
 
 static guchar *
@@ -805,90 +804,104 @@ decode_encoded_8bit_word (const guchar *word)
 gchar *
 g_mime_utils_8bit_header_decode (const guchar *in)
 {
-	GString *out, *whtspc, *word;
+	GString *out, *lwsp, *atom;
 	const guchar *inptr;
 	guchar *decoded;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
 	
 	out = g_string_sized_new (256);
-	whtspc = g_string_sized_new (256);
-	word = g_string_sized_new (256);
+	lwsp = g_string_sized_new (256);
+	atom = g_string_sized_new (256);
 	inptr = in;
 	
 	while (inptr && *inptr) {
 		guchar c = *inptr++;
 		
-		if (isspace (c) && !last_was_space) {
-			/* we reached the end of a 'word' */
+		if (!is_atom (c) && !last_was_space) {
+			/* we reached the end of an atom */
 			gboolean was_encoded;
-			const gchar *cword;
 			guchar *dword = NULL;
-
-			if ((was_encoded = is_8bit_word_encoded (word->str)))
-				cword = dword = decode_encoded_8bit_word (word->str);
-			else
-				cword = word->str;
+			const guchar *word;
 			
-			if (cword) {
+			if ((was_encoded = is_8bit_word_encoded (atom->str)))
+				word = dword = decode_encoded_8bit_word (atom->str);
+			else
+				word = atom->str;
+			
+			if (word) {
 				if (!(last_was_encoded && was_encoded)) {
 					/* rfc2047 states that you
                                            must ignore all whitespace
                                            between encoded words */
-					g_string_append (out, whtspc->str);
+					g_string_append (out, lwsp->str);
 				}
 				
-				g_string_append (out, cword);
+				g_string_append (out, word);
 				g_free (dword);
 			} else {
 				was_encoded = FALSE;
-				g_string_append (out, whtspc->str);
-				g_string_append (out, word->str);
+				g_string_append (out, lwsp->str);
+				g_string_append (out, atom->str);
 			}
 			
 			last_was_encoded = was_encoded;
-
-			g_string_truncate (whtspc, 0);
-			g_string_truncate (word, 0);
+			
+			g_string_truncate (lwsp, 0);
+			g_string_truncate (atom, 0);
+			
+			if (is_lwsp (c)) {
+				g_string_append_c (lwsp, c);
+				last_was_space = TRUE;
+			} else {
+				/* This is mostly here for interoperability with broken
+                                   mailers that might do something stupid like:
+                                   =?iso-8859-1?Q?blah?=:\t=?iso-8859-1?Q?I_am_broken?= */
+				g_string_append_c (out, c);
+				last_was_encoded = FALSE;
+				last_was_space = FALSE;
+			}
+			
+			continue;
 		}
 		
-		if (isspace (c)) {
-			g_string_append_c (whtspc, c);
-			last_was_space = TRUE;
-		} else {
-			g_string_append_c (word, c);
+		if (is_atom (c)) {
+			g_string_append_c (atom, c);
 			last_was_space = FALSE;
+		} else {
+			g_string_append_c (lwsp, c);
+			last_was_space = TRUE;
 		}
 	}
 	
-	if (word->len || whtspc->len) {
+	if (atom->len || lwsp->len) {
 		gboolean was_encoded;
-		const guchar *cword;
 		guchar *dword = NULL;
-
-		if ((was_encoded = is_8bit_word_encoded (word->str)))
-			cword = dword = decode_encoded_8bit_word (word->str);
-		else
-			cword = word->str;
+		const guchar *word;
 		
-		if (cword) {
+		if ((was_encoded = is_8bit_word_encoded (atom->str)))
+			word = dword = decode_encoded_8bit_word (atom->str);
+		else
+			word = atom->str;
+		
+		if (word) {
 			if (!(last_was_encoded && was_encoded)) {
 				/* rfc2047 states that you
 				   must ignore all whitespace
 				   between encoded words */
-				g_string_append (out, whtspc->str);
+				g_string_append (out, lwsp->str);
 			}
 			
-			g_string_append (out, cword);
+			g_string_append (out, word);
 			g_free (dword);
 		} else {
-			g_string_append (out, whtspc->str);
-			g_string_append (out, word->str);
+			g_string_append (out, lwsp->str);
+			g_string_append (out, atom->str);
 		}
 	}
 	
-	g_string_free (whtspc, TRUE);
-	g_string_free (word, TRUE);
+	g_string_free (lwsp, TRUE);
+	g_string_free (atom, TRUE);
 	
 	decoded = out->str;
 	g_string_free (out, FALSE);
@@ -971,7 +984,7 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	if (this_was_encoded)
 		*this_was_encoded = TRUE;
 	
-	return g_strdup_printf ("=?iso-8859-1?%c?%s?=", encoding, encoded);
+	return g_strdup_printf ("=?%s?%c?%s?=", g_mime_charset_locale_name (), encoding, encoded);	
 }
 
 
@@ -999,7 +1012,7 @@ g_mime_utils_8bit_header_encode_phrase (const guchar *in)
 gchar *
 g_mime_utils_8bit_header_encode (const guchar *in)
 {
-	GString *out, *word, *whtspc;
+	GString *out, *word, *lwsp;
 	guchar *inptr;
 	guchar *encoded;
 	gboolean is8bit = FALSE;
@@ -1008,7 +1021,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 	
 	out = g_string_new ("");
 	word = g_string_new ("");
-	whtspc = g_string_new ("");
+	lwsp = g_string_new ("");
 	inptr = (guchar *) in;
 	
 	while (inptr && *inptr) {
@@ -1026,25 +1039,23 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 			/* append any whitespace */
 			if (last_was_encoded && this_was_encoded) {
 				/* we need to encode the whitespace */
-				guchar *ewhtspc;
+				guchar *elwsp;
 				gint len;
 				
-				ewhtspc = alloca (whtspc->len * 3 + 4);
-				len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
-				ewhtspc[len] = '\0';
+				elwsp = alloca (lwsp->len * 3 + 4);
+				len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
+				elwsp[len] = '\0';
 				
-				g_string_append (out, " =?iso-8859-1?q?");
-				g_string_append (out, ewhtspc);
-				g_string_append (out, "?= ");
+				g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
 			} else {
-				g_string_append (out, whtspc->str);
+				g_string_append (out, lwsp->str);
 			}
 			
 			/* append the encoded word */
 			g_string_append (out, eword);
 			g_free (eword);
-
-			g_string_truncate (whtspc, 0);
+			
+			g_string_truncate (lwsp, 0);
 			g_string_truncate (word, 0);
 			
 			last_was_encoded = this_was_encoded;
@@ -1052,7 +1063,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		}
 		
 		if (isspace (c)) {
-			g_string_append_c (whtspc, c);
+			g_string_append_c (lwsp, c);
 			last_was_space = TRUE;
 		} else {
 			if (c > 127)
@@ -1063,7 +1074,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		}
 	}
 	
-	if (word->len || whtspc->len) {
+	if (word->len || lwsp->len) {
 		gboolean this_was_encoded = FALSE;
 		guchar *eword;
 		
@@ -1075,18 +1086,16 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		/* append any whitespace */
 		if (last_was_encoded && this_was_encoded) {
 			/* we need to encode the whitespace */
-			guchar *ewhtspc;
+			guchar *elwsp;
 			gint len;
 			
-			ewhtspc = alloca (whtspc->len * 3 + 4);
-			len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
-			ewhtspc[len] = '\0';
+			elwsp = alloca (lwsp->len * 3 + 4);
+			len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
+			elwsp[len] = '\0';
 			
-			g_string_append (out, " =?iso-8859-1?q?");
-			g_string_append (out, ewhtspc);
-			g_string_append (out, "?= ");
+			g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
 		} else {
-			g_string_append (out, whtspc->str);
+			g_string_append (out, lwsp->str);
 		}
 		
 		/* append the encoded word */
@@ -1094,7 +1103,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		g_free (eword);
 	}
 	
-	g_string_free (whtspc, TRUE);
+	g_string_free (lwsp, TRUE);
 	g_string_free (word, TRUE);
 	
 	encoded = out->str;
@@ -1117,18 +1126,18 @@ g_mime_utils_8bit_header_encode (const guchar *in)
  * bit.
  **/
 gint
-g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	guchar *outptr = out;
-	gint c1, c2;
+	unsigned char *outptr = out;
+	int c1, c2;
 	
 	if (inlen > 0)
 		outptr += g_mime_utils_base64_encode_step (in, inlen, outptr, state, save);
 	
-	c1 = ((guchar *)save)[1];
-	c2 = ((guchar *)save)[2];
+	c1 = ((unsigned char *)save)[1];
+	c2 = ((unsigned char *)save)[2];
 	
-	switch (((guchar *)save)[0]) {
+	switch (((unsigned char *)save)[0]) {
 	case 2:
 		outptr[2] = base64_alphabet [(c2 & 0x0f) << 2];
 		goto skip;
@@ -1164,10 +1173,10 @@ g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gin
  * invocation).
  **/
 gint
-g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
 	
 	if (inlen <= 0)
 		return 0;
@@ -1177,17 +1186,17 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 	
 	d(printf("we have %d chars, and %d saved chars\n", inlen, ((gchar *)save)[0]));
 	
-	if (inlen + ((guchar *)save)[0] > 2) {
-		const guchar *inend = in + inlen - 2;
-		register gint c1=0, c2=0, c3=0;
-		register gint already;
+	if (inlen + ((unsigned char *)save)[0] > 2) {
+		const unsigned char *inend = in + inlen - 2;
+		register int c1 = 0, c2 = 0, c3 = 0;
+		register int already;
 		
 		already = *state;
 		
 		switch (((gchar *)save)[0]) {
-		case 1:	c1 = ((guchar *)save)[1]; goto skip1;
-		case 2:	c1 = ((guchar *)save)[1];
-			c2 = ((guchar *)save)[2]; goto skip2;
+		case 1:	c1 = ((unsigned char *)save)[1]; goto skip1;
+		case 2:	c1 = ((unsigned char *)save)[1];
+			c2 = ((unsigned char *)save)[2]; goto skip2;
 		}
 		
 		/* yes, we jump into the loop, no i'm not going to change it, its beautiful! */
@@ -1199,7 +1208,7 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 			c3 = *inptr++;
 			*outptr++ = base64_alphabet [c1 >> 2];
 			*outptr++ = base64_alphabet [(c2 >> 4) | ((c1 & 0x3) << 4)];
-			*outptr++ = base64_alphabet [((c2 &0x0f) << 2) | (c3 >> 6)];
+			*outptr++ = base64_alphabet [((c2 & 0x0f) << 2) | (c3 >> 6)];
 			*outptr++ = base64_alphabet [c3 & 0x3f];
 			/* this is a bit ugly ... */
 			if ((++already) >= 19) {
@@ -1208,7 +1217,7 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 			}
 		}
 		
-		((guchar *)save)[0] = 0;
+		((unsigned char *)save)[0] = 0;
 		inlen = 2 - (inptr - inend);
 		*state = already;
 	}
@@ -1248,37 +1257,37 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
  * Returns the number of bytes decoded (which have been dumped in #out).
  **/
 gint
-g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint *save)
+g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar c;
-	register guint v;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	register guint32 saved;
+	unsigned char c;
 	int i;
 	
 	inend = in + inlen;
 	outptr = out;
 	
 	/* convert 4 base64 bytes to 3 normal bytes */
-	v = *save;
+	saved = *save;
 	i = *state;
 	inptr = in;
 	while (inptr < inend) {
 		c = gmime_base64_rank[*inptr++];
 		if (c != 0xff) {
-			v = (v << 6) | c;
+			saved = (saved << 6) | c;
 			i++;
 			if (i == 4) {
-				*outptr++ = v >> 16;
-				*outptr++ = v >> 8;
-				*outptr++ = v;
+				*outptr++ = saved >> 16;
+				*outptr++ = saved >> 8;
+				*outptr++ = saved;
 				i = 0;
 			}
 		}
 	}
 	
-	*save = v;
+	*save = saved;
 	*state = i;
 	
 	/* quick scan back for '=' on the end somewhere */
@@ -1299,6 +1308,159 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
 
 
 /**
+ * g_mime_utils_uuencode_close: uuencode a chunk of data
+ * @in: input stream
+ * @inlen: input stream length
+ * @out: output stream
+ * @uubuf: temporary buffer of 60 bytes
+ * @state: holds the number of bits that are stored in @save
+ * @save: leftover bits that have not yet been encoded
+ * @uulen: holds the value of the length-char which is used to calculate
+ *         how many more chars need to be decoded for that 'line'
+ *
+ * Returns the number of bytes encoded. Call this when finished
+ * encoding data with uuencode_step to flush off the last little
+ * bit.
+ **/
+gint
+g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
+{
+	register unsigned char *outptr, *bufptr;
+	register guint32 saved;
+	int i;
+	
+	outptr = out;
+	
+	if (inlen > 0)
+		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save, uulen);
+	
+	bufptr = uubuf + ((*uulen / 3) * 4);
+	saved = *save;
+	i = *state;
+	
+	if (i > 0) {
+		while (i < 3) {
+			saved <<= 8 | 0;
+			i++;
+		}
+		
+		if (i == 3) {
+			/* convert 3 normal bytes into 4 uuencoded bytes */
+			unsigned char b0, b1, b2;
+			
+			b0 = saved >> 16;
+			b1 = saved >> 8 & 0xff;
+			b2 = saved & 0xff;
+			
+			*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+		}
+	}
+	
+	if (*uulen || *state) {
+		int cplen = (((*uulen + (*state ? 3 : 0)) / 3) * 4);
+		
+		*outptr++ = GMIME_UUENCODE_CHAR (*uulen + *state);
+		memcpy (outptr, uubuf, cplen);
+		outptr += cplen;
+		*outptr++ = '\n';
+		*uulen = 0;
+	}
+	
+	*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
+	*outptr++ = '\n';
+	
+	*save = 0;
+	*state = 0;
+	
+	return (outptr - out);
+}
+
+
+/**
+ * g_mime_utils_uuencode_step: uuencode a chunk of data
+ * @in: input stream
+ * @inlen: input stream length
+ * @out: output stream
+ * @uubuf: temporary buffer of 60 bytes
+ * @state: holds the number of bits that are stored in @save
+ * @save: leftover bits that have not yet been encoded
+ * @uulen: holds the value of the length-char which is used to calculate
+ *         how many more chars need to be decoded for that 'line'
+ *
+ * Returns the number of bytes encoded. Performs an 'encode step',
+ * only encodes blocks of 45 characters to the output at a time, saves
+ * left-over state in @uubuf, @state and @save (initialize to 0 on first
+ * invocation).
+ **/
+gint
+g_mime_utils_uuencode_step (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
+{
+	register unsigned char *outptr, *bufptr;
+	const register unsigned char *inptr;
+	const unsigned char *inend;
+	register guint32 saved;
+	int i;
+	
+	if (*uulen <= 0)
+		*uulen = 0;
+	
+	inptr = in;
+	inend = in + inlen;
+	
+	outptr = out;
+	
+	bufptr = uubuf + ((*uulen / 3) * 4);
+	
+	saved = *save;
+	i = *state;
+	
+	while (inptr < inend) {
+		while (*uulen < 45 && inptr < inend) {
+			while (i < 3 && inptr < inend) {
+				saved = (saved << 8) | *inptr++;
+				i++;
+			}
+			
+			if (i == 3) {
+				/* convert 3 normal bytes into 4 uuencoded bytes */
+				unsigned char b0, b1, b2;
+				
+				b0 = saved >> 16;
+				b1 = saved >> 8 & 0xff;
+				b2 = saved & 0xff;
+				
+				*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+				
+				i = 0;
+				saved = 0;
+				*uulen += 3;
+			}
+		}
+		
+		if (*uulen >= 45) {
+			*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
+			memcpy (outptr, uubuf, ((*uulen / 3) * 4));
+			outptr += ((*uulen / 3) * 4);
+			*outptr++ = '\n';
+			*uulen = 0;
+			bufptr = uubuf;
+		}
+	}
+	
+	*save = saved;
+	*state = i;
+	
+	return (outptr - out);
+}
+
+
+/**
  * g_mime_utils_uudecode_step: uudecode a chunk of data
  * @in: input stream
  * @inlen: max length of data to decode ( normally strlen(in) ??)
@@ -1308,17 +1470,17 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * Returns the number of bytes decoded. Performs a 'uudecode step' on
+ * Returns the number of bytes decoded. Performs a 'decode step' on
  * a chunk of uuencoded data. Assumes the "begin <mode> <file name>"
  * line has been stripped off.
  **/
 gint
 g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save, gchar *uulen)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar ch;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	unsigned char ch;
 	register guint32 saved;
 	gboolean last_was_eoln;
 	int i;
@@ -1354,7 +1516,7 @@ g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *sta
 			i++;
 			if (i == 4) {
 				/* convert 4 uuencoded bytes to 3 normal bytes */
-				guchar b0, b1, b2, b3;
+				unsigned char b0, b1, b2, b3;
 				
 				b0 = saved >> 24;
 				b1 = saved >> 16 & 0xff;
@@ -1405,7 +1567,7 @@ g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *sta
 gint
 g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
-	register guchar *outptr = out;
+	register unsigned char *outptr = out;
 	int last;
 	
 	if (inlen > 0)
@@ -1448,9 +1610,9 @@ g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gin
 gint
 g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
-	const register guchar *inptr, *inend;
-	register guchar *outptr;
-	guchar c;
+	const register unsigned char *inptr, *inend;
+	register unsigned char *outptr;
+	unsigned char c;
 	register int sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
 	
@@ -1547,10 +1709,10 @@ g_mime_utils_quoted_decode_step (const guchar *in, gint inlen, guchar *out, gint
 	 * Note: Trailing rubbish (at the end of input), like = or =x
 	 * or =\r will be lost.
 	 */
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar c;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	unsigned char c;
 	int state, save;
 	
 	inend = in + inlen;

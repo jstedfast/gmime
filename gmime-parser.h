@@ -28,19 +28,13 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus } */
 
-#include <stdio.h> /* for FILE */
 #include <glib.h>
 #include "gmime-message.h"
-#include "gmime-part.h"
-#include "gmime-content-type.h"
-#include "gmime-param.h"
+#include "gmime-stream.h"
 
+GMimePart *g_mime_parser_construct_part (GMimeStream *stream);
 
-GMimePart *g_mime_parser_construct_part (const gchar *in, guint inlen);
-
-GMimeMessage *g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_extra_headers);
-
-GMimeMessage *g_mime_parser_construct_message_from_file (FILE *fp, gboolean save_extra_headers);
+GMimeMessage *g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers);
 
 #ifdef __cplusplus
 }

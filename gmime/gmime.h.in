@@ -26,11 +26,25 @@
 #include <glib.h>
 #include "gmime-param.h"
 #include "gmime-content-type.h"
+#include "gmime-disposition.h"
+#include "gmime-data-wrapper.h"
+#include "gmime-object.h"
 #include "gmime-part.h"
 #include "gmime-message.h"
 #include "internet-address.h"
 #include "gmime-parser.h"
 #include "gmime-utils.h"
+#include "gmime-stream.h"
+#include "gmime-stream-buffer.h"
+#include "gmime-stream-file.h"
+#include "gmime-stream-filter.h"
+#include "gmime-stream-fs.h"
+#include "gmime-stream-mem.h"
+#include "gmime-stream-null.h"
+#include "gmime-filter.h"
+#include "gmime-filter-basic.h"
+#include "gmime-filter-crlf.h"
+#include "gmime-filter-html.h"
 
 /* GMIME version */
 static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;

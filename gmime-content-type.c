@@ -32,6 +32,25 @@
 #define d(x)
 
 
+static gint
+param_equal (gconstpointer v, gconstpointer v2)
+{
+	return strcasecmp ((const char *) v, (const char *) v2) == 0;
+}
+
+static guint
+param_hash (gconstpointer key)
+{
+	const char *p = key;
+	guint h = tolower (*p);
+	
+	if (h)
+		for (p += 1; *p != '\0'; p++)
+			h = (h << 5) - h + tolower (*p);
+	
+	return h;
+}
+
 /**
  * g_mime_content_type_new: Create a new MIME Content-Type
  * @type: MIME type (or NULL for "text")
@@ -40,7 +59,7 @@
  * Returns a new MIME Content-Type.
  **/
 GMimeContentType *
-g_mime_content_type_new (const gchar *type, const gchar *subtype)
+g_mime_content_type_new (const char *type, const char *subtype)
 {
 	GMimeContentType *mime_type;
 	
@@ -82,25 +101,25 @@ g_mime_content_type_new (const gchar *type, const gchar *subtype)
  * Returns a new MIME Content-Type based on the input string.
  **/
 GMimeContentType *
-g_mime_content_type_new_from_string (const gchar *string)
+g_mime_content_type_new_from_string (const char *string)
 {
 	GMimeContentType *mime_type;
-	guchar *type = NULL, *subtype = NULL;
-	guchar *eptr;
+	char *type = NULL, *subtype = NULL;
+	register char *inptr;
 	
 	g_return_val_if_fail (string != NULL, NULL);
 	
 	/* get the type */
-	type = (gchar *) string;
-	for (eptr = type; *eptr && *eptr != '/' && *eptr != ';'; eptr++);
-	type = g_strndup (type, (gint) (eptr - type));
+	type = (char *) string;
+	for (inptr = type; *inptr && *inptr != '/' && *inptr != ';'; inptr++);
+	type = g_strndup (type, (int) (inptr - type));
 	g_strstrip (type);
 	
 	/* get the subtype */
-	if (*eptr != ';') {
-		subtype = eptr + 1;
-		for (eptr = subtype; *eptr && *eptr != ';'; eptr++);
-		subtype = g_strndup (subtype, (gint) (eptr - subtype));
+	if (*inptr != ';') {
+		inptr++;
+		for (subtype = inptr; *inptr && *inptr != ';'; inptr++);
+		subtype = g_strndup (subtype, (int) (inptr - subtype));
 		g_strstrip (subtype);
 	}
 	
@@ -108,45 +127,19 @@ g_mime_content_type_new_from_string (const gchar *string)
 	g_free (type);
 	g_free (subtype);
 	
-	while (*eptr == ';') {
-		/* looks like we've got some parameters */
-		guchar *name, *value;
+	if (*inptr++ == ';' && *inptr) {
+		GMimeParam *p;
 		
-		while (*eptr && (*eptr == ';' || isspace (*eptr)))
-			eptr++;
-		
-		/* get the param name - skip past all whitespace */
-		for (name = eptr; *name && isspace (*name); name++);
-		
-		for (eptr = name; *eptr && *eptr != '='; eptr++);
-		name = g_strndup (name, (gint) (eptr - name));
-		
-		g_strstrip (name);
-		
-		/* change the param name to lowercase */
-		g_strdown (name);
-		
-		/* skip any whitespace */
-		for (value = eptr + 1; *value && isspace (*value); value++);
-		
-		if (*value == '"') {
-			/* value is in quotes */
-			value++;
-			for (eptr = value; *eptr && *eptr != '"'; eptr++);
-			value = g_strndup (value, (gint) (eptr - value));
-			g_strstrip (value);
+		mime_type->params = g_mime_param_new_from_string (inptr);
+		p = mime_type->params;
+		if (p != NULL) {
+			mime_type->param_hash = g_hash_table_new (param_hash, param_equal);
 			
-			for ( ; *eptr && *eptr != ';'; eptr++);
-		} else {			
-			/* value is not in quotes */
-			for (eptr = value; *eptr && *eptr != ';'; eptr++);
-			value = g_strndup (value, (gint) (eptr - value));
-			g_strstrip (value);
+			while (p) {
+				g_hash_table_insert (mime_type->param_hash, p->name, p);
+				p = p->next;
+			}
 		}
-		
-		g_mime_content_type_add_parameter (mime_type, name, value);
-		g_free (name);
-		g_free (value);
 	}
 	
 	return mime_type;
@@ -170,22 +163,7 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
 	if (mime_type->param_hash)
 		g_hash_table_destroy (mime_type->param_hash);
 	
-	if (mime_type->params) {
-		GList *parameter;
-		
-		parameter = mime_type->params;
-		while (parameter) {
-			GMimeParam *param = parameter->data;
-			
-			g_free (param->name);
-			g_free (param->value);
-			g_free (param);
-			
-			parameter = parameter->next;
-		}
-		
-		g_list_free (mime_type->params);
-	}
+	g_mime_param_destroy (mime_type->params);
 	
 	g_free (mime_type);
 }
@@ -198,10 +176,10 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
  * Returns an allocated string containing the type and subtype of the
  * content-type in the format: type/subtype.
  **/
-gchar *
+char *
 g_mime_content_type_to_string (const GMimeContentType *mime_type)
 {
-	gchar *string;
+	char *string;
 	
 	g_return_val_if_fail (mime_type != NULL, NULL);
 	
@@ -220,7 +198,7 @@ g_mime_content_type_to_string (const GMimeContentType *mime_type)
  * @subtype: MIME subtype to compare against
  *
  * Returns TRUE if the MIME types match or FALSE otherwise. You may
- * use "*" in place of #type and/or #subtype as a wilcard.
+ * use "*" in place of @type and/or @subtype as a wilcard.
  **/
 gboolean
 g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype)
@@ -231,12 +209,12 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!g_strcasecmp (mime_type->type, type)) {
+	if (!strcasecmp (mime_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;
 		} else {
-			if (!g_strcasecmp (mime_type->subtype, subtype))
+			if (!strcasecmp (mime_type->subtype, subtype))
 				return TRUE;
 			else
 				return FALSE;
@@ -256,29 +234,31 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
  * Adds a parameter to the Content-Type.
  **/
 void
-g_mime_content_type_add_parameter (GMimeContentType *mime_type, const gchar *attribute, const gchar *value)
+g_mime_content_type_add_parameter (GMimeContentType *mime_type, const char *attribute, const char *value)
 {
-	GMimeParam *param;
+	GMimeParam *param = NULL;
 	
 	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (attribute != NULL);
+	g_return_if_fail (value != NULL);
 	
 	if (mime_type->params) {
 		param = g_hash_table_lookup (mime_type->param_hash, attribute);
 		if (param) {
-			/* destroy previously defined param */
-			g_hash_table_remove (mime_type->param_hash, attribute);
-			mime_type->params = g_list_remove (mime_type->params, param);
-			g_mime_param_destroy (param);
+			g_free (param->value);
+			param->value = g_strdup (value);
 		}
 	} else {
 		/* hash table may not be initialized */
 		if (!mime_type->param_hash)
-			mime_type->param_hash = g_hash_table_new (g_str_hash, g_str_equal);
+			mime_type->param_hash = g_hash_table_new (param_hash, param_equal);
 	}
 	
-	param = g_mime_param_new (attribute, value);
-	mime_type->params = g_list_append (mime_type->params, param);
-	g_hash_table_insert (mime_type->param_hash, param->name, param);
+	if (param == NULL) {
+		param = g_mime_param_new (attribute, value);
+		mime_type->params = g_mime_param_append_param (mime_type->params, param);
+		g_hash_table_insert (mime_type->param_hash, param->name, param);
+	}
 }
 
 
@@ -289,12 +269,13 @@ g_mime_content_type_add_parameter (GMimeContentType *mime_type, const gchar *att
  *
  * Returns a const pointer to the paramer value specified by #attribute.
  **/
-const gchar *
-g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gchar *attribute)
+const char *
+g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute)
 {
 	GMimeParam *param;
 	
 	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (attribute != NULL, NULL);
 	
 	if (!mime_type->param_hash)
 		return NULL;

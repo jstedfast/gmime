@@ -213,10 +213,10 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 	ia->value.members = g_list_append (ia->value.members, member);
 }
 
-static gchar *
-encoded_name (const gchar *raw, gboolean rfc2047_encode)
+static char *
+encoded_name (const char *raw, gboolean rfc2047_encode)
 {
-	gchar *name;
+	char *name;
 	
 	g_return_val_if_fail (raw != NULL, NULL);
 	
@@ -238,7 +238,7 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
  * Returns the InternetAddress object as an allocated string in rfc822
  * format.
  **/
-gchar *
+char *
 internet_address_to_string (InternetAddress *ia, gboolean encode)
 {
 	char *string = NULL;
@@ -474,7 +474,7 @@ decode_domain (const char **in)
 	domain = g_string_new ("");
 	
 	inptr = *in;
-	while (TRUE) {
+	while (inptr && *inptr) {
 		decode_lwsp (&inptr);
 		if (*inptr == '[') {
 			/* domain literal */
@@ -517,7 +517,7 @@ decode_domain (const char **in)
 	else
 		dom = NULL;
 	
-	g_string_free (domain, FALSE);
+	g_string_free (domain, dom ? FALSE : TRUE);
 	
 	*in = inptr;
 	
@@ -584,6 +584,8 @@ decode_mailbox (const char **in)
 		if (name)
 			g_string_free (name, TRUE);
 		g_string_free (addr, TRUE);
+		*in = inptr;
+		
 		return NULL;
 	}
 	

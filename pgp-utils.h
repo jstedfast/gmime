@@ -25,6 +25,7 @@
 #define __PGP_UTILS_H__
 
 #include <glib.h>
+#include <sys/types.h>
 #include "gmime-exception.h"
 
 #ifdef __cplusplus
@@ -45,27 +46,27 @@ typedef enum {
 	PGP_HASH_TYPE_SHA1
 } PgpHashType;
 
-typedef gchar* (*PgpPasswdFunc) (const gchar *prompt, gpointer data);
+typedef char* (*PgpPasswdFunc) (const char *prompt, gpointer data);
 
-void pgp_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data);
+void pgp_init (const char *path, PgpType type, PgpPasswdFunc callback, gpointer data);
 
-gboolean pgp_detect (const gchar *text);
+gboolean pgp_detect (const char *text);
 
-gboolean pgp_sign_detect (const gchar *text);
+gboolean pgp_sign_detect (const char *text);
 
-gchar *pgp_decrypt (const gchar *ciphertext, gint cipherlen, gint *outlen, GMimeException *ex);
+char *pgp_decrypt (const char *ciphertext, size_t cipherlen, size_t *outlen, GMimeException *ex);
 
-gchar *pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
-		    gboolean sign, const gchar *userid, GMimeException *ex);
+char *pgp_encrypt (const char *in, size_t inlen, const GPtrArray *recipients,
+		   gboolean sign, const char *userid, GMimeException *ex);
 
-gchar *pgp_clearsign (const gchar *plaintext, const gchar *userid,
-		      PgpHashType hash, GMimeException *ex);
+char *pgp_clearsign (const char *plaintext, const char *userid,
+		     PgpHashType hash, GMimeException *ex);
 
-gchar *pgp_sign (const gchar *in, gint inlen, const gchar *userid,
-		 PgpHashType hash, GMimeException *ex);
+char *pgp_sign (const char *in, size_t inlen, const char *userid,
+		PgpHashType hash, GMimeException *ex);
 
-gboolean pgp_verify (const gchar *in, gint inlen, const gchar *sigin,
-		     gint siglen, GMimeException *ex);
+gboolean pgp_verify (const char *in, size_t inlen, const char *sigin,
+		     size_t siglen, GMimeException *ex);
 
 #ifdef __cplusplus
 }

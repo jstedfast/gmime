@@ -1,3 +1,568 @@
+2001-11-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 0.7.3
+
+	* gmime-param.c: GMimeParam is now a linked list of parameters
+	rather than a single name/value pair.
+	(g_mime_param_new_from_string): Now returns a parameter list based
+	on the input string rather than only returning a single parameter
+	name/value pair. Also updated to handle rfc2184 encoded
+	parameters.
+	(g_mime_param_destroy): Destroy the linked list of params.
+	(g_mime_param_append): Append a new parameter.
+	(g_mime_param_append_param): Append a new parameter object.
+	(g_mime_param_write_to_string): New function (which replaces
+	g_mime_param_to_string) which correctly encodes (either by quoting
+	the value or rfc2184 encoding it) the list of parameters and
+	optionally folds them suitable for header wrapping.
+
+	* gmime-disposition.[c,h]: New sources files to handle
+	parsing/generating Content-Disposition headers.
+
+	* gmime-part.c (g_mime_part_destroy): Updated to use
+	g_mime_disposition_destroy.
+	(g_mime_part_set_content_disposition_object): New function for
+	setting the disposition object on a mime part.
+	(g_mime_part_set_content_disposition): Updated to use
+	g_mime_disposition_set.
+	(g_mime_part_get_content_disposition): Updated to use
+	g_mime_disposition_get.
+	(g_mime_part_add_content_disposition_parameter): Updated to use
+	g_mime_disposition_add_parameter.
+	(g_mime_part_get_content_disposition_parameter): Updated to use
+	g_mime_disposition_get_parameter.
+	(g_mime_part_set_filename): Updated to use
+	g_mime_disposition_add_parameter.
+	(g_mime_part_get_filename): Updated to use
+	g_mime_disposition_get_parameter.
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string): Use
+	the gmime-param code to parse any Content-Type parameters.
+	(g_mime_content_type_destroy): Updated to use
+	g_mime_param_destroy.
+	(g_mime_content_type_add_parameter): Updated to use g_mime_param
+	functions.
+
+	* gmime-utils.c (g_mime_utils_header_fold): Fixed a small header
+	folding bug.
+
+	* gmime-parser.c (parse_content_headers): Updated to use the
+	GMimeDisposition parser.
+
+	* pan-mime-parser.c (parse_content_headers): Updated to use the
+	GMimeDisposition parser.
+
+2001-11-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 0.7.2 due to the change-over to
+	refcounted mime objects.
+
+	* gmime-object[c,h]: New source files that implement an abstract
+	Object class.
+
+	* gmime-message.c: Updated to subclass GMimeObject
+
+	* gmime-part.c: Updated to subclass GMimeObject
+	(g_mime_part_set_content_header): Set an arbitrary mime content
+	header.
+	(g_mime_part_get_content_header): Get an arbitrary mime content
+	header.
+	(g_mime_part_add_child): Finally deprecated, please use
+	g_mime_part_add_subpart instead if you aren't already.
+
+	* gmime-parser.c: Updated to unref mime parts where appropriate as
+	well as set unknown content headers on mime parts.
+
+	* pan-mime-parser.c: Same as gmime-parser.c
+
+2001-11-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-null.c (g_mime_stream_null_new): A new stream,
+	similar to /dev/null basically.
+
+2001-11-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Added checks for strlib functions and bumped the
+	version to 0.7.1 (there won't be an official 0.7.1 release but I
+	figure I should be bumping version numbers whenever I add
+	functionality).
+
+	* strlib.[c,h]: New string library that provides anything that the
+	system libc doesn't (includig strnstr and stpcpy).
+
+	* gmime-filter-html.[c,h]: New filter that converts plain text
+	into HTML suitable for display in things like GtkHTML (makes urls
+	into hyperlinks and preserves whitespace and such).
+
+	* gmime-parser.c (g_strstrbound): Removed.
+	(find_header_part_end): Use strnstr.
+	(g_mime_parser_construct_part_internal): Use strnstr.
+
+2001-10-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Updated the version to 0.7.0
+
+	* doc/*: Updated.
+
+2001-10-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (g_mime_message_new): Now takes an
+	"init_headers" argument, it doesn't really matter what value you
+	put here - it's more a "I want my message headers to be in a nice
+	friendly order rather than the order they are set in".
+
+	* gmime-parser.c (g_mime_parser_construct_message): Use
+	!preserve_headers as the init_headers argument to
+	g_mime_message_new ().
+
+	* pan-mime-parser.c (g_mime_parser_construct_message): Same.
+
+2001-10-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c (construct_message_headers): Use
+	g_mime_header_add instead of g_mime_header_set so we can get
+	multiple of the same header (such as "Received:").
+
+	* gmime-parser.c (construct_headers): Use g_mime_header_add
+	instead of g_mime_header_set so we can get multiple of the same
+	header (such as "Received:") and also move it into the switch
+	statement into the default case.
+
+	* gmime-message.c (g_mime_message_set_header): New function to add
+	a header to a message.
+
+	* gmime-header.c (g_mime_header_add): New function to add a
+	header.
+
+	* gmime-stream.c (g_mime_stream_writev): New function to write a
+	vector to a stream.
+
+2001-10-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c: Updated to use g_mime_stream_buffer_readln.
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_readln): New
+	convenience function to read a single line from a stream.
+
+2001-10-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (g_mime_part_write_to_stream): No longer takes a
+	'toplevel' argument.
+	(g_mime_part_to_string): No longer takes a 'toplevel' argument.
+
+	* gmime-message.c (g_mime_message_write_to_stream): Write the
+	MIME-Version header here instead of needing to pass a 'toplevel'
+	argument to g_mime_part_write_to_stream().
+
+	* gmime-charset.c (g_mime_charset_init): Fix for Debian and
+	Solaris.
+
+2001-10-09  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter.c (g_mime_filter_construct): make sure outptr is
+	zeroed out before we read it in g_mime_filter_set_size().
+
+2001-10-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-basic.c (filter_filter): Implemented uuencoding.
+	(filter_complete): Implemented uuencoding.
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): New function to
+	flush the uuencoder.
+	(g_mime_utils_uuencode_step): New function to uuencode a block of
+	data.
+
+2001-10-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Fixes for c++ compilation
+
+	* gmime-stream*.c: s/template/stream_template
+
+	* gmime-filter*.c: s/template/filter_template
+
+2001-10-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): If we
+	just change the order of operations, we can get away without a
+	second stream pointer.
+
+	* gmime-stream.c (g_mime_stream_substream): Revert.
+
+	* gmime-stream-buffer.c (stream_substream): Instead of calling
+	g_mime_stream_substream(), call the source stream's substream
+	method directly. I think this is the better fix for the bug
+	Charles just fixed.
+
+2001-10-04  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-stream.c (g_mime_stream_substream): fix refcount stealth
+	bug.  Calling this on a buffered stream wound up reffing two
+	streams instead of one because of a nested call to
+	g_mime_stream_substream().  This took a lot of scaffolding to
+	find. :)
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): fix
+	refcount paranoia bug.  ref the new *before* unreffing the old
+	just in case new==old.
+	
+	* gmime-filter-basic.[ch]: fix some compiler warnings that I
+	introduced yesterday.  (Strange how the same version of gcc finds
+	different warnings on different platforms.)
+
+2001-10-03  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-part.c (g_mime_part_get_content): bugfix for when getting
+	the content from a stream-mem.  We were just returning the
+	stream-mem's gbytearray buffer, but we need to check against the
+	stream's bounds.
+
+	* gmime-filter-basic.[ch]: added support for decoding a uuencoded
+	stream; added a placeholder for uuencoding a stream.
+
+	* md5-utils.c: commented out d(x) macro.
+
+2001-10-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.h: buflen should be an ssize_t not a
+	size_t. Thanks to Charles for catching this.
+
+2001-10-01  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter.c: include <string.h> to pick up memcpy prototype.
+	* gmime-stream-mem.c: same.
+	* gmime-stream-buffer.c: same.
+	* gmime-stream-filter.c: same.
+
+	* gmime-stream-mem.c (stream_flush): added a retval of 0.
+
+	* gmime-filter-crlf.h (g_mime_filter_crlf_new_type): renamed
+	prototype as g_mime_filter_crlf_new to sync with .c
+
+	* gmime-part.h: added g_mime_part_set_content_object() prototype.
+
+	* gmime-content-type.h: Replaced <> with "" in #include
+	<gmime-param.h>
+
+	* pan-mime-parser.c: added #include gmime-stream-buffer.h to pick
+	up prototype for g_mime_stream_buffer_gets.
+	(g_strstrbound): removed unused func.
+
+	* gmime-utils.c: on calls to ctype functions, explicitly upcast
+	the char arguments as ints to shut up gcc warnings on Solaris.
+	* gmime-param.c: same.
+
+2001-09-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c: New parser (with exactly the same API as
+	gmime-parser.c) that is meant to parse MIME objects without
+	needing them to be memory mapped. Quite a bit slower on average,
+	but is vastly sped up by using a GMimeStreamBuffer in BLOCK_READ
+	mode.
+
+	* gmime-stream-buffer.c (stream_write): Incremement the stream
+	position by the number of bytes we wrote.
+	(stream_tell): Return stream->position.
+	(stream_substream): Just return a substream of our source stream.
+	(g_mime_stream_buffer_gets): Increment the stream position by the
+	number of bytes read if and only if we are operating on a buffered
+	stream.
+
+2001-09-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-file.c (stream_tell): Return stream->position here
+	too.
+
+	* gmime-part.c (g_mime_part_set_pre_encoded_content): Don't decode
+	into a stream and then set the data wrapper encoding to the
+	incoming encoding type, instead use filters to decode into the
+	stream and set the data wrapper encoding to the default.
+
+	* gmime-stream.c (g_mime_stream_set_bounds): Don't set the
+	position equal to end if end == -1.
+
+	* gmime-parser.c (g_mime_parser_construct_message): Use the stream
+	functions to find the beginning and end of the stream rather than
+	breaking abstractions. Also reset the mem stream after writing to
+	it.
+	(g_mime_parser_construct_part): Reset the mem stream here too.
+	(g_mime_parser_construct_part_internal): Use the stream interfaces
+	to get the position instead of breaking abstractions.
+
+	* gmime-stream-fs.c (stream_tell): Return stream->position.
+
+	* gmime-stream-mem.c (stream_seek): Return the new syteam
+	position.
+	(stream_tell): Return stream->position.
+
+2001-09-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/gmime-docs.sgml: Documented streams.
+
+	* gmime-stream-fs.c (stream_write): Seek to the position we think
+	we're at before attempting to write, and increment the stream
+	position after the write.
+
+	* gmime-stream-file.c (stream_write): Seek to the position we
+	think we're at... this is just in case we are or have substreams
+	that might have read or written in the meantime. Also remember to
+	increment the stream position after the write.
+	(stream_eos): Only return feof() if our end boundary is unlimited.
+
+	* gmime-stream-mem.c (stream_write): Start writing data at
+	stream->position rather than always appending it to the end of the
+	mem stream. Also don't go writing past the end boundary if it's
+	set.
+	(stream_length): Use a relative bound_end.
+	(stream_seek): Same.
+	(stream_eos): Here too.
+	(stream_write): And here.
+	(stream_read): And here.
+	(stream_substream): Correctly set the bounds.
+	(g_mime_stream_mem_new): Here too.
+	(g_mime_stream_mem_new_with_byte_array): And here.
+	(g_mime_stream_mem_new_with_buffer): Same.
+	(g_mime_stream_mem_set_byte_array): And finally here.
+
+2001-09-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-streams.c: New test suite for streams.
+
+	* gmime-stream-buffer.c (stream_read): Fixed some logic bugs
+	(including forgetting a break statement at the end of a case).
+	(g_mime_stream_buffer_gets): Fixed some logic bugs.
+
+	* gmime-stream-mem.c (stream_read): Fixed logic error.
+
+2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_gets): Implemented.
+	(stream_reset): Implemented.
+	(stream_eos): Implemented.
+	(stream_write): Reimplemented.
+	(stream_read): Reimplemented.
+
+2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.[c,h]: New stream that buffers reads or
+	writes to/from another stream. Will also implement a gets() method
+	for Charles.
+
+2001-09-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-mem.c (stream_eos): Check for position >= instead
+	of == bound_end
+
+	* gmime-stream.c (g_mime_stream_eos): Do some simple bounds
+	checking.
+
+	* doc/*: Updated.
+
+	* gmime-part.c (g_mime_part_get_content_object): Added.
+
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-fs.c (stream_seek): Improve.
+
+	* gmime-stream-file.c (stream_reset): Oops, reset the position
+	pointer on a successful reset.
+	(stream_seek): Fixed.
+
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-fs.c (stream_reset): Reset the position offset. Doh!
+
+	* gmime-stream.c (g_mime_stream_write_to_stream): Don't increment
+	total if no bytes were read/written.
+
+	* gmime-stream-filter.c (stream_substream): Copy over the filters.
+
+	* gmime-part.c (g_mime_part_verify_content_md5): Updated.
+	(g_mime_part_set_content_md5): Updated.
+	(g_mime_part_get_content): Updated.
+	(write_content): Updated.
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_write_to_stream):
+	Implemented.
+
+	* gmime-filter-basic.[c,h]: A basic filter that does Base64 and QP
+	encoding/decoding.
+
+	* gmime-filter-crlf.[c,h]: A simple filter that does crlf(/dot)
+	encoding/decoding.
+
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_new_with_stream): Ref
+	the stream.
+	(g_mime_data_wrapper_set_stream): Same.
+	(g_mime_data_wrapper_get_stream): Return the internal stream.
+	(g_mime_data_wrapper_get_encoding): Return the internal stream's
+	encoding.
+	(g_mime_data_wrapper_write_to_stream): Not-yet-implemented.
+
+	* gmime-filter.[c,h]: Abstract class for filters.
+
+	* gmime-stream-filter.[c,h]: Abstract stream for filtering.
+
+	* gmime-part.c (g_mime_part_set_content): Updated for data-wrapper
+	changes.
+	(g_mime_part_set_content_byte_array): Same.
+	(g_mime_part_set_pre_encoded_content): And here.
+	(g_mime_part_get_content): And here too.
+
+	* gmime-parser.c (g_mime_parser_construct_part_internal): Fix
+	offset calculations.
+	(g_mime_parser_construct_part_internal): Updated for data-wrapper
+	changes.
+
+2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-parser.c (test_parser): Updated.
+
+	* test-mime.c (test_parser): Updated.
+
+	* gmime-utils.h: Move the GMimePartEncodingType enum here.
+
+	* gmime-stream-fs.[c,h]: Implemented.
+
+	* gmime-stream.c (g_mime_stream_construct): New function to
+	initialize the stream data members.
+	(g_mime_stream_substream): New function to get a substream of
+	another stream.
+	(g_mime_stream_unref): If the stream is actually a substream,
+	unref it's "super" stream if we are destroying the substream.
+
+	* gmime-stream-mem.c (stream_substream): Implemented.
+	(g_mime_stream_mem_new): Updated to use g_mime_stream_construct().
+	(g_mime_stream_mem_new_with_byte_array): Same.
+	(g_mime_stream_mem_new_with_buffer): And here too.
+
+	* gmime-stream-file.c (stream_substream): Implemented.
+	(g_mime_stream_file_new): Updated to use
+	g_mime_stream_construct().
+	(g_mime_stream_file_new_with_bounds): Same.
+
+	* gmime-part.c (g_mime_part_set_content_md5): Updated to use
+	streams.
+	(g_mime_part_verify_content_md5): Same.
+	(g_mime_part_set_content): Updated to use streams and data
+	wrappers.
+	(g_mime_part_set_content_byte_array): Same.
+	(g_mime_part_set_pre_encoded_content): And here.
+	(g_mime_part_set_content_object): New function that allows one to
+	set the content object of a MIME part.
+	(g_mime_part_get_content): Updated to use streams.
+	(write_content): Same.
+	(g_mime_part_write_to_stream): Replacement for
+	g_mime_part_write_to_string().
+	(g_mime_part_to_string): Updated to use
+	g_mime_part_write_to_stream().
+	(g_mime_part_destroy): Updated to destroy the content object
+	rather than destroying a GByteArray (since we longer use a
+	GByteArray for the content data).
+
+	* gmime-parser.c (g_mime_parser_construct_message): Now takes a
+	stream argument instead of a string.
+	(g_mime_parser_construct_message_from_file): Deprecated.
+	(g_mime_parser_construct_part): Also takes a stream now.
+
+	* gmime-message.c (g_mime_message_write_to_stream): Replacement
+	for g_mime_message_write_to_string().
+	(g_mime_message_to_string): Updated.
+
+	* gmime-header.c (g_mime_header_write_to_stream): Replacement for
+	g_mime_header_write_to_string().
+	(g_mime_header_to_string): Updated.
+
+2001-09-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream.[c,h]: Abstract stream class.
+
+	* gmime-stream-mem.[c,h]: Memory stream.
+
+	* gmime-stream-file.[c,h]: File stream.
+
+	* gmime-data-wrapper.[c,h]: Data wrapper class. Will be used as
+	the content object in MIME parts.
+
+2001-08-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (encode_8bit_word): Oops. Add the closing ? char.
+	(g_mime_utils_8bit_header_encode): Oops. Make sure we encode *all*
+	lwsp chars.
+	(g_mime_utils_8bit_header_decode): Slightly better fix for the
+	other day.
+
+2001-08-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+2001-08-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* Makefile.am: Added gmime-charset.[c,h] to the build.
+
+	* gmime-charset.[c,h]: New source files for managing charset
+	related issues.
+	(g_mime_charset_init): New function to retrieve the user's locale
+	information for later use with gmime_charset_locale_name.
+	(g_mime_charset_locale_name): New function to return user's
+	locale.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_decode): linear
+	whitespace isn't the only thing that can delimit atoms.
+	(get_codeset): Removed in favor of the new gmime-charset
+	functions.
+	(g_mime_utils_8bit_header_encode): Use g_mime_charset_locale_name.
+	(encode_8bit_word): And here too.
+
+2001-08-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_mailbox): When returning due to a
+	missing local part, make sure to set *in to inptr.
+
+2001-08-13  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-utils.c (encode_8bit_word): query nl_langinfo for the
+	codeset instead of just assuming iso-8859-1.  Thanks to Volodymyr
+	M . Lisivka <lvm@mystery.lviv.net> for suggesting this patch.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_encode): same.
+
+	* gmime-parser.c (find_header_part_end): new utility function to
+	find the dividing line between body & header.  * gmime-parser.c
+	(g_mime_parser_construct_part): sync.  * gmime-parser.c
+	(g_mime_parser_construct_message): sync.
+
+	* gmime-parser.c (get_header_block): remove unused func.  *
+	gmime-parser.c (rfc822_headers): remove unused static array.
+
+2001-07-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* zentimer.h: Added. Provides some timing macros for performace
+	testing.
+
+	* zenprofiler.h: Added. Extends zentimer.h as a simple profiler
+	that gives nice printouts.
+
+	* test-parser.c: Use zentimer.h
+
+2001-06-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-header.c (g_mime_header_remove): New function.
+	(g_mime_header_set): Setting header to NULL no longer removes the
+	header. Use g_mime_header_remove instead.
+
+	* gmime-message.c (g_mime_message_write_to_string): No longer have
+	to sync the headers.
+	(g_mime_message_get_headers): Same.
+	(g_mime_message_set_sender): sync the From header.
+	(g_mime_message_set_reply_to): Sync the Reply-To header.
+	(g_mime_message_add_recipient): Sync the recipient header.
+	(g_mime_message_add_recipients_from_string): Same.
+	(g_mime_message_set_subject): Sync the Subject header.
+	(g_mime_message_set_date): Sync the date header.
+	(g_mime_message_set_message_id): Sync the Message-Id header.
+
 2001-06-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (quoted_encode): Minor cleanups.
