@@ -1000,15 +1000,17 @@ g_mime_utils_header_fold (const char *in)
 	
 	inptr = in;
 	len = strlen (in);
-	if (len <= GMIME_FOLD_LEN)
+	if (len <= GMIME_FOLD_LEN + 1)
 		return g_strdup (in);
+	
+	printf ("pre-folded: '%s'\n", in);
 	
 	out = g_string_new ("");
 	outlen = 0;
-	while (*inptr) {
-		len = strcspn (inptr, " \t");
+	while (*inptr && *inptr != '\n') {
+		len = strcspn (inptr, " \t\n");
 		
-		if (outlen + len > GMIME_FOLD_LEN) {			
+		if (outlen + len > GMIME_FOLD_LEN) {
 			if (last_was_lwsp)
 				g_string_insert_c (out, out->len - 1, '\n');
 			else
@@ -1033,8 +1035,8 @@ g_mime_utils_header_fold (const char *in)
 		} else {
 			if (*inptr == '\t') {
 				/* tabs are a good place to fold, odds
-                                   are that this is where the previous
-                                   mailer folded it */
+				   are that this is where the previous
+				   mailer folded it */
 				g_string_append (out, "\n\t");
 				outlen = 1;
 				inptr++;
@@ -1047,8 +1049,13 @@ g_mime_utils_header_fold (const char *in)
 		}
 	}
 	
+	if (*inptr == '\n' && out->str[out->len - 1] != '\n')
+		g_string_append_c (out, '\n');
+	
 	ret = out->str;
 	g_string_free (out, FALSE);
+	
+	printf ("post-folded: '%s'\n", ret);
 	
 	return ret;
 }

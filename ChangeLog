@@ -1,3 +1,11 @@
+2004-05-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (write_received): Be careful to never
+	append bytes beyond the end of the header value (eg the nul byte).
+
+	* gmime/gmime-utils.c (g_mime_utils_header_fold): Don't allow
+	folded headers to end with \n\n.
+
 2004-04-28  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-multipart-encrypted.c

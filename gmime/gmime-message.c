@@ -406,9 +406,9 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 			g_string_append_len (str, start, inptr - start);
 			len += (inptr - start);
 			start = inptr;
+		} else {
+			inptr++;
 		}
-		
-		inptr++;
 	}
 	
 	if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
@@ -418,7 +418,8 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 		len = 1;
 	}
 	
-	g_string_append_len (str, start, inptr - start);
+	if ((inptr - start) > 0)
+		g_string_append_len (str, start, inptr - start);
 	g_string_append_c (str, '\n');
 	
 	nwritten = g_mime_stream_write (stream, str->str, str->len);
