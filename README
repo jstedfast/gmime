@@ -1,4 +1,4 @@
-                            GMime, version 1.0.5
+                            GMime, version 1.0.6
                    by Jeffrey Stedfast <fejj@helixcode.com>
 
 
@@ -49,7 +49,7 @@ Other RFCs of interest:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000,2002 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2002 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

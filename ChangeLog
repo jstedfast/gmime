@@ -1,3 +1,26 @@
+2002-10-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 1.0.6
+
+	* README: Updated.
+
+	* internet-address.c (decode_mailbox): When erroring out due to no
+	local part in the add-spec, set *in to inptr + 1 so we don't get
+	into an infinite loop.
+
+	* gmime-charset.c (g_mime_charset_name): Don't g_assert after
+	using strtoul on the iso charset name, seems that some news
+	clients use 'isolatin' as if it were a real charset (it's not) and
+	we don't want to abort() on this.
+
+	* gmime-utils.c (get_tzone): Fixed to not get false positives when
+	the token is shorter than the actual timezone string (but matches
+	the first little bit of it).
+
+	* gmime-stream-filter.c (stream_read): Change presize from an int
+	to a size_t to fix a 64bit cleanliness bug.
+	(stream_write): Same.
+
 2002-07-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.0.5
