@@ -283,7 +283,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	g_object_ref (session);
 	gpg->userid_hint = g_hash_table_new (g_str_hash, g_str_equal);
 	gpg->complete = FALSE;
-	gpg->seen_eof1 = FALSE;
+	gpg->seen_eof1 = TRUE;
 	gpg->seen_eof2 = FALSE;
 	gpg->pid = (pid_t) -1;
 	gpg->exit_status = 0;
@@ -407,6 +407,7 @@ gpg_ctx_set_ostream (struct _GpgCtx *gpg, GMimeStream *ostream)
 	if (gpg->ostream)
 		g_mime_stream_unref (gpg->ostream);
 	gpg->ostream = ostream;
+	gpg->seen_eof1 = FALSE;
 }
 
 static const char *
@@ -868,11 +869,6 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				} else if (!strncmp (status, "ULTIMATE", 8)) {
 					gpg->trust = GPG_TRUST_ULTIMATE;
 				}
-				
-				/* Since verifying a signature will never produce output
-				   on gpg's stdout descriptor, we use this EOF bit for
-				   making sure that we get a TRUST metric. */
-				gpg->seen_eof1 = TRUE;
 			} else if (!strncmp (status, "VALIDSIG", 8)) {
 				gpg->validsig = TRUE;
 			} else if (!strncmp (status, "BADSIG", 6)) {
@@ -901,13 +897,10 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			}
 			break;
 		case GPG_CTX_MODE_IMPORT:
-			/* hack to work around the fact that gpg
-                           doesn't write anything to stdout when
-                           importing keys */
-			if (!strncmp (status, "IMPORT_RES", 10))
-				gpg->seen_eof1 = TRUE;
+			/* no-op */
 			break;
 		case GPG_CTX_MODE_EXPORT:
+			/* no-op */
 			break;
 		}
 	}
@@ -960,12 +953,21 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	
  retry:
 	FD_ZERO (&rdset);
-	FD_SET (gpg->stdout_fd, &rdset);
-	FD_SET (gpg->stderr_fd, &rdset);
-	FD_SET (gpg->status_fd, &rdset);
 	
-	maxfd = MAX (gpg->stdout_fd, gpg->stderr_fd);
-	maxfd = MAX (maxfd, gpg->status_fd);
+	if (!gpg->seen_eof1) {
+		FD_SET (gpg->stdout_fd, &rdset);
+		maxfd = MAX (maxfd, gpg->stdout_fd);
+	}
+	
+	if (!gpg->seen_eof2) {
+		FD_SET (gpg->stderr_fd, &rdset);
+		maxfd = MAX (maxfd, gpg->stderr_fd);
+	}
+	
+	if (!gpg->complete) {
+		FD_SET (gpg->status_fd, &rdset);
+		maxfd = MAX (maxfd, gpg->status_fd);
+	}
 	
 	if (gpg->stdin_fd != -1 || gpg->passwd_fd != -1) {
 		FD_ZERO (&wrset);
@@ -980,6 +982,8 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		
 		wrsetp = &wrset;
 	}
+	
+	g_assert (maxfd > 0);
 	
 	timeout.tv_sec = 10; /* timeout in seconds */
 	timeout.tv_usec = 0;
@@ -1174,6 +1178,7 @@ gpg_ctx_op_complete (struct _GpgCtx *gpg)
 	return gpg->complete && gpg->seen_eof1 && gpg->seen_eof2;
 }
 
+#if 0
 static gboolean
 gpg_ctx_op_exited (struct _GpgCtx *gpg)
 {
@@ -1189,6 +1194,7 @@ gpg_ctx_op_exited (struct _GpgCtx *gpg)
 	
 	return FALSE;
 }
+#endif
 
 static void
 gpg_ctx_op_cancel (struct _GpgCtx *gpg)

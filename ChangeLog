@@ -1,3 +1,19 @@
+2003-04-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_new): Initialise seen_eof1 to
+	TRUE.
+	(gpg_ctx_set_ostream): Set seen_eof1 to FALSE here, this way we
+	only ever check for EOF for gpg's stdout if we care about the data
+	received from it.
+	(gpg_ctx_parse_status): Remove the hack that set seen_eof1 to TRUE
+	when we received a TRUST status from gpg when verifying a
+	signature. Same for when importing signatures.
+	(gpg_ctx_op_step): Only FD_SET() fd's that we have not finished
+	reading from.
+	(gpg_ctx_op_exited): #if 0'd for now since we aren't using it
+	anymore. Keeping it around for historical reasons and in case we
+	find we really do need it back.
+
 2003-04-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Check for netdb.h, gethostname and gethostbyname.
