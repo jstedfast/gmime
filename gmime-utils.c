@@ -726,11 +726,14 @@ g_mime_utils_unquote_string (gchar *string)
 gboolean
 g_mime_utils_text_is_8bit (const guchar *text)
 {
-	guchar *c;
-	
-	for (c = (guchar *) text; *c; c++)
-		if (*c > (guchar) 127)
-			return TRUE;
+	if (text != NULL)
+	{
+		guchar *c;
+
+		for (c = (guchar *) text; *c; c++)
+			if (*c > (guchar) 127)
+				return TRUE;
+	}
 	
 	return FALSE;
 }

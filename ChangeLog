@@ -1,3 +1,9 @@
+2000-12-28  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.c (g_mime_utils_text_is_8bit): gracefully handle
+	a NULL pointer being passed in.  Thanks to Christophe Lambin for
+	reporting this problem.
+
 2000-12-14  Charles Kerr <charles@superpimp.org>
 
 	* gmime-messge.c (g_mime_message_get_message_id):  change
