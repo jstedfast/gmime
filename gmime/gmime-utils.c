@@ -976,6 +976,35 @@ g_mime_references_clear (GMimeReferences **refs)
 }
 
 
+static gboolean
+is_rfc2047_token (const char *inptr, size_t len)
+{
+	if (len < 8 || strncmp (inptr, "=?", 2) != 0 || strncmp (inptr + len - 2, "?=", 2) != 0)
+		return FALSE;
+	
+	inptr += 3;
+	len -= 3;
+	
+	while (*inptr != '?' && len > 0) {
+		inptr++;
+		len--;
+	}
+	
+	if (*inptr != '?' || len < 4)
+		return FALSE;
+	
+	if (inptr[1] != 'q' && inptr[1] != 'Q' && inptr[1] != 'b' && inptr[1] != 'B')
+		return FALSE;
+	
+	inptr += 2;
+	len -= 2;
+	
+	if (*inptr != '?')
+		return FALSE;
+	
+	return TRUE;
+}
+
 static char *
 header_fold (const char *in, gboolean structured)
 {
@@ -1012,7 +1041,7 @@ header_fold (const char *in, gboolean structured)
 				outlen = 1;
 			}
 			
-			if (!structured) {
+			if (!structured && !is_rfc2047_token (inptr, len)) {
 				/* check for very long words, just cut them up */
 				while (outlen + len > GMIME_FOLD_LEN) {
 					for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)

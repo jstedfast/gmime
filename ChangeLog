@@ -1,3 +1,14 @@
+2005-01-31  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (header_fold): Don't break apart rfc2047
+	encoded tokens.
+
+2005-01-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Updated
+
+	* configure.in: Bumped version to 2.1.11
+
 2005-01-26  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metdata: The gtk-sharp generator doesn't handle
