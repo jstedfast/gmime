@@ -2,6 +2,8 @@
 
 	* doc/html/index.sgml: Added - apparently we need this :-)
 
+	* doc/Makefile.am: Updated to pass distcheck
+
 2000-11-10  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/gmime-docs.sgml: Added a new paragraph explaining the
