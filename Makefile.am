@@ -30,6 +30,7 @@ libgmime_la_SOURCES = 		\
 	gmime-filter-html.c	\
 	gmime-header.c		\
 	gmime-iconv.c		\
+	gmime-iconv-utils.c	\
 	gmime-message.c		\
 	gmime-object.c		\
 	gmime-param.c		\
@@ -62,6 +63,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter-html.h	\
 	gmime-header.h		\
 	gmime-iconv.h		\
+	gmime-iconv-utils.h	\
 	gmime-message.h		\
 	gmime-object.h		\
 	gmime-param.h		\

@@ -1,3 +1,18 @@
+2002-01-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): New utility function
+	to iconv n bytes of a string and return a buffer containing the
+	converted string.
+	(g_mime_iconv_strdup): Same but for the whole string.
+	(g_mime_iconv_locale_to_utf8): Converts a string in the locale
+	charset to utf8.
+	(g_mime_iconv_locale_to_utf8_length): Same but for a sublength of
+	the string.
+	(g_mime_iconv_utf8_to_locale): Converts a string from utf8 to the
+	locale charset.
+	(g_mime_iconv_utf8_to_locale_length): Same but for a sublength of
+	the string.
+
 2002-01-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* test-iconv.c: test suite to make sure that the gmime-iconv cache

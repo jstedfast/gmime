@@ -25,6 +25,8 @@
 
 #include <glib.h>
 #include "gmime-charset.h"
+#include "gmime-iconv.h"
+#include "gmime-iconv-utils.h"
 #include "gmime-param.h"
 #include "gmime-content-type.h"
 #include "gmime-disposition.h"
