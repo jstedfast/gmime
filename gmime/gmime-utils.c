@@ -1936,7 +1936,7 @@ g_mime_utils_header_encode_text (const unsigned char *in)
  * Decodes an rfc2047 encoded header.
  *
  * Note: This function is deprecated. Use
- * #g_mime_utils_header_decode_text() instead.
+ * #g_mime_utils_header_decode_text instead.
  *
  * Returns the decoded header (which will be in UTF-8 if at all
  * possible).
@@ -1955,7 +1955,7 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
  * Encodes a 'text' header according to the rules in rfc2047.
  *
  * Note: This function is deprecated. Use
- * #g_mime_utils_header_encode_text() instead.
+ * #g_mime_utils_header_encode_text instead.
  *
  * Returns the encoded header. Useful for encoding
  * headers like "Subject".
@@ -1974,7 +1974,7 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
  * Note: This function is deprecated. Use
- * #g_mime_utils_header_encode_phrase() instead.
+ * #g_mime_utils_header_encode_phrase instead.
  *
  * Returns the encoded 'phrase'. Useful for encoding internet
  * addresses.

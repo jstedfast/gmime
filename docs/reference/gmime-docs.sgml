@@ -39,6 +39,7 @@
 <!entity GMimeFilterBest SYSTEM "sgml/gmime-filter-best.sgml">
 <!entity GMimeFilterCharset SYSTEM "sgml/gmime-filter-charset.sgml">
 <!entity GMimeFilterCRLF SYSTEM "sgml/gmime-filter-crlf.sgml">
+<!entity GMimeFilterEnriched SYSTEM "sgml/gmime-filter-enriched.sgml">
 <!entity GMimeFilterFrom SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity GMimeFilterHTML SYSTEM "sgml/gmime-filter-html.sgml">
 <!entity GMimeFilterMd5 SYSTEM "sgml/gmime-filter-md5.sgml">
@@ -176,6 +177,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterBest;
       &GMimeFilterCharset;
       &GMimeFilterCRLF;
+      &GMimeFilterEnriched;
       &GMimeFilterFrom;
       &GMimeFilterHTML;
       &GMimeFilterMd5;
