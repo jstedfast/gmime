@@ -1,3 +1,10 @@
+2001-01-05  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_set_content_md5): Oops, didn't quite
+	do this right. It should be correct now.
+	(g_mime_part_verify_content_md5): New function to verify the
+	Content-MD5.
+
 2001-01-04  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-parser.c (g_mime_parser_construct_part): Added support for

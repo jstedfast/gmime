@@ -85,6 +85,7 @@ void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
 const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
 
 void g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5);
+gboolean g_mime_part_verify_content_md5 (GMimePart *mime_part);
 const gchar *g_mime_part_get_content_md5 (GMimePart *mime_part);
 
 void g_mime_part_set_content_location (GMimePart *mime_part, const gchar *content_location);
