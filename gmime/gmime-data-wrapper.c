@@ -100,8 +100,9 @@ void
 g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
 	g_return_if_fail (wrapper != NULL);
-	
-	g_mime_stream_ref (stream);
+
+	if (stream)
+		g_mime_stream_ref (stream);
 	
 	if (wrapper->stream)
 		g_mime_stream_unref (wrapper->stream);
@@ -185,6 +186,8 @@ g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *str
 	g_return_val_if_fail (wrapper != NULL, -1);
 	g_return_val_if_fail (stream != NULL, -1);
 	g_return_val_if_fail (wrapper->stream != NULL, -1);
+	
+	g_mime_stream_reset (wrapper->stream);
 	
 	filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);
 	switch (wrapper->encoding) {

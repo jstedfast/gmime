@@ -395,15 +395,15 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
-	/*test_date ();
+	test_date ();
 	
-	  test_onepart ();*/
+	test_onepart ();
 	
 	test_multipart ();
 	
-	/*test_encodings ();
+	test_encodings ();
 	
-	  test_addresses ();*/
+	test_addresses ();
 	
 	return 0;
 }

@@ -86,7 +86,7 @@ test_parser (GMimeStream *stream)
 		char *body;
 		
 		body = g_mime_message_get_body (message, FALSE, &is_html);
-		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
+		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n\n",
 			 body && is_html ? "found" : "not found",
 			 body ? body : "No message body found");
 		
@@ -105,7 +105,7 @@ test_parser (GMimeStream *stream)
 
 
 /* you can only enable one of these at a time... */
-#define STREAM_BUFFER
+/*#define STREAM_BUFFER*/
 /*#define STREAM_MEM*/
 /*#define STREAM_MMAP*/
 

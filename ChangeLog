@@ -1,7 +1,28 @@
+2001-12-01  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parse_content_headers): Set is_multipart to
+	FALSE.
+	(g_mime_parser_construct_part_internal): Get the inlen properly
+	and do content-offsetting a little better by skipping past the
+	end-of-header marker.
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_gets): Use the
+	'register' keyword for some variables.
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): Safeguard
+	against NULL streams.
+	(g_mime_data_wrapper_write_to_stream): Reset the stream before
+	writing too.
+
+	* gmime-stream-mem.c (stream_seek): Fix to work like the others.
+	(stream_read): On error, always return -1 (and not just any value
+	less than 0)
+	(stream_write): Same.
+
 2001-11-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c (write_content): Implemented a slight optimization
-	which bypasses the need to do any encoding in some certain
+	which bypasses the need to do any encoding in certain
 	circumstances.
 
 2001-11-28  Jeffrey Stedfast  <fejj@ximian.com>
