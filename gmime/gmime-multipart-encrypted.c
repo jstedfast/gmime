@@ -316,8 +316,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		protocol = ctx->encrypt_protocol;
 	}
 	
-	version_part = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 0);
-	encrypted_part = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 1);
+	version = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 0);
 	
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
@@ -325,13 +324,21 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 				      "Failed to decrypt MIME part: protocol error");
 		
-		g_mime_object_unref (signature);
-		g_mime_object_unref (content);
+		g_mime_object_unref (version);
 		g_free (content_type);
 		
 		return NULL;
 	}
 	g_free (content_type);
+	
+	/* get the encrypted part and check that it is of type application/octet-stream */
+	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 1);
+	mime_type = g_mime_object_get_content_type (encrypted_part);
+	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
+		g_mime_object_unref (encrypted);
+		g_mime_object_unref (version);
+		return NULL;
+	}
 	
 	/* get the ciphertext stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (encrypted));
@@ -364,9 +371,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	decrypted = g_mime_parser_construct_part (parser);
 	g_object_unref (parser);
 	
-	if (decryptd) {
+	if (decrypted) {
 		/* cache the decrypted part */
-		g_mime_object_unref (decrypted);
+		g_mime_object_ref (decrypted);
 		mpe->decrypted = decrypted;
 	} else {
 		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
