@@ -24,6 +24,9 @@
 #define __GMIME_H__
 
 #include <glib.h>
+#include "gmime-charset.h"
+#include "gmime-iconv.h"
+#include "gmime-iconv-utils.h"
 #include "gmime-param.h"
 #include "gmime-content-type.h"
 #include "gmime-disposition.h"
@@ -44,6 +47,8 @@
 #include "gmime-stream-null.h"
 #include "gmime-filter.h"
 #include "gmime-filter-basic.h"
+#include "gmime-filter-charset.h"
+#include "gmime-filter-chomp.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-filter-html.h"
