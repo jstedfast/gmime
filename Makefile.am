@@ -41,6 +41,7 @@ libgmime_la_SOURCES = 		\
 	gmime-part.c		\
 	gmime-stream.c		\
 	gmime-stream-buffer.c	\
+	gmime-stream-cat.c	\
 	gmime-stream-file.c	\
 	gmime-stream-filter.c	\
 	gmime-stream-fs.c	\
@@ -76,6 +77,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-part.h		\
 	gmime-stream.h		\
 	gmime-stream-buffer.h	\
+	gmime-stream-cat.h	\
 	gmime-stream-file.h	\
 	gmime-stream-filter.h	\
 	gmime-stream-fs.h	\

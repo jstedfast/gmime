@@ -1,3 +1,15 @@
+2002-05-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* Makefile.am: Added gmime-stream-cat.c to the build.
+
+	* gmime-stream-cat.c: New stream that acts similar to the Unix
+	`cat` command by concatenating multiple streams.
+
+2002-05-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-fs.c (stream_write): Do more error handling and
+	also try to write out everything.
+
 2002-05-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-charset.c (main): Generate the multibyte charsets without
