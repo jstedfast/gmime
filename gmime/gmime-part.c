@@ -26,6 +26,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <string.h>
 #include <ctype.h>
 #include "gmime-part.h"
@@ -1048,7 +1049,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		
 		/* Content-Location: */
 		if (mime_part->content_location) {
-			content_md5 = g_strdup_printf ("Content-Location: %s\n", mime_part->content_location);
+			content_location = g_strdup_printf ("Content-Location: %s\n", mime_part->content_location);
 			g_string_append (string, content_location);
 			g_free (content_location);
 		}

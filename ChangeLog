@@ -1,3 +1,14 @@
+2001-02-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (g_mime_part_to_string): Oops. Don't init
+	content_md5 with the content location string ;-)
+
+	* gmime-parser.c (g_mime_parser_construct_part): Init content to
+	NULL to get rid of a warning (this doesn't really matter as 'len'
+	was init'd to 0)
+
+	* gmime-part.c: #include unistd.h
+
 2001-01-27  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_content_byte_array): So
