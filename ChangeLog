@@ -1,5 +1,14 @@
 2002-08-03  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-message.c (g_mime_message_set_message_id): Revert Charles'
+	previous fix and just g_return_if_fail() if the message_id is NULL
+	instead.
+	(g_mime_message_set_subject): Same for NULL subjects.
+	(g_mime_message_set_reply_to): Here too.
+	(g_mime_message_set_sender): Again here.
+	(g_mime_message_add_header): Check that the value != NULL.
+	(g_mime_message_set_header): Same here.
+
 	* internet-address.c (decode_mailbox): Changed a for-loop into a
 	while-loop to make the code a tad easier to read. Also fixed a
 	type-o that meant to wrap a debug printf in d(). While we're at

@@ -417,6 +417,7 @@ void
 g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (sender != NULL);
 	
 	message_set_sender (message, sender);
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "From", message->from);
@@ -461,6 +462,7 @@ void
 g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (reply_to != NULL);
 	
 	message_set_reply_to (message, reply_to);
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "Reply-To", message->reply_to);
@@ -623,6 +625,7 @@ void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (subject != NULL);
 	
 	message_set_subject (message, subject);
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "Subject", message->subject);
@@ -719,11 +722,8 @@ message_set_message_id (GMimeMessage *message, const char *message_id)
 {
 	if (message->message_id)
 		g_free (message->message_id);
-
-	if (message_id)
-		message->message_id = g_strstrip (g_strdup (message_id));
-	else
-		message->message_id = NULL;
+	
+	message->message_id = g_strstrip (g_strdup (message_id));
 }
 
 
@@ -738,6 +738,7 @@ void
 g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (message_id != NULL);
 	
 	message_set_message_id (message, message_id);
 	g_mime_header_set (GMIME_OBJECT (message)->headers,
@@ -776,6 +777,7 @@ g_mime_message_add_header (GMimeMessage *message, const char *header, const char
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (header != NULL);
+	g_return_if_fail (value != NULL);
 	
 	g_mime_object_add_header (GMIME_OBJECT (message), header, value);
 }
@@ -795,6 +797,7 @@ g_mime_message_set_header (GMimeMessage *message, const char *header, const char
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (header != NULL);
+	g_return_if_fail (value != NULL);
 	
 	g_mime_object_set_header (GMIME_OBJECT (message), header, value);
 }
