@@ -1,4 +1,4 @@
-                            GMime, version 0.7.0
+                            GMime, version 0.8.0
                    by Jeffrey Stedfast <fejj@helixcode.com>
 
 
@@ -49,7 +49,7 @@ Other RFCs of interest:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000,2001 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000,2002 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -84,10 +84,10 @@ OBTAINING GMIME
 ---------------
 
 Sources to GMime may be obtained from:
-  http://www.xtorshun.org/gmime/sources
+  http://spruce.sourceforge.net/gmime/sources/
 
 Information regarding GMime may be obtained from the Spruce home page:
-  http://www.xtorshun.org/gmime
+  http://spruce.sourceforge.net/gmime/
 
 Experimental CVS versions of GMime may be obtained by following the
 directions at cvs.gnome.org, module gmime.
