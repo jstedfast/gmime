@@ -21,6 +21,7 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <glib.h>
 
 #include "gmime.h"
@@ -38,7 +39,7 @@ test_parser (char *data)
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
 	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
-	message = g_mime_parser_construct_message (stream, TRUE);
+	message = g_mime_parser_construct_message (stream);
 	g_mime_stream_unref (stream);
 	
 	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
@@ -421,6 +422,8 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
+	g_mime_init (0 /*GMIME_INIT_FLAG_UTF8*/);
+	
 	test_date ();
 	
 	test_onepart ();
