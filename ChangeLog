@@ -1,3 +1,8 @@
+2002-03-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-charset.c (filter_filter): Same fix as I made
+	earlier to g_mime_iconv_strndup.
+
 2002-03-20  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): Don't forget to
