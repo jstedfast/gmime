@@ -1,3 +1,7 @@
+2002-09-03  Tomasz K³oczko  <kloczek@pld.org.pl>
+
+	* doc/makefile.am: fixes for "make install DESTDIR=</install/prefix>".
+
 2002-09-01  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (decode_mailbox): When erroring out due to no

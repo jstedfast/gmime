@@ -36,11 +36,11 @@ maintainer-clean-local: clean
 	rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt 
 
 install-data-local:
-	$(INSTALL) -d -m 0755 $(TARGET_DIR)
-	$(INSTALL_DATA) $(srcdir)/html/*.html $(TARGET_DIR)
-	$(INSTALL_DATA) $(srcdir)/html/index.sgml $(TARGET_DIR)
+	$(INSTALL) -d $(DESTDIR)$(TARGET_DIR)
+	$(INSTALL_DATA) $(srcdir)/html/*.html $(DESTDIR)$(TARGET_DIR)
+	$(INSTALL_DATA) $(srcdir)/html/index.sgml $(DESTDIR)$(TARGET_DIR)
 	if test "x$(enable_gtk_doc)" = "xyes"; then \
-		gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(HTML_DIR); \
+		gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(DESTDIR)$(HTML_DIR); \
 	fi
 
 dist-hook:
