@@ -21,7 +21,8 @@ EXTRA_DIST = 			\
 	gmime.spec.in 		\
 	iconv-detect.c		\
 	zentimer.h 		\
-	zenprofiler.h
+	zenprofiler.h		\
+	gtk-doc.make
 
 BUILD_EXTRA_DIST = 		\
 	gmime.spec
