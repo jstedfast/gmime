@@ -104,13 +104,12 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		 * We just need to grow our outbuffer and try again.
 		 */
 		
-		converted = outlen - outleft;
+		converted = outbuf - (char *) out;
 		if (errno == E2BIG) {
 			outlen += inleft * 2 + 16;
 			out = g_realloc (out, outlen + 4);
 			outbuf = out + converted;
 		}
-		
 	} while (errno == E2BIG && inleft > 0);
 	
 	/*
