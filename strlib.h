@@ -30,6 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <sys/types.h>
+#include <strings.h>
 #include <string.h>
 
 #if !defined (HAVE_MEMCHR) || !defined (memchr)
