@@ -1,3 +1,9 @@
+2004-11-19  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/GMime.metadata: Don't autogenerate get GetDate method
+
+	* mono/Message.custom: Implement it by hand and return a DateTime.
+
 2004-11-17  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metadata: More metadata goodness.

@@ -61,3 +61,17 @@ public string GetRecipientsAsString (RecipientType type)
 {
 	return this.GetRecipientsAsString (type, false);
 }
+
+[DllImport("gmime")]
+static extern void g_mime_message_get_date (IntPtr raw, out IntPtr date, out int gmt_offset);
+
+public DateTime Date {
+	get {
+		IntPtr date_raw;
+		int gmt_offset;
+
+		g_mime_message_get_date (Handle, out date_raw, out gmt_offset);
+
+		return GLib.Marshaller.time_tToDateTime (date_raw);
+	}
+}

@@ -27,11 +27,12 @@
 
   <!-- Hide some problematic elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetDate']/*/*[@name='date']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeObject']/method[@name='GetData']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="hidden">1</attr>
-  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
 </metadata>
