@@ -264,7 +264,7 @@ g_mime_charset_map_init (void)
 			locale_charset = NULL;
 		}
 		
-		locale_parse_language (locale);
+		locale_parse_lang (locale);
 	}
 #endif
 	
@@ -451,6 +451,8 @@ static const char *iso_charsets[] = {
 	"iso-8859-15",
 	"iso-8859-16"
 };
+
+#define NUM_ISO_CHARSETS (sizeof (iso_charsets) / sizeof (iso_charsets[0]))
 
 
 /**
