@@ -1,5 +1,8 @@
 2003-09-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-stream.c (g_mime_stream_read): If len == 0, return 0.
+	(g_mime_stream_write): Same.
+
 	* gmime/gmime-parser.c (parser_push_boundary): Fix the
 	boundarylenfinal calculation. Thanks to Bart Visscher for catching
 	this mistake.

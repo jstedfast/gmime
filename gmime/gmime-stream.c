@@ -159,6 +159,9 @@ g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (buf != NULL, -1);
 	
+	if (len == 0)
+		return 0;
+	
 	return GMIME_STREAM_GET_CLASS (stream)->read (stream, buf, len);
 }
 
@@ -186,6 +189,9 @@ g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (buf != NULL, -1);
+	
+	if (len == 0)
+		return 0;
 	
 	return GMIME_STREAM_GET_CLASS (stream)->write (stream, buf, len);
 }
