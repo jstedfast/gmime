@@ -1,5 +1,9 @@
 2001-10-03  Charles Kerr <charles@rebelbase.com>
 
+	* gmime-part.c (g_mime_part_get_content): bugfix for when getting the
+	content from a stream-mem.  We were just returning the stream-mem's
+	gbytearray buffer, but we need to check against the stream's bounds.
+
 	* gmime-filter-basic.[ch]: added support for decoding a uuencoded
 	stream; added a placeholder for uuencoding a stream.
 

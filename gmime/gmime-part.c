@@ -877,8 +877,8 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
 const char *
 g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
-	GMimeStream *stream;
-	GByteArray *buf;
+	GMimeStream * stream;
+	const gchar * retval = NULL;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
@@ -888,11 +888,12 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 	}
 	
 	stream = mime_part->content->stream;
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
+	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))
+	{
 		/* Decode and cache this mime part's contents... */
 		GMimeStream *cache;
 		
-		buf = g_byte_array_new ();
+		GByteArray * buf = g_byte_array_new ();
 		cache = g_mime_stream_mem_new_with_byte_array (buf);
 		
 		g_mime_data_wrapper_write_to_stream (mime_part->content, cache);
@@ -900,13 +901,30 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 		g_mime_data_wrapper_set_stream (mime_part->content, cache);
 		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
 		g_mime_stream_unref (cache);
-	} else {
-		buf = GMIME_STREAM_MEM (mime_part->content->stream)->buffer;
+
+		*len = buf->len;
+		retval = buf->data;
+	}
+	else
+	{
+		GByteArray * buf = GMIME_STREAM_MEM (stream)->buffer;
+		gint start_index = 0;
+		gint end_index = buf->len;
+
+		/* check boundaries */
+		if (stream->bound_start>=0)
+			start_index = CLAMP (stream->bound_start, 0, buf->len);
+		if (stream->bound_end>=0)
+			end_index = CLAMP (stream->bound_end, 0, buf->len);
+		if (end_index < start_index)
+			end_index = start_index;
+
+		*len = end_index - start_index;
+		retval = buf->data + start_index;
 	}
 	
-	*len = buf->len;
 	
-	return buf->data;
+	return retval;
 }
 
 
