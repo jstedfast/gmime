@@ -1,3 +1,29 @@
+2002-03-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_mailbox): If gmime was initialized to
+	use UTF-8 interfaces and we encountered illegal 8bit text, attempt
+	to convert it to UTF-8 using the user's locale charset.
+
+	* gmime-charset.c (g_mime_charset_name): Fixed the ISO parser.
+	(g_mime_charset_best): New function to compute the best charset
+	for a given text input.
+
+	* gmime-param.c (rfc2184_decode): If gmime was initialized to use
+	UTF-8 interfaces, then convert the decoded text to UTF-8 here.
+	(decode_param): If gmime was initialized to use UTF-8 interfaces
+	and we encounter illegal 8bit text, attempt to convert it to
+	UTF-8.
+	(encode_param): If gmime was initialized to use UTF-8 interfaces,
+	convert the input buffer to the locale charset before encoding.
+
+	* gmime-utils.c (rfc2047_decode_word): Renamed from
+	decoded_encoded_8bit_word. If gmime was initialized to use UTF-8
+	interfaces, then convert the header to UTF-8 here.
+	(rfc2047_encode_word): Renamed from encode_8bit_word. If gmime was
+	initialized to use UTF-8 interfaces, convert input text to locale
+	charset before encoding.
+	(g_mime_utils_8bit_header_encode): Avoid excess mallocing.
+
 2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (g_mime_message_write_to_stream): fixed doc

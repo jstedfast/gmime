@@ -18,6 +18,7 @@ libgmime_la_SOURCES = 		\
 	alloca.c		\
 	strlib.c		\
 	memchunk.c		\
+	gmime.c			\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
@@ -82,10 +83,11 @@ gmimeinclude_HEADERS = 		\
 	gmime-utils.h		\
 	internet-address.h
 
-noinst_HEADERS = 		\
-	strlib.h		\
-	memchunk.h		\
-	gmime-table-private.h	\
+noinst_HEADERS = 			\
+	strlib.h			\
+	memchunk.h			\
+	gmime-table-private.h		\
+	gmime-charset-map-private.h	\
 	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime.la

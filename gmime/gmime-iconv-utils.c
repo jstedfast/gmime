@@ -25,8 +25,10 @@
 #endif
 
 #include <glib.h>
-#include <errno.h>
+#include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
 #include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 

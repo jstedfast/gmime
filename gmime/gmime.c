@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,27 +21,36 @@
  */
 
 
-#ifndef __GMIME_CHARSET_H__
-#define __GMIME_CHARSET_H__
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+#include "gmime.h"
 
-#include <glib.h>
-#include <sys/types.h>
 
-void        g_mime_charset_init (void);
+int gmime_interfaces_utf8 = FALSE;
 
-const char *g_mime_charset_locale_name (void);
 
-const char *g_mime_charset_name (const char *charset);
-
-const char *g_mime_charset_best (const char *in, size_t inlen);
-
-#ifdef __cplusplus
+/**
+ * g_mime_init:
+ * @flags: initialization flags
+ *
+ * Initailizes GMime.
+ **/
+void
+g_mime_init (guint32 flags)
+{
+	static int initialized = FALSE;
+	
+	if (initialized)
+		return;
+	
+	initialized = TRUE;
+	
+	if (flags & GMIME_INIT_FLAG_UTF8)
+		gmime_interfaces_utf8 = TRUE;
+	
+	g_mime_charset_init ();
+	
+	g_mime_iconv_init ();
 }
-#endif /* __cplusplus */
-
-#endif /* __GMIME_CHARSET_H__ */

@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -40,8 +41,9 @@
 #include "gmime-part.h"
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
+#include "gmime-iconv-utils.h"
 
-#define d(x)
+#define d(x) x
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
@@ -66,6 +68,9 @@
 #define DATE_TOKEN_NON_TIMEZONE_ALPHA   (1 << 5)
 #define DATE_TOKEN_NON_TIMEZONE_NUMERIC (1 << 6)
 #define DATE_TOKEN_HAS_SIGN             (1 << 7)
+
+/* from gmime.c */
+extern int gmime_interfaces_utf8;
 
 static char *base64_alphabet =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -994,19 +999,18 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
 	return -1;
 }
 
-#define is_8bit_word_encoded(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
+#define is_rfc2047_encoded_word(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
 
 static unsigned char *
-decode_encoded_8bit_word (const unsigned char *word)
+rfc2047_decode_word (const unsigned char *in, size_t inlen)
 {
 	const register unsigned char *inptr;
 	const unsigned char *inend;
-	size_t len;
 	
-	len = strlen (word);
+	inptr = in + 2;
+	inend = in + inlen - 2;
 	
-	inptr = word + 2;
-	inend = word + len - 2;
+	d(fprintf (stderr, "decoding %.*s\n", inlen, in));
 	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
@@ -1015,16 +1019,14 @@ decode_encoded_8bit_word (const unsigned char *word)
 		int state = 0;
 		int save = 0;
 		
-		d(fprintf (stderr, "encoding is '%c'\n", inptr[0]));
-		
 		inptr++;
+		
 		switch (*inptr) {
 		case 'B':
 		case 'b':
 			inptr += 2;
 			decoded = alloca (inend - inptr);
 			declen = g_mime_utils_base64_decode_step (inptr, inend - inptr, decoded, &state, &save);
-			return g_strndup (decoded, declen);
 			break;
 		case 'Q':
 		case 'q':
@@ -1036,12 +1038,62 @@ decode_encoded_8bit_word (const unsigned char *word)
 				d(fprintf (stderr, "encountered broken 'Q' encoding\n"));
 				return NULL;
 			}
-			
-			return g_strndup (decoded, declen);
 			break;
 		default:
 			d(fprintf (stderr, "unknown encoding\n"));
 			return NULL;
+		}
+		
+		if (gmime_interfaces_utf8) {
+			const char *charset;
+			unsigned char *buf;
+			char *charenc, *p;
+			size_t len;
+			iconv_t cd;
+			
+			len = (inptr - 3) - (in + 2);
+			charenc = alloca (len + 1);
+			memcpy (charenc, in + 2, len);
+			charenc[len] = '\0';
+			
+			/* rfc2231 updates rfc2047 encoded words...
+			 * The ABNF given in RFC 2047 for encoded-words is:
+			 *   encoded-word := "=?" charset "?" encoding "?" encoded-text "?="
+			 * This specification changes this ABNF to:
+			 *   encoded-word := "=?" charset ["*" language] "?" encoding "?" encoded-text "?="
+			 */
+			
+			/* trim off the 'language' part if it's there... */
+			p = strchr (charenc, '*');
+			if (p)
+				*p = '\0';
+			
+			/* slight optimization */
+			if (!strcasecmp (charset, "UTF-8"))
+				return g_strndup (decoded, declen);
+			
+			charset = g_mime_charset_name (charenc);
+			cd = g_mime_iconv_open ("UTF-8", charset);
+			if (cd == (iconv_t) -1) {
+				d(g_warning ("Cannot convert from %s to UTF-8, header display may "
+					     "be corrupt: %s", charset, g_strerror (errno)));
+				charset = g_mime_charset_locale_name ();
+				cd = g_mime_iconv_open ("UTF-8", charset);
+				if (cd == (iconv_t) -1)
+					return NULL;
+			}
+			
+			buf = g_mime_iconv_strndup (cd, decoded, declen);
+			g_mime_iconv_close (cd);
+			
+			if (!buf) {
+				d(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
+					     "corrupt: %s", declen, decoded, g_strerror (errno)));
+			}
+			
+			return buf;
+		} else {
+			return g_strndup (decoded, declen);
 		}
 	}
 	
@@ -1080,8 +1132,8 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
 			const unsigned char *word;
 			gboolean was_encoded;
 			
-			if ((was_encoded = is_8bit_word_encoded (atom->str, atom->len)))
-				word = dword = decode_encoded_8bit_word (atom->str);
+			if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
+				word = dword = rfc2047_decode_word (atom->str, atom->len);
 			else
 				word = atom->str;
 			
@@ -1135,8 +1187,8 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
 		const unsigned char *word;
 		gboolean was_encoded;
 		
-		if ((was_encoded = is_8bit_word_encoded (atom->str, atom->len)))
-			word = dword = decode_encoded_8bit_word (atom->str);
+		if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
+			word = dword = rfc2047_decode_word (atom->str, atom->len);
 		else
 			word = atom->str;
 		
@@ -1195,15 +1247,45 @@ quoted_encode (const unsigned char *in, size_t len, unsigned char *out, gushort 
 }
 
 static char *
-encode_8bit_word (const unsigned char *word, gushort safemask, gboolean *this_was_encoded)
+rfc2047_encode_word (const unsigned char *word, gushort safemask)
 {
 	unsigned char *encoded, *ptr;
+	unsigned char *uword = NULL;
+	iconv_t cd = (iconv_t) -1;
 	size_t enclen, pos, len;
+	const char *charset;
 	int state = 0;
 	int save = 0;
 	char encoding;
 	
 	len = strlen (word);
+	
+	if (gmime_interfaces_utf8) {
+		charset = g_mime_charset_best (word, len);
+		if (!charset)
+			charset = "iso-8859-1";
+	} else {
+		charset = g_mime_charset_locale_name ();
+	}
+	
+	if (gmime_interfaces_utf8) {
+		if (strcasecmp (charset, "UTF-8") != 0) {
+			charset = g_mime_charset_name (charset);
+			cd = g_mime_iconv_open (charset, "UTF-8");
+		}
+		
+		if (cd != (iconv_t) -1) {
+			uword = g_mime_iconv_strndup (cd, word, len);
+			g_mime_iconv_close (cd);
+		}
+		
+		if (uword) {
+			len = strlen (uword);
+			word = uword;
+		} else {
+			charset = "UTF-8";
+		}
+	}
 	
 	switch (g_mime_utils_best_encoding (word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
@@ -1232,16 +1314,16 @@ encode_8bit_word (const unsigned char *word, gushort safemask, gboolean *this_wa
 		
 		break;
 	default:
-		if (this_was_encoded)
-			*this_was_encoded = FALSE;
-		
-		return g_strdup (word);
+		g_assert_not_reached ();
 	}
 	
-	if (this_was_encoded)
-		*this_was_encoded = TRUE;
+	g_free (uword);
 	
-	return g_strdup_printf ("=?%s?%c?%s?=", g_mime_charset_locale_name (), encoding, encoded);	
+	uword = g_strdup_printf ("=?%s?%c?%s?=", charset, encoding, encoded);
+	
+	fprintf (stderr, "resultant encoded word: %s\n", uword);
+	
+	return uword;
 }
 
 
@@ -1257,7 +1339,7 @@ encode_8bit_word (const unsigned char *word, gushort safemask, gboolean *this_wa
 char *
 g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
 {
-	return encode_8bit_word (in, IS_PSAFE, NULL);
+	return rfc2047_encode_word (in, IS_PSAFE);
 }
 
 
@@ -1276,29 +1358,29 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
 	register const unsigned char *inptr;
 	GString *out, *word, *lwsp;
 	unsigned char *encoded;
-	gboolean is8bit = FALSE;
+	gboolean encode_word = FALSE;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
 	
 	out = g_string_new ("");
 	word = g_string_new ("");
 	lwsp = g_string_new ("");
-	inptr = (guchar *) in;
+	
+	inptr = in;
 	
 	while (inptr && *inptr) {
 		unsigned char c = *inptr++;
 		
 		if (isspace (c) && !last_was_space) {
-			gboolean this_was_encoded = FALSE;
 			char *eword;
 			
-			if (is8bit)
-				eword = encode_8bit_word (word->str, IS_ESAFE, &this_was_encoded);
+			if (encode_word)
+				eword = rfc2047_encode_word (word->str, IS_ESAFE);
 			else
-				eword = g_strdup (word->str);
+				eword = word->str;
 			
 			/* append any whitespace */
-			if (last_was_encoded && this_was_encoded) {
+			if (last_was_encoded && encode_word) {
 				/* we need to encode the whitespace */
 				unsigned char *elwsp;
 				size_t len;
@@ -1307,20 +1389,22 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
 				len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
 				elwsp[len] = '\0';
 				
-				g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
+				g_string_sprintfa (out, " =?iso-8859-1?q?%s?= ", elwsp);
 			} else {
 				g_string_append (out, lwsp->str);
 			}
 			
-			/* append the encoded word */
+			/* append the (encoded) word */
 			g_string_append (out, eword);
-			g_free (eword);
+			
+			if (encode_word)
+				g_free (eword);
 			
 			g_string_truncate (lwsp, 0);
 			g_string_truncate (word, 0);
 			
-			last_was_encoded = this_was_encoded;
-			is8bit = FALSE;
+			last_was_encoded = encode_word;
+			encode_word = FALSE;
 		}
 		
 		if (isspace (c)) {
@@ -1328,7 +1412,7 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
 			last_was_space = TRUE;
 		} else {
 			if (c > 127)
-				is8bit = TRUE;
+				encode_word = TRUE;
 			
 			g_string_append_c (word, c);
 			last_was_space = FALSE;
@@ -1336,16 +1420,15 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
 	}
 	
 	if (word->len || lwsp->len) {
-		gboolean this_was_encoded = FALSE;
 		char *eword;
 		
-		if (is8bit)
-			eword = encode_8bit_word (word->str, IS_ESAFE, &this_was_encoded);
+		if (encode_word)
+			eword = rfc2047_encode_word (word->str, IS_ESAFE);
 		else
-			eword = g_strdup (word->str);
+			eword = word->str;
 		
 		/* append any whitespace */
-		if (last_was_encoded && this_was_encoded) {
+		if (last_was_encoded && encode_word) {
 			/* we need to encode the whitespace */
 			unsigned char *elwsp;
 			size_t len;
@@ -1354,14 +1437,16 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
 			len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
 			elwsp[len] = '\0';
 			
-			g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
+			g_string_sprintfa (out, " =?iso-8859-1?q?%s?= ", elwsp);
 		} else {
 			g_string_append (out, lwsp->str);
 		}
 		
 		/* append the encoded word */
 		g_string_append (out, eword);
-		g_free (eword);
+		
+		if (encode_word)
+			g_free (eword);
 	}
 	
 	g_string_free (lwsp, TRUE);

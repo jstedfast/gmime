@@ -30,12 +30,15 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <sys/types.h>
 
 void        g_mime_charset_init (void);
 
 const char *g_mime_charset_locale_name (void);
 
 const char *g_mime_charset_name (const char *charset);
+
+const char *g_mime_charset_best (const char *in, size_t inlen);
 
 #ifdef __cplusplus
 }

@@ -422,6 +422,8 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
+	g_mime_init (GMIME_INIT_FLAG_UTF8);
+	
 	test_date ();
 	
 	test_onepart ();

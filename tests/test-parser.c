@@ -124,6 +124,8 @@ int main (int argc, char **argv)
 	if (fd == -1)
 		return 0;
 	
+	g_mime_init (GMIME_INIT_FLAG_UTF8);
+	
 #ifdef STREAM_MMAP
 	stream = g_mime_stream_mmap_new (fd, PROT_READ, MAP_PRIVATE);
 	g_assert (stream != NULL);
