@@ -39,6 +39,11 @@ print_mime_struct (GMimeObject *part, int depth)
 			print_mime_struct (subpart->data, depth + 1);
 			subpart = subpart->next;
 		}
+	} else if (GMIME_IS_MESSAGE_PART (part)) {
+		GMimeMessagePart *mpart = (GMimeMessagePart *) part;
+		
+		if (mpart->message)
+			print_mime_struct (mpart->message->mime_part, depth + 1);
 	}
 }
 
