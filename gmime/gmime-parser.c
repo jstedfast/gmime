@@ -119,9 +119,9 @@ struct _GMimeParserPrivate {
 struct _boundary_stack {
 	struct _boundary_stack *parent;
 	unsigned char *boundary;
-	unsigned int boundarylen;
-	unsigned int boundarylenfinal;
-	unsigned int boundarylenmax;
+	size_t boundarylen;
+	size_t boundarylenfinal;
+	size_t boundarylenmax;
 	off_t content_end;
 };
 
@@ -130,7 +130,7 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _boundary_stack *s;
-	unsigned int max;
+	size_t max;
 	
 	max = priv->bounds ? priv->bounds->boundarylenmax : 0;
 	
@@ -727,7 +727,7 @@ parser_step_from (GMimeParser *parser)
 
 #define header_backup(priv, start, len) G_STMT_START {                    \
 	if (priv->headerleft <= len) {                                    \
-		unsigned int hlen, hoff;                                  \
+		size_t hlen, hoff;                                        \
 		                                                          \
 		hlen = hoff = priv->headerptr - priv->headerbuf;          \
 		hlen = hlen ? hlen : 1;                                   \
@@ -748,7 +748,7 @@ parser_step_from (GMimeParser *parser)
 #define header_parse(parser, priv, hend) G_STMT_START {                   \
 	register unsigned char *colon;                                    \
 	struct _header_raw *header;                                       \
-	unsigned int hlen;                                                \
+	size_t hlen;                                                      \
 	                                                                  \
 	header = g_new (struct _header_raw, 1);                           \
 	header->next = NULL;                                              \
@@ -878,8 +878,7 @@ parser_content_type (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	const char *content_type;
 	
-	content_type = header_raw_find (priv->headers, "Content-Type", NULL);
-	if (content_type)
+	if ((content_type = header_raw_find (priv->headers, "Content-Type", NULL)))
 		return g_mime_content_type_new_from_string (content_type);
 	
 	return NULL;
@@ -966,7 +965,7 @@ enum {
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
 static int
-check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, int len)
+check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, size_t len)
 {
 	off_t offset = parser_offset (priv, (unsigned char *) start);
 	
