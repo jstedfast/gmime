@@ -111,7 +111,7 @@ list_append_node (List *list, ListNode *node)
 }
 
 ListNode *
-list_node_unlink  (ListNode *node)
+list_node_unlink (ListNode *node)
 {
 	node->next->prev = node->prev;
         node->prev->next = node->next;
