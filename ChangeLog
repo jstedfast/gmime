@@ -1,3 +1,9 @@
+2004-04-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (decode_msgid): Try to always return a
+	string buffer containing whatever we can get from the msg-id, even
+	if it isn't a valid msg-id token.
+
 2004-04-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-content-type.c

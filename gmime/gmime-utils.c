@@ -834,23 +834,30 @@ decode_msgid (const char **in)
 	char *msgid = NULL;
 	
 	decode_lwsp (&inptr);
-	if (*inptr == '<') {
-		inptr++;
-		decode_lwsp (&inptr);
-		if ((msgid = decode_addrspec (&inptr))) {
-			decode_lwsp (&inptr);
-			if (*inptr != '>') {
-				w(g_warning ("Invalid msg-id; missing '>': %s", *in));
-			} else {
-				inptr++;
-			}
-			
-			*in = inptr;
-		} else {
-			w(g_warning ("Invalid msg-id; missing addr-spec: %s", *in));
-		}
-	} else {
+	if (*inptr != '<') {
 		w(g_warning ("Invalid msg-id; missing '<': %s", *in));
+	} else {
+		inptr++;
+	}
+	
+	decode_lwsp (&inptr);
+	if ((msgid = decode_addrspec (&inptr))) {
+		decode_lwsp (&inptr);
+		if (*inptr != '>') {
+			w(g_warning ("Invalid msg-id; missing '>': %s", *in));
+		} else {
+			inptr++;
+		}
+		
+		*in = inptr;
+	} else {
+		w(g_warning ("Invalid msg-id; missing addr-spec: %s", *in));
+		*in = inptr;
+		while (*inptr && *inptr != '>')
+			inptr++;
+		
+		msgid = g_strndup (*in, inptr - *in);
+		*in = inptr;
 	}
 	
 	return msgid;
