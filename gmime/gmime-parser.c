@@ -646,8 +646,16 @@ parser_step_from (GMimeParser *parser)
 	                                                                  \
 	hlen = colon - priv->headerbuf;                                   \
 	                                                                  \
-	header->name = g_strstrip (g_strndup (priv->headerbuf, hlen));    \
-	header->value = g_strstrip (g_strdup (colon + 1));                \
+	header->name = g_strndup (priv->headerbuf, hlen);                 \
+	g_strstrip (header->name);                                        \
+	if (*colon != ':') {                                              \
+		g_warning ("Invalid header: %s", header->name);           \
+		header->value = header->name;                             \
+		header->name = g_strdup ("X-Invalid-Header");             \
+	} else {                                                          \
+		header->value = g_strdup (colon + 1);                     \
+		g_strstrip (header->value);                               \
+	}                                                                 \
 	header->offset = priv->header_start;                              \
 	                                                                  \
 	hend->next = header;                                              \
