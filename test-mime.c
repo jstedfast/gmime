@@ -152,14 +152,11 @@ static char *string = "I have no idea what to test here so I'll just test a "
 "foo   \n"
 "Lets also try some tabs in here like this:\t\tis that 2 tabs? I hope so.";
 
-int main (int argc, char *argv[])
+void
+test_encodings (void)
 {
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
-	
-	test_onepart ();
-	
-	test_multipart ();
 	
 	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr");
 	fprintf (stderr, "encoded: %s\n", enc);
@@ -226,6 +223,50 @@ int main (int argc, char *argv[])
 	fprintf (stderr, "\nencoded:\n-------\n%s\n-------\n", enc);
 	
 	g_free (enc);
+}
+
+static gchar *addresses[] = {
+	"fejj@helixcode.com",
+	"Jeffrey Stedfast <fejj@helixcode.com>",
+	"Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
+	"\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
+	"fejj@helixcode.com (Jeffrey Stedfast)",
+	"<fejj@helixcode.com> (Jeff)",
+	"=?iso-8859-1?q?Kristoffer=20Br=E5nemyr?= <ztion@swipenet.se>",
+	NULL
+};
+
+void
+test_addresses (void)
+{
+	InternetAddress *ia;
+	gchar *str;
+	int i;
+	
+	for (i = 0; addresses[i]; i++) {
+		ia = internet_address_new_from_string (addresses[i]);
+		if (!ia) {
+			fprintf (stderr, "failed to parse '%s'.\n");
+			continue;
+		}
+		fprintf (stderr, "Original: %s\n", addresses[i]);
+		fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
+		fprintf (stderr, "EMail: %s\n", ia->address ? ia->address : "");
+		str = internet_address_to_string (ia, TRUE);
+		fprintf (stderr, "Rewritten: %s\n\n", str ? str : "(null)");
+		g_free (str);
+	}
+}
+
+int main (int argc, char *argv[])
+{
+	test_onepart ();
+	
+	test_multipart ();
+	
+	test_encodings ();
+	
+	test_addresses ();
 	
 	return 0;
 }

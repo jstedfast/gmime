@@ -1393,7 +1393,7 @@ g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gin
 {
 	register guchar *outptr = out;
 	int last;
-
+	
 	if (inlen > 0)
 		outptr += g_mime_utils_quoted_encode_step (in, inlen, outptr, state, save);
 	
@@ -1464,7 +1464,7 @@ g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint
 			last = -1;
 		} else {
 			if (last != -1) {
-				if (is_qpsafe (last) || isblank ((char ) last)) {
+				if (is_qpsafe (last)) {
 					*outptr++ = last;
 					sofar++;
 				} else {
@@ -1475,7 +1475,7 @@ g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint
 				}
 			}
 			
-			if (is_qpsafe (c) || isblank (c)) {
+			if (is_qpsafe (c)) {
 				if (sofar > 74) {
 					*outptr++ = '=';
 					*outptr++ = '\n';

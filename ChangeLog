@@ -1,3 +1,11 @@
+2000-12-04  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-mime.c: Added test code for the address parser.
+
+	* gmime-utils.c (g_mime_utils_quoted_encode_step): Updated. No
+	longer need to special-case whitespace chars as they have been put
+	into the gmime_special_table (a while ago).
+
 2000-12-02  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* Makefile.am: Install gmime.m4
