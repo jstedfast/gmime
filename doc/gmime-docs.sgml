@@ -7,6 +7,7 @@
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
 ]>
 
 <book>
@@ -24,7 +25,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000</year>
+      <year>2000, 2001</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
   </bookinfo>
@@ -59,5 +60,6 @@
     &gmime-utils;
     &internet-address;
     &gmime-parser;
+    &gmime-charset;
   </chapter>
 </book>

@@ -16,7 +16,7 @@ HTML_DIR=$(datadir)/gmime/html
 TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
 
 scan:
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime.h gmime-table-private.h acconfig.h config.h"
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime.h gmime-table-private.h acconfig.h config.h zentimer.h zenprofiler.h"
 
 templates: scan
 	gtkdoc-mktmpl --module=$(DOC_MODULE)

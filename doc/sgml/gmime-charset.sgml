@@ -1,0 +1,66 @@
+<refentry id="gmime-gmime-charset" revision="20 Aug 2001">
+<refmeta>
+<refentrytitle>gmime-charset</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-charset</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+void        <link linkend="g-mime-charset-init">g_mime_charset_init</link>             (void);
+const char* <link linkend="g-mime-charset-locale-name">g_mime_charset_locale_name</link>      (void);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-charset-init">g_mime_charset_init ()</title>
+<programlisting>void        g_mime_charset_init             (void);</programlisting>
+<para>
+Initializes the locale charset variable for later calls to
+gmime_charset_locale_name. Only really needs to be called for non-
+iso-8859-1 locales.</para>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-charset-locale-name">g_mime_charset_locale_name ()</title>
+<programlisting>const char* g_mime_charset_locale_name      (void);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the user's locale charset (or iso-8859-1 by default).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

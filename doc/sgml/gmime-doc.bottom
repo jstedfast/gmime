@@ -6,3 +6,4 @@
     &gmime-gmime-utils;
     &gmime-internet-address;
     &gmime-gmime-parser;
+    &gmime-gmime-charset;

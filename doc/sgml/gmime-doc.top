@@ -6,3 +6,4 @@
 <!entity gmime-gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity gmime-internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-gmime-charset SYSTEM "sgml/gmime-charset.sgml">

@@ -135,3 +135,6 @@
 <ANCHOR id ="G-MIME-PARSER-CONSTRUCT-PART" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART">
 <ANCHOR id ="G-MIME-PARSER-CONSTRUCT-MESSAGE" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE">
 <ANCHOR id ="G-MIME-PARSER-CONSTRUCT-MESSAGE-FROM-FILE" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE-FROM-FILE">
+<ANCHOR id ="GMIME-GMIME-CHARSET" href="gmime/gmime-gmime-charset.html">
+<ANCHOR id ="G-MIME-CHARSET-INIT" href="gmime/gmime-gmime-charset.html#G-MIME-CHARSET-INIT">
+<ANCHOR id ="G-MIME-CHARSET-LOCALE-NAME" href="gmime/gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME">
