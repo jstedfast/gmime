@@ -127,7 +127,7 @@ test_decrypt (const gchar *ciphertext)
 	
 	ex = g_mime_exception_new ();
 	
-	cleartext = pgp_decrypt (ciphertext, &len, ex);
+	cleartext = pgp_decrypt (ciphertext, strlen (ciphertext), &len, ex);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_encrypt failed: %s\n",
 			 g_mime_exception_get_description (ex));
