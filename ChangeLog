@@ -1,3 +1,11 @@
+2003-02-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-filter.c (stream_read): Set priv->flushed to
+	TRUE if we call g_mime_filter_complete() on our filters.
+	(stream_eos): It's not actually the end of the stream until we've
+	flushed the filters. This fixes some possible truncation when
+	reading from a filtered stream.
+
 2003-02-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Bumped version to 2.0.2

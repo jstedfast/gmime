@@ -50,7 +50,8 @@ struct _GMimeStreamFilterPrivate {
 	char *filtered;		/* the filtered data */
 	size_t filteredlen;
 	
-	int last_was_read;	/* was the last op read or write? */
+	int last_was_read:1;	/* was the last op read or write? */
+	int flushed:1;          /* have the filters been flushed? */
 };
 
 static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
@@ -130,6 +131,7 @@ g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *kl
 	stream->priv->buffer = stream->priv->realbuffer + READ_PAD;
 	stream->priv->last_was_read = TRUE;
 	stream->priv->filteredlen = 0;
+	stream->priv->flushed = FALSE;
 }
 
 static void
@@ -184,6 +186,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 					f = f->next;
 				}
 				size = p->filteredlen;
+				p->flushed = TRUE;
 			}
 			if (size <= 0)
 				return size;
@@ -292,6 +295,9 @@ stream_eos (GMimeStream *stream)
 	if (p->filteredlen > 0)
 		return FALSE;
 	
+	if (!p->flushed)
+		return FALSE;
+	
 	return g_mime_stream_eos (filter->source);
 }
 
@@ -303,6 +309,7 @@ stream_reset (GMimeStream *stream)
 	struct _filter *f;
 	
 	p->filteredlen = 0;
+	p->flushed = FALSE;
 	
 	/* and reset filters */
 	f = p->filters;
