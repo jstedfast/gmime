@@ -111,8 +111,6 @@ noinst_HEADERS = 			\
 	gmime-charset-map-private.h	\
 	md5-utils.h
 
-EXTRA_DIST = gmime-exception-list.def
-
 libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
 
 DEPS = $(top_builddir)/libgmime-2.0.la

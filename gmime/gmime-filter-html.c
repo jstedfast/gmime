@@ -323,6 +323,9 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			char save;
 			int i;
 			
+			/* we have to dup the line here because our input buffer
+			   may be static and so setting *inptr = '\0' temporarily
+			   is out of the question :-( */
 			len = inptr - start;
 			linebuf = g_malloc (len + 1);
 			memcpy (linebuf, start, len);
