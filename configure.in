@@ -94,7 +94,7 @@ AM_CONDITIONAL(HAVE_GTK_DOC, $GTKDOC)
 AC_SUBST(HAVE_GTK_DOC)
 
 dnl Make people disable the gtk-doc stuff explicitly.
-AC_ARG_ENABLE(gtk-doc, [  --enable-gtk-doc        Use gtk-doc to build documentation [default=auto]], enable_gtk_doc="$enableval", enable_gtk_doc=auto)
+AC_ARG_ENABLE(gtk-doc, [  --enable-gtk-doc        Use gtk-doc to build documentation [default=auto]], enable_gtk_doc="$enableval", enable_gtk_doc="auto")
 
 if test "x$enable_gtk_doc" = "xauto" ; then
   if test "x$GTKDOC" = "xtrue" ; then
@@ -108,19 +108,22 @@ AC_SUBST(enable_gtk_doc)
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.
-AM_CONDITIONAL(ENABLE_GTK_DOC, test x$enable_gtk_doc = xyes)
+AM_CONDITIONAL(ENABLE_GTK_DOC, test "x$enable_gtk_doc" = "xyes")
 
 dnl Check for gprof action
-AC_ARG_ENABLE(gprof, [  --enable-gprof          Enable gprof profiling compile flags [default=no]], enable_gprof="$enableval", enable_gprof=no)
-if test x$enable_gprof = xyes; then
+AC_ARG_ENABLE(gprof, [  --enable-gprof          Enable gprof profiling compile flags [default=no]], enable_gprof="$enableval", enable_gprof="no")
+if test "x$enable_gprof" = "xyes"; then
   CFLAGS="$CFLAGS -pg"
 fi
 
-dnl Turn on a bunch of warnings
-AC_ARG_ENABLE(warnings, [  --enable-warnings		Enable a bunch of compile warning options], enable_warnings="$enableval", enable_warnings=no)
-if test x$enable_warnings = xyes; then
+dnl Enable warning spewage on the console
+AC_ARG_ENABLE(warnings, [  --enable-warnings       Enable g_warning spewage on the console when invalid MIME is encountered [default=no]], enable_warnings="$enableval", enable_warnings="no")
+if test "x$enable_warnings" = "xyes"; then
   CFLAGS="$CFLAGS -Wall -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wunused -Werror"
 fi
+
+AM_CONDITIONAL(ENABLE_WARNINGS, test "x$enable_warnings" = "xyes")
+
 
 dnl We need at *least* glib 2.0.0
 AM_PATH_GLIB_2_0(2.0.0, ,

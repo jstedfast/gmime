@@ -41,6 +41,12 @@
 #define isblank(c) ((c) == ' ' || (c) == '\t')
 #endif /* HAVE_ISBLANK */
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #define d(x)
 
 static void g_mime_parser_class_init (GMimeParserClass *klass);
@@ -150,7 +156,7 @@ parser_pop_boundary (GMimeParser *parser)
 	struct _boundary_stack *s;
 	
 	if (!priv->bounds) {
-		g_warning ("boundary stack underflow");
+		d(g_warning ("boundary stack underflow"));
 		return;
 	}
 	
@@ -716,7 +722,7 @@ parser_step_from (GMimeParser *parser)
 	header->name = g_strndup (priv->headerbuf, hlen);                 \
 	g_strstrip (header->name);                                        \
 	if (*colon != ':') {                                              \
-		g_warning ("Invalid header: %s", header->name);           \
+		w(g_warning ("Invalid header: %s", header->name));        \
 		header->value = header->name;                             \
 		header->name = g_strdup ("X-Invalid-Header");             \
 	} else {                                                          \
@@ -1276,7 +1282,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		
 		parser_pop_boundary (parser);
 	} else {
-		g_warning ("multipart without boundary encountered");
+		w(g_warning ("multipart without boundary encountered"));
 		/* this will scan everything into the preface */
 		*found = parser_scan_multipart_preface (parser, multipart);
 	}

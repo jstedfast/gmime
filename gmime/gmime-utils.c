@@ -52,12 +52,17 @@
 #include "gmime-iconv-utils.h"
 #include "gmime-host-utils.h"
 
-#define d(x)
-#define w(x) x
-
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
 #endif
+
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
+#define d(x)
 
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)

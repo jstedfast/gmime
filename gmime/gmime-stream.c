@@ -29,7 +29,7 @@
 
 #include "gmime-stream.h"
 
-#define d(x) x
+#define d(x)
 
 static void g_mime_stream_class_init (GMimeStreamClass *klass);
 static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);

@@ -1,3 +1,16 @@
+2004-01-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-param.c: Disable debugging and conditionally disable
+	warnings.
+
+	* gmime/gmime-multipart.c: Disable debugging.
+
+	* gmime/gmime-stream.c: Disable debugging.
+
+	* gmime/internet-address.c: Same.
+
+	* gmime/gmime-parser.c: Conditionally disable warnings.
+
 2004-01-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-host-utils.c (g_gethostbyaddr_r): Fixed some compile
