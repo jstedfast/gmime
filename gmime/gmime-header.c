@@ -193,12 +193,47 @@ g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
 	n->name = g_strdup (name);
 	n->value = g_strdup (value);
 	
-	for (h = header->headers; h && h->next; h = h->next);
+	h = header->headers;
+	while (h && h->next)
+		h = h->next;
 	
 	if (h)
 		h->next = n;
 	else
 		header->headers = n;
+	
+	if (!g_hash_table_lookup (header->hash, name))
+		g_hash_table_insert (header->hash, n->name, n);
+	
+	g_free (header->raw);
+	header->raw = NULL;
+}
+
+
+/**
+ * g_mime_header_prepend:
+ * @header: header object
+ * @name: header name
+ * @value: header value
+ *
+ * Adds a header to the head of the list. If @value is %NULL, a space
+ * will be set aside for it (useful for setting the order of headers
+ * before values can be obtained for them) otherwise the header will
+ * be unset.
+ **/
+void
+g_mime_header_prepend (GMimeHeader *header, const char *name, const char *value)
+{
+	struct raw_header *n;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (name != NULL);
+	
+	n = g_new (struct raw_header, 1);
+	n->next = header->headers;
+	n->name = g_strdup (name);
+	n->value = g_strdup (value);
+	header->headers = n;
 	
 	if (!g_hash_table_lookup (header->hash, name))
 		g_hash_table_insert (header->hash, n->name, n);

@@ -1,5 +1,10 @@
 2005-03-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-header.c (g_mime_header_prepend): New function to
+	prepend a header to the list.
+
+2005-03-07  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Updated.
 
 	* configure.in: Bumped version to 2.1.13
