@@ -179,6 +179,11 @@ HREF="gmime-gmime-filter-basic.html"
 > &#8212; </DT
 ><DT
 ><A
+HREF="gmime-gmime-filter-best.html"
+>gmime-filter-best</A
+> &#8212; </DT
+><DT
+><A
 HREF="gmime-gmime-filter-charset.html"
 >gmime-filter-charset</A
 > &#8212; </DT
@@ -332,11 +337,8 @@ HREF="gmime-gmime-session.html"
 ><P
 >All public functions that return const pointers are not to
     be free'd, they point to data internal to the structure. Functions
-    that don't return const pointers MUST be free'd by the caller -
-    the ONLY exception to this are functions that return GList
-    structures - for these functions, you must read the documentation
-    for the particular function to know for sure whther you need to
-    free it or not and how.</P
+    that don't return const pointers MUST be free'd by the
+    caller.</P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"

@@ -1,5 +1,7 @@
 2002-08-23  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* doc/*: Updated.
+
 	* gmime-message-part.c (message_part_write_to_stream): Changed the
 	prototype to return ssize_t and not int.
 

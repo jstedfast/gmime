@@ -34,6 +34,7 @@
 <!entity gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
 <!entity gmime-filter SYSTEM "sgml/gmime-filter.sgml">
 <!entity gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!entity gmime-filter-best SYSTEM "sgml/gmime-filter-best.sgml">
 <!entity gmime-filter-charset SYSTEM "sgml/gmime-filter-charset.sgml">
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
@@ -206,7 +207,7 @@
     data. Actually, they wrap around a source stream and contain
     information about the format of the source stream. This makes
     writing a data wrapper to a stream incredibly easy because it will
-    decode the data into it's raw form before writing it to the output
+    decode the data into its raw form before writing it to the output
     stream for you.</para>
   </chapter>
 
@@ -220,11 +221,8 @@
 
     <para>All public functions that return const pointers are not to
     be free'd, they point to data internal to the structure. Functions
-    that don't return const pointers MUST be free'd by the caller -
-    the ONLY exception to this are functions that return GList
-    structures - for these functions, you must read the documentation
-    for the particular function to know for sure whther you need to
-    free it or not and how.</para>
+    that don't return const pointers MUST be free'd by the
+    caller.</para>
 
     &gmime;
     &gmime-stream;
@@ -238,6 +236,7 @@
     &gmime-stream-filter;
     &gmime-filter;
     &gmime-filter-basic;
+    &gmime-filter-best;
     &gmime-filter-charset;
     &gmime-filter-crlf;
     &gmime-filter-from;

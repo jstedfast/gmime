@@ -66,8 +66,6 @@ GType g_mime_data_wrapper_get_type (void);
 GMimeDataWrapper *g_mime_data_wrapper_new (void);
 GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding);
 
-void g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper);
-
 void g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
 GMimeStream *g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper);
 

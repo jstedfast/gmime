@@ -19,7 +19,6 @@ struct      <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>;
 <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* <link linkend="g-mime-data-wrapper-new-with-stream">g_mime_data_wrapper_new_with_stream</link>
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
-void        <link linkend="g-mime-data-wrapper-destroy">g_mime_data_wrapper_destroy</link>     (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);
 void        <link linkend="g-mime-data-wrapper-set-stream">g_mime_data_wrapper_set_stream</link>  (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-data-wrapper-get-stream">g_mime_data_wrapper_get_stream</link> (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);
@@ -31,6 +30,8 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-data-wrapper-write-to-stream">g_mime_data_wrapper_write_to_stream</link>
                                             (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -50,6 +51,8 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 <refsect2>
 <title><anchor id="GMimeDataWrapper">struct GMimeDataWrapper</title>
 <programlisting>struct GMimeDataWrapper {
+	GObject parent_object;
+	
 	GMimePartEncodingType encoding;
 	GMimeStream *stream;
 };
@@ -95,22 +98,6 @@ Creates a new GMimeDataWrapper object around <parameter>stream</parameter>.</par
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a data wrapper around <parameter>stream</parameter>. Since the wrapper owns it's
 own reference on the stream, caller is responsible for unrefing
 it's own copy.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-data-wrapper-destroy">g_mime_data_wrapper_destroy ()</title>
-<programlisting>void        g_mime_data_wrapper_destroy     (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);</programlisting>
-<para>
-Destroys the data wrapper and unref's its internal stream.</para>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry> data wrapper
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

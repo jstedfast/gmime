@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->GMimeSession</TITLE
+>gmime-filter-best</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,8 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="GMimeGpgContext"
-HREF="gmime-gmime-gpg-context.html"></HEAD
+TITLE="gmime-filter-basic"
+HREF="gmime-gmime-filter-basic.html"><LINK
+REL="NEXT"
+TITLE="gmime-filter-charset"
+HREF="gmime-gmime-filter-charset.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -46,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-gpg-context.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -99,27 +102,36 @@ SIZE="3"
 WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
->&nbsp;</TD
+><A
+HREF="gmime-gmime-filter-charset.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
 ></TR
 ></TABLE
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-SESSION"
->GMimeSession</A
+NAME="GMIME-GMIME-FILTER-BEST"
+>gmime-filter-best</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN9506"
+NAME="AEN1736"
 ></A
 ><H2
 >Name</H2
->GMimeSession&nbsp;--&nbsp;</DIV
+>gmime-filter-best&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN9509"
+NAME="AEN1739"
 ></A
 ><H2
 >Synopsis</H2
@@ -134,50 +146,39 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
+enum        <A
+HREF="gmime-gmime-filter-best.html#GMIMEBESTENCODING"
+>GMimeBestEncoding</A
 >;
-char*       <A
-HREF="gmime-gmime-session.html#G-MIME-SESSION-REQUEST-PASSWD"
->g_mime_session_request_passwd</A
->   (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session,
-                                             const char *prompt,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> secret,
-                                             const char *item,
+<A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+>* <A
+HREF="gmime-gmime-filter-best.html#G-MIME-FILTER-BEST-NEW"
+>g_mime_filter_best_new</A
+>         (unsigned int flags);
+const char* <A
+HREF="gmime-gmime-filter-best.html#G-MIME-FILTER-BEST-CHARSET"
+>g_mime_filter_best_charset</A
+>      (<GTKDOCLINK
+HREF="GMIMEFILTERBEST"
+>GMimeFilterBest</GTKDOCLINK
+> *best);
+<A
+HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> <A
+HREF="gmime-gmime-filter-best.html#G-MIME-FILTER-BEST-ENCODING"
+>g_mime_filter_best_encoding</A
+>
+                                            (<GTKDOCLINK
+HREF="GMIMEFILTERBEST"
+>GMimeFilterBest</GTKDOCLINK
+> *best,
                                              <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
-void        <A
-HREF="gmime-gmime-session.html#G-MIME-SESSION-FORGET-PASSWD"
->g_mime_session_forget_passwd</A
->    (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session,
-                                             const char *item,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);
-<GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
->    <A
-HREF="gmime-gmime-session.html#G-MIME-SESSION-IS-ONLINE"
->g_mime_session_is_online</A
->        (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session);
-&#13;</PRE
+HREF="gmime-gmime-filter-best.html#GMIMEBESTENCODING"
+>GMimeBestEncoding</A
+> required);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -185,7 +186,7 @@ HREF="gmime-gmime-session.html#GMIMESESSION"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9523"
+NAME="AEN1751"
 ></A
 ><H2
 >Description</H2
@@ -195,20 +196,20 @@ NAME="AEN9523"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9526"
+NAME="AEN1754"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9528"
+NAME="AEN1756"
 ></A
 ><H3
 ><A
-NAME="GMIMESESSION"
+NAME="GMIMEBESTENCODING"
 ></A
->struct GMimeSession</H3
+>enum GMimeBestEncoding</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -218,10 +219,11 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeSession {
-	GObject parent_object;
-	
-};</PRE
+>typedef enum {
+	GMIME_BEST_ENCODING_7BIT,
+	GMIME_BEST_ENCODING_8BIT,
+	GMIME_BEST_ENCODING_BINARY,
+} GMimeBestEncoding;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -231,13 +233,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9533"
+NAME="AEN1761"
 ></A
 ><H3
 ><A
-NAME="G-MIME-SESSION-REQUEST-PASSWD"
+NAME="G-MIME-FILTER-BEST-NEW"
 ></A
->g_mime_session_request_passwd ()</H3
+>g_mime_filter_best_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -247,36 +249,44 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->char*       g_mime_session_request_passwd   (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session,
-                                             const char *prompt,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> secret,
-                                             const char *item,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+><A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+>* g_mime_filter_best_new         (unsigned int flags);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Requests the password for item <TT
+>Creates a new GMimeFilterBest filter. <TT
 CLASS="PARAMETER"
 ><I
->item</I
+>flags</I
 ></TT
->.</P
+> are used to determine
+which information to keep statistics of. If the
+<GTKDOCLINK
+HREF="GMIME-FILTER-BEST-CHARSET-CAPS"
+>GMIME_FILTER_BEST_CHARSET</GTKDOCLINK
+> bit is set, the filter will be able to
+compute the best charset for encoding the stream of data
+filtered. If the <GTKDOCLINK
+HREF="GMIME-FILTER-BEST-ENCODING-CAPS"
+>GMIME_FILTER_BEST_ENCODING</GTKDOCLINK
+> bit is set, the filter
+will be able to compute the best Content-Transfer-Encoding for use
+with the stream being filtered.</P
+><P
+>Note: In order for the #<A
+HREF="gmime-gmime-filter-best.html#G-MIME-FILTER-BEST-CHARSET"
+>g_mime_filter_best_charset</A
+>() function to
+work, the stream being filtered MUST already be encoded in UTF-8.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9543"
+NAME="AEN1773"
 ></A
 ><P
 ></P
@@ -296,85 +306,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->session</I
+>flags</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> session object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->prompt</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> prompt to present to the user</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->secret</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> <TT
-CLASS="LITERAL"
->TRUE</TT
-> if the characters the user types should be hidden</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->item</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> item name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->ex</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> exception</TD
+> filter flags</TD
 ></TR
 ><TR
 ><TD
@@ -389,11 +328,12 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a string buffer containing the password for the requested
-item or <TT
-CLASS="LITERAL"
->NULL</TT
-> on fail.</TD
+>a new best filter with flags <TT
+CLASS="PARAMETER"
+><I
+>flags</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -404,13 +344,13 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9574"
+NAME="AEN1787"
 ></A
 ><H3
 ><A
-NAME="G-MIME-SESSION-FORGET-PASSWD"
+NAME="G-MIME-FILTER-BEST-CHARSET"
 ></A
->g_mime_session_forget_passwd ()</H3
+>g_mime_filter_best_charset ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -420,31 +360,27 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_session_forget_passwd    (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session,
-                                             const char *item,
-                                             <A
-HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
->GMimeException</A
-> *ex);</PRE
+>const char* g_mime_filter_best_charset      (<GTKDOCLINK
+HREF="GMIMEFILTERBEST"
+>GMimeFilterBest</GTKDOCLINK
+> *best);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Forgets the password for item <TT
+>Calculates the best charset for encoding the stream filtered
+through the <TT
 CLASS="PARAMETER"
 ><I
->item</I
+>best</I
 ></TT
->.</P
+> filter.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9583"
+NAME="AEN1795"
 ></A
 ><P
 ></P
@@ -464,120 +400,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->session</I
+>best</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> session object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->item</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> item name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->ex</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> exception</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN9600"
-></A
-><H3
-><A
-NAME="G-MIME-SESSION-IS-ONLINE"
-></A
->g_mime_session_is_online ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
->    g_mime_session_is_online        (<A
-HREF="gmime-gmime-session.html#GMIMESESSION"
->GMimeSession</A
-> *session);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets whether or not the session is 'online' or not (online meaning
-that we are connected to the internet).</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN9608"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->session</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> session object</TD
+> best filter</TD
 ></TR
 ><TR
 ><TD
@@ -592,13 +422,137 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
+>a pointer to a string containing the name of the charset
+best suited for the text filtered through <TT
+CLASS="PARAMETER"
+><I
+>best</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1809"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-BEST-ENCODING"
+></A
+>g_mime_filter_best_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> g_mime_filter_best_encoding
+                                            (<GTKDOCLINK
+HREF="GMIMEFILTERBEST"
+>GMimeFilterBest</GTKDOCLINK
+> *best,
+                                             <A
+HREF="gmime-gmime-filter-best.html#GMIMEBESTENCODING"
+>GMimeBestEncoding</A
+> required);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Calculates the best Content-Transfer-Encoding for the stream
+filtered through <TT
+CLASS="PARAMETER"
+><I
+>best</I
+></TT
+> that fits within the <TT
+CLASS="PARAMETER"
+><I
+>required</I
+></TT
+> encoding.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1820"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
 ><TT
-CLASS="LITERAL"
->TRUE</TT
-> if the session is online or <TT
-CLASS="LITERAL"
->FALSE</TT
-> otherwise.</TD
+CLASS="PARAMETER"
+><I
+>best</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> best filter</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>required</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> encoding that all data must fit within</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the best encoding for the stream filtered by <TT
+CLASS="PARAMETER"
+><I
+>best</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -622,7 +576,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-gpg-context.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -675,7 +629,16 @@ SIZE="3"
 WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
->&nbsp;</TD
+><A
+HREF="gmime-gmime-filter-charset.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
 ></TR
 ><TR
 ><TD
@@ -685,13 +648,19 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->GMimeGpgContext</B
+>gmime-filter-basic</B
 ></FONT
 ></TD
 ><TD
 COLSPAN="2"
 ALIGN="right"
->&nbsp;</TD
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-filter-charset</B
+></FONT
+></TD
 ></TR
 ></TABLE
 ></DIV

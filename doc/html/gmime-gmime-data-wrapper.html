@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-DATA-WRAPPER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN3278"
+NAME="AEN3385"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN3278"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN3281"
+NAME="AEN3388"
 ></A
 ><H2
 >Synopsis</H2
@@ -172,13 +172,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);
-void        <A
-HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-DESTROY"
->g_mime_data_wrapper_destroy</A
->     (<A
-HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
->GMimeDataWrapper</A
-> *wrapper);
 void        <A
 HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-SET-STREAM"
 >g_mime_data_wrapper_set_stream</A
@@ -237,7 +230,8 @@ HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
                                              <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
-> *stream);</PRE
+> *stream);
+&#13;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -245,7 +239,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3309"
+NAME="AEN3414"
 ></A
 ><H2
 >Description</H2
@@ -255,14 +249,14 @@ NAME="AEN3309"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3312"
+NAME="AEN3417"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3314"
+NAME="AEN3419"
 ></A
 ><H3
 ><A
@@ -279,6 +273,8 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeDataWrapper {
+	GObject parent_object;
+	
 	GMimePartEncodingType encoding;
 	GMimeStream *stream;
 };</PRE
@@ -291,7 +287,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3319"
+NAME="AEN3424"
 ></A
 ><H3
 ><A
@@ -321,7 +317,7 @@ HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3326"
+NAME="AEN3431"
 ></A
 ><P
 ></P
@@ -357,7 +353,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3335"
+NAME="AEN3440"
 ></A
 ><H3
 ><A
@@ -400,7 +396,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3345"
+NAME="AEN3450"
 ></A
 ><P
 ></P
@@ -477,75 +473,7 @@ it's own copy.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3363"
-></A
-><H3
-><A
-NAME="G-MIME-DATA-WRAPPER-DESTROY"
-></A
->g_mime_data_wrapper_destroy ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_data_wrapper_destroy     (<A
-HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
->GMimeDataWrapper</A
-> *wrapper);</PRE
-></TD
-></TR
-></TABLE
-><P
->Destroys the data wrapper and unref's its internal stream.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN3370"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->wrapper</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> data wrapper</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN3379"
+NAME="AEN3468"
 ></A
 ><H3
 ><A
@@ -591,7 +519,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3389"
+NAME="AEN3478"
 ></A
 ><P
 ></P
@@ -646,7 +574,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3402"
+NAME="AEN3491"
 ></A
 ><H3
 ><A
@@ -684,7 +612,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3411"
+NAME="AEN3500"
 ></A
 ><P
 ></P
@@ -738,7 +666,7 @@ for unrefing it.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3424"
+NAME="AEN3513"
 ></A
 ><H3
 ><A
@@ -773,7 +701,7 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3432"
+NAME="AEN3521"
 ></A
 ><P
 ></P
@@ -828,7 +756,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3445"
+NAME="AEN3534"
 ></A
 ><H3
 ><A
@@ -867,7 +795,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3454"
+NAME="AEN3543"
 ></A
 ><P
 ></P
@@ -920,7 +848,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3467"
+NAME="AEN3556"
 ></A
 ><H3
 ><A
@@ -958,7 +886,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3476"
+NAME="AEN3565"
 ></A
 ><P
 ></P

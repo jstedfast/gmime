@@ -436,7 +436,9 @@ g_mime_cipher_validity_init (GMimeCipherValidity *validity)
  * g_mime_cipher_validity_get_valid:
  * @validity: validity structure
  *
- * Returns %TRUE if @validity is valid.
+ * Gets the validity of the validity structure @validity.
+ *
+ * Returns %TRUE if @validity is valid or %FALSE otherwise.
  **/
 gboolean
 g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
@@ -467,6 +469,8 @@ g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
 /**
  * g_mime_cipher_validity_get_description:
  * @validity: validity structure
+ *
+ * Gets the description set on the validity structure @validity.
  *
  * Returns any description set on the validity structure.
  **/

@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-CHARSET"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN8066"
+NAME="AEN8155"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN8066"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN8069"
+NAME="AEN8158"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,9 +147,9 @@ CLASS="SYNOPSIS"
 >&#13;
 
 void        <A
-HREF="gmime-gmime-charset.html#G-MIME-CHARSET-INIT"
->g_mime_charset_init</A
->             (void);
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-MAP-INIT"
+>g_mime_charset_map_init</A
+>         (void);
 const char* <A
 HREF="gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME"
 >g_mime_charset_locale_name</A
@@ -158,6 +158,32 @@ const char* <A
 HREF="gmime-gmime-charset.html#G-MIME-CHARSET-NAME"
 >g_mime_charset_name</A
 >             (const char *charset);
+void        <A
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-INIT"
+>g_mime_charset_init</A
+>             (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset);
+void        <A
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-STEP"
+>g_mime_charset_step</A
+>             (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset,
+                                             const char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);
+const char* <A
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-BEST-NAME"
+>g_mime_charset_best_name</A
+>        (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset);
 const char* <A
 HREF="gmime-gmime-charset.html#G-MIME-CHARSET-BEST"
 >g_mime_charset_best</A
@@ -173,7 +199,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN8077"
+NAME="AEN8173"
 ></A
 ><H2
 >Description</H2
@@ -183,20 +209,20 @@ NAME="AEN8077"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN8080"
+NAME="AEN8176"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8082"
+NAME="AEN8178"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CHARSET-INIT"
+NAME="G-MIME-CHARSET-MAP-INIT"
 ></A
->g_mime_charset_init ()</H3
+>g_mime_charset_map_init ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -206,7 +232,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_charset_init             (void);</PRE
+>void        g_mime_charset_map_init         (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -220,7 +246,7 @@ iso-8859-1 locales.</P
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8088"
+NAME="AEN8184"
 ></A
 ><H3
 ><A
@@ -247,7 +273,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN8094"
+NAME="AEN8190"
 ></A
 ><P
 ></P
@@ -283,7 +309,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8103"
+NAME="AEN8199"
 ></A
 ><H3
 ><A
@@ -315,7 +341,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN8110"
+NAME="AEN8206"
 ></A
 ><P
 ></P
@@ -373,7 +399,289 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8124"
+NAME="AEN8220"
+></A
+><H3
+><A
+NAME="G-MIME-CHARSET-INIT"
+></A
+>g_mime_charset_init ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_charset_init             (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initializes a charset mask structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8227"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset mask</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8236"
+></A
+><H3
+><A
+NAME="G-MIME-CHARSET-STEP"
+></A
+>g_mime_charset_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_charset_step             (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset,
+                                             const char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Steps through the input buffer 1 unicode character (glyph) at a
+time (ie, not necessarily 1 byte at a time). Bitwise 'and' our
+<TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>-&gt;mask with the mask for each glyph. This has the effect of
+limiting what charsets our <TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>-&gt;mask can match.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8246"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input text buffer (must be in UTF-8)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input buffer length</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8263"
+></A
+><H3
+><A
+NAME="G-MIME-CHARSET-BEST-NAME"
+></A
+>g_mime_charset_best_name ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_charset_best_name        (<GTKDOCLINK
+HREF="GMIMECHARSET"
+>GMimeCharset</GTKDOCLINK
+> *charset);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the best charset name based on the charset mask <TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8271"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset mask</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a pointer to a string containing the best charset name that
+can represent the charset mask <TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8285"
 ></A
 ><H3
 ><A
@@ -404,7 +712,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN8131"
+NAME="AEN8292"
 ></A
 ><P
 ></P

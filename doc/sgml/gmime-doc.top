@@ -11,6 +11,7 @@
 <!ENTITY gmime-gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
 <!ENTITY gmime-gmime-filter SYSTEM "sgml/gmime-filter.sgml">
 <!ENTITY gmime-gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!ENTITY gmime-gmime-filter-best SYSTEM "sgml/gmime-filter-best.sgml">
 <!ENTITY gmime-gmime-filter-charset SYSTEM "sgml/gmime-filter-charset.sgml">
 <!ENTITY gmime-gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!ENTITY gmime-gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
