@@ -1,5 +1,20 @@
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* TODO: Updated.
+
+	* gmime-utils.c: Updated gmime_special_table.
+	(g_mime_utils_8bit_header_encode): Since rfc2047 states that all
+	whitespace between encoded atoms must be ignored, the encoder
+	should therefor make an effort to encode whitespace when it falls
+	between two atoms that will be encoded. Use the IS_ESAFE mask.
+	(quoted_encode): Now takes a safemask argument to specify which
+	chars are safe to leave unencoded and also a arg to save whether
+	or not the word was encoded.
+	(g_mime_utils_8bit_header_encode_phrase): Updated to use the
+	IS_PSAFE mask.
+
+2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* gmime-parser.c (header_unfold): New function to unfold a header
 	(to be used internally).
 	(construct_headers): Unfold headers as we parse them.

@@ -193,6 +193,16 @@ int main (int argc, char *argv[])
 	g_free (enc);
 	g_free (dec);
 	
+	fprintf (stderr, "test that white space between 8bit words is preserved\n");
+	enc = g_mime_utils_8bit_header_encode ("еaеееaее  \t  ееееaa");
+	fprintf (stderr, "encoded: %s\n", enc);
+	
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	
+	g_free (enc);
+	g_free (dec);
+	
 	enc = g_mime_utils_quote_string ("this is an \"embedded\" quoted string.", TRUE);
 	fprintf (stderr, "quoted: %s\n", enc);
 	g_mime_utils_unquote_string (enc);

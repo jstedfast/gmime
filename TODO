@@ -37,6 +37,7 @@ encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_?= =?iso-8859-1?Q?b?=
 After deocding, the first equates to: ab 
 This is incorrect, the RFC specifies that whitespace between 
 encoded atoms be ignored.
+** This should be fixed now.
 
 - Parsing quoted strings needs to be smarter - need to check for
 escaped quotes and such.

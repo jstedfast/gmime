@@ -44,12 +44,12 @@ static unsigned char tohex[16] = {
 static unsigned short gmime_special_table[256] = {
 	  5,  5,  5,  5,  5,  5,  5,  5,  5,231,  7,  5,  5, 39,  5,  5,
 	  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
-	 50,192, 76,192,192,192,192,192, 76, 76,192,192, 76,192, 72, 68,
-	192,192,192,192,192,192,192,192,192,192, 76, 76, 76,  4, 76, 68,
-	 76,192,192,192,192,192,192,192,192,192,192,192,192,192,192,192,
-	192,192,192,192,192,192,192,192,192,192,192,108,236,108,192,192,
-	192,192,192,192,192,192,192,192,192,192,192,192,192,192,192,192,
-	192,192,192,192,192,192,192,192,192,192,192,192,192,192,192,  5,
+	242,448, 76,192,192,192,192,192, 76, 76,448,448, 76,448, 72,324,
+	448,448,448,448,448,448,448,448,448,448, 76, 76, 76,  4, 76, 68,
+	 76,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
+	448,448,448,448,448,448,448,448,448,448,448,108,236,108,192, 64,
+	192,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
+	448,448,448,448,448,448,448,448,448,448,448,192,192,192,192,  5,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -132,9 +132,75 @@ enum {
 #define CHARS_SPECIAL "()<>@,;:\\\".[]"
 #define CHARS_CSPECIAL "()\\\r"	           /* not in comments */
 #define CHARS_DSPECIAL "[]\\\r \t"	   /* not in domains */
-#define CHARS_ESPECIAL "()<>@,;:\"/[]?.="  /* rfc2047 encoded word specials */
-#define CHARS_PSPECIAL "!*+-/=_"           /* encoded word specials */
+#define CHARS_ESPECIAL "()<>@,;:\"/[]?.="  /* encoded word specials (rfc2047 5.1) */
+#define CHARS_PSPECIAL "!*+-/"             /* encoded phrase specials (rfc2047 5.3) */
 
+#ifdef BUILD_TABLE
+/* code to rebuild the gmime_special_table */
+static void
+header_remove_bits (gushort bit, guchar *vals)
+{
+	gint i;
+	
+	for (i = 0; vals[i]; i++)
+		gmime_special_table[vals[i]] &= ~bit;
+}
+
+static void
+header_init_bits (gushort bit, gushort bitcopy, gboolean remove, guchar *vals)
+{
+	gint i, len = strlen (vals);
+	
+	if (!remove) {
+		for (i = 0; i < len; i++) {
+			gmime_special_table[vals[i]] |= bit;
+		}
+		if (bitcopy) {
+			for (i = 0; i < 256; i++) {
+				if (gmime_special_table[i] & bitcopy)
+					gmime_special_table[i] |= bit;
+			}
+		}
+	} else {
+		for (i = 0; i < 256; i++)
+			gmime_special_table[i] |= bit;
+		for (i = 0; i < len; i++) {
+			gmime_special_table[vals[i]] &= ~bit;
+		}
+		if (bitcopy) {
+			for (i = 0; i < 256; i++) {
+				if (gmime_special_table[i] & bitcopy)
+					gmime_special_table[i] &= ~bit;
+			}
+		}
+	}
+}
+
+static void
+header_decode_init (void)
+{
+	gint i;
+	
+	for (i = 0; i < 256; i++) {
+		gmime_special_table[i] = 0;
+		if (i < 32)
+			gmime_special_table[i] |= IS_CTRL;
+		if ((i >= 33 && i <= 60) || (i >= 62 && i <= 126) || i == 32 || i == 9)
+			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
+		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
+			gmime_special_table[i] |= IS_PSAFE;
+	}
+	
+	gmime_special_table[127] |= IS_CTRL;
+	gmime_special_table[' '] |= IS_SPACE;
+	header_init_bits (IS_LWSP, 0, FALSE, CHARS_LWSP);
+	header_init_bits (IS_TSPECIAL, IS_CTRL, FALSE, CHARS_TSPECIAL);
+	header_init_bits (IS_SPECIAL, 0, FALSE, CHARS_SPECIAL);
+	header_init_bits (IS_DSPECIAL, 0, FALSE, CHARS_DSPECIAL);
+	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
+	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
+}
+#endif /* BUILD_TABLE */
 
 /* hrm, is there a library for this shit? */
 static struct {
@@ -199,9 +265,11 @@ datetok (const gchar *date)
 {
 	GList *tokens = NULL;
 	gchar *token, *start, *end;
-
+	
+	g_return_val_if_fail (date != NULL, NULL);
+	
 	start = (gchar *) date;
-	while (start!=NULL && *start) {
+	while (*start) {
 		/* kill leading whitespace */
 		for ( ; *start && isspace (*start); start++);
 		
@@ -244,7 +312,7 @@ get_days_in_month (gint mon, gint year)
 static gint
 get_wday (gchar *str)
 {
-	int i;
+	gint i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
@@ -259,7 +327,7 @@ static gint
 get_mday (gchar *str)
 {
 	gchar *p;
-	int mday;
+	gint mday;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
@@ -278,7 +346,7 @@ get_mday (gchar *str)
 static gint
 get_month (gchar *str)
 {
-	int i;
+	gint i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
@@ -311,10 +379,10 @@ get_year (gchar *str)
 }
 
 static gboolean
-get_time (char *in, int *hour, int *min, int *sec)
+get_time (gchar *in, gint *hour, gint *min, gint *sec)
 {
-	char *p;
-	int colons = 0;
+	gchar *p;
+	gint colons = 0;
 	gboolean digits = TRUE;
 	
 	for (p = in; *p && digits; p++) {
@@ -334,16 +402,16 @@ static gint
 get_tzone (GList **token)
 {
 	gint tz = -1;
-	int i;
+	gint i;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
-		char *str = (*token)->data;
+		gchar *str = (*token)->data;
 		
 		if (*str == '+' || *str == '-') {
 			tz = atoi (str);
 			return tz;
 		} else {
-			int t;
+			gint t;
 			
 			if (*str == '(')
 				str++;
@@ -365,7 +433,7 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	GList *token;
 	struct tm tm;
 	time_t t;
-	int hour, min, sec, offset, n;
+	gint hour, min, sec, offset, n;
 	
 	g_return_val_if_fail (tokens != NULL, (time_t) 0);
 	
@@ -442,7 +510,7 @@ parse_broken_date (GList *tokens, int *tzone)
 {
 	GList *token;
 	struct tm tm;
-	int hour, min, sec, n;
+	gint hour, min, sec, n;
 	
 	if (tzone)
 		*tzone = 0;
@@ -590,8 +658,8 @@ GMimePartEncodingType
 g_mime_utils_best_encoding (const guchar *text)
 {
 	guchar *ch;
-	int count = 0;
-	int total;
+	gint count = 0;
+	gint total;
 	
 	for (ch = (guchar *) text; *ch; ch++)
 		if (*ch > (guchar) 127)
@@ -739,7 +807,6 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 			/* we reached the end of a 'word' */
 			gboolean was_encoded;
 			guchar *dword;
-			guint len;
 			
 			dword = decode_8bit_word (word->str, &was_encoded);
 			if (dword) {
@@ -808,7 +875,7 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 
 /* rfc2047 version of quoted-printable */
 static gint
-quoted_encode (const guchar *in, gint len, guchar *out)
+quoted_encode (const guchar *in, gint len, guchar *out, gushort safemask)
 {
 	register const guchar *inptr, *inend;
 	guchar *outptr;
@@ -820,14 +887,14 @@ quoted_encode (const guchar *in, gint len, guchar *out)
 	
 	while (inptr < inend) {
 		c = *inptr++;
-		if (c > 127 || strchr (CHARS_ESPECIAL, c)) {
-			*outptr++ = '=';
-			*outptr++ = tohex[(c >> 4) & 0xf];
-			*outptr++ = tohex[c & 0xf];
-		} else {
+		if (gmime_special_table[c] & safemask && c != '\t') {
 			if (c == ' ')
 				c = '_';
 			*outptr++ = c;
+		} else {
+			*outptr++ = '=';
+			*outptr++ = tohex[(c >> 4) & 0xf];
+			*outptr++ = tohex[c & 0xf];
 		}
 	}
 	
@@ -835,7 +902,7 @@ quoted_encode (const guchar *in, gint len, guchar *out)
 }
 
 static guchar *
-encode_8bit_word (const guchar *word)
+encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encoded)
 {
 	guchar *encoded, *ptr;
 	guint enclen, pos, len;
@@ -869,13 +936,19 @@ encode_8bit_word (const guchar *word)
 		
 		encoding = 'q';
 		
-		pos = quoted_encode (word, len, encoded);		
+		pos = quoted_encode (word, len, encoded, safemask);
 		encoded[pos] = '\0';
 		
 		break;
 	default:
+		if (this_was_encoded)
+			*this_was_encoded = FALSE;
+		
 		return g_strdup (word);
 	}
+	
+	if (this_was_encoded)
+		*this_was_encoded = TRUE;
 	
 	return g_strdup_printf ("=?iso-8859-1?%c?%s?=", encoding, encoded);
 }
@@ -891,7 +964,7 @@ encode_8bit_word (const guchar *word)
 gchar *
 g_mime_utils_8bit_header_encode_phrase (const guchar *in)
 {
-	return encode_8bit_word (in);
+	return encode_8bit_word (in, IS_PSAFE, NULL);
 }
 
 
@@ -905,81 +978,106 @@ g_mime_utils_8bit_header_encode_phrase (const guchar *in)
 gchar *
 g_mime_utils_8bit_header_encode (const guchar *in)
 {
-	GString *out;
-	guchar *inptr, *start;
+	GString *out, *word, *whtspc;
+	guchar *inptr;
 	guchar *encoded;
-	gboolean encode;
-	gboolean last_encoded = FALSE;
+	gboolean is8bit = FALSE;
+	gboolean last_was_encoded = FALSE;
+	gboolean last_was_space = FALSE;
 	
 	out = g_string_new ("");
-	start = inptr = (guchar *) in;
-	encode = FALSE;
+	word = g_string_new ("");
+	whtspc = g_string_new ("");
+	inptr = (guchar *) in;
 	
 	while (inptr && *inptr) {
 		guchar c = *inptr++;
 		
-		if (isspace (c)) {
-			if (encode) {
-				guchar *word, *eword;
-				guint len;
+		if (isspace (c) && !last_was_space) {
+			gboolean this_was_encoded = FALSE;
+			guchar *eword;
+			
+			if (is8bit)
+				eword = encode_8bit_word (word->str, IS_ESAFE, &this_was_encoded);
+			else
+				eword = g_strdup (word->str);
+			
+			/* append any whitespace */
+			if (last_was_encoded && this_was_encoded) {
+				/* we need to encode the whitespace */
+				guchar *ewhtspc;
+				gint len;
 				
-				len = inptr - start - 1;
-				word = alloca (len + 1);
-				memcpy (word, start, len);
-				word[len] = '\0';
+				ewhtspc = alloca (whtspc->len * 3 + 4);
+				len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
+				ewhtspc[len] = '\0';
 				
-				eword = encode_8bit_word (word);
-				
-				g_string_append (out, eword);
-				g_free (eword);
-				g_string_append_c (out, c);
+				g_string_append (out, " =?iso-8859-1?q?");
+				g_string_append (out, ewhtspc);
+				g_string_append (out, "?= ");
 			} else {
-				guchar *word;
-				guint len;
-				
-				len = inptr - start;
-				word = alloca (len + 1);
-				memcpy (word, start, len);
-				word[len] = '\0';
-				
-				g_string_append (out, word);
+				g_string_append (out, whtspc->str);
 			}
 			
-			start = inptr;
-			encode = FALSE;
+			/* append the encoded word */
+			g_string_append (out, eword);
+			g_free (eword);
+			
+			g_string_free (whtspc, TRUE);
+			whtspc = g_string_new ("");
+			
+			g_string_free (word, TRUE);
+			word = g_string_new ("");
+			
+			last_was_encoded = this_was_encoded;
+			is8bit = FALSE;
+		}
+		
+		if (isspace (c)) {
+			g_string_append_c (whtspc, c);
+			last_was_space = TRUE;
 		} else {
 			if (c > 127)
-				encode = TRUE;
+				is8bit = TRUE;
+			
+			g_string_append_c (word, c);
+			last_was_space = FALSE;
 		}
 	}
 	
-	if (inptr - start) {
-		if (encode) {
-			guchar *word, *eword;
-			guint len;
+	if (word->len || whtspc->len) {
+		gboolean this_was_encoded = FALSE;
+		guchar *eword;
+		
+		if (is8bit)
+			eword = encode_8bit_word (word->str, IS_ESAFE, &this_was_encoded);
+		else
+			eword = g_strdup (word->str);
+		
+		/* append any whitespace */
+		if (last_was_encoded && this_was_encoded) {
+			/* we need to encode the whitespace */
+			guchar *ewhtspc;
+			gint len;
 			
-			len = inptr - start;
-			word = alloca (len + 1);
-			memcpy (word, start, len);
-			word[len] = '\0';
+			ewhtspc = alloca (whtspc->len * 3 + 4);
+			len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
+			ewhtspc[len] = '\0';
 			
-			eword = encode_8bit_word (word);
-			
-			g_string_append (out, eword);
-			g_free (eword);
-			g_string_append_c (out, *inptr);
+			g_string_append (out, " =?iso-8859-1?q?");
+			g_string_append (out, ewhtspc);
+			g_string_append (out, "?= ");
 		} else {
-			guchar *word;
-			guint len;
-			
-			len = inptr - start;
-			word = alloca (len + 1);
-			memcpy (word, start, len);
-			word[len] = '\0';
-			
-			g_string_append (out, word);
+			g_string_append (out, whtspc->str);
 		}
+		
+		/* append the encoded word */
+		g_string_append (out, eword);
+		g_free (eword);
 	}
+	
+	g_string_free (whtspc, TRUE);
+	g_string_free (word, TRUE);
 	
 	encoded = out->str;
 	g_string_free (out, FALSE);
