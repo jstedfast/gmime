@@ -39,7 +39,7 @@ pgp_get_passphrase (const gchar *prompt, gpointer data)
 #if 0
 	gchar buffer[256];
 	
-	fprintf (stderr, "%s\nPassphrase: %s\n", prompt, passphrase);
+	fprintf (stdout, "%s\nPassphrase: %s\n", prompt, passphrase);
 	fgets (buffer, 255, stdin);
 	buffer[strlen (buffer)] = '\0'; /* chop off \n */
 #endif
@@ -69,7 +69,7 @@ test_multipart_signed (void)
 	pgp_mime_part_sign (&text_part, userid, PGP_HASH_TYPE_MD5, ex);
 	if (g_mime_exception_is_set (ex)) {
 		g_mime_part_destroy (text_part);
-		fprintf (stderr, "pgp_mime_part_sign failed: %s\n",
+		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
 		g_mime_exception_free (ex);
 		return;
@@ -101,6 +101,13 @@ test_multipart_signed (void)
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
 	
+	fprintf (stdout, "Trying to verify signature...%s\n",
+		 pgp_mime_part_verify_signature (text_part, ex) ? "valid" : "invalid");
+	if (g_mime_exception_is_set (ex))
+		fprintf (stdout, "error: %s\n", g_mime_exception_get_description (ex));
+	
+	g_mime_exception_free (ex);
+	
 	g_mime_message_destroy (message);
 }
 
@@ -109,7 +116,7 @@ test_multipart_encrypted (void)
 {
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
-	GMimePart *text_part;
+	GMimePart *text_part, *decrypted_part;
 	GMimeException *ex;
 	GPtrArray *recipients;
 	gchar *body;
@@ -131,11 +138,12 @@ test_multipart_encrypted (void)
 	g_ptr_array_free (recipients, TRUE);
 	if (g_mime_exception_is_set (ex)) {
 		g_mime_part_destroy (text_part);
-		fprintf (stderr, "pgp_mime_part_sign failed: %s\n",
+		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
 		g_mime_exception_free (ex);
 		return;
 	}
+	g_mime_exception_free (ex);
 	
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
@@ -162,6 +170,21 @@ test_multipart_encrypted (void)
 	g_free (body);
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
+	
+	/* okay, now to test our decrypt function... */
+	ex = g_mime_exception_new ();
+	decrypted_part = pgp_mime_part_decrypt (text_part, ex);
+	if (g_mime_exception_is_set (ex)) {
+		fprintf (stdout, "failed to decrypt part.\n");
+	} else {
+		gchar *text;
+		
+		text = g_mime_part_to_string (decrypted_part, FALSE);
+		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
+		g_free (text);
+		g_mime_part_destroy (decrypted_part);
+	}
+	g_mime_exception_free (ex);
 	
 	g_mime_message_destroy (message);
 }

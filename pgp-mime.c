@@ -42,6 +42,107 @@ pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer
 }
 
 
+/**
+ * pgp_mime_part_is_rfc2015_signed:
+ * @mime_part: MIME Part
+ *
+ * Returns TRUE if it is an rfc2015 multipart/signed.
+ **/
+gboolean
+pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part)
+{
+	GMimePart *multipart, *part;
+	const GMimeContentType *type;
+	const gchar *param;
+	GList *child;
+	int nparts;
+	
+	/* check that we have a multipart/signed */
+	type = g_mime_part_get_content_type (mime_part);
+	if (!g_mime_content_type_is_type (type, "multipart", "signed"))
+		return FALSE;
+	
+	/* check that we have a protocol param with the value: "application/pgp-signed" */
+	param = g_mime_content_type_get_parameter (type, "protocol");
+	if (!param || g_strcasecmp (param, "\"application/pgp-signed\""))
+		return FALSE;
+	
+	/* check that we have exactly 2 subparts */
+	multipart = mime_part;
+	nparts = g_list_length (multipart->children);
+	if (nparts != 2)
+		return FALSE;
+	
+	/* The first part may be of any type except for 
+	 * application/pgp-signature - check it. */
+	child = multipart->children;
+	part = child->data;
+	type = g_mime_part_get_content_type (part);
+	if (g_mime_content_type_is_type (type, "application","pgp-signature"))
+		return FALSE;
+	
+	/* The second part should be application/pgp-signature. */
+	child = child->next;
+	part = child->data;
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application","pgp-siganture"))
+		return FALSE;
+	
+	/* FIXME: Implement multisig stuff */	
+	
+	return TRUE;
+}
+
+
+/**
+ * pgp_mime_part_is_rfc2015_encrypted:
+ * @mime_part: MIME Part
+ *
+ * Returns TRUE if it is an rfc2015 multipart/encrypted.
+ **/
+gboolean
+pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
+{
+	GMimePart *multipart, *part;
+	const GMimeContentType *type;
+	const gchar *param;
+	GList *child;
+	int nparts;
+	
+	/* check that we have a multipart/encrypted */
+	type = g_mime_part_get_content_type (mime_part);
+	if (!g_mime_content_type_is_type (type, "multipart", "encrypted"))
+		return FALSE;
+	
+	/* check that we have a protocol param with the value: "application/pgp-encrypted" */
+	param = g_mime_content_type_get_parameter (type, "protocol");
+	if (!param || g_strcasecmp (param, "\"application/pgp-encrypted\""))
+		return FALSE;
+	
+	/* check that we have exactly 2 subparts */
+	multipart = mime_part;
+	nparts = g_list_length (multipart->children);
+	if (nparts != 2)
+		return FALSE;
+	
+	/* The first part should be application/pgp-encrypted */
+	child = multipart->children;
+	part = child->data;
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application","pgp-encrypted"))
+		return FALSE;
+	
+	/* The second part should be application/octet-stream - this
+           is the one we care most about */
+	child = child->next;
+	part = child->data;
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application","octet-stream"))
+		return FALSE;
+	
+	return TRUE;
+}
+
 static void
 make_pgp_safe (GString *string, gboolean encode_from)
 {
@@ -51,7 +152,7 @@ make_pgp_safe (GString *string, gboolean encode_from)
 	while ((ptr = strchr (ptr, '\n'))) {
 		g_string_insert_c (string, (ptr - string->str), '\r');
 		ptr += 2;
-		if (encode_from && g_strncasecmp (ptr, "From ", 5)) {
+		if (encode_from && !g_strncasecmp (ptr, "From ", 5)) {
 			/* encode "From " as "From=20" */
 			ptr += 4;
 			g_string_erase (string, (ptr - string->str), 1);
@@ -144,7 +245,6 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 /**
  * pgp_mime_part_verify_signature:
  * @mime_part: a multipart/signed MIME Part
- * @sign_key: key that multipart is signed with
  * @ex: exception
  *
  * Returns TRUE if the signature is valid otherwise returns
@@ -154,9 +254,58 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
  * the sender's key on her system.
  **/
 gboolean
-pgp_mime_part_verify_signature (GMimePart *mime_part, const gchar *sign_key, GMimeException *ex)
+pgp_mime_part_verify_signature (GMimePart *mime_part, GMimeException *ex)
 {
-	return FALSE;
+	const GMimeContentType *mime_type;
+	GMimePart *content_part = NULL;
+	GMimePart *signed_part = NULL;
+	GMimePart *multipart, *part;
+	gchar *content, *signature;
+	GString *string;
+	gboolean retval;
+	GList *child;
+	
+	g_return_val_if_fail (mime_part != NULL, FALSE);
+	
+	/* make sure the mime part is a multipart/signed */
+	multipart = mime_part;
+	mime_type = g_mime_part_get_content_type (multipart);
+	if (!g_mime_content_type_is_type (mime_type, "multipart", "signed"))
+		return FALSE;
+	
+	child = multipart->children;
+	g_return_val_if_fail (child != NULL, FALSE);
+	
+	/* get the data part - first part?? */
+	content_part = child->data;
+	child = child->next;
+	
+	/* get the signature part - last part?? */
+	while (child) {
+		part = child->data;
+		mime_type = g_mime_part_get_content_type (part);
+		if (g_mime_content_type_is_type (mime_type, "application", "pgp-signature")) {
+			signed_part = part;
+			break;
+		}
+		
+		child = child->next;
+	}
+	
+	if (!signed_part)
+		return FALSE;
+	
+	content = g_mime_part_to_string (content_part, FALSE);
+	string = g_string_new (content);
+	g_free (content);
+	make_pgp_safe (string, TRUE);
+	
+	retval = pgp_verify (string->str, string->len, signed_part->content->data,
+			     signed_part->content->len, ex);
+	
+	g_string_free (string, TRUE);
+	
+	return retval;
 }
 
 
@@ -175,15 +324,22 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 {
 	GMimePart *part, *multipart, *version_part, *encrypted_part;
 	GMimeContentType *mime_type;
-	gchar *ciphertext;
+	gchar *cleartext, *ciphertext;
+	GString *string;
 	
 	g_return_if_fail (*mime_part != NULL);
 	g_return_if_fail (recipients != NULL);
 	
 	part = *mime_part;
 	
+	cleartext = g_mime_part_to_string (part, FALSE);
+	string = g_string_new (cleartext);
+	g_free (cleartext);
+	
 	/* pgp encrypt */
-	ciphertext = pgp_encrypt (part->content->data, part->content->len, recipients, FALSE, NULL, ex);
+	make_pgp_safe (string, FALSE);
+	ciphertext = pgp_encrypt (string->str, string->len, recipients, FALSE, NULL, ex);
+	g_string_free (string, TRUE);
 	if (g_mime_exception_is_set (ex))
 		return;
 	
@@ -218,6 +374,22 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 }
 
 
+static void
+strip (gchar *string, gchar c)
+{
+	/* strip all occurances of c from the string */
+	gchar *src, *dst;
+	
+	if (!string)
+		return;
+	
+	for (src = dst = string; *src; src++)
+		if (*src != c)
+			*dst++ = *src;
+	*dst = '\0';
+}
+
+
 /**
  * pgp_mime_part_decrypt:
  * @mime_part: a multipart/encrypted MIME Part
@@ -230,8 +402,8 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
  * there is no way to get back the original content-type
  * information.
  **/
-void
-pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
+GMimePart *
+pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 {
 	GMimePart *multipart, *encrypted_part, *part;
 	const GMimeContentType *mime_type;
@@ -239,15 +411,15 @@ pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
 	GList *child;
 	gint outlen;
 	
-	g_return_if_fail (*mime_part != NULL);
+	g_return_val_if_fail (mime_part != NULL, NULL);
 	
 	/* make sure the mime part is a multipart/encrypted */
-	multipart = *mime_part;
+	multipart = mime_part;
 	mime_type = g_mime_part_get_content_type (multipart);
 	if (!g_mime_content_type_is_type (mime_type, "multipart", "encrypted"))
-		return;
+		return NULL;
 	
-	/* find the encrypted part */
+	/* find the encrypted part - it should be the second part */
 	child = multipart->children;
 	while (child) {
 		encrypted_part = child->data;
@@ -269,31 +441,20 @@ pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
 	if (!child || !encrypted_part || !ciphertext) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_INVALID_PARAM,
 				       "No encrypted part found.");
-		return;
+		return NULL;
 	}
 	
 	/* get the cleartext */
 	cleartext = pgp_decrypt (ciphertext, &outlen, ex);
 	g_free (ciphertext);
 	if (g_mime_exception_is_set (ex))
-		return;
+		return NULL;
 	
 	/* construct the new decrypted mime part */
-	/* FIXME: should this be application/octet-stream? or what?
-	   It's not safe to assume text/plain so I guess it pretty
-	   much has to default to application/octet-stream or at least
-	   until I find a way to get a mime type from a stream. Maybe
-	   I should look into gnome-vfs? And what encoding should it
-	   default to? Probably nothing less than QP? Maybe Base64 is
-	   better for now? */
-	part = g_mime_part_new_with_type ("application", "octet-stream");
-	g_mime_part_set_encoding (part, GMIME_PART_ENCODING_BASE64);
-	g_mime_part_set_content (part, cleartext, outlen);
+	strip (cleartext, '\r');
+	part = g_mime_parser_construct_part (cleartext, outlen);
 	g_free (cleartext);
 	
-	/* replace the mime part with the decrypted mime part */
-	*mime_part = part;
-	
-	/* destroy the original multipart/encrypted part */
-	g_mime_part_destroy (multipart);
+	/* return the decrypted mime part */
+	return part;
 }

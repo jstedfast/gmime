@@ -34,6 +34,8 @@ extern "C" {
 #include "gmime-content-type.h"
 #include "gmime-param.h"
 
+GMimePart *g_mime_parser_construct_part (const gchar *in, guint inlen);
+
 GMimeMessage *g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers);
 
 #ifdef __cplusplus

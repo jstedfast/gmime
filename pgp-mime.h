@@ -26,6 +26,7 @@
 #include <glib.h>
 #include "gmime-exception.h"
 #include "gmime-part.h"
+#include "gmime-parser.h"
 #include "pgp-utils.h"
 
 #ifdef __cplusplus
@@ -35,13 +36,17 @@ extern "C" {
 
 void pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data);
 
+gboolean pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part);
+
+gboolean pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part);
+
 void pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash, GMimeException *ex);
 
-gboolean pgp_mime_part_verify_signature (GMimePart *mime_part, const gchar *sign_key, GMimeException *ex);
+gboolean pgp_mime_part_verify_signature (GMimePart *mime_part, GMimeException *ex);
 
 void pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMimeException *ex);
 
-void pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex);
+GMimePart *pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex);
 
 #ifdef __cplusplus
 }

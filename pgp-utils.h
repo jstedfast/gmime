@@ -64,6 +64,9 @@ gchar *pgp_clearsign (const gchar *plaintext, const gchar *userid,
 gchar *pgp_sign (const gchar *in, gint inlen, const gchar *userid,
 		 PgpHashType hash, GMimeException *ex);
 
+gboolean pgp_verify (const gchar *in, gint inlen, const gchar *sigin,
+		     gint siglen, GMimeException *ex);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

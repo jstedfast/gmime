@@ -71,8 +71,8 @@ pgp_get_passphrase (const gchar *userid)
 		type = "PGP2.x";
 		break;
 	}
-	prompt = g_strdup_printf ("Please enter your %s passphrase%s%s",
-				  type, userid ? " for " : "",
+	prompt = g_strdup_printf (_("Please enter your %s passphrase%s%s"),
+				  type, userid ? _(" for ") : "",
 				  userid ? userid : "");
 	
 	passphrase = pgp_passwd_func (prompt, pgp_data);
@@ -518,12 +518,11 @@ pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 	GPtrArray *recipient_list = NULL;
 	GPtrArray *argv = NULL;
 	int retval, i, r;
-	char *cyphertext = NULL;
+	char *ciphertext = NULL;
 	char *diagnostics = NULL;
 	int passwd_fds[2];
 	char passwd_fd[32];
 	char *passphrase = NULL;
-	char *command;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
@@ -677,24 +676,19 @@ pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 	
 	g_ptr_array_add (argv, NULL);
 	
-	d(fprintf (stderr, "here we are to encrypt stuff!\n"));
-	command = g_strjoinv (" ", (char **) argv->pdata);
-	d(fprintf (stderr, "%s\n", command));
-	g_free (command);
-	
 	retval = crypto_exec_with_passwd (pgp_path, (char **) argv->pdata,
 					  in, inlen, passwd_fds,
-					  passphrase, &cyphertext, NULL,
+					  passphrase, &ciphertext, NULL,
 					  &diagnostics);
 	
 	g_free (passphrase);
 	g_ptr_array_free (argv, TRUE);
 	
-	if (retval != 0 || !*cyphertext) {
+	if (retval != 0 || !*ciphertext) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
 				       "%s", diagnostics);
-		g_free (cyphertext);
-		cyphertext = NULL;
+		g_free (ciphertext);
+		ciphertext = NULL;
 	}
 	
 	if (recipient_list) {
@@ -705,7 +699,7 @@ pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 	
 	g_free (diagnostics);
 	
-	return cyphertext;
+	return ciphertext;
 }
 
 
@@ -724,13 +718,12 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 	       PgpHashType hash, GMimeException *ex)
 {
 	char *argv[15];
-	char *cyphertext = NULL;
+	char *ciphertext = NULL;
 	char *diagnostics = NULL;
 	char *passphrase = NULL;
 	char *hash_str = NULL;
 	int passwd_fds[2];
 	char passwd_fd[32];
-	char *command;
 	int retval, i;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
@@ -808,7 +801,6 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		argv[i++] = "-o";
 		argv[i++] = "-";        /* output to stdout */
 		
-		argv[i++] = "-s";	
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
@@ -826,7 +818,7 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		argv[i++] = "-o";
 		argv[i++] = "-";
 		
-		argv[i++] = "-s";	
+		argv[i++] = "-st";
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
@@ -834,29 +826,24 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 	
 	argv[i++] = NULL;
 	
-	d(fprintf (stderr, "here we are to clearsign stuff!\n"));
-	command = g_strjoinv (" ", argv);
-	d(fprintf (stderr, "%s\n", command));
-	g_free (command);
-	
 	retval = crypto_exec_with_passwd (pgp_path, argv,
 					  plaintext, strlen (plaintext),
 					  passwd_fds, passphrase,
-					  &cyphertext, NULL,
+					  &ciphertext, NULL,
 					  &diagnostics);
 	
 	g_free (passphrase);
 	
-	if (retval != 0 || !*cyphertext) {
+	if (retval != 0 || !*ciphertext) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
 				       "%s", diagnostics);
-		g_free (cyphertext);
-		cyphertext = NULL;
+		g_free (ciphertext);
+		ciphertext = NULL;
 	}
 	
 	g_free (diagnostics);
 	
-	return cyphertext;
+	return ciphertext;
 }
 
 
@@ -876,13 +863,12 @@ pgp_sign (const gchar *in, gint inlen, const gchar *userid,
 	  PgpHashType hash, GMimeException *ex)
 {
 	char *argv[20];
-	char *cyphertext = NULL;
+	char *ciphertext = NULL;
 	char *diagnostics = NULL;
 	char *passphrase = NULL;
 	char *hash_str = NULL;
 	int passwd_fds[2];
 	char passwd_fd[32];
-	char *command;
 	int retval, i;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
@@ -961,12 +947,11 @@ pgp_sign (const gchar *in, gint inlen, const gchar *userid,
 		argv[i++] = "-o";
 		argv[i++] = "-";        /* output to stdout */
 		
-		argv[i++] = "-s";	
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
 	case PGP_TYPE_PGP2:
-		/* FIXME: respect has and also detach */
+		/* FIXME: respect hash */
 		argv[i++] = "pgp";
 		
 		if (userid) {
@@ -979,7 +964,7 @@ pgp_sign (const gchar *in, gint inlen, const gchar *userid,
 		argv[i++] = "-o";
 		argv[i++] = "-";
 		
-		argv[i++] = "-s";	
+		argv[i++] = "-sb"; /* create a detached signature */
 		sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 		putenv (passwd_fd);
 		break;
@@ -987,27 +972,145 @@ pgp_sign (const gchar *in, gint inlen, const gchar *userid,
 	
 	argv[i++] = NULL;
 	
-	d(fprintf (stderr, "here we are to sign stuff!\n"));
-	command = g_strjoinv (" ", argv);
-	d(fprintf (stderr, "%s\n", command));
-	g_free (command);
-	
 	retval = crypto_exec_with_passwd (pgp_path, argv,
 					  in, inlen,
 					  passwd_fds, passphrase,
-					  &cyphertext, NULL,
+					  &ciphertext, NULL,
 					  &diagnostics);
 	
 	g_free (passphrase);
 	
-	if (retval != 0 || !*cyphertext) {
+	if (retval != 0 || !*ciphertext) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
 				       "%s", diagnostics);
-		g_free (cyphertext);
-		cyphertext = NULL;
+		g_free (ciphertext);
+		ciphertext = NULL;
 	}
 	
 	g_free (diagnostics);
 	
-	return cyphertext;
+	return ciphertext;
+}
+
+static char *
+swrite (const char *data, int len)
+{
+	char *template;
+	int fd;
+	
+	template = g_strdup ("/tmp/gmime-crypto-XXXXXX");
+	fd = mkstemp (template);
+	if (fd == -1) {
+		g_free (template);
+		return NULL;
+	}
+	
+	write (fd, data, len);
+	close (fd);
+	
+	return template;
+}
+
+gboolean
+pgp_verify (const gchar *in, gint inlen, const gchar *sigin, gint siglen, GMimeException *ex)
+{
+	char *argv[20];
+	char *cleartext = NULL;
+	char *diagnostics = NULL;
+	int passwd_fds[2];
+	char passwd_fd[32];
+	char *sigfile;
+	int retval, i, clearlen;
+	gboolean valid = TRUE;
+	
+	
+	if (pgp_type == PGP_TYPE_NONE) {
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No GPG/PGP program available."));
+		return FALSE;
+	}
+	
+	if (pipe (passwd_fds) < 0) {
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Couldn't create pipe to GPG/PGP: %s"),
+				       g_strerror (errno));
+		return FALSE;
+	}
+	
+	if (sigin != NULL && siglen) {
+		/* We are going to verify a detached signature so save
+		   the signature to a temp file. */
+		sigfile = swrite (sigin, siglen);
+		if (!sigfile) {
+			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+					       _("Couldn't create temp file: %s"),
+					       g_strerror (errno));
+			return FALSE;
+		}
+	}
+	
+	i = 0;
+	switch (pgp_type) {
+	case PGP_TYPE_GPG:
+		argv[i++] = "gpg";
+		
+		argv[i++] = "--verify";
+		
+		if (sigin != NULL && siglen)
+			argv[i++] = sigfile;
+		
+		argv[i++] = "-";
+		
+		/*argv[i++] = "--verbose";*/
+		/*argv[i++] = "--yes";*/
+		/*argv[i++] = "--batch";*/
+		break;
+	case PGP_TYPE_PGP5:
+		argv[i++] = "pgpv";
+		
+		argv[i++] = "-z";
+		
+		if (sigin != NULL && siglen)
+			argv[i++] = sigfile;
+		
+		argv[i++] = "-f";
+		
+		break;
+	case PGP_TYPE_PGP2:
+		argv[i++] = "pgp";
+		
+		if (sigin != NULL && siglen)
+			argv[i++] = sigfile;
+		
+		argv[i++] = "-f";
+		
+		break;
+	}
+	
+	argv[i++] = NULL;
+	
+	clearlen = 0;
+	retval = crypto_exec_with_passwd (pgp_path, argv,
+					  in, inlen,
+					  passwd_fds, NULL,
+					  &cleartext, &clearlen,
+					  &diagnostics);
+	
+	/* cleanup */
+	if (sigfile) {
+		unlink (sigfile);
+		g_free (sigfile);
+	}
+	
+	/* FIXME: maybe we should always set an exception? */
+	if (retval != 0) {
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       "%s", diagnostics);
+		valid = FALSE;
+	}
+	
+	g_free (diagnostics);
+	g_free (cleartext);
+	
+	return valid;
 }

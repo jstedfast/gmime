@@ -1,3 +1,54 @@
+2000-12-27  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* pgp-utils.c (pgp_sign): Updated PGP2 to generate a detached
+	signature.
+
+2000-12-26  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* pgp-mime.c (pgp_mime_part_is_rfc2015_signed): New convenience
+	function.
+	(pgp_mime_part_is_rfc2015_encrypted): Same.
+
+2000-12-24  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-pgpmime.c (test_multipart_signed): Updated to test pgp
+	signature verification.
+
+	* pgp-utils.c (pgp_verify): Don't check clearlen as verify won't
+	necessarily write anything to stdout.
+
+	* gmime-parser.c (g_mime_parser_construct_part): Don't set the
+	boundary if we are able to get the boundary from the content-type
+	because we'll just set the same data over again which is a
+	waste. Also tack a \n onto the ends of the boundary markers so
+	that "blah_" and "blah_D" don't trick the parser. Fix it so that
+	an empty part won't set any contents (since setting a 0-length
+	content stream causes a segfault).
+	(construct_headers): Take an inlen argument so that we can parse
+	headers without needing to strdup before passing into this
+	function.
+	(g_mime_parser_construct_message): Don't strdup the headers since
+	we can just pass in the length to the construct_headers() function
+	now.
+
+	* pgp-mime.c (pgp_mime_part_decrypt): Strip \r's before sending to
+	the mime_part parser.
+	(pgp_mime_part_encrypt): Write the MIME Part to a string and
+	convert line endings to the cononical CRLF sequence before pgp
+	encrypting it.
+	(pgp_mime_part_verify_signature): Implemented.
+
+2000-12-18  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* pgp-mime.c (pgp_mime_part_decrypt): Return the decrypted part
+	rather than replacing the part inline so we don't "corrupt" the
+	original structure that the input part may have been a part of.
+
+	* gmime-parser.c (g_mime_parser_construct_part): Moved from being
+	an internal-only function.
+
+	* pgp-utils.c (pgp_verify): Added.
+
 2000-12-13  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/html/gmime-pgp-utils.html:

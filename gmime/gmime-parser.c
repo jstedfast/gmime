@@ -77,11 +77,18 @@ content_header (const gchar *field)
 	
 /* we pass the length here so that we can avoid dup'ing in the caller
    as mime parts can be BIG (tm) */
-static GMimePart *
-get_mime_part (const gchar *in, guint inlen)
+/**
+ * g_mime_parser_construct_part: Construct a GMimePart object
+ * @in: raw MIME Part data
+ * @inlen: raw MIME Part data length
+ *
+ * Returns a GMimePart object based on the data.
+ **/
+GMimePart *
+g_mime_parser_construct_part (const gchar *in, guint inlen)
 {
 	GMimePart *mime_part;
-	char *boundary = NULL, *end_boundary = NULL;
+	gchar *boundary = NULL, *end_boundary = NULL;
 	gchar *inptr, *inend;
 	gboolean is_multipart = FALSE;
 	
@@ -98,6 +105,10 @@ get_mime_part (const gchar *in, guint inlen)
 		GMimeContentType *mime_type;
 		gchar *desc, *type, *encoding, *disp, *disposition, *id;
 		gchar *ptr, *eptr, *text;
+		
+		eptr = strchr (inptr, '\n');
+		if (!eptr)
+			eptr = inend;
 		
 		switch (content_header (inptr)) {
 		case CONTENT_DESCRIPTION:
@@ -144,13 +155,13 @@ get_mime_part (const gchar *in, guint inlen)
 			
 			is_multipart = g_mime_content_type_is_type (mime_type, "multipart", "*");
 			if (is_multipart) {
-				boundary = (gchar *) g_mime_content_type_get_parameter (mime_type, "boundary");
-				if (boundary) {
-					g_mime_part_set_boundary (mime_part, boundary);
-					
+				const gchar *bndry;
+				
+				bndry = g_mime_content_type_get_parameter (mime_type, "boundary");
+				if (bndry) {
 					/* create our temp boundary vars */
-					boundary = g_strdup_printf ("\n--%s", boundary);
-					end_boundary = g_strdup_printf ("%s--", boundary);
+					boundary = g_strdup_printf ("\n--%s\n", bndry);
+					end_boundary = g_strdup_printf ("\n--%s--\n", bndry);
 				} else {
 					g_warning ("Invalid MIME structure: boundary not found for multipart"
 						   " - defaulting to text/plain.");
@@ -243,11 +254,14 @@ get_mime_part (const gchar *in, guint inlen)
 		
 		/* jump to the next line */
 		for ( ; inptr < inend && *inptr != '\n'; inptr++);
+		
+		/* check for end-of-header */
 		if (*inptr == '\n' && *(inptr + 1) == '\n') {
 			/* we've reached the end of the mime header */
 			inptr++;
 			break;
 		}
+		
 		inptr++;  /* get past the '\n' */
 	}
 	
@@ -268,7 +282,7 @@ get_mime_part (const gchar *in, guint inlen)
 				part_end = inend;
 			
 			/* get the subpart */
-			subpart = get_mime_part (part_begin, (guint) (part_end - part_begin));
+			subpart = g_mime_parser_construct_part (part_begin, (guint) (part_end - part_begin));
 			g_mime_part_add_subpart (mime_part, subpart);
 			
 			/* the next part begins where the last one left off */
@@ -281,21 +295,19 @@ get_mime_part (const gchar *in, guint inlen)
 	} else {
 		GMimePartEncodingType encoding;
 		gchar *content;
-		guint len;
+		guint len = 0;
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
 			for (inptr++; inptr < inend && isspace (*inptr); inptr++);
 			len = inend - inptr;
 			content = inptr;
-		} else {
-			content = "";
-			len = 0;
 		}
 		
 		encoding = g_mime_part_get_encoding (mime_part);
 		
-		g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
+		if (len > 0)
+			g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
 	}
 	
 	return mime_part;
@@ -332,29 +344,33 @@ special_header (const gchar *field)
 }
 
 static void
-construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_extra_headers)
+construct_headers (GMimeMessage *message, const gchar *headers, gint inlen, gboolean save_extra_headers)
 {
-	gchar *field, *value, *raw, *p, *q;
+	gchar *field, *value, *raw, *q;
+	gchar *inptr, *inend;
 	time_t date;
 	int offset = 0;
 	int i;
 	
-	for (p = (gchar *) headers; *p; p++) {
+	inptr = (gchar *) headers;
+	inend = inptr + inlen;
+	
+	for ( ; inptr < inend; inptr++) {
 		for (i = 0; fields[i]; i++)
-			if (!g_strncasecmp (fields[i], p, strlen (fields[i])))
+			if (!g_strncasecmp (fields[i], inptr, strlen (fields[i])))
 				break;
 		
 		if (!fields[i]) {
-			field = p;
-			for (q = field; *q && *q != ':'; q++);
+			field = inptr;
+			for (q = field; q < inend && *q != ':'; q++);
 			field = g_strndup (field, (gint) (q - field + 1));
 			g_strstrip (field);
 		} else {
 			field = g_strdup (fields[i]);
 		}
 		
-		value = p + strlen (field);
-		for (q = value; *q; q++)
+		value = inptr + strlen (field);
+		for (q = value; q < inend; q++)
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
 		
@@ -408,10 +424,10 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 		g_free (field);
 		g_free (value);
 		
-		if (*q == '\0')
+		if (q >= inend)
 			break;
 		else
-			p = q;
+			inptr = q;
 	}
 }
 
@@ -428,22 +444,18 @@ g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers)
 {
 	GMimeMessage *message;
 	GMimePart *part;
-	gchar *header, *p;
+	gchar *end;
 	
 	g_return_val_if_fail (data != NULL, NULL);
 	
-	p = strstr (data, "\n\n");
-	if (!p)
-		return NULL;
-	
-	header = g_strndup (data, (gint) (p - data));
+	end = strstr (data, "\n\n");
+	g_return_val_if_fail (end != NULL, NULL);
 	
 	message = g_mime_message_new ();
 	
-	construct_headers (message, header, save_extra_headers);
-	g_free (header);
+	construct_headers (message, data, (gint) (end - data), save_extra_headers);
 	
-	part = get_mime_part (data, strlen (data));
+	part = g_mime_parser_construct_part (data, strlen (data));
 	
 	g_mime_message_set_mime_part (message, part);
 	
