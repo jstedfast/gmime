@@ -296,7 +296,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	g_mime_object_write_to_stream (content, filtered_stream);
 	g_mime_stream_flush (filtered_stream);
-	g_mime_stream_unref (filtered_stream);
+	g_object_unref (filtered_stream);
 	g_mime_stream_reset (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
@@ -311,20 +311,20 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* sign the content stream */
 	if (g_mime_cipher_sign (ctx, userid, hash, filtered_stream, sigstream, err) == -1) {
-		g_mime_stream_unref (filtered_stream);
-		g_mime_stream_unref (sigstream);
-		g_mime_stream_unref (stream);
+		g_object_unref (filtered_stream);
+		g_object_unref (sigstream);
+		g_object_unref (stream);
 		return -1;
 	}
 	
-	g_mime_stream_unref (filtered_stream);
+	g_object_unref (filtered_stream);
 	g_mime_stream_reset (sigstream);
 	g_mime_stream_reset (stream);
 	
 	/* construct the content part */
 	parser = g_mime_parser_new_with_stream (stream);
 	content = g_mime_parser_construct_part (parser);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	g_object_unref (parser);
 	
 	/* construct the signature part */
@@ -332,7 +332,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	wrapper = g_mime_data_wrapper_new ();
 	g_mime_data_wrapper_set_stream (wrapper, sigstream);
 	g_mime_part_set_content_object (GMIME_PART (signature), wrapper);
-	g_mime_stream_unref (sigstream);
+	g_object_unref (sigstream);
 	g_object_unref (wrapper);
 	
 	mps->protocol = g_strdup (ctx->sign_protocol);
@@ -347,8 +347,8 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* FIXME: make sure there aren't any other parts?? */
 	g_mime_multipart_add_part (GMIME_MULTIPART (mps), content);
 	g_mime_multipart_add_part (GMIME_MULTIPART (mps), signature);
-	g_mime_object_unref (signature);
-	g_mime_object_unref (content);
+	g_object_unref (signature);
+	g_object_unref (content);
 	
 	/* set the content-type params for this multipart/signed part */
 	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mps), "micalg", mps->micalg);
@@ -407,7 +407,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	/* make sure the protocol matches the signature content-type */
 	content_type = g_mime_content_type_to_string (signature->content_type);
 	if (strcasecmp (content_type, protocol) != 0) {
-		g_mime_object_unref (signature);
+		g_object_unref (signature);
 		g_free (content_type);
 		
 		return NULL;
@@ -428,15 +428,15 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	g_mime_object_write_to_stream (content, filtered_stream);
 	g_mime_stream_flush (filtered_stream);
-	g_mime_stream_unref (filtered_stream);
-	g_mime_object_unref (content);
+	g_object_unref (filtered_stream);
 	g_mime_stream_reset (stream);
+	g_object_unref (content);
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
 	sigstream = g_mime_data_wrapper_get_stream (wrapper);
 	g_mime_stream_reset (sigstream);
-	g_mime_object_unref (signature);
+	g_object_unref (signature);
 	g_object_unref (wrapper);
 	
 	/* verify the signature */
@@ -446,8 +446,8 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
-	g_mime_stream_unref (sigstream);
-	g_mime_stream_unref (stream);
+	g_object_unref (sigstream);
+	g_object_unref (stream);
 	
 	return valid;
 }

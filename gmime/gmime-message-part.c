@@ -107,7 +107,7 @@ g_mime_message_part_finalize (GObject *object)
 	GMimeMessagePart *part = (GMimeMessagePart *) object;
 	
 	if (part->message)
-		g_mime_object_unref (GMIME_OBJECT (part->message));
+		g_object_unref (part->message);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -255,7 +255,7 @@ g_mime_message_part_new_with_message (const char *subtype, GMimeMessage *message
 	
 	part = g_mime_message_part_new (subtype);
 	part->message = message;
-	g_mime_object_ref (GMIME_OBJECT (message));
+	g_object_ref (message);
 	
 	return part;
 }
@@ -274,10 +274,10 @@ g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
 	g_return_if_fail (GMIME_IS_MESSAGE_PART (part));
 	
 	if (message)
-		g_mime_object_ref (GMIME_OBJECT (message));
+		g_object_ref (message);
 	
 	if (part->message)
-		g_mime_object_unref (GMIME_OBJECT (part->message));
+		g_object_unref (part->message);
 	
 	part->message = message;
 }

@@ -103,8 +103,10 @@ ssize_t   g_mime_stream_length  (GMimeStream *stream);
 
 GMimeStream *g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end);
 
+#ifndef GMIME_DISABLE_DEPRECATED
 void      g_mime_stream_ref     (GMimeStream *stream);
 void      g_mime_stream_unref   (GMimeStream *stream);
+#endif
 
 void      g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end);
 

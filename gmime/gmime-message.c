@@ -164,7 +164,7 @@ g_mime_message_finalize (GObject *object)
 	
 	/* unref child mime part */
 	if (message->mime_part)
-		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
+		g_object_unref (message->mime_part);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -642,7 +642,7 @@ message_get_headers (GMimeObject *object)
 		g_mime_header_write_to_stream (message->mime_part->headers, stream);
 	}
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	g_byte_array_append (ba, "", 1);
 	str = ba->data;
 	g_byte_array_free (ba, FALSE);
@@ -1154,10 +1154,10 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	g_mime_object_ref (GMIME_OBJECT (mime_part));
+	g_object_ref (mime_part);
 	
 	if (message->mime_part)
-		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
+		g_object_unref (message->mime_part);
 	
 	message->mime_part = mime_part;
 }

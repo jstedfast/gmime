@@ -328,7 +328,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 		filter = g_mime_filter_charset_new (charset, "UTF-8");
 		fstream = g_mime_stream_filter_new_with_stream (stream);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		g_object_unref (filter);
 		
 		gpg->diagnostics = fstream;
@@ -394,18 +394,18 @@ gpg_ctx_set_armor (struct _GpgCtx *gpg, gboolean armor)
 static void
 gpg_ctx_set_istream (struct _GpgCtx *gpg, GMimeStream *istream)
 {
-	g_mime_stream_ref (istream);
+	g_object_ref (istream);
 	if (gpg->istream)
-		g_mime_stream_unref (gpg->istream);
+		g_object_unref (gpg->istream);
 	gpg->istream = istream;
 }
 
 static void
 gpg_ctx_set_ostream (struct _GpgCtx *gpg, GMimeStream *ostream)
 {
-	g_mime_stream_ref (ostream);
+	g_object_ref (ostream);
 	if (gpg->ostream)
-		g_mime_stream_unref (gpg->ostream);
+		g_object_unref (gpg->ostream);
 	gpg->ostream = ostream;
 	gpg->seen_eof1 = FALSE;
 }
@@ -474,12 +474,12 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	}
 	
 	if (gpg->istream)
-		g_mime_stream_unref (gpg->istream);
+		g_object_unref (gpg->istream);
 	
 	if (gpg->ostream)
-		g_mime_stream_unref (gpg->ostream);
+		g_object_unref (gpg->ostream);
 	
-	g_mime_stream_unref (gpg->diagnostics);
+	g_object_unref (gpg->diagnostics);
 	
 	g_free (gpg);
 }
@@ -1343,7 +1343,7 @@ swrite (GMimeStream *istream)
 		if (ret != -1)
 			ret = g_mime_stream_close (ostream);
 	}
-	g_mime_stream_unref (ostream);
+	g_object_unref (ostream);
 	
 	if (ret == -1) {
 		unlink (template);

@@ -307,7 +307,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 			nwritten = g_mime_stream_printf (stream, "begin 0644 %s\n",
 							 filename ? filename : "unknown");
 			if (nwritten == -1) {
-				g_mime_stream_unref (filtered_stream);
+				g_object_unref (filtered_stream);
 				return -1;
 			}
 			
@@ -323,7 +323,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 		
 		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
 		g_mime_stream_flush (filtered_stream);
-		g_mime_stream_unref (filtered_stream);
+		g_object_unref (filtered_stream);
 		
 		if (nwritten == -1)
 			return -1;
@@ -344,7 +344,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 		content_stream = g_mime_data_wrapper_get_stream (part->content);
 		g_mime_stream_reset (content_stream);
 		nwritten = g_mime_stream_write_to_stream (content_stream, stream);
-		g_mime_stream_unref (content_stream);
+		g_object_unref (content_stream);
 		
 		if (nwritten == -1)
 			return -1;
@@ -569,7 +569,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		/* compute a md5sum */
 		stream = g_mime_stream_null_new ();
 		filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		
 		content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 		if (g_mime_content_type_is_type (content_type, "text", "*")) {
@@ -587,7 +587,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		
 		stream = (GMimeStream *) filtered_stream;
 		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		
 		memset (digest, 0, 16);
 		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
@@ -634,7 +634,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	
 	stream = g_mime_stream_null_new ();
 	filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
 	if (g_mime_content_type_is_type (content_type, "text", "*")) {
@@ -652,7 +652,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	
 	stream = (GMimeStream *) filtered_stream;
 	g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	memset (digest, 0, 16);
 	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
@@ -1062,7 +1062,7 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len)
 	stream = g_mime_stream_mem_new_with_buffer (content, len);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
 	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 }
 
 
@@ -1086,7 +1086,7 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 	stream = g_mime_stream_mem_new_with_byte_array (content);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
 	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 }
 
 
@@ -1136,12 +1136,12 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 	
 	g_mime_stream_write (filtered_stream, (char *) content, len);
 	g_mime_stream_flush (filtered_stream);
-	g_mime_stream_unref (filtered_stream);
+	g_object_unref (filtered_stream);
 	
 	g_mime_stream_reset (stream);
 	g_mime_data_wrapper_set_stream (mime_part->content, stream);
 	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	mime_part->encoding = encoding;
 }
@@ -1228,7 +1228,7 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 		
 		g_mime_data_wrapper_set_stream (mime_part->content, cache);
 		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-		g_mime_stream_unref (cache);
+		g_object_unref (cache);
 		
 		*len = buf->len;
 		retval = buf->data;

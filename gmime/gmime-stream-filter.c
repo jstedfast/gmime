@@ -153,7 +153,7 @@ g_mime_stream_filter_finalize (GObject *object)
 	g_free (p);
 	
 	if (filter->source)
-		g_mime_stream_unref (filter->source);
+		g_object_unref (filter->source);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -350,7 +350,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	
 	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
 	sub->source = filter->source;
-	g_mime_stream_ref (sub->source);
+	g_object_ref (sub->source);
 	
 	if (filter->priv->filters) {
 		struct _filter *f, *sn, *s = NULL;
@@ -402,7 +402,7 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 	
 	filter = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
 	filter->source = stream;
-	g_mime_stream_ref (stream);
+	g_object_ref (stream);
 	
 	g_mime_stream_construct (GMIME_STREAM (filter),
 				 stream->bound_start,

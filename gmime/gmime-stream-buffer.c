@@ -115,7 +115,7 @@ g_mime_stream_buffer_finalize (GObject *object)
 	GMimeStreamBuffer *stream = (GMimeStreamBuffer *) object;
 	
 	if (stream->source)
-		g_mime_stream_unref (stream->source);
+		g_object_unref (stream->source);
 	
 	g_free (stream->buffer);
 	
@@ -451,7 +451,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL, NULL);
 	
 	buffer->source = source;
-	g_mime_stream_ref (source);
+	g_object_ref (source);
 	
 	buffer->mode = mode;
 	

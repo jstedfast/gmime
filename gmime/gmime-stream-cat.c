@@ -115,7 +115,7 @@ g_mime_stream_cat_finalize (GObject *object)
 	p = cat->sources;
 	while (p) {
 		n = p->next;
-		g_mime_stream_unref (p->stream);
+		g_object_unref (p->stream);
 		g_free (p);
 		p = n;
 	}
@@ -457,7 +457,7 @@ g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source)
 	node->next = NULL;
 	node->stream = source;
 	node->length = len;
-	g_mime_stream_ref (source);
+	g_object_ref (source);
 	
 	p = cat->sources;
 	while (p && p->next)

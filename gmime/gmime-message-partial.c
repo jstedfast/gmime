@@ -329,12 +329,12 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 		
 		g_mime_stream_reset (stream);
 		g_mime_stream_cat_add_source (GMIME_STREAM_CAT (cat), stream);
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 	}
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, cat);
-	g_mime_stream_unref (cat);
+	g_object_unref (cat);
 	
 	message = g_mime_parser_construct_message (parser);
 	g_object_unref (parser);
@@ -343,7 +343,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	
  exception:
 	
-	g_mime_stream_unref (cat);
+	g_object_unref (cat);
 	
 	return NULL;
 }
@@ -403,7 +403,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	stream = g_mime_stream_mem_new ();
 	
 	if (g_mime_object_write_to_stream (GMIME_OBJECT (message), stream) == -1) {
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		return NULL;
 	}
 	
@@ -413,8 +413,8 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	
 	/* optimization */
 	if (len <= max_size) {
-		g_mime_stream_unref (stream);
-		g_mime_object_ref (GMIME_OBJECT (message));
+		g_object_unref (stream);
+		g_object_ref (message);
 		
 		messages = g_malloc (sizeof (void *) * 2);
 		messages[0] = message;
@@ -436,16 +436,16 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 		partial = g_mime_message_partial_new (id, i + 1, parts->len);
 		wrapper = g_mime_data_wrapper_new_with_stream (GMIME_STREAM (parts->pdata[i]),
 							       GMIME_PART_ENCODING_DEFAULT);
-		g_mime_stream_unref (GMIME_STREAM (parts->pdata[i]));
+		g_object_unref (parts->pdata[i]);
 		g_mime_part_set_content_object (GMIME_PART (partial), wrapper);
 		g_object_unref (wrapper);
 		
 		parts->pdata[i] = message_partial_message_new (message);
 		g_mime_message_set_mime_part (GMIME_MESSAGE (parts->pdata[i]), GMIME_OBJECT (partial));
-		g_mime_object_unref (GMIME_OBJECT (partial));
+		g_object_unref (partial);
 	}
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	messages = (GMimeMessage **) parts->pdata;
 	*nparts = parts->len;

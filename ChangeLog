@@ -1,5 +1,10 @@
 2004-02-08  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/*.c: Use g_object_ref/unref instead of the
+	g_mime_object_ref/unref and g_mime_stream_ref/unref.
+
+2004-02-08  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime-utils.c (rfc2047_encode): Changed to take a safemask
 	arg instead of a gboolean phrase arg since we never used 'phrase'
 	directly.

@@ -140,13 +140,15 @@ g_mime_object_finalize (GObject *object)
  * @object: mime object
  *
  * Ref's a MIME object.
+ *
+ * WARNING: This method is deprecated. Use #g_object_ref instead.
  **/
 void
 g_mime_object_ref (GMimeObject *object)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	
-	g_object_ref ((GObject *) object);
+	g_object_ref (object);
 }
 
 
@@ -155,13 +157,15 @@ g_mime_object_ref (GMimeObject *object)
  * @object: mime object
  *
  * Unref's a MIME object.
+ *
+ * WARNING: This method is deprecated. Use #g_object_unref instead.
  **/
 void
 g_mime_object_unref (GMimeObject *object)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	
-	g_object_unref ((GObject *) object);
+	g_object_unref (object);
 }
 
 
@@ -647,7 +651,7 @@ g_mime_object_to_string (GMimeObject *object)
 	
 	g_mime_object_write_to_stream (object, stream);
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	g_byte_array_append (array, "", 1);
 	str = array->data;
 	g_byte_array_free (array, FALSE);

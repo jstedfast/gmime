@@ -89,7 +89,7 @@ g_mime_data_wrapper_finalize (GObject *object)
 	GMimeDataWrapper *wrapper = (GMimeDataWrapper *) object;
 	
 	if (wrapper->stream)
-		g_mime_stream_unref (wrapper->stream);
+		g_object_unref (wrapper->stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -131,7 +131,7 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
 	wrapper->encoding = encoding;
 	wrapper->stream = stream;
 	if (stream)
-		g_mime_stream_ref (stream);
+		g_object_ref (stream);
 	
 	return wrapper;
 }
@@ -153,10 +153,10 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
 	if (stream)
-		g_mime_stream_ref (stream);
+		g_object_ref (stream);
 	
 	if (wrapper->stream)
-		g_mime_stream_unref (wrapper->stream);
+		g_object_unref (wrapper->stream);
 	
 	wrapper->stream = stream;
 }
@@ -179,7 +179,7 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 	if (wrapper->stream == NULL)
 		return NULL;
 	
-	g_mime_stream_ref (wrapper->stream);
+	g_object_ref (wrapper->stream);
 	
 	return wrapper->stream;
 }
@@ -249,7 +249,7 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	}
 	
 	written = g_mime_stream_write_to_stream (filtered_stream, stream);
-	g_mime_stream_unref (filtered_stream);
+	g_object_unref (filtered_stream);
 	
 	g_mime_stream_reset (wrapper->stream);
 	

@@ -112,7 +112,7 @@ g_mime_stream_finalize (GObject *object)
 	GMimeStream *stream = (GMimeStream *) object;
 	
 	if (stream->super_stream)
-		g_mime_stream_unref (stream->super_stream);
+		g_object_unref (stream->super_stream);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -416,7 +416,7 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 	sub = GMIME_STREAM_GET_CLASS (stream)->substream (stream, start, end);
 	if (sub) {
 		sub->super_stream = stream;
-		g_mime_stream_ref (stream);
+		g_object_ref (stream);
 	}
 	
 	return sub;
@@ -428,13 +428,15 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
  * @stream: stream
  *
  * Ref's a stream.
+ *
+ * WARNING: This method is deprecated. Use #g_object_ref instead.
  **/
 void
 g_mime_stream_ref (GMimeStream *stream)
 {
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
-	g_object_ref ((GObject *) stream);
+	g_object_ref (stream);
 }
 
 
@@ -443,13 +445,15 @@ g_mime_stream_ref (GMimeStream *stream)
  * @stream: stream
  *
  * Unref's a stream.
+ *
+ * WARNING: This method is deprecated. Use g_object_unref instead.
  **/
 void
 g_mime_stream_unref (GMimeStream *stream)
 {
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
-	g_object_unref ((GObject *) stream);
+	g_object_unref (stream);
 }
 
 

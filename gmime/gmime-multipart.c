@@ -144,7 +144,7 @@ g_mime_multipart_finalize (GObject *object)
 		GMimeObject *part;
 		
 		part = node->data;
-		g_mime_object_unref (part);
+		g_object_unref (part);
 		node = node->next;
 	}
 	g_list_free (multipart->subparts);
@@ -419,7 +419,7 @@ g_mime_multipart_get_postface (GMimeMultipart *multipart)
 static void
 multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 {
-	g_mime_object_ref (part);
+	g_object_ref (part);
 	multipart->subparts = g_list_append (multipart->subparts, part);
 }
 
@@ -444,7 +444,7 @@ g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 static void
 multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index)
 {
-	g_mime_object_ref (part);
+	g_object_ref (part);
 	multipart->subparts = g_list_insert (multipart->subparts, part, index);
 }
 
@@ -500,7 +500,7 @@ multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 	
 	g_list_free_1 (node);
 	
-	g_mime_object_unref (part);
+	g_object_unref (part);
 }
 
 
@@ -582,7 +582,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 	
 	part = node->data;
 	
-	g_mime_object_ref (part);
+	g_object_ref (part);
 	
 	return part;
 }

@@ -283,7 +283,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	off_t offset = -1;
 	
 	if (stream) {
-		g_mime_stream_ref (stream);
+		g_object_ref (stream);
 		offset = g_mime_stream_tell (stream);
 	}
 	
@@ -322,7 +322,7 @@ parser_close (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	
 	if (priv->stream)
-		g_mime_stream_unref (priv->stream);
+		g_object_unref (priv->stream);
 	
 	g_byte_array_free (priv->from_line, TRUE);
 	
@@ -1128,8 +1128,8 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
 	g_mime_part_set_content_object (mime_part, wrapper);
-	g_mime_stream_unref (stream);
 	g_object_unref (wrapper);
+	g_object_unref (stream);
 }
 
 static void
@@ -1165,10 +1165,10 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	}
 	
 	g_mime_message_set_mime_part (message, object);
-	g_mime_object_unref (object);
+	g_object_unref (object);
 	
 	g_mime_message_part_set_message (mpart, message);
-	g_mime_object_unref (GMIME_OBJECT (message));
+	g_object_unref (message);
 }
 
 static GMimeObject *
@@ -1267,7 +1267,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		}
 		
 		g_mime_multipart_add_part (multipart, subpart);
-		g_mime_object_unref (subpart);
+		g_object_unref (subpart);
 	} while (found == FOUND_BOUNDARY);
 	
 	return found;
@@ -1421,7 +1421,7 @@ parser_construct_message (GMimeParser *parser)
 	}
 	
 	g_mime_message_set_mime_part (message, object);
-	g_mime_object_unref (object);
+	g_object_unref (object);
 	
 	if (priv->scan_from) {
 		priv->state = GMIME_PARSER_STATE_FROM;
