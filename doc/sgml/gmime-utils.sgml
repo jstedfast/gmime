@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="17 Nov 2000">
+<refentry id="gmime-gmime-utils" revision="20 Nov 2000">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -18,8 +18,7 @@
                                              <link linkend="gint">gint</link> *saveoffset);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
                                              <link linkend="gint">gint</link> offset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string,
-                                             <link linkend="gboolean">gboolean</link> do_quotes);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string);
 void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-utils-best-encoding">g_mime_utils_best_encoding</link>
@@ -130,8 +129,7 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quote-string">g_mime_utils_quote_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_quote_string       (const <link linkend="gchar">gchar</link> *string,
-                                             <link linkend="gboolean">gboolean</link> do_quotes);</programlisting>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_quote_string       (const <link linkend="gchar">gchar</link> *string);</programlisting>
 <para>
 </para>
 <para>
@@ -144,11 +142,10 @@ will be stored.
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
 <entry> input string
 </entry></row>
-<row><entry align="right"><parameter>do_quotes</parameter>&nbsp;:</entry>
-<entry> wrap string in quotes.
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the escaped and (optionally)
-quoted input string.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the escaped and quoted (if
+needed to be) input string. The decision to quote the string is
+based on whether or not the input string contains any 'tspecials'
+as defined by rfc2045.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

@@ -1,5 +1,8 @@
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* doc/html/*:
+	* doc/sgml/*: Updated.
+
 	* test-mime.c: Updated.
 
 	* gmime-utils.c (g_mime_utils_quote_string): Do the detection on

@@ -182,11 +182,7 @@ HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTE-STRING"
 >       (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *string,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> do_quotes);
+> *string);
 void        <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-UNQUOTE-STRING"
 >g_mime_utils_unquote_string</A
@@ -441,7 +437,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1680"
+NAME="AEN1679"
 ></A
 ><H2
 >Description</H2
@@ -451,14 +447,14 @@ NAME="AEN1680"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1683"
+NAME="AEN1682"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1685"
+NAME="AEN1684"
 ></A
 ><H3
 ><A
@@ -495,7 +491,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1694"
+NAME="AEN1693"
 ></A
 ><P
 ></P
@@ -570,7 +566,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1712"
+NAME="AEN1711"
 ></A
 ><H3
 ><A
@@ -607,7 +603,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1721"
+NAME="AEN1720"
 ></A
 ><P
 ></P
@@ -677,7 +673,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1738"
+NAME="AEN1737"
 ></A
 ><H3
 ><A
@@ -699,11 +695,7 @@ HREF="GCHAR"
 >*      g_mime_utils_quote_string       (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *string,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> do_quotes);</PRE
+> *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -714,7 +706,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1747"
+NAME="AEN1745"
 ></A
 ><P
 ></P
@@ -748,23 +740,6 @@ VALIGN="TOP"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->do_quotes</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> wrap string in quotes.</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
@@ -773,8 +748,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an allocated string containing the escaped and (optionally)
-quoted input string.</TD
+>an allocated string containing the escaped and quoted (if
+needed to be) input string. The decision to quote the string is
+based on whether or not the input string contains any 'tspecials'
+as defined by rfc2045.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -785,7 +762,7 @@ quoted input string.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1764"
+NAME="AEN1758"
 ></A
 ><H3
 ><A
@@ -815,7 +792,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1771"
+NAME="AEN1765"
 ></A
 ><P
 ></P
@@ -853,7 +830,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1780"
+NAME="AEN1774"
 ></A
 ><H3
 ><A
@@ -886,7 +863,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1788"
+NAME="AEN1782"
 ></A
 ><P
 ></P
@@ -940,7 +917,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1801"
+NAME="AEN1795"
 ></A
 ><H3
 ><A
@@ -974,7 +951,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1809"
+NAME="AEN1803"
 ></A
 ><P
 ></P
@@ -1029,7 +1006,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1822"
+NAME="AEN1816"
 ></A
 ><H3
 ><A
@@ -1062,7 +1039,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1830"
+NAME="AEN1824"
 ></A
 ><P
 ></P
@@ -1115,7 +1092,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1843"
+NAME="AEN1837"
 ></A
 ><H3
 ><A
@@ -1148,7 +1125,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1851"
+NAME="AEN1845"
 ></A
 ><P
 ></P
@@ -1202,7 +1179,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1864"
+NAME="AEN1858"
 ></A
 ><H3
 ><A
@@ -1236,7 +1213,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1872"
+NAME="AEN1866"
 ></A
 ><P
 ></P
@@ -1290,7 +1267,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1885"
+NAME="AEN1879"
 ></A
 ><H3
 ><A
@@ -1339,7 +1316,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1897"
+NAME="AEN1891"
 ></A
 ><P
 ></P
@@ -1468,7 +1445,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1928"
+NAME="AEN1922"
 ></A
 ><H3
 ><A
@@ -1517,7 +1494,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1940"
+NAME="AEN1934"
 ></A
 ><P
 ></P
@@ -1646,7 +1623,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1970"
+NAME="AEN1964"
 ></A
 ><H3
 ><A
@@ -1696,7 +1673,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1982"
+NAME="AEN1976"
 ></A
 ><P
 ></P
@@ -1824,7 +1801,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2012"
+NAME="AEN2006"
 ></A
 ><H3
 ><A
@@ -1877,7 +1854,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2025"
+NAME="AEN2019"
 ></A
 ><P
 ></P
@@ -2023,7 +2000,7 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2059"
+NAME="AEN2053"
 ></A
 ><H3
 ><A
@@ -2072,7 +2049,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2071"
+NAME="AEN2065"
 ></A
 ><P
 ></P
@@ -2199,7 +2176,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2101"
+NAME="AEN2095"
 ></A
 ><H3
 ><A
@@ -2248,7 +2225,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2113"
+NAME="AEN2107"
 ></A
 ><P
 ></P
@@ -2376,7 +2353,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2143"
+NAME="AEN2137"
 ></A
 ><H3
 ><A
@@ -2426,7 +2403,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2155"
+NAME="AEN2149"
 ></A
 ><P
 ></P
