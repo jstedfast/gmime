@@ -340,6 +340,7 @@ Makefile
 docs/Makefile
 docs/reference/Makefile
 docs/tutorial/Makefile
+examples/Makefile
 gmime/Makefile
 gmime/gmime.h
 src/Makefile

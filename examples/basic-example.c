@@ -36,8 +36,8 @@ static char *path = "/usr/bin/gpg";
 static char *userid = "pgp-mime@xtorshun.org";
 static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
 
-typedef struct _TestSession TestSession;
-typedef struct _TestSessionClass TestSessionClass;
+typedef struct _ExampleSession ExampleSession;
+typedef struct _ExampleSessionClass ExampleSessionClass;
 
 struct _ExampleSession {
 	GMimeSession parent_object;
