@@ -162,6 +162,60 @@ make_pgp_safe (GString *string, gboolean encode_from)
 	}
 }
 	
+static void
+pgp_mime_part_sign_restore_part (GMimePart *mime_part, GSList *encodings)
+{
+	const GMimeContentType *type;
+	
+	type = g_mime_part_get_content_type (mime_part);
+	if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		GList *child;
+		
+		child = mime_part->children;
+		while (child) {
+			GMimePart *part = child->data;
+			
+			pgp_mime_part_sign_restore_part (part, encodings);
+			encodings = encodings->next;
+		}
+	} else {
+		GMimePartEncodingType encoding;
+		
+		encoding = GPOINTER_TO_INT (encodings->data);
+		
+		g_mime_part_set_encoding (mime_part, encoding);
+	}
+
+}
+
+static void
+pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
+{
+	const GMimeContentType *type;
+	
+	type = g_mime_part_get_content_type (mime_part);
+	if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		GList *child;
+		
+		child = mime_part->children;
+		while (child) {
+			GMimePart *part = child->data;
+			
+			pgp_mime_part_sign_prepare_part (part, encodings);
+		}
+	} else {
+		GMimePartEncodingType encoding;
+		
+		/* FIXME: find the best encoding for this part and use that instead?? */
+		/* the encoding should really be QP or Base64 */
+		encoding = g_mime_part_get_encoding (mime_part);
+		if (encoding != GMIME_PART_ENCODING_BASE64)
+			g_mime_part_set_encoding (mime_part, GMIME_PART_ENCODING_QUOTEDPRINTABLE);
+		
+		*encodings = g_slist_append (*encodings, GINT_TO_POINTER (encoding));
+	}
+
+}
 
 /**
  * pgp_mime_part_sign:
@@ -178,9 +232,9 @@ void
 pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash, GMimeException *ex)
 {
 	GMimePart *multipart, *part, *signed_part;
-	GMimePartEncodingType encoding;
 	GMimeContentType *mime_type;
 	gchar *cleartext, *signature;
+	GSList *encodings = NULL;
 	GString *string;
 	gchar *hash_type;
 	
@@ -189,9 +243,9 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	g_return_if_fail (hash != PGP_HASH_TYPE_NONE);
 	
 	part = *mime_part;
-	encoding = g_mime_part_get_encoding (part);
-	if (encoding != GMIME_PART_ENCODING_BASE64)
-		g_mime_part_set_encoding (part, GMIME_PART_ENCODING_QUOTEDPRINTABLE);
+	
+	/* prepare all the parts for signing... */
+	pgp_mime_part_sign_prepare_part (part, &encodings);
 	
 	/* get the cleartext */
 	cleartext = g_mime_part_to_string (part, FALSE);
@@ -206,9 +260,13 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	g_free (cleartext);
 	if (g_mime_exception_is_set (ex)) {
 		/* restore the original encoding */
-		g_mime_part_set_encoding (part, encoding);
+		pgp_mime_part_sign_restore_part (part, encodings);
+		g_slist_free (encodings);
 		return;
 	}
+	
+	/* we don't need this anymore... */
+	g_slist_free (encodings);
 	
 	/* construct the pgp-signature mime part */
 	signed_part = g_mime_part_new_with_type ("application", "pgp-signature");
