@@ -1,3 +1,13 @@
+2003-05-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (handle_multipart_mixed): Don't look at
+	the subtype of the first_type unless we have already defined
+	first_type. Fixes a crash.
+
+	* gmime/gmime-message-partial.c
+	(g_mime_message_partial_split_message): Fixed an optimisation gone
+	bad. Thanks to Piotr Klaban for reporting this.
+
 2003-05-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* docs/reference/*: Updated some.
