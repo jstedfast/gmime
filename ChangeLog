@@ -1,5 +1,9 @@
 2004-03-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Bumped version to 1.0.8
+
+	* configure.in: Bumped the version to 1.0.8
+
 	* gmime-charset.c (g_mime_charset_shutdown): Make public.
 	(g_mime_charset_init): Don't register g_mime_charset_shutdown() as
 	an atexit handler.
@@ -10,9 +14,6 @@
 	* gmime-iconv.c (g_mime_iconv_shutdown): Make public.
 	(g_mime_iconv_init): Don't set g_mime_iconv_shutdown() as an
 	atexit handler.
-
-	The following fixes were based on patches from Lars Magne
-	Ingebrigtsen. Thanks Lars!
 
 	* gmime-param.c (decode_param): If we fail to decode a value, skip
 	to the end (and avoid trying to decode a NULL value).

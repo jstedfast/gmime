@@ -1,5 +1,5 @@
-                            GMime, version 1.0.7
-                   by Jeffrey Stedfast <fejj@helixcode.com>
+                            GMime, version 1.0.8
+                   by Jeffrey Stedfast <fejj@ximian.com>
 
 
 WHAT IS GMIME
@@ -142,4 +142,4 @@ REPORTING BUGS
 --------------
 
 Bugs may be reported to the GMime development team by sending email to:
-fejj@helixcode.com
+fejj@ximian.com
