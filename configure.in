@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=1
 GMIME_MINOR_VERSION=90
-GMIME_MICRO_VERSION=0
+GMIME_MICRO_VERSION=1
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -83,13 +83,15 @@ AC_SUBST(HAVE_GTK_DOC)
 dnl Let people disable the gtk-doc stuff.
 AC_ARG_ENABLE(gtk-doc, [  --enable-gtk-doc        Use gtk-doc to build documentation [default=auto]], enable_gtk_doc="$enableval", enable_gtk_doc=auto)
 
-if test x$enable_gtk_doc = xauto ; then
-  if test x$GTKDOC = xtrue ; then
+if test "x$enable_gtk_doc" = "xauto" ; then
+  if test "x$GTKDOC" = "xtrue" ; then
     enable_gtk_doc=yes
   else
     enable_gtk_doc=no
   fi
 fi
+
+AC_SUBST(enable_gtk_doc)
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.

@@ -17,7 +17,7 @@ HTML_DIR=$(datadir)/gtk-doc/html
 TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE_VERSIONED)
 
 scan:
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h acconfig.h config.h strlib.h memchunk.h iconv-detect.h zentimer.h zenprofiler.h"
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h acconfig.h config.h memchunk.h iconv-detect.h zentimer.h zenprofiler.h"
 
 templates: scan
 	gtkdoc-mktmpl --module=$(DOC_MODULE)
@@ -39,7 +39,9 @@ install-data-local:
 	$(INSTALL) -d -m 0755 $(TARGET_DIR)
 	$(INSTALL_DATA) $(srcdir)/html/*.html $(TARGET_DIR)
 	$(INSTALL_DATA) $(srcdir)/html/index.sgml $(TARGET_DIR)
-	gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(HTML_DIR)
+	if test "x$(enable_gtk_doc)" = "xyes"; then \
+		gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(HTML_DIR); \
+	fi
 
 dist-hook:
 	(cd $(srcdir) ; tar cvf - html) | (cd $(distdir); tar xf -)
