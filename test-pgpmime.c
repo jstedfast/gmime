@@ -67,7 +67,7 @@ test_multipart_signed (GMimePgpContext *ctx)
 	ex = g_mime_exception_new ();
 	g_mime_pgp_mime_part_sign (ctx, &text_part, userid, GMIME_CIPHER_HASH_MD5, ex);
 	if (g_mime_exception_is_set (ex)) {
-		g_mime_part_destroy (text_part);
+		g_mime_object_unref (GMIME_OBJECT (text_part));
 		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
 		g_mime_exception_free (ex);
@@ -113,7 +113,7 @@ test_multipart_signed (GMimePgpContext *ctx)
 	
 	g_mime_exception_free (ex);
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
 void
@@ -124,13 +124,11 @@ test_multipart_encrypted (GMimePgpContext *ctx)
 	GMimePart *text_part, *decrypted_part;
 	GMimeException *ex;
 	GPtrArray *recipients;
-	char *body, *text;
-	gboolean is_html;
+	char *text;
 	
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
-	g_mime_part_set_content_id (text_part, "1");
 	g_mime_part_set_content (text_part, "This is a test of multipart/encrypted.\n",
 				 strlen ("This is a test of multipart/encrypted.\n"));
 	
@@ -141,7 +139,7 @@ test_multipart_encrypted (GMimePgpContext *ctx)
 	g_mime_pgp_mime_part_encrypt (ctx, &text_part, recipients, ex);
 	g_ptr_array_free (recipients, TRUE);
 	if (g_mime_exception_is_set (ex)) {
-		g_mime_part_destroy (text_part);
+		g_mime_object_unref (GMIME_OBJECT (text_part));
 		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
 		g_mime_exception_free (ex);
@@ -159,38 +157,23 @@ test_multipart_encrypted (GMimePgpContext *ctx)
 	g_mime_message_set_mime_part (message, text_part);
 	
 	text = g_mime_message_to_string (message);
-	
 	fprintf (stdout, "%s\n", text ? text : "(null)");
 	g_free (text);
-	
-	/* get the body in text/plain */
-	body = g_mime_message_get_body (message, TRUE, &is_html);
-	fprintf (stdout, "Trying to get message body in plain text format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	
-	/* get the body in text/html */
-	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stdout, "Trying to get message body in html format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	if (is_html)
-		fprintf (stdout, "yep...got it in html format\n");
 	
 	/* okay, now to test our decrypt function... */
 	ex = g_mime_exception_new ();
 	decrypted_part = g_mime_pgp_mime_part_decrypt (ctx, text_part, ex);
-	if (g_mime_exception_is_set (ex)) {
+	if (!decrypted_part || g_mime_exception_is_set (ex)) {
 		fprintf (stdout, "failed to decrypt part.\n");
 	} else {
-		char *text;
-		
 		text = g_mime_part_to_string (decrypted_part);
 		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
 		g_free (text);
-		g_mime_part_destroy (decrypted_part);
+		g_mime_object_unref (GMIME_OBJECT (decrypted_part));
 	}
 	g_mime_exception_free (ex);
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
 int main (int argc, char *argv[])

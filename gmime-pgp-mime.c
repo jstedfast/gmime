@@ -203,12 +203,12 @@ pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
  * @context: PGP Context
  * @mime_part: a MIME part that will be replaced by a pgp signed part
  * @userid: userid to sign with
- * @hash: one of GMIME_PGP_HASH_TYPE_MD5 or GMIME_PGP_HASH_TYPE_SHA1
+ * @hash: one of GMIME_CIPHER_HASH_MD5 or GMIME_CIPHER_HASH_SHA1
  * @ex: exception which will be set if there are any errors.
  *
  * Constructs a PGP/MIME multipart in compliance with rfc2015 and
- * replaces @part with the generated multipart/signed. On failure,
- * @ex will be set and #part will remain untouched.
+ * replaces @mime_part with the generated multipart/signed. On
+ * failure, @ex will be set and #part will remain untouched.
  **/
 void
 g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, const char *userid,
@@ -306,7 +306,6 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	g_mime_object_unref (GMIME_OBJECT (signed_part));
 	
 	/* replace the input part with the output part */
-	g_mime_object_unref (GMIME_OBJECT (*mime_part));
 	*mime_part = multipart;
 }
 
@@ -317,7 +316,7 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
  * @mime_part: a multipart/signed MIME Part
  * @ex: exception
  *
- * Returns a GMimeCipherValidity on success or NULL on fail.
+ * Returns a GMimeCipherValidity on success or %NULL on fail.
  **/
 GMimeCipherValidity *
 g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMimeException *ex)
@@ -375,8 +374,8 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
  * @ex: exception which will be set if there are any errors.
  *
  * Constructs a PGP/MIME multipart in compliance with rfc2015 and
- * replaces #mime_part with the generated multipart/signed. On failure,
- * #ex will be set and #part will remain untouched.
+ * replaces @mime_part with the generated multipart/signed. On failure,
+ * @ex will be set and @mime_part will remain untouched.
  **/
 void
 g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
@@ -455,7 +454,7 @@ g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
  * @mime_part: a multipart/encrypted MIME Part
  * @ex: exception
  *
- * Returns the decrypted MIME Part on success or NULL on fail.
+ * Returns the decrypted MIME Part on success or %NULL on fail.
  **/
 GMimePart *
 g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GMimeException *ex)
@@ -495,17 +494,26 @@ g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GM
 	}
 	
 	g_mime_stream_unref (ciphertext);
-	g_mime_stream_reset (stream);
 	
 	/* construct the new decrypted mime part from the stream */
+	g_mime_stream_reset (stream);
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_DECODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	g_mime_stream_unref (stream);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
 	
-	part = g_mime_parser_construct_part (filtered_stream);
+	/* FIXME: this kludge is only needed by the in-memory mime
+           parser in gmime-parser.c (it needs to be able to seek in
+           the stream), it's not needed by the parser in
+           pan-mime-parser.c I don't think... */
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_write_to_stream (filtered_stream, stream);
 	g_mime_stream_unref (filtered_stream);
+	g_mime_stream_reset (stream);
+	
+	part = g_mime_parser_construct_part (stream);
+	g_mime_stream_unref (stream);
 	
 	return part;
 }
