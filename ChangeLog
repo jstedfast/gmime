@@ -1,3 +1,8 @@
+2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (g_mime_message_write_to_stream): fixed doc
+	comment.
+
 2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-fs.c (stream_destroy): Check fd against -1.

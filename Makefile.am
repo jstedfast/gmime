@@ -99,7 +99,7 @@ test_mime_LDADD = $(LDADDS)
 test_parser_SOURCES = test-parser.c
 test_parser_LDFLAGS = 
 test_parser_DEPENDENCIES = $(DEPS)
-test_parser_LDADD = $(LDADDS)
+test_parser_LDADD = -static $(LDADDS)
 
 test_streams_SOURCES = test-streams.c
 test_streams_LDFLAGS = 
