@@ -282,6 +282,18 @@ charset_init (Charset *charset)
 	charset->level = 0;
 }
 
+
+/**
+ * charset_step:
+ * @charset:
+ * @in: input text buffer (must be in UTF-8)
+ * @len: input buffer length
+ *
+ * Steps through the input buffer 1 unicode character (glyph) at a
+ * time (ie, not necessarily 1 byte at a time). Bitwise 'and' our
+ * @charset->mask with the mask for each glyph. This has the effect of
+ * limiting what charsets our @charset->mask can match.
+ **/
 static void
 charset_step (Charset *charset, const char *in, size_t len)
 {
