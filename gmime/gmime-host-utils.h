@@ -24,6 +24,8 @@
 #ifndef __GMIME_HOST_UTILS_H__
 #define __GMIME_HOST_UTILS_H__
 
+#include <glib.h>
+
 #include <netdb.h>
 
 #ifdef __cplusplus
