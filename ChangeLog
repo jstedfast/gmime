@@ -1,5 +1,8 @@
 2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-mem.c: Updated to be based on the new
+	implementation of GMimeStream.
+
 	* gmime-type-utils.h: New file to contain some more-friendly
 	type-cast macros around the glib2 ones.
 

@@ -32,16 +32,30 @@ extern "C" {
 #include <glib.h>
 #include "gmime-stream.h"
 
-typedef struct _GMimeStreamMem {
-	GMimeStream parent;
+#define GMIME_TYPE_STREAM_MEM            (g_mime_stream_mem_get_type ())
+#define GMIME_STREAM_MEM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMem))
+#define GMIME_STREAM_MEM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
+#define GMIME_IS_STREAM_MEM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_MEM))
+#define GMIME_IS_STREAM_MEM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MEM))
+#define GMIME_STREAM_MEM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
+
+typedef struct _GMimeStreamMem GMimeStreamMem;
+typedef struct _GMimeStreamMemClass GMimeStreamMemClass;
+
+struct _GMimeStreamMem {
+	GMimeStream parent_object;
 	
 	gboolean owner;
 	GByteArray *buffer;
-} GMimeStreamMem;
+};
 
-#define GMIME_STREAM_MEM_TYPE g_str_hash ("GMimeStreamMem")
-#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MEM_TYPE)
-#define GMIME_STREAM_MEM(stream) ((GMimeStreamMem *) stream)
+struct _GMimeStreamMemClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_mem_get_type (void);
 
 GMimeStream *g_mime_stream_mem_new (void);
 GMimeStream *g_mime_stream_mem_new_with_byte_array (GByteArray *array);

@@ -26,9 +26,16 @@
 #endif
 
 #include <string.h>
+
 #include "gmime-stream-mem.h"
 
-static void stream_destroy (GMimeStream *stream);
+static void g_mime_stream_mem_base_class_init (GMimeStreamMemClass *klass);
+static void g_mime_stream_mem_base_class_finalize (GMimeStreamMemClass *klass);
+static void g_mime_stream_mem_class_init (GMimeStreamMemClass *klass);
+static void g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass);
+static void g_mime_stream_mem_destroy (GMimeStreamMem *stream);
+static void g_mime_stream_mem_finalize (GObject *object);
+
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
@@ -40,26 +47,94 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream stream_template = {
-	NULL, 0,
-	1, 0, 0, 0, stream_destroy,
-	stream_read, stream_write,
-	stream_flush, stream_close,
-	stream_eos, stream_reset,
-	stream_seek, stream_tell,
-	stream_length, stream_substream,
-};
+static GMimeStreamClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_mem_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamMemClass),
+			(GBaseInitFunc) g_mime_stream_mem_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_mem_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_mem_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStreamMem),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_mem_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamMem", &info, 0);
+	}
+	
+	return type;
+}
+
 
 static void
-stream_destroy (GMimeStream *stream)
+g_mime_stream_mem_base_class_init (GMimeStreamMemClass *klass)
 {
-	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	
-	if (mem->owner && mem->buffer)
-		g_byte_array_free (mem->buffer, TRUE);
-	
-	g_free (mem);
+	/* reset instance specifc methods that don't get inherited */
+	;
 }
+
+static void
+g_mime_stream_mem_base_class_finalize (GMimeStreamMemClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_mem_class_init (GMimeStreamMemClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_stream_mem_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+	
+	klass->destroy = g_mime_stream_mem_destroy;
+}
+
+static void
+g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass)
+{
+	stream->owner = TRUE;
+	stream->buffer = NULL;
+}
+
+static void
+g_mime_stream_mem_destroy (GMimeStreamMem *stream)
+{
+	g_signal_handlers_destroy (G_OBJECT (stream));
+}
+
+static void
+g_mime_stream_mem_finalize (GObject *object)
+{
+	GMimeStreamMem *stream = (GMimeStreamMem *) object;
+	
+	if (stream->owner && stream->buffer)
+		g_byte_array_free (stream->buffer, TRUE);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
@@ -216,11 +291,11 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_new (GMimeStreamMem, 1);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
 	mem->owner = FALSE;
 	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (mem), start, end);
 	
 	return GMIME_STREAM (mem);
 }
@@ -238,11 +313,11 @@ g_mime_stream_mem_new (void)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_new (GMimeStreamMem, 1);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -261,11 +336,11 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_new (GMimeStreamMem, 1);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
 	mem->owner = TRUE;
 	mem->buffer = array;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -286,13 +361,13 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_new (GMimeStreamMem, 1);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
 	g_byte_array_append (mem->buffer, buffer, len);
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -311,7 +386,7 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 {
 	GMimeStream *stream;
 	
-	g_return_if_fail (mem != NULL);
+	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
 	g_return_if_fail (array != NULL);
 	
 	if (mem->buffer)
