@@ -517,7 +517,7 @@ pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 {
 	GPtrArray *recipient_list = NULL;
 	GPtrArray *argv = NULL;
-	int retval, i, r;
+	int retval, r;
 	char *ciphertext = NULL;
 	char *diagnostics = NULL;
 	int passwd_fds[2];
@@ -1019,7 +1019,7 @@ pgp_verify (const gchar *in, gint inlen, const gchar *sigin, gint siglen, GMimeE
 	char *diagnostics = NULL;
 	int passwd_fds[2];
 	char passwd_fd[32];
-	char *sigfile;
+	char *sigfile = NULL;
 	int retval, i, clearlen;
 	gboolean valid = TRUE;
 	
