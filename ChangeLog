@@ -1,3 +1,11 @@
+2001-08-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (encode_8bit_word): Oops. Add the closing ? char.
+	(g_mime_utils_8bit_header_encode): Oops. Make sure we encode *all*
+	lwsp chars.
+	(g_mime_utils_8bit_header_decode): Slightly better fix for the
+	other day.
+
 2001-08-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.

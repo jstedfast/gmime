@@ -181,6 +181,26 @@ test_encodings (void)
 	g_free (enc);
 	g_free (dec);
 	
+	enc = g_mime_utils_8bit_header_encode ("OT - ich weiﬂ, trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("=?iso-8859-1?Q?=DE?=:\t=?iso-8859-1?Q?=AD=BE=EF?= spells 0xdeadbeef");
+	fprintf (stderr, "incorrect: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	enc = g_mime_utils_8bit_header_encode (dec);
+	g_free (dec);
+	fprintf (stderr, "correct: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);

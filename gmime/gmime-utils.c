@@ -798,8 +798,6 @@ decode_encoded_8bit_word (const guchar *word)
 }
 
 
-#define is_delim(c) (is_type (c, IS_SPECIAL) || isspace (c))
-
 /**
  * g_mime_utils_8bit_header_decode: Decode an encoded header.
  * @in: header to decode
@@ -809,90 +807,104 @@ decode_encoded_8bit_word (const guchar *word)
 gchar *
 g_mime_utils_8bit_header_decode (const guchar *in)
 {
-	GString *out, *whtspc, *word;
+	GString *out, *lwsp, *atom;
 	const guchar *inptr;
 	guchar *decoded;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
 	
 	out = g_string_sized_new (256);
-	whtspc = g_string_sized_new (256);
-	word = g_string_sized_new (256);
+	lwsp = g_string_sized_new (256);
+	atom = g_string_sized_new (256);
 	inptr = in;
 	
 	while (inptr && *inptr) {
 		guchar c = *inptr++;
 		
-		if (is_delim (c) && !last_was_space) {
+		if (!is_atom (c) && !last_was_space) {
 			/* we reached the end of an atom */
 			gboolean was_encoded;
-			const gchar *cword;
 			guchar *dword = NULL;
+			const guchar *word;
 			
-			if ((was_encoded = is_8bit_word_encoded (word->str)))
-				cword = dword = decode_encoded_8bit_word (word->str);
+			if ((was_encoded = is_8bit_word_encoded (atom->str)))
+				word = dword = decode_encoded_8bit_word (atom->str);
 			else
-				cword = word->str;
+				word = atom->str;
 			
-			if (cword) {
+			if (word) {
 				if (!(last_was_encoded && was_encoded)) {
 					/* rfc2047 states that you
                                            must ignore all whitespace
                                            between encoded words */
-					g_string_append (out, whtspc->str);
+					g_string_append (out, lwsp->str);
 				}
 				
-				g_string_append (out, cword);
+				g_string_append (out, word);
 				g_free (dword);
 			} else {
 				was_encoded = FALSE;
-				g_string_append (out, whtspc->str);
-				g_string_append (out, word->str);
+				g_string_append (out, lwsp->str);
+				g_string_append (out, atom->str);
 			}
 			
 			last_was_encoded = was_encoded;
 			
-			g_string_truncate (whtspc, 0);
-			g_string_truncate (word, 0);
+			g_string_truncate (lwsp, 0);
+			g_string_truncate (atom, 0);
+			
+			if (is_lwsp (c)) {
+				g_string_append_c (lwsp, c);
+				last_was_space = TRUE;
+			} else {
+				/* This is mostly here for interoperability with broken
+                                   mailers that might do something stupid like:
+                                   =?iso-8859-1?Q?blah?=:\t=?iso-8859-1?Q?I_am_broken?= */
+				g_string_append_c (out, c);
+				last_was_encoded = FALSE;
+				last_was_space = FALSE;
+			}
+			
+			continue;
 		}
 		
-		if (is_delim (c)) {
-			g_string_append_c (whtspc, c);
-			last_was_space = isspace (c);
-		} else {
-			g_string_append_c (word, c);
+		if (is_atom (c)) {
+			g_string_append_c (atom, c);
 			last_was_space = FALSE;
+		} else {
+			g_string_append_c (lwsp, c);
+			last_was_space = TRUE;
 		}
 	}
 	
-	if (word->len || whtspc->len) {
+	if (atom->len || lwsp->len) {
 		gboolean was_encoded;
-		const guchar *cword;
 		guchar *dword = NULL;
+		const guchar *word;
 		
-		if ((was_encoded = is_8bit_word_encoded (word->str)))
-			cword = dword = decode_encoded_8bit_word (word->str);
+		if ((was_encoded = is_8bit_word_encoded (atom->str)))
+			word = dword = decode_encoded_8bit_word (atom->str);
 		else
-			cword = word->str;
+			word = atom->str;
 		
-		if (cword) {
+		if (word) {
 			if (!(last_was_encoded && was_encoded)) {
 				/* rfc2047 states that you
 				   must ignore all whitespace
 				   between encoded words */
-				g_string_append (out, whtspc->str);
+				g_string_append (out, lwsp->str);
 			}
 			
-			g_string_append (out, cword);
+			g_string_append (out, word);
 			g_free (dword);
 		} else {
-			g_string_append (out, whtspc->str);
-			g_string_append (out, word->str);
+			g_string_append (out, lwsp->str);
+			g_string_append (out, atom->str);
 		}
 	}
 	
-	g_string_free (whtspc, TRUE);
-	g_string_free (word, TRUE);
+	g_string_free (lwsp, TRUE);
+	g_string_free (atom, TRUE);
 	
 	decoded = out->str;
 	g_string_free (out, FALSE);
@@ -975,7 +987,7 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	if (this_was_encoded)
 		*this_was_encoded = TRUE;
 	
-	return g_strdup_printf ("=?%s?%c?%s=", g_mime_charset_locale_name (), encoding, encoded);	
+	return g_strdup_printf ("=?%s?%c?%s?=", g_mime_charset_locale_name (), encoding, encoded);	
 }
 
 
@@ -1003,7 +1015,7 @@ g_mime_utils_8bit_header_encode_phrase (const guchar *in)
 gchar *
 g_mime_utils_8bit_header_encode (const guchar *in)
 {
-	GString *out, *word, *whtspc;
+	GString *out, *word, *lwsp;
 	guchar *inptr;
 	guchar *encoded;
 	gboolean is8bit = FALSE;
@@ -1012,7 +1024,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 	
 	out = g_string_new ("");
 	word = g_string_new ("");
-	whtspc = g_string_new ("");
+	lwsp = g_string_new ("");
 	inptr = (guchar *) in;
 	
 	while (inptr && *inptr) {
@@ -1030,23 +1042,23 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 			/* append any whitespace */
 			if (last_was_encoded && this_was_encoded) {
 				/* we need to encode the whitespace */
-				guchar *ewhtspc;
+				guchar *elwsp;
 				gint len;
 				
-				ewhtspc = alloca (whtspc->len * 3 + 4);
-				len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
-				ewhtspc[len] = '\0';
+				elwsp = alloca (lwsp->len * 3 + 4);
+				len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
+				elwsp[len] = '\0';
 				
-				g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), ewhtspc);
+				g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
 			} else {
-				g_string_append (out, whtspc->str);
+				g_string_append (out, lwsp->str);
 			}
 			
 			/* append the encoded word */
 			g_string_append (out, eword);
 			g_free (eword);
-
-			g_string_truncate (whtspc, 0);
+			
+			g_string_truncate (lwsp, 0);
 			g_string_truncate (word, 0);
 			
 			last_was_encoded = this_was_encoded;
@@ -1054,7 +1066,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		}
 		
 		if (isspace (c)) {
-			g_string_append_c (whtspc, c);
+			g_string_append_c (lwsp, c);
 			last_was_space = TRUE;
 		} else {
 			if (c > 127)
@@ -1065,7 +1077,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		}
 	}
 	
-	if (word->len || whtspc->len) {
+	if (word->len || lwsp->len) {
 		gboolean this_was_encoded = FALSE;
 		guchar *eword;
 		
@@ -1077,16 +1089,16 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		/* append any whitespace */
 		if (last_was_encoded && this_was_encoded) {
 			/* we need to encode the whitespace */
-			guchar *ewhtspc;
+			guchar *elwsp;
 			gint len;
 			
-			ewhtspc = alloca (whtspc->len * 3 + 4);
-			len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
-			ewhtspc[len] = '\0';
+			elwsp = alloca (lwsp->len * 3 + 4);
+			len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
+			elwsp[len] = '\0';
 			
-			g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), ewhtspc);
+			g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), elwsp);
 		} else {
-			g_string_append (out, whtspc->str);
+			g_string_append (out, lwsp->str);
 		}
 		
 		/* append the encoded word */
@@ -1094,7 +1106,7 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 		g_free (eword);
 	}
 	
-	g_string_free (whtspc, TRUE);
+	g_string_free (lwsp, TRUE);
 	g_string_free (word, TRUE);
 	
 	encoded = out->str;
