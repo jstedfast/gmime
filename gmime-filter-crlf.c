@@ -50,8 +50,10 @@ static GMimeFilter filter_template = {
 
 /**
  * g_mime_filter_crlf_new:
- * @direction:
- * @mode:
+ * @direction: encode direction
+ * @mode: crlf or crlf & dot mode
+ *
+ * Creates a new GMimeFilterCRLF filter.
  *
  * Returns a new crlf(/dot) filter.
  **/

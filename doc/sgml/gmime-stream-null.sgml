@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-null" revision="20 Nov 2001">
+<refentry id="gmime-gmime-stream-null">
 <refmeta>
 <refentrytitle>gmime-stream-null</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -55,6 +55,7 @@
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -71,6 +72,7 @@
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -86,6 +88,7 @@
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

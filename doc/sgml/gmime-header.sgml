@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-header" revision="20 Nov 2001">
+<refentry id="gmime-gmime-header">
 <refmeta>
 <refentrytitle>gmime-header</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -64,11 +64,14 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -76,7 +79,7 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 <title><anchor id="g-mime-header-new">g_mime_header_new ()</title>
 <programlisting><link linkend="GMimeHeader">GMimeHeader</link>* g_mime_header_new              (void);</programlisting>
 <para>
-</para>
+Creates a new GMimeHeader object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -161,7 +164,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 <programlisting>const char* g_mime_header_get               (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              const char *name);</programlisting>
 <para>
-</para>
+Gets the value of the header requested.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -175,7 +178,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 <row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
 <entry> header name
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the header requested
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the header requested.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -183,7 +186,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 <programlisting>void        g_mime_header_remove            (<link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              const char *name);</programlisting>
 <para>
-Remove the specified header</para>
+Remove the specified header.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -222,7 +225,8 @@ Write the headers to a stream.</para>
 <title><anchor id="g-mime-header-to-string">g_mime_header_to_string ()</title>
 <programlisting>char*       g_mime_header_to_string         (const <link linkend="GMimeHeader">GMimeHeader</link> *header);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the raw rfc822 headers
+contained in <parameter>header</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

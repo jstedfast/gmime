@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter-html" revision="20 Nov 2001">
+<refentry id="gmime-gmime-filter-html">
 <refmeta>
 <refentrytitle>gmime-filter-html</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -101,7 +101,7 @@
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_html_new         (<link linkend="guint32">guint32</link> flags,
                                              <link linkend="guint32">guint32</link> colour);</programlisting>
 <para>
-</para>
+Creates a new GMimeFilterHTML filter.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -110,10 +110,10 @@
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
-<entry>
+<entry> html flags
 </entry></row>
 <row><entry align="right"><parameter>colour</parameter>&nbsp;:</entry>
-<entry>
+<entry> citation colour
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new html filter.
 </entry></row>

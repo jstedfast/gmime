@@ -1,3 +1,7 @@
+2001-11-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/gmime-docs.sgml: Added documentation of the use of filters.
+
 2001-11-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-buffer.c (stream_seek): Implemented.

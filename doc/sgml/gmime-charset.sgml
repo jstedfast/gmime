@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-charset" revision="20 Nov 2001">
+<refentry id="gmime-gmime-charset">
 <refmeta>
 <refentrytitle>gmime-charset</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -46,7 +46,7 @@ iso-8859-1 locales.</para>
 <title><anchor id="g-mime-charset-locale-name">g_mime_charset_locale_name ()</title>
 <programlisting>const char* g_mime_charset_locale_name      (void);</programlisting>
 <para>
-</para>
+Gets the user's locale charset (or iso-8859-1 by default).</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

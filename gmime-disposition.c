@@ -53,6 +53,8 @@ param_hash (gconstpointer key)
  * g_mime_disposition_new:
  * @disposition: disposition header (and params)
  *
+ * Creates a new GMimeDisposition object.
+ *
  * Returns a new disposition object
  **/
 GMimeDisposition *
@@ -141,6 +143,8 @@ g_mime_disposition_set (GMimeDisposition *disposition, const char *value)
  * g_mime_disposition_get:
  * @disposition: disposition object
  *
+ * Gets the disposition or %NULL on fail.
+ *
  * Returns the disposition string which is probably one of
  * GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE.
  **/
@@ -196,6 +200,8 @@ g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *att
  * @disposition: disposition object
  * @attribute: parameter name
  *
+ * Gets the value of the parameter @attribute, or %NULL on fail.
+ *
  * Returns the value of the parameter of name @attribute.
  **/
 const char *
@@ -222,6 +228,9 @@ g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *att
  * g_mime_disposition_header:
  * @disposition: disposition object
  * @fold: fold header if needed
+ *
+ * Allocates a string buffer containing the Content-Disposition header
+ * represented by the disposition object @disposition.
  *
  * Returns a string containing the disposition header
  **/

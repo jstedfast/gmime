@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter" revision="20 Nov 2001">
+<refentry id="gmime-gmime-filter">
 <refmeta>
 <refentrytitle>gmime-filter</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -105,6 +105,7 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 <row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -147,7 +148,7 @@ Destroys <parameter>filter</parameter> and releases the memory to the system.</p
 <title><anchor id="g-mime-filter-copy">g_mime_filter_copy ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_copy             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>
 <para>
-</para>
+Copies <parameter>filter</parameter> into a new GMimeFilter object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

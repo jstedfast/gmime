@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-disposition" revision="20 Nov 2001">
+<refentry id="gmime-gmime-disposition">
 <refmeta>
 <refentrytitle>gmime-disposition</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -76,7 +76,7 @@ char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header<
 <title><anchor id="g-mime-disposition-new">g_mime_disposition_new ()</title>
 <programlisting><link linkend="GMimeDisposition">GMimeDisposition</link>* g_mime_disposition_new    (const char *disposition);</programlisting>
 <para>
-</para>
+Creates a new GMimeDisposition object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -133,7 +133,7 @@ should be displayed by the MUA.</para>
 <title><anchor id="g-mime-disposition-get">g_mime_disposition_get ()</title>
 <programlisting>const char* g_mime_disposition_get          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
 <para>
-</para>
+Gets the disposition or <literal>NULL</literal> on fail.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -180,7 +180,7 @@ disposition.</para>
                                             (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
                                              const char *attribute);</programlisting>
 <para>
-</para>
+Gets the value of the parameter <parameter>attribute</parameter>, or <literal>NULL</literal> on fail.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -202,7 +202,8 @@ disposition.</para>
 <programlisting>char*       g_mime_disposition_header       (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
                                              <link linkend="gboolean">gboolean</link> fold);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the Content-Disposition header
+represented by the disposition object <parameter>disposition</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

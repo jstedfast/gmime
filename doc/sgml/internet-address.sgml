@@ -1,4 +1,4 @@
-<refentry id="gmime-internet-address" revision="20 Nov 2001">
+<refentry id="gmime-internet-address">
 <refmeta>
 <refentrytitle>internet-address</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -235,8 +235,10 @@ Add a contact to the internet address group.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

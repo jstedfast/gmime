@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream" revision="20 Nov 2001">
+<refentry id="gmime-gmime-stream">
 <refmeta>
 <refentrytitle>gmime-stream</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -125,6 +125,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

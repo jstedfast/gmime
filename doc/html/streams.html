@@ -13,8 +13,8 @@ REL="PREVIOUS"
 TITLE="GMime Programming Notes"
 HREF="gmime-notes.html"><LINK
 REL="NEXT"
-TITLE="Data Wrappers"
-HREF="data-wrappers.html"></HEAD
+TITLE="Stream Filters"
+HREF="filters.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
 BGCOLOR="#FFFFFF"
@@ -91,7 +91,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="data-wrappers.html"
+HREF="filters.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,7 +117,7 @@ NAME="STREAMS"
 >The three (3) basic stream types are: GMimeStreamFile,
     GMimeStreamFs and GMimeStreamMem. You can manipulate all three
     streams using the GMimeStream interfaces. In addition, some of
-    these streams have extended interfaces to allow more fined grained
+    these streams have extended interfaces to allow more fine grained
     manipulation.</P
 ><P
 >GMimeStreamFile and GMimeStreamFs are very similar in that
@@ -126,14 +126,10 @@ NAME="STREAMS"
     abstracted layer above the libc FILE type, one of the added
     benefits is buffered I/O. GMimeStreamFs, on the other hand, is an
     abstracted layer above UNIX file descriptors. While a
-    GMimeStreamFs <FONT
-COLOR="RED"
->can</FONT
-> be used on top of a UNIX
-    socket, you must be careful because sockets are not seekable. It
-    is suggested that you use a GMimeStreamBuffer in cache mode if you
-    intend to be able to seek, we will get to this advanced stream
-    type later.</P
+    GMimeStreamFs can be used on top of a UNIX socket, you must be
+    careful because sockets are not seekable. It is suggested that you
+    use a GMimeStreamBuffer in cache mode if you intend to be able to
+    seek, we will get to this advanced stream type later.</P
 ><P
 >Unlike the previous 2 stream types, GMimeStreamMem does not
     interact with the file system at all (except maybe the swap
@@ -141,8 +137,14 @@ COLOR="RED"
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</P
 ><P
->The two (2) advanced stream types are GMimeStreamBuffer (as
-    was mentioned previously) and GMimeStreamFilter.</P
+>The three (3) advanced stream types are GMimeStreamNull,
+    GMimeStreamBuffer (as was mentioned previously) and
+    GMimeStreamFilter.</P
+><P
+>Our most simple stream, GMimeStreamNull, is the stream
+    equivalent of /dev/null on Unix systems. The main difference is
+    that GMimeStreamNull records the number of bytes written to
+    it.</P
 ><P
 >The GMimeStreamBuffer type inherits from any other type of
     stream and has 3 modes: block reads, block writes, and cached
@@ -219,7 +221,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="data-wrappers.html"
+HREF="filters.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -247,7 +249,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->Data Wrappers</B
+>Stream Filters</B
 ></FONT
 ></TD
 ></TR

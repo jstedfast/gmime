@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter-basic" revision="20 Nov 2001">
+<refentry id="gmime-gmime-filter-basic">
 <refmeta>
 <refentrytitle>gmime-filter-basic</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -50,7 +50,7 @@ enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 <title><anchor id="g-mime-filter-basic-new-type">g_mime_filter_basic_new_type ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_basic_new_type   (<link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link> type);</programlisting>
 <para>
-</para>
+Creates a new filter of type <parameter>type</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -59,7 +59,7 @@ enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry>
+<entry> filter type
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new basic filter of type <parameter>type</parameter>.
 </entry></row>

@@ -51,7 +51,9 @@ static GMimeFilter filter_template = {
 
 /**
  * g_mime_filter_basic_new_type:
- * @type:
+ * @type: filter type
+ *
+ * Creates a new filter of type @type.
  *
  * Returns a new basic filter of type @type.
  **/

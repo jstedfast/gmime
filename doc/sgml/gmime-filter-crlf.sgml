@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter-crlf" revision="20 Nov 2001">
+<refentry id="gmime-gmime-filter-crlf">
 <refmeta>
 <refentrytitle>gmime-filter-crlf</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -59,7 +59,7 @@ enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_crlf_new         (<link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link> direction,
                                              <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link> mode);</programlisting>
 <para>
-</para>
+Creates a new GMimeFilterCRLF filter.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -68,10 +68,10 @@ enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>direction</parameter>&nbsp;:</entry>
-<entry>
+<entry> encode direction
 </entry></row>
 <row><entry align="right"><parameter>mode</parameter>&nbsp;:</entry>
-<entry>
+<entry> crlf or crlf &amp; dot mode
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new crlf(/dot) filter.
 </entry></row>

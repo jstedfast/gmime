@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-data-wrapper" revision="20 Nov 2001">
+<refentry id="gmime-gmime-data-wrapper">
 <refmeta>
 <refentrytitle>gmime-data-wrapper</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -61,7 +61,7 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 <title><anchor id="g-mime-data-wrapper-new">g_mime_data_wrapper_new ()</title>
 <programlisting><link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* g_mime_data_wrapper_new   (void);</programlisting>
 <para>
-</para>
+Creates a new GMimeDataWrapper object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -78,7 +78,7 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);</programlisting>
 <para>
-</para>
+Creates a new GMimeDataWrapper object around <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -87,10 +87,10 @@ void        <link linkend="g-mime-data-wrapper-set-encoding">g_mime_data_wrapper
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
+<entry> stream
 </entry></row>
 <row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry>
+<entry> stream's encoding
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a data wrapper around <parameter>stream</parameter>. Since the wrapper owns it's
 own reference on the stream, caller is responsible for unrefing
@@ -110,7 +110,7 @@ Destroys the data wrapper and unref's its internal stream.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -129,17 +129,17 @@ Note: caller is responsible for it's own reference on
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
+<entry> stream
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-data-wrapper-get-stream">g_mime_data_wrapper_get_stream ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_data_wrapper_get_stream (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);</programlisting>
 <para>
-</para>
+Gets a reference to the stream wrapped by <parameter>wrapper</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -148,7 +148,7 @@ Note: caller is responsible for it's own reference on
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a reference to the internal stream. Caller is responsable
 for unrefing it.
@@ -169,10 +169,10 @@ Sets the encoding type of the internal stream.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 <row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
-<entry>
+<entry> encoding
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -180,7 +180,7 @@ Sets the encoding type of the internal stream.</para>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_data_wrapper_get_encoding
                                             (<link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *wrapper);</programlisting>
 <para>
-</para>
+Gets the encoding type of the stream wrapped by <parameter>wrapper</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -189,7 +189,7 @@ Sets the encoding type of the internal stream.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding type of the internal stream.
 </entry></row>
@@ -209,7 +209,7 @@ Write's the raw (decoded) data to the output stream.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>wrapper</parameter>&nbsp;:</entry>
-<entry>
+<entry> data wrapper
 </entry></row>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> output stream

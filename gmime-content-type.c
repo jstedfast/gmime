@@ -52,11 +52,13 @@ param_hash (gconstpointer key)
 }
 
 /**
- * g_mime_content_type_new: Create a new MIME Content-Type
+ * g_mime_content_type_new:
  * @type: MIME type (or NULL for "text")
  * @subtype: MIME subtype (or NULL for "plain")
  *
- * Returns a new MIME Content-Type.
+ * Creates a Content-Type object with type @type and subtype @subtype.
+ *
+ * Returns a new MIME Content-Type object.
  **/
 GMimeContentType *
 g_mime_content_type_new (const char *type, const char *subtype)
@@ -95,8 +97,10 @@ g_mime_content_type_new (const char *type, const char *subtype)
 
 
 /**
- * g_mime_content_type_new_from_string: Create a new MIME Content-Type
+ * g_mime_content_type_new_from_string:
  * @string: input string containing a content-type (and params)
+ *
+ * Constructs a new Content-Type object based on the input string.
  *
  * Returns a new MIME Content-Type based on the input string.
  **/
@@ -170,8 +174,11 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
 
 
 /**
- * g_mime_content_type_to_string: Write the Content-Type to a string
+ * g_mime_content_type_to_string:
  * @mime_type: MIME Content-Type
+ *
+ * Allocates a string buffer containing the type and subtype defined
+ * by the @mime_type.
  *
  * Returns an allocated string containing the type and subtype of the
  * content-type in the format: type/subtype.
@@ -192,10 +199,13 @@ g_mime_content_type_to_string (const GMimeContentType *mime_type)
 
 
 /**
- * g_mime_content_type_is_type: Compare MIME types
+ * g_mime_content_type_is_type:
  * @mime_type: MIME Content-Type
  * @type: MIME type to compare against
  * @subtype: MIME subtype to compare against
+ *
+ * Compares the given type and subtype with that of the given mime
+ * type object.
  *
  * Returns TRUE if the MIME types match or FALSE otherwise. You may
  * use "*" in place of @type and/or @subtype as a wilcard.
@@ -226,7 +236,7 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 
 
 /**
- * g_mime_content_type_add_parameter: Add a parameter to the MIME Content-Type
+ * g_mime_content_type_add_parameter:
  * @mime_type: MIME Content-Type
  * @attribute: parameter name (aka attribute)
  * @value: parameter value
@@ -263,11 +273,14 @@ g_mime_content_type_add_parameter (GMimeContentType *mime_type, const char *attr
 
 
 /**
- * g_mime_content_type_get_parameter: Get a parameter of the MIME Content-Type
+ * g_mime_content_type_get_parameter:
  * @mime_type: MIME Content-Type
  * @attribute: parameter name (aka attribute)
  *
- * Returns a const pointer to the paramer value specified by #attribute.
+ * Gets the parameter value specified by @attribute if it's available.
+ *
+ * Returns a const pointer to the paramer value specified by
+ * @attribute or %NULL on fail.
  **/
 const char *
 g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute)
