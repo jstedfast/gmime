@@ -51,7 +51,7 @@ static const char *multipart_get_header (GMimeObject *object, const char *header
 static void multipart_remove_header (GMimeObject *object, const char *header);
 static void multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *multipart_get_headers (GMimeObject *object);
-static int multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 /* GMimeMultipart class methods */
 static void multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
@@ -59,7 +59,7 @@ static void multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part,
 static void multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);
 static GMimeObject *multipart_remove_part_at (GMimeMultipart *multipart, int index);
 static GMimeObject *multipart_get_part (GMimeMultipart *multipart, int index);
-static ssize_t multipart_get_number (GMimeMultipart *multipart);
+static int multipart_get_number (GMimeMultipart *multipart);
 static void multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 static const char *multipart_get_boundary (GMimeMultipart *multipart);
 
