@@ -298,7 +298,7 @@ g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 #ifdef ENABLE_IPv6
 	int retval, len;
 	
-	if ((retval = getnameinfo (addr, addrlen, buf, buflen, NULL, 0, NI_NAMEREQD)) != 0) {
+	if ((retval = getnameinfo ((const struct sockaddr *) addr, addrlen, buf, buflen, NULL, 0, NI_NAMEREQD)) != 0) {
 		*herr = ai_to_herr (retval);
 		return -1;
 	}
@@ -318,7 +318,7 @@ g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 	
 	/* h_addrtype and h_length */
 	host->h_length = addrlen;
-	host->h_addrtype = type;
+	host->h_addrtype = af;
 	
 	memcpy (buf, addr, host->h_length);
 	addr = buf;

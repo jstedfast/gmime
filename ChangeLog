@@ -1,3 +1,8 @@
+2004-01-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-host-utils.c (g_gethostbyaddr_r): Fixed some compile
+	problems in the IPv6 implementation.
+
 2003-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream-mmap.c (g_mime_stream_mmap_new): Don't add
