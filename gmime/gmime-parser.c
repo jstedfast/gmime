@@ -931,7 +931,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	
 	g_assert (priv->inptr <= priv->inend);
 	
-	inptr = priv->inptr;
+	start = inptr = priv->inptr;
 	
 	do {
 	refill:

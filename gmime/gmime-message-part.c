@@ -25,6 +25,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-message-part.h"
 
 #define d(x) x

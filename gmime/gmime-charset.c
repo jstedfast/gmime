@@ -338,6 +338,20 @@ g_mime_charset_language (const char *charset)
 }
 
 
+static const char *
+strdown (char *str)
+{
+	register char *s = str;
+	
+	while (*s) {
+		if (*s >= 'A' && *s <= 'Z')
+			*s += 0x20;
+		s++;
+	}
+	
+	return str;
+}
+
 /**
  * g_mime_charset_iconv_name:
  * @charset: charset name
@@ -356,7 +370,7 @@ g_mime_charset_iconv_name (const char *charset)
 	
 	name = g_alloca (strlen (charset) + 1);
 	strcpy (name, charset);
-	g_strdown (name);
+	strdown (name);
 	
 	CHARSET_LOCK ();
 	if (!iconv_charsets)

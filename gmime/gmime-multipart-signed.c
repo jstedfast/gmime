@@ -25,6 +25,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-multipart-signed.h"
 #include "gmime-message-part.h"
 #include "gmime-stream-filter.h"

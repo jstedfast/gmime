@@ -56,6 +56,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -75,20 +76,6 @@ static struct option longopts[] = {
 	{ NULL,          no_argument,       NULL,  0  }
 };
 
-
-static int
-uuopen (const char *filename, int flags, mode_t mode)
-{
-	int fd, err;
-	
-	if (strcmp (filename, "-") != 0)
-		return open (filename, flags, mode);
-	
-	if (flags & O_RDONLY == O_RDONLY)
-		return dup (0);
-	else
-		return dup (1);
-}
 
 static void
 usage (const char *progname)
@@ -110,8 +97,8 @@ static void
 uuencode (const char *progname, int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
-	const char *filename, *name, *param;
 	GMimeFilterBasicType encoding;
+	const char *filename, *name;
 	GMimeFilter *filter;
 	gboolean base64;
 	struct stat st;
@@ -175,7 +162,7 @@ uuencode (const char *progname, int argc, char **argv)
 		exit (1);
 	}
 	
-	if (g_mime_stream_printf (ostream, "begin%s %0.3o %s\n",
+	if (g_mime_stream_printf (ostream, "begin%s %.3o %s\n",
 				  base64 ? "-base64" : "", st.st_mode & 0777, name) == -1) {
 		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
 		g_object_unref (ostream);

@@ -35,8 +35,6 @@
 #include "cache.h"
 
 
-#define GMIME_ICONV_DEBUG
-
 #define ICONV_CACHE_SIZE   (16)
 
 typedef struct {
@@ -83,7 +81,9 @@ iconv_cache_node_new (const char *key, iconv_t cd)
 {
 	IconvCacheNode *node;
 	
+#ifdef GMIME_ICONV_DEBUG
 	cache_misses++;
+#endif
 	
 	node = (IconvCacheNode *) cache_node_insert (iconv_cache, key);
 	node->refcount = 1;

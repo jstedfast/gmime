@@ -26,6 +26,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -73,7 +74,7 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 		if ((fd = open (filename, flags, mode)) == -1)
 			return NULL;
 	} else {
-		fd = flags & O_RDONLY == O_RDONLY ? 0 : 1;
+		fd = (flags & O_RDONLY) == O_RDONLY ? 0 : 1;
 		if ((fd = dup (fd)) == -1)
 			return NULL;
 	}
@@ -157,7 +158,7 @@ uudecode (const char *progname, int argc, char **argv)
 		}
 		
 		/* decode the mode */
-		if ((mode = strtoul (p, &q, 8) & 0777) && *q != ' ')
+		if ((mode = strtoul (p, (char **) &q, 8) & 0777) && *q != ' ')
 			goto nexti;
 		
 		while (*q == ' ')

@@ -30,7 +30,7 @@
 
 static iconv_t cd = (iconv_t) -1;
 
-void
+static void
 test_parser (char *data)
 {
 	GMimeParser *parser;
@@ -55,7 +55,7 @@ test_parser (char *data)
 	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
-void
+static void
 test_multipart (void)
 {
 	GMimeMessage *message;
@@ -123,7 +123,7 @@ test_multipart (void)
 	g_free (text);
 }
 
-void
+static void
 test_onepart (void)
 {
 	GMimeMessage *message;
@@ -172,7 +172,7 @@ static char *string = "I have no idea what to test here so I'll just test a "
 "foo   \n"
 "Lets also try some tabs in here like this:\t\tis that 2 tabs? I hope so.";
 
-void
+static void
 test_encodings (void)
 {
 	int pos, state = -1, save = 0;
@@ -388,7 +388,7 @@ dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean de
 	}
 }
 
-void
+static void
 test_addresses (void)
 {
 	int i;
@@ -410,7 +410,7 @@ test_addresses (void)
 
 /*#include "date-strings.h"*/
 
-void
+static void
 test_date (void)
 {
 	int offset = 0;

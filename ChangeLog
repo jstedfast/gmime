@@ -1,3 +1,25 @@
+2003-04-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* tests/test-mime.c: Fixed some compile warnings.
+
+	* src/uudecode.c: Fixed some compile warnings.
+
+	* src/uuencode.c: Fixed some compile warnings.
+
+	* gmime/gmime-parser.c (parser_scan_content): Initialise 'start'.
+
+	* gmime/gmime-multipart-signed.c: #include <string.h>
+
+	* gmime/gmime-message-part.c: #include <string.h>
+
+	* gmime/gmime-filter-enriched.c: #include <stdlib.h> for strtoul.
+
+	* gmime/gmime-charset.c (strdown): New function to lowercasify a
+	string inline (rather than being lame and strdup'ing the bloody
+	string like g_ascii_strdown does).
+
+	* gmime/gmime-iconv.c: Turn off cache debugging.
+
 2003-04-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_new): Initialise seen_eof1 to
