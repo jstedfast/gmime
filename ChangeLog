@@ -1,3 +1,12 @@
+2003-12-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Don't immediately
+	prompt for a passwd after receiving the NEED_PASSPHRASE status
+	message. Instead, parse the userid that gpg needs a passwd for and
+	store it on our context. Wait for a GET_HIDDEN status message
+	before prompting, this way if the user has their gpg configured to
+	use gpg-agent, the user won't get 2 passwd prompts.
+
 2003-12-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (parser_step_headers): If scanning for eoln

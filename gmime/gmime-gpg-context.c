@@ -242,6 +242,7 @@ struct _GpgCtx {
 	unsigned char *statusptr;
 	unsigned int statusleft;
 	
+	char *need_id;
 	char *passwd;
 	
 	GMimeStream *istream;
@@ -310,6 +311,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->bad_passwds = 0;
 	gpg->need_passwd = FALSE;
 	gpg->send_passwd = FALSE;
+	gpg->need_id = NULL;
 	gpg->passwd = NULL;
 	
 	gpg->validsig = FALSE;
@@ -466,8 +468,12 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	
 	g_free (gpg->statusbuf);
 	
-	if (gpg->passwd)
+	g_free (gpg->need_id);
+	
+	if (gpg->passwd) {
+		memset (gpg->passwd, 0, strlen (gpg->passwd));
 		g_free (gpg->passwd);
+	}
 	
 	if (gpg->istream)
 		g_mime_stream_unref (gpg->istream);
@@ -785,8 +791,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		g_hash_table_insert (gpg->userid_hint, hint, user);
 	} else if (!strncmp (status, "NEED_PASSPHRASE ", 16)) {
-		char *prompt, *userid, *passwd;
-		const char *name;
+		char *userid;
 		
 		status += 16;
 		
@@ -797,18 +802,20 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			return -1;
 		}
 		
-		name = g_hash_table_lookup (gpg->userid_hint, userid);
-		if (!name)
-			name = userid;
+		g_free (gpg->need_id);
+		gpg->need_id = userid;
+	} else if (!strncmp (status, "GET_HIDDEN passphrase.enter", 27)) {
+		char *prompt, *passwd;
+		const char *name;
+		
+		if (!(name = g_hash_table_lookup (gpg->userid_hint, gpg->need_id)))
+			name = gpg->userid;
 		
 		prompt = g_strdup_printf (_("You need a passphrase to unlock the key for\n"
 					    "user: \"%s\""), name);
 		
-		passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, userid, err);
+		passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, gpg->need_id, err);
 		g_free (prompt);
-		
-		g_free (gpg->userid);
-		gpg->userid = userid;
 		
 		if (passwd == NULL) {
 			if (err && *err == NULL)
