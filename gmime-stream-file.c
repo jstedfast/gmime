@@ -242,6 +242,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
 	GMimeStreamFile *fstream;
 	
 	fstream = g_new (GMimeStreamFile, 1);
+	fstream->owner = TRUE;
 	fstream->fp = fp;
 	
 	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
