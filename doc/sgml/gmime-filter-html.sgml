@@ -1,0 +1,127 @@
+<refentry id="gmime-gmime-filter-html">
+<refmeta>
+<refentrytitle>gmime-filter-html</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter-html</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-FILTER-HTML-PRE-CAPS">GMIME_FILTER_HTML_PRE</link>
+#define     <link linkend="GMIME-FILTER-HTML-CONVERT-NL-CAPS">GMIME_FILTER_HTML_CONVERT_NL</link>
+#define     <link linkend="GMIME-FILTER-HTML-CONVERT-SPACES-CAPS">GMIME_FILTER_HTML_CONVERT_SPACES</link>
+#define     <link linkend="GMIME-FILTER-HTML-CONVERT-URLS-CAPS">GMIME_FILTER_HTML_CONVERT_URLS</link>
+#define     <link linkend="GMIME-FILTER-HTML-MARK-CITATION-CAPS">GMIME_FILTER_HTML_MARK_CITATION</link>
+#define     <link linkend="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS">GMIME_FILTER_HTML_CONVERT_ADDRESSES</link>
+#define     <link linkend="GMIME-FILTER-HTML-ESCAPE-8BIT-CAPS">GMIME_FILTER_HTML_ESCAPE_8BIT</link>
+#define     <link linkend="GMIME-FILTER-HTML-CITE-CAPS">GMIME_FILTER_HTML_CITE</link>
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-html-new">g_mime_filter_html_new</link>         (<link linkend="guint32">guint32</link> flags,
+                                             <link linkend="guint32">guint32</link> colour);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-PRE-CAPS">GMIME_FILTER_HTML_PRE</title>
+<programlisting>#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-CONVERT-NL-CAPS">GMIME_FILTER_HTML_CONVERT_NL</title>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-CONVERT-SPACES-CAPS">GMIME_FILTER_HTML_CONVERT_SPACES</title>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-CONVERT-URLS-CAPS">GMIME_FILTER_HTML_CONVERT_URLS</title>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-MARK-CITATION-CAPS">GMIME_FILTER_HTML_MARK_CITATION</title>
+<programlisting>#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS">GMIME_FILTER_HTML_CONVERT_ADDRESSES</title>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-ESCAPE-8BIT-CAPS">GMIME_FILTER_HTML_ESCAPE_8BIT</title>
+<programlisting>#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-HTML-CITE-CAPS">GMIME_FILTER_HTML_CITE</title>
+<programlisting>#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-html-new">g_mime_filter_html_new ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_html_new         (<link linkend="guint32">guint32</link> flags,
+                                             <link linkend="guint32">guint32</link> colour);</programlisting>
+<para>
+Creates a new GMimeFilterHTML filter.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>flags</parameter>&nbsp;:</entry>
+<entry> html flags
+</entry></row>
+<row><entry align="right"><parameter>colour</parameter>&nbsp;:</entry>
+<entry> citation colour
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new html filter.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

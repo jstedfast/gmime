@@ -1,0 +1,85 @@
+<refentry id="gmime-gmime-filter-crlf">
+<refmeta>
+<refentrytitle>gmime-filter-crlf</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter-crlf</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+enum        <link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link>;
+enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-crlf-new">g_mime_filter_crlf_new</link>         (<link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link> direction,
+                                             <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link> mode);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterCRLFDirection">enum GMimeFilterCRLFDirection</title>
+<programlisting>typedef enum {
+	GMIME_FILTER_CRLF_ENCODE,
+	GMIME_FILTER_CRLF_DECODE
+} GMimeFilterCRLFDirection;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeFilterCRLFMode">enum GMimeFilterCRLFMode</title>
+<programlisting>typedef enum {
+	GMIME_FILTER_CRLF_MODE_CRLF_DOTS,
+	GMIME_FILTER_CRLF_MODE_CRLF_ONLY,
+} GMimeFilterCRLFMode;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-crlf-new">g_mime_filter_crlf_new ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_crlf_new         (<link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link> direction,
+                                             <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link> mode);</programlisting>
+<para>
+Creates a new GMimeFilterCRLF filter.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>direction</parameter>&nbsp;:</entry>
+<entry> encode direction
+</entry></row>
+<row><entry align="right"><parameter>mode</parameter>&nbsp;:</entry>
+<entry> crlf or crlf &amp; dot mode
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new crlf(/dot) filter.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

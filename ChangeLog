@@ -1,5 +1,11 @@
 2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* internet-address.c (decode_address): Optimized group parsing.
+
+	* doc/*: Updated.
+
+2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* strlib.c (strncasecmp): Convert the chars to lowercase before
 	diffing.
 

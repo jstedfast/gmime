@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-content-type" revision="17 Jun 2001">
+<refentry id="gmime-gmime-content-type">
 <refmeta>
 <refentrytitle>gmime-content-type</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -15,22 +15,22 @@
 
 
 struct      <link linkend="GMimeContentType">GMimeContentType</link>;
-<link linkend="GMimeContentType">GMimeContentType</link>* <link linkend="g-mime-content-type-new">g_mime_content_type_new</link>   (const <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *subtype);
+<link linkend="GMimeContentType">GMimeContentType</link>* <link linkend="g-mime-content-type-new">g_mime_content_type_new</link>   (const char *type,
+                                             const char *subtype);
 <link linkend="GMimeContentType">GMimeContentType</link>* <link linkend="g-mime-content-type-new-from-string">g_mime_content_type_new_from_string</link>
-                                            (const <link linkend="gchar">gchar</link> *string);
+                                            (const char *string);
 void        <link linkend="g-mime-content-type-destroy">g_mime_content_type_destroy</link>     (<link linkend="GMimeContentType">GMimeContentType</link> *mime_type);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-content-type-to-string">g_mime_content_type_to_string</link>   (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type);
+char*       <link linkend="g-mime-content-type-to-string">g_mime_content_type_to_string</link>   (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-content-type-is-type">g_mime_content_type_is_type</link>     (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
                                              const char *type,
                                              const char *subtype);
 void        <link linkend="g-mime-content-type-add-parameter">g_mime_content_type_add_parameter</link>
                                             (<link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
-                                             const <link linkend="gchar">gchar</link> *attribute,
-                                             const <link linkend="gchar">gchar</link> *value);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-content-type-get-parameter">g_mime_content_type_get_parameter</link>
+                                             const char *attribute,
+                                             const char *value);
+const char* <link linkend="g-mime-content-type-get-parameter">g_mime_content_type_get_parameter</link>
                                             (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
-                                             const <link linkend="gchar">gchar</link> *attribute);
+                                             const char *attribute);
 </synopsis>
 </refsynopsisdiv>
 
@@ -50,10 +50,10 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-content-type-get
 <refsect2>
 <title><anchor id="GMimeContentType">struct GMimeContentType</title>
 <programlisting>struct GMimeContentType {
-	gchar *type;
-	gchar *subtype;
+	char *type;
+	char *subtype;
 	
-	GList *params;   /* of type GMimeParam */
+	GMimeParam *params;
 	GHashTable *param_hash;
 };
 </programlisting>
@@ -62,10 +62,10 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-content-type-get
 </para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-new">g_mime_content_type_new ()</title>
-<programlisting><link linkend="GMimeContentType">GMimeContentType</link>* g_mime_content_type_new   (const <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *subtype);</programlisting>
+<programlisting><link linkend="GMimeContentType">GMimeContentType</link>* g_mime_content_type_new   (const char *type,
+                                             const char *subtype);</programlisting>
 <para>
-</para>
+Creates a Content-Type object with type <parameter>type</parameter> and subtype <parameter>subtype</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -79,15 +79,15 @@ const <link linkend="gchar">gchar</link>* <link linkend="g-mime-content-type-get
 <row><entry align="right"><parameter>subtype</parameter>&nbsp;:</entry>
 <entry> MIME subtype (or NULL for "plain")
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new MIME Content-Type.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new MIME Content-Type object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-new-from-string">g_mime_content_type_new_from_string ()</title>
 <programlisting><link linkend="GMimeContentType">GMimeContentType</link>* g_mime_content_type_new_from_string
-                                            (const <link linkend="gchar">gchar</link> *string);</programlisting>
+                                            (const char *string);</programlisting>
 <para>
-</para>
+Constructs a new Content-Type object based on the input string.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -119,9 +119,10 @@ Destroys the given MIME Content-Type object.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-to-string">g_mime_content_type_to_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_content_type_to_string   (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type);</programlisting>
+<programlisting>char*       g_mime_content_type_to_string   (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the type and subtype defined
+by the <parameter>mime_type</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -142,7 +143,8 @@ content-type in the format: type/subtype.
                                              const char *type,
                                              const char *subtype);</programlisting>
 <para>
-</para>
+Compares the given type and subtype with that of the given mime
+type object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -160,15 +162,15 @@ content-type in the format: type/subtype.
 <entry> MIME subtype to compare against
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE if the MIME types match or FALSE otherwise. You may
-use "*" in place of <link linkend="type">type</link> and/or <link linkend="subtype">subtype</link> as a wilcard.
+use "*" in place of <parameter>type</parameter> and/or <parameter>subtype</parameter> as a wilcard.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-add-parameter">g_mime_content_type_add_parameter ()</title>
 <programlisting>void        g_mime_content_type_add_parameter
                                             (<link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
-                                             const <link linkend="gchar">gchar</link> *attribute,
-                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+                                             const char *attribute,
+                                             const char *value);</programlisting>
 <para>
 Adds a parameter to the Content-Type.</para>
 <para>
@@ -190,11 +192,11 @@ Adds a parameter to the Content-Type.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-get-parameter">g_mime_content_type_get_parameter ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_content_type_get_parameter
+<programlisting>const char* g_mime_content_type_get_parameter
                                             (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
-                                             const <link linkend="gchar">gchar</link> *attribute);</programlisting>
+                                             const char *attribute);</programlisting>
 <para>
-</para>
+Gets the parameter value specified by <parameter>attribute</parameter> if it's available.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -208,7 +210,8 @@ Adds a parameter to the Content-Type.</para>
 <row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
 <entry> parameter name (aka attribute)
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a const pointer to the paramer value specified by <link linkend="attribute">attribute</link>.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a const pointer to the paramer value specified by
+<parameter>attribute</parameter> or <literal>NULL</literal> on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

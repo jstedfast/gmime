@@ -74,7 +74,7 @@ struct _GMimeCipherContext {
 
 void                 g_mime_cipher_context_construct (GMimeCipherContext *context,
 						      GMimeCipherContext *context_template,
-						      int type);
+						      unsigned int type);
 
 /* cipher routines */
 int                  g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid,

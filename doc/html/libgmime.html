@@ -10,11 +10,11 @@ REL="HOME"
 TITLE="GMime Library Reference Manual"
 HREF="book1.html"><LINK
 REL="PREVIOUS"
-TITLE="GMime Programming Notes"
-HREF="gmime-notes.html"><LINK
+TITLE="Data Wrappers"
+HREF="data-wrappers.html"><LINK
 REL="NEXT"
-TITLE="gmime-param"
-HREF="gmime-gmime-param.html"></HEAD
+TITLE="gmime-stream"
+HREF="gmime-gmime-stream.html"></HEAD
 ><BODY
 CLASS="CHAPTER"
 BGCOLOR="#FFFFFF"
@@ -46,7 +46,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-notes.html"
+HREF="data-wrappers.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -91,7 +91,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-stream.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -119,6 +119,71 @@ CLASS="TOC"
 ></DT
 ><DT
 ><A
+HREF="gmime-gmime-stream.html"
+>gmime-stream</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-buffer.html"
+>gmime-stream-buffer</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-file.html"
+>gmime-stream-file</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-fs.html"
+>gmime-stream-fs</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-mem.html"
+>gmime-stream-mem</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-mmap.html"
+>gmime-stream-mmap</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-null.html"
+>gmime-stream-null</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-stream-filter.html"
+>gmime-stream-filter</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-filter.html"
+>gmime-filter</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-filter-basic.html"
+>gmime-filter-basic</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-filter-crlf.html"
+>gmime-filter-crlf</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-filter-from.html"
+>gmime-filter-from</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-filter-html.html"
+>gmime-filter-html</A
+> &#8212; </DT
+><DT
+><A
 HREF="gmime-gmime-param.html"
 >gmime-param</A
 > &#8212; </DT
@@ -131,6 +196,21 @@ HREF="gmime-gmime-header.html"
 ><A
 HREF="gmime-gmime-content-type.html"
 >gmime-content-type</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-disposition.html"
+>gmime-disposition</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-object.html"
+>gmime-object</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-data-wrapper.html"
+>gmime-data-wrapper</A
 > &#8212; </DT
 ><DT
 ><A
@@ -159,18 +239,28 @@ HREF="gmime-gmime-parser.html"
 > &#8212; </DT
 ><DT
 ><A
+HREF="gmime-gmime-charset.html"
+>gmime-charset</A
+> &#8212; </DT
+><DT
+><A
 HREF="gmime-gmime-exception.html"
 >gmime-exception</A
 > &#8212; </DT
 ><DT
 ><A
-HREF="gmime-pgp-utils.html"
->pgp-utils</A
+HREF="gmime-gmime-cipher-context.html"
+>gmime-cipher-context</A
 > &#8212; </DT
 ><DT
 ><A
-HREF="gmime-pgp-mime.html"
->pgp-mime</A
+HREF="gmime-gmime-pgp-context.html"
+>gmime-pgp-context</A
+> &#8212; </DT
+><DT
+><A
+HREF="gmime-gmime-pgp-mime.html"
+>gmime-pgp-mime</A
 > &#8212; </DT
 ></DL
 ></DIV
@@ -184,7 +274,9 @@ HREF="gmime-pgp-mime.html"
     be free'd, they point to data internal to the structure. Functions
     that don't return const pointers MUST be free'd by the caller -
     the ONLY exception to this are functions that return GList
-    structures.</P
+    structures - for these functions, you must read the documentation
+    for the particular function to know for sure whther you need to
+    free it or not and how.</P
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
@@ -201,7 +293,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-notes.html"
+HREF="data-wrappers.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -246,7 +338,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-stream.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -264,7 +356,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->GMime Programming Notes</B
+>Data Wrappers</B
 ></FONT
 ></TD
 ><TD
@@ -274,7 +366,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-param</B
+>gmime-stream</B
 ></FONT
 ></TD
 ></TR

@@ -1,0 +1,55 @@
+<refentry id="gmime-gmime-filter-from">
+<refmeta>
+<refentrytitle>gmime-filter-from</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter-from</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-from-new">g_mime_filter_from_new</link>         (void);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-filter-from-new">g_mime_filter_from_new ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_from_new         (void);</programlisting>
+<para>
+Creates a new GMimeFilterFrom filter.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new from filter.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

@@ -1,0 +1,266 @@
+<HTML
+><HEAD
+><TITLE
+>Streams</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="GMime Programming Notes"
+HREF="gmime-notes.html"><LINK
+REL="NEXT"
+TITLE="Stream Filters"
+HREF="filters.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-notes.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&nbsp;</B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="filters.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="STREAMS"
+>Streams</A
+></H1
+><P
+>Streams are the fundamental method for reading and writing
+    data used by GMime.</P
+><P
+>The three (3) basic stream types are: GMimeStreamFile,
+    GMimeStreamFs and GMimeStreamMem. You can manipulate all three
+    streams using the GMimeStream interfaces. In addition, some of
+    these streams have extended interfaces to allow more fine grained
+    manipulation.</P
+><P
+>GMimeStreamFile and GMimeStreamFs are very similar in that
+    they are both meant for reading and writing data to the file
+    system (in the form of files). Since GMimeStreamFile is an
+    abstracted layer above the libc FILE type, one of the added
+    benefits is buffered I/O. GMimeStreamFs, on the other hand, is an
+    abstracted layer above UNIX file descriptors. While a
+    GMimeStreamFs can be used on top of a UNIX socket, you must be
+    careful because sockets are not seekable. It is suggested that you
+    use a GMimeStreamBuffer in cache mode if you intend to be able to
+    seek, we will get to this advanced stream type later.</P
+><P
+>Unlike the previous 2 stream types, GMimeStreamMem does not
+    interact with the file system at all (except maybe the swap
+    partition/file indirectly). Memory streams are handy when you want
+    reads and writes to be nearly instantaneous and/or if you don't
+    want to create a temporary file on disk.</P
+><P
+>The three (4) advanced stream types are GMimeStreamMmap,
+    GMimeStreamNull, GMimeStreamBuffer (as was mentioned previously)
+    and GMimeStreamFilter.</P
+><P
+>Our most simple stream, GMimeStreamNull, is the stream
+    equivalent of /dev/null on Unix systems. The main difference is
+    that GMimeStreamNull records the number of bytes written to
+    it.</P
+><P
+>GMimeStreamMmap is a memory-mapped stream. This isn't
+    guarenteed to work on all systems since not all systems support
+    the POSIX mmap system call, but for those that do - this might
+    present a faster stream than GMimeStreamFs and/or
+    GMimeStreamFile.</P
+><P
+>The GMimeStreamBuffer type inherits from any other type of
+    stream and has 3 modes: block reads, block writes, and cached
+    reads. Block reads are especially useful if you will be making a
+    lot of small reads from a stream that accesses the file
+    system. Block writes are useful for very much the same reason. The
+    final mode, cached reads, can become memory intensive but can be
+    very helpful when inheriting from a stream that does not support
+    seeking.</P
+><P
+>Our final stream type, GMimeStreamFilter, also inherits from
+    another stream. This stream, as you may have guessed, filters
+    reads and writes to its inherited stream. For example, one could
+    write a compression filter and apply it to a GMimeStreamFilter and
+    any further reads or writes would be compressed.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-notes.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&nbsp;</B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="filters.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>GMime Programming Notes</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Stream Filters</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

@@ -1,0 +1,2337 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-cipher-context</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-exception"
+HREF="gmime-gmime-exception.html"><LINK
+REL="NEXT"
+TITLE="gmime-pgp-context"
+HREF="gmime-gmime-pgp-context.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-exception.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-pgp-context.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-CIPHER-CONTEXT"
+>gmime-cipher-context</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN6479"
+></A
+><H2
+>Name</H2
+>gmime-cipher-context&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN6482"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+#define     <A
+HREF="gmime-gmime-cipher-context.html#GMIME-CIPHER-CONTEXT-CAPS"
+>GMIME_CIPHER_CONTEXT</A
+>            (ctx)
+enum        <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+>;
+struct      <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+>;
+struct      <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>;
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-CONTEXT-CONSTRUCT"
+>g_mime_cipher_context_construct</A
+> (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *context,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *context_template,
+                                             unsigned int type);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-SIGN"
+>g_mime_cipher_sign</A
+>              (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-CLEARSIGN"
+>g_mime_cipher_clearsign</A
+>         (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VERIFY"
+>g_mime_cipher_verify</A
+>   (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *sigstream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-ENCRYPT"
+>g_mime_cipher_encrypt</A
+>           (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> sign,
+                                             const char *userid,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-DECRYPT"
+>g_mime_cipher_decrypt</A
+>           (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-INIT"
+>g_mime_cipher_validity_init</A
+>     (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);
+<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-NEW"
+>g_mime_cipher_validity_new</A
+>
+                                            (void);
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-CLEAR"
+>g_mime_cipher_validity_clear</A
+>    (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-FREE"
+>g_mime_cipher_validity_free</A
+>     (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-GET-VALID"
+>g_mime_cipher_validity_get_valid</A
+>
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-SET-VALID"
+>g_mime_cipher_validity_set_valid</A
+>
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> valid);
+char*       <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-GET-DESCRIPTION"
+>g_mime_cipher_validity_get_description</A
+>
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);
+void        <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-SET-DESCRIPTION"
+>g_mime_cipher_validity_set_description</A
+>
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity,
+                                             const char *description);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN6541"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN6544"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6546"
+></A
+><H3
+><A
+NAME="GMIME-CIPHER-CONTEXT-CAPS"
+></A
+>GMIME_CIPHER_CONTEXT()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_CIPHER_CONTEXT(ctx) ((GMimeCipherContext *) ctx)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6551"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6560"
+></A
+><H3
+><A
+NAME="GMIMECIPHERHASH"
+></A
+>enum GMimeCipherHash</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	GMIME_CIPHER_HASH_DEFAULT,
+	GMIME_CIPHER_HASH_MD2,
+	GMIME_CIPHER_HASH_MD5,
+	GMIME_CIPHER_HASH_SHA1
+} GMimeCipherHash;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6565"
+></A
+><H3
+><A
+NAME="GMIMECIPHERCONTEXT"
+></A
+>struct GMimeCipherContext</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeCipherContext {
+	GMimeObject parent_object;
+	
+	void                  (*destroy)    (GMimeCipherContext *ctx);
+	
+	int                   (*sign)       (GMimeCipherContext *ctx, const char *userid,
+					     GMimeCipherHash hash, GMimeStream *istream,
+					     GMimeStream *ostream, GMimeException *ex);
+	
+	int                   (*clearsign)  (GMimeCipherContext *ctx, const char *userid,
+					     GMimeCipherHash hash, GMimeStream *istream,
+					     GMimeStream *ostream, GMimeException *ex);
+	
+	GMimeCipherValidity * (*verify)     (GMimeCipherContext *ctx, GMimeCipherHash hash,
+					     GMimeStream *istream, GMimeStream *sigstream,
+					     GMimeException *ex);
+	
+	int                   (*encrypt)    (GMimeCipherContext *ctx, gboolean sign,
+					     const char *userid, GPtrArray *recipients,
+					     GMimeStream *istream, GMimeStream *ostream,
+					     GMimeException *ex);
+	
+	int                   (*decrypt)    (GMimeCipherContext *ctx, GMimeStream *istream,
+					     GMimeStream *ostream, GMimeException *ex);
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6570"
+></A
+><H3
+><A
+NAME="GMIMECIPHERVALIDITY"
+></A
+>struct GMimeCipherValidity</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeCipherValidity;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6575"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-CONTEXT-CONSTRUCT"
+></A
+>g_mime_cipher_context_construct ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_context_construct (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *context,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *context_template,
+                                             unsigned int type);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Constucts the GMimeCipherContext</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6583"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> GMimeCipherContext</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context_template</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> template</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> context type</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6600"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-SIGN"
+></A
+>g_mime_cipher_sign ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_sign              (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Signs the input stream and writes the resulting signature to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6611"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> private key to use to sign the stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> preferred Message-Integrity-Check hash algorithm</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> 0 for success or -1 for failure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6644"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-CLEARSIGN"
+></A
+>g_mime_cipher_clearsign ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_clearsign         (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Clearsigns the input stream and writes the resulting clearsign to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6655"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> key id or email address of the private key to sign with</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> preferred Message-Integrity-Check hash algorithm</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> 0 for success or -1 for failure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6688"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VERIFY"
+></A
+>g_mime_cipher_verify ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* g_mime_cipher_verify   (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *sigstream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Verifies the signature. If <TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+> is a clearsigned stream,
+you should pass <TT
+CLASS="LITERAL"
+>NULL</TT
+> as the sigstream parameter. Otherwise
+<TT
+CLASS="PARAMETER"
+><I
+>sigstream</I
+></TT
+> is assumed to be the signature stream and is used to
+verify the integirity of the <TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6704"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> secure hash used</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>sigstream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> optional detached-signature stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a GMimeCipherValidity structure containing information
+about the integrity of the input stream or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on failure to
+execute at all.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6734"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-ENCRYPT"
+></A
+>g_mime_cipher_encrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_encrypt           (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> sign,
+                                             const char *userid,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Encrypts (and optionally signs) the cleartext input stream and
+writes the resulting ciphertext to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6746"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>sign</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> sign as well as encrypt</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> key id (or email address) to use when signing (assuming <TT
+CLASS="PARAMETER"
+><I
+>sign</I
+></TT
+> is <TT
+CLASS="LITERAL"
+>TRUE</TT
+>)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>recipients</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> an array of recipient key ids and/or email addresses</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> cleartext input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> ciphertext output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> 0 for success or -1 for failure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6785"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-DECRYPT"
+></A
+>g_mime_cipher_decrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_decrypt           (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Decrypts the ciphertext input stream and writes the resulting
+cleartext to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6795"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input/ciphertext stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output/cleartext stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> 0 for success or -1 for failure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6820"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-INIT"
+></A
+>g_mime_cipher_validity_init ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_validity_init     (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initializes the validity structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6827"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6836"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-NEW"
+></A
+>g_mime_cipher_validity_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* g_mime_cipher_validity_new
+                                            (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new validity structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6843"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new validity structure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6852"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-CLEAR"
+></A
+>g_mime_cipher_validity_clear ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_validity_clear    (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Clears the contents of the validity structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6859"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6868"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-FREE"
+></A
+>g_mime_cipher_validity_free ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_validity_free     (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Frees the memory used by <TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+> back to the system.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6876"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6885"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-GET-VALID"
+></A
+>g_mime_cipher_validity_get_valid ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_cipher_validity_get_valid
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6893"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><TT
+CLASS="LITERAL"
+>TRUE</TT
+> if <TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+> is valid.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6908"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-SET-VALID"
+></A
+>g_mime_cipher_validity_set_valid ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_validity_set_valid
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> valid);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the validness on the validity structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6916"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>valid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> <TT
+CLASS="LITERAL"
+>TRUE</TT
+> if valid else <TT
+CLASS="LITERAL"
+>FALSE</TT
+></TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6931"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-GET-DESCRIPTION"
+></A
+>g_mime_cipher_validity_get_description ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       g_mime_cipher_validity_get_description
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6938"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>any description set on the validity structure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6951"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-VALIDITY-SET-DESCRIPTION"
+></A
+>g_mime_cipher_validity_set_description ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_cipher_validity_set_description
+                                            (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> *validity,
+                                             const char *description);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the description on the validity structure.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6958"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>validity</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity structure</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>description</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> validity description</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-exception.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-pgp-context.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-exception</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-pgp-context</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

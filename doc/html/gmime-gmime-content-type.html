@@ -16,8 +16,8 @@ REL="PREVIOUS"
 TITLE="gmime-header"
 HREF="gmime-gmime-header.html"><LINK
 REL="NEXT"
-TITLE="gmime-part"
-HREF="gmime-gmime-part.html"></HEAD
+TITLE="gmime-disposition"
+HREF="gmime-gmime-disposition.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-part.html"
+HREF="gmime-gmime-disposition.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-CONTENT-TYPE"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN369"
+NAME="AEN2485"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN369"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN372"
+NAME="AEN2488"
 ></A
 ><H2
 >Synopsis</H2
@@ -156,14 +156,8 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >* <A
 HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-NEW"
 >g_mime_content_type_new</A
->   (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subtype);
+>   (const char *type,
+                                             const char *subtype);
 <A
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
@@ -171,10 +165,7 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-NEW-FROM-STRING"
 >g_mime_content_type_new_from_string</A
 >
-                                            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+                                            (const char *string);
 void        <A
 HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-DESTROY"
 >g_mime_content_type_destroy</A
@@ -182,10 +173,7 @@ HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-DESTROY"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-TO-STRING"
 >g_mime_content_type_to_string</A
 >   (const <A
@@ -212,18 +200,9 @@ HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-ADD-PARAMETER"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *attribute,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *attribute,
+                                             const char *value);
+const char* <A
 HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-GET-PARAMETER"
 >g_mime_content_type_get_parameter</A
 >
@@ -231,10 +210,7 @@ HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-GET-PARAMETER"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *attribute);</PRE
+                                             const char *attribute);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -242,7 +218,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN399"
+NAME="AEN2507"
 ></A
 ><H2
 >Description</H2
@@ -252,14 +228,14 @@ NAME="AEN399"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN402"
+NAME="AEN2510"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN404"
+NAME="AEN2512"
 ></A
 ><H3
 ><A
@@ -276,10 +252,10 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeContentType {
-	gchar *type;
-	gchar *subtype;
+	char *type;
+	char *subtype;
 	
-	GList *params;   /* of type GMimeParam */
+	GMimeParam *params;
 	GHashTable *param_hash;
 };</PRE
 ></TD
@@ -291,7 +267,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN409"
+NAME="AEN2517"
 ></A
 ><H3
 ><A
@@ -310,25 +286,29 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
->* g_mime_content_type_new   (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subtype);</PRE
+>* g_mime_content_type_new   (const char *type,
+                                             const char *subtype);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a Content-Type object with type <TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+> and subtype <TT
+CLASS="PARAMETER"
+><I
+>subtype</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN418"
+NAME="AEN2526"
 ></A
 ><P
 ></P
@@ -387,7 +367,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new MIME Content-Type.</TD
+>a new MIME Content-Type object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -398,7 +378,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN435"
+NAME="AEN2543"
 ></A
 ><H3
 ><A
@@ -418,21 +398,18 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 >* g_mime_content_type_new_from_string
-                                            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+                                            (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Constructs a new Content-Type object based on the input string.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN443"
+NAME="AEN2550"
 ></A
 ><P
 ></P
@@ -485,7 +462,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN456"
+NAME="AEN2563"
 ></A
 ><H3
 ><A
@@ -515,7 +492,7 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN463"
+NAME="AEN2570"
 ></A
 ><P
 ></P
@@ -553,7 +530,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN472"
+NAME="AEN2579"
 ></A
 ><H3
 ><A
@@ -569,10 +546,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_content_type_to_string   (const <A
+>char*       g_mime_content_type_to_string   (const <A
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type);</PRE
@@ -580,13 +554,19 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a string buffer containing the type and subtype defined
+by the <TT
+CLASS="PARAMETER"
+><I
+>mime_type</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN480"
+NAME="AEN2587"
 ></A
 ><P
 ></P
@@ -640,7 +620,7 @@ content-type in the format: type/subtype.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN493"
+NAME="AEN2600"
 ></A
 ><H3
 ><A
@@ -669,13 +649,14 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ></TR
 ></TABLE
 ><P
-></P
+>Compares the given type and subtype with that of the given mime
+type object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN501"
+NAME="AEN2608"
 ></A
 ><P
 ></P
@@ -752,12 +733,16 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >TRUE if the MIME types match or FALSE otherwise. You may
-use "*" in place of <GTKDOCLINK
-HREF="TYPE"
->type</GTKDOCLINK
-> and/or <GTKDOCLINK
-HREF="SUBTYPE"
->subtype</GTKDOCLINK
+use "*" in place of <TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+> and/or <TT
+CLASS="PARAMETER"
+><I
+>subtype</I
+></TT
 > as a wilcard.</TD
 ></TR
 ></TBODY
@@ -769,7 +754,7 @@ HREF="SUBTYPE"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN524"
+NAME="AEN2631"
 ></A
 ><H3
 ><A
@@ -790,14 +775,8 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *attribute,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+                                             const char *attribute,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -808,7 +787,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN533"
+NAME="AEN2638"
 ></A
 ><P
 ></P
@@ -880,7 +859,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN550"
+NAME="AEN2655"
 ></A
 ><H3
 ><A
@@ -896,29 +875,28 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_content_type_get_parameter
+>const char* g_mime_content_type_get_parameter
                                             (const <A
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *attribute);</PRE
+                                             const char *attribute);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Gets the parameter value specified by <TT
+CLASS="PARAMETER"
+><I
+>attribute</I
+></TT
+> if it's available.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN559"
+NAME="AEN2663"
 ></A
 ><P
 ></P
@@ -977,10 +955,16 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a const pointer to the paramer value specified by <GTKDOCLINK
-HREF="ATTRIBUTE"
->attribute</GTKDOCLINK
->.</TD
+>a const pointer to the paramer value specified by
+<TT
+CLASS="PARAMETER"
+><I
+>attribute</I
+></TT
+> or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1058,7 +1042,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-part.html"
+HREF="gmime-gmime-disposition.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1086,7 +1070,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-part</B
+>gmime-disposition</B
 ></FONT
 ></TD
 ></TR

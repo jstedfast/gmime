@@ -36,6 +36,17 @@
 
 /** rfc2015 stuff (aka PGP/MIME) *******************************/
 
+
+/**
+ * g_mime_pgp_mime_is_rfc2015_signed:
+ * @mime_part: a multipart/signed mime part
+ *
+ * Examines the part to decide whether or not it is an rfc2015 signed
+ * part.
+ *
+ * Returns %TRUE if @mime_part is an rfc2015 signed part or %FALSE
+ * otherwise.
+ **/
 gboolean
 g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part)
 {
@@ -85,6 +96,17 @@ g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part)
 	return TRUE;
 }
 
+
+/**
+ * g_mime_pgp_mime_is_rfc2015_encrypted:
+ * @mime_part: a multipart/encrypted mime part
+ *
+ * Examines the part to decide whether or not it is an rfc2015
+ * encrypted part.
+ *
+ * Returns %TRUE if @mime_part is an rfc2015 encrypted part or %FALSE
+ * otherwise.
+ **/
 gboolean
 g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *mime_part)
 {
@@ -316,6 +338,8 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
  * @mime_part: a multipart/signed MIME Part
  * @ex: exception
  *
+ * Attempts to verify the signature of the multipart/signed mime part.
+ *
  * Returns a GMimeCipherValidity on success or %NULL on fail.
  **/
 GMimeCipherValidity *
@@ -453,6 +477,8 @@ g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
  * @context: PGP Context
  * @mime_part: a multipart/encrypted MIME Part
  * @ex: exception
+ *
+ * Attempts to decrypt the multipart/encrypted mime part.
  *
  * Returns the decrypted MIME Part on success or %NULL on fail.
  **/

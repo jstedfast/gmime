@@ -32,8 +32,8 @@ extern "C" {
 #include "gmime-part.h"
 #include "gmime-pgp-context.h"
 
-gboolean g_mime_pgp_mime_is_rfc2015_signed (GMimePart *part);
-gboolean g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *part);
+gboolean g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part);
+gboolean g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *mime_part);
 
 void g_mime_pgp_mime_part_sign (GMimePgpContext *context,
 				GMimePart **mime_part,

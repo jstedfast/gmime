@@ -43,7 +43,7 @@ static GMimeObject object_template = {
  * Constucts the GMimeCipherContext
  **/
 void
-g_mime_cipher_context_construct (GMimeCipherContext *context, GMimeCipherContext *context_template, int type)
+g_mime_cipher_context_construct (GMimeCipherContext *context, GMimeCipherContext *context_template, unsigned int type)
 {
 	context->destroy = context_template->destroy;
 	context->sign = context_template->sign;
@@ -131,6 +131,7 @@ g_mime_cipher_clearsign (GMimeCipherContext *ctx, const char *userid, GMimeCiphe
 /**
  * g_mime_cipher_verify:
  * @ctx: Cipher Context
+ * @hash: secure hash used
  * @istream: input stream
  * @sigstream: optional detached-signature stream
  * @ex: exception
@@ -196,8 +197,8 @@ g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *useri
 /**
  * g_mime_cipher_decrypt:
  * @ctx: Cipher Context
- * @ciphertext: ciphertext stream (ie input stream)
- * @cleartext: cleartext stream (ie output stream)
+ * @istream: input/ciphertext stream
+ * @ostream: output/cleartext stream
  * @ex: exception
  *
  * Decrypts the ciphertext input stream and writes the resulting
@@ -228,6 +229,14 @@ struct _GMimeCipherValidity {
 	char *description;
 };
 
+
+/**
+ * g_mime_cipher_validity_new:
+ *
+ * Creates a new validity structure.
+ *
+ * Returns a new validity structure.
+ **/
 GMimeCipherValidity *
 g_mime_cipher_validity_new (void)
 {
@@ -240,6 +249,13 @@ g_mime_cipher_validity_new (void)
 	return validity;
 }
 
+
+/**
+ * g_mime_cipher_validity_init:
+ * @validity: validity structure
+ *
+ * Initializes the validity structure.
+ **/ 
 void
 g_mime_cipher_validity_init (GMimeCipherValidity *validity)
 {
@@ -249,6 +265,13 @@ g_mime_cipher_validity_init (GMimeCipherValidity *validity)
 	validity->description = NULL;
 }
 
+
+/**
+ * g_mime_cipher_validity_get_valid:
+ * @validity: validity structure
+ *
+ * Returns %TRUE if @validity is valid.
+ **/
 gboolean
 g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
 {
@@ -258,6 +281,14 @@ g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
 	return validity->valid;
 }
 
+
+/**
+ * g_mime_cipher_validity_set_valid:
+ * @validity: validity structure
+ * @valid: %TRUE if valid else %FALSE
+ *
+ * Sets the validness on the validity structure.
+ **/
 void
 g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
 {
@@ -266,7 +297,14 @@ g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
 	validity->valid = valid;
 }
 
-char *
+
+/**
+ * g_mime_cipher_validity_get_description:
+ * @validity: validity structure
+ *
+ * Returns any description set on the validity structure.
+ **/
+const char *
 g_mime_cipher_validity_get_description (GMimeCipherValidity *validity)
 {
 	if (validity == NULL)
@@ -275,6 +313,14 @@ g_mime_cipher_validity_get_description (GMimeCipherValidity *validity)
 	return validity->description;
 }
 
+
+/**
+ * g_mime_cipher_validity_set_description:
+ * @validity: validity structure
+ * @description: validity description
+ *
+ * Sets the description on the validity structure.
+ **/
 void
 g_mime_cipher_validity_set_description (GMimeCipherValidity *validity, const char *description)
 {
@@ -284,6 +330,13 @@ g_mime_cipher_validity_set_description (GMimeCipherValidity *validity, const cha
 	validity->description = g_strdup (description);
 }
 
+
+/**
+ * g_mime_cipher_validity_clear:
+ * @validity: validity structure
+ *
+ * Clears the contents of the validity structure.
+ **/
 void
 g_mime_cipher_validity_clear (GMimeCipherValidity *validity)
 {
@@ -294,6 +347,13 @@ g_mime_cipher_validity_clear (GMimeCipherValidity *validity)
 	validity->description = NULL;
 }
 
+
+/**
+ * g_mime_cipher_validity_free:
+ * @validity: validity structure
+ *
+ * Frees the memory used by @validity back to the system.
+ **/
 void
 g_mime_cipher_validity_free (GMimeCipherValidity *validity)
 {

@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2284"
+NAME="AEN4963"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN2284"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2287"
+NAME="AEN4966"
 ></A
 ><H2
 >Synopsis</H2
@@ -160,79 +160,43 @@ HREF="TIME-T"
 >      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-DECODE-DATE"
 >g_mime_utils_header_decode_date</A
-> (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saveoffset);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+> (const char *in,
+                                             int *saveoffset);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FORMAT-DATE"
 >g_mime_utils_header_format_date</A
 > (<GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
 > time,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> offset);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+                                             int offset);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FOLD"
 >g_mime_utils_header_fold</A
->        (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+>        (const char *in);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-PRINTF"
 >g_mime_utils_header_printf</A
->      (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
+>      (const char *format,
                                              ...);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTE-STRING"
 >g_mime_utils_quote_string</A
->       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+>       (const char *string);
 void        <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-UNQUOTE-STRING"
 >g_mime_utils_unquote_string</A
->     (<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+>     (char *string);
 <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 >    <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-TEXT-IS-8BIT"
 >g_mime_utils_text_is_8bit</A
->       (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *text,
+>       (unsigned char *text,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > len);
 <A
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
@@ -241,233 +205,175 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-BEST-ENCODING"
 >g_mime_utils_best_encoding</A
 >
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *text,
+                                            (unsigned char *text,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > len);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-DECODE"
 >g_mime_utils_8bit_header_decode</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+> (unsigned char *in);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-ENCODE"
 >g_mime_utils_8bit_header_encode</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+> (unsigned char *in);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-ENCODE-PHRASE"
 >g_mime_utils_8bit_header_encode_phrase</A
 >
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);
+                                            (unsigned char *in);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-DECODE-STEP"
 >g_mime_utils_base64_decode_step</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+> (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-ENCODE-STEP"
 >g_mime_utils_base64_encode_step</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+> (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-ENCODE-CLOSE"
 >g_mime_utils_base64_encode_close</A
 >
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+                                            (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUDECODE-STEP"
 >g_mime_utils_uudecode_step</A
->      (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+>      (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *uulen);
+                                             char *uulen);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUENCODE-STEP"
+>g_mime_utils_uuencode_step</A
+>      (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             char *uulen);
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUENCODE-CLOSE"
+>g_mime_utils_uuencode_close</A
+>     (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             char *uulen);
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-DECODE-STEP"
 >g_mime_utils_quoted_decode_step</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+> (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *savestate,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saved);
+                                             unsigned char *out,
+                                             int *savestate,
+                                             int *saved);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-ENCODE-STEP"
 >g_mime_utils_quoted_encode_step</A
-> (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+> (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *save);
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);
 <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        <A
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-ENCODE-CLOSE"
 >g_mime_utils_quoted_encode_close</A
 >
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+                                            (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *save);</PRE
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -475,7 +381,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2378"
+NAME="AEN5021"
 ></A
 ><H2
 >Description</H2
@@ -485,14 +391,14 @@ NAME="AEN2378"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2381"
+NAME="AEN5024"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2383"
+NAME="AEN5026"
 ></A
 ><H3
 ><A
@@ -508,7 +414,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */</PRE
+>#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */</PRE
 ></TD
 ></TR
 ></TABLE
@@ -517,7 +423,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2388"
+NAME="AEN5031"
 ></A
 ><P
 ></P
@@ -555,7 +461,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2397"
+NAME="AEN5040"
 ></A
 ><H3
 ><A
@@ -571,7 +477,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */</PRE
+>#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */</PRE
 ></TD
 ></TR
 ></TABLE
@@ -580,7 +486,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2402"
+NAME="AEN5045"
 ></A
 ><P
 ></P
@@ -618,7 +524,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2411"
+NAME="AEN5054"
 ></A
 ><H3
 ><A
@@ -637,25 +543,25 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
->      g_mime_utils_header_decode_date (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saveoffset);</PRE
+>      g_mime_utils_header_decode_date (const char *in,
+                                             int *saveoffset);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes the rfc822 date string and saves the GMT offset into
+<TT
+CLASS="PARAMETER"
+><I
+>saveoffset</I
+></TT
+> if non-NULL.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2420"
+NAME="AEN5062"
 ></A
 ><P
 ></P
@@ -715,9 +621,11 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >the time_t representation of the date string specified by
-<GTKDOCLINK
-HREF="IN"
->in</GTKDOCLINK
+<TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
 >. If 'saveoffset' is non-NULL, the value of the timezone offset
 will be stored.</TD
 ></TR
@@ -730,7 +638,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2438"
+NAME="AEN5080"
 ></A
 ><H3
 ><A
@@ -746,28 +654,33 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_format_date (<GTKDOCLINK
+>char*       g_mime_utils_header_format_date (<GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
 > time,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> offset);</PRE
+                                             int offset);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a string buffer containing the rfc822 formatted date
+string represented by <TT
+CLASS="PARAMETER"
+><I
+>time</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2447"
+NAME="AEN5089"
 ></A
 ><P
 ></P
@@ -837,7 +750,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2464"
+NAME="AEN5106"
 ></A
 ><H3
 ><A
@@ -853,24 +766,18 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_fold        (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in);</PRE
+>char*       g_mime_utils_header_fold        (const char *in);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Folds a header according to the rules in rfc822.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2472"
+NAME="AEN5112"
 ></A
 ><P
 ></P
@@ -923,7 +830,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2485"
+NAME="AEN5125"
 ></A
 ><H3
 ><A
@@ -939,25 +846,25 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_printf      (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
+>char*       g_mime_utils_header_printf      (const char *format,
                                              ...);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a buffer containing a formatted header specified by the
+<TT
+CLASS="PARAMETER"
+><I
+>Varargs</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2493"
+NAME="AEN5132"
 ></A
 ><P
 ></P
@@ -1017,9 +924,11 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >an allocated string containing the folded header specified
-by <GTKDOCLINK
-HREF="FORMAT"
->format</GTKDOCLINK
+by <TT
+CLASS="PARAMETER"
+><I
+>format</I
+></TT
 > and the following arguments.</TD
 ></TR
 ></TBODY
@@ -1031,7 +940,7 @@ HREF="FORMAT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2511"
+NAME="AEN5150"
 ></A
 ><H3
 ><A
@@ -1047,24 +956,23 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_quote_string       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>char*       g_mime_utils_quote_string       (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Quotes <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> as needed according to the rules in rfc2045.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2519"
+NAME="AEN5157"
 ></A
 ><P
 ></P
@@ -1120,7 +1028,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2532"
+NAME="AEN5170"
 ></A
 ><H3
 ><A
@@ -1136,10 +1044,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_utils_unquote_string     (<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>void        g_mime_utils_unquote_string     (char *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1150,7 +1055,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2539"
+NAME="AEN5176"
 ></A
 ><P
 ></P
@@ -1177,7 +1082,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> string</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1188,7 +1093,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2548"
+NAME="AEN5185"
 ></A
 ><H3
 ><A
@@ -1207,25 +1112,33 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
->    g_mime_utils_text_is_8bit       (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *text,
+>    g_mime_utils_text_is_8bit       (unsigned char *text,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > len);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Determines if <TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+> contains 8bit characters within the first <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>
+bytes.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2557"
+NAME="AEN5195"
 ></A
 ><P
 ></P
@@ -1296,7 +1209,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2574"
+NAME="AEN5212"
 ></A
 ><H3
 ><A
@@ -1316,25 +1229,33 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > g_mime_utils_best_encoding
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *text,
+                                            (unsigned char *text,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > len);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Determines the best content encoding for the first <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2583"
+NAME="AEN5222"
 ></A
 ><P
 ></P
@@ -1406,7 +1327,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2600"
+NAME="AEN5239"
 ></A
 ><H3
 ><A
@@ -1422,24 +1343,18 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_8bit_header_decode (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);</PRE
+>char*       g_mime_utils_8bit_header_decode (unsigned char *in);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes and rfc2047 encoded header.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2608"
+NAME="AEN5245"
 ></A
 ><P
 ></P
@@ -1492,7 +1407,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2621"
+NAME="AEN5258"
 ></A
 ><H3
 ><A
@@ -1508,24 +1423,18 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_8bit_header_encode (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);</PRE
+>char*       g_mime_utils_8bit_header_encode (unsigned char *in);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Encodes a header according to the rules in rfc2047.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2629"
+NAME="AEN5264"
 ></A
 ><P
 ></P
@@ -1579,7 +1488,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2642"
+NAME="AEN5277"
 ></A
 ><H3
 ><A
@@ -1595,25 +1504,19 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_8bit_header_encode_phrase
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in);</PRE
+>char*       g_mime_utils_8bit_header_encode_phrase
+                                            (unsigned char *in);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Encodes a header phrase according to the rules in rfc2047.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2650"
+NAME="AEN5283"
 ></A
 ><P
 ></P
@@ -1667,7 +1570,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2663"
+NAME="AEN5296"
 ></A
 ><H3
 ><A
@@ -1684,39 +1587,30 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_base64_decode_step (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_base64_decode_step (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes a chunk of base64 encoded data.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2675"
+NAME="AEN5305"
 ></A
 ><P
 ></P
@@ -1831,9 +1725,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded (which have been dumped in <GTKDOCLINK
-HREF="OUT"
->out</GTKDOCLINK
+>the number of bytes decoded (which have been dumped in <TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
 >).</TD
 ></TR
 ></TBODY
@@ -1845,7 +1741,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2706"
+NAME="AEN5336"
 ></A
 ><H3
 ><A
@@ -1862,39 +1758,33 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_base64_encode_step (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_base64_encode_step (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Base64 encodes a chunk of data. Performs an 'encode step', only
+encodes blocks of 3 characters to the output at a time, saves
+left-over state in state and save (initialise to 0 on first
+invocation).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2718"
+NAME="AEN5345"
 ></A
 ><P
 ></P
@@ -2009,10 +1899,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Performs an 'encode step',
-only encodes blocks of 3 characters to the output at a time, saves
-left-over state in state and save (initialise to 0 on first
-invocation).</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2023,7 +1910,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2748"
+NAME="AEN5375"
 ></A
 ><H3
 ><A
@@ -2040,40 +1927,33 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_base64_encode_close
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_base64_encode_close
+                                            (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Base64 encodes the input stream to the output stream. Call this
+when finished encoding data with g_mime_utils_base64_encode_step to
+flush off the last little bit.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2760"
+NAME="AEN5384"
 ></A
 ><P
 ></P
@@ -2188,9 +2068,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Call this when finished
-encoding data with base64_encode_step to flush off the last little
-bit.</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2201,7 +2079,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2790"
+NAME="AEN5414"
 ></A
 ><H3
 ><A
@@ -2218,43 +2096,33 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_uudecode_step      (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_uudecode_step      (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
+                                             unsigned char *out,
+                                             int *state,
                                              <GTKDOCLINK
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *uulen);</PRE
+                                             char *uulen);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
+uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
+been stripped off.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2803"
+NAME="AEN5423"
 ></A
 ><P
 ></P
@@ -2298,7 +2166,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> max length of data to decode ( normally strlen(in) ??)</TD
+> max length of data to decode (normally strlen (in) ??)</TD
 ></TR
 ><TR
 ><TD
@@ -2387,9 +2255,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded. Performs a 'uudecode step' on
-a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
-line has been stripped off.</TD
+>the number of bytes decoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2400,7 +2266,432 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2837"
+NAME="AEN5457"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUENCODE-STEP"
+></A
+>g_mime_utils_uuencode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_uuencode_step      (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             char *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Uuencodes a chunk of data. Performs an 'encode step', only encodes
+blocks of 45 characters to the output at a time, saves left-over
+state in <TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>, <TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+> (initialize to 0 on first
+invocation).</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5469"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> temporary buffer of 60 bytes</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uulen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5507"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUENCODE-CLOSE"
+></A
+>g_mime_utils_uuencode_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_uuencode_close     (unsigned char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             char *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Uuencodes a chunk of data. Call this when finished encoding data
+with g_mime_utils_uuencode_step to flush off the last little bit.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5516"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> temporary buffer of 60 bytes</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uulen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5554"
 ></A
 ><H3
 ><A
@@ -2417,39 +2708,28 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_quoted_decode_step (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_quoted_decode_step (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *savestate,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saved);</PRE
+                                             unsigned char *out,
+                                             int *savestate,
+                                             int *saved);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes a block of quoted-printable encoded data. Performs a
+'decode step' on a chunk of QP encoded data.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2849"
+NAME="AEN5562"
 ></A
 ><P
 ></P
@@ -2564,8 +2844,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded. Performs a 'decode step' on a
-chunk of QP encoded data.</TD
+>the number of bytes decoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2576,7 +2855,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2879"
+NAME="AEN5592"
 ></A
 ><H3
 ><A
@@ -2593,39 +2872,29 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_quoted_encode_step (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_quoted_encode_step (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *save);</PRE
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Quoted-printable encodes a block of text. Performs an 'encode
+step', saves left-over state in state and save (initialise to -1 on
+first invocation).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2891"
+NAME="AEN5600"
 ></A
 ><P
 ></P
@@ -2740,9 +3009,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Performs an 'encode step',
-saves left-over state in state and save (initialise to -1 on first
-invocation).</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2753,7 +3020,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2921"
+NAME="AEN5630"
 ></A
 ><H3
 ><A
@@ -2770,40 +3037,30 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
->        g_mime_utils_quoted_encode_close
-                                            (const <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *in,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_utils_quoted_encode_close
+                                            (unsigned char *in,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
 > inlen,
-                                             <GTKDOCLINK
-HREF="GUCHAR"
->guchar</GTKDOCLINK
-> *out,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *state,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *save);</PRE
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Quoted-printable encodes a block of text. Call this when finished
+encoding data with g_mime_utils_quoted_encode_step to flush off the
+last little bit.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2933"
+NAME="AEN5638"
 ></A
 ><P
 ></P
@@ -2918,9 +3175,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Call this when finished
-encoding data with quoted_encode_step to flush off the last little
-bit.</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE

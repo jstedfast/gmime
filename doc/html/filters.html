@@ -1,0 +1,244 @@
+<HTML
+><HEAD
+><TITLE
+>Stream Filters</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="PREVIOUS"
+TITLE="Streams"
+HREF="streams.html"><LINK
+REL="NEXT"
+TITLE="Data Wrappers"
+HREF="data-wrappers.html"></HEAD
+><BODY
+CLASS="CHAPTER"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="streams.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&nbsp;</B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="data-wrappers.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="CHAPTER"
+><H1
+><A
+NAME="FILTERS"
+>Stream Filters</A
+></H1
+><P
+>Stream filters are an efficient way of converting data from
+    one format to another. To use a stream filter, you must first
+    construct a GMimeStreamFilter object and then add the desired
+    filters to it.</P
+><P
+>GMime comes equipped with some basic filters:
+    GMimeFilterBasic, GMimeFilterCRLF, GMimeFilterFrom and
+    GMimeFilterHTML.</P
+><P
+>The GMimeFilterBasic filter is actually a collection of
+    filters for common transfer encodings used by MIME. So far, it is
+    able to handle encoding and decoding of base64, quoted-printable
+    and (x-)uuencode.</P
+><P
+>A common conversion needed for text is CRLF -&#62; LF and LF -&#62;
+    CRLF which is needed for most (all?) internet protocols. Luckily,
+    GMime comes equipped with a filter to handle this for you,
+    GMimeFilterCRLF. You'll notice that GMimeFilterCRLF can also
+    handle dot-escaping, which is especially useful for SMTP
+    (rfc821).</P
+><P
+>On Unix systems, mail often resides in spools in mbox
+    format. Mbox uses a line that starts with "From " to delimit
+    messages which means that message bodies are forbidden to contain
+    lines starting with "From ". The common way to escape these from
+    lines in message bodies is to prepend the line with a greater-than
+    character ('&#62;'). You'll find GMimeFilterFrom handy when dealing
+    with this.</P
+><P
+>The GMimeFilterHTML filter converts a normal text stream
+    into an html stream. This is especially useful if you are using a
+    widget such as GtkHTML to display the contents of an email
+    message.</P
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="streams.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&nbsp;</B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="data-wrappers.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Streams</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Data Wrappers</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

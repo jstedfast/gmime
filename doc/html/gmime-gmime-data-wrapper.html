@@ -1,0 +1,1134 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-data-wrapper</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-object"
+HREF="gmime-gmime-object.html"><LINK
+REL="NEXT"
+TITLE="gmime-part"
+HREF="gmime-gmime-part.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-object.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-part.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-DATA-WRAPPER"
+>gmime-data-wrapper</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN2996"
+></A
+><H2
+>Name</H2
+>gmime-data-wrapper&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN2999"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+struct      <A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>;
+<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-NEW"
+>g_mime_data_wrapper_new</A
+>   (void);
+<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-NEW-WITH-STREAM"
+>g_mime_data_wrapper_new_with_stream</A
+>
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);
+void        <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-DESTROY"
+>g_mime_data_wrapper_destroy</A
+>     (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
+void        <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-SET-STREAM"
+>g_mime_data_wrapper_set_stream</A
+>  (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-GET-STREAM"
+>g_mime_data_wrapper_get_stream</A
+> (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
+void        <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-SET-ENCODING"
+>g_mime_data_wrapper_set_encoding</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);
+<A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-GET-ENCODING"
+>g_mime_data_wrapper_get_encoding</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-WRITE-TO-STREAM"
+>g_mime_data_wrapper_write_to_stream</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN3027"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN3030"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3032"
+></A
+><H3
+><A
+NAME="GMIMEDATAWRAPPER"
+></A
+>struct GMimeDataWrapper</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeDataWrapper {
+	GMimePartEncodingType encoding;
+	GMimeStream *stream;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3037"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-NEW"
+></A
+>g_mime_data_wrapper_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* g_mime_data_wrapper_new   (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new GMimeDataWrapper object.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3044"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new data wrapper object.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3053"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-NEW-WITH-STREAM"
+></A
+>g_mime_data_wrapper_new_with_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* g_mime_data_wrapper_new_with_stream
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new GMimeDataWrapper object around <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3063"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>encoding</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream's encoding</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a data wrapper around <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>. Since the wrapper owns it's
+own reference on the stream, caller is responsible for unrefing
+it's own copy.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3081"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-DESTROY"
+></A
+>g_mime_data_wrapper_destroy ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_data_wrapper_destroy     (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Destroys the data wrapper and unref's its internal stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3088"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3097"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-SET-STREAM"
+></A
+>g_mime_data_wrapper_set_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_data_wrapper_set_stream  (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Replaces the wrapper's internal stream with <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.
+Note: caller is responsible for it's own reference on
+<TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3107"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3120"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-GET-STREAM"
+></A
+>g_mime_data_wrapper_get_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_data_wrapper_get_stream (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets a reference to the stream wrapped by <TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3129"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a reference to the internal stream. Caller is responsable
+for unrefing it.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3142"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-SET-ENCODING"
+></A
+>g_mime_data_wrapper_set_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_data_wrapper_set_encoding
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the encoding type of the internal stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3150"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>encoding</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> encoding</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3163"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-GET-ENCODING"
+></A
+>g_mime_data_wrapper_get_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> g_mime_data_wrapper_get_encoding
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the encoding type of the stream wrapped by <TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3172"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the encoding type of the internal stream.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3185"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-WRITE-TO-STREAM"
+></A
+>g_mime_data_wrapper_write_to_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_data_wrapper_write_to_stream
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Write's the raw (decoded) data to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3194"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data wrapper</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written or -1 on failure.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-object.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-part.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-object</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-part</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

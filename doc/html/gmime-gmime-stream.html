@@ -1,0 +1,2714 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-stream</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="NEXT"
+TITLE="gmime-stream-buffer"
+HREF="gmime-gmime-stream-buffer.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-stream-buffer.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-STREAM"
+>gmime-stream</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN48"
+></A
+><H2
+>Name</H2
+>gmime-stream&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN51"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+struct      <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>;
+enum        <A
+HREF="gmime-gmime-stream.html#GMIMESEEKWHENCE"
+>GMimeSeekWhence</A
+>;
+struct      <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
+>;
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-STREAM-CAPS"
+>GMIME_STREAM</A
+>                    (stream)
+void        <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-CONSTRUCT"
+>g_mime_stream_construct</A
+>         (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream_template,
+                                             unsigned int type,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);
+void        <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-REF"
+>g_mime_stream_ref</A
+>               (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+void        <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-UNREF"
+>g_mime_stream_unref</A
+>             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-READ"
+>g_mime_stream_read</A
+>              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             char *buf,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITE"
+>g_mime_stream_write</A
+>             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             char *buf,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);
+int         <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-FLUSH"
+>g_mime_stream_flush</A
+>             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-SEEK"
+>g_mime_stream_seek</A
+>              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> offset,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESEEKWHENCE"
+>GMimeSeekWhence</A
+> whence);
+<GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-TELL"
+>g_mime_stream_tell</A
+>              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+int         <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-RESET"
+>g_mime_stream_reset</A
+>             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-EOS"
+>g_mime_stream_eos</A
+>               (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+int         <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-CLOSE"
+>g_mime_stream_close</A
+>             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-LENGTH"
+>g_mime_stream_length</A
+>            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-SUBSTREAM"
+>g_mime_stream_substream</A
+>        (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);
+void        <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-SET-BOUNDS"
+>g_mime_stream_set_bounds</A
+>        (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITE-STRING"
+>g_mime_stream_write_string</A
+>      (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             const char *string);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-PRINTF"
+>g_mime_stream_printf</A
+>            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             const char *fmt,
+                                             ...);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITE-TO-STREAM"
+>g_mime_stream_write_to_stream</A
+>   (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *src,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *dest);
+<GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITEV"
+>g_mime_stream_writev</A
+>            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
+> *vector,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> count);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN119"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN122"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN124"
+></A
+><H3
+><A
+NAME="GMIMESTREAM"
+></A
+>struct GMimeStream</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStream {
+	/* Note: these are private fields!! */
+	GMimeStream *super_stream;
+	
+	unsigned int type;
+	int refcount;
+	
+	off_t position;
+	off_t bound_start;
+	off_t bound_end;
+	
+	void     (*destroy) (GMimeStream *stream);
+	
+	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
+	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
+	int      (*flush)   (GMimeStream *stream);
+	int      (*close)   (GMimeStream *stream);
+	gboolean (*eos)     (GMimeStream *stream);
+	int      (*reset)   (GMimeStream *stream);
+	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
+	off_t    (*tell)    (GMimeStream *stream);
+	ssize_t  (*length)  (GMimeStream *stream);
+	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN129"
+></A
+><H3
+><A
+NAME="GMIMESEEKWHENCE"
+></A
+>enum GMimeSeekWhence</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	GMIME_STREAM_SEEK_SET = SEEK_SET,
+	GMIME_STREAM_SEEK_CUR = SEEK_CUR,
+	GMIME_STREAM_SEEK_END = SEEK_END,
+} GMimeSeekWhence;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN134"
+></A
+><H3
+><A
+NAME="IOVECTOR"
+></A
+>struct IOVector</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct IOVector {
+	gpointer data;
+	size_t len;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN139"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-CAPS"
+></A
+>GMIME_STREAM()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN144"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN153"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-CONSTRUCT"
+></A
+>g_mime_stream_construct ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_construct         (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream_template,
+                                             unsigned int type,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initializes a new stream of type <TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+>, using the virtual methods
+from <TT
+CLASS="PARAMETER"
+><I
+>stream_template</I
+></TT
+>, with bounds <TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN167"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream_template</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream template</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream type</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> start boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> end boundary</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN192"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-REF"
+></A
+>g_mime_stream_ref ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_ref               (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Ref's a stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN199"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN208"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-UNREF"
+></A
+>g_mime_stream_unref ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_unref             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Unref's a stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN215"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN224"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-READ"
+></A
+>g_mime_stream_read ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_read              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             char *buf,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to read up to <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+> bytes from <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> into <TT
+CLASS="PARAMETER"
+><I
+>buf</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN236"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>buf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> buffer length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes read or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN257"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-WRITE"
+></A
+>g_mime_stream_write ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_write             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             char *buf,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to write up to <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+> bytes of <TT
+CLASS="PARAMETER"
+><I
+>buf</I
+></TT
+> to <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN269"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>buf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> buffer length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN290"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-FLUSH"
+></A
+>g_mime_stream_flush ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_stream_flush             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sync's the stream to disk.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN297"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>0 on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN310"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-SEEK"
+></A
+>g_mime_stream_seek ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       g_mime_stream_seek              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> offset,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESEEKWHENCE"
+>GMimeSeekWhence</A
+> whence);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Repositions the offset of the stream <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> to
+the argument <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+> according to the
+directive <TT
+CLASS="PARAMETER"
+><I
+>whence</I
+></TT
+> as follows:</P
+><P
+>GMIME_STREAM_SEEK_SET: The offset is set to <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+> bytes.</P
+><P
+>GMIME_STREAM_SEEK_CUR: The offset is set to its current
+location plus <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+> bytes.</P
+><P
+>GMIME_STREAM_SEEK_END: The offset is set to the size of the
+stream plus <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+> bytes.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN329"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> positional offset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>whence</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> seek directive</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the resultant position on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN350"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-TELL"
+></A
+>g_mime_stream_tell ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       g_mime_stream_tell              (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the current offset within the stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN358"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the current position within the stream.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN371"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-RESET"
+></A
+>g_mime_stream_reset ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_stream_reset             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Resets the stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN378"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>0 on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN391"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-EOS"
+></A
+>g_mime_stream_eos ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_stream_eos               (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Tests the end-of-stream indicator for <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN400"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>TRUE on EOS or FALSE otherwise.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN413"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-CLOSE"
+></A
+>g_mime_stream_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_stream_close             (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Closes the stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN420"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>0 on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN433"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-LENGTH"
+></A
+>g_mime_stream_length ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_length            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the length of the stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN441"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the length of the stream or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN454"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-SUBSTREAM"
+></A
+>g_mime_stream_substream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_substream        (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new substream of <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> with bounds <TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN467"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> start boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> end boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a substream of <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> with bounds <TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN491"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-SET-BOUNDS"
+></A
+>g_mime_stream_set_bounds ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_set_bounds        (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the bounds on a stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN500"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> start boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> end boundary</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN517"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-WRITE-STRING"
+></A
+>g_mime_stream_write_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_write_string      (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             const char *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Writes <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> to <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN527"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> string to write</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN544"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-PRINTF"
+></A
+>g_mime_stream_printf ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_printf            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             const char *fmt,
+                                             ...);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Write formatted output to a stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN552"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>fmt</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> format</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>...</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> arguments</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN573"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-WRITE-TO-STREAM"
+></A
+>g_mime_stream_write_to_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_write_to_stream   (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *src,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *dest);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to write stream <TT
+CLASS="PARAMETER"
+><I
+>src</I
+></TT
+> to stream <TT
+CLASS="PARAMETER"
+><I
+>dest</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN584"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>src</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> source stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>dest</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> destination stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN601"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-WRITEV"
+></A
+>g_mime_stream_writev ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+>      g_mime_stream_writev            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
+> *vector,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> count);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Writes at most <TT
+CLASS="PARAMETER"
+><I
+>count</I
+></TT
+> blocks described by <TT
+CLASS="PARAMETER"
+><I
+>vector</I
+></TT
+> to <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN614"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>vector</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> i/o vector</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>count</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> number of vector elements</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes written.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-gmime-stream-buffer.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>GMime Library Reference</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-stream-buffer</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

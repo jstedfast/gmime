@@ -92,6 +92,8 @@ static GMimeCipherContext context_template = {
  * g_mime_pgp_context_new:
  * @type: One of GMIME_PGP_TYPE_[PGP2, PGP5, PGP6, GPG]
  * @path: path to PGP binary
+ * @get_passwd: Password callback function
+ * @user_data: user data to pass to @get_passwd
  *
  * This creates a new GMimePgpContext object which is used to sign,
  * verify, encrypt and decrypt streams.

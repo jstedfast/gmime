@@ -1,0 +1,218 @@
+<refentry id="gmime-gmime-pgp-mime">
+<refmeta>
+<refentrytitle>gmime-pgp-mime</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-pgp-mime</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-pgp-mime-is-rfc2015-signed">g_mime_pgp_mime_is_rfc2015_signed</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-pgp-mime-is-rfc2015-encrypted">g_mime_pgp_mime_is_rfc2015_encrypted</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);
+void        <link linkend="g-mime-pgp-mime-part-sign">g_mime_pgp_mime_part_sign</link>       (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> **mime_part,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+<link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-pgp-mime-part-verify">g_mime_pgp_mime_part_verify</link>
+                                            (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+void        <link linkend="g-mime-pgp-mime-part-encrypt">g_mime_pgp_mime_part_encrypt</link>    (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> **mime_part,
+                                             <link linkend="GPtrArray">GPtrArray</link> *recipients,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+<link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-pgp-mime-part-decrypt">g_mime_pgp_mime_part_decrypt</link>    (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-is-rfc2015-signed">g_mime_pgp_mime_is_rfc2015_signed ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_pgp_mime_is_rfc2015_signed
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+<para>
+Examines the part to decide whether or not it is an rfc2015 signed
+part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a multipart/signed mime part
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> if <parameter>mime_part</parameter> is an rfc2015 signed part or <literal>FALSE</literal>
+otherwise.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-is-rfc2015-encrypted">g_mime_pgp_mime_is_rfc2015_encrypted ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_pgp_mime_is_rfc2015_encrypted
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+<para>
+Examines the part to decide whether or not it is an rfc2015
+encrypted part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a multipart/encrypted mime part
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> if <parameter>mime_part</parameter> is an rfc2015 encrypted part or <literal>FALSE</literal>
+otherwise.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-part-sign">g_mime_pgp_mime_part_sign ()</title>
+<programlisting>void        g_mime_pgp_mime_part_sign       (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> **mime_part,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Constructs a PGP/MIME multipart in compliance with rfc2015 and
+replaces <parameter>mime_part</parameter> with the generated multipart/signed. On
+failure, <parameter>ex</parameter> will be set and <link linkend="part">part</link> will remain untouched.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>context</parameter>&nbsp;:</entry>
+<entry> PGP Context
+</entry></row>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a MIME part that will be replaced by a pgp signed part
+</entry></row>
+<row><entry align="right"><parameter>userid</parameter>&nbsp;:</entry>
+<entry> userid to sign with
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry> one of GMIME_CIPHER_HASH_MD5 or GMIME_CIPHER_HASH_SHA1
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception which will be set if there are any errors.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-part-verify">g_mime_pgp_mime_part_verify ()</title>
+<programlisting><link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* g_mime_pgp_mime_part_verify
+                                            (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Attempts to verify the signature of the multipart/signed mime part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>context</parameter>&nbsp;:</entry>
+<entry> PGP Context
+</entry></row>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a multipart/signed MIME Part
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeCipherValidity on success or <literal>NULL</literal> on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-part-encrypt">g_mime_pgp_mime_part_encrypt ()</title>
+<programlisting>void        g_mime_pgp_mime_part_encrypt    (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> **mime_part,
+                                             <link linkend="GPtrArray">GPtrArray</link> *recipients,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Constructs a PGP/MIME multipart in compliance with rfc2015 and
+replaces <parameter>mime_part</parameter> with the generated multipart/signed. On failure,
+<parameter>ex</parameter> will be set and <parameter>mime_part</parameter> will remain untouched.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>context</parameter>&nbsp;:</entry>
+<entry> PGP Context
+</entry></row>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a MIME part that will be replaced by a pgp encrypted part
+</entry></row>
+<row><entry align="right"><parameter>recipients</parameter>&nbsp;:</entry>
+<entry> list of recipient PGP Key IDs
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception which will be set if there are any errors.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-mime-part-decrypt">g_mime_pgp_mime_part_decrypt ()</title>
+<programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_pgp_mime_part_decrypt    (<link linkend="GMimePgpContext">GMimePgpContext</link> *context,
+                                             <link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Attempts to decrypt the multipart/encrypted mime part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>context</parameter>&nbsp;:</entry>
+<entry> PGP Context
+</entry></row>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> a multipart/encrypted MIME Part
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the decrypted MIME Part on success or <literal>NULL</literal> on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

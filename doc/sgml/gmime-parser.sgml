@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-parser" revision="17 Jun 2001">
+<refentry id="gmime-gmime-parser">
 <refmeta>
 <refentrytitle>gmime-parser</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -14,15 +14,10 @@
 
 
 
-<link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-parser-construct-part">g_mime_parser_construct_part</link>    (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="guint">guint</link> inlen);
+<link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-parser-construct-part">g_mime_parser_construct_part</link>    (<link linkend="GMimeStream">GMimeStream</link> *stream);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>
-                                            (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="guint">guint</link> inlen,
-                                             <link linkend="gboolean">gboolean</link> save_extra_headers);
-<link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message-from-file">g_mime_parser_construct_message_from_file</link>
-                                            (<link linkend="FILE-CAPS">FILE</link> *fp,
-                                             <link linkend="gboolean">gboolean</link> save_extra_headers);
+                                            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="gboolean">gboolean</link> preserve_headers);
 </synopsis>
 </refsynopsisdiv>
 
@@ -41,8 +36,7 @@
 <title>Details</title>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
-<programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_parser_construct_part    (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="guint">guint</link> inlen);</programlisting>
+<programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_parser_construct_part    (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
 </para>
 <para>
@@ -52,11 +46,8 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry> raw MIME Part data
-</entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> raw MIME Part data length
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> raw MIME Part stream
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimePart object based on the data.
 </entry></row>
@@ -64,9 +55,8 @@
 <refsect2>
 <title><anchor id="g-mime-parser-construct-message">g_mime_parser_construct_message ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_parser_construct_message
-                                            (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="guint">guint</link> inlen,
-                                             <link linkend="gboolean">gboolean</link> save_extra_headers);</programlisting>
+                                            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="gboolean">gboolean</link> preserve_headers);</programlisting>
 <para>
 </para>
 <para>
@@ -76,36 +66,10 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> an rfc0822 message stream
 </entry></row>
-<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> stream length
-</entry></row>
-<row><entry align="right"><parameter>save_extra_headers</parameter>&nbsp;:</entry>
-<entry> if TRUE, then store the arbitrary headers
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 data.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-parser-construct-message-from-file">g_mime_parser_construct_message_from_file ()</title>
-<programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_parser_construct_message_from_file
-                                            (<link linkend="FILE-CAPS">FILE</link> *fp,
-                                             <link linkend="gboolean">gboolean</link> save_extra_headers);</programlisting>
-<para>
-</para>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>fp</parameter>&nbsp;:</entry>
-<entry> a file pointer pointing to an rfc0822 message
-</entry></row>
-<row><entry align="right"><parameter>save_extra_headers</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>preserve_headers</parameter>&nbsp;:</entry>
 <entry> if TRUE, then store the arbitrary headers
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 data.

@@ -1,0 +1,132 @@
+<refentry id="gmime-gmime-object">
+<refmeta>
+<refentrytitle>gmime-object</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-object</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-OBJECT-CAPS">GMIME_OBJECT</link>                    (object)
+struct      <link linkend="GMimeObject">GMimeObject</link>;
+void        <link linkend="g-mime-object-construct">g_mime_object_construct</link>         (<link linkend="GMimeObject">GMimeObject</link> *object,
+                                             <link linkend="GMimeObject">GMimeObject</link> *object_template,
+                                             unsigned int type);
+void        <link linkend="g-mime-object-ref">g_mime_object_ref</link>               (<link linkend="GMimeObject">GMimeObject</link> *object);
+void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>             (<link linkend="GMimeObject">GMimeObject</link> *object);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-OBJECT-CAPS">GMIME_OBJECT()</title>
+<programlisting>#define GMIME_OBJECT(object) ((GMimeObject *) object)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeObject">struct GMimeObject</title>
+<programlisting>struct GMimeObject {
+	unsigned int type;
+	int refcount;
+	
+	void (*destroy) (GMimeObject *object);
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-object-construct">g_mime_object_construct ()</title>
+<programlisting>void        g_mime_object_construct         (<link linkend="GMimeObject">GMimeObject</link> *object,
+                                             <link linkend="GMimeObject">GMimeObject</link> *object_template,
+                                             unsigned int type);</programlisting>
+<para>
+Initializes a new object of type <parameter>type</parameter>, using the virtual methods
+from <parameter>object_template</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry> object
+</entry></row>
+<row><entry align="right"><parameter>object_template</parameter>&nbsp;:</entry>
+<entry> object template
+</entry></row>
+<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
+<entry> object type
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-object-ref">g_mime_object_ref ()</title>
+<programlisting>void        g_mime_object_ref               (<link linkend="GMimeObject">GMimeObject</link> *object);</programlisting>
+<para>
+Ref's an object.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry> object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-object-unref">g_mime_object_unref ()</title>
+<programlisting>void        g_mime_object_unref             (<link linkend="GMimeObject">GMimeObject</link> *object);</programlisting>
+<para>
+Unref's an object.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry> object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

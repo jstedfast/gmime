@@ -2,14 +2,32 @@
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
+<!entity gmime-disposition SYSTEM "sgml/gmime-disposition.sgml">
+<!entity gmime-object SYSTEM "sgml/gmime-object.sgml">
+<!entity gmime-data-wrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
+<!entity gmime-stream SYSTEM "sgml/gmime-stream.sgml">
+<!entity gmime-stream-buffer SYSTEM "sgml/gmime-stream-buffer.sgml">
+<!entity gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
+<!entity gmime-stream-fs SYSTEM "sgml/gmime-stream-fs.sgml">
+<!entity gmime-stream-mem SYSTEM "sgml/gmime-stream-mem.sgml">
+<!entity gmime-stream-mmap SYSTEM "sgml/gmime-stream-mmap.sgml">
+<!entity gmime-stream-null SYSTEM "sgml/gmime-stream-null.sgml">
+<!entity gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
+<!entity gmime-filter SYSTEM "sgml/gmime-filter.sgml">
+<!entity gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
+<!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
+<!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
 <!entity gmime-exception SYSTEM "sgml/gmime-exception.sgml">
-<!entity pgp-utils SYSTEM "sgml/pgp-utils.sgml">
-<!entity pgp-mime SYSTEM "sgml/pgp-mime.sgml">
+<!entity gmime-cipher-context SYSTEM "sgml/gmime-cipher-context.sgml">
+<!entity gmime-pgp-context SYSTEM "sgml/gmime-pgp-context.sgml">
+<!entity gmime-pgp-mime SYSTEM "sgml/gmime-pgp-mime.sgml">
 ]>
 
 <book>
@@ -27,7 +45,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000</year>
+      <year>2000, 2001</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
   </bookinfo>
@@ -35,9 +53,118 @@
   <chapter id="gmime-notes">
     <title>GMime Programming Notes</title>
 
-    <para>GMime is a MIME (Multipurpose Internet Mail Extension)
-    utility library. It is meant for creating, editing, and parsing
-    MIME messages.</para>
+    <para>GMime is a powerful MIME (Multipurpose Internet Mail
+    Extension) utility library. It is meant for creating, editing, and
+    parsing MIME messages and structures.</para>
+  </chapter>
+
+  <chapter id="streams">
+    <title>Streams</title>
+
+    <para>Streams are the fundamental method for reading and writing
+    data used by GMime.</para>
+
+    <para>The three (3) basic stream types are: GMimeStreamFile,
+    GMimeStreamFs and GMimeStreamMem. You can manipulate all three
+    streams using the GMimeStream interfaces. In addition, some of
+    these streams have extended interfaces to allow more fine grained
+    manipulation.</para>
+
+    <para>GMimeStreamFile and GMimeStreamFs are very similar in that
+    they are both meant for reading and writing data to the file
+    system (in the form of files). Since GMimeStreamFile is an
+    abstracted layer above the libc FILE type, one of the added
+    benefits is buffered I/O. GMimeStreamFs, on the other hand, is an
+    abstracted layer above UNIX file descriptors. While a
+    GMimeStreamFs can be used on top of a UNIX socket, you must be
+    careful because sockets are not seekable. It is suggested that you
+    use a GMimeStreamBuffer in cache mode if you intend to be able to
+    seek, we will get to this advanced stream type later.</para>
+
+    <para>Unlike the previous 2 stream types, GMimeStreamMem does not
+    interact with the file system at all (except maybe the swap
+    partition/file indirectly). Memory streams are handy when you want
+    reads and writes to be nearly instantaneous and/or if you don't
+    want to create a temporary file on disk.</para>
+
+    <para>The three (4) advanced stream types are GMimeStreamMmap,
+    GMimeStreamNull, GMimeStreamBuffer (as was mentioned previously)
+    and GMimeStreamFilter.</para>
+
+    <para>Our most simple stream, GMimeStreamNull, is the stream
+    equivalent of /dev/null on Unix systems. The main difference is
+    that GMimeStreamNull records the number of bytes written to
+    it.</para>
+
+    <para>GMimeStreamMmap is a memory-mapped stream. This isn't
+    guarenteed to work on all systems since not all systems support
+    the POSIX mmap system call, but for those that do - this might
+    present a faster stream than GMimeStreamFs and/or
+    GMimeStreamFile.</para>
+
+    <para>The GMimeStreamBuffer type inherits from any other type of
+    stream and has 3 modes: block reads, block writes, and cached
+    reads. Block reads are especially useful if you will be making a
+    lot of small reads from a stream that accesses the file
+    system. Block writes are useful for very much the same reason. The
+    final mode, cached reads, can become memory intensive but can be
+    very helpful when inheriting from a stream that does not support
+    seeking.</para>
+
+    <para>Our final stream type, GMimeStreamFilter, also inherits from
+    another stream. This stream, as you may have guessed, filters
+    reads and writes to its inherited stream. For example, one could
+    write a compression filter and apply it to a GMimeStreamFilter and
+    any further reads or writes would be compressed.</para>
+  </chapter>
+
+  <chapter id="filters">
+    <title>Stream Filters</title>
+
+    <para>Stream filters are an efficient way of converting data from
+    one format to another. To use a stream filter, you must first
+    construct a GMimeStreamFilter object and then add the desired
+    filters to it.</para>
+
+    <para>GMime comes equipped with some basic filters:
+    GMimeFilterBasic, GMimeFilterCRLF, GMimeFilterFrom and
+    GMimeFilterHTML.</para>
+
+    <para>The GMimeFilterBasic filter is actually a collection of
+    filters for common transfer encodings used by MIME. So far, it is
+    able to handle encoding and decoding of base64, quoted-printable
+    and (x-)uuencode.</para>
+
+    <para>A common conversion needed for text is CRLF -> LF and LF ->
+    CRLF which is needed for most (all?) internet protocols. Luckily,
+    GMime comes equipped with a filter to handle this for you,
+    GMimeFilterCRLF. You'll notice that GMimeFilterCRLF can also
+    handle dot-escaping, which is especially useful for SMTP
+    (rfc821).</para>
+
+    <para>On Unix systems, mail often resides in spools in mbox
+    format. Mbox uses a line that starts with "From " to delimit
+    messages which means that message bodies are forbidden to contain
+    lines starting with "From ". The common way to escape these from
+    lines in message bodies is to prepend the line with a greater-than
+    character ('>'). You'll find GMimeFilterFrom handy when dealing
+    with this.</para>
+
+    <para>The GMimeFilterHTML filter converts a normal text stream
+    into an html stream. This is especially useful if you are using a
+    widget such as GtkHTML to display the contents of an email
+    message.</para>
+  </chapter>
+
+  <chapter id="data-wrappers">
+    <title>Data Wrappers</title>
+
+    <para>Data wrappers are a very simple concept. They wrap
+    data. Actually, they wrap around a source stream and contain
+    information about the format of the source stream. This makes
+    writing a data wrapper to another stream incredibly easy because
+    it will unformat the data into it's raw form before writing it to
+    the output stream for you.</para>
   </chapter>
 
   <chapter id="libgmime">
@@ -52,18 +179,39 @@
     be free'd, they point to data internal to the structure. Functions
     that don't return const pointers MUST be free'd by the caller -
     the ONLY exception to this are functions that return GList
-    structures.</para>
+    structures - for these functions, you must read the documentation
+    for the particular function to know for sure whther you need to
+    free it or not and how.</para>
 
+    &gmime-stream;
+    &gmime-stream-buffer;
+    &gmime-stream-file;
+    &gmime-stream-fs;
+    &gmime-stream-mem;
+    &gmime-stream-mmap;
+    &gmime-stream-null;
+    &gmime-stream-filter;
+    &gmime-filter;
+    &gmime-filter-basic;
+    &gmime-filter-crlf;
+    &gmime-filter-from;
+    &gmime-filter-html;
     &gmime-param;
     &gmime-header;
     &gmime-content-type;
+    &gmime-disposition;
+    &gmime-object;
+    &gmime-data-wrapper;
     &gmime-part;
     &gmime-message;
     &gmime-utils;
     &internet-address;
     &gmime-parser;
+    &gmime-charset;
+    
     &gmime-exception;
-    &pgp-utils;
-    &pgp-mime;
+    &gmime-cipher-context;
+    &gmime-pgp-context;
+    &gmime-pgp-mime;
   </chapter>
 </book>

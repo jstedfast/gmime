@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="17 Jun 2001">
+<refentry id="gmime-gmime-utils">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -16,62 +16,76 @@
 
 #define     <link linkend="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN</link>               (x)
 #define     <link linkend="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN</link>                   (x)
-<link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="gint">gint</link> *saveoffset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
-                                             <link linkend="gint">gint</link> offset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const <link linkend="gchar">gchar</link> *in);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const <link linkend="gchar">gchar</link> *format,
+<link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const char *in,
+                                             int *saveoffset);
+char*       <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
+                                             int offset);
+char*       <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const char *in);
+char*       <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const char *format,
                                              ...);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string);
-void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
-<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text,
-                                             <link linkend="guint">guint</link> len);
+char*       <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const char *string);
+void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (char *string);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (unsigned char *text,
+                                             <link linkend="size-t">size_t</link> len);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-utils-best-encoding">g_mime_utils_best_encoding</link>
-                                            (const <link linkend="guchar">guchar</link> *text,
-                                             <link linkend="guint">guint</link> len);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode</link> (const <link linkend="guchar">guchar</link> *in);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode</link> (const <link linkend="guchar">guchar</link> *in);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase</link>
-                                            (const <link linkend="guchar">guchar</link> *in);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step</link> (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="guint">guint</link> *save);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step</link> (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close</link>
-                                            (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
+                                            (unsigned char *text,
+                                             <link linkend="size-t">size_t</link> len);
+char*       <link linkend="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode</link> (unsigned char *in);
+char*       <link linkend="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode</link> (unsigned char *in);
+char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase</link>
+                                            (unsigned char *in);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step</link> (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step</link> (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close</link>
+                                            (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <link linkend="guint32">guint32</link> *save,
-                                             <link linkend="gchar">gchar</link> *uulen);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step</link> (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *savestate,
-                                             <link linkend="gint">gint</link> *saved);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step</link> (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
-<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close</link>
-                                            (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
+                                             char *uulen);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link>      (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             char *uulen);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close</link>     (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             char *uulen);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step</link> (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *savestate,
+                                             int *saved);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step</link> (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);
+<link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close</link>
+                                            (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);
 </synopsis>
 </refsynopsisdiv>
 
@@ -90,7 +104,7 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <title>Details</title>
 <refsect2>
 <title><anchor id="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN()</title>
-<programlisting>#define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
+<programlisting>#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 </programlisting>
 <para>
 
@@ -101,12 +115,13 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <tbody>
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN()</title>
-<programlisting>#define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
+<programlisting>#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 </programlisting>
 <para>
 
@@ -118,14 +133,16 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date ()</title>
-<programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="gint">gint</link> *saveoffset);</programlisting>
+<programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const char *in,
+                                             int *saveoffset);</programlisting>
 <para>
-</para>
+Decodes the rfc822 date string and saves the GMT offset into
+<parameter>saveoffset</parameter> if non-NULL.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -137,19 +154,20 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <entry> input date string
 </entry></row>
 <row><entry align="right"><parameter>saveoffset</parameter>&nbsp;:</entry>
-<entry> 
+<entry>
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the time_t representation of the date string specified by
-<link linkend="in">in</link>. If 'saveoffset' is non-NULL, the value of the timezone offset
+<parameter>in</parameter>. If 'saveoffset' is non-NULL, the value of the timezone offset
 will be stored.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-format-date">g_mime_utils_header_format_date ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_format_date (<link linkend="time-t">time_t</link> time,
-                                             <link linkend="gint">gint</link> offset);</programlisting>
+<programlisting>char*       g_mime_utils_header_format_date (<link linkend="time-t">time_t</link> time,
+                                             int offset);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the rfc822 formatted date
+string represented by <parameter>time</parameter> and <parameter>offset</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -168,9 +186,9 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-fold">g_mime_utils_header_fold ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_fold        (const <link linkend="gchar">gchar</link> *in);</programlisting>
+<programlisting>char*       g_mime_utils_header_fold        (const char *in);</programlisting>
 <para>
-</para>
+Folds a header according to the rules in rfc822.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -186,10 +204,11 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-printf">g_mime_utils_header_printf ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_printf      (const <link linkend="gchar">gchar</link> *format,
+<programlisting>char*       g_mime_utils_header_printf      (const char *format,
                                              ...);</programlisting>
 <para>
-</para>
+Allocates a buffer containing a formatted header specified by the
+<parameter>Varargs</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -204,14 +223,14 @@ will be stored.
 <entry> arguments
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the folded header specified
-by <link linkend="format">format</link> and the following arguments.
+by <parameter>format</parameter> and the following arguments.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quote-string">g_mime_utils_quote_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_quote_string       (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting>char*       g_mime_utils_quote_string       (const char *string);</programlisting>
 <para>
-</para>
+Quotes <parameter>string</parameter> as needed according to the rules in rfc2045.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -230,7 +249,7 @@ as defined by rfc2045.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-unquote-string">g_mime_utils_unquote_string ()</title>
-<programlisting>void        g_mime_utils_unquote_string     (<link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting>void        g_mime_utils_unquote_string     (char *string);</programlisting>
 <para>
 Unquotes and unescapes a string.</para>
 <para>
@@ -241,15 +260,16 @@ Unquotes and unescapes a string.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry>
+<entry> string
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit ()</title>
-<programlisting><link linkend="gboolean">gboolean</link>    g_mime_utils_text_is_8bit       (const <link linkend="guchar">guchar</link> *text,
-                                             <link linkend="guint">guint</link> len);</programlisting>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_utils_text_is_8bit       (unsigned char *text,
+                                             <link linkend="size-t">size_t</link> len);</programlisting>
 <para>
-</para>
+Determines if <parameter>text</parameter> contains 8bit characters within the first <parameter>len</parameter>
+bytes.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -270,10 +290,11 @@ otherwise.
 <refsect2>
 <title><anchor id="g-mime-utils-best-encoding">g_mime_utils_best_encoding ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_utils_best_encoding
-                                            (const <link linkend="guchar">guchar</link> *text,
-                                             <link linkend="guint">guint</link> len);</programlisting>
+                                            (unsigned char *text,
+                                             <link linkend="size-t">size_t</link> len);</programlisting>
 <para>
-</para>
+Determines the best content encoding for the first <parameter>len</parameter> bytes of
+<parameter>text</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -294,9 +315,9 @@ particular case means best compression)
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_decode (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<programlisting>char*       g_mime_utils_8bit_header_decode (unsigned char *in);</programlisting>
 <para>
-</para>
+Decodes and rfc2047 encoded header.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -312,9 +333,9 @@ particular case means best compression)
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_encode (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<programlisting>char*       g_mime_utils_8bit_header_encode (unsigned char *in);</programlisting>
 <para>
-</para>
+Encodes a header according to the rules in rfc2047.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -331,10 +352,10 @@ headers like "Subject".
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_encode_phrase
-                                            (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<programlisting>char*       g_mime_utils_8bit_header_encode_phrase
+                                            (unsigned char *in);</programlisting>
 <para>
-</para>
+Encodes a header phrase according to the rules in rfc2047.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -351,13 +372,13 @@ internet addresses.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_decode_step (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="guint">guint</link> *save);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_base64_decode_step (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
-</para>
+Decodes a chunk of base64 encoded data.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -380,18 +401,21 @@ internet addresses.
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been decoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded (which have been dumped in <link linkend="out">out</link>).
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded (which have been dumped in <parameter>out</parameter>).
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_encode_step (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_base64_encode_step (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
-</para>
+Base64 encodes a chunk of data. Performs an 'encode step', only
+encodes blocks of 3 characters to the output at a time, saves
+left-over state in state and save (initialise to 0 on first
+invocation).</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -414,22 +438,21 @@ internet addresses.
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Performs an 'encode step',
-only encodes blocks of 3 characters to the output at a time, saves
-left-over state in state and save (initialise to 0 on first
-invocation).
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_encode_close
-                                            (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_base64_encode_close
+                                            (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
-</para>
+Base64 encodes the input stream to the output stream. Call this
+when finished encoding data with g_mime_utils_base64_encode_step to
+flush off the last little bit.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -452,21 +475,21 @@ invocation).
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Call this when finished
-encoding data with base64_encode_step to flush off the last little
-bit.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_uudecode_step      (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_uudecode_step      (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
                                              <link linkend="guint32">guint32</link> *save,
-                                             <link linkend="gchar">gchar</link> *uulen);</programlisting>
+                                             char *uulen);</programlisting>
 <para>
-</para>
+Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
+uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
+been stripped off.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -478,7 +501,7 @@ bit.
 <entry> input stream
 </entry></row>
 <row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> max length of data to decode ( normally strlen(in) ??)
+<entry> max length of data to decode (normally strlen (in) ??)
 </entry></row>
 <row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
 <entry> output stream
@@ -493,20 +516,109 @@ bit.
 <entry> holds the value of the length-char which is used to calculate
 how many more chars need to be decoded for that 'line'
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'uudecode step' on
-a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
-line has been stripped off.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step ()</title>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_uuencode_step      (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             char *uulen);</programlisting>
+<para>
+Uuencodes a chunk of data. Performs an 'encode step', only encodes
+blocks of 45 characters to the output at a time, saves left-over
+state in <parameter>uubuf</parameter>, <parameter>state</parameter> and <parameter>save</parameter> (initialize to 0 on first
+invocation).</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> input stream length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>uubuf</parameter>&nbsp;:</entry>
+<entry> temporary buffer of 60 bytes
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
+<entry> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close ()</title>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_uuencode_close     (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             unsigned char *uubuf,
+                                             int *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             char *uulen);</programlisting>
+<para>
+Uuencodes a chunk of data. Call this when finished encoding data
+with g_mime_utils_uuencode_step to flush off the last little bit.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> input stream length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>uubuf</parameter>&nbsp;:</entry>
+<entry> temporary buffer of 60 bytes
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
+<entry> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_decode_step (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *savestate,
-                                             <link linkend="gint">gint</link> *saved);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_quoted_decode_step (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *savestate,
+                                             int *saved);</programlisting>
 <para>
-</para>
+Decodes a block of quoted-printable encoded data. Performs a
+'decode step' on a chunk of QP encoded data.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -529,19 +641,20 @@ line has been stripped off.
 <row><entry align="right"><parameter>saved</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been decoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'decode step' on a
-chunk of QP encoded data.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_encode_step (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_quoted_encode_step (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);</programlisting>
 <para>
-</para>
+Quoted-printable encodes a block of text. Performs an 'encode
+step', saves left-over state in state and save (initialise to -1 on
+first invocation).</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -564,21 +677,21 @@ chunk of QP encoded data.
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Performs an 'encode step',
-saves left-over state in state and save (initialise to -1 on first
-invocation).
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close ()</title>
-<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_encode_close
-                                            (const <link linkend="guchar">guchar</link> *in,
-                                             <link linkend="gint">gint</link> inlen,
-                                             <link linkend="guchar">guchar</link> *out,
-                                             <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+<programlisting><link linkend="size-t">size_t</link>      g_mime_utils_quoted_encode_close
+                                            (unsigned char *in,
+                                             <link linkend="size-t">size_t</link> inlen,
+                                             unsigned char *out,
+                                             int *state,
+                                             int *save);</programlisting>
 <para>
-</para>
+Quoted-printable encodes a block of text. Call this when finished
+encoding data with g_mime_utils_quoted_encode_step to flush off the
+last little bit.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -601,9 +714,7 @@ invocation).
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Call this when finished
-encoding data with quoted_encode_step to flush off the last little
-bit.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

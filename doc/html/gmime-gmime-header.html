@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-HEADER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN145"
+NAME="AEN2225"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN145"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN148"
+NAME="AEN2228"
 ></A
 ><H2
 >Synopsis</H2
@@ -149,14 +149,8 @@ CLASS="SYNOPSIS"
 void        (<A
 HREF="gmime-gmime-header.html#GMIMEHEADERFUNC"
 >*GMimeHeaderFunc</A
->)              (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value,
+>)              (const char *name,
+                                             const char *value,
                                              <GTKDOCLINK
 HREF="GPOINTER"
 >gpointer</GTKDOCLINK
@@ -176,49 +170,51 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header);
 void        <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-ADD"
+>g_mime_header_add</A
+>               (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const char *name,
+                                             const char *value);
+void        <A
 HREF="gmime-gmime-header.html#G-MIME-HEADER-SET"
 >g_mime_header_set</A
 >               (<A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *name,
+                                             const char *value);
+const char* <A
 HREF="gmime-gmime-header.html#G-MIME-HEADER-GET"
 >g_mime_header_get</A
->              (const <A
+>               (const <A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+                                             const char *name);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STRING"
->g_mime_header_write_to_string</A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-REMOVE"
+>g_mime_header_remove</A
+>            (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const char *name);
+void        <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STREAM"
+>g_mime_header_write_to_stream</A
 >   (const <A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+char*       <A
 HREF="gmime-gmime-header.html#G-MIME-HEADER-TO-STRING"
 >g_mime_header_to_string</A
 >         (const <A
@@ -247,7 +243,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN177"
+NAME="AEN2254"
 ></A
 ><H2
 >Description</H2
@@ -257,14 +253,14 @@ NAME="AEN177"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN180"
+NAME="AEN2257"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN182"
+NAME="AEN2259"
 ></A
 ><H3
 ><A
@@ -280,14 +276,8 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        (*GMimeHeaderFunc)              (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value,
+>void        (*GMimeHeaderFunc)              (const char *name,
+                                             const char *value,
                                              <GTKDOCLINK
 HREF="GPOINTER"
 >gpointer</GTKDOCLINK
@@ -300,7 +290,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN190"
+NAME="AEN2265"
 ></A
 ><P
 ></P
@@ -372,7 +362,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN207"
+NAME="AEN2282"
 ></A
 ><H3
 ><A
@@ -396,13 +386,13 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a new GMimeHeader object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN214"
+NAME="AEN2289"
 ></A
 ><P
 ></P
@@ -438,7 +428,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN223"
+NAME="AEN2298"
 ></A
 ><H3
 ><A
@@ -468,7 +458,7 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN230"
+NAME="AEN2305"
 ></A
 ><P
 ></P
@@ -506,13 +496,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN239"
+NAME="AEN2314"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-SET"
+NAME="G-MIME-HEADER-ADD"
 ></A
->g_mime_header_set ()</H3
+>g_mime_header_add ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -522,23 +512,17 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_set               (<A
+>void        g_mime_header_add               (<A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+                                             const char *name,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Set the value of the specified header. If <TT
+>Adds a header. If <TT
 CLASS="PARAMETER"
 ><I
 >value</I
@@ -546,21 +530,15 @@ CLASS="PARAMETER"
 > is <TT
 CLASS="LITERAL"
 >NULL</TT
-> and the
-header, <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->, had not been previously set, a space will be set
-aside for it (useful for setting the order of headers before values
-can be obtained for them) otherwise the header will be removed.</P
+>, a space will be set aside for it
+(useful for setting the order of headers before values can be
+obtained for them) otherwise the header will be unset.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN251"
+NAME="AEN2323"
 ></A
 ><P
 ></P
@@ -621,10 +599,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header value (or <TT
-CLASS="LITERAL"
->NULL</TT
-> to remove header)</TD
+> header value</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -635,7 +610,127 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN269"
+NAME="AEN2340"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-SET"
+></A
+>g_mime_header_set ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_header_set               (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const char *name,
+                                             const char *value);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the value of the specified header. If <TT
+CLASS="PARAMETER"
+><I
+>value</I
+></TT
+> is <TT
+CLASS="LITERAL"
+>NULL</TT
+> and the
+header, <TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>, had not been previously set, a space will be set
+aside for it (useful for setting the order of headers before values
+can be obtained for them) otherwise the header will be unset.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2350"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header name</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>value</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header value</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2367"
 ></A
 ><H3
 ><A
@@ -651,28 +746,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_header_get              (const <A
+>const char* g_mime_header_get               (const <A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
+                                             const char *name);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Gets the value of the header requested.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN278"
+NAME="AEN2374"
 ></A
 ><P
 ></P
@@ -731,7 +820,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the value of the header requested</TD
+>the value of the header requested.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -742,13 +831,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN295"
+NAME="AEN2391"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-WRITE-TO-STRING"
+NAME="G-MIME-HEADER-REMOVE"
 ></A
->g_mime_header_write_to_string ()</H3
+>g_mime_header_remove ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -758,25 +847,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_write_to_string   (const <A
+>void        g_mime_header_remove            (<A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header,
-                                             <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);</PRE
+                                             const char *name);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Write the headers to a string</P
+>Remove the specified header.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN303"
+NAME="AEN2398"
 ></A
 ><P
 ></P
@@ -813,14 +899,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>name</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> string</TD
+> header name</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -831,7 +917,96 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN316"
+NAME="AEN2411"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-WRITE-TO-STREAM"
+></A
+>g_mime_header_write_to_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_header_write_to_stream   (const <A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Write the headers to a stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2419"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2432"
 ></A
 ><H3
 ><A
@@ -847,10 +1022,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_header_to_string         (const <A
+>char*       g_mime_header_to_string         (const <A
 HREF="gmime-gmime-message.html#GMIMEHEADER"
 >GMimeHeader</A
 > *header);</PRE
@@ -858,13 +1030,19 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a string buffer containing the raw rfc822 headers
+contained in <TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN324"
+NAME="AEN2440"
 ></A
 ><P
 ></P
@@ -917,7 +1095,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN337"
+NAME="AEN2453"
 ></A
 ><H3
 ><A
@@ -960,7 +1138,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN347"
+NAME="AEN2463"
 ></A
 ><P
 ></P

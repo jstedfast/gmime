@@ -123,7 +123,7 @@ NAME="GMIME-INTERNET-ADDRESS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2968"
+NAME="AEN5673"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN2968"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2971"
+NAME="AEN5676"
 ></A
 ><H2
 >Synopsis</H2
@@ -151,6 +151,10 @@ HREF="gmime-internet-address.html#INTERNETADDRESSTYPE"
 >InternetAddressType</A
 >;
 struct      <A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>;
+struct      <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >;
@@ -167,28 +171,26 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 >* <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW-NAME"
 >internet_address_new_name</A
->  (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *addr);
+>  (const char *name,
+                                             const char *addr);
 <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >* <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW-GROUP"
 >internet_address_new_group</A
-> (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+> (const char *name);
 void        <A
-HREF="gmime-internet-address.html#INTERNET-ADDRESS-DESTROY"
->internet_address_destroy</A
->        (<A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-REF"
+>internet_address_ref</A
+>            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-UNREF"
+>internet_address_unref</A
+>          (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);
@@ -199,10 +201,7 @@ HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-NAME"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+                                             const char *name);
 void        <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-ADDR"
 >internet_address_set_addr</A
@@ -210,10 +209,7 @@ HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-ADDR"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *addr);
+                                             const char *addr);
 void        <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-GROUP"
 >internet_address_set_group</A
@@ -221,9 +217,9 @@ HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-GROUP"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             <GTKDOCLINK
-HREF="GLIST"
->GList</GTKDOCLINK
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
 > *group);
 void        <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-ADD-MEMBER"
@@ -236,26 +232,91 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *member);
-<GTKDOCLINK
-HREF="GLIST"
->GList</GTKDOCLINK
->*      <A
+<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-PREPEND"
+>internet_address_list_prepend</A
+>
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);
+<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-APPEND"
+>internet_address_list_append</A
+>
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);
+<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-CONCAT"
+>internet_address_list_concat</A
+>
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *a,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *b);
+int         <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-LENGTH"
+>internet_address_list_length</A
+>    (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-DESTROY"
+>internet_address_list_destroy</A
+>   (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list);
+<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-PARSE-STRING"
 >internet_address_parse_string</A
->   (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+>
+                                            (const char *string);
+char*       <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-TO-STRING"
 >internet_address_to_string</A
 >      (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> encode);
+char*       <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-LIST-TO-STRING"
+>internet_address_list_to_string</A
+> (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -267,7 +328,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3006"
+NAME="AEN5726"
 ></A
 ><H2
 >Description</H2
@@ -277,14 +338,14 @@ NAME="AEN3006"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3009"
+NAME="AEN5729"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3011"
+NAME="AEN5731"
 ></A
 ><H3
 ><A
@@ -314,7 +375,36 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3016"
+NAME="AEN5736"
+></A
+><H3
+><A
+NAME="INTERNETADDRESSLIST"
+></A
+>struct InternetAddressList</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct InternetAddressList {
+	struct _InternetAddressList *next;
+	InternetAddress *address;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5741"
 ></A
 ><H3
 ><A
@@ -332,10 +422,11 @@ CELLPADDING="6"
 CLASS="PROGRAMLISTING"
 >struct InternetAddress {
 	InternetAddressType type;
-	gchar *name;
+	unsigned int refcount;
+	char *name;
 	union {
-		gchar *addr;
-		GList *members;
+		char *addr;
+		InternetAddressList *members;
 	} value;
 };</PRE
 ></TD
@@ -347,7 +438,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3021"
+NAME="AEN5746"
 ></A
 ><H3
 ><A
@@ -371,13 +462,13 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a new InternetAddress object</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3028"
+NAME="AEN5753"
 ></A
 ><P
 ></P
@@ -413,7 +504,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3037"
+NAME="AEN5762"
 ></A
 ><H3
 ><A
@@ -432,25 +523,30 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
->* internet_address_new_name  (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *addr);</PRE
+>* internet_address_new_name  (const char *name,
+                                             const char *addr);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a new InternetAddress object with name <TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+> and address
+<TT
+CLASS="PARAMETER"
+><I
+>addr</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3046"
+NAME="AEN5771"
 ></A
 ><P
 ></P
@@ -520,7 +616,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3063"
+NAME="AEN5788"
 ></A
 ><H3
 ><A
@@ -539,21 +635,23 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
->* internet_address_new_group (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
+>* internet_address_new_group (const char *name);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a new InternetAddress object with group name <TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3071"
+NAME="AEN5796"
 ></A
 ><P
 ></P
@@ -606,13 +704,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3084"
+NAME="AEN5809"
 ></A
 ><H3
 ><A
-NAME="INTERNET-ADDRESS-DESTROY"
+NAME="INTERNET-ADDRESS-REF"
 ></A
->internet_address_destroy ()</H3
+>internet_address_ref ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -622,7 +720,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        internet_address_destroy        (<A
+>void        internet_address_ref            (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);</PRE
@@ -630,18 +728,13 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ></TR
 ></TABLE
 ><P
->Destroy the InternetAddress object pointed to by <TT
-CLASS="PARAMETER"
-><I
->ia</I
-></TT
->.</P
+>Ref's the internet address.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3092"
+NAME="AEN5816"
 ></A
 ><P
 ></P
@@ -668,7 +761,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Internet Address object to destroy</TD
+> address</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -679,7 +772,75 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3101"
+NAME="AEN5825"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-UNREF"
+></A
+>internet_address_unref ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_unref          (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Unref's the internet address.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5832"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> address</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5841"
 ></A
 ><H3
 ><A
@@ -699,10 +860,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
+                                             const char *name);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -713,7 +871,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3109"
+NAME="AEN5848"
 ></A
 ><P
 ></P
@@ -768,7 +926,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3122"
+NAME="AEN5861"
 ></A
 ><H3
 ><A
@@ -788,10 +946,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *addr);</PRE
+                                             const char *addr);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -802,7 +957,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3130"
+NAME="AEN5868"
 ></A
 ><P
 ></P
@@ -857,7 +1012,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3143"
+NAME="AEN5881"
 ></A
 ><H3
 ><A
@@ -877,9 +1032,9 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
-                                             <GTKDOCLINK
-HREF="GLIST"
->GList</GTKDOCLINK
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
 > *group);</PRE
 ></TD
 ></TR
@@ -891,7 +1046,7 @@ HREF="GLIST"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3151"
+NAME="AEN5889"
 ></A
 ><P
 ></P
@@ -946,7 +1101,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3164"
+NAME="AEN5902"
 ></A
 ><H3
 ><A
@@ -980,7 +1135,7 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3172"
+NAME="AEN5910"
 ></A
 ><P
 ></P
@@ -1035,7 +1190,509 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3185"
+NAME="AEN5923"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-PREPEND"
+></A
+>internet_address_list_prepend ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* internet_address_list_prepend
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Prepends the internet address to the list of internet addresses
+pointed to by <TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5933"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a list of internet addresses</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address to prepend</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the resultant list.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5950"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-APPEND"
+></A
+>internet_address_list_append ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* internet_address_list_append
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Appends the internet address to the list of internet addresses
+pointed to by <TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5960"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a list of internet addresses</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address to append</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the resultant list.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5977"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-CONCAT"
+></A
+>internet_address_list_concat ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* internet_address_list_concat
+                                            (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *a,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *b);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Concatenates a copy of list <TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+> onto the end of list <TT
+CLASS="PARAMETER"
+><I
+>a</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5988"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>a</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> first list</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>b</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> second list</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the resulting list.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6005"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-LENGTH"
+></A
+>internet_address_list_length ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         internet_address_list_length    (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Calculates the length of the list of addresses.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6012"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> list of internet addresses</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of internet addresses in <TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6026"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-DESTROY"
+></A
+>internet_address_list_destroy ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_list_destroy   (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Destroys the list of internet addresses.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6033"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> address list</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6042"
 ></A
 ><H3
 ><A
@@ -1051,22 +1708,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GLIST"
->GList</GTKDOCLINK
->*      internet_address_parse_string   (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+><A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+>* internet_address_parse_string
+                                            (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
+><P
+>Construct a list of internet addresses from the given string.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3192"
+NAME="AEN6049"
 ></A
 ><P
 ></P
@@ -1093,7 +1750,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> a string containing internet addresses</TD
 ></TR
 ><TR
 ><TD
@@ -1108,7 +1765,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>a linked list of internet addresses. *Must* be free'd by
+the caller.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1119,7 +1777,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3205"
+NAME="AEN6062"
 ></A
 ><H3
 ><A
@@ -1135,10 +1793,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      internet_address_to_string      (<A
+>char*       internet_address_to_string      (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
@@ -1150,13 +1805,14 @@ HREF="GBOOLEAN"
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a string containing the contents of the InternetAddress
+object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3214"
+NAME="AEN6070"
 ></A
 ><P
 ></P
@@ -1217,6 +1873,116 @@ ALIGN="LEFT"
 VALIGN="TOP"
 >the InternetAddress object as an allocated string in rfc822
 format.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6087"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-LIST-TO-STRING"
+></A
+>internet_address_list_to_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       internet_address_list_to_string (<A
+HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
+>InternetAddressList</A
+> *list,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> encode);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Allocates a string buffer containing the rfc822 formatted addresses
+in <TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6096"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>list</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> list of internet addresses</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>encode</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> TRUE if the address should be rfc2047 encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a string containing the list of addresses in rfc822 format.</TD
 ></TR
 ></TBODY
 ></TABLE

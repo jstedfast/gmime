@@ -1,0 +1,307 @@
+<refentry id="gmime-gmime-pgp-context">
+<refmeta>
+<refentrytitle>gmime-pgp-context</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-pgp-context</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-PGP-CONTEXT-TYPE-CAPS">GMIME_PGP_CONTEXT_TYPE</link>
+#define     <link linkend="GMIME-IS-PGP-CONTEXT-CAPS">GMIME_IS_PGP_CONTEXT</link>            (ctx)
+#define     <link linkend="GMIME-PGP-CONTEXT-CAPS">GMIME_PGP_CONTEXT</link>               (ctx)
+char*       (<link linkend="GMimePgpPassphraseFunc">*GMimePgpPassphraseFunc</link>)       (const char *prompt,
+                                             <link linkend="gpointer">gpointer</link> user_data);
+enum        <link linkend="GMimePgpType">GMimePgpType</link>;
+<link linkend="GMimePgpContext">GMimePgpContext</link>* <link linkend="g-mime-pgp-context-new">g_mime_pgp_context_new</link>     (<link linkend="GMimePgpType">GMimePgpType</link> type,
+                                             const char *path,
+                                             <link linkend="GMimePgpPassphraseFunc">GMimePgpPassphraseFunc</link> get_passwd,
+                                             <link linkend="gpointer">gpointer</link> user_data);
+#define     <link linkend="g-mime-pgp-sign">g_mime_pgp_sign</link>                 (c, u, h, i, o, e)
+#define     <link linkend="g-mime-pgp-clearsign">g_mime_pgp_clearsign</link>            (c, u, h, i, o, e)
+#define     <link linkend="g-mime-pgp-verify">g_mime_pgp_verify</link>               (c, i, s, e)
+#define     <link linkend="g-mime-pgp-encrypt">g_mime_pgp_encrypt</link>              (c, s, u, r, i, o, e)
+#define     <link linkend="g-mime-pgp-decrypt">g_mime_pgp_decrypt</link>              (c, i, o, e)
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-PGP-CONTEXT-TYPE-CAPS">GMIME_PGP_CONTEXT_TYPE</title>
+<programlisting>#define GMIME_PGP_CONTEXT_TYPE g_str_hash ("GMimePgpContext")
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-PGP-CONTEXT-CAPS">GMIME_IS_PGP_CONTEXT()</title>
+<programlisting>#define GMIME_IS_PGP_CONTEXT(ctx) (((GMimeObject *) ctx)-&gt;type == GMIME_PGP_CONTEXT_TYPE)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-PGP-CONTEXT-CAPS">GMIME_PGP_CONTEXT()</title>
+<programlisting>#define GMIME_PGP_CONTEXT(ctx)    ((GMimePgpContext *) ctx)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimePgpPassphraseFunc">GMimePgpPassphraseFunc ()</title>
+<programlisting>char*       (*GMimePgpPassphraseFunc)       (const char *prompt,
+                                             <link linkend="gpointer">gpointer</link> user_data);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>prompt</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimePgpType">enum GMimePgpType</title>
+<programlisting>typedef enum {
+	GMIME_PGP_TYPE_NONE,
+	GMIME_PGP_TYPE_PGP2,
+	GMIME_PGP_TYPE_PGP5,
+	GMIME_PGP_TYPE_PGP6,
+	GMIME_PGP_TYPE_GPG
+} GMimePgpType;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-context-new">g_mime_pgp_context_new ()</title>
+<programlisting><link linkend="GMimePgpContext">GMimePgpContext</link>* g_mime_pgp_context_new     (<link linkend="GMimePgpType">GMimePgpType</link> type,
+                                             const char *path,
+                                             <link linkend="GMimePgpPassphraseFunc">GMimePgpPassphraseFunc</link> get_passwd,
+                                             <link linkend="gpointer">gpointer</link> user_data);</programlisting>
+<para>
+This creates a new GMimePgpContext object which is used to sign,
+verify, encrypt and decrypt streams.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
+<entry> One of GMIME_PGP_TYPE_[PGP2, PGP5, PGP6, GPG]
+</entry></row>
+<row><entry align="right"><parameter>path</parameter>&nbsp;:</entry>
+<entry> path to PGP binary
+</entry></row>
+<row><entry align="right"><parameter>get_passwd</parameter>&nbsp;:</entry>
+<entry> Password callback function
+</entry></row>
+<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
+<entry> user data to pass to <parameter>get_passwd</parameter>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry> the new GMimePgpContext
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-sign">g_mime_pgp_sign()</title>
+<programlisting>#define     g_mime_pgp_sign(c, u, h, i, o, e)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>h</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-clearsign">g_mime_pgp_clearsign()</title>
+<programlisting>#define     g_mime_pgp_clearsign(c, u, h, i, o, e)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>h</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-verify">g_mime_pgp_verify()</title>
+<programlisting>#define     g_mime_pgp_verify(c, i, s, e)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>s</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-encrypt">g_mime_pgp_encrypt()</title>
+<programlisting>#define     g_mime_pgp_encrypt(c, s, u, r, i, o, e)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>s</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>r</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-pgp-decrypt">g_mime_pgp_decrypt()</title>
+<programlisting>#define     g_mime_pgp_decrypt(c, i, o, e)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

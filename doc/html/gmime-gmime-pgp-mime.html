@@ -1,0 +1,1122 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-pgp-mime</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-pgp-context"
+HREF="gmime-gmime-pgp-context.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-pgp-context.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+>&nbsp;</TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-PGP-MIME"
+>gmime-pgp-mime</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN7263"
+></A
+><H2
+>Name</H2
+>gmime-pgp-mime&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN7266"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-IS-RFC2015-SIGNED"
+>g_mime_pgp_mime_is_rfc2015_signed</A
+>
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-IS-RFC2015-ENCRYPTED"
+>g_mime_pgp_mime_is_rfc2015_encrypted</A
+>
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);
+void        <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-PART-SIGN"
+>g_mime_pgp_mime_part_sign</A
+>       (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> **mime_part,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-PART-VERIFY"
+>g_mime_pgp_mime_part_verify</A
+>
+                                            (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+void        <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-PART-ENCRYPT"
+>g_mime_pgp_mime_part_encrypt</A
+>    (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> **mime_part,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+>*  <A
+HREF="gmime-gmime-pgp-mime.html#G-MIME-PGP-MIME-PART-DECRYPT"
+>g_mime_pgp_mime_part_decrypt</A
+>    (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN7295"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN7298"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7300"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-IS-RFC2015-SIGNED"
+></A
+>g_mime_pgp_mime_is_rfc2015_signed ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_pgp_mime_is_rfc2015_signed
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Examines the part to decide whether or not it is an rfc2015 signed
+part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7308"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a multipart/signed mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><TT
+CLASS="LITERAL"
+>TRUE</TT
+> if <TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+> is an rfc2015 signed part or <TT
+CLASS="LITERAL"
+>FALSE</TT
+>
+otherwise.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7324"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-IS-RFC2015-ENCRYPTED"
+></A
+>g_mime_pgp_mime_is_rfc2015_encrypted ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_pgp_mime_is_rfc2015_encrypted
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Examines the part to decide whether or not it is an rfc2015
+encrypted part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7332"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a multipart/encrypted mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+><TT
+CLASS="LITERAL"
+>TRUE</TT
+> if <TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+> is an rfc2015 encrypted part or <TT
+CLASS="LITERAL"
+>FALSE</TT
+>
+otherwise.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7348"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-PART-SIGN"
+></A
+>g_mime_pgp_mime_part_sign ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_pgp_mime_part_sign       (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> **mime_part,
+                                             const char *userid,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
+>GMimeCipherHash</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Constructs a PGP/MIME multipart in compliance with rfc2015 and
+replaces <TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+> with the generated multipart/signed. On
+failure, <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> will be set and <GTKDOCLINK
+HREF="PART"
+>part</GTKDOCLINK
+> will remain untouched.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7361"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> PGP Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a MIME part that will be replaced by a pgp signed part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> userid to sign with</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> one of GMIME_CIPHER_HASH_MD5 or GMIME_CIPHER_HASH_SHA1</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception which will be set if there are any errors.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7386"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-PART-VERIFY"
+></A
+>g_mime_pgp_mime_part_verify ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+>* g_mime_pgp_mime_part_verify
+                                            (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to verify the signature of the multipart/signed mime part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7396"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> PGP Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a multipart/signed MIME Part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a GMimeCipherValidity on success or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7418"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-PART-ENCRYPT"
+></A
+>g_mime_pgp_mime_part_encrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_pgp_mime_part_encrypt    (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> **mime_part,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Constructs a PGP/MIME multipart in compliance with rfc2015 and
+replaces <TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+> with the generated multipart/signed. On failure,
+<TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> will be set and <TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+> will remain untouched.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7431"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> PGP Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a MIME part that will be replaced by a pgp encrypted part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>recipients</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> list of recipient PGP Key IDs</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception which will be set if there are any errors.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN7452"
+></A
+><H3
+><A
+NAME="G-MIME-PGP-MIME-PART-DECRYPT"
+></A
+>g_mime_pgp_mime_part_decrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+>*  g_mime_pgp_mime_part_decrypt    (<GTKDOCLINK
+HREF="GMIMEPGPCONTEXT"
+>GMimePgpContext</GTKDOCLINK
+> *context,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to decrypt the multipart/encrypted mime part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN7462"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>context</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> PGP Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a multipart/encrypted MIME Part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the decrypted MIME Part on success or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR
+CLEAR="all"><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-pgp-context.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-pgp-context</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+>&nbsp;</TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>
