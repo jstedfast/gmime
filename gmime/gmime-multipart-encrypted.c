@@ -404,6 +404,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (filtered_stream);
 	g_object_unref (ciphertext);
 	
+	g_mime_stream_reset (stream);
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	g_object_unref (stream);
