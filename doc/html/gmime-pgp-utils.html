@@ -1,0 +1,1554 @@
+<HTML
+><HEAD
+><TITLE
+>pgp-utils</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.57"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-exception"
+HREF="gmime-gmime-exception.html"><LINK
+REL="NEXT"
+TITLE="pgp-mime"
+HREF="gmime-pgp-mime.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-exception.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-pgp-mime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-PGP-UTILS"
+>pgp-utils</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN2885"
+></A
+><H2
+>Name</H2
+>pgp-utils&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN2888"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+enum        <A
+HREF="gmime-pgp-utils.html#PGPTYPE"
+>PgpType</A
+>;
+enum        <A
+HREF="gmime-pgp-utils.html#PGPHASHTYPE"
+>PgpHashType</A
+>;
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      (<A
+HREF="gmime-pgp-utils.html#PGPPASSWDFUNC"
+>*PgpPasswdFunc</A
+>)                (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *prompt,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);
+void        <A
+HREF="gmime-pgp-utils.html#PGP-INIT"
+>pgp_init</A
+>                        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *path,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPTYPE"
+>PgpType</A
+> type,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPPASSWDFUNC"
+>PgpPasswdFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-pgp-utils.html#PGP-DETECT"
+>pgp_detect</A
+>                      (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *text);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-pgp-utils.html#PGP-SIGN-DETECT"
+>pgp_sign_detect</A
+>                 (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *text);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-pgp-utils.html#PGP-ENCRYPT"
+>pgp_encrypt</A
+>                     (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             const <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> sign,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-pgp-utils.html#PGP-DECRYPT"
+>pgp_decrypt</A
+>                     (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *ciphertext,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *outlen,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-pgp-utils.html#PGP-CLEARSIGN"
+>pgp_clearsign</A
+>                   (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *plaintext,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPHASHTYPE"
+>PgpHashType</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-pgp-utils.html#PGP-SIGN"
+>pgp_sign</A
+>                        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPHASHTYPE"
+>PgpHashType</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN2934"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN2937"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2939"
+></A
+><H3
+><A
+NAME="PGPTYPE"
+></A
+>enum PgpType</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	PGP_TYPE_NONE,
+	PGP_TYPE_PGP2,
+	PGP_TYPE_PGP5,
+	PGP_TYPE_GPG
+} PgpType;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2944"
+></A
+><H3
+><A
+NAME="PGPHASHTYPE"
+></A
+>enum PgpHashType</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	PGP_HASH_TYPE_NONE,
+	PGP_HASH_TYPE_MD5,
+	PGP_HASH_TYPE_SHA1
+} PgpHashType;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2949"
+></A
+><H3
+><A
+NAME="PGPPASSWDFUNC"
+></A
+>PgpPasswdFunc ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      (*PgpPasswdFunc)                (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *prompt,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2957"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>prompt</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>data</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2974"
+></A
+><H3
+><A
+NAME="PGP-INIT"
+></A
+>pgp_init ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        pgp_init                        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *path,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPTYPE"
+>PgpType</A
+> type,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPPASSWDFUNC"
+>PgpPasswdFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initializes pgp variables</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2984"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>path</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> path to pgp</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>type</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> pgp program type</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>callback</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> function to query for a passphrase</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>data</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> user data</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3005"
+></A
+><H3
+><A
+NAME="PGP-DETECT"
+></A
+>pgp_detect ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    pgp_detect                      (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *text);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3013"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input text</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>TRUE if it is found that the text contains a PGP encrypted
+block otherwise returns FALSE.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3026"
+></A
+><H3
+><A
+NAME="PGP-SIGN-DETECT"
+></A
+>pgp_sign_detect ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    pgp_sign_detect                 (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *text);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3034"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input text</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>TRUE if it is found that the text contains a PGP signed
+block otherwise returns FALSE.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3047"
+></A
+><H3
+><A
+NAME="PGP-ENCRYPT"
+></A
+>pgp_encrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      pgp_encrypt                     (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             const <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> sign,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3060"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> data to encrypt</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input length of input data</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>recipients</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> An array of recipient ids</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>sign</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> TRUE if you want to sign as well as encrypt</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> userid to use when signing (assuming <GTKDOCLINK
+HREF="SIGN"
+>sign</GTKDOCLINK
+> is TRUE)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated string containing the ciphertext.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3094"
+></A
+><H3
+><A
+NAME="PGP-DECRYPT"
+></A
+>pgp_decrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      pgp_decrypt                     (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *ciphertext,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *outlen,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3104"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ciphertext</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> ciphertext to decrypt</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>outlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output length of the decrypted data (to be set by <A
+HREF="gmime-pgp-utils.html#PGP-DECRYPT"
+>pgp_decrypt</A
+>)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated buffer containing the decrypted ciphertext. If
+the cleartext is plain text then you may treat it like a normal
+string as it will be NUL terminated, however <GTKDOCLINK
+HREF="OUTLEN"
+>outlen</GTKDOCLINK
+> is also set in
+the case that the cleartext is a binary stream.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3127"
+></A
+><H3
+><A
+NAME="PGP-CLEARSIGN"
+></A
+>pgp_clearsign ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      pgp_clearsign                   (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *plaintext,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPHASHTYPE"
+>PgpHashType</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3138"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>plaintext</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> plain readable text to clearsign</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> userid to sign with</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Preferred hash function (md5 or sha1)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated string containing the clearsigned plaintext
+using the preferred hash.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3163"
+></A
+><H3
+><A
+NAME="PGP-SIGN"
+></A
+>pgp_sign ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      pgp_sign                        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *userid,
+                                             <A
+HREF="gmime-pgp-utils.html#PGPHASHTYPE"
+>PgpHashType</A
+> hash,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3175"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input data to sign</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> length of input data</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> userid to sign with</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> preferred hash type (md5 or sha1)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated string containing the detached signature using
+the preferred hash.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-exception.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-pgp-mime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-exception</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>pgp-mime</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

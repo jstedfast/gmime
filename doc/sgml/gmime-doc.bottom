@@ -5,3 +5,6 @@
     &gmime-gmime-utils;
     &gmime-internet-address;
     &gmime-gmime-parser;
+    &gmime-pgp-utils;
+    &gmime-pgp-mime;
+    &gmime-gmime-exception;

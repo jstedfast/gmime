@@ -75,8 +75,6 @@ test_multipart_signed (void)
 		return;
 	}
 	
-	fprintf (stderr, "type: %s/%s\n", text_part->mime_type->type, text_part->mime_type->subtype);
-	
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");

@@ -55,14 +55,14 @@ gboolean pgp_sign_detect (const gchar *text);
 
 gchar *pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex);
 
-gchar *pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
+gchar *pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 		    gboolean sign, const gchar *userid, GMimeException *ex);
 
 gchar *pgp_clearsign (const gchar *plaintext, const gchar *userid,
-		      GMimeException *ex);
+		      PgpHashType hash, GMimeException *ex);
 
-gchar *pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
-			       PgpHashType hash, GMimeException *ex);
+gchar *pgp_sign (const gchar *in, gint inlen, const gchar *userid,
+		 PgpHashType hash, GMimeException *ex);
 
 #ifdef __cplusplus
 }

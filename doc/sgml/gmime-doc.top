@@ -5,3 +5,6 @@
 <!entity gmime-gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity gmime-internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-pgp-utils SYSTEM "sgml/pgp-utils.sgml">
+<!entity gmime-pgp-mime SYSTEM "sgml/pgp-mime.sgml">
+<!entity gmime-gmime-exception SYSTEM "sgml/gmime-exception.sgml">

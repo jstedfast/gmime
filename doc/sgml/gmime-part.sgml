@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="2 Dec 2000">
+<refentry id="gmime-gmime-part" revision="13 Dec 2000">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -18,6 +18,8 @@ enum        <link linkend="GMimePartEncodingType">GMimePartEncodingType</link>;
 struct      <link linkend="GMimePartDispositionParam">GMimePartDispositionParam</link>;
 struct      <link linkend="GMimePartDisposition">GMimePartDisposition</link>;
 struct      <link linkend="GMimePart">GMimePart</link>;
+void        (<link linkend="GMimePartFunc">*GMimePartFunc</link>)                (<link linkend="GMimePart">GMimePart</link> *part,
+                                             <link linkend="gpointer">gpointer</link> data);
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new">g_mime_part_new</link>                 (void);
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new-with-type">g_mime_part_new_with_type</link>       (const <link linkend="gchar">gchar</link> *type,
                                              const <link linkend="gchar">gchar</link> *subtype);
@@ -69,10 +71,17 @@ void        <link linkend="g-mime-part-set-pre-encoded-content">g_mime_part_set_
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>        (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="guint">guint</link> *len);
-void        <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="GMimePart">GMimePart</link> *child);
+void        <link linkend="g-mime-part-add-subpart">g_mime_part_add_subpart</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimePart">GMimePart</link> *subpart);
+#define     <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (mime_part, child)
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="gboolean">gboolean</link> toplevel);
+void        <link linkend="g-mime-part-foreach">g_mime_part_foreach</link>             (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> data);
+const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get-subpart-from-content-id">g_mime_part_get_subpart_from_content_id</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_id);
 </synopsis>
 </refsynopsisdiv>
 
@@ -128,7 +137,6 @@ void        <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>  
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
-	gchar *boundary;
 	
 	GByteArray *content;
 	
@@ -138,6 +146,24 @@ void        <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>  
 <para>
 
 </para></refsect2>
+<refsect2>
+<title><anchor id="GMimePartFunc">GMimePartFunc ()</title>
+<programlisting>void        (*GMimePartFunc)                (<link linkend="GMimePart">GMimePart</link> *part,
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-new">g_mime_part_new ()</title>
 <programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_part_new                 (void);</programlisting>
@@ -546,7 +572,7 @@ Sets the boundary on the mime part.</para>
 <entry> Mime part
 </entry></row>
 <row><entry align="right"><parameter>boundary</parameter>&nbsp;:</entry>
-<entry> the boundary for the multi-part
+<entry> the boundary for the multi-part or NULL to generate a random one.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -644,11 +670,11 @@ and sets <literal>len</literal> to the length of the buffer.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="g-mime-part-add-child">g_mime_part_add_child ()</title>
-<programlisting>void        g_mime_part_add_child           (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="GMimePart">GMimePart</link> *child);</programlisting>
+<title><anchor id="g-mime-part-add-subpart">g_mime_part_add_subpart ()</title>
+<programlisting>void        g_mime_part_add_subpart         (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimePart">GMimePart</link> *subpart);</programlisting>
 <para>
-Adds a child mime part to the parent mime part which *must* be a
+Adds a subpart to the parent mime part which *must* be a
 multipart.</para>
 <para>
 
@@ -660,8 +686,25 @@ multipart.</para>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> Parent Mime part
 </entry></row>
-<row><entry align="right"><parameter>child</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>subpart</parameter>&nbsp;:</entry>
 <entry> Child Mime part
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-add-child">g_mime_part_add_child()</title>
+<programlisting>#define     g_mime_part_add_child(mime_part, child)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>child</parameter>&nbsp;:</entry>
+<entry>
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -686,6 +729,54 @@ multipart.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Part. If toplevel
 is set to TRUE, then the MIME Part header will contain needed MIME
 headers for rfc822 messages.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-foreach">g_mime_part_foreach ()</title>
+<programlisting>void        g_mime_part_foreach             (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+Calls <link linkend="callback">callback</link> on <link linkend="mime-part">mime_part</link> and each of it's subparts.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> the MIME part
+</entry></row>
+<row><entry align="right"><parameter>callback</parameter>&nbsp;:</entry>
+<entry> function to call for <link linkend="mime-part">mime_part</link> and all it's subparts
+</entry></row>
+<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
+<entry> extra data to pass to the callback
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-get-subpart-from-content-id">g_mime_part_get_subpart_from_content_id ()</title>
+<programlisting>const <link linkend="GMimePart">GMimePart</link>* g_mime_part_get_subpart_from_content_id
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_id);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> the MIME part
+</entry></row>
+<row><entry align="right"><parameter>content_id</parameter>&nbsp;:</entry>
+<entry> the content id of the part to look for
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the GMimePart whose content-id matches the search string,
+or NULL if a match cannot be found.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

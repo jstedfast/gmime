@@ -502,8 +502,8 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
 
 /**
  * pgp_encrypt:
- * @cleartext: data to encrypt
- * @inlen: input length of the cleartext (which may be a binary stream)
+ * @in: data to encrypt
+ * @inlen: input length of input data
  * @recipients: An array of recipient ids
  * @sign: TRUE if you want to sign as well as encrypt
  * @userid: userid to use when signing (assuming #sign is TRUE)
@@ -512,7 +512,7 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
  * Returns an allocated string containing the ciphertext.
  **/
 gchar *
-pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
+pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 	     gboolean sign, const gchar *userid, GMimeException *ex)
 {
 	GPtrArray *recipient_list = NULL;
@@ -683,7 +683,7 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	g_free (command);
 	
 	retval = crypto_exec_with_passwd (pgp_path, (char **) argv->pdata,
-					  plaintext, inlen, passwd_fds,
+					  in, inlen, passwd_fds,
 					  passphrase, &cyphertext, NULL,
 					  &diagnostics);
 	
@@ -713,18 +713,21 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
  * pgp_clearsign:
  * @plaintext: plain readable text to clearsign
  * @userid: userid to sign with
+ * @hash: Preferred hash function (md5 or sha1)
  * @ex: exception
  *
- * Returns an allocated string containing the clearsigned plaintext.
+ * Returns an allocated string containing the clearsigned plaintext
+ * using the preferred hash.
  **/
 gchar *
 pgp_clearsign (const gchar *plaintext, const gchar *userid,
-	       GMimeException *ex)
+	       PgpHashType hash, GMimeException *ex)
 {
 	char *argv[15];
 	char *cyphertext = NULL;
 	char *diagnostics = NULL;
 	char *passphrase = NULL;
+	char *hash_str = NULL;
 	int passwd_fds[2];
 	char passwd_fd[32];
 	char *command;
@@ -751,12 +754,26 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		return NULL;
 	}
 	
+	switch (hash) {
+	case PGP_HASH_TYPE_MD5:
+		hash_str = "MD5";
+		break;
+	case PGP_HASH_TYPE_SHA1:
+		hash_str = "SHA1";
+		break;
+	}
+	
 	i = 0;
 	switch (pgp_type) {
 	case PGP_TYPE_GPG:
 		argv[i++] = "gpg";
 		
 		argv[i++] = "--clearsign";
+		
+		if (hash_str) {
+			argv[i++] = "--digest-algo";
+			argv[i++] = hash_str;
+		}
 		
 		if (userid) {
 			argv[i++] = "-u";
@@ -777,6 +794,7 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		argv[i++] = passwd_fd;
 		break;
 	case PGP_TYPE_PGP5:
+		/* FIXME: modify to respect hash */
 		argv[i++] = "pgps";
 		
 		if (userid) {
@@ -795,6 +813,7 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		putenv (passwd_fd);
 		break;
 	case PGP_TYPE_PGP2:
+		/* FIXME: modify to respect hash */
 		argv[i++] = "pgp";
 		
 		if (userid) {
@@ -815,7 +834,7 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 	
 	argv[i++] = NULL;
 	
-	d(fprintf (stderr, "here we are to sign stuff!\n"));
+	d(fprintf (stderr, "here we are to clearsign stuff!\n"));
 	command = g_strjoinv (" ", argv);
 	d(fprintf (stderr, "%s\n", command));
 	g_free (command);
@@ -842,18 +861,19 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 
 
 /**
- * pgp_detached_clearsign:
- * @plaintext: plain readable text to clearsign.
+ * pgp_sign:
+ * @in: input data to sign
+ * @inlen: length of input data
  * @userid: userid to sign with
  * @hash: preferred hash type (md5 or sha1)
  * @ex: exception
  *
- * Returns an allocated string containing the detached clearsign
- * using the preferred hash.
+ * Returns an allocated string containing the detached signature using
+ * the preferred hash.
  **/
 gchar *
-pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
-			PgpHashType hash, GMimeException *ex)
+pgp_sign (const gchar *in, gint inlen, const gchar *userid,
+	  PgpHashType hash, GMimeException *ex)
 {
 	char *argv[20];
 	char *cyphertext = NULL;
@@ -900,7 +920,7 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 	case PGP_TYPE_GPG:
 		argv[i++] = "gpg";
 		
-		argv[i++] = "--clearsign";
+		argv[i++] = "--sign";
 		argv[i++] = "-b";
 		if (hash_str) {
 			argv[i++] = "--digest-algo";
@@ -926,7 +946,7 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 		argv[i++] = passwd_fd;
 		break;
 	case PGP_TYPE_PGP5:
-		/* FIXME: mod to specify hash */
+		/* FIXME: respect hash */
 		argv[i++] = "pgps";
 		
 		if (userid) {
@@ -946,7 +966,7 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 		putenv (passwd_fd);
 		break;
 	case PGP_TYPE_PGP2:
-		/* FIXME: mod to only return the signature and specify hash */
+		/* FIXME: respect has and also detach */
 		argv[i++] = "pgp";
 		
 		if (userid) {
@@ -973,7 +993,7 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 	g_free (command);
 	
 	retval = crypto_exec_with_passwd (pgp_path, argv,
-					  plaintext, strlen (plaintext),
+					  in, inlen,
 					  passwd_fds, passphrase,
 					  &cyphertext, NULL,
 					  &diagnostics);

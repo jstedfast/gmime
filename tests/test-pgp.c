@@ -51,7 +51,7 @@ test_clearsign (const gchar *cleartext)
 	GMimeException *ex;
 	
 	ex = g_mime_exception_new ();
-	ciphertext = pgp_clearsign (cleartext, userid, ex);
+	ciphertext = pgp_clearsign (cleartext, userid, PGP_HASH_TYPE_NONE, ex);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_clearsign failed: %s\n",
 			 g_mime_exception_get_description (ex));
@@ -67,22 +67,23 @@ test_clearsign (const gchar *cleartext)
 }
 
 static int
-test_detached_clearsign (const gchar *cleartext, PgpHashType hash)
+test_sign (const gchar *cleartext, PgpHashType hash)
 {
 	gchar *ciphertext;
 	GMimeException *ex;
 	
 	ex = g_mime_exception_new ();
-	ciphertext = pgp_detached_clearsign (cleartext, userid, hash, ex);
+	ciphertext = pgp_sign (cleartext, strlen (cleartext),
+			       userid, hash, ex);
 	if (g_mime_exception_is_set (ex)) {
-		fprintf (stderr, "pgp_detached_clearsign failed: %s\n",
+		fprintf (stderr, "pgp_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
 		g_mime_exception_free (ex);
 		return 0;
 	}
 	
 	g_mime_exception_free (ex);
-	fprintf (stderr, "detached clearsign:\n%s\n", ciphertext);
+	fprintf (stderr, "signature:\n%s\n", ciphertext);
 	g_free (ciphertext);
 	
 	return 1;
@@ -150,12 +151,12 @@ int main (int argc, char **argv)
 	if (!test_clearsign ("This is a test of clearsign\n"))
 		return 1;
 	
-	if (!test_detached_clearsign ("This is a test of detached clearsign using md5\n",
-				      PGP_HASH_TYPE_MD5))
+	if (!test_sign ("This is a test of pgp sign using md5\n",
+			PGP_HASH_TYPE_MD5))
 		return 1;
 	
-	if (!test_detached_clearsign ("This is a test of detached clearsign using sha1\n",
-				      PGP_HASH_TYPE_SHA1))
+	if (!test_sign ("This is a test of pgp sign using sha1\n",
+			PGP_HASH_TYPE_SHA1))
 		return 1;
 	
 	if (!test_encrypt ("Hello, this is a test\n", strlen ("Hello, this is a test\n")))

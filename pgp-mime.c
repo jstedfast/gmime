@@ -43,7 +43,7 @@ pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer
 
 
 static void
-crlf_filter (GString *string)
+make_pgp_safe (GString *string, gboolean encode_from)
 {
 	gchar *ptr;
 	
@@ -51,6 +51,13 @@ crlf_filter (GString *string)
 	while ((ptr = strchr (ptr, '\n'))) {
 		g_string_insert_c (string, (ptr - string->str), '\r');
 		ptr += 2;
+		if (encode_from && g_strncasecmp (ptr, "From ", 5)) {
+			/* encode "From " as "From=20" */
+			ptr += 4;
+			g_string_erase (string, (ptr - string->str), 1);
+			g_string_insert (string, (ptr - string->str),
+					 "=20");
+		}
 	}
 }
 	
@@ -89,12 +96,12 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	cleartext = g_mime_part_to_string (part, FALSE);
 	string = g_string_new (cleartext);
 	g_free (cleartext);
-	crlf_filter (string);
+	make_pgp_safe (string, TRUE);
 	cleartext = string->str;
 	g_string_free (string, FALSE);
 	
 	/* get the signature */
-	signature = pgp_detached_clearsign (cleartext, userid, hash, ex);
+	signature = pgp_sign (cleartext, strlen (cleartext), userid, hash, ex);
 	g_free (cleartext);
 	if (g_mime_exception_is_set (ex)) {
 		/* restore the original encoding */
@@ -134,6 +141,18 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 }
 
 
+/**
+ * pgp_mime_part_verify_signature:
+ * @mime_part: a multipart/signed MIME Part
+ * @sign_key: key that multipart is signed with
+ * @ex: exception
+ *
+ * Returns TRUE if the signature is valid otherwise returns
+ * FALSE. Note: you may want to check the exception if it fails as
+ * there may be useful information to give to the user; example:
+ * verification may have failed merely because the user doesn't have
+ * the sender's key on her system.
+ **/
 gboolean
 pgp_mime_part_verify_signature (GMimePart *mime_part, const gchar *sign_key, GMimeException *ex)
 {
@@ -144,7 +163,7 @@ pgp_mime_part_verify_signature (GMimePart *mime_part, const gchar *sign_key, GMi
 /**
  * pgp_mime_part_encrypt:
  * @mime_part: a MIME part that will be replaced by a pgp encrypted part
- * @userid: userid to sign with
+ * @recipients: list of recipient PGP Key IDs
  * @ex: exception which will be set if there are any errors.
  *
  * Constructs a PGP/MIME multipart in compliance with rfc2015 and
@@ -198,6 +217,19 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	g_mime_part_destroy (part);
 }
 
+
+/**
+ * pgp_mime_part_decrypt:
+ * @mime_part: a multipart/encrypted MIME Part
+ * @ex: exception
+ *
+ * Attempts to decrypt the multipart/encrypted part and replace it
+ * with the original (decrypted) mime part. #ex will be set on failure
+ * and #mime_part will remain untouched. Note: Currently, on success,
+ * the new mime part will be of the type application/octet-stream as
+ * there is no way to get back the original content-type
+ * information.
+ **/
 void
 pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
 {

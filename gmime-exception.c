@@ -31,9 +31,7 @@
  * g_mime_exception_new: allocate a new exception object. 
  * 
  * Create and returns a new exception object.
- * 
- * 
- * Return value: The newly allocated exception object.
+ * Returns the newly allocated exception object.
  **/
 GMimeException *
 g_mime_exception_new (void)
@@ -50,13 +48,12 @@ g_mime_exception_new (void)
 }
 
 /**
- * g_mime_exception_init: init a (statically allocated) exception. 
+ * g_mime_exception_init: init a (statically allocated) exception.
+ * @ex: exception
  * 
  * Init an exception. This routine is mainly
  * useful when using a statically allocated
- * exception. 
- * 
- * 
+ * exception.
  **/
 void
 g_mime_exception_init (GMimeException *ex)
@@ -72,11 +69,9 @@ g_mime_exception_init (GMimeException *ex)
  * g_mime_exception_clear: Clear an exception
  * @exception: the exception object
  * 
- * Clear an exception, that is, set the 
- * exception ID to GMIME_EXCEPTION_NONE and
- * free the description text.
- * If the exception is NULL, this funtion just
- * returns.
+ * Clear an exception, that is, set the exception ID to
+ * GMIME_EXCEPTION_NONE and free the description text. If the
+ * exception is NULL, this funtion just returns.
  **/
 void 
 g_mime_exception_clear (GMimeException *exception)
@@ -99,9 +94,8 @@ g_mime_exception_clear (GMimeException *exception)
  * g_mime_exception_free: Free an exception 
  * @exception: The exception object to free
  * 
- * Free an exception object. If the exception
- * is NULL, nothing is done, the routine simply
- * returns.
+ * Free an exception object. If the exception is NULL, nothing is
+ * done, the routine simply returns.
  **/
 void 
 g_mime_exception_free (GMimeException *exception)
@@ -153,6 +147,7 @@ g_mime_exception_set (GMimeException *ex,
  * @id: exception id 
  * @format: format of the description string. The format string is
  * used as in printf().
+ * @Varargs: arguments
  * 
  * Set the value of an exception. The exception id is 
  * a unique number representing the exception. The 
@@ -166,7 +161,6 @@ g_mime_exception_set (GMimeException *ex,
  *
  * When @ex is NULL, nothing is done, this routine
  * simply returns.
- *
  **/
 void
 g_mime_exception_setv (GMimeException *ex,

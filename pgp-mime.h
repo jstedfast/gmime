@@ -35,13 +35,13 @@ extern "C" {
 
 void pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data);
 
-void pgp_mime_part_sign (GMimePart **part, const gchar *userid, PgpHashType hash, GMimeException *ex);
+void pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash, GMimeException *ex);
 
-gboolean pgp_mime_part_verify_signature (GMimePart *part, const gchar *sign_key, GMimeException *ex);
+gboolean pgp_mime_part_verify_signature (GMimePart *mime_part, const gchar *sign_key, GMimeException *ex);
 
-void pgp_mime_part_encrypt (GMimePart **part, const GPtrArray *recipients, GMimeException *ex);
+void pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMimeException *ex);
 
-void pgp_mime_part_decrypt (GMimePart **part, GMimeException *ex);
+void pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex);
 
 #ifdef __cplusplus
 }

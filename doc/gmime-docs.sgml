@@ -6,6 +6,9 @@
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-exception SYSTEM "sgml/gmime-exception.sgml">
+<!entity pgp-utils SYSTEM "sgml/pgp-utils.sgml">
+<!entity pgp-mime SYSTEM "sgml/pgp-mime.sgml">
 ]>
 
 <book>
@@ -57,5 +60,8 @@
     &gmime-utils;
     &internet-address;
     &gmime-parser;
+    &gmime-exception;
+    &pgp-utils;
+    &pgp-mime;
   </chapter>
 </book>

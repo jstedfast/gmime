@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="2 Dec 2000">
+<refentry id="gmime-gmime-message" revision="13 Dec 2000">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -57,13 +57,14 @@ void        <link linkend="g-mime-message-add-arbitrary-header">g_mime_message_a
                                              const <link linkend="gchar">gchar</link> *value);
 void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime_part</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePart">GMimePart</link> *mime_part);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-header-printf">g_mime_header_printf</link>            (const <link linkend="gchar">gchar</link> *format,
-                                             ...);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-body">g_mime_message_get_body</link>         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="gboolean">gboolean</link> want_plain,
                                              <link linkend="gboolean">gboolean</link> *is_html);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-headers">g_mime_message_get_headers</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_part</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> data);
 </synopsis>
 </refsynopsisdiv>
 
@@ -527,29 +528,6 @@ Set the root-level MIME part of the message.</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="g-mime-header-printf">g_mime_header_printf ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_header_printf            (const <link linkend="gchar">gchar</link> *format,
-                                             ...);</programlisting>
-<para>
-</para>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>format</parameter>&nbsp;:</entry>
-<entry> string format
-</entry></row>
-<row><entry align="right"><parameter>...</parameter>&nbsp;:</entry>
-<entry> arguments
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the folded header specified
-by <literal>format</literal> and the following arguments.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-message-to-string">g_mime_message_to_string ()</title>
 <programlisting><link linkend="gchar">gchar</link>*      g_mime_message_to_string        (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
@@ -614,6 +592,30 @@ recommended that you traverse the MIME structure yourself.
 <entry> MIME Message
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the raw message headers.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-foreach-part">g_mime_message_foreach_part ()</title>
+<programlisting>void        g_mime_message_foreach_part     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> data);</programlisting>
+<para>
+Calls <link linkend="callback">callback</link> on each of the mime parts in the mime message.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
+<entry> MIME message
+</entry></row>
+<row><entry align="right"><parameter>callback</parameter>&nbsp;:</entry>
+<entry> function to call on each of the mime parts contained by the mime message
+</entry></row>
+<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
+<entry> extra data to pass to the callback
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

@@ -1,3 +1,29 @@
+2000-12-13  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* doc/html/gmime-pgp-utils.html:
+	* doc/html/gmime-pgp-mime.html:
+	* doc/gmime-gmime-exception.html:
+	* doc/sgml/pgp-utils.sgml:
+	* doc/sgml/pgp-mime.sgml:
+	* doc/sgml/gmime-exception.sgml: Added.
+
+	* doc/gmime-docs.sgml: Added gmime-exception, pgp-utils, and
+	pgp-mime.
+
+	* doc/gmime-sections.txt: Updated.
+
+	* README: Updated version string to 0.3.0
+
+	* pgp-mime.c (make_pgp_safe): Convert line endings to the
+	cononical CRLF sequence and also allow encoding of "From " lines
+	("From " -> "From=20").
+
+	* pgp-utils.c (pgp_sign): Renamed from pgp_detached_clearsign as
+	that's not what we wanted, what we want instead is a
+	signature. Also takes an inlen argument because you can sign
+	binary data.
+	(pgp_clearsign): Now takes a hash argument.
+
 2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_to_string): Wrap some content-*
