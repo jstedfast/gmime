@@ -1,3 +1,16 @@
+2005-03-12  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/GMime.metadata: Tag the return values of
+	MessagePart.Message, Message.MimePart, Multipart.GetPart() and
+	Multipart.GetSubpartFromContentId() as "owned", meaning that
+	gtk-sharp should not ref them but take ownership of the single
+	reference that's returned from the underlying C functions.
+
+	* mono/Message.custom: Don't instantiate InternetAddress
+	objects, just deal with the C APIs directly.  This saves us a
+	lot of allocations and fixes a bug in gtk-sharp where opaque
+	objects would leak references.
+
 2005-03-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-header.c (g_mime_header_prepend): New function to

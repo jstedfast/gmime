@@ -17,24 +17,38 @@ public ICollection GetRecipients (RecipientType type)
 	return new InternetAddress.InternetAddressList (raw_ret);
 }
 
+[DllImport("gmime")]
+static extern IntPtr internet_address_list_get_address (IntPtr raw);
+
+[DllImport("gmime")]
+static extern IntPtr internet_address_to_string(IntPtr raw, bool encode);
+
+[DllImport("gmime")]
+static extern IntPtr internet_address_list_next (IntPtr raw);
+
 public string GetRecipientsAsString (RecipientType type, bool encode)
 {
-	ICollection collection = this.GetRecipients (type);
+	IntPtr raw_list = g_mime_message_get_recipients (Handle, type.ToString ());
 
-	if (collection == null)
+	if (raw_list == IntPtr.Zero)
 		return null;
 
 	System.Text.StringBuilder sb = new System.Text.StringBuilder ();
-
 	bool first = true;
 
-	foreach (InternetAddress addr in collection) {
+	while (raw_list != IntPtr.Zero) {
+		IntPtr raw_ia = internet_address_list_get_address (raw_list);
+		IntPtr raw_str = internet_address_to_string (raw_ia, encode);
+
 		if (!first)
 			sb.Append (", ");
 		else
 			first = false;
 
-		sb.Append (addr.ToString (encode));
+
+		sb.Append (GLib.Marshaller.PtrToStringGFree (raw_str));
+
+		raw_list = internet_address_list_next (raw_list);
 	}
 
 	return sb.ToString ();
