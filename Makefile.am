@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html test-pgp test-pgpmime
 
 bin_SCRIPTS = gmime-config
 
@@ -25,6 +25,7 @@ libgmime_la_SOURCES = 		\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
 	gmime-filter-crlf.c	\
+	gmime-filter-from.c	\
 	gmime-filter-html.c	\
 	gmime-header.c		\
 	gmime-message.c		\
@@ -38,6 +39,7 @@ libgmime_la_SOURCES = 		\
 	gmime-stream-filter.c	\
 	gmime-stream-fs.c	\
 	gmime-stream-mem.c	\
+	gmime-stream-mmap.c	\
 	gmime-stream-null.c	\
 	gmime-utils.c		\
 	internet-address.c	\
@@ -56,6 +58,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-crlf.h	\
+	gmime-filter-from.h	\
 	gmime-filter-html.h	\
 	gmime-header.h		\
 	gmime-message.h		\
@@ -69,6 +72,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-stream-filter.h	\
 	gmime-stream-fs.h	\
 	gmime-stream-mem.h	\
+	gmime-stream-mmap.h	\
 	gmime-stream-null.h	\
 	gmime-utils.h		\
 	internet-address.h	\
