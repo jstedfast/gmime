@@ -55,7 +55,7 @@ test_parser (GMimeStream *stream)
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
 	ZenTimerStart();
-	message = g_mime_parser_construct_message (stream, TRUE);
+	message = g_mime_parser_construct_message (stream);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::parser_construct_message");
 	

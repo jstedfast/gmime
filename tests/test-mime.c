@@ -39,7 +39,7 @@ test_parser (char *data)
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
 	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
-	message = g_mime_parser_construct_message (stream, TRUE);
+	message = g_mime_parser_construct_message (stream);
 	g_mime_stream_unref (stream);
 	
 	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
