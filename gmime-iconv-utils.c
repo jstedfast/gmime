@@ -103,11 +103,10 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	
 	/* flush the iconv conversion */
 	iconv (cd, NULL, NULL, &outbuf, &outleft);
+	*outbuf = '\0';
 	
 	/* reset the cd */
 	iconv (cd, NULL, NULL, NULL, NULL);
-	
-	out[outlen - outleft] = '\0';
 	
 	return out;
 	
