@@ -6,6 +6,7 @@
 <!entity percent "%">
 <!entity gmime-Init SYSTEM "sgml/gmime.sgml">
 <!entity GMimeSession SYSTEM "sgml/gmime-session.sgml">
+<!entity GMimeSessionSimple SYSTEM "sgml/gmime-session-simple.sgml">
 <!entity GMimeParam SYSTEM "sgml/gmime-param.sgml">
 <!entity GMimeHeader SYSTEM "sgml/gmime-header.sgml">
 <!entity GMimeContentType SYSTEM "sgml/gmime-content-type.sgml">
@@ -229,6 +230,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <chapter id="Sessions">
       <title>Sessions</title>
       &GMimeSession;
+      &GMimeSessionSimple;
     </chapter>
   </part>
 </book>

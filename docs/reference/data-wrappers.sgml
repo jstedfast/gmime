@@ -10,11 +10,13 @@
   </refnamediv>
   <refsect1 id="data-wrapper-overview">
     <title>Overview of Data Wrappers</title>
-    <para>Data wrappers are a very simple concept. They wrap
-    data. Actually, they wrap around a source stream and contain
-    information about the format of the source stream. This makes
-    writing a data wrapper to a stream incredibly easy because it will
-    decode the data into its raw form before writing it to the output
-    stream for you.</para>
+    
+    <para>Data wrappers are very simple. A GMimeDataWrapper object
+    contains both a stream and an encoding-type. The encoding-type
+    (such as GMIME_PART_ENCODING_BASE64) is used by
+    g_mime_data_wrapper_write_to_stream() in order to decode the data
+    into its unencoded form. This means that you, the application
+    programmer, do not need to worry about decoding the content stream
+    yourself.</para>
   </refsect1>
 </refentry>

@@ -1,5 +1,10 @@
 2003-05-17  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* docs/reference/streams.sgml: Updated for correctness.
+
+	* docs/reference/data-wrappers.sgml: Pretty much re-written to
+	better explain GMimeDataWrapper.
+
 	* gmime/gmime-session-simple.[c,h]: New simple instantiable class
 	implementing the GMimeSession interfaces.
 

@@ -11,7 +11,10 @@
   <refsect1 id="stream-overview">
     <title>Overview of Streams</title>
     <para>Streams are the fundamental method for reading and writing
-    data used by GMime.</para>
+    data used by GMime. You'll probably notice that the basic API is 
+    similar to that of the low-level Unix I/O layer (read(), write(), 
+    lseek(), etc) with some additional nicities such as a printf-like 
+    function.</para>
 
     <para>The three (3) basic stream types are: GMimeStreamFile,
     GMimeStreamFs and GMimeStreamMem. You can manipulate all three
@@ -22,13 +25,11 @@
     <para>GMimeStreamFile and GMimeStreamFs are very similar in that
     they are both meant for reading and writing data to the file
     system (in the form of files). Since GMimeStreamFile is an
-    abstracted layer above the libc FILE type, one of the added
-    benefits is buffered I/O. GMimeStreamFs, on the other hand, is an
-    abstracted layer above UNIX file descriptors. While a
-    GMimeStreamFs can be used on top of a UNIX socket, you must be
-    careful because sockets are not seekable. It is suggested that you
-    use a GMimeStreamBuffer in cache mode if you intend to be able to
-    seek, we will get to this advanced stream type later.</para>
+    abstracted layer above the standard libc FILE type, one of the
+    added benefits is buffered I/O. GMimeStreamFs, on the other hand,
+    is an abstracted layer above Unix file descriptors. While a
+    GMimeStreamFs can be used on top of a UNIX socket or pipe, you
+    must be careful because sockets and pipes are not seekable.</para>
 
     <para>Unlike the previous 2 stream types, GMimeStreamMem does not
     interact with the file system at all (except maybe the swap
@@ -37,33 +38,36 @@
     want to create a temporary file on disk.</para>
 
     <para>The four (4) advanced stream types are GMimeStreamMmap,
-    GMimeStreamNull, GMimeStreamBuffer (as was mentioned previously)
-    and GMimeStreamFilter.</para>
+    GMimeStreamNull, GMimeStreamBuffer and GMimeStreamFilter.</para>
 
     <para>Our most simple stream, GMimeStreamNull, is the stream
     equivalent of /dev/null on Unix systems. The main difference is
-    that GMimeStreamNull records the number of bytes written to
-    it.</para>
+    that GMimeStreamNull records the number of bytes written to it -
+    you may find this useful if you need to know the number of bytes a
+    GMimeObject (for example) will require.</para>
 
     <para>GMimeStreamMmap is a memory-mapped stream. This isn't
     guarenteed to work on all systems since not all systems support
     the POSIX mmap system call, but for those that do - this might
     present a faster stream than GMimeStreamFs and/or
-    GMimeStreamFile.</para>
+    GMimeStreamFile. You'll have to do some experimentation to know
+    for sure.</para>
 
-    <para>The GMimeStreamBuffer type inherits from any other type of
-    stream and has 3 modes: block reads, block writes, and cached
+    <para>The GMimeStreamBuffer can be used on top of any other type
+    of stream and has 3 modes: block reads, block writes, and cached
     reads. Block reads are especially useful if you will be making a
     lot of small reads from a stream that accesses the file
     system. Block writes are useful for very much the same reason. The
     final mode, cached reads, can become memory intensive but can be
     very helpful when inheriting from a stream that does not support
-    seeking.</para>
+    seeking (Note: this mode is the least tested so be careful using
+    it).</para>
 
-    <para>Our final stream type, GMimeStreamFilter, also inherits from
-    another stream. This stream, as you may have guessed, filters
-    reads and writes to its inherited stream. For example, one could
-    write a compression filter and apply it to a GMimeStreamFilter and
-    any further reads or writes would be compressed.</para>
+    <para>Our final stream type, GMimeStreamFilter, can also be used
+    on top of another stream. This stream, as you may have guessed,
+    filters reads and writes to its inherited stream. For example, one
+    could write a compression filter and apply it to a
+    GMimeStreamFilter and any further reads or writes would be
+    (un)compressed.</para>
   </refsect1>
 </refentry>

@@ -35,4 +35,5 @@ GObject
   GMimeCipherContext
     GMimeGpgContext
   GMimeSession
+    GMimeSessionSimple
 InternetAddress
