@@ -971,7 +971,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	else
 		content = g_byte_array_new ();
 	
-	*found = parser_scan_content (parser, NULL);
+	*found = parser_scan_content (parser, content);
 	if (*found != FOUND_EOS) {
 		/* last '\n' belongs to the boundary */
 		if (priv->seekable)

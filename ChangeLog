@@ -1,3 +1,8 @@
+2002-08-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_scan_mime_part_content): Pass `content'
+	into parser_scan_content(), fixes bug #92183.
+
 2002-08-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.90.1
