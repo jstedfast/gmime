@@ -1058,15 +1058,17 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		}
 		
 		if (gmime_interfaces_utf8) {
+			const char *charset;
 			unsigned char *buf;
-			char *charset, *p;
+			char *charenc, *p;
 			size_t len;
 			iconv_t cd;
 			
 			len = (inptr - 3) - (in + 2);
-			charset = alloca (len + 1);
-			memcpy (charset, in + 2, len);
-			charset[len] = '\0';
+			charenc = alloca (len + 1);
+			memcpy (charenc, in + 2, len);
+			charenc[len] = '\0';
+			charset = charenc;
 			
 			/* rfc2231 updates rfc2047 encoded words...
 			 * The ABNF given in RFC 2047 for encoded-words is:

@@ -114,8 +114,9 @@ rfc2184_decode (const char *in, size_t len)
 {
 	const char *inptr = in;
 	const char *inend = in + len;
+	const char *charset = NULL;
 	char *decoded = NULL;
-	char *charset;
+	char *charenc;
 	
 	/* skips to the end of the charset / beginning of the locale */
 	inptr = memchr (inptr, '\'', len);
@@ -124,9 +125,10 @@ rfc2184_decode (const char *in, size_t len)
 	
 	/* save the charset */
 	len = inptr - in;
-	charset = alloca (len + 1);
-	memcpy (charset, in, len);
-	charset[len] = '\0';
+	charenc = alloca (len + 1);
+	memcpy (charenc, in, len);
+	charenc[len] = '\0';
+	charset = charenc;
 	
 	/* skip to the end of the locale */
 	inptr = memchr (inptr + 1, '\'', (unsigned int) (inend - inptr - 1));
