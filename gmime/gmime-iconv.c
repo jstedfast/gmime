@@ -82,7 +82,6 @@ iconv_cache_bucket_new (const char *key, iconv_t cd)
 	struct _iconv_cache_bucket *bucket;
 	
 	bucket = memchunk_alloc (cache_chunk);
-	bucket->next = NULL;
 	bucket->prev = NULL;
 	bucket->key = g_strdup (key);
 	bucket->refcount = 1;
@@ -97,6 +96,8 @@ iconv_cache_bucket_new (const char *key, iconv_t cd)
            expire first? */
 	bucket->next = iconv_cache_buckets;
 	iconv_cache_buckets = bucket;
+	if (bucket->next)
+		bucket->next->prev = bucket;
 	
 	iconv_cache_size++;
 	
@@ -237,10 +238,10 @@ g_mime_iconv_open (const char *to, const char *from)
 	}
 	
 	if (!g_strcasecmp (from, "x-unknown"))
-		from = g_mime_locale_charset ();
+		from = g_mime_charset_locale_name ();
 	
-	from = g_mime_charset_iconv_name (from);
-	to = g_mime_charset_iconv_name (to);
+	from = g_mime_charset_name (from);
+	to = g_mime_charset_name (to);
 	key = g_alloca (strlen (from) + strlen (to) + 2);
 	sprintf (key, "%s:%s", from, to);
 	
@@ -273,7 +274,8 @@ g_mime_iconv_open (const char *to, const char *from)
 		if (cd == (iconv_t) -1)
 			goto exception;
 		
-		iconv_cache_expire_unused ();
+		if (iconv_cache_size >= ICONV_CACHE_SIZE)
+			iconv_cache_expire_unused ();
 		
 		bucket = iconv_cache_bucket_new (key, cd);
 	}
