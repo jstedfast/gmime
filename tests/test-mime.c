@@ -157,22 +157,41 @@ test_encodings (void)
 {
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
+
+	fprintf (stderr, "hello\n");
+
+	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+
+	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+
+	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
 	
 	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr");
 	fprintf (stderr, "encoded: %s\n", enc);
-	
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	
 	g_free (enc);
 	g_free (dec);
 	
 	enc = g_mime_utils_8bit_header_encode_phrase ("Kristoffer Brånemyr");
 	fprintf (stderr, "encoded: %s\n", enc);
-	
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	
 	g_free (enc);
 	g_free (dec);
 	
@@ -258,8 +277,34 @@ test_addresses (void)
 	}
 }
 
+void
+test_date (void)
+{
+	gint offset = 0;
+	gchar * in = NULL;
+	gchar * out = NULL;
+	time_t date = 0;
+
+	in = "Mon, 17 Jan 1994 11:14:55 -0500";
+	fprintf (stderr, "date  in: [%s]\n", in);
+	date = g_mime_utils_header_decode_date (in, &offset);
+	out = g_mime_utils_header_format_date (date, offset);
+	fprintf (stderr, "date out: [%s]\n", out);
+	g_free (out);
+
+	in = "Mon, 17 Jan 01 11:14:55 -0500";
+	fprintf (stderr, "date  in: [%s]\n", in);
+	date = g_mime_utils_header_decode_date (in, &offset);
+	out = g_mime_utils_header_format_date (date, offset);
+	fprintf (stderr, "date out: [%s]\n", out);
+	g_free (out);
+}
+
+
 int main (int argc, char *argv[])
 {
+	test_date ();
+
 	test_onepart ();
 	
 	test_multipart ();
