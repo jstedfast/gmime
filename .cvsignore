@@ -23,9 +23,11 @@ gmime-config
 gmimeConf.sh
 gen-table
 gen-multibyte
-test-parser
 test-mime
+test-parser
+test-partial
 test-streams
+test-mbox
 test-html
 test-iconv
 gmime.spec
