@@ -131,13 +131,14 @@ parse_content_headers (const char *headers, int inlen,
 		const int type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
-		char *field, *value;
+		char *header = NULL;
+		char *value;
 		
 		if (type == -1) {
 			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
 				break;
-			field = g_strndup (inptr, hvalptr - inptr);
-			g_strstrip (field);
+			header = g_strndup (inptr, hvalptr - inptr);
+			g_strstrip (header);
 			hvalptr++;
 		} else {
 			hvalptr = inptr + strlen (content_headers[type]);
@@ -147,7 +148,7 @@ parse_content_headers (const char *headers, int inlen,
 			if (*hvalend == '\n' && !isblank (*(hvalend + 1)))
 				break;
 		
-		value = g_strndup (hvalptr, (gint) (hvalend - hvalptr));
+		value = g_strndup (hvalptr, (int) (hvalend - hvalptr));
 		
 		header_unfold (value);
 		g_strstrip (value);
@@ -212,10 +213,9 @@ parse_content_headers (const char *headers, int inlen,
 		}
 		default:
 			/* possibly save the raw header */
-			if (!strncasecmp (field, "Content-", 8)) {
-				g_mime_part_set_content_header (mime_part, field, value);
-				g_free (field);
-			}
+			if (!strncasecmp (header, "Content-", 8))
+				g_mime_part_set_content_header (mime_part, header, value);
+			g_free (header);
 			break;
 		}
 		
@@ -407,9 +407,9 @@ static char *fields[] = {
 };
 
 static gboolean
-special_header (const char *field)
+special_header (const char *header)
 {
-	return (!strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
+	return (!strcasecmp (header, "MIME-Version:") || content_header (header) != -1);
 }
 
 static void

@@ -1,6 +1,15 @@
+2001-11-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.c (stream_seek): Implemented.
+
+	* gmime-parser.c (parse_content_headers): Fixed another memory
+	leak here.
+
+	* gmime-param.c (decode_param_list): Fixed a small memory leak.
+
 2001-11-22  Jeffrey stedfast  <fejj@ximian.com>
 
-	* gmime-filter-from.[c,h]: New filter to escapre from-lines.
+	* gmime-filter-from.[c,h]: New filter to escape from-lines.
 
 	* pan-mime-parser.c (parser_read_until_boundary): Slight
 	optimization.

@@ -423,7 +423,11 @@ decode_param_list (const char **in)
 				}
 			}
 			
-			param = g_mime_param_new (name, value);
+			param = g_new (GMimeParam, 1);
+			param->next = NULL;
+			param->name = name;
+			param->value = value;
+			
 			if (head == NULL)
 				head = param;
 			if (tail)
