@@ -42,16 +42,16 @@ Find answers to common questions in the GMime manual
         <qandaentry>
           <question><para>How does memory management work in GMime? Should I free data returned from functions?</para></question>
           <answer>
-            <para>See the documentation for <link
-            linkend="GObject">GObject</link>. For <link
-            linkend="GObject">GObject</link> note specifically <link
-            linkend="g-object-ref">g_object_ref()</link> and <link
-            linkend="g-object-unref">g_object_unref()</link>.
+            <para>See the documentation for <ulink
+            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink>. For <ulink
+            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink> note specifically <ulink
+            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html#g-object-ref">g_object_ref()</ulink> and <ulink
+            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html#g-object-unref">g_object_unref()</ulink>.
             </para>
             <para>For strings returned from functions, they will be
             declared "const" if they should not be freed. Non-const
-            strings should be freed with <link
-            linkend="g-free">g_free()</link>. Arrays follow the same
+            strings should be freed with <ulink
+            url="http://developer.gnome.org/doc/API/2.0/glib/glib-Memory-Allocation.html#g-free">g_free()</ulink>. Arrays follow the same
             rule.  (If you find an exception to the rules, please
             report a bug to <ulink
             url="http://bugzilla.gnome.org">http://bugzilla.gnome.org</ulink>.)
@@ -61,24 +61,24 @@ Find answers to common questions in the GMime manual
         <qandaentry>
           <question><para>How do I use GMime with threads?</para></question>
           <answer>
-            <para>First, read the <link
-            linkend="glib-Threads">GThread</link> documentation for
+            <para>First, read the <ulink
+            url="http://developer.gnome.org/doc/API/2.0/glib/glib-Threads.html">GThread</ulink> documentation for
             portable threading primitives.</para>
             <para>Secondly, all functions in <link
             linkend="gmime-charset">gmime-charset</link>, <link
             linkend="gmime-iconv">gmime-iconv</link> and <link
             linkend="gmime-utils">gmime-utils</link> should be
-            thread-safe. Objects subclassing <link
-            linkend="GObject">GObject</link> are not.
+            thread-safe. Objects subclassing <ulink
+            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink> are not.
             </para>
           </answer>
         </qandaentry>
         <qandaentry>
           <question><para>How do I use GMime with C++?</para></question>
           <answer>
-            <para>There are two ways to approach this. The GMime
-            header files use the subset of C that's also valid C++, so you can
-            simply use the normal GMime API in a C++ program.</para>
+            <para>The GMime header files use the subset of C that's
+            also valid C++, so you can simply use the normal GMime API
+            in a C++ program.</para>
           </answer>
         </qandaentry>
         <qandaentry>
