@@ -33,6 +33,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-filter-crlf.c		\
 	gmime-filter-enriched.c		\
 	gmime-filter-from.c		\
+	gmime-filter-gzip.c		\
 	gmime-filter-html.c		\
 	gmime-filter-md5.c		\
 	gmime-filter-strip.c		\
@@ -82,6 +83,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-crlf.h		\
 	gmime-filter-enriched.h		\
 	gmime-filter-from.h		\
+	gmime-filter-gzip.h		\
 	gmime-filter-html.h		\
 	gmime-filter-md5.h		\
 	gmime-filter-strip.h		\

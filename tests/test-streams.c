@@ -95,8 +95,7 @@ test_stream_read (GMimeStream *stream, const char *filename)
 	
 	test_push ("stream_read");
 	
-	fd = open (filename, O_RDONLY);
-	if (fd == -1) {
+	if ((fd = open (filename, O_RDONLY)) == -1) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
@@ -105,7 +104,7 @@ test_stream_read (GMimeStream *stream, const char *filename)
 	slen = rlen = 0;
 	while (!g_mime_stream_eos (stream)) {
 		slen = g_mime_stream_read (stream, sbuf, sizeof (sbuf));
-		rlen = read (fd, rbuf, sizeof (rbuf));
+		rlen = read (fd, rbuf, slen);
 		if (slen != rlen || memcmp (sbuf, rbuf, slen))
 			break;
 	}
@@ -130,8 +129,7 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	
 	test_push ("stream_gets");
 	
-	fp = fopen (filename, "r+");
-	if (fp == NULL) {
+	if (!(fp = fopen (filename, "r+"))) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
@@ -165,8 +163,7 @@ test_stream_buffer (const char *filename)
 	
 	test_push ("GMimeStreamBuffer");
 	
-	fd = open (filename, O_RDONLY);
-	if (fd == -1) {
+	if ((fd = open (filename, O_RDONLY)) == -1) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
@@ -214,8 +211,7 @@ test_stream_mem (const char *filename)
 	
 	test_push ("GMimeStreamMem");
 	
-	fd = open (filename, O_RDONLY);
-	if (fd == -1) {
+	if ((fd = open (filename, O_RDONLY)) == -1) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
@@ -242,8 +238,7 @@ test_stream_fs (const char *filename)
 	
 	test_push ("GMimeStreamFs");
 	
-	fd = open (filename, O_RDONLY);
-	if (fd == -1) {
+	if ((fd = open (filename, O_RDONLY)) == -1) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
@@ -264,14 +259,37 @@ test_stream_file (const char *filename)
 	
 	test_push ("GMimeStreamFile");
 	
-	fp = fopen (filename, "r+");
-	if (fp == NULL) {
+	if (!(fp = fopen (filename, "r+"))) {
 		g_warning ("failed to open %s", filename);
 		test_pop ();
 		return;
 	}
 	
 	stream = g_mime_stream_file_new (fp);
+	test_stream_read (stream, filename);
+	g_mime_stream_unref (stream);
+	
+	test_pop ();
+}
+
+static void
+test_stream_filter (const char *filename)
+{
+	GMimeStream *stream, *istream;
+	int fd;
+	
+	test_push ("GMimeStreamFilter");
+	
+	if ((fd = open (filename, O_RDONLY)) == -1) {
+		g_warning ("failed to open %s", filename);
+		test_pop ();
+		return;
+	}
+	
+	istream = g_mime_stream_fs_new (fd);
+	stream = g_mime_stream_filter_new_with_stream (istream);
+	g_object_unref (istream);
+	
 	test_stream_read (stream, filename);
 	g_mime_stream_unref (stream);
 	
@@ -290,6 +308,7 @@ int main (int argc, char **argv)
 		test_stream_fs (argv[i]);
 		test_stream_mem (argv[i]);
 		test_stream_buffer (argv[i]);
+		test_stream_filter (argv[i]);
 	}
 	
 	g_mime_shutdown ();

@@ -1,3 +1,8 @@
+2004-05-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-filter-gzip.c: New filter for compressing/inflating
+	gzip streams.
+
 2004-05-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-message.c (write_received): Be careful to never

@@ -75,36 +75,11 @@ dnl Check for working mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(munmap msync)
 
-dnl Specific dir for HTML output ?
-AC_ARG_WITH(html-dir, [  --with-html-dir=PATH path to installed docs ])
-if test "x$with_html_dir" = "x" ; then
-  HTML_DIR='${datadir}/gtk-doc/html'
-else
-  HTML_DIR=$with_html_dir
-fi
-
-AC_SUBST(HTML_DIR)
-
 dnl ******************************
 dnl gtk-doc
 dnl ******************************
 
-AC_CHECK_PROG(GTKDOC, gtkdoc-mkdb, true, false)
-AM_CONDITIONAL(HAVE_GTK_DOC, $GTKDOC)
-AC_SUBST(HAVE_GTK_DOC)
-
-dnl Make people disable the gtk-doc stuff explicitly.
-AC_ARG_ENABLE(gtk-doc, [  --enable-gtk-doc        Use gtk-doc to build documentation [default=auto]], enable_gtk_doc="$enableval", enable_gtk_doc="auto")
-
-if test "x$enable_gtk_doc" = "xauto" ; then
-  if test "x$GTKDOC" = "xtrue" ; then
-    enable_gtk_doc="yes"
-  else
-    enable_gtk_doc="no"
-  fi
-fi
-
-AC_SUBST(enable_gtk_doc)
+GTK_DOC_CHECK([1.0])
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.
@@ -134,6 +109,12 @@ glib_cflags="$GLIB_CFLAGS"
 glib_libs="$GLIB_LIBS"
 AC_SUBST(glib_cflags)
 AC_SUBST(glib_libs)
+
+dnl *****************************
+dnl *** Checks for zlib       ***
+dnl *****************************
+AC_CHECK_HEADERS(zlib.h)
+AC_CHECK_LIB(z, inflate, ZLIB="-lz")
 
 dnl *****************************
 dnl *** Checks for libnsl     ***
@@ -313,8 +294,9 @@ AM_CONDITIONAL(ENABLE_IPv6, test "x$enable_ipv6" = "xyes")
 
 
 dnl Extra libs
+EXTRA_LIBS="$ZLIB"
 if test "x$LIBNSL" != "x"; then
-	EXTRA_LIBS="$LIBNSL"
+	EXTRA_LIBS="$EXTRA_LIBS $LIBNSL"
 fi
 if test "x$LIBICONV" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $LIBICONV"
