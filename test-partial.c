@@ -102,11 +102,12 @@ int main (int argc, char **argv)
 	
 	message = g_mime_message_partial_reconstruct_message ((GMimeMessagePartial **) partials->pdata,
 							      partials->len);
+	g_ptr_array_free (partials, TRUE);
 	if (!message)
 		return -4;
 	
 	stream = g_mime_stream_fs_new (STDERR_FILENO);
-	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
+	/*g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);*/
 	
 	print_mime_struct (message->mime_part, 0);
 	

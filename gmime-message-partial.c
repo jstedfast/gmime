@@ -209,12 +209,14 @@ g_mime_message_partial_get_total (GMimeMessagePartial *partial)
 
 
 static int
-partial_compare (const void *partial1, const void *partial2)
+partial_compare (const void *v1, const void *v2)
 {
+	GMimeMessagePartial **partial1 = (GMimeMessagePartial **) v1;
+	GMimeMessagePartial **partial2 = (GMimeMessagePartial **) v2;
 	int num1, num2;
 	
-	num1 = g_mime_message_partial_get_number (GMIME_MESSAGE_PARTIAL (partial1));
-	num2 = g_mime_message_partial_get_number (GMIME_MESSAGE_PARTIAL (partial2));
+	num1 = g_mime_message_partial_get_number (*partial1);
+	num2 = g_mime_message_partial_get_number (*partial2);
 	
 	return num1 - num2;
 }
@@ -249,7 +251,7 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 		return NULL;
 	
 	/* get them into the correct order... */
-	qsort ((void *) partials, num, sizeof (GMimeMessagePartial *),
+	qsort ((void *) partials, num, sizeof (gpointer),
 	       partial_compare);
 	
 	/* only the last message/partial part is REQUIRED to have the total parameter */
