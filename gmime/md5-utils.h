@@ -36,7 +36,7 @@ typedef struct {
 } MD5Context ;
 
 
-void md5_get_digest (const char *buffer, int buffer_size, unsigned char digest[16]);
+void md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16]);
 
 /* use this one when speed is needed */
 /* for use in provider code only */

@@ -1,5 +1,13 @@
 2002-05-20  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-part.c (g_mime_part_set_content_md5): Fix some compiler
+	warnings as well as doing some more error handling.
+	(g_mime_part_verify_content_md5): Same.
+
+	* md5-utils.c: Removed some compiler warnings.
+
+2002-05-20  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-stream-cat.c (stream_seek): Return the absolute offset
 	into the cat stream rather than the relative offset of one of the
 	substreams on success. Fixed a few other things too.

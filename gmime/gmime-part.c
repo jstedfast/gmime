@@ -561,9 +561,10 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	} else if (mime_part->content && mime_part->content->stream) {
 		GMimePartEncodingType encoding;
 		char digest[16], b64digest[32];
-		int len, state, save;
 		GMimeStream *stream;
 		GByteArray *buf;
+		int state, save;
+		size_t len;
 		
 		encoding = g_mime_data_wrapper_get_encoding (mime_part->content);
 		stream = g_mime_data_wrapper_get_stream (mime_part->content);
@@ -574,20 +575,21 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		}
 		
 		buf = GMIME_STREAM_MEM (stream)->buffer;
+		len = g_mime_stream_length (stream);
 		
-		md5_get_digest (buf->data + stream->bound_start,
-				g_mime_stream_length (stream),
-				digest);
+		if (len != (size_t) -1) {
+			md5_get_digest (buf->data + stream->bound_start, len, digest);
+			
+			state = save = 0;
+			len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+			b64digest[len] = '\0';
+			
+			mime_part->content_md5 = g_strdup (b64digest);
+			
+			g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", b64digest);
+		}
 		
 		g_mime_stream_unref (stream);
-		
-		state = save = 0;
-		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
-		b64digest[len] = '\0';
-		
-		mime_part->content_md5 = g_strdup (b64digest);
-		
-		g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", b64digest);
 	}
 }
 
@@ -606,9 +608,10 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 {
 	GMimePartEncodingType encoding;
 	char digest[16], b64digest[32];
-	int len, state, save;
 	GMimeStream *stream;
 	GByteArray *buf;
+	int state, save;
+	size_t len;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
 	g_return_val_if_fail (mime_part->content != NULL, FALSE);
@@ -625,16 +628,19 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	}
 	
 	buf = GMIME_STREAM_MEM (stream)->buffer;
+	len = g_mime_stream_length (stream);
 	
-	md5_get_digest (buf->data + stream->bound_start,
-			g_mime_stream_length (stream),
-			digest);
+	if (len != (size_t) -1) {
+		md5_get_digest (buf->data + stream->bound_start, len, digest);
+		
+		state = save = 0;
+		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+		b64digest[len] = '\0';
+	} else {
+		b64digest[0] = '\0';
+	}
 	
 	g_mime_stream_unref (GMIME_STREAM (stream));
-	
-	state = save = 0;
-	len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
-	b64digest[len] = '\0';
 	
 	return !strcmp (b64digest, mime_part->content_md5);
 }

@@ -25,6 +25,7 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <sys/types.h>
 #include "md5-utils.h"
 
 #define d(x)
@@ -301,7 +302,7 @@ md5_transform (guint32 buf[4], const guint32 in[16])
  * the 16 bytes buffer @digest .
  **/
 void
-md5_get_digest (const char *buffer, int buffer_size, unsigned char digest[16])
+md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16])
 {	
 	MD5Context ctx;
 
@@ -324,8 +325,8 @@ void
 md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 {	
 	MD5Context ctx;
-	unsigned char tmp_buf[1024];
-	int nb_bytes_read;
+	unsigned char buf[1024];
+	size_t nread;
 	FILE *fp;
 	
 	d(fprintf (stderr, "generating checksum\n"));
@@ -335,8 +336,8 @@ md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 	if (!fp)
 		return;
 	
-	while ((nb_bytes_read = fread (tmp_buf, 1, 1024, fp)) > 0)
-		md5_update (&ctx, tmp_buf, nb_bytes_read);
+	while ((nread = fread (buf, 1, 1024, fp)) > 0)
+		md5_update (&ctx, buf, nread);
 	
 	if (ferror (fp)) {
 		fclose (fp);

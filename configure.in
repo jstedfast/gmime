@@ -106,7 +106,7 @@ fi
 dnl Turn on a bunch of warnings
 AC_ARG_ENABLE(warnings, [  --enable-warnings		Enable a bunch of compile warning options], enable_warnings="$enableval", enable_warnings=no)
 if test x$enable_warnings = xyes; then
-  CFLAGS="$CFLAGS -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
+  CFLAGS="$CFLAGS -Wall -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
 fi
 
 dnl We need at *least* glib 2.0.0
