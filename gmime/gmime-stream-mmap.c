@@ -37,12 +37,12 @@
 
 #include "gmime-stream-mmap.h"
 
-static void g_mime_stream_null_base_class_init (GMimeStreamNullClass *klass);
-static void g_mime_stream_null_base_class_finalize (GMimeStreamNullClass *klass);
-static void g_mime_stream_null_class_init (GMimeStreamNullClass *klass);
-static void g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass);
-static void g_mime_stream_null_destroy (GMimeStreamNull *stream);
-static void g_mime_stream_null_finalize (GObject *object);
+static void g_mime_stream_mmap_base_class_init (GMimeStreamMmapClass *klass);
+static void g_mime_stream_mmap_base_class_finalize (GMimeStreamMmapClass *klass);
+static void g_mime_stream_mmap_class_init (GMimeStreamMmapClass *klass);
+static void g_mime_stream_mmap_init (GMimeStreamMmap *stream, GMimeStreamMmapClass *klass);
+static void g_mime_stream_mmap_destroy (GMimeStreamMmap *stream);
+static void g_mime_stream_mmap_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);

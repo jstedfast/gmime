@@ -1,5 +1,8 @@
 2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-file.c: Updated to subclass the new GMimeStream
+	based on GObject.
+
 	* gmime-stream-mmap.c: Updated to subclass the new GMimeStream
 	based on GObject.
 
