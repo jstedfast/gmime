@@ -87,8 +87,7 @@ get_mime_part (const gchar *in, guint inlen)
 		
 		switch (content_header (inptr)) {
 		case CONTENT_DESCRIPTION:
-			desc = inptr + strlen ("Content-Description:");
-			
+			desc = inptr + strlen ("Content-Description:");			
 			for (eptr = desc; eptr < inend; eptr++)
 				if (*eptr == '\n' && !isblank (*(eptr + 1)))
 					break;
@@ -139,10 +138,12 @@ get_mime_part (const gchar *in, guint inlen)
 					boundary = g_strdup_printf ("\n--%s", boundary);
 					end_boundary = g_strdup_printf ("%s--", boundary);
 				} else {
-					g_warning ("Invalid MIME structure: boundary not found for multipart");
+					g_warning ("Invalid MIME structure: boundary not found for multipart"
+						   " - defaulting to text/plain.");
 					/* lets continue onward as if this was not a multipart */
+					g_mime_content_type_destroy (mime_type);
+					mime_type = g_mime_content_type_new ("text", "plain");
 					is_multipart = FALSE;
-					boundary = NULL;
 				}
 			}
 			
@@ -359,7 +360,7 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 			break;
 		case HEADER_SUBJECT:
 			raw = g_mime_utils_8bit_header_decode (value);
-			g_mime_message_set_subject (message, value);
+			g_mime_message_set_subject (message, raw);
 			g_free (raw);
 			break;
 		case HEADER_DATE:

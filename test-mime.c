@@ -157,7 +157,16 @@ int main (int argc, char *argv[])
 	
 	test_multipart ();
 	
-	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr <ztion@swipnet.se>");
+	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr");
+	fprintf (stderr, "encoded: %s\n", enc);
+	
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_mime_utils_8bit_header_encode_phrase ("Kristoffer Brånemyr");
 	fprintf (stderr, "encoded: %s\n", enc);
 	
 	dec = g_mime_utils_8bit_header_decode (enc);
@@ -167,6 +176,15 @@ int main (int argc, char *argv[])
 	g_free (dec);
 	
 	enc = g_mime_utils_8bit_header_encode ("åaåååaåå aaaa ååååaa");
+	fprintf (stderr, "encoded: %s\n", enc);
+	
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_mime_utils_8bit_header_encode_phrase ("åaåååaåå aaaa ååååaa");
 	fprintf (stderr, "encoded: %s\n", enc);
 	
 	dec = g_mime_utils_8bit_header_decode (enc);

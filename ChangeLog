@@ -1,5 +1,12 @@
 2000-11-08  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* gmime-parser.c (construct_headers): Oops. Set the subject with
+	the decoded string rather than the encoded one.
+	(get_mime_part): On the chance that we come accross a broken
+	multipart, default the mime type to text/plain and continue on.
+
+2000-11-08  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* internet-address.c (internet_address_to_string): Moved code
 	around to avoid unecessary warnings.
 
