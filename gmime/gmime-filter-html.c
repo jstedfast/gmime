@@ -110,14 +110,15 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 static void
 g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 {
+	struct _UrlRegexPattern *urls;
 	int i;
 	
-	filter->patterns = g_malloc (sizeof (patterns));
+	urls = filter->patterns = g_malloc (sizeof (patterns));
 	memcpy (filter->patterns, patterns, sizeof (patterns));
 	
 	for (i = 0; i < NUM_URL_REGEX_PATTERNS; i++) {
-		filter->patterns[i].preg = g_malloc (sizeof (regex_t));
-		if (regcomp (filter->patterns[i].preg, patterns[i].pattern, REG_EXTENDED) == -1) {
+		urls[i].preg = g_malloc (sizeof (regex_t));
+		if (regcomp (urls[i].preg, urls[i].pattern, REG_EXTENDED | REG_ICASE) == -1) {
 			/* error building the regex_t so we can't use this pattern */
 			filter->patterns[i].preg = NULL;
 			filter->patterns[i].mask = 0;

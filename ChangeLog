@@ -1,3 +1,8 @@
+2002-12-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-filter-html.c (g_mime_filter_html_init): match
+	REG_ICASE so we don't cut off at the first capital letter, duh.
+
 2002-12-01  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-utils.c: #define _GNU_SOURCE for isblank on GNU
