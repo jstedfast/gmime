@@ -37,6 +37,8 @@ void        g_mime_charset_map_init (void);
 const char *g_mime_locale_charset (void);
 const char *g_mime_locale_language (void);
 
+const char *g_mime_charset_language (const char *charset);
+
 const char *g_mime_charset_canon_name (const char *charset);
 const char *g_mime_charset_iconv_name (const char *charset);
 

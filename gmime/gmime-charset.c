@@ -670,7 +670,7 @@ static struct {
 	{ "gb2312",       1, 0 },  /* Simplified Chinese */
 	{ "Big5",         1, 0 },  /* Traditional Chinese */
 	{ "euc-tw",       1, 0 },
-	{ NULL, 0, 0}
+	{ NULL,           0, 0 }
 };
 
 unsigned int encoding_map[256 * 256];
@@ -710,7 +710,7 @@ int main (int argc, char **argv)
 				inbuf++;
 				inleft--;
 			} else {
-				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d):%s",
+				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s",
 					   tables[j].name, inleft, outleft,
 					   g_strerror (errno));
 				exit (1);
