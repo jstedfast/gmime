@@ -1,3 +1,12 @@
+2002-03-15  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter-charset.c: fixed minor compiler warnings.
+	* gmime-iconv-utils.c: same.
+	* test-html.c: same.
+	* test-iconv.c: same.
+	* test-mime.c: same.
+	* test-streams.c: same.
+
 2002-03-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (g_mime_utils_uudecode_step): Fixed a logic

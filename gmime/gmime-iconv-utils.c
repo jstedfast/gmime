@@ -89,7 +89,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		outbuf = out + converted;
 		outleft = outlen - converted;
 		
-		converted = iconv (cd, &inbuf, &inleft, &outbuf, &outleft);
+		converted = iconv (cd, (char**)&inbuf, &inleft, &outbuf, &outleft);
 		if (converted == (size_t) -1) {
 			if (errno != E2BIG && errno != EINVAL)
 				goto fail;
