@@ -691,15 +691,21 @@ encode_param (const unsigned char *in, gboolean *encoded)
 static void
 g_string_append_len_quoted (GString *out, const char *in, size_t len)
 {
-	const char *inptr;
+	register const char *inptr;
+	const char *inend;
 	
 	g_string_append_c (out, '"');
 	
-	for (inptr = in; *inptr; inptr++) {
+	inptr = in;
+	inend = in + len;
+	
+	while (inptr < inend) {
 		if ((*inptr == '"') || *inptr == '\\')
 			g_string_append_c (out, '\\');
 		
 		g_string_append_c (out, *inptr);
+		
+		inptr++;
 	}
 	
 	g_string_append_c (out, '"');
