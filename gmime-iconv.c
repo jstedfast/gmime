@@ -28,6 +28,10 @@
 #include <glib.h>
 #include <errno.h>
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "memchunk.h"
@@ -286,8 +290,8 @@ g_mime_iconv_init (void)
 
 /**
  * g_mime_iconv_open:
- * @from: charset to convert from
  * @to: charset to convert to
+ * @from: charset to convert from
  *
  * Allocates a coversion descriptor suitable for converting byte
  * sequences from charset @from to charset @to. The resulting
@@ -299,7 +303,7 @@ g_mime_iconv_init (void)
  * value.
  **/
 iconv_t
-g_mime_iconv_open (const char *from, const char *to)
+g_mime_iconv_open (const char *to, const char *from)
 {
 	struct _iconv_cache_bucket *bucket, *prev;
 	struct _iconv_node *node;

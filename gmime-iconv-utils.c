@@ -47,8 +47,8 @@ iconv_utils_init (void)
 	utf8 = g_mime_charset_name ("utf-8");
 	locale = g_mime_charset_name (g_mime_charset_locale_name ());
 	
-	utf8_to_locale = iconv_open (utf8, locale);
-	locale_to_utf8 = iconv_open (locale, utf8);
+	utf8_to_locale = iconv_open (locale, utf8);
+	locale_to_utf8 = iconv_open (utf8, locale);
 	
 	initialized = TRUE;
 }

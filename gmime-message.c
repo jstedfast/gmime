@@ -29,6 +29,10 @@
 #include <ctype.h>
 #include <locale.h>
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "gmime-message.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"

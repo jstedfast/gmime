@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -31,6 +32,10 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
 
 #include "gmime-part.h"
 #include "gmime-utils.h"

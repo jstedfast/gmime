@@ -1,3 +1,18 @@
+2002-01-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Fixed more silliness.
+
+	* acconfig.h: Added #undef's for some iconv stuff.
+
+	* gmime-filter-charset.c (g_mime_filter_charset_new): Put the
+	charset aruments in the right order.
+
+	* gmime-iconv.c (g_mime_iconv_open): Swap the to/from arguments so
+	that they are in the same order as iconv_open.
+
+	* gmime-iconv-utils.c (iconv_utils_init): Put the to/from
+	arguments in the right order.
+
 2002-01-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): If we get an EILSEQ,

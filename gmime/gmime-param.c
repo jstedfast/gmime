@@ -24,11 +24,17 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+#include <ctype.h>
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "gmime-param.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
 #include "gmime-utils.h"
-#include <ctype.h>
 
 #include "strlib.h"
 

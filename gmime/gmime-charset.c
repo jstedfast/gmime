@@ -21,14 +21,21 @@
  */
 
 
-#include "gmime-charset.h"
-
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <locale.h>
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
+#include "gmime-charset.h"
+#include "strlib.h"
 
 
 struct {

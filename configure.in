@@ -34,7 +34,7 @@ dnl Checks for programs.
 AC_ISC_POSIX
 AC_PROG_CC
 AM_PROG_CC_STDC
-AC_HEADER_STDC
+dnl AC_HEADER_STDC
 AC_STDC_HEADERS
 AC_ARG_PROGRAM
 AC_PROG_INSTALL
@@ -51,7 +51,6 @@ AM_MAINTAINER_MODE
 LDFLAGS=${_ldflags}
 
 dnl Checks for header files.
-AC_HEADER_STDC
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
@@ -119,10 +118,6 @@ AC_SUBST(glib_libs)
 dnl Check for libiconv
 AM_ICONV()
 
-dnl Checks for library functions.
-AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(alloca localtime isblank)
-
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
 	AC_TRY_COMPILE([
@@ -183,4 +178,3 @@ Configuration:
 
   Profiling enabled:    ${enable_gprof}
 "
-  

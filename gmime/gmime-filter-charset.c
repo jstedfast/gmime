@@ -68,7 +68,7 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 	GMimeFilterCharset *new;
 	iconv_t cd;
 	
-	cd = g_mime_iconv_open (from_charset, to_charset);
+	cd = g_mime_iconv_open (to_charset, from_charset);
 	if (cd == (iconv_t) -1)
 		return NULL;
 	
