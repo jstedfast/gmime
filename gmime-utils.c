@@ -910,9 +910,9 @@ quoted_encode (const guchar *in, gint len, guchar *out, gushort safemask)
 	
 	while (inptr < inend) {
 		c = *inptr++;
-		if (gmime_special_table[c] & safemask && c != '\t') {
-			if (c == ' ')
-				c = '_';
+		if (c == ' ') {
+			*outptr++ = '_';
+		} else if (gmime_special_table[c] & safemask) {
 			*outptr++ = c;
 		} else {
 			*outptr++ = '=';

@@ -474,7 +474,7 @@ decode_domain (const char **in)
 	domain = g_string_new ("");
 	
 	inptr = *in;
-	while (TRUE) {
+	while (inptr && *inptr) {
 		decode_lwsp (&inptr);
 		if (*inptr == '[') {
 			/* domain literal */
@@ -517,7 +517,7 @@ decode_domain (const char **in)
 	else
 		dom = NULL;
 	
-	g_string_free (domain, FALSE);
+	g_string_free (domain, dom ? FALSE : TRUE);
 	
 	*in = inptr;
 	

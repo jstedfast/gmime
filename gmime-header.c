@@ -110,6 +110,7 @@ g_mime_header_destroy (GMimeHeader *header)
  * g_mime_header_foreach:
  * @header: header object
  * @func: function to be called for each header.
+ * @data: User data to be passed to the func.
  *
  * Calls @func for each header name/value pair.
  */

@@ -9,12 +9,14 @@ g_mime_param_to_string
 
 <SECTION>
 <FILE>gmime-header</FILE>
+GMimeHeaderFunc
 g_mime_header_new
 g_mime_header_destroy
 g_mime_header_set
 g_mime_header_get
 g_mime_header_write_to_string
 g_mime_header_to_string
+g_mime_header_foreach
 </SECTION>
 
 <SECTION>
@@ -63,6 +65,7 @@ g_mime_part_get_filename
 g_mime_part_set_boundary
 g_mime_part_get_boundary
 g_mime_part_set_content
+g_mime_part_append_pre_encoded_content
 g_mime_part_set_pre_encoded_content
 g_mime_part_set_content_byte_array
 g_mime_part_get_content

@@ -244,7 +244,7 @@ static gchar *addresses[] = {
 	"\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	"fejj@helixcode.com (Jeffrey Stedfast)",
 	"Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
-	"=?iso-8859-1?q?Kristoffer=20Br=E5nemyr?= <ztion@swipenet.se>",
+	"=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>",
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
 	"GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
 	"Local recipients: phil, joe, alex, bob",
@@ -258,6 +258,7 @@ static gchar *addresses[] = {
 	"Charles Kerr,, likes illegal commas <charles@superpimp.org>", /* ouch this is bad... */
 	"<charles@>",
 	"<charles@broken.host.com.> (Charles Kerr)",
+	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
 	NULL
 };
 
