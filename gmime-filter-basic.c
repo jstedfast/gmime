@@ -97,7 +97,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
-	int newlen = 0;
+	size_t newlen = 0;
 	
 	switch (basic->type) {
 	case GMIME_FILTER_BASIC_BASE64_ENC:
@@ -127,14 +127,15 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		break;
 	case GMIME_FILTER_BASIC_QP_DEC:
 		/* output can't possibly exceed the input size */
-		g_mime_filter_set_size (filter, len, FALSE);
+		g_mime_filter_set_size (filter, len + 2, FALSE);
 		newlen = g_mime_utils_quoted_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
-		g_assert (newlen <= len);
+		g_assert (newlen <= len + 2);
 		break;
 	case GMIME_FILTER_BASIC_UU_DEC:
 		/* output can't possibly exceed the input size */
-		g_mime_filter_set_size (filter, len, FALSE);
+		g_mime_filter_set_size (filter, len + 3, FALSE);
 		newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &basic->state, &basic->save, &basic->uulen);
+		g_assert (newlen <= len + 3);
 		break;
 	}
 	
@@ -148,12 +149,12 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
-	int newlen = 0;
+	size_t newlen = 0;
 	
 	switch (basic->type) {
 	case GMIME_FILTER_BASIC_BASE64_ENC:
 		/* wont go to more than 2x size (overly conservative) */
-		g_mime_filter_set_size (filter, len*2+6, FALSE);
+		g_mime_filter_set_size (filter, len * 2 + 6, FALSE);
 		newlen = g_mime_utils_base64_encode_close (in, len, filter->outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 2 + 6);
 		break;
@@ -178,14 +179,15 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		break;
 	case GMIME_FILTER_BASIC_QP_DEC:
 		/* output can't possibly exceed the input size */
-		g_mime_filter_set_size (filter, len, FALSE);
+		g_mime_filter_set_size (filter, len + 2, FALSE);
 		newlen = g_mime_utils_quoted_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
-		g_assert (newlen <= len);
+		g_assert (newlen <= len + 2);
 		break;
 	case GMIME_FILTER_BASIC_UU_DEC:
 		/* output can't possibly exceed the input size */
-		g_mime_filter_set_size (filter, len, FALSE);
+		g_mime_filter_set_size (filter, len + 3, FALSE);
 		newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &basic->state, &basic->save, &basic->uulen);
+		g_assert (newlen <= len + 3);
 		break;
 	}
 	
