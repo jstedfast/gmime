@@ -1881,7 +1881,7 @@ rfc2047_encode (const unsigned char *in, gushort safemask)
 	char *outstr;
 	
 	if (!(words = rfc2047_encode_get_rfc822_words (in, safemask & IS_PSAFE)))
-		return NULL;
+		return g_strdup (in);
 	
 	while (rfc2047_encode_merge_rfc822_words (&words))
 		;

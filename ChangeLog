@@ -1,5 +1,8 @@
 2004-02-18  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-utils.c (rfc2047_encode): Return a duplicate of the
+	input string if there are no 'words'.
+
 	* gmime/internet-address.c (internet_address_to_string): Make sure
 	ia->name is not an empty string.
 
