@@ -1,3 +1,8 @@
+2004-04-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-cat.c (stream_write): This should be writing
+	data, not reading it from the underlying streams. Oops.
+
 2004-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-charset.c (charset_best_mask): Don't use the charset

@@ -199,7 +199,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	do {
 		n = -1;
 		while (!g_mime_stream_eos (current->stream) && nwritten < len) {
-			n = g_mime_stream_read (current->stream, buf + nwritten, len - nwritten);
+			n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten);
 			if (n > 0)
 				nwritten += n;
 		}
