@@ -20,9 +20,14 @@
  *
  */
 
-/* mailto:fejj@ximian.com\and stuff */
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include "gmime-filter-html.h"
+
+#include "strlib.h"
 
 #include <stdio.h>
 #include <string.h>

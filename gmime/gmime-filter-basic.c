@@ -21,6 +21,10 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "gmime-filter-basic.h"
 #include "gmime-utils.h"
 

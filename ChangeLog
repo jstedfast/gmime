@@ -1,3 +1,26 @@
+2001-11-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 0.7.2 due to the change-over to
+	refcounted mime objects.
+
+	* gmime-object[c,h]: New source files that implement an abstract
+	Object class.
+
+	* gmime-message.c: Updated to subclass GMimeObject
+
+	* gmime-part.c: Updated to subclass GMimeObject
+	(g_mime_part_set_content_header): Set an arbitrary mime content
+	header.
+	(g_mime_part_get_content_header): Get an arbitrary mime content
+	header.
+	(g_mime_part_add_child): Finally deprecated, please use
+	g_mime_part_add_subpart instead if you aren't already.
+
+	* gmime-parser.c: Updated to unref mime parts where appropriate as
+	well as set unknown content headers on mime parts.
+
+	* pan-mime-parser.c: Same as gmime-parser.c
+
 2001-11-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-null.c (g_mime_stream_null_new): A new stream,

@@ -63,6 +63,8 @@ test_multipart (void)
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
 	g_mime_part_set_content_id (text_part, "1");
+	g_mime_part_set_content_header (text_part, "Content-Test", "test-mime");
+	g_mime_part_set_content_description (text_part, "this is a text part");
 	g_mime_part_set_content (text_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
@@ -72,10 +74,10 @@ test_multipart (void)
 	mime_type = g_mime_content_type_new ("text", "html");
 	g_mime_part_set_content_type (html_part, mime_type);
 	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
-	g_mime_part_set_content_id (html_part, "2");
 	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>",
 				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
 	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
+	g_mime_part_set_content_id (html_part, "2");
 	
 	g_mime_part_add_subpart (multi_part, html_part);
 	

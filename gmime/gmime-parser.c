@@ -46,7 +46,7 @@ enum {
 	CONTENT_DESCRIPTION,
 	CONTENT_LOCATION,
 	CONTENT_MD5,
-	CONTENT_ID
+	CONTENT_ID,
 };
 
 static char *content_headers[] = {
@@ -128,14 +128,16 @@ parse_content_headers (const char *headers, int inlen,
 	*end_boundary = NULL;
 	
 	while (inptr < inend) {
-		const gint type = content_header (inptr);
+		const int type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
-		char *value;
+		char *field, *value;
 		
 		if (type == -1) {
 			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
 				break;
+			field = g_strndup (inptr, hvalptr - inptr);
+			g_strstrip (field);
 			hvalptr++;
 		} else {
 			hvalptr = inptr + strlen (content_headers[type]);
@@ -253,7 +255,11 @@ parse_content_headers (const char *headers, int inlen,
 			break;
 		}
 		default:
-			/* ignore this header */
+			/* possibly save the raw header */
+			if (!g_strncasecmp (field, "Content-", 8)) {
+				g_mime_header_add (mime_part->headers, field, value);
+				g_free (field);
+			}
 			break;
 		}
 		
@@ -325,6 +331,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 						  pos + (part_end - in));
 			subpart = g_mime_parser_construct_part_internal (stream, mem);
 			g_mime_part_add_subpart (mime_part, subpart);
+			g_mime_object_unref (GMIME_OBJECT (subpart));
 			
 			/* the next part begins where the last one left off */
 			part_begin = part_end;
@@ -583,6 +590,7 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
 		construct_message_headers (message, in, hdr_end - in, preserve_headers);
 		part = g_mime_parser_construct_part_internal (stream, mem);
 		g_mime_message_set_mime_part (message, part);
+		g_mime_object_unref (GMIME_OBJECT (part));
 	}
 	
 	g_mime_stream_unref (GMIME_STREAM (mem));

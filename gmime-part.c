@@ -40,6 +40,11 @@
 #include "md5-utils.h"
 
 
+static GMimeObject object_template = {
+	0, 0, g_mime_part_destroy
+};
+
+
 #define NEEDS_DECODING(encoding)  (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||        \
 				   ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
 
@@ -55,10 +60,16 @@ g_mime_part_new ()
 	GMimePart *mime_part;
 	
 	mime_part = g_new0 (GMimePart, 1);
+	g_mime_object_construct (GMIME_OBJECT (mime_part),
+				 &object_template,
+				 GMIME_PART_TYPE);
+	
+	mime_part->headers = g_mime_header_new ();
 	
 	/* lets set the default content type just in case the
 	 * programmer forgets to set it ;-) */
 	mime_part->mime_type = g_mime_content_type_new ("text", "plain");
+	g_mime_header_set (mime_part->headers, "Content-Type", "text/plain");
 	
 	return mime_part;
 }
@@ -75,10 +86,19 @@ GMimePart *
 g_mime_part_new_with_type (const char *type, const char *subtype)
 {
 	GMimePart *mime_part;
+	char *content_type;
 	
 	mime_part = g_new0 (GMimePart, 1);
+	g_mime_object_construct (GMIME_OBJECT (mime_part),
+				 &object_template,
+				 GMIME_PART_TYPE);
+	
+	mime_part->headers = g_mime_header_new ();
 	
 	mime_part->mime_type = g_mime_content_type_new (type, subtype);
+	content_type = g_strdup_printf ("%s/%s", type, subtype);
+	g_mime_header_set (mime_part->headers, "Content-Type", content_type);
+	g_free (content_type);
 	
 	return mime_part;
 }
@@ -93,7 +113,9 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 void
 g_mime_part_destroy (GMimePart *mime_part)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	
+	g_mime_header_destroy (mime_part->headers);
 	
 	g_free (mime_part->description);
 	g_free (mime_part->content_id);
@@ -134,7 +156,7 @@ g_mime_part_destroy (GMimePart *mime_part)
 		
 		child = mime_part->children;
 		while (child) {
-			g_mime_part_destroy (child->data);
+			g_mime_object_unref (GMIME_OBJECT (child->data));
 			child = child->next;
 		}
 		
@@ -149,6 +171,41 @@ g_mime_part_destroy (GMimePart *mime_part)
 
 
 /**
+ * g_mime_part_set_content_header:
+ * @mime_part:
+ * @header:
+ * @value:
+ *
+ * Set an arbitrary MIME content header.
+ **/
+void
+g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const char *value)
+{
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (header != NULL);
+	
+	g_mime_header_set (mime_part->headers, header, value);
+}
+
+
+/**
+ * g_mime_part_get_content_header:
+ * @mime_part:
+ * @header:
+ *
+ * Returns the value of the content header @header.
+ **/
+const char *
+g_mime_part_get_content_header (GMimePart *mime_part, const char *header)
+{
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+	g_return_val_if_fail (header != NULL, NULL);
+	
+	return g_mime_header_get (mime_part->headers, header);
+}
+
+
+/**
  * g_mime_part_set_content_description: Set the content description
  * @mime_part: Mime part
  * @description: content description
@@ -158,12 +215,13 @@ g_mime_part_destroy (GMimePart *mime_part)
 void
 g_mime_part_set_content_description (GMimePart *mime_part, const char *description)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->description)
 		g_free (mime_part->description);
 	
 	mime_part->description = g_strdup (description);
+	g_mime_header_set (mime_part->headers, "Content-Description", description);
 }
 
 
@@ -176,7 +234,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 const char *
 g_mime_part_get_content_description (const GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->description;
 }
@@ -192,12 +250,13 @@ g_mime_part_get_content_description (const GMimePart *mime_part)
 void
 g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_id)
 		g_free (mime_part->content_id);
 	
 	mime_part->content_id = g_strdup (content_id);
+	g_mime_header_set (mime_part->headers, "Content-Id", content_id);
 }
 
 
@@ -210,7 +269,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 const char *
 g_mime_part_get_content_id (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->content_id;
 }
@@ -228,7 +287,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
 	const GMimeContentType *type;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	/* RFC 1864 states that you cannot set a Content-MD5 for these types */
 	type = g_mime_part_get_content_type (mime_part);
@@ -269,6 +328,8 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		b64digest[len] = '\0';
 		
 		mime_part->content_md5 = g_strdup (b64digest);
+		
+		g_mime_header_set (mime_part->headers, "Content-Md5", b64digest);
 	}
 }
 
@@ -290,7 +351,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	GMimeStream *stream;
 	GByteArray *buf;
 	
-	g_return_val_if_fail (mime_part != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
 	g_return_val_if_fail (mime_part->content != NULL, FALSE);
 	g_return_val_if_fail (mime_part->content_md5 != NULL, FALSE);
 	
@@ -331,7 +392,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 const char *
 g_mime_part_get_content_md5 (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->content_md5;
 }
@@ -347,12 +408,13 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 void
 g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_location)
 		g_free (mime_part->content_location);
 	
 	mime_part->content_location = g_strdup (content_location);
+	g_mime_header_set (mime_part->headers, "Content-Location", content_location);
 }
 
 
@@ -365,11 +427,54 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 const char *
 g_mime_part_get_content_location (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->content_location;
 }
 
+
+static void
+sync_content_type (GMimePart *mime_part)
+{
+	GMimeContentType *mime_type;
+	GString *string;
+	GList *params;
+	char *type;
+	
+	mime_type = mime_part->mime_type;
+	
+	type = g_mime_content_type_to_string (mime_type);
+	
+	string = g_string_new (type);
+	g_free (type);
+	
+	params = mime_type->params;
+	if (params)
+		g_string_append_c (string, ';');
+	
+	while (params) {
+		GMimeParam *param;
+		char *buf;
+		
+		param = params->data;
+		buf = g_mime_param_to_string (param);
+		g_string_append_c (string, ' ');
+		g_string_append (string, buf);
+		g_free (buf);
+		
+		params = params->next;
+		if (params)
+			g_string_append_c (string, ';');
+		else
+			break;
+	}
+	
+	type = string->str;
+	g_string_free (string, FALSE);
+	
+	g_mime_header_set (mime_part->headers, "Content-Type", type);
+	g_free (type);
+}
 
 /**
  * g_mime_part_set_content_type: Set the content type/subtype
@@ -381,12 +486,15 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 void
 g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (mime_type != NULL);
 	
 	if (mime_part->mime_type)
 		g_mime_content_type_destroy (mime_part->mime_type);
 	
 	mime_part->mime_type = mime_type;
+	
+	sync_content_type (mime_part);
 }
 
 
@@ -399,7 +507,7 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 const GMimeContentType *
 g_mime_part_get_content_type (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->mime_type;
 }
@@ -418,9 +526,11 @@ g_mime_part_get_content_type (GMimePart *mime_part)
 void
 g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	mime_part->encoding = encoding;
+	g_mime_header_set (mime_part->headers, "Content-Transfer-Encoding",
+			   g_mime_part_encoding_to_string (encoding));
 }
 
 
@@ -437,7 +547,7 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, GMIME_PART_ENCODING_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_PART_ENCODING_DEFAULT);
 	
 	return mime_part->encoding;
 }
@@ -466,7 +576,7 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 		return "quoted-printable";
 	default:
 		/* I guess this is a good default... */
-		return "8bit";
+		return NULL;
 	}
 }
 
@@ -496,6 +606,47 @@ g_mime_part_encoding_from_string (const char *encoding)
 }
 
 
+static void
+sync_content_disposition (GMimePart *mime_part)
+{
+	GString *string;
+	GList *params;
+	char *str;
+	
+	params = mime_part->disposition->params;
+	
+	if (mime_part->disposition->disposition && *mime_part->disposition->disposition)
+		string = g_string_new (mime_part->disposition->disposition);
+	else
+		string = g_string_new ("");
+	
+	if (params)
+		g_string_append_c (string, ';');
+	
+	while (params) {
+		GMimeParam *param;
+		char *buf;
+		
+		param = params->data;
+		buf = g_mime_param_to_string (param);
+		g_string_append_c (string, ' ');
+		g_string_append (string, buf);
+		g_free (buf);
+		
+		params = params->next;
+		if (params)
+			g_string_append_c (string, ';');
+		else
+			break;
+	}
+	
+	str = string->str;
+	g_string_free (string, FALSE);
+	
+	g_mime_header_set (mime_part->headers, "Content-Disposition", str);
+	g_free (str);
+}
+
 /**
  * g_mime_part_set_content_disposition: Set the content disposition
  * @mime_part: Mime part
@@ -506,7 +657,7 @@ g_mime_part_encoding_from_string (const char *encoding)
 void
 g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->disposition) {
 		g_free (mime_part->disposition->disposition);
@@ -518,6 +669,8 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const char *dispositi
 		/* init the parameter lookup table */
 		mime_part->disposition->param_hash = g_hash_table_new (g_str_hash, g_str_equal);
 	}
+	
+	sync_content_disposition (mime_part);
 }
 
 
@@ -530,7 +683,7 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const char *dispositi
 const char *
 g_mime_part_get_content_disposition (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (mime_part->disposition)
 		return mime_part->disposition->disposition;
@@ -552,7 +705,7 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 {
 	GMimeParam *param;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)
 		g_mime_part_set_content_disposition (mime_part, "");
@@ -573,6 +726,8 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 	param = g_mime_param_new (name, value);
 	mime_part->disposition->params = g_list_append (mime_part->disposition->params, param);
 	g_hash_table_insert (mime_part->disposition->param_hash, param->name, param);
+	
+	sync_content_disposition (mime_part);
 }
 
 
@@ -589,7 +744,7 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 {
 	GMimeParam *param;
 	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (!mime_part->disposition || !mime_part->disposition->param_hash)
 		return NULL;
@@ -613,7 +768,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
 	GMimeParam *param;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)
 		g_mime_part_set_content_disposition (mime_part, "");
@@ -636,6 +791,9 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 	g_hash_table_insert (mime_part->disposition->param_hash, param->name, param);
 	
 	g_mime_content_type_add_parameter (mime_part->mime_type, "name", filename);
+	
+	sync_content_type (mime_part);
+	sync_content_disposition (mime_part);
 }
 
 
@@ -652,7 +810,7 @@ g_mime_part_get_filename (const GMimePart *mime_part)
 {
 	GMimeParam *param = NULL;
 	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (mime_part->disposition && mime_part->disposition->param_hash)
 		param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
@@ -695,7 +853,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 {
 	char bbuf[27];
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
@@ -714,6 +872,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 	}
 	
 	g_mime_content_type_add_parameter (mime_part->mime_type, "boundary", boundary);
+	sync_content_type (mime_part);
 }
 
 
@@ -726,7 +885,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 const char *
 g_mime_part_get_boundary (GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return g_mime_content_type_get_parameter (mime_part->mime_type, "boundary");
 }
@@ -741,11 +900,11 @@ g_mime_part_get_boundary (GMimePart *mime_part)
  * Sets the content of the Mime Part (only non-multiparts)
  **/
 void
-g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len)
+g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len)
 {
 	GMimeStream *stream;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->content)
 		mime_part->content = g_mime_data_wrapper_new ();
@@ -769,7 +928,7 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 {
 	GMimeStream *stream;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->content)
 		mime_part->content = g_mime_data_wrapper_new ();
@@ -792,12 +951,12 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
  **/
 void
 g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
-				     guint len, GMimePartEncodingType encoding)
+				     size_t len, GMimePartEncodingType encoding)
 {
 	GMimeStream *stream, *filtered_stream;
 	GMimeFilter *filter;
 	
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (content != NULL);
 	
 	if (!mime_part->content)
@@ -841,7 +1000,7 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 void
 g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content)
 		g_mime_data_wrapper_destroy (mime_part->content);
@@ -860,7 +1019,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 const GMimeDataWrapper *
 g_mime_part_get_content_object (const GMimePart *mime_part)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	return mime_part->content;
 }
@@ -875,12 +1034,12 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * and sets %len to the length of the buffer.
  **/
 const char *
-g_mime_part_get_content (const GMimePart *mime_part, guint *len)
+g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 {
-	GMimeStream * stream;
-	const gchar * retval = NULL;
+	const char *retval = NULL;
+	GMimeStream *stream;
 	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (!mime_part->content || !mime_part->content->stream) {
 		g_warning ("no content set on this mime part");
@@ -888,12 +1047,12 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 	}
 	
 	stream = mime_part->content->stream;
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))
-	{
+	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
 		/* Decode and cache this mime part's contents... */
 		GMimeStream *cache;
+		GByteArray *buf;
 		
-		GByteArray * buf = g_byte_array_new ();
+		buf = g_byte_array_new ();
 		cache = g_mime_stream_mem_new_with_byte_array (buf);
 		
 		g_mime_data_wrapper_write_to_stream (mime_part->content, cache);
@@ -901,28 +1060,25 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 		g_mime_data_wrapper_set_stream (mime_part->content, cache);
 		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
 		g_mime_stream_unref (cache);
-
+		
 		*len = buf->len;
 		retval = buf->data;
-	}
-	else
-	{
-		GByteArray * buf = GMIME_STREAM_MEM (stream)->buffer;
-		gint start_index = 0;
-		gint end_index = buf->len;
-
+	} else {
+		GByteArray *buf = GMIME_STREAM_MEM (stream)->buffer;
+		int start_index = 0;
+		int end_index = buf->len;
+		
 		/* check boundaries */
-		if (stream->bound_start>=0)
+		if (stream->bound_start >= 0)
 			start_index = CLAMP (stream->bound_start, 0, buf->len);
-		if (stream->bound_end>=0)
+		if (stream->bound_end >= 0)
 			end_index = CLAMP (stream->bound_end, 0, buf->len);
 		if (end_index < start_index)
 			end_index = start_index;
-
+		
 		*len = end_index - start_index;
 		retval = buf->data + start_index;
 	}
-	
 	
 	return retval;
 }
@@ -941,101 +1097,16 @@ g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
 {
 	const GMimeContentType *type;
 	
-	g_return_if_fail (mime_part != NULL);
-	g_return_if_fail (subpart != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (GMIME_IS_PART (subpart));
 	
 	type = g_mime_part_get_content_type (mime_part);
-	if (g_mime_content_type_is_type (type, "multipart", "*"))
+	if (g_mime_content_type_is_type (type, "multipart", "*")) {
 		mime_part->children = g_list_append (mime_part->children, subpart);
-}
-
-static char *
-get_content_disposition (GMimePart *mime_part)
-{
-	GString *string;
-	GList *params;
-	char *str;
-	
-	if (!mime_part->disposition)
-		return NULL;
-	
-	params = mime_part->disposition->params;
-	
-	if (mime_part->disposition->disposition && *mime_part->disposition->disposition)
-		string = g_string_new (mime_part->disposition->disposition);
-	else
-		string = g_string_new ("");
-	
-	if (params)
-		g_string_append (string, ";");
-	
-	while (params) {
-		GMimeParam *param;
-		char *buf;
-		
-		param = params->data;
-		buf = g_mime_param_to_string (param);
-		g_string_append_c (string, ' ');
-		g_string_append (string, buf);
-		g_free (buf);
-		
-		params = params->next;
-		if (params)
-			g_string_append (string, ";");
-		else
-			break;
+		g_mime_object_ref (GMIME_OBJECT (subpart));
 	}
-	
-	str = string->str;
-	g_string_free (string, FALSE);
-	
-	return str;
 }
 
-
-static char *
-get_content_type (GMimeContentType *mime_type)
-{
-	GString *string;
-	GList *params;
-	char *str, *type;
-	
-	g_return_val_if_fail (mime_type != NULL, NULL);
-	
-	type = g_mime_content_type_to_string (mime_type);
-	
-	string = g_string_new (type);
-	g_free (type);
-	
-	params = mime_type->params;
-	if (params)
-		g_string_append (string, ";");
-	
-	while (params) {
-		GMimeParam *param;
-		char *buf;
-		
-		param = params->data;
-		buf = g_mime_param_to_string (param);
-		g_string_append_c (string, ' ');
-		g_string_append (string, buf);
-		g_free (buf);
-		
-		params = params->next;
-		if (params)
-			g_string_append (string, ";");
-		else
-			break;
-	}
-	
-	str = string->str;
-	g_string_free (string, FALSE);
-	
-	type = g_mime_utils_header_printf ("Content-Type: %s\n", str);
-	g_free (str);
-	
-	return type;
-}
 
 static void
 write_content (GMimePart *part, GMimeStream *stream)
@@ -1080,13 +1151,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 void
 g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (stream != NULL);
 	
 	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
 		const char *boundary;
 		GList *child;
-		char *content_type;
 		
 		/* make sure there's a boundary, else force a random boundary */
 		boundary = g_mime_part_get_boundary (mime_part);
@@ -1095,9 +1165,9 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 			boundary = g_mime_part_get_boundary (mime_part);
 		}
 		
-		content_type = get_content_type (mime_part->mime_type);
-		g_mime_stream_printf (stream, "%s\n", content_type);		
-		g_free (content_type);
+		/* write the mime headers */
+		g_mime_header_write_to_stream (mime_part->headers, stream);
+		g_mime_stream_write (stream, "\n", 1);
 		
 		child = mime_part->children;
 		while (child) {
@@ -1110,71 +1180,8 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 		
 		g_mime_stream_printf (stream, "\n--%s--\n", boundary);
 	} else {
-		char *content_type;
-		char *disposition;
-		char *description;
-		char *content_id;
-		char *content_md5;
-		char *content_location;
-		char *text;
-		
-		/* Content-Type: */
-		content_type = get_content_type (mime_part->mime_type);
-		g_mime_stream_write_string (stream, content_type);
-		g_free (content_type);
-		
-		/* Content-Transfer-Encoding: */
-		if (mime_part->encoding != GMIME_PART_ENCODING_DEFAULT) {
-			char *content_encoding;
-			
-			content_encoding = g_strdup_printf ("Content-Transfer-Encoding: %s\n",
-							    g_mime_part_encoding_to_string (mime_part->encoding));
-			
-			g_mime_stream_write_string (stream, content_encoding);
-			g_free (content_encoding);
-		}
-		
-		/* Content-Disposition: */
-		disposition = get_content_disposition (mime_part);
-		if (disposition) {
-			text = g_mime_utils_header_printf ("Content-Disposition: %s\n",
-							   disposition);
-			g_free (disposition);
-			g_mime_stream_write_string (stream, text);
-			g_free (text);
-		}
-		
-		/* Content-Description: */
-		if (mime_part->description) {
-			text = g_mime_utils_8bit_header_encode (mime_part->description);
-			description = g_mime_utils_header_printf ("Content-Description: %s\n", text);
-			g_free (text);
-			
-			g_mime_stream_write_string (stream, description);
-			g_free (description);
-		}
-		
-		/* Content-Location: */
-		if (mime_part->content_location) {
-			content_location = g_strdup_printf ("Content-Location: %s\n",
-							    mime_part->content_location);
-			g_mime_stream_write_string (stream, content_location);
-			g_free (content_location);
-		}
-		
-		/* Content-Md5: */
-		if (mime_part->content_md5) {
-			content_md5 = g_strdup_printf ("Content-MD5: %s\n", mime_part->content_md5);
-			g_mime_stream_write_string (stream, content_md5);
-			g_free (content_md5);
-		}
-		
-		/* Content-Id: */
-		if (mime_part->content_id) {
-			content_id = g_strdup_printf ("Content-Id: %s\n", mime_part->content_id);
-			g_mime_stream_write_string (stream, content_id);
-			g_free (content_id);
-		}
+		/* write the mime headers */
+		g_mime_header_write_to_stream (mime_part->headers, stream);
 		
 		g_mime_stream_write (stream, "\n", 1);
 		write_content (mime_part, stream);
@@ -1196,7 +1203,7 @@ g_mime_part_to_string (GMimePart *mime_part)
 	GByteArray *buf;
 	char *str;
 	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	buf = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
@@ -1222,7 +1229,7 @@ g_mime_part_to_string (GMimePart *mime_part)
 void
 g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data)
 {
-	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (callback != NULL);
 	
 	callback (mime_part, data);
@@ -1252,7 +1259,7 @@ g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const char *conte
 {
 	GList *child;
 	
-	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	g_return_val_if_fail (content_id != NULL, NULL);
 	
 	if (mime_part->content_id && !strcmp (mime_part->content_id, content_id))

@@ -64,6 +64,14 @@ g_mime_stream_mem_set_byte_array
 </SECTION>
 
 <SECTION>
+<FILE>gmime-stream-null</FILE>
+GMIME_STREAM_NULL_TYPE
+GMIME_IS_STREAM_NULL
+GMIME_STREAM_NULL
+g_mime_stream_null_new
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream-filter</FILE>
 GMIME_STREAM_FILTER_TYPE
 GMIME_IS_STREAM_FILTER
@@ -98,6 +106,19 @@ g_mime_filter_basic_new_type
 GMimeFilterCRLFDirection
 GMimeFilterCRLFMode
 g_mime_filter_crlf_new
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-html</FILE>
+GMIME_FILTER_HTML_PRE
+GMIME_FILTER_HTML_CONVERT_NL
+GMIME_FILTER_HTML_CONVERT_SPACES
+GMIME_FILTER_HTML_CONVERT_URLS
+GMIME_FILTER_HTML_MARK_CITATION
+GMIME_FILTER_HTML_CONVERT_ADDRESSES
+GMIME_FILTER_HTML_ESCAPE_8BIT
+GMIME_FILTER_HTML_CITE
+g_mime_filter_html_new
 </SECTION>
 
 <SECTION>
@@ -149,7 +170,19 @@ g_mime_content_type_get_parameter
 </SECTION>
 
 <SECTION>
+<FILE>gmime-object</FILE>
+GMIME_OBJECT
+GMimeObject
+g_mime_object_construct
+g_mime_object_ref
+g_mime_object_unref
+</SECTION>
+
+<SECTION>
 <FILE>gmime-part</FILE>
+GMIME_PART_TYPE
+GMIME_IS_PART
+GMIME_PART
 GMimePartEncodingType
 GMimePartDispositionParam
 GMimePartDisposition
@@ -158,6 +191,8 @@ GMimePartFunc
 g_mime_part_new
 g_mime_part_new_with_type
 g_mime_part_destroy
+g_mime_part_set_content_header
+g_mime_part_get_content_header
 g_mime_part_set_content_description
 g_mime_part_get_content_description
 g_mime_part_set_content_id
@@ -189,7 +224,6 @@ g_mime_part_get_content
 g_mime_part_get_content_object
 g_mime_part_set_content_object
 g_mime_part_add_subpart
-g_mime_part_add_child
 g_mime_part_write_to_stream
 g_mime_part_to_string
 g_mime_part_foreach
@@ -198,6 +232,9 @@ g_mime_part_get_subpart_from_content_id
 
 <SECTION>
 <FILE>gmime-message</FILE>
+GMIME_MESSAGE_TYPE
+GMIME_IS_MESSAGE
+GMIME_MESSAGE
 GMIME_RECIPIENT_TYPE_TO
 GMIME_RECIPIENT_TYPE_CC
 GMIME_RECIPIENT_TYPE_BCC

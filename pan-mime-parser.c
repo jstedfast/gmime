@@ -208,11 +208,13 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 		const gint type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
-		char *value;
+		char *field, *value;
 		
 		if (type == -1) {
 			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
 				break;
+			field = g_strndup (inptr, hvalptr - inptr);
+			g_strstrip (field);
 			hvalptr++;
 		} else {
 			hvalptr = inptr + strlen (content_headers[type]);
@@ -330,7 +332,10 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			break;
 		}
 		default:
-			/* ignore this header */
+			if (!g_strncasecmp (field, "Content-", 8)) {
+				g_mime_header_add (mime_part->headers, field, value);
+				g_free (field);
+			}
 			break;
 		}
 		
@@ -384,6 +389,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GByteArray *headers,
 									 end_boundary,
 									 &found);
 			g_mime_part_add_subpart (mime_part, subpart);
+			g_mime_object_unref (GMIME_OBJECT (subpart));
 			g_byte_array_free (content_headers, TRUE);
 		}
 		
@@ -570,6 +576,7 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
 		construct_message_headers (message, headers, preserve_headers);
 		part = g_mime_parser_construct_part_internal (stream, headers, NULL, NULL, &found);
 		g_mime_message_set_mime_part (message, part);
+		g_mime_object_unref (GMIME_OBJECT (part));
 	}
 	
 	g_byte_array_free (headers, TRUE);

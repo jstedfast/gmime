@@ -46,7 +46,7 @@ struct _GMimeHeader {
 static gint
 header_equal (gconstpointer v, gconstpointer v2)
 {
-	return g_strcasecmp ((const gchar *) v, (const gchar *) v2) == 0;
+	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 static guint
@@ -213,7 +213,7 @@ g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
  *
  * Returns the value of the header requested
  **/
-const gchar *
+const char *
 g_mime_header_get (const GMimeHeader *header, const char *name)
 {
 	const struct raw_header *h;
@@ -299,7 +299,7 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
  *
  * Returns a string containing the header block
  **/
-gchar *
+char *
 g_mime_header_to_string (const GMimeHeader *header)
 {
 	GMimeStream *stream;

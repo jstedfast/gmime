@@ -33,7 +33,7 @@ extern "C" {
 
 typedef struct _GMimeHeader GMimeHeader;
 
-typedef void (*GMimeHeaderFunc) (const gchar *name, const gchar *value, gpointer data);
+typedef void (*GMimeHeaderFunc) (const char *name, const char *value, gpointer data);
 
 GMimeHeader *g_mime_header_new (void);
 
@@ -45,13 +45,13 @@ void g_mime_header_set (GMimeHeader *header, const char *name, const char *value
 
 void g_mime_header_add (GMimeHeader *header, const char *name, const char *value);
 
-const gchar *g_mime_header_get (const GMimeHeader *header, const char *name);
+const char *g_mime_header_get (const GMimeHeader *header, const char *name);
 
 void g_mime_header_remove (GMimeHeader *header, const char *name);
 
 void g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
 
-gchar *g_mime_header_to_string (const GMimeHeader *header);
+char *g_mime_header_to_string (const GMimeHeader *header);
 
 #ifdef __cplusplus
 }

@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-MESSAGE"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN3469"
+NAME="AEN3531"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN3469"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN3472"
+NAME="AEN3534"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,6 +146,18 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+#define     <A
+HREF="gmime-gmime-message.html#GMIME-MESSAGE-TYPE-CAPS"
+>GMIME_MESSAGE_TYPE</A
+>
+#define     <A
+HREF="gmime-gmime-message.html#GMIME-IS-MESSAGE-CAPS"
+>GMIME_IS_MESSAGE</A
+>                (object)
+#define     <A
+HREF="gmime-gmime-message.html#GMIME-MESSAGE-CAPS"
+>GMIME_MESSAGE</A
+>                   (object)
 #define     <A
 HREF="gmime-gmime-message.html#GMIME-RECIPIENT-TYPE-TO-CAPS"
 >GMIME_RECIPIENT_TYPE_TO</A
@@ -194,17 +206,11 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-SENDER"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *sender);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *sender);
+const char* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-SENDER"
 >g_mime_message_get_sender</A
->      (<A
+>       (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);
@@ -215,17 +221,11 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-REPLY-TO"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *reply_to);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *reply_to);
+const char* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-REPLY-TO"
 >g_mime_message_get_reply_to</A
->    (<A
+>     (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);
@@ -236,18 +236,9 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-ADD-RECIPIENT"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *address);
+                                             char *type,
+                                             const char *name,
+                                             const char *address);
 void        <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-ADD-RECIPIENTS-FROM-STRING"
 >g_mime_message_add_recipients_from_string</A
@@ -256,14 +247,8 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-ADD-RECIPIENTS-FROM-STRING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+                                             char *type,
+                                             const char *string);
 <GTKDOCLINK
 HREF="GLIST"
 >GList</GTKDOCLINK
@@ -274,10 +259,7 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-RECIPIENTS"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type);
+                                             const char *type);
 void        <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-SUBJECT"
 >g_mime_message_set_subject</A
@@ -285,17 +267,11 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-SUBJECT"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subject);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *subject);
+const char* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-SUBJECT"
 >g_mime_message_get_subject</A
->     (<A
+>      (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);
@@ -323,10 +299,7 @@ HREF="TIME-T"
 >time_t</GTKDOCLINK
 > *date,
                                              int *gmt_offset);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-DATE-STRING"
 >g_mime_message_get_date_string</A
 >  (<A
@@ -340,17 +313,11 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-MESSAGE-ID"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *id);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *id);
+const char* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-MESSAGE-ID"
 >g_mime_message_get_message_id</A
->  (<A
+>   (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);
@@ -361,14 +328,8 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-ADD-HEADER"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
+                                             const char *header,
+                                             const char *value);
 void        <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-HEADER"
 >g_mime_message_set_header</A
@@ -376,28 +337,16 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-HEADER"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *header,
+                                             const char *value);
+const char* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-HEADER"
 >g_mime_message_get_header</A
->      (<A
+>       (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field);
+                                             const char *header);
 void        <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-SET-MIME-PART"
 >g_mime_message_set_mime_part</A
@@ -420,20 +369,14 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-TO-STRING"
 >g_mime_message_to_string</A
 >        (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-BODY"
 >g_mime_message_get_body</A
 >         (const <A
@@ -448,10 +391,7 @@ HREF="GBOOLEAN"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > *is_html);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-HEADERS"
 >g_mime_message_get_headers</A
 >      (<A
@@ -480,7 +420,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3565"
+NAME="AEN3606"
 ></A
 ><H2
 >Description</H2
@@ -490,14 +430,166 @@ NAME="AEN3565"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3568"
+NAME="AEN3609"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3570"
+NAME="AEN3611"
+></A
+><H3
+><A
+NAME="GMIME-MESSAGE-TYPE-CAPS"
+></A
+>GMIME_MESSAGE_TYPE</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_MESSAGE_TYPE       g_str_hash ("GMimeMessage")</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3616"
+></A
+><H3
+><A
+NAME="GMIME-IS-MESSAGE-CAPS"
+></A
+>GMIME_IS_MESSAGE()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_MESSAGE(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_MESSAGE_TYPE)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3621"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>object</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3630"
+></A
+><H3
+><A
+NAME="GMIME-MESSAGE-CAPS"
+></A
+>GMIME_MESSAGE()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_MESSAGE(object)    ((GMimeMessage *) object)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3635"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>object</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3644"
 ></A
 ><H3
 ><A
@@ -523,7 +615,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3575"
+NAME="AEN3649"
 ></A
 ><H3
 ><A
@@ -549,7 +641,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3580"
+NAME="AEN3654"
 ></A
 ><H3
 ><A
@@ -575,7 +667,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3585"
+NAME="AEN3659"
 ></A
 ><H3
 ><A
@@ -601,7 +693,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3590"
+NAME="AEN3664"
 ></A
 ><H3
 ><A
@@ -618,17 +710,17 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeMessageHeader {
-	gchar *from;
-	gchar *reply_to;
+	char *from;
+	char *reply_to;
 	
 	GHashTable *recipients;
 	
-	gchar *subject;
+	char *subject;
 	
 	time_t date;
 	int gmt_offset;     /* GMT offset */
 	
-	gchar *message_id;
+	char *message_id;
 	
 	GMimeHeader *headers;
 };</PRE
@@ -641,7 +733,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3595"
+NAME="AEN3669"
 ></A
 ><H3
 ><A
@@ -658,6 +750,8 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeMessage {
+	GMimeObject parent_object;
+	
 	GMimeMessageHeader *header;
 	
 	GMimePart *mime_part;
@@ -671,7 +765,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3600"
+NAME="AEN3674"
 ></A
 ><H3
 ><A
@@ -721,7 +815,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3612"
+NAME="AEN3686"
 ></A
 ><P
 ></P
@@ -774,7 +868,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3625"
+NAME="AEN3699"
 ></A
 ><H3
 ><A
@@ -805,7 +899,7 @@ Parts back to the Operating System for reuse.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3632"
+NAME="AEN3706"
 ></A
 ><P
 ></P
@@ -843,7 +937,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3641"
+NAME="AEN3715"
 ></A
 ><H3
 ><A
@@ -863,10 +957,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *sender);</PRE
+                                             const char *sender);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -883,7 +974,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3650"
+NAME="AEN3723"
 ></A
 ><P
 ></P
@@ -938,7 +1029,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3663"
+NAME="AEN3736"
 ></A
 ><H3
 ><A
@@ -954,10 +1045,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_message_get_sender      (<A
+>const char* g_mime_message_get_sender       (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -971,7 +1059,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3671"
+NAME="AEN3743"
 ></A
 ><P
 ></P
@@ -1024,7 +1112,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3684"
+NAME="AEN3756"
 ></A
 ><H3
 ><A
@@ -1044,10 +1132,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *reply_to);</PRE
+                                             const char *reply_to);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1058,7 +1143,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3692"
+NAME="AEN3763"
 ></A
 ><P
 ></P
@@ -1113,7 +1198,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3705"
+NAME="AEN3776"
 ></A
 ><H3
 ><A
@@ -1129,10 +1214,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_message_get_reply_to    (<A
+>const char* g_mime_message_get_reply_to     (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -1146,7 +1228,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3713"
+NAME="AEN3783"
 ></A
 ><P
 ></P
@@ -1199,7 +1281,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3726"
+NAME="AEN3796"
 ></A
 ><H3
 ><A
@@ -1219,18 +1301,9 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *address);</PRE
+                                             char *type,
+                                             const char *name,
+                                             const char *address);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1243,7 +1316,7 @@ GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3736"
+NAME="AEN3803"
 ></A
 ><P
 ></P
@@ -1332,7 +1405,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3757"
+NAME="AEN3824"
 ></A
 ><H3
 ><A
@@ -1353,14 +1426,8 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+                                             char *type,
+                                             const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1375,7 +1442,7 @@ specified in rfc822.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3766"
+NAME="AEN3831"
 ></A
 ><P
 ></P
@@ -1447,7 +1514,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3783"
+NAME="AEN3848"
 ></A
 ><H3
 ><A
@@ -1470,10 +1537,7 @@ HREF="GLIST"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type);</PRE
+                                             const char *type);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1484,7 +1548,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3792"
+NAME="AEN3856"
 ></A
 ><P
 ></P
@@ -1557,7 +1621,7 @@ GMIME_RECIPIENT_TYPE_BCC.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3809"
+NAME="AEN3873"
 ></A
 ><H3
 ><A
@@ -1577,10 +1641,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subject);</PRE
+                                             const char *subject);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1591,7 +1652,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3817"
+NAME="AEN3880"
 ></A
 ><P
 ></P
@@ -1646,7 +1707,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3830"
+NAME="AEN3893"
 ></A
 ><H3
 ><A
@@ -1662,10 +1723,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_message_get_subject     (<A
+>const char* g_mime_message_get_subject      (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -1679,7 +1737,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3838"
+NAME="AEN3900"
 ></A
 ><P
 ></P
@@ -1732,7 +1790,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3851"
+NAME="AEN3913"
 ></A
 ><H3
 ><A
@@ -1767,7 +1825,7 @@ HREF="TIME-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3859"
+NAME="AEN3921"
 ></A
 ><P
 ></P
@@ -1839,7 +1897,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3876"
+NAME="AEN3938"
 ></A
 ><H3
 ><A
@@ -1881,7 +1939,7 @@ HREF="GMT-OFFSET"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3886"
+NAME="AEN3948"
 ></A
 ><P
 ></P
@@ -1953,7 +2011,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3903"
+NAME="AEN3965"
 ></A
 ><H3
 ><A
@@ -1969,10 +2027,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_message_get_date_string  (<A
+>char*       g_mime_message_get_date_string  (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -1986,7 +2041,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3911"
+NAME="AEN3972"
 ></A
 ><P
 ></P
@@ -2039,7 +2094,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3924"
+NAME="AEN3985"
 ></A
 ><H3
 ><A
@@ -2059,10 +2114,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *id);</PRE
+                                             const char *id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2073,7 +2125,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3932"
+NAME="AEN3992"
 ></A
 ><P
 ></P
@@ -2128,7 +2180,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3945"
+NAME="AEN4005"
 ></A
 ><H3
 ><A
@@ -2144,10 +2196,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_message_get_message_id  (<A
+>const char* g_mime_message_get_message_id   (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -2161,7 +2210,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3953"
+NAME="AEN4012"
 ></A
 ><P
 ></P
@@ -2214,7 +2263,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3966"
+NAME="AEN4025"
 ></A
 ><H3
 ><A
@@ -2234,14 +2283,8 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+                                             const char *header,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2253,7 +2296,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3975"
+NAME="AEN4032"
 ></A
 ><P
 ></P
@@ -2290,7 +2333,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->field</I
+>header</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -2325,7 +2368,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3992"
+NAME="AEN4049"
 ></A
 ><H3
 ><A
@@ -2345,14 +2388,8 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+                                             const char *header,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2364,7 +2401,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4001"
+NAME="AEN4056"
 ></A
 ><P
 ></P
@@ -2401,7 +2438,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->field</I
+>header</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -2436,7 +2473,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4018"
+NAME="AEN4073"
 ></A
 ><H3
 ><A
@@ -2452,17 +2489,11 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_message_get_header      (<A
+>const char* g_mime_message_get_header       (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *field);</PRE
+                                             const char *header);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2473,7 +2504,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4027"
+NAME="AEN4080"
 ></A
 ><P
 ></P
@@ -2510,7 +2541,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->field</I
+>header</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -2532,7 +2563,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the value of the requested header (or NULL if it isn't set)</TD
+>the value of the requested header (or <TT
+CLASS="LITERAL"
+>NULL</TT
+> if it isn't set)</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2543,7 +2577,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4044"
+NAME="AEN4098"
 ></A
 ><H3
 ><A
@@ -2577,7 +2611,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4052"
+NAME="AEN4106"
 ></A
 ><P
 ></P
@@ -2632,7 +2666,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4065"
+NAME="AEN4119"
 ></A
 ><H3
 ><A
@@ -2671,7 +2705,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4074"
+NAME="AEN4128"
 ></A
 ><P
 ></P
@@ -2726,7 +2760,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4087"
+NAME="AEN4141"
 ></A
 ><H3
 ><A
@@ -2742,10 +2776,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_message_to_string        (<A
+>char*       g_mime_message_to_string        (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -2759,7 +2790,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4095"
+NAME="AEN4148"
 ></A
 ><P
 ></P
@@ -2812,7 +2843,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4108"
+NAME="AEN4161"
 ></A
 ><H3
 ><A
@@ -2828,10 +2859,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_message_get_body         (const <A
+>char*       g_mime_message_get_body         (const <A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message,
@@ -2853,7 +2881,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4118"
+NAME="AEN4170"
 ></A
 ><P
 ></P
@@ -2948,7 +2976,7 @@ recommended that you traverse the MIME structure yourself.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4140"
+NAME="AEN4192"
 ></A
 ><H3
 ><A
@@ -2964,10 +2992,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_message_get_headers      (<A
+>char*       g_mime_message_get_headers      (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 > *message);</PRE
@@ -2981,7 +3006,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4148"
+NAME="AEN4199"
 ></A
 ><P
 ></P
@@ -3034,7 +3059,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4161"
+NAME="AEN4212"
 ></A
 ><H3
 ><A
@@ -3075,7 +3100,7 @@ HREF="CALLBACK"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4171"
+NAME="AEN4222"
 ></A
 ><P
 ></P

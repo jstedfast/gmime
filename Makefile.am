@@ -26,6 +26,7 @@ libgmime_la_SOURCES = 		\
 	gmime-filter-html.c	\
 	gmime-header.c		\
 	gmime-message.c		\
+	gmime-object.c		\
 	gmime-param.c		\
 	gmime-parser.c		\
 	gmime-part.c		\
@@ -52,6 +53,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter-html.h	\
 	gmime-header.h		\
 	gmime-message.h		\
+	gmime-object.h		\
 	gmime-param.h		\
 	gmime-parser.h		\
 	gmime-part.h		\

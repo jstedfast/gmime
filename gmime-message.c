@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -33,6 +34,10 @@
 #include "internet-address.h"
 #include "gmime-stream-mem.h"
 
+
+static GMimeObject object_template = {
+	0, 0, g_mime_message_destroy
+};
 
 static char *rfc822_headers[] = {
 	"Return-Path",
@@ -67,6 +72,9 @@ g_mime_message_new (gboolean pretty_headers)
 	int i;
 	
 	message = g_new0 (GMimeMessage, 1);
+	g_mime_object_construct (GMIME_OBJECT (message),
+				 &object_template,
+				 GMIME_MESSAGE_TYPE);
 	
 	message->header = g_new0 (GMimeMessageHeader, 1);
 	
@@ -114,7 +122,7 @@ recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 void
 g_mime_message_destroy (GMimeMessage *message)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	g_free (message->header->from);
 	g_free (message->header->reply_to);
@@ -131,9 +139,9 @@ g_mime_message_destroy (GMimeMessage *message)
 	
 	g_free (message->header);
 	
-	/* destroy all child mime parts */
+	/* unref child mime part */
 	if (message->mime_part)
-		g_mime_part_destroy (message->mime_part);
+		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
 	
 	g_free (message);
 }
@@ -148,11 +156,11 @@ g_mime_message_destroy (GMimeMessage *message)
  * (ex: "\"Joe Sixpack\" <joe@sixpack.org>")
  **/
 void
-g_mime_message_set_sender (GMimeMessage *message, const gchar *sender)
+g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 {
 	GMimeMessageHeader *header;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	header = message->header;
 	
@@ -170,10 +178,10 @@ g_mime_message_set_sender (GMimeMessage *message, const gchar *sender)
  *
  * Returns the sender's name and address of the MIME Message.
  **/
-const gchar *
+const char *
 g_mime_message_get_sender (GMimeMessage *message)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->header->from;
 }
@@ -187,11 +195,11 @@ g_mime_message_get_sender (GMimeMessage *message)
  * Set the sender's Reply-To address on the MIME Message.
  **/
 void
-g_mime_message_set_reply_to (GMimeMessage *message, const gchar *reply_to)
+g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 {
 	GMimeMessageHeader *header;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	header = message->header;
 	
@@ -209,17 +217,17 @@ g_mime_message_set_reply_to (GMimeMessage *message, const gchar *reply_to)
  *
  * Returns the sender's Reply-To address from the MIME Message.
  **/
-const gchar *
+const char *
 g_mime_message_get_reply_to (GMimeMessage *message)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->header->reply_to;
 }
 
 
 static void
-sync_recipient_header (GMimeMessage *message, const gchar *type)
+sync_recipient_header (GMimeMessage *message, const char *type)
 {
 	GList *recipients;
 	
@@ -231,7 +239,7 @@ sync_recipient_header (GMimeMessage *message, const gchar *type)
 		recip = g_string_new ("");
 		while (recipients) {
 			InternetAddress *ia;
-			gchar *address;
+			char *address;
 			
 			ia = recipients->data;
 			address = internet_address_to_string (ia, TRUE);
@@ -261,7 +269,7 @@ sync_recipient_header (GMimeMessage *message, const gchar *type)
  * GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.
  **/
 void
-g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *name, const gchar *address)
+g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *name, const char *address)
 {
 	InternetAddress *ia;
 	GList *recipients;
@@ -290,11 +298,11 @@ g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *n
  * specified in rfc822.
  **/
 void
-g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, const gchar *string)
+g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
 {
 	GList *recipients, *addrlist;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (string != NULL);
 	
 	recipients = g_hash_table_lookup (message->header->recipients, type);
@@ -321,9 +329,9 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
  * GMIME_RECIPIENT_TYPE_BCC.
  **/
 GList *
-g_mime_message_get_recipients (GMimeMessage *message, const gchar *type)
+g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return g_hash_table_lookup (message->header->recipients, type);
 }
@@ -337,11 +345,11 @@ g_mime_message_get_recipients (GMimeMessage *message, const gchar *type)
  * Set the Subject field on a MIME Message.
  **/
 void
-g_mime_message_set_subject (GMimeMessage *message, const gchar *subject)
+g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 {
 	GMimeMessageHeader *header;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	header = message->header;
 	
@@ -359,10 +367,10 @@ g_mime_message_set_subject (GMimeMessage *message, const gchar *subject)
  *
  * Returns the Subject field on a MIME Message.
  **/
-const gchar *
+const char *
 g_mime_message_get_subject (GMimeMessage *message)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->header->subject;
 }
@@ -379,9 +387,9 @@ g_mime_message_get_subject (GMimeMessage *message)
 void
 g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
 {
-	gchar *date_str;
+	char *date_str;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	message->header->date = date;
 	message->header->gmt_offset = gmt_offset;
@@ -404,7 +412,7 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
 void
 g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	*date = message->header->date;
 	*gmt_offset = message->header->gmt_offset;
@@ -417,13 +425,13 @@ g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
  * 
  * Returns the sent-date of the MIME Message in string format.
  **/
-gchar *
+char *
 g_mime_message_get_date_string (GMimeMessage *message)
 {
-	gchar *date_str;
-	gchar *locale;
+	char *date_str;
+	char *locale;
 	
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	locale = g_strdup (setlocale (LC_TIME, ""));
 	setlocale (LC_TIME, "POSIX");
@@ -447,11 +455,11 @@ g_mime_message_get_date_string (GMimeMessage *message)
  * Set the Message-Id on a message.
  **/
 void
-g_mime_message_set_message_id (GMimeMessage *message, const gchar *id)
+g_mime_message_set_message_id (GMimeMessage *message, const char *id)
 {
 	GMimeMessageHeader *header;
 	
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	header = message->header;
 	
@@ -469,10 +477,10 @@ g_mime_message_set_message_id (GMimeMessage *message, const gchar *id)
  *
  * Returns the Message-Id of a message.
  **/
-const gchar *
+const char *
 g_mime_message_get_message_id (GMimeMessage *message)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return message->header->message_id;
 }
@@ -481,52 +489,55 @@ g_mime_message_get_message_id (GMimeMessage *message)
 /**
  * g_mime_message_add_header: Add an arbitrary message header
  * @message: MIME Message
- * @field: rfc822 header field
+ * @header: rfc822 header field
  * @value: the contents of the header field
  *
  * Add an arbitrary message header to the MIME Message such as X-Mailer,
  * X-Priority, or In-Reply-To.
  **/
 void
-g_mime_message_add_header (GMimeMessage *message, const gchar *field, const gchar *value)
+g_mime_message_add_header (GMimeMessage *message, const char *header, const char *value)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (header != NULL);
 	
-	g_mime_header_add (message->header->headers, field, value);
+	g_mime_header_add (message->header->headers, header, value);
 }
 
 
 /**
  * g_mime_message_set_header: Add an arbitrary message header
  * @message: MIME Message
- * @field: rfc822 header field
+ * @header: rfc822 header field
  * @value: the contents of the header field
  *
  * Set an arbitrary message header to the MIME Message such as X-Mailer,
  * X-Priority, or In-Reply-To.
  **/
 void
-g_mime_message_set_header (GMimeMessage *message, const gchar *field, const gchar *value)
+g_mime_message_set_header (GMimeMessage *message, const char *header, const char *value)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (header != NULL);
 	
-	g_mime_header_set (message->header->headers, field, value);
+	g_mime_header_set (message->header->headers, header, value);
 }
 
 
 /**
  * g_mime_message_get_header:
  * @message: MIME Message
- * @field: rfc822 header field
+ * @header: rfc822 header field
  *
- * Returns the value of the requested header (or NULL if it isn't set)
+ * Returns the value of the requested header (or %NULL if it isn't set)
  **/
-const gchar *
-g_mime_message_get_header (GMimeMessage *message, const gchar *field)
+const char *
+g_mime_message_get_header (GMimeMessage *message, const char *header)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (header != NULL, NULL);
 	
-	return g_mime_header_get (message->header->headers, field);
+	return g_mime_header_get (message->header->headers, header);
 }
 
 
@@ -540,10 +551,13 @@ g_mime_message_get_header (GMimeMessage *message, const gchar *field)
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	
+	g_mime_object_ref (GMIME_OBJECT (mime_part));
 	
 	if (message->mime_part)
-		g_mime_part_destroy (message->mime_part);
+		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
 	
 	message->mime_part = mime_part;
 }
@@ -559,7 +573,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
 void
 g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (stream != NULL);
 	
 	g_mime_header_write_to_stream (message->header->headers, stream);
@@ -578,14 +592,14 @@ g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
  *
  * Returns an allocated string containing the MIME Message.
  **/
-gchar *
+char *
 g_mime_message_to_string (GMimeMessage *message)
 {
 	GMimeStream *stream;
 	GByteArray *array;
 	char *str;
 	
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
@@ -629,14 +643,14 @@ g_mime_message_to_string (GMimeMessage *message)
  * message body. Note that this is an assumption and is thus not
  * guarenteed to always be correct.
  **/
-static gchar *
+static char *
 multipart_get_body (GMimePart *multipart, gboolean want_plain, gboolean *is_html)
 {
 	GMimePart *first = NULL;
-	const gchar *content;
-	gchar *body = NULL;
+	const char *content;
+	char *body = NULL;
 	GList *child;
-	guint len;
+	size_t len;
 	
 	child = multipart->children;
 	while (child) {
@@ -696,13 +710,13 @@ multipart_get_body (GMimePart *multipart, gboolean want_plain, gboolean *is_html
  * makes some assumptions that are not necessarily true. It is
  * recommended that you traverse the MIME structure yourself.
  **/
-gchar *
+char *
 g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html)
 {
 	const GMimeContentType *type;
-	const gchar *content;
-	gchar *body = NULL;
-	guint len = 0;
+	const char *content;
+	char *body = NULL;
+	size_t len = 0;
 	
 	type = g_mime_part_get_content_type (message->mime_part);
 	if (g_mime_content_type_is_type (type, "text", "*")) {
@@ -729,10 +743,10 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
  *
  * Returns an allocated string containing the raw message headers.
  **/
-gchar *
+char *
 g_mime_message_get_headers (GMimeMessage *message)
 {
-	g_return_val_if_fail (message != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	return g_mime_header_to_string (message->header->headers);
 }
@@ -749,7 +763,7 @@ g_mime_message_get_headers (GMimeMessage *message)
 void
 g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data)
 {
-	g_return_if_fail (message != NULL);
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (callback != NULL);
 	
 	g_mime_part_foreach (message->mime_part, callback, data);

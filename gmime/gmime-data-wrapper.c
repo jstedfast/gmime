@@ -21,9 +21,14 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "gmime-data-wrapper.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
+
 
 /**
  * g_mime_data_wrapper_new:

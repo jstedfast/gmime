@@ -3,14 +3,17 @@
     &gmime-gmime-stream-file;
     &gmime-gmime-stream-fs;
     &gmime-gmime-stream-mem;
+    &gmime-gmime-stream-null;
     &gmime-gmime-stream-filter;
     &gmime-gmime-filter;
     &gmime-gmime-filter-basic;
     &gmime-gmime-filter-crlf;
+    &gmime-gmime-filter-html;
     &gmime-gmime-data-wrapper;
     &gmime-gmime-param;
     &gmime-gmime-header;
     &gmime-gmime-content-type;
+    &gmime-gmime-object;
     &gmime-gmime-part;
     &gmime-gmime-message;
     &gmime-gmime-utils;

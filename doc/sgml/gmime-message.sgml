@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="25 Oct 2001">
+<refentry id="gmime-gmime-message" revision="17 Nov 2001">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -14,6 +14,9 @@
 
 
 
+#define     <link linkend="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</link>
+#define     <link linkend="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE</link>                (object)
+#define     <link linkend="GMIME-MESSAGE-CAPS">GMIME_MESSAGE</link>                   (object)
 #define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
 #define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
 #define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
@@ -23,51 +26,51 @@ struct      <link linkend="GMimeMessage">GMimeMessage</link>;
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
 void        <link linkend="g-mime-message-destroy">g_mime_message_destroy</link>          (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-sender">g_mime_message_set_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *sender);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-sender">g_mime_message_get_sender</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+                                             const char *sender);
+const char* <link linkend="g-mime-message-get-sender">g_mime_message_get_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-reply-to">g_mime_message_set_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *reply_to);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-reply-to">g_mime_message_get_reply_to</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+                                             const char *reply_to);
+const char* <link linkend="g-mime-message-get-reply-to">g_mime_message_get_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-add-recipient">g_mime_message_add_recipient</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *address);
+                                             char *type,
+                                             const char *name,
+                                             const char *address);
 void        <link linkend="g-mime-message-add-recipients-from-string">g_mime_message_add_recipients_from_string</link>
                                             (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *string);
+                                             char *type,
+                                             const char *string);
 <link linkend="GList">GList</link>*      <link linkend="g-mime-message-get-recipients">g_mime_message_get_recipients</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *type);
+                                             const char *type);
 void        <link linkend="g-mime-message-set-subject">g_mime_message_set_subject</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *subject);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-subject">g_mime_message_get_subject</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+                                             const char *subject);
+const char* <link linkend="g-mime-message-get-subject">g_mime_message_get_subject</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-date">g_mime_message_set_date</link>         (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="time-t">time_t</link> date,
                                              int gmt_offset);
 void        <link linkend="g-mime-message-get-date">g_mime_message_get_date</link>         (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="time-t">time_t</link> *date,
                                              int *gmt_offset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-date-string">g_mime_message_get_date_string</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+char*       <link linkend="g-mime-message-get-date-string">g_mime_message_get_date_string</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-message-id">g_mime_message_set_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *id);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-message-id">g_mime_message_get_message_id</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+                                             const char *id);
+const char* <link linkend="g-mime-message-get-message-id">g_mime_message_get_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-add-header">g_mime_message_add_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field,
-                                             const <link linkend="gchar">gchar</link> *value);
+                                             const char *header,
+                                             const char *value);
 void        <link linkend="g-mime-message-set-header">g_mime_message_set_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field,
-                                             const <link linkend="gchar">gchar</link> *value);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-header">g_mime_message_get_header</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field);
+                                             const char *header,
+                                             const char *value);
+const char* <link linkend="g-mime-message-get-header">g_mime_message_get_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const char *header);
 void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime_part</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-message-write-to-stream">g_mime_message_write_to_stream</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-body">g_mime_message_get_body</link>         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
+char*       <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+char*       <link linkend="g-mime-message-get-body">g_mime_message_get_body</link>         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="gboolean">gboolean</link> want_plain,
                                              <link linkend="gboolean">gboolean</link> *is_html);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-headers">g_mime_message_get_headers</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+char*       <link linkend="g-mime-message-get-headers">g_mime_message_get_headers</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_part</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
                                              <link linkend="gpointer">gpointer</link> data);
@@ -87,6 +90,45 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</title>
+<programlisting>#define GMIME_MESSAGE_TYPE       g_str_hash ("GMimeMessage")
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE()</title>
+<programlisting>#define GMIME_IS_MESSAGE(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_MESSAGE_TYPE)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-MESSAGE-CAPS">GMIME_MESSAGE()</title>
+<programlisting>#define GMIME_MESSAGE(object)    ((GMimeMessage *) object)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
 <programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
@@ -117,17 +159,17 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <refsect2>
 <title><anchor id="GMimeMessageHeader">struct GMimeMessageHeader</title>
 <programlisting>struct GMimeMessageHeader {
-	gchar *from;
-	gchar *reply_to;
+	char *from;
+	char *reply_to;
 	
 	GHashTable *recipients;
 	
-	gchar *subject;
+	char *subject;
 	
 	time_t date;
 	int gmt_offset;     /* GMT offset */
 	
-	gchar *message_id;
+	char *message_id;
 	
 	GMimeHeader *headers;
 };
@@ -138,6 +180,8 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <refsect2>
 <title><anchor id="GMimeMessage">struct GMimeMessage</title>
 <programlisting>struct GMimeMessage {
+	GMimeObject parent_object;
+	
 	GMimeMessageHeader *header;
 	
 	GMimePart *mime_part;
@@ -187,7 +231,7 @@ Parts back to the Operating System for reuse.</para>
 <refsect2>
 <title><anchor id="g-mime-message-set-sender">g_mime_message_set_sender ()</title>
 <programlisting>void        g_mime_message_set_sender       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *sender);</programlisting>
+                                             const char *sender);</programlisting>
 <para>
 Set the sender's name and address on the MIME Message.
 (ex: "\"Joe Sixpack\" &lt;joe<parameter>sixpack</parameter>.org&gt;")</para>
@@ -207,7 +251,7 @@ Set the sender's name and address on the MIME Message.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-sender">g_mime_message_get_sender ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_sender      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>const char* g_mime_message_get_sender       (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -226,7 +270,7 @@ Set the sender's name and address on the MIME Message.
 <refsect2>
 <title><anchor id="g-mime-message-set-reply-to">g_mime_message_set_reply_to ()</title>
 <programlisting>void        g_mime_message_set_reply_to     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *reply_to);</programlisting>
+                                             const char *reply_to);</programlisting>
 <para>
 Set the sender's Reply-To address on the MIME Message.</para>
 <para>
@@ -245,7 +289,7 @@ Set the sender's Reply-To address on the MIME Message.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-reply-to">g_mime_message_get_reply_to ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_reply_to    (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>const char* g_mime_message_get_reply_to     (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -264,9 +308,9 @@ Set the sender's Reply-To address on the MIME Message.</para>
 <refsect2>
 <title><anchor id="g-mime-message-add-recipient">g_mime_message_add_recipient ()</title>
 <programlisting>void        g_mime_message_add_recipient    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *address);</programlisting>
+                                             char *type,
+                                             const char *name,
+                                             const char *address);</programlisting>
 <para>
 Add a recipient of a chosen type to the MIME Message. Available
 recipient types include: GMIME_RECIPIENT_TYPE_TO,
@@ -295,8 +339,8 @@ GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</para>
 <title><anchor id="g-mime-message-add-recipients-from-string">g_mime_message_add_recipients_from_string ()</title>
 <programlisting>void        g_mime_message_add_recipients_from_string
                                             (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="gchar">gchar</link> *type,
-                                             const <link linkend="gchar">gchar</link> *string);</programlisting>
+                                             char *type,
+                                             const char *string);</programlisting>
 <para>
 Add a list of recipients of a chosen type to the MIME
 Message. Available recipient types include:
@@ -323,7 +367,7 @@ specified in rfc822.</para>
 <refsect2>
 <title><anchor id="g-mime-message-get-recipients">g_mime_message_get_recipients ()</title>
 <programlisting><link linkend="GList">GList</link>*      g_mime_message_get_recipients   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *type);</programlisting>
+                                             const char *type);</programlisting>
 <para>
 </para>
 <para>
@@ -348,7 +392,7 @@ GMIME_RECIPIENT_TYPE_BCC.
 <refsect2>
 <title><anchor id="g-mime-message-set-subject">g_mime_message_set_subject ()</title>
 <programlisting>void        g_mime_message_set_subject      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *subject);</programlisting>
+                                             const char *subject);</programlisting>
 <para>
 Set the Subject field on a MIME Message.</para>
 <para>
@@ -367,7 +411,7 @@ Set the Subject field on a MIME Message.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-subject">g_mime_message_get_subject ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_subject     (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>const char* g_mime_message_get_subject      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -434,7 +478,7 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-date-string">g_mime_message_get_date_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_message_get_date_string  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>char*       g_mime_message_get_date_string  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -453,7 +497,7 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 <refsect2>
 <title><anchor id="g-mime-message-set-message-id">g_mime_message_set_message_id ()</title>
 <programlisting>void        g_mime_message_set_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *id);</programlisting>
+                                             const char *id);</programlisting>
 <para>
 Set the Message-Id on a message.</para>
 <para>
@@ -472,7 +516,7 @@ Set the Message-Id on a message.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-message-id">g_mime_message_get_message_id ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_message_id  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>const char* g_mime_message_get_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -491,8 +535,8 @@ Set the Message-Id on a message.</para>
 <refsect2>
 <title><anchor id="g-mime-message-add-header">g_mime_message_add_header ()</title>
 <programlisting>void        g_mime_message_add_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field,
-                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+                                             const char *header,
+                                             const char *value);</programlisting>
 <para>
 Add an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
@@ -506,7 +550,7 @@ X-Priority, or In-Reply-To.</para>
 <row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
 <entry> MIME Message
 </entry></row>
-<row><entry align="right"><parameter>field</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
 <entry> rfc822 header field
 </entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
@@ -516,8 +560,8 @@ X-Priority, or In-Reply-To.</para>
 <refsect2>
 <title><anchor id="g-mime-message-set-header">g_mime_message_set_header ()</title>
 <programlisting>void        g_mime_message_set_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field,
-                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+                                             const char *header,
+                                             const char *value);</programlisting>
 <para>
 Set an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
@@ -531,7 +575,7 @@ X-Priority, or In-Reply-To.</para>
 <row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
 <entry> MIME Message
 </entry></row>
-<row><entry align="right"><parameter>field</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
 <entry> rfc822 header field
 </entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
@@ -540,8 +584,8 @@ X-Priority, or In-Reply-To.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-header">g_mime_message_get_header ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_header      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const <link linkend="gchar">gchar</link> *field);</programlisting>
+<programlisting>const char* g_mime_message_get_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const char *header);</programlisting>
 <para>
 </para>
 <para>
@@ -554,10 +598,10 @@ X-Priority, or In-Reply-To.</para>
 <row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
 <entry> MIME Message
 </entry></row>
-<row><entry align="right"><parameter>field</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
 <entry> rfc822 header field
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the requested header (or NULL if it isn't set)
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the requested header (or <literal>NULL</literal> if it isn't set)
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -602,7 +646,7 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-to-string">g_mime_message_to_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_message_to_string        (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>char*       g_mime_message_to_string        (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
@@ -620,7 +664,7 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-body">g_mime_message_get_body ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_message_get_body         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
+<programlisting>char*       g_mime_message_get_body         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="gboolean">gboolean</link> want_plain,
                                              <link linkend="gboolean">gboolean</link> *is_html);</programlisting>
 <para>
@@ -651,7 +695,7 @@ recommended that you traverse the MIME structure yourself.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-headers">g_mime_message_get_headers ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_message_get_headers      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<programlisting>char*       g_mime_message_get_headers      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
 </para>
 <para>
