@@ -32,7 +32,7 @@ static void g_mime_stream_cat_init (GMimeStreamCat *stream, GMimeStreamCatClass 
 static void g_mime_stream_cat_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -175,7 +175,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 }
  
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;

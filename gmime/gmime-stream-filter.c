@@ -58,8 +58,8 @@ static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_finalize (GObject *object);
 
-static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_read (GMimeStream *stream, char *buf, size_t n);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t n);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -160,7 +160,7 @@ g_mime_stream_filter_finalize (GObject *object)
 
 
 static ssize_t
-stream_read (GMimeStream *stream, char *buf, size_t len)
+stream_read (GMimeStream *stream, char *buf, size_t n)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *p = filter->priv;
@@ -204,7 +204,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		}
 	}
 	
-	size = MIN (len, p->filteredlen);
+	size = MIN (n, p->filteredlen);
 	memcpy (buf, p->filtered, size);
 	p->filteredlen -= size;
 	p->filtered += size;
@@ -213,19 +213,16 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 }
 
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t n)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	char *buffer = (char *) buf;
+	ssize_t nwritten = n;
 	struct _filter *f;
 	size_t presize;
-	char *buffer;
-	size_t n;
 	
 	p->last_was_read = FALSE;
-	
-	buffer = buf;
-	n = len;
 	
 	f = p->filters;
 	presize = 0;
@@ -238,8 +235,8 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	if (g_mime_stream_write (filter->source, buffer, n) != n)
 		return -1;
 	
-	/* return 'len' because that's what our caller expects */
-	return len;
+	/* return original input len because that's what our caller expects */
+	return nwritten;
 }
 
 static int

@@ -34,7 +34,7 @@ static void g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass 
 static void g_mime_stream_mem_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -138,7 +138,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 }
 
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	off_t bound_end;

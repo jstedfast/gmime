@@ -73,7 +73,7 @@ struct _GMimeStreamClass {
 	GObjectClass parent_class;
 	
 	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
-	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
+	ssize_t  (*write)   (GMimeStream *stream, const char *buf, size_t len);
 	int      (*flush)   (GMimeStream *stream);
 	int      (*close)   (GMimeStream *stream);
 	gboolean (*eos)     (GMimeStream *stream);
@@ -92,7 +92,7 @@ void g_mime_stream_construct (GMimeStream *stream, off_t start, off_t end);
 
 /* public methods */
 ssize_t   g_mime_stream_read    (GMimeStream *stream, char *buf, size_t len);
-ssize_t   g_mime_stream_write   (GMimeStream *stream, char *buf, size_t len);
+ssize_t   g_mime_stream_write   (GMimeStream *stream, const char *buf, size_t len);
 int       g_mime_stream_flush   (GMimeStream *stream);
 int       g_mime_stream_close   (GMimeStream *stream);
 gboolean  g_mime_stream_eos     (GMimeStream *stream);

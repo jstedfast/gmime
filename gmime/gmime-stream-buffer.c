@@ -37,7 +37,7 @@ static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBuf
 static void g_mime_stream_buffer_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -195,15 +195,15 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 }
 
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	/* FIXME: this could be better optimized for the case where @len > block size */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t written = 0, n;
 	
- again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
+	again:
 		n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, len);
 		memcpy (buffer->buffer + buffer->buflen, buf, n);
 		buffer->buflen += n;
@@ -211,9 +211,9 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 		len -= n;
 		if (len) {
 			/* flush our buffer... */
-			n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
-			if (n > 0) {
+			if ((n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN))) {
 				memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
+				buffer->buflen = 0;
 				goto again;
 			}
 		}

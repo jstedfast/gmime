@@ -46,6 +46,7 @@ struct _GMimeStreamNull {
 	GMimeStream parent_object;
 	
 	size_t written;
+	size_t newlines;
 };
 
 struct _GMimeStreamNullClass {

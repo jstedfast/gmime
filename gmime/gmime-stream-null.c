@@ -34,7 +34,7 @@ static void g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullCla
 static void g_mime_stream_null_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -99,6 +99,7 @@ static void
 g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
 {
 	stream->written = 0;
+	stream->newlines = 0;
 }
 
 static void
@@ -119,9 +120,17 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 }
 
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
+	register const char *inptr = buf;
+	const char *inend = buf + len;
+	
+	while (inptr < inend) {
+		if (*inptr == '\n')
+			null->newlines++;
+		inptr++;
+	}
 	
 	null->written += len;
 	stream->position += len;
@@ -153,6 +162,7 @@ stream_reset (GMimeStream *stream)
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;
 	
 	null->written = 0;
+	null->newlines = 0;
 	
 	return 0;
 }

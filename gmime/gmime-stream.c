@@ -36,7 +36,7 @@ static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);
 static void g_mime_stream_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
-static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, const char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
@@ -167,7 +167,7 @@ g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 
 
 static ssize_t
-stream_write (GMimeStream *stream, char *buf, size_t len)
+stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	d(g_warning ("Invoked default stream_write implementation."));
 	return 0;
@@ -185,7 +185,7 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
  * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
-g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
+g_mime_stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (buf != NULL, -1);
