@@ -1,3 +1,24 @@
+2000-12-24  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-parser.c (g_mime_parser_construct_part): Don't set the
+	boundary if we are able to get the boundary from the content-type
+	because we'll just set the same data over again which is a
+	waste. Also tack a \n onto the ends of the boundary markers so
+	that "blah_" and "blah_D" don't trick the parser. Fix it so that
+	an empty part won't set any contents (since setting a 0-length
+	content stream causes a segfault).
+	(construct_headers): Take an inlen argument so that we can parse
+	headers without needing to strdup before passing into this
+	function.
+	(g_mime_parser_construct_message): Don't strdup the headers since
+	we can just pass in the length to the construct_headers() function
+	now.
+
+2000-12-18  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-parser.c (g_mime_parser_construct_part): Moved from being
+	an internal-only function.
+
 2000-12-28  Charles Kerr <charles@superpimp.org>
 
 	* gmime-utils.c (g_mime_utils_text_is_8bit): gracefully handle
