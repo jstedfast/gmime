@@ -12,6 +12,10 @@
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 
+#define TEST_PRESERVE_HEADERS
+#define TEST_GET_BODY
+#define PRINT_MIME_STRUCT
+
 void
 print_depth (int depth)
 {
@@ -47,7 +51,6 @@ test_parser (GMimeStream *stream)
 	GMimeMessage *message;
 	gboolean is_html;
 	char *text;
-	char *body;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
@@ -63,16 +66,38 @@ test_parser (GMimeStream *stream)
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	
-	/* test of get_body */
-	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
-		 body && is_html ? "found" : "not found",
-		 body ? body : "No message body found");
+#ifdef TEST_PRESERVE_HEADERS
+	{
+		GMimeStream *stream;
+		
+		fprintf (stdout, "\nTesting preservation of headers...\n\n");
+		stream = g_mime_stream_file_new (stdout);
+		g_mime_header_write_to_stream (message->header->headers, stream);
+		g_mime_stream_flush (stream);
+		GMIME_STREAM_FILE (stream)->fp = NULL;
+		g_mime_stream_unref (stream);
+		fprintf (stdout, "\n");
+	}
+#endif
 	
-	g_free (body);
+#ifdef TEST_GET_BODY
+	{
+		/* test of get_body */
+		char *body;
+		
+		body = g_mime_message_get_body (message, FALSE, &is_html);
+		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
+			 body && is_html ? "found" : "not found",
+			 body ? body : "No message body found");
+		
+		g_free (body);
+	}
+#endif
 	
+#ifdef PRINT_MIME_STRUCT
 	/* print mime structure */
 	print_mime_struct (message->mime_part, 0);
+#endif
 	
 	g_mime_message_destroy (message);
 }

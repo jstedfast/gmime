@@ -1,3 +1,10 @@
+2001-10-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (g_mime_message_new): Now takes an
+	"init_headers" argument, it doesn't really matter what value you
+	put here - it's more a "I want my message headers to be in a nice
+	friendly order rather than the order they are set in".
+
 2001-10-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pan-mime-parser.c (construct_message_headers): Use

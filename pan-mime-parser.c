@@ -526,7 +526,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 		default:
 			/* possibly save the raw header */
 			if ((preserve_headers || fields[i]) && !special_header (field)) {
-				field[strlen (field) - 1] = '\0'; /* kill the ';' */
+				field[strlen (field) - 1] = '\0'; /* kill the ':' */
 				g_strstrip (field);
 				g_mime_header_add (message->header->headers, field, value);
 			}
@@ -566,7 +566,7 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
 		GMimePart *part;
 		int found;
 		
-		message = g_mime_message_new ();
+		message = g_mime_message_new (!preserve_headers);
 		construct_message_headers (message, headers, preserve_headers);
 		part = g_mime_parser_construct_part_internal (stream, headers, NULL, NULL, &found);
 		g_mime_message_set_mime_part (message, part);

@@ -79,7 +79,7 @@ test_multipart (void)
 	
 	g_mime_part_add_subpart (multi_part, html_part);
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
@@ -125,7 +125,7 @@ test_onepart (void)
 	g_mime_part_set_content (mime_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
