@@ -1,3 +1,8 @@
+2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): Fixed a bug that
+	crept in during my simplification.
+
 2002-04-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (g_mime_message_add_recipients_from_string):
@@ -19,7 +24,7 @@
 	(encode_param): And again here.
 
 	* gmime-utils.c (rfc2047_decode_word): Don't bother with a
-	charenc, we don't need to get the iconv-friednly
+	charenc, we don't need to get the iconv-friendly
 	name. g_mime_iconv_open does that for us.
 	(rfc2047_encode_word): Same.
 
