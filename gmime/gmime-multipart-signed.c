@@ -222,7 +222,7 @@ sign_prepare (GMimeObject *mime_part)
 	if (GMIME_IS_MULTIPART (mime_part)) {
 		GList *lpart;
 		
-		if (GMIME_IS_MULTIPART_SIGNED (mime_part) || GMIME_IS_MULTIPART_ENCRYPTED (mime_part)) {
+		if (GMIME_IS_MULTIPART_SIGNED (mime_part)) {
 			/* must not modify these parts as they must be treated as opaque */
 			return;
 		}
