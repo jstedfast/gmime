@@ -124,6 +124,7 @@ internet_address_to_string
 
 <SECTION>
 <FILE>gmime-parser</FILE>
+g_mime_parser_construct_part
 g_mime_parser_construct_message
 </SECTION>
 
@@ -139,11 +140,14 @@ pgp_encrypt
 pgp_decrypt
 pgp_clearsign
 pgp_sign
+pgp_verify
 </SECTION>
 
 <SECTION>
 <FILE>pgp-mime</FILE>
 pgp_mime_init
+pgp_mime_part_is_rfc2015_signed
+pgp_mime_part_is_rfc2015_encrypted
 pgp_mime_part_sign
 pgp_mime_part_verify_signature
 pgp_mime_part_encrypt

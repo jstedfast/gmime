@@ -395,12 +395,7 @@ strip (gchar *string, gchar c)
  * @mime_part: a multipart/encrypted MIME Part
  * @ex: exception
  *
- * Attempts to decrypt the multipart/encrypted part and replace it
- * with the original (decrypted) mime part. #ex will be set on failure
- * and #mime_part will remain untouched. Note: Currently, on success,
- * the new mime part will be of the type application/octet-stream as
- * there is no way to get back the original content-type
- * information.
+ * Returns the decrypted MIME Part on success or NULL on fail.
  **/
 GMimePart *
 pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
