@@ -31,6 +31,7 @@ extern "C" {
 
 #include <glib.h>
 #include <time.h>
+#include <stdarg.h>
 
 #include "gmime-part.h"
 
@@ -39,6 +40,9 @@ extern "C" {
 
 time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
 gchar *g_mime_utils_header_format_date (time_t time, gint offset);
+
+gchar *g_mime_utils_header_fold (const gchar *in);
+gchar *g_mime_utils_header_printf (const gchar *format, ...);
 
 gchar *g_mime_utils_quote_string (const gchar *string);
 void   g_mime_utils_unquote_string (gchar *string);

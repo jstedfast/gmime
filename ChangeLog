@@ -1,4 +1,17 @@
 2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_to_string): Wrap some content-*
+	headers that might sometimes be long.
+
+	* gmime-message.c (create_header): Updated to reflect function
+	name changes/moves.
+
+	* gmime-utils.c (g_mime_utils_header_printf): Moved here from
+	gmime-message.c and slightly renamed ;-)
+	(g_mime_utils_header_fold): Moved from being provate to being
+	public.
+
+2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
 	Synced with HEAD.
 
 	* pgp-mime.c (pgp_mime_part_encrypt): Updated to use add_subpart

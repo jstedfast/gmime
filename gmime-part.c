@@ -727,7 +727,10 @@ get_content_type (GMimeContentType *mime_type)
 	str = string->str;
 	g_string_free (string, FALSE);
 	
-	return str;
+	type = g_mime_utils_header_printf ("Content-Type: %s", str);
+	g_free (str);
+	
+	return type;
 }
 
 static gchar *
@@ -769,7 +772,8 @@ get_content (GMimePart *part)
  * headers for rfc822 messages.
  **/
 gchar *
-g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
+g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
+{
 	gchar *string;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
@@ -810,14 +814,14 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		if (toplevel) {
 			/* add message header stuff first */
 			string = g_strdup_printf ("MIME-Version: 1.0\n"
-						  "Content-Type: %s\n\n"
+						  "%s\n\n"  /* content-type */
 						  "This is a multi-part message in MIME format.\n\n"
 						  "%s\n--%s--\n",
 						  content_type,
 						  contents->str,
 						  boundary);
 		} else {
-			string = g_strdup_printf ("Content-Type: %s\n\n"
+			string = g_strdup_printf ("%s\n\n"  /* content-type */
 						  "%s\n--%s--\n",
 						  content_type,
 						  contents->str,
@@ -840,7 +844,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		
 		if (mime_part->description) {
 			text = g_mime_utils_8bit_header_encode (mime_part->description);
-			description = g_strdup_printf ("Content-Description: %s\n", text);
+			description = g_mime_utils_header_printf ("Content-Description: %s\n", text);
 			g_free (text);
 		} else {
 			description = g_strdup ("");
@@ -859,11 +863,11 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		content = get_content (mime_part);
 		
 		if (disposition && *disposition) {
-			string = g_strdup_printf ("%sContent-Type: %s\n"
+			string = g_strdup_printf ("%s%s\n"  /* mime-version, content-type */
 						  "Content-Transfer-Encoding: %s\n"
 						  "Content-Disposition: %s\n"
 						  "%s"      /* description */
-						  "%s\n"    /* content id */
+						  "%s\n"    /* content-id */
 						  "%s\n",   /* content */
 						  extras, content_type,
 						  g_mime_part_encoding_to_string (mime_part->encoding),
@@ -872,10 +876,10 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 						  content_id,
 						  content);
 		} else {
-			string = g_strdup_printf ("%sContent-Type: %s\n"
+			string = g_strdup_printf ("%s%s\n"  /* mime-version, content-type */
 						  "Content-Transfer-Encoding: %s\n"
 						  "%s"      /* description */
-						  "%s\n"    /* content id */
+						  "%s\n"    /* content-id */
 						  "%s\n",   /* content */
 						  extras, content_type,
 						  g_mime_part_encoding_to_string (mime_part->encoding),
