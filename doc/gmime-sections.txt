@@ -8,6 +8,16 @@ g_mime_param_to_string
 </SECTION>
 
 <SECTION>
+<FILE>gmime-header</FILE>
+g_mime_header_new
+g_mime_header_destroy
+g_mime_header_set
+g_mime_header_get
+g_mime_header_write_to_string
+g_mime_header_to_string
+</SECTION>
+
+<SECTION>
 <FILE>gmime-content-type</FILE>
 GMimeContentType
 g_mime_content_type_new
@@ -54,9 +64,11 @@ g_mime_part_set_boundary
 g_mime_part_get_boundary
 g_mime_part_set_content
 g_mime_part_set_pre_encoded_content
+g_mime_part_set_content_byte_array
 g_mime_part_get_content
 g_mime_part_add_subpart
 g_mime_part_add_child
+g_mime_part_write_to_string
 g_mime_part_to_string
 g_mime_part_foreach
 g_mime_part_get_subpart_from_content_id
@@ -86,8 +98,10 @@ g_mime_message_get_date
 g_mime_message_get_date_string
 g_mime_message_set_message_id
 g_mime_message_get_message_id
-g_mime_message_add_arbitrary_header
+g_mime_message_set_header
+g_mime_message_get_header
 g_mime_message_set_mime_part
+g_mime_message_write_to_string
 g_mime_message_to_string
 g_mime_message_get_body
 g_mime_message_get_headers
@@ -120,10 +134,17 @@ g_mime_utils_quoted_encode_close
 
 <SECTION>
 <FILE>internet-address</FILE>
+InternetAddressType
 InternetAddress
 internet_address_new
-internet_address_new_from_string
+internet_address_new_name
+internet_address_new_group
 internet_address_destroy
+internet_address_set_name
+internet_address_set_addr
+internet_address_set_group
+internet_address_add_member
+internet_address_parse_string
 internet_address_to_string
 </SECTION>
 
@@ -131,6 +152,7 @@ internet_address_to_string
 <FILE>gmime-parser</FILE>
 g_mime_parser_construct_part
 g_mime_parser_construct_message
+g_mime_parser_construct_message_from_file
 </SECTION>
 
 <SECTION>

@@ -20,11 +20,16 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "pgp-utils.h"
 #include "pgp-mime.h"
+
 
 /**
  * pgp_mime_init:
@@ -87,8 +92,6 @@ pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part)
 	type = g_mime_part_get_content_type (part);
 	if (!g_mime_content_type_is_type (type, "application", "pgp-signature"))
 		return FALSE;
-	
-	/* FIXME: Implement multisig stuff */	
 	
 	return TRUE;
 }
@@ -216,6 +219,7 @@ pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
 	}
 
 }
+
 
 /**
  * pgp_mime_part_sign:

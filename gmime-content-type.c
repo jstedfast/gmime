@@ -20,8 +20,11 @@
  *
  */
 
-#include "gmime-content-type.h"
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#include "gmime-content-type.h"
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>

@@ -21,4 +21,7 @@ gmime-config
 gmimeConf.sh
 test-parser
 test-mime
+test-pgp
+test-pgpmime
 gen-table
+libgmime.spec

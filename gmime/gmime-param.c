@@ -20,9 +20,12 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "gmime-param.h"
 #include "gmime-utils.h"
-#include <config.h>
 #include <string.h>
 #include <ctype.h>
 

@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2001 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,30 +20,32 @@
  *
  */
 
-#ifndef __GMIME_PARSER_H__
-#define __GMIME_PARSER_H__
+#ifndef __GMIME_HEADER_H__
+#define __GMIME_HEADER_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus } */
+#endif /* __cplusplus */
 
-#include <stdio.h> /* for FILE */
 #include <glib.h>
-#include "gmime-message.h"
-#include "gmime-part.h"
-#include "gmime-content-type.h"
-#include "gmime-param.h"
 
+typedef struct _GMimeHeader GMimeHeader;
 
-GMimePart *g_mime_parser_construct_part (const gchar *in, guint inlen);
+GMimeHeader *g_mime_header_new (void);
 
-GMimeMessage *g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_extra_headers);
+void g_mime_header_destroy (GMimeHeader *header);
 
-GMimeMessage *g_mime_parser_construct_message_from_file (FILE *fp, gboolean save_extra_headers);
+void g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value);
+
+const gchar *g_mime_header_get (GMimeHeader *header, const gchar *name);
+
+void g_mime_header_write_to_string (GMimeHeader *header, GString *string);
+
+gchar *g_mime_header_to_string (GMimeHeader *header);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_PARSER_H__ */
+#endif /* __GMIME_HEADER_H__ */

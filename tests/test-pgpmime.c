@@ -81,7 +81,7 @@ test_multipart_signed (void)
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, text_part);
 	
 	text = g_mime_message_to_string (message);
@@ -151,7 +151,7 @@ test_multipart_encrypted (void)
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, text_part);
 	
 	text = g_mime_message_to_string (message);

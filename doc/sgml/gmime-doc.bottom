@@ -1,4 +1,5 @@
     &gmime-gmime-param;
+    &gmime-gmime-header;
     &gmime-gmime-content-type;
     &gmime-gmime-part;
     &gmime-gmime-message;

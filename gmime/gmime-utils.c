@@ -28,12 +28,10 @@
 #include "gmime-utils.h"
 #include "gmime-table-private.h"
 #include "gmime-part.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <alloca.h>
 
 #define d(x)
 

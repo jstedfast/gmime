@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-param</TITLE
+>gmime-header</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="GMime Library Reference"
-HREF="libgmime.html"><LINK
+TITLE="gmime-param"
+HREF="gmime-gmime-param.html"><LINK
 REL="NEXT"
-TITLE="gmime-header"
-HREF="gmime-gmime-header.html"></HEAD
+TITLE="gmime-content-type"
+HREF="gmime-gmime-content-type.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="libgmime.html"
+HREF="gmime-gmime-param.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-content-type.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARAM"
->gmime-param</A
+NAME="GMIME-GMIME-HEADER"
+>gmime-header</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN26"
+NAME="AEN145"
 ></A
 ><H2
 >Name</H2
->gmime-param&nbsp;--&nbsp;</DIV
+>gmime-header&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN29"
+NAME="AEN148"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,17 +146,28 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->;
 <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
 >* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW"
->g_mime_param_new</A
->                (const <GTKDOCLINK
+HREF="gmime-gmime-header.html#G-MIME-HEADER-NEW"
+>g_mime_header_new</A
+>              (void);
+void        <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-DESTROY"
+>g_mime_header_destroy</A
+>           (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header);
+void        <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-SET"
+>g_mime_header_set</A
+>               (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 > *name,
@@ -164,33 +175,41 @@ HREF="GCHAR"
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 > *value);
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW-FROM-STRING"
->g_mime_param_new_from_string</A
->    (const <GTKDOCLINK
+const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *string);
+>* <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-GET"
+>g_mime_header_get</A
+>              (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);
 void        <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
->g_mime_param_destroy</A
->            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);
+HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STRING"
+>g_mime_header_write_to_string</A
+>   (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             <GTKDOCLINK
+HREF="GSTRING"
+>GString</GTKDOCLINK
+> *string);
 <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 >*      <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-TO-STRING"
->g_mime_param_to_string</A
->          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+HREF="gmime-gmime-header.html#G-MIME-HEADER-TO-STRING"
+>g_mime_header_to_string</A
+>         (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -198,7 +217,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN45"
+NAME="AEN169"
 ></A
 ><H2
 >Description</H2
@@ -208,49 +227,20 @@ NAME="AEN45"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN48"
+NAME="AEN172"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN50"
+NAME="AEN174"
 ></A
 ><H3
 ><A
-NAME="GMIMEPARAM"
+NAME="G-MIME-HEADER-NEW"
 ></A
->struct GMimeParam</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->struct GMimeParam {
-	gchar *name;
-	gchar *value;
-};</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN55"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-NEW"
-></A
->g_mime_param_new ()</H3
+>g_mime_header_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -261,16 +251,9 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+>* g_mime_header_new              (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -281,7 +264,73 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN64"
+NAME="AEN181"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new header object.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN190"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-DESTROY"
+></A
+>g_mime_header_destroy ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_header_destroy           (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Destroy the header object</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN197"
 ></A
 ><P
 ></P
@@ -301,6 +350,115 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN206"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-SET"
+></A
+>g_mime_header_set ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_header_set               (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *value);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the value of the specified header. If <TT
+CLASS="PARAMETER"
+><I
+>value</I
+></TT
+> is <TT
+CLASS="LITERAL"
+>NULL</TT
+> and the
+header, <TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>, had not been previously set, a space will be set
+aside for it (useful for setting the order of headers before values
+can be obtained for them) otherwise the header will be removed.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN218"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
 >name</I
 ></TT
 >&nbsp;:</TD
@@ -308,7 +466,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter name</TD
+> header name</TD
 ></TR
 ><TR
 ><TD
@@ -325,7 +483,102 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter value</TD
+> header value (or <TT
+CLASS="LITERAL"
+>NULL</TT
+> to remove header)</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN236"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-GET"
+></A
+>g_mime_header_get ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>* g_mime_header_get              (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN245"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header name</TD
 ></TR
 ><TR
 ><TD
@@ -340,7 +593,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new paramter structure.</TD
+>the value of the header requested</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -351,13 +604,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN81"
+NAME="AEN262"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-NEW-FROM-STRING"
+NAME="G-MIME-HEADER-WRITE-TO-STRING"
 ></A
->g_mime_param_new_from_string ()</H3
+>g_mime_header_write_to_string ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -367,24 +620,25 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new_from_string    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
+>void        g_mime_header_write_to_string   (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             <GTKDOCLINK
+HREF="GSTRING"
+>GString</GTKDOCLINK
 > *string);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Write the headers to a string</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN89"
+NAME="AEN270"
 ></A
 ><P
 ></P
@@ -396,6 +650,23 @@ CELLSPACING="0"
 CELLPADDING="4"
 CLASS="CALSTABLE"
 ><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
 ><TR
 ><TD
 WIDTH="20%"
@@ -411,25 +682,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> string to parse into a GMimeParam structure</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a GMimeParam structure based on <GTKDOCLINK
-HREF="STRING"
->string</GTKDOCLINK
->.</TD
+> string</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -440,82 +693,13 @@ HREF="STRING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN103"
+NAME="AEN283"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-DESTROY"
+NAME="G-MIME-HEADER-TO-STRING"
 ></A
->g_mime_param_destroy ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_param_destroy            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
-></TD
-></TR
-></TABLE
-><P
->Releases all memory used by this mime param back to the Operating
-System.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN110"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->param</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> Mime param to destroy</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN119"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-TO-STRING"
-></A
->g_mime_param_to_string ()</H3
+>g_mime_header_to_string ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -528,10 +712,10 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
->*      g_mime_param_to_string          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+>*      g_mime_header_to_string         (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -542,7 +726,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN127"
+NAME="AEN291"
 ></A
 ><P
 ></P
@@ -562,14 +746,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>header</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Param</TD
+> header object</TD
 ></TR
 ><TR
 ><TD
@@ -584,8 +768,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an allocated string containing the MIME Param in the form:
-name="value"</TD
+>a string containing the header block</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -609,7 +792,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="libgmime.html"
+HREF="gmime-gmime-param.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -663,7 +846,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-content-type.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -681,7 +864,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->GMime Library Reference</B
+>gmime-param</B
 ></FONT
 ></TD
 ><TD
@@ -691,7 +874,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-header</B
+>gmime-content-type</B
 ></FONT
 ></TD
 ></TR

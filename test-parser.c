@@ -49,7 +49,7 @@ test_parser (gchar *data)
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	time (&past);
-	message = g_mime_parser_construct_message (data, TRUE);
+	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
 	time (&now);
 	fprintf (stderr, "parsed message in %lus.\n", now - past);
 	time (&past);

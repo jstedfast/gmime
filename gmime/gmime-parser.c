@@ -27,7 +27,7 @@
 
 #include "gmime-parser.h"
 #include "gmime-utils.h"
-
+#include "gmime-header.h"
 #include <string.h>
 #include <ctype.h>
 
@@ -42,6 +42,21 @@ enum {
 	CONTENT_MD5,
 	CONTENT_ID
 };
+
+#if 0
+static char *rfc822_headers[] = {
+	"Return-Path",
+	"Received",
+	"Date",
+	"From",
+	"Reply-To",
+	"Subject",
+	"Sender",
+	"To",
+	"Cc",
+	NULL
+};
+#endif
 
 static gchar *content_headers[] = {
 	"Content-Type:",
@@ -110,9 +125,10 @@ g_strstrbound (const gchar *haystack, const gchar *needle, const gchar *end)
 
 #define GMIME_PARSER_MAX_LINE_WIDTH 1024
 
+
 /**
  * get_header_block_from_file: Get the header block from a message.
- * @fp file pointer pointing to the beginning of the file block.
+ * @fp: file pointer pointing to the beginning of the file block.
  *
  * This will read all of the headers into an unparsed GArray and
  * leave fp_in pointing at the message body that comes after the
@@ -142,7 +158,7 @@ get_header_block_from_file (FILE *fp)
 		if (!strcmp (buf,"\n"))
 			break;
 		
-		g_array_append_vals (a, buf, strlen(buf));
+		g_array_append_vals (a, buf, strlen (buf));
 	}
 	
 	return a;
@@ -173,32 +189,9 @@ get_header_block (const gchar *pch)
 
 
 /**
- * find_header_end: Given the beginning of a header, will return a pointer to its end.
- * @header: the beginning of the header
- * @boundary: maximum end boundary for the header.  Typically points to the end of the header block.
- *
- * Returns a pointer to the end of a header.
- **/
-static const gchar *
-find_header_end (const gchar *header, const gchar *boundary)
-{
-	const gchar * eptr;
-	
-	g_return_val_if_fail (header != NULL, NULL);
-	g_return_val_if_fail (boundary != NULL, NULL);
-	
-	for (eptr = header; eptr < boundary; eptr++)
-		if (*eptr == '\n' && !isblank (eptr[1]))
-			break;
-	
-	return eptr;
-}
-
-/**
- * parse_content_heaaders: picks the Content-* headers from a header block
- *                         and extracts info from them.
- * @headers: string containing the zero-terminated header block.
- * @headers_len: length of the header block.
+ * parse_content_heaaders:
+ * @headers: content header string
+ * @inlen: length of the header block.
  * @mime_part: mime part to populate with the information we get from the Content-* headers.
  * @is_multipart: set to TRUE if the part is a multipart, FALSE otherwise (to be set by function)
  * @boundary: multipart boundary string (to be set by function)
@@ -207,91 +200,65 @@ find_header_end (const gchar *header, const gchar *boundary)
  * Parse a header block for content information.
  */
 static void
-parse_content_headers (const gchar *headers, gint headers_len,
+parse_content_headers (const gchar *headers, gint inlen,
                        GMimePart *mime_part, gboolean *is_multipart,
                        gchar **boundary, gchar **end_boundary)
 {
-	const gchar *headers_ptr = headers;
-	const gchar *headers_end = headers + headers_len;
+	const gchar *inptr = headers;
+	const gchar *inend = inptr + inlen;
 	
 	*boundary = NULL;
 	*end_boundary = NULL;
 	
-	while (headers_ptr < headers_end) {
-		const gint type = content_header (headers_ptr);
+	while (inptr < inend) {
+		const gint type = content_header (inptr);
+		const gchar *hvalptr;
+		const gchar *hvalend;
+		gchar *value;
+		
+		if (type == -1) {
+			if (!(hvalptr = memchr (inptr, ':', inend - inptr)))
+				break;
+			hvalptr++;
+		} else {
+			hvalptr = inptr + strlen (content_headers[type]);
+		}
+		
+		for (hvalend = hvalptr; hvalend < inend; hvalend++)
+			if (*hvalend == '\n' && !isblank (*(hvalend + 1)))
+				break;
+		
+		value = g_strndup (hvalptr, (gint) (hvalend - hvalptr));
+		
+		header_unfold (value);
+		g_strstrip (value);
 		
 		switch (type) {
 		case CONTENT_DESCRIPTION: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar *desc_enc = g_strndup (pch, (gint)(end - pch));
-			gchar *desc_dec = g_mime_utils_8bit_header_decode (desc_enc);
+			gchar *description = g_mime_utils_8bit_header_decode (value);
 			
-			g_strstrip (desc_dec);
-			g_mime_part_set_content_description (mime_part, desc_dec);
-			g_free (desc_enc);
-			g_free (desc_dec);
+			g_strstrip (description);
+			g_mime_part_set_content_description (mime_part, description);
+			g_free (description);
 			
-			headers_ptr = end + 1;
 			break;
 		}
-		case CONTENT_LOCATION: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar * loc = g_strndup (pch, (gint)(end - pch));
-			
-			g_strstrip (loc);
-			g_mime_part_set_content_location (mime_part, loc);
-			g_free (loc);
-			
-			headers_ptr = end + 1;
+		case CONTENT_LOCATION:
+			g_mime_part_set_content_location (mime_part, value);
 			break;
-		}
-		case CONTENT_MD5: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar *md5 = g_strndup (pch, (gint) (end - pch));
-			
-			g_strstrip (md5);
-			g_mime_part_set_content_md5 (mime_part, md5);
-			g_free (md5);
-			
-			headers_ptr = end + 1;
+		case CONTENT_MD5:
+			g_mime_part_set_content_md5 (mime_part, value);
 			break;
-		}
-		case CONTENT_ID: {
-			const gchar* pch = headers_ptr + strlen (content_headers[type]);
-			const gchar* end = find_header_end (pch, headers_end);
-			gchar *id = g_strndup (pch, (gint) (end - pch));
-			
-			g_strstrip (id);
-			g_mime_part_set_content_id (mime_part, id);
-			g_free (id);
-			
-			headers_ptr = end + 1;
+		case CONTENT_ID:
+			g_mime_part_set_content_id (mime_part, value);
 			break;
-		}
-		case CONTENT_TRANSFER_ENCODING: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar *encoding = g_strndup (pch, (gint) (end - pch));
-			
-			g_strstrip (encoding);
-			g_mime_part_set_encoding (mime_part, g_mime_part_encoding_from_string (encoding));
-			g_free (encoding);
-			
-			headers_ptr = end + 1;
+		case CONTENT_TRANSFER_ENCODING:
+			g_mime_part_set_encoding (mime_part, g_mime_part_encoding_from_string (value));
 			break;
-		}
 		case CONTENT_TYPE: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar *type = g_strndup (pch, (gint) (end - pch));
 			GMimeContentType *mime_type;
 			
-			g_strstrip (type);
-			mime_type = g_mime_content_type_new_from_string (type);
-			g_free (type);
+			mime_type = g_mime_content_type_new_from_string (value);
 			
 			*is_multipart = g_mime_content_type_is_type (mime_type, "multipart", "*");
 			if (*is_multipart) {
@@ -314,78 +281,67 @@ parse_content_headers (const gchar *headers, gint headers_len,
 			}
 			g_mime_part_set_content_type (mime_part, mime_type);
 			
-			headers_ptr = end + 1;
 			break;
 		}
 		case CONTENT_DISPOSITION: {
-			const gchar *pch = headers_ptr + strlen (content_headers[type]);
-			const gchar *end = find_header_end (pch, headers_end);
-			gchar *disposition = g_strndup (pch, (gint) (end - pch));
-			gchar *ptr;
-			gchar *disp;
+			gchar *disposition, *ptr;
 			
 			/* get content disposition part */
-			for (ptr = disposition; *ptr && *ptr != ';'; ptr++); /* find ; or \0 */
-			disp = g_strndup (disposition, (gint)(ptr - disposition));
-			g_strstrip (disp);
-			g_mime_part_set_content_disposition (mime_part, disp);
-			g_free (disp);
+			for (ptr = value; *ptr && *ptr != ';'; ptr++); /* find ; or \0 */
+			disposition = g_strndup (value, (gint)(ptr - value));
+			g_strstrip (disposition);
+			g_mime_part_set_content_disposition (mime_part, disposition);
+			g_free (disposition);
 			
 			/* parse the parameters, if any */
 			while (*ptr == ';') {
-				gchar *name;
-				gchar *value;
+				gchar *pname, *pval;
 				
 				/* get the param name */
-				for (name = ptr + 1; *name && !isspace ((int)*name); name++);
-				for (ptr = name; *ptr && *ptr != '='; ptr++);
-				name = g_strndup (name, (gint) (ptr - name));
-				g_strstrip (name);
+				for (pname = ptr + 1; *pname && !isspace ((int)*pname); pname++);
+				for (ptr = pname; *ptr && *ptr != '='; ptr++);
+				pname = g_strndup (pname, (gint) (ptr - pname));
+				g_strstrip (pname);
 				
 				/* convert param name to lowercase */
-				g_strdown (name);
+				g_strdown (pname);
 				
 				/* skip any whitespace */
-				for (value = ptr + 1; *value && isspace ((int)*value); value++);
+				for (pval = ptr + 1; *pval && isspace ((int) *pval); pval++);
 				
-				if (*value == '"') {
+				if (*pval == '"') {
 					/* value is in quotes */
-					value++;
-					for (ptr = value; *ptr; ptr++)
+					pval++;
+					for (ptr = pval; *ptr; ptr++)
 						if (*ptr == '"' && *(ptr - 1) != '\\')
 							break;
-					value = g_strndup (value, (gint) (ptr - value));
-					g_strstrip (value);
-					g_mime_utils_unquote_string (value);
-						
+					pval = g_strndup (pval, (gint) (ptr - pval));
+					g_strstrip (pval);
+					g_mime_utils_unquote_string (pval);
+					
 					for ( ; *ptr && *ptr != ';'; ptr++);
 				} else {
 					/* value is not in quotes */
-					for (ptr = value; *ptr && *ptr != ';'; ptr++);
-					value = g_strndup (value, (gint) (ptr - value));
-					g_strstrip (value);
+					for (ptr = pval; *ptr && *ptr != ';'; ptr++);
+					pval = g_strndup (pval, (gint) (ptr - pval));
+					g_strstrip (pval);
 				}
 				
-				g_mime_part_add_content_disposition_parameter (mime_part, name, value);
+				g_mime_part_add_content_disposition_parameter (mime_part, pname, pval);
 				
-				g_free (name);
-				g_free (value);
+				g_free (pname);
+				g_free (pval);
 			}
 			
-			g_free (disposition);
-			
-			headers_ptr = end + 1;
 			break;
 		}
-		default: {
+		default:
 			/* ignore this header */
-			const gchar *pch = headers_ptr;
-			const gchar *end = find_header_end (pch, headers_end);
-			
-			headers_ptr = end + 1;
 			break;
 		}
-		}
+		
+		g_free (value);
+		inptr = hvalend + 1;
 	}
 }
 
@@ -446,7 +402,9 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 	parse_content_headers (headers, headers_len, mime_part, &is_multipart, &boundary, &end_boundary);
 	
 	/* Body */
-	if (is_multipart && boundary!=NULL && end_boundary!=NULL) { /* is a multipart */
+	if (is_multipart && boundary != NULL && end_boundary != NULL) {
+		/* is a multipart */
+
 		/* get all the subparts */
 		gchar buf[GMIME_PARSER_MAX_LINE_WIDTH];
 		
@@ -516,8 +474,10 @@ g_mime_parser_construct_part_from_file (const gchar   *headers,
 	return mime_part;
 }
 
+
 /* we pass the length here so that we can avoid dup'ing in the caller
    as mime parts can be BIG (tm) */
+
 /**
  * g_mime_parser_construct_part: Construct a GMimePart object
  * @in: raw MIME Part data
@@ -529,25 +489,29 @@ GMimePart *
 g_mime_parser_construct_part (const gchar *in, guint inlen)
 {
 	GMimePart *mime_part;
-	GArray *headers;
 	gchar *boundary;
 	gchar *end_boundary;
 	gboolean is_multipart;
 	const gchar *inptr;
 	const gchar *inend = in + inlen;
+	const gchar *hdr_end;
 	
 	g_return_val_if_fail (in != NULL, NULL);
 	g_return_val_if_fail (inlen != 0, NULL);
 	
 	/* Headers */
-	headers = get_header_block (in);
+	/* if the beginning of the input is a '\n' then there are no content headers */
+	hdr_end = *in == '\n' ? in : g_strstrbound (in, "\n\n", inend);
+	if (!hdr_end)
+		return NULL;
+	
 	mime_part = g_mime_part_new ();
 	is_multipart = FALSE;
-	parse_content_headers (headers->data, headers->len, mime_part,
+	parse_content_headers (in, hdr_end - in, mime_part,
 			       &is_multipart, &boundary, &end_boundary);
 	
 	/* Body */
-	inptr = in + headers->len;
+	inptr = hdr_end;
 	
 	if (is_multipart && boundary && end_boundary) {
 		/* get all the subparts */
@@ -571,6 +535,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 			}
 			
 			/* get the subpart */
+			part_begin += strlen (boundary);
 			subpart = g_mime_parser_construct_part (part_begin, (guint) (part_end - part_begin));
 			g_mime_part_add_subpart (mime_part, subpart);
 			
@@ -605,8 +570,6 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 		if (len > 0)
 			g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
 	}
-	
-	g_array_free (headers, TRUE);	
 	
 	return mime_part;
 }
@@ -712,11 +675,14 @@ construct_headers (GMimeMessage *message, const gchar *headers, gint inlen, gboo
 			break;
 		case HEADER_UNKNOWN:
 		default:
-			if (save_extra_headers && !special_header (field)) {
-				field[strlen (field) - 1] = '\0'; /* kill the ':' */
-				g_mime_message_add_arbitrary_header (message, field, value);
-			}
 			break;
+		}
+		
+		/* possibly save the raw header */
+		if ((save_extra_headers || fields[i]) && !special_header (field)) {
+			field[strlen (field) - 1] = '\0'; /* kill the ';' */
+			g_strstrip (field);
+			g_mime_header_set (message->header->headers, field, value);
 		}
 		
 		g_free (field);
@@ -732,29 +698,28 @@ construct_headers (GMimeMessage *message, const gchar *headers, gint inlen, gboo
 
 /**
  * g_mime_parser_construct_message: Construct a GMimeMessage object
- * @data: an rfc0822 message
+ * @in: an rfc0822 message stream
+ * @inlen: stream length
  * @save_extra_headers: if TRUE, then store the arbitrary headers
  *
  * Returns a GMimeMessage object based on the rfc0822 data.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (const gchar *data, gboolean save_extra_headers)
+g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_extra_headers)
 {
 	GMimeMessage *message = NULL;
-	GArray *headers;
+	const gchar *hdr_end;
 	
-	g_return_val_if_fail (data != NULL, NULL);
+	g_return_val_if_fail (in != NULL, NULL);
 	
-	headers = get_header_block (data);
-	if (headers != NULL) {
-		GMimePart * part;
+	hdr_end = g_strstrbound (in, "\n\n", in + inlen);
+	if (hdr_end != NULL) {
+		GMimePart *part;
 		
 		message = g_mime_message_new ();
-		construct_headers (message, headers->data, headers->len, save_extra_headers);
-		part = g_mime_parser_construct_part (data, strlen(data));
+		construct_headers (message, in, hdr_end - in, save_extra_headers);
+		part = g_mime_parser_construct_part (in, inlen);
 		g_mime_message_set_mime_part (message, part);
-		
-		g_array_free (headers, TRUE);
 	}
 	
 	return message;

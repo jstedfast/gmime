@@ -4,7 +4,8 @@
 >gmime-parser</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
 REL="HOME"
 TITLE="GMime Library Reference Manual"
 HREF="book1.html"><LINK
@@ -122,7 +123,7 @@ NAME="GMIME-GMIME-PARSER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2723"
+NAME="AEN3140"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +131,7 @@ NAME="AEN2723"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2726"
+NAME="AEN3143"
 ></A
 ><H2
 >Synopsis</H2
@@ -169,7 +170,26 @@ HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
                                             (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *data,
+> *in,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> save_extra_headers);
+<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE-FROM-FILE"
+>g_mime_parser_construct_message_from_file</A
+>
+                                            (<GTKDOCLINK
+HREF="FILE-CAPS"
+>FILE</GTKDOCLINK
+> *fp,
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -181,7 +201,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2737"
+NAME="AEN3159"
 ></A
 ><H2
 >Description</H2
@@ -191,14 +211,14 @@ NAME="AEN2737"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2740"
+NAME="AEN3162"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2742"
+NAME="AEN3164"
 ></A
 ><H3
 ><A
@@ -234,6 +254,9 @@ HREF="GUINT"
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN3173"
+></A
 ><P
 ></P
 ><TABLE
@@ -302,7 +325,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2768"
+NAME="AEN3190"
 ></A
 ><H3
 ><A
@@ -325,7 +348,11 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
                                             (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *data,
+> *in,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> inlen,
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -339,6 +366,9 @@ HREF="GBOOLEAN"
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN3200"
+></A
 ><P
 ></P
 ><TABLE
@@ -357,14 +387,139 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->data</I
+>in</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message</TD
+> an rfc0822 message stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> stream length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save_extra_headers</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> if TRUE, then store the arbitrary headers</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a GMimeMessage object based on the rfc0822 data.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3221"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-CONSTRUCT-MESSAGE-FROM-FILE"
+></A
+>g_mime_parser_construct_message_from_file ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* g_mime_parser_construct_message_from_file
+                                            (<GTKDOCLINK
+HREF="FILE-CAPS"
+>FILE</GTKDOCLINK
+> *fp,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> save_extra_headers);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3230"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>fp</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a file pointer pointing to an rfc0822 message</TD
 ></TR
 ><TR
 ><TD
