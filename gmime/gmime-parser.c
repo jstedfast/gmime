@@ -125,7 +125,7 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 		s->boundarylenfinal = 5;
 	} else {
 		s->boundary = g_strdup_printf ("--%s--", boundary);
-		s->boundarylen = strlen (boundary);
+		s->boundarylen = strlen (boundary) + 2;
 		s->boundarylenfinal = strlen (s->boundary);
 	}
 	
@@ -665,6 +665,8 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	size_t nleft, len;
 	int found;
 	
+	d(printf ("scan-content\n"));
+	
 	priv->midline = FALSE;
 	
 	g_assert (priv->inptr <= priv->inend);
@@ -717,6 +719,8 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 						
 						s = s->parent;
 					}
+					
+					d(printf ("'%.*s' not a boundary\n", len, start));
 				}
 				len++;
 			} else if (!found_eos) {
