@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table gen-multibyte test-mime test-parser test-mbox test-streams test-html test-iconv
+noinst_PROGRAMS = gen-table test-mime test-parser test-mbox test-streams test-html test-iconv
 
 bin_SCRIPTS = gmime-config
 
@@ -129,11 +129,6 @@ gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
 gen_table_LDADD = 
-
-gen_multibyte_SOURCES = gen-multibyte.c
-gen_multibyte_LDFLAGS = 
-gen_multibyte_DEPENDENCIES = 
-gen_multibyte_LDADD = 
 
 check-local: tests
 
