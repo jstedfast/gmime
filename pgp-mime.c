@@ -62,9 +62,9 @@ pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part)
 	if (!g_mime_content_type_is_type (type, "multipart", "signed"))
 		return FALSE;
 	
-	/* check that we have a protocol param with the value: "application/pgp-signed" */
+	/* check that we have a protocol param with the value: "application/pgp-signature" */
 	param = g_mime_content_type_get_parameter (type, "protocol");
-	if (!param || g_strcasecmp (param, "\"application/pgp-signed\""))
+	if (!param || g_strcasecmp (param, "application/pgp-signature"))
 		return FALSE;
 	
 	/* check that we have exactly 2 subparts */
@@ -78,14 +78,14 @@ pgp_mime_part_is_rfc2015_signed (GMimePart *mime_part)
 	child = multipart->children;
 	part = child->data;
 	type = g_mime_part_get_content_type (part);
-	if (g_mime_content_type_is_type (type, "application","pgp-signature"))
+	if (g_mime_content_type_is_type (type, "application", "pgp-signature"))
 		return FALSE;
 	
 	/* The second part should be application/pgp-signature. */
 	child = child->next;
 	part = child->data;
 	type = g_mime_part_get_content_type (part);
-	if (!g_mime_content_type_is_type (type, "application","pgp-siganture"))
+	if (!g_mime_content_type_is_type (type, "application", "pgp-signature"))
 		return FALSE;
 	
 	/* FIXME: Implement multisig stuff */	
@@ -116,7 +116,7 @@ pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
 	
 	/* check that we have a protocol param with the value: "application/pgp-encrypted" */
 	param = g_mime_content_type_get_parameter (type, "protocol");
-	if (!param || g_strcasecmp (param, "\"application/pgp-encrypted\""))
+	if (!param || g_strcasecmp (param, "application/pgp-encrypted"))
 		return FALSE;
 	
 	/* check that we have exactly 2 subparts */
@@ -129,7 +129,7 @@ pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
 	child = multipart->children;
 	part = child->data;
 	type = g_mime_part_get_content_type (part);
-	if (!g_mime_content_type_is_type (type, "application","pgp-encrypted"))
+	if (!g_mime_content_type_is_type (type, "application", "pgp-encrypted"))
 		return FALSE;
 	
 	/* The second part should be application/octet-stream - this
@@ -137,7 +137,7 @@ pgp_mime_part_is_rfc2015_encrypted (GMimePart *mime_part)
 	child = child->next;
 	part = child->data;
 	type = g_mime_part_get_content_type (part);
-	if (!g_mime_content_type_is_type (type, "application","octet-stream"))
+	if (!g_mime_content_type_is_type (type, "application", "octet-stream"))
 		return FALSE;
 	
 	return TRUE;
