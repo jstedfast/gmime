@@ -1,3 +1,10 @@
+2005-03-07  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/GMime.metadata: Add the "owned" flag to the return
+	value parameter for ConstructMessage on the GMimeParser,
+	because this method returns a new object with a refcount
+	of 1.  The binding needs to take ownership of the object.
+
 2005-02-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Updated

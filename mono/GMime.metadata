@@ -39,4 +39,8 @@
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
+
+  <!-- Some functions return new objects with owned refs -->
+  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
 </metadata>
