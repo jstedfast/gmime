@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="20 Nov 2000">
+<refentry id="gmime-gmime-part" revision="30 Nov 2000">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -60,13 +60,19 @@ void        <link linkend="g-mime-part-set-boundary">g_mime_part_set_boundary</l
                                              const <link linkend="gchar">gchar</link> *boundary);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-boundary">g_mime_part_get_boundary</link>       (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content">g_mime_part_set_content</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content);
+                                             const char *content,
+                                             <link linkend="guint">guint</link> len);
+void        <link linkend="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const char *content,
+                                             <link linkend="guint">guint</link> len,
+                                             <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>        (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="guint">guint</link> *len);
 void        <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimePart">GMimePart</link> *child);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="gboolean">gboolean</link> toplevel);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-part-decode-contents">g_mime_part_decode_contents</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="guint">guint</link> *len);
 </synopsis>
 </refsynopsisdiv>
 
@@ -123,7 +129,8 @@ void        <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>  
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
 	gchar *boundary;
-	gchar *content;
+	
+	GByteArray *content;
 	
 	GList *children;   /* of type GMimePart */
 };
@@ -563,7 +570,8 @@ Sets the boundary on the mime part.</para>
 <refsect2>
 <title><anchor id="g-mime-part-set-content">g_mime_part_set_content ()</title>
 <programlisting>void        g_mime_part_set_content         (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content);</programlisting>
+                                             const char *content,
+                                             <link linkend="guint">guint</link> len);</programlisting>
 <para>
 Sets the content of the Mime Part (only non-multiparts)</para>
 <para>
@@ -577,7 +585,62 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 <entry> Mime part
 </entry></row>
 <row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry> Mime part content
+<entry> raw mime part content
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> raw content length
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content ()</title>
+<programlisting>void        g_mime_part_set_pre_encoded_content
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const char *content,
+                                             <link linkend="guint">guint</link> len,
+                                             <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);</programlisting>
+<para>
+Sets the encoding type and raw content on the mime part after decoding the content.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
+<entry> encoded mime part content
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> length of the content
+</entry></row>
+<row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
+<entry> content encoding
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-get-content">g_mime_part_get_content ()</title>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content        (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="guint">guint</link> *len);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> the GMimePart to be decoded.
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> decoded length (to be set after processing)
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a gchar * pointer to the raw contents of the MIME Part
+and sets <literal>len</literal> to the length of the buffer.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -623,29 +686,6 @@ multipart.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Part. If toplevel
 is set to TRUE, then the MIME Part header will contain needed MIME
 headers for rfc822 messages.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-part-decode-contents">g_mime_part_decode_contents ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_part_decode_contents     (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="guint">guint</link> *len);</programlisting>
-<para>
-</para>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> the GMimePart to be decoded.
-</entry></row>
-<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
-<entry> decoded length (to be set after processing)
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a gchar * pointer to the decoded contents of the MIME Part
-and sets <literal>len</literal> to the length of the decoded buffer.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

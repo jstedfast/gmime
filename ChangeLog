@@ -1,5 +1,13 @@
 2000-11-29  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* README: Updated.
+
+	* doc/gmime-sections.txt: Added new functions.
+
+	* doc/html/*: Updated.
+
+2000-11-29  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* configure.in: Bumped the version to 0.2.0 because the API has
 	changed a bit.
 

@@ -1,4 +1,4 @@
-                             GMime, version 0.1
+                             GMime, version 0.2
                    by Jeffrey Stedfast <fejj@helixcode.com>
 
 
@@ -58,14 +58,16 @@ OBTAINING GMIME
 ---------------
 
 Sources to GMime may be obtained from:
-  ftp://spruce.sourceforge.net/pub/spruce
+  http://www.xtorshun.org/gmime/sources
 
 Information regarding GMime may be obtained from the Spruce home page:
-  http://spruce.sourceforge.net
+  http://www.xtorshun.org/gmime
 
 Experimental CVS versions of GMime may be obtained by following the
-directions at:
-  http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/gmime/?cvsroot=spruce
+directions at cvs.gnome.org, module gmime.
+
+  cvs -d:pserver:anonymous@anoncvs.gnome.org:/cvs/gnome login
+  cvs -z3 -d:pserver:anonymous@anoncvs.gnome.org:/cvs/gnome co gmime
 
 
 REQUIREMENTS
@@ -109,9 +111,5 @@ of GMime.
 REPORTING BUGS
 --------------
 
-Bugs may be reported to the GMime development team through the use of
-our automated bug tracking system located at:
-  http://sourceforge.net/bugs/?group_id=3355
-
-Once your bug has been submitted, you may return to the same URL to check
-on the status of its resolution.
+Bugs may be reported to the GMime development team by sending email to:
+fejj@helixcode.com

@@ -47,9 +47,10 @@ g_mime_part_get_filename
 g_mime_part_set_boundary
 g_mime_part_get_boundary
 g_mime_part_set_content
+g_mime_part_set_pre_encoded_content
+g_mime_part_get_content
 g_mime_part_add_child
 g_mime_part_to_string
-g_mime_part_decode_contents
 </SECTION>
 
 <SECTION>
@@ -84,6 +85,8 @@ g_mime_message_get_headers
 
 <SECTION>
 <FILE>gmime-utils</FILE>
+BASE64_ENCODE_LEN
+QP_ENCODE_LEN
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
 g_mime_utils_quote_string
