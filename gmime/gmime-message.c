@@ -34,6 +34,7 @@
 #include "internet-address.h"
 #include "gmime-stream-mem.h"
 
+static void g_mime_message_destroy (GMimeObject *object);
 
 static GMimeObject object_template = {
 	0, 0, g_mime_message_destroy
@@ -111,18 +112,12 @@ recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 	return TRUE;
 }
 
-
-/**
- * g_mime_message_destroy:
- * @message: MIME Message to destroy
- *
- * Releases all memory used by the MIME Message and it's child MIME
- * Parts back to the Operating System for reuse.
- **/
-void
-g_mime_message_destroy (GMimeMessage *message)
+static void
+g_mime_message_destroy (GMimeObject *object)
 {
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	GMimeMessage *message = (GMimeMessage *) object;
+	
+	g_return_if_fail (GMIME_IS_MESSAGE (object));
 	
 	g_free (message->header->from);
 	g_free (message->header->reply_to);

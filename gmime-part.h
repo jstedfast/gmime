@@ -65,14 +65,11 @@ typedef struct _GMimePart GMimePart;
 
 typedef void (*GMimePartFunc) (GMimePart *part, gpointer data);
 
-/* constructors / destructors */
-
+/* constructors */
 GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
-void g_mime_part_destroy (GMimePart *mime_part);
 
 /* accessor functions */
-
 void g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const char *value);
 const char *g_mime_part_get_content_header (GMimePart *mime_part, const char *header);
 

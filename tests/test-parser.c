@@ -99,7 +99,7 @@ test_parser (GMimeStream *stream)
 	print_mime_struct (message->mime_part, 0);
 #endif
 	
-	g_mime_message_destroy (message);
+	g_mime_object_unref (GMIME_OBJECT (message));
 }
 
 

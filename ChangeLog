@@ -1,3 +1,10 @@
+2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (g_mime_part_destroy): Now an internal-only method.
+
+	* gmime-message.c (g_mime_message_destroy): Now an internal-only
+	method.
+
 2001-12-05  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-basic.c (filter_filter):

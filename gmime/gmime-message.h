@@ -74,7 +74,6 @@ typedef struct _GMimeMessage GMimeMessage;
 #define GMIME_MESSAGE(object)    ((GMimeMessage *) object)
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
-void g_mime_message_destroy (GMimeMessage *message);
 
 void g_mime_message_set_sender (GMimeMessage *message, const char *sender);
 const char *g_mime_message_get_sender (GMimeMessage *message);
