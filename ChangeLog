@@ -1,3 +1,8 @@
+2002-04-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (rfc2047_encode_phrase): Fixed a small memory
+	leak. Thanks to the Pan guys for finding this.
+
 2002-04-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_step_from): Fixes to make it work.

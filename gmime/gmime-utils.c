@@ -1561,7 +1561,7 @@ rfc2047_encode_phrase (const unsigned char *in)
 		word = word->next;
 	}
 	
-	g_free (word);
+	g_free (prev);
 	
 	outstr = out->str;
 	g_string_free (out, FALSE);
