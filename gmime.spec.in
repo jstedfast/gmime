@@ -28,7 +28,7 @@ Source: http://www.xtorshun.org/gmime/sources/gmime-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
 Requires: glib2 >= 2.0.0
-
+BuildRequires: glib2-devel >= 2.0.0
 
 %description
 GMime is a set of utilities for parsing and creating messages using
