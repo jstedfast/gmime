@@ -71,7 +71,7 @@ libgmime_2_0_la_SOURCES = 		\
 	internet-address.c		\
 	md5-utils.c
 
-gmimeincludedir = $(includedir)/gmime-2.0
+gmimeincludedir = $(includedir)/gmime-2.0/gmime
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
 	gmime-charset.h			\
