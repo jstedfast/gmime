@@ -441,8 +441,10 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 ssize_t
 g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 {
-	char *outptr, *outend, *inptr, *inend, c = '\0';
+	register char *inptr, *outptr;
+	char *inend, *outend;
 	ssize_t nread;
+	char c = '\0';
 	
 	g_return_val_if_fail (stream != NULL, -1);
 	
@@ -559,7 +561,9 @@ g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer)
 		if (len <= 0)
 			break;
 		
-		g_byte_array_append (buffer, linebuf, len);
+		if (buffer)
+			g_byte_array_append (buffer, linebuf, len);
+		
 		if (linebuf[len - 1] == '\n')
 			break;
 	}

@@ -75,12 +75,12 @@ header_unfold (char *header)
 }
 
 static int
-content_header (const char *field)
+content_header (const char *header)
 {
 	int i;
 	
 	for (i = 0; content_headers[i]; i++)
-		if (!strncasecmp (field, content_headers[i], strlen (content_headers[i])))
+		if (!strncasecmp (header, content_headers[i], strlen (content_headers[i])))
 			return i;
 	
 	return -1;
@@ -99,13 +99,13 @@ content_header (const char *field)
  * Parse a header block for content information.
  */
 static void
-parse_content_headers (const char *headers, int inlen,
-                       GMimePart *mime_part, gboolean *is_multipart,
-                       char **boundary, char **end_boundary)
+parse_content_headers (GMimePart *mime_part, const char *headers, int inlen,
+                       gboolean *is_multipart, char **boundary, char **end_boundary)
 {
 	const char *inptr = headers;
 	const char *inend = inptr + inlen;
 	
+	*is_multipart = FALSE;
 	*boundary = NULL;
 	*end_boundary = NULL;
 	
@@ -217,10 +217,13 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 	const char *inend;
 	const char *hdr_end;
 	const char *in;
-	int inlen;
+	size_t inlen;
+	off_t offset;
 	
-	in = mem->buffer->data + g_mime_stream_tell (GMIME_STREAM (mem));
-	inlen = g_mime_stream_length (GMIME_STREAM (mem));
+	offset = g_mime_stream_tell (GMIME_STREAM (mem));
+	inlen = g_mime_stream_seek (GMIME_STREAM (mem), 0, SEEK_END) - offset;
+	g_mime_stream_seek (GMIME_STREAM (mem), offset, SEEK_SET);
+	in = mem->buffer->data + offset;
 	inend = in + inlen;
 	
 	/* Headers */
@@ -230,21 +233,20 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		return NULL;
 	
 	mime_part = g_mime_part_new ();
-	is_multipart = FALSE;
-	parse_content_headers (in, hdr_end - in, mime_part,
+	parse_content_headers (mime_part, in, hdr_end - in,
 			       &is_multipart, &boundary, &end_boundary);
 	
 	/* Body */
-	inptr = hdr_end;
+	inptr = hdr_end == in ? hdr_end + 1 : hdr_end + 2;
 	
 	if (is_multipart && boundary && end_boundary) {
 		/* get all the subparts */
 		GMimePart *subpart;
 		const char *part_begin;
 		const char *part_end;
-		off_t start, end, pos;
+		off_t start, end;
 		
-		pos = g_mime_stream_tell (GMIME_STREAM (mem));
+		offset = g_mime_stream_tell (GMIME_STREAM (mem));
 		start = GMIME_STREAM (mem)->bound_start;
 		end = GMIME_STREAM (mem)->bound_end;
 		
@@ -265,8 +267,8 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 			}
 			
 			/* get the subpart */
-			g_mime_stream_set_bounds (GMIME_STREAM (mem), pos + (part_begin - in),
-						  pos + (part_end - in));
+			g_mime_stream_set_bounds (GMIME_STREAM (mem), offset + (part_begin - in),
+						  offset + (part_end - in));
 			subpart = g_mime_parser_construct_part_internal (stream, mem);
 			g_mime_part_add_subpart (mime_part, subpart);
 			g_mime_object_unref (GMIME_OBJECT (subpart));
@@ -276,20 +278,18 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		}
 		
 		g_mime_stream_set_bounds (GMIME_STREAM (mem), start, end);
-		g_mime_stream_seek (GMIME_STREAM (mem), pos, GMIME_STREAM_SEEK_SET);
+		g_mime_stream_seek (GMIME_STREAM (mem), offset, GMIME_STREAM_SEEK_SET);
 		
 		/* free our temp boundary strings */
 		g_free (boundary);
 		g_free (end_boundary);
 	} else {
 		GMimePartEncodingType encoding;
-		const char *content = NULL;
 		size_t len = 0;
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
-			content = inptr + 1;
-			len = inend - content;
+			len = inend - inptr;
 			
 			/* trim off excess trailing \n's */
 			while (len > 2 && *(inend - 1) == '\n' && *(inend - 2) == '\n') {
@@ -304,11 +304,11 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 			if (GMIME_IS_STREAM_MEM (stream)) {
 				/* if we've already got it in memory, we use less memory if we
 				 * use individual mem streams per part after parsing... */
-				g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
+				g_mime_part_set_pre_encoded_content (mime_part, inptr, len, encoding);
 			} else {
 				GMimeDataWrapper *wrapper;
 				GMimeStream *substream;
-				off_t offset, start, end;
+				off_t start, end;
 				
 				/* mime part offset into memory stream */
 				offset = g_mime_stream_tell (GMIME_STREAM (mem));
@@ -317,7 +317,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 				if (stream != GMIME_STREAM (mem))
 					offset += g_mime_stream_tell (stream);
 				
-				start = offset + (content - in);
+				start = offset + (inptr - in);
 				end = start + len;
 				
 				substream = g_mime_stream_substream (stream, start, end);
@@ -379,7 +379,7 @@ enum {
 	HEADER_UNKNOWN
 };
 
-static char *fields[] = {
+static char *headers[] = {
 	"From:",
 	"Reply-To:",
 	"To:",
@@ -398,32 +398,32 @@ special_header (const char *header)
 }
 
 static void
-construct_message_headers (GMimeMessage *message, const char *headers, int inlen, gboolean preserve_headers)
+construct_message_headers (GMimeMessage *message, const char *in, int inlen, gboolean preserve_headers)
 {
-	char *field, *value, *raw, *q;
+	char *header, *value, *raw, *q;
 	char *inptr, *inend;
 	time_t date;
-	int offset = 0;
+	int offset;
 	int i;
 	
-	inptr = (char *) headers;
+	inptr = (char *) in;
 	inend = inptr + inlen;
 	
 	for ( ; inptr < inend; inptr++) {
-		for (i = 0; fields[i]; i++)
-			if (!strncasecmp (fields[i], inptr, strlen (fields[i])))
+		for (i = 0; headers[i]; i++)
+			if (!strncasecmp (headers[i], inptr, strlen (headers[i])))
 				break;
 		
-		if (!fields[i]) {
-			field = inptr;
-			for (q = field; q < inend && *q != ':'; q++);
-			field = g_strndup (field, (int) (q - field + 1));
-			g_strstrip (field);
+		if (!headers[i]) {
+			header = inptr;
+			for (q = header; q < inend && *q != ':'; q++);
+			header = g_strndup (header, (int) (q - header + 1));
+			g_strstrip (header);
 		} else {
-			field = g_strdup (fields[i]);
+			header = g_strdup (headers[i]);
 		}
 		
-		value = inptr + strlen (field);
+		value = inptr + strlen (header);
 		for (q = value; q < inend; q++)
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
@@ -469,15 +469,15 @@ construct_message_headers (GMimeMessage *message, const char *headers, int inlen
 		case HEADER_UNKNOWN:
 		default:
 			/* possibly save the raw header */
-			if ((preserve_headers || fields[i]) && !special_header (field)) {
-				field[strlen (field) - 1] = '\0'; /* kill the ':' */
-				g_strstrip (field);
-				g_mime_header_add (message->header->headers, field, value);
+			if ((preserve_headers || headers[i]) && !special_header (header)) {
+				header[strlen (header) - 1] = '\0'; /* kill the ':' */
+				g_strstrip (header);
+				g_mime_header_add (message->header->headers, header, value);
 			}
 			break;
 		}
 		
-		g_free (field);
+		g_free (header);
 		g_free (value);
 		
 		if (q >= inend)

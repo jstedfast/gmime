@@ -76,6 +76,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if (n > 0) {
 		memcpy (buf, mem->buffer->data + stream->position, n);
 		stream->position += n;
+	} else if (n < 0) {
+		/* set errno?? */
+		n = -1;
 	}
 	
 	return n;
@@ -90,15 +93,19 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len)
+	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len) {
 		g_byte_array_set_size (mem->buffer, stream->position + len);
-	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+		bound_end = mem->buffer->len;
+	} else
+		bound_end = stream->bound_end;
 	
 	n = MIN (bound_end - stream->position, len);
 	if (n > 0) {
 		memcpy (mem->buffer->data + stream->position, buf, n);
 		stream->position += n;
+	} else if (n < 0) {
+		/* FIXME: set errno?? */
+		n = -1;
 	}
 	
 	return n;
@@ -135,7 +142,7 @@ stream_eos (GMimeStream *stream)
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
 	
-	return mem->buffer ? stream->position >= bound_end : TRUE;
+	return stream->position >= bound_end;
 }
 
 static int
@@ -154,7 +161,7 @@ static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t bound_end;
+	off_t real, bound_end;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
@@ -162,18 +169,21 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		stream->position = MIN (offset + stream->bound_start, bound_end);
+		real = offset;
 		break;
 	case GMIME_STREAM_SEEK_END:
-		stream->position = MAX (offset + bound_end, 0);
+		real = offset + bound_end;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		stream->position += offset;
-		if (stream->position < stream->bound_start)
-			stream->position = stream->bound_start;
-		else if (stream->position > bound_end)
-			stream->position = bound_end;
+		real = stream->position + offset;
 	}
+	
+	if (real < stream->bound_start)
+		real = stream->bound_start;
+	else if (real > bound_end)
+		real = bound_end;
+	
+	stream->position = real;
 	
 	return stream->position;
 }
