@@ -17,20 +17,20 @@
 enum        <link linkend="InternetAddressType">InternetAddressType</link>;
 struct      <link linkend="InternetAddress">InternetAddress</link>;
 <link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new">internet_address_new</link>       (void);
-<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-name">internet_address_new_name</link>  (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *addr);
-<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-group">internet_address_new_group</link> (const <link linkend="gchar">gchar</link> *name);
+<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-name">internet_address_new_name</link>  (const char *name,
+                                             const char *addr);
+<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-group">internet_address_new_group</link> (const char *name);
 void        <link linkend="internet-address-destroy">internet_address_destroy</link>        (<link linkend="InternetAddress">InternetAddress</link> *ia);
 void        <link linkend="internet-address-set-name">internet_address_set_name</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             const <link linkend="gchar">gchar</link> *name);
+                                             const char *name);
 void        <link linkend="internet-address-set-addr">internet_address_set_addr</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             const <link linkend="gchar">gchar</link> *addr);
+                                             const char *addr);
 void        <link linkend="internet-address-set-group">internet_address_set_group</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="GList">GList</link> *group);
 void        <link linkend="internet-address-add-member">internet_address_add_member</link>     (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="InternetAddress">InternetAddress</link> *member);
-<link linkend="GList">GList</link>*      <link linkend="internet-address-parse-string">internet_address_parse_string</link>   (const <link linkend="gchar">gchar</link> *string);
-<link linkend="gchar">gchar</link>*      <link linkend="internet-address-to-string">internet_address_to_string</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
+<link linkend="GList">GList</link>*      <link linkend="internet-address-parse-string">internet_address_parse_string</link>   (const char *string);
+char*       <link linkend="internet-address-to-string">internet_address_to_string</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="gboolean">gboolean</link> encode);
 </synopsis>
 </refsynopsisdiv>
@@ -63,9 +63,9 @@ void        <link linkend="internet-address-add-member">internet_address_add_mem
 <title><anchor id="InternetAddress">struct InternetAddress</title>
 <programlisting>struct InternetAddress {
 	InternetAddressType type;
-	gchar *name;
+	char *name;
 	union {
-		gchar *addr;
+		char *addr;
 		GList *members;
 	} value;
 };
@@ -90,8 +90,8 @@ Creates a new InternetAddress object</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-name">internet_address_new_name ()</title>
-<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *addr);</programlisting>
+<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const char *name,
+                                             const char *addr);</programlisting>
 <para>
 Creates a new InternetAddress object with name <parameter>name</parameter> and address
 <parameter>addr</parameter>.</para>
@@ -113,7 +113,7 @@ Creates a new InternetAddress object with name <parameter>name</parameter> and a
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
-<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const <link linkend="gchar">gchar</link> *name);</programlisting>
+<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const char *name);</programlisting>
 <para>
 Creates a new InternetAddress object with group name <parameter>name</parameter>.</para>
 <para>
@@ -148,7 +148,7 @@ Destroy the InternetAddress object pointed to by <parameter>ia</parameter>.</par
 <refsect2>
 <title><anchor id="internet-address-set-name">internet_address_set_name ()</title>
 <programlisting>void        internet_address_set_name       (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
+                                             const char *name);</programlisting>
 <para>
 Set the name of the internet address.</para>
 <para>
@@ -168,7 +168,7 @@ Set the name of the internet address.</para>
 <refsect2>
 <title><anchor id="internet-address-set-addr">internet_address_set_addr ()</title>
 <programlisting>void        internet_address_set_addr       (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             const <link linkend="gchar">gchar</link> *addr);</programlisting>
+                                             const char *addr);</programlisting>
 <para>
 Set the internet address's address.</para>
 <para>
@@ -227,7 +227,7 @@ Add a contact to the internet address group.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
-<programlisting><link linkend="GList">GList</link>*      internet_address_parse_string   (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting><link linkend="GList">GList</link>*      internet_address_parse_string   (const char *string);</programlisting>
 <para>
 Construct a list of internet addresses from the given string.</para>
 <para>
@@ -246,7 +246,7 @@ the caller.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-to-string">internet_address_to_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
+<programlisting>char*       internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="gboolean">gboolean</link> encode);</programlisting>
 <para>
 Allocates a string containing the contents of the InternetAddress

@@ -87,9 +87,7 @@ Creates a new GMimeStreamNull object.</para>
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new null stream (similar to /dev/null on Unix).
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

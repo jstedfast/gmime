@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-stream-file</TITLE
+>gmime-stream-mmap</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-stream-buffer"
-HREF="gmime-gmime-stream-buffer.html"><LINK
+TITLE="gmime-stream-mem"
+HREF="gmime-gmime-stream-mem.html"><LINK
 REL="NEXT"
-TITLE="gmime-stream-fs"
-HREF="gmime-gmime-stream-fs.html"></HEAD
+TITLE="gmime-stream-null"
+HREF="gmime-gmime-stream-null.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream-buffer.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-fs.html"
+HREF="gmime-gmime-stream-null.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-STREAM-FILE"
->gmime-stream-file</A
+NAME="GMIME-GMIME-STREAM-MMAP"
+>gmime-stream-mmap</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN793"
+NAME="AEN1180"
 ></A
 ><H2
 >Name</H2
->gmime-stream-file&nbsp;--&nbsp;</DIV
+>gmime-stream-mmap&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN796"
+NAME="AEN1183"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,38 +147,36 @@ CLASS="SYNOPSIS"
 >&#13;
 
 #define     <A
-HREF="gmime-gmime-stream-file.html#GMIME-STREAM-FILE-TYPE-CAPS"
->GMIME_STREAM_FILE_TYPE</A
+HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-TYPE-CAPS"
+>GMIME_STREAM_MMAP_TYPE</A
 >
 #define     <A
-HREF="gmime-gmime-stream-file.html#GMIME-IS-STREAM-FILE-CAPS"
->GMIME_IS_STREAM_FILE</A
+HREF="gmime-gmime-stream-mmap.html#GMIME-IS-STREAM-MMAP-CAPS"
+>GMIME_IS_STREAM_MMAP</A
 >            (stream)
 #define     <A
-HREF="gmime-gmime-stream-file.html#GMIME-STREAM-FILE-CAPS"
->GMIME_STREAM_FILE</A
+HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-CAPS"
+>GMIME_STREAM_MMAP</A
 >               (stream)
 <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 >* <A
-HREF="gmime-gmime-stream-file.html#G-MIME-STREAM-FILE-NEW"
->g_mime_stream_file_new</A
->         (<GTKDOCLINK
-HREF="FILE-CAPS"
->FILE</GTKDOCLINK
-> *fp);
+HREF="gmime-gmime-stream-mmap.html#G-MIME-STREAM-MMAP-NEW"
+>g_mime_stream_mmap_new</A
+>         (int fd,
+                                             int prot,
+                                             int flags);
 <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 >* <A
-HREF="gmime-gmime-stream-file.html#G-MIME-STREAM-FILE-NEW-WITH-BOUNDS"
->g_mime_stream_file_new_with_bounds</A
+HREF="gmime-gmime-stream-mmap.html#G-MIME-STREAM-MMAP-NEW-WITH-BOUNDS"
+>g_mime_stream_mmap_new_with_bounds</A
 >
-                                            (<GTKDOCLINK
-HREF="FILE-CAPS"
->FILE</GTKDOCLINK
-> *fp,
+                                            (int fd,
+                                             int prot,
+                                             int flags,
                                              <GTKDOCLINK
 HREF="OFF-T"
 >off_t</GTKDOCLINK
@@ -194,7 +192,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN810"
+NAME="AEN1195"
 ></A
 ><H2
 >Description</H2
@@ -204,20 +202,20 @@ NAME="AEN810"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN813"
+NAME="AEN1198"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN815"
+NAME="AEN1200"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-FILE-TYPE-CAPS"
+NAME="GMIME-STREAM-MMAP-TYPE-CAPS"
 ></A
->GMIME_STREAM_FILE_TYPE</H3
+>GMIME_STREAM_MMAP_TYPE</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -227,7 +225,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FILE_TYPE g_str_hash ("GMimeStreamFile")</PRE
+>#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")</PRE
 ></TD
 ></TR
 ></TABLE
@@ -237,13 +235,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN820"
+NAME="AEN1205"
 ></A
 ><H3
 ><A
-NAME="GMIME-IS-STREAM-FILE-CAPS"
+NAME="GMIME-IS-STREAM-MMAP-CAPS"
 ></A
->GMIME_IS_STREAM_FILE()</H3
+>GMIME_IS_STREAM_MMAP()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -253,7 +251,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_STREAM_FILE(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILE_TYPE)</PRE
+>#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MMAP_TYPE)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -262,7 +260,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN825"
+NAME="AEN1210"
 ></A
 ><P
 ></P
@@ -300,13 +298,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN834"
+NAME="AEN1219"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-FILE-CAPS"
+NAME="GMIME-STREAM-MMAP-CAPS"
 ></A
->GMIME_STREAM_FILE()</H3
+>GMIME_STREAM_MMAP()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -316,7 +314,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FILE(stream) ((GMimeStreamFile *) stream)</PRE
+>#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -325,7 +323,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN839"
+NAME="AEN1224"
 ></A
 ><P
 ></P
@@ -363,13 +361,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN848"
+NAME="AEN1233"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-FILE-NEW"
+NAME="G-MIME-STREAM-MMAP-NEW"
 ></A
->g_mime_stream_file_new ()</H3
+>g_mime_stream_mmap_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -382,18 +380,17 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
->* g_mime_stream_file_new         (<GTKDOCLINK
-HREF="FILE-CAPS"
->FILE</GTKDOCLINK
-> *fp);</PRE
+>* g_mime_stream_mmap_new         (int fd,
+                                             int prot,
+                                             int flags);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeStreamFile object around <TT
+>Creates a new GMimeStreamMmap object around <TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 >.</P
 ><P
@@ -401,7 +398,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN857"
+NAME="AEN1241"
 ></A
 ><P
 ></P
@@ -421,14 +418,48 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> file pointer</TD
+> file descriptor</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>prot</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> protection flags</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>flags</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> map flags</TD
 ></TR
 ><TR
 ><TD
@@ -446,7 +477,7 @@ VALIGN="TOP"
 >a stream using <TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 >.</TD
 ></TR
@@ -459,13 +490,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN871"
+NAME="AEN1263"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-FILE-NEW-WITH-BOUNDS"
+NAME="G-MIME-STREAM-MMAP-NEW-WITH-BOUNDS"
 ></A
->g_mime_stream_file_new_with_bounds ()</H3
+>g_mime_stream_mmap_new_with_bounds ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -478,11 +509,10 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
->* g_mime_stream_file_new_with_bounds
-                                            (<GTKDOCLINK
-HREF="FILE-CAPS"
->FILE</GTKDOCLINK
-> *fp,
+>* g_mime_stream_mmap_new_with_bounds
+                                            (int fd,
+                                             int prot,
+                                             int flags,
                                              <GTKDOCLINK
 HREF="OFF-T"
 >off_t</GTKDOCLINK
@@ -495,10 +525,10 @@ HREF="OFF-T"
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeStreamFile object around <TT
+>Creates a new GMimeStreamMmap object around <TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 > with bounds <TT
 CLASS="PARAMETER"
@@ -517,7 +547,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN884"
+NAME="AEN1275"
 ></A
 ><P
 ></P
@@ -537,14 +567,48 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> file pointer</TD
+> file descriptor</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>prot</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> protection flags</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>flags</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> map flags</TD
 ></TR
 ><TR
 ><TD
@@ -596,7 +660,7 @@ VALIGN="TOP"
 >a stream using <TT
 CLASS="PARAMETER"
 ><I
->fp</I
+>fd</I
 ></TT
 > with bounds <TT
 CLASS="PARAMETER"
@@ -632,7 +696,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream-buffer.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -686,7 +750,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-fs.html"
+HREF="gmime-gmime-stream-null.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -704,7 +768,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-buffer</B
+>gmime-stream-mem</B
 ></FONT
 ></TD
 ><TD
@@ -714,7 +778,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-fs</B
+>gmime-stream-null</B
 ></FONT
 ></TD
 ></TR

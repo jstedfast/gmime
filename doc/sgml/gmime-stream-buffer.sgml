@@ -160,10 +160,10 @@ Reads a single line into <parameter>buffer</parameter>.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
+<entry> stream
 </entry></row>
 <row><entry align="right"><parameter>buffer</parameter>&nbsp;:</entry>
-<entry>
+<entry> output buffer
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

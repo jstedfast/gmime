@@ -3,7 +3,7 @@
     &gmime-gmime-stream-file;
     &gmime-gmime-stream-fs;
     &gmime-gmime-stream-mem;
-    &gmime-gmime-stream-null;
+    &gmime-gmime-stream-mmap;
     &gmime-gmime-stream-null;
     &gmime-gmime-stream-filter;
     &gmime-gmime-filter;

@@ -137,14 +137,20 @@ NAME="STREAMS"
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</P
 ><P
->The three (3) advanced stream types are GMimeStreamNull,
-    GMimeStreamBuffer (as was mentioned previously) and
-    GMimeStreamFilter.</P
+>The three (4) advanced stream types are GMimeStreamMmap,
+    GMimeStreamNull, GMimeStreamBuffer (as was mentioned previously)
+    and GMimeStreamFilter.</P
 ><P
 >Our most simple stream, GMimeStreamNull, is the stream
     equivalent of /dev/null on Unix systems. The main difference is
     that GMimeStreamNull records the number of bytes written to
     it.</P
+><P
+>GMimeStreamMmap is a memory-mapped stream. This isn't
+    guarenteed to work on all systems since not all systems support
+    the POSIX mmap system call, but for those that do - this might
+    present a faster stream than GMimeStreamFs and/or
+    GMimeStreamFile.</P
 ><P
 >The GMimeStreamBuffer type inherits from any other type of
     stream and has 3 modes: block reads, block writes, and cached

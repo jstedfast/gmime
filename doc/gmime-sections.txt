@@ -65,11 +65,12 @@ g_mime_stream_mem_set_byte_array
 </SECTION>
 
 <SECTION>
-<FILE>gmime-stream-null</FILE>
-GMIME_STREAM_NULL_TYPE
-GMIME_IS_STREAM_NULL
-GMIME_STREAM_NULL
-g_mime_stream_null_new
+<FILE>gmime-stream-mmap</FILE>
+GMIME_STREAM_MMAP_TYPE
+GMIME_IS_STREAM_MMAP
+GMIME_STREAM_MMAP
+g_mime_stream_mmap_new
+g_mime_stream_mmap_new_with_bounds
 </SECTION>
 
 <SECTION>
