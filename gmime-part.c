@@ -168,10 +168,10 @@ static char *headers[] = {
 static void
 set_disposition (GMimePart *mime_part, const char *disposition)
 {
-	if (!mime_part->disposition)
-		mime_part->disposition = g_mime_disposition_new (NULL);
+	if (mime_part->disposition)
+		g_mime_disposition_destroy (mime_part->disposition);
 	
-	g_mime_disposition_set (mime_part->disposition, disposition);
+	mime_part->disposition = g_mime_disposition_new (disposition);
 }
 
 static gboolean
