@@ -769,7 +769,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
  * Returns the GMimeObject whose content-id matches the search string,
  * or %NULL if a match cannot be found.
  **/
-const GMimeObject *
+GMimeObject *
 g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)
 {
 	GMimeObject *object = (GMimeObject *) multipart;
@@ -778,22 +778,24 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (content_id != NULL, NULL);
 	
-	if (object->content_id && !strcmp (object->content_id, content_id))
+	if (object->content_id && !strcmp (object->content_id, content_id)) {
+		g_object_ref (object);
 		return object;
+	}
 	
 	subparts = multipart->subparts;
 	while (subparts) {
-		const GMimeObject *part = NULL;
 		const GMimeContentType *type;
+		GMimeObject *part = NULL;
 		GMimeObject *subpart;
 		
 		subpart = subparts->data;
 		type = g_mime_object_get_content_type (GMIME_OBJECT (subpart));
 		
 		if (g_mime_content_type_is_type (type, "multipart", "*")) {
-			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart),
-									     content_id);
+			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart), content_id);
 		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
+			g_object_ref (subpart);
 			part = subpart;
 		}
 		

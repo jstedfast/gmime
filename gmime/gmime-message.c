@@ -1270,8 +1270,8 @@ handle_multipart_mixed (GMimeMultipart *multipart, gboolean want_plain, gboolean
 			/* if we haven't yet found a text part or if
                            it is a type we can understand and it is
                            the first of that type, save it */
-			if (!text_part || (!strcasecmp (type->subtype, "plain") && 
-					   strcasecmp (type->subtype, first_type->subtype) != 0)) {
+			if (!text_part || (!strcasecmp (type->subtype, "plain") && (first_type &&
+					   strcasecmp (type->subtype, first_type->subtype) != 0))) {
 				*is_html = !strcasecmp (type->subtype, "html");
 				text_part = mime_part;
 				first_type = type;

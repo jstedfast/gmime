@@ -414,9 +414,13 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	/* optimization */
 	if (len <= max_size) {
 		g_mime_stream_unref (stream);
-		*nparts = 1;
 		g_mime_object_ref (GMIME_OBJECT (message));
-		return &message;
+		
+		messages = g_malloc (sizeof (void *) * 2);
+		messages[0] = message;
+		*nparts = 1;
+		
+		return messages;
 	}
 	
 	parts = g_ptr_array_new ();
