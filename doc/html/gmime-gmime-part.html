@@ -219,7 +219,7 @@ HREF="GCHAR"
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-DESCRIPTION"
 >g_mime_part_get_content_description</A
 >
-                                            (<A
+                                            (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -241,6 +241,50 @@ HREF="GCHAR"
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-ID"
 >g_mime_part_get_content_id</A
 >     (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);
+void        <A
+HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-MD5"
+>g_mime_part_set_content_md5</A
+>     (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *content_md5);
+const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>* <A
+HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-MD5"
+>g_mime_part_get_content_md5</A
+>    (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);
+void        <A
+HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-LOCATION"
+>g_mime_part_set_content_location</A
+>
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *content_location);
+const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>* <A
+HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-LOCATION"
+>g_mime_part_get_content_location</A
+>
+                                            (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -440,7 +484,7 @@ HREF="GCHAR"
 >* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT"
 >g_mime_part_get_content</A
->        (<A
+>        (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
@@ -514,7 +558,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN462"
+NAME="AEN474"
 ></A
 ><H2
 >Description</H2
@@ -524,14 +568,14 @@ NAME="AEN462"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN465"
+NAME="AEN477"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN467"
+NAME="AEN479"
 ></A
 ><H3
 ><A
@@ -547,14 +591,14 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->enum GMimePartEncodingType {
+>typedef enum {
         GMIME_PART_ENCODING_DEFAULT,
         GMIME_PART_ENCODING_7BIT,
         GMIME_PART_ENCODING_8BIT,
         GMIME_PART_ENCODING_BASE64,
         GMIME_PART_ENCODING_QUOTEDPRINTABLE,
         GMIME_PART_NUM_ENCODINGS
-};</PRE
+} GMimePartEncodingType;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -564,7 +608,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN472"
+NAME="AEN484"
 ></A
 ><H3
 ><A
@@ -590,7 +634,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN477"
+NAME="AEN489"
 ></A
 ><H3
 ><A
@@ -620,7 +664,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN482"
+NAME="AEN494"
 ></A
 ><H3
 ><A
@@ -637,11 +681,13 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimePart {
-	gchar *description;
-	gchar *content_id;
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
+	gchar *description;
+	gchar *content_id;
+	gchar *content_md5;
+	gchar *content_location;
 	
 	GByteArray *content;
 	
@@ -656,7 +702,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN487"
+NAME="AEN499"
 ></A
 ><H3
 ><A
@@ -688,7 +734,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN494"
+NAME="AEN506"
 ></A
 ><P
 ></P
@@ -743,7 +789,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN507"
+NAME="AEN519"
 ></A
 ><H3
 ><A
@@ -773,7 +819,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN514"
+NAME="AEN526"
 ></A
 ><P
 ></P
@@ -810,7 +856,7 @@ text/plain.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN523"
+NAME="AEN535"
 ></A
 ><H3
 ><A
@@ -847,7 +893,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN532"
+NAME="AEN544"
 ></A
 ><P
 ></P
@@ -917,7 +963,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN549"
+NAME="AEN561"
 ></A
 ><H3
 ><A
@@ -947,7 +993,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN556"
+NAME="AEN568"
 ></A
 ><P
 ></P
@@ -985,7 +1031,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN565"
+NAME="AEN577"
 ></A
 ><H3
 ><A
@@ -1020,7 +1066,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN573"
+NAME="AEN585"
 ></A
 ><P
 ></P
@@ -1075,7 +1121,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN586"
+NAME="AEN598"
 ></A
 ><H3
 ><A
@@ -1095,7 +1141,7 @@ CLASS="PROGRAMLISTING"
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 >* g_mime_part_get_content_description
-                                            (<A
+                                            (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
@@ -1109,7 +1155,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN594"
+NAME="AEN606"
 ></A
 ><P
 ></P
@@ -1162,7 +1208,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN607"
+NAME="AEN619"
 ></A
 ><H3
 ><A
@@ -1196,7 +1242,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN615"
+NAME="AEN627"
 ></A
 ><P
 ></P
@@ -1251,7 +1297,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN628"
+NAME="AEN640"
 ></A
 ><H3
 ><A
@@ -1284,7 +1330,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN636"
+NAME="AEN648"
 ></A
 ><P
 ></P
@@ -1337,7 +1383,359 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN649"
+NAME="AEN661"
+></A
+><H3
+><A
+NAME="G-MIME-PART-SET-CONTENT-MD5"
+></A
+>g_mime_part_set_content_md5 ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_part_set_content_md5     (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *content_md5);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the content md5 for the specified mime part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN669"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>content_md5</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> content md5 or NULL to generate the md5 digest.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN682"
+></A
+><H3
+><A
+NAME="G-MIME-PART-GET-CONTENT-MD5"
+></A
+>g_mime_part_get_content_md5 ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>* g_mime_part_get_content_md5    (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN690"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the content md5 for the specified mime part.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN703"
+></A
+><H3
+><A
+NAME="G-MIME-PART-SET-CONTENT-LOCATION"
+></A
+>g_mime_part_set_content_location ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_part_set_content_location
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *content_location);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the content location for the specified mime part.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN711"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>content_location</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> content location</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN724"
+></A
+><H3
+><A
+NAME="G-MIME-PART-GET-CONTENT-LOCATION"
+></A
+>g_mime_part_get_content_location ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>* g_mime_part_get_content_location
+                                            (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN732"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the content location for the specified mime part.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN745"
 ></A
 ><H3
 ><A
@@ -1371,7 +1769,7 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN657"
+NAME="AEN753"
 ></A
 ><P
 ></P
@@ -1426,7 +1824,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN670"
+NAME="AEN766"
 ></A
 ><H3
 ><A
@@ -1460,7 +1858,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN678"
+NAME="AEN774"
 ></A
 ><P
 ></P
@@ -1513,7 +1911,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN691"
+NAME="AEN787"
 ></A
 ><H3
 ><A
@@ -1550,7 +1948,7 @@ GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN699"
+NAME="AEN795"
 ></A
 ><P
 ></P
@@ -1605,7 +2003,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN712"
+NAME="AEN808"
 ></A
 ><H3
 ><A
@@ -1639,7 +2037,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN720"
+NAME="AEN816"
 ></A
 ><P
 ></P
@@ -1696,7 +2094,7 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN733"
+NAME="AEN829"
 ></A
 ><H3
 ><A
@@ -1729,7 +2127,7 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN741"
+NAME="AEN837"
 ></A
 ><P
 ></P
@@ -1785,7 +2183,7 @@ GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN754"
+NAME="AEN850"
 ></A
 ><H3
 ><A
@@ -1819,7 +2217,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN762"
+NAME="AEN858"
 ></A
 ><P
 ></P
@@ -1876,7 +2274,7 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN775"
+NAME="AEN871"
 ></A
 ><H3
 ><A
@@ -1911,7 +2309,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN783"
+NAME="AEN879"
 ></A
 ><P
 ></P
@@ -1966,7 +2364,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN796"
+NAME="AEN892"
 ></A
 ><H3
 ><A
@@ -2000,7 +2398,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN804"
+NAME="AEN900"
 ></A
 ><P
 ></P
@@ -2053,7 +2451,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN817"
+NAME="AEN913"
 ></A
 ><H3
 ><A
@@ -2092,7 +2490,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN826"
+NAME="AEN922"
 ></A
 ><P
 ></P
@@ -2164,7 +2562,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN843"
+NAME="AEN939"
 ></A
 ><H3
 ><A
@@ -2202,7 +2600,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN852"
+NAME="AEN948"
 ></A
 ><P
 ></P
@@ -2276,7 +2674,7 @@ HREF="NAME"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN870"
+NAME="AEN966"
 ></A
 ><H3
 ><A
@@ -2311,7 +2709,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN878"
+NAME="AEN974"
 ></A
 ><P
 ></P
@@ -2366,7 +2764,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN891"
+NAME="AEN987"
 ></A
 ><H3
 ><A
@@ -2399,7 +2797,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN899"
+NAME="AEN995"
 ></A
 ><P
 ></P
@@ -2454,7 +2852,7 @@ and if not then checks the "name" parameter in the Content-Type.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN912"
+NAME="AEN1008"
 ></A
 ><H3
 ><A
@@ -2488,7 +2886,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN920"
+NAME="AEN1016"
 ></A
 ><P
 ></P
@@ -2543,7 +2941,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN933"
+NAME="AEN1029"
 ></A
 ><H3
 ><A
@@ -2576,7 +2974,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN941"
+NAME="AEN1037"
 ></A
 ><P
 ></P
@@ -2629,7 +3027,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN954"
+NAME="AEN1050"
 ></A
 ><H3
 ><A
@@ -2664,7 +3062,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN962"
+NAME="AEN1058"
 ></A
 ><P
 ></P
@@ -2736,7 +3134,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN979"
+NAME="AEN1075"
 ></A
 ><H3
 ><A
@@ -2776,7 +3174,7 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN988"
+NAME="AEN1084"
 ></A
 ><P
 ></P
@@ -2865,7 +3263,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1009"
+NAME="AEN1105"
 ></A
 ><H3
 ><A
@@ -2884,7 +3282,7 @@ CLASS="PROGRAMLISTING"
 >const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
->* g_mime_part_get_content        (<A
+>* g_mime_part_get_content        (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
@@ -2902,7 +3300,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1018"
+NAME="AEN1114"
 ></A
 ><P
 ></P
@@ -2976,7 +3374,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1036"
+NAME="AEN1132"
 ></A
 ><H3
 ><A
@@ -3011,7 +3409,7 @@ multipart.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1044"
+NAME="AEN1140"
 ></A
 ><P
 ></P
@@ -3066,7 +3464,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1057"
+NAME="AEN1153"
 ></A
 ><H3
 ><A
@@ -3091,7 +3489,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1062"
+NAME="AEN1158"
 ></A
 ><P
 ></P
@@ -3146,7 +3544,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1075"
+NAME="AEN1171"
 ></A
 ><H3
 ><A
@@ -3183,7 +3581,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1084"
+NAME="AEN1180"
 ></A
 ><P
 ></P
@@ -3255,7 +3653,7 @@ headers for rfc822 messages.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1101"
+NAME="AEN1197"
 ></A
 ><H3
 ><A
@@ -3299,7 +3697,7 @@ HREF="MIME-PART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1112"
+NAME="AEN1208"
 ></A
 ><P
 ></P
@@ -3374,7 +3772,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1130"
+NAME="AEN1226"
 ></A
 ><H3
 ><A
@@ -3412,7 +3810,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1139"
+NAME="AEN1235"
 ></A
 ><P
 ></P
@@ -3483,7 +3881,8 @@ or NULL if a match cannot be found.</TD
 ></DIV
 ><DIV
 CLASS="NAVFOOTER"
-><BR><BR><TABLE
+><BR
+CLEAR="all"><BR><TABLE
 WIDTH="100%"
 BORDER="0"
 BGCOLOR="#000000"

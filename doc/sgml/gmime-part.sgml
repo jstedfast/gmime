@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="2 Jan 2001">
+<refentry id="gmime-gmime-part" revision="4 Jan 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -28,10 +28,18 @@ void        <link linkend="g-mime-part-set-content-description">g_mime_part_set_
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const <link linkend="gchar">gchar</link> *description);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content-description">g_mime_part_get_content_description</link>
-                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);
+                                            (const <link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content-id">g_mime_part_set_content_id</link>      (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const <link linkend="gchar">gchar</link> *content_id);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content-id">g_mime_part_get_content_id</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part);
+void        <link linkend="g-mime-part-set-content-md5">g_mime_part_set_content_md5</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_md5);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content-md5">g_mime_part_get_content_md5</link>    (<link linkend="GMimePart">GMimePart</link> *mime_part);
+void        <link linkend="g-mime-part-set-content-location">g_mime_part_set_content_location</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_location);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content-location">g_mime_part_get_content_location</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content-type">g_mime_part_set_content_type</link>    (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimeContentType">GMimeContentType</link> *mime_type);
 const <link linkend="GMimeContentType">GMimeContentType</link>* <link linkend="g-mime-part-get-content-type">g_mime_part_get_content_type</link>
@@ -69,7 +77,7 @@ void        <link linkend="g-mime-part-set-pre-encoded-content">g_mime_part_set_
                                              const char *content,
                                              <link linkend="guint">guint</link> len,
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
-const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>        (<link linkend="GMimePart">GMimePart</link> *mime_part,
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>        (const <link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="guint">guint</link> *len);
 void        <link linkend="g-mime-part-add-subpart">g_mime_part_add_subpart</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimePart">GMimePart</link> *subpart);
@@ -100,14 +108,14 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMimePartEncodingType">enum GMimePartEncodingType</title>
-<programlisting>enum GMimePartEncodingType {
+<programlisting>typedef enum {
         GMIME_PART_ENCODING_DEFAULT,
         GMIME_PART_ENCODING_7BIT,
         GMIME_PART_ENCODING_8BIT,
         GMIME_PART_ENCODING_BASE64,
         GMIME_PART_ENCODING_QUOTEDPRINTABLE,
         GMIME_PART_NUM_ENCODINGS
-};
+} GMimePartEncodingType;
 </programlisting>
 <para>
 
@@ -132,11 +140,13 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <refsect2>
 <title><anchor id="GMimePart">struct GMimePart</title>
 <programlisting>struct GMimePart {
-	gchar *description;
-	gchar *content_id;
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
+	gchar *description;
+	gchar *content_id;
+	gchar *content_md5;
+	gchar *content_location;
 	
 	GByteArray *content;
 	
@@ -242,7 +252,7 @@ Set the content description for the specified mime part.</para>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-description">g_mime_part_get_content_description ()</title>
 <programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content_description
-                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+                                            (const <link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
 <para>
 </para>
 <para>
@@ -294,6 +304,84 @@ Set the content id for the specified mime part.</para>
 <entry> Mime part
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content id for the specified mime part.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-set-content-md5">g_mime_part_set_content_md5 ()</title>
+<programlisting>void        g_mime_part_set_content_md5     (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_md5);</programlisting>
+<para>
+Set the content md5 for the specified mime part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><parameter>content_md5</parameter>&nbsp;:</entry>
+<entry> content md5 or NULL to generate the md5 digest.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-get-content-md5">g_mime_part_get_content_md5 ()</title>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content_md5    (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content md5 for the specified mime part.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-set-content-location">g_mime_part_set_content_location ()</title>
+<programlisting>void        g_mime_part_set_content_location
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             const <link linkend="gchar">gchar</link> *content_location);</programlisting>
+<para>
+Set the content location for the specified mime part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><parameter>content_location</parameter>&nbsp;:</entry>
+<entry> content location
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-get-content-location">g_mime_part_get_content_location ()</title>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content_location
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the content location for the specified mime part.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -648,7 +736,7 @@ Sets the encoding type and raw content on the mime part after decoding the conte
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content">g_mime_part_get_content ()</title>
-<programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content        (<link linkend="GMimePart">GMimePart</link> *mime_part,
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_part_get_content        (const <link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="guint">guint</link> *len);</programlisting>
 <para>
 </para>
