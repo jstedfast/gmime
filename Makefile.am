@@ -35,6 +35,7 @@ libgmime_la_SOURCES = 		\
 	gmime-stream-filter.c	\
 	gmime-stream-fs.c	\
 	gmime-stream-mem.c	\
+	gmime-stream-null.c	\
 	gmime-utils.c		\
 	internet-address.c	\
 	md5-utils.c
@@ -60,6 +61,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-stream-filter.h	\
 	gmime-stream-fs.h	\
 	gmime-stream-mem.h	\
+	gmime-stream-null.h	\
 	gmime-utils.h		\
 	internet-address.h
 

@@ -1,3 +1,8 @@
+2001-11-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-null.c (g_mime_stream_null_new): A new stream,
+	similar to /dev/null basically.
+
 2001-11-10  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Added checks for strlib functions and bumped the
