@@ -168,7 +168,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	}
 	
 	*out = filter->outbuf;
-	*outlen = converted;
+	*outlen = outbuf - filter->outbuf;
 	*outprespace = filter->outpre;
 	
 	return;
@@ -246,7 +246,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	iconv (charset->cd, NULL, NULL, &outbuf, &outleft);
 	
 	*out = filter->outbuf;
-	*outlen = filter->outsize - outleft;
+	*outlen = outbuf - filter->outbuf;
 	*outprespace = filter->outpre;
 	
 	return;
