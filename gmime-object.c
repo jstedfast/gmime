@@ -30,6 +30,7 @@
 
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
+#include "gmime-utils.h"
 
 struct _type_bucket {
 	char *type;
@@ -377,19 +378,23 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
 /**
  * g_mime_object_set_content_id:
  * @object: MIME object
- * @content_id: content-id
+ * @content_id: content-id (addr-spec portion)
  *
  * Sets the Content-Id of the MIME object.
  **/
 void
 g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
 {
+	char *msgid;
+	
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	
 	g_free (object->content_id);
 	object->content_id = g_strdup (content_id);
 	
-	g_mime_object_set_header (object, "Content-Id", content_id);
+	msgid = g_strdup_printf ("<%s>", content_id);
+	g_mime_object_set_header (object, "Content-Id", msgid);
+	g_free (msgid);
 }
 
 
@@ -442,8 +447,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		break;
 	case HEADER_CONTENT_ID:
 		g_free (object->content_id);
-		object->content_id = g_strdup (value);
-		g_strstrip (object->content_id);
+		object->content_id = g_mime_utils_decode_message_id (value);
 		break;
 	default:
 		break;

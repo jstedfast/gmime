@@ -1,3 +1,18 @@
+2002-10-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Fixes to make g_mime_message_partial_split_message() use the
+	correct token as the id parameter.
+
+	* gmime-object.c (g_mime_object_set_content_id): Same as with
+	GMimeMessage::message_id.
+	(process_header): Same as process_header for gmime-message.c but
+	for content_id.
+
+	* gmime-message.c (process_header): Set only the addr-spec portion
+	of the msgid.
+	(g_mime_message_set_message_id): Treat the message_id passed in as
+	the addr-spec msgid (ie, as if it didn't contain <>'s).
+
 2002-10-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-gpg-context.c (gpg_import_keys): Renamed.

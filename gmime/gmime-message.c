@@ -53,7 +53,7 @@ static void message_set_sender (GMimeMessage *message, const char *sender);
 static void message_set_reply_to (GMimeMessage *message, const char *reply_to);
 static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
 static void message_set_subject (GMimeMessage *message, const char *subject);
-static void message_set_message_id (GMimeMessage *message, const char *message_id);
+
 
 static GMimeObjectClass *parent_class = NULL;
 
@@ -234,7 +234,8 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		}
 		break;
 	case HEADER_MESSAGE_ID:
-		message_set_message_id (message, value);
+		g_free (message->message_id);
+		message->message_id = g_mime_utils_decode_message_id (value);
 		break;
 	default:
 		return FALSE;
@@ -768,32 +769,29 @@ g_mime_message_get_date_string (GMimeMessage *message)
 }
 
 
-static void
-message_set_message_id (GMimeMessage *message, const char *message_id)
-{
-	if (message->message_id)
-		g_free (message->message_id);
-	
-	message->message_id = g_strstrip (g_strdup (message_id));
-}
-
-
 /**
  * g_mime_message_set_message_id: 
  * @message: MIME Message
- * @message_id: message-id
+ * @message_id: message-id (addr-spec portion)
  *
  * Set the Message-Id on a message.
  **/
 void
 g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 {
+	char *msgid;
+	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (message_id != NULL);
 	
-	message_set_message_id (message, message_id);
-	g_mime_header_set (GMIME_OBJECT (message)->headers,
-			   "Message-Id", message->message_id);
+	if (message->message_id)
+		g_free (message->message_id);
+	
+	message->message_id = g_strstrip (g_strdup (message_id));
+	
+	msgid = g_strdup_printf ("<%s>", message_id);
+	g_mime_header_set (GMIME_OBJECT (message)->headers, "Message-Id", msgid);
+	g_free (msgid);
 }
 
 
