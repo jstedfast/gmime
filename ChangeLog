@@ -1,5 +1,7 @@
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* configure.in: Changed version to 0.1.1.
+
 	* gmime-part.c (get_content_disposition): Append a ";" before
 	appending any parameters even when there is no disposition
 	text. Also only enter into the param loop if there exist params.
