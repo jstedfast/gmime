@@ -61,6 +61,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-data-wrapper.h	\
 	gmime-disposition.h	\
 	gmime-exception.h	\
+	gmime-exception-list.def\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-charset.h	\
