@@ -1227,6 +1227,28 @@ g_mime_message_get_header (GMimeMessage *message, const char *header)
 
 
 /**
+ * g_mime_message_get_mime_part:
+ * @message: MIME Message
+ *
+ * Gets the toplevel MIME part contained within @message.
+ *
+ * Returns the toplevel MIME part of @message.
+ **/
+GMimeObject *
+g_mime_message_get_mime_part (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	if (message->mime_part == NULL)
+		return NULL;
+	
+	g_object_ref (message->mime_part);
+	
+	return message->mime_part;
+}
+
+
+/**
  * g_mime_message_set_mime_part:
  * @message: MIME Message
  * @mime_part: The root-level MIME Part
@@ -1352,7 +1374,7 @@ handle_multipart_mixed (GMimeMultipart *multipart, gboolean want_plain, gboolean
 		} else if (g_mime_content_type_is_type (type, "text", "*")) {
 			if (!strcasecmp (type->subtype, want_plain ? "plain" : "html")) {
 				/* we got what we came for */
-				*is_html = !want_plain;
+				*is_html = !strcasecmp (type->subtype, "html");
 				return mime_part;
 			}
 			
@@ -1414,10 +1436,10 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 			mime_part = handle_multipart_mixed (multipart, want_plain, is_html);
 	} else if (g_mime_content_type_is_type (type, "text", "*")) {
 		/* this *has* to be the message body */
-		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html"))
-			*is_html = !want_plain;
+		if (g_mime_content_type_is_type (type, "text", "html"))
+			*is_html = TRUE;
 		else
-			*is_html = want_plain;
+			*is_html = FALSE;
 		
 		mime_part = message->mime_part;
 	}

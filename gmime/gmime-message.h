@@ -124,6 +124,7 @@ void g_mime_message_add_header (GMimeMessage *message, const char *header, const
 void g_mime_message_set_header (GMimeMessage *message, const char *header, const char *value);
 const char *g_mime_message_get_header (GMimeMessage *message, const char *header);
 
+GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
 
 #ifndef GMIME_DISABLE_DEPRECATED

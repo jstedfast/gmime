@@ -1,3 +1,10 @@
+2004-05-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (g_mime_message_get_mime_part): New
+	function.
+	(g_mime_message_get_body): Fixed a bug where is_html could get set
+	to TRUE even if the part wasn't html.
+
 2004-05-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* util/memchunk.c (memchunk_alloc): Add parens to fix casting
