@@ -124,7 +124,7 @@ g_mime_stream_mem_finalize (GObject *object)
 	if (stream->owner && stream->buffer)
 		g_byte_array_free (stream->buffer, TRUE);
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

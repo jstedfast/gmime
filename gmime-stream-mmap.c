@@ -142,7 +142,7 @@ g_mime_stream_mmap_finalize (GObject *object)
 			close (stream->fd);
 	}
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

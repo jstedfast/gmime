@@ -137,7 +137,7 @@ static void
 g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass)
 {
 	stream->source = NULL;
-	stream->priv = g_new (struct _GMimeFilterPrivate, 1);
+	stream->priv = g_new (struct _GMimeStreamFilterPrivate, 1);
 	stream->priv->filters = NULL;
 	stream->priv->filterid = 0;
 	stream->priv->realbuffer = g_malloc (READ_SIZE + READ_PAD);
@@ -167,7 +167,7 @@ g_mime_stream_filter_finalize (GObject *object)
 	if (filter->source)
 		g_mime_stream_unref (filter->source);
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

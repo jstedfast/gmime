@@ -133,7 +133,7 @@ g_mime_stream_buffer_finalize (GObject *object)
 	
 	g_free (stream->buffer);
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

@@ -122,7 +122,7 @@ g_mime_stream_file_finalize (GObject *object)
 	if (stream->owner && stream->fp)
 		fclose (stream->fp);
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

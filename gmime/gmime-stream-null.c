@@ -118,7 +118,7 @@ g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
 static void
 g_mime_stream_null_finalize (GObject *object)
 {
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 

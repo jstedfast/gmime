@@ -1,3 +1,23 @@
+2002-03-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-object.c: Compile fixes.
+
+	* gmime-stream-null.c (g_mime_stream_null_finalize): And finally
+	here.
+
+	* gmime-stream-mmap.c (g_mime_stream_mmap_finalize): Here too.
+
+	* gmime-stream-mem.c (g_mime_stream_mem_finalize): And again...
+
+	* gmime-stream-fs.c (g_mime_stream_fs_finalize): Again here.
+
+	* gmime-stream-filter.c (g_mime_stream_filter_finalize): Here too.
+
+	* gmime-stream-file.c (g_mime_stream_file_finalize): Same.
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_finalize): Call
+	GObject's finalize function.
+
 2002-03-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-param.c: 

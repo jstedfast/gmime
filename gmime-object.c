@@ -49,6 +49,8 @@ static void remove_header (GMimeObject *object, const char *header);
 static char *get_headers (GMimeObject *object);
 static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
+static int strcase_equal (gconstpointer v, gconstpointer v2);
+static guint strcase_hash (gconstpointer key);
 
 static GHashTable *type_hash = NULL;
 
@@ -110,7 +112,7 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	klass->get_headers = get_headers;
 	klass->write_to_stream = write_to_stream;
 	
-	type_hash = g_hash_table_new (g_strcase_hash, g_strcase_equal);
+	type_hash = g_hash_table_new (strcase_hash, strcase_equal);
 }
 
 static void
@@ -208,7 +210,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 {
 	struct _type_bucket *bucket;
 	
-	g_return_if_fail (object_type != NULL);
+	g_return_if_fail (object_type != 0);
 	g_return_if_fail (subtype != NULL);
 	g_return_if_fail (type != NULL);
 	
@@ -216,12 +218,12 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 	if (!bucket) {
 		bucket = g_new (struct _type_bucket, 1);
 		bucket->type = g_strdup (type);
-		bucket->object_type = *type == '*' ? object_type : NULL;
-		bucket->subtype_hash = g_hash_table_new (g_strcase_hash, g_strcase_equal);
+		bucket->object_type = *type == '*' ? object_type : 0;
+		bucket->subtype_hash = g_hash_table_new (strcase_hash, strcase_equal);
 		g_hash_table_insert (type_hash, bucket->type, bucket);
 	}
 	
-	g_hash_table_insert (bucket->subtype_hash, g_strdup (subtype), object_type);
+	g_hash_table_insert (bucket->subtype_hash, g_strdup (subtype), GINT_TO_POINTER (object_type));
 }
 
 
@@ -250,11 +252,11 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	bucket = g_hash_table_lookup (type_hash, type);
 	if (!bucket) {
 		bucket = g_hash_table_lookup (type_hash, "*");
-		obj_type = bucket ? bucket->object_type : NULL;
+		obj_type = bucket ? bucket->object_type : 0;
 	} else {
-		obj_type = g_hash_table_lookup (subtype_hash, subtype);
+		obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, subtype));
 		if (!obj_type)
-			obj_type = g_hash_table_lookup (subtype_hash, "*");
+			obj_type = GPOINTER_TO_INT (g_hash_table_lookup (bucket->subtype_hash, "*"));
 	}
 	
 	if (!obj_type)
@@ -362,8 +364,8 @@ remove_header (GMimeObject *object, const char *header)
 void
 g_mime_object_remove_header (GMimeObject *object, const char *header)
 {
-	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
-	g_return_val_if_fail (header != NULL, NULL);
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (header != NULL);
 	
 	GMIME_OBJECT_GET_CLASS (object)->remove_header (object, header);
 }
@@ -389,7 +391,7 @@ g_mime_object_get_headers (GMimeObject *object)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->get_headerss (object);
+	return GMIME_OBJECT_GET_CLASS (object)->get_headers (object);
 }
 
 
@@ -435,7 +437,7 @@ g_mime_object_to_string (GMimeObject *object)
 	GByteArray *array;
 	char *str;
 	
-	g_return_val_if_fail (GMIME_IS_OBJECT (message), NULL);
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
 	
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
@@ -449,4 +451,24 @@ g_mime_object_to_string (GMimeObject *object)
 	g_byte_array_free (array, FALSE);
 	
 	return str;
+}
+
+
+static int
+strcase_equal (gconstpointer v, gconstpointer v2)
+{
+	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
+}
+
+static guint
+strcase_hash (gconstpointer key)
+{
+	const char *p = key;
+	guint h = tolower (*p);
+	
+	if (h)
+		for (p += 1; *p != '\0'; p++)
+			h = (h << 5) - h + tolower (*p);
+	
+	return h;
 }

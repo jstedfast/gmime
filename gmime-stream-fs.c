@@ -128,7 +128,7 @@ g_mime_stream_fs_finalize (GObject *object)
 	if (stream->owner && stream->fd != -1)
 		close (stream->fd);
 	
-	GMIME_STREAM_CLASS (parent_class)->finalize (object);
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 static ssize_t
