@@ -1,3 +1,11 @@
+2001-10-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Fixes for c++ compilation
+
+	* gmime-stream*.c: s/template/stream_template
+
+	* gmime-filter*.c: s/template/filter_template
+
 2001-10-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): If we

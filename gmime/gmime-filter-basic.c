@@ -34,7 +34,7 @@ static void filter_complete (GMimeFilter *filter, char *in, size_t len,
 			     size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter template = {
+static GMimeFilter filter_template = {
 	NULL, NULL, NULL, NULL,
 	0, 0, NULL, 0, 0,
 	filter_destroy,
@@ -63,7 +63,7 @@ g_mime_filter_basic_new_type (GMimeFilterBasicType type)
 	new->save = 0;
 	new->uulen = '\0';
 	
-	g_mime_filter_construct (GMIME_FILTER (new), &template);
+	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
 	filter_reset (GMIME_FILTER (new));
 	

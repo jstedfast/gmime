@@ -33,7 +33,7 @@ static void filter_complete (GMimeFilter *filter, char *in, size_t len,
 			     size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter template = {
+static GMimeFilter filter_template = {
 	NULL, NULL, NULL, NULL,
 	0, 0, NULL, 0, 0,
 	filter_destroy,
@@ -64,7 +64,7 @@ g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode 
 	new->saw_lf = FALSE;
 	new->saw_dot = FALSE;
 	
-	g_mime_filter_construct (GMIME_FILTER (new), &template);
+	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
 	return GMIME_FILTER (new);
 }

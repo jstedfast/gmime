@@ -38,15 +38,15 @@ struct _GMimeFilterPrivate {
 /**
  * g_mime_filter_construct:
  * @filter: filter
- * @template: filter template
+ * @filter_template: filter template
  *
- * Initializes a filter object using the virtual methods in @template.
+ * Initializes a filter object using the virtual methods in @filter_template.
  **/
 void
-g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template)
+g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template)
 {
 	g_return_if_fail (filter != NULL);
-	g_return_if_fail (template != NULL);
+	g_return_if_fail (filter_template != NULL);
 	
 	filter->priv = g_new0 (struct _GMimeFilterPrivate, 1);
 	filter->outreal = NULL;
@@ -57,11 +57,11 @@ g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template)
 	filter->backsize = 0;
 	filter->backlen = 0;
 	
-	filter->destroy = template->destroy;
-	filter->copy = template->copy;
-	filter->filter = template->filter;
-	filter->complete = template->complete;
-	filter->reset = template->reset;
+	filter->destroy = filter_template->destroy;
+	filter->copy = filter_template->copy;
+	filter->filter = filter_template->filter;
+	filter->complete = filter_template->complete;
+	filter->reset = filter_template->reset;
 }
 
 

@@ -36,7 +36,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream template = {
+static GMimeStream stream_template = {
 	NULL, 0,
 	1, 0, 0, 0, stream_destroy,
 	stream_read, stream_write,
@@ -232,7 +232,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	fstream->owner = FALSE;
 	fstream->fp = GMIME_STREAM_FILE (stream)->fp;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FILE_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -253,7 +253,7 @@ g_mime_stream_file_new (FILE *fp)
 	fstream->owner = TRUE;
 	fstream->fp = fp;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, ftell (fp), -1);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FILE_TYPE, ftell (fp), -1);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -276,7 +276,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
 	fstream->owner = TRUE;
 	fstream->fp = fp;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FILE_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }

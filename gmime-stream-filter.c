@@ -59,7 +59,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream template = {
+static GMimeStream stream_template = {
 	NULL, 0,
 	1, 0, 0, 0, stream_destroy,
 	stream_read, stream_write,
@@ -312,7 +312,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 		sub->priv->filterid = filter->priv->filterid;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (filter), &template,
+	g_mime_stream_construct (GMIME_STREAM (filter), &stream_template,
 				 GMIME_STREAM_FILTER_TYPE,
 				 sub->source->bound_start,
 				 sub->source->bound_end);
@@ -346,7 +346,7 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 	filter->priv->last_was_read = TRUE;
 	filter->priv->filteredlen = 0;
 	
-	g_mime_stream_construct (GMIME_STREAM (filter), &template,
+	g_mime_stream_construct (GMIME_STREAM (filter), &stream_template,
 				 GMIME_STREAM_FILTER_TYPE,
 				 stream->bound_start,
 				 stream->bound_end);

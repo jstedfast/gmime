@@ -69,7 +69,7 @@ struct _GMimeStream {
 
 #define GMIME_STREAM(stream)  ((GMimeStream *) stream)
 
-void g_mime_stream_construct (GMimeStream *stream, GMimeStream *template,
+void g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template,
 			      int type, off_t start, off_t end);
 
 /* public methods */

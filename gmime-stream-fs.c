@@ -41,7 +41,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream template = {
+static GMimeStream stream_template = {
 	NULL, 0,
 	1, 0, 0, 0, stream_destroy,
 	stream_read, stream_write,
@@ -244,7 +244,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	fstream->owner = FALSE;
 	fstream->fd = GMIME_STREAM_FS (stream)->fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -269,7 +269,7 @@ g_mime_stream_fs_new (int fd)
 	
 	start = lseek (fd, 0, SEEK_CUR);
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, -1);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, -1);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -293,7 +293,7 @@ g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end)
 	fstream->eos = FALSE;
 	fstream->fd = fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }

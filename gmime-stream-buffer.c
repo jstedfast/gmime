@@ -38,7 +38,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream template = {
+static GMimeStream stream_template = {
 	NULL, 0,
 	1, 0, 0, 0, stream_destroy,
 	stream_read, stream_write,
@@ -320,7 +320,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 		buffer->buflen = BUFFER_GROW_SIZE;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (buffer), &template,
+	g_mime_stream_construct (GMIME_STREAM (buffer), &stream_template,
 				 GMIME_STREAM_BUFFER_TYPE,
 				 source->bound_start,
 				 source->bound_end);

@@ -28,16 +28,16 @@
 /**
  * g_mime_stream_construct:
  * @stream: stream
- * @template: stream template
+ * @stream_template: stream template
  * @type: stream type
  * @start: start boundary
  * @end: end boundary
  *
  * Initializes a new stream of type @type, using the virtual methods
- * from @template, with bounds @start and @end.
+ * from @stream_template, with bounds @start and @end.
  **/
 void
-g_mime_stream_construct (GMimeStream *stream, GMimeStream *template, int type, off_t start, off_t end)
+g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, int type, off_t start, off_t end)
 {
 	stream->super_stream = NULL;
 	stream->refcount = 1;
@@ -47,17 +47,17 @@ g_mime_stream_construct (GMimeStream *stream, GMimeStream *template, int type, o
 	stream->bound_start = start;
 	stream->bound_end = end;
 	
-	stream->destroy = template->destroy;
-	stream->read = template->read;
-	stream->write = template->write;
-	stream->flush = template->flush;
-	stream->close = template->close;
-	stream->reset = template->reset;
-	stream->seek = template->seek;
-	stream->tell = template->tell;
-	stream->eos = template->eos;
-	stream->length = template->length;
-	stream->substream = template->substream;
+	stream->destroy = stream_template->destroy;
+	stream->read = stream_template->read;
+	stream->write = stream_template->write;
+	stream->flush = stream_template->flush;
+	stream->close = stream_template->close;
+	stream->reset = stream_template->reset;
+	stream->seek = stream_template->seek;
+	stream->tell = stream_template->tell;
+	stream->eos = stream_template->eos;
+	stream->length = stream_template->length;
+	stream->substream = stream_template->substream;
 }
 
 /**

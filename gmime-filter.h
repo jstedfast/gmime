@@ -65,7 +65,7 @@ struct _GMimeFilter {
 
 #define GMIME_FILTER(filter) ((GMimeFilter *) filter)
 
-void g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template);
+void g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template);
 
 void g_mime_filter_destroy (GMimeFilter *filter);
 

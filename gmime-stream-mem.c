@@ -35,7 +35,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream template = {
+static GMimeStream stream_template = {
 	NULL, 0,
 	1, 0, 0, 0, stream_destroy,
 	stream_read, stream_write,
@@ -205,7 +205,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	mem->owner = FALSE;
 	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, start, end);
 	
 	return GMIME_STREAM (mem);
 }
@@ -225,7 +225,7 @@ g_mime_stream_mem_new (void)
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -246,7 +246,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 	mem->owner = TRUE;
 	mem->buffer = array;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -270,7 +270,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 	
 	g_byte_array_append (mem->buffer, buffer, len);
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (mem), &stream_template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
