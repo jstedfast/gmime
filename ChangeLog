@@ -1,3 +1,8 @@
+2001-10-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c (g_mime_charset_init): Fix for Debian and
+	Solaris.
+
 2001-10-09  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-filter.c (g_mime_filter_construct): make sure outptr is

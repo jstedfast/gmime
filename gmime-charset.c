@@ -69,14 +69,19 @@ g_mime_charset_init (void)
 		 * codeset  is  a  character  set or encoding identifier like
 		 * ISO-8859-1 or UTF-8.
 		 */
-		char *p;
-		int len;
+		char *codeset, *p;
 		
-		p = strchr (locale, '@');
-		len = p ? (p - locale) : strlen (locale);
-		if ((p = strchr (locale, '.'))) {
-			locale_charset = g_strndup (p + 1, len - (p - locale) + 1);
+		codeset = strchr (locale, '.');
+		if (codeset) {
+			codeset++;
+			
+			/* ; is a hack for debian systems and / is a hack for Solaris systems */
+			for (p = codeset; *p && !strchr ("@;/", *p); p++);
+			locale_charset = g_strndup (codeset, p - codeset);
 			g_strdown (locale_charset);
+		} else {
+			/* charset unknown */
+			locale_charset = NULL;
 		}
 	}
 	
