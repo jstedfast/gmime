@@ -1,3 +1,8 @@
+2002-07-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-crlf.c (filter_filter): Fix to not add an extra \r
+	for pre-canonicalised streams.
+
 2002-07-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix a logic mistake
