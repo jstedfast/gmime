@@ -46,12 +46,12 @@ GMimeContentType *g_mime_content_type_new_from_string (const gchar *string);
 
 void g_mime_content_type_destroy (GMimeContentType *mime_type);
 
-gchar *g_mime_content_type_to_string (GMimeContentType *mime_type);
+gchar *g_mime_content_type_to_string (const GMimeContentType *mime_type);
 
-gboolean g_mime_content_type_is_type (GMimeContentType *mime_type, const char *type, const char *subtype);
+gboolean g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype);
 
 void g_mime_content_type_add_parameter (GMimeContentType *mime_type, const gchar *attribute, const gchar *value);
-const gchar *g_mime_content_type_get_parameter (GMimeContentType *mime_type, const gchar *attribute);
+const gchar *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gchar *attribute);
 
 
 

@@ -1,6 +1,23 @@
+2000-10-27  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-mime.c: Added code to test g_mime_message_get_body()
+
+	* gmime-message.c (g_mime_message_get_body): New convenience
+	function that attempts to get the message body in the requested
+	text format (plain vs html).
+
+	* gmime-parser.c (construct_headers): If the end of a header field
+	is the end of the header, break out of the loop.
+
+	* gmime-content-type.[c,h]: Added const to arguments where
+	appropriate.
+
+	* gmime-utils.h: Fixed a spelling mistake in a comment ;-)
+
 2000-10-26  Charles Kerr <charles@superpimp.org>
 
-	* gmime-utils.h: made const the input ptrs for encode/decode funcs.
+	* gmime-utils.h: made const the input ptrs for encode/decode
+	funcs.
 
 	* gmime-utils.c: Updated to reflect const changes.
 

@@ -51,7 +51,7 @@ gint g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out
 /* do incremental uudecoding */
 gint g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state, guint32 *save, gchar *uulen);
 
-/* do incremental quoted-prgintable (de/en)coding */
+/* do incremental quoted-printable (de/en)coding */
 gint g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *savestate, gint *saveme);
 gint g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *state, gint *save);
 gint g_mime_utils_quoted_encode_close (const guchar *in, gint len, guchar *out, gint *state, gint *save);

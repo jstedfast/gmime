@@ -45,9 +45,10 @@ test_multipart (void)
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
 	GMimePart *multi_part, *text_part, *html_part;
-	gchar *text;
+	gchar *text, *body;
+	gboolean is_html;
 	
-	multi_part = g_mime_part_new_with_type ("multipart", "mixed");
+	multi_part = g_mime_part_new_with_type ("multipart", "alternative");
 	g_mime_part_set_boundary (multi_part, "spruce1234567890ABCDEFGHIJK");
 	
 	text_part = g_mime_part_new ();
@@ -77,9 +78,22 @@ test_multipart (void)
 	g_mime_message_set_mime_part (message, multi_part);
 	
 	text = g_mime_message_to_string (message);
-	g_mime_message_destroy (message);
 	
 	fprintf (stdout, "%s\n", text ? text : "(null)");
+	
+	/* get the body in text/plain */
+	body = g_mime_message_get_body (message, TRUE, &is_html);
+	fprintf (stdout, "Trying to get message body in plain text format:\n%s\n\n", body ? body : "(null)");
+	g_free (body);
+	
+	/* get the body in text/html */
+	body = g_mime_message_get_body (message, FALSE, &is_html);
+	fprintf (stdout, "Trying to get message body in html format:\n%s\n\n", body ? body : "(null)");
+	if (is_html)
+		fprintf (stdout, "yep...got it in html format\n");
+	g_free (body);
+	
+	g_mime_message_destroy (message);
 	
 	test_parser (text);
 	
@@ -91,7 +105,8 @@ test_onepart (void)
 {
 	GMimeMessage *message;
 	GMimePart *mime_part;
-	gchar *text;
+	gchar *text, *body;
+	gboolean is_html;
 	
 	mime_part = g_mime_part_new_with_type ("text", "plain");
 	
@@ -107,9 +122,13 @@ test_onepart (void)
 	g_mime_message_set_mime_part (message, mime_part);
 	
 	text = g_mime_message_to_string (message);
-	g_mime_message_destroy (message);
 	
 	fprintf (stdout, "%s\n", text ? text : "(null)");
+	
+	body = g_mime_message_get_body (message, TRUE, &is_html);
+	fprintf (stdout, "Trying to get message body:\n%s\n\n", body ? body : "(null)");
+	g_free (body);
+	g_mime_message_destroy (message);
 	
 	test_parser (text);
 	

@@ -33,7 +33,7 @@ g_mime_content_type_new (const gchar *type, const gchar *subtype)
 {
 	GMimeContentType *mime_type;
 	
-	mime_type = g_new (GMimeContentType, 1);
+	mime_type = g_new0 (GMimeContentType, 1);
 	
 	if (type)
 		mime_type->type = g_strdup (type);
@@ -44,9 +44,6 @@ g_mime_content_type_new (const gchar *type, const gchar *subtype)
 		mime_type->subtype = g_strdup (subtype);
 	else
 		mime_type->subtype = g_strdup ("plain");
-	
-	mime_type->params = NULL;
-	mime_type->param_hash = NULL;
 	
 	return mime_type;
 }
@@ -150,7 +147,7 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
 }
 
 gchar *
-g_mime_content_type_to_string (GMimeContentType *mime_type)
+g_mime_content_type_to_string (const GMimeContentType *mime_type)
 {
 	gchar *string;
 	
@@ -164,7 +161,7 @@ g_mime_content_type_to_string (GMimeContentType *mime_type)
 }
 
 gboolean
-g_mime_content_type_is_type (GMimeContentType *mime_type, const char *type, const char *subtype)
+g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype)
 {
 	g_return_val_if_fail (mime_type != NULL, FALSE);
 	g_return_val_if_fail (mime_type->type != NULL, FALSE);
@@ -214,7 +211,7 @@ g_mime_content_type_add_parameter (GMimeContentType *mime_type, const gchar *att
 }
 
 const gchar *
-g_mime_content_type_get_parameter (GMimeContentType *mime_type, const gchar *attribute)
+g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gchar *attribute)
 {
 	GMimeParam *param;
 	

@@ -571,3 +571,91 @@ g_mime_message_to_string (GMimeMessage *message)
 	
 	return str;
 }
+
+static gchar *
+handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolean *is_html)
+{
+	const GMimePart *last = NULL;
+	GList *child;
+	gchar *text = NULL;
+	
+	child = multipart->children;
+	while (child) {
+		const GMimeContentType *type;
+		GMimePart *mime_part;
+		
+		mime_part = child->data;
+		type = g_mime_part_get_content_type (mime_part);
+		
+		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html")) {
+			/* we got what we wanted */
+			*is_html = !want_plain;
+			text = g_strdup (mime_part->content);
+			break;
+		} else {
+			last = mime_part;
+		}
+		
+		child = child->next;
+	}
+	
+	if (!text && last) {
+		/* we didn't get the type we wanted but still got the body */
+		*is_html = want_plain;
+		text = g_strdup (last->content);
+	}
+	
+	return text;
+}
+
+/**
+ * g_mime_message_get_body: Return the body of the message
+ * @message: MIME Message
+ * @want_plain: request text/plain
+ * @is_html: body returned is in html format
+ *
+ * Tries to find the prefered form of the message body and return it.
+ * Note: This function is NOT guarenteed to always work as it makes
+ * some assumptions that are not necessarily true. It is recommended
+ * that you traverse the MIME structure yourself.
+ **/
+gchar *
+g_mime_message_get_body (GMimeMessage *message, gboolean want_plain, gboolean *is_html)
+{
+	const GMimeContentType *type;
+	gchar *body = NULL;
+	
+	type = g_mime_part_get_content_type (message->mime_part);
+	if (g_mime_content_type_is_type (type, "text", "*")) {
+		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html"))
+			*is_html = !want_plain;
+		else
+			*is_html = want_plain;
+		
+		body = g_strdup (message->mime_part->content);
+	} else if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
+		/* Get the prefered part from the multipart/alternative */
+		body = handle_multipart_alternative (message->mime_part, want_plain, is_html);
+	} else if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		/* The message body has to be in the first MIME part of the multipart */
+		GMimePart *first_part;
+		
+		first_part = message->mime_part->children->data;
+		type = g_mime_part_get_content_type (first_part);
+		if (g_mime_content_type_is_type (type, "text", "*")) {
+			if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html"))
+				*is_html = !want_plain;
+			else
+				*is_html = want_plain;
+			
+			body = g_strdup (first_part->content);
+		} else if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
+			/* Get the prefered part from the multipart/alternative */
+			body = handle_multipart_alternative (first_part, want_plain, is_html);
+		} else {
+			/* fuck it, if we haven't found it yet we ain't gonna find it */
+		}
+	}
+	
+	return body;
+}

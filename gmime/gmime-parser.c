@@ -325,7 +325,7 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 			field = g_strndup (field, (gint) (q - field + 1));
 			g_strstrip (field);
 		} else {
-			field = fields[i];
+			field = g_strdup (fields[i]);
 		}
 		
 		value = p + strlen (field);
@@ -371,13 +371,16 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 				field[strlen (field) - 1] = '\0'; /* kill the ':' */
 				g_mime_message_add_arbitrary_header (message, field, value);
 			}
-			g_free (field);
 			break;
 		}
 		
+		g_free (field);
 		g_free (value);
 		
-		p = q;
+		if (*q == '\0')
+			break;
+		else
+			p = q;
 	}
 }
 
