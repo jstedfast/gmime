@@ -1,3 +1,10 @@
+2002-04-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_fill): Try to align the end of our
+	left-over buffer with realbuf + SCAN_HEAD so that we avoid: 1)
+	completely filling the prespace or 2) reading more than SCAN_BUF
+	bytes per read() call.
+
 2002-04-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (g_mime_utils_base64_decode_step): Only backtrack

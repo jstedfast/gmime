@@ -420,18 +420,29 @@ parser_fill (GMimeParser *parser)
 	if (inlen > atleast)
 		return inlen;
 	
-	inbuf = priv->realbuf;
+	/* attempt to align 'inend' with realbuf + SCAN_HEAD */
+	if (inptr >= inbuf) {
+		inbuf -= inlen < SCAN_HEAD ? inlen : SCAN_HEAD;
+		memmove (inbuf, inptr, inlen);
+		inptr = inbuf;
+		inbuf += inlen;
+	} else if (inptr > priv->realbuf) {
+		size_t shift;
+		
+		shift = MIN (inptr - priv->realbuf, inend - inbuf);
+		memmove (inptr - shift, inptr, inlen);
+		inptr -= shift;
+		inbuf = inptr + inlen;
+	} else {
+		/* we can't shift... */
+		inbuf = inend;
+	}
 	
-	memmove (inbuf, inptr, inlen);
-	priv->inptr = inbuf;
-	
-	/* start reading into inbuf */
-	inbuf += inlen;
-	
+	priv->inptr = inptr;
 	priv->inend = inbuf;
 	inend = priv->realbuf + SCAN_HEAD + SCAN_BUF - 1;
 	
-	nread = g_mime_stream_read (parser->priv->stream, inbuf, inend - inbuf);
+	nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf);
 	if (nread > 0)
 		priv->inend += nread;
 	
@@ -439,6 +450,7 @@ parser_fill (GMimeParser *parser)
 	
 	return priv->inend - priv->inptr;
 }
+
 
 static off_t
 parser_offset (GMimeParser *parser, unsigned char *cur)
