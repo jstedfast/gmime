@@ -1,3 +1,35 @@
+2003-02-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Bumped version to 2.1.0
+
+	* configure.in: Bumped version to 2.1.0
+
+	* gmime/gmime-utils.c (rfc2047_decode_word): Use
+	g_mime_locale_charset().
+
+	* gmime/gmime-param.c (rfc2184_decode): Use
+	g_mime_locale_charset().
+
+	* gmime/gmime-iconv-utils.c (iconv_utils_init): Same as
+	below. Also use g_mime_locale_charset() rather than
+	g_mime_charset_locale_name().
+
+	* gmime/gmime-iconv.c (g_mime_iconv_open): Use
+	g_mime_charset_iconv_name() instead of the older deprecated
+	g_mime_charset_name() function.
+
+	* gmime/gmime-charset.c (g_mime_charset_map_init): Initialize the
+	locale_lang.
+	(g_mime_charset_iconv_name): Renamed from g_mime_charset_name()
+	(g_mime_charset_canon_name): New function which does almost the
+	same thing as g_mime_charset_iconv_name() except that it will
+	always return the canonical forms of the iso-8859 charsets.
+	(g_mime_locale_charset): Renamed from g_mime_charset_locale_name()
+	(g_mime_locale_language): New function to return the user's locale
+	language.
+	(g_mime_charset_language): New function to map charsets to their
+	language code (meant for CJKR).
+
 2003-02-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Bumped version to 2.0.2

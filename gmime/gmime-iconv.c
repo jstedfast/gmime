@@ -237,10 +237,10 @@ g_mime_iconv_open (const char *to, const char *from)
 	}
 	
 	if (!g_strcasecmp (from, "x-unknown"))
-		from = g_mime_charset_locale_name ();
+		from = g_mime_locale_charset ();
 	
-	from = g_mime_charset_name (from);
-	to = g_mime_charset_name (to);
+	from = g_mime_charset_iconv_name (from);
+	to = g_mime_charset_iconv_name (to);
 	key = g_alloca (strlen (from) + strlen (to) + 2);
 	sprintf (key, "%s:%s", from, to);
 	

@@ -144,7 +144,7 @@ rfc2184_decode (const char *in, size_t len)
 			if (cd == (iconv_t) -1) {
 				d(g_warning ("Cannot convert from %s to UTF-8, param display may "
 					     "be corrupt: %s", charset, g_strerror (errno)));
-				charset = g_mime_charset_locale_name ();
+				charset = g_mime_locale_charset ();
 				cd = g_mime_iconv_open ("UTF-8", charset);
 				if (cd == (iconv_t) -1)
 					return NULL;

@@ -1292,7 +1292,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		if (cd == (iconv_t) -1) {
 			w(g_warning ("Cannot convert from %s to UTF-8, header display may "
 				     "be corrupt: %s", charset, g_strerror (errno)));
-			charset = g_mime_charset_locale_name ();
+			charset = g_mime_locale_charset ();
 			cd = g_mime_iconv_open ("UTF-8", charset);
 			if (cd == (iconv_t) -1)
 				return NULL;

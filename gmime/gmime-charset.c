@@ -55,12 +55,17 @@
 #define ICONV_10646 "iso-10646"
 #endif /* USE_ICONV_DETECT */
 
+
+/* a useful website on charset alaises:
+ * http://www.li18nux.org/subgroups/sa/locnameguide/v1.1draft/CodesetAliasTable-V11.html */
+
 struct {
 	char *charset;
 	char *iconv_name;
 } known_iconv_charsets[] = {
 	/* charset name, iconv-friendly name (sometimes case sensitive) */
 	{ "utf-8",           "UTF-8"      },
+	{ "utf8",            "UTF-8"      },
 	
 	/* ANSI_X3.4-1968 is used on some systems and should be
 	   treated the same as US-ASCII */
@@ -77,26 +82,61 @@ struct {
 	{ "iso10646",        "UCS-2BE"    },
 	
 	{ "ks_c_5601-1987",  "EUC-KR"     },
+	{ "5601",            "EUC-KR"     },
+	{ "ksc-5601",        "EUC-KR"     },
+	{ "ksc-5601-1987",   "EUC-KR"     },
+	{ "ksc-5601_1987",   "EUC-KR"     },
 	
 	/* FIXME: Japanese/Korean/Chinese stuff needs checking */
 	{ "euckr-0",         "EUC-KR"     },
+	{ "5601",            "EUC-KR"     },
 	{ "big5-0",          "BIG5"       },
 	{ "big5.eten-0",     "BIG5"       },
 	{ "big5hkscs-0",     "BIG5HKCS"   },
 	{ "gb2312-0",        "gb2312"     },
 	{ "gb2312.1980-0",   "gb2312"     },
+	{ "euc-cn",          "gb2312"     },
 	{ "gb18030-0",       "gb18030"    },
 	{ "gbk-0",           "GBK"        },
 	
-	{ "eucjp-0",         "eucJP"      },
-	{ "ujis-0",          "ujis"       },
+	{ "eucjp-0",         "eucJP"  	  },  /* should this map to "EUC-JP" instead? */
+	{ "ujis-0",          "ujis"  	  },  /* we might want to map this to EUC-JP */
 	{ "jisx0208.1983-0", "SJIS"       },
 	{ "jisx0212.1990-0", "SJIS"       },
+	{ "pck",	     "SJIS"       },
 	{ NULL,              NULL         }
 };
 
+/* map CJKR charsets to their language code */
+/* NOTE: only support charset names that will be returned by
+ * g_mime_charset_iconv_name() so that we don't have to keep track of
+ * all the aliases too. */
+static struct {
+	char *charset;
+	char *lang;
+} cjkr_lang_map[] = {
+	{ "Big5",        "zh" },
+	{ "BIG5HKCS",    "zh" },
+	{ "gb2312",      "zh" },
+	{ "gb18030",     "zh" },
+	{ "gbk",         "zh" },
+	{ "euc-tw",      "zh" },
+	{ "iso-2022-jp", "ja" },
+	{ "sjis",        "ja" },
+	{ "ujis",        "ja" },
+	{ "eucJP",       "ja" },
+	{ "euc-jp",      "ja" },
+	{ "euc-kr",      "ko" },
+	{ "koi8-r",      "ru" },
+	{ "koi8-u",      "uk" }
+};
+
+#define NUM_CJKR_LANGS (sizeof (cjkr_lang_map) / sizeof (cjkr_lang_map[0]))
+
+
 static GHashTable *iconv_charsets = NULL;
 static char *locale_charset = NULL;
+static char *locale_lang = NULL;
 
 #ifdef G_THREADS_ENABLED
 static GStaticMutex charset_lock = G_STATIC_MUTEX_INIT;
@@ -121,6 +161,46 @@ g_mime_charset_shutdown (void)
 	g_hash_table_foreach (iconv_charsets, iconv_charset_free, NULL);
 	g_hash_table_destroy (iconv_charsets);
 	g_free (locale_charset);
+	g_free (locale_lang);
+}
+
+
+static void
+locale_parse_lang (const char *locale)
+{
+	char *codeset, *lang;
+	
+	if ((codeset = strchr (locale, '.')))
+		lang = g_strndup (locale, codeset - locale);
+	else
+		lang = g_strdup (locale);
+	
+	/* validate the language */
+	if (strlen (lang) >= 2) {
+		if (lang[2] == '-' || lang[2] == '_') {
+			/* canonicalise the lang */
+			g_ascii_strdown (lang, 2);
+			
+			/* validate the country code */
+			if (strlen (lang + 3) > 2) {
+				/* invalid country code */
+				lang[2] = '\0';
+			} else {
+				lang[2] = '-';
+				g_ascii_strup (lang + 3, 2);
+			}
+		} else if (lang[2] != '\0') {
+			/* invalid language */
+			g_free (lang);
+			lang = NULL;
+		}
+		
+		locale_lang = lang;
+	} else {
+		/* invalid language */
+		locale_lang = NULL;
+		g_free (lang);
+	}
 }
 
 
@@ -128,7 +208,7 @@ g_mime_charset_shutdown (void)
  * g_mime_charset_map_init:
  *
  * Initializes the locale charset variable for later calls to
- * gmime_charset_locale_name. Only really needs to be called for non-
+ * #g_mime_locale_charset(). Only really needs to be called for non-
  * iso-8859-1 locales.
  **/
 void
@@ -145,13 +225,13 @@ g_mime_charset_map_init (void)
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
 		charset = g_strdup (known_iconv_charsets[i].charset);
 		iconv_name = g_strdup (known_iconv_charsets[i].iconv_name);
-		g_strdown (charset);
+		g_ascii_strdown (charset, -1);
 		g_hash_table_insert (iconv_charsets, charset, iconv_name);
 	}
 	
 #ifdef HAVE_CODESET
 	locale_charset = g_strdup (nl_langinfo (CODESET));
-	g_strdown (locale_charset);
+	g_ascii_strdown (locale_charset, -1);
 #else
 	locale = setlocale (LC_ALL, NULL);
 	
@@ -161,6 +241,7 @@ g_mime_charset_map_init (void)
 		 * set.  */
 		
 		locale_charset = NULL;
+		locale_lang = NULL;
 	} else {
 		/* A locale name is typically of  the  form  language[_terri-
 		 * tory][.codeset][@modifier],  where  language is an ISO 639
@@ -177,11 +258,13 @@ g_mime_charset_map_init (void)
 			/* ; is a hack for debian systems and / is a hack for Solaris systems */
 			for (p = codeset; *p && !strchr ("@;/", *p); p++);
 			locale_charset = g_strndup (codeset, (unsigned) (p - codeset));
-			g_strdown (locale_charset);
+			g_ascii_strdown (locale_charset, -1);
 		} else {
 			/* charset unknown */
 			locale_charset = NULL;
 		}
+		
+		locale_parse_language (locale);
 	}
 #endif
 	
@@ -190,14 +273,14 @@ g_mime_charset_map_init (void)
 
 
 /**
- * g_mime_charset_locale_name:
+ * g_mime_locale_charset:
  *
  * Gets the user's locale charset (or iso-8859-1 by default).
  *
  * Returns the user's locale charset (or iso-8859-1 by default).
  **/
 const char *
-g_mime_charset_locale_name (void)
+g_mime_locale_charset (void)
 {
 	CHARSET_LOCK ();
 	if (!iconv_charsets)
@@ -209,7 +292,54 @@ g_mime_charset_locale_name (void)
 
 
 /**
- * g_mime_charset_name:
+ * g_mime_locale_language:
+ *
+ * Gets the user's locale language code (or %NULL by default).
+ *
+ * Returns the user's locale language code (or %NULL by default).
+ **/
+const char *
+g_mime_locale_language (void)
+{
+	CHARSET_LOCK ();
+	if (!iconv_charsets)
+		g_mime_charset_map_init ();
+	CHARSET_UNLOCK ();
+	
+	return locale_lang;
+}
+
+
+/**
+ * g_mime_charset_language:
+ * @charset: charset name
+ *
+ * Attempts to find a specific language code that is specific to
+ * @charset. Currently only handles CJK and Russian/Ukranian
+ * charset->lang mapping. Everything else will return %NULL.
+ *
+ * Returns a language code that is specific to @charset, or NULL on
+ * fail.
+ **/
+const char *
+g_mime_charset_language (const char *charset)
+{
+	int i;
+	
+	if (!charset)
+		return NULL;
+	
+	for (i = 0; i < NUM_CJKR_LANGS; i++) {
+		if (!strcasecmp (cjkr_lang_map[i].charset, charset))
+			return cjkr_lang_map[i].lang;
+	}
+	
+	return NULL;
+}
+
+
+/**
+ * g_mime_charset_iconv_name:
  * @charset: charset name
  *
  * Attempts to find an iconv-friendly charset name for @charset.
@@ -217,7 +347,7 @@ g_mime_charset_locale_name (void)
  * Returns an iconv-friendly charset name for @charset.
  **/
 const char *
-g_mime_charset_name (const char *charset)
+g_mime_charset_iconv_name (const char *charset)
 {
 	char *name, *iconv_name, *buf;
 	
@@ -299,6 +429,76 @@ g_mime_charset_name (const char *charset)
 	CHARSET_UNLOCK ();
 	
 	return iconv_name;
+}
+
+
+static const char *iso_charsets[] = {
+	"us-ascii",
+	"iso-8859-1",
+	"iso-8859-2",
+	"iso-8859-3",
+	"iso-8859-4",
+	"iso-8859-5",
+	"iso-8859-6",
+	"iso-8859-7",
+	"iso-8859-8",
+	"iso-8859-9",
+	"iso-8859-10",
+	"iso-8859-11",
+	"iso-8859-12",
+	"iso-8859-13",
+	"iso-8859-14",
+	"iso-8859-15",
+	"iso-8859-16"
+};
+
+
+/**
+ * g_mime_charset_canon_name:
+ * @charset: charset name
+ *
+ * Attempts to find a canonical charset name for @charset.
+ *
+ * Note: Will normally return the same value as
+ * #g_mime_charset_iconv_name() unless the system iconv does not use
+ * the canonical ISO charset names (such as using ISO8859-1 rather
+ * than the canonical form ISO-8859-1).
+ *
+ * Returns a canonical charset name for @charset.
+ **/
+const char *
+g_mime_charset_canon_name (const char *charset)
+{
+	const char *ptr;
+	char *endptr;
+	int iso;
+	
+	if (!charset)
+		return NULL;
+	
+	charset = g_mime_charset_iconv_name (charset);
+	if (strncasecmp (charset, "iso", 3) != 0)
+		return charset;
+	
+	ptr = charset + 3;
+	if (*ptr == '-' || *ptr == '_')
+		ptr++;
+	
+	if (strncmp (ptr, "8859", 4) != 0)
+		return charset;
+	
+	ptr += 4;
+	if (*ptr == '-' || *ptr == '_')
+		ptr++;
+	
+	iso = strtoul (ptr, &endptr, 10);
+	if (endptr == ptr || *endptr != '\0')
+		return charset;
+	
+	if (iso >= NUM_ISO_CHARSETS)
+		return charset;
+	
+	return iso_charsets[iso];
 }
 
 
