@@ -176,7 +176,10 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >* <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-NEW"
 >g_mime_message_new</A
->            (void);
+>            (<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> pretty_headers);
 void        <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-DESTROY"
 >g_mime_message_destroy</A
@@ -477,7 +480,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3564"
+NAME="AEN3565"
 ></A
 ><H2
 >Description</H2
@@ -487,14 +490,14 @@ NAME="AEN3564"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN3567"
+NAME="AEN3568"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3569"
+NAME="AEN3570"
 ></A
 ><H3
 ><A
@@ -520,7 +523,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3574"
+NAME="AEN3575"
 ></A
 ><H3
 ><A
@@ -546,7 +549,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3579"
+NAME="AEN3580"
 ></A
 ><H3
 ><A
@@ -572,7 +575,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3584"
+NAME="AEN3585"
 ></A
 ><H3
 ><A
@@ -598,7 +601,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3589"
+NAME="AEN3590"
 ></A
 ><H3
 ><A
@@ -638,7 +641,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3594"
+NAME="AEN3595"
 ></A
 ><H3
 ><A
@@ -668,7 +671,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3599"
+NAME="AEN3600"
 ></A
 ><H3
 ><A
@@ -687,18 +690,38 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
->* g_mime_message_new            (void);</PRE
+>* g_mime_message_new            (<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> pretty_headers);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>If <TT
+CLASS="PARAMETER"
+><I
+>pretty_headers</I
+></TT
+> is <TT
+CLASS="LITERAL"
+>TRUE</TT
+>, then the standard rfc822 headers are
+initialized so as to put headers in a nice friendly order. This is
+strictly a cosmetic thing, so if you are unsure, it is safe to say
+<TT
+CLASS="LITERAL"
+>no</TT
+> (<TT
+CLASS="LITERAL"
+>FALSE</TT
+>).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3606"
+NAME="AEN3612"
 ></A
 ><P
 ></P
@@ -715,6 +738,23 @@ CLASS="CALSTABLE"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>pretty_headers</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> make pretty headers </TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
@@ -723,8 +763,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an empty MIME Message object with no headers nor content
-set by default.</TD
+>an empty MIME Message object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -735,7 +774,7 @@ set by default.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3615"
+NAME="AEN3625"
 ></A
 ><H3
 ><A
@@ -766,7 +805,7 @@ Parts back to the Operating System for reuse.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3622"
+NAME="AEN3632"
 ></A
 ><P
 ></P
@@ -804,7 +843,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3631"
+NAME="AEN3641"
 ></A
 ><H3
 ><A
@@ -844,7 +883,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3640"
+NAME="AEN3650"
 ></A
 ><P
 ></P
@@ -899,7 +938,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3653"
+NAME="AEN3663"
 ></A
 ><H3
 ><A
@@ -932,7 +971,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3661"
+NAME="AEN3671"
 ></A
 ><P
 ></P
@@ -985,7 +1024,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3674"
+NAME="AEN3684"
 ></A
 ><H3
 ><A
@@ -1019,7 +1058,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3682"
+NAME="AEN3692"
 ></A
 ><P
 ></P
@@ -1074,7 +1113,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3695"
+NAME="AEN3705"
 ></A
 ><H3
 ><A
@@ -1107,7 +1146,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3703"
+NAME="AEN3713"
 ></A
 ><P
 ></P
@@ -1160,7 +1199,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3716"
+NAME="AEN3726"
 ></A
 ><H3
 ><A
@@ -1204,7 +1243,7 @@ GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3726"
+NAME="AEN3736"
 ></A
 ><P
 ></P
@@ -1293,7 +1332,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3747"
+NAME="AEN3757"
 ></A
 ><H3
 ><A
@@ -1336,7 +1375,7 @@ specified in rfc822.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3756"
+NAME="AEN3766"
 ></A
 ><P
 ></P
@@ -1408,7 +1447,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3773"
+NAME="AEN3783"
 ></A
 ><H3
 ><A
@@ -1445,7 +1484,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3782"
+NAME="AEN3792"
 ></A
 ><P
 ></P
@@ -1518,7 +1557,7 @@ GMIME_RECIPIENT_TYPE_BCC.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3799"
+NAME="AEN3809"
 ></A
 ><H3
 ><A
@@ -1552,7 +1591,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3807"
+NAME="AEN3817"
 ></A
 ><P
 ></P
@@ -1607,7 +1646,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3820"
+NAME="AEN3830"
 ></A
 ><H3
 ><A
@@ -1640,7 +1679,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3828"
+NAME="AEN3838"
 ></A
 ><P
 ></P
@@ -1693,7 +1732,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3841"
+NAME="AEN3851"
 ></A
 ><H3
 ><A
@@ -1728,7 +1767,7 @@ HREF="TIME-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3849"
+NAME="AEN3859"
 ></A
 ><P
 ></P
@@ -1800,7 +1839,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3866"
+NAME="AEN3876"
 ></A
 ><H3
 ><A
@@ -1842,7 +1881,7 @@ HREF="GMT-OFFSET"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3876"
+NAME="AEN3886"
 ></A
 ><P
 ></P
@@ -1914,7 +1953,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3893"
+NAME="AEN3903"
 ></A
 ><H3
 ><A
@@ -1947,7 +1986,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3901"
+NAME="AEN3911"
 ></A
 ><P
 ></P
@@ -2000,7 +2039,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3914"
+NAME="AEN3924"
 ></A
 ><H3
 ><A
@@ -2034,7 +2073,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3922"
+NAME="AEN3932"
 ></A
 ><P
 ></P
@@ -2089,7 +2128,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3935"
+NAME="AEN3945"
 ></A
 ><H3
 ><A
@@ -2122,7 +2161,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3943"
+NAME="AEN3953"
 ></A
 ><P
 ></P
@@ -2175,7 +2214,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3956"
+NAME="AEN3966"
 ></A
 ><H3
 ><A
@@ -2214,7 +2253,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3965"
+NAME="AEN3975"
 ></A
 ><P
 ></P
@@ -2286,7 +2325,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN3982"
+NAME="AEN3992"
 ></A
 ><H3
 ><A
@@ -2325,7 +2364,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN3991"
+NAME="AEN4001"
 ></A
 ><P
 ></P
@@ -2397,7 +2436,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4008"
+NAME="AEN4018"
 ></A
 ><H3
 ><A
@@ -2434,7 +2473,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4017"
+NAME="AEN4027"
 ></A
 ><P
 ></P
@@ -2504,7 +2543,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4034"
+NAME="AEN4044"
 ></A
 ><H3
 ><A
@@ -2538,7 +2577,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4042"
+NAME="AEN4052"
 ></A
 ><P
 ></P
@@ -2593,7 +2632,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4055"
+NAME="AEN4065"
 ></A
 ><H3
 ><A
@@ -2632,7 +2671,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4064"
+NAME="AEN4074"
 ></A
 ><P
 ></P
@@ -2687,7 +2726,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4077"
+NAME="AEN4087"
 ></A
 ><H3
 ><A
@@ -2720,7 +2759,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4085"
+NAME="AEN4095"
 ></A
 ><P
 ></P
@@ -2773,7 +2812,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4098"
+NAME="AEN4108"
 ></A
 ><H3
 ><A
@@ -2814,7 +2853,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4108"
+NAME="AEN4118"
 ></A
 ><P
 ></P
@@ -2909,7 +2948,7 @@ recommended that you traverse the MIME structure yourself.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4130"
+NAME="AEN4140"
 ></A
 ><H3
 ><A
@@ -2942,7 +2981,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4138"
+NAME="AEN4148"
 ></A
 ><P
 ></P
@@ -2995,7 +3034,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4151"
+NAME="AEN4161"
 ></A
 ><H3
 ><A
@@ -3036,7 +3075,7 @@ HREF="CALLBACK"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4161"
+NAME="AEN4171"
 ></A
 ><P
 ></P

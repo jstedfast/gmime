@@ -50,16 +50,17 @@ static char *rfc822_headers[] = {
 
 /**
  * g_mime_message_new: Create a new MIME Message object
- * @init_headers: initialize the headers 
+ * @pretty_headers: make pretty headers 
  *
- * If @init_headers is %TRUE, then the standard rfc822 headers are
- * initialized so as to put headers in a nice friendly order.
+ * If @pretty_headers is %TRUE, then the standard rfc822 headers are
+ * initialized so as to put headers in a nice friendly order. This is
+ * strictly a cosmetic thing, so if you are unsure, it is safe to say
+ * %no (%FALSE).
  *
- * Returns an empty MIME Message object with no headers nor content
- * set by default.
+ * Returns an empty MIME Message object.
  **/
 GMimeMessage *
-g_mime_message_new (gboolean init_headers)
+g_mime_message_new (gboolean pretty_headers)
 {
 	GMimeMessage *message;
 	GMimeHeader *headers;
@@ -73,7 +74,7 @@ g_mime_message_new (gboolean init_headers)
 	
 	message->header->headers = headers = g_mime_header_new ();
 	
-	if (init_headers) {
+	if (pretty_headers) {
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
 		for (i = 0; rfc822_headers[i]; i++) 
 			g_mime_header_set (headers, rfc822_headers[i], NULL);

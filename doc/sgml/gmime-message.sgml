@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="24 Oct 2001">
+<refentry id="gmime-gmime-message" revision="25 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -20,7 +20,7 @@
 struct      <link linkend="GMimeHeader">GMimeHeader</link>;
 struct      <link linkend="GMimeMessageHeader">GMimeMessageHeader</link>;
 struct      <link linkend="GMimeMessage">GMimeMessage</link>;
-<link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (void);
+<link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
 void        <link linkend="g-mime-message-destroy">g_mime_message_destroy</link>          (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-sender">g_mime_message_set_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const <link linkend="gchar">gchar</link> *sender);
@@ -148,9 +148,12 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 </para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-new">g_mime_message_new ()</title>
-<programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_message_new            (void);</programlisting>
+<programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_message_new            (<link linkend="gboolean">gboolean</link> pretty_headers);</programlisting>
 <para>
-</para>
+If <parameter>pretty_headers</parameter> is <literal>TRUE</literal>, then the standard rfc822 headers are
+initialized so as to put headers in a nice friendly order. This is
+strictly a cosmetic thing, so if you are unsure, it is safe to say
+<literal>no</literal> (<literal>FALSE</literal>).</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -158,8 +161,10 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Message object with no headers nor content
-set by default.
+<row><entry align="right"><parameter>pretty_headers</parameter>&nbsp;:</entry>
+<entry> make pretty headers 
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Message object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
