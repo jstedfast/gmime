@@ -1,3 +1,8 @@
+2002-01-01  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-message (g_mime_message_get_body): added g_return_val_if_fail
+	checks in the entry point.
+
 2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (decode_address): Optimized group parsing.
