@@ -45,6 +45,7 @@ GTKDOC_LIBS = 					\
 content_files = 			\
 	building.sgml			\
 	changes-2.0.sgml		\
+	changes-2.2.sgml		\
 	compiling.sgml			\
 	data-wrappers.sgml		\
 	filters.sgml			\
