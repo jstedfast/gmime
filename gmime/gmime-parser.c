@@ -624,6 +624,9 @@ parser_fill (GMimeParser *parser)
 static off_t
 parser_offset (struct _GMimeParserPrivate *priv, unsigned char *inptr)
 {
+	if (priv->offset == -1)
+		return -1;
+	
 	if (!inptr)
 		inptr = priv->inptr;
 	
