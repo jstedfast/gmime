@@ -33,11 +33,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
-#define GMIME_STREAM_NULL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
-#define GMIME_STREAM_NULL_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
-#define GMIME_IS_STREAM_NULL(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_NULL))
-#define GMIME_IS_STREAM_NULL_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_NULL))
-#define GMIME_STREAM_NULL_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
+#define GMIME_STREAM_NULL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
+#define GMIME_STREAM_NULL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
+#define GMIME_IS_STREAM_NULL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_NULL))
+#define GMIME_IS_STREAM_NULL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_NULL))
+#define GMIME_STREAM_NULL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
 
 typedef struct _GMimeStreamNull GMimeStreamNull;
 typedef struct _GMimeStreamNullClass GMimeStreamNullClass;

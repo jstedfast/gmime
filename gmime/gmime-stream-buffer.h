@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
-#define GMIME_STREAM_BUFFER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
-#define GMIME_STREAM_BUFFER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
-#define GMIME_IS_STREAM_BUFFER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_BUFFER))
-#define GMIME_IS_STREAM_BUFFER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
-#define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
+#define GMIME_STREAM_BUFFER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
+#define GMIME_STREAM_BUFFER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
+#define GMIME_IS_STREAM_BUFFER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_BUFFER))
+#define GMIME_IS_STREAM_BUFFER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
+#define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
 
 
 typedef enum {

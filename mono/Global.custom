@@ -1,0 +1,15 @@
+		[DllImport("gmime")]
+		static extern void g_mime_init (int flags);
+	
+		public static void Init ()
+		{
+			g_mime_init (0);
+		}
+
+		[DllImport("gmime")]
+		static extern void g_mime_shutdown ();
+	
+		public static void Shutdown ()
+		{
+			g_mime_shutdown ();
+		}

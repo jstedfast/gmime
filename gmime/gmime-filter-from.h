@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_FROM            (g_mime_filter_from_get_type ())
-#define GMIME_FILTER_FROM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFrom))
-#define GMIME_FILTER_FROM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
-#define GMIME_IS_FILTER_FROM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_FROM))
-#define GMIME_IS_FILTER_FROM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_FROM))
-#define GMIME_FILTER_FROM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
+#define GMIME_FILTER_FROM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFrom))
+#define GMIME_FILTER_FROM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
+#define GMIME_IS_FILTER_FROM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_FROM))
+#define GMIME_IS_FILTER_FROM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_FROM))
+#define GMIME_FILTER_FROM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_FROM, GMimeFilterFromClass))
 
 typedef struct _GMimeFilterFrom GMimeFilterFrom;
 typedef struct _GMimeFilterFromClass GMimeFilterFromClass;

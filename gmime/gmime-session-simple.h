@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_SESSION_SIMPLE            (g_mime_session_simple_get_type ())
-#define GMIME_SESSION_SIMPLE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimple))
-#define GMIME_SESSION_SIMPLE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimpleClass))
-#define GMIME_IS_SESSION_SIMPLE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_SESSION_SIMPLE))
-#define GMIME_IS_SESSION_SIMPLE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SESSION_SIMPLE))
-#define GMIME_SESSION_SIMPLE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimpleClass))
+#define GMIME_SESSION_SIMPLE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimple))
+#define GMIME_SESSION_SIMPLE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimpleClass))
+#define GMIME_IS_SESSION_SIMPLE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_SESSION_SIMPLE))
+#define GMIME_IS_SESSION_SIMPLE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SESSION_SIMPLE))
+#define GMIME_SESSION_SIMPLE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimpleClass))
 
 typedef struct _GMimeSessionSimple GMimeSessionSimple;
 typedef struct _GMimeSessionSimpleClass GMimeSessionSimpleClass;

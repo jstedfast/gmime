@@ -28,19 +28,17 @@
 #include <glib-object.h>
 #include <sys/types.h>
 
-#include <gmime/gmime-type-utils.h>
-
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
-#define GMIME_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))
-#define GMIME_FILTER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER, GMimeFilterClass))
-#define GMIME_IS_FILTER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER))
-#define GMIME_IS_FILTER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER))
-#define GMIME_FILTER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER, GMimeFilterClass))
+#define GMIME_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))
+#define GMIME_FILTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER, GMimeFilterClass))
+#define GMIME_IS_FILTER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER))
+#define GMIME_IS_FILTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER))
+#define GMIME_FILTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER, GMimeFilterClass))
 
 typedef struct _GMimeFilter GMimeFilter;
 typedef struct _GMimeFilterClass GMimeFilterClass;

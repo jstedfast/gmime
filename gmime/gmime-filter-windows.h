@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_WINDOWS            (g_mime_filter_windows_get_type ())
-#define GMIME_FILTER_WINDOWS(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindows))
-#define GMIME_FILTER_WINDOWS_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
-#define GMIME_IS_FILTER_WINDOWS(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_WINDOWS))
-#define GMIME_IS_FILTER_WINDOWS_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_WINDOWS))
-#define GMIME_FILTER_WINDOWS_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
+#define GMIME_FILTER_WINDOWS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindows))
+#define GMIME_FILTER_WINDOWS_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
+#define GMIME_IS_FILTER_WINDOWS(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_WINDOWS))
+#define GMIME_IS_FILTER_WINDOWS_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_WINDOWS))
+#define GMIME_FILTER_WINDOWS_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindowsClass))
 
 typedef struct _GMimeFilterWindows GMimeFilterWindows;
 typedef struct _GMimeFilterWindowsClass GMimeFilterWindowsClass;

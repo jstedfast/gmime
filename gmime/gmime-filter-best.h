@@ -34,11 +34,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_BEST            (g_mime_filter_best_get_type ())
-#define GMIME_FILTER_BEST(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBest))
-#define GMIME_FILTER_BEST_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
-#define GMIME_IS_FILTER_BEST(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_BEST))
-#define GMIME_IS_FILTER_BEST_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_BEST))
-#define GMIME_FILTER_BEST_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
+#define GMIME_FILTER_BEST(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBest))
+#define GMIME_FILTER_BEST_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
+#define GMIME_IS_FILTER_BEST(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_BEST))
+#define GMIME_IS_FILTER_BEST_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_BEST))
+#define GMIME_FILTER_BEST_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
 
 typedef struct _GMimeFilterBest GMimeFilterBest;
 typedef struct _GMimeFilterBestClass GMimeFilterBestClass;

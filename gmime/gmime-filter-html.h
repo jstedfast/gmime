@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
-#define GMIME_FILTER_HTML(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))
-#define GMIME_FILTER_HTML_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
-#define GMIME_IS_FILTER_HTML(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_HTML))
-#define GMIME_IS_FILTER_HTML_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_HTML))
-#define GMIME_FILTER_HTML_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
+#define GMIME_FILTER_HTML(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))
+#define GMIME_FILTER_HTML_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
+#define GMIME_IS_FILTER_HTML(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_HTML))
+#define GMIME_IS_FILTER_HTML_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_HTML))
+#define GMIME_FILTER_HTML_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
 
 typedef struct _GMimeFilterHTML GMimeFilterHTML;
 typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;

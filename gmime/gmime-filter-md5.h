@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_MD5            (g_mime_filter_md5_get_type ())
-#define GMIME_FILTER_MD5(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5))
-#define GMIME_FILTER_MD5_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5Class))
-#define GMIME_IS_FILTER_MD5(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_MD5))
-#define GMIME_IS_FILTER_MD5_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_MD5))
-#define GMIME_FILTER_MD5_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5Class))
+#define GMIME_FILTER_MD5(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5))
+#define GMIME_FILTER_MD5_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5Class))
+#define GMIME_IS_FILTER_MD5(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_MD5))
+#define GMIME_IS_FILTER_MD5_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_MD5))
+#define GMIME_FILTER_MD5_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5Class))
 
 typedef struct _GMimeFilterMd5 GMimeFilterMd5;
 typedef struct _GMimeFilterMd5Class GMimeFilterMd5Class;

@@ -33,11 +33,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
-#define GMIME_STREAM_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
-#define GMIME_STREAM_FILTER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
-#define GMIME_IS_STREAM_FILTER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_IS_STREAM_FILTER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
-#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+#define GMIME_STREAM_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
+#define GMIME_STREAM_FILTER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+#define GMIME_IS_STREAM_FILTER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
+#define GMIME_IS_STREAM_FILTER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
+#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
 
 typedef struct _GMimeStreamFilter GMimeStreamFilter;
 typedef struct _GMimeStreamFilterClass GMimeStreamFilterClass;

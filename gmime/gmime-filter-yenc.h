@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_YENC            (g_mime_filter_yenc_get_type ())
-#define GMIME_FILTER_YENC(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYenc))
-#define GMIME_FILTER_YENC_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
-#define GMIME_IS_FILTER_YENC(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_YENC))
-#define GMIME_IS_FILTER_YENC_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_YENC))
-#define GMIME_FILTER_YENC_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
+#define GMIME_FILTER_YENC(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYenc))
+#define GMIME_FILTER_YENC_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
+#define GMIME_IS_FILTER_YENC(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_YENC))
+#define GMIME_IS_FILTER_YENC_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_YENC))
+#define GMIME_FILTER_YENC_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
 
 typedef struct _GMimeFilterYenc GMimeFilterYenc;
 typedef struct _GMimeFilterYencClass GMimeFilterYencClass;

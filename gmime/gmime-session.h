@@ -27,19 +27,17 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include <gmime/gmime-type-utils.h>
-
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_SESSION            (g_mime_session_get_type ())
-#define GMIME_SESSION(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))
-#define GMIME_SESSION_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SESSION, GMimeSessionClass))
-#define GMIME_IS_SESSION(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_SESSION))
-#define GMIME_IS_SESSION_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SESSION))
-#define GMIME_SESSION_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_SESSION, GMimeSessionClass))
+#define GMIME_SESSION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))
+#define GMIME_SESSION_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_SESSION, GMimeSessionClass))
+#define GMIME_IS_SESSION(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_SESSION))
+#define GMIME_IS_SESSION_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_SESSION))
+#define GMIME_SESSION_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_SESSION, GMimeSessionClass))
 
 typedef struct _GMimeSession GMimeSession;
 typedef struct _GMimeSessionClass GMimeSessionClass;

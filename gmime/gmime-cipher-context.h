@@ -38,11 +38,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
-#define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
-#define GMIME_CIPHER_CONTEXT_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
-#define GMIME_IS_CIPHER_CONTEXT(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_CIPHER_CONTEXT))
-#define GMIME_IS_CIPHER_CONTEXT_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CIPHER_CONTEXT))
-#define GMIME_CIPHER_CONTEXT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
+#define GMIME_CIPHER_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
+#define GMIME_CIPHER_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
+#define GMIME_IS_CIPHER_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CIPHER_CONTEXT))
+#define GMIME_IS_CIPHER_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CIPHER_CONTEXT))
+#define GMIME_CIPHER_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
 
 typedef struct _GMimeCipherContext GMimeCipherContext;
 typedef struct _GMimeCipherContextClass GMimeCipherContextClass;

@@ -33,11 +33,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_STREAM_MEM            (g_mime_stream_mem_get_type ())
-#define GMIME_STREAM_MEM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMem))
-#define GMIME_STREAM_MEM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
-#define GMIME_IS_STREAM_MEM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_MEM))
-#define GMIME_IS_STREAM_MEM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MEM))
-#define GMIME_STREAM_MEM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
+#define GMIME_STREAM_MEM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMem))
+#define GMIME_STREAM_MEM_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
+#define GMIME_IS_STREAM_MEM(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_STREAM_MEM))
+#define GMIME_IS_STREAM_MEM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MEM))
+#define GMIME_STREAM_MEM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMemClass))
 
 typedef struct _GMimeStreamMem GMimeStreamMem;
 typedef struct _GMimeStreamMemClass GMimeStreamMemClass;

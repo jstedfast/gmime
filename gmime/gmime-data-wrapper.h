@@ -27,7 +27,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include <gmime/gmime-type-utils.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-utils.h>
@@ -38,11 +37,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_DATA_WRAPPER            (g_mime_data_wrapper_get_type ())
-#define GMIME_DATA_WRAPPER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))
-#define GMIME_DATA_WRAPPER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
-#define GMIME_IS_DATA_WRAPPER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_DATA_WRAPPER))
-#define GMIME_IS_DATA_WRAPPER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_DATA_WRAPPER))
-#define GMIME_DATA_WRAPPER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
+#define GMIME_DATA_WRAPPER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))
+#define GMIME_DATA_WRAPPER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
+#define GMIME_IS_DATA_WRAPPER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_DATA_WRAPPER))
+#define GMIME_IS_DATA_WRAPPER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_DATA_WRAPPER))
+#define GMIME_DATA_WRAPPER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
 
 typedef struct _GMimeDataWrapper GMimeDataWrapper;
 typedef struct _GMimeDataWrapperClass GMimeDataWrapperClass;

@@ -27,7 +27,6 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#include <gmime/gmime-type-utils.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-header.h>
@@ -38,11 +37,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_OBJECT            (g_mime_object_get_type ())
-#define GMIME_OBJECT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_OBJECT, GMimeObject))
-#define GMIME_OBJECT_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_OBJECT, GMimeObjectClass))
-#define GMIME_IS_OBJECT(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_OBJECT))
-#define GMIME_IS_OBJECT_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_OBJECT))
-#define GMIME_OBJECT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_OBJECT, GMimeObjectClass))
+#define GMIME_OBJECT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_OBJECT, GMimeObject))
+#define GMIME_OBJECT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_OBJECT, GMimeObjectClass))
+#define GMIME_IS_OBJECT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_OBJECT))
+#define GMIME_IS_OBJECT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_OBJECT))
+#define GMIME_OBJECT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_OBJECT, GMimeObjectClass))
 
 typedef struct _GMimeObject GMimeObject;
 typedef struct _GMimeObjectClass GMimeObjectClass;

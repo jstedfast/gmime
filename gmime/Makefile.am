@@ -122,7 +122,7 @@ noinst_HEADERS = 			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h
 
-libgmime_2_0_la_LIBADD = $(top_builddir)/util/libutil.la
+libgmime_2_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
 libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
 
 gen_table_SOURCES = gen-table.c

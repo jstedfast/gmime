@@ -39,11 +39,11 @@ extern "C" {
 #include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())
-#define GMIME_PARSER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))
-#define GMIME_PARSER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARSER, GMimeParserClass))
-#define GMIME_IS_PARSER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_PARSER))
-#define GMIME_IS_PARSER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARSER))
-#define GMIME_PARSER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_PARSER, GMimeParserClass))
+#define GMIME_PARSER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))
+#define GMIME_PARSER_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARSER, GMimeParserClass))
+#define GMIME_IS_PARSER(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_PARSER))
+#define GMIME_IS_PARSER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARSER))
+#define GMIME_PARSER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_PARSER, GMimeParserClass))
 
 typedef struct _GMimeParser GMimeParser;
 typedef struct _GMimeParserClass GMimeParserClass;

@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER_GZIP            (g_mime_filter_gzip_get_type ())
-#define GMIME_FILTER_GZIP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZip))
-#define GMIME_FILTER_GZIP_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
-#define GMIME_IS_FILTER_GZIP(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_GZIP))
-#define GMIME_IS_FILTER_GZIP_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_GZIP))
-#define GMIME_FILTER_GZIP_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
+#define GMIME_FILTER_GZIP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZip))
+#define GMIME_FILTER_GZIP_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
+#define GMIME_IS_FILTER_GZIP(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_FILTER_GZIP))
+#define GMIME_IS_FILTER_GZIP_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_GZIP))
+#define GMIME_FILTER_GZIP_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZipClass))
 
 typedef struct _GMimeFilterGZip GMimeFilterGZip;
 typedef struct _GMimeFilterGZipClass GMimeFilterGZipClass;

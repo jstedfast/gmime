@@ -38,11 +38,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
-#define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
-#define GMIME_MESSAGE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
-#define GMIME_IS_MESSAGE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MESSAGE))
-#define GMIME_IS_MESSAGE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
-#define GMIME_MESSAGE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
+#define GMIME_MESSAGE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
+#define GMIME_MESSAGE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
+#define GMIME_IS_MESSAGE(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE))
+#define GMIME_IS_MESSAGE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
+#define GMIME_MESSAGE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
 
 typedef struct _GMimeMessage GMimeMessage;
 typedef struct _GMimeMessageClass GMimeMessageClass;

@@ -34,11 +34,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
-#define GMIME_MULTIPART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
-#define GMIME_MULTIPART_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
-#define GMIME_IS_MULTIPART(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MULTIPART))
-#define GMIME_IS_MULTIPART_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART))
-#define GMIME_MULTIPART_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
+#define GMIME_MULTIPART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
+#define GMIME_MULTIPART_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
+#define GMIME_IS_MULTIPART(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART))
+#define GMIME_IS_MULTIPART_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART))
+#define GMIME_MULTIPART_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
 
 typedef struct _GMimeMultipart GMimeMultipart;
 typedef struct _GMimeMultipartClass GMimeMultipartClass;

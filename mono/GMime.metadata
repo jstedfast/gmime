@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<metadata>
+  <!-- Rename some items -->
+  <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
+
+  <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
+  <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
+
+  <!-- This returns ssize_t, which the generator doesn't deal with nicely. -->
+  <attr path="/api/namespace/callback[@cname='GMimeHeaderWriter']/return-type" name="type">long</attr>
+
+  <!-- Make some structures opaque -->
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="opaque">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeSignatureValidity']" name="opaque">1</attr>
+  <attr path="/api/namespace/struct[@cname='InternetAddress']" name="opaque">1</attr>
+
+  <!-- Hide some problematic methods/constructors -->
+  <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="hidden">1</attr>
+
+
+<!--
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/field[@cname='disposition']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeDataWrapper']/field[@cname='encoding']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeFilterYenc']/field[@cname='state']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeFilterYenc']/field[@cname='pcrc']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeFilterYenc']/field[@cname='crc']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeGpgContext']/field[@cname='always_trust']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessage']/field[@cname='subject']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessage']/field[@cname='message_id']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessage']/field[@cname='reply_to']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessagePartial']/field[@cname='number']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessagePartial']/field[@cname='total']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMessagePartial']/field[@cname='id']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMultipart']/field[@cname='postface']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMultipart']/field[@cname='boundary']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeMultipart']/field[@cname='preface']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeObject']/field[@cname='content_id']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimePart']/field[@cname='encoding']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimePart']/field[@cname='content_location']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimePart']/field[@cname='content_md5']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimePart']/field[@cname='content_description']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='status']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='details']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeStreamFile']/field[@cname='owner']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeStreamFs']/field[@cname='owner']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeStreamMem']/field[@cname='owner']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='InternetAddress']/field[@cname='name']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='InternetAddress']/field[@cname='addr']" name="hidden">1</attr>
+
+  <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
+
+
+
+-->
+</metadata>

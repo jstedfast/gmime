@@ -33,11 +33,11 @@ extern "C" {
 #include <gmime/gmime-cipher-context.h>
 
 #define GMIME_TYPE_MULTIPART_ENCRYPTED            (g_mime_multipart_encrypted_get_type ())
-#define GMIME_MULTIPART_ENCRYPTED(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncrypted))
-#define GMIME_MULTIPART_ENCRYPTED_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
-#define GMIME_IS_MULTIPART_ENCRYPTED(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_IS_MULTIPART_ENCRYPTED_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED))
-#define GMIME_MULTIPART_ENCRYPTED_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
+#define GMIME_MULTIPART_ENCRYPTED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncrypted))
+#define GMIME_MULTIPART_ENCRYPTED_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
+#define GMIME_IS_MULTIPART_ENCRYPTED(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED))
+#define GMIME_IS_MULTIPART_ENCRYPTED_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART_ENCRYPTED))
+#define GMIME_MULTIPART_ENCRYPTED_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncryptedClass))
 
 typedef struct _GMimeMultipartEncrypted GMimeMultipartEncrypted;
 typedef struct _GMimeMultipartEncryptedClass GMimeMultipartEncryptedClass;

@@ -1,0 +1,9 @@
+<gapi-parser-input>
+  <api filename="gmime-api.raw">
+    <library name="gmime">
+      <namespace name="GMime">
+        <dir>../gmime</dir>
+      </namespace>
+    </library>
+  </api>
+</gapi-parser-input>

@@ -1,3 +1,35 @@
+2004-11-15  Joe Shaw  <joeshaw@novell.com>
+
+	* Added a mono binding
+
+	* configure.in: Add optional checks for mono and gtk-sharp.
+
+	* Makefile.am: Build the mono subdir if enabled.
+
+	* gmime/Makefile.am: Add $(GLIB_LIBS) to the libgmime LIBADD line.
+
+	* gmime/*.h: Replace GMIME_CHECK macros with the G_TYPE_CHECK
+	ones, because the gtk-sharp binding generator looks for them.
+
+	* gmime/gmime-type-utils.h: Removed.
+
+	* mono/AssemblyInfo.cs.in: Added.
+
+	* mono/sources.xml: Added. The sources file, which tells the
+	generator how to generate the API data.
+
+	* mono/GMime.metadata: Added. Metadata file used to tweak the
+	generated API.
+
+	* mono/Global.custom: Added.  The g_mime_init() function isn't
+	being wrapped automatically for some reason, so add the code here.
+
+	* mono/gmime-api.raw: Added.  The raw generated API, so that the
+	parser doesn't have to be run by most people.
+
+	* mono/gmime-sharp.pub: Added. Public key used to sign the
+	assembly.
+
 2004-10-22  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Removed the --enable-ipv6 option. getaddrinfo is

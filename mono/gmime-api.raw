@@ -1,0 +1,2442 @@
+<?xml version="1.0"?>
+<api>
+<!--
+
+        This file was automatically generated.
+        Please DO NOT MODIFY THIS FILE, modify .metadata files instead.
+
+-->
+  <namespace name="GMime" library="gmime">
+    <enum name="BestEncoding" cname="GMimeBestEncoding" type="enum">
+      <member cname="GMIME_BEST_ENCODING_7BIT" name="7Bit"/>
+      <member cname="GMIME_BEST_ENCODING_8BIT" name="8Bit"/>
+      <member cname="GMIME_BEST_ENCODING_BINARY" name="Binary"/>
+    </enum>
+    <enum name="CipherHash" cname="GMimeCipherHash" type="enum">
+      <member cname="GMIME_CIPHER_HASH_DEFAULT" name="Default"/>
+      <member cname="GMIME_CIPHER_HASH_MD2" name="Md2"/>
+      <member cname="GMIME_CIPHER_HASH_MD5" name="Md5"/>
+      <member cname="GMIME_CIPHER_HASH_SHA1" name="Sha1"/>
+      <member cname="GMIME_CIPHER_HASH_RIPEMD160" name="Ripemd160"/>
+      <member cname="GMIME_CIPHER_HASH_TIGER192" name="Tiger192"/>
+      <member cname="GMIME_CIPHER_HASH_HAVAL5160" name="Haval5160"/>
+    </enum>
+    <enum name="FilterBasicType" cname="GMimeFilterBasicType" type="enum">
+      <member cname="GMIME_FILTER_BASIC_BASE64_ENC" name="Base64Enc" value="1"/>
+      <member cname="GMIME_FILTER_BASIC_BASE64_DEC" name="Base64Dec"/>
+      <member cname="GMIME_FILTER_BASIC_QP_ENC" name="QpEnc"/>
+      <member cname="GMIME_FILTER_BASIC_QP_DEC" name="QpDec"/>
+      <member cname="GMIME_FILTER_BASIC_UU_ENC" name="UuEnc"/>
+      <member cname="GMIME_FILTER_BASIC_UU_DEC" name="UuDec"/>
+    </enum>
+    <enum name="FilterCRLFDirection" cname="GMimeFilterCRLFDirection" type="enum">
+      <member cname="GMIME_FILTER_CRLF_ENCODE" name="Encode"/>
+      <member cname="GMIME_FILTER_CRLF_DECODE" name="Decode"/>
+    </enum>
+    <enum name="FilterCRLFMode" cname="GMimeFilterCRLFMode" type="enum">
+      <member cname="GMIME_FILTER_CRLF_MODE_CRLF_DOTS" name="Dots"/>
+      <member cname="GMIME_FILTER_CRLF_MODE_CRLF_ONLY" name="Only"/>
+    </enum>
+    <enum name="FilterFromMode" cname="GMimeFilterFromMode" type="enum">
+      <member cname="GMIME_FILTER_FROM_MODE_DEFAULT" name="Default"/>
+      <member cname="GMIME_FILTER_FROM_MODE_ESCAPE" name="Escape"/>
+      <member cname="GMIME_FILTER_FROM_MODE_ARMOR" name="Armor" value="1"/>
+    </enum>
+    <enum name="FilterGZipMode" cname="GMimeFilterGZipMode" type="enum">
+      <member cname="GMIME_FILTER_GZIP_MODE_ZIP" name="Zip"/>
+      <member cname="GMIME_FILTER_GZIP_MODE_UNZIP" name="Unzip"/>
+    </enum>
+    <enum name="FilterYencDirection" cname="GMimeFilterYencDirection" type="enum">
+      <member cname="GMIME_FILTER_YENC_DIRECTION_ENCODE" name="Encode"/>
+      <member cname="GMIME_FILTER_YENC_DIRECTION_DECODE" name="Decode"/>
+    </enum>
+    <enum name="PartEncodingType" cname="GMimePartEncodingType" type="enum">
+      <member cname="GMIME_PART_ENCODING_DEFAULT" name="EncodingDefault"/>
+      <member cname="GMIME_PART_ENCODING_7BIT" name="Encoding7bit"/>
+      <member cname="GMIME_PART_ENCODING_8BIT" name="Encoding8bit"/>
+      <member cname="GMIME_PART_ENCODING_BINARY" name="EncodingBinary"/>
+      <member cname="GMIME_PART_ENCODING_BASE64" name="EncodingBase64"/>
+      <member cname="GMIME_PART_ENCODING_QUOTEDPRINTABLE" name="EncodingQuotedprintable"/>
+      <member cname="GMIME_PART_ENCODING_UUENCODE" name="EncodingUuencode"/>
+      <member cname="GMIME_PART_NUM_ENCODINGS" name="NumEncodings"/>
+    </enum>
+    <enum name="SeekWhence" cname="GMimeSeekWhence" type="enum">
+      <member cname="GMIME_STREAM_SEEK_SET" name="Set"/>
+      <member cname="GMIME_STREAM_SEEK_CUR" name="Cur"/>
+      <member cname="GMIME_STREAM_SEEK_END" name="End"/>
+    </enum>
+    <enum name="SignatureStatus" cname="GMimeSignatureStatus" type="enum">
+      <member cname="GMIME_SIGNATURE_STATUS_NONE" name="None"/>
+      <member cname="GMIME_SIGNATURE_STATUS_GOOD" name="Good"/>
+      <member cname="GMIME_SIGNATURE_STATUS_BAD" name="Bad"/>
+      <member cname="GMIME_SIGNATURE_STATUS_UNKNOWN" name="Unknown"/>
+    </enum>
+    <enum name="SignerError" cname="GMimeSignerError" type="enum">
+      <member cname="GMIME_SIGNER_ERROR_NONE" name="None"/>
+      <member cname="GMIME_SIGNER_ERROR_EXPSIG" name="Expsig"/>
+      <member cname="GMIME_SIGNER_ERROR_NO_PUBKEY" name="NoPubkey"/>
+      <member cname="GMIME_SIGNER_ERROR_EXPKEYSIG" name="Expkeysig"/>
+      <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig"/>
+    </enum>
+    <enum name="SignerStatus" cname="GMimeSignerStatus" type="enum">
+      <member cname="GMIME_SIGNER_STATUS_NONE" name="None"/>
+      <member cname="GMIME_SIGNER_STATUS_GOOD" name="Good"/>
+      <member cname="GMIME_SIGNER_STATUS_BAD" name="Bad"/>
+      <member cname="GMIME_SIGNER_STATUS_ERROR" name="Error"/>
+    </enum>
+    <enum name="SignerTrust" cname="GMimeSignerTrust" type="enum">
+      <member cname="GMIME_SIGNER_TRUST_NONE" name="None"/>
+      <member cname="GMIME_SIGNER_TRUST_NEVER" name="Never"/>
+      <member cname="GMIME_SIGNER_TRUST_UNDEFINED" name="Undefined"/>
+      <member cname="GMIME_SIGNER_TRUST_MARGINAL" name="Marginal"/>
+      <member cname="GMIME_SIGNER_TRUST_FULLY" name="Fully"/>
+      <member cname="GMIME_SIGNER_TRUST_ULTIMATE" name="Ultimate"/>
+    </enum>
+    <enum name="StreamBufferMode" cname="GMimeStreamBufferMode" type="enum">
+      <member cname="GMIME_STREAM_BUFFER_CACHE_READ" name="CacheRead"/>
+      <member cname="GMIME_STREAM_BUFFER_BLOCK_READ" name="BlockRead"/>
+      <member cname="GMIME_STREAM_BUFFER_BLOCK_WRITE" name="BlockWrite"/>
+    </enum>
+    <enum name="InternetAddressType" cname="InternetAddressType" type="enum">
+      <member cname="INTERNET_ADDRESS_NONE" name="None"/>
+      <member cname="INTERNET_ADDRESS_NAME" name="Name"/>
+      <member cname="INTERNET_ADDRESS_GROUP" name="Group"/>
+    </enum>
+    <callback name="HeaderForeachFunc" cname="GMimeHeaderForeachFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter type="const-char*" name="name"/>
+        <parameter type="const-char*" name="value"/>
+        <parameter type="gpointer" name="user_data"/>
+      </parameters>
+    </callback>
+    <callback name="HeaderWriter" cname="GMimeHeaderWriter">
+      <return-type type="ssize_t"/>
+      <parameters>
+        <parameter type="GMimeStream*" name="stream"/>
+        <parameter type="const-char*" name="name"/>
+        <parameter type="const-char*" name="value"/>
+      </parameters>
+    </callback>
+    <callback name="ParserHeaderRegexFunc" cname="GMimeParserHeaderRegexFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter type="GMimeParser*" name="parser"/>
+        <parameter type="const-char*" name="header"/>
+        <parameter type="const-char*" name="value"/>
+        <parameter type="off_t" name="offset"/>
+        <parameter type="gpointer" name="user_data"/>
+      </parameters>
+    </callback>
+    <callback name="PartFunc" cname="GMimePartFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter type="GMimeObject*" name="part"/>
+        <parameter type="gpointer" name="data"/>
+      </parameters>
+    </callback>
+    <callback name="SimpleForgetPasswdFunc" cname="GMimeSimpleForgetPasswdFunc">
+      <return-type type="void"/>
+      <parameters>
+        <parameter type="GMimeSession*" name="session"/>
+        <parameter type="const-char*" name="item"/>
+        <parameter type="GError**" name="err"/>
+      </parameters>
+    </callback>
+    <callback name="SimpleIsOnlineFunc" cname="GMimeSimpleIsOnlineFunc">
+      <return-type type="gboolean"/>
+      <parameters>
+        <parameter type="GMimeSession*" name="session"/>
+      </parameters>
+    </callback>
+    <callback name="SimpleRequestPasswdFunc" cname="GMimeSimpleRequestPasswdFunc">
+      <return-type type="char*"/>
+      <parameters>
+        <parameter type="GMimeSession*" name="session"/>
+        <parameter type="const-char*" name="prompt"/>
+        <parameter type="gboolean" name="secret"/>
+        <parameter type="const-char*" name="item"/>
+        <parameter type="GError**" name="err"/>
+      </parameters>
+    </callback>
+    <object name="CipherContext" cname="GMimeCipherContext" parent="GObject">
+      <field cname="session" type="GMimeSession*"/>
+      <field cname="sign_protocol" type="const-char*"/>
+      <field cname="encrypt_protocol" type="const-char*"/>
+      <field cname="key_protocol" type="const-char*"/>
+      <virtual_method name="HashId" cname="hash_id">
+        <return-type type="GMimeCipherHash"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="const-char*" name="hash"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Sign" cname="sign">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="const-char*" name="userid"/>
+          <parameter type="GMimeCipherHash" name="hash"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Encrypt" cname="encrypt">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="gboolean" name="sign"/>
+          <parameter type="const-char*" name="userid"/>
+          <parameter type="GPtrArray*" name="recipients"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="ImportKeys" cname="import_keys">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </virtual_method>
+      <method name="GetType" cname="g_mime_cipher_context_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+    </object>
+    <object name="DataWrapper" cname="GMimeDataWrapper" parent="GObject">
+      <field cname="encoding" type="GMimePartEncodingType"/>
+      <field cname="stream" type="GMimeStream*"/>
+      <virtual_method name="WriteToStream" cname="write_to_stream">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeDataWrapper*" name="wrapper"/>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </virtual_method>
+      <method name="GetEncoding" cname="g_mime_data_wrapper_get_encoding">
+        <return-type type="GMimePartEncodingType"/>
+      </method>
+      <method name="GetStream" cname="g_mime_data_wrapper_get_stream">
+        <return-type type="GMimeStream*"/>
+      </method>
+      <method name="GetType" cname="g_mime_data_wrapper_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_data_wrapper_new"/>
+      <constructor cname="g_mime_data_wrapper_new_with_stream">
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+          <parameter type="GMimePartEncodingType" name="encoding"/>
+        </parameters>
+      </constructor>
+      <method name="SetEncoding" cname="g_mime_data_wrapper_set_encoding">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimePartEncodingType" name="encoding"/>
+        </parameters>
+      </method>
+      <method name="SetStream" cname="g_mime_data_wrapper_set_stream">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </method>
+      <method name="WriteToStream" cname="g_mime_data_wrapper_write_to_stream">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Filter" cname="GMimeFilter" parent="GObject">
+      <field cname="priv" type="struct-_GMimeFilterPrivate*"/>
+      <field cname="outreal" type="char*"/>
+      <field cname="outbuf" type="char*"/>
+      <field cname="outptr" type="char*"/>
+      <field cname="outsize" type="size_t"/>
+      <field cname="outpre" type="size_t"/>
+      <field cname="backbuf" type="char*"/>
+      <field cname="backsize" type="size_t"/>
+      <field cname="backlen" type="size_t"/>
+      <virtual_method name="Copy" cname="copy">
+        <return-type type="GMimeFilter*"/>
+        <parameters>
+          <parameter type="GMimeFilter*" name="filter"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Complete" cname="complete">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeFilter*" name="filter"/>
+          <parameter type="char*" name="in"/>
+          <parameter type="size_t" name="len"/>
+          <parameter type="size_t" name="prespace"/>
+          <parameter type="char**" name="out"/>
+          <parameter type="size_t*" name="outlen"/>
+          <parameter type="size_t*" name="outprespace"/>
+        </parameters>
+      </virtual_method>
+      <method name="Backup" cname="g_mime_filter_backup">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="data"/>
+          <parameter type="size_t" name="length"/>
+        </parameters>
+      </method>
+      <method name="Complete" cname="g_mime_filter_complete">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="char*" name="in"/>
+          <parameter type="size_t" name="len"/>
+          <parameter type="size_t" name="prespace"/>
+          <parameter type="char**" name="out"/>
+          <parameter type="size_t*" name="outlen"/>
+          <parameter type="size_t*" name="outprespace"/>
+        </parameters>
+      </method>
+      <method name="Copy" cname="g_mime_filter_copy">
+        <return-type type="GMimeFilter*"/>
+      </method>
+      <method name="Filter" cname="g_mime_filter_filter">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="char*" name="in"/>
+          <parameter type="size_t" name="len"/>
+          <parameter type="size_t" name="prespace"/>
+          <parameter type="char**" name="out"/>
+          <parameter type="size_t*" name="outlen"/>
+          <parameter type="size_t*" name="outprespace"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_filter_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="Reset" cname="g_mime_filter_reset">
+        <return-type type="void"/>
+      </method>
+      <method name="SetSize" cname="g_mime_filter_set_size">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="size_t" name="size"/>
+          <parameter type="gboolean" name="keep"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="FilterBasic" cname="GMimeFilterBasic" parent="GMimeFilter">
+      <field cname="type" type="GMimeFilterBasicType"/>
+      <field cname="uubuf" array_len="60" type="unsigned char"/>
+      <field cname="state" type="int"/>
+      <field cname="save" type="int"/>
+      <method name="GetType" cname="g_mime_filter_basic_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_basic_new_type">
+        <parameters>
+          <parameter type="GMimeFilterBasicType" name="type"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterBest" cname="GMimeFilterBest" parent="GMimeFilter">
+      <field cname="flags" type="unsigned int"/>
+      <field cname="charset" type="GMimeCharset"/>
+      <field cname="count0" type="unsigned int"/>
+      <field cname="count8" type="unsigned int"/>
+      <field cname="total" type="unsigned int"/>
+      <field cname="maxline" type="unsigned int"/>
+      <field cname="linelen" type="unsigned int"/>
+      <field cname="frombuf" array_len="6" type="unsigned char"/>
+      <field cname="fromlen" bits="4" type="unsigned int"/>
+      <field cname="hadfrom" bits="1" type="unsigned int"/>
+      <field cname="startline" bits="1" type="unsigned int"/>
+      <field cname="midline" bits="1" type="unsigned int"/>
+      <method name="Charset" cname="g_mime_filter_best_charset">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="Encoding" cname="g_mime_filter_best_encoding">
+        <return-type type="GMimePartEncodingType"/>
+        <parameters>
+          <parameter type="GMimeBestEncoding" name="required"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_filter_best_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_best_new">
+        <parameters>
+          <parameter type="unsigned int" name="flags"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterCharset" cname="GMimeFilterCharset" parent="GMimeFilter">
+      <field cname="from_charset" type="char*"/>
+      <field cname="to_charset" type="char*"/>
+      <field cname="cd" type="iconv_t"/>
+      <method name="GetType" cname="g_mime_filter_charset_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_charset_new">
+        <parameters>
+          <parameter type="const-char*" name="from_charset"/>
+          <parameter type="const-char*" name="to_charset"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterCRLF" cname="GMimeFilterCRLF" parent="GMimeFilter">
+      <field cname="direction" type="GMimeFilterCRLFDirection"/>
+      <field cname="mode" type="GMimeFilterCRLFMode"/>
+      <field cname="saw_cr" type="gboolean"/>
+      <field cname="saw_lf" type="gboolean"/>
+      <field cname="saw_dot" type="gboolean"/>
+      <method name="GetType" cname="g_mime_filter_crlf_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_crlf_new">
+        <parameters>
+          <parameter type="GMimeFilterCRLFDirection" name="direction"/>
+          <parameter type="GMimeFilterCRLFMode" name="mode"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterEnriched" cname="GMimeFilterEnriched" parent="GMimeFilter">
+      <field cname="flags" type="guint32"/>
+      <field cname="nofill" type="int"/>
+      <method name="GetType" cname="g_mime_filter_enriched_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_enriched_new">
+        <parameters>
+          <parameter type="guint32" name="flags"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterFrom" cname="GMimeFilterFrom" parent="GMimeFilter">
+      <field cname="mode" type="GMimeFilterFromMode"/>
+      <field cname="midline" type="gboolean"/>
+      <method name="GetType" cname="g_mime_filter_from_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_from_new">
+        <parameters>
+          <parameter type="GMimeFilterFromMode" name="mode"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterGZip" cname="GMimeFilterGZip" parent="GMimeFilter">
+      <field cname="priv" type="struct-_GMimeFilterGZipPrivate*"/>
+      <field cname="mode" type="GMimeFilterGZipMode"/>
+      <field cname="level" type="int"/>
+      <method name="GetType" cname="g_mime_filter_gzip_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_gzip_new">
+        <parameters>
+          <parameter type="GMimeFilterGZipMode" name="mode"/>
+          <parameter type="int" name="level"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterHTML" cname="GMimeFilterHTML" parent="GMimeFilter">
+      <field cname="scanner" type="struct-_GUrlScanner*"/>
+      <field cname="flags" type="guint32"/>
+      <field cname="colour" type="guint32"/>
+      <field cname="column" bits="31" type="guint32"/>
+      <field cname="pre_open" bits="1" type="guint32"/>
+      <method name="GetType" cname="g_mime_filter_html_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_html_new">
+        <parameters>
+          <parameter type="guint32" name="flags"/>
+          <parameter type="guint32" name="colour"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="FilterMd5" cname="GMimeFilterMd5" parent="GMimeFilter">
+      <field cname="priv" type="struct-_GMimeFilterMd5Private*"/>
+      <method name="GetDigest" cname="g_mime_filter_md5_get_digest">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="unsigned char" array="true" name="digest"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_filter_md5_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_md5_new"/>
+    </object>
+    <object name="FilterStrip" cname="GMimeFilterStrip" parent="GMimeFilter">
+      <method name="GetType" cname="g_mime_filter_strip_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_strip_new"/>
+    </object>
+    <object name="FilterWindows" cname="GMimeFilterWindows" parent="GMimeFilter">
+      <field cname="is_windows" type="gboolean"/>
+      <field cname="claimed_charset" type="char*"/>
+      <method name="GetType" cname="g_mime_filter_windows_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="IsWindowsCharset" cname="g_mime_filter_windows_is_windows_charset">
+        <return-type type="gboolean"/>
+      </method>
+      <constructor cname="g_mime_filter_windows_new">
+        <parameters>
+          <parameter type="const-char*" name="claimed_charset"/>
+        </parameters>
+      </constructor>
+      <method name="RealCharset" cname="g_mime_filter_windows_real_charset">
+        <return-type type="const-char*"/>
+      </method>
+    </object>
+    <object name="FilterYenc" cname="GMimeFilterYenc" parent="GMimeFilter">
+      <field cname="direction" type="GMimeFilterYencDirection"/>
+      <field cname="part" type="int"/>
+      <field cname="state" type="int"/>
+      <field cname="pcrc" type="guint32"/>
+      <field cname="crc" type="guint32"/>
+      <method name="GetCrc" cname="g_mime_filter_yenc_get_crc">
+        <return-type type="guint32"/>
+      </method>
+      <method name="GetPcrc" cname="g_mime_filter_yenc_get_pcrc">
+        <return-type type="guint32"/>
+      </method>
+      <method name="GetType" cname="g_mime_filter_yenc_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_filter_yenc_new">
+        <parameters>
+          <parameter type="GMimeFilterYencDirection" name="direction"/>
+        </parameters>
+      </constructor>
+      <method name="SetCrc" cname="g_mime_filter_yenc_set_crc">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="guint32" name="crc"/>
+        </parameters>
+      </method>
+      <method name="SetState" cname="g_mime_filter_yenc_set_state">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="int" name="state"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCipherContext">
+      <field cname="path" type="char*"/>
+      <field cname="always_trust" type="gboolean"/>
+      <method name="GetAlwaysTrust" cname="g_mime_gpg_context_get_always_trust">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetType" cname="g_mime_gpg_context_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_gpg_context_new">
+        <parameters>
+          <parameter type="GMimeSession*" name="session"/>
+          <parameter type="const-char*" name="path"/>
+        </parameters>
+      </constructor>
+      <method name="SetAlwaysTrust" cname="g_mime_gpg_context_set_always_trust">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="always_trust"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Message" cname="GMimeMessage" parent="GMimeObject">
+      <field cname="from" type="char*"/>
+      <field cname="reply_to" type="char*"/>
+      <field cname="recipients" type="GHashTable*"/>
+      <field cname="subject" type="char*"/>
+      <field cname="date" type="time_t"/>
+      <field cname="gmt_offset" type="int"/>
+      <field cname="message_id" type="char*"/>
+      <field cname="mime_part" type="GMimeObject*"/>
+      <method name="AddHeader" cname="g_mime_message_add_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="AddRecipient" cname="g_mime_message_add_recipient">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="char*" name="type"/>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="address"/>
+        </parameters>
+      </method>
+      <method name="AddRecipientsFromString" cname="g_mime_message_add_recipients_from_string">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="char*" name="type"/>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="ForeachPart" cname="g_mime_message_foreach_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimePartFunc" name="callback"/>
+          <parameter type="gpointer" name="data"/>
+        </parameters>
+      </method>
+      <method name="GetBody" cname="g_mime_message_get_body">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="gboolean" name="want_plain"/>
+          <parameter type="gboolean*" name="is_html"/>
+        </parameters>
+      </method>
+      <method name="GetDate" cname="g_mime_message_get_date">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="time_t*" name="date"/>
+          <parameter type="int*" name="gmt_offset"/>
+        </parameters>
+      </method>
+      <method name="GetDateString" cname="g_mime_message_get_date_string">
+        <return-type type="char*"/>
+      </method>
+      <method name="GetHeader" cname="g_mime_message_get_header">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+        </parameters>
+      </method>
+      <method name="GetHeaders" cname="g_mime_message_get_headers">
+        <return-type type="char*"/>
+      </method>
+      <method name="GetMessageId" cname="g_mime_message_get_message_id">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetMimePart" cname="g_mime_message_get_mime_part">
+        <return-type type="GMimeObject*"/>
+      </method>
+      <method name="GetRecipients" cname="g_mime_message_get_recipients">
+        <return-type type="const-InternetAddressList*"/>
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+        </parameters>
+      </method>
+      <method name="GetReplyTo" cname="g_mime_message_get_reply_to">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetSender" cname="g_mime_message_get_sender">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetSubject" cname="g_mime_message_get_subject">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetType" cname="g_mime_message_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_message_new">
+        <parameters>
+          <parameter type="gboolean" name="pretty_headers"/>
+        </parameters>
+      </constructor>
+      <method name="SetDate" cname="g_mime_message_set_date">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="time_t" name="date"/>
+          <parameter type="int" name="gmt_offset"/>
+        </parameters>
+      </method>
+      <method name="SetHeader" cname="g_mime_message_set_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="SetMessageId" cname="g_mime_message_set_message_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="message_id"/>
+        </parameters>
+      </method>
+      <method name="SetMimePart" cname="g_mime_message_set_mime_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="mime_part"/>
+        </parameters>
+      </method>
+      <method name="SetReplyTo" cname="g_mime_message_set_reply_to">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="reply_to"/>
+        </parameters>
+      </method>
+      <method name="SetSender" cname="g_mime_message_set_sender">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="sender"/>
+        </parameters>
+      </method>
+      <method name="SetSubject" cname="g_mime_message_set_subject">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="subject"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="MessagePart" cname="GMimeMessagePart" parent="GMimeObject">
+      <field cname="message" type="GMimeMessage*"/>
+      <method name="GetMessage" cname="g_mime_message_part_get_message">
+        <return-type type="GMimeMessage*"/>
+      </method>
+      <method name="GetType" cname="g_mime_message_part_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_message_part_new">
+        <parameters>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_message_part_new_with_message">
+        <parameters>
+          <parameter type="const-char*" name="subtype"/>
+          <parameter type="GMimeMessage*" name="message"/>
+        </parameters>
+      </constructor>
+      <method name="SetMessage" cname="g_mime_message_part_set_message">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeMessage*" name="message"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="MessagePartial" cname="GMimeMessagePartial" parent="GMimePart">
+      <field cname="id" type="char*"/>
+      <field cname="number" type="int"/>
+      <field cname="total" type="int"/>
+      <method name="GetId" cname="g_mime_message_partial_get_id">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetNumber" cname="g_mime_message_partial_get_number">
+        <return-type type="int"/>
+      </method>
+      <method name="GetTotal" cname="g_mime_message_partial_get_total">
+        <return-type type="int"/>
+      </method>
+      <method name="GetType" cname="g_mime_message_partial_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_message_partial_new">
+        <parameters>
+          <parameter type="const-char*" name="id"/>
+          <parameter type="int" name="number"/>
+          <parameter type="int" name="total"/>
+        </parameters>
+      </constructor>
+      <method name="ReconstructMessage" cname="g_mime_message_partial_reconstruct_message">
+        <return-type type="GMimeMessage*"/>
+        <parameters>
+          <parameter type="size_t" name="num"/>
+        </parameters>
+      </method>
+      <method name="SplitMessage" cname="g_mime_message_partial_split_message" shared="true">
+        <return-type type="GMimeMessage**"/>
+        <parameters>
+          <parameter type="GMimeMessage*" name="message"/>
+          <parameter type="size_t" name="max_size"/>
+          <parameter type="size_t*" name="nparts"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Multipart" cname="GMimeMultipart" parent="GMimeObject">
+      <field cname="boundary" type="char*"/>
+      <field cname="preface" type="char*"/>
+      <field cname="postface" type="char*"/>
+      <field cname="subparts" type="GList*"/>
+      <virtual_method name="AddPart" cname="add_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart"/>
+          <parameter type="GMimeObject*" name="part"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RemovePart" cname="remove_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart"/>
+          <parameter type="GMimeObject*" name="part"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="GetPart" cname="get_part">
+        <return-type type="GMimeObject*"/>
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart"/>
+          <parameter type="int" name="index"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="SetBoundary" cname="set_boundary">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart"/>
+          <parameter type="const-char*" name="boundary"/>
+        </parameters>
+      </virtual_method>
+      <method name="AddPart" cname="g_mime_multipart_add_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="part"/>
+        </parameters>
+      </method>
+      <method name="AddPartAt" cname="g_mime_multipart_add_part_at">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="part"/>
+          <parameter type="int" name="index"/>
+        </parameters>
+      </method>
+      <method name="Foreach" cname="g_mime_multipart_foreach">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimePartFunc" name="callback"/>
+          <parameter type="gpointer" name="user_data"/>
+        </parameters>
+      </method>
+      <method name="GetBoundary" cname="g_mime_multipart_get_boundary">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetNumber" cname="g_mime_multipart_get_number">
+        <return-type type="int"/>
+      </method>
+      <method name="GetPart" cname="g_mime_multipart_get_part">
+        <return-type type="GMimeObject*"/>
+        <parameters>
+          <parameter type="int" name="index"/>
+        </parameters>
+      </method>
+      <method name="GetPostface" cname="g_mime_multipart_get_postface">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetPreface" cname="g_mime_multipart_get_preface">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetSubpartFromContentId" cname="g_mime_multipart_get_subpart_from_content_id">
+        <return-type type="GMimeObject*"/>
+        <parameters>
+          <parameter type="const-char*" name="content_id"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_multipart_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_multipart_new"/>
+      <constructor cname="g_mime_multipart_new_with_subtype">
+        <parameters>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </constructor>
+      <method name="RemovePart" cname="g_mime_multipart_remove_part">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="part"/>
+        </parameters>
+      </method>
+      <method name="RemovePartAt" cname="g_mime_multipart_remove_part_at">
+        <return-type type="GMimeObject*"/>
+        <parameters>
+          <parameter type="int" name="index"/>
+        </parameters>
+      </method>
+      <method name="SetBoundary" cname="g_mime_multipart_set_boundary">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="boundary"/>
+        </parameters>
+      </method>
+      <method name="SetPostface" cname="g_mime_multipart_set_postface">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="postface"/>
+        </parameters>
+      </method>
+      <method name="SetPreface" cname="g_mime_multipart_set_preface">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="preface"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="MultipartEncrypted" cname="GMimeMultipartEncrypted" parent="GMimeMultipart">
+      <field cname="protocol" type="char*"/>
+      <field cname="decrypted" type="GMimeObject*"/>
+      <method name="Decrypt" cname="g_mime_multipart_encrypted_decrypt">
+        <return-type type="GMimeObject*"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="Encrypt" cname="g_mime_multipart_encrypted_encrypt">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="content"/>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GPtrArray*" name="recipients"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_multipart_encrypted_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_multipart_encrypted_new"/>
+    </object>
+    <object name="MultipartSigned" cname="GMimeMultipartSigned" parent="GMimeMultipart">
+      <field cname="protocol" type="char*"/>
+      <field cname="micalg" type="char*"/>
+      <method name="GetType" cname="g_mime_multipart_signed_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_multipart_signed_new"/>
+      <method name="Sign" cname="g_mime_multipart_signed_sign">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="content"/>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="const-char*" name="userid"/>
+          <parameter type="GMimeCipherHash" name="hash"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="Verify" cname="g_mime_multipart_signed_verify">
+        <return-type type="GMimeSignatureValidity*"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Object" cname="GMimeObject" parent="GObject">
+      <field cname="content_type" type="GMimeContentType*"/>
+      <field cname="headers" type="GMimeHeader*"/>
+      <field cname="content_id" type="char*"/>
+      <virtual_method name="Init" cname="init">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="object"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="SetHeader" cname="set_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="object"/>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="RemoveHeader" cname="remove_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="object"/>
+          <parameter type="const-char*" name="header"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="GetHeaders" cname="get_headers">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="GMimeObject*" name="object"/>
+        </parameters>
+      </virtual_method>
+      <method name="AddHeader" cname="g_mime_object_add_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="GetContentId" cname="g_mime_object_get_content_id">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentType" cname="g_mime_object_get_content_type">
+        <return-type type="const-GMimeContentType*"/>
+      </method>
+      <method name="GetContentTypeParameter" cname="g_mime_object_get_content_type_parameter">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+        </parameters>
+      </method>
+      <method name="GetHeader" cname="g_mime_object_get_header">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+        </parameters>
+      </method>
+      <method name="GetHeaders" cname="g_mime_object_get_headers">
+        <return-type type="char*"/>
+      </method>
+      <method name="GetType" cname="g_mime_object_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_object_new_type">
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </constructor>
+      <method name="RegisterType" cname="g_mime_object_register_type" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+          <parameter type="const-char*" name="subtype"/>
+          <parameter type="GType" name="object_type"/>
+        </parameters>
+      </method>
+      <method name="RemoveHeader" cname="g_mime_object_remove_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+        </parameters>
+      </method>
+      <method name="SetContentId" cname="g_mime_object_set_content_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="content_id"/>
+        </parameters>
+      </method>
+      <method name="SetContentType" cname="g_mime_object_set_content_type">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeContentType*" name="mime_type"/>
+        </parameters>
+      </method>
+      <method name="SetContentTypeParameter" cname="g_mime_object_set_content_type_parameter">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="SetHeader" cname="g_mime_object_set_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="g_mime_object_to_string">
+        <return-type type="char*"/>
+      </method>
+      <method name="WriteToStream" cname="g_mime_object_write_to_stream">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Parser" cname="GMimeParser" parent="GObject">
+      <field cname="priv" type="struct-_GMimeParserPrivate*"/>
+      <method name="ConstructMessage" cname="g_mime_parser_construct_message">
+        <return-type type="GMimeMessage*"/>
+      </method>
+      <method name="ConstructPart" cname="g_mime_parser_construct_part">
+        <return-type type="GMimeObject*"/>
+      </method>
+      <method name="Eos" cname="g_mime_parser_eos">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetFrom" cname="g_mime_parser_get_from">
+        <return-type type="char*"/>
+      </method>
+      <method name="GetFromOffset" cname="g_mime_parser_get_from_offset">
+        <return-type type="off_t"/>
+      </method>
+      <method name="GetPersistStream" cname="g_mime_parser_get_persist_stream">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetRespectContentLength" cname="g_mime_parser_get_respect_content_length">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetScanFrom" cname="g_mime_parser_get_scan_from">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetType" cname="g_mime_parser_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="InitWithStream" cname="g_mime_parser_init_with_stream">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </method>
+      <constructor cname="g_mime_parser_new"/>
+      <constructor cname="g_mime_parser_new_with_stream">
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </constructor>
+      <method name="SetHeaderRegex" cname="g_mime_parser_set_header_regex">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="regex"/>
+          <parameter type="GMimeParserHeaderRegexFunc" name="header_cb"/>
+          <parameter type="gpointer" name="user_data"/>
+        </parameters>
+      </method>
+      <method name="SetPersistStream" cname="g_mime_parser_set_persist_stream">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="persist"/>
+        </parameters>
+      </method>
+      <method name="SetRespectContentLength" cname="g_mime_parser_set_respect_content_length">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="respect_content_length"/>
+        </parameters>
+      </method>
+      <method name="SetScanFrom" cname="g_mime_parser_set_scan_from">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="scan_from"/>
+        </parameters>
+      </method>
+      <method name="Tell" cname="g_mime_parser_tell">
+        <return-type type="off_t"/>
+      </method>
+    </object>
+    <object name="Part" cname="GMimePart" parent="GMimeObject">
+      <field cname="encoding" type="GMimePartEncodingType"/>
+      <field cname="disposition" type="GMimeDisposition*"/>
+      <field cname="content_description" type="char*"/>
+      <field cname="content_location" type="char*"/>
+      <field cname="content_md5" type="char*"/>
+      <field cname="content" type="GMimeDataWrapper*"/>
+      <method name="AddContentDispositionParameter" cname="g_mime_part_add_content_disposition_parameter">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="EncodingFromString" cname="g_mime_part_encoding_from_string" shared="true">
+        <return-type type="GMimePartEncodingType"/>
+        <parameters>
+          <parameter type="const-char*" name="encoding"/>
+        </parameters>
+      </method>
+      <method name="EncodingToString" cname="g_mime_part_encoding_to_string" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="GMimePartEncodingType" name="encoding"/>
+        </parameters>
+      </method>
+      <method name="GetContentDescription" cname="g_mime_part_get_content_description">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentDisposition" cname="g_mime_part_get_content_disposition">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentDispositionParameter" cname="g_mime_part_get_content_disposition_parameter">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+        </parameters>
+      </method>
+      <method name="GetContentHeader" cname="g_mime_part_get_content_header">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+        </parameters>
+      </method>
+      <method name="GetContentId" cname="g_mime_part_get_content_id">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentLocation" cname="g_mime_part_get_content_location">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentMd5" cname="g_mime_part_get_content_md5">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetContentObject" cname="g_mime_part_get_content_object">
+        <return-type type="GMimeDataWrapper*"/>
+      </method>
+      <method name="GetContentType" cname="g_mime_part_get_content_type">
+        <return-type type="const-GMimeContentType*"/>
+      </method>
+      <method name="GetEncoding" cname="g_mime_part_get_encoding">
+        <return-type type="GMimePartEncodingType"/>
+      </method>
+      <method name="GetFilename" cname="g_mime_part_get_filename">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetType" cname="g_mime_part_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_part_new"/>
+      <constructor cname="g_mime_part_new_with_type">
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </constructor>
+      <method name="SetContentDescription" cname="g_mime_part_set_content_description">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="description"/>
+        </parameters>
+      </method>
+      <method name="SetContentDisposition" cname="g_mime_part_set_content_disposition">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="disposition"/>
+        </parameters>
+      </method>
+      <method name="SetContentDispositionObject" cname="g_mime_part_set_content_disposition_object">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeDisposition*" name="disposition"/>
+        </parameters>
+      </method>
+      <method name="SetContentHeader" cname="g_mime_part_set_content_header">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="header"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="SetContentId" cname="g_mime_part_set_content_id">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="content_id"/>
+        </parameters>
+      </method>
+      <method name="SetContentLocation" cname="g_mime_part_set_content_location">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="content_location"/>
+        </parameters>
+      </method>
+      <method name="SetContentMd5" cname="g_mime_part_set_content_md5">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="content_md5"/>
+        </parameters>
+      </method>
+      <method name="SetContentObject" cname="g_mime_part_set_content_object">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeDataWrapper*" name="content"/>
+        </parameters>
+      </method>
+      <method name="SetContentType" cname="g_mime_part_set_content_type">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeContentType*" name="mime_type"/>
+        </parameters>
+      </method>
+      <method name="SetEncoding" cname="g_mime_part_set_encoding">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimePartEncodingType" name="encoding"/>
+        </parameters>
+      </method>
+      <method name="SetFilename" cname="g_mime_part_set_filename">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="filename"/>
+        </parameters>
+      </method>
+      <method name="VerifyContentMd5" cname="g_mime_part_verify_content_md5">
+        <return-type type="gboolean"/>
+      </method>
+    </object>
+    <object name="Session" cname="GMimeSession" parent="GObject">
+      <virtual_method name="IsOnline" cname="is_online">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter type="GMimeSession*" name="session"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="ForgetPasswd" cname="forget_passwd">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSession*" name="session"/>
+          <parameter type="const-char*" name="item"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </virtual_method>
+      <method name="ForgetPasswd" cname="g_mime_session_forget_passwd">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="item"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_session_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="IsOnline" cname="g_mime_session_is_online">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="RequestPasswd" cname="g_mime_session_request_passwd">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="prompt"/>
+          <parameter type="gboolean" name="secret"/>
+          <parameter type="const-char*" name="item"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="SessionSimple" cname="GMimeSessionSimple" parent="GMimeSession">
+      <field cname="is_online" type="GMimeSimpleIsOnlineFunc"/>
+      <field cname="request_passwd" type="GMimeSimpleRequestPasswdFunc"/>
+      <field cname="forget_passwd" type="GMimeSimpleForgetPasswdFunc"/>
+      <method name="GetType" cname="g_mime_session_simple_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="SetForgetPasswd" cname="g_mime_session_simple_set_forget_passwd">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSimpleForgetPasswdFunc" name="forget_passwd"/>
+        </parameters>
+      </method>
+      <method name="SetIsOnline" cname="g_mime_session_simple_set_is_online">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSimpleIsOnlineFunc" name="is_online"/>
+        </parameters>
+      </method>
+      <method name="SetRequestPasswd" cname="g_mime_session_simple_set_request_passwd">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSimpleRequestPasswdFunc" name="request_passwd"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="Stream" cname="GMimeStream" parent="GObject">
+      <field cname="super_stream" type="GMimeStream*"/>
+      <field cname="position" type="off_t"/>
+      <field cname="bound_start" type="off_t"/>
+      <field cname="bound_end" type="off_t"/>
+      <virtual_method name="Read" cname="read">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+          <parameter type="char*" name="buf"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Flush" cname="flush">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Eos" cname="eos">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Seek" cname="seek">
+        <return-type type="off_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+          <parameter type="off_t" name="offset"/>
+          <parameter type="GMimeSeekWhence" name="whence"/>
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Length" cname="length">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </virtual_method>
+      <method name="Close" cname="g_mime_stream_close">
+        <return-type type="int"/>
+      </method>
+      <method name="Construct" cname="g_mime_stream_construct">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </method>
+      <method name="Eos" cname="g_mime_stream_eos">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="Flush" cname="g_mime_stream_flush">
+        <return-type type="int"/>
+      </method>
+      <method name="GetType" cname="g_mime_stream_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="Length" cname="g_mime_stream_length">
+        <return-type type="ssize_t"/>
+      </method>
+      <method name="Printf" cname="g_mime_stream_printf">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="const-char*" name="fmt"/>
+          <parameter ellipsis="true"/>
+          <parameter type="3" name="arg3"/>
+        </parameters>
+      </method>
+      <method name="Read" cname="g_mime_stream_read">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="char*" name="buf"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </method>
+      <method name="Reset" cname="g_mime_stream_reset">
+        <return-type type="int"/>
+      </method>
+      <method name="Seek" cname="g_mime_stream_seek">
+        <return-type type="off_t"/>
+        <parameters>
+          <parameter type="off_t" name="offset"/>
+          <parameter type="GMimeSeekWhence" name="whence"/>
+        </parameters>
+      </method>
+      <method name="SetBounds" cname="g_mime_stream_set_bounds">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </method>
+      <method name="Substream" cname="g_mime_stream_substream">
+        <return-type type="GMimeStream*"/>
+        <parameters>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </method>
+      <method name="Tell" cname="g_mime_stream_tell">
+        <return-type type="off_t"/>
+      </method>
+      <method name="Write" cname="g_mime_stream_write">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="const-char*" name="buf"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </method>
+      <method name="WriteString" cname="g_mime_stream_write_string">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="WriteToStream" cname="g_mime_stream_write_to_stream">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="dest"/>
+        </parameters>
+      </method>
+      <method name="Writev" cname="g_mime_stream_writev">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStreamIOVector*" name="vector"/>
+          <parameter type="size_t" name="count"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamBuffer" cname="GMimeStreamBuffer" parent="GMimeStream">
+      <field cname="source" type="GMimeStream*"/>
+      <field cname="buffer" type="unsigned char*"/>
+      <field cname="bufptr" type="unsigned char*"/>
+      <field cname="bufend" type="unsigned char*"/>
+      <field cname="buflen" type="size_t"/>
+      <field cname="mode" type="GMimeStreamBufferMode"/>
+      <method name="GetType" cname="g_mime_stream_buffer_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <method name="Gets" cname="g_mime_stream_buffer_gets" shared="true">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+          <parameter type="char*" name="buf"/>
+          <parameter type="size_t" name="max"/>
+        </parameters>
+      </method>
+      <constructor cname="g_mime_stream_buffer_new">
+        <parameters>
+          <parameter type="GMimeStream*" name="source"/>
+          <parameter type="GMimeStreamBufferMode" name="mode"/>
+        </parameters>
+      </constructor>
+      <method name="Readln" cname="g_mime_stream_buffer_readln" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+          <parameter type="GByteArray*" name="buffer"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamCat" cname="GMimeStreamCat" parent="GMimeStream">
+      <field cname="sources" type="struct-_cat_node*"/>
+      <field cname="current" type="struct-_cat_node*"/>
+      <method name="AddSource" cname="g_mime_stream_cat_add_source">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="source"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_stream_cat_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_cat_new"/>
+    </object>
+    <object name="StreamFile" cname="GMimeStreamFile" parent="GMimeStream">
+      <field cname="owner" type="gboolean"/>
+      <field cname="fp" type="FILE*"/>
+      <method name="GetOwner" cname="g_mime_stream_file_get_owner">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetType" cname="g_mime_stream_file_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_file_new">
+        <parameters>
+          <parameter type="FILE*" name="fp"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_file_new_with_bounds">
+        <parameters>
+          <parameter type="FILE*" name="fp"/>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </constructor>
+      <method name="SetOwner" cname="g_mime_stream_file_set_owner">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="owner"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamFilter" cname="GMimeStreamFilter" parent="GMimeStream">
+      <field cname="priv" type="struct-_GMimeStreamFilterPrivate*"/>
+      <field cname="source" type="GMimeStream*"/>
+      <method name="Add" cname="g_mime_stream_filter_add">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeFilter*" name="filter"/>
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_stream_filter_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_filter_new_with_stream">
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </constructor>
+      <method name="Remove" cname="g_mime_stream_filter_remove">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="int" name="id"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamFs" cname="GMimeStreamFs" parent="GMimeStream">
+      <field cname="owner" type="gboolean"/>
+      <field cname="eos" type="gboolean"/>
+      <field cname="fd" type="int"/>
+      <method name="GetOwner" cname="g_mime_stream_fs_get_owner">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetType" cname="g_mime_stream_fs_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_fs_new">
+        <parameters>
+          <parameter type="int" name="fd"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_fs_new_with_bounds">
+        <parameters>
+          <parameter type="int" name="fd"/>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </constructor>
+      <method name="SetOwner" cname="g_mime_stream_fs_set_owner">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="owner"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamMem" cname="GMimeStreamMem" parent="GMimeStream">
+      <field cname="owner" type="gboolean"/>
+      <field cname="buffer" type="GByteArray*"/>
+      <method name="GetOwner" cname="g_mime_stream_mem_get_owner">
+        <return-type type="gboolean"/>
+      </method>
+      <method name="GetType" cname="g_mime_stream_mem_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_mem_new"/>
+      <constructor cname="g_mime_stream_mem_new_with_buffer">
+        <parameters>
+          <parameter type="const-char*" name="buffer"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_mem_new_with_byte_array">
+        <parameters>
+          <parameter type="GByteArray*" name="array"/>
+        </parameters>
+      </constructor>
+      <method name="SetByteArray" cname="g_mime_stream_mem_set_byte_array">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GByteArray*" name="array"/>
+        </parameters>
+      </method>
+      <method name="SetOwner" cname="g_mime_stream_mem_set_owner">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="owner"/>
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamMmap" cname="GMimeStreamMmap" parent="GMimeStream">
+      <field cname="owner" type="gboolean"/>
+      <field cname="eos" type="gboolean"/>
+      <field cname="fd" type="int"/>
+      <field cname="map" type="char*"/>
+      <field cname="maplen" type="size_t"/>
+      <method name="GetType" cname="g_mime_stream_mmap_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_mmap_new">
+        <parameters>
+          <parameter type="int" name="fd"/>
+          <parameter type="int" name="prot"/>
+          <parameter type="int" name="flags"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_mmap_new_with_bounds">
+        <parameters>
+          <parameter type="int" name="fd"/>
+          <parameter type="int" name="prot"/>
+          <parameter type="int" name="flags"/>
+          <parameter type="off_t" name="start"/>
+          <parameter type="off_t" name="end"/>
+        </parameters>
+      </constructor>
+    </object>
+    <object name="StreamNull" cname="GMimeStreamNull" parent="GMimeStream">
+      <field cname="written" type="size_t"/>
+      <field cname="newlines" type="size_t"/>
+      <method name="GetType" cname="g_mime_stream_null_get_type" shared="true">
+        <return-type type="GType"/>
+      </method>
+      <constructor cname="g_mime_stream_null_new"/>
+    </object>
+    <struct name="Charset" cname="GMimeCharset" opaque="true">
+      <method name="Best" cname="g_mime_charset_best" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+          <parameter type="size_t" name="inlen"/>
+        </parameters>
+      </method>
+      <method name="BestName" cname="g_mime_charset_best_name">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="CanonName" cname="g_mime_charset_canon_name" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="charset"/>
+        </parameters>
+      </method>
+      <method name="IconvName" cname="g_mime_charset_iconv_name" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="charset"/>
+        </parameters>
+      </method>
+      <method name="Init" cname="g_mime_charset_init">
+        <return-type type="void"/>
+      </method>
+      <method name="IsoToWindows" cname="g_mime_charset_iso_to_windows" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="isocharset"/>
+        </parameters>
+      </method>
+      <method name="Language" cname="g_mime_charset_language" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="charset"/>
+        </parameters>
+      </method>
+      <method name="MapInit" cname="g_mime_charset_map_init" shared="true">
+        <return-type type="void"/>
+      </method>
+      <method name="MapShutdown" cname="g_mime_charset_map_shutdown" shared="true">
+        <return-type type="void"/>
+      </method>
+      <method name="Step" cname="g_mime_charset_step">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="ContentType" cname="GMimeContentType">
+      <field cname="type" type="char*"/>
+      <field cname="subtype" type="char*"/>
+      <field cname="params" type="GMimeParam*"/>
+      <field cname="param_hash" type="GHashTable*"/>
+      <method name="Destroy" cname="g_mime_content_type_destroy">
+        <return-type type="void"/>
+      </method>
+      <method name="GetParameter" cname="g_mime_content_type_get_parameter">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+        </parameters>
+      </method>
+      <method name="IsType" cname="g_mime_content_type_is_type">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </method>
+      <constructor cname="g_mime_content_type_new">
+        <parameters>
+          <parameter type="const-char*" name="type"/>
+          <parameter type="const-char*" name="subtype"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_content_type_new_from_string">
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </constructor>
+      <method name="SetParameter" cname="g_mime_content_type_set_parameter">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="g_mime_content_type_to_string">
+        <return-type type="char*"/>
+      </method>
+    </struct>
+    <struct name="Disposition" cname="GMimeDisposition">
+      <field cname="disposition" type="char*"/>
+      <field cname="params" type="GMimeParam*"/>
+      <field cname="param_hash" type="GHashTable*"/>
+      <method name="AddParameter" cname="g_mime_disposition_add_parameter">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="Destroy" cname="g_mime_disposition_destroy">
+        <return-type type="void"/>
+      </method>
+      <method name="Get" cname="g_mime_disposition_get">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetParameter" cname="g_mime_disposition_get_parameter">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="attribute"/>
+        </parameters>
+      </method>
+      <method name="Header" cname="g_mime_disposition_header">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="gboolean" name="fold"/>
+        </parameters>
+      </method>
+      <constructor cname="g_mime_disposition_new">
+        <parameters>
+          <parameter type="const-char*" name="disposition"/>
+        </parameters>
+      </constructor>
+      <method name="Set" cname="g_mime_disposition_set">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="Header" cname="GMimeHeader" opaque="true">
+      <method name="Add" cname="g_mime_header_add">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="Destroy" cname="g_mime_header_destroy">
+        <return-type type="void"/>
+      </method>
+      <method name="Foreach" cname="g_mime_header_foreach">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeHeaderForeachFunc" name="func"/>
+          <parameter type="gpointer" name="user_data"/>
+        </parameters>
+      </method>
+      <method name="Get" cname="g_mime_header_get">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+        </parameters>
+      </method>
+      <method name="HasRaw" cname="g_mime_header_has_raw">
+        <return-type type="gboolean"/>
+      </method>
+      <constructor cname="g_mime_header_new"/>
+      <method name="RegisterWriter" cname="g_mime_header_register_writer">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="GMimeHeaderWriter" name="writer"/>
+        </parameters>
+      </method>
+      <method name="Remove" cname="g_mime_header_remove">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+        </parameters>
+      </method>
+      <method name="Set" cname="g_mime_header_set">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="SetRaw" cname="g_mime_header_set_raw">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="raw"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="g_mime_header_to_string">
+        <return-type type="char*"/>
+      </method>
+      <method name="WriteToStream" cname="g_mime_header_write_to_stream">
+        <return-type type="ssize_t"/>
+        <parameters>
+          <parameter type="GMimeStream*" name="stream"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="Param" cname="GMimeParam">
+      <field cname="next" type="struct-_GMimeParam*"/>
+      <field cname="name" type="char*"/>
+      <field cname="value" type="char*"/>
+      <method name="Append" cname="g_mime_param_append">
+        <return-type type="GMimeParam*"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
+      <method name="AppendParam" cname="g_mime_param_append_param">
+        <return-type type="GMimeParam*"/>
+        <parameters>
+          <parameter type="GMimeParam*" name="param"/>
+        </parameters>
+      </method>
+      <method name="Destroy" cname="g_mime_param_destroy">
+        <return-type type="void"/>
+      </method>
+      <constructor cname="g_mime_param_new">
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_param_new_from_string">
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </constructor>
+      <method name="WriteToString" cname="g_mime_param_write_to_string">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="gboolean" name="fold"/>
+          <parameter type="GString*" name="string"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="References" cname="GMimeReferences">
+      <field cname="next" type="struct-_GMimeReferences*"/>
+      <field cname="msgid" type="char*"/>
+      <method name="Append" cname="g_mime_references_append">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="msgid"/>
+        </parameters>
+      </method>
+      <method name="Clear" cname="g_mime_references_clear">
+        <return-type type="void"/>
+      </method>
+      <method name="Decode" cname="g_mime_references_decode" shared="true">
+        <return-type type="GMimeReferences*"/>
+        <parameters>
+          <parameter type="const-char*" name="text"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="SignatureValidity" cname="GMimeSignatureValidity">
+      <field cname="status" type="GMimeSignatureStatus"/>
+      <field cname="signers" type="GMimeSigner*"/>
+      <field cname="details" type="char*"/>
+      <method name="AddSigner" cname="g_mime_signature_validity_add_signer">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSigner*" name="signer"/>
+        </parameters>
+      </method>
+      <method name="Free" cname="g_mime_signature_validity_free">
+        <return-type type="void"/>
+      </method>
+      <method name="GetDetails" cname="g_mime_signature_validity_get_details">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetSigners" cname="g_mime_signature_validity_get_signers">
+        <return-type type="const-GMimeSigner*"/>
+      </method>
+      <method name="GetStatus" cname="g_mime_signature_validity_get_status">
+        <return-type type="GMimeSignatureStatus"/>
+      </method>
+      <constructor cname="g_mime_signature_validity_new"/>
+      <method name="SetDetails" cname="g_mime_signature_validity_set_details">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="details"/>
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="g_mime_signature_validity_set_status">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="GMimeSignatureStatus" name="status"/>
+        </parameters>
+      </method>
+    </struct>
+    <struct name="Signer" cname="GMimeSigner">
+      <field cname="next" type="struct-_GMimeSigner*"/>
+      <field cname="status" bits="2" type="unsigned int"/>
+      <field cname="errors" bits="4" type="unsigned int"/>
+      <field cname="trust" bits="3" type="unsigned int"/>
+      <field cname="unused" bits="23" type="unsigned int"/>
+      <field cname="sig_created" type="time_t"/>
+      <field cname="sig_expire" type="time_t"/>
+      <field cname="fingerprint" type="char*"/>
+      <field cname="keyid" type="char*"/>
+      <field cname="name" type="char*"/>
+      <method name="Free" cname="g_mime_signer_free">
+        <return-type type="void"/>
+      </method>
+      <constructor cname="g_mime_signer_new"/>
+    </struct>
+    <struct name="StreamIOVector" cname="GMimeStreamIOVector">
+      <field cname="data" type="gpointer"/>
+      <field cname="len" type="size_t"/>
+    </struct>
+    <struct name="InternetAddress" cname="InternetAddress">
+      <field cname="type" type="InternetAddressType"/>
+      <field cname="refcount" type="unsigned int"/>
+      <field cname="name" type="char*"/>
+      <field cname="addr" type="char*"/>
+      <method name="AddMember" cname="internet_address_add_member">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="InternetAddress*" name="member"/>
+        </parameters>
+      </method>
+      <constructor cname="internet_address_new"/>
+      <constructor cname="internet_address_new_group">
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+        </parameters>
+      </constructor>
+      <constructor cname="internet_address_new_name">
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="addr"/>
+        </parameters>
+      </constructor>
+      <method name="ParseString" cname="internet_address_parse_string" shared="true">
+        <return-type type="InternetAddressList*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="Ref" cname="internet_address_ref">
+        <return-type type="void"/>
+      </method>
+      <method name="SetAddr" cname="internet_address_set_addr">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="addr"/>
+        </parameters>
+      </method>
+      <method name="SetGroup" cname="internet_address_set_group">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="InternetAddressList*" name="group"/>
+        </parameters>
+      </method>
+      <method name="SetName" cname="internet_address_set_name">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="internet_address_to_string">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="gboolean" name="encode"/>
+        </parameters>
+      </method>
+      <method name="Unref" cname="internet_address_unref">
+        <return-type type="void"/>
+      </method>
+    </struct>
+    <struct name="InternetAddressList" cname="InternetAddressList">
+      <field cname="next" type="struct-_InternetAddressList*"/>
+      <field cname="address" type="InternetAddress*"/>
+      <method name="Append" cname="internet_address_list_append">
+        <return-type type="InternetAddressList*"/>
+        <parameters>
+          <parameter type="InternetAddress*" name="ia"/>
+        </parameters>
+      </method>
+      <method name="Concat" cname="internet_address_list_concat">
+        <return-type type="InternetAddressList*"/>
+        <parameters>
+          <parameter type="InternetAddressList*" name="b"/>
+        </parameters>
+      </method>
+      <method name="Destroy" cname="internet_address_list_destroy">
+        <return-type type="void"/>
+      </method>
+      <method name="Length" cname="internet_address_list_length">
+        <return-type type="int"/>
+      </method>
+      <method name="Prepend" cname="internet_address_list_prepend">
+        <return-type type="InternetAddressList*"/>
+        <parameters>
+          <parameter type="InternetAddress*" name="ia"/>
+        </parameters>
+      </method>
+      <method name="ToString" cname="internet_address_list_to_string">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="gboolean" name="encode"/>
+        </parameters>
+      </method>
+    </struct>
+    <class name="Cipher" cname="GMimeCipher_">
+      <method name="Decrypt" cname="g_mime_cipher_decrypt" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="Encrypt" cname="g_mime_cipher_encrypt" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="gboolean" name="sign"/>
+          <parameter type="const-char*" name="userid"/>
+          <parameter type="GPtrArray*" name="recipients"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="ExportKeys" cname="g_mime_cipher_export_keys" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GPtrArray*" name="keys"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="HashId" cname="g_mime_cipher_hash_id" shared="true">
+        <return-type type="GMimeCipherHash"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="const-char*" name="hash"/>
+        </parameters>
+      </method>
+      <method name="HashName" cname="g_mime_cipher_hash_name" shared="true">
+        <return-type type="const-char*"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GMimeCipherHash" name="hash"/>
+        </parameters>
+      </method>
+      <method name="ImportKeys" cname="g_mime_cipher_import_keys" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="Sign" cname="g_mime_cipher_sign" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="const-char*" name="userid"/>
+          <parameter type="GMimeCipherHash" name="hash"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="ostream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+      <method name="Verify" cname="g_mime_cipher_verify" shared="true">
+        <return-type type="GMimeSignatureValidity*"/>
+        <parameters>
+          <parameter type="GMimeCipherContext*" name="ctx"/>
+          <parameter type="GMimeCipherHash" name="hash"/>
+          <parameter type="GMimeStream*" name="istream"/>
+          <parameter type="GMimeStream*" name="sigstream"/>
+          <parameter type="GError**" name="err"/>
+        </parameters>
+      </method>
+    </class>
+    <class name="Iconv" cname="GMimeIconv_">
+      <method name="Close" cname="g_mime_iconv_close" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="iconv_t" name="cd"/>
+        </parameters>
+      </method>
+      <method name="Init" cname="g_mime_iconv_init" shared="true">
+        <return-type type="void"/>
+      </method>
+      <method name="LocaleToUtf8" cname="g_mime_iconv_locale_to_utf8" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="LocaleToUtf8Length" cname="g_mime_iconv_locale_to_utf8_length" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+          <parameter type="size_t" name="n"/>
+        </parameters>
+      </method>
+      <method name="Open" cname="g_mime_iconv_open" shared="true">
+        <return-type type="iconv_t"/>
+        <parameters>
+          <parameter type="const-char*" name="to"/>
+          <parameter type="const-char*" name="from"/>
+        </parameters>
+      </method>
+      <method name="Shutdown" cname="g_mime_iconv_shutdown" shared="true">
+        <return-type type="void"/>
+      </method>
+      <method name="Strdup" cname="g_mime_iconv_strdup" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="iconv_t" name="cd"/>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="Strndup" cname="g_mime_iconv_strndup" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="iconv_t" name="cd"/>
+          <parameter type="const-char*" name="string"/>
+          <parameter type="size_t" name="n"/>
+        </parameters>
+      </method>
+      <method name="Utf8ToLocale" cname="g_mime_iconv_utf8_to_locale" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="Utf8ToLocaleLength" cname="g_mime_iconv_utf8_to_locale_length" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+          <parameter type="size_t" name="n"/>
+        </parameters>
+      </method>
+    </class>
+    <class name="Locale" cname="GMimeLocale_">
+      <method name="Charset" cname="g_mime_locale_charset" shared="true">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="Language" cname="g_mime_locale_language" shared="true">
+        <return-type type="const-char*"/>
+      </method>
+    </class>
+    <class name="Strcase" cname="GMimeStrcase_">
+      <method name="Equal" cname="g_mime_strcase_equal" shared="true">
+        <return-type type="int"/>
+        <parameters>
+          <parameter type="gconstpointer" name="v"/>
+          <parameter type="gconstpointer" name="v2"/>
+        </parameters>
+      </method>
+      <method name="Hash" cname="g_mime_strcase_hash" shared="true">
+        <return-type type="guint"/>
+        <parameters>
+          <parameter type="gconstpointer" name="key"/>
+        </parameters>
+      </method>
+    </class>
+    <class name="Utils" cname="GMimeUtils_">
+      <method name="Base64DecodeStep" cname="g_mime_utils_base64_decode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+      <method name="Base64EncodeClose" cname="g_mime_utils_base64_encode_close" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+      <method name="Base64EncodeStep" cname="g_mime_utils_base64_encode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+      <method name="BestEncoding" cname="g_mime_utils_best_encoding" shared="true">
+        <return-type type="GMimePartEncodingType"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </method>
+      <method name="DecodeMessageId" cname="g_mime_utils_decode_message_id" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="message_id"/>
+        </parameters>
+      </method>
+      <method name="GenerateMessageId" cname="g_mime_utils_generate_message_id" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="fqdn"/>
+        </parameters>
+      </method>
+      <method name="HeaderDecodeDate" cname="g_mime_utils_header_decode_date" shared="true">
+        <return-type type="time_t"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+          <parameter type="int*" name="saveoffset"/>
+        </parameters>
+      </method>
+      <method name="HeaderDecodePhrase" cname="g_mime_utils_header_decode_phrase" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+        </parameters>
+      </method>
+      <method name="HeaderDecodeText" cname="g_mime_utils_header_decode_text" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+        </parameters>
+      </method>
+      <method name="HeaderEncodePhrase" cname="g_mime_utils_header_encode_phrase" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+        </parameters>
+      </method>
+      <method name="HeaderEncodeText" cname="g_mime_utils_header_encode_text" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+        </parameters>
+      </method>
+      <method name="HeaderFold" cname="g_mime_utils_header_fold" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+        </parameters>
+      </method>
+      <method name="HeaderFormatDate" cname="g_mime_utils_header_format_date" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="time_t" name="time"/>
+          <parameter type="int" name="offset"/>
+        </parameters>
+      </method>
+      <method name="HeaderPrintf" cname="g_mime_utils_header_printf" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="format"/>
+          <parameter ellipsis="true"/>
+        </parameters>
+      </method>
+      <method name="QuoteString" cname="g_mime_utils_quote_string" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="QuotedDecodeStep" cname="g_mime_utils_quoted_decode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="savestate"/>
+          <parameter type="int*" name="saved"/>
+        </parameters>
+      </method>
+      <method name="QuotedEncodeClose" cname="g_mime_utils_quoted_encode_close" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="int*" name="save"/>
+        </parameters>
+      </method>
+      <method name="QuotedEncodeStep" cname="g_mime_utils_quoted_encode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="int*" name="save"/>
+        </parameters>
+      </method>
+      <method name="StructuredHeaderFold" cname="g_mime_utils_structured_header_fold" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+        </parameters>
+      </method>
+      <method name="TextIs8bit" cname="g_mime_utils_text_is_8bit" shared="true">
+        <return-type type="gboolean"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="len"/>
+        </parameters>
+      </method>
+      <method name="UnquoteString" cname="g_mime_utils_unquote_string" shared="true">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="char*" name="string"/>
+        </parameters>
+      </method>
+      <method name="UnstructuredHeaderFold" cname="g_mime_utils_unstructured_header_fold" shared="true">
+        <return-type type="char*"/>
+        <parameters>
+          <parameter type="const-char*" name="in"/>
+        </parameters>
+      </method>
+      <method name="UudecodeStep" cname="g_mime_utils_uudecode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+      <method name="UuencodeClose" cname="g_mime_utils_uuencode_close" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned char*" name="uubuf"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+      <method name="UuencodeStep" cname="g_mime_utils_uuencode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned char*" name="uubuf"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="save"/>
+        </parameters>
+      </method>
+    </class>
+    <class name="Global" cname="GMimeGlobal">
+      <method name="YdecodeStep" cname="g_mime_ydecode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="pcrc"/>
+          <parameter type="guint32*" name="crc"/>
+        </parameters>
+      </method>
+    </class>
+    <class name="Yencode" cname="GMimeYencode_">
+      <method name="Close" cname="g_mime_yencode_close" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="pcrc"/>
+          <parameter type="guint32*" name="crc"/>
+        </parameters>
+      </method>
+      <method name="Step" cname="g_mime_yencode_step" shared="true">
+        <return-type type="size_t"/>
+        <parameters>
+          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="size_t" name="inlen"/>
+          <parameter type="unsigned char*" name="out"/>
+          <parameter type="int*" name="state"/>
+          <parameter type="guint32*" name="pcrc"/>
+          <parameter type="guint32*" name="crc"/>
+        </parameters>
+      </method>
+    </class>
+  </namespace>
+</api>

@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_GPG_CONTEXT            (g_mime_gpg_context_get_type ())
-#define GMIME_GPG_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))
-#define GMIME_GPG_CONTEXT_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
-#define GMIME_IS_GPG_CONTEXT(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_GPG_CONTEXT))
-#define GMIME_IS_GPG_CONTEXT_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_GPG_CONTEXT))
-#define GMIME_GPG_CONTEXT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
+#define GMIME_GPG_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))
+#define GMIME_GPG_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
+#define GMIME_IS_GPG_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_GPG_CONTEXT))
+#define GMIME_IS_GPG_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_GPG_CONTEXT))
+#define GMIME_GPG_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContextClass))
 
 typedef struct _GMimeGpgContext GMimeGpgContext;
 typedef struct _GMimeGpgContextClass GMimeGpgContextClass;

@@ -35,11 +35,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
-#define GMIME_MESSAGE_PARTIAL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))
-#define GMIME_MESSAGE_PARTIAL_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
-#define GMIME_IS_MESSAGE_PARTIAL(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_IS_MESSAGE_PARTIAL_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PARTIAL))
-#define GMIME_MESSAGE_PARTIAL_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
+#define GMIME_MESSAGE_PARTIAL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))
+#define GMIME_MESSAGE_PARTIAL_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
+#define GMIME_IS_MESSAGE_PARTIAL(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_MESSAGE_PARTIAL))
+#define GMIME_IS_MESSAGE_PARTIAL_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE_PARTIAL))
+#define GMIME_MESSAGE_PARTIAL_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartialClass))
 
 typedef struct _GMimeMessagePartial GMimeMessagePartial;
 typedef struct _GMimeMessagePartialClass GMimeMessagePartialClass;
