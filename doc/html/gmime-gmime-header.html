@@ -205,6 +205,17 @@ HREF="GCHAR"
 >gchar</GTKDOCLINK
 > *name);
 void        <A
+HREF="gmime-gmime-header.html#G-MIME-HEADER-REMOVE"
+>g_mime_header_remove</A
+>            (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);
+void        <A
 HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STRING"
 >g_mime_header_write_to_string</A
 >   (const <A
@@ -247,7 +258,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN177"
+NAME="AEN180"
 ></A
 ><H2
 >Description</H2
@@ -257,14 +268,14 @@ NAME="AEN177"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN180"
+NAME="AEN183"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN182"
+NAME="AEN185"
 ></A
 ><H3
 ><A
@@ -300,7 +311,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN190"
+NAME="AEN193"
 ></A
 ><P
 ></P
@@ -372,7 +383,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN207"
+NAME="AEN210"
 ></A
 ><H3
 ><A
@@ -402,7 +413,7 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN214"
+NAME="AEN217"
 ></A
 ><P
 ></P
@@ -438,7 +449,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN223"
+NAME="AEN226"
 ></A
 ><H3
 ><A
@@ -468,7 +479,7 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN230"
+NAME="AEN233"
 ></A
 ><P
 ></P
@@ -506,7 +517,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN239"
+NAME="AEN242"
 ></A
 ><H3
 ><A
@@ -554,13 +565,13 @@ CLASS="PARAMETER"
 ></TT
 >, had not been previously set, a space will be set
 aside for it (useful for setting the order of headers before values
-can be obtained for them) otherwise the header will be removed.</P
+can be obtained for them) otherwise the header will be unset.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN251"
+NAME="AEN254"
 ></A
 ><P
 ></P
@@ -621,10 +632,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header value (or <TT
-CLASS="LITERAL"
->NULL</TT
-> to remove header)</TD
+> header value</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -635,7 +643,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN269"
+NAME="AEN271"
 ></A
 ><H3
 ><A
@@ -672,7 +680,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN278"
+NAME="AEN280"
 ></A
 ><P
 ></P
@@ -742,7 +750,96 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN295"
+NAME="AEN297"
+></A
+><H3
+><A
+NAME="G-MIME-HEADER-REMOVE"
+></A
+>g_mime_header_remove ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_header_remove            (<A
+HREF="gmime-gmime-message.html#GMIMEHEADER"
+>GMimeHeader</A
+> *header,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Remove the specified header</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN305"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>header</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header name</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN318"
 ></A
 ><H3
 ><A
@@ -776,7 +873,7 @@ HREF="GSTRING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN303"
+NAME="AEN326"
 ></A
 ><P
 ></P
@@ -831,7 +928,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN316"
+NAME="AEN339"
 ></A
 ><H3
 ><A
@@ -864,7 +961,7 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN324"
+NAME="AEN347"
 ></A
 ><P
 ></P
@@ -917,7 +1014,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN337"
+NAME="AEN360"
 ></A
 ><H3
 ><A
@@ -960,7 +1057,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN347"
+NAME="AEN370"
 ></A
 ><P
 ></P

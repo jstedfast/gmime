@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-header" revision="13 Jun 2001">
+<refentry id="gmime-gmime-header" revision="23 Jun 2001">
 <refmeta>
 <refentrytitle>gmime-header</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -23,6 +23,8 @@ void        <link linkend="g-mime-header-set">g_mime_header_set</link>          
                                              const <link linkend="gchar">gchar</link> *name,
                                              const <link linkend="gchar">gchar</link> *value);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-header-get">g_mime_header_get</link>              (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const <link linkend="gchar">gchar</link> *name);
+void        <link linkend="g-mime-header-remove">g_mime_header_remove</link>            (<link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              const <link linkend="gchar">gchar</link> *name);
 void        <link linkend="g-mime-header-write-to-string">g_mime_header_write_to_string</link>   (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              <link linkend="GString">GString</link> *string);
@@ -107,7 +109,7 @@ Destroy the header object</para>
 Set the value of the specified header. If <parameter>value</parameter> is <literal>NULL</literal> and the
 header, <parameter>name</parameter>, had not been previously set, a space will be set
 aside for it (useful for setting the order of headers before values
-can be obtained for them) otherwise the header will be removed.</para>
+can be obtained for them) otherwise the header will be unset.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -122,7 +124,7 @@ can be obtained for them) otherwise the header will be removed.</para>
 <entry> header name
 </entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry> header value (or <literal>NULL</literal> to remove header)
+<entry> header value
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -145,6 +147,26 @@ can be obtained for them) otherwise the header will be removed.</para>
 <entry> header name
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the header requested
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-header-remove">g_mime_header_remove ()</title>
+<programlisting>void        g_mime_header_remove            (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
+<para>
+Remove the specified header</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> header name
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

@@ -131,12 +131,12 @@ g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer
  * g_mime_header_set:
  * @header: header object
  * @name: header name
- * @value: header value (or %NULL to remove header)
+ * @value: header value
  *
  * Set the value of the specified header. If @value is %NULL and the
  * header, @name, had not been previously set, a space will be set
  * aside for it (useful for setting the order of headers before values
- * can be obtained for them) otherwise the header will be removed.
+ * can be obtained for them) otherwise the header will be unset.
  **/
 void
 g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
@@ -147,27 +147,11 @@ g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
 	g_return_if_fail (name != NULL);
 	
 	if ((h = g_hash_table_lookup (header->hash, name))) {
-		if (value) {
-			g_free (h->value);
+		g_free (h->value);
+		if (value)
 			h->value = g_mime_utils_8bit_header_encode (value);
-		} else {
-			/* remove the header */
-			g_hash_table_remove (header->hash, name);
-			n = header->headers;
-			
-			if (h == n) {
-				header->headers = h->next;
-			} else {
-				while (n->next != h)
-					n = n->next;
-				
-				n->next = h->next;
-			}
-			
-			g_free (h->name);
-			g_free (h->value);
-			g_free (h);
-		}
+		else
+			h->value = NULL;
 	} else {
 		n = g_new (struct raw_header, 1);
 		n->next = NULL;
@@ -203,6 +187,42 @@ g_mime_header_get (const GMimeHeader *header, const gchar *name)
 	h = g_hash_table_lookup (header->hash, name);
 	
 	return h ? h->value : NULL;
+}
+
+
+/**
+ * g_mime_header_remove:
+ * @header: header object
+ * @name: header name
+ *
+ * Remove the specified header
+ **/
+void
+g_mime_header_remove (GMimeHeader *header, const gchar *name)
+{
+	struct raw_header *h, *n;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (name != NULL);
+	
+	if ((h = g_hash_table_lookup (header->hash, name))) {
+		/* remove the header */
+		g_hash_table_remove (header->hash, name);
+		n = header->headers;
+		
+		if (h == n) {
+			header->headers = h->next;
+		} else {
+			while (n->next != h)
+				n = n->next;
+			
+			n->next = h->next;
+		}
+		
+		g_free (h->name);
+		g_free (h->value);
+		g_free (h);
+	}
 }
 
 

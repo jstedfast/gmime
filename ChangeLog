@@ -1,3 +1,20 @@
+2001-06-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-header.c (g_mime_header_remove): New function.
+	(g_mime_header_set): Setting header to NULL no longer removes the
+	header. Use g_mime_header_remove instead.
+
+	* gmime-message.c (g_mime_message_write_to_string): No longer have
+	to sync the headers.
+	(g_mime_message_get_headers): Same.
+	(g_mime_message_set_sender): sync the From header.
+	(g_mime_message_set_reply_to): Sync the Reply-To header.
+	(g_mime_message_add_recipient): Sync the recipient header.
+	(g_mime_message_add_recipients_from_string): Same.
+	(g_mime_message_set_subject): Sync the Subject header.
+	(g_mime_message_set_date): Sync the date header.
+	(g_mime_message_set_message_id): Sync the Message-Id header.
+
 2001-06-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (quoted_encode): Minor cleanup.

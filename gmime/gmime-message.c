@@ -143,12 +143,17 @@ g_mime_message_destroy (GMimeMessage *message)
 void
 g_mime_message_set_sender (GMimeMessage *message, const gchar *sender)
 {
+	GMimeMessageHeader *header;
+	
 	g_return_if_fail (message != NULL);
 	
-	if (message->header->from)
-		g_free (message->header->from);
+	header = message->header;
 	
-	message->header->from = g_strdup (sender);
+	if (header->from)
+		g_free (header->from);
+	
+	header->from = g_strstrip (g_strdup (sender));
+	g_mime_header_set (header->headers, "From", header->from);
 }
 
 
@@ -177,12 +182,17 @@ g_mime_message_get_sender (GMimeMessage *message)
 void
 g_mime_message_set_reply_to (GMimeMessage *message, const gchar *reply_to)
 {
+	GMimeMessageHeader *header;
+	
 	g_return_if_fail (message != NULL);
 	
-	if (message->header->reply_to)
-		g_free (message->header->reply_to);
+	header = message->header;
 	
-	message->header->reply_to = g_strdup (reply_to);
+	if (header->reply_to)
+		g_free (header->reply_to);
+	
+	header->reply_to = g_strstrip (g_strdup (reply_to));
+	g_mime_header_set (header->headers, "Reply-To", header->reply_to);
 }
 
 
@@ -200,6 +210,37 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 	return message->header->reply_to;
 }
 
+
+static void
+sync_recipient_header (GMimeMessage *message, const gchar *type)
+{
+	GList *recipients;
+	
+	/* sync the specified recipient header */
+	recipients = g_mime_message_get_recipients (message, type);
+	if (recipients) {
+		GString *recip;
+		
+		recip = g_string_new ("");
+		while (recipients) {
+			InternetAddress *ia;
+			gchar *address;
+			
+			ia = recipients->data;
+			address = internet_address_to_string (ia, TRUE);
+			g_string_append (recip, address);
+			g_free (address);
+			
+			recipients = recipients->next;
+			if (recipients)
+				g_string_append (recip, ", ");
+		}
+		
+		g_mime_header_set (message->header->headers, type, recip->str);
+		g_string_free (recip, TRUE);
+	} else
+		g_mime_header_set (message->header->headers, type, NULL);
+}
 
 /**
  * g_mime_message_add_recipient: Add a recipient
@@ -225,6 +266,7 @@ g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *n
 	
 	recipients = g_list_append (recipients, ia);
 	g_hash_table_insert (message->header->recipients, type, recipients);
+	sync_recipient_header (message, type);
 }
 
 
@@ -256,6 +298,8 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
 		recipients = g_list_concat (recipients, addrlist);
 	
 	g_hash_table_insert (message->header->recipients, type, recipients);
+	
+	sync_recipient_header (message, type);
 }
 
 
@@ -288,12 +332,17 @@ g_mime_message_get_recipients (GMimeMessage *message, const gchar *type)
 void
 g_mime_message_set_subject (GMimeMessage *message, const gchar *subject)
 {
+	GMimeMessageHeader *header;
+	
 	g_return_if_fail (message != NULL);
 	
-	if (message->header->subject)
-		g_free (message->header->subject);
+	header = message->header;
 	
-	message->header->subject = g_strdup (subject);
+	if (header->subject)
+		g_free (header->subject);
+	
+	header->subject = g_strstrip (g_strdup (subject));
+	g_mime_header_set (header->headers, "Subject", header->subject);
 }
 
 
@@ -323,10 +372,16 @@ g_mime_message_get_subject (GMimeMessage *message)
 void
 g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
 {
+	gchar *date_str;
+	
 	g_return_if_fail (message != NULL);
 	
 	message->header->date = date;
 	message->header->gmt_offset = gmt_offset;
+	
+	date_str = g_mime_message_get_date_string (message);
+	g_mime_header_set (message->header->headers, "Date", date_str);
+	g_free (date_str);
 }
 
 
@@ -387,11 +442,17 @@ g_mime_message_get_date_string (GMimeMessage *message)
 void
 g_mime_message_set_message_id (GMimeMessage *message, const gchar *id)
 {
+	GMimeMessageHeader *header;
+	
 	g_return_if_fail (message != NULL);
 	
-	if (message->header->message_id)
-		g_free (message->header->message_id);
-	message->header->message_id = g_strdup (id);
+	header = message->header;
+	
+	if (header->message_id)
+		g_free (header->message_id);
+	
+	header->message_id = g_strstrip (g_strdup (id));
+	g_mime_header_set (header->headers, "Message-Id", header->message_id);
 }
 
 
@@ -463,83 +524,6 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
 }
 
 
-static void
-sync_headers (GMimeMessage *message)
-{
-	GString *string;
-	gchar *str, *date;
-	GList *recipients;
-	
-	/* sync the Date header */
-	if (!message->header->date)
-		g_mime_message_set_date (message, time (NULL), 0);
-	date = g_mime_message_get_date_string (message);
-	g_mime_header_set (message->header->headers, "Date", date);
-	g_free (date);
-	
-	/* sync the From header */
-	g_mime_header_set (message->header->headers, "From",
-			   message->header->from ? message->header->from : "");
-	
-	/* sync the Reply-To header */
-	g_mime_header_set (message->header->headers, "Reply-To", message->header->reply_to);
-	
-	/* sync the To header */
-	recipients = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
-	if (recipients) {
-		GString *recip;
-		
-		recip = g_string_new ("");
-		while (recipients) {
-			InternetAddress *ia;
-			gchar *address;
-			
-			ia = recipients->data;
-			address = internet_address_to_string (ia, TRUE);
-			g_string_append (recip, address);
-			g_free (address);
-			
-			recipients = recipients->next;
-			if (recipients)
-				g_string_append (recip, ", ");
-		}
-		
-		g_mime_header_set (message->header->headers, "To", recip->str);
-		g_string_free (recip, TRUE);
-	}
-	
-	/* sync the Cc header */
-	recipients = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_CC);
-	if (recipients) {
-		GString *recip;
-		
-		recip = g_string_new ("");
-		while (recipients) {
-			InternetAddress *ia;
-			gchar *address;
-			
-			ia = recipients->data;
-			address = internet_address_to_string (ia, TRUE);
-			g_string_append (recip, address);
-			g_free (address);
-			
-			recipients = recipients->next;
-			if (recipients)
-				g_string_append (recip, ", ");
-		}
-		
-		g_mime_header_set (message->header->headers, "Cc", recip->str);
-		g_string_free (recip, TRUE);
-	}
-	
-	/* sync the Subject header */
-	g_mime_header_set (message->header->headers, "Subject", message->header->subject);
-	
-	/* sync the Message-Id header */
-	g_mime_header_set (message->header->headers, "Message-Id", message->header->message_id);
-}
-
-
 /**
  * g_mime_message_write_to_string: Write the MIME Message to a string
  * @message: MIME Message
@@ -553,7 +537,6 @@ g_mime_message_write_to_string (GMimeMessage *message, GString *string)
 	g_return_if_fail (message != NULL);
 	g_return_if_fail (string != NULL);
 	
-	sync_headers (message);
 	g_mime_header_write_to_string (message->header->headers, string);
 	
 	if (message->mime_part)
@@ -720,7 +703,6 @@ g_mime_message_get_headers (GMimeMessage *message)
 {
 	g_return_val_if_fail (message != NULL, NULL);
 	
-	sync_headers (message);
 	return g_mime_header_to_string (message->header->headers);
 }
 

@@ -44,6 +44,8 @@ void g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *val
 
 const gchar *g_mime_header_get (const GMimeHeader *header, const gchar *name);
 
+void g_mime_header_remove (GMimeHeader *header, const gchar *name);
+
 void g_mime_header_write_to_string (const GMimeHeader *header, GString *string);
 
 gchar *g_mime_header_to_string (const GMimeHeader *header);

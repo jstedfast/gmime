@@ -10,6 +10,7 @@
 <ANCHOR id ="G-MIME-HEADER-DESTROY" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-DESTROY">
 <ANCHOR id ="G-MIME-HEADER-SET" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-SET">
 <ANCHOR id ="G-MIME-HEADER-GET" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-GET">
+<ANCHOR id ="G-MIME-HEADER-REMOVE" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-REMOVE">
 <ANCHOR id ="G-MIME-HEADER-WRITE-TO-STRING" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STRING">
 <ANCHOR id ="G-MIME-HEADER-TO-STRING" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-TO-STRING">
 <ANCHOR id ="G-MIME-HEADER-FOREACH" href="gmime/gmime-gmime-header.html#G-MIME-HEADER-FOREACH">

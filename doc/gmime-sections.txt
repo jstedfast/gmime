@@ -14,6 +14,7 @@ g_mime_header_new
 g_mime_header_destroy
 g_mime_header_set
 g_mime_header_get
+g_mime_header_remove
 g_mime_header_write_to_string
 g_mime_header_to_string
 g_mime_header_foreach
