@@ -1,3 +1,13 @@
+2002-07-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-html.c (is_addr_char): Don't use "isprint(c)" to
+	mean "c >= 32 && c < 128" since it doesn't in most locales.
+	(is_url_char): Same.
+	(is_trailing_garbage): Same.
+	(is_domain_name_char): New macro for dns-valid characters
+	(email_address_extract): Use is_domain_name_char rather than
+	is_addr_char for the part after the @.
+
 2002-07-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_step_headers): Finish the fix from
