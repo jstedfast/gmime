@@ -1,3 +1,20 @@
+2002-06-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-multipart-signed.c (g_mime_multipart_signed_get_type):
+	Register as a subclass of a GMimeMultipart.
+
+	* gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_get_type): Same.
+
+	* gmime-gpg-context.[c,h]: A new class implementing the
+	GMimeCipherContext interfaces for GnuPG.
+
+	* gmime-session.[c,h]: New abstract session class for use by the
+	cipher context classes for requesting passphrases/etc.
+
+	* gmime-cipher-context.c (g_mime_cipher_context_finalize): Unref
+	the gmime-session.
+
 2002-06-22  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c: Oops, a prototype had the wrong return type.

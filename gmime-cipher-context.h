@@ -33,6 +33,7 @@ extern "C" {
 #include <glib-object.h>
 
 #include "gmime-stream.h"
+#include "gmime-session.h"
 #include "gmime-exception.h"
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
@@ -47,8 +48,6 @@ typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
 
 typedef struct _GMimeCipherValidity GMimeCipherValidity;
 
-typedef char * (*GMimePasswdFunc) (GMimeCipherContext *ctx, const char *prompt, gpointer user_data);
-
 typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
 	GMIME_CIPHER_HASH_MD2,
@@ -61,6 +60,8 @@ typedef enum {
 
 struct _GMimeCipherContext {
 	GObject parent_object;
+	
+	GMimeSession *session;
 	
 	/* these must be set by the subclass */
 	const char *sign_protocol;

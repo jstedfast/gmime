@@ -74,7 +74,7 @@ g_mime_multipart_encrypted_get_type (void)
 			(GInstanceInitFunc) g_mime_multipart_encrypted_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimeMultipartEncrypted", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_MULTIPART, "GMimeMultipartEncrypted", &info, 0);
 	}
 	
 	return type;

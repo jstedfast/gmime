@@ -73,7 +73,7 @@ g_mime_multipart_signed_get_type (void)
 			(GInstanceInitFunc) g_mime_multipart_signed_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimeMultipartSigned", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_MULTIPART, "GMimeMultipartSigned", &info, 0);
 	}
 	
 	return type;

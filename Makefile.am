@@ -20,9 +20,11 @@ libgmime_2_0_la_SOURCES = 	\
 	memchunk.c		\
 	gmime.c			\
 	gmime-charset.c		\
+	gmime-cipher-context.c	\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
 	gmime-disposition.c	\
+	gmime-exception.c	\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
 	gmime-filter-charset.c	\
@@ -30,6 +32,7 @@ libgmime_2_0_la_SOURCES = 	\
 	gmime-filter-from.c	\
 	gmime-filter-html.c	\
 	gmime-filter-yenc.c	\
+	gmime-gpg-context.c	\
 	gmime-header.c		\
 	gmime-iconv.c		\
 	gmime-iconv-utils.c	\
@@ -41,6 +44,7 @@ libgmime_2_0_la_SOURCES = 	\
 	gmime-param.c		\
 	gmime-parser.c		\
 	gmime-part.c		\
+	gmime-session.c		\
 	gmime-stream.c		\
 	gmime-stream-buffer.c	\
 	gmime-stream-cat.c	\
@@ -58,9 +62,11 @@ gmimeincludedir = $(includedir)/gmime-2.0
 gmimeinclude_HEADERS = 		\
 	gmime.h			\
 	gmime-charset.h		\
+	gmime-cipher-context.h	\
 	gmime-content-type.h	\
 	gmime-data-wrapper.h	\
 	gmime-disposition.h	\
+	gmime-exception.h	\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-charset.h	\
@@ -68,6 +74,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter-from.h	\
 	gmime-filter-html.h	\
 	gmime-filter-yenc.h	\
+	gmime-gpg-context.h	\
 	gmime-header.h		\
 	gmime-iconv.h		\
 	gmime-iconv-utils.h	\
@@ -79,6 +86,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-param.h		\
 	gmime-parser.h		\
 	gmime-part.h		\
+	gmime-session.h		\
 	gmime-stream.h		\
 	gmime-stream-buffer.h	\
 	gmime-stream-cat.h	\

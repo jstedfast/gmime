@@ -108,13 +108,16 @@ g_mime_cipher_context_class_init (GMimeCipherContextClass *klass)
 static void
 g_mime_cipher_context_init (GMimeCipherContext *ctx, GMimeCipherContextClass *klass)
 {
-	
+	ctx->session = NULL;
 }
 
 static void
 g_mime_cipher_context_finalize (GObject *object)
 {
 	GMimeCipherContext *ctx = (GMimeCipherContext *) object;
+	
+	if (ctx->session)
+		g_object_unref (ctx->session);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -142,11 +145,11 @@ g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), GMIME_CIPHER_HASH_DEFAULT);
 	g_return_val_if_fail (hash != NULL, GMIME_CIPHER_HASH_DEFAULT);
 	
-	return GMIME_CIPHER_HASH_GET_CLASS (ctx)->hash_id (ctx, hash);
+	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->hash_id (ctx, hash);
 }
 
 
-static GMimeCipherHash
+static const char *
 cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 {
 	return NULL;
@@ -167,7 +170,7 @@ g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	
-	return GMIME_CIPHER_HASH_GET_CLASS (ctx)->hash_name (ctx, hash);
+	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->hash_name (ctx, hash);
 }
 
 
