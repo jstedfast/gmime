@@ -302,7 +302,7 @@ message_remove_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a multipart */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (g_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 

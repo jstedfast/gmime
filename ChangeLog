@@ -1,3 +1,8 @@
+2002-07-30  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-message.c (message_remove_header): Fix April 3 2002 bug
+	that kept message-remove-header from removing headers.
+
 2002-07-29  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (message_get_headers): Write the toplevel MIME
