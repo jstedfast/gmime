@@ -29,7 +29,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
-#include <alloca.h>
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "md5-utils.h"

@@ -31,7 +31,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
-#include <alloca.h>
 
 /**
  * g_mime_message_new: Create a new MIME Message object

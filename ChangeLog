@@ -9,15 +9,7 @@
 	address. Skip the bad char and then retry. If we fail again,
 	*then* we abort.
 
-	* gmime-content-type.c: #include <alloca.h>
-
-	* gmime-message.c: Same.
-
-	* gmime-param.c: Here too.
-
-	* gmime-part.c: And here...
-
-	* gmime-utils.c: And finally here.
+	* gmime-utils.c: #include <alloca.h>
 
 	* gmime-parser.c (g_mime_parser_construct_part): Oops, inend
 	points to the end of the string, not the last char of the string
