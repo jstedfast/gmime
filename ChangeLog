@@ -1,5 +1,32 @@
 2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/url-scanner.c: Use our own masking table since we need it
+	atoms to be slightly different. There's a few more chars we want
+	to restrict. Also has the benefit of being easier to split out if
+	someone else wants to use it.
+	(g_url_addrspec_end): Fixed to not be fooled in the case where the
+	address is followed immediately by a period.
+	(g_url_web_end): Made more robust.
+	(g_url_scanner_scan): Oops. We need to set the match->pattern
+	string pointer to the correct pattern before executing the
+	start/end methods (as some of them rely on this info).
+
+2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c: Don't need a hash table anymore.
+	(g_url_scanner_add): When adding a pattern to the trie, use the
+	array index as the pattern_id argument.
+	(g_url_scanner_scan): Use the matched_id set by g_trie_search() to
+	lookup the urlpattern_t instead of using a hash table.
+
+	* gmime/gtrie.c (g_trie_add): Now takes a pattern_id argument so
+	that we can avoid the use of GQuarks and thus save on unecessary
+	memory usage.
+	(g_trie_search): Instead of giving our caller back the pattern
+	string pointer, give him back the pattern id.
+
+2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gtrie.c (g_trie_matches): Removed.
 	(g_trie_search): Fixed the FIXME.
 

@@ -25,17 +25,15 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
 #include <string.h>
 
 #include "gtrie.h"
 #include "url-scanner.h"
 
-#include "gmime-table-private.h"
-
 
 struct _GUrlScanner {
 	GPtrArray *patterns;
-	GHashTable *pattern_hash;
 	GTrie *trie;
 };
 
@@ -47,7 +45,6 @@ g_url_scanner_new (void)
 	
 	scanner = g_new (GUrlScanner, 1);
 	scanner->patterns = g_ptr_array_new ();
-	scanner->pattern_hash = g_hash_table_new (g_str_hash, g_str_equal);
 	scanner->trie = g_trie_new (TRUE);
 	
 	return scanner;
@@ -60,7 +57,6 @@ g_url_scanner_free (GUrlScanner *scanner)
 	g_return_if_fail (scanner != NULL);
 	
 	g_ptr_array_free (scanner->patterns, TRUE);
-	g_hash_table_destroy (scanner->pattern_hash);
 	g_trie_free (scanner->trie);
 	g_free (scanner);
 }
@@ -71,25 +67,28 @@ g_url_scanner_add (GUrlScanner *scanner, urlpattern_t *pattern)
 {
 	g_return_if_fail (scanner != NULL);
 	
+	g_trie_add (scanner->trie, pattern->pattern, scanner->patterns->len);
 	g_ptr_array_add (scanner->patterns, pattern);
-	g_hash_table_insert (scanner->pattern_hash, pattern->pattern, pattern);
-	g_trie_add (scanner->trie, pattern->pattern);
 }
 
 
 gboolean
 g_url_scanner_scan (GUrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match)
 {
-	const char *pattern, *pos, *inend;
+	const char *pos, *inend;
 	urlpattern_t *pat;
+	int pattern_id;
 	
 	g_return_val_if_fail (scanner != NULL, FALSE);
 	g_return_val_if_fail (in != NULL, FALSE);
 	
-	if (!(pos = g_trie_search (scanner->trie, in, inlen, &pattern)))
+	if (!(pos = g_trie_search (scanner->trie, in, inlen, &pattern_id)))
 		return FALSE;
 	
-	pat = g_hash_table_lookup (scanner->pattern_hash, pattern);
+	pat = g_ptr_array_index (scanner->patterns, pattern_id);
+	
+	match->pattern = pat->pattern;
+	match->prefix = pat->prefix;
 	
 	inend = in + inlen;
 	if (!pat->start (in, pos, inend, match))
@@ -98,11 +97,47 @@ g_url_scanner_scan (GUrlScanner *scanner, const char *in, size_t inlen, urlmatch
 	if (!pat->end (in, pos, inend, match))
 		return FALSE;
 	
-	match->pattern = pattern;
-	match->prefix = pat->prefix;
-	
 	return TRUE;
 }
+
+
+static unsigned char url_scanner_table[256] = {
+	  1,  1,  1,  1,  1,  1,  1,  1,  1,  9,  9,  1,  1,  9,  1,  1,
+	  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,
+	 24,128,160,128,128,128,128,128,160,160,128,128,160,192,160,160,
+	 68, 68, 68, 68, 68, 68, 68, 68, 68, 68,160,160, 32,128, 32,128,
+	160, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+	 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,160,160,160,128,128,
+	128, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,
+	 66, 66, 66, 66, 66, 66, 66, 66, 66, 66, 66,128,128,128,128,  1,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
+	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0
+};
+
+enum {
+	IS_CTRL		= (1 << 0),
+	IS_ALPHA        = (1 << 1),
+	IS_DIGIT        = (1 << 2),
+	IS_LWSP		= (1 << 3),
+	IS_SPACE	= (1 << 4),
+	IS_SPECIAL	= (1 << 5),
+	IS_DOMAIN       = (1 << 6),
+	IS_URLSAFE      = (1 << 7),
+};
+
+#define is_ctrl(x) ((url_scanner_table[(unsigned char)(x)] & IS_CTRL) != 0)
+#define is_lwsp(x) ((url_scanner_table[(unsigned char)(x)] & IS_LWSP) != 0)
+#define is_atom(x) ((url_scanner_table[(unsigned char)(x)] & (IS_SPECIAL|IS_SPACE|IS_CTRL)) == 0)
+#define is_alpha(x) ((url_scanner_table[(unsigned char)(x)] & IS_ALPHA) != 0)
+#define is_digit(x) ((url_scanner_table[(unsigned char)(x)] & IS_DIGIT) != 0)
+#define is_domain(x) ((url_scanner_table[(unsigned char)(x)] & IS_DOMAIN) != 0)
+#define is_urlsafe(x) ((url_scanner_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT|IS_URLSAFE)) != 0)
 
 
 gboolean
@@ -165,7 +200,7 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 				return FALSE;
 		} while (parts < 4);
 		
-		if (*inptr == ']')
+		if (inptr < inend && *inptr == ']')
 			inptr++;
 		else
 			return FALSE;
@@ -179,7 +214,7 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 			while (inptr < inend && is_domain (*inptr))
 				inptr++;
 			
-			if (inptr < inend && *inptr == '.')
+			if (inptr < inend && *inptr == '.' && is_domain (inptr[1]))
 				inptr++;
 		}
 	}
@@ -256,38 +291,123 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 			
 		} while (parts < 4);
 	} else if (is_domain (*inptr)) {
-		do {
-			while (inptr < inend && is_domain (*inptr))
-				inptr++;
-			
-			if (inptr < inend && *inptr == '.')
+		while (inptr < inend) {
+			if (is_domain (*inptr))
 				inptr++;
 			else
 				break;
 			
-		} while (inptr < inend);
+			while (inptr < inend && is_domain (*inptr))
+				inptr++;
+			
+			if (inptr < inend && *inptr == '.' && is_domain (inptr[1]))
+				inptr++;
+		}
+		
+		fprintf (stderr, "domain is '%.*s'\n", inptr - pos, pos);
 	} else {
 		return FALSE;
 	}
 	
-	if (inptr < inend && *inptr == ':') {
-		/* skip past the port */
-		inptr++;
-		port = 0;
-		
-		while (inptr < inend && is_digit (*inptr) && port < 65536)
-			port = (port * 10) + (*inptr++ - '0');
-	}
-	
-	if (inptr < inend && *inptr == '/') {
-		/* skip past our url path */
-		inptr++;
-		
-		while (inptr < inend && is_urlsafe (*inptr))
+	if (inptr < inend) {
+		switch (*inptr) {
+		case ':': /* port notation */
 			inptr++;
+			port = 0;
+			
+			while (inptr < inend && is_digit (*inptr) && port < 65536)
+				port = (port * 10) + (*inptr++ - '0');
+			
+			if (port >= 65536)
+				inptr--;
+			
+			if (inptr >= inend || *inptr != '/')
+				break;
+			
+			/* we have a '/' so there could be a path - fall through */
+		case '/': /* we've detected a path component to our url */
+			inptr++;
+			
+			while (inptr < inend && is_urlsafe (*inptr))
+				inptr++;
+			
+			break;
+		default:
+			break;
+		}
 	}
 	
 	match->um_eo = (inptr - in);
 	
 	return TRUE;
 }
+
+
+#ifdef BUILD_TABLE
+
+#include <stdio.h>
+
+/* got these from rfc1738 */
+#define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
+#define CHARS_SPECIAL "()<>@,;:\\\".[]"
+
+/* got these from rfc1738 */
+#define CHARS_URLSAFE "$-_.+!*'(),{}|\\^~[]`#%\";/?:@&="
+
+
+static void
+table_init_bits (unsigned int mask, const unsigned char *vals)
+{
+	int i;
+	
+	for (i = 0; vals[i] != '\0'; i++)
+		url_scanner_table[vals[i]] |= mask;
+}
+
+static void
+url_scanner_table_init (void)
+{
+	int i;
+	
+	for (i = 0; i < 256; i++) {
+		url_scanner_table[i] = 0;
+		if (i < 32)
+			url_scanner_table[i] |= IS_CTRL;
+		if ((i >= '0' && i <= '9'))
+			url_scanner_table[i] |= IS_DIGIT | IS_DOMAIN;
+		if ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
+			url_scanner_table[i] |= IS_ALPHA | IS_DOMAIN;
+	}
+	
+	url_scanner_table[127] |= IS_CTRL;
+	url_scanner_table[' '] |= IS_SPACE;
+	url_scanner_table['-'] |= IS_DOMAIN;
+	
+	/* not defined to be special in rfc0822, but when scanning
+           backwards to find the beginning of the email address we do
+           not want to include this char if we come accross it - so
+           this is kind of a hack, but it's ok */
+	url_scanner_table['/'] |= IS_SPECIAL;
+	
+	table_init_bits (IS_LWSP, CHARS_LWSP);
+	table_init_bits (IS_SPECIAL, CHARS_SPECIAL);
+	table_init_bits (IS_URLSAFE, CHARS_URLSAFE);
+}
+
+int main (int argc, char **argv)
+{
+	int i;
+	
+	url_scanner_table_init ();
+	
+	printf ("static unsigned char url_scanner_table[256] = {");
+	for (i = 0; i < 256; i++) {
+		printf ("%s%3d%s", (i % 16) ? "" : "\n\t",
+			url_scanner_table[i], i != 255 ? "," : "\n");
+	}
+	printf ("};\n\n");
+	
+	return 0;
+}
+
+#endif /* BUILD_TABLE */

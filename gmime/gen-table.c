@@ -37,9 +37,6 @@ enum {
 #define CHARS_ESPECIAL "()<>@,;:\"/[]?.=_" /* encoded word specials (rfc2047 5.1) */
 #define CHARS_PSPECIAL "!*+-/=_"           /* encoded phrase specials (rfc2047 5.3) */
 
-/* got these from rfc1738 */
-#define CHARS_URLSAFE "$-_.+!*'(),{}|\\^~[]`#%\";/?:@&="
-
 static unsigned short gmime_special_table[256];
 
 enum {
@@ -51,10 +48,7 @@ enum {
 	IS_DSPECIAL	= (1 << 5),
 	IS_QPSAFE	= (1 << 6),
 	IS_ESAFE	= (1 << 7),  /* encoded word safe */
-	IS_PSAFE	= (1 << 8),  /* encoded word in phrase safe */
-	IS_ALPHA        = (1 << 9),
-	IS_DIGIT        = (1 << 10),
-	IS_URLSAFE      = (1 << 11),
+	IS_PSAFE	= (1 << 8)   /* encoded word in phrase safe */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -68,10 +62,6 @@ enum {
 #define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
-#define is_alpha(x) ((gmime_special_table[(unsigned char)(x)] & IS_ALPHA) != 0)
-#define is_digit(x) ((gmime_special_table[(unsigned char)(x)] & IS_DIGIT) != 0)
-#define is_domain(x) ((gmime_special_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT)) != 0 || (x) == '-')
-#define is_urlsafe(x) ((gmime_special_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT|IS_URLSAFE)) != 0)
 
 /* code to rebuild the gmime_special_table */
 static void
@@ -122,23 +112,20 @@ header_decode_init (void)
 			gmime_special_table[i] |= IS_CTRL;
 		if ((i >= 33 && i <= 60) || (i >= 62 && i <= 126) || i == 32)
 			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
-		if ((i >= '0' && i <= '9'))
-			gmime_special_table[i] |= IS_DIGIT | IS_PSAFE;
-		if ((i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
-			gmime_special_table[i] |= IS_ALPHA | IS_PSAFE;
+		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
+			gmime_special_table[i] |= IS_PSAFE;
 	}
 	
 	gmime_special_table['\t'] |= IS_QPSAFE;
+	
 	gmime_special_table[127] |= IS_CTRL;
 	gmime_special_table[' '] |= IS_SPACE;
-	
 	header_init_bits (IS_LWSP, 0, FALSE, CHARS_LWSP);
 	header_init_bits (IS_TSPECIAL, IS_CTRL, FALSE, CHARS_TSPECIAL);
 	header_init_bits (IS_SPECIAL, 0, FALSE, CHARS_SPECIAL);
 	header_init_bits (IS_DSPECIAL, 0, FALSE, CHARS_DSPECIAL);
 	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
 	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
-	header_init_bits (IS_URLSAFE, 0, FALSE, CHARS_URLSAFE);
 }
 
 int main (int argc, char **argv)
@@ -154,7 +141,7 @@ int main (int argc, char **argv)
 	/* print out the table */
 	printf ("static unsigned short gmime_special_table[256] = {");
 	for (i = 0; i < 256; i++) {
-		printf ("%s0x%0.4x%s", (i % 8) ? "" : "\n\t",
+		printf ("%s%3d%s", (i % 16) ? "" : "\n\t",
 			gmime_special_table[i], i != 255 ? "," : "\n");
 	}
 	printf ("};\n\n");
@@ -169,10 +156,7 @@ int main (int argc, char **argv)
 	printf ("\tIS_DSPECIAL\t= (1 << 5),\n");
 	printf ("\tIS_QPSAFE  \t= (1 << 6),\n");
 	printf ("\tIS_ESAFE   \t= (1 << 7), /* encoded word safe */\n");
-	printf ("\tIS_PSAFE   \t= (1 << 8), /* encode word in phrase safe */\n");
-	printf ("\tIS_ALPHA   \t= (1 << 9),\n");
-	printf ("\tIS_DIGIT   \t= (1 << 10),\n");
-	printf ("\tIS_URLSAFE \t= (1 << 11),\n");
+	printf ("\tIS_PSAFE   \t= (1 << 8)  /* encode word in phrase safe */\n");
 	printf ("};\n\n");
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
@@ -185,11 +169,7 @@ int main (int argc, char **argv)
 	printf ("#define is_fieldname(x) ((gmime_special_table[(unsigned char)(x)] & (IS_CTRL|IS_SPACE)) == 0)\n");
 	printf ("#define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)\n");
 	printf ("#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)\n");
-	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n");
-	printf ("#define is_alpha(x) ((gmime_special_table[(unsigned char)(x)] & IS_ALPHA) != 0)\n");
-	printf ("#define is_digit(x) ((gmime_special_table[(unsigned char)(x)] & IS_DIGIT) != 0)\n");
-	printf ("#define is_domain(x) ((gmime_special_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT)) != 0 || (x) == '-')\n");
-	printf ("#define is_urlsafe(x) ((gmime_special_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT|IS_URLSAFE)) != 0)\n\n");
+	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n\n");
 	
 	printf ("#define CHARS_LWSP \" \\t\\n\\r\"               /* linear whitespace chars */\n");
 	printf ("#define CHARS_TSPECIAL \"()<>@,;:\\\\\\\"/[]?=\"\n");
@@ -197,9 +177,7 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_CSPECIAL \"()\\\\\\r\"	           /* not in comments */\n");
 	printf ("#define CHARS_DSPECIAL \"[]\\\\\\r \\t\"         /* not in domains */\n");
 	printf ("#define CHARS_ESPECIAL \"()<>@,;:\\\"/[]?.=_\" /* encoded word specials (rfc2047 5.1) */\n");
-	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n");
-	printf ("#define CHARS_URLSAFE  \"$-_.+!*'(),{}|\\\\^~[]`#%\\\";/?:@&=\"\n\n");
-	
+	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n\n");
 	printf ("#define GMIME_FOLD_LEN 76\n");
 	
 	return 0;

@@ -38,7 +38,7 @@ struct _trie_state {
 	struct _trie_state *fail;
 	struct _trie_match *match;
 	unsigned int final;
-	GQuark quark;
+	int id;
 };
 
 struct _trie_match {
@@ -158,7 +158,7 @@ trie_insert (GTrie *trie, int depth, struct _trie_state *q, gunichar c)
 	q->match = NULL;
 	q->fail = &trie->root;
 	q->final = 0;
-	q->quark = 0;
+	q->id = 0;
 	
 	if (trie->fail_states->len < depth + 1) {
 		unsigned int size = trie->fail_states->len;
@@ -174,7 +174,7 @@ trie_insert (GTrie *trie, int depth, struct _trie_state *q, gunichar c)
 }
 
 
-#if 1
+#if d(!)0
 static void 
 dump_trie (struct _trie_state *s, int depth)
 {
@@ -184,8 +184,8 @@ dump_trie (struct _trie_state *s, int depth)
 	memset (p, ' ', depth * 2);
 	p[depth * 2] = '\0';
 	
-	fprintf (stderr, "%s[state] %p: final=%d; quark=%s; fail=%p\n",
-		 p, s, s->final, g_quark_to_string (s->quark), s->fail);
+	fprintf (stderr, "%s[state] %p: final=%d; pattern-id=%s; fail=%p\n",
+		 p, s, s->final, s->id, s->fail);
 	m = s->match;
 	while (m) {
 		fprintf (stderr, " %s'%c' -> %p\n", p, m->c, m->state);
@@ -213,7 +213,7 @@ dump_trie (struct _trie_state *s, int depth)
 */
 
 void
-g_trie_add (GTrie *trie, const char *pattern)
+g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 {
 	const unsigned char *inptr = (const unsigned char *) pattern;
 	struct _trie_state *q, *q1, *r;
@@ -240,7 +240,7 @@ g_trie_add (GTrie *trie, const char *pattern)
 	}
 	
 	q->final = depth;
-	q->quark = g_quark_from_string (pattern);
+	q->id = pattern_id;
 	
 	/* Step 2: compute failure graph */
 	
@@ -298,7 +298,7 @@ g_trie_add (GTrie *trie, const char *pattern)
  */
 
 const char *
-g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **pattern)
+g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 {
 	const unsigned char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
@@ -330,8 +330,8 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **patt
 			q = m->state;
 			
 			if (q->final) {
-				if (pattern)
-					*pattern = g_quark_to_string (q->quark);
+				if (matched_id)
+					*matched_id = q->id;
 				
 				return (const char *) pat;
 			}
@@ -369,17 +369,17 @@ static char *haystacks[] = {
 
 int main (int argc, char **argv)
 {
-	const char *match, *pattern;
+	const char *match;
 	GTrie *trie;
-	int i;
+	int id, i;
 	
 	trie = g_trie_new (TRUE);
 	for (i = 0; i < (sizeof (patterns) / sizeof (patterns[0])); i++)
-		g_trie_add (trie, patterns[i]);
+		g_trie_add (trie, patterns[i], i);
 	
 	for (i = 0; i < (sizeof (haystacks) / sizeof (haystacks[0])); i++) {
-		if ((match = g_trie_search (trie, haystacks[i], -1, &pattern))) {
-			fprintf (stderr, "matched @ '%s' with pattern '%s'\n", match, pattern);
+		if ((match = g_trie_search (trie, haystacks[i], -1, &id))) {
+			fprintf (stderr, "matched @ '%s' with pattern '%s'\n", match, patterns[id]);
 		} else {
 			fprintf (stderr, "no match\n");
 		}
