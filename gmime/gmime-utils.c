@@ -1010,9 +1010,9 @@ g_mime_utils_header_fold (const char *in)
 		
 		if (outlen + len > GMIME_FOLD_LEN) {			
 			if (last_was_lwsp)
-				g_string_truncate (out, out->len - 1);
-			
-			g_string_append (out, "\n\t");
+				g_string_insert_c (out, out->len - 1, '\n');
+			else
+				g_string_append (out, "\n\t");
 			outlen = 1;
 			
 			/* check for very long words, just cut them up */

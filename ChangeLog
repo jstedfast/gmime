@@ -1,3 +1,9 @@
+2004-04-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (g_mime_utils_header_fold): Rather than
+	always using a tab character when folding, use the lwsp character
+	that we are wrapping at instead.
+
 2004-04-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (g_mime_parser_init): Initialise
