@@ -26,33 +26,32 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
 #include <glib.h>
 #include "gmime-param.h"
 
 struct _GMimeContentType {
-	gchar *type;
-	gchar *subtype;
+	char *type;
+	char *subtype;
 	
-	GList *params;   /* of type GMimeParam */
+	GMimeParam *params;
 	GHashTable *param_hash;
 };
 
 typedef struct _GMimeContentType GMimeContentType;
 
-GMimeContentType *g_mime_content_type_new (const gchar *type, const gchar *subtype);
-GMimeContentType *g_mime_content_type_new_from_string (const gchar *string);
+GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
+GMimeContentType *g_mime_content_type_new_from_string (const char *string);
 
 void g_mime_content_type_destroy (GMimeContentType *mime_type);
 
-gchar *g_mime_content_type_to_string (const GMimeContentType *mime_type);
+char *g_mime_content_type_to_string (const GMimeContentType *mime_type);
 
 gboolean g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype);
 
-void g_mime_content_type_add_parameter (GMimeContentType *mime_type, const gchar *attribute, const gchar *value);
-const gchar *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gchar *attribute);
-
+void g_mime_content_type_add_parameter (GMimeContentType *mime_type, const char *attribute, const char *value);
+const char *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute);
 
 
 #ifdef __cplusplus

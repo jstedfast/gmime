@@ -213,10 +213,10 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 	ia->value.members = g_list_append (ia->value.members, member);
 }
 
-static gchar *
-encoded_name (const gchar *raw, gboolean rfc2047_encode)
+static char *
+encoded_name (const char *raw, gboolean rfc2047_encode)
 {
-	gchar *name;
+	char *name;
 	
 	g_return_val_if_fail (raw != NULL, NULL);
 	
@@ -238,7 +238,7 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
  * Returns the InternetAddress object as an allocated string in rfc822
  * format.
  **/
-gchar *
+char *
 internet_address_to_string (InternetAddress *ia, gboolean encode)
 {
 	char *string = NULL;

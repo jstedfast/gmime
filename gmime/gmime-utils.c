@@ -39,8 +39,6 @@
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 
-#define GMIME_FOLD_LEN  76
-
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
 #endif
@@ -131,8 +129,8 @@ static char *tm_days[] = {
  *
  * Returns a valid string representation of the date.
  **/
-gchar *
-g_mime_utils_header_format_date (time_t time, gint offset)
+char *
+g_mime_utils_header_format_date (time_t time, int offset)
 {
 	struct tm tm;
 	
@@ -151,14 +149,14 @@ g_mime_utils_header_format_date (time_t time, gint offset)
 /* This is where it gets ugly... */
 
 static GList *
-datetok (const gchar *date)
+datetok (const char *date)
 {
 	GList *tokens = NULL;
-	gchar *token, *start, *end;
+	char *token, *start, *end;
 	
 	g_return_val_if_fail (date != NULL, NULL);
 	
-	start = (gchar *) date;
+	start = (char *) date;
 	while (*start) {
 		/* kill leading whitespace */
 		for ( ; *start && isspace ((int)*start); start++);
@@ -211,30 +209,30 @@ get_days_in_month (gint month, gint year)
 }
 #endif
 
-static gint
-get_wday (gchar *str)
+static int
+get_wday (char *str)
 {
 	gint i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (i = 0; i < 7; i++)
-		if (!g_strncasecmp (str, tm_days[i], 3))
+		if (!strncasecmp (str, tm_days[i], 3))
 			return i;
 	
 	return -1;  /* unknown week day */
 }
 
-static gint
-get_mday (gchar *str)
+static int
+get_mday (char *str)
 {
-	gchar *p;
-	gint mday;
+	char *p;
+	int mday;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (p = str; *p; p++)
-		if (!isdigit ((int)*p))
+		if (!isdigit ((int) *p))
 			return -1;
 	
 	mday = atoi (str);
@@ -245,28 +243,28 @@ get_mday (gchar *str)
 	return mday;
 }
 
-static gint
-get_month (gchar *str)
+static int
+get_month (char *str)
 {
-	gint i;
+	int i;
 	
 	g_return_val_if_fail (str != NULL, -1);
 	
 	for (i = 0; i < 12; i++)
-		if (!g_strncasecmp (str, tm_months[i], 3))
+		if (!strncasecmp (str, tm_months[i], 3))
 			return i;
 	
 	return -1;  /* unknown month */
 }
 
-static gint
-get_year (const gchar *str)
+static int
+get_year (const char *str)
 {
-	gint year;
-	const gchar * p;
+	const char *p;
+	int year;
 	
 	for (p = str; *p; p++)
-		if (!isdigit ((int)*p))
+		if (!isdigit ((int) *p))
 			return -1;
 	
 	year = atoi (str);
@@ -281,16 +279,16 @@ get_year (const gchar *str)
 }
 
 static gboolean
-get_time (const gchar *in, gint *hour, gint *min, gint *sec)
+get_time (const char *in, int *hour, int *min, int *sec)
 {
-	const gchar *p;
-	gint colons = 0;
+	const char *p;
+	int colons = 0;
 	gboolean digits = TRUE;
 	
 	for (p = in; *p && digits; p++) {
 		if (*p == ':')
 			colons++;
-		else if (!isdigit ((int)*p))
+		else if (!isdigit ((int) *p))
 			digits = FALSE;
 	}
 	
@@ -306,20 +304,20 @@ get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 	}
 }
 
-static gint
+static int
 get_tzone (GList **token)
 {
-	gint tz = -1;
-	gint i;
+	int tz = -1;
+	int i;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
-		gchar *str = (*token)->data;
+		char *str = (*token)->data;
 		
 		if (*str == '+' || *str == '-') {
 			tz = atoi (str);
 			return tz;
 		} else {
-			gint t;
+			int t;
 			
 			if (*str == '(')
 				str++;
@@ -341,13 +339,13 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	GList *token;
 	struct tm tm;
 	time_t t;
-	gint hour, min, sec, offset, n;
+	int hour, min, sec, offset, n;
 	
 	g_return_val_if_fail (tokens != NULL, (time_t) 0);
 	
 	token = tokens;
 	
-	memset ((void *)&tm, 0, sizeof (struct tm));
+	memset ((void *) &tm, 0, sizeof (struct tm));
 	
 	if ((n = get_wday (token->data)) != -1) {
 		/* not all dates may have this... */
@@ -419,7 +417,7 @@ parse_broken_date (GList *tokens, int *tzone)
 #if 0
 	GList *token;
 	struct tm tm;
-	gint hour, min, sec, n;
+	int hour, min, sec, n;
 	
 	if (tzone)
 		*tzone = 0;
@@ -438,7 +436,7 @@ parse_broken_date (GList *tokens, int *tzone)
  * will be stored.
  **/
 time_t
-g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
+g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 {
 	GList *token, *tokens;
 	time_t date;
@@ -467,13 +465,13 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
  *
  * Returns an allocated string containing the folded header.
  **/
-gchar *
-g_mime_utils_header_fold (const gchar *in)
+char *
+g_mime_utils_header_fold (const char *in)
 {
-	const gchar *inptr, *space;
-	gint len, outlen, i;
+	const char *inptr, *space;
+	size_t len, outlen, i;
 	GString *out;
-	gchar *ret;
+	char *ret;
 	
 	inptr = in;
 	len = strlen (in);
@@ -483,11 +481,7 @@ g_mime_utils_header_fold (const gchar *in)
 	out = g_string_new ("");
 	outlen = 0;
 	while (*inptr) {
-		space = strchr (inptr, ' ');
-		if (space)
-			len = space - inptr + 1;
-		else
-			len = strlen (inptr);
+		len = strcspn (inptr, " \t");
 		
 		if (outlen + len > GMIME_FOLD_LEN) {
 			g_string_append (out, "\n\t");
@@ -502,13 +496,15 @@ g_mime_utils_header_fold (const gchar *in)
 				g_string_append (out, "\n\t");
 				outlen = 1;
 			}
+		} else if (len > 0) {
+			outlen += len;
+			for (i = 0; i < len; i++) {
+				g_string_append_c (out, inptr[i]);
+			}
+			inptr += len;
+		} else {
+			g_string_append_c (out, *inptr++);
 		}
-		
-		outlen += len;
-		for (i = 0; i < len; i++) {
-			g_string_append_c (out, inptr[i]);
-		}
-		inptr += len;
 	}
 	
 	ret = out->str;
@@ -526,10 +522,10 @@ g_mime_utils_header_fold (const gchar *in)
  * Returns an allocated string containing the folded header specified
  * by #format and the following arguments.
  **/
-gchar *
-g_mime_utils_header_printf (const gchar *format, ...)
+char *
+g_mime_utils_header_printf (const char *format, ...)
 {
-	gchar *buf, *ret;
+	char *buf, *ret;
 	va_list ap;
 	
 	va_start (ap, format);
@@ -574,12 +570,12 @@ need_quotes (const char *string)
  * based on whether or not the input string contains any 'tspecials'
  * as defined by rfc2045.
  **/
-gchar *
-g_mime_utils_quote_string (const gchar *string)
+char *
+g_mime_utils_quote_string (const char *string)
 {
 	gboolean quote;
-	const gchar *c;
-	gchar *qstring;
+	const char *c;
+	char *qstring;
 	GString *out;
 	
 	out = g_string_new ("");
@@ -611,10 +607,10 @@ g_mime_utils_quote_string (const gchar *string)
  * Unquotes and unescapes a string.
  **/
 void
-g_mime_utils_unquote_string (gchar *string)
+g_mime_utils_unquote_string (char *string)
 {
 	/* if the string is quoted, unquote it */
-	gchar *inptr, *inend;
+	char *inptr, *inend;
 	
 	if (!string)
 		return;

@@ -29,7 +29,7 @@
 #include "gmime-header.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-buffer.h"
-#include <string.h>
+#include "strlib.h"
 #include <ctype.h>
 
 #define d(x) x
@@ -79,7 +79,7 @@ content_header (const char *field)
 	int i;
 	
 	for (i = 0; content_headers[i]; i++)
-		if (!g_strncasecmp (field, content_headers[i], strlen (content_headers[i])))
+		if (!strncasecmp (field, content_headers[i], strlen (content_headers[i])))
 			return i;
 	
 	return -1;
@@ -112,7 +112,7 @@ static char *fields[] = {
 static gboolean
 special_header (const char *field)
 {
-	return (!g_strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
+	return (!strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
 }
 
 static void
@@ -280,60 +280,16 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			break;
 		}
 		case CONTENT_DISPOSITION: {
-			char *disposition, *ptr;
+			GMimeDisposition *disposition;
 			
-			/* get content disposition part */
-			for (ptr = value; *ptr && *ptr != ';'; ptr++); /* find ; or \0 */
-			disposition = g_strndup (value, (gint)(ptr - value));
-			g_strstrip (disposition);
-			g_mime_part_set_content_disposition (mime_part, disposition);
-			g_free (disposition);
-			
-			/* parse the parameters, if any */
-			while (*ptr == ';') {
-				char *pname, *pval;
-				
-				/* get the param name */
-				for (pname = ptr + 1; *pname && !isspace ((int)*pname); pname++);
-				for (ptr = pname; *ptr && *ptr != '='; ptr++);
-				pname = g_strndup (pname, (gint) (ptr - pname));
-				g_strstrip (pname);
-				
-				/* convert param name to lowercase */
-				g_strdown (pname);
-				
-				/* skip any whitespace */
-				for (pval = ptr + 1; *pval && isspace ((int) *pval); pval++);
-				
-				if (*pval == '"') {
-					/* value is in quotes */
-					pval++;
-					for (ptr = pval; *ptr; ptr++)
-						if (*ptr == '"' && *(ptr - 1) != '\\')
-							break;
-					pval = g_strndup (pval, (gint) (ptr - pval));
-					g_strstrip (pval);
-					g_mime_utils_unquote_string (pval);
-					
-					for ( ; *ptr && *ptr != ';'; ptr++);
-				} else {
-					/* value is not in quotes */
-					for (ptr = pval; *ptr && *ptr != ';'; ptr++);
-					pval = g_strndup (pval, (gint) (ptr - pval));
-					g_strstrip (pval);
-				}
-				
-				g_mime_part_add_content_disposition_parameter (mime_part, pname, pval);
-				
-				g_free (pname);
-				g_free (pval);
-			}
+			disposition = g_mime_disposition_new (value);
+			g_mime_part_set_content_disposition_object (mime_part, disposition);
 			
 			break;
 		}
 		default:
-			if (!g_strncasecmp (field, "Content-", 8)) {
-				g_mime_header_add (mime_part->headers, field, value);
+			if (!strncasecmp (field, "Content-", 8)) {
+				g_mime_part_set_content_header (mime_part, field, value);
 				g_free (field);
 			}
 			break;
@@ -473,7 +429,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 	
 	for ( ; inptr < inend; inptr++) {
 		for (i = 0; fields[i]; i++)
-			if (!g_strncasecmp (fields[i], inptr, strlen (fields[i])))
+			if (!strncasecmp (fields[i], inptr, strlen (fields[i])))
 				break;
 		
 		if (!fields[i]) {

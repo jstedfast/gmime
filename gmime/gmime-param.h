@@ -26,22 +26,26 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
 #include <glib.h>
 
 struct _GMimeParam {
-	gchar *name;
-	gchar *value;
+	struct _GMimeParam *next;
+	char *name;
+	char *value;
 };
 
 typedef struct _GMimeParam GMimeParam;
 
-GMimeParam *g_mime_param_new (const gchar *name, const gchar *value);
-GMimeParam *g_mime_param_new_from_string (const gchar *string);
+GMimeParam *g_mime_param_new (const char *name, const char *value);
+GMimeParam *g_mime_param_new_from_string (const char *string);
 void g_mime_param_destroy (GMimeParam *param);
 
-gchar *g_mime_param_to_string (GMimeParam *param);
+GMimeParam *g_mime_param_append (GMimeParam *params, const char *name, const char *value);
+GMimeParam *g_mime_param_append_param (GMimeParam *params, GMimeParam *param);
+
+void g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *string);
 
 #ifdef __cplusplus
 }

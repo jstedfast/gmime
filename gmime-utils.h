@@ -45,14 +45,14 @@ typedef enum {
 #define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 
-time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
-gchar *g_mime_utils_header_format_date (time_t time, gint offset);
+time_t g_mime_utils_header_decode_date (const char *in, int *saveoffset);
+char  *g_mime_utils_header_format_date (time_t time, int offset);
 
-gchar *g_mime_utils_header_fold (const gchar *in);
-gchar *g_mime_utils_header_printf (const gchar *format, ...);
+char  *g_mime_utils_header_fold (const char *in);
+char  *g_mime_utils_header_printf (const char *format, ...);
 
-gchar *g_mime_utils_quote_string (const gchar *string);
-void   g_mime_utils_unquote_string (gchar *string);
+char  *g_mime_utils_quote_string (const char *string);
+void   g_mime_utils_unquote_string (char *string);
 
 /* encoding decision making utilities ;-) */
 gboolean g_mime_utils_text_is_8bit (const guchar *text, guint len);

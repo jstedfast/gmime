@@ -20,6 +20,7 @@ libgmime_la_SOURCES = 		\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
+	gmime-disposition.c	\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
 	gmime-filter-crlf.c	\
@@ -47,6 +48,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-charset.h		\
 	gmime-content-type.h	\
 	gmime-data-wrapper.h	\
+	gmime-disposition.h	\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-crlf.h	\

@@ -73,6 +73,7 @@ test_multipart (void)
 	html_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "html");
 	g_mime_part_set_content_type (html_part, mime_type);
+	g_mime_part_set_filename (html_part, "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html");
 	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
 	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>",
 				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
@@ -397,15 +398,15 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
-	test_date ();
+	/*test_date ();
 	
-	test_onepart ();
+	  test_onepart ();*/
 	
 	test_multipart ();
 	
-	test_encodings ();
+	/*test_encodings ();
 	
-	test_addresses ();
+	  test_addresses ();*/
 	
 	return 0;
 }

@@ -1,3 +1,57 @@
+2001-11-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 0.7.3
+
+	* gmime-param.c: GMimeParam is now a linked list of parameters
+	rather than a single name/value pair.
+	(g_mime_param_new_from_string): Now returns a parameter list based
+	on the input string rather than only returning a single parameter
+	name/value pair. Also updated to handle rfc2184 encoded
+	parameters.
+	(g_mime_param_destroy): Destroy the linked list of params.
+	(g_mime_param_append): Append a new parameter.
+	(g_mime_param_append_param): Append a new parameter object.
+	(g_mime_param_write_to_string): New function (which replaces
+	g_mime_param_to_string) which correctly encodes (either by quoting
+	the value or rfc2184 encoding it) the list of parameters and
+	optionally folds them suitable for header wrapping.
+
+	* gmime-disposition.[c,h]: New sources files to handle
+	parsing/generating Content-Disposition headers.
+
+	* gmime-part.c (g_mime_part_destroy): Updated to use
+	g_mime_disposition_destroy.
+	(g_mime_part_set_content_disposition_object): New function for
+	setting the disposition object on a mime part.
+	(g_mime_part_set_content_disposition): Updated to use
+	g_mime_disposition_set.
+	(g_mime_part_get_content_disposition): Updated to use
+	g_mime_disposition_get.
+	(g_mime_part_add_content_disposition_parameter): Updated to use
+	g_mime_disposition_add_parameter.
+	(g_mime_part_get_content_disposition_parameter): Updated to use
+	g_mime_disposition_get_parameter.
+	(g_mime_part_set_filename): Updated to use
+	g_mime_disposition_add_parameter.
+	(g_mime_part_get_filename): Updated to use
+	g_mime_disposition_get_parameter.
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string): Use
+	the gmime-param code to parse any Content-Type parameters.
+	(g_mime_content_type_destroy): Updated to use
+	g_mime_param_destroy.
+	(g_mime_content_type_add_parameter): Updated to use g_mime_param
+	functions.
+
+	* gmime-utils.c (g_mime_utils_header_fold): Fixed a small header
+	folding bug.
+
+	* gmime-parser.c (parse_content_headers): Updated to use the
+	GMimeDisposition parser.
+
+	* pan-mime-parser.c (parse_content_headers): Updated to use the
+	GMimeDisposition parser.
+
 2001-11-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 0.7.2 due to the change-over to

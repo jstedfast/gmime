@@ -25,9 +25,20 @@
 #endif
 
 #include "gmime-param.h"
+#include "gmime-table-private.h"
+#include "gmime-charset.h"
 #include "gmime-utils.h"
-#include <string.h>
+#include "strlib.h"
 #include <ctype.h>
+
+
+#define d(x)
+#define w(x)
+
+static unsigned char tohex[16] = {
+	'0', '1', '2', '3', '4', '5', '6', '7',
+	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
+};
 
 
 /**
@@ -38,12 +49,13 @@
  * Returns a new paramter structure.
  **/
 GMimeParam *
-g_mime_param_new (const gchar *name, const gchar *value)
+g_mime_param_new (const char *name, const char *value)
 {
 	GMimeParam *param;
 	
 	param = g_new (GMimeParam, 1);
 	
+	param->next = NULL;
 	param->name = g_strdup (name);
 	param->value = g_strdup (value);
 	
@@ -51,52 +63,416 @@ g_mime_param_new (const gchar *name, const gchar *value)
 }
 
 
-/**
- * g_mime_param_new_from_string: Create a new MIME Param object
- * @string: string to parse into a GMimeParam structure
- *
- * Returns a GMimeParam structure based on #string.
- **/
-GMimeParam *
-g_mime_param_new_from_string (const gchar *string)
+#define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
+
+static char *
+hex_decode (const char *in, int len)
 {
-	GMimeParam *param;
-	gchar *name, *value;
-	gchar *ptr, *eptr;
+	register unsigned char *inptr, *outptr;
+	const unsigned char *inend;
+	char *outbuf;
 	
-	for (eptr = (gchar *) string; *eptr && *eptr != '='; eptr++);
-	name = g_strndup (string, (gint) (eptr - string));
-	g_strstrip (name);
+	inend = (const unsigned char *) in + len;
 	
-	/* skip any whitespace */
-	for (ptr = eptr + 1; *ptr && isspace ((int)*ptr); ptr++);
+	outptr = outbuf = g_malloc (len);
 	
-	if (*ptr == '"') {
-		/* value is in quotes */
-		value = ptr + 1;
-		for (eptr = value; *eptr; eptr++)
-			if (*eptr == '"' && *(eptr - 1) != '\\')
-				break;
-		value = g_strndup (value, (gint) (eptr - value));
-		g_strstrip (value);
-		g_mime_utils_unquote_string (value);
-	} else {
-		/* value is not in quotes */
-		value = g_strdup (ptr);
-		g_strstrip (value);
+	inptr = (unsigned char *) in;
+	while (inptr < inend) {
+		if (*inptr == '%') {
+			if (isxdigit (inptr[1]) && isxdigit (inptr[2])) {
+				*outptr++ = HEXVAL (inptr[1]) * 16 + HEXVAL (inptr[2]);
+				inptr += 3;
+			} else
+				*outptr++ = *inptr++;
+		} else
+			*outptr++ = *inptr++;
 	}
 	
-	param = g_mime_param_new (name, value);
-	g_free (name);
-	g_free (value);
+	*outptr = '\0';
 	
-	return param;
+	return outbuf;
+}
+
+/* an rfc2184 encoded string looks something like:
+ * us-ascii'en'This%20is%20even%20more%20
+ */
+static char *
+rfc2184_decode (const char *in, int len)
+{
+	const char *inptr = in;
+	const char *inend = in + len;
+	const char *charset;
+	char *decoded = NULL;
+	char *encoding;
+	
+	/* skips to the end of the charset / beginning of the locale */
+	inptr = memchr (inptr, '\'', len);
+	if (!inptr)
+		return NULL;
+	
+#if 0
+	/* someday we'll need to do something with the charset... */
+	encoding = g_strndup (in, inptr - in);
+	charset = g_mime_iconv_charset_name (encoding);
+	g_free (encoding);
+#endif
+	
+	/* skip to the end of the locale */
+	inptr = memchr (inptr + 1, '\'', inend - inptr - 1);
+	if (!inptr)
+		return NULL;
+	
+	inptr++;
+	if (inptr < inend)
+		decoded = hex_decode (inptr, inend - inptr);
+	
+	return decoded;
+}
+
+static void
+decode_lwsp (const char **in)
+{
+	const char *inptr = *in;
+	
+	while (*inptr && (*inptr == '(' || is_lwsp (*inptr))) {
+		while (*inptr && is_lwsp (*inptr))
+			inptr++;
+		
+		/* skip over any comments */
+		if (*inptr == '(') {
+			int depth = 1;
+			
+			inptr++;
+			while (*inptr && depth) {
+				if (*inptr == '\\' && *(inptr + 1))
+					inptr++;
+				else if (*inptr == '(')
+					depth++;
+				else if (*inptr == ')')
+					depth--;
+				
+				inptr++;
+			}
+		}
+	}
+	
+	*in = inptr;
+}
+
+static int
+decode_int (const char **in)
+{
+	const char *inptr = *in;
+	int n = 0;
+	
+	decode_lwsp (&inptr);
+	
+	while (isdigit ((int) *inptr)) {
+		n = n * 10 + (*inptr - '0');
+		inptr++;
+	}
+	
+	*in = inptr;
+	
+	return n;
+}
+
+static char *
+decode_quoted_string (const char **in)
+{
+	const char *start, *inptr = *in;
+	char *out = NULL;
+	
+	decode_lwsp (&inptr);
+	if (*inptr == '"') {
+		start = inptr++;
+		
+		while (*inptr && *inptr != '"') {
+			if (*inptr++ == '\\')
+				inptr++;
+		}
+		
+		if (*inptr == '"') {
+			start++;
+			out = g_strndup (start, inptr - start);
+			inptr++;
+		} else {
+			/* string wasn't properly quoted */
+			out = g_strndup (start, inptr - start);
+		}
+	}
+	
+	*in = inptr;
+	
+	return out;
+}
+
+static char *
+decode_token (const char **in)
+{
+	const char *inptr = *in;
+	const char *start;
+	
+	decode_lwsp (&inptr);
+	
+	start = inptr;
+	while (is_ttoken (*inptr))
+		inptr++;
+	if (inptr > start) {
+		*in = inptr;
+		return g_strndup (start, inptr - start);
+	} else {
+		return NULL;
+	}
+}
+
+static char *
+decode_value (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	
+	if (*inptr == '"') {
+		return decode_quoted_string (in);
+	} else if (is_ttoken (*inptr)) {
+		return decode_token (in);
+	}
+	
+	return NULL;
+}
+
+/* This function is basically the same as decode_token()
+ * except that it will not accept *'s which have a special
+ * meaning for rfc2184 params */
+static char *
+decode_param_token (const char **in)
+{
+	const char *inptr = *in;
+	const char *start;
+	
+	decode_lwsp (&inptr);
+	
+	start = inptr;
+	while (is_ttoken (*inptr) && *inptr != '*')
+		inptr++;
+	if (inptr > start) {
+		*in = inptr;
+		return g_strndup (start, inptr - start);
+	} else {
+		return NULL;
+	}
+}
+
+static gboolean
+decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *value_is_encoded)
+{
+	gboolean is_rfc2184 = FALSE;
+	const char *inptr = *in;
+	char *param;
+	
+	*value_is_encoded = FALSE;
+	*part = -1;
+	
+	param = decode_param_token (&inptr);
+	
+	decode_lwsp (&inptr);
+	
+	if (*inptr == '*') {
+		is_rfc2184 = TRUE;
+		inptr++;
+		
+		decode_lwsp (&inptr);
+		if (*inptr == '=') {
+			/* form := param*=value */
+			if (value_is_encoded)
+				*value_is_encoded = TRUE;
+		} else {
+			/* form := param*#=value or param*#*=value */
+			*part = decode_int (&inptr);
+			
+			decode_lwsp (&inptr);
+			if (*inptr == '*') {
+				/* form := param*#*=value */
+				if (value_is_encoded)
+					*value_is_encoded = TRUE;
+				inptr++;
+				decode_lwsp (&inptr);
+			}
+		}
+	}
+	
+	if (paramp)
+		*paramp = param;
+	
+	if (param)
+		*in = inptr;
+	
+	return is_rfc2184;
+}
+
+static int
+decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc2184_param)
+{
+	gboolean is_rfc2184_encoded = FALSE;
+	gboolean is_rfc2184 = FALSE;
+	const char *inptr = *in;
+	char *param, *value = NULL;
+	int rfc2184_part = -1;
+	
+	*is_rfc2184_param = FALSE;
+	
+	is_rfc2184 = decode_rfc2184_param (&inptr, &param, &rfc2184_part,
+					   &is_rfc2184_encoded);
+	
+	if (*inptr == '=') {
+		inptr++;
+		value = decode_value (&inptr);
+		
+		if (is_rfc2184) {
+			/* We have ourselves an rfc2184 parameter */
+			if (rfc2184_part == -1) {
+				/* rfc2184 allows the value to be broken into
+				 * multiple parts - this isn't one of them so
+				 * it is safe to decode it.
+				 */
+				char *val;
+				
+				val = rfc2184_decode (value, strlen (value));
+				if (val) {
+					g_free (value);
+					value = val;
+				}
+			} else {
+				/* Since we are expecting to find the rest of
+				 * this paramter value later, let our caller know.
+				 */
+				*is_rfc2184_param = TRUE;
+			}
+		} else if (value && !strncmp (value, "=?", 2)) {
+			/* We have a broken param value that is rfc2047 encoded.
+			 * Since both Outlook and Netscape/Mozilla do this, we
+			 * should handle this case.
+			 */
+			char *val;
+			
+			val = g_mime_utils_8bit_header_decode (value);
+			if (val) {
+				g_free (value);
+				value = val;
+			}
+		}
+	}
+	
+	if (param && value) {
+		*paramp = param;
+		*valuep = value;
+		*in = inptr;
+		return 0;
+	} else {
+		g_free (param);
+		g_free (value);
+		return 1;
+	}
+}
+
+static GMimeParam *
+decode_param_list (const char **in)
+{
+	const char *inptr = *in;
+	GMimeParam *head = NULL, *tail = NULL;
+	gboolean last_was_rfc2184 = FALSE;
+	gboolean is_rfc2184 = FALSE;
+	
+	decode_lwsp (&inptr);
+	
+	do {
+		GMimeParam *param = NULL;
+		char *name, *value;
+		
+		/* invalid format? */
+		if (decode_param (&inptr, &name, &value, &is_rfc2184) != 0)
+			break;
+		
+		if (is_rfc2184 && tail && !strcasecmp (name, tail->name)) {
+			/* rfc2184 allows a parameter to be broken into multiple parts
+			 * and it looks like we've found one. Append this value to the
+			 * last value.
+			 */
+			GString *gvalue;
+			
+			gvalue = g_string_new (tail->value);
+			g_string_append (gvalue, value);
+			g_free (tail->value);
+			g_free (value);
+			g_free (name);
+			
+			tail->value = gvalue->str;
+			g_string_free (gvalue, FALSE);
+		} else {
+			if (last_was_rfc2184) {
+				/* We've finished gathering the values for the last param
+				 * so it is now safe to decode it.
+				 */
+				char *val;
+				
+				val = rfc2184_decode (tail->value, strlen (tail->value));
+				if (val) {
+					g_free (tail->value);
+					tail->value = val;
+				}
+			}
+			
+			param = g_mime_param_new (name, value);
+			if (head == NULL)
+				head = param;
+			if (tail)
+				tail->next = param;
+			tail = param;
+		}
+		
+		last_was_rfc2184 = is_rfc2184;
+		
+		decode_lwsp (&inptr);
+	} while (*inptr++ == ';');
+	
+	if (last_was_rfc2184) {
+		/* We've finished gathering the values for the last param
+		 * so it is now safe to decode it.
+		 */
+		char *val;
+		
+		val = rfc2184_decode (tail->value, strlen (tail->value));
+		if (val) {
+			g_free (tail->value);
+			tail->value = val;
+		}
+	}
+	
+	*in = inptr;
+	
+	return head;
+}
+
+
+/**
+ * g_mime_param_new_from_string: Create a new MIME Param object
+ * @string: input string
+ *
+ * Returns a GMimeParam structure based on @string.
+ **/
+GMimeParam *
+g_mime_param_new_from_string (const char *string)
+{
+	g_return_val_if_fail (string != NULL, NULL);
+	
+	return decode_param_list (&string);
 }
 
 
 /**
  * g_mime_param_destroy: Destroy the MIME Param
- * @param: Mime param to destroy
+ * @param: Mime param list to destroy
  *
  * Releases all memory used by this mime param back to the Operating
  * System.
@@ -104,32 +480,281 @@ g_mime_param_new_from_string (const gchar *string)
 void
 g_mime_param_destroy (GMimeParam *param)
 {
-	g_return_if_fail (param != NULL);
+	GMimeParam *next;
 	
-	g_free (param->name);
-	g_free (param->value);
-	g_free (param);
+	while (param) {
+		next = param->next;
+		g_free (param->name);
+		g_free (param->value);
+		g_free (param);
+		param = next;
+	}
 }
 
 
 /**
- * g_mime_param_to_string: Write the MIME Param to a string
- * @param: MIME Param
+ * g_mime_param_append:
+ * @params: param list
+ * @name: new param name
+ * @value: new param value
  *
- * Returns an allocated string containing the MIME Param in the form:
- * name="value"
+ * Returns a param list with the new param of name @name and value
+ * @value appended to the list of params @params.
  **/
-gchar *
-g_mime_param_to_string (GMimeParam *param)
+GMimeParam *
+g_mime_param_append (GMimeParam *params, const char *name, const char *value)
 {
-	gchar *ret, *val;
+	GMimeParam *param, *p;
 	
-	g_return_val_if_fail (param != NULL, NULL);
+	g_return_val_if_fail (name != NULL, params);
+	g_return_val_if_fail (value != NULL, params);
 	
-	val = g_mime_utils_quote_string (param->value);
+	param = g_mime_param_new (name, value);
+	if (params) {
+		p = params;
+		while (p->next)
+			p = p->next;
+		p->next = param;
+	} else
+		params = param;
 	
-	ret = g_strdup_printf ("%s=%s", param->name, val);
-	g_free (val);
+	return params;
+}
+
+
+/**
+ * g_mime_param_append_param:
+ * @params: param list
+ * @param: param to append
+ *
+ * Returns a param list with the new param @param appended to the list
+ * of params @params.
+ **/
+GMimeParam *
+g_mime_param_append_param (GMimeParam *params, GMimeParam *param)
+{
+	GMimeParam *p;
 	
-	return ret;
+	g_return_val_if_fail (param != NULL, params);
+	
+	if (params) {
+		p = params;
+		while (p->next)
+			p = p->next;
+		p->next = param;
+	} else
+		params = param;
+	
+	return params;
+}
+
+/* FIXME: I wrote this in a quick & dirty fasion - it may not be 100% correct */
+static char *
+encode_param (const unsigned char *in, gboolean *encoded)
+{
+	const unsigned char *inptr;
+	char *outstr, *charset;
+	int encoding;
+	GString *out;
+	
+	*encoded = FALSE;
+	
+	g_return_val_if_fail (in != NULL, NULL);
+	
+	for (inptr = in; *inptr && inptr - in < GMIME_FOLD_LEN; inptr++)
+		if (*inptr > 127)
+			break;
+	
+	if (*inptr == '\0')
+		return g_strdup (in);
+	
+	out = g_string_new ("");
+	inptr = in;
+	encoding = 0;
+	while (inptr && *inptr) {
+		unsigned int c = *inptr++ & 0xff;
+		
+		if (c > 127 && c < 256) {
+			encoding = MAX (encoding, 1);
+			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
+		} else if (is_lwsp (c) || !(gmime_special_table[c] & IS_ESAFE)) {
+			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
+		} else {
+			g_string_append_c (out, c);
+		}
+	}
+	
+	if (encoding) {
+		charset = g_strdup_printf ("%s''", g_mime_charset_locale_name ());
+		g_string_prepend (out, charset);
+		g_free (charset);
+	} else {
+		g_string_prepend (out, "iso-8859-1''");
+	}
+	
+	outstr = out->str;
+	g_string_free (out, FALSE);
+	*encoded = TRUE;
+	
+	return outstr;
+}
+
+static void
+g_string_append_len_quoted (GString *out, const char *in, size_t len)
+{
+	const char *inptr;
+	char *qstring;
+	
+	g_string_append_c (out, '"');
+	
+	for (inptr = in; *inptr; inptr++) {
+		if ((*inptr == '"') || *inptr == '\\')
+			g_string_append_c (out, '\\');
+		
+		g_string_append_c (out, *inptr);
+	}
+	
+	g_string_append_c (out, '"');
+}
+
+static void
+g_string_append_len (GString *out, const char *in, size_t len)
+{
+	char *buf;
+	
+	buf = alloca (len + 1);
+	strlcpy (buf, in, len);
+	
+	g_string_append (out, buf);
+}
+
+static void
+param_list_format (GString *out, GMimeParam *param, gboolean fold)
+{
+	int used = out->len;
+	
+	while (param) {
+		gboolean encoded = FALSE;
+		gboolean quote = FALSE;
+		int here = out->len;
+		int nlen, vlen;
+		char *value;
+		
+		if (!param->value) {
+			param = param->next;
+			continue;
+		}
+		
+		value = encode_param (param->value, &encoded);
+		if (!value) {
+			w(g_warning ("appending parameter %s=%s violates rfc2184",
+				     param->name, param->value));
+			value = g_strdup (param->value);
+		}
+		
+		if (!encoded) {
+			char *ch;
+			
+			for (ch = value; *ch; ch++) {
+				if (is_tspecial (*ch) || is_lwsp (*ch))
+					break;
+			}
+			
+			quote = ch && *ch;
+		}
+		
+		nlen = strlen (param->name);
+		vlen = strlen (value);
+		
+		if (used + nlen + vlen > GMIME_FOLD_LEN - 8) {
+			if (fold)
+				g_string_append (out, ";\n\t");
+			else
+				g_string_append (out, "; ");
+			
+			here = out->len;
+			used = 0;
+		} else
+			out = g_string_append (out, "; ");
+		
+		if (nlen + vlen > GMIME_FOLD_LEN - 10) {
+			/* we need to do special rfc2184 parameter wrapping */
+			int maxlen = GMIME_FOLD_LEN - (nlen + 10);
+			char *inptr, *inend;
+			int i = 0;
+			
+			inptr = value;
+			inend = value + vlen;
+			
+			while (inptr < inend) {
+				char *ptr = inptr + MIN (inend - inptr, maxlen);
+				char *buf;
+				
+				if (encoded && ptr < inend) {
+					/* be careful not to break an encoded char (ie %20) */
+					char *q = ptr;
+					int j = 2;
+					
+					for ( ; j > 0 && q > inptr && *q != '%'; j--, q--);
+					if (*q == '%')
+						ptr = q;
+				}
+				
+				if (i != 0) {
+					if (fold)
+						g_string_append (out, ";\n\t");
+					else
+						g_string_append (out, "; ");
+					
+					here = out->len;
+					used = 0;
+				}
+				
+				g_string_sprintfa (out, "%s*%d%s=", param->name, i++, encoded ? "*" : "");
+				if (encoded || !quote)
+					g_string_append_len (out, inptr, ptr - inptr);
+				else
+					g_string_append_len_quoted (out, inptr, ptr - inptr);
+				
+				d(printf ("wrote: %s\n", out->str + here));
+				
+				used += (out->len - here);
+				
+				inptr = ptr;
+			}
+		} else {
+			g_string_sprintfa (out, "%s%s=", param->name, encoded ? "*" : "");
+			
+			if (encoded || !quote)
+				g_string_append_len (out, value, vlen);
+			else
+				g_string_append_len_quoted (out, value, vlen);
+			
+			used += (out->len - here);
+		}
+		
+		g_free (value);
+		
+		param = param->next;
+	}
+}
+
+
+/**
+ * g_mime_param_write_to_string:
+ * @param: MIME Param list
+ * @fold: specifies whether or not to fold headers
+ * @string: output string
+ *
+ * Assumes the output string contains only the Content-* header and
+ * it's immediate value.
+ *
+ * Writes the params out to the string @string.
+ **/
+void
+g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *string)
+{
+	g_return_if_fail (string != NULL);
+	
+	param_list_format (string, param, fold);
 }

@@ -26,7 +26,7 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
 #include <glib.h>
 #include <stdio.h>
@@ -34,19 +34,10 @@ extern "C" {
 #include "gmime-param.h"
 #include "gmime-header.h"
 #include "gmime-content-type.h"
+#include "gmime-disposition.h"
 #include "gmime-data-wrapper.h"
 #include "gmime-stream.h"
 
-
-typedef struct _GMimePartDispositionParam GMimePartDispositionParam;
-
-struct _GMimePartDisposition {
-	char *disposition;
-	GList *params;     /* of type GMimeParam */
-	GHashTable *param_hash;
-};
-
-typedef struct _GMimePartDisposition GMimePartDisposition;
 
 struct _GMimePart {
 	GMimeObject parent_object;
@@ -55,7 +46,7 @@ struct _GMimePart {
 	
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
-	GMimePartDisposition *disposition;
+	GMimeDisposition *disposition;
 	char *description;
 	char *content_id;
 	char *content_md5;
@@ -106,12 +97,13 @@ GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
 const char *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_encoding_from_string (const char *encoding);
 
+void g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition);
 void g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition);
 const char *g_mime_part_get_content_disposition (GMimePart *mime_part);
 
-void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *name,
+void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute,
 						    const char *value);
-const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *name);
+const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute);
 
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (const GMimePart *mime_part);

@@ -177,7 +177,8 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_CSPECIAL \"()\\\\\\r\"	           /* not in comments */\n");
 	printf ("#define CHARS_DSPECIAL \"[]\\\\\\r \\t\"         /* not in domains */\n");
 	printf ("#define CHARS_ESPECIAL \"()<>@,;:\\\"/[]?.=\"  /* encoded word specials (rfc2047 5.1) */\n");
-	printf ("#define CHARS_PSPECIAL \"!*+-/\"             /* encoded phrase specials (rfc2047 5.3) */\n");
+	printf ("#define CHARS_PSPECIAL \"!*+-/\"             /* encoded phrase specials (rfc2047 5.3) */\n\n");
+	printf ("#define GMIME_FOLD_LEN   76\n");
 	
 	return 0;
 }

@@ -45,8 +45,10 @@ static GMimeObject object_template = {
 };
 
 
-#define NEEDS_DECODING(encoding)  (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||        \
-				   ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
+#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||  \
+				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
+
+
 
 /**
  * g_mime_part_new: Create a new MIME Part object
@@ -125,31 +127,8 @@ g_mime_part_destroy (GMimePart *mime_part)
 	if (mime_part->mime_type)
 		g_mime_content_type_destroy (mime_part->mime_type);
 	
-	if (mime_part->disposition) {
-		g_free (mime_part->disposition->disposition);
-		
-		if (mime_part->disposition->param_hash)
-			g_hash_table_destroy (mime_part->disposition->param_hash);
-		
-		if (mime_part->disposition->params) {
-			GList *parameter;
-			
-			parameter = mime_part->disposition->params;
-			while (parameter) {
-				GMimeParam *param = parameter->data;
-				
-				g_free (param->name);
-				g_free (param->value);
-				g_free (param);
-				
-				parameter = parameter->next;
-			}
-			
-			g_list_free (mime_part->disposition->params);
-		}
-		
-		g_free (mime_part->disposition);
-	}
+	if (mime_part->disposition)
+		g_mime_disposition_destroy (mime_part->disposition);
 	
 	if (mime_part->children) {
 		GList *child;
@@ -434,46 +413,48 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 
 
 static void
+unfold (char *str)
+{
+	register char *s, *d;
+	
+	for (d = s = str; *s; s++) {
+		if (*s != '\n') {
+			if (*s == '\t')
+				*d++ = ' ';
+			else
+				*d++ = *s;
+		}
+	}
+	
+	*d = '\0';
+}
+
+static void
 sync_content_type (GMimePart *mime_part)
 {
 	GMimeContentType *mime_type;
+	GMimeParam *params;
 	GString *string;
-	GList *params;
-	char *type;
+	char *type, *p;
 	
 	mime_type = mime_part->mime_type;
 	
-	type = g_mime_content_type_to_string (mime_type);
+	string = g_string_new ("Content-Type: ");
 	
-	string = g_string_new (type);
+	type = g_mime_content_type_to_string (mime_type);
+	g_string_append (string, type);
 	g_free (type);
 	
 	params = mime_type->params;
 	if (params)
-		g_string_append_c (string, ';');
+		g_mime_param_write_to_string (params, FALSE, string);
 	
-	while (params) {
-		GMimeParam *param;
-		char *buf;
-		
-		param = params->data;
-		buf = g_mime_param_to_string (param);
-		g_string_append_c (string, ' ');
-		g_string_append (string, buf);
-		g_free (buf);
-		
-		params = params->next;
-		if (params)
-			g_string_append_c (string, ';');
-		else
-			break;
-	}
-	
-	type = string->str;
+	p = string->str;
 	g_string_free (string, FALSE);
 	
+	type = p + strlen ("Content-Type: ");
 	g_mime_header_set (mime_part->headers, "Content-Type", type);
-	g_free (type);
+	g_free (p);
 }
 
 /**
@@ -609,48 +590,39 @@ g_mime_part_encoding_from_string (const char *encoding)
 static void
 sync_content_disposition (GMimePart *mime_part)
 {
-	GString *string;
-	GList *params;
-	char *str;
+	char *str, *buf;
 	
-	params = mime_part->disposition->params;
-	
-	if (mime_part->disposition->disposition && *mime_part->disposition->disposition)
-		string = g_string_new (mime_part->disposition->disposition);
-	else
-		string = g_string_new ("");
-	
-	if (params)
-		g_string_append_c (string, ';');
-	
-	while (params) {
-		GMimeParam *param;
-		char *buf;
-		
-		param = params->data;
-		buf = g_mime_param_to_string (param);
-		g_string_append_c (string, ' ');
-		g_string_append (string, buf);
-		g_free (buf);
-		
-		params = params->next;
-		if (params)
-			g_string_append_c (string, ';');
-		else
-			break;
-	}
-	
-	str = string->str;
-	g_string_free (string, FALSE);
-	
+	str = g_mime_disposition_header (mime_part->disposition, FALSE);
 	g_mime_header_set (mime_part->headers, "Content-Disposition", str);
 	g_free (str);
 }
 
+
+/**
+ * g_mime_part_set_content_disposition_object: Set the content disposition
+ * @mime_part: Mime part
+ * @disposition: disposition object
+ *
+ * Set the content disposition for the specified mime part
+ **/
+void
+g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition)
+{
+	g_return_if_fail (GMIME_IS_PART (mime_part));
+	
+	if (mime_part->disposition)
+		g_mime_disposition_destroy (mime_part->disposition);
+	
+	mime_part->disposition = disposition;
+	
+	sync_content_disposition (mime_part);
+}
+
+
 /**
  * g_mime_part_set_content_disposition: Set the content disposition
  * @mime_part: Mime part
- * @disposition: content disposition
+ * @disposition: disposition
  *
  * Set the content disposition for the specified mime part
  **/
@@ -659,16 +631,10 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const char *dispositi
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->disposition) {
-		g_free (mime_part->disposition->disposition);
-		mime_part->disposition->disposition = g_strdup (disposition);
-	} else {
-		mime_part->disposition = g_new0 (GMimePartDisposition, 1);
-		mime_part->disposition->disposition = g_strdup (disposition);
-		
-		/* init the parameter lookup table */
-		mime_part->disposition->param_hash = g_hash_table_new (g_str_hash, g_str_equal);
-	}
+	if (!mime_part->disposition)
+		mime_part->disposition = g_mime_disposition_new (NULL);
+	
+	g_mime_disposition_set (mime_part->disposition, disposition);
 	
 	sync_content_disposition (mime_part);
 }
@@ -686,7 +652,7 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
 	if (mime_part->disposition)
-		return mime_part->disposition->disposition;
+		return g_mime_disposition_get (mime_part->disposition);
 	
 	return NULL;
 }
@@ -703,29 +669,14 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 void
 g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *name, const char *value)
 {
-	GMimeParam *param;
+	GMimeParam *param = NULL;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)
-		g_mime_part_set_content_disposition (mime_part, "");
+		mime_part->disposition = g_mime_disposition_new (GMIME_DISPOSITION_ATTACHMENT);
 	
-	if (mime_part->disposition->params) {
-		/* lets look to see if we've set "name" */
-		param = g_hash_table_lookup (mime_part->disposition->param_hash, name);
-		if (param) {
-			/* why yes, yes we have... */
-			g_hash_table_remove (mime_part->disposition->param_hash, name);
-			mime_part->disposition->params = g_list_remove (mime_part->disposition->params, param);
-			g_free (param->name);
-			g_free (param->value);
-			g_free (param);
-		}
-	}
-	
-	param = g_mime_param_new (name, value);
-	mime_part->disposition->params = g_list_append (mime_part->disposition->params, param);
-	g_hash_table_insert (mime_part->disposition->param_hash, param->name, param);
+	g_mime_disposition_add_parameter (mime_part->disposition, name, value);
 	
 	sync_content_disposition (mime_part);
 }
@@ -746,12 +697,10 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	if (!mime_part->disposition || !mime_part->disposition->param_hash)
+	if (!mime_part->disposition)
 		return NULL;
 	
-	param = g_hash_table_lookup (mime_part->disposition->param_hash, name);
-	
-	return param->value;
+	return g_mime_disposition_get_parameter (mime_part->disposition, name);
 }
 
 
@@ -766,29 +715,14 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
-	GMimeParam *param;
+	GMimeParam *param = NULL;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)
-		g_mime_part_set_content_disposition (mime_part, "");
+		mime_part->disposition = g_mime_disposition_new (GMIME_DISPOSITION_ATTACHMENT);
 	
-	if (mime_part->disposition->params) {
-		/* lets look to see if we've set "filename" */
-		param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
-		if (param) {
-			/* why yes, yes we have... */
-			g_hash_table_remove (mime_part->disposition->param_hash, "filename");
-			mime_part->disposition->params = g_list_remove (mime_part->disposition->params, param);
-			g_free (param->name);
-			g_free (param->value);
-			g_free (param);
-		}
-	}
-	
-	param = g_mime_param_new ("filename", filename);
-	mime_part->disposition->params = g_list_append (mime_part->disposition->params, param);
-	g_hash_table_insert (mime_part->disposition->param_hash, param->name, param);
+	g_mime_disposition_add_parameter (mime_part->disposition, "filename", filename);
 	
 	g_mime_content_type_add_parameter (mime_part->mime_type, "name", filename);
 	
@@ -808,19 +742,19 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 const char *
 g_mime_part_get_filename (const GMimePart *mime_part)
 {
-	GMimeParam *param = NULL;
+	const char *filename = NULL;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	if (mime_part->disposition && mime_part->disposition->param_hash)
-		param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
+	if (mime_part->disposition)
+		filename = g_mime_disposition_get_parameter (mime_part->disposition, "filename");
 	
-	if (!param || !param->value) {
+	if (!filename) {
 		/* check the "name" param in the content-type */
 		return g_mime_content_type_get_parameter (mime_part->mime_type, "name");
 	}
 	
-	return param->value;
+	return filename;
 }
 
 
