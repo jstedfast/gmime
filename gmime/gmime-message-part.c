@@ -161,7 +161,7 @@ message_part_remove_header (GMimeObject *object, const char *header)
            doesn't belong on a message part */
 	
 	if (!g_strncasecmp ("Content-", header, 8))
-		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+		GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static void

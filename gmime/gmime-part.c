@@ -257,10 +257,10 @@ static void
 mime_part_remove_header (GMimeObject *object, const char *header)
 {
 	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a mime part */
+	   doesn't belong on a mime part */
 	
 	if (!g_strncasecmp ("Content-", header, 8))
-		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+		GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static char *
