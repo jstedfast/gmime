@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-fs">
+<refentry id="gmime-gmime-stream-fs" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-stream-fs</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -59,7 +59,6 @@
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -75,7 +74,6 @@
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

@@ -1,0 +1,63 @@
+<refentry id="gmime-gmime-filter-charset" revision="2 Mar 2002">
+<refmeta>
+<refentrytitle>gmime-filter-charset</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter-charset</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-charset-new">g_mime_filter_charset_new</link>      (const char *from_charset,
+                                             const char *to_charset);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-filter-charset-new">g_mime_filter_charset_new ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_charset_new      (const char *from_charset,
+                                             const char *to_charset);</programlisting>
+<para>
+Creates a new GMimeFilterCharset filter.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>from_charset</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>to_charset</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new charset filter.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

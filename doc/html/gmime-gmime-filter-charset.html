@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-filter-crlf</TITLE
+>gmime-filter-charset</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-chomp"
-HREF="gmime-gmime-filter-chomp.html"><LINK
+TITLE="gmime-filter-basic"
+HREF="gmime-gmime-filter-basic.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-from"
-HREF="gmime-gmime-filter-from.html"></HEAD
+TITLE="gmime-filter-chomp"
+HREF="gmime-gmime-filter-chomp.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-chomp.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-from.html"
+HREF="gmime-gmime-filter-chomp.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-FILTER-CRLF"
->gmime-filter-crlf</A
+NAME="GMIME-GMIME-FILTER-CHARSET"
+>gmime-filter-charset</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1927"
+NAME="AEN1851"
 ></A
 ><H2
 >Name</H2
->gmime-filter-crlf&nbsp;--&nbsp;</DIV
+>gmime-filter-charset&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1930"
+NAME="AEN1854"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,28 +146,14 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-enum        <A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
->GMimeFilterCRLFDirection</A
->;
-enum        <A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
->GMimeFilterCRLFMode</A
->;
 <A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
 >* <A
-HREF="gmime-gmime-filter-crlf.html#G-MIME-FILTER-CRLF-NEW"
->g_mime_filter_crlf_new</A
->         (<A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
->GMimeFilterCRLFDirection</A
-> direction,
-                                             <A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
->GMimeFilterCRLFMode</A
-> mode);</PRE
+HREF="gmime-gmime-filter-charset.html#G-MIME-FILTER-CHARSET-NEW"
+>g_mime_filter_charset_new</A
+>      (const char *from_charset,
+                                             const char *to_charset);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -175,7 +161,7 @@ HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1939"
+NAME="AEN1859"
 ></A
 ><H2
 >Description</H2
@@ -185,78 +171,20 @@ NAME="AEN1939"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1942"
+NAME="AEN1862"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1944"
+NAME="AEN1864"
 ></A
 ><H3
 ><A
-NAME="GMIMEFILTERCRLFDIRECTION"
+NAME="G-MIME-FILTER-CHARSET-NEW"
 ></A
->enum GMimeFilterCRLFDirection</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_FILTER_CRLF_ENCODE,
-	GMIME_FILTER_CRLF_DECODE
-} GMimeFilterCRLFDirection;</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1949"
-></A
-><H3
-><A
-NAME="GMIMEFILTERCRLFMODE"
-></A
->enum GMimeFilterCRLFMode</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_FILTER_CRLF_MODE_CRLF_DOTS,
-	GMIME_FILTER_CRLF_MODE_CRLF_ONLY,
-} GMimeFilterCRLFMode;</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1954"
-></A
-><H3
-><A
-NAME="G-MIME-FILTER-CRLF-NEW"
-></A
->g_mime_filter_crlf_new ()</H3
+>g_mime_filter_charset_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -269,25 +197,19 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
->* g_mime_filter_crlf_new         (<A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
->GMimeFilterCRLFDirection</A
-> direction,
-                                             <A
-HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
->GMimeFilterCRLFMode</A
-> mode);</PRE
+>* g_mime_filter_charset_new      (const char *from_charset,
+                                             const char *to_charset);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeFilterCRLF filter.</P
+>Creates a new GMimeFilterCharset filter.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1963"
+NAME="AEN1871"
 ></A
 ><P
 ></P
@@ -307,14 +229,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->direction</I
+>from_charset</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> encode direction</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -324,14 +246,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->mode</I
+>to_charset</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> crlf or crlf &amp; dot mode</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -346,7 +268,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new crlf(/dot) filter.</TD
+>a new charset filter.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -370,7 +292,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-chomp.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -424,7 +346,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-from.html"
+HREF="gmime-gmime-filter-chomp.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -442,7 +364,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-chomp</B
+>gmime-filter-basic</B
 ></FONT
 ></TD
 ><TD
@@ -452,7 +374,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-from</B
+>gmime-filter-chomp</B
 ></FONT
 ></TD
 ></TR

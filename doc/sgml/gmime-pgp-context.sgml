@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-pgp-context">
+<refentry id="gmime-gmime-pgp-context" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-pgp-context</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -66,7 +66,6 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -83,7 +82,6 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -98,13 +96,10 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>prompt</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -163,23 +158,17 @@ verify, encrypt and decrypt streams.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>h</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -194,23 +183,17 @@ verify, encrypt and decrypt streams.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>h</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -225,17 +208,13 @@ verify, encrypt and decrypt streams.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>s</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -250,26 +229,19 @@ verify, encrypt and decrypt streams.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>s</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>u</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>r</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -284,17 +256,13 @@ verify, encrypt and decrypt streams.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>c</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>i</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>o</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>e</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

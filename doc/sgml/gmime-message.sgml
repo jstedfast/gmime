@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message">
+<refentry id="gmime-gmime-message" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -111,7 +111,6 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -127,7 +126,6 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <tbody>
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

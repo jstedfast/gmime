@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-cipher-context">
+<refentry id="gmime-gmime-cipher-context" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-cipher-context</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -49,6 +49,7 @@ int         <link linkend="g-mime-cipher-decrypt">g_mime_cipher_decrypt</link>  
                                              <link linkend="GMimeStream">GMimeStream</link> *istream,
                                              <link linkend="GMimeStream">GMimeStream</link> *ostream,
                                              <link linkend="GMimeException">GMimeException</link> *ex);
+
 void        <link linkend="g-mime-cipher-validity-init">g_mime_cipher_validity_init</link>     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
 <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-cipher-validity-new">g_mime_cipher_validity_new</link>
                                             (void);
@@ -59,7 +60,7 @@ void        <link linkend="g-mime-cipher-validity-free">g_mime_cipher_validity_f
 void        <link linkend="g-mime-cipher-validity-set-valid">g_mime_cipher_validity_set_valid</link>
                                             (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
                                              <link linkend="gboolean">gboolean</link> valid);
-char*       <link linkend="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description</link>
+const char* <link linkend="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description</link>
                                             (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
 void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher_validity_set_description</link>
                                             (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
@@ -94,7 +95,6 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -103,7 +103,8 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 	GMIME_CIPHER_HASH_DEFAULT,
 	GMIME_CIPHER_HASH_MD2,
 	GMIME_CIPHER_HASH_MD5,
-	GMIME_CIPHER_HASH_SHA1
+	GMIME_CIPHER_HASH_SHA1,
+	GMIME_CIPHER_HASH_RIPEMD160
 } GMimeCipherHash;
 </programlisting>
 <para>
@@ -465,7 +466,7 @@ Sets the validness on the validity structure.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description ()</title>
-<programlisting>char*       g_mime_cipher_validity_get_description
+<programlisting>const char* g_mime_cipher_validity_get_description
                                             (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
 <para>
 </para>

@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-param</TITLE
+>gmime-iconv-utils</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-html"
-HREF="gmime-gmime-filter-html.html"><LINK
+TITLE="gmime-iconv"
+HREF="gmime-gmime-iconv.html"><LINK
 REL="NEXT"
-TITLE="gmime-header"
-HREF="gmime-gmime-header.html"></HEAD
+TITLE="gmime-exception"
+HREF="gmime-gmime-exception.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-html.html"
+HREF="gmime-gmime-iconv.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-exception.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARAM"
->gmime-param</A
+NAME="GMIME-GMIME-ICONV-UTILS"
+>gmime-iconv-utils</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2113"
+NAME="AEN6428"
 ></A
 ><H2
 >Name</H2
->gmime-param&nbsp;--&nbsp;</DIV
+>gmime-iconv-utils&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2116"
+NAME="AEN6431"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,73 +146,52 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->;
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW"
->g_mime_param_new</A
->                (const char *name,
-                                             const char *value);
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW-FROM-STRING"
->g_mime_param_new_from_string</A
->    (const char *string);
-void        <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
->g_mime_param_destroy</A
->            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-APPEND"
->g_mime_param_append</A
->             (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *params,
-                                             const char *name,
-                                             const char *value);
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-APPEND-PARAM"
->g_mime_param_append_param</A
->       (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *params,
-                                             <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);
-void        <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-WRITE-TO-STRING"
->g_mime_param_write_to_string</A
->    (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param,
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-STRDUP"
+>g_mime_iconv_strdup</A
+>             (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd,
+                                             const char *string);
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-STRNDUP"
+>g_mime_iconv_strndup</A
+>            (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd,
+                                             const char *string,
                                              <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> fold,
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-UTF8-TO-LOCALE"
+>g_mime_iconv_utf8_to_locale</A
+>     (const char *string);
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-UTF8-TO-LOCALE-LENGTH"
+>g_mime_iconv_utf8_to_locale_length</A
+>
+                                            (const char *string,
                                              <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);</PRE
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-LOCALE-TO-UTF8"
+>g_mime_iconv_locale_to_utf8</A
+>     (const char *string);
+char*       <A
+HREF="gmime-gmime-iconv-utils.html#G-MIME-ICONV-LOCALE-TO-UTF8-LENGTH"
+>g_mime_iconv_locale_to_utf8_length</A
+>
+                                            (const char *string,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -220,7 +199,7 @@ HREF="GSTRING"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2137"
+NAME="AEN6445"
 ></A
 ><H2
 >Description</H2
@@ -230,20 +209,20 @@ NAME="AEN2137"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2140"
+NAME="AEN6448"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2142"
+NAME="AEN6450"
 ></A
 ><H3
 ><A
-NAME="GMIMEPARAM"
+NAME="G-MIME-ICONV-STRDUP"
 ></A
->struct GMimeParam</H3
+>g_mime_iconv_strdup ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -253,54 +232,25 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeParam {
-	struct _GMimeParam *next;
-	char *name;
-	char *value;
-};</PRE
+>char*       g_mime_iconv_strdup             (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd,
+                                             const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2147"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-NEW"
-></A
->g_mime_param_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new                (const char *name,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Creates a new GMimeParam node with name <TT
+>Allocates a new string buffer containing <TT
 CLASS="PARAMETER"
 ><I
->name</I
+>string</I
 ></TT
-> and value <TT
+> converted to
+the destination charset described in <TT
 CLASS="PARAMETER"
 ><I
->value</I
+>cd</I
 ></TT
 >.</P
 ><P
@@ -308,7 +258,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2156"
+NAME="AEN6459"
 ></A
 ><P
 ></P
@@ -328,98 +278,15 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->name</I
+>cd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter name</TD
+> conversion descriptor</TD
 ></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> parameter value</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a new paramter structure.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2173"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-NEW-FROM-STRING"
-></A
->g_mime_param_new_from_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new_from_string    (const char *string);</PRE
-></TD
-></TR
-></TABLE
-><P
->Creates a parameter list based on the input string.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2180"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -435,7 +302,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input string</TD
+> string in source charset</TD
 ></TR
 ><TR
 ><TD
@@ -450,12 +317,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeParam structure based on <TT
-CLASS="PARAMETER"
-><I
->string</I
-></TT
->.</TD
+>a new string buffer containing the original string
+converted to the new charset.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -466,13 +329,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2194"
+NAME="AEN6476"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-DESTROY"
+NAME="G-MIME-ICONV-STRNDUP"
 ></A
->g_mime_param_destroy ()</H3
+>g_mime_iconv_strndup ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -482,253 +345,35 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_param_destroy            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+>char*       g_mime_iconv_strndup            (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd,
+                                             const char *string,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Releases all memory used by this mime param back to the Operating
-System.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2201"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
+>Allocates a new string buffer containing the first <TT
 CLASS="PARAMETER"
 ><I
->param</I
+>n</I
 ></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> Mime param list to destroy</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2210"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-APPEND"
-></A
->g_mime_param_append ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_append             (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *params,
-                                             const char *name,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Appends a new parameter with name <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
-> and value <TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
-> to the
-parameter list <TT
-CLASS="PARAMETER"
-><I
->params</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2221"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->params</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> param list</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> new param name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> new param value</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a param list with the new param of name <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
-> and value
+> bytes of
 <TT
 CLASS="PARAMETER"
 ><I
->value</I
+>string</I
 ></TT
-> appended to the list of params <TT
+> converted to the destination charset as described by the
+conversion descriptor <TT
 CLASS="PARAMETER"
 ><I
->params</I
-></TT
->.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2245"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-APPEND-PARAM"
-></A
->g_mime_param_append_param ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_append_param       (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *params,
-                                             <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
-></TD
-></TR
-></TABLE
-><P
->Appends <TT
-CLASS="PARAMETER"
-><I
->param</I
-></TT
-> to the param list <TT
-CLASS="PARAMETER"
-><I
->params</I
+>cd</I
 ></TT
 >.</P
 ><P
@@ -736,7 +381,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2256"
+NAME="AEN6487"
 ></A
 ><P
 ></P
@@ -756,14 +401,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->params</I
+>cd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> param list</TD
+> conversion descriptor</TD
 ></TR
 ><TR
 ><TD
@@ -773,14 +418,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>string</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> param to append</TD
+> string in source charset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> number of bytes to convert</TD
 ></TR
 ><TR
 ><TD
@@ -795,16 +457,22 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a param list with the new param <TT
+>a new string buffer containing the first <TT
 CLASS="PARAMETER"
 ><I
->param</I
+>n</I
 ></TT
-> appended to the list
-of params <TT
+> bytes of
+<TT
 CLASS="PARAMETER"
 ><I
->params</I
+>string</I
+></TT
+> converted to the destination charset as described by the
+conversion descriptor <TT
+CLASS="PARAMETER"
+><I
+>cd</I
 ></TT
 >.</TD
 ></TR
@@ -817,13 +485,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2275"
+NAME="AEN6511"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-WRITE-TO-STRING"
+NAME="G-MIME-ICONV-UTF8-TO-LOCALE"
 ></A
->g_mime_param_write_to_string ()</H3
+>g_mime_iconv_utf8_to_locale ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -833,37 +501,24 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_param_write_to_string    (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> fold,
-                                             <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);</PRE
+>char*       g_mime_iconv_utf8_to_locale     (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Assumes the output string contains only the Content-* header and
-it's immediate value.</P
-><P
->Writes the params out to the string <TT
+>Allocates a new string buffer containing <TT
 CLASS="PARAMETER"
 ><I
 >string</I
 ></TT
->.</P
+> converted to the
+user's locale charset.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2286"
+NAME="AEN6518"
 ></A
 ><P
 ></P
@@ -883,32 +538,100 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>string</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Param list</TD
+> string in UTF-8 charset</TD
 ></TR
 ><TR
 ><TD
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
 ><I
->fold</I
-></TT
->&nbsp;:</TD
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> specifies whether or not to fold headers</TD
+>a new string buffer containing <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to the
+user's locale charset.</TD
 ></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6532"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV-UTF8-TO-LOCALE-LENGTH"
+></A
+>g_mime_iconv_utf8_to_locale_length ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       g_mime_iconv_utf8_to_locale_length
+                                            (const char *string,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Allocates a new string buffer containing the first <TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to the user's locale charset.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6541"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -924,7 +647,264 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output string</TD
+> string in UTF-8 charset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> number of bytes to convert</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new string buffer containing the first <TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to the user's locale charset.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6560"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV-LOCALE-TO-UTF8"
+></A
+>g_mime_iconv_locale_to_utf8 ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       g_mime_iconv_locale_to_utf8     (const char *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Allocates a new string buffer containing <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> in UTF-8.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6567"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> string in locale charset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new string buffer containing <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to UTF-8.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6581"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV-LOCALE-TO-UTF8-LENGTH"
+></A
+>g_mime_iconv_locale_to_utf8_length ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       g_mime_iconv_locale_to_utf8_length
+                                            (const char *string,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> n);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Allocates a new string buffer containing the first <TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to UTF-8.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6590"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> string in locale charset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> number of bytes to convert</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new string buffer containing the first <TT
+CLASS="PARAMETER"
+><I
+>n</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> converted to UTF-8.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -948,7 +928,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-html.html"
+HREF="gmime-gmime-iconv.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1002,7 +982,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-exception.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1020,7 +1000,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-html</B
+>gmime-iconv</B
 ></FONT
 ></TD
 ><TD
@@ -1030,7 +1010,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-header</B
+>gmime-exception</B
 ></FONT
 ></TD
 ></TR

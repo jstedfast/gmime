@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-stream-fs</TITLE
+>gmime-iconv</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-stream-file"
-HREF="gmime-gmime-stream-file.html"><LINK
+TITLE="gmime-charset"
+HREF="gmime-gmime-charset.html"><LINK
 REL="NEXT"
-TITLE="gmime-stream-mem"
-HREF="gmime-gmime-stream-mem.html"></HEAD
+TITLE="gmime-iconv-utils"
+HREF="gmime-gmime-iconv-utils.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream-file.html"
+HREF="gmime-gmime-charset.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-mem.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-STREAM-FS"
->gmime-stream-fs</A
+NAME="GMIME-GMIME-ICONV"
+>gmime-iconv</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN920"
+NAME="AEN6323"
 ></A
 ><H2
 >Name</H2
->gmime-stream-fs&nbsp;--&nbsp;</DIV
+>gmime-iconv&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN923"
+NAME="AEN6326"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,41 +146,29 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+void        <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-INIT"
+>g_mime_iconv_init</A
+>               (void);
+<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-OPEN"
+>g_mime_iconv_open</A
+>               (const char *to,
+                                             const char *from);
 #define     <A
-HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-TYPE-CAPS"
->GMIME_STREAM_FS_TYPE</A
->
-#define     <A
-HREF="gmime-gmime-stream-fs.html#GMIME-IS-STREAM-FS-CAPS"
->GMIME_IS_STREAM_FS</A
->              (stream)
-#define     <A
-HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-CAPS"
->GMIME_STREAM_FS</A
->                 (stream)
-<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* <A
-HREF="gmime-gmime-stream-fs.html#G-MIME-STREAM-FS-NEW"
->g_mime_stream_fs_new</A
->           (int fd);
-<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* <A
-HREF="gmime-gmime-stream-fs.html#G-MIME-STREAM-FS-NEW-WITH-BOUNDS"
->g_mime_stream_fs_new_with_bounds</A
->
-                                            (int fd,
-                                             <GTKDOCLINK
-HREF="OFF-T"
->off_t</GTKDOCLINK
-> start,
-                                             <GTKDOCLINK
-HREF="OFF-T"
->off_t</GTKDOCLINK
-> end);</PRE
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV"
+>g_mime_iconv</A
+>                    (cd,inbuf,inleft,outbuf,outleft)
+int         <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-CLOSE"
+>g_mime_iconv_close</A
+>              (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -188,7 +176,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN935"
+NAME="AEN6335"
 ></A
 ><H2
 >Description</H2
@@ -198,20 +186,20 @@ NAME="AEN935"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN938"
+NAME="AEN6338"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN940"
+NAME="AEN6340"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-FS-TYPE-CAPS"
+NAME="G-MIME-ICONV-INIT"
 ></A
->GMIME_STREAM_FS_TYPE</H3
+>g_mime_iconv_init ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -221,23 +209,26 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")</PRE
+>void        g_mime_iconv_init               (void);</PRE
 ></TD
 ></TR
 ></TABLE
+><P
+>Initialize GMime's iconv cache. This *MUST* be called before any
+gmime-iconv interfaces will work correctly.</P
 ><P
 ></P
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN945"
+NAME="AEN6346"
 ></A
 ><H3
 ><A
-NAME="GMIME-IS-STREAM-FS-CAPS"
+NAME="G-MIME-ICONV-OPEN"
 ></A
->GMIME_IS_STREAM_FS()</H3
+>g_mime_iconv_open ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -247,16 +238,35 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FS_TYPE)</PRE
+><GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+>     g_mime_iconv_open               (const char *to,
+                                             const char *from);</PRE
 ></TD
 ></TR
 ></TABLE
+><P
+>Allocates a coversion descriptor suitable for converting byte
+sequences from charset <TT
+CLASS="PARAMETER"
+><I
+>from</I
+></TT
+> to charset <TT
+CLASS="PARAMETER"
+><I
+>to</I
+></TT
+>. The resulting
+descriptor can be used with iconv (or the g_mime_iconv wrapper) any
+number of times until closed using g_mime_iconv_close.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN950"
+NAME="AEN6355"
 ></A
 ><P
 ></P
@@ -276,7 +286,172 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>to</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset to convert to</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>from</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset to convert from</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new conversion descriptor for use with iconv on success
+or (iconv_t) -1 on fail as well as setting an appropriate errno
+value.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6372"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV"
+></A
+>g_mime_iconv()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define     g_mime_iconv(cd,inbuf,inleft,outbuf,outleft)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6377"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>cd</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inbuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inleft</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>outbuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>outleft</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -294,13 +469,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN959"
+NAME="AEN6402"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-FS-CAPS"
+NAME="G-MIME-ICONV-CLOSE"
 ></A
->GMIME_STREAM_FS()</H3
+>g_mime_iconv_close ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -310,81 +485,18 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)</PRE
+>int         g_mime_iconv_close              (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN964"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
+>Closes the iconv descriptor <TT
 CLASS="PARAMETER"
 ><I
->stream</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN973"
-></A
-><H3
-><A
-NAME="G-MIME-STREAM-FS-NEW"
-></A
->g_mime_stream_fs_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* g_mime_stream_fs_new           (int fd);</PRE
-></TD
-></TR
-></TABLE
-><P
->Creates a new GMimeStreamFs object around <TT
-CLASS="PARAMETER"
-><I
->fd</I
+>cd</I
 ></TT
 >.</P
 ><P
@@ -392,7 +504,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN981"
+NAME="AEN6410"
 ></A
 ><P
 ></P
@@ -412,14 +524,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->fd</I
+>cd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> file descriptor</TD
+> iconv conversion descriptor</TD
 ></TR
 ><TR
 ><TD
@@ -434,169 +546,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a stream using <TT
-CLASS="PARAMETER"
-><I
->fd</I
-></TT
->.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN995"
-></A
-><H3
-><A
-NAME="G-MIME-STREAM-FS-NEW-WITH-BOUNDS"
-></A
->g_mime_stream_fs_new_with_bounds ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* g_mime_stream_fs_new_with_bounds
-                                            (int fd,
-                                             <GTKDOCLINK
-HREF="OFF-T"
->off_t</GTKDOCLINK
-> start,
-                                             <GTKDOCLINK
-HREF="OFF-T"
->off_t</GTKDOCLINK
-> end);</PRE
-></TD
-></TR
-></TABLE
-><P
->Creates a new GMimeStreamFs object around <TT
-CLASS="PARAMETER"
-><I
->fd</I
-></TT
-> with bounds <TT
-CLASS="PARAMETER"
-><I
->start</I
-></TT
->
-and <TT
-CLASS="PARAMETER"
-><I
->end</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1007"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->fd</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> file descriptor</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->start</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> start boundary</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->end</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> end boundary</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a stream using <TT
-CLASS="PARAMETER"
-><I
->fd</I
-></TT
-> with bounds <TT
-CLASS="PARAMETER"
-><I
->start</I
-></TT
-> and <TT
-CLASS="PARAMETER"
-><I
->end</I
-></TT
->.</TD
+>0 on success or -1 on fail as well as setting an
+appropriate errno value.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -620,7 +571,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream-file.html"
+HREF="gmime-gmime-charset.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -674,7 +625,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-mem.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -692,7 +643,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-file</B
+>gmime-charset</B
 ></FONT
 ></TD
 ><TD
@@ -702,7 +653,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-mem</B
+>gmime-iconv-utils</B
 ></FONT
 ></TD
 ></TR

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-charset">
+<refentry id="gmime-gmime-charset" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-charset</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -16,6 +16,7 @@
 
 void        <link linkend="g-mime-charset-init">g_mime_charset_init</link>             (void);
 const char* <link linkend="g-mime-charset-locale-name">g_mime_charset_locale_name</link>      (void);
+const char* <link linkend="g-mime-charset-name">g_mime_charset_name</link>             (const char *charset);
 </synopsis>
 </refsynopsisdiv>
 
@@ -55,6 +56,24 @@ Gets the user's locale charset (or iso-8859-1 by default).</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the user's locale charset (or iso-8859-1 by default).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-charset-name">g_mime_charset_name ()</title>
+<programlisting>const char* g_mime_charset_name             (const char *charset);</programlisting>
+<para>
+Attempts to find an iconv-friendly charset name for <parameter>charset</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>charset</parameter>&nbsp;:</entry>
+<entry> charset name
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an iconv-friendly charset name for <parameter>charset</parameter>.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

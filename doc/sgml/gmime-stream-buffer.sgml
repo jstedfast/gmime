@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-buffer">
+<refentry id="gmime-gmime-stream-buffer" revision="2 Mar 2002">
 <refmeta>
 <refentrytitle>gmime-stream-buffer</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -73,7 +73,6 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -89,7 +88,6 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

@@ -112,6 +112,16 @@ g_mime_filter_basic_new_type
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-charset</FILE>
+g_mime_filter_charset_new
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-chomp</FILE>
+g_mime_filter_chomp_new
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-crlf</FILE>
 GMimeFilterCRLFDirection
 GMimeFilterCRLFMode
@@ -355,6 +365,25 @@ g_mime_parser_construct_message
 <FILE>gmime-charset</FILE>
 g_mime_charset_init
 g_mime_charset_locale_name
+g_mime_charset_name
+</SECTION>
+
+<SECTION>
+<FILE>gmime-iconv</FILE>
+g_mime_iconv_init
+g_mime_iconv_open
+g_mime_iconv
+g_mime_iconv_close
+</SECTION>
+
+<SECTION>
+<FILE>gmime-iconv-utils</FILE>
+g_mime_iconv_strdup
+g_mime_iconv_strndup
+g_mime_iconv_utf8_to_locale
+g_mime_iconv_utf8_to_locale_length
+g_mime_iconv_locale_to_utf8
+g_mime_iconv_locale_to_utf8_length
 </SECTION>
 
 <SECTION>
@@ -385,6 +414,7 @@ g_mime_cipher_clearsign
 g_mime_cipher_verify
 g_mime_cipher_encrypt
 g_mime_cipher_decrypt
+<SUBSECTION>
 g_mime_cipher_validity_init
 g_mime_cipher_validity_new
 g_mime_cipher_validity_clear

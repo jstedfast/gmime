@@ -1,0 +1,194 @@
+<refentry id="gmime-gmime-iconv-utils" revision="2 Mar 2002">
+<refmeta>
+<refentrytitle>gmime-iconv-utils</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-iconv-utils</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+char*       <link linkend="g-mime-iconv-strdup">g_mime_iconv_strdup</link>             (<link linkend="iconv-t">iconv_t</link> cd,
+                                             const char *string);
+char*       <link linkend="g-mime-iconv-strndup">g_mime_iconv_strndup</link>            (<link linkend="iconv-t">iconv_t</link> cd,
+                                             const char *string,
+                                             <link linkend="size-t">size_t</link> n);
+char*       <link linkend="g-mime-iconv-utf8-to-locale">g_mime_iconv_utf8_to_locale</link>     (const char *string);
+char*       <link linkend="g-mime-iconv-utf8-to-locale-length">g_mime_iconv_utf8_to_locale_length</link>
+                                            (const char *string,
+                                             <link linkend="size-t">size_t</link> n);
+char*       <link linkend="g-mime-iconv-locale-to-utf8">g_mime_iconv_locale_to_utf8</link>     (const char *string);
+char*       <link linkend="g-mime-iconv-locale-to-utf8-length">g_mime_iconv_locale_to_utf8_length</link>
+                                            (const char *string,
+                                             <link linkend="size-t">size_t</link> n);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-iconv-strdup">g_mime_iconv_strdup ()</title>
+<programlisting>char*       g_mime_iconv_strdup             (<link linkend="iconv-t">iconv_t</link> cd,
+                                             const char *string);</programlisting>
+<para>
+Allocates a new string buffer containing <parameter>string</parameter> converted to
+the destination charset described in <parameter>cd</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
+<entry> conversion descriptor
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in source charset
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the original string
+converted to the new charset.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-strndup">g_mime_iconv_strndup ()</title>
+<programlisting>char*       g_mime_iconv_strndup            (<link linkend="iconv-t">iconv_t</link> cd,
+                                             const char *string,
+                                             <link linkend="size-t">size_t</link> n);</programlisting>
+<para>
+Allocates a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to the destination charset as described by the
+conversion descriptor <parameter>cd</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
+<entry> conversion descriptor
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in source charset
+</entry></row>
+<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
+<entry> number of bytes to convert
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to the destination charset as described by the
+conversion descriptor <parameter>cd</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-utf8-to-locale">g_mime_iconv_utf8_to_locale ()</title>
+<programlisting>char*       g_mime_iconv_utf8_to_locale     (const char *string);</programlisting>
+<para>
+Allocates a new string buffer containing <parameter>string</parameter> converted to the
+user's locale charset.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in UTF-8 charset
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing <parameter>string</parameter> converted to the
+user's locale charset.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-utf8-to-locale-length">g_mime_iconv_utf8_to_locale_length ()</title>
+<programlisting>char*       g_mime_iconv_utf8_to_locale_length
+                                            (const char *string,
+                                             <link linkend="size-t">size_t</link> n);</programlisting>
+<para>
+Allocates a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to the user's locale charset.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in UTF-8 charset
+</entry></row>
+<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
+<entry> number of bytes to convert
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to the user's locale charset.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-locale-to-utf8">g_mime_iconv_locale_to_utf8 ()</title>
+<programlisting>char*       g_mime_iconv_locale_to_utf8     (const char *string);</programlisting>
+<para>
+Allocates a new string buffer containing <parameter>string</parameter> in UTF-8.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in locale charset
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing <parameter>string</parameter> converted to UTF-8.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-locale-to-utf8-length">g_mime_iconv_locale_to_utf8_length ()</title>
+<programlisting>char*       g_mime_iconv_locale_to_utf8_length
+                                            (const char *string,
+                                             <link linkend="size-t">size_t</link> n);</programlisting>
+<para>
+Allocates a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to UTF-8.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string in locale charset
+</entry></row>
+<row><entry align="right"><parameter>n</parameter>&nbsp;:</entry>
+<entry> number of bytes to convert
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new string buffer containing the first <parameter>n</parameter> bytes of
+<parameter>string</parameter> converted to UTF-8.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>
