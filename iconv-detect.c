@@ -80,9 +80,9 @@ static CharInfo iso10646_tests[] = {
 	{ "iso-10646-1", "iso-%d-%d",  ISO_DASH_D_DASH_D_LOWER },
 	{ "ISO-10646-1", "ISO-%d-%d",  ISO_DASH_D_DASH_D },
 	{ "ISO10646-1",  "ISO%d-%d",   ISO_D_DASH_D },
-	{ "iso-10646",   "iso-%d\0%d", ISO_DASH_D_LOWER },
-	{ "ISO-10646",   "ISO-%d\0%d", ISO_DASH_D },
-	{ "ISO10646",    "ISO%d\0%d",  ISO_D },
+	{ "iso-10646",   "iso-%d",     ISO_DASH_D_LOWER },
+	{ "ISO-10646",   "ISO-%d",     ISO_DASH_D },
+	{ "ISO10646",    "ISO%d",      ISO_D },
 };
 
 static int num_iso10646_tests = sizeof (iso10646_tests) / sizeof (CharInfo);
