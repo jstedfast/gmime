@@ -22,4 +22,5 @@ gmimeConf.sh
 gen-table
 test-parser
 test-mime
+test-streams
 gmime.spec
