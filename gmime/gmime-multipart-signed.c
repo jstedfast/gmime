@@ -32,6 +32,7 @@
 #include "gmime-filter-from.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-stream-mem.h"
+#include "gmime-parser.h"
 #include "gmime-part.h"
 #include "strlib.h"
 
@@ -177,96 +178,7 @@ multipart_signed_get_headers (GMimeObject *object)
 static ssize_t
 multipart_signed_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
-	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	GMimeStream *filtered_stream;
-	ssize_t nwritten, total = 0;
-	GMimeFilter *from_filter;
-	GMimeObject *part;
-	
-	/* make sure a boundary is set */
-	if (!multipart->boundary)
-		g_mime_multipart_set_boundary (multipart, NULL);
-	
-	/* write the content headers */
-	nwritten = g_mime_header_write_to_stream (object->headers, stream);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write the preface */
-	if (multipart->preface) {
-		/* terminate the headers */
-		if (g_mime_stream_write (stream, "\n", 1) == -1)
-			return -1;
-		
-		total++;
-		
-		nwritten = g_mime_stream_write_string (stream, multipart->preface);
-		if (nwritten == -1)
-			return -1;
-		
-		total += nwritten;
-	}
-	
-	/* write the content part */
-	part = g_mime_multipart_get_part (multipart, GMIME_MULTIPART_SIGNED_CONTENT);
-	
-	/* write the boundary */
-	nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write this part out */
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	from_filter = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ARMOR);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
-	nwritten = g_mime_object_write_to_stream (part, filtered_stream);
-	if (nwritten != -1 && g_mime_stream_flush (filtered_stream) == -1)
-		nwritten = -1;
-	
-	g_mime_stream_unref (filtered_stream);
-	
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write the signature part */
-	part = g_mime_multipart_get_part (multipart, GMIME_MULTIPART_SIGNED_SIGNATURE);
-	
-	/* write the boundary */
-	nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write this part out */
-	nwritten = g_mime_object_write_to_stream (part, stream);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write the postface */
-	if (multipart->postface) {
-		nwritten = g_mime_stream_write_string (stream, multipart->postface);
-		if (nwritten == -1)
-			return -1;
-		
-		total += nwritten;
-	}
-		
-	return total;
+	return GMIME_OBJECT_CLASS (parent_class)->write_to_stream (object, stream);
 }
 
 
@@ -333,12 +245,13 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCipherContext *ctx, const char *userid,
 			      GMimeCipherHash hash, GMimeException *ex)
 {
-	GMimePart *signature;
+	GMimeObject *signature;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *filtered_stream;
 	GMimeStream *stream, *sigstream;
 	GMimeFilter *crlf_filter, *from_filter, *strip_filter;
 	GMimeContentType *content_type;
+	GMimeParser *parser;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), -1);
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
@@ -360,36 +273,44 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	strip_filter = g_mime_filter_strip_new ();
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), strip_filter);
 	
-	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
-					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	
 	g_mime_object_write_to_stream (content, filtered_stream);
 	g_mime_stream_flush (filtered_stream);
 	g_mime_stream_unref (filtered_stream);
-	
-	/* reset the stream */
 	g_mime_stream_reset (stream);
+	
+	/* Note: see rfc2015 or rfc3156, section 5.1 */
+	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
+					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
 	
 	/* construct the signature stream */
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if (g_mime_cipher_sign (ctx, userid, hash, stream, sigstream, ex) == -1) {
-		g_mime_stream_unref (stream);
+	if (g_mime_cipher_sign (ctx, userid, hash, filtered_stream, sigstream, ex) == -1) {
+		g_mime_stream_unref (filtered_stream);
 		g_mime_stream_unref (sigstream);
+		g_mime_stream_unref (stream);
 		return -1;
 	}
 	
-	g_mime_stream_unref (stream);
+	g_mime_stream_unref (filtered_stream);
 	g_mime_stream_reset (sigstream);
+	g_mime_stream_reset (stream);
+	
+	/* construct the content part */
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	content = g_mime_parser_construct_part (parser);
+	g_mime_stream_unref (stream);
+	g_object_unref (parser);
 	
 	/* construct the signature part */
-	signature = g_mime_part_new ();
+	signature = (GMimeObject *) g_mime_part_new ();
 	wrapper = g_mime_data_wrapper_new ();
 	g_mime_data_wrapper_set_stream (wrapper, sigstream);
-	g_mime_part_set_content_object (signature, wrapper);
+	g_mime_part_set_content_object (GMIME_PART (signature), wrapper);
 	g_mime_stream_unref (sigstream);
 	
 	mps->protocol = g_strdup (ctx->sign_protocol);
@@ -397,14 +318,15 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* set the content-type of the signature part */
 	content_type = g_mime_content_type_new_from_string (mps->protocol);
-	g_mime_object_set_content_type (GMIME_OBJECT (signature), content_type);
-	g_mime_part_set_filename (signature, "signature.asc");
+	g_mime_object_set_content_type (signature, content_type);
+	g_mime_part_set_filename (GMIME_PART (signature), "signature.asc");
 	
 	/* save the content and signature parts */
 	/* FIXME: make sure there aren't any other parts?? */
 	g_mime_multipart_add_part (GMIME_MULTIPART (mps), content);
-	g_mime_multipart_add_part (GMIME_MULTIPART (mps), GMIME_OBJECT (signature));
-	g_mime_object_unref (GMIME_OBJECT (signature));
+	g_mime_multipart_add_part (GMIME_MULTIPART (mps), signature);
+	g_mime_object_unref (signature);
+	g_mime_object_unref (content);
 	
 	/* set the content-type params for this multipart/signed part */
 	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mps), "micalg", mps->micalg);

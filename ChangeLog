@@ -1,5 +1,18 @@
 2002-06-26  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-multipart-signed.c (g_mime_multipart_signed_sign): Once
+	we've created the mime-part stream and armored the From lines and
+	such, create a new MIME part based on this stream (since normally
+	our QP encoder will not armor From lines) and use it as the
+	content part for this multipart/signed part rather than the
+	original MIME part.
+	(multipart_signed_write_to_stream): This can now be simplified by
+	calling our parent class's write_to_stream implementation since
+	g_mime_multipart_signed_sign() takes care of all the From
+	armoring.
+
+2002-06-26  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* test-pgpmime.c: New test suite for the pgp/mime code.
 
 	* gmime-gpg-context.c (gpg_ctx_parse_status): Handle a NODATA
