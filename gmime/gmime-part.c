@@ -543,8 +543,9 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const gchar
 	GMimeParam *param;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
-	g_return_val_if_fail (mime_part->disposition != NULL, NULL);
-	g_return_val_if_fail (mime_part->disposition->param_hash != NULL, NULL);
+	
+	if (!mime_part->disposition || !mime_part->disposition->param_hash)
+		return NULL;
 	
 	param = g_hash_table_lookup (mime_part->disposition->param_hash, name);
 	
@@ -605,8 +606,9 @@ g_mime_part_get_filename (const GMimePart *mime_part)
 	GMimeParam *param;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
-	g_return_val_if_fail (mime_part->disposition != NULL, NULL);
-	g_return_val_if_fail (mime_part->disposition->param_hash != NULL, NULL);
+	
+	if (!mime_part->disposition || !mime_part->disposition->param_hash)
+		return NULL;
 	
 	param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
 	
@@ -735,7 +737,8 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
  * Sets the encoding type and raw content on the mime part after decoding the content.
  **/
 void
-g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content, guint len, GMimePartEncodingType encoding)
+g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content,
+				     guint len, GMimePartEncodingType encoding)
 {
 	gchar *raw;
 	gint save = 0, state = 0;
@@ -782,7 +785,9 @@ const gchar *
 g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
 	g_return_val_if_fail (mime_part != NULL, NULL);
-	g_return_val_if_fail (mime_part->content != NULL, NULL);
+	
+	if (!mime_part->content)
+		return NULL;
 	
 	*len = mime_part->content->len;
 	
