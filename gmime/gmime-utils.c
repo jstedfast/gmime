@@ -465,6 +465,32 @@ get_tzone (struct _date_token **token)
 }
 
 static time_t
+mktime_utc (struct tm *tm)
+{
+	time_t tt;
+	
+	tm->tm_isdst = -1;
+	tt = mktime (tm);
+	
+#if defined (HAVE_TM_GMTOFF)
+	tt += tm->tm_gmtoff;
+#elif defined (HAVE_TIMEZONE)
+	if (tm->tm_isdst > 0) {
+#if defined (HAVE_ALTZONE)
+		tt -= altzone;
+#else /* !defined (HAVE_ALTZONE) */
+		tt -= (timezone - 3600);
+#endif
+	} else
+		tt -= timezone;
+#else
+#error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
+#endif
+	
+	return tt;
+}
+
+static time_t
 parse_rfc822_date (struct _date_token *tokens, int *tzone)
 {
 	int hour, min, sec, offset, n;
@@ -522,22 +548,7 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 		offset = n;
 	}
 	
-	t = mktime (&tm);
-#if defined (HAVE_TM_GMTOFF)
-	t += tm.tm_gmtoff;
-#elif defined (HAVE_TIMEZONE)
-	if (tm.tm_isdst > 0) {
-#if defined (HAVE_ALTZONE)
-		t -= altzone;
-#else /* !defined (HAVE_ALTZONE) */
-		t -= (timezone - 3600);
-#endif
-	} else {
-		t -= timezone;
-	}
-#else
-#error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
-#endif
+	t = mktime_utc (&tm);
 	
 	/* t is now GMT of the time we want, but not offset by the timezone ... */
 	
@@ -650,22 +661,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	
 	d(printf ("\n"));
 		
-	t = mktime (&tm);
-#if defined (HAVE_TM_GMTOFF)
-	t += tm.tm_gmtoff;
-#elif defined (HAVE_TIMEZONE)
-	if (tm.tm_isdst > 0) {
-#if defined (HAVE_ALTZONE)
-		t -= altzone;
-#else /* !defined (HAVE_ALTZONE) */
-		t -= (timezone - 3600);
-#endif
-	} else {
-		t -= timezone;
-	}
-#else
-#error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
-#endif
+	t = mktime_utc (&tm);
 	
 	/* t is now GMT of the time we want, but not offset by the timezone ... */
 	
