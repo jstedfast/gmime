@@ -301,7 +301,7 @@ g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 	buf += ALIGN (host->h_length);
 	
 	/* h_addr_list */
-	((char **) buf)[0] = addr;
+	((char **) buf)[0] = (char *) addr;
 	((char **) buf)[1] = NULL;
 	host->h_addr_list = (char **) buf;
 	
