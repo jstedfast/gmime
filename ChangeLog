@@ -1,3 +1,7 @@
+2003-06-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gtrie.c (g_trie_free): Free the fail_states array.
+
 2003-05-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-common.c (g_mime_strcase_hash): Oops, fixed a bug.

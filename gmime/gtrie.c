@@ -126,6 +126,7 @@ g_trie_new (gboolean icase)
 void
 g_trie_free (GTrie *trie)
 {
+	g_ptr_array_free (trie->fail_states, TRUE);
 	memchunk_destroy (trie->match_chunks);
 	memchunk_destroy (trie->state_chunks);
 	g_free (trie);
