@@ -1,3 +1,7 @@
+2001-03-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (quoted_decode): Fix a possible buffer overrun.
+
 2001-02-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (parse_rfc822_date): Allow for time token to not
