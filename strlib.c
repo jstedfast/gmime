@@ -96,15 +96,15 @@ memrchr (const void *s, int c, size_t n)
 /* FIXME: this is just a guess... should really do some performace tests to get an accurate measure */
 #define bm_optimal(hlen, nlen)  (((hlen) ? (hlen) > 20 : 1) && (nlen) > 10 ? 1 : 0)
 
-static char *
-__boyer_moore (const char *haystack, size_t haystacklen,
-	       const char *needle, size_t needlelen, int icase)
+static unsigned char *
+__boyer_moore (const unsigned char *haystack, size_t haystacklen,
+	       const unsigned char *needle, size_t needlelen, int icase)
 {
 	register unsigned char *hc_ptr, *nc_ptr;
 	unsigned char *he_ptr, *ne_ptr, *h_ptr;
-	size_t lookuptable[256], n;
+	size_t skiptable[256], n;
 	register int i;
-
+	
 #ifdef BOYER_MOORE_CHECKS
 	/* we don't need to do these checks since memmem/strstr/etc do it already */
 	
@@ -114,18 +114,18 @@ __boyer_moore (const char *haystack, size_t haystacklen,
 	
 	/* instant match if the pattern buffer is 0-length */
 	if (needlelen == 0)
-		return (void *) haystack;
+		return (unsigned char *) haystack;
 #endif /* BOYER_MOORE_CHECKS */
 	
 	/* set a pointer at the end of each string */
 	ne_ptr = (unsigned char *) needle + needlelen - 1;
 	he_ptr = (unsigned char *) haystack + haystacklen - 1;
 	
-	/* create our lookup table */
+	/* create our skip table */
 	for (i = 0; i < 256; i++)
-		lookuptable[i] = needlelen;
+		skiptable[i] = needlelen;
 	for (nc_ptr = (unsigned char *) needle; nc_ptr < ne_ptr; nc_ptr++)
-		lookuptable[bm_index (*nc_ptr, icase)] = (size_t) (ne_ptr - nc_ptr);
+		skiptable[bm_index (*nc_ptr, icase)] = (size_t) (ne_ptr - nc_ptr);
 	
 	h_ptr = (unsigned char *) haystack;
 	while (haystacklen >= needlelen) {
@@ -138,14 +138,14 @@ __boyer_moore (const char *haystack, size_t haystacklen,
 				break;
 		
 		if (!bm_equal (*nc_ptr, *hc_ptr, icase)) {
-			n = lookuptable[bm_index (*hc_ptr, icase)];
+			n = skiptable[bm_index (*hc_ptr, icase)];
 			if (n == needlelen && i)
 				if (bm_equal (*ne_ptr, ((unsigned char *) needle)[0], icase))
 					n--;
 			h_ptr += n;
 			haystacklen -= n;
 		} else
-			return (void *) h_ptr;
+			return (unsigned char *) h_ptr;
 	}
 	
 	return NULL;
@@ -179,8 +179,8 @@ memmem (const void *haystack, size_t haystacklen, const void *needle, size_t nee
 	} else if (needlelen == 1) {
 		return memchr (haystack, (int) ((unsigned char *) needle)[0], haystacklen);
 	} else if (bm_optimal (haystacklen, needlelen)) {
-		return (void *) __boyer_moore ((const char *) haystack, haystacklen,
-					       (const char *) needle, needlelen, 0);
+		return (void *) __boyer_moore ((const unsigned char *) haystack, haystacklen,
+					       (const unsigned char *) needle, needlelen, 0);
 	}
 	
 	h = (unsigned char *) haystack;
@@ -524,8 +524,8 @@ strnstr (const char *haystack, const char *needle, size_t haystacklen)
 	} else if (needlelen == 1) {
 		return memchr (haystack, (int) ((unsigned char *) needle)[0], haystacklen);
 	} else if (bm_optimal (haystacklen, needlelen)) {
-		return (void *) __boyer_moore ((const char *) haystack, haystacklen,
-					       (const char *) needle, needlelen, 0);
+		return (char *) __boyer_moore ((const unsigned char *) haystack, haystacklen,
+					       (const unsigned char *) needle, needlelen, 0);
 	}
 	
 	h = (unsigned char *) haystack;
@@ -574,8 +574,8 @@ strstr (const char *haystack, const char *needle)
 	} else if (needlelen == 1) {
 		return strchr (haystack, (int) ((unsigned char *) needle)[0]);
 	} else if (bm_optimal (0, needlelen)) {
-		return (void *) __boyer_moore ((const char *) haystack, strlen (haystack),
-					       (const char *) needle, needlelen, 0);
+		return (char *) __boyer_moore ((const unsigned char *) haystack, strlen (haystack),
+					       (const unsigned char *) needle, needlelen, 0);
 	}
 	
 	h = (unsigned char *) haystack;
@@ -622,8 +622,8 @@ strncasestr (const char *haystack, const char *needle, size_t haystacklen)
 	if (needlelen == 0) {
 		return (char *) haystack;
 	} else if (bm_optimal (haystacklen, needlelen)) {
-		return (void *) __boyer_moore ((const char *) haystack, haystacklen,
-					       (const char *) needle, needlelen, 1);
+		return (char *) __boyer_moore ((const unsigned char *) haystack, haystacklen,
+					       (const unsigned char *) needle, needlelen, 1);
 	}
 	
 	h = (unsigned char *) haystack;
@@ -670,8 +670,8 @@ strcasestr (const char *haystack, const char *needle)
 	if (needlelen == 0) {
 		return (char *) haystack;
 	} else if (bm_optimal (0, needlelen)) {
-		return (void *) __boyer_moore ((const char *) haystack, strlen (haystack),
-					       (const char *) needle, needlelen, 1);
+		return (char *) __boyer_moore ((const unsigned char *) haystack, strlen (haystack),
+					       (const unsigned char *) needle, needlelen, 1);
 	}
 	
 	h = (unsigned char *) haystack;

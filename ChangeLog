@@ -1,3 +1,8 @@
+2002-03-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (rfc2047_decode_word): strcasecmp on charenc, not
+	charset because charset has not yet been initialized.
+
 2002-03-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (decode_mailbox): If gmime was initialized to

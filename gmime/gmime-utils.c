@@ -1069,7 +1069,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 				*p = '\0';
 			
 			/* slight optimization */
-			if (!strcasecmp (charset, "UTF-8"))
+			if (!strcasecmp (charenc, "UTF-8"))
 				return g_strndup (decoded, declen);
 			
 			charset = g_mime_charset_name (charenc);
