@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="5 Jan 2001">
+<refentry id="gmime-gmime-part" revision="18 Jan 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -71,11 +71,11 @@ void        <link linkend="g-mime-part-set-boundary">g_mime_part_set_boundary</l
                                              const <link linkend="gchar">gchar</link> *boundary);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-boundary">g_mime_part_get_boundary</link>       (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content">g_mime_part_set_content</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content,
+                                             const <link linkend="gchar">gchar</link> *content,
                                              <link linkend="guint">guint</link> len);
 void        <link linkend="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content,
+                                             const <link linkend="gchar">gchar</link> *content,
                                              <link linkend="guint">guint</link> len,
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>        (const <link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -706,7 +706,7 @@ Sets the boundary on the mime part.</para>
 <refsect2>
 <title><anchor id="g-mime-part-set-content">g_mime_part_set_content ()</title>
 <programlisting>void        g_mime_part_set_content         (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content,
+                                             const <link linkend="gchar">gchar</link> *content,
                                              <link linkend="guint">guint</link> len);</programlisting>
 <para>
 Sets the content of the Mime Part (only non-multiparts)</para>
@@ -731,7 +731,7 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 <title><anchor id="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content ()</title>
 <programlisting>void        g_mime_part_set_pre_encoded_content
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *content,
+                                             const <link linkend="gchar">gchar</link> *content,
                                              <link linkend="guint">guint</link> len,
                                              <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);</programlisting>
 <para>

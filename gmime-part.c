@@ -740,7 +740,7 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content,
 		memcpy (raw, content, len);
 		
 		/* do some smart 8bit detection */
-		if (encoding == GMIME_PART_ENCODING_DEFAULT && g_mime_utils_text_is_8bit (raw))
+		if (encoding == GMIME_PART_ENCODING_DEFAULT && g_mime_utils_text_is_8bit (raw, len))
 			encoding = GMIME_PART_ENCODING_8BIT;
 	}
 	

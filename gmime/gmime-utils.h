@@ -48,8 +48,8 @@ gchar *g_mime_utils_quote_string (const gchar *string);
 void   g_mime_utils_unquote_string (gchar *string);
 
 /* encoding decision making utilities ;-) */
-gboolean g_mime_utils_text_is_8bit (const guchar *text);
-GMimePartEncodingType g_mime_utils_best_encoding (const guchar *text);
+gboolean g_mime_utils_text_is_8bit (const guchar *text, guint len);
+GMimePartEncodingType g_mime_utils_best_encoding (const guchar *text, guint len);
 
 /* utilities to (de/en)code headers */
 gchar *g_mime_utils_8bit_header_decode (const guchar *in);

@@ -719,21 +719,22 @@ g_mime_utils_unquote_string (gchar *string)
 /**
  * g_mime_utils_text_is_8bit: Determine if a string contains 8bit chars
  * @text: text to check for 8bit chars
+ * @len: text length
  *
  * Returns TRUE if the text contains 8bit characters or FALSE
  * otherwise.
  **/
 gboolean
-g_mime_utils_text_is_8bit (const guchar *text)
+g_mime_utils_text_is_8bit (const guchar *text, guint len)
 {
-	if (text != NULL)
-	{
-		guchar *c;
-
-		for (c = (guchar *) text; *c; c++)
-			if (*c > (guchar) 127)
-				return TRUE;
-	}
+	guchar *c, *inend;
+	
+	g_return_val_if_fail (text != NULL, FALSE);
+	
+	inend = (guchar *) text + len;
+	for (c = (guchar *) text; c < inend; c++)
+		if (*c > (guchar) 127)
+			return TRUE;
 	
 	return FALSE;
 }
@@ -742,25 +743,24 @@ g_mime_utils_text_is_8bit (const guchar *text)
 /**
  * g_mime_utils_best_encoding: Determine the best encoding
  * @text: text to encode
+ * @len: text length
  *
  * Returns a GMimePartEncodingType that is determined to be the best
  * encoding type for the specified block of text. ("best" in this
  * particular case means best compression)
  **/
 GMimePartEncodingType
-g_mime_utils_best_encoding (const guchar *text)
+g_mime_utils_best_encoding (const guchar *text, guint len)
 {
-	guchar *ch;
+	guchar *ch, *inend;
 	gint count = 0;
-	gint total;
 	
-	for (ch = (guchar *) text; *ch; ch++)
+	inend = (guchar *) text + len;
+	for (ch = (guchar *) text; ch < inend; ch++)
 		if (*ch > (guchar) 127)
 			count++;
 	
-	total = (int) (ch - text);
-	
-	if ((float) count <= total * 0.17)
+	if ((float) count <= len * 0.17)
 		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
 	else
 		return GMIME_PART_ENCODING_BASE64;
@@ -1005,7 +1005,7 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	
 	len = strlen (word);
 	
-	switch (g_mime_utils_best_encoding (word)) {
+	switch (g_mime_utils_best_encoding (word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
 		enclen = BASE64_ENCODE_LEN (len);
 		encoded = alloca (enclen);
