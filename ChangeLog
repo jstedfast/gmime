@@ -1,3 +1,14 @@
+2004-03-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-charset.c (g_mime_charset_name): Use my own strdown
+	implementation to 'strdown' the alloca()'d charset name.
+	(g_mime_charset_map_init): Instead of strdup()ing the charset name
+	and then using g_ascii_strdown(), just use g_ascii_strdown() since
+	it malloc's.
+
+	* gmime/gmime-stream-buffer.c (stream_write): Fixed a bug when
+	writing across block boundaries.
+
 2003-03-07  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.

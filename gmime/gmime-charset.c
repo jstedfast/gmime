@@ -143,15 +143,16 @@ g_mime_charset_map_init (void)
 	iconv_charsets = g_hash_table_new (g_str_hash, g_str_equal);
 	
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
-		charset = g_strdup (known_iconv_charsets[i].charset);
+		charset = g_ascii_strdown (known_iconv_charsets[i].charset, -1);
 		iconv_name = g_strdup (known_iconv_charsets[i].iconv_name);
-		g_strdown (charset);
 		g_hash_table_insert (iconv_charsets, charset, iconv_name);
 	}
 	
 #ifdef HAVE_CODESET
-	locale_charset = g_strdup (nl_langinfo (CODESET));
-	g_strdown (locale_charset);
+	if ((locale_charset = nl_langinfo (CODESET)) && locale_charset[0])
+		locale_charset = g_ascii_strdown (locale_charset, -1);
+	else
+		locale_charset = NULL;
 #else
 	locale = setlocale (LC_ALL, NULL);
 	
@@ -176,8 +177,7 @@ g_mime_charset_map_init (void)
 			
 			/* ; is a hack for debian systems and / is a hack for Solaris systems */
 			for (p = codeset; *p && !strchr ("@;/", *p); p++);
-			locale_charset = g_strndup (codeset, (unsigned) (p - codeset));
-			g_strdown (locale_charset);
+			locale_charset = g_ascii_strdown (codeset, (unsigned) (p - codeset));
 		} else {
 			/* charset unknown */
 			locale_charset = NULL;
@@ -207,6 +207,20 @@ g_mime_charset_locale_name (void)
 	return locale_charset ? locale_charset : "iso-8859-1";
 }
 
+static const char *
+strdown (char *str)
+{
+	register char *s = str;
+	
+	while (*s) {
+		if (*s >= 'A' && *s <= 'Z')
+			*s += 0x20;
+		s++;
+	}
+	
+	return str;
+}
+
 
 /**
  * g_mime_charset_name:
@@ -226,7 +240,7 @@ g_mime_charset_name (const char *charset)
 	
 	name = g_alloca (strlen (charset) + 1);
 	strcpy (name, charset);
-	g_strdown (name);
+	strdown (name);
 	
 	CHARSET_LOCK ();
 	if (!iconv_charsets)
