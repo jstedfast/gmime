@@ -1,5 +1,10 @@
 2000-11-16  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* doc/sgml/*: Added.
+	
+	* doc/gmime-sections.txt: Added g_mime_part_decode_contents and
+	g_mime_header_printf.
+
 	* gmime-message.c (header_fold): New function to fold headers.
 	(g_mime_header_printf): New convenience function to print a
 	formatted header (which will get correctly folded).

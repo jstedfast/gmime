@@ -1,0 +1,530 @@
+<refentry id="gmime-gmime-utils" revision="17 Nov 2000">
+<refmeta>
+<refentrytitle>gmime-utils</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-utils</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const <link linkend="gchar">gchar</link> *in,
+                                             <link linkend="gint">gint</link> *saveoffset);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
+                                             <link linkend="gint">gint</link> offset);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string,
+                                             <link linkend="gboolean">gboolean</link> do_quotes);
+void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text);
+<link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-utils-best-encoding">g_mime_utils_best_encoding</link>
+                                            (const <link linkend="guchar">guchar</link> *text);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode</link> (const <link linkend="guchar">guchar</link> *in);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode</link> (const <link linkend="guchar">guchar</link> *in);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase</link>
+                                            (const <link linkend="guchar">guchar</link> *in);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step</link> (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint">guint</link> *save);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step</link> (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close</link>
+                                            (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step</link> (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *savestate,
+                                             <link linkend="gint">gint</link> *saved);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step</link> (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close</link>
+                                            (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date ()</title>
+<programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const <link linkend="gchar">gchar</link> *in,
+                                             <link linkend="gint">gint</link> *saveoffset);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input date string
+</entry></row>
+<row><entry align="right"><parameter>saveoffset</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the time_t representation of the date string specified by
+<link linkend="in">in</link>. If 'saveoffset' is non-NULL, the value of the timezone offset
+will be stored.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-header-format-date">g_mime_utils_header_format_date ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_format_date (<link linkend="time-t">time_t</link> time,
+                                             <link linkend="gint">gint</link> offset);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>time</parameter>&nbsp;:</entry>
+<entry> time_t date representation
+</entry></row>
+<row><entry align="right"><parameter>offset</parameter>&nbsp;:</entry>
+<entry> Timezone offset
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a valid string representation of the date.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-quote-string">g_mime_utils_quote_string ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_quote_string       (const <link linkend="gchar">gchar</link> *string,
+                                             <link linkend="gboolean">gboolean</link> do_quotes);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> input string
+</entry></row>
+<row><entry align="right"><parameter>do_quotes</parameter>&nbsp;:</entry>
+<entry> wrap string in quotes.
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the escaped and (optionally)
+quoted input string.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-unquote-string">g_mime_utils_unquote_string ()</title>
+<programlisting>void        g_mime_utils_unquote_string     (<link linkend="gchar">gchar</link> *string);</programlisting>
+<para>
+Unquotes and unescapes a string.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_utils_text_is_8bit       (const <link linkend="guchar">guchar</link> *text);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>text</parameter>&nbsp;:</entry>
+<entry> text to check for 8bit chars
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE if the text contains 8bit characters or FALSE
+otherwise.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-best-encoding">g_mime_utils_best_encoding ()</title>
+<programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_utils_best_encoding
+                                            (const <link linkend="guchar">guchar</link> *text);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>text</parameter>&nbsp;:</entry>
+<entry> text to encode
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimePartEncodingType that is determined to be the best
+encoding type for the specified block of text. ("best" in this
+particular case means best compression)
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_decode (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> header to decode
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the mime encoded header as 8bit text.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_encode (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> header to encode
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the header as several encoded atoms. Useful for encoding
+headers like "Subject".
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_8bit_header_encode_phrase
+                                            (const <link linkend="guchar">guchar</link> *in);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> header to encode
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the header phrase as 1 encoded atom. Useful for encoding
+internet addresses.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_decode_step (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint">guint</link> *save);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> max length of data to decode
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been decoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded (which have been dumped in <link linkend="out">out</link>).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_encode_step (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> length of the input
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output string
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Performs an 'encode step',
+only encodes blocks of 3 characters to the output at a time, saves
+left-over state in state and save (initialise to 0 on first
+invocation).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_base64_encode_close
+                                            (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> length of the input
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output string
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Call this when finished
+encoding data with base64_encode_step to flush off the last little
+bit.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_uudecode_step      (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> max length of data to decode ( normally strlen(in) ??)
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been decoded
+</entry></row>
+<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
+<entry> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'uudecode step' on
+a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
+line has been stripped off.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_decode_step (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *savestate,
+                                             <link linkend="gint">gint</link> *saved);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> max length of data to decode
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>savestate</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>saved</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been decoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'decode step' on a
+chunk of QP encoded data.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_encode_step (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> length of the input
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output string
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Performs an 'encode step',
+saves left-over state in state and save (initialise to -1 on first
+invocation).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_quoted_encode_close
+                                            (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="gint">gint</link> *save);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> length of the input
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output string
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Call this when finished
+encoding data with quoted_encode_step to flush off the last little
+bit.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

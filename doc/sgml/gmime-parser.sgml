@@ -1,0 +1,65 @@
+<refentry id="gmime-gmime-parser" revision="17 Nov 2000">
+<refmeta>
+<refentrytitle>gmime-parser</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-parser</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+<link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>
+                                            (const <link linkend="gchar">gchar</link> *data,
+                                             <link linkend="gboolean">gboolean</link> save_extra_headers);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-parser-construct-message">g_mime_parser_construct_message ()</title>
+<programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_parser_construct_message
+                                            (const <link linkend="gchar">gchar</link> *data,
+                                             <link linkend="gboolean">gboolean</link> save_extra_headers);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
+<entry> an rfc0822 message
+</entry></row>
+<row><entry align="right"><parameter>save_extra_headers</parameter>&nbsp;:</entry>
+<entry> if TRUE, then store the arbitrary headers
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 data.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

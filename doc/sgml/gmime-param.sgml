@@ -1,0 +1,131 @@
+<refentry id="gmime-gmime-param" revision="17 Nov 2000">
+<refmeta>
+<refentrytitle>gmime-param</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-param</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeParam">GMimeParam</link>;
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new">g_mime_param_new</link>                (const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *value);
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new-from-string">g_mime_param_new_from_string</link>    (const <link linkend="gchar">gchar</link> *string);
+void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>            (<link linkend="GMimeParam">GMimeParam</link> *param);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-param-to-string">g_mime_param_to_string</link>          (<link linkend="GMimeParam">GMimeParam</link> *param);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeParam">struct GMimeParam</title>
+<programlisting>struct GMimeParam {
+	gchar *name;
+	gchar *value;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-new">g_mime_param_new ()</title>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new                (const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> parameter name
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> parameter value
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new paramter structure.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-new-from-string">g_mime_param_new_from_string ()</title>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new_from_string    (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> string to parse into a GMimeParam structure
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeParam structure based on <link linkend="string">string</link>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-destroy">g_mime_param_destroy ()</title>
+<programlisting>void        g_mime_param_destroy            (<link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
+<para>
+Releases all memory used by this mime param back to the Operating
+System.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
+<entry> Mime param to destroy
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-to-string">g_mime_param_to_string ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_param_to_string          (<link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
+<entry> MIME Param
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Param in the form:
+name="value"
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

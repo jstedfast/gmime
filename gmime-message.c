@@ -488,6 +488,7 @@ header_fold (const gchar *in)
 /**
  * g_mime_header_printf: Format a header.
  * @format: string format
+ * @Varargs: arguments
  *
  * Returns an allocated string containing the folded header specified
  * by %format and the following arguments.

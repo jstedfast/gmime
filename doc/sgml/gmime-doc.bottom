@@ -1,0 +1,7 @@
+    &gmime-gmime-param;
+    &gmime-gmime-content-type;
+    &gmime-gmime-part;
+    &gmime-gmime-message;
+    &gmime-gmime-utils;
+    &gmime-internet-address;
+    &gmime-gmime-parser;
