@@ -36,6 +36,7 @@
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
 
+
 #define d(x) x
 #define w(x)
 
@@ -657,7 +658,7 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	
 	/* FIXME: set the 'language' as well, assuming we can get that info...? */
 	out = g_string_new ("");
-	g_string_sprintfa (out, "%s''", charset);
+	g_string_append_printf (out, "%s''", charset);
 	
 	while (inptr && *inptr) {
 		unsigned char c = *inptr++;
@@ -665,9 +666,9 @@ encode_param (const unsigned char *in, gboolean *encoded)
 		/* FIXME: make sure that '\'', '*', and ';' are also encoded */
 		
 		if (c > 127) {
-			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
+			g_string_append_printf (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
 		} else if (is_lwsp (c) || !(gmime_special_table[c] & IS_ESAFE)) {
-			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
+			g_string_append_printf (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
 		} else {
 			g_string_append_c (out, c);
 		}
@@ -786,7 +787,8 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 					used = 0;
 				}
 				
-				g_string_sprintfa (out, "%s*%d%s=", param->name, i++, encoded ? "*" : "");
+				g_string_append_printf (out, "%s*%d%s=", param->name,
+							i++, encoded ? "*" : "");
 				
 				if (encoded || !quote)
 					g_string_append_len (out, inptr, ptr - inptr);
@@ -798,7 +800,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 				inptr = ptr;
 			}
 		} else {
-			g_string_sprintfa (out, "%s%s=", param->name, encoded ? "*" : "");
+			g_string_append_printf (out, "%s%s=", param->name, encoded ? "*" : "");
 			
 			if (encoded || !quote)
 				g_string_append_len (out, value, vlen);

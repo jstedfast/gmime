@@ -1,3 +1,14 @@
+2002-12-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Build fixes for G_DISABLE_DEPRECATED
+
+	* gmime/gmime-param.c (encode_param): Replace calls to
+	g_string_sprintfa() with g_string_append_printf() since the former
+	is marked as being deprecated.
+	(param_list_format): Same.
+
+	* gmime/gmime-utils.c (rfc2047_encode_word): Here too.
+
 2002-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 1.90.8

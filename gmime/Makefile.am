@@ -7,6 +7,7 @@ gmimeincludedir = $(includedir)/gmime-2.0/gmime
 INCLUDES = -I$(top_srcdir) 		\
 	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
+	-DG_DISABLE_DEPRECATED		\
 	$(GLIB_CFLAGS)
 
 VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\"

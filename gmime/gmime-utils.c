@@ -1520,7 +1520,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	
 	g_free (uword);
 	
-	g_string_sprintfa (string, "=?%s?%c?%s?=", charset, encoding, encoded);
+	g_string_append_printf (string, "=?%s?%c?%s?=", charset, encoding, encoded);
 }
 
 
