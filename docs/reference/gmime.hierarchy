@@ -28,6 +28,7 @@ GObject
     GMimeFilterCharset
     GMimeFilterCRLF
     GMimeFilterFrom
+    GMimeFilterGZip
     GMimeFilterHTML
     GMimeFilterMd5
     GMimeFilterStrip
