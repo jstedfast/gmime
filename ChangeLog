@@ -5,6 +5,12 @@
 	put here - it's more a "I want my message headers to be in a nice
 	friendly order rather than the order they are set in".
 
+	* gmime-parser.c (g_mime_parser_construct_message): Use
+	!preserve_headers as the init_headers argument to
+	g_mime_message_new ().
+
+	* pan-mime-parser.c (g_mime_parser_construct_message): Same.
+
 2001-10-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pan-mime-parser.c (construct_message_headers): Use
