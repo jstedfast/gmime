@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-STREAM-MMAP"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1181"
+NAME="AEN1623"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN1181"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1184"
+NAME="AEN1626"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,17 +147,44 @@ CLASS="SYNOPSIS"
 >&#13;
 
 #define     <A
-HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-TYPE-CAPS"
->GMIME_STREAM_MMAP_TYPE</A
+HREF="gmime-gmime-stream-mmap.html#GMIME-TYPE-STREAM-MMAP-CAPS"
+>GMIME_TYPE_STREAM_MMAP</A
 >
 #define     <A
 HREF="gmime-gmime-stream-mmap.html#GMIME-IS-STREAM-MMAP-CAPS"
 >GMIME_IS_STREAM_MMAP</A
->            (stream)
+>            (obj)
 #define     <A
 HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-CAPS"
 >GMIME_STREAM_MMAP</A
->               (stream)
+>               (obj)
+#define     <A
+HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-CLASS-CAPS"
+>GMIME_STREAM_MMAP_CLASS</A
+>         (klass)
+#define     <A
+HREF="gmime-gmime-stream-mmap.html#GMIME-IS-STREAM-MMAP-CLASS-CAPS"
+>GMIME_IS_STREAM_MMAP_CLASS</A
+>      (klass)
+#define     <A
+HREF="gmime-gmime-stream-mmap.html#GMIME-STREAM-MMAP-GET-CLASS-CAPS"
+>GMIME_STREAM_MMAP_GET_CLASS</A
+>     (obj)
+struct      <A
+HREF="gmime-gmime-stream-mmap.html#GMIMESTREAMMMAP"
+>GMimeStreamMmap</A
+>;
+struct      <A
+HREF="gmime-gmime-stream-mmap.html#GMIMESTREAMMMAPCLASS"
+>GMimeStreamMmapClass</A
+>;
+<GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-stream-mmap.html#G-MIME-STREAM-MMAP-GET-TYPE"
+>g_mime_stream_mmap_get_type</A
+>     (void);
 <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
@@ -192,7 +219,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1196"
+NAME="AEN1645"
 ></A
 ><H2
 >Description</H2
@@ -202,20 +229,20 @@ NAME="AEN1196"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1199"
+NAME="AEN1648"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1201"
+NAME="AEN1650"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-MMAP-TYPE-CAPS"
+NAME="GMIME-TYPE-STREAM-MMAP-CAPS"
 ></A
->GMIME_STREAM_MMAP_TYPE</H3
+>GMIME_TYPE_STREAM_MMAP</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -225,7 +252,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")</PRE
+>#define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())</PRE
 ></TD
 ></TR
 ></TABLE
@@ -235,7 +262,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1206"
+NAME="AEN1655"
 ></A
 ><H3
 ><A
@@ -251,7 +278,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MMAP_TYPE)</PRE
+>#define GMIME_IS_STREAM_MMAP(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_MMAP))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -260,7 +287,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1211"
+NAME="AEN1660"
 ></A
 ><P
 ></P
@@ -280,7 +307,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>obj</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -298,7 +325,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1220"
+NAME="AEN1669"
 ></A
 ><H3
 ><A
@@ -314,7 +341,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)</PRE
+>#define GMIME_STREAM_MMAP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmap))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -323,7 +350,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1225"
+NAME="AEN1674"
 ></A
 ><P
 ></P
@@ -343,7 +370,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>obj</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -361,7 +388,321 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1234"
+NAME="AEN1683"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-MMAP-CLASS-CAPS"
+></A
+>GMIME_STREAM_MMAP_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_MMAP_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1688"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1697"
+></A
+><H3
+><A
+NAME="GMIME-IS-STREAM-MMAP-CLASS-CAPS"
+></A
+>GMIME_IS_STREAM_MMAP_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_STREAM_MMAP_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MMAP))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1702"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1711"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-MMAP-GET-CLASS-CAPS"
+></A
+>GMIME_STREAM_MMAP_GET_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_MMAP_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1716"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1725"
+></A
+><H3
+><A
+NAME="GMIMESTREAMMMAP"
+></A
+>struct GMimeStreamMmap</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStreamMmap {
+	GMimeStream parent_object;
+	
+	gboolean owner;
+	gboolean eos;
+	int fd;
+	
+	char *map;
+	size_t maplen;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1730"
+></A
+><H3
+><A
+NAME="GMIMESTREAMMMAPCLASS"
+></A
+>struct GMimeStreamMmapClass</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStreamMmapClass;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1735"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-MMAP-GET-TYPE"
+></A
+>g_mime_stream_mmap_get_type ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       g_mime_stream_mmap_get_type     (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1741"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1750"
 ></A
 ><H3
 ><A
@@ -398,7 +739,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1242"
+NAME="AEN1758"
 ></A
 ><P
 ></P
@@ -490,7 +831,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1264"
+NAME="AEN1780"
 ></A
 ><H3
 ><A
@@ -547,7 +888,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1276"
+NAME="AEN1792"
 ></A
 ><P
 ></P

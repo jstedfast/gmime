@@ -14,15 +14,16 @@
 
 
 
-#define     <link linkend="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</link>
-#define     <link linkend="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE</link>                (object)
-#define     <link linkend="GMIME-MESSAGE-CAPS">GMIME_MESSAGE</link>                   (object)
-#define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
-#define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
-#define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
+#define     <link linkend="GMIME-TYPE-MESSAGE-CAPS">GMIME_TYPE_MESSAGE</link>
+#define     <link linkend="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE</link>                (obj)
+#define     <link linkend="GMIME-MESSAGE-CAPS">GMIME_MESSAGE</link>                   (obj)
+#define     <link linkend="GMIME-MESSAGE-CLASS-CAPS">GMIME_MESSAGE_CLASS</link>             (klass)
+#define     <link linkend="GMIME-IS-MESSAGE-CLASS-CAPS">GMIME_IS_MESSAGE_CLASS</link>          (klass)
+#define     <link linkend="GMIME-MESSAGE-GET-CLASS-CAPS">GMIME_MESSAGE_GET_CLASS</link>         (obj)
 struct      <link linkend="GMimeHeader">GMimeHeader</link>;
-struct      <link linkend="GMimeMessageHeader">GMimeMessageHeader</link>;
 struct      <link linkend="GMimeMessage">GMimeMessage</link>;
+struct      <link linkend="GMimeMessageClass">GMimeMessageClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-message-get-type">g_mime_message_get_type</link>         (void);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
 void        <link linkend="g-mime-message-set-sender">g_mime_message_set_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *sender);
@@ -30,6 +31,9 @@ const char* <link linkend="g-mime-message-get-sender">g_mime_message_get_sender<
 void        <link linkend="g-mime-message-set-reply-to">g_mime_message_set_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *reply_to);
 const char* <link linkend="g-mime-message-get-reply-to">g_mime_message_get_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+#define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
+#define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
+#define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
 void        <link linkend="g-mime-message-add-recipient">g_mime_message_add_recipient</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              char *type,
                                              const char *name,
@@ -52,7 +56,7 @@ void        <link linkend="g-mime-message-get-date">g_mime_message_get_date</lin
                                              int *gmt_offset);
 char*       <link linkend="g-mime-message-get-date-string">g_mime_message_get_date_string</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-message-id">g_mime_message_set_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const char *id);
+                                             const char *message_id);
 const char* <link linkend="g-mime-message-get-message-id">g_mime_message_get_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-add-header">g_mime_message_add_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *header,
@@ -63,8 +67,8 @@ void        <link linkend="g-mime-message-set-header">g_mime_message_set_header<
 const char* <link linkend="g-mime-message-get-header">g_mime_message_get_header</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *header);
 void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime_part</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="GMimePart">GMimePart</link> *mime_part);
-void        <link linkend="g-mime-message-write-to-stream">g_mime_message_write_to_stream</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             <link linkend="GMimeObject">GMimeObject</link> *mime_part);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-message-write-to-stream">g_mime_message_write_to_stream</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 char*       <link linkend="g-mime-message-to-string">g_mime_message_to_string</link>        (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 char*       <link linkend="g-mime-message-get-body">g_mime_message_get_body</link>         (const <link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -91,15 +95,15 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</title>
-<programlisting>#define GMIME_MESSAGE_TYPE       g_str_hash ("GMimeMessage")
+<title><anchor id="GMIME-TYPE-MESSAGE-CAPS">GMIME_TYPE_MESSAGE</title>
+<programlisting>#define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE()</title>
-<programlisting>#define GMIME_IS_MESSAGE(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_MESSAGE_TYPE)
+<programlisting>#define GMIME_IS_MESSAGE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MESSAGE))
 </programlisting>
 <para>
 
@@ -108,7 +112,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
 
 
@@ -116,7 +120,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-MESSAGE-CAPS">GMIME_MESSAGE()</title>
-<programlisting>#define GMIME_MESSAGE(object)    ((GMimeMessage *) object)
+<programlisting>#define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
 </programlisting>
 <para>
 
@@ -125,33 +129,63 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
 
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
+<title><anchor id="GMIME-MESSAGE-CLASS-CAPS">GMIME_MESSAGE_CLASS()</title>
+<programlisting>#define GMIME_MESSAGE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
 </programlisting>
 <para>
 
-</para></refsect2>
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+<title><anchor id="GMIME-IS-MESSAGE-CLASS-CAPS">GMIME_IS_MESSAGE_CLASS()</title>
+<programlisting>#define GMIME_IS_MESSAGE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
 </programlisting>
 <para>
 
-</para></refsect2>
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+<title><anchor id="GMIME-MESSAGE-GET-CLASS-CAPS">GMIME_MESSAGE_GET_CLASS()</title>
+<programlisting>#define GMIME_MESSAGE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
 </programlisting>
 <para>
 
-</para></refsect2>
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimeHeader">struct GMimeHeader</title>
 <programlisting>struct GMimeHeader;</programlisting>
@@ -159,8 +193,10 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeMessageHeader">struct GMimeMessageHeader</title>
-<programlisting>struct GMimeMessageHeader {
+<title><anchor id="GMimeMessage">struct GMimeMessage</title>
+<programlisting>struct GMimeMessage {
+	GMimeObject parent_object;
+	
 	char *from;
 	char *reply_to;
 	
@@ -173,25 +209,33 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 	
 	char *message_id;
 	
-	GMimeHeader *headers;
+	GMimeObject *mime_part;
 };
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeMessage">struct GMimeMessage</title>
-<programlisting>struct GMimeMessage {
-	GMimeObject parent_object;
-	
-	GMimeMessageHeader *header;
-	
-	GMimePart *mime_part;
-};
-</programlisting>
+<title><anchor id="GMimeMessageClass">struct GMimeMessageClass</title>
+<programlisting>struct GMimeMessageClass;</programlisting>
 <para>
 
 </para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-get-type">g_mime_message_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_message_get_type         (void);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-new">g_mime_message_new ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_message_new            (<link linkend="gboolean">gboolean</link> pretty_headers);</programlisting>
@@ -291,6 +335,27 @@ Gets the Reply-To address from <parameter>message</parameter>.</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="g-mime-message-add-recipient">g_mime_message_add_recipient ()</title>
 <programlisting>void        g_mime_message_add_recipient    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              char *type,
@@ -298,8 +363,8 @@ Gets the Reply-To address from <parameter>message</parameter>.</para>
                                              const char *address);</programlisting>
 <para>
 Add a recipient of a chosen type to the MIME Message. Available
-recipient types include: GMIME_RECIPIENT_TYPE_TO,
-GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</para>
+recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>,
+<link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -329,8 +394,8 @@ GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</para>
 <para>
 Add a list of recipients of a chosen type to the MIME
 Message. Available recipient types include:
-GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
-GMIME_RECIPIENT_TYPE_BCC. The string must be in the format
+<link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>, <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and
+<link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>. The string must be in the format
 specified in rfc822.</para>
 <para>
 
@@ -355,7 +420,9 @@ specified in rfc822.</para>
                                             (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *type);</programlisting>
 <para>
-Gets a list of recipients of type <parameter>type</parameter> from <parameter>message</parameter>.</para>
+Gets a list of recipients of type <parameter>type</parameter> from <parameter>message</parameter>. Available
+recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>,
+<link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -370,9 +437,7 @@ Gets a list of recipients of type <parameter>type</parameter> from <parameter>me
 <entry> Recipient type
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a list of recipients of a chosen type from the MIME
-Message. Available recipient types include:
-GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
-GMIME_RECIPIENT_TYPE_BCC.
+Message.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -419,7 +484,7 @@ Gets the message's subject.</para>
                                              <link linkend="time-t">time_t</link> date,
                                              int gmt_offset);</programlisting>
 <para>
-Set the sent-date on a MIME Message.</para>
+Sets the sent-date on a MIME Message.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -431,7 +496,7 @@ Set the sent-date on a MIME Message.</para>
 <entry> MIME Message
 </entry></row>
 <row><entry align="right"><parameter>date</parameter>&nbsp;:</entry>
-<entry> Sent-date (ex: gotten from time (NULL);)
+<entry> Sent-date (ex: gotten from time (NULL))
 </entry></row>
 <row><entry align="right"><parameter>gmt_offset</parameter>&nbsp;:</entry>
 <entry> GMT date offset (in +/- hours)
@@ -483,7 +548,7 @@ Gets the message's sent date in string format.</para>
 <refsect2>
 <title><anchor id="g-mime-message-set-message-id">g_mime_message_set_message_id ()</title>
 <programlisting>void        g_mime_message_set_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             const char *id);</programlisting>
+                                             const char *message_id);</programlisting>
 <para>
 Set the Message-Id on a message.</para>
 <para>
@@ -496,7 +561,7 @@ Set the Message-Id on a message.</para>
 <row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
 <entry> MIME Message
 </entry></row>
-<row><entry align="right"><parameter>id</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>message_id</parameter>&nbsp;:</entry>
 <entry> message-id
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -594,7 +659,7 @@ Gets the value of the requested header <parameter>header</parameter> if it exist
 <refsect2>
 <title><anchor id="g-mime-message-set-mime-part">g_mime_message_set_mime_part ()</title>
 <programlisting>void        g_mime_message_set_mime_part    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
-                                             <link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
+                                             <link linkend="GMimeObject">GMimeObject</link> *mime_part);</programlisting>
 <para>
 Set the root-level MIME part of the message.</para>
 <para>
@@ -613,10 +678,10 @@ Set the root-level MIME part of the message.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-write-to-stream">g_mime_message_write_to_stream ()</title>
-<programlisting>void        g_mime_message_write_to_stream  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_message_write_to_stream  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-Write the contents of the MIME Message to <parameter>string</parameter>.</para>
+Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -629,6 +694,8 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
 </entry></row>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> output stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>-1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -674,8 +741,9 @@ specified by <parameter>want_plain</parameter>.</para>
 <entry> body returned is in html format
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the prefered form of the message body. Sets the value of
-<parameter>is_html</parameter> to TRUE if the part returned is in HTML format, otherwise
-FALSE.
+<parameter>is_html</parameter> to <literal>TRUE</literal> if the part returned is in HTML format, otherwise
+<literal>FALSE</literal>.
+
 Note: This function is NOT guarenteed to always work as it
 makes some assumptions that are not necessarily true. It is
 recommended that you traverse the MIME structure yourself.

@@ -104,7 +104,7 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 <title><anchor id="internet-address-new">internet_address_new ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new       (void);</programlisting>
 <para>
-Creates a new InternetAddress object</para>
+Creates a new <link linkend="InternetAddress">InternetAddress</link> object</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -112,7 +112,7 @@ Creates a new InternetAddress object</para>
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -120,7 +120,7 @@ Creates a new InternetAddress object</para>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const char *name,
                                              const char *addr);</programlisting>
 <para>
-Creates a new InternetAddress object with name <parameter>name</parameter> and address
+Creates a new <link linkend="InternetAddress">InternetAddress</link> object with name <parameter>name</parameter> and address
 <parameter>addr</parameter>.</para>
 <para>
 
@@ -135,14 +135,14 @@ Creates a new InternetAddress object with name <parameter>name</parameter> and a
 <row><entry align="right"><parameter>addr</parameter>&nbsp;:</entry>
 <entry> person's address
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const char *name);</programlisting>
 <para>
-Creates a new InternetAddress object with group name <parameter>name</parameter>.</para>
+Creates a new <link linkend="InternetAddress">InternetAddress</link> object with group name <parameter>name</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -153,7 +153,7 @@ Creates a new InternetAddress object with group name <parameter>name</parameter>
 <row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
 <entry> group name
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new <link linkend="InternetAddress">InternetAddress</link> object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -169,7 +169,7 @@ Ref's the internet address.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> address
+<entry> internet address
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -185,7 +185,7 @@ Unref's the internet address.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> address
+<entry> internet address
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -398,7 +398,7 @@ the caller.
 <programlisting>char*       internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="gboolean">gboolean</link> encode);</programlisting>
 <para>
-Allocates a string containing the contents of the InternetAddress
+Allocates a string containing the contents of the <link linkend="InternetAddress">InternetAddress</link>
 object.</para>
 <para>
 
@@ -413,8 +413,8 @@ object.</para>
 <row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
 <entry> TRUE if the address should be rfc2047 encoded
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the InternetAddress object as an allocated string in rfc822
-format.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the <link linkend="InternetAddress">InternetAddress</link> object as an allocated string in
+rfc822 format.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -435,7 +435,7 @@ in <parameter>list</parameter>.</para>
 <entry> list of internet addresses
 </entry></row>
 <row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
-<entry> TRUE if the address should be rfc2047 encoded
+<entry> <literal>TRUE</literal> if the address should be rfc2047 encoded
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the list of addresses in rfc822 format.
 </entry></row>

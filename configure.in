@@ -136,6 +136,9 @@ AC_SUBST(glib_libs)
 
 dnl Check for libiconv
 AM_ICONV()
+
+CFLAGS="$CFLAGS -I$srcdir"
+
 AC_MSG_CHECKING(preferred charset formats for system iconv)
 AC_TRY_RUN([
 #define CONFIGURE_IN

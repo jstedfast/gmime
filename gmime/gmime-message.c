@@ -489,8 +489,8 @@ sync_recipient_header (GMimeMessage *message, const char *type)
  * @address: The recipient's address
  *
  * Add a recipient of a chosen type to the MIME Message. Available
- * recipient types include: GMIME_RECIPIENT_TYPE_TO,
- * GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.
+ * recipient types include: #GMIME_RECIPIENT_TYPE_TO,
+ * #GMIME_RECIPIENT_TYPE_CC and #GMIME_RECIPIENT_TYPE_BCC.
  **/
 void
 g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *name, const char *address)
@@ -542,8 +542,8 @@ message_add_recipients_from_string (GMimeMessage *message, char *type, const cha
  *
  * Add a list of recipients of a chosen type to the MIME
  * Message. Available recipient types include:
- * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
- * GMIME_RECIPIENT_TYPE_BCC. The string must be in the format
+ * #GMIME_RECIPIENT_TYPE_TO, #GMIME_RECIPIENT_TYPE_CC and
+ * #GMIME_RECIPIENT_TYPE_BCC. The string must be in the format
  * specified in rfc822.
  **/
 void
@@ -564,12 +564,12 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
  * @message: MIME Message
  * @type: Recipient type
  *
- * Gets a list of recipients of type @type from @message.
+ * Gets a list of recipients of type @type from @message. Available
+ * recipient types include: #GMIME_RECIPIENT_TYPE_TO,
+ * #GMIME_RECIPIENT_TYPE_CC and #GMIME_RECIPIENT_TYPE_BCC.
  *
  * Returns a list of recipients of a chosen type from the MIME
- * Message. Available recipient types include:
- * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
- * GMIME_RECIPIENT_TYPE_BCC.
+ * Message.
  **/
 InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, const char *type)
@@ -628,10 +628,10 @@ g_mime_message_get_subject (GMimeMessage *message)
 /**
  * g_mime_message_set_date:
  * @message: MIME Message
- * @date: Sent-date (ex: gotten from time (NULL);)
+ * @date: Sent-date (ex: gotten from time (NULL))
  * @gmt_offset: GMT date offset (in +/- hours)
  * 
- * Set the sent-date on a MIME Message.
+ * Sets the sent-date on a MIME Message.
  **/
 void
 g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
@@ -947,8 +947,9 @@ multipart_get_body (GMimeMultipart *multipart, gboolean want_plain, gboolean *is
  * specified by @want_plain.
  *
  * Returns the prefered form of the message body. Sets the value of
- * @is_html to TRUE if the part returned is in HTML format, otherwise
- * FALSE.
+ * @is_html to %TRUE if the part returned is in HTML format, otherwise
+ * %FALSE.
+ *
  * Note: This function is NOT guarenteed to always work as it
  * makes some assumptions that are not necessarily true. It is
  * recommended that you traverse the MIME structure yourself.

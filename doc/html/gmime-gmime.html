@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-iconv</TITLE
+>gmime</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-charset"
-HREF="gmime-gmime-charset.html"><LINK
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
 REL="NEXT"
-TITLE="gmime-iconv-utils"
-HREF="gmime-gmime-iconv-utils.html"></HEAD
+TITLE="gmime-stream"
+HREF="gmime-gmime-stream.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="libgmime.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-iconv-utils.html"
+HREF="gmime-gmime-stream.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-ICONV"
->gmime-iconv</A
+NAME="GMIME-GMIME"
+>gmime</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN8656"
+NAME="AEN55"
 ></A
 ><H2
 >Name</H2
->gmime-iconv&nbsp;--&nbsp;</DIV
+>gmime&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN8659"
+NAME="AEN58"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,29 +146,21 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-void        <A
-HREF="gmime-gmime-iconv.html#G-MIME-ICONV-INIT"
->g_mime_iconv_init</A
->               (void);
-<GTKDOCLINK
-HREF="ICONV-T"
->iconv_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-iconv.html#G-MIME-ICONV-OPEN"
->g_mime_iconv_open</A
->               (const char *to,
-                                             const char *from);
 #define     <A
-HREF="gmime-gmime-iconv.html#G-MIME-ICONV"
->g_mime_iconv</A
->                    (cd,inbuf,inleft,outbuf,outleft)
-int         <A
-HREF="gmime-gmime-iconv.html#G-MIME-ICONV-CLOSE"
->g_mime_iconv_close</A
->              (<GTKDOCLINK
-HREF="ICONV-T"
->iconv_t</GTKDOCLINK
-> cd);</PRE
+HREF="gmime-gmime.html#GMIME-CHECK-VERSION-CAPS"
+>GMIME_CHECK_VERSION</A
+>             (major,minor,micro)
+#define     <A
+HREF="gmime-gmime.html#GMIME-INIT-FLAG-UTF8-CAPS"
+>GMIME_INIT_FLAG_UTF8</A
+>
+void        <A
+HREF="gmime-gmime.html#G-MIME-INIT"
+>g_mime_init</A
+>                     (<GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> flags);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -176,7 +168,7 @@ HREF="ICONV-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN8668"
+NAME="AEN65"
 ></A
 ><H2
 >Description</H2
@@ -186,20 +178,20 @@ NAME="AEN8668"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN8671"
+NAME="AEN68"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8673"
+NAME="AEN70"
 ></A
 ><H3
 ><A
-NAME="G-MIME-ICONV-INIT"
+NAME="GMIME-CHECK-VERSION-CAPS"
 ></A
->g_mime_iconv_init ()</H3
+>GMIME_CHECK_VERSION()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -209,64 +201,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_iconv_init               (void);</PRE
+>#define     GMIME_CHECK_VERSION(major,minor,micro)</PRE
 ></TD
 ></TR
 ></TABLE
-><P
->Initialize GMime's iconv cache. This *MUST* be called before any
-gmime-iconv interfaces will work correctly.</P
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN8679"
-></A
-><H3
-><A
-NAME="G-MIME-ICONV-OPEN"
-></A
->g_mime_iconv_open ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="ICONV-T"
->iconv_t</GTKDOCLINK
->     g_mime_iconv_open               (const char *to,
-                                             const char *from);</PRE
-></TD
-></TR
-></TABLE
-><P
->Allocates a coversion descriptor suitable for converting byte
-sequences from charset <TT
-CLASS="PARAMETER"
-><I
->from</I
-></TT
-> to charset <TT
-CLASS="PARAMETER"
-><I
->to</I
-></TT
->. The resulting
-descriptor can be used with iconv (or the g_mime_iconv wrapper) any
-number of times until closed using g_mime_iconv_close.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN8688"
+NAME="AEN75"
 ></A
 ><P
 ></P
@@ -286,104 +230,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->to</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> charset to convert to</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->from</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> charset to convert from</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a new conversion descriptor for use with iconv on success
-or (iconv_t) -1 on fail as well as setting an appropriate errno
-value.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN8705"
-></A
-><H3
-><A
-NAME="G-MIME-ICONV"
-></A
->g_mime_iconv()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->#define     g_mime_iconv(cd,inbuf,inleft,outbuf,outleft)</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN8710"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->cd</I
+>major</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -400,7 +247,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->inbuf</I
+>minor</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -417,41 +264,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->inleft</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->outbuf</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->outleft</I
+>micro</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -469,13 +282,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN8735"
+NAME="AEN92"
 ></A
 ><H3
 ><A
-NAME="G-MIME-ICONV-CLOSE"
+NAME="GMIME-INIT-FLAG-UTF8-CAPS"
 ></A
->g_mime_iconv_close ()</H3
+>GMIME_INIT_FLAG_UTF8</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -485,26 +298,47 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->int         g_mime_iconv_close              (<GTKDOCLINK
-HREF="ICONV-T"
->iconv_t</GTKDOCLINK
-> cd);</PRE
+>#define GMIME_INIT_FLAG_UTF8  (1 &lt;&lt; 0)  /* here for backward compatability */</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Closes the iconv descriptor <TT
-CLASS="PARAMETER"
-><I
->cd</I
-></TT
->.</P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN97"
+></A
+><H3
+><A
+NAME="G-MIME-INIT"
+></A
+>g_mime_init ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_init                     (<GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> flags);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initailizes GMime.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN8743"
+NAME="AEN104"
 ></A
 ><P
 ></P
@@ -524,30 +358,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->cd</I
+>flags</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> iconv conversion descriptor</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->0 on success or -1 on fail as well as setting an
-appropriate errno value.</TD
+> initialization flags</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -571,7 +389,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="libgmime.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -625,7 +443,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-iconv-utils.html"
+HREF="gmime-gmime-stream.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -643,7 +461,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-charset</B
+>GMime Library Reference</B
 ></FONT
 ></TD
 ><TD
@@ -653,7 +471,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-iconv-utils</B
+>gmime-stream</B
 ></FONT
 ></TD
 ></TR

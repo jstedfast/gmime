@@ -1,3 +1,10 @@
+2002-04-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* docs/*: Updated.
+
+	* configure.in: Add $srcdir to the include path so it catches
+	iconv-detect.h.
+
 2002-04-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_step_headers): Take advantage of the same

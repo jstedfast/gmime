@@ -159,15 +159,13 @@ g_mime_object_unref (GMimeObject *object)
  * g_mime_object_register_type:
  * @type: mime type
  * @subtype: mime subtype
- * @object_type: GMimeObject subclass type that handles mime
- *               parts of the type specified by @type/@subtype
+ * @object_type: object type
  *
- * Registers the object type for the g_mime_object_new_type()
- * convenience function.
+ * Registers the object type @object_type for use with the
+ * #g_mime_object_new_type convenience function.
  *
- * Note: In order for the parser to work properly, each leaf MIME part
- * class MUST be registered. You may use the wildcard "*" to match any
- * type and/or subtype.
+ * Note: You may use the wildcard "*" to match any type and/or
+ * subtype.
  **/
 void
 g_mime_object_register_type (const char *type, const char *subtype, GType object_type)
@@ -205,6 +203,15 @@ init (GMimeObject *object)
  * @type: mime type
  * @subtype: mime subtype
  *
+ * Performs a lookup of registered #GMimeObject subclasses, registered
+ * using #g_mime_object_register_type, to find an appropriate class
+ * capable of handling MIME parts of type @type/@subtype. If no class
+ * has been registered to handle that type, it looks for a registered
+ * class that can handle @type/*. If that also fails, then it will use
+ * the generic part class, #GMimePart.
+ *
+ * Returns an appropriate #GMimeObject registered to handle mime-types
+ * of @type/@subtype.
  **/
 GMimeObject *
 g_mime_object_new_type (const char *type, const char *subtype)
@@ -270,20 +277,20 @@ sync_content_type (GMimeObject *object)
 /**
  * g_mime_object_set_content_type:
  * @object: MIME object
- * @type: MIME type
+ * @mime_type: MIME type
  *
- * Set the content type/subtype for the specified MIME object.
+ * Sets the content-type for the specified MIME object.
  **/
 void
-g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *type)
+g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (type != NULL);
+	g_return_if_fail (mime_type != NULL);
 	
 	if (object->content_type)
 		g_mime_content_type_destroy (object->content_type);
 	
-	object->content_type = type;
+	object->content_type = mime_type;
 	
 	sync_content_type (object);
 }
@@ -437,7 +444,7 @@ add_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Add an arbitrary header to the MIME object.
+ * Adds an arbitrary header to the MIME object.
  **/
 void
 g_mime_object_add_header (GMimeObject *object, const char *header, const char *value)
@@ -490,7 +497,8 @@ get_header (GMimeObject *object, const char *header)
  * Gets the value of the requested header if it exists or %NULL
  * otherwise.
  *
- * Returns the value of the header @header.
+ * Returns the value of the header @header if it exists or %NULL
+ * otherwise.
  **/
 const char *
 g_mime_object_get_header (GMimeObject *object, const char *header)
@@ -537,9 +545,10 @@ get_headers (GMimeObject *object)
  * g_mime_object_get_headers:
  * @object: mime object
  *
- * Allocates a string buffer containing the MIME object's raw headers.
+ * Allocates a string buffer containing all of the MIME object's raw
+ * headers.
  *
- * Returns an allocated string containing the raw MIME headers.
+ * Returns an allocated string containing all of the raw MIME headers.
  **/
 char *
 g_mime_object_get_headers (GMimeObject *object)

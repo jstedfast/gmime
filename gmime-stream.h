@@ -50,7 +50,7 @@ typedef enum {
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
 
-typedef struct _GMimeStreamIOVector {
+typedef struct {
 	gpointer data;
 	size_t len;
 } GMimeStreamIOVector;

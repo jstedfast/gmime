@@ -334,6 +334,27 @@ g_mime_parser_new (void)
 }
 
 
+/**
+ * g_mime_parser_init_with_stream:
+ * @parser: MIME parser object
+ * @stream: raw message or part stream
+ *
+ * Initializes @parser to use @stream.
+ *
+ * WARNING: Initializing a parser with a stream is comparable to
+ * selling your soul (@stream) to the devil (@parser). You are
+ * basically giving the parser complete control of the stream, this
+ * means that you had better not touch the stream so long as the
+ * parser is still using it. This means no reading, writing, seeking,
+ * or resetting of the stream. Anything that will/could change the
+ * current stream's offset is PROHIBITED.
+ *
+ * It is also recommended that you not use #g_mime_stream_tell because
+ * it will not necessarily give you the current @parser offset since
+ * @parser handles its own internal read-ahead buffer. Instead, it is
+ * recommended that you use #g_mime_parser_tell if you have a reason
+ * to need the current offset of the @parser.
+ **/
 void
 g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 {
@@ -345,6 +366,13 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 }
 
 
+/**
+ * g_mime_parser_set_scan_from:
+ * @parser: MIME parser object
+ * @scan_from: %TRUE to scan From-lines or %FALSE otherwise
+ *
+ * Sets whether or not @parser should scan mbox-style From-lines.
+ **/
 void
 g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
 {
@@ -354,6 +382,15 @@ g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
 }
 
 
+/**
+ * g_mime_parser_get_scan_from:
+ * @parser: MIME parser object
+ *
+ * Gets whether or not @parser is set to scan mbox-style From-lines.
+ *
+ * Returns whether or not @parser is set to scan mbox-style
+ * From-lines.
+ **/
 gboolean
 g_mime_parser_get_scan_from (GMimeParser *parser)
 {
@@ -412,6 +449,26 @@ parser_offset (GMimeParser *parser, unsigned char *cur)
 	
 	return (priv->offset - (priv->inend - inptr));
 }
+
+
+/**
+ * g_mime_parser_tell:
+ * @parser: MIME parser object
+ *
+ * Gets the current stream offset from the parser's internal stream.
+ *
+ * Returns the current stream offset from the parser's internal stream
+ * or -1 on error.
+ **/
+off_t
+g_mime_parser_tell (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), -1);
+	
+	return parser_offset (parser, NULL);
+}
+
 
 static int
 parser_step_from (GMimeParser *parser)
@@ -983,11 +1040,11 @@ parser_construct_part (GMimeParser *parser)
 
 /**
  * g_mime_parser_construct_part:
- * @stream: raw MIME Part stream
+ * @parser: MIME parser object
  *
- * Constructs a MIME object based on @stream.
+ * Constructs a MIME part from @parser.
  *
- * Returns a MIME object based on the data or %NULL on fail.
+ * Returns a MIME part based on @parser or %NULL on fail.
  **/
 GMimeObject *
 g_mime_parser_construct_part (GMimeParser *parser)
@@ -1047,7 +1104,7 @@ parser_construct_message (GMimeParser *parser)
 
 /**
  * g_mime_parser_construct_message:
- * @parser: MIME parser
+ * @parser: MIME parser object
  *
  * Constructs a MIME message from @parser.
  *
@@ -1061,3 +1118,30 @@ g_mime_parser_construct_message (GMimeParser *parser)
 	return parser_construct_message (parser);
 }
 
+
+/**
+ * g_mime_parser_get_from:
+ * @parser: MIME parser object
+ *
+ * Gets the mbox-style From-line of the most recently parsed message
+ * (gotten from #g_mime_parser_construct_message).
+ *
+ * Returns the mbox-style From-line of the most recently parsed
+ * message or %NULL on error.
+ **/
+char *
+g_mime_parser_get_from (GMimeParser *parser)
+{
+	struct _GMimeParserPrivate *priv;
+	
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
+	
+	priv = parser->priv;
+	if (!priv->scan_from)
+		return NULL;
+	
+	if (priv->from_line->len)
+		return g_strndup (priv->from_line->data, priv->from_line->len);
+	
+	return NULL;
+}

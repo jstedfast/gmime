@@ -1,0 +1,539 @@
+<refentry id="gmime-gmime-multipart">
+<refmeta>
+<refentrytitle>gmime-multipart</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-multipart</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-TYPE-MULTIPART-CAPS">GMIME_TYPE_MULTIPART</link>
+#define     <link linkend="GMIME-IS-MULTIPART-CAPS">GMIME_IS_MULTIPART</link>              (obj)
+#define     <link linkend="GMIME-MULTIPART-CAPS">GMIME_MULTIPART</link>                 (obj)
+#define     <link linkend="GMIME-MULTIPART-CLASS-CAPS">GMIME_MULTIPART_CLASS</link>           (klass)
+#define     <link linkend="GMIME-IS-MULTIPART-CLASS-CAPS">GMIME_IS_MULTIPART_CLASS</link>        (klass)
+#define     <link linkend="GMIME-MULTIPART-GET-CLASS-CAPS">GMIME_MULTIPART_GET_CLASS</link>       (obj)
+struct      <link linkend="GMimeMultipart">GMimeMultipart</link>;
+struct      <link linkend="GMimeMultipartClass">GMimeMultipartClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-multipart-get-type">g_mime_multipart_get_type</link>       (void);
+<link linkend="GMimeMultipart">GMimeMultipart</link>* <link linkend="g-mime-multipart-new">g_mime_multipart_new</link>        (void);
+<link linkend="GMimeMultipart">GMimeMultipart</link>* <link linkend="g-mime-multipart-new-with-subtype">g_mime_multipart_new_with_subtype</link>
+                                            (const char *subtype);
+void        <link linkend="g-mime-multipart-set-preface">g_mime_multipart_set_preface</link>    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *preface);
+const char* <link linkend="g-mime-multipart-get-preface">g_mime_multipart_get_preface</link>    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);
+void        <link linkend="g-mime-multipart-set-postface">g_mime_multipart_set_postface</link>   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *postface);
+const char* <link linkend="g-mime-multipart-get-postface">g_mime_multipart_get_postface</link>   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);
+void        <link linkend="g-mime-multipart-set-boundary">g_mime_multipart_set_boundary</link>   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *boundary);
+const char* <link linkend="g-mime-multipart-get-boundary">g_mime_multipart_get_boundary</link>   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);
+void        <link linkend="g-mime-multipart-add-part">g_mime_multipart_add_part</link>       (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part);
+void        <link linkend="g-mime-multipart-add-part-at">g_mime_multipart_add_part_at</link>    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part,
+                                             int index);
+int         <link linkend="g-mime-multipart-get-number">g_mime_multipart_get_number</link>     (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);
+<link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-multipart-get-part">g_mime_multipart_get_part</link>      (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             int index);
+void        <link linkend="g-mime-multipart-remove-part">g_mime_multipart_remove_part</link>    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part);
+<link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-multipart-remove-part-at">g_mime_multipart_remove_part_at</link>
+                                            (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             int index);
+void        <link linkend="g-mime-multipart-foreach">g_mime_multipart_foreach</link>        (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> user_data);
+const <link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-multipart-get-subpart-from-content-id">g_mime_multipart_get_subpart_from_content_id</link>
+                                            (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *content_id);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-TYPE-MULTIPART-CAPS">GMIME_TYPE_MULTIPART</title>
+<programlisting>#define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-MULTIPART-CAPS">GMIME_IS_MULTIPART()</title>
+<programlisting>#define GMIME_IS_MULTIPART(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MULTIPART))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-MULTIPART-CAPS">GMIME_MULTIPART()</title>
+<programlisting>#define GMIME_MULTIPART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-MULTIPART-CLASS-CAPS">GMIME_MULTIPART_CLASS()</title>
+<programlisting>#define GMIME_MULTIPART_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-MULTIPART-CLASS-CAPS">GMIME_IS_MULTIPART_CLASS()</title>
+<programlisting>#define GMIME_IS_MULTIPART_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-MULTIPART-GET-CLASS-CAPS">GMIME_MULTIPART_GET_CLASS()</title>
+<programlisting>#define GMIME_MULTIPART_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MULTIPART, GMimeMultipartClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeMultipart">struct GMimeMultipart</title>
+<programlisting>struct GMimeMultipart {
+	GMimeObject parent_object;
+	
+	char *boundary;
+	
+	char *preface;
+	char *postface;
+	
+	GList *subparts;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeMultipartClass">struct GMimeMultipartClass</title>
+<programlisting>struct GMimeMultipartClass;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-type">g_mime_multipart_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_multipart_get_type       (void);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-new">g_mime_multipart_new ()</title>
+<programlisting><link linkend="GMimeMultipart">GMimeMultipart</link>* g_mime_multipart_new        (void);</programlisting>
+<para>
+Creates a new MIME multipart object with a default content-type of
+multipart/mixed.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME multipart object with a default content-type of
+multipart/mixed.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-new-with-subtype">g_mime_multipart_new_with_subtype ()</title>
+<programlisting><link linkend="GMimeMultipart">GMimeMultipart</link>* g_mime_multipart_new_with_subtype
+                                            (const char *subtype);</programlisting>
+<para>
+Creates a new MIME multipart object with a content-type of
+multipart/<parameter>subtype</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>subtype</parameter>&nbsp;:</entry>
+<entry> content-type subtype
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME multipart object with a content-type of
+multipart/<parameter>subtype</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-set-preface">g_mime_multipart_set_preface ()</title>
+<programlisting>void        g_mime_multipart_set_preface    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *preface);</programlisting>
+<para>
+Sets the preface on the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>preface</parameter>&nbsp;:</entry>
+<entry> preface
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-preface">g_mime_multipart_get_preface ()</title>
+<programlisting>const char* g_mime_multipart_get_preface    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);</programlisting>
+<para>
+Gets the preface on the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a pointer to the preface string on the multipart.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-set-postface">g_mime_multipart_set_postface ()</title>
+<programlisting>void        g_mime_multipart_set_postface   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *postface);</programlisting>
+<para>
+Sets the postface on the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>postface</parameter>&nbsp;:</entry>
+<entry> postface
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-postface">g_mime_multipart_get_postface ()</title>
+<programlisting>const char* g_mime_multipart_get_postface   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);</programlisting>
+<para>
+Gets the postface on the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a pointer to the postface string on the multipart.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-set-boundary">g_mime_multipart_set_boundary ()</title>
+<programlisting>void        g_mime_multipart_set_boundary   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *boundary);</programlisting>
+<para>
+Sets <parameter>boundary</parameter> as the boundary on the multipart. If <parameter>boundary</parameter> is
+<literal>NULL</literal>, then a boundary will be auto-generated for you.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>boundary</parameter>&nbsp;:</entry>
+<entry> boundary or <literal>NULL</literal> to autogenerate one
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-boundary">g_mime_multipart_get_boundary ()</title>
+<programlisting>const char* g_mime_multipart_get_boundary   (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);</programlisting>
+<para>
+Gets the boundary on the multipart. If the internal boundary is
+<literal>NULL</literal>, then an auto-generated boundary will be set on the multipart
+and returned.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the boundary on the multipart.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-add-part">g_mime_multipart_add_part ()</title>
+<programlisting>void        g_mime_multipart_add_part       (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part);</programlisting>
+<para>
+Adds a mime part to the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
+<entry> mime part
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-add-part-at">g_mime_multipart_add_part_at ()</title>
+<programlisting>void        g_mime_multipart_add_part_at    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part,
+                                             int index);</programlisting>
+<para>
+Adds a mime part to the multipart at the position <parameter>index</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
+<entry> mime part
+</entry></row>
+<row><entry align="right"><parameter>index</parameter>&nbsp;:</entry>
+<entry> position to insert the mime part
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-number">g_mime_multipart_get_number ()</title>
+<programlisting>int         g_mime_multipart_get_number     (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart);</programlisting>
+<para>
+Gets the number of mime parts contained within the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of mime parts contained within the multipart.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-part">g_mime_multipart_get_part ()</title>
+<programlisting><link linkend="GMimeObject">GMimeObject</link>* g_mime_multipart_get_part      (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             int index);</programlisting>
+<para>
+Gets the mime part at position <parameter>index</parameter> within the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>index</parameter>&nbsp;:</entry>
+<entry> position of the mime part
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the mime part at position <parameter>index</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-remove-part">g_mime_multipart_remove_part ()</title>
+<programlisting>void        g_mime_multipart_remove_part    (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimeObject">GMimeObject</link> *part);</programlisting>
+<para>
+Removes the specified mime part from the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
+<entry> mime part
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-remove-part-at">g_mime_multipart_remove_part_at ()</title>
+<programlisting><link linkend="GMimeObject">GMimeObject</link>* g_mime_multipart_remove_part_at
+                                            (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             int index);</programlisting>
+<para>
+Removes the mime part at position <parameter>index</parameter> from the multipart.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> multipart
+</entry></row>
+<row><entry align="right"><parameter>index</parameter>&nbsp;:</entry>
+<entry> position of the mime part to remove
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the mime part that was removed.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-foreach">g_mime_multipart_foreach ()</title>
+<programlisting>void        g_mime_multipart_foreach        (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
+                                             <link linkend="gpointer">gpointer</link> user_data);</programlisting>
+<para>
+Calls <parameter>callback</parameter> on <parameter>multipart</parameter> and each of its subparts.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> a multipart
+</entry></row>
+<row><entry align="right"><parameter>callback</parameter>&nbsp;:</entry>
+<entry> function to call for <parameter>multipart</parameter> and all of its subparts
+</entry></row>
+<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
+<entry> extra data to pass to the callback
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-get-subpart-from-content-id">g_mime_multipart_get_subpart_from_content_id ()</title>
+<programlisting>const <link linkend="GMimeObject">GMimeObject</link>* g_mime_multipart_get_subpart_from_content_id
+                                            (<link linkend="GMimeMultipart">GMimeMultipart</link> *multipart,
+                                             const char *content_id);</programlisting>
+<para>
+Gets the mime part with the content-id <parameter>content_id</parameter> from the
+multipart <parameter>multipart</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>multipart</parameter>&nbsp;:</entry>
+<entry> a multipart
+</entry></row>
+<row><entry align="right"><parameter>content_id</parameter>&nbsp;:</entry>
+<entry> the content id of the part to look for
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the GMimeObject whose content-id matches the search string,
+or <literal>NULL</literal> if a match cannot be found.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

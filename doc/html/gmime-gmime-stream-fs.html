@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-STREAM-FS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN914"
+NAME="AEN1208"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN914"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN917"
+NAME="AEN1211"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,17 +147,44 @@ CLASS="SYNOPSIS"
 >&#13;
 
 #define     <A
-HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-TYPE-CAPS"
->GMIME_STREAM_FS_TYPE</A
+HREF="gmime-gmime-stream-fs.html#GMIME-TYPE-STREAM-FS-CAPS"
+>GMIME_TYPE_STREAM_FS</A
 >
 #define     <A
 HREF="gmime-gmime-stream-fs.html#GMIME-IS-STREAM-FS-CAPS"
 >GMIME_IS_STREAM_FS</A
->              (stream)
+>              (obj)
 #define     <A
 HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-CAPS"
 >GMIME_STREAM_FS</A
->                 (stream)
+>                 (obj)
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-CLASS-CAPS"
+>GMIME_STREAM_FS_CLASS</A
+>           (klass)
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-IS-STREAM-FS-CLASS-CAPS"
+>GMIME_IS_STREAM_FS_CLASS</A
+>        (klass)
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-GET-CLASS-CAPS"
+>GMIME_STREAM_FS_GET_CLASS</A
+>       (obj)
+struct      <A
+HREF="gmime-gmime-stream-fs.html#GMIMESTREAMFS"
+>GMimeStreamFs</A
+>;
+struct      <A
+HREF="gmime-gmime-stream-fs.html#GMIMESTREAMFSCLASS"
+>GMimeStreamFsClass</A
+>;
+<GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-stream-fs.html#G-MIME-STREAM-FS-GET-TYPE"
+>g_mime_stream_fs_get_type</A
+>       (void);
 <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
@@ -188,7 +215,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN929"
+NAME="AEN1230"
 ></A
 ><H2
 >Description</H2
@@ -198,20 +225,20 @@ NAME="AEN929"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN932"
+NAME="AEN1233"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN934"
+NAME="AEN1235"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-FS-TYPE-CAPS"
+NAME="GMIME-TYPE-STREAM-FS-CAPS"
 ></A
->GMIME_STREAM_FS_TYPE</H3
+>GMIME_TYPE_STREAM_FS</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -221,7 +248,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")</PRE
+>#define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())</PRE
 ></TD
 ></TR
 ></TABLE
@@ -231,7 +258,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN939"
+NAME="AEN1240"
 ></A
 ><H3
 ><A
@@ -247,7 +274,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FS_TYPE)</PRE
+>#define GMIME_IS_STREAM_FS(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FS))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -256,7 +283,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN944"
+NAME="AEN1245"
 ></A
 ><P
 ></P
@@ -276,7 +303,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>obj</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -294,7 +321,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN953"
+NAME="AEN1254"
 ></A
 ><H3
 ><A
@@ -310,7 +337,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)</PRE
+>#define GMIME_STREAM_FS(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -319,7 +346,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN958"
+NAME="AEN1259"
 ></A
 ><P
 ></P
@@ -339,7 +366,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>obj</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -357,7 +384,318 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN967"
+NAME="AEN1268"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-FS-CLASS-CAPS"
+></A
+>GMIME_STREAM_FS_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_FS_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1273"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1282"
+></A
+><H3
+><A
+NAME="GMIME-IS-STREAM-FS-CLASS-CAPS"
+></A
+>GMIME_IS_STREAM_FS_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_STREAM_FS_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FS))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1287"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1296"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-FS-GET-CLASS-CAPS"
+></A
+>GMIME_STREAM_FS_GET_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_FS_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1301"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1310"
+></A
+><H3
+><A
+NAME="GMIMESTREAMFS"
+></A
+>struct GMimeStreamFs</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStreamFs {
+	GMimeStream parent_object;
+	
+	gboolean owner;
+	gboolean eos;
+	int fd;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1315"
+></A
+><H3
+><A
+NAME="GMIMESTREAMFSCLASS"
+></A
+>struct GMimeStreamFsClass</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStreamFsClass;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1320"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-FS-GET-TYPE"
+></A
+>g_mime_stream_fs_get_type ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       g_mime_stream_fs_get_type       (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1326"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1335"
 ></A
 ><H3
 ><A
@@ -392,7 +730,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN975"
+NAME="AEN1343"
 ></A
 ><P
 ></P
@@ -450,7 +788,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN989"
+NAME="AEN1357"
 ></A
 ><H3
 ><A
@@ -505,7 +843,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1001"
+NAME="AEN1369"
 ></A
 ><P
 ></P

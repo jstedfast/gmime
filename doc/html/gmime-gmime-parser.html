@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-PARSER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN6149"
+NAME="AEN8232"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN6149"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN6152"
+NAME="AEN8235"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,16 +146,104 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-TYPE-PARSER-CAPS"
+>GMIME_TYPE_PARSER</A
+>
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-IS-PARSER-CAPS"
+>GMIME_IS_PARSER</A
+>                 (obj)
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-PARSER-CAPS"
+>GMIME_PARSER</A
+>                    (obj)
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-PARSER-CLASS-CAPS"
+>GMIME_PARSER_CLASS</A
+>              (klass)
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-IS-PARSER-CLASS-CAPS"
+>GMIME_IS_PARSER_CLASS</A
+>           (klass)
+#define     <A
+HREF="gmime-gmime-parser.html#GMIME-PARSER-GET-CLASS-CAPS"
+>GMIME_PARSER_GET_CLASS</A
+>          (obj)
+struct      <A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+>;
+struct      <A
+HREF="gmime-gmime-parser.html#GMIMEPARSERCLASS"
+>GMimeParserClass</A
+>;
+<GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-GET-TYPE"
+>g_mime_parser_get_type</A
+>          (void);
 <A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART"
->g_mime_parser_construct_part</A
->    (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+>* <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-NEW"
+>g_mime_parser_new</A
+>              (void);
+void        <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-INIT-WITH-STREAM"
+>g_mime_parser_init_with_stream</A
+>  (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser,
+                                             <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream);
+void        <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-SET-SCAN-FROM"
+>g_mime_parser_set_scan_from</A
+>     (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> scan_from);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-GET-SCAN-FROM"
+>g_mime_parser_get_scan_from</A
+>     (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);
+<GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-TELL"
+>g_mime_parser_tell</A
+>              (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);
+<A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART"
+>g_mime_parser_construct_part</A
+>   (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);
 <A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
@@ -164,13 +252,16 @@ HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
 >g_mime_parser_construct_message</A
 >
                                             (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> preserve_headers);</PRE
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);
+char*       <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-GET-FROM"
+>g_mime_parser_get_from</A
+>          (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -178,7 +269,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6162"
+NAME="AEN8270"
 ></A
 ><H2
 >Description</H2
@@ -188,20 +279,20 @@ NAME="AEN6162"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6165"
+NAME="AEN8273"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6167"
+NAME="AEN8275"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-PART"
+NAME="GMIME-TYPE-PARSER-CAPS"
 ></A
->g_mime_parser_construct_part ()</H3
+>GMIME_TYPE_PARSER</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -211,29 +302,42 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  g_mime_parser_construct_part    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
+>#define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Constructs a GMimePart object based on <TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
->.</P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8280"
+></A
+><H3
+><A
+NAME="GMIME-IS-PARSER-CAPS"
+></A
+>GMIME_IS_PARSER()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_PARSER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_PARSER))</PRE
+></TD
+></TR
+></TABLE
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6176"
+NAME="AEN8285"
 ></A
 ><P
 ></P
@@ -253,6 +357,588 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8294"
+></A
+><H3
+><A
+NAME="GMIME-PARSER-CAPS"
+></A
+>GMIME_PARSER()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_PARSER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8299"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8308"
+></A
+><H3
+><A
+NAME="GMIME-PARSER-CLASS-CAPS"
+></A
+>GMIME_PARSER_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_PARSER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARSER, GMimeParserClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8313"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8322"
+></A
+><H3
+><A
+NAME="GMIME-IS-PARSER-CLASS-CAPS"
+></A
+>GMIME_IS_PARSER_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_PARSER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARSER))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8327"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8336"
+></A
+><H3
+><A
+NAME="GMIME-PARSER-GET-CLASS-CAPS"
+></A
+>GMIME_PARSER_GET_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_PARSER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_PARSER, GMimeParserClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8341"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8350"
+></A
+><H3
+><A
+NAME="GMIMEPARSER"
+></A
+>struct GMimeParser</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeParser {
+	GObject parent_object;
+	
+	struct _GMimeParserPrivate *priv;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8355"
+></A
+><H3
+><A
+NAME="GMIMEPARSERCLASS"
+></A
+>struct GMimeParserClass</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeParserClass;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8360"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-GET-TYPE"
+></A
+>g_mime_parser_get_type ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       g_mime_parser_get_type          (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8366"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8375"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-NEW"
+></A
+>g_mime_parser_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+>* g_mime_parser_new              (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new parser object.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8382"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new parser object.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8391"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-INIT-WITH-STREAM"
+></A
+>g_mime_parser_init_with_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_parser_init_with_stream  (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Initializes <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> to use <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
+><P
+>WARNING: Initializing a parser with a stream is comparable to
+selling your soul (<TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>) to the devil (<TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>). You are
+basically giving the parser complete control of the stream, this
+means that you had better not touch the stream so long as the
+parser is still using it. This means no reading, writing, seeking,
+or resetting of the stream. Anything that will/could change the
+current stream's offset is PROHIBITED.</P
+><P
+>It is also recommended that you not use <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-TELL"
+>g_mime_stream_tell</A
+> because
+it will not necessarily give you the current <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> offset since
+<TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> handles its own internal read-ahead buffer. Instead, it is
+recommended that you use <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-TELL"
+>g_mime_parser_tell</A
+> if you have a reason
+to need the current offset of the <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8410"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
 >stream</I
 ></TT
 >&nbsp;:</TD
@@ -260,7 +946,183 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> raw MIME Part stream</TD
+> raw message or part stream</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8423"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-SET-SCAN-FROM"
+></A
+>g_mime_parser_set_scan_from ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_parser_set_scan_from     (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> scan_from);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets whether or not <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> should scan mbox-style From-lines.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8432"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>scan_from</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> <TT
+CLASS="LITERAL"
+>TRUE</TT
+> to scan From-lines or <TT
+CLASS="LITERAL"
+>FALSE</TT
+> otherwise</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8447"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-GET-SCAN-FROM"
+></A
+>g_mime_parser_get_scan_from ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_parser_get_scan_from     (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets whether or not <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> is set to scan mbox-style From-lines.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8456"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
 ></TR
 ><TR
 ><TD
@@ -275,7 +1137,13 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimePart object based on the data.</TD
+>whether or not <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> is set to scan mbox-style
+From-lines.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -286,7 +1154,193 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6189"
+NAME="AEN8470"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-TELL"
+></A
+>g_mime_parser_tell ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+>       g_mime_parser_tell              (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the current stream offset from the parser's internal stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8478"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the current stream offset from the parser's internal stream
+or -1 on error.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8491"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-CONSTRUCT-PART"
+></A
+>g_mime_parser_construct_part ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* g_mime_parser_construct_part   (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Constructs a MIME part from <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8500"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a MIME part based on <TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+> or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8515"
 ></A
 ><H3
 ><A
@@ -307,21 +1361,17 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
 >* g_mime_parser_construct_message
                                             (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> preserve_headers);</PRE
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Constructs a GMimeMessage object based on <TT
+>Constructs a MIME message from <TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>parser</I
 ></TT
 >.</P
 ><P
@@ -329,7 +1379,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6199"
+NAME="AEN8524"
 ></A
 ><P
 ></P
@@ -349,34 +1399,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>parser</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->preserve_headers</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> if <TT
-CLASS="LITERAL"
->TRUE</TT
->, then store the arbitrary headers</TD
+> MIME parser object</TD
 ></TR
 ><TR
 ><TD
@@ -391,7 +1421,101 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeMessage object based on the rfc0822 message stream.</TD
+>a MIME message or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8538"
+></A
+><H3
+><A
+NAME="G-MIME-PARSER-GET-FROM"
+></A
+>g_mime_parser_get_from ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>char*       g_mime_parser_get_from          (<A
+HREF="gmime-gmime-parser.html#GMIMEPARSER"
+>GMimeParser</A
+> *parser);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the mbox-style From-line of the most recently parsed message
+(gotten from <A
+HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
+>g_mime_parser_construct_message</A
+>).</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8546"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>parser</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME parser object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the mbox-style From-line of the most recently parsed
+message or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on error.</TD
 ></TR
 ></TBODY
 ></TABLE

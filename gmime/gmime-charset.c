@@ -119,9 +119,7 @@ g_mime_charset_shutdown (void)
 /**
  * g_mime_charset_init:
  *
- * Initializes the locale charset variable for later calls to
- * gmime_charset_locale_name. Only really needs to be called for non-
- * iso-8859-1 locales.
+ * Initializes internal charset tables.
  **/
 void
 g_mime_charset_init (void)
@@ -179,9 +177,9 @@ g_mime_charset_init (void)
 /**
  * g_mime_charset_locale_name:
  *
- * Gets the user's locale charset (or iso-8859-1 by default).
+ * Gets the user's locale charset (or %iso-8859-1 by default).
  *
- * Returns the user's locale charset (or iso-8859-1 by default).
+ * Returns the user's locale charset (or %iso-8859-1 by default).
  **/
 const char *
 g_mime_charset_locale_name (void)

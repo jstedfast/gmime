@@ -1,10 +1,15 @@
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+
+<!entity hash "#">
+<!entity percent "%">
+<!entity gmime SYSTEM "sgml/gmime.sgml">
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
 <!entity gmime-disposition SYSTEM "sgml/gmime-disposition.sgml">
 <!entity gmime-object SYSTEM "sgml/gmime-object.sgml">
 <!entity gmime-data-wrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
+<!entity gmime-multipart SYSTEM "sgml/gmime-multipart.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
@@ -27,6 +32,7 @@
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
+<!entity gmime-filter-yenc SYSTEM "sgml/gmime-filter-yenc.sgml">
 ]>
 
 <book>
@@ -210,6 +216,7 @@
     for the particular function to know for sure whther you need to
     free it or not and how.</para>
 
+    &gmime;
     &gmime-stream;
     &gmime-stream-buffer;
     &gmime-stream-file;
@@ -224,13 +231,15 @@
     &gmime-filter-crlf;
     &gmime-filter-from;
     &gmime-filter-html;
+    &gmime-filter-yenc;
     &gmime-param;
     &gmime-header;
     &gmime-content-type;
     &gmime-disposition;
-    &gmime-object;
     &gmime-data-wrapper;
+    &gmime-object;
     &gmime-part;
+    &gmime-multipart;
     &gmime-message;
     &gmime-utils;
     &internet-address;

@@ -780,7 +780,7 @@ g_mime_utils_header_fold (const char *in)
 	ret = out->str;
 	g_string_free (out, FALSE);
 	
-	return ret;	
+	return ret;
 }
 
 
@@ -922,7 +922,7 @@ g_mime_utils_unquote_string (char *string)
  * Determines if @text contains 8bit characters within the first @len
  * bytes.
  *
- * Returns TRUE if the text contains 8bit characters or FALSE
+ * Returns %TRUE if the text contains 8bit characters or %FALSE
  * otherwise.
  **/
 gboolean
@@ -949,7 +949,7 @@ g_mime_utils_text_is_8bit (const unsigned char *text, size_t len)
  * Determines the best content encoding for the first @len bytes of
  * @text.
  *
- * Returns a GMimePartEncodingType that is determined to be the best
+ * Returns a #GMimePartEncodingType that is determined to be the best
  * encoding type for the specified block of text. ("best" in this
  * particular case means best compression)
  **/
@@ -1595,8 +1595,8 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
  * @save: leftover bits that have not yet been encoded
  *
  * Base64 encodes the input stream to the output stream. Call this
- * when finished encoding data with g_mime_utils_base64_encode_step to
- * flush off the last little bit.
+ * when finished encoding data with #g_mime_utils_base64_encode_step
+ * to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
  **/
@@ -1722,6 +1722,7 @@ g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned
 	return (outptr - out);
 }
 
+
 /**
  * g_mime_utils_base64_decode_step:
  * @in: input stream
@@ -1795,7 +1796,7 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * @save: leftover bits that have not yet been encoded
  *
  * Uuencodes a chunk of data. Call this when finished encoding data
- * with g_mime_utils_uuencode_step to flush off the last little bit.
+ * with #g_mime_utils_uuencode_step to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
  **/
@@ -1947,7 +1948,7 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
 /**
  * g_mime_utils_uudecode_step:
  * @in: input stream
- * @inlen: max length of data to decode (normally strlen (in) ??)
+ * @inlen: max length of data to decode
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
@@ -2056,8 +2057,8 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
  * @save: leftover bits that have not yet been encoded
  *
  * Quoted-printable encodes a block of text. Call this when finished
- * encoding data with g_mime_utils_quoted_encode_step to flush off the
- * last little bit.
+ * encoding data with #g_mime_utils_quoted_encode_step to flush off
+ * the last little bit.
  *
  * Returns the number of bytes encoded.
  **/

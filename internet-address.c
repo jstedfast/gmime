@@ -41,9 +41,9 @@
 /**
  * internet_address_new:
  *
- * Creates a new InternetAddress object
+ * Creates a new #InternetAddress object
  * 
- * Returns a new Internet Address object.
+ * Returns a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new ()
@@ -62,9 +62,9 @@ internet_address_new ()
 
 /**
  * internet_address_destroy:
- * @ia: InternetAddress object to destroy
+ * @ia: internet address
  * 
- * Destroy the InternetAddress object pointed to by @ia.
+ * Destroy the #InternetAddress object pointed to by @ia.
  **/
 static void
 internet_address_destroy (InternetAddress *ia)
@@ -85,7 +85,7 @@ internet_address_destroy (InternetAddress *ia)
 
 /**
  * internet_address_ref:
- * @ia: address
+ * @ia: internet address
  *
  * Ref's the internet address.
  **/
@@ -98,7 +98,7 @@ internet_address_ref (InternetAddress *ia)
 
 /**
  * internet_address_unref:
- * @ia: address
+ * @ia: internet address
  *
  * Unref's the internet address.
  **/
@@ -118,10 +118,10 @@ internet_address_unref (InternetAddress *ia)
  * @name: person's name
  * @addr: person's address
  *
- * Creates a new InternetAddress object with name @name and address
+ * Creates a new #InternetAddress object with name @name and address
  * @addr.
  * 
- * Returns a new Internet Address object.
+ * Returns a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new_name (const char *name, const char *addr)
@@ -146,9 +146,9 @@ internet_address_new_name (const char *name, const char *addr)
  * internet_address_new_group:
  * @name: group name
  *
- * Creates a new InternetAddress object with group name @name.
+ * Creates a new #InternetAddress object with group name @name.
  * 
- * Returns a new Internet Address object.
+ * Returns a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new_group (const char *name)
@@ -435,11 +435,11 @@ internet_address_list_to_string_internal (InternetAddressList *list, gboolean en
  * @ia: Internet Address object
  * @encode: TRUE if the address should be rfc2047 encoded
  *
- * Allocates a string containing the contents of the InternetAddress
+ * Allocates a string containing the contents of the #InternetAddress
  * object.
  * 
- * Returns the InternetAddress object as an allocated string in rfc822
- * format.
+ * Returns the #InternetAddress object as an allocated string in
+ * rfc822 format.
  **/
 char *
 internet_address_to_string (InternetAddress *ia, gboolean encode)
@@ -478,7 +478,7 @@ internet_address_to_string (InternetAddress *ia, gboolean encode)
 /**
  * internet_address_list_to_string:
  * @list: list of internet addresses
- * @encode: TRUE if the address should be rfc2047 encoded
+ * @encode: %TRUE if the address should be rfc2047 encoded
  *
  * Allocates a string buffer containing the rfc822 formatted addresses
  * in @list.

@@ -14,13 +14,18 @@
 
 
 
-struct      <link linkend="GMimeStream">GMimeStream</link>;
+#define     <link linkend="GMIME-TYPE-STREAM-CAPS">GMIME_TYPE_STREAM</link>
+#define     <link linkend="GMIME-IS-STREAM-CAPS">GMIME_IS_STREAM</link>                 (obj)
+#define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (obj)
+#define     <link linkend="GMIME-STREAM-CLASS-CAPS">GMIME_STREAM_CLASS</link>              (klass)
+#define     <link linkend="GMIME-IS-STREAM-CLASS-CAPS">GMIME_IS_STREAM_CLASS</link>           (klass)
+#define     <link linkend="GMIME-STREAM-GET-CLASS-CAPS">GMIME_STREAM_GET_CLASS</link>          (obj)
 enum        <link linkend="GMimeSeekWhence">GMimeSeekWhence</link>;
-struct      <link linkend="IOVector">IOVector</link>;
-#define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (stream)
+typedef     <link linkend="GMimeStreamIOVector">GMimeStreamIOVector</link>;
+struct      <link linkend="GMimeStream">GMimeStream</link>;
+struct      <link linkend="GMimeStreamClass">GMimeStreamClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-stream-get-type">g_mime_stream_get_type</link>          (void);
 void        <link linkend="g-mime-stream-construct">g_mime_stream_construct</link>         (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="GMimeStream">GMimeStream</link> *stream_template,
-                                             unsigned int type,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);
 void        <link linkend="g-mime-stream-ref">g_mime_stream_ref</link>               (<link linkend="GMimeStream">GMimeStream</link> *stream);
@@ -53,8 +58,8 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
                                              ...);
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-write-to-stream">g_mime_stream_write_to_stream</link>   (<link linkend="GMimeStream">GMimeStream</link> *src,
                                              <link linkend="GMimeStream">GMimeStream</link> *dest);
-<link linkend="size-t">size_t</link>      <link linkend="g-mime-stream-writev">g_mime_stream_writev</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="IOVector">IOVector</link> *vector,
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-writev">g_mime_stream_writev</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GMimeStreamIOVector">GMimeStreamIOVector</link> *vector,
                                              <link linkend="size-t">size_t</link> count);
 </synopsis>
 </refsynopsisdiv>
@@ -73,35 +78,97 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMimeStream">struct GMimeStream</title>
-<programlisting>struct GMimeStream {
-	/* Note: these are private fields!! */
-	GMimeStream *super_stream;
-	
-	unsigned int type;
-	int refcount;
-	
-	off_t position;
-	off_t bound_start;
-	off_t bound_end;
-	
-	void     (*destroy) (GMimeStream *stream);
-	
-	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
-	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
-	int      (*flush)   (GMimeStream *stream);
-	int      (*close)   (GMimeStream *stream);
-	gboolean (*eos)     (GMimeStream *stream);
-	int      (*reset)   (GMimeStream *stream);
-	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-	off_t    (*tell)    (GMimeStream *stream);
-	ssize_t  (*length)  (GMimeStream *stream);
-	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
-};
+<title><anchor id="GMIME-TYPE-STREAM-CAPS">GMIME_TYPE_STREAM</title>
+<programlisting>#define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
 </programlisting>
 <para>
 
 </para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-CAPS">GMIME_IS_STREAM()</title>
+<programlisting>#define GMIME_IS_STREAM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-CAPS">GMIME_STREAM()</title>
+<programlisting>#define GMIME_STREAM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-CLASS-CAPS">GMIME_STREAM_CLASS()</title>
+<programlisting>#define GMIME_STREAM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-CLASS-CAPS">GMIME_IS_STREAM_CLASS()</title>
+<programlisting>#define GMIME_IS_STREAM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-GET-CLASS-CAPS">GMIME_STREAM_GET_CLASS()</title>
+<programlisting>#define GMIME_STREAM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimeSeekWhence">enum GMimeSeekWhence</title>
 <programlisting>typedef enum {
@@ -114,19 +181,40 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="IOVector">struct IOVector</title>
-<programlisting>struct IOVector {
+<title><anchor id="GMimeStreamIOVector">GMimeStreamIOVector</title>
+<programlisting>typedef struct {
 	gpointer data;
 	size_t len;
+} GMimeStreamIOVector;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeStream">struct GMimeStream</title>
+<programlisting>struct GMimeStream {
+	GObject parent_object;
+	
+	/* Note: these are private fields!! */
+	GMimeStream *super_stream;
+	
+	off_t position;
+	off_t bound_start;
+	off_t bound_end;
 };
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMIME-STREAM-CAPS">GMIME_STREAM()</title>
-<programlisting>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)
-</programlisting>
+<title><anchor id="GMimeStreamClass">struct GMimeStreamClass</title>
+<programlisting>struct GMimeStreamClass;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-get-type">g_mime_stream_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_stream_get_type          (void);</programlisting>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -134,8 +222,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
 
 
 </entry></row>
@@ -143,13 +230,10 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <refsect2>
 <title><anchor id="g-mime-stream-construct">g_mime_stream_construct ()</title>
 <programlisting>void        g_mime_stream_construct         (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="GMimeStream">GMimeStream</link> *stream_template,
-                                             unsigned int type,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);</programlisting>
 <para>
-Initializes a new stream of type <parameter>type</parameter>, using the virtual methods
-from <parameter>stream_template</parameter>, with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
+Initializes a new stream with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -159,12 +243,6 @@ from <parameter>stream_template</parameter>, with bounds <parameter>start</param
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> stream
-</entry></row>
-<row><entry align="right"><parameter>stream_template</parameter>&nbsp;:</entry>
-<entry> stream template
-</entry></row>
-<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
-<entry> stream type
 </entry></row>
 <row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
 <entry> start boundary
@@ -526,8 +604,8 @@ Attempts to write stream <parameter>src</parameter> to stream <parameter>dest</p
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-writev">g_mime_stream_writev ()</title>
-<programlisting><link linkend="size-t">size_t</link>      g_mime_stream_writev            (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="IOVector">IOVector</link> *vector,
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_writev            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GMimeStreamIOVector">GMimeStreamIOVector</link> *vector,
                                              <link linkend="size-t">size_t</link> count);</programlisting>
 <para>
 Writes at most <parameter>count</parameter> blocks described by <parameter>vector</parameter> to <parameter>stream</parameter>.</para>

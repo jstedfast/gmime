@@ -24,7 +24,7 @@ char*       <link linkend="g-mime-content-type-to-string">g_mime_content_type_to
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-content-type-is-type">g_mime_content_type_is_type</link>     (const <link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
                                              const char *type,
                                              const char *subtype);
-void        <link linkend="g-mime-content-type-add-parameter">g_mime_content_type_add_parameter</link>
+void        <link linkend="g-mime-content-type-set-parameter">g_mime_content_type_set_parameter</link>
                                             (<link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
                                              const char *attribute,
                                              const char *value);
@@ -166,13 +166,13 @@ use "*" in place of <parameter>type</parameter> and/or <parameter>subtype</param
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="g-mime-content-type-add-parameter">g_mime_content_type_add_parameter ()</title>
-<programlisting>void        g_mime_content_type_add_parameter
+<title><anchor id="g-mime-content-type-set-parameter">g_mime_content_type_set_parameter ()</title>
+<programlisting>void        g_mime_content_type_set_parameter
                                             (<link linkend="GMimeContentType">GMimeContentType</link> *mime_type,
                                              const char *attribute,
                                              const char *value);</programlisting>
 <para>
-Adds a parameter to the Content-Type.</para>
+Sets a parameter on the Content-Type.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

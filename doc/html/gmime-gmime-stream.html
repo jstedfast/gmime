@@ -13,8 +13,8 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="GMime Library Reference"
-HREF="libgmime.html"><LINK
+TITLE="gmime"
+HREF="gmime-gmime.html"><LINK
 REL="NEXT"
 TITLE="gmime-stream-buffer"
 HREF="gmime-gmime-stream-buffer.html"></HEAD
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="libgmime.html"
+HREF="gmime-gmime.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-STREAM"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN49"
+NAME="AEN118"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN49"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN52"
+NAME="AEN121"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,22 +146,53 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->;
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-TYPE-STREAM-CAPS"
+>GMIME_TYPE_STREAM</A
+>
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-IS-STREAM-CAPS"
+>GMIME_IS_STREAM</A
+>                 (obj)
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-STREAM-CAPS"
+>GMIME_STREAM</A
+>                    (obj)
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-STREAM-CLASS-CAPS"
+>GMIME_STREAM_CLASS</A
+>              (klass)
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-IS-STREAM-CLASS-CAPS"
+>GMIME_IS_STREAM_CLASS</A
+>           (klass)
+#define     <A
+HREF="gmime-gmime-stream.html#GMIME-STREAM-GET-CLASS-CAPS"
+>GMIME_STREAM_GET_CLASS</A
+>          (obj)
 enum        <A
 HREF="gmime-gmime-stream.html#GMIMESEEKWHENCE"
 >GMimeSeekWhence</A
 >;
-struct      <A
-HREF="gmime-gmime-stream.html#IOVECTOR"
->IOVector</A
+typedef     <A
+HREF="gmime-gmime-stream.html#GMIMESTREAMIOVECTOR"
+>GMimeStreamIOVector</A
 >;
-#define     <A
-HREF="gmime-gmime-stream.html#GMIME-STREAM-CAPS"
->GMIME_STREAM</A
->                    (stream)
+struct      <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>;
+struct      <A
+HREF="gmime-gmime-stream.html#GMIMESTREAMCLASS"
+>GMimeStreamClass</A
+>;
+<GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       <A
+HREF="gmime-gmime-stream.html#G-MIME-STREAM-GET-TYPE"
+>g_mime_stream_get_type</A
+>          (void);
 void        <A
 HREF="gmime-gmime-stream.html#G-MIME-STREAM-CONSTRUCT"
 >g_mime_stream_construct</A
@@ -169,11 +200,6 @@ HREF="gmime-gmime-stream.html#G-MIME-STREAM-CONSTRUCT"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
-                                             <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream_template,
-                                             unsigned int type,
                                              <GTKDOCLINK
 HREF="OFF-T"
 >off_t</GTKDOCLINK
@@ -366,9 +392,9 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *dest);
 <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
->      <A
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
 HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITEV"
 >g_mime_stream_writev</A
 >            (<A
@@ -376,8 +402,8 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
                                              <A
-HREF="gmime-gmime-stream.html#IOVECTOR"
->IOVector</A
+HREF="gmime-gmime-stream.html#GMIMESTREAMIOVECTOR"
+>GMimeStreamIOVector</A
 > *vector,
                                              <GTKDOCLINK
 HREF="SIZE-T"
@@ -390,7 +416,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN120"
+NAME="AEN196"
 ></A
 ><H2
 >Description</H2
@@ -400,20 +426,20 @@ NAME="AEN120"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN123"
+NAME="AEN199"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN125"
+NAME="AEN201"
 ></A
 ><H3
 ><A
-NAME="GMIMESTREAM"
+NAME="GMIME-TYPE-STREAM-CAPS"
 ></A
->struct GMimeStream</H3
+>GMIME_TYPE_STREAM</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -423,30 +449,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeStream {
-	/* Note: these are private fields!! */
-	GMimeStream *super_stream;
-	
-	unsigned int type;
-	int refcount;
-	
-	off_t position;
-	off_t bound_start;
-	off_t bound_end;
-	
-	void     (*destroy) (GMimeStream *stream);
-	
-	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
-	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
-	int      (*flush)   (GMimeStream *stream);
-	int      (*close)   (GMimeStream *stream);
-	gboolean (*eos)     (GMimeStream *stream);
-	int      (*reset)   (GMimeStream *stream);
-	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-	off_t    (*tell)    (GMimeStream *stream);
-	ssize_t  (*length)  (GMimeStream *stream);
-	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
-};</PRE
+>#define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())</PRE
 ></TD
 ></TR
 ></TABLE
@@ -456,7 +459,322 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN130"
+NAME="AEN206"
+></A
+><H3
+><A
+NAME="GMIME-IS-STREAM-CAPS"
+></A
+>GMIME_IS_STREAM()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_STREAM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN211"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN220"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-CAPS"
+></A
+>GMIME_STREAM()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN225"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN234"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-CLASS-CAPS"
+></A
+>GMIME_STREAM_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN239"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN248"
+></A
+><H3
+><A
+NAME="GMIME-IS-STREAM-CLASS-CAPS"
+></A
+>GMIME_IS_STREAM_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_STREAM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN253"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>klass</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN262"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-GET-CLASS-CAPS"
+></A
+>GMIME_STREAM_GET_CLASS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN267"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>obj</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN276"
 ></A
 ><H3
 ><A
@@ -486,13 +804,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN135"
+NAME="AEN281"
 ></A
 ><H3
 ><A
-NAME="IOVECTOR"
+NAME="GMIMESTREAMIOVECTOR"
 ></A
->struct IOVector</H3
+>GMimeStreamIOVector</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -502,9 +820,44 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct IOVector {
+>typedef struct {
 	gpointer data;
 	size_t len;
+} GMimeStreamIOVector;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN286"
+></A
+><H3
+><A
+NAME="GMIMESTREAM"
+></A
+>struct GMimeStream</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeStream {
+	GObject parent_object;
+	
+	/* Note: these are private fields!! */
+	GMimeStream *super_stream;
+	
+	off_t position;
+	off_t bound_start;
+	off_t bound_end;
 };</PRE
 ></TD
 ></TR
@@ -515,13 +868,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN140"
+NAME="AEN291"
 ></A
 ><H3
 ><A
-NAME="GMIME-STREAM-CAPS"
+NAME="GMIMESTREAMCLASS"
 ></A
->GMIME_STREAM()</H3
+>struct GMimeStreamClass</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -531,7 +884,36 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_STREAM(stream)  ((GMimeStream *) stream)</PRE
+>struct GMimeStreamClass;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN296"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-GET-TYPE"
+></A
+>g_mime_stream_get_type ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GTYPE"
+>GType</GTKDOCLINK
+>       g_mime_stream_get_type          (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -540,7 +922,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN145"
+NAME="AEN302"
 ></A
 ><P
 ></P
@@ -557,12 +939,10 @@ CLASS="CALSTABLE"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
 ><I
->stream</I
-></TT
->&nbsp;:</TD
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
@@ -578,7 +958,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN154"
+NAME="AEN311"
 ></A
 ><H3
 ><A
@@ -598,11 +978,6 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
-                                             <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream_template,
-                                             unsigned int type,
                                              <GTKDOCLINK
 HREF="OFF-T"
 >off_t</GTKDOCLINK
@@ -615,18 +990,7 @@ HREF="OFF-T"
 ></TR
 ></TABLE
 ><P
->Initializes a new stream of type <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->, using the virtual methods
-from <TT
-CLASS="PARAMETER"
-><I
->stream_template</I
-></TT
->, with bounds <TT
+>Initializes a new stream with bounds <TT
 CLASS="PARAMETER"
 ><I
 >start</I
@@ -642,7 +1006,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN168"
+NAME="AEN322"
 ></A
 ><P
 ></P
@@ -670,40 +1034,6 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 > stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->stream_template</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> stream template</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> stream type</TD
 ></TR
 ><TR
 ><TD
@@ -748,7 +1078,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN193"
+NAME="AEN339"
 ></A
 ><H3
 ><A
@@ -778,7 +1108,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN200"
+NAME="AEN346"
 ></A
 ><P
 ></P
@@ -816,7 +1146,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN209"
+NAME="AEN355"
 ></A
 ><H3
 ><A
@@ -846,7 +1176,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN216"
+NAME="AEN362"
 ></A
 ><P
 ></P
@@ -884,7 +1214,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN225"
+NAME="AEN371"
 ></A
 ><H3
 ><A
@@ -937,7 +1267,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN237"
+NAME="AEN383"
 ></A
 ><P
 ></P
@@ -1024,7 +1354,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN258"
+NAME="AEN404"
 ></A
 ><H3
 ><A
@@ -1077,7 +1407,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN270"
+NAME="AEN416"
 ></A
 ><P
 ></P
@@ -1164,7 +1494,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN291"
+NAME="AEN437"
 ></A
 ><H3
 ><A
@@ -1194,7 +1524,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN298"
+NAME="AEN444"
 ></A
 ><P
 ></P
@@ -1247,7 +1577,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN311"
+NAME="AEN457"
 ></A
 ><H3
 ><A
@@ -1328,7 +1658,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN330"
+NAME="AEN476"
 ></A
 ><P
 ></P
@@ -1415,7 +1745,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN351"
+NAME="AEN497"
 ></A
 ><H3
 ><A
@@ -1448,7 +1778,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN359"
+NAME="AEN505"
 ></A
 ><P
 ></P
@@ -1501,7 +1831,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN372"
+NAME="AEN518"
 ></A
 ><H3
 ><A
@@ -1531,7 +1861,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN379"
+NAME="AEN525"
 ></A
 ><P
 ></P
@@ -1584,7 +1914,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN392"
+NAME="AEN538"
 ></A
 ><H3
 ><A
@@ -1622,7 +1952,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN401"
+NAME="AEN547"
 ></A
 ><P
 ></P
@@ -1675,7 +2005,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN414"
+NAME="AEN560"
 ></A
 ><H3
 ><A
@@ -1705,7 +2035,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN421"
+NAME="AEN567"
 ></A
 ><P
 ></P
@@ -1758,7 +2088,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN434"
+NAME="AEN580"
 ></A
 ><H3
 ><A
@@ -1791,7 +2121,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN442"
+NAME="AEN588"
 ></A
 ><P
 ></P
@@ -1844,7 +2174,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN455"
+NAME="AEN601"
 ></A
 ><H3
 ><A
@@ -1900,7 +2230,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN468"
+NAME="AEN614"
 ></A
 ><P
 ></P
@@ -2002,7 +2332,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN492"
+NAME="AEN638"
 ></A
 ><H3
 ><A
@@ -2040,7 +2370,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN501"
+NAME="AEN647"
 ></A
 ><P
 ></P
@@ -2112,7 +2442,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN518"
+NAME="AEN664"
 ></A
 ><H3
 ><A
@@ -2156,7 +2486,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN528"
+NAME="AEN674"
 ></A
 ><P
 ></P
@@ -2226,7 +2556,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN545"
+NAME="AEN691"
 ></A
 ><H3
 ><A
@@ -2261,7 +2591,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN553"
+NAME="AEN699"
 ></A
 ><P
 ></P
@@ -2348,7 +2678,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN574"
+NAME="AEN720"
 ></A
 ><H3
 ><A
@@ -2395,7 +2725,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN585"
+NAME="AEN731"
 ></A
 ><P
 ></P
@@ -2465,7 +2795,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN602"
+NAME="AEN748"
 ></A
 ><H3
 ><A
@@ -2482,15 +2812,15 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
->      g_mime_stream_writev            (<A
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_stream_writev            (<A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
                                              <A
-HREF="gmime-gmime-stream.html#IOVECTOR"
->IOVector</A
+HREF="gmime-gmime-stream.html#GMIMESTREAMIOVECTOR"
+>GMimeStreamIOVector</A
 > *vector,
                                              <GTKDOCLINK
 HREF="SIZE-T"
@@ -2521,7 +2851,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN615"
+NAME="AEN761"
 ></A
 ><P
 ></P
@@ -2621,7 +2951,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="libgmime.html"
+HREF="gmime-gmime.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -2693,7 +3023,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->GMime Library Reference</B
+>gmime</B
 ></FONT
 ></TD
 ><TD

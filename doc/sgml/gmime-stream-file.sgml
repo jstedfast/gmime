@@ -14,9 +14,15 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-FILE-TYPE-CAPS">GMIME_STREAM_FILE_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-FILE-CAPS">GMIME_IS_STREAM_FILE</link>            (stream)
-#define     <link linkend="GMIME-STREAM-FILE-CAPS">GMIME_STREAM_FILE</link>               (stream)
+#define     <link linkend="GMIME-TYPE-STREAM-FILE-CAPS">GMIME_TYPE_STREAM_FILE</link>
+#define     <link linkend="GMIME-IS-STREAM-FILE-CAPS">GMIME_IS_STREAM_FILE</link>            (obj)
+#define     <link linkend="GMIME-STREAM-FILE-CAPS">GMIME_STREAM_FILE</link>               (obj)
+#define     <link linkend="GMIME-STREAM-FILE-CLASS-CAPS">GMIME_STREAM_FILE_CLASS</link>         (klass)
+#define     <link linkend="GMIME-IS-STREAM-FILE-CLASS-CAPS">GMIME_IS_STREAM_FILE_CLASS</link>      (klass)
+#define     <link linkend="GMIME-STREAM-FILE-GET-CLASS-CAPS">GMIME_STREAM_FILE_GET_CLASS</link>     (obj)
+struct      <link linkend="GMimeStreamFile">GMimeStreamFile</link>;
+struct      <link linkend="GMimeStreamFileClass">GMimeStreamFileClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-stream-file-get-type">g_mime_stream_file_get_type</link>     (void);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-file-new">g_mime_stream_file_new</link>         (<link linkend="FILE-CAPS">FILE</link> *fp);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-file-new-with-bounds">g_mime_stream_file_new_with_bounds</link>
                                             (<link linkend="FILE-CAPS">FILE</link> *fp,
@@ -39,15 +45,15 @@
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-STREAM-FILE-TYPE-CAPS">GMIME_STREAM_FILE_TYPE</title>
-<programlisting>#define GMIME_STREAM_FILE_TYPE g_str_hash ("GMimeStreamFile")
+<title><anchor id="GMIME-TYPE-STREAM-FILE-CAPS">GMIME_TYPE_STREAM_FILE</title>
+<programlisting>#define GMIME_TYPE_STREAM_FILE            (g_mime_stream_file_get_type ())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-FILE-CAPS">GMIME_IS_STREAM_FILE()</title>
-<programlisting>#define GMIME_IS_STREAM_FILE(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILE_TYPE)
+<programlisting>#define GMIME_IS_STREAM_FILE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FILE))
 </programlisting>
 <para>
 
@@ -56,7 +62,7 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
 
 
@@ -64,7 +70,7 @@
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-FILE-CAPS">GMIME_STREAM_FILE()</title>
-<programlisting>#define GMIME_STREAM_FILE(stream) ((GMimeStreamFile *) stream)
+<programlisting>#define GMIME_STREAM_FILE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFile))
 </programlisting>
 <para>
 
@@ -73,8 +79,92 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-FILE-CLASS-CAPS">GMIME_STREAM_FILE_CLASS()</title>
+<programlisting>#define GMIME_STREAM_FILE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILE, GMimeStreamFileClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-FILE-CLASS-CAPS">GMIME_IS_STREAM_FILE_CLASS()</title>
+<programlisting>#define GMIME_IS_STREAM_FILE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILE))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-FILE-GET-CLASS-CAPS">GMIME_STREAM_FILE_GET_CLASS()</title>
+<programlisting>#define GMIME_STREAM_FILE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFileClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamFile">struct GMimeStreamFile</title>
+<programlisting>struct GMimeStreamFile {
+	GMimeStream parent_object;
+	
+	gboolean owner;
+	FILE *fp;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamFileClass">struct GMimeStreamFileClass</title>
+<programlisting>struct GMimeStreamFileClass;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-file-get-type">g_mime_stream_file_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_stream_file_get_type     (void);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
 
 
 </entry></row>

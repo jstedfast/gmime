@@ -16,6 +16,7 @@
 
 #define     <link linkend="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN</link>               (x)
 #define     <link linkend="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN</link>                   (x)
+enum        <link linkend="GMimePartEncodingType">GMimePartEncodingType</link>;
 <link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const char *in,
                                              int *saveoffset);
 char*       <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
@@ -50,6 +51,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
                                              unsigned char *out,
                                              int *state,
                                              <link linkend="guint32">guint32</link> *save);
+#define     <link linkend="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</link>
+#define     <link linkend="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</link>
 <link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
@@ -133,6 +138,22 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimePartEncodingType">enum GMimePartEncodingType</title>
+<programlisting>typedef enum {
+	GMIME_PART_ENCODING_DEFAULT,
+	GMIME_PART_ENCODING_7BIT,
+	GMIME_PART_ENCODING_8BIT,
+	GMIME_PART_ENCODING_BINARY,
+	GMIME_PART_ENCODING_BASE64,
+	GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+	GMIME_PART_ENCODING_UUENCODE,
+	GMIME_PART_NUM_ENCODINGS
+} GMimePartEncodingType;
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date ()</title>
 <programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const char *in,
@@ -280,7 +301,7 @@ bytes.</para>
 <row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
 <entry> text length
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE if the text contains 8bit characters or FALSE
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> if the text contains 8bit characters or <literal>FALSE</literal>
 otherwise.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -305,7 +326,7 @@ Determines the best content encoding for the first <parameter>len</parameter> by
 <row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
 <entry> text length
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimePartEncodingType that is determined to be the best
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> that is determined to be the best
 encoding type for the specified block of text. ("best" in this
 particular case means best compression)
 </entry></row>
@@ -448,8 +469,8 @@ invocation).</para>
                                              <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 Base64 encodes the input stream to the output stream. Call this
-when finished encoding data with g_mime_utils_base64_encode_step to
-flush off the last little bit.</para>
+when finished encoding data with <link linkend="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step</link>
+to flush off the last little bit.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -476,6 +497,34 @@ flush off the last little bit.</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</title>
+<programlisting>#define GMIME_UUDECODE_STATE_INIT   (0)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</title>
+<programlisting>#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</title>
+<programlisting>#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</title>
+<programlisting>#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step ()</title>
 <programlisting><link linkend="size-t">size_t</link>      g_mime_utils_uudecode_step      (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
@@ -497,7 +546,7 @@ been stripped off.</para>
 <entry> input stream
 </entry></row>
 <row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry> max length of data to decode (normally strlen (in) ??)
+<entry> max length of data to decode
 </entry></row>
 <row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
 <entry> output stream
@@ -562,7 +611,7 @@ invocation).</para>
                                              <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 Uuencodes a chunk of data. Call this when finished encoding data
-with g_mime_utils_uuencode_step to flush off the last little bit.</para>
+with <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link> to flush off the last little bit.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -672,8 +721,8 @@ first invocation).</para>
                                              int *save);</programlisting>
 <para>
 Quoted-printable encodes a block of text. Call this when finished
-encoding data with g_mime_utils_quoted_encode_step to flush off the
-last little bit.</para>
+encoding data with <link linkend="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step</link> to flush off
+the last little bit.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

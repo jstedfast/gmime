@@ -14,9 +14,15 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-FILTER-TYPE-CAPS">GMIME_STREAM_FILTER_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER</link>          (stream)
-#define     <link linkend="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER</link>             (stream)
+#define     <link linkend="GMIME-TYPE-STREAM-FILTER-CAPS">GMIME_TYPE_STREAM_FILTER</link>
+#define     <link linkend="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER</link>          (obj)
+#define     <link linkend="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER</link>             (obj)
+#define     <link linkend="GMIME-STREAM-FILTER-CLASS-CAPS">GMIME_STREAM_FILTER_CLASS</link>       (klass)
+#define     <link linkend="GMIME-IS-STREAM-FILTER-CLASS-CAPS">GMIME_IS_STREAM_FILTER_CLASS</link>    (klass)
+#define     <link linkend="GMIME-STREAM-FILTER-GET-CLASS-CAPS">GMIME_STREAM_FILTER_GET_CLASS</link>   (obj)
+struct      <link linkend="GMimeStreamFilter">GMimeStreamFilter</link>;
+struct      <link linkend="GMimeStreamFilterClass">GMimeStreamFilterClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-stream-filter-get-type">g_mime_stream_filter_get_type</link>   (void);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-filter-new-with-stream">g_mime_stream_filter_new_with_stream</link>
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream);
 int         <link linkend="g-mime-stream-filter-add">g_mime_stream_filter_add</link>        (<link linkend="GMimeStreamFilter">GMimeStreamFilter</link> *fstream,
@@ -40,15 +46,15 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-STREAM-FILTER-TYPE-CAPS">GMIME_STREAM_FILTER_TYPE</title>
-<programlisting>#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
+<title><anchor id="GMIME-TYPE-STREAM-FILTER-CAPS">GMIME_TYPE_STREAM_FILTER</title>
+<programlisting>#define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER()</title>
-<programlisting>#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILTER_TYPE)
+<programlisting>#define GMIME_IS_STREAM_FILTER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FILTER))
 </programlisting>
 <para>
 
@@ -57,7 +63,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
 
 
@@ -65,7 +71,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER()</title>
-<programlisting>#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
+<programlisting>#define GMIME_STREAM_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
 </programlisting>
 <para>
 
@@ -74,8 +80,93 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-FILTER-CLASS-CAPS">GMIME_STREAM_FILTER_CLASS()</title>
+<programlisting>#define GMIME_STREAM_FILTER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-FILTER-CLASS-CAPS">GMIME_IS_STREAM_FILTER_CLASS()</title>
+<programlisting>#define GMIME_IS_STREAM_FILTER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FILTER))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-FILTER-GET-CLASS-CAPS">GMIME_STREAM_FILTER_GET_CLASS()</title>
+<programlisting>#define GMIME_STREAM_FILTER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilterClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamFilter">struct GMimeStreamFilter</title>
+<programlisting>struct GMimeStreamFilter {
+	GMimeStream parent_object;
+	
+	struct _GMimeStreamFilterPrivate *priv;
+	
+	GMimeStream *source;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamFilterClass">struct GMimeStreamFilterClass</title>
+<programlisting>struct GMimeStreamFilterClass;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-filter-get-type">g_mime_stream_filter_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_stream_filter_get_type   (void);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
 
 
 </entry></row>

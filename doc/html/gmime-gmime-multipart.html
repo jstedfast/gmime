@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-object</TITLE
+>gmime-multipart</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-data-wrapper"
-HREF="gmime-gmime-data-wrapper.html"><LINK
-REL="NEXT"
 TITLE="gmime-part"
-HREF="gmime-gmime-part.html"></HEAD
+HREF="gmime-gmime-part.html"><LINK
+REL="NEXT"
+TITLE="gmime-message"
+HREF="gmime-gmime-message.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-data-wrapper.html"
+HREF="gmime-gmime-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-part.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-OBJECT"
->gmime-object</A
+NAME="GMIME-GMIME-MULTIPART"
+>gmime-multipart</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4201"
+NAME="AEN5735"
 ></A
 ><H2
 >Name</H2
->gmime-object&nbsp;--&nbsp;</DIV
+>gmime-multipart&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4204"
+NAME="AEN5738"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,204 +147,195 @@ CLASS="SYNOPSIS"
 >&#13;
 
 #define     <A
-HREF="gmime-gmime-object.html#GMIME-TYPE-OBJECT-CAPS"
->GMIME_TYPE_OBJECT</A
+HREF="gmime-gmime-multipart.html#GMIME-TYPE-MULTIPART-CAPS"
+>GMIME_TYPE_MULTIPART</A
 >
 #define     <A
-HREF="gmime-gmime-object.html#GMIME-IS-OBJECT-CAPS"
->GMIME_IS_OBJECT</A
+HREF="gmime-gmime-multipart.html#GMIME-IS-MULTIPART-CAPS"
+>GMIME_IS_MULTIPART</A
+>              (obj)
+#define     <A
+HREF="gmime-gmime-multipart.html#GMIME-MULTIPART-CAPS"
+>GMIME_MULTIPART</A
 >                 (obj)
 #define     <A
-HREF="gmime-gmime-object.html#GMIME-OBJECT-CAPS"
->GMIME_OBJECT</A
->                    (obj)
-#define     <A
-HREF="gmime-gmime-object.html#GMIME-OBJECT-CLASS-CAPS"
->GMIME_OBJECT_CLASS</A
->              (klass)
-#define     <A
-HREF="gmime-gmime-object.html#GMIME-IS-OBJECT-CLASS-CAPS"
->GMIME_IS_OBJECT_CLASS</A
+HREF="gmime-gmime-multipart.html#GMIME-MULTIPART-CLASS-CAPS"
+>GMIME_MULTIPART_CLASS</A
 >           (klass)
 #define     <A
-HREF="gmime-gmime-object.html#GMIME-OBJECT-GET-CLASS-CAPS"
->GMIME_OBJECT_GET_CLASS</A
->          (obj)
+HREF="gmime-gmime-multipart.html#GMIME-IS-MULTIPART-CLASS-CAPS"
+>GMIME_IS_MULTIPART_CLASS</A
+>        (klass)
+#define     <A
+HREF="gmime-gmime-multipart.html#GMIME-MULTIPART-GET-CLASS-CAPS"
+>GMIME_MULTIPART_GET_CLASS</A
+>       (obj)
 struct      <A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
 >;
 struct      <A
-HREF="gmime-gmime-object.html#GMIMEOBJECTCLASS"
->GMimeObjectClass</A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPARTCLASS"
+>GMimeMultipartClass</A
 >;
-void        (<A
-HREF="gmime-gmime-object.html#GMIMEPARTFUNC"
->*GMimePartFunc</A
->)                (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *part,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);
 <GTKDOCLINK
 HREF="GTYPE"
 >GType</GTKDOCLINK
 >       <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-TYPE"
->g_mime_object_get_type</A
->          (void);
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-TYPE"
+>g_mime_multipart_get_type</A
+>       (void);
+<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+>* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-NEW"
+>g_mime_multipart_new</A
+>        (void);
+<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+>* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-NEW-WITH-SUBTYPE"
+>g_mime_multipart_new_with_subtype</A
+>
+                                            (const char *subtype);
 void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-REGISTER-TYPE"
->g_mime_object_register_type</A
->     (const char *type,
-                                             const char *subtype,
-                                             <GTKDOCLINK
-HREF="GTYPE"
->GType</GTKDOCLINK
-> object_type);
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-SET-PREFACE"
+>g_mime_multipart_set_preface</A
+>    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *preface);
+const char* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-PREFACE"
+>g_mime_multipart_get_preface</A
+>    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);
+void        <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-SET-POSTFACE"
+>g_mime_multipart_set_postface</A
+>   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *postface);
+const char* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-POSTFACE"
+>g_mime_multipart_get_postface</A
+>   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);
+void        <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-SET-BOUNDARY"
+>g_mime_multipart_set_boundary</A
+>   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *boundary);
+const char* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-BOUNDARY"
+>g_mime_multipart_get_boundary</A
+>   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);
+void        <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-ADD-PART"
+>g_mime_multipart_add_part</A
+>       (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             <A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part);
+void        <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-ADD-PART-AT"
+>g_mime_multipart_add_part_at</A
+>    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             <A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part,
+                                             int index);
+int         <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-NUMBER"
+>g_mime_multipart_get_number</A
+>     (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);
 <A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 >* <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-NEW-TYPE"
->g_mime_object_new_type</A
->         (const char *type,
-                                             const char *subtype);
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-PART"
+>g_mime_multipart_get_part</A
+>      (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             int index);
 void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-REF"
->g_mime_object_ref</A
->               (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-UNREF"
->g_mime_object_unref</A
->             (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-SET-CONTENT-TYPE"
->g_mime_object_set_content_type</A
->  (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-REMOVE-PART"
+>g_mime_multipart_remove_part</A
+>    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
                                              <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);
-const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part);
+<A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
 >* <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-CONTENT-TYPE"
->g_mime_object_get_content_type</A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-REMOVE-PART-AT"
+>g_mime_multipart_remove_part_at</A
 >
                                             (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             int index);
 void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-SET-CONTENT-TYPE-PARAMETER"
->g_mime_object_set_content_type_parameter</A
->
-                                            (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *name,
-                                             const char *value);
-const char* <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-CONTENT-TYPE-PARAMETER"
->g_mime_object_get_content_type_parameter</A
->
-                                            (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *name);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-SET-CONTENT-ID"
->g_mime_object_set_content_id</A
->    (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *content_id);
-const char* <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-CONTENT-ID"
->g_mime_object_get_content_id</A
->    (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-ADD-HEADER"
->g_mime_object_add_header</A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-FOREACH"
+>g_mime_multipart_foreach</A
 >        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header,
-                                             const char *value);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-SET-HEADER"
->g_mime_object_set_header</A
->        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header,
-                                             const char *value);
-const char* <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-HEADER"
->g_mime_object_get_header</A
->        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header);
-void        <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-REMOVE-HEADER"
->g_mime_object_remove_header</A
->     (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header);
-char*       <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-GET-HEADERS"
->g_mime_object_get_headers</A
->       (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);
-<GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-WRITE-TO-STREAM"
->g_mime_object_write_to_stream</A
->   (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
                                              <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);
-char*       <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-TO-STRING"
->g_mime_object_to_string</A
->         (<A
+HREF="gmime-gmime-object.html#GMIMEPARTFUNC"
+>GMimePartFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> user_data);
+const <A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
-> *object);</PRE
+>* <A
+HREF="gmime-gmime-multipart.html#G-MIME-MULTIPART-GET-SUBPART-FROM-CONTENT-ID"
+>g_mime_multipart_get_subpart_from_content_id</A
+>
+                                            (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *content_id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -352,7 +343,7 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4258"
+NAME="AEN5791"
 ></A
 ><H2
 >Description</H2
@@ -362,20 +353,20 @@ NAME="AEN4258"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4261"
+NAME="AEN5794"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4263"
+NAME="AEN5796"
 ></A
 ><H3
 ><A
-NAME="GMIME-TYPE-OBJECT-CAPS"
+NAME="GMIME-TYPE-MULTIPART-CAPS"
 ></A
->GMIME_TYPE_OBJECT</H3
+>GMIME_TYPE_MULTIPART</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -385,7 +376,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_TYPE_OBJECT            (g_mime_object_get_type ())</PRE
+>#define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())</PRE
 ></TD
 ></TR
 ></TABLE
@@ -395,13 +386,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4268"
+NAME="AEN5801"
 ></A
 ><H3
 ><A
-NAME="GMIME-IS-OBJECT-CAPS"
+NAME="GMIME-IS-MULTIPART-CAPS"
 ></A
->GMIME_IS_OBJECT()</H3
+>GMIME_IS_MULTIPART()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -411,7 +402,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_OBJECT(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_OBJECT))</PRE
+>#define GMIME_IS_MULTIPART(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MULTIPART))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -420,7 +411,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4273"
+NAME="AEN5806"
 ></A
 ><P
 ></P
@@ -458,13 +449,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4282"
+NAME="AEN5815"
 ></A
 ><H3
 ><A
-NAME="GMIME-OBJECT-CAPS"
+NAME="GMIME-MULTIPART-CAPS"
 ></A
->GMIME_OBJECT()</H3
+>GMIME_MULTIPART()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -474,7 +465,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_OBJECT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_OBJECT, GMimeObject))</PRE
+>#define GMIME_MULTIPART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -483,7 +474,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4287"
+NAME="AEN5820"
 ></A
 ><P
 ></P
@@ -521,13 +512,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4296"
+NAME="AEN5829"
 ></A
 ><H3
 ><A
-NAME="GMIME-OBJECT-CLASS-CAPS"
+NAME="GMIME-MULTIPART-CLASS-CAPS"
 ></A
->GMIME_OBJECT_CLASS()</H3
+>GMIME_MULTIPART_CLASS()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -537,7 +528,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_OBJECT_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_OBJECT, GMimeObjectClass))</PRE
+>#define GMIME_MULTIPART_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MULTIPART, GMimeMultipartClass))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -546,7 +537,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4301"
+NAME="AEN5834"
 ></A
 ><P
 ></P
@@ -584,13 +575,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4310"
+NAME="AEN5843"
 ></A
 ><H3
 ><A
-NAME="GMIME-IS-OBJECT-CLASS-CAPS"
+NAME="GMIME-IS-MULTIPART-CLASS-CAPS"
 ></A
->GMIME_IS_OBJECT_CLASS()</H3
+>GMIME_IS_MULTIPART_CLASS()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -600,7 +591,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_IS_OBJECT_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_OBJECT))</PRE
+>#define GMIME_IS_MULTIPART_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MULTIPART))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -609,7 +600,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4315"
+NAME="AEN5848"
 ></A
 ><P
 ></P
@@ -647,13 +638,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4324"
+NAME="AEN5857"
 ></A
 ><H3
 ><A
-NAME="GMIME-OBJECT-GET-CLASS-CAPS"
+NAME="GMIME-MULTIPART-GET-CLASS-CAPS"
 ></A
->GMIME_OBJECT_GET_CLASS()</H3
+>GMIME_MULTIPART_GET_CLASS()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -663,7 +654,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_OBJECT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_OBJECT, GMimeObjectClass))</PRE
+>#define GMIME_MULTIPART_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MULTIPART, GMimeMultipartClass))</PRE
 ></TD
 ></TR
 ></TABLE
@@ -672,7 +663,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4329"
+NAME="AEN5862"
 ></A
 ><P
 ></P
@@ -710,13 +701,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4338"
+NAME="AEN5871"
 ></A
 ><H3
 ><A
-NAME="GMIMEOBJECT"
+NAME="GMIMEMULTIPART"
 ></A
->struct GMimeObject</H3
+>struct GMimeMultipart</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -726,13 +717,15 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeObject {
-	GObject parent_object;
+>struct GMimeMultipart {
+	GMimeObject parent_object;
 	
-	GMimeContentType *content_type;
-	GMimeHeader *headers;
+	char *boundary;
 	
-	char *content_id;
+	char *preface;
+	char *postface;
+	
+	GList *subparts;
 };</PRE
 ></TD
 ></TR
@@ -743,13 +736,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4343"
+NAME="AEN5876"
 ></A
 ><H3
 ><A
-NAME="GMIMEOBJECTCLASS"
+NAME="GMIMEMULTIPARTCLASS"
 ></A
->struct GMimeObjectClass</H3
+>struct GMimeMultipartClass</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -759,7 +752,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeObjectClass;</PRE
+>struct GMimeMultipartClass;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -769,100 +762,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4348"
+NAME="AEN5881"
 ></A
 ><H3
 ><A
-NAME="GMIMEPARTFUNC"
+NAME="G-MIME-MULTIPART-GET-TYPE"
 ></A
->GMimePartFunc ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        (*GMimePartFunc)                (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *part,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4355"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->part</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->data</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4368"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-GET-TYPE"
-></A
->g_mime_object_get_type ()</H3
+>g_mime_multipart_get_type ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -875,7 +781,7 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="GTYPE"
 >GType</GTKDOCLINK
->       g_mime_object_get_type          (void);</PRE
+>       g_mime_multipart_get_type       (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -884,7 +790,7 @@ HREF="GTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4374"
+NAME="AEN5887"
 ></A
 ><P
 ></P
@@ -920,13 +826,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4383"
+NAME="AEN5896"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-REGISTER-TYPE"
+NAME="G-MIME-MULTIPART-NEW"
 ></A
->g_mime_object_register_type ()</H3
+>g_mime_multipart_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -936,35 +842,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_object_register_type     (const char *type,
-                                             const char *subtype,
-                                             <GTKDOCLINK
-HREF="GTYPE"
->GType</GTKDOCLINK
-> object_type);</PRE
+><A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+>* g_mime_multipart_new        (void);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Registers the object type <TT
-CLASS="PARAMETER"
-><I
->object_type</I
-></TT
-> for use with the
-<A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-NEW-TYPE"
->g_mime_object_new_type</A
-> convenience function.</P
-><P
->Note: You may use the wildcard "*" to match any type and/or
-subtype.</P
+>Creates a new MIME multipart object with a default content-type of
+multipart/mixed.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4393"
+NAME="AEN5903"
 ></A
 ><P
 ></P
@@ -981,51 +874,16 @@ CLASS="CALSTABLE"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
 ><I
->type</I
-></TT
->&nbsp;:</TD
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> mime type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->subtype</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime subtype</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object_type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> object type</TD
+>an empty MIME multipart object with a default content-type of
+multipart/mixed.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1036,13 +894,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4410"
+NAME="AEN5912"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-NEW-TYPE"
+NAME="G-MIME-MULTIPART-NEW-WITH-SUBTYPE"
 ></A
->g_mime_object_new_type ()</H3
+>g_mime_multipart_new_with_subtype ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1053,50 +911,27 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
->* g_mime_object_new_type         (const char *type,
-                                             const char *subtype);</PRE
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+>* g_mime_multipart_new_with_subtype
+                                            (const char *subtype);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Performs a lookup of registered <A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> subclasses, registered
-using <A
-HREF="gmime-gmime-object.html#G-MIME-OBJECT-REGISTER-TYPE"
->g_mime_object_register_type</A
->, to find an appropriate class
-capable of handling MIME parts of type <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->/<TT
+>Creates a new MIME multipart object with a content-type of
+multipart/<TT
 CLASS="PARAMETER"
 ><I
 >subtype</I
 ></TT
->. If no class
-has been registered to handle that type, it looks for a registered
-class that can handle <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->/*. If that also fails, then it will use
-the generic part class, <A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
 >.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4423"
+NAME="AEN5920"
 ></A
 ><P
 ></P
@@ -1116,23 +951,6 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
 >subtype</I
 ></TT
 >&nbsp;:</TD
@@ -1140,7 +958,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> mime subtype</TD
+> content-type subtype</TD
 ></TR
 ><TR
 ><TD
@@ -1155,16 +973,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an appropriate <A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> registered to handle mime-types
-of <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->/<TT
+>an empty MIME multipart object with a content-type of
+multipart/<TT
 CLASS="PARAMETER"
 ><I
 >subtype</I
@@ -1180,13 +990,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4443"
+NAME="AEN5934"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-REF"
+NAME="G-MIME-MULTIPART-SET-PREFACE"
 ></A
->g_mime_object_ref ()</H3
+>g_mime_multipart_set_preface ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1196,21 +1006,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_object_ref               (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
+>void        g_mime_multipart_set_preface    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *preface);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Ref's a MIME object.</P
+>Sets the preface on the multipart.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4450"
+NAME="AEN5941"
 ></A
 ><P
 ></P
@@ -1230,14 +1041,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->object</I
+>multipart</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> mime object</TD
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>preface</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> preface</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1248,13 +1076,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4459"
+NAME="AEN5954"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-UNREF"
+NAME="G-MIME-MULTIPART-GET-PREFACE"
 ></A
->g_mime_object_unref ()</H3
+>g_mime_multipart_get_preface ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1264,21 +1092,21 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_object_unref             (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
+>const char* g_mime_multipart_get_preface    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Unref's a MIME object.</P
+>Gets the preface on the multipart.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4466"
+NAME="AEN5961"
 ></A
 ><P
 ></P
@@ -1298,14 +1126,29 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->object</I
+>multipart</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> mime object</TD
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a pointer to the preface string on the multipart.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1316,13 +1159,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4475"
+NAME="AEN5974"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-SET-CONTENT-TYPE"
+NAME="G-MIME-MULTIPART-SET-POSTFACE"
 ></A
->g_mime_object_set_content_type ()</H3
+>g_mime_multipart_set_postface ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1332,25 +1175,385 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_object_set_content_type  (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
+>void        g_mime_multipart_set_postface   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *postface);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the postface on the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5981"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>postface</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> postface</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5994"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-GET-POSTFACE"
+></A
+>g_mime_multipart_get_postface ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_multipart_get_postface   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the postface on the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6001"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a pointer to the postface string on the multipart.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6014"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-SET-BOUNDARY"
+></A
+>g_mime_multipart_set_boundary ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_multipart_set_boundary   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             const char *boundary);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets <TT
+CLASS="PARAMETER"
+><I
+>boundary</I
+></TT
+> as the boundary on the multipart. If <TT
+CLASS="PARAMETER"
+><I
+>boundary</I
+></TT
+> is
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>, then a boundary will be auto-generated for you.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6024"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>boundary</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> boundary or <TT
+CLASS="LITERAL"
+>NULL</TT
+> to autogenerate one</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6038"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-GET-BOUNDARY"
+></A
+>g_mime_multipart_get_boundary ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_multipart_get_boundary   (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the boundary on the multipart. If the internal boundary is
+<TT
+CLASS="LITERAL"
+>NULL</TT
+>, then an auto-generated boundary will be set on the multipart
+and returned.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6046"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the boundary on the multipart.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6059"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-ADD-PART"
+></A
+>g_mime_multipart_add_part ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_multipart_add_part       (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
                                              <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);</PRE
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Sets the content-type for the specified MIME object.</P
+>Adds a mime part to the multipart.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4483"
+NAME="AEN6067"
 ></A
 ><P
 ></P
@@ -1370,14 +1573,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->object</I
+>multipart</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME object</TD
+> multipart</TD
 ></TR
 ><TR
 ><TD
@@ -1387,14 +1590,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->mime_type</I
+>part</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME type</TD
+> mime part</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1405,13 +1608,646 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4496"
+NAME="AEN6080"
 ></A
 ><H3
 ><A
-NAME="G-MIME-OBJECT-GET-CONTENT-TYPE"
+NAME="G-MIME-MULTIPART-ADD-PART-AT"
 ></A
->g_mime_object_get_content_type ()</H3
+>g_mime_multipart_add_part_at ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_multipart_add_part_at    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             <A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part,
+                                             int index);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Adds a mime part to the multipart at the position <TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6089"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> position to insert the mime part</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6106"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-GET-NUMBER"
+></A
+>g_mime_multipart_get_number ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_multipart_get_number     (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the number of mime parts contained within the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6113"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of mime parts contained within the multipart.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6126"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-GET-PART"
+></A
+>g_mime_multipart_get_part ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* g_mime_multipart_get_part      (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             int index);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the mime part at position <TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+> within the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6135"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> position of the mime part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the mime part at position <TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6153"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-REMOVE-PART"
+></A
+>g_mime_multipart_remove_part ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_multipart_remove_part    (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             <A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *part);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Removes the specified mime part from the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6161"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> mime part</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6174"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-REMOVE-PART-AT"
+></A
+>g_mime_multipart_remove_part_at ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* g_mime_multipart_remove_part_at
+                                            (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             int index);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Removes the mime part at position <TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+> from the multipart.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6183"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>index</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> position of the mime part to remove</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the mime part that was removed.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6200"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-FOREACH"
+></A
+>g_mime_multipart_foreach ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_multipart_foreach        (<A
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
+                                             <A
+HREF="gmime-gmime-object.html#GMIMEPARTFUNC"
+>GMimePartFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> user_data);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Calls <TT
+CLASS="PARAMETER"
+><I
+>callback</I
+></TT
+> on <TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+> and each of its subparts.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6211"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a multipart</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>callback</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> function to call for <TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+> and all of its subparts</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>user_data</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> extra data to pass to the callback</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6229"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-GET-SUBPART-FROM-CONTENT-ID"
+></A
+>g_mime_multipart_get_subpart_from_content_id ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1422,344 +2258,36 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
->* g_mime_object_get_content_type
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* g_mime_multipart_get_subpart_from_content_id
                                             (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the Content-Type object for the given MIME object or <TT
-CLASS="LITERAL"
->NULL</TT
-> on
-fail.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4505"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->the content-type object for the specified MIME object.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4518"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-SET-CONTENT-TYPE-PARAMETER"
-></A
->g_mime_object_set_content_type_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_object_set_content_type_parameter
-                                            (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *name,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Sets the content-type param <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
-> to the value <TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4527"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> param name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> param value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4544"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-GET-CONTENT-TYPE-PARAMETER"
-></A
->g_mime_object_get_content_type_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_object_get_content_type_parameter
-                                            (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *name);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the value of the content-type param <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
-> set on the MIME part
-<TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4553"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> param name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->the value of the requested content-type param or <TT
-CLASS="LITERAL"
->NULL</TT
-> on
-if the param doesn't exist.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4571"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-SET-CONTENT-ID"
-></A
->g_mime_object_set_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_object_set_content_id    (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
+HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
+>GMimeMultipart</A
+> *multipart,
                                              const char *content_id);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Sets the Content-Id of the MIME object.</P
+>Gets the mime part with the content-id <TT
+CLASS="PARAMETER"
+><I
+>content_id</I
+></TT
+> from the
+multipart <TT
+CLASS="PARAMETER"
+><I
+>multipart</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4578"
+NAME="AEN6239"
 ></A
 ><P
 ></P
@@ -1779,14 +2307,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->object</I
+>multipart</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME object</TD
+> a multipart</TD
 ></TR
 ><TR
 ><TD
@@ -1803,75 +2331,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> content-id</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4591"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-GET-CONTENT-ID"
-></A
->g_mime_object_get_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_object_get_content_id    (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the Content-Id of the MIME object or NULL if one is not set.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4598"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME object</TD
+> the content id of the part to look for</TD
 ></TR
 ><TR
 ><TD
@@ -1886,700 +2346,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a const pointer to the Content-Id header.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4611"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-ADD-HEADER"
-></A
->g_mime_object_add_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_object_add_header        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Adds an arbitrary header to the MIME object.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4618"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4635"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-SET-HEADER"
-></A
->g_mime_object_set_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_object_set_header        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Sets an arbitrary header on the MIME object.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4642"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4659"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-GET-HEADER"
-></A
->g_mime_object_get_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_object_get_header        (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the value of the requested header if it exists or <TT
+>the GMimeObject whose content-id matches the search string,
+or <TT
 CLASS="LITERAL"
 >NULL</TT
->
-otherwise.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4667"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->the value of the header <TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
-> if it exists or <TT
-CLASS="LITERAL"
->NULL</TT
->
-otherwise.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4686"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-REMOVE-HEADER"
-></A
->g_mime_object_remove_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_object_remove_header     (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             const char *header);</PRE
-></TD
-></TR
-></TABLE
-><P
->Removed the specified header if it exists.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4693"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4706"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-GET-HEADERS"
-></A
->g_mime_object_get_headers ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->char*       g_mime_object_get_headers       (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
-></TD
-></TR
-></TABLE
-><P
->Allocates a string buffer containing all of the MIME object's raw
-headers.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4713"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->an allocated string containing all of the raw MIME headers.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4726"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-WRITE-TO-STREAM"
-></A
->g_mime_object_write_to_stream ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     g_mime_object_write_to_stream   (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object,
-                                             <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
-></TD
-></TR
-></TABLE
-><P
->Write the contents of the MIME object to <TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4736"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->-1 on fail.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN4753"
-></A
-><H3
-><A
-NAME="G-MIME-OBJECT-TO-STRING"
-></A
->g_mime_object_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->char*       g_mime_object_to_string         (<A
-HREF="gmime-gmime-object.html#GMIMEOBJECT"
->GMimeObject</A
-> *object);</PRE
-></TD
-></TR
-></TABLE
-><P
->Allocates a string buffer containing the contents of <TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4761"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->object</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> mime object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->an allocated string containing the contents of the mime
-object.</TD
+> if a match cannot be found.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2603,7 +2374,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-data-wrapper.html"
+HREF="gmime-gmime-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -2657,7 +2428,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-part.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -2675,7 +2446,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-data-wrapper</B
+>gmime-part</B
 ></FONT
 ></TD
 ><TD
@@ -2685,7 +2456,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-part</B
+>gmime-message</B
 ></FONT
 ></TD
 ></TR

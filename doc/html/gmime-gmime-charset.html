@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-CHARSET"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN6222"
+NAME="AEN8565"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN6222"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN6225"
+NAME="AEN8568"
 ></A
 ><H2
 >Synopsis</H2
@@ -157,7 +157,15 @@ HREF="gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME"
 const char* <A
 HREF="gmime-gmime-charset.html#G-MIME-CHARSET-NAME"
 >g_mime_charset_name</A
->             (const char *charset);</PRE
+>             (const char *charset);
+const char* <A
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-BEST"
+>g_mime_charset_best</A
+>             (const char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -165,7 +173,7 @@ HREF="gmime-gmime-charset.html#G-MIME-CHARSET-NAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6231"
+NAME="AEN8576"
 ></A
 ><H2
 >Description</H2
@@ -175,14 +183,14 @@ NAME="AEN6231"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6234"
+NAME="AEN8579"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6236"
+NAME="AEN8581"
 ></A
 ><H3
 ><A
@@ -203,16 +211,14 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
->Initializes the locale charset variable for later calls to
-gmime_charset_locale_name. Only really needs to be called for non-
-iso-8859-1 locales.</P
+>Initializes internal charset tables.</P
 ><P
 ></P
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6242"
+NAME="AEN8587"
 ></A
 ><H3
 ><A
@@ -233,13 +239,16 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
->Gets the user's locale charset (or iso-8859-1 by default).</P
+>Gets the user's locale charset (or <TT
+CLASS="LITERAL"
+>iso</TT
+>-8859-1 by default).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6248"
+NAME="AEN8594"
 ></A
 ><P
 ></P
@@ -264,7 +273,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the user's locale charset (or iso-8859-1 by default).</TD
+>the user's locale charset (or <TT
+CLASS="LITERAL"
+>iso</TT
+>-8859-1 by default).</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -275,7 +287,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6257"
+NAME="AEN8604"
 ></A
 ><H3
 ><A
@@ -307,7 +319,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6264"
+NAME="AEN8611"
 ></A
 ><P
 ></P
@@ -355,6 +367,116 @@ CLASS="PARAMETER"
 >charset</I
 ></TT
 >.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8625"
+></A
+><H3
+><A
+NAME="G-MIME-CHARSET-BEST"
+></A
+>g_mime_charset_best ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_charset_best             (const char *in,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> inlen);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Computes the best charset to use to encode this text buffer.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8632"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a UTF-8 text buffer</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> length of <TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the charset name best suited for the input text or <TT
+CLASS="LITERAL"
+>NULL</TT
+> if
+it is US-ASCII safe.</TD
 ></TR
 ></TBODY
 ></TABLE

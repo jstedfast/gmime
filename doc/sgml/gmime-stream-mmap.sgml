@@ -14,9 +14,15 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-MMAP-TYPE-CAPS">GMIME_STREAM_MMAP_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-MMAP-CAPS">GMIME_IS_STREAM_MMAP</link>            (stream)
-#define     <link linkend="GMIME-STREAM-MMAP-CAPS">GMIME_STREAM_MMAP</link>               (stream)
+#define     <link linkend="GMIME-TYPE-STREAM-MMAP-CAPS">GMIME_TYPE_STREAM_MMAP</link>
+#define     <link linkend="GMIME-IS-STREAM-MMAP-CAPS">GMIME_IS_STREAM_MMAP</link>            (obj)
+#define     <link linkend="GMIME-STREAM-MMAP-CAPS">GMIME_STREAM_MMAP</link>               (obj)
+#define     <link linkend="GMIME-STREAM-MMAP-CLASS-CAPS">GMIME_STREAM_MMAP_CLASS</link>         (klass)
+#define     <link linkend="GMIME-IS-STREAM-MMAP-CLASS-CAPS">GMIME_IS_STREAM_MMAP_CLASS</link>      (klass)
+#define     <link linkend="GMIME-STREAM-MMAP-GET-CLASS-CAPS">GMIME_STREAM_MMAP_GET_CLASS</link>     (obj)
+struct      <link linkend="GMimeStreamMmap">GMimeStreamMmap</link>;
+struct      <link linkend="GMimeStreamMmapClass">GMimeStreamMmapClass</link>;
+<link linkend="GType">GType</link>       <link linkend="g-mime-stream-mmap-get-type">g_mime_stream_mmap_get_type</link>     (void);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-mmap-new">g_mime_stream_mmap_new</link>         (int fd,
                                              int prot,
                                              int flags);
@@ -43,15 +49,15 @@
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-STREAM-MMAP-TYPE-CAPS">GMIME_STREAM_MMAP_TYPE</title>
-<programlisting>#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")
+<title><anchor id="GMIME-TYPE-STREAM-MMAP-CAPS">GMIME_TYPE_STREAM_MMAP</title>
+<programlisting>#define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())
 </programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-MMAP-CAPS">GMIME_IS_STREAM_MMAP()</title>
-<programlisting>#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MMAP_TYPE)
+<programlisting>#define GMIME_IS_STREAM_MMAP(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_MMAP))
 </programlisting>
 <para>
 
@@ -60,7 +66,7 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
 
 
@@ -68,7 +74,7 @@
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-MMAP-CAPS">GMIME_STREAM_MMAP()</title>
-<programlisting>#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)
+<programlisting>#define GMIME_STREAM_MMAP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmap))
 </programlisting>
 <para>
 
@@ -77,8 +83,96 @@
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
 <entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-MMAP-CLASS-CAPS">GMIME_STREAM_MMAP_CLASS()</title>
+<programlisting>#define GMIME_STREAM_MMAP_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-MMAP-CLASS-CAPS">GMIME_IS_STREAM_MMAP_CLASS()</title>
+<programlisting>#define GMIME_IS_STREAM_MMAP_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MMAP))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-MMAP-GET-CLASS-CAPS">GMIME_STREAM_MMAP_GET_CLASS()</title>
+<programlisting>#define GMIME_STREAM_MMAP_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamMmap">struct GMimeStreamMmap</title>
+<programlisting>struct GMimeStreamMmap {
+	GMimeStream parent_object;
+	
+	gboolean owner;
+	gboolean eos;
+	int fd;
+	
+	char *map;
+	size_t maplen;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeStreamMmapClass">struct GMimeStreamMmapClass</title>
+<programlisting>struct GMimeStreamMmapClass;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-mmap-get-type">g_mime_stream_mmap_get_type ()</title>
+<programlisting><link linkend="GType">GType</link>       g_mime_stream_mmap_get_type     (void);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
 
 
 </entry></row>
