@@ -1,5 +1,10 @@
 2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-message.c (g_mime_message_set_subject): Encode the
+	subject before setting it in the raw header list.
+
+2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* README: Bumped version to 2.0.4
 
 	* configure.in: Bumped version to 2.0.4
