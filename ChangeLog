@@ -1,3 +1,21 @@
+2001-11-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Added checks for strlib functions and bumped the
+	version to 0.7.1 (there won't be an official 0.7.1 release but I
+	figure I should be bumping version numbers whenever I add
+	functionality).
+
+	* strlib.[c,h]: New string library that provides anything that the
+	system libc doesn't (includig strnstr and stpcpy).
+
+	* gmime-filter-html.[c,h]: New filter that converts plain text
+	into HTML suitable for display in things like GtkHTML (makes urls
+	into hyperlinks and preserves whitespace and such).
+
+	* gmime-parser.c (g_strstrbound): Removed.
+	(find_header_part_end): Use strnstr.
+	(g_mime_parser_construct_part_internal): Use strnstr.
+
 2001-10-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Updated the version to 0.7.0

@@ -23,4 +23,5 @@ gen-table
 test-parser
 test-mime
 test-streams
+test-html
 gmime.spec

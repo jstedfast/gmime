@@ -31,6 +31,11 @@
 #include "gmime-stream-mem.h"
 #include <string.h>
 #include <ctype.h>
+#include "strlib.h"
+
+#ifndef HAVE_ISBLANK
+#define isblank(c) ((c) == ' ' || (c) == '\t')
+#endif /* HAVE_ISBLANK */
 
 #define d(x) x
 
@@ -81,34 +86,6 @@ content_header (const char *field)
 	return -1;
 }
 
-#ifndef HAVE_ISBLANK
-#define isblank(c) ((c) == ' ' || (c) == '\t')
-#endif /* HAVE_ISBLANK */
-
-static const char *
-g_strstrbound (const char *haystack, const char *needle, const char *end)
-{
-	gboolean matches = FALSE;
-	const char *ptr;
-	guint nlen;
-	
-	nlen = strlen (needle);
-	ptr = haystack;
-	
-	while (ptr + nlen <= end) {
-		if (!strncmp (ptr, needle, nlen)) {
-			matches = TRUE;
-			break;
-		}
-		ptr++;
-	}
-	
-	if (matches)
-		return ptr;
-	else
-		return NULL;
-}
-
 static const char *
 find_header_part_end (const char *in, guint inlen)
 {
@@ -119,9 +96,9 @@ find_header_part_end (const char *in, guint inlen)
 	
 	if (*in == '\n') /* if the beginning is a '\n' there are no content headers */
 		hdr_end = in;
-	else if ((pch = g_strstrbound (in, "\n\n", in+inlen)) != NULL)
+	else if ((pch = strnstr (in, "\n\n", inlen)) != NULL)
 		hdr_end = pch;
-	else if ((pch = g_strstrbound (in, "\n\r\n", in+inlen)) != NULL)
+	else if ((pch = strnstr (in, "\n\r\n", inlen)) != NULL)
 		hdr_end = pch;
 	
 	return hdr_end;
@@ -327,24 +304,23 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		start = GMIME_STREAM (mem)->bound_start;
 		end = GMIME_STREAM (mem)->bound_end;
 		
-		part_begin = g_strstrbound (inptr, boundary, inend);
+		part_begin = strnstr (inptr, boundary, inend - inptr);
 		while (part_begin && part_begin < inend) {
 			/* make sure we're not looking at the end boundary */
 			if (!strncmp (part_begin, end_boundary, strlen (end_boundary)))
 				break;
 			
 			/* find the end of this part */
-			part_end = g_strstrbound (part_begin + strlen (boundary), boundary, inend);
-			if (!part_end || part_end >= inend) {
-				part_end = g_strstrbound (part_begin + strlen (boundary),
-							  end_boundary, inend);
-				if (!part_end || part_end >= inend)
+			part_begin += strlen (boundary);
+			
+			part_end = strnstr (part_begin, boundary, inend - part_begin);
+			if (!part_end) {
+				part_end = strnstr (part_begin, end_boundary, inend - part_begin);
+				if (!part_end)
 					part_end = inend;
 			}
 			
 			/* get the subpart */
-			part_begin += strlen (boundary);
-			
 			g_mime_stream_set_bounds (GMIME_STREAM (mem), pos + (part_begin - in),
 						  pos + (part_end - in));
 			subpart = g_mime_parser_construct_part_internal (stream, mem);

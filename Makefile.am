@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-streams
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html
 
 bin_SCRIPTS = gmime-config
 
@@ -16,12 +16,14 @@ libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_la_SOURCES = 		\
 	alloca.c		\
+	strlib.c		\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
 	gmime-filter-crlf.c	\
+	gmime-filter-html.c	\
 	gmime-header.c		\
 	gmime-message.c		\
 	gmime-param.c		\
@@ -37,16 +39,16 @@ libgmime_la_SOURCES = 		\
 	internet-address.c	\
 	md5-utils.c
 
-gmimeincdir = $(includedir)/gmime
-gmimeinc_HEADERS = 		\
+gmimeincludedir = $(includedir)/gmime
+gmimeinclude_HEADERS = 		\
 	gmime.h			\
-	gmime-table-private.h	\
 	gmime-charset.h		\
 	gmime-content-type.h	\
 	gmime-data-wrapper.h	\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-crlf.h	\
+	gmime-filter-html.h	\
 	gmime-header.h		\
 	gmime-message.h		\
 	gmime-param.h		\
@@ -59,7 +61,11 @@ gmimeinc_HEADERS = 		\
 	gmime-stream-fs.h	\
 	gmime-stream-mem.h	\
 	gmime-utils.h		\
-	internet-address.h	\
+	internet-address.h
+
+noinst_HEADERS = 		\
+	strlib.h		\
+	gmime-table-private.h	\
 	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime.la
@@ -80,6 +86,11 @@ test_streams_LDFLAGS =
 test_streams_DEPENDENCIES = $(DEPS)
 test_streams_LDADD = $(LDADDS)
 
+test_html_SOURCES = test-html.c
+test_html_LDFLAGS = 
+test_html_DEPENDENCIES = $(DEPS)
+test_html_LDADD = $(LDADDS)
+
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
@@ -89,7 +100,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests STREAMtests
+tests: MIMEtests PARSERtests STREAMtests FILTERtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -104,6 +115,11 @@ PARSERtests : test-parser
 STREAMtests : test-streams
 	@echo "##"
 	@echo "## Stream regression tests"
+	@echo "##"
+
+FILTERtests : test-html
+	@echo "##"
+	@echo "## Filter regression tests"
 	@echo "##"
 
 dist-hook: gmime.spec
