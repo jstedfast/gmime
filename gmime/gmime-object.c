@@ -384,14 +384,49 @@ g_mime_object_get_content_id (GMimeObject *object)
 }
 
 
+enum {
+	HEADER_CONTENT_TYPE,
+	HEADER_CONTENT_ID,
+	HEADER_UNKNOWN,
+};
+
+static char *headers[] = {
+	"Content-Type",
+	"Content-Id",
+	NULL
+};
+
+static void
+process_header (GMimeObject *object, const char *header, const char *value)
+{
+	GMimeContentType *content_type;
+	int i;
+	
+	for (i = 0; headers[i]; i++) {
+		if (!strcasecmp (headers[i], header))
+			break;
+	}
+	
+	switch (i) {
+	case HEADER_CONTENT_TYPE:
+		content_type = g_mime_content_type_new_from_string (value);
+		if (object->content_type)
+			g_mime_content_type_destroy (object->content_type);
+		object->content_type = content_type;
+		break;
+	case HEADER_CONTENT_ID:
+		g_free (object->content_id);
+		object->content_id = g_strstrip (g_strdup (value));
+		break;
+	default:
+		break;
+	}
+}
+
 static void
 add_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp (header, "Content-Id")) {
-		g_free (object->content_id);
-		object->content_id = g_strstrip (g_strdup (value));
-	}
-	
+	process_header (object, header, value);
 	g_mime_header_add (object->headers, header, value);
 }
 
@@ -417,11 +452,7 @@ g_mime_object_add_header (GMimeObject *object, const char *header, const char *v
 static void
 set_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp (header, "Content-Id")) {
-		g_free (object->content_id);
-		object->content_id = g_strstrip (g_strdup (value));
-	}
-	
+	process_header (object, header, value);
 	g_mime_header_set (object->headers, header, value);
 }
 

@@ -324,7 +324,7 @@ parser_unstep (GMimeParser *parser)
  * Returns a new parser object.
  **/
 GMimeParser *
-g_mime_parser_new ()
+g_mime_parser_new (void)
 {
 	GMimeParser *parser;
 	
@@ -343,6 +343,25 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 	parser_close (parser);
 	parser_init (parser, stream);
 }
+
+
+void
+g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
+{
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+	
+	parser->priv->scan_from = TRUE;
+}
+
+
+gboolean
+g_mime_parser_get_scan_from (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
+	
+	return parser->priv->scan_from;
+}
+
 
 static ssize_t
 parser_fill (GMimeParser *parser)

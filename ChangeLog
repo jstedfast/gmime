@@ -1,3 +1,27 @@
+2002-04-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (process_header): process the headers we care
+	about.
+	(message_add_header): Call process_header.
+	(message_set_header): Same.
+
+	* gmime-part.c (process_header): process the headers we care
+	about.
+	(mime_part_add_header): Call process_header.
+	(mime_part_set_header): Same.
+
+	* gmime-object (process_header): process the headers we care
+	about.
+	(add_header): Call process_header.
+	(set_header): Same.
+
+2002-04-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (g_mime_parser_set_scan_from): New accessor
+	method to set whether or not to scan from-lines.
+	(g_mime_parser_get_scan_from): New accessor method to get the
+	from-line mode.
+
 2002-04-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (datetok): Treat ',' as a token delimeter. Also

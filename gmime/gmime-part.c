@@ -33,6 +33,10 @@
 #include <string.h>
 #include <ctype.h>
 
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
@@ -143,14 +147,84 @@ mime_part_init (GMimeObject *object)
 	GMIME_OBJECT_CLASS (parent_class)->init (object);
 }
 
+enum {
+	HEADER_CONTENT_TRANSFER_ENCODING,
+	HEADER_CONTENT_DISPOSITION,
+	HEADER_CONTENT_DESCRIPTION,
+	HEADER_CONTENT_LOCATION,
+	HEADER_CONTENT_MD5,
+	HEADER_UNKNOWN
+};
+
+static char *headers[] = {
+	"Content-Transfer-Encoding",
+	"Content-Disposition",
+	"Content-Description",
+	"Content-Location",
+	"Content-Md5",
+	NULL
+};
+
+static void
+set_disposition (GMimePart *mime_part, const char *disposition)
+{
+	if (!mime_part->disposition)
+		mime_part->disposition = g_mime_disposition_new (NULL);
+	
+	g_mime_disposition_set (mime_part->disposition, disposition);
+}
+
+static void
+process_header (GMimeObject *object, const char *header, const char *value)
+{
+	GMimePart *mime_part = (GMimePart *) object;
+	GMimePartEncodingType encoding;
+	char *text;
+	int i;
+	
+	for (i = 0; headers[i]; i++) {
+		if (!strcasecmp (headers[i], header))
+			break;
+	}
+	
+	switch (i) {
+	case HEADER_CONTENT_TRANSFER_ENCODING:
+		text = alloca (strlen (value) + 1);
+		strcpy (text, value);
+		g_strstrip (text);
+		mime_part->encoding = g_mime_part_encoding_from_string (text);
+		break;
+	case HEADER_CONTENT_DISPOSITION:
+		set_disposition (mime_part, value);
+		break;
+	case HEADER_CONTENT_DESCRIPTION:
+		/* FIXME: we should decode this */
+		g_free (mime_part->content_description);
+		mime_part->content_description = g_strstrip (g_strdup (value));
+		break;
+	case HEADER_CONTENT_LOCATION:
+		g_free (mime_part->content_location);
+		mime_part->content_location = g_strstrip (g_strdup (value));
+		break;
+	case HEADER_CONTENT_MD5:
+		g_free (mime_part->content_md5);
+		mime_part->content_md5 = g_strstrip (g_strdup (value));
+		break;
+	default:
+		break;
+	}
+}
+
 static void
 mime_part_add_header (GMimeObject *object, const char *header, const char *value)
 {
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8)) {
+		process_header (object, header, value);
 		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+	}
 }
 
 static void
@@ -159,8 +233,10 @@ mime_part_set_header (GMimeObject *object, const char *header, const char *value
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8)) {
+		process_header (object, header, value);
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+	}
 }
 
 static const char *
@@ -179,7 +255,7 @@ static void
 mime_part_remove_header (GMimeObject *object, const char *header)
 {
 	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
+           doesn't belong on a mime part */
 	
 	if (!strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
@@ -801,11 +877,7 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const char *dispositi
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (!mime_part->disposition)
-		mime_part->disposition = g_mime_disposition_new (NULL);
-	
-	g_mime_disposition_set (mime_part->disposition, disposition);
-	
+	set_disposition (mime_part, disposition);
 	sync_content_disposition (mime_part);
 }
 

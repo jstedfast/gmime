@@ -96,7 +96,7 @@ void g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset
 void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset);
 char *g_mime_message_get_date_string (GMimeMessage *message);
 
-void g_mime_message_set_message_id (GMimeMessage *message, const char *id);
+void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);
 
 void g_mime_message_add_header (GMimeMessage *message, const char *header, const char *value);

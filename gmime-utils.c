@@ -1032,8 +1032,6 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 	inptr = in + 2;
 	inend = in + inlen - 2;
 	
-	fprintf (stderr, "rfc2047_decode_word: %.*s\n", inlen, in);
-	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
 		unsigned char *decoded;
@@ -1317,8 +1315,6 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	}
 	
 	g_free (uword);
-	
-	fprintf (stderr, "rfc2047_encode_word: =?%s?%c?%s?=\n", charset, encoding, encoded);
 	
 	g_string_sprintfa (string, "=?%s?%c?%s?=", charset, encoding, encoded);
 }
