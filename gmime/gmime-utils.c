@@ -1023,6 +1023,8 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 	inptr = in + 2;
 	inend = in + inlen - 2;
 	
+	fprintf (stderr, "rfc2047_decode_word: %.*s\n", inlen, in);
+	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
 		unsigned char *decoded;
@@ -1056,16 +1058,15 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		}
 		
 		if (gmime_interfaces_utf8) {
-			const char *charset;
 			unsigned char *buf;
-			char *charenc, *p;
+			char *charset, *p;
 			size_t len;
 			iconv_t cd;
 			
 			len = (inptr - 3) - (in + 2);
-			charenc = alloca (len + 1);
-			memcpy (charenc, in + 2, len);
-			charenc[len] = '\0';
+			charset = alloca (len + 1);
+			memcpy (charset, in + 2, len);
+			charset[len] = '\0';
 			
 			/* rfc2231 updates rfc2047 encoded words...
 			 * The ABNF given in RFC 2047 for encoded-words is:
@@ -1075,15 +1076,14 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			 */
 			
 			/* trim off the 'language' part if it's there... */
-			p = strchr (charenc, '*');
+			p = strchr (charset, '*');
 			if (p)
 				*p = '\0';
 			
 			/* slight optimization */
-			if (!strcasecmp (charenc, "UTF-8"))
+			if (!strcasecmp (charset, "UTF-8"))
 				return g_strndup (decoded, declen);
 			
-			charset = g_mime_charset_name (charenc);
 			cd = g_mime_iconv_open ("UTF-8", charset);
 			if (cd == (iconv_t) -1) {
 				w(g_warning ("Cannot convert from %s to UTF-8, header display may "
@@ -1270,10 +1270,8 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	char encoding;
 	
 	if (gmime_interfaces_utf8) {
-		if (strcasecmp (charset, "UTF-8") != 0) {
-			charset = g_mime_charset_name (charset);
+		if (strcasecmp (charset, "UTF-8") != 0)
 			cd = g_mime_iconv_open (charset, "UTF-8");
-		}
 		
 		if (cd != (iconv_t) -1) {
 			uword = g_mime_iconv_strndup (cd, word, len);
@@ -1319,6 +1317,8 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	}
 	
 	g_free (uword);
+	
+	fprintf (stderr, "rfc2047_encode_word: =?%s?%c?%s?=\n", charset, encoding, encoded);
 	
 	g_string_sprintfa (string, "=?%s?%c?%s?=", charset, encoding, encoded);
 }

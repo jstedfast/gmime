@@ -371,6 +371,7 @@ g_mime_charset_best (const char *in, size_t inlen)
 
 #ifdef BUILD_CHARSET_MAP
 
+#include <sys/stat.h>
 #include <errno.h>
 #include <iconv.h>
 
@@ -400,6 +401,30 @@ static struct {
 	{ 0, 0 }
 };
 
+/* Multibyte charsets - files are generated with gen-multibyte.c */
+static struct {
+	char *name;
+	char *filename;
+	unsigned int bit;
+} multibyte_tables[] = {
+	/* Japanese - in order of preference */
+	{ "iso-2022-jp", "iso-2022-jp.dat", 0 },
+	{ "Shift-JIS", "Shift-JIS.dat", 0 },
+	{ "euc-jp", "euc-jp.dat", 0 },
+	
+	/* Korean - in order of preference */
+	{ "euc-kr", "euc-kr.dat", 0 },
+	{ "iso-2022-kr", "iso-2022-kr.dat", 0 },
+	
+	/* Simplified Chinese */
+	{ "gb2312", "gb2312.dat", 0 },
+	
+	/* Traditional Chinese - in order of preference */
+	{ "Big5", "Big5.data", 0 },
+	{ "euc-tw", "euc-tw.dat", 0 },
+	{ NULL, NULL, 0 }
+};
+
 unsigned int encoding_map[256 * 256];
 
 #if G_BYTE_ORDER == G_BIG_ENDIAN
@@ -411,11 +436,10 @@ unsigned int encoding_map[256 * 256];
 int main (int argc, char **argv)
 {
 	char *inptr, *outptr;
-	size_t inlen, outlen;
+	size_t inleft, outleft;
 	guint32 out[128];
 	char in[128];
 	int i, j, k;
-	int max, min;
 	int bit = 0x01;
 	int bytes;
 	iconv_t cd;
@@ -430,12 +454,12 @@ int main (int argc, char **argv)
 		cd = iconv_open (UCS, tables[j].name);
 		inptr = in;
 		outptr = (char *)(out);
-		inlen = sizeof (in);
-		outlen = sizeof (out);
-		while (iconv (cd, &inptr, &inlen, &outptr, &outlen) == -1) {
+		inleft = sizeof (in);
+		outleft = sizeof (out);
+		while (iconv (cd, &inptr, &inleft, &outptr, &outleft) == -1) {
 			if (errno == EILSEQ) {
 				inptr++;
-				inlen--;
+				inleft--;
 			} else {
 				g_warning ("%s\n", g_strerror (errno));
 				exit (1);
@@ -443,12 +467,82 @@ int main (int argc, char **argv)
 		}
 		iconv_close (cd);
 		
-		for (i = 0; i < 128 - outlen / 4; i++) {
+		for (i = 0; i < 128 - outleft / 4; i++) {
 			encoding_map[i] |= bit;
 			encoding_map[out[i]] |= bit;
 		}
 		
 		tables[j].bit = bit;
+		bit <<= 1;
+	}
+	
+	/* Mutibyte tables */
+	for (j = 0; multibyte_tables[j].name; j++) {
+		char *inbuf, *outbuf;
+		struct stat st;
+		unichar c;
+		FILE *fp;
+		
+		if (stat (multibyte_tables[j].filename, &st) == -1)
+			continue;
+		
+		fp = fopen (multibyte_tables[j].filename, "r");
+		if (fp == NULL)
+			continue;
+		
+		inleft = st.st_size;
+		inbuf = malloc (st.st_size);
+		outleft = st.st_size * 6 + 16;
+		outptr = outbuf = malloc (outleft);
+		
+		fread (inbuf, 1, st.st_size, fp);
+		fclose (fp);
+		
+		cd = iconv_open ("UTF-8", multibyte_tables[j].name);
+		
+		inptr = inbuf;
+		while (iconv (cd, &inptr, &inleft, &outptr, &outleft) == (size_t) -1) {
+			if (errno == EILSEQ || errno == EINVAL) {
+				inptr++;
+				inleft--;
+			} else {
+				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s\n",
+					   multibyte_tables[j].name, inleft, outleft,
+					   g_strerror (errno));
+				exit (1);
+			}
+		}
+		
+		iconv_close (cd);
+		
+		free (inbuf);
+		
+		/* now we have a UTF-8 string - convert to UCS-4 manually... */
+		i = 0;
+		inptr = outbuf;
+		while (inptr && *inptr) {
+			char *newinptr;
+			
+			newinptr = unicode_next_char (inptr);
+			c = unicode_get_char (inptr);
+			if (!unichar_validate (c)) {
+				g_warning ("Invalid UTF-8 sequence encountered");
+				inptr++;
+				continue;
+			} else if (i >= 65535 || c >= 65535) {
+				/* this'll overflow our table... */
+				break;
+			}
+			
+			inptr = newinptr;
+			
+			encoding_map[i++] |= bit;
+			encoding_map[c] |= bit;
+		}
+		
+		free (outbuf);
+		
+		multibyte_tables[j].bit = bit;
 		bit <<= 1;
 	}
 	
@@ -505,6 +599,9 @@ int main (int argc, char **argv)
 	printf ("struct {\n\tconst char *name;\n\tunsigned int bit;\n} charinfo[] = {\n");
 	for (j = 0; tables[j].name; j++) {
 		printf ("\t{ \"%s\", 0x%04x },\n", tables[j].name, tables[j].bit);
+	}
+	for (j = 0; multibyte_tables[j].name; j++) {
+		printf ("\t{ \"%s\", 0x%04x },\n", multibyte_tables[j].name, multibyte_tables[j].bit);
 	}
 	printf ("};\n\n");
 	

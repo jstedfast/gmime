@@ -114,9 +114,8 @@ rfc2184_decode (const char *in, size_t len)
 {
 	const char *inptr = in;
 	const char *inend = in + len;
-	const char *charset;
 	char *decoded = NULL;
-	char *charenc;
+	char *charset;
 	
 	/* skips to the end of the charset / beginning of the locale */
 	inptr = memchr (inptr, '\'', len);
@@ -125,10 +124,9 @@ rfc2184_decode (const char *in, size_t len)
 	
 	/* save the charset */
 	len = inptr - in;
-	charenc = alloca (len + 1);
-	memcpy (charenc, in, len);
-	charenc[len] = '\0';
-	charset = g_mime_charset_name (charenc);
+	charset = alloca (len + 1);
+	memcpy (charset, in, len);
+	charset[len] = '\0';
 	
 	/* skip to the end of the locale */
 	inptr = memchr (inptr + 1, '\'', (unsigned int) (inend - inptr - 1));
@@ -660,10 +658,8 @@ encode_param (const unsigned char *in, gboolean *encoded)
 		charset = "iso-8859-1";
 	
 	if (gmime_interfaces_utf8) {
-		if (strcasecmp (charset, "UTF-8") != 0) {
-			charset = g_mime_charset_name (charset);
+		if (strcasecmp (charset, "UTF-8") != 0)
 			cd = g_mime_iconv_open (charset, "UTF-8");
-		}
 		
 		if (cd == (iconv_t) -1)
 			charset = "UTF-8";

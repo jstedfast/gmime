@@ -1,5 +1,22 @@
 2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-param.c (rfc2184_decode): Don't bother using
+	g_mime_charset_name here either because g_mime_iconv_open does it
+	for us.
+	(encode_param): And again here.
+
+	* gmime-utils.c (rfc2047_decode_word): Don't bother with a
+	charenc, we don't need to get the iconv-friednly
+	name. g_mime_iconv_open does that for us.
+	(rfc2047_encode_word): Same.
+
+	* gmime-charset.c (main): Added support for multibyte charsets.
+
+	* gen-multibyte.c: Generates character tables for multibyte
+	charsets such as iso-2022-jp and euc-kr.
+
+2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* unicode.[c,h]: New private source files to do some unicode
 	shiz. Ripped out of gmime-charset.c
 
