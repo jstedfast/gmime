@@ -87,7 +87,7 @@ content_header (const char *field)
 }
 
 static const char *
-find_header_part_end (const char *in, guint inlen)
+find_header_part_end (const char *in, size_t inlen)
 {
 	const char *pch;
 	const char *hdr_end = NULL;
@@ -302,7 +302,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 	} else {
 		GMimePartEncodingType encoding;
 		const char *content = NULL;
-		guint len = 0;
+		size_t len = 0;
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
@@ -415,7 +415,7 @@ special_header (const char *header)
 }
 
 static void
-construct_message_headers (GMimeMessage *message, const char *headers, gint inlen, gboolean preserve_headers)
+construct_message_headers (GMimeMessage *message, const char *headers, int inlen, gboolean preserve_headers)
 {
 	char *field, *value, *raw, *q;
 	char *inptr, *inend;
@@ -434,7 +434,7 @@ construct_message_headers (GMimeMessage *message, const char *headers, gint inle
 		if (!fields[i]) {
 			field = inptr;
 			for (q = field; q < inend && *q != ':'; q++);
-			field = g_strndup (field, (gint) (q - field + 1));
+			field = g_strndup (field, (int) (q - field + 1));
 			g_strstrip (field);
 		} else {
 			field = g_strdup (fields[i]);
@@ -445,7 +445,7 @@ construct_message_headers (GMimeMessage *message, const char *headers, gint inle
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
 		
-		value = g_strndup (value, (gint) (q - value));
+		value = g_strndup (value, (int) (q - value));
 		g_strstrip (value);
 		header_unfold (value);
 		

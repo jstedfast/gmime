@@ -32,7 +32,7 @@
 #define d(x)
 
 
-static gint
+static int
 param_equal (gconstpointer v, gconstpointer v2)
 {
 	return strcasecmp ((const char *) v, (const char *) v2) == 0;

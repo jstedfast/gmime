@@ -52,8 +52,7 @@ test_multipart (void)
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
 	GMimePart *multi_part, *text_part, *html_part;
-	gchar *body;
-	gchar *text;
+	char *body, *text;
 	gboolean is_html;
 	
 	multi_part = g_mime_part_new_with_type ("multipart", "alternative");
@@ -119,8 +118,7 @@ test_onepart (void)
 {
 	GMimeMessage *message;
 	GMimePart *mime_part;
-	gchar *body;
-	gchar *text;
+	char *body, *text;
 	gboolean is_html;
 	
 	mime_part = g_mime_part_new_with_type ("text", "plain");
@@ -286,7 +284,7 @@ test_encodings (void)
 	g_free (enc);
 }
 
-static gchar *addresses[] = {
+static char *addresses[] = {
 	"fejj@helixcode.com",
 	"Jeffrey Stedfast <fejj@helixcode.com>",
 	"Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
@@ -375,18 +373,17 @@ test_addresses (void)
 void
 test_date (void)
 {
-	gint offset = 0;
-	gchar * in = NULL;
-	gchar * out = NULL;
-	time_t date = 0;
-
+	int offset = 0;
+	char *in, *out;
+	time_t date;
+	
 	in = "Mon, 17 Jan 1994 11:14:55 -0500";
 	fprintf (stderr, "date  in: [%s]\n", in);
 	date = g_mime_utils_header_decode_date (in, &offset);
 	out = g_mime_utils_header_format_date (date, offset);
 	fprintf (stderr, "date out: [%s]\n", out);
 	g_free (out);
-
+	
 	in = "Mon, 17 Jan 01 11:14:55 -0500";
 	fprintf (stderr, "date  in: [%s]\n", in);
 	date = g_mime_utils_header_decode_date (in, &offset);

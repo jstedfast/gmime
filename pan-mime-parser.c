@@ -229,7 +229,7 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 			if (*hvalend == '\n' && !isblank (*(hvalend + 1)))
 				break;
 		
-		value = g_strndup (hvalptr, (gint) (hvalend - hvalptr));
+		value = g_strndup (hvalptr, (int) (hvalend - hvalptr));
 		
 		header_unfold (value);
 		g_strstrip (value);
@@ -368,7 +368,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GByteArray *headers,
 		GMimeDataWrapper *wrapper;
 		GMimeStream *substream;
 		off_t start, end;
-		guint len;
+		size_t len;
 		
 		start = g_mime_stream_tell (stream);		
 		
@@ -439,7 +439,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 		if (!fields[i]) {
 			field = inptr;
 			for (q = field; q < inend && *q != ':'; q++);
-			field = g_strndup (field, (gint) (q - field + 1));
+			field = g_strndup (field, (int) (q - field + 1));
 			g_strstrip (field);
 		} else {
 			field = g_strdup (fields[i]);
@@ -450,7 +450,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 			if (*q == '\n' && !isblank (*(q + 1)))
 				break;
 		
-		value = g_strndup (value, (gint) (q - value));
+		value = g_strndup (value, (int) (q - value));
 		g_strstrip (value);
 		header_unfold (value);
 		
