@@ -53,6 +53,8 @@ test_multipart_signed (GMimePgpContext *ctx)
 	GMimeContentType *mime_type;
 	GMimePart *text_part, *signed_part;
 	GMimeCipherValidity *validity;
+	GMimeDataWrapper *content;
+	GMimeStream *stream;
 	GMimeException *ex;
 	char *body, *text;
 	gboolean is_html;
@@ -60,8 +62,22 @@ test_multipart_signed (GMimePgpContext *ctx)
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
-	g_mime_part_set_content (text_part, "This is a test of the emergency broadcast system with an md5 clearsign.\n",
-				 strlen ("This is a test of the emergency broadcast system with an md5 clearsign.\n"));
+	
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_write_string (
+		stream,
+		"This is a test of the emergency broadcast system with an md5 clearsign.\n\n"
+		"=46rom now on, there will be text to try and break     \t  \n"
+		"various things. For example, the F in \"From\" in the previous line...\n"
+		"=2E..and the first dot of this line have been pre-encoded in the QP encoding =\n"
+		"in order to test that GMime properly treats MIME part content as opaque.\n"
+		"If this still verifies okay, then we have ourselves a winner I guess...\n");
+	
+	g_mime_stream_reset (stream);
+	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_QUOTEDPRINTABLE);
+	g_mime_stream_unref (stream);
+	
+	g_mime_part_set_content_object (text_part, content);
 	
 	/* sign the part */
 	ex = g_mime_exception_new ();
@@ -88,7 +104,9 @@ test_multipart_signed (GMimePgpContext *ctx)
 	
 	fprintf (stdout, "%s\n", text ? text : "(null)");
 	g_free (text);
-	
+
+#if 0
+	/* Note: the use of get_body() destroys the ability to verify MIME parts, so DON'T USE IT!! */
 	/* get the body in text/plain */
 	body = g_mime_message_get_body (message, TRUE, &is_html);
 	fprintf (stdout, "Trying to get message body in plain text format:\n%s\n\n", body ? body : "(null)");
@@ -100,6 +118,7 @@ test_multipart_signed (GMimePgpContext *ctx)
 	g_free (body);
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
+#endif
 	
 	validity = g_mime_pgp_mime_part_verify (ctx, text_part, ex);
 	fprintf (stdout, "Trying to verify signature...%s\n",

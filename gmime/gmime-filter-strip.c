@@ -105,7 +105,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		start = inptr;
 		while (inptr < inend && *inptr != '\n') {
 			if (*inptr != ' ' && *inptr != '\t')
-				last = inptr;
+				last = inptr + 1;
 			inptr++;
 		}
 		
