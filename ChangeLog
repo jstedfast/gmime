@@ -1,3 +1,8 @@
+2001-01-25  Charles Kerr <charles@superpimp.org>
+
+	* gmime-part.c (g_mime_part_destroy): fix memory leak - the
+	disposition wasn't being g_free()d.
+
 2001-01-24  Charles Kerr <charles@superpimp.org>
 
 	* gmime-part.c (g_mime_part_get_filename): Now takes a const

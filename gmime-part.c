@@ -115,6 +115,8 @@ g_mime_part_destroy (GMimePart *mime_part)
 			
 			g_list_free (mime_part->disposition->params);
 		}
+
+		g_free (mime_part->disposition);
 	}
 	
 	if (mime_part->children) {
