@@ -1,5 +1,9 @@
 2003-09-26  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-host-utils.c (g_gethostbyaddr_r): IPv6
+	implementation rewritten to use getnameinfo() which is the proper
+	function to use in this case.
+
 	* gmime/internet-address.c (internet_address_list_length): Changed
 	to take a const argument.
 	(internet_address_to_string): Now takes a const InternetAddress.
