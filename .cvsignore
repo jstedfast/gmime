@@ -19,6 +19,7 @@ config.h
 gmime.h
 gmime-config
 gmimeConf.sh
+gen-table
 test-parser
 test-mime
 libgmime.spec
