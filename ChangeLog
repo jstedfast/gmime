@@ -1,5 +1,23 @@
 2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-filter.c (stream_substream): Copy over the filters.
+
+	* gmime-part.c (g_mime_part_verify_content_md5): Updated.
+	(g_mime_part_set_content_md5): Updated.
+	(g_mime_part_get_content): Updated.
+	(write_content): Updated.
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_write_to_stream):
+	Implemented.
+
+	* gmime-filter-basic.[c,h]: A basic filter that does Base64 and QP
+	encoding/decoding.
+
+	* gmime-filter-crlf.[c,h]: A simple filter that does crlf(/dot)
+	encoding/decoding.
+
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-data-wrapper.c (g_mime_data_wrapper_new_with_stream): Ref
 	the stream.
 	(g_mime_data_wrapper_set_stream): Same.

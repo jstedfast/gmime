@@ -30,6 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <sys/types.h>
 
 typedef struct _GMimeFilter GMimeFilter;
 
@@ -62,6 +63,7 @@ struct _GMimeFilter {
 	void (*reset)    (GMimeFilter *filter);
 };
 
+#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
 
 void g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template);
 

@@ -192,10 +192,10 @@ g_mime_filter_reset (GMimeFilter *filter)
 {
 	g_return_if_fail (filter != NULL);
 	
-	filter->reset (f);
+	filter->reset (filter);
 	
 	/* could free some buffers, if they are really big? */
-	f->backlen = 0;
+	filter->backlen = 0;
 }
 
 
@@ -255,6 +255,6 @@ g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)
 		/* this could be offset from the end of the structure, but 
 		   this should be good enough */
 		
-		f->outpre = PRE_HEAD * 4;
+		filter->outpre = PRE_HEAD * 4;
 	}
 }

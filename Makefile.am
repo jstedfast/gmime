@@ -19,6 +19,9 @@ libgmime_la_SOURCES = 		\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
+	gmime-filter.c		\
+	gmime-filter-basic.c	\
+	gmime-filter-crlf.c	\
 	gmime-header.c		\
 	gmime-message.c		\
 	gmime-param.c		\
@@ -26,6 +29,7 @@ libgmime_la_SOURCES = 		\
 	gmime-part.c		\
 	gmime-stream.c		\
 	gmime-stream-file.c	\
+	gmime-stream-filter.c	\
 	gmime-stream-fs.c	\
 	gmime-stream-mem.c	\
 	gmime-utils.c		\
@@ -39,6 +43,9 @@ gmimeinc_HEADERS = 		\
 	gmime-charset.h		\
 	gmime-content-type.h	\
 	gmime-data-wrapper.h	\
+	gmime-filter.h		\
+	gmime-filter-basic.h	\
+	gmime-filter-crlf.h	\
 	gmime-header.h		\
 	gmime-message.h		\
 	gmime-param.h		\
@@ -46,6 +53,7 @@ gmimeinc_HEADERS = 		\
 	gmime-part.h		\
 	gmime-stream.h		\
 	gmime-stream-file.h	\
+	gmime-stream-filter.c	\
 	gmime-stream-fs.h	\
 	gmime-stream-mem.h	\
 	gmime-utils.h		\

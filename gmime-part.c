@@ -31,11 +31,17 @@
 #include <unistd.h>
 #include <string.h>
 #include <ctype.h>
+
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
+#include "gmime-stream-filter.h"
+#include "gmime-filter-basic.h"
 #include "md5-utils.h"
 
+
+#define NEEDS_DECODING(encoding)  (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||        \
+				   ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
 
 /**
  * g_mime_part_new: Create a new MIME Part object
@@ -235,19 +241,19 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	
 	if (content_md5) {
 		mime_part->content_md5 = g_strdup (content_md5);
-	} else if (mime_part->content) {
+	} else if (mime_part->content->stream) {
 		char digest[16], b64digest[32];
 		int len, state, save;
 		GMimeStream *stream;
 		GByteArray *buf;
 		
-		if (GMIME_IS_STREAM_MEM (mime_part->content->stream)) {
-			stream = mime_part->content->stream;
-			g_mime_stream_ref (mime_part->content->stream);
-		} else {
+		stream = mime_part->content->stream;
+		if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
 			stream = g_mime_stream_mem_new ();
-			g_mime_stream_write_to_stream (mime_part->content->stream, stream);
-			g_mime_stream_reset (mime_part->content->stream);
+			g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
+		} else {
+			stream = mime_part->content->stream;
+			g_mime_stream_ref (stream);
 		}
 		
 		buf = GMIME_STREAM_MEM (stream)->buffer;
@@ -285,15 +291,16 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	GByteArray *buf;
 	
 	g_return_val_if_fail (mime_part != NULL, FALSE);
+	g_return_val_if_fail (mime_part->content != NULL, FALSE);
 	g_return_val_if_fail (mime_part->content_md5 != NULL, FALSE);
 	
-	if (GMIME_IS_STREAM_MEM (mime_part->content)) {
+	stream = mime_part->content->stream;
+	if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
+		stream = g_mime_stream_mem_new ();
+		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
+	} else {
 		stream = mime_part->content->stream;
 		g_mime_stream_ref (stream);
-	} else {
-		stream = g_mime_stream_mem_new ();
-		g_mime_stream_write_to_stream (mime_part->content->stream, GMIME_STREAM (stream));
-		g_mime_stream_reset (mime_part->content->stream);
 	}
 	
 	buf = GMIME_STREAM_MEM (stream)->buffer;
@@ -844,9 +851,6 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 }
 
 
-#define NEEDS_DECODING(encoding)  (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||        \
-				   ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
-
 /**
  * g_mime_part_get_content: 
  * @mime_part: the GMimePart to be decoded.
@@ -858,6 +862,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 const char *
 g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
+	GMimeStream *stream;
 	GByteArray *buf;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
@@ -869,33 +874,11 @@ g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 	if (stream && (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding))) {
 		/* Decode and cache this mime part's contents... */
 		GMimeStream *cache;
-		int len, save = 0, state = 0;
-		char inbuf[4096], outbuf[4096];
-		ssize_t nread;
 		
 		buf = g_byte_array_new ();
-		
-		while (!g_mime_stream_eos (stream)) {
-			nread = g_mime_stream_read (stream, inbuf, sizeof (inbuf));
-			if (nread > 0) {
-				switch (mime_part->content->encoding) {
-				case GMIME_PART_ENCODING_BASE64:
-					len = g_mime_utils_base64_decode_step (inbuf, nread, outbuf,
-									       &state, &save);
-					g_byte_array_append (buf, outbuf, len);
-					break;
-				case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-					len = g_mime_utils_quoted_decode_step (inbuf, nread, outbuf,
-									       &state, &save);
-					g_byte_array_append (buf, outbuf, len);
-					break;
-				default:
-					g_byte_array_append (buf, inbuf, nread);
-				}
-			}
-		}
-		
 		cache = g_mime_stream_mem_new_with_byte_array (buf);
+		
+		g_mime_data_wrapper_write_to_stream (mime_part->content, cache);
 		
 		g_mime_data_wrapper_set_stream (mime_part->content, cache);
 		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
@@ -1022,38 +1005,32 @@ get_content_type (GMimeContentType *mime_type)
 static void
 write_content (GMimePart *part, GMimeStream *stream)
 {
-	const char *content;
-	int save = 0, state = 0;
-	char *outbuf;
-	int len;
+	GMimeStream *filtered_stream;
+	GMimeFilter *filter;
+	ssize_t written;
 	
 	if (!part->content || !part->content->stream)
 		return;
 	
-	content = g_mime_part_get_content (part, &len);
-	if (!content)
-		return;
-	
+	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	switch (part->encoding) {
 	case GMIME_PART_ENCODING_BASE64:
-		outbuf = g_malloc (BASE64_ENCODE_LEN (len));
-		len = g_mime_utils_base64_encode_close (content, len, outbuf, &state, &save);
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		state = -1;
-		outbuf = g_malloc (QP_ENCODE_LEN (len));
-		len = g_mime_utils_quoted_encode_close (content, len, outbuf, &state, &save);
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
 	default:
-		outbuf = g_malloc (len);
-		memcpy (outbuf, content, len);
+		break;
 	}
 	
-	g_warning ("write_content(): writing outbuf...%.*s", 20, outbuf);
-	g_mime_stream_write (stream, outbuf, len);
-	g_warning ("write_content(): done.");
+	written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
+	g_mime_stream_unref (filtered_stream);
 	
-	g_free (outbuf);
+	/* this is just so that I get a warning on fail... */
+	g_return_if_fail (written != -1);
 }
 
 

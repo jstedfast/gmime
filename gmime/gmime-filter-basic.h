@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximain, Inc. (www.ximian.com)
+ *  Copyright 2001 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,36 +21,36 @@
  */
 
 
-#ifndef __GMIME_STREAM_FILTER_H__
-#define __GMIME_STREAM_FILTER_H__
+#ifndef __G_MIME_FILTER_BASIC_H__
+#define __G_MIME_FILTER_BASIC_H__
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-stream.h"
 #include "gmime-filter.h"
 
-typedef struct _GMimeStreamFilter {
-	GMimeStream parent;
+typedef enum {
+	GMIME_FILTER_BASIC_BASE64_ENC = 1,
+	GMIME_FILTER_BASIC_BASE64_DEC,
+	GMIME_FILTER_BASIC_QP_ENC,
+	GMIME_FILTER_BASIC_QP_DEC,
+} GMimeFilterBasicType;
+
+typedef struct _GMimeFilterBasic {
+	GMimeFilter parent;
 	
-	struct _GMimeStreamFilterPrivate *priv;
+	GMimeFilterBasicType type;
 	
-	GMimeStream *source;
-} GMimeStreamFilter;
+	int state;
+	int save;
+} GMimeFilterBasic;
 
-#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
-#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILTER_TYPE)
-#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
-
-GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
-
-int g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter);
-void g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id);
+GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_STREAM_FILTER_H__ */
+#endif /* __GMIME_FILTER_BASIC_H__ */

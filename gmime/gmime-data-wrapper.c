@@ -22,7 +22,8 @@
 
 
 #include "gmime-data-wrapper.h"
-
+#include "gmime-stream-filter.h"
+#include "gmime-filter-basic.h"
 
 /**
  * g_mime_data_wrapper_new:
@@ -163,5 +164,31 @@ g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
 ssize_t
 g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
-	return -1;
+	GMimeStream *filtered_stream;
+	GMimeFilter *filter;
+	ssize_t written;
+	
+	g_return_val_if_fail (wrapper != NULL, -1);
+	g_return_val_if_fail (wrapper->stream != NULL, -1);
+	
+	filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);
+	switch (wrapper->encoding) {
+	case GMIME_PART_ENCODING_BASE64:
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		break;
+	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		break;
+	default:
+		break;
+	}
+	
+	written = g_mime_stream_write_to_stream (filtered_stream, stream);
+	g_mime_stream_unref (filtered_stream);
+	
+	g_mime_stream_reset (wrapper->stream);
+	
+	return written;
 }

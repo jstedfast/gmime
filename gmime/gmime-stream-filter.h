@@ -42,7 +42,7 @@ typedef struct _GMimeStreamFilter {
 
 #define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
 #define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILTER_TYPE)
-#define GMIME_STREAM_FILTER(stream) ((GMimeStreamMem *) stream)
+#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
 
 GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
 
