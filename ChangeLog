@@ -1,3 +1,10 @@
+2002-09-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-charset.c: Try our best to handle EILSEQ (illegal
+	multibyte sequences) by eating the illegal bytes and
+	continuing. This seems to be what users expect (it's what Mozilla
+	seems to do).
+
 2002-09-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-charset.c (g_mime_charset_name): Don't g_assert after

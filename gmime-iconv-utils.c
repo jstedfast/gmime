@@ -99,6 +99,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	inleft = n;
 	
 	do {
+		errno = 0;
 		outbuf = out + converted;
 		outleft = outlen - converted;
 		

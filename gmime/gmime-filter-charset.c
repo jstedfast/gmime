@@ -127,21 +127,32 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		
 		converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
 		if (converted == (size_t) -1) {
-			if (errno != E2BIG && errno != EINVAL)
+			if (errno != E2BIG && errno != EILSEQ && errno != EINVAL)
 				goto noop;
 		}
 		
-		/*
-		 * E2BIG   There is not sufficient room at *outbuf.
-		 *
-		 * We just need to grow our outbuffer and try again.
-		 */
-		
-		converted = filter->outsize - outleft;
-		if (errno == E2BIG)
+		converted = outbuf - filter->outbuf;
+		if (errno == E2BIG) {
+			/*
+			 * E2BIG   There is not sufficient room at *outbuf.
+			 *
+			 * We just need to grow our outbuffer and try again.
+			 */
+			
 			g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
+		} else if (errno == EILSEQ) {
+			/*
+			 * EILSEQ An invalid multibyte sequence has been  encountered
+			 *        in the input.
+			 *
+			 * An illegal multibyte sequence has been encountered.
+			 */
+			
+			inbuf++;
+			inleft--;
+		}
 		
-	} while (errno == E2BIG && inleft > 0);
+	} while (errno != EINVAL && ((int) inleft) > 0);
 	
 	/*
 	 * EINVAL  An  incomplete  multibyte sequence has been encoun­
@@ -151,7 +162,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 * of the input buffer for the next conversion.
 	 */
 	
-	if (inleft > 0)
+	if (((int) inleft) > 0)
 		g_mime_filter_backup (filter, inbuf, inleft);
 	
 	*out = filter->outbuf;
@@ -186,26 +197,39 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	if (inleft > 0) {
 		do {
+			errno = 0;
 			outbuf = filter->outbuf + converted;
 			outleft = filter->outsize - converted;
 			
 			converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
 			if (converted == (size_t) -1) {
-				if (errno != E2BIG && errno != EINVAL)
+				/* We only know how to handle E2BIG, EILSEQ and EINVAL */
+				if (errno != E2BIG && errno != EILSEQ && errno != EINVAL)
 					goto noop;
 			}
 			
-			/*
-			 * E2BIG   There is not sufficient room at *outbuf.
-			 *
-			 * We just need to grow our outbuffer and try again.
-			 */
-			
-			converted = filter->outsize - outleft;
-			if (errno == E2BIG)
+			converted = outbuf - filter->outbuf;
+			if (errno == E2BIG) {
+				/*
+				 * E2BIG   There is not sufficient room at *outbuf.
+				 *
+				 * We just need to grow our outbuffer and try again.
+				 */
+				
 				g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
+			} else if (errno == EILSEQ) {
+				/*
+				 * EILSEQ An invalid multibyte sequence has been  encountered
+				 *        in the input.
+				 *
+				 * An illegal multibyte sequence has been encountered.
+				 */
+				
+				inbuf++;
+				inleft--;
+			}
 			
-		} while (errno == E2BIG);
+		} while (errno != EINVAL && ((int) inleft) > 0);
 	} else {
 		outbuf = filter->outbuf;
 		outleft = filter->outsize;
@@ -215,8 +239,8 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 * EINVAL  An  incomplete  multibyte sequence has been encoun­
 	 *         tered in the input.
 	 *
-	 * This just means that we need to save the remainder
-	 * of the input buffer for the next conversion.
+	 * If errno is EINVAL, at this point we have no other choice
+	 * than to just truncate the remainder.
 	 */
 	
 	/* flush the iconv conversion */
