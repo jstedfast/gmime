@@ -552,18 +552,11 @@ get_content_disposition (GMimePart *mime_part)
 	if (params)
 		g_string_append (string, ";");
 	
-	fprintf (stderr, "here we are...\n");
-	
 	while (params) {
 		GMimeParam *param;
 		gchar *buf;
 		
 		param = params->data;
-		
-		fprintf (stderr, "param: name='%s' value='%s'\n",
-			 param->name ? param->name : "(null)",
-			 param->value ? param->value : "(null)");
-		
 		buf = g_mime_param_to_string (param);
 		g_string_append_c (string, ' ');
 		g_string_append (string, buf);
