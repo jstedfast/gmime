@@ -1,3 +1,9 @@
+2001-11-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (write_content): Implemented a slight optimization
+	which bypasses the need to do any encoding in some certain
+	circumstances.
+
 2001-11-28  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pan-mime-parser.c (parser_read_until_boundary): Make sure

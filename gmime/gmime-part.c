@@ -1091,30 +1091,47 @@ g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
 static void
 write_content (GMimePart *part, GMimeStream *stream)
 {
-	GMimeStream *filtered_stream;
-	GMimeFilter *filter;
 	ssize_t written;
 	
-	if (!part->content || !part->content->stream)
+	if (!part->content)
 		return;
 	
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	switch (part->encoding) {
-	case GMIME_PART_ENCODING_BASE64:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		break;
-	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		break;
-	default:
-		break;
-	}
+	/* Evil Genius's "slight" optimization: Since GMimeDataWrapper::write_to_stream()
+	 * decodes its content stream to the raw format, we can cheat by requesting its
+	 * content stream and not doing any encoding on the data if the source and
+	 * destination encodings are identical.
+	 */
 	
-	written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
-	g_mime_stream_flush (filtered_stream);
-	g_mime_stream_unref (filtered_stream);
+	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
+		GMimeStream *filtered_stream;
+		GMimeFilter *filter;
+		
+		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+		switch (part->encoding) {
+		case GMIME_PART_ENCODING_BASE64:
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
+		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
+		default:
+			break;
+		}
+		
+		written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
+		g_mime_stream_flush (filtered_stream);
+		g_mime_stream_unref (filtered_stream);
+	} else {
+		GMimeStream *content_stream;
+		
+		content_stream = g_mime_data_wrapper_get_stream (part->content);
+		g_mime_stream_reset (content_stream);
+		written = g_mime_stream_write_to_stream (content_stream, stream);
+		g_mime_stream_unref (content_stream);
+		g_mime_stream_flush (stream);
+	}
 	
 	/* this is just so that I get a warning on fail... */
 	g_return_if_fail (written != -1);
