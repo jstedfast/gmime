@@ -1,0 +1,7 @@
+
+     Rules for commits on the gmime module
+     =========================================
+
+ALWAYS update the ChangeLog accurately when commiting changes to
+gmime. This is as much for me as it is for any other contributors.
+It allows everyone to know exactly what's being modified and when.

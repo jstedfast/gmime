@@ -1,0 +1,38 @@
+/* config.h.in.  Generated automatically from configure.in by autoheader.  */
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you need to in order for stat and other things to work.  */
+#undef _POSIX_SOURCE
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you have the localtime function.  */
+#undef HAVE_LOCALTIME
+
+/* Define if you have the strftime function.  */
+#undef HAVE_STRFTIME
+
+/* Define if you have the <ctype.h> header file.  */
+#undef HAVE_CTYPE_H
+
+/* Define if you have the <time.h> header file.  */
+#undef HAVE_TIME_H
+
+/* Define if 'timezone' is in the <time.h> header file. */
+#undef HAVE_TIMEZONE
+
+/* Define if tm_gmtoff is a member of struct tm. */
+#undef HAVE_TM_GMTOFF
+
+/* Define if you have the isblank function (GNU systems). */
+#undef HAVE_ISBLANK
+
+/* Name of package */
+#undef PACKAGE
+
+/* Version number of package */
+#undef VERSION
+

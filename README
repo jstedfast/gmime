@@ -1,0 +1,117 @@
+                             GMime, version 0.1
+                   by Jeffrey Stedfast <fejj@helixcode.com>
+
+
+WHAT IS GMIME
+-------------
+
+GMime is a set of utilities for parsing and creating messages using
+the Multipurpose Internet Mail Extension (MIME) as defined by the
+following RFCs:
+
+ * 0822: Standard for the Format of Arpa Internet Text Messages
+ * 2045: Multipurpose Internet Mail Extensions (MIME) Part One: Format
+         of Internet Message Bodies
+ * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two: Media
+         Types
+ * 2047: Multipurpose Internet Mail Extensions (MIME) Part Three:
+         Message Header Extensions for Non-ASCII Text
+ * 2183: Communicating Presentation Information in Internet Messages:
+         The Content-Disposition Header Field
+
+
+LICENSE INFORMATION
+-------------------
+
+The GMime library is Copyright (C) 2000 Jeffrey Stedfast.
+
+This library is free software; you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation; either version 2 of the License, or
+(at your option) any later version.
+
+This library is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this library; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+HISTORY
+-------
+
+As a developer and user of Electronic Mail clients, I had come to
+realize that the vast majority of E-Mail client solutions had
+less-than-satisfactory MIME implementations. More often than not these
+E-Mail clients created broken MIME messages and/or would incorrectly
+try to parse a MIME message thus subtracting from the full benefits
+that MIME was meant to provide. GMime is meant to address this issue
+by following the MIME specification as closely as possible while also
+providing programmers with an extremely easy to use application
+programming interface.
+
+
+OBTAINING GMIME
+---------------
+
+Sources to GMime may be obtained from:
+  ftp://spruce.sourceforge.net/pub/spruce
+
+Information regarding GMime may be obtained from the Spruce home page:
+  http://spruce.sourceforge.net
+
+Experimental CVS versions of GMime may be obtained by following the
+directions at:
+  http://cvs.sourceforge.net/cgi-bin/cvsweb.cgi/gmime/?cvsroot=spruce
+
+
+REQUIREMENTS
+------------
+
+For proper compilation and functionality of GMime, the following packages
+are REQUIRED:
+
+  - Glib version 1.2.x
+    Glib provides a number of portability-enhancing functions and types.
+    Glib is included in most GMime-supported operating system
+    distributions.  Glib sources may be obtained from:
+      ftp://ftp.gtk.org/pub/gtk/v1.2
+
+
+DOCUMENTATION
+-------------
+
+This is the README file for GMime.  Additional documentation related to
+development using GMime has been included within the source release
+of GMime.
+
+  doc/                  Contains SGML and HTML versions of the GMime manual
+
+  rfc/                  Contains text versions of the RFCs for the
+                        specifications GMime supports
+
+  AUTHORS               List of primary authors (source code developers)
+
+  COPYING               The GNU General Public License, version 2
+
+  ChangeLog             Log of changes made to the source code
+
+  INSTALL               In-depth installation instructions
+
+  NEWS                  Release notes (Overview of changes)
+
+  TODO                  Description of planned GMime development
+
+
+REPORTING BUGS
+--------------
+
+Bugs may be reported to the GMime development team through the use of
+our automated bug tracking system located at:
+  http://sourceforge.net/bugs/?group_id=3355
+
+Once your bug has been submitted, you may return to the same URL to check
+on the status of its resolution.

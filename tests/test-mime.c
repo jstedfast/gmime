@@ -1,0 +1,143 @@
+#include <stdio.h>
+#include <glib.h>
+
+#include "gmime.h"
+
+void
+test_parser (gchar *data)
+{
+	GMimeMessage *message;
+	gchar *text;
+	
+	fprintf (stdout, "\nTesting MIME parser...\n\n");
+	message = g_mime_parser_construct_message (data, TRUE);
+	text = g_mime_message_to_string (message);
+	fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);
+	g_free (text);
+	g_mime_message_destroy (message);
+}
+
+void
+test_multipart (void)
+{
+	GMimeMessage *message;
+	GMimeContentType *mime_type;
+	GMimePart *multi_part, *text_part, *html_part;
+	gchar *text;
+	
+	multi_part = g_mime_part_new_with_type ("multipart", "mixed");
+	g_mime_part_set_boundary (multi_part, "spruce1234567890ABCDEFGHIJK");
+	
+	text_part = g_mime_part_new ();
+	mime_type = g_mime_content_type_new ("text", "plain");
+	g_mime_part_set_content_type (text_part, mime_type);
+	g_mime_part_set_content_id (text_part, "1");
+	g_mime_part_set_content (text_part, "This is the body of my message.\n");
+	
+	g_mime_part_add_child (multi_part, text_part);
+	
+	html_part = g_mime_part_new ();
+	mime_type = g_mime_content_type_new ("text", "html");
+	g_mime_part_set_content_type (html_part, mime_type);
+	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
+	g_mime_part_set_content_id (html_part, "2");
+	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>");
+	
+	g_mime_part_add_child (multi_part, html_part);
+	
+	message = g_mime_message_new ();
+	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
+	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
+	g_mime_message_add_recipient (message, GMIME_MESSAGE_RECIPIENTS_TO,
+				    "Federico Mena-Quintero", "federico@helixcode.com");
+	g_mime_message_set_subject (message, "This is a test message");
+	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_mime_part (message, multi_part);
+	
+	text = g_mime_message_to_string (message);
+	g_mime_message_destroy (message);
+	
+	fprintf (stdout, "%s\n", text ? text : "(null)");
+	
+	test_parser (text);
+	
+	g_free (text);
+}
+
+void
+test_onepart (void)
+{
+	GMimeMessage *message;
+	GMimePart *mime_part;
+	gchar *text;
+	
+	mime_part = g_mime_part_new_with_type ("text", "plain");
+	
+	g_mime_part_set_content (mime_part, "This is the body of my message.\n");
+	
+	message = g_mime_message_new ();
+	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
+	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
+	g_mime_message_add_recipient (message, GMIME_MESSAGE_RECIPIENTS_TO,
+				    "Federico Mena-Quintero", "federico@helixcode.com");
+	g_mime_message_set_subject (message, "This is a test message");
+	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_mime_part (message, mime_part);
+	
+	text = g_mime_message_to_string (message);
+	g_mime_message_destroy (message);
+	
+	fprintf (stdout, "%s\n", text ? text : "(null)");
+	
+	test_parser (text);
+	
+	g_free (text);
+}
+
+static char *string = "I have no idea what to test here so I'll just test a "
+"bunch of crap like this and see what it encodes it as.\r\n"
+"I'm thinking this line should be really really really long "
+"so as to test the line wrapping at 76 chars, dontcha think? "
+"I most certainly do. Lets get some weird chars in here too. "
+"Lets try: = ååååaa\nOkay, now on a side note...uhm, ?= =? and stuff.\n"
+"danw wanted me to try this next line...so lets give it a shot:\n"
+"foo   \n"
+"Lets also try some tabs in here like this:\t\tis that 2 tabs? I hope so.";
+
+int main (int argc, char *argv[])
+{
+	char *enc, *dec;
+	int pos, state = -1, save = 0;
+	
+	test_onepart ();
+	
+	test_multipart ();
+	
+	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr <ztion@swipnet.se>");
+	fprintf (stderr, "encoded: %s\n", enc);
+	
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_mime_utils_8bit_header_encode ("åaåååaåå aaaa ååååaa");
+	fprintf (stderr, "encoded: %s\n", enc);
+	
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_malloc (strlen (string) * 3);
+	pos = g_mime_utils_quoted_encode_close (string, strlen (string), enc, &state, &save);
+	enc[pos] = '\0';
+	
+	fprintf (stderr, "\nencoded:\n-------\n%s\n-------\n", enc);
+	
+	g_free (enc);
+	
+	return 0;
+}

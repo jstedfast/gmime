@@ -1,0 +1,180 @@
+2000-10-21  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime.h.in: Wrap definitions in #ifndef __GMIME_H__
+
+2000-10-18  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* TODO: Updated.
+
+	* test-*.c: Updated to reflect GMime API changes.
+
+	* gmime-part.c: #include "gmime-utils.h"
+
+	* gmime-parser.c (g_mime_parser_construct_message): Now takes a
+	boolean argument 'save_extra_headers' which tells the parser
+	whether it should add unknown headers to the arbitrary header
+	array or ignore them.
+	(construct_headers): Save the extra headers if desired.
+
+	* gmime-message.c (g_mime_message_add_arbitrary_header): Use the
+	new GMimeHeader structure.
+	(g_mime_message_new): Always initialize the arbitrary header array.
+	(g_mime_message_destroy): The arbitrary header array will never
+	be NULL (as it is now pre-initialized) so don't bother
+	checking.
+	(create_header): rfc2047 encode the arbitrary header values.
+
+2000-10-17  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* rfc/rfc*.txt: MIME specification RFCs
+
+	* README: Updated.
+
+	* TODO: Added a list of tasks that need to be done eventually.
+
+	* gmime-parser.c (get_mime_part): rfc2047 decode the
+	content-description before we set the value.
+
+	* gmime-part.c (g_mime_part_to_string): rfc2047 encode the
+	content-description before we write it to the string.
+
+2000-10-06  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-parser.c (construct_headers): rfc2047 decode some headers.
+
+	* internet-address.c (internet_address_to_string): Now takes an
+	argument to rfc2047 encode or not, when not rfc2047 encoding.
+	(internet_address_new_from_string): Rewrote
+
+	* gmime-message.c (create_header): rfc2047 encode addresses and
+	subject headers.
+
+2000-10-05  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-utils.c (g_mime_utils_quoted_encode_step): Fixed some
+	non-compliance issues like encoding all spaces as =20 even when
+	they shouldn't have been.
+
+2000-10-04  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* acconfig.h:
+	* config.h.in: #undef HAVE_ISBLANK
+
+	* configure.in: Check for the isblank() GNU extension function.
+	
+	* gmime-parser.c (get_mime_part): Parse for the Content-Id. Use
+	isblank() instead of isspace() when looking to see if the content
+	header was wrapped. We want it to match only if the next char is
+	either a tab or a space.
+	(isblank): Define an isblank() macro if HAVE_ISBLANK isn't
+	defined.
+
+	* gmime-part.c (g_mime_part_set_content_id): New function to set
+	the Content-ID.
+	(g_mime_part_get_content_id): New function to get the Content-Id.
+	(g_mime_part_to_string): Print content id's if available.
+	(get_content_type): Eek! If there aren't any params, don't assign
+	'string' an empty string! It's already been initialized with a
+	type!
+
+2000-10-04  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-utils.c (quoted_decode): New function to decode rfc2047's
+	version of the quoted-printable encoding.
+	(decode_8bit_word): Use quoted_decode()
+	(quoted_encode): New function to encode to rfc2047's version of
+	quoted-printable (removed from the internals of encode_8bit_word)
+	(encode_8bit_word): Use quoted_encode()
+
+2000-10-01  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* internet-address.c (internet_address_new_from_string): Fixed a
+	logic error that cut off the last char of the name (or address).
+
+	* gmime-parser.c (construct_headers): Optimized.
+
+	* gmime-part.c (get_content_type): If there are no params, don't
+	try to get any. Fixes a segfault.
+
+	* gmime-utils.[c,h]: New utilities functions for use with libgmime
+	(time and encoding/decoding routines)
+	
+	* test-mime.c: test some of the routines in gmime-utils.c
+
+	* gmime.h.in: #include "gmime-utils.h"
+	
+	* configure.in: Added checks for time zone stuff
+
+	* acconfig.h:
+	* config.h.in: Added some #undef's for timezone stuff
+	
+	* Makefile.am: Added gmime-utils.[c,h]
+
+2000-09-24  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* HACKING: Updated
+
+	* gmime-param.c: Wrote Gtk-docs comments
+
+	* gmime-parser.c: Wrote Gtk-docs comments
+
+	* AUTHORS: Updated
+
+	* autogen.sh: Updated autogen.sh to look for gmime.h.in instead of
+	gmime.h
+
+2000-09-24  Jeffrey Stedfast  <fejj@helixcode.com>
+	
+	* gmime.h: Removed
+
+	* gmime.h.in: Replacement for gmime.h - modified to be dynamically
+	created at build-time.
+
+	* configure.in: Updated to generate gmime.h and also to ignore
+	doc/ until docs are written.
+
+	* Makefile.am: Modified to ignore doc/
+
+	* tests/*: MIME messages that break are likely to break MIME
+	parsers.
+
+2000-09-24  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (get_content_disposition): Put a space between
+	disposition parameters.
+	(get_content_type): New convenience function to dump the content
+	type and it's params to a string (for use internally).
+	(g_mime_part_to_string): Use get_content_type and add print for
+	content-description's.
+
+	* gmime-parser.c (get_mime_part): strip leading/trailing
+	whitespace from the disposition and convert param names to
+	lowercase. Also fixed Content-Transfer-Encoding.
+
+2000-09-23  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_destroy): Erm, make sure to increment
+	to the next item in the list.
+
+	* gmime-message.c (recipients_destroy): Optimized a bit
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string):
+	Change all parameter names to lowercase, this way we can look them
+	up without having to know which case the original name used (eg
+	boundary).
+
+	* test-mime.c: renamed from mime-test.c
+
+	* test-parser.c: a new test program that allows us to specify a
+	file to get our test email from.
+
+2000-09-22  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* configure.in: remember glib_cflags and glib_libs so we can dump
+	them into gmime-config later.
+
+	* gmime-config.in: use glib_cflags and glib_libs.
+
+	* gmime.h: add variables for major/minor/micro release
+
+	* Makefile.am: switch to GMIME_ instead og LIBGMIME_ stuff

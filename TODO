@@ -1,0 +1,21 @@
+The following is a list of known places for possible improvement to
+the GMime library. This list of tasks in no way indicates priority,
+that is to say that there is no rhyme or reason to the order that the
+tasks are presented in.
+
+
+
+- rfc2047 encode parameters in the MIME Content fields where
+appropriate. This means we can't always wrap parameter values in
+quotes (it is illegal to quote rfc2047 encoded atoms).
+
+- Expand InternetAddress to correctly handle rfc0822 address 'groups'
+(Are these even in use still?).
+
+- Possibly make the GMime parser async.
+
+- Write a broken date parser. (job for lex/bison?)
+
+
+All questions and comments should be directed toward the author,
+Jeffrey Stedfast <fejj@helixcode.com>

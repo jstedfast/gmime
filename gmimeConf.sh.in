@@ -1,0 +1,7 @@
+#
+# Configuration file for using the GMIME library in GNOME applications
+#
+GMIME_LIBDIR="@GMIME_LIBDIR@"
+GMIME_LIBS="@GMIME_LIBS@"
+GMIME_INCLUDEDIR="@GMIME_INCLUDEDIR@"
+MODULE_VERSION="gmime-@VERSION@"
