@@ -211,7 +211,7 @@ memchunk_clean (MemChunk *memchunk)
 			
 			node = memchunk->free;
 			while (node) {
-				if (tree_search (info, (void *) node) != 0) {
+				if (tree_search (info, (void *) node) == 0) {
 					/* prune this node from our free-node list */
 					if (prev)
 						prev->next = node->next;
