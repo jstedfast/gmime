@@ -858,7 +858,7 @@ parser_skip_line (GMimeParser *parser)
 }
 
 enum {
-	FOUND_EOS,
+	FOUND_EOS          = 1,
 	FOUND_BOUNDARY,
 	FOUND_END_BOUNDARY
 };
@@ -871,6 +871,40 @@ enum {
 #define possible_boundary(scan_from, start, len)                                      \
                          ((scan_from && len >= 5 && !strncmp (start, "From ", 5)) ||  \
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
+
+static int
+check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, int len)
+{
+	if (possible_boundary (priv->scan_from, start, len)) {
+		struct _boundary_stack *s;
+		
+		d(printf ("checking boundary '%.*s'\n", len, start));
+		
+		s = priv->bounds;
+		while (s) {
+			/* we use >= here because From lines are > 5 chars */
+			if (len >= s->boundarylenfinal &&
+			    !strncmp (s->boundary, start,
+				      s->boundarylenfinal)) {
+				d(printf ("found end boundary\n"));
+				return FOUND_END_BOUNDARY;
+			}
+			
+			if (len == s->boundarylen &&
+			    !strncmp (s->boundary, start,
+				      s->boundarylen)) {
+				d(printf ("found boundary\n"));
+				return FOUND_BOUNDARY;
+			}
+			
+			s = s->parent;
+		}
+		
+		d(printf ("'%.*s' not a boundary\n", len, start));
+	}
+	
+	return 0;
+}
 
 /* Optimization Notes:
  *
@@ -888,9 +922,8 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
-	gboolean found_eos = FALSE;
 	size_t nleft, len;
-	int found;
+	int found = 0;
 	
 	d(printf ("scan-content\n"));
 	
@@ -914,8 +947,10 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 		/* Note: see optimization comment [1] */
 		*inend = '\n';
 		
-		if (inend - inptr == nleft)
-			found_eos = TRUE;
+		if (priv->midline && inend - inptr == nleft)
+			found = FOUND_EOS;
+		
+		priv->midline = FALSE;
 		
 		while (inptr < inend) {
 			start = inptr;
@@ -927,47 +962,30 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 			
 			if (inptr < inend) {
 				inptr++;
-				if (possible_boundary (priv->scan_from, start, len)) {
-					struct _boundary_stack *s;
-					
-					d(printf ("checking boundary '%.*s'\n", len, start));
-					
-					s = priv->bounds;
-					while (s) {
-						/* we use >= here because From lines are > 5 chars */
-						if (len >= s->boundarylenfinal &&
-						    !strncmp (s->boundary, start,
-							      s->boundarylenfinal)) {
-							d(printf ("found end boundary\n"));
-							found = FOUND_END_BOUNDARY;
-							goto boundary;
-						}
-						
-						if (len == s->boundarylen &&
-						    !strncmp (s->boundary, start,
-							      s->boundarylen)) {
-							d(printf ("found boundary\n"));
-							found = FOUND_BOUNDARY;
-							goto boundary;
-						}
-						
-						s = s->parent;
-					}
-					
-					d(printf ("'%.*s' not a boundary\n", len, start));
-				}
+				if ((found = check_boundary (priv, start, len)))
+					goto boundary;
 				len++;
-			} else if (!found_eos) {
-				/* not enough to tell if we found a boundary */
-				priv->inptr = start;
-				goto refill;
+			} else {
+				/* didn't find an end-of-line */
+				priv->midline = TRUE;
+				
+				if (!found) {
+					/* not enough to tell if we found a boundary */
+					priv->inptr = start;
+					inptr = start;
+					goto refill;
+				}
+				
+				/* check for a boundary not ending in a \n */
+				if ((found = check_boundary (priv, start, len)))
+					goto boundary;
 			}
 			
 			content_save (content, start, len);
 		}
 		
 		priv->inptr = inptr;
-	} while (1);
+	} while (!found);
 	
  boundary:
 	

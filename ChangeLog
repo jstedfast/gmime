@@ -1,3 +1,13 @@
+2003-02-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Bumped version to 2.0.2
+
+	* configure.in: Bumped version to 2.0.2
+
+	* gmime/gmime-parser.c (parser_scan_content): Stop looping if/when
+	we find EOS in all cases. Also handle the case where an
+	[end-]boundary ends an an EOS rather than a new-line.
+
 2003-02-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/url-scanner.c (g_url_file_end): If the file:// url is
@@ -272,7 +282,7 @@
 	* PORTING: New document meant to help developers port their
 	applications from gmime-1.0 to gmime-2.0.
 
-	* iconv-detect.c: Removd unused variables and #include <stdlib.h>
+	* iconv-detect.c: Removed unused variables and #include <stdlib.h>
 
 	* gmime/gmime-multipart.c
 	(g_mime_multipart_get_subpart_from_content_id): Init part to NULL.
@@ -382,7 +392,7 @@
 	errno will not be set?). Also, don't grow the buffer here, save
 	any un-converted text in the backup buffer to be converted next
 	time through.
-	(filter_continue): Pick up the slack of filter_filter by
+	(filter_complete): Pick up the slack of filter_filter by
 	converting anything left over.
 
 2002-09-29  Jeffrey Stedfast  <fejj@ximian.com>
