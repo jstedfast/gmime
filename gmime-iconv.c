@@ -129,7 +129,7 @@ iconv_node_destroy (struct _iconv_node *node)
 
 
 static struct _iconv_cache_bucket *
-cache_bucket_new (const char *key)
+iconv_cache_bucket_new (const char *key)
 {
 	struct _iconv_cache_bucket *bucket;
 	
@@ -144,7 +144,7 @@ cache_bucket_new (const char *key)
 }
 
 static void
-cache_bucket_add (struct _iconv_cache_bucket *bucket)
+iconv_cache_bucket_add (struct _iconv_cache_bucket *bucket)
 {
 	if (iconv_cache_buckets)
 		bucket->prev = iconv_cache_tail;
@@ -156,14 +156,14 @@ cache_bucket_add (struct _iconv_cache_bucket *bucket)
 }
 
 static void
-cache_bucket_add_node (struct _iconv_cache_bucket *bucket, struct _iconv_node *node)
+iconv_cache_bucket_add_node (struct _iconv_cache_bucket *bucket, struct _iconv_node *node)
 {
 	node = bucket->unused;
 	bucket->unused = node;
 }
 
 static void
-cache_bucket_remove (struct _iconv_cache_bucket *bucket)
+iconv_cache_bucket_remove (struct _iconv_cache_bucket *bucket)
 {
 	if (bucket->prev) {
 		bucket->prev->next = bucket->next;
@@ -180,7 +180,7 @@ cache_bucket_remove (struct _iconv_cache_bucket *bucket)
 }
 
 static struct _iconv_node *
-cache_bucket_get_first_unused (struct _iconv_cache_bucket *bucket)
+iconv_cache_bucket_get_first_unused (struct _iconv_cache_bucket *bucket)
 {
 	struct _iconv_node *node = NULL;
 	
@@ -194,7 +194,7 @@ cache_bucket_get_first_unused (struct _iconv_cache_bucket *bucket)
 }
 
 static void
-cache_bucket_destroy (struct _iconv_cache_bucket *bucket)
+iconv_cache_bucket_destroy (struct _iconv_cache_bucket *bucket)
 {
 	struct _iconv_node *node, *next;
 	
@@ -217,7 +217,7 @@ cache_bucket_destroy (struct _iconv_cache_bucket *bucket)
 }
 
 static void
-cache_bucket_flush_unused (struct _iconv_cache_bucket *bucket)
+iconv_cache_bucket_flush_unused (struct _iconv_cache_bucket *bucket)
 {
 	struct _iconv_node *node, *next;
 	
@@ -233,7 +233,7 @@ cache_bucket_flush_unused (struct _iconv_cache_bucket *bucket)
 	
 	if (!bucket->unused && !bucket->used) {
 		/* expire this cache bucket... */
-		cache_bucket_remove (bucket);
+		iconv_cache_bucket_remove (bucket);
 	}
 }
 
@@ -247,7 +247,7 @@ g_mime_iconv_shutdown (void)
 	bucket = iconv_cache_buckets;
 	while (bucket) {
 		next = bucket->next;
-		cache_bucket_destroy (bucket);
+		iconv_cache_bucket_destroy (bucket);
 		bucket = next;
 	}
 	
@@ -322,42 +322,40 @@ g_mime_iconv_open (const char *to, const char *from)
 	
 	bucket = g_hash_table_lookup (iconv_cache, key);
 	if (bucket) {
-		node = cache_bucket_get_first_unused (bucket);
+		node = iconv_cache_bucket_get_first_unused (bucket);
 	} else {
 		/* make room for another cache bucket */
 		bucket = iconv_cache_tail;
 		while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
 			prev = bucket->prev;
-			cache_bucket_flush_unused (bucket);
+			iconv_cache_bucket_flush_unused (bucket);
 			bucket = prev;
 		}
 		
-		bucket = cache_bucket_new (key);
-		cache_bucket_add (bucket);
+		bucket = iconv_cache_bucket_new (key);
+		iconv_cache_bucket_add (bucket);
 		
 		node = NULL;
 	}
 	
 	if (node == NULL) {
-		node = iconv_node_new (bucket);
-		
 		/* make room for this node */
 		bucket = iconv_cache_tail;
 		while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
 			prev = bucket->prev;
-			cache_bucket_flush_unused (bucket);
+			iconv_cache_bucket_flush_unused (bucket);
 			bucket = prev;
 		}
 		
 		cd = iconv_open (to, from);
 		if (cd == (iconv_t) -1) {
-			iconv_node_destroy (node);
 			return cd;
 		}
 		
+		node = iconv_node_new (bucket);
 		node->cd = cd;
 		
-		cache_bucket_add_node (bucket, node);
+		iconv_cache_bucket_add_node (bucket, node);
 	} else {
 		cd = node->cd;
 		
