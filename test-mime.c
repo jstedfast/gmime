@@ -373,7 +373,7 @@ test_addresses (void)
 	}
 }
 
-#include "date-strings.h"
+/*#include "date-strings.h"*/
 
 void
 test_date (void)
@@ -395,7 +395,8 @@ test_date (void)
 	out = g_mime_utils_header_format_date (date, offset);
 	fprintf (stderr, "date out: [%s]\n", out);
 	g_free (out);
-	
+
+#if 0
 	{
 		char *string;
 		int i;
@@ -415,6 +416,7 @@ test_date (void)
 		ZenTimerReport (string);
 		g_free (string);
 	}
+#endif
 }
 
 
@@ -422,13 +424,13 @@ int main (int argc, char *argv[])
 {
 	test_date ();
 	
-	/*test_onepart ();
+	test_onepart ();
 	
 	test_multipart ();
 	
 	test_encodings ();
 	
-	test_addresses ();*/
+	test_addresses ();
 	
 	return 0;
 }
