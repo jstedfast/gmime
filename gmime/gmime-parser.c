@@ -1177,7 +1177,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
-	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*")) {
+	if (g_mime_content_type_is_type (content_type, "multipart", "*")) {
 		object = parser_construct_multipart (parser, content_type, found);
 	} else {
 		object = parser_construct_leaf_part (parser, content_type, found);
@@ -1200,11 +1200,6 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	/* get the headers */
 	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
 		;
-	
-	if (!content_type) {
-		if (!(content_type = parser_content_type (parser)))
-			content_type = g_mime_content_type_new ("text", "plain");
-	}
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
 	header = priv->headers;
@@ -1268,7 +1263,8 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 	
 	if (buffer->len > crlf) {
 		/* last '\n' belongs to the boundary */
-		buffer->data[buffer->len - crlf] = '\0';
+		g_byte_array_set_size (buffer, buffer->len + 1);
+		buffer->data[buffer->len - crlf - 1] = '\0';
 		crlf2lf (buffer->data);
 		face = buffer->data;
 		

@@ -443,7 +443,7 @@ static char *headers[] = {
 	NULL
 };
 
-static void
+static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeContentType *content_type;
@@ -457,24 +457,26 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	switch (i) {
 	case HEADER_CONTENT_TYPE:
 		content_type = g_mime_content_type_new_from_string (value);
-		if (object->content_type)
-			g_mime_content_type_destroy (object->content_type);
-		object->content_type = content_type;
+		g_mime_object_set_content_type (object, content_type);
 		break;
 	case HEADER_CONTENT_ID:
 		g_free (object->content_id);
 		object->content_id = g_mime_utils_decode_message_id (value);
 		break;
 	default:
-		break;
+		return FALSE;
 	}
+	
+	g_mime_header_set (object->headers, header, value);
+	
+	return TRUE;
 }
 
 static void
 add_header (GMimeObject *object, const char *header, const char *value)
 {
-	process_header (object, header, value);
-	g_mime_header_add (object->headers, header, value);
+	if (!process_header (object, header, value))
+		g_mime_header_add (object->headers, header, value);
 }
 
 
@@ -500,8 +502,8 @@ g_mime_object_add_header (GMimeObject *object, const char *header, const char *v
 static void
 set_header (GMimeObject *object, const char *header, const char *value)
 {
-	process_header (object, header, value);
-	g_mime_header_set (object->headers, header, value);
+	if (!process_header (object, header, value))
+		g_mime_header_set (object->headers, header, value);
 }
 
 

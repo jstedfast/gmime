@@ -1,3 +1,24 @@
+2004-07-04  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_construct_leaf_part): Removed code
+	to check that the content_type argument is NULL - it can never be
+	NULL.
+	(parser_scan_multipart_face): Fixed a possible buffer-overrun.
+
+	* gmime/gmime-object.c (process_header): Modified to call
+	g_mime_object_set_content_type() if we got called with a
+	Content-Type header. This way all the ::set_content_type()
+	subclass methods get a chance to update the object's state.
+	(process_header): Return TRUE if we've "processed" the value or
+	FALSE otherwise.
+	(add_header): Only add the header if process_header() didn't do
+	anything with the header.
+	(set_header): Same.
+
+	* gmime/gmime-message.c (g_mime_message_set_sender): Parse the
+	sender string so we can properly encode it before setting it as
+	the From header.
+
 2004-06-28  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (parser_scan_content): Updated to handle

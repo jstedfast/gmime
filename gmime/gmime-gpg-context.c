@@ -200,7 +200,7 @@ gpg_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 	case GMIME_CIPHER_HASH_HAVAL5160:
 		return "pgp-haval-5-160";
 	default:
-		return NULL;
+		return "pgp-sha1";
 	}
 }
 

@@ -832,11 +832,20 @@ message_set_sender (GMimeMessage *message, const char *sender)
 void
 g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 {
+	InternetAddressList *addrlist;
+	char *encoded;
+	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (sender != NULL);
 	
 	message_set_sender (message, sender);
-	g_mime_header_set (GMIME_OBJECT (message)->headers, "From", message->from);
+	
+	addrlist = internet_address_parse_string (sender);
+	encoded = internet_address_list_to_string (addrlist, TRUE);
+	internet_address_list_destroy (addrlist);
+	
+	g_mime_header_set (GMIME_OBJECT (message)->headers, "From", encoded);
+	g_free (encoded);
 }
 
 
