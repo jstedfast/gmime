@@ -458,7 +458,7 @@ internet_address_to_string (const InternetAddress *ia, gboolean encode)
 	char *str = NULL;
 	
 	if (ia->type == INTERNET_ADDRESS_NAME) {
-		if (ia->name) {
+		if (ia->name && *ia->name) {
 			char *name;
 			
 			name = encoded_name (ia->name, encode);
