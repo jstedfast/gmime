@@ -28,9 +28,9 @@
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
 #include "gmime-utils.h"
-#include "strlib.h"
 #include <ctype.h>
 
+#include "strlib.h"
 
 #define d(x)
 #define w(x)

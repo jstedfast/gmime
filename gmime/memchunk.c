@@ -208,6 +208,8 @@ memchunk_clean (MemChunk *memchunk)
 		
 		info = info->next;
 	}
+	
+	g_tree_destroy (tree);
 }
 
 void
