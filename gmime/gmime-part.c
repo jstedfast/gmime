@@ -854,10 +854,26 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 }
 
 
+
+/**
+ * g_mime_part_get_content_object:
+ * @mime_part: MIME part object
+ *
+ * Returns the data-wrapper for the mime part's contents.
+ **/
+const GMimeDataWrapper *
+g_mime_part_get_content_object (const GMimePart *mime_part)
+{
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
+	return mime_part->content;
+}
+
+
 /**
  * g_mime_part_get_content: 
- * @mime_part: the GMimePart to be decoded.
- * @len: decoded length (to be set after processing)
+ * @mime_part: MIME part object
+ * @len: pointer to the content length
  * 
  * Returns a char * pointer to the raw contents of the MIME Part
  * and sets %len to the length of the buffer.

@@ -34,10 +34,12 @@ extern "C" {
 #include "gmime-utils.h"
 #include "gmime-stream.h"
 
-typedef struct _GMimeDataWrapper {
+typedef struct _GMimeDataWrapper GMimeDataWrapper;
+
+struct _GMimeDataWrapper {
 	GMimePartEncodingType encoding;
 	GMimeStream *stream;
-} GMimeDataWrapper;
+};
 
 GMimeDataWrapper *g_mime_data_wrapper_new (void);
 GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding);

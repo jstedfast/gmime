@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-header</TITLE
+>gmime-data-wrapper</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-param"
-HREF="gmime-gmime-param.html"><LINK
-REL="NEXT"
 TITLE="gmime-content-type"
-HREF="gmime-gmime-content-type.html"></HEAD
+HREF="gmime-gmime-content-type.html"><LINK
+REL="NEXT"
+TITLE="gmime-part"
+HREF="gmime-gmime-part.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-content-type.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-HEADER"
->gmime-header</A
+NAME="GMIME-GMIME-DATA-WRAPPER"
+>gmime-data-wrapper</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1590"
+NAME="AEN2050"
 ></A
 ><H2
 >Name</H2
->gmime-header&nbsp;--&nbsp;</DIV
+>gmime-data-wrapper&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1593"
+NAME="AEN2053"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,111 +146,98 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-void        (<A
-HREF="gmime-gmime-header.html#GMIMEHEADERFUNC"
->*GMimeHeaderFunc</A
->)              (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);
+struct      <A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>;
 <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
 >* <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-NEW"
->g_mime_header_new</A
->              (void);
-void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-DESTROY"
->g_mime_header_destroy</A
->           (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);
-void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-SET"
->g_mime_header_set</A
->               (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-NEW"
+>g_mime_data_wrapper_new</A
+>   (void);
+<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
 >* <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-GET"
->g_mime_header_get</A
->              (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-NEW-WITH-STREAM"
+>g_mime_data_wrapper_new_with_stream</A
+>
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-REMOVE"
->g_mime_header_remove</A
->            (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-DESTROY"
+>g_mime_data_wrapper_destroy</A
+>     (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STREAM"
->g_mime_header_write_to_stream</A
->   (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-SET-STREAM"
+>g_mime_data_wrapper_set_stream</A
+>  (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
                                              <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-TO-STRING"
->g_mime_header_to_string</A
->         (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-GET-STREAM"
+>g_mime_data_wrapper_get_stream</A
+> (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-FOREACH"
->g_mime_header_foreach</A
->           (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-SET-ENCODING"
+>g_mime_data_wrapper_set_encoding</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
                                              <A
-HREF="gmime-gmime-header.html#GMIMEHEADERFUNC"
->GMimeHeaderFunc</A
-> func,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);
+<A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-GET-ENCODING"
+>g_mime_data_wrapper_get_encoding</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);
+<GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-data-wrapper.html#G-MIME-DATA-WRAPPER-WRITE-TO-STREAM"
+>g_mime_data_wrapper_write_to_stream</A
+>
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -258,7 +245,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1625"
+NAME="AEN2081"
 ></A
 ><H2
 >Description</H2
@@ -268,20 +255,20 @@ NAME="AEN1625"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1628"
+NAME="AEN2084"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1630"
+NAME="AEN2086"
 ></A
 ><H3
 ><A
-NAME="GMIMEHEADERFUNC"
+NAME="GMIMEDATAWRAPPER"
 ></A
->GMimeHeaderFunc ()</H3
+>struct GMimeDataWrapper</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -291,105 +278,26 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        (*GMimeHeaderFunc)              (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
+>struct GMimeDataWrapper {
+	GMimePartEncodingType encoding;
+	GMimeStream *stream;
+};</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1638"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->data</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1655"
+NAME="AEN2091"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-NEW"
+NAME="G-MIME-DATA-WRAPPER-NEW"
 ></A
->g_mime_header_new ()</H3
+>g_mime_data_wrapper_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -400,9 +308,9 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
->* g_mime_header_new              (void);</PRE
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* g_mime_data_wrapper_new   (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -413,7 +321,7 @@ HREF="gmime-gmime-message.html#GMIMEHEADER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1662"
+NAME="AEN2098"
 ></A
 ><P
 ></P
@@ -438,7 +346,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new header object.</TD
+>a new data wrapper object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -449,13 +357,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1671"
+NAME="AEN2107"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-DESTROY"
+NAME="G-MIME-DATA-WRAPPER-NEW-WITH-STREAM"
 ></A
->g_mime_header_destroy ()</H3
+>g_mime_data_wrapper_new_with_stream ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -465,21 +373,29 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_destroy           (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);</PRE
+><A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* g_mime_data_wrapper_new_with_stream
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Destroy the header object</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1678"
+NAME="AEN2116"
 ></A
 ><P
 ></P
@@ -499,106 +415,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1687"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-SET"
-></A
->g_mime_header_set ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_header_set               (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Set the value of the specified header. If <TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
-> is <TT
-CLASS="LITERAL"
->NULL</TT
-> and the
-header, <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->, had not been previously set, a space will be set
-aside for it (useful for setting the order of headers before values
-can be obtained for them) otherwise the header will be unset.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1699"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -608,123 +432,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->name</I
+>encoding</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1716"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-GET"
-></A
->g_mime_header_get ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_header_get              (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1725"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -739,7 +454,14 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the value of the header requested</TD
+>a data wrapper around <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>. Since the wrapper owns it's
+own reference on the stream, caller is responsible for unrefing
+it's own copy.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -750,13 +472,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1742"
+NAME="AEN2134"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-REMOVE"
+NAME="G-MIME-DATA-WRAPPER-DESTROY"
 ></A
->g_mime_header_remove ()</H3
+>g_mime_data_wrapper_destroy ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -766,25 +488,21 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_remove            (<A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
+>void        g_mime_data_wrapper_destroy     (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Remove the specified header</P
+>Destroys the data wrapper and unref's its internal stream.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1750"
+NAME="AEN2141"
 ></A
 ><P
 ></P
@@ -804,31 +522,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>wrapper</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -839,13 +540,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1763"
+NAME="AEN2150"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-WRITE-TO-STREAM"
+NAME="G-MIME-DATA-WRAPPER-SET-STREAM"
 ></A
->g_mime_header_write_to_stream ()</H3
+>g_mime_data_wrapper_set_stream ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -855,10 +556,10 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_write_to_stream   (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+>void        g_mime_data_wrapper_set_stream  (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
                                              <A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
@@ -867,13 +568,25 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ></TR
 ></TABLE
 ><P
->Write the headers to a stream.</P
+>Replaces the wrapper's internal stream with <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.
+Note: caller is responsible for it's own reference on
+<TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1771"
+NAME="AEN2160"
 ></A
 ><P
 ></P
@@ -893,14 +606,371 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>wrapper</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2173"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-GET-STREAM"
+></A
+>g_mime_data_wrapper_get_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_data_wrapper_get_stream (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2181"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a reference to the internal stream. Caller is responsable
+for unrefing it.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2194"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-SET-ENCODING"
+></A
+>g_mime_data_wrapper_set_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_data_wrapper_set_encoding
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> encoding);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the encoding type of the internal stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2202"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>encoding</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2215"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-GET-ENCODING"
+></A
+>g_mime_data_wrapper_get_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> g_mime_data_wrapper_get_encoding
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2223"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the encoding type of the internal stream.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2236"
+></A
+><H3
+><A
+NAME="G-MIME-DATA-WRAPPER-WRITE-TO-STREAM"
+></A
+>g_mime_data_wrapper_write_to_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="SSIZE-T"
+>ssize_t</GTKDOCLINK
+>     g_mime_data_wrapper_write_to_stream
+                                            (<A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+> *wrapper,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Write's the raw (decoded) data to the output stream.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2245"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>wrapper</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -919,77 +989,6 @@ ALIGN="LEFT"
 VALIGN="TOP"
 > output stream</TD
 ></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1784"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-TO-STRING"
-></A
->g_mime_header_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_header_to_string         (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1792"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
 ><TR
 ><TD
 WIDTH="20%"
@@ -1003,122 +1002,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a string containing the header block</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1805"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-FOREACH"
-></A
->g_mime_header_foreach ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_header_foreach           (const <A
-HREF="gmime-gmime-message.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             <A
-HREF="gmime-gmime-header.html#GMIMEHEADERFUNC"
->GMimeHeaderFunc</A
-> func,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
-></TD
-></TR
-></TABLE
-><P
->Calls <TT
-CLASS="PARAMETER"
-><I
->func</I
-></TT
-> for each header name/value pair.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1815"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->func</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> function to be called for each header.</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->data</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> User data to be passed to the func.</TD
+>the number of bytes written or -1 on failure.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1142,7 +1026,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-content-type.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1196,7 +1080,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1214,7 +1098,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-param</B
+>gmime-content-type</B
 ></FONT
 ></TD
 ><TD
@@ -1224,7 +1108,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-content-type</B
+>gmime-part</B
 ></FONT
 ></TD
 ></TR

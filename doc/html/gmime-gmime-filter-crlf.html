@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-parser</TITLE
+>gmime-filter-crlf</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="internet-address"
-HREF="gmime-internet-address.html"><LINK
+TITLE="gmime-filter-basic"
+HREF="gmime-gmime-filter-basic.html"><LINK
 REL="NEXT"
-TITLE="gmime-charset"
-HREF="gmime-gmime-charset.html"></HEAD
+TITLE="gmime-param"
+HREF="gmime-gmime-param.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="gmime-gmime-param.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARSER"
->gmime-parser</A
+NAME="GMIME-GMIME-FILTER-CRLF"
+>gmime-filter-crlf</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4878"
+NAME="AEN1413"
 ></A
 ><H2
 >Name</H2
->gmime-parser&nbsp;--&nbsp;</DIV
+>gmime-filter-crlf&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4881"
+NAME="AEN1416"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,31 +146,28 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+enum        <A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
+>GMimeFilterCRLFDirection</A
+>;
+enum        <A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
+>GMimeFilterCRLFMode</A
+>;
 <A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART"
->g_mime_parser_construct_part</A
->    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);
-<A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
 >* <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
->g_mime_parser_construct_message</A
->
-                                            (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> save_extra_headers);</PRE
+HREF="gmime-gmime-filter-crlf.html#G-MIME-FILTER-CRLF-NEW-TYPE"
+>g_mime_filter_crlf_new_type</A
+>    (<A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
+>GMimeFilterCRLFDirection</A
+> direction,
+                                             <A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
+>GMimeFilterCRLFMode</A
+> mode);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -178,7 +175,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4891"
+NAME="AEN1425"
 ></A
 ><H2
 >Description</H2
@@ -188,20 +185,20 @@ NAME="AEN4891"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4894"
+NAME="AEN1428"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4896"
+NAME="AEN1430"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-PART"
+NAME="GMIMEFILTERCRLFDIRECTION"
 ></A
->g_mime_parser_construct_part ()</H3
+>enum GMimeFilterCRLFDirection</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -211,83 +208,55 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  g_mime_parser_construct_part    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
+>typedef enum {
+	GMIME_FILTER_CRLF_ENCODE,
+	GMIME_FILTER_CRLF_DECODE
+} GMimeFilterCRLFDirection;</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN4904"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> raw MIME Part stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a GMimePart object based on the data.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4917"
+NAME="AEN1435"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-MESSAGE"
+NAME="GMIMEFILTERCRLFMODE"
 ></A
->g_mime_parser_construct_message ()</H3
+>enum GMimeFilterCRLFMode</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	GMIME_FILTER_CRLF_MODE_CRLF_DOTS,
+	GMIME_FILTER_CRLF_MODE_CRLF_ONLY,
+} GMimeFilterCRLFMode;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1440"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-CRLF-NEW-TYPE"
+></A
+>g_mime_filter_crlf_new_type ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -298,17 +267,16 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
->* g_mime_parser_construct_message
-                                            (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> save_extra_headers);</PRE
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+>* g_mime_filter_crlf_new_type    (<A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFDIRECTION"
+>GMimeFilterCRLFDirection</A
+> direction,
+                                             <A
+HREF="gmime-gmime-filter-crlf.html#GMIMEFILTERCRLFMODE"
+>GMimeFilterCRLFMode</A
+> mode);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -319,7 +287,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4926"
+NAME="AEN1449"
 ></A
 ><P
 ></P
@@ -339,14 +307,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>direction</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message stream</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -356,14 +324,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->save_extra_headers</I
+>mode</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> if TRUE, then store the arbitrary headers</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -378,7 +346,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeMessage object based on the rfc0822 data.</TD
+>a new crlf(/dot) filter.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -402,7 +370,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -456,7 +424,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="gmime-gmime-param.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -474,7 +442,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->internet-address</B
+>gmime-filter-basic</B
 ></FONT
 ></TD
 ><TD
@@ -484,7 +452,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-charset</B
+>gmime-param</B
 ></FONT
 ></TD
 ></TR

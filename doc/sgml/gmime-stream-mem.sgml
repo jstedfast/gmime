@@ -1,0 +1,169 @@
+<refentry id="gmime-gmime-stream-mem" revision="20 Sep 2001">
+<refmeta>
+<refentrytitle>gmime-stream-mem</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-stream-mem</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-STREAM-MEM-TYPE-CAPS">GMIME_STREAM_MEM_TYPE</link>
+#define     <link linkend="GMIME-IS-STREAM-MEM-CAPS">GMIME_IS_STREAM_MEM</link>             (stream)
+#define     <link linkend="GMIME-STREAM-MEM-CAPS">GMIME_STREAM_MEM</link>                (stream)
+<link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-mem-new">g_mime_stream_mem_new</link>          (void);
+<link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-mem-new-with-byte-array">g_mime_stream_mem_new_with_byte_array</link>
+                                            (<link linkend="GByteArray">GByteArray</link> *array);
+<link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-mem-new-with-buffer">g_mime_stream_mem_new_with_buffer</link>
+                                            (const char *buffer,
+                                             <link linkend="size-t">size_t</link> len);
+void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_set_byte_array</link>
+                                            (<link linkend="GMimeStreamMem">GMimeStreamMem</link> *mem,
+                                             <link linkend="GByteArray">GByteArray</link> *array);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-STREAM-MEM-TYPE-CAPS">GMIME_STREAM_MEM_TYPE</title>
+<programlisting>#define GMIME_STREAM_MEM_TYPE g_str_hash ("GMimeStreamMem")
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-IS-STREAM-MEM-CAPS">GMIME_IS_STREAM_MEM()</title>
+<programlisting>#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MEM_TYPE)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-MEM-CAPS">GMIME_STREAM_MEM()</title>
+<programlisting>#define GMIME_STREAM_MEM(stream) ((GMimeStreamMem *) stream)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-mem-new">g_mime_stream_mem_new ()</title>
+<programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mem_new          (void);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-mem-new-with-byte-array">g_mime_stream_mem_new_with_byte_array ()</title>
+<programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mem_new_with_byte_array
+                                            (<link linkend="GByteArray">GByteArray</link> *array);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>array</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream using <parameter>array</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-mem-new-with-buffer">g_mime_stream_mem_new_with_buffer ()</title>
+<programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_mem_new_with_buffer
+                                            (const char *buffer,
+                                             <link linkend="size-t">size_t</link> len);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>buffer</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new memory stream initialized with <parameter>buffer</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_set_byte_array ()</title>
+<programlisting>void        g_mime_stream_mem_set_byte_array
+                                            (<link linkend="GMimeStreamMem">GMimeStreamMem</link> *mem,
+                                             <link linkend="GByteArray">GByteArray</link> *array);</programlisting>
+<para>
+Sets the byte array on the memory stream. Note: The memory stream
+is not responsible for freeing the byte array.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mem</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>array</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

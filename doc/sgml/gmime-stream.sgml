@@ -1,0 +1,521 @@
+<refentry id="gmime-gmime-stream" revision="20 Sep 2001">
+<refmeta>
+<refentrytitle>gmime-stream</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-stream</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeStream">GMimeStream</link>;
+enum        <link linkend="GMimeSeekWhence">GMimeSeekWhence</link>;
+#define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (stream)
+void        <link linkend="g-mime-stream-construct">g_mime_stream_construct</link>         (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *template,
+                                             int type,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);
+void        <link linkend="g-mime-stream-ref">g_mime_stream_ref</link>               (<link linkend="GMimeStream">GMimeStream</link> *stream);
+void        <link linkend="g-mime-stream-unref">g_mime_stream_unref</link>             (<link linkend="GMimeStream">GMimeStream</link> *stream);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-read">g_mime_stream_read</link>              (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             char *buf,
+                                             <link linkend="size-t">size_t</link> len);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-write">g_mime_stream_write</link>             (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             char *buf,
+                                             <link linkend="size-t">size_t</link> len);
+int         <link linkend="g-mime-stream-flush">g_mime_stream_flush</link>             (<link linkend="GMimeStream">GMimeStream</link> *stream);
+<link linkend="off-t">off_t</link>       <link linkend="g-mime-stream-seek">g_mime_stream_seek</link>              (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> offset,
+                                             <link linkend="GMimeSeekWhence">GMimeSeekWhence</link> whence);
+<link linkend="off-t">off_t</link>       <link linkend="g-mime-stream-tell">g_mime_stream_tell</link>              (<link linkend="GMimeStream">GMimeStream</link> *stream);
+int         <link linkend="g-mime-stream-reset">g_mime_stream_reset</link>             (<link linkend="GMimeStream">GMimeStream</link> *stream);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-stream-eos">g_mime_stream_eos</link>               (<link linkend="GMimeStream">GMimeStream</link> *stream);
+int         <link linkend="g-mime-stream-close">g_mime_stream_close</link>             (<link linkend="GMimeStream">GMimeStream</link> *stream);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-length">g_mime_stream_length</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream);
+<link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-substream">g_mime_stream_substream</link>        (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);
+void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</link>        (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-write-string">g_mime_stream_write_string</link>      (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             const char *string);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-printf">g_mime_stream_printf</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             const char *fmt,
+                                             ...);
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-write-to-stream">g_mime_stream_write_to_stream</link>   (<link linkend="GMimeStream">GMimeStream</link> *src,
+                                             <link linkend="GMimeStream">GMimeStream</link> *dest);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeStream">struct GMimeStream</title>
+<programlisting>struct GMimeStream {
+	/* Note: these are private fields!! */
+	GMimeStream *super_stream;
+	
+	int type;
+	int refcount;
+	
+	off_t position;
+	off_t bound_start;
+	off_t bound_end;
+	
+	void     (*destroy) (GMimeStream *stream);
+	
+	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
+	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
+	int      (*flush)   (GMimeStream *stream);
+	int      (*close)   (GMimeStream *stream);
+	gboolean (*eos)     (GMimeStream *stream);
+	int      (*reset)   (GMimeStream *stream);
+	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
+	off_t    (*tell)    (GMimeStream *stream);
+	ssize_t  (*length)  (GMimeStream *stream);
+	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeSeekWhence">enum GMimeSeekWhence</title>
+<programlisting>typedef enum {
+	GMIME_STREAM_SEEK_SET = SEEK_SET,
+	GMIME_STREAM_SEEK_CUR = SEEK_CUR,
+	GMIME_STREAM_SEEK_END = SEEK_END,
+} GMimeSeekWhence;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-STREAM-CAPS">GMIME_STREAM()</title>
+<programlisting>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-construct">g_mime_stream_construct ()</title>
+<programlisting>void        g_mime_stream_construct         (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *template,
+                                             int type,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);</programlisting>
+<para>
+Initializes a new stream of type <parameter>type</parameter>, using the virtual methods
+from <parameter>template</parameter>, with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>template</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>type</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-ref">g_mime_stream_ref ()</title>
+<programlisting>void        g_mime_stream_ref               (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Ref's a stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-unref">g_mime_stream_unref ()</title>
+<programlisting>void        g_mime_stream_unref             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Unref's a stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-read">g_mime_stream_read ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_read              (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             char *buf,
+                                             <link linkend="size-t">size_t</link> len);</programlisting>
+<para>
+Attempts to read up to <parameter>len</parameter> bytes from <parameter>stream</parameter> into <parameter>buf</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>buf</parameter>&nbsp;:</entry>
+<entry> buffer
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> buffer length
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes read or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-write">g_mime_stream_write ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_write             (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             char *buf,
+                                             <link linkend="size-t">size_t</link> len);</programlisting>
+<para>
+Attempts to write up to <parameter>len</parameter> bytes of <parameter>buf</parameter> to <parameter>stream</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>buf</parameter>&nbsp;:</entry>
+<entry> buffer
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> buffer length
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-flush">g_mime_stream_flush ()</title>
+<programlisting>int         g_mime_stream_flush             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Sync's the stream to disk.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-seek">g_mime_stream_seek ()</title>
+<programlisting><link linkend="off-t">off_t</link>       g_mime_stream_seek              (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> offset,
+                                             <link linkend="GMimeSeekWhence">GMimeSeekWhence</link> whence);</programlisting>
+<para>
+Repositions the offset of the stream <parameter>stream</parameter> to
+the argument <parameter>offset</parameter> according to the
+directive <parameter>whence</parameter> as follows:
+</para>
+<para>
+GMIME_STREAM_SEEK_SET
+The offset is set to <parameter>offset</parameter> bytes.
+</para>
+<para>
+GMIME_STREAM_SEEK_CUR
+The offset is set to its current location
+plus <parameter>offset</parameter> bytes.
+</para>
+<para>
+GMIME_STREAM_SEEK_END
+The offset is set to the size of the stream
+plus <parameter>offset</parameter> bytes.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>offset</parameter>&nbsp;:</entry>
+<entry> positional offset
+</entry></row>
+<row><entry align="right"><parameter>whence</parameter>&nbsp;:</entry>
+<entry> seek directive
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resultant position on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-tell">g_mime_stream_tell ()</title>
+<programlisting><link linkend="off-t">off_t</link>       g_mime_stream_tell              (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the current position within the stream.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-reset">g_mime_stream_reset ()</title>
+<programlisting>int         g_mime_stream_reset             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Resets the stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-eos">g_mime_stream_eos ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_stream_eos               (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Tests the end-of-stream indicator for <parameter>stream</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE on EOS or FALSE otherwise.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-close">g_mime_stream_close ()</title>
+<programlisting>int         g_mime_stream_close             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Closes the stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-length">g_mime_stream_length ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_length            (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the length of the stream or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-substream">g_mime_stream_substream ()</title>
+<programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_substream        (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-set-bounds">g_mime_stream_set_bounds ()</title>
+<programlisting>void        g_mime_stream_set_bounds        (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="off-t">off_t</link> start,
+                                             <link linkend="off-t">off_t</link> end);</programlisting>
+<para>
+Set the bounds on a stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>start</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>end</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-write-string">g_mime_stream_write_string ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_write_string      (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             const char *string);</programlisting>
+<para>
+Write's <parameter>string</parameter> to <parameter>stream</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-printf">g_mime_stream_printf ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_printf            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             const char *fmt,
+                                             ...);</programlisting>
+<para>
+Write formatted output to a stream.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry> stream
+</entry></row>
+<row><entry align="right"><parameter>fmt</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>...</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-write-to-stream">g_mime_stream_write_to_stream ()</title>
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_write_to_stream   (<link linkend="GMimeStream">GMimeStream</link> *src,
+                                             <link linkend="GMimeStream">GMimeStream</link> *dest);</programlisting>
+<para>
+Attempts to write stream <parameter>src</parameter> to stream <parameter>dest</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>src</parameter>&nbsp;:</entry>
+<entry> source stream
+</entry></row>
+<row><entry align="right"><parameter>dest</parameter>&nbsp;:</entry>
+<entry> destination stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

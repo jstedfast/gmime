@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-parser</TITLE
+>gmime-stream-fs</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="internet-address"
-HREF="gmime-internet-address.html"><LINK
+TITLE="gmime-stream-file"
+HREF="gmime-gmime-stream-file.html"><LINK
 REL="NEXT"
-TITLE="gmime-charset"
-HREF="gmime-gmime-charset.html"></HEAD
+TITLE="gmime-stream-mem"
+HREF="gmime-gmime-stream-mem.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-stream-file.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARSER"
->gmime-parser</A
+NAME="GMIME-GMIME-STREAM-FS"
+>gmime-stream-fs</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4878"
+NAME="AEN696"
 ></A
 ><H2
 >Name</H2
->gmime-parser&nbsp;--&nbsp;</DIV
+>gmime-stream-fs&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4881"
+NAME="AEN699"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,31 +146,41 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-<A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART"
->g_mime_parser_construct_part</A
->    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);
-<A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
->* <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
->g_mime_parser_construct_message</A
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-TYPE-CAPS"
+>GMIME_STREAM_FS_TYPE</A
 >
-                                            (<A
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-IS-STREAM-FS-CAPS"
+>GMIME_IS_STREAM_FS</A
+>              (stream)
+#define     <A
+HREF="gmime-gmime-stream-fs.html#GMIME-STREAM-FS-CAPS"
+>GMIME_STREAM_FS</A
+>                 (stream)
+<A
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
-> *stream,
+>* <A
+HREF="gmime-gmime-stream-fs.html#G-MIME-STREAM-FS-NEW"
+>g_mime_stream_fs_new</A
+>           (int fd);
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-stream-fs.html#G-MIME-STREAM-FS-NEW-WITH-BOUNDS"
+>g_mime_stream_fs_new_with_bounds</A
+>
+                                            (int fd,
                                              <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> save_extra_headers);</PRE
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -178,7 +188,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4891"
+NAME="AEN711"
 ></A
 ><H2
 >Description</H2
@@ -188,20 +198,20 @@ NAME="AEN4891"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4894"
+NAME="AEN714"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4896"
+NAME="AEN716"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-PART"
+NAME="GMIME-STREAM-FS-TYPE-CAPS"
 ></A
->g_mime_parser_construct_part ()</H3
+>GMIME_STREAM_FS_TYPE</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -211,24 +221,42 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  g_mime_parser_construct_part    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
+>#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN721"
+></A
+><H3
+><A
+NAME="GMIME-IS-STREAM-FS-CAPS"
+></A
+>GMIME_IS_STREAM_FS()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FS_TYPE)</PRE
+></TD
+></TR
+></TABLE
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4904"
+NAME="AEN726"
 ></A
 ><P
 ></P
@@ -255,22 +283,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> raw MIME Part stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a GMimePart object based on the data.</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -281,13 +294,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4917"
+NAME="AEN735"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-MESSAGE"
+NAME="GMIME-STREAM-FS-CAPS"
 ></A
->g_mime_parser_construct_message ()</H3
+>GMIME_STREAM_FS()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -297,29 +310,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
->* g_mime_parser_construct_message
-                                            (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> save_extra_headers);</PRE
+>#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4926"
+NAME="AEN740"
 ></A
 ><P
 ></P
@@ -346,8 +346,59 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message stream</TD
+>&nbsp;</TD
 ></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN749"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-FS-NEW"
+></A
+>g_mime_stream_fs_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_fs_new           (int fd);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN756"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -356,14 +407,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->save_extra_headers</I
+>fd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> if TRUE, then store the arbitrary headers</TD
+> file descriptor</TD
 ></TR
 ><TR
 ><TD
@@ -378,7 +429,153 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeMessage object based on the rfc0822 data.</TD
+>a stream using <TT
+CLASS="PARAMETER"
+><I
+>fd</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN770"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-FS-NEW-WITH-BOUNDS"
+></A
+>g_mime_stream_fs_new_with_bounds ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_fs_new_with_bounds
+                                            (int fd,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> start,
+                                             <GTKDOCLINK
+HREF="OFF-T"
+>off_t</GTKDOCLINK
+> end);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN779"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>fd</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> file descriptor</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> start boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> end boundary</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a stream using <TT
+CLASS="PARAMETER"
+><I
+>fd</I
+></TT
+> with bounds <TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -402,7 +599,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-stream-file.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -456,7 +653,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-charset.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -474,7 +671,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->internet-address</B
+>gmime-stream-file</B
 ></FONT
 ></TD
 ><TD
@@ -484,7 +681,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-charset</B
+>gmime-stream-mem</B
 ></FONT
 ></TD
 ></TR

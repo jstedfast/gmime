@@ -37,9 +37,10 @@ struct _GMimeFilterPrivate {
 
 /**
  * g_mime_filter_construct:
- * @filter:
- * @template:
+ * @filter: filter
+ * @template: filter template
  *
+ * Initializes a filter object using the virtual methods in @template.
  **/
 void
 g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template)
@@ -51,7 +52,7 @@ g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template)
 	filter->outreal = NULL;
 	filter->outbuf = NULL;
 	filter->outsize = 0;
-
+	
 	filter->backbuf = NULL;
 	filter->backsize = 0;
 	filter->backlen = 0;
@@ -66,7 +67,7 @@ g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *template)
 
 /**
  * g_mime_filter_destroy:
- * @filter:
+ * @filter: filter
  *
  * Destroys @filter and releases the memory to the system.
  **/
@@ -85,7 +86,7 @@ g_mime_filter_destroy (GMimeFilter *filter)
 
 /**
  * g_mime_filter_copy:
- * @filter:
+ * @filter: filter
  *
  * Returns a duplicate of @filter.
  **/
@@ -139,14 +140,15 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 
 /**
  * g_mime_filter_filter:
- * @filter:
- * @in:
- * @len:
- * @prespace:
- * @out:
- * @outlen:
- * @outprespace:
+ * @filter: filter
+ * @in: input buffer
+ * @len: input buffer length
+ * @prespace: prespace buffer length
+ * @out: pointer to output buffer
+ * @outlen: pointer to output length
+ * @outprespace: pointer to output prespace buffer length
  *
+ * Filters the input data and writes it to @out.
  **/
 void
 g_mime_filter_filter (GMimeFilter *filter,
@@ -161,14 +163,15 @@ g_mime_filter_filter (GMimeFilter *filter,
 
 /**
  * g_mime_filter_complete:
- * @filter:
- * @in:
- * @len:
- * @prespace:
- * @out:
- * @outlen:
- * @outprespace:
+ * @filter: filter
+ * @in: input buffer
+ * @len: input length
+ * @prespace: prespace buffer length
+ * @out: pointer to output buffer
+ * @outlen: pointer to output length
+ * @outprespace: pointer to output prespace buffer length
  *
+ * Completes the filtering.
  **/
 void
 g_mime_filter_complete (GMimeFilter *filter,
@@ -201,9 +204,9 @@ g_mime_filter_reset (GMimeFilter *filter)
 
 /**
  * g_mime_filter_backup:
- * @filter:
- * @data:
- * @length:
+ * @filter: filter
+ * @data: 
+ * @length: 
  *
  * Sets number of bytes backed up on the input, new calls replace
  * previous ones
@@ -227,9 +230,9 @@ g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 
 /**
  * g_mime_filter_set_size:
- * @filter:
- * @size:
- * @keep:
+ * @filter: filter
+ * @size: 
+ * @keep: 
  *
  * Ensure this much size available for filter output (if required)
  **/

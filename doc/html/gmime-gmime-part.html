@@ -13,8 +13,8 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-content-type"
-HREF="gmime-gmime-content-type.html"><LINK
+TITLE="gmime-data-wrapper"
+HREF="gmime-gmime-data-wrapper.html"><LINK
 REL="NEXT"
 TITLE="gmime-message"
 HREF="gmime-gmime-message.html"></HEAD
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-data-wrapper.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-PART"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN605"
+NAME="AEN2267"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN605"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN608"
+NAME="AEN2270"
 ></A
 ><H2
 >Synopsis</H2
@@ -186,14 +186,8 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >*  <A
 HREF="gmime-gmime-part.html#G-MIME-PART-NEW-WITH-TYPE"
 >g_mime_part_new_with_type</A
->       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subtype);
+>       (const char *type,
+                                             const char *subtype);
 void        <A
 HREF="gmime-gmime-part.html#G-MIME-PART-DESTROY"
 >g_mime_part_destroy</A
@@ -209,14 +203,8 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-DESCRIPTION"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *description);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *description);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-DESCRIPTION"
 >g_mime_part_get_content_description</A
 >
@@ -231,17 +219,11 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-ID"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_id);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *content_id);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-ID"
 >g_mime_part_get_content_id</A
->     (<A
+>      (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -252,17 +234,11 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-MD5"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_md5);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *content_md5);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-MD5"
 >g_mime_part_get_content_md5</A
->    (<A
+>     (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -284,14 +260,8 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-LOCATION"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_location);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *content_location);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-LOCATION"
 >g_mime_part_get_content_location</A
 >
@@ -343,13 +313,10 @@ HREF="gmime-gmime-part.html#G-MIME-PART-GET-ENCODING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-ENCODING-TO-STRING"
 >g_mime_part_encoding_to_string</A
-> (<A
+>  (<A
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);
@@ -360,10 +327,7 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 HREF="gmime-gmime-part.html#G-MIME-PART-ENCODING-FROM-STRING"
 >g_mime_part_encoding_from_string</A
 >
-                                            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *encoding);
+                                            (const char *encoding);
 void        <A
 HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-DISPOSITION"
 >g_mime_part_set_content_disposition</A
@@ -372,14 +336,8 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-DISPOSITION"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *disposition);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *disposition);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-DISPOSITION"
 >g_mime_part_get_content_disposition</A
 >
@@ -395,18 +353,9 @@ HREF="gmime-gmime-part.html#G-MIME-PART-ADD-CONTENT-DISPOSITION-PARAMETER"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *name,
+                                             const char *value);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-DISPOSITION-PARAMETER"
 >g_mime_part_get_content_disposition_parameter</A
 >
@@ -414,10 +363,7 @@ HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-DISPOSITION-PARAMETER"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);
+                                             const char *name);
 void        <A
 HREF="gmime-gmime-part.html#G-MIME-PART-SET-FILENAME"
 >g_mime_part_set_filename</A
@@ -425,17 +371,11 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-FILENAME"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *filename);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *filename);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-FILENAME"
 >g_mime_part_get_filename</A
->       (const <A
+>        (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -446,17 +386,11 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-BOUNDARY"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *boundary);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+                                             const char *boundary);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-BOUNDARY"
 >g_mime_part_get_boundary</A
->       (<A
+>        (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
@@ -467,34 +401,11 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
+                                             const char *content,
                                              <GTKDOCLINK
 HREF="GUINT"
 >guint</GTKDOCLINK
 > len);
-void        <A
-HREF="gmime-gmime-part.html#G-MIME-PART-APPEND-PRE-ENCODED-CONTENT"
->g_mime_part_append_pre_encoded_content</A
->
-                                            (<A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
-> *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
-                                             <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
-> len,
-                                             <A
-HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
->GMimePartEncodingType</A
-> encoding);
 void        <A
 HREF="gmime-gmime-part.html#G-MIME-PART-SET-PRE-ENCODED-CONTENT"
 >g_mime_part_set_pre_encoded_content</A
@@ -503,10 +414,7 @@ HREF="gmime-gmime-part.html#G-MIME-PART-SET-PRE-ENCODED-CONTENT"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
+                                             const char *content,
                                              <GTKDOCLINK
 HREF="GUINT"
 >guint</GTKDOCLINK
@@ -527,13 +435,21 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GBYTEARRAY"
 >GByteArray</GTKDOCLINK
 > *content);
-const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* <A
+void        <A
+HREF="gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-STREAM"
+>g_mime_part_set_content_stream</A
+>  (<A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *content);
+const char* <A
 HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT"
 >g_mime_part_get_content</A
->        (const <A
+>         (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
@@ -541,6 +457,17 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GUINT"
 >guint</GTKDOCLINK
 > *len);
+const <A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* <A
+HREF="gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-OBJECT"
+>g_mime_part_get_content_object</A
+>
+                                            (const <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);
 void        <A
 HREF="gmime-gmime-part.html#G-MIME-PART-ADD-SUBPART"
 >g_mime_part_add_subpart</A
@@ -557,8 +484,8 @@ HREF="gmime-gmime-part.html#G-MIME-PART-ADD-CHILD"
 >g_mime_part_add_child</A
 >           (mime_part, child)
 void        <A
-HREF="gmime-gmime-part.html#G-MIME-PART-WRITE-TO-STRING"
->g_mime_part_write_to_string</A
+HREF="gmime-gmime-part.html#G-MIME-PART-WRITE-TO-STREAM"
+>g_mime_part_write_to_stream</A
 >     (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
@@ -567,14 +494,11 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > toplevel,
-                                             <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+char*       <A
 HREF="gmime-gmime-part.html#G-MIME-PART-TO-STRING"
 >g_mime_part_to_string</A
 >           (<A
@@ -611,10 +535,7 @@ HREF="gmime-gmime-part.html#G-MIME-PART-GET-SUBPART-FROM-CONTENT-ID"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_id);</PRE
+                                             const char *content_id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -622,7 +543,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN738"
+NAME="AEN2374"
 ></A
 ><H2
 >Description</H2
@@ -632,14 +553,14 @@ NAME="AEN738"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN741"
+NAME="AEN2377"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN743"
+NAME="AEN2379"
 ></A
 ><H3
 ><A
@@ -672,7 +593,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN748"
+NAME="AEN2384"
 ></A
 ><H3
 ><A
@@ -698,7 +619,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN753"
+NAME="AEN2389"
 ></A
 ><H3
 ><A
@@ -715,7 +636,7 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimePartDisposition {
-	gchar *disposition;
+	char *disposition;
 	GList *params;     /* of type GMimeParam */
 	GHashTable *param_hash;
 };</PRE
@@ -728,7 +649,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN758"
+NAME="AEN2394"
 ></A
 ><H3
 ><A
@@ -748,12 +669,12 @@ CLASS="PROGRAMLISTING"
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
-	gchar *description;
-	gchar *content_id;
-	gchar *content_md5;
-	gchar *content_location;
+	char *description;
+	char *content_id;
+	char *content_md5;
+	char *content_location;
 	
-	GByteArray *content;
+	GMimeDataWrapper *content;
 	
 	guint append_save;
 	guint append_state;
@@ -769,7 +690,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN763"
+NAME="AEN2399"
 ></A
 ><H3
 ><A
@@ -801,7 +722,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN770"
+NAME="AEN2406"
 ></A
 ><P
 ></P
@@ -856,7 +777,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN783"
+NAME="AEN2419"
 ></A
 ><H3
 ><A
@@ -886,7 +807,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN790"
+NAME="AEN2426"
 ></A
 ><P
 ></P
@@ -923,7 +844,7 @@ text/plain.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN799"
+NAME="AEN2435"
 ></A
 ><H3
 ><A
@@ -942,14 +863,8 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
->*  g_mime_part_new_with_type       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *type,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *subtype);</PRE
+>*  g_mime_part_new_with_type       (const char *type,
+                                             const char *subtype);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -960,7 +875,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN808"
+NAME="AEN2442"
 ></A
 ><P
 ></P
@@ -1030,7 +945,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN825"
+NAME="AEN2459"
 ></A
 ><H3
 ><A
@@ -1060,7 +975,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN832"
+NAME="AEN2466"
 ></A
 ><P
 ></P
@@ -1098,7 +1013,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN841"
+NAME="AEN2475"
 ></A
 ><H3
 ><A
@@ -1119,10 +1034,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *description);</PRE
+                                             const char *description);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1133,7 +1045,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN849"
+NAME="AEN2482"
 ></A
 ><P
 ></P
@@ -1188,7 +1100,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN862"
+NAME="AEN2495"
 ></A
 ><H3
 ><A
@@ -1204,10 +1116,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_description
+>const char* g_mime_part_get_content_description
                                             (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
@@ -1222,7 +1131,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN870"
+NAME="AEN2502"
 ></A
 ><P
 ></P
@@ -1275,7 +1184,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN883"
+NAME="AEN2515"
 ></A
 ><H3
 ><A
@@ -1295,10 +1204,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_id);</PRE
+                                             const char *content_id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1309,7 +1215,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN891"
+NAME="AEN2522"
 ></A
 ><P
 ></P
@@ -1364,7 +1270,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN904"
+NAME="AEN2535"
 ></A
 ><H3
 ><A
@@ -1380,10 +1286,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_id     (<A
+>const char* g_mime_part_get_content_id      (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
@@ -1397,7 +1300,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN912"
+NAME="AEN2542"
 ></A
 ><P
 ></P
@@ -1450,7 +1353,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN925"
+NAME="AEN2555"
 ></A
 ><H3
 ><A
@@ -1470,10 +1373,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_md5);</PRE
+                                             const char *content_md5);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1484,7 +1384,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN933"
+NAME="AEN2562"
 ></A
 ><P
 ></P
@@ -1539,7 +1439,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN946"
+NAME="AEN2575"
 ></A
 ><H3
 ><A
@@ -1555,10 +1455,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_md5    (<A
+>const char* g_mime_part_get_content_md5     (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
@@ -1572,7 +1469,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN954"
+NAME="AEN2582"
 ></A
 ><P
 ></P
@@ -1625,7 +1522,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN967"
+NAME="AEN2595"
 ></A
 ><H3
 ><A
@@ -1658,7 +1555,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN975"
+NAME="AEN2603"
 ></A
 ><P
 ></P
@@ -1712,7 +1609,7 @@ return FALSE if the mime part does not contain a Content-MD5.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN988"
+NAME="AEN2616"
 ></A
 ><H3
 ><A
@@ -1733,10 +1630,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_location);</PRE
+                                             const char *content_location);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1747,7 +1641,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN996"
+NAME="AEN2623"
 ></A
 ><P
 ></P
@@ -1802,7 +1696,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1009"
+NAME="AEN2636"
 ></A
 ><H3
 ><A
@@ -1818,10 +1712,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_location
+>const char* g_mime_part_get_content_location
                                             (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
@@ -1836,7 +1727,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1017"
+NAME="AEN2643"
 ></A
 ><P
 ></P
@@ -1889,7 +1780,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1030"
+NAME="AEN2656"
 ></A
 ><H3
 ><A
@@ -1923,7 +1814,7 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1038"
+NAME="AEN2664"
 ></A
 ><P
 ></P
@@ -1978,7 +1869,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1051"
+NAME="AEN2677"
 ></A
 ><H3
 ><A
@@ -2012,7 +1903,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1059"
+NAME="AEN2685"
 ></A
 ><P
 ></P
@@ -2065,7 +1956,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1072"
+NAME="AEN2698"
 ></A
 ><H3
 ><A
@@ -2102,7 +1993,7 @@ GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1080"
+NAME="AEN2706"
 ></A
 ><P
 ></P
@@ -2157,7 +2048,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1093"
+NAME="AEN2719"
 ></A
 ><H3
 ><A
@@ -2191,7 +2082,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1101"
+NAME="AEN2727"
 ></A
 ><P
 ></P
@@ -2248,7 +2139,7 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1114"
+NAME="AEN2740"
 ></A
 ><H3
 ><A
@@ -2264,10 +2155,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_encoding_to_string (<A
+>const char* g_mime_part_encoding_to_string  (<A
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);</PRE
@@ -2281,7 +2169,7 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1122"
+NAME="AEN2747"
 ></A
 ><P
 ></P
@@ -2337,7 +2225,7 @@ GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1135"
+NAME="AEN2760"
 ></A
 ><H3
 ><A
@@ -2357,10 +2245,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > g_mime_part_encoding_from_string
-                                            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *encoding);</PRE
+                                            (const char *encoding);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2371,7 +2256,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1143"
+NAME="AEN2767"
 ></A
 ><P
 ></P
@@ -2428,7 +2313,7 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1156"
+NAME="AEN2780"
 ></A
 ><H3
 ><A
@@ -2449,10 +2334,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *disposition);</PRE
+                                             const char *disposition);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2463,7 +2345,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1164"
+NAME="AEN2787"
 ></A
 ><P
 ></P
@@ -2518,7 +2400,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1177"
+NAME="AEN2800"
 ></A
 ><H3
 ><A
@@ -2534,10 +2416,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_disposition
+>const char* g_mime_part_get_content_disposition
                                             (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
@@ -2552,7 +2431,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1185"
+NAME="AEN2807"
 ></A
 ><P
 ></P
@@ -2605,7 +2484,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1198"
+NAME="AEN2820"
 ></A
 ><H3
 ><A
@@ -2626,14 +2505,8 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+                                             const char *name,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2644,7 +2517,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1207"
+NAME="AEN2827"
 ></A
 ><P
 ></P
@@ -2716,7 +2589,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1224"
+NAME="AEN2844"
 ></A
 ><H3
 ><A
@@ -2732,18 +2605,12 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content_disposition_parameter
+>const char* g_mime_part_get_content_disposition_parameter
                                             (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name);</PRE
+                                             const char *name);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2754,7 +2621,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1233"
+NAME="AEN2851"
 ></A
 ><P
 ></P
@@ -2828,7 +2695,7 @@ HREF="NAME"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1251"
+NAME="AEN2869"
 ></A
 ><H3
 ><A
@@ -2848,10 +2715,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *filename);</PRE
+                                             const char *filename);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2863,7 +2727,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1259"
+NAME="AEN2876"
 ></A
 ><P
 ></P
@@ -2918,7 +2782,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1272"
+NAME="AEN2889"
 ></A
 ><H3
 ><A
@@ -2934,10 +2798,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_filename       (const <A
+>const char* g_mime_part_get_filename        (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
@@ -2951,7 +2812,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1280"
+NAME="AEN2896"
 ></A
 ><P
 ></P
@@ -3006,7 +2867,7 @@ and if not then checks the "name" parameter in the Content-Type.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1293"
+NAME="AEN2909"
 ></A
 ><H3
 ><A
@@ -3026,10 +2887,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *boundary);</PRE
+                                             const char *boundary);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -3040,7 +2898,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1301"
+NAME="AEN2916"
 ></A
 ><P
 ></P
@@ -3095,7 +2953,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1314"
+NAME="AEN2929"
 ></A
 ><H3
 ><A
@@ -3111,10 +2969,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_boundary       (<A
+>const char* g_mime_part_get_boundary        (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
@@ -3128,7 +2983,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1322"
+NAME="AEN2936"
 ></A
 ><P
 ></P
@@ -3181,7 +3036,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1335"
+NAME="AEN2949"
 ></A
 ><H3
 ><A
@@ -3201,10 +3056,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
+                                             const char *content,
                                              <GTKDOCLINK
 HREF="GUINT"
 >guint</GTKDOCLINK
@@ -3219,7 +3071,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1344"
+NAME="AEN2957"
 ></A
 ><P
 ></P
@@ -3291,139 +3143,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1361"
-></A
-><H3
-><A
-NAME="G-MIME-PART-APPEND-PRE-ENCODED-CONTENT"
-></A
->g_mime_part_append_pre_encoded_content ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_part_append_pre_encoded_content
-                                            (<A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
-> *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
-                                             <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
-> len,
-                                             <A
-HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
->GMimePartEncodingType</A
-> encoding);</PRE
-></TD
-></TR
-></TABLE
-><P
->Append some pre-encoded content</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1371"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mime_part</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> Mime part</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->content</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> content to append</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->len</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> content length</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->encoding</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> encoding type</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1392"
+NAME="AEN2974"
 ></A
 ><H3
 ><A
@@ -3444,10 +3164,7 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content,
+                                             const char *content,
                                              <GTKDOCLINK
 HREF="GUINT"
 >guint</GTKDOCLINK
@@ -3466,7 +3183,7 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1402"
+NAME="AEN2983"
 ></A
 ><P
 ></P
@@ -3555,7 +3272,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1423"
+NAME="AEN3004"
 ></A
 ><H3
 ><A
@@ -3590,7 +3307,7 @@ HREF="GBYTEARRAY"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1431"
+NAME="AEN3012"
 ></A
 ><P
 ></P
@@ -3645,13 +3362,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1444"
+NAME="AEN3025"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PART-GET-CONTENT"
+NAME="G-MIME-PART-SET-CONTENT-STREAM"
 ></A
->g_mime_part_get_content ()</H3
+>g_mime_part_set_content_stream ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -3661,28 +3378,23 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->* g_mime_part_get_content        (const <A
+>void        g_mime_part_set_content_stream  (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
-> *len);</PRE
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *content);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1453"
+NAME="AEN3032"
 ></A
 ><P
 ></P
@@ -3709,7 +3421,96 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> the GMimePart to be decoded.</TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>content</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3045"
+></A
+><H3
+><A
+NAME="G-MIME-PART-GET-CONTENT"
+></A
+>g_mime_part_get_content ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_part_get_content         (const <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> *len);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3053"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME part object</TD
 ></TR
 ><TR
 ><TD
@@ -3726,7 +3527,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> decoded length (to be set after processing)</TD
+> pointer to the content length</TD
 ></TR
 ><TR
 ><TD
@@ -3741,7 +3542,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a gchar * pointer to the raw contents of the MIME Part
+>a char * pointer to the raw contents of the MIME Part
 and sets <TT
 CLASS="LITERAL"
 >len</TT
@@ -3756,7 +3557,94 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1471"
+NAME="AEN3071"
+></A
+><H3
+><A
+NAME="G-MIME-PART-GET-CONTENT-OBJECT"
+></A
+>g_mime_part_get_content_object ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const <A
+HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
+>GMimeDataWrapper</A
+>* g_mime_part_get_content_object
+                                            (const <A
+HREF="gmime-gmime-part.html#GMIMEPART"
+>GMimePart</A
+> *mime_part);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN3079"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mime_part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME part object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the data-wrapper for the mime part's contents.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN3092"
 ></A
 ><H3
 ><A
@@ -3791,7 +3679,7 @@ multipart.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1479"
+NAME="AEN3100"
 ></A
 ><P
 ></P
@@ -3846,7 +3734,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1492"
+NAME="AEN3113"
 ></A
 ><H3
 ><A
@@ -3871,7 +3759,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1497"
+NAME="AEN3118"
 ></A
 ><P
 ></P
@@ -3926,13 +3814,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1510"
+NAME="AEN3131"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PART-WRITE-TO-STRING"
+NAME="G-MIME-PART-WRITE-TO-STREAM"
 ></A
->g_mime_part_write_to_string ()</H3
+>g_mime_part_write_to_stream ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -3942,7 +3830,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_part_write_to_string     (<A
+>void        g_mime_part_write_to_stream     (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
@@ -3950,10 +3838,10 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > toplevel,
-                                             <GTKDOCLINK
-HREF="GSTRING"
->GString</GTKDOCLINK
-> *string);</PRE
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -3961,7 +3849,7 @@ HREF="GSTRING"
 >Writes the contents of the MIME Part to <TT
 CLASS="PARAMETER"
 ><I
->string</I
+>stream</I
 ></TT
 >. If toplevel is set
 to TRUE, then the MIME Part header will contain needed MIME headers
@@ -3971,7 +3859,7 @@ for rfc822 messages.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1520"
+NAME="AEN3141"
 ></A
 ><P
 ></P
@@ -4025,14 +3913,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output string</TD
+> output stream</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -4043,7 +3931,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1537"
+NAME="AEN3158"
 ></A
 ><H3
 ><A
@@ -4059,10 +3947,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_part_to_string           (<A
+>char*       g_mime_part_to_string           (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
@@ -4080,7 +3965,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1546"
+NAME="AEN3166"
 ></A
 ><P
 ></P
@@ -4152,7 +4037,7 @@ headers for rfc822 messages.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1563"
+NAME="AEN3183"
 ></A
 ><H3
 ><A
@@ -4196,7 +4081,7 @@ HREF="MIME-PART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1574"
+NAME="AEN3194"
 ></A
 ><P
 ></P
@@ -4271,7 +4156,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1592"
+NAME="AEN3212"
 ></A
 ><H3
 ><A
@@ -4295,10 +4180,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *content_id);</PRE
+                                             const char *content_id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -4309,7 +4191,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1601"
+NAME="AEN3220"
 ></A
 ><P
 ></P
@@ -4393,7 +4275,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-data-wrapper.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -4465,7 +4347,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-content-type</B
+>gmime-data-wrapper</B
 ></FONT
 ></TD
 ><TD

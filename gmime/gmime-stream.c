@@ -27,12 +27,14 @@
 
 /**
  * g_mime_stream_construct:
- * @stream:
- * @template:
- * @type:
- * @start:
- * @end:
+ * @stream: stream
+ * @template: stream template
+ * @type: stream type
+ * @start: start boundary
+ * @end: end boundary
  *
+ * Initializes a new stream of type @type, using the virtual methods
+ * from @template, with bounds @start and @end.
  **/
 void
 g_mime_stream_construct (GMimeStream *stream, GMimeStream *template, int type, off_t start, off_t end)
@@ -60,9 +62,9 @@ g_mime_stream_construct (GMimeStream *stream, GMimeStream *template, int type, o
 
 /**
  * g_mime_stream_read:
- * @stream:
- * @buf:
- * @len:
+ * @stream: stream
+ * @buf: buffer
+ * @len: buffer length
  *
  * Attempts to read up to @len bytes from @stream into @buf.
  *
@@ -80,9 +82,9 @@ g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 
 /**
  * g_mime_stream_write:
- * @stream:
- * @buf:
- * @len:
+ * @stream: stream
+ * @buf: buffer
+ * @len: buffer length
  *
  * Attempts to write up to @len bytes of @buf to @stream.
  *
@@ -100,7 +102,7 @@ g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
 
 /**
  * g_mime_stream_flush:
- * @stream:
+ * @stream: stream
  *
  * Sync's the stream to disk.
  *
@@ -117,7 +119,7 @@ g_mime_stream_flush (GMimeStream *stream)
 
 /**
  * g_mime_stream_close:
- * @stream:
+ * @stream: stream
  *
  * Closes the stream.
  *
@@ -134,7 +136,7 @@ g_mime_stream_close (GMimeStream *stream)
 
 /**
  * g_mime_stream_eos:
- * @stream:
+ * @stream: stream
  *
  * Tests the end-of-stream indicator for @stream.
  *
@@ -151,7 +153,7 @@ g_mime_stream_eos (GMimeStream *stream)
 
 /**
  * g_mime_stream_reset:
- * @stream:
+ * @stream: stream
  *
  * Resets the stream.
  *
@@ -168,11 +170,23 @@ g_mime_stream_reset (GMimeStream *stream)
 
 /**
  * g_mime_stream_seek:
- * @stream:
- * @offset:
- * @whence:
+ * @stream: stream
+ * @offset: positional offset
+ * @whence: seek directive
  *
- * Seek to a position in the stream.
+ * Repositions the offset of the stream @stream to
+ * the argument @offset according to the
+ * directive @whence as follows:
+ *
+ *     GMIME_STREAM_SEEK_SET: The offset is set to @offset bytes.
+ *
+ *     GMIME_STREAM_SEEK_CUR: The offset is set to its current
+ *     location plus @offset bytes.
+ *
+ *     GMIME_STREAM_SEEK_END: The offset is set to the size of the
+ *     stream plus @offset bytes.
+ *
+ * Returns the resultant position on success or -1 on fail.
  **/
 off_t
 g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
@@ -185,7 +199,7 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 
 /**
  * g_mime_stream_tell:
- * @stream:
+ * @stream: stream
  *
  * Returns the current position within the stream.
  **/
@@ -200,7 +214,7 @@ g_mime_stream_tell (GMimeStream *stream)
 
 /**
  * g_mime_stream_length:
- * @stream:
+ * @stream: stream
  *
  * Returns the length of the stream or -1 on fail.
  **/
@@ -215,9 +229,9 @@ g_mime_stream_length (GMimeStream *stream)
 
 /**
  * g_mime_stream_substream:
- * @stream:
- * @start:
- * @end:
+ * @stream: stream
+ * @start: start boundary
+ * @end: end boundary
  *
  * Returns a substream of @stream with bounds @start and @end.
  **/
@@ -238,7 +252,7 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 
 /**
  * g_mime_stream_ref:
- * @stream:
+ * @stream: stream
  *
  * Ref's a stream.
  **/
@@ -253,7 +267,7 @@ g_mime_stream_ref (GMimeStream *stream)
 
 /**
  * g_mime_stream_unref:
- * @stream:
+ * @stream: stream
  *
  * Unref's a stream.
  **/
@@ -275,9 +289,9 @@ g_mime_stream_unref (GMimeStream *stream)
 
 /**
  * g_mime_stream_set_bounds:
- * @stream:
- * @start:
- * @end:
+ * @stream: stream
+ * @start: start boundary
+ * @end: end boundary
  *
  * Set the bounds on a stream.
  **/
@@ -298,10 +312,10 @@ g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
 
 /**
  * g_mime_stream_write_string:
- * @stream:
- * @string:
+ * @stream: stream
+ * @string: string to write
  *
- * Write's @string to @stream.
+ * Writes @string to @stream.
  *
  * Returns the number of bytes written.
  **/
@@ -317,10 +331,13 @@ g_mime_stream_write_string (GMimeStream *stream, const char *string)
 
 /**
  * g_mime_stream_printf:
- * @stream:
- * @fmt:
- * @args:
+ * @stream: stream
+ * @fmt: format
+ * @Varargs: arguments
  *
+ * Write formatted output to a stream.
+ *
+ * Returns the number of bytes written.
  **/
 ssize_t
 g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
@@ -348,8 +365,8 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
 
 /**
  * g_mime_stream_write_to_stream:
- * @src:
- * @dest:
+ * @src: source stream
+ * @dest: destination stream
  *
  * Attempts to write stream @src to stream @dest.
  *

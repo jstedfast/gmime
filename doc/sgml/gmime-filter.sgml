@@ -1,0 +1,315 @@
+<refentry id="gmime-gmime-filter" revision="20 Sep 2001">
+<refmeta>
+<refentrytitle>gmime-filter</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeFilter">GMimeFilter</link>;
+#define     <link linkend="GMIME-FILTER-CAPS">GMIME_FILTER</link>                    (filter)
+void        <link linkend="g-mime-filter-construct">g_mime_filter_construct</link>         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             <link linkend="GMimeFilter">GMimeFilter</link> *template);
+void        <link linkend="g-mime-filter-destroy">g_mime_filter_destroy</link>           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-copy">g_mime_filter_copy</link>             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
+void        <link linkend="g-mime-filter-filter">g_mime_filter_filter</link>            (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             char *in,
+                                             <link linkend="size-t">size_t</link> len,
+                                             <link linkend="size-t">size_t</link> prespace,
+                                             char **out,
+                                             <link linkend="size-t">size_t</link> *outlen,
+                                             <link linkend="size-t">size_t</link> *outprespace);
+void        <link linkend="g-mime-filter-complete">g_mime_filter_complete</link>          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             char *in,
+                                             <link linkend="size-t">size_t</link> len,
+                                             <link linkend="size-t">size_t</link> prespace,
+                                             char **out,
+                                             <link linkend="size-t">size_t</link> *outlen,
+                                             <link linkend="size-t">size_t</link> *outprespace);
+void        <link linkend="g-mime-filter-reset">g_mime_filter_reset</link>             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
+void        <link linkend="g-mime-filter-backup">g_mime_filter_backup</link>            (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             const char *data,
+                                             <link linkend="size-t">size_t</link> length);
+void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             <link linkend="size-t">size_t</link> size,
+                                             int keep);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilter">struct GMimeFilter</title>
+<programlisting>struct GMimeFilter {
+	struct _GMimeFilterPrivate *priv;
+	
+	char *outreal;		/* real malloc'd buffer */
+	char *outbuf;		/* first 'writable' position allowed (outreal + outpre) */
+	char *outptr;
+	int outsize;
+	int outpre;		/* prespace of this buffer */
+	
+	char *backbuf;
+	int backsize;
+	int backlen;		/* significant data there */
+	
+	/* virtual functions */
+	void (*destroy)  (GMimeFilter *filter);
+	
+	GMimeFilter *(*copy) (GMimeFilter *filter);
+	
+	void (*filter)   (GMimeFilter *filter,
+			  char *in, size_t len, size_t prespace,
+			  char **out, size_t *outlen, size_t *outprespace);
+	
+	void (*complete) (GMimeFilter *filter,
+			  char *in, size_t len, size_t prespace,
+			  char **out, size_t *outlen, size_t *outprespace);
+	
+	void (*reset)    (GMimeFilter *filter);
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-FILTER-CAPS">GMIME_FILTER()</title>
+<programlisting>#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
+</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-construct">g_mime_filter_construct ()</title>
+<programlisting>void        g_mime_filter_construct         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             <link linkend="GMimeFilter">GMimeFilter</link> *template);</programlisting>
+<para>
+Initializes a filter object using the virtual methods in <parameter>template</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><parameter>template</parameter>&nbsp;:</entry>
+<entry> filter template
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-destroy">g_mime_filter_destroy ()</title>
+<programlisting>void        g_mime_filter_destroy           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>
+<para>
+Destroys <parameter>filter</parameter> and releases the memory to the system.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-copy">g_mime_filter_copy ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_copy             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a duplicate of <parameter>filter</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-filter">g_mime_filter_filter ()</title>
+<programlisting>void        g_mime_filter_filter            (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             char *in,
+                                             <link linkend="size-t">size_t</link> len,
+                                             <link linkend="size-t">size_t</link> prespace,
+                                             char **out,
+                                             <link linkend="size-t">size_t</link> *outlen,
+                                             <link linkend="size-t">size_t</link> *outprespace);</programlisting>
+<para>
+Filters the input data and writes it to <parameter>out</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input buffer
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> input buffer length
+</entry></row>
+<row><entry align="right"><parameter>prespace</parameter>&nbsp;:</entry>
+<entry> prespace buffer length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> pointer to output buffer
+</entry></row>
+<row><entry align="right"><parameter>outlen</parameter>&nbsp;:</entry>
+<entry> pointer to output length
+</entry></row>
+<row><entry align="right"><parameter>outprespace</parameter>&nbsp;:</entry>
+<entry> pointer to output prespace buffer length
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-complete">g_mime_filter_complete ()</title>
+<programlisting>void        g_mime_filter_complete          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             char *in,
+                                             <link linkend="size-t">size_t</link> len,
+                                             <link linkend="size-t">size_t</link> prespace,
+                                             char **out,
+                                             <link linkend="size-t">size_t</link> *outlen,
+                                             <link linkend="size-t">size_t</link> *outprespace);</programlisting>
+<para>
+Completes the filtering.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input buffer
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> input length
+</entry></row>
+<row><entry align="right"><parameter>prespace</parameter>&nbsp;:</entry>
+<entry> prespace buffer length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> pointer to output buffer
+</entry></row>
+<row><entry align="right"><parameter>outlen</parameter>&nbsp;:</entry>
+<entry> pointer to output length
+</entry></row>
+<row><entry align="right"><parameter>outprespace</parameter>&nbsp;:</entry>
+<entry> pointer to output prespace buffer length
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-reset">g_mime_filter_reset ()</title>
+<programlisting>void        g_mime_filter_reset             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>
+<para>
+Resets the filter.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-backup">g_mime_filter_backup ()</title>
+<programlisting>void        g_mime_filter_backup            (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             const char *data,
+                                             <link linkend="size-t">size_t</link> length);</programlisting>
+<para>
+Sets number of bytes backed up on the input, new calls replace
+previous ones</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>length</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-set-size">g_mime_filter_set_size ()</title>
+<programlisting>void        g_mime_filter_set_size          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
+                                             <link linkend="size-t">size_t</link> size,
+                                             int keep);</programlisting>
+<para>
+Ensure this much size available for filter output (if required)</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
+<entry> filter
+</entry></row>
+<row><entry align="right"><parameter>size</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+<row><entry align="right"><parameter>keep</parameter>&nbsp;:</entry>
+<entry> 
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

@@ -321,6 +321,12 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 }
 
 
+/**
+ * g_mime_stream_filter_new_with_stream:
+ * @stream:
+ *
+ * Returns a new filter stream with @stream as its source.
+ **/
 GMimeStream *
 g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 {
@@ -349,6 +355,15 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 }
 
 
+/**
+ * g_mime_stream_filter_add:
+ * @fstream: filter stream
+ * @filter: filter
+ *
+ * Adds a @filter to @fstream.
+ *
+ * Returns an id for the filter.
+ **/
 int
 g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 {
@@ -376,6 +391,14 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 }
 
 
+/**
+ * g_mime_stream_filter_remove:
+ * @fstream: filter stream
+ * @id: filter id
+ *
+ * Removed a filter from the stream based on the id (as returned from
+ * filter_add).
+ **/
 void
 g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id)
 {

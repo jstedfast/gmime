@@ -1,3 +1,12 @@
+    &gmime-gmime-stream;
+    &gmime-gmime-stream-file;
+    &gmime-gmime-stream-fs;
+    &gmime-gmime-stream-mem;
+    &gmime-gmime-stream-filter;
+    &gmime-gmime-filter;
+    &gmime-gmime-filter-basic;
+    &gmime-gmime-filter-crlf;
+    &gmime-gmime-data-wrapper;
     &gmime-gmime-param;
     &gmime-gmime-header;
     &gmime-gmime-content-type;

@@ -1,3 +1,9 @@
+2001-09-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+	* gmime-part.c (g_mime_part_get_content_object): Added.
+
 2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-fs.c (stream_seek): Improve.

@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-param</TITLE
+>gmime-stream-filter</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-crlf"
-HREF="gmime-gmime-filter-crlf.html"><LINK
+TITLE="gmime-stream-mem"
+HREF="gmime-gmime-stream-mem.html"><LINK
 REL="NEXT"
-TITLE="gmime-header"
-HREF="gmime-gmime-header.html"></HEAD
+TITLE="gmime-filter"
+HREF="gmime-gmime-filter.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARAM"
->gmime-param</A
+NAME="GMIME-GMIME-STREAM-FILTER"
+>gmime-stream-filter</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1471"
+NAME="AEN956"
 ></A
 ><H2
 >Name</H2
->gmime-param&nbsp;--&nbsp;</DIV
+>gmime-stream-filter&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1474"
+NAME="AEN959"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,51 +146,48 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->;
+#define     <A
+HREF="gmime-gmime-stream-filter.html#GMIME-STREAM-FILTER-TYPE-CAPS"
+>GMIME_STREAM_FILTER_TYPE</A
+>
+#define     <A
+HREF="gmime-gmime-stream-filter.html#GMIME-IS-STREAM-FILTER-CAPS"
+>GMIME_IS_STREAM_FILTER</A
+>          (stream)
+#define     <A
+HREF="gmime-gmime-stream-filter.html#GMIME-STREAM-FILTER-CAPS"
+>GMIME_STREAM_FILTER</A
+>             (stream)
 <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
 >* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW"
->g_mime_param_new</A
->                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
-<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW-FROM-STRING"
->g_mime_param_new_from_string</A
->    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+HREF="gmime-gmime-stream-filter.html#G-MIME-STREAM-FILTER-NEW-WITH-STREAM"
+>g_mime_stream_filter_new_with_stream</A
+>
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);
+int         <A
+HREF="gmime-gmime-stream-filter.html#G-MIME-STREAM-FILTER-ADD"
+>g_mime_stream_filter_add</A
+>        (<GTKDOCLINK
+HREF="GMIMESTREAMFILTER"
+>GMimeStreamFilter</GTKDOCLINK
+> *fstream,
+                                             <A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+> *filter);
 void        <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
->g_mime_param_destroy</A
->            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-TO-STRING"
->g_mime_param_to_string</A
->          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+HREF="gmime-gmime-stream-filter.html#G-MIME-STREAM-FILTER-REMOVE"
+>g_mime_stream_filter_remove</A
+>     (<GTKDOCLINK
+HREF="GMIMESTREAMFILTER"
+>GMimeStreamFilter</GTKDOCLINK
+> *fstream,
+                                             int id);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -198,7 +195,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1490"
+NAME="AEN973"
 ></A
 ><H2
 >Description</H2
@@ -208,20 +205,20 @@ NAME="AEN1490"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1493"
+NAME="AEN976"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1495"
+NAME="AEN978"
 ></A
 ><H3
 ><A
-NAME="GMIMEPARAM"
+NAME="GMIME-STREAM-FILTER-TYPE-CAPS"
 ></A
->struct GMimeParam</H3
+>GMIME_STREAM_FILTER_TYPE</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -231,10 +228,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeParam {
-	gchar *name;
-	gchar *value;
-};</PRE
+>#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")</PRE
 ></TD
 ></TR
 ></TABLE
@@ -244,13 +238,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1500"
+NAME="AEN983"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-NEW"
+NAME="GMIME-IS-STREAM-FILTER-CAPS"
 ></A
->g_mime_param_new ()</H3
+>GMIME_IS_STREAM_FILTER()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -260,28 +254,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+>#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILTER_TYPE)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1509"
+NAME="AEN988"
 ></A
 ><P
 ></P
@@ -301,15 +283,61 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->name</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter name</TD
+>&nbsp;</TD
 ></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN997"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-FILTER-CAPS"
+></A
+>GMIME_STREAM_FILTER()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1002"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -318,14 +346,86 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->value</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter value</TD
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1011"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-FILTER-NEW-WITH-STREAM"
+></A
+>g_mime_stream_filter_new_with_stream ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_filter_new_with_stream
+                                            (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1019"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -340,7 +440,12 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new paramter structure.</TD
+>a new filter stream with <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> as its source.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -351,13 +456,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1526"
+NAME="AEN1033"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-NEW-FROM-STRING"
+NAME="G-MIME-STREAM-FILTER-ADD"
 ></A
->g_mime_param_new_from_string ()</H3
+>g_mime_stream_filter_add ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -367,24 +472,35 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new_from_string    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>int         g_mime_stream_filter_add        (<GTKDOCLINK
+HREF="GMIMESTREAMFILTER"
+>GMimeStreamFilter</GTKDOCLINK
+> *fstream,
+                                             <A
+HREF="gmime-gmime-filter.html#GMIMEFILTER"
+>GMimeFilter</A
+> *filter);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
-></P
+>Adds a <TT
+CLASS="PARAMETER"
+><I
+>filter</I
+></TT
+> to <TT
+CLASS="PARAMETER"
+><I
+>fstream</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1534"
+NAME="AEN1043"
 ></A
 ><P
 ></P
@@ -404,14 +520,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>fstream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> string to parse into a GMimeParam structure</TD
+> filter stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>filter</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> filter</TD
 ></TR
 ><TR
 ><TD
@@ -426,10 +559,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeParam structure based on <GTKDOCLINK
-HREF="STRING"
->string</GTKDOCLINK
->.</TD
+>an id for the filter.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -440,13 +570,13 @@ HREF="STRING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1548"
+NAME="AEN1060"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-DESTROY"
+NAME="G-MIME-STREAM-FILTER-REMOVE"
 ></A
->g_mime_param_destroy ()</H3
+>g_mime_stream_filter_remove ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -456,22 +586,23 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_param_destroy            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+>void        g_mime_stream_filter_remove     (<GTKDOCLINK
+HREF="GMIMESTREAMFILTER"
+>GMimeStreamFilter</GTKDOCLINK
+> *fstream,
+                                             int id);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Releases all memory used by this mime param back to the Operating
-System.</P
+>Removed a filter from the stream based on the id (as returned from
+filter_add).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1555"
+NAME="AEN1067"
 ></A
 ><P
 ></P
@@ -491,69 +622,15 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>fstream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Mime param to destroy</TD
+> filter stream</TD
 ></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1564"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-TO-STRING"
-></A
->g_mime_param_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_param_to_string          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1572"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -562,30 +639,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>id</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Param</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->an allocated string containing the MIME Param in the form:
-name="value"</TD
+> filter id</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -609,7 +670,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -663,7 +724,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -681,7 +742,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-crlf</B
+>gmime-stream-mem</B
 ></FONT
 ></TD
 ><TD
@@ -691,7 +752,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-header</B
+>gmime-filter</B
 ></FONT
 ></TD
 ></TR

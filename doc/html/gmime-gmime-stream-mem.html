@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-param</TITLE
+>gmime-stream-mem</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-crlf"
-HREF="gmime-gmime-filter-crlf.html"><LINK
+TITLE="gmime-stream-fs"
+HREF="gmime-gmime-stream-fs.html"><LINK
 REL="NEXT"
-TITLE="gmime-header"
-HREF="gmime-gmime-header.html"></HEAD
+TITLE="gmime-stream-filter"
+HREF="gmime-gmime-stream-filter.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-fs.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-stream-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARAM"
->gmime-param</A
+NAME="GMIME-GMIME-STREAM-MEM"
+>gmime-stream-mem</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1471"
+NAME="AEN808"
 ></A
 ><H2
 >Name</H2
->gmime-param&nbsp;--&nbsp;</DIV
+>gmime-stream-mem&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1474"
+NAME="AEN811"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,51 +146,60 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->;
+#define     <A
+HREF="gmime-gmime-stream-mem.html#GMIME-STREAM-MEM-TYPE-CAPS"
+>GMIME_STREAM_MEM_TYPE</A
+>
+#define     <A
+HREF="gmime-gmime-stream-mem.html#GMIME-IS-STREAM-MEM-CAPS"
+>GMIME_IS_STREAM_MEM</A
+>             (stream)
+#define     <A
+HREF="gmime-gmime-stream-mem.html#GMIME-STREAM-MEM-CAPS"
+>GMIME_STREAM_MEM</A
+>                (stream)
 <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
 >* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW"
->g_mime_param_new</A
->                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
+HREF="gmime-gmime-stream-mem.html#G-MIME-STREAM-MEM-NEW"
+>g_mime_stream_mem_new</A
+>          (void);
 <A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
 >* <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW-FROM-STRING"
->g_mime_param_new_from_string</A
->    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+HREF="gmime-gmime-stream-mem.html#G-MIME-STREAM-MEM-NEW-WITH-BYTE-ARRAY"
+>g_mime_stream_mem_new_with_byte_array</A
+>
+                                            (<GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *array);
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-stream-mem.html#G-MIME-STREAM-MEM-NEW-WITH-BUFFER"
+>g_mime_stream_mem_new_with_buffer</A
+>
+                                            (const char *buffer,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);
 void        <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
->g_mime_param_destroy</A
->            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-TO-STRING"
->g_mime_param_to_string</A
->          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+HREF="gmime-gmime-stream-mem.html#G-MIME-STREAM-MEM-SET-BYTE-ARRAY"
+>g_mime_stream_mem_set_byte_array</A
+>
+                                            (<GTKDOCLINK
+HREF="GMIMESTREAMMEM"
+>GMimeStreamMem</GTKDOCLINK
+> *mem,
+                                             <GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *array);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -198,7 +207,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1490"
+NAME="AEN828"
 ></A
 ><H2
 >Description</H2
@@ -208,20 +217,20 @@ NAME="AEN1490"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1493"
+NAME="AEN831"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1495"
+NAME="AEN833"
 ></A
 ><H3
 ><A
-NAME="GMIMEPARAM"
+NAME="GMIME-STREAM-MEM-TYPE-CAPS"
 ></A
->struct GMimeParam</H3
+>GMIME_STREAM_MEM_TYPE</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -231,10 +240,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeParam {
-	gchar *name;
-	gchar *value;
-};</PRE
+>#define GMIME_STREAM_MEM_TYPE g_str_hash ("GMimeStreamMem")</PRE
 ></TD
 ></TR
 ></TABLE
@@ -244,13 +250,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1500"
+NAME="AEN838"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-NEW"
+NAME="GMIME-IS-STREAM-MEM-CAPS"
 ></A
->g_mime_param_new ()</H3
+>GMIME_IS_STREAM_MEM()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -260,28 +266,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+>#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MEM_TYPE)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1509"
+NAME="AEN843"
 ></A
 ><P
 ></P
@@ -301,46 +295,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->name</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> parameter name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> parameter value</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a new paramter structure.</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -351,13 +313,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1526"
+NAME="AEN852"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-NEW-FROM-STRING"
+NAME="GMIME-STREAM-MEM-CAPS"
 ></A
->g_mime_param_new_from_string ()</H3
+>GMIME_STREAM_MEM()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -367,24 +329,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
->* g_mime_param_new_from_string    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>#define GMIME_STREAM_MEM(stream) ((GMimeStreamMem *) stream)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1534"
+NAME="AEN857"
 ></A
 ><P
 ></P
@@ -404,14 +358,152 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> string to parse into a GMimeParam structure</TD
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN866"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-MEM-NEW"
+></A
+>g_mime_stream_mem_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_mem_new          (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN873"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new memory stream.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN882"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-MEM-NEW-WITH-BYTE-ARRAY"
+></A
+>g_mime_stream_mem_new_with_byte_array ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_mem_new_with_byte_array
+                                            (<GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *array);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN890"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>array</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -426,9 +518,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeParam structure based on <GTKDOCLINK
-HREF="STRING"
->string</GTKDOCLINK
+>a new memory stream using <TT
+CLASS="PARAMETER"
+><I
+>array</I
+></TT
 >.</TD
 ></TR
 ></TBODY
@@ -440,13 +534,13 @@ HREF="STRING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1548"
+NAME="AEN904"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-DESTROY"
+NAME="G-MIME-STREAM-MEM-NEW-WITH-BUFFER"
 ></A
->g_mime_param_destroy ()</H3
+>g_mime_stream_mem_new_with_buffer ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -456,22 +550,26 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_param_destroy            (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_mem_new_with_buffer
+                                            (const char *buffer,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> len);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Releases all memory used by this mime param back to the Operating
-System.</P
+></P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1555"
+NAME="AEN912"
 ></A
 ><P
 ></P
@@ -491,69 +589,15 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>buffer</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Mime param to destroy</TD
+>&nbsp;</TD
 ></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1564"
-></A
-><H3
-><A
-NAME="G-MIME-PARAM-TO-STRING"
-></A
->g_mime_param_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_param_to_string          (<A
-HREF="gmime-gmime-param.html#GMIMEPARAM"
->GMimeParam</A
-> *param);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1572"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -562,14 +606,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>len</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Param</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -584,8 +628,103 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an allocated string containing the MIME Param in the form:
-name="value"</TD
+>a new memory stream initialized with <TT
+CLASS="PARAMETER"
+><I
+>buffer</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN930"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-MEM-SET-BYTE-ARRAY"
+></A
+>g_mime_stream_mem_set_byte_array ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_mem_set_byte_array
+                                            (<GTKDOCLINK
+HREF="GMIMESTREAMMEM"
+>GMimeStreamMem</GTKDOCLINK
+> *mem,
+                                             <GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *array);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the byte array on the memory stream. Note: The memory stream
+is not responsible for freeing the byte array.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN938"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>mem</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>array</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -609,7 +748,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-fs.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -663,7 +802,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-stream-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -681,7 +820,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-crlf</B
+>gmime-stream-fs</B
 ></FONT
 ></TD
 ><TD
@@ -691,7 +830,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-header</B
+>gmime-stream-filter</B
 ></FONT
 ></TD
 ></TR

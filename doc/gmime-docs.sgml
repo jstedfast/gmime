@@ -2,12 +2,21 @@
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
+<!entity gmime-data-wrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
 <!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
+<!entity gmime-stream SYSTEM "sgml/gmime-stream.sgml">
+<!entity gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
+<!entity gmime-stream-fs SYSTEM "sgml/gmime-stream-fs.sgml">
+<!entity gmime-stream-mem SYSTEM "sgml/gmime-stream-mem.sgml">
+<!entity gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
+<!entity gmime-filter SYSTEM "sgml/gmime-filter.sgml">
+<!entity gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 ]>
 
 <book>
@@ -35,7 +44,28 @@
 
     <para>GMime is a MIME (Multipurpose Internet Mail Extension)
     utility library. It is meant for creating, editing, and parsing
-    MIME messages.</para>
+    MIME messages and structures.</para>
+  </chapter>
+
+  <chapter id="streams">
+    <title>Streams</title>
+
+    <para>Streams are the fundamental method for reading and writing
+    data used by GMime.</para>
+
+    <para></para>
+  </chapter>
+
+  <chapter id="data-wrappers">
+    <title>Data Wrappers</title>
+  </chapter>
+
+  <chapter id="internet-addresses">
+    <title>Internet Addresses</title>
+  </chapter>
+
+  <chapter id="mime">
+    <title>Multipurpose Internet Mail Extension</title>
   </chapter>
 
   <chapter id="libgmime">
@@ -52,9 +82,18 @@
     the ONLY exception to this are functions that return GList
     structures.</para>
 
+    &gmime-stream;
+    &gmime-stream-file;
+    &gmime-stream-fs;
+    &gmime-stream-mem;
+    &gmime-stream-filter;
+    &gmime-filter;
+    &gmime-filter-basic;
+    &gmime-filter-crlf;
     &gmime-param;
     &gmime-header;
     &gmime-content-type;
+    &gmime-data-wrapper;
     &gmime-part;
     &gmime-message;
     &gmime-utils;

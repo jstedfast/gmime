@@ -177,6 +177,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 /**
  * g_mime_stream_mem_new:
  *
+ * Returns a new memory stream.
  **/
 GMimeStream *
 g_mime_stream_mem_new (void)
@@ -197,6 +198,7 @@ g_mime_stream_mem_new (void)
  * g_mime_stream_mem_new_with_byte_array:
  * @array:
  *
+ * Returns a new memory stream using @array.
  **/
 GMimeStream *
 g_mime_stream_mem_new_with_byte_array (GByteArray *array)
@@ -218,6 +220,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
  * @buffer:
  * @len:
  *
+ * Returns a new memory stream initialized with @buffer.
  **/
 GMimeStream *
 g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
@@ -238,9 +241,11 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 
 /**
  * g_mime_stream_mem_set_byte_array:
- * @mem:
- * @array:
+ * @mem: 
+ * @array: 
  *
+ * Sets the byte array on the memory stream. Note: The memory stream
+ * is not responsible for freeing the byte array.
  **/
 void
 g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
