@@ -623,7 +623,12 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	
 	start = parser_offset (parser, NULL);
 	*found = parser_scan_content (parser, NULL);
-	end = parser_offset (parser, NULL) - 1;  /* last '\n' belongs to the boundary */
+	if (*found != FOUND_EOS) {
+		/* last '\n' belongs to the boundary */
+		end = parser_offset (parser, NULL) - 1;
+	} else {
+		end = parser_offset (parser, NULL);
+	}
 	
 	encoding = g_mime_part_get_encoding (mime_part);
 	stream = g_mime_stream_substream (parser->stream, start, end);
