@@ -1,3 +1,21 @@
+2001-08-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* Makefile.am: Added gmime-charset.[c,h] to the build.
+
+	* gmime-charset.[c,h]: New source files for managing charset
+	related issues.
+	(g_mime_charset_init): New function to retrieve the user's locale
+	information for later use with gmime_charset_locale_name.
+	(g_mime_charset_locale_name): New function to return user's
+	locale.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_decode): linear
+	whitespace isn't the only thing that can delimit atoms.
+	(get_codeset): Removed in favor of the new gmime-charset
+	functions.
+	(g_mime_utils_8bit_header_encode): Use g_mime_charset_locale_name.
+	(encode_8bit_word): And here too.
+
 2001-08-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (decode_mailbox): When returning due to a

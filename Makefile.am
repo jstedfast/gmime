@@ -16,6 +16,7 @@ libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_la_SOURCES = 		\
 	alloca.c		\
+	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-header.c		\
 	gmime-message.c		\
@@ -30,6 +31,7 @@ gmimeincdir = $(includedir)/gmime
 gmimeinc_HEADERS = 		\
 	gmime.h			\
 	gmime-table-private.h	\
+	gmime-charset.h		\
 	gmime-content-type.h	\
 	gmime-header.h		\
 	gmime-message.h		\

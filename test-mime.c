@@ -160,6 +160,27 @@ test_encodings (void)
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
 	
+	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
+	
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
@@ -349,7 +370,7 @@ test_date (void)
 int main (int argc, char *argv[])
 {
 	test_date ();
-
+	
 	test_onepart ();
 	
 	test_multipart ();

@@ -28,11 +28,11 @@
 #include "gmime-utils.h"
 #include "gmime-table-private.h"
 #include "gmime-part.h"
+#include "gmime-charset.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include <langinfo.h>
 
 #define d(x)
 
@@ -121,20 +121,6 @@ static char *tm_months[] = {
 static char *tm_days[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
-
-#define DEFAULT_CODESET "iso-8859-1"
-
-static const gchar*
-get_codeset (void)
-{
-	const gchar * codeset;
-
-	codeset = nl_langinfo (CODESET);
-	if (!codeset || !*codeset)
-		codeset = DEFAULT_CODESET;
-
-	return codeset;
-}
 
 
 /**
@@ -753,10 +739,11 @@ quoted_decode (const guchar *in, gint len, guchar *out)
 }
 
 static gboolean
-is_8bit_word_encoded (const guchar * word)
+is_8bit_word_encoded (const guchar *atom)
 {
-	guint len = strlen (word);
-	return len>=7 && word[0]=='=' && word[1]=='?' && word[len-2]=='?' && word[len-1]=='=';
+	guint len = strlen (atom);
+	
+	return len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2);
 }
 
 static guchar *
@@ -811,6 +798,8 @@ decode_encoded_8bit_word (const guchar *word)
 }
 
 
+#define is_delim(c) (is_type (c, IS_SPECIAL) || isspace (c))
+
 /**
  * g_mime_utils_8bit_header_decode: Decode an encoded header.
  * @in: header to decode
@@ -834,12 +823,12 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 	while (inptr && *inptr) {
 		guchar c = *inptr++;
 		
-		if (isspace (c) && !last_was_space) {
-			/* we reached the end of a 'word' */
+		if (is_delim (c) && !last_was_space) {
+			/* we reached the end of an atom */
 			gboolean was_encoded;
 			const gchar *cword;
 			guchar *dword = NULL;
-
+			
 			if ((was_encoded = is_8bit_word_encoded (word->str)))
 				cword = dword = decode_encoded_8bit_word (word->str);
 			else
@@ -862,14 +851,14 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 			}
 			
 			last_was_encoded = was_encoded;
-
+			
 			g_string_truncate (whtspc, 0);
 			g_string_truncate (word, 0);
 		}
 		
-		if (isspace (c)) {
+		if (is_delim (c)) {
 			g_string_append_c (whtspc, c);
-			last_was_space = TRUE;
+			last_was_space = isspace (c);
 		} else {
 			g_string_append_c (word, c);
 			last_was_space = FALSE;
@@ -880,7 +869,7 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 		gboolean was_encoded;
 		const guchar *cword;
 		guchar *dword = NULL;
-
+		
 		if ((was_encoded = is_8bit_word_encoded (word->str)))
 			cword = dword = decode_encoded_8bit_word (word->str);
 		else
@@ -985,8 +974,8 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	
 	if (this_was_encoded)
 		*this_was_encoded = TRUE;
-
-	return g_strdup_printf ("=?%s?%c?%s=", get_codeset(), encoding, encoded);	
+	
+	return g_strdup_printf ("=?%s?%c?%s=", g_mime_charset_locale_name (), encoding, encoded);	
 }
 
 
@@ -1047,8 +1036,8 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 				ewhtspc = alloca (whtspc->len * 3 + 4);
 				len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
 				ewhtspc[len] = '\0';
-		
-				g_string_sprintfa (out, " =?%s?q?%s?= ", get_codeset(), ewhtspc);
+				
+				g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), ewhtspc);
 			} else {
 				g_string_append (out, whtspc->str);
 			}
@@ -1094,8 +1083,8 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 			ewhtspc = alloca (whtspc->len * 3 + 4);
 			len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
 			ewhtspc[len] = '\0';
-		
-			g_string_sprintfa (out, " =?%s?q?%s?= ", get_codeset(), ewhtspc);
+			
+			g_string_sprintfa (out, " =?%s?q?%s?= ", g_mime_charset_locale_name (), ewhtspc);
 		} else {
 			g_string_append (out, whtspc->str);
 		}
@@ -1190,8 +1179,8 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 	
 	if (inlen + ((guchar *)save)[0] > 2) {
 		const guchar *inend = in + inlen - 2;
-		register gint c1=0, c2=0, c3=0;
-		register gint already;
+		register int c1 = 0, c2 = 0, c3 = 0;
+		register int already;
 		
 		already = *state;
 		
@@ -1210,7 +1199,7 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 			c3 = *inptr++;
 			*outptr++ = base64_alphabet [c1 >> 2];
 			*outptr++ = base64_alphabet [(c2 >> 4) | ((c1 & 0x3) << 4)];
-			*outptr++ = base64_alphabet [((c2 &0x0f) << 2) | (c3 >> 6)];
+			*outptr++ = base64_alphabet [((c2 & 0x0f) << 2) | (c3 >> 6)];
 			*outptr++ = base64_alphabet [c3 & 0x3f];
 			/* this is a bit ugly ... */
 			if ((++already) >= 19) {
