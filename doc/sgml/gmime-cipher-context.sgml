@@ -50,6 +50,7 @@ int         <link linkend="g-mime-cipher-export-keys">g_mime_cipher_export_keys<
                                              <link linkend="GPtrArray">GPtrArray</link> *keys,
                                              <link linkend="GMimeStream">GMimeStream</link> *ostream,
                                              <link linkend="GError">GError</link> **err);
+
 void        <link linkend="g-mime-cipher-validity-init">g_mime_cipher_validity_init</link>     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
 <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-cipher-validity-new">g_mime_cipher_validity_new</link>
                                             (void);

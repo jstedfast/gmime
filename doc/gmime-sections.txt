@@ -875,7 +875,7 @@ g_mime_cipher_encrypt
 g_mime_cipher_decrypt
 g_mime_cipher_import_keys
 g_mime_cipher_export_keys
-
+<SUBSECTION>
 g_mime_cipher_validity_init
 g_mime_cipher_validity_new
 g_mime_cipher_validity_clear
