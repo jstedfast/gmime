@@ -1,3 +1,12 @@
+2004-06-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_scan_content): Updated to handle
+	crlf sequences.
+	(parser_scan_mime_part_content): Same.
+	(crlf2lf): New function to convert CRLF to LF.
+	(parser_scan_multipart_face): Convert the pre/postface into lf
+	format.
+
 2004-06-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* util/url-scanner.c (g_url_web_end): Some fixes that I had to do

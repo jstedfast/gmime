@@ -832,10 +832,13 @@ parser_step_headers (GMimeParser *parser)
 			}
 			
 			/* check to see if we've reached the end of the headers */
-			if (!priv->midline && inptr == start)
+			if (!priv->midline && (inptr == start || (inptr - start == 1 && *start == '\r')))
 				goto headers_end;
 			
 			len = inptr - start;
+			if (inptr[-1] == '\r')
+				len--;
+			
 			header_backup (priv, start, len);
 			
 			if (inptr < inend) {
@@ -973,6 +976,9 @@ check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, si
 {
 	off_t offset = parser_offset (priv, (unsigned char *) start);
 	
+	if (start[len - 1] == '\r')
+		len--;
+	
 	if (possible_boundary (priv->scan_from, start, len)) {
 		struct _boundary_stack *s;
 		
@@ -1017,7 +1023,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, si
  **/
 
 static int
-parser_scan_content (GMimeParser *parser, GByteArray *content)
+parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register unsigned char *inptr;
@@ -1061,9 +1067,10 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 			len = inptr - start;
 			
 			if (inptr < inend) {
-				inptr++;
 				if ((found = check_boundary (priv, start, len)))
 					goto boundary;
+				
+				inptr++;
 				len++;
 			} else {
 				/* didn't find an end-of-line */
@@ -1092,6 +1099,15 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	/* don't chew up the boundary */
 	priv->inptr = start;
 	
+	if (found != FOUND_EOS) {
+		if (inptr[-1] == '\r')
+			*crlf = 2;
+		else
+			*crlf = 1;
+	} else {
+		*crlf = 0;
+	}
+	
 	return found;
 }
 
@@ -1104,19 +1120,20 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
 	off_t start, end;
+	int crlf;
 	
 	if (priv->persist_stream && priv->seekable)
 		start = parser_offset (priv, NULL);
 	else
 		content = g_byte_array_new ();
 	
-	*found = parser_scan_content (parser, content);
+	*found = parser_scan_content (parser, content, &crlf);
 	if (*found != FOUND_EOS) {
 		/* last '\n' belongs to the boundary */
 		if (priv->persist_stream && priv->seekable)
-			end = parser_offset (priv, NULL) - 1;
+			end = parser_offset (priv, NULL) - crlf;
 		else
-			g_byte_array_set_size (content, MAX (content->len - 1, 0));
+			g_byte_array_set_size (content, MAX (content->len - crlf, 0));
 	} else if (priv->persist_stream && priv->seekable) {
 		end = parser_offset (priv, NULL);
 	}
@@ -1214,27 +1231,52 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	return object;
 }
 
+static void
+crlf2lf (unsigned char *in)
+{
+	register unsigned char *inptr = in;
+	register unsigned char *outptr;
+	
+	while (*inptr != '\0' && !(inptr[0] == '\r' && inptr[1] == '\n'))
+		inptr++;
+	
+	if (*inptr == '\0')
+		return;
+	
+	outptr = inptr++;
+	
+	while (*inptr != '\0') {
+		while (*inptr != '\0' && !(inptr[0] == '\r' && inptr[1] == '\n'))
+			*outptr++ = *inptr++;
+		
+		if (*inptr == '\r')
+			inptr++;
+	}
+	
+	*outptr = '\0';
+}
+
 static int
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
 	GByteArray *buffer;
 	const char *face;
-	int found;
+	int crlf, found;
 	
 	buffer = g_byte_array_new ();
-	found = parser_scan_content (parser, buffer);
+	found = parser_scan_content (parser, buffer, &crlf);
 	
-	/* last '\n' belongs to the boundary */
-	if (buffer->len) {
-		buffer->data[buffer->len - 1] = '\0';
+	if (buffer->len > crlf) {
+		/* last '\n' belongs to the boundary */
+		buffer->data[buffer->len - crlf] = '\0';
+		crlf2lf (buffer->data);
 		face = buffer->data;
-	} else
-		face = NULL;
-	
-	if (preface)
-		g_mime_multipart_set_preface (multipart, face);
-	else
-		g_mime_multipart_set_postface (multipart, face);
+		
+		if (preface)
+			g_mime_multipart_set_preface (multipart, face);
+		else
+			g_mime_multipart_set_postface (multipart, face);
+	}
 	
 	g_byte_array_free (buffer, TRUE);
 	
