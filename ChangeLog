@@ -1,3 +1,10 @@
+2005-03-15  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/Makefile.am: Build ObjectStream.cs
+
+	* mono/ObjectStream.cs: Added.  Implements a .net Stream for
+	getting the conents from a GMime.Object. 
+
 2005-03-12  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metadata: Tag the return values of

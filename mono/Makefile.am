@@ -18,6 +18,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gmime-sharp.pc
 
 sources = 				\
+	ObjectStream.cs			\
 	#
 
 build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
