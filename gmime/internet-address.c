@@ -755,7 +755,7 @@ decode_mailbox (const char **in)
 		if (name)
 			g_string_free (name, TRUE);
 		g_string_free (addr, TRUE);
-		*in = inptr;
+		*in = inptr + 1;
 		
 		return NULL;
 	}

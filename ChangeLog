@@ -1,5 +1,9 @@
 2002-09-01  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* internet-address.c (decode_mailbox): When erroring out due to no
+	local part in the add-spec, set *in to inptr + 1 so we don't get
+	into an infinite loop.
+
 	* gmime-message-part.c (message_part_remove_header): Same as
 	below.
 
