@@ -29,51 +29,74 @@
 
 #include "gmime-filter-strip.h"
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_strip_class_init (GMimeFilterStripClass *klass);
+static void g_mime_filter_strip_init (GMimeFilterStrip *filter, GMimeFilterStripClass *klass);
+static void g_mime_filter_strip_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
 
-/**
- * g_mime_filter_strip_new:
- *
- * Creates a new GMimeFilterStrip filter.
- *
- * Returns a new strip filter.
- **/
-GMimeFilter *
-g_mime_filter_strip_new ()
+static GMimeFilterClass *parent_class = NULL;
+
+
+GType
+g_mime_filter_strip_get_type (void)
 {
-	GMimeFilterStrip *new;
+	static GType type = 0;
 	
-	new = g_new (GMimeFilterStrip, 1);
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterStripClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_strip_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterStrip),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_strip_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterStrip", &info, 0);
+	}
 	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	return GMIME_FILTER (new);
+	return type;
 }
 
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_strip_class_init (GMimeFilterStripClass *klass)
 {
-	g_free (filter);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_strip_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_strip_init (GMimeFilterStrip *filter, GMimeFilterStripClass *klass)
+{
+	/* no-op */
+}
+
+static void
+g_mime_filter_strip_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -132,4 +155,22 @@ static void
 filter_reset (GMimeFilter *filter)
 {
 	/* no-op */
+}
+
+
+/**
+ * g_mime_filter_strip_new:
+ *
+ * Creates a new GMimeFilterStrip filter.
+ *
+ * Returns a new strip filter.
+ **/
+GMimeFilter *
+g_mime_filter_strip_new ()
+{
+	GMimeFilterStrip *new;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_STRIP, NULL, NULL);
+	
+	return (GMimeFilter *) new;
 }

@@ -32,68 +32,83 @@
 #include "gmime-iconv.h"
 
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass);
+static void g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass);
+static void g_mime_filter_charset_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
+
+static GMimeFilterClass *parent_class = NULL;
 
 
-/**
- * g_mime_filter_charset_new:
- * @from_charset:
- * @to_charset:
- *
- * Creates a new GMimeFilterCharset filter.
- *
- * Returns a new charset filter.
- **/
-GMimeFilter *
-g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
+GType
+g_mime_filter_charset_get_type (void)
 {
-	GMimeFilterCharset *new;
-	iconv_t cd;
+	static GType type = 0;
 	
-	cd = g_mime_iconv_open (to_charset, from_charset);
-	if (cd == (iconv_t) -1)
-		return NULL;
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterCharsetClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_charset_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterCharset),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_charset_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterCharset", &info, 0);
+	}
 	
-	new = g_new (GMimeFilterCharset, 1);
-	new->from_charset = g_strdup (from_charset);
-	new->to_charset = g_strdup (to_charset);
-	new->cd = cd;
-	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	return GMIME_FILTER (new);
+	return type;
 }
 
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass)
 {
-	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
 	
-	g_free (charset->from_charset);
-	g_free (charset->to_charset);
-	if (charset->cd != (iconv_t) -1)
-		g_mime_iconv_close (charset->cd);
-	g_free (filter);
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_charset_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass)
+{
+	filter->from_charset = NULL;
+	filter->to_charset = NULL;
+	filter->cd = (iconv_t) -1;
+}
+
+static void
+g_mime_filter_charset_finalize (GObject *object)
+{
+	GMimeFilterCharset *filter = (GMimeFilterCharset *) object;
+	
+	g_free (filter->from_charset);
+	g_free (filter->to_charset);
+	if (filter->cd != (iconv_t) -1)
+		g_mime_iconv_close (filter->cd);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -266,4 +281,32 @@ filter_reset (GMimeFilter *filter)
 	
 	if (charset->cd != (iconv_t) -1)
 		iconv (charset->cd, NULL, NULL, NULL, NULL);
+}
+
+
+/**
+ * g_mime_filter_charset_new:
+ * @from_charset:
+ * @to_charset:
+ *
+ * Creates a new GMimeFilterCharset filter.
+ *
+ * Returns a new charset filter.
+ **/
+GMimeFilter *
+g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
+{
+	GMimeFilterCharset *new;
+	iconv_t cd;
+	
+	cd = g_mime_iconv_open (to_charset, from_charset);
+	if (cd == (iconv_t) -1)
+		return NULL;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL, NULL);
+	new->from_charset = g_strdup (from_charset);
+	new->to_charset = g_strdup (to_charset);
+	new->cd = cd;
+	
+	return (GMimeFilter *) new;
 }

@@ -32,14 +32,31 @@ extern "C" {
 #include "gmime-filter.h"
 #include <iconv.h>
 
+#define GMIME_TYPE_FILTER_CHARSET            (g_mime_filter_charset_get_type ())
+#define GMIME_FILTER_CHARSET(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_CHARSET, GMimeFilterCharset))
+#define GMIME_FILTER_CHARSET_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_CHARSET, GMimeFilterCharsetClass))
+#define GMIME_IS_FILTER_CHARSET(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_CHARSET))
+#define GMIME_IS_FILTER_CHARSET_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_CHARSET))
+#define GMIME_FILTER_CHARSET_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_CHARSET, GMimeFilterCharsetClass))
 
-typedef struct _GMimeFilterCharset {
-	GMimeFilter parent;
+typedef struct _GMimeFilterCharset GMimeFilterCharset;
+typedef struct _GMimeFilterCharsetClass GMimeFilterCharsetClass;
+
+struct _GMimeFilterCharset {
+	GMimeFilter parent_object;
 	
 	char *from_charset;
 	char *to_charset;
 	iconv_t cd;
-} GMimeFilterCharset;
+};
+
+struct _GMimeFilterCharsetClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_charset_get_type (void);
 
 GMimeFilter *g_mime_filter_charset_new (const char *from_charset, const char *to_charset);
 

@@ -1,3 +1,33 @@
+2002-09-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter[c,h]: Ported to GObject.
+
+	* gmime-filter-basic.[c,h]:
+	* gmime-filter-best.[c,h]:
+	* gmime-filter-charset.[c,h]:
+	* gmime-filter-crlf.[c,h]:
+	* gmime-filter-from.[c,h]:
+	* gmime-filter-html.[c,h]:
+	* gmime-filter-strip.[c,h]:
+	* gmime-filter-yenc.[c,h]: Ported to the new GMimeFilter.
+
+	* gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_encrypt): Unref the filters once we've
+	added them to the filtered_stream.
+	(g_mime_multipart_encrypted_decrypt): And here.
+
+	* gmime-multipart-signed.c (g_mime_multipart_signed_sign): Unref
+	the filters once we've added them to the filtered_stream.
+	(g_mime_multipart_signed_verify): Same here.
+
+	* gmime-part.c (write_content): Unref the filter.
+	(g_mime_part_set_pre_encoded_content): Here too.
+
+	* gmime-stream-filter.c (g_mime_stream_filter_add): Ref the filter
+	here.
+	(g_mime_stream_filter_remove): Unref the filter.
+	(g_mime_stream_filter_finalize): Unref the filters here.
+
 2002-09-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-charset.c: Try our best to handle EILSEQ (illegal

@@ -293,10 +293,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 		case GMIME_PART_ENCODING_BASE64:
 			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			g_object_unref (filter);
 			break;
 		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			g_object_unref (filter);
 			break;
 		case GMIME_PART_ENCODING_UUENCODE:
 			filename = g_mime_part_get_filename (part);
@@ -311,6 +313,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 			
 			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			g_object_unref (filter);
 			break;
 		default:
 			break;
@@ -1093,14 +1096,17 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 	case GMIME_PART_ENCODING_BASE64:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	case GMIME_PART_ENCODING_UUENCODE:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	default:
 		break;

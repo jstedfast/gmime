@@ -31,6 +31,16 @@ extern "C" {
 
 #include "gmime-filter.h"
 
+#define GMIME_TYPE_FILTER_YENC            (g_mime_filter_yenc_get_type ())
+#define GMIME_FILTER_YENC(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYenc))
+#define GMIME_FILTER_YENC_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
+#define GMIME_IS_FILTER_YENC(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_YENC))
+#define GMIME_IS_FILTER_YENC_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_YENC))
+#define GMIME_FILTER_YENC_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYencClass))
+
+typedef struct _GMimeFilterYenc GMimeFilterYenc;
+typedef struct _GMimeFilterYencClass GMimeFilterYencClass;
+
 typedef enum {
 	GMIME_FILTER_YENC_DIRECTION_ENCODE,
 	GMIME_FILTER_YENC_DIRECTION_DECODE,
@@ -55,8 +65,8 @@ typedef enum {
 #define GMIME_YENCODE_CRC_INIT       (~0)
 #define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
 
-typedef struct _GMimeFilterYenc {
-	GMimeFilter parent;
+struct _GMimeFilterYenc {
+	GMimeFilter parent_object;
 	
 	GMimeFilterYencDirection direction;
 	
@@ -65,7 +75,15 @@ typedef struct _GMimeFilterYenc {
 	int state;
 	guint32 pcrc;
 	guint32 crc;
-} GMimeFilterYenc;
+};
+
+struct _GMimeFilterYencClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_yenc_get_type (void);
 
 GMimeFilter *g_mime_filter_yenc_new (GMimeFilterYencDirection direction);
 

@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,60 +27,76 @@
 
 #include "gmime-filter-crlf.h"
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_crlf_class_init (GMimeFilterCRLFClass *klass);
+static void g_mime_filter_crlf_init (GMimeFilterCRLF *filter, GMimeFilterCRLFClass *klass);
+static void g_mime_filter_crlf_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
+
+static GMimeFilterClass *parent_class = NULL;
 
 
-/**
- * g_mime_filter_crlf_new:
- * @direction: encode direction
- * @mode: crlf or crlf & dot mode
- *
- * Creates a new GMimeFilterCRLF filter.
- *
- * Returns a new crlf(/dot) filter.
- **/
-GMimeFilter *
-g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode)
+GType
+g_mime_filter_crlf_get_type (void)
 {
-	GMimeFilterCRLF *new;
+	static GType type = 0;
 	
-	new = g_new (GMimeFilterCRLF, 1);
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterCRLFClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_crlf_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterCRLF),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_crlf_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterCRLF", &info, 0);
+	}
 	
-	new->direction = direction;
-	new->mode = mode;
-	new->saw_cr = FALSE;
-	new->saw_lf = FALSE;
-	new->saw_dot = FALSE;
-	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	return GMIME_FILTER (new);
+	return type;
 }
 
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_crlf_class_init (GMimeFilterCRLFClass *klass)
 {
-	g_free (filter);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_crlf_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_crlf_init (GMimeFilterCRLF *filter, GMimeFilterCRLFClass *klass)
+{
+	filter->saw_cr = FALSE;
+	filter->saw_lf = FALSE;
+	filter->saw_dot = FALSE;
+}
+
+static void
+g_mime_filter_crlf_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -186,4 +202,26 @@ filter_reset (GMimeFilter *filter)
 	crlf->saw_cr = FALSE;
 	crlf->saw_lf = TRUE;
 	crlf->saw_dot = FALSE;
+}
+
+
+/**
+ * g_mime_filter_crlf_new:
+ * @direction: encode direction
+ * @mode: crlf or crlf & dot mode
+ *
+ * Creates a new GMimeFilterCRLF filter.
+ *
+ * Returns a new crlf(/dot) filter.
+ **/
+GMimeFilter *
+g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode)
+{
+	GMimeFilterCRLF *new;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_CRLF, NULL, NULL);
+	new->direction = direction;
+	new->mode = mode;
+	
+	return (GMimeFilter *) new;
 }

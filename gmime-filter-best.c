@@ -29,145 +29,74 @@
 
 #include "gmime-filter-best.h"
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_best_class_init (GMimeFilterBestClass *klass);
+static void g_mime_filter_best_init (GMimeFilterBest *filter, GMimeFilterBestClass *klass);
+static void g_mime_filter_best_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
+
+static GMimeFilterClass *parent_class = NULL;
 
 
-/**
- * g_mime_filter_best_new:
- * @flags: filter flags
- *
- * Creates a new GMimeFilterBest filter. @flags are used to determine
- * which information to keep statistics of. If the
- * #GMIME_FILTER_BEST_CHARSET bit is set, the filter will be able to
- * compute the best charset for encoding the stream of data
- * filtered. If the #GMIME_FILTER_BEST_ENCODING bit is set, the filter
- * will be able to compute the best Content-Transfer-Encoding for use
- * with the stream being filtered.
- *
- * Note: In order for the #g_mime_filter_best_charset() function to
- * work, the stream being filtered MUST already be encoded in UTF-8.
- *
- * Returns a new best filter with flags @flags.
- **/
-GMimeFilter *
-g_mime_filter_best_new (unsigned int flags)
+GType
+g_mime_filter_best_get_type (void)
 {
-	GMimeFilterBest *new;
+	static GType type = 0;
 	
-	new = g_new (GMimeFilterBest, 1);
-	new->flags = flags;
-	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	filter_reset (GMIME_FILTER (new));
-	new->frombuf[5] = '\0';
-	
-	return GMIME_FILTER (new);
-}
-
-
-/**
- * g_mime_filter_best_charset:
- * @best: best filter
- *
- * Calculates the best charset for encoding the stream filtered
- * through the @best filter.
- *
- * Returns a pointer to a string containing the name of the charset
- * best suited for the text filtered through @best.
- **/
-const char *
-g_mime_filter_best_charset (GMimeFilterBest *best)
-{
-	const char *charset;
-	
-	g_return_val_if_fail (best != NULL, NULL);
-	
-	if (!(best->flags & GMIME_FILTER_BEST_CHARSET))
-		return NULL;
-	
-	charset = g_mime_charset_best_name (&best->charset);
-	
-	return charset ? charset : "us-ascii";
-}
-
-
-/**
- * g_mime_filter_best_encoding:
- * @best: best filter
- * @required: encoding that all data must fit within
- *
- * Calculates the best Content-Transfer-Encoding for the stream
- * filtered through @best that fits within the @required encoding.
- *
- * Returns the best encoding for the stream filtered by @best.
- **/
-GMimePartEncodingType
-g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)
-{
-	GMimePartEncodingType encoding = GMIME_PART_ENCODING_DEFAULT;
-	
-	g_return_val_if_fail (best != NULL, GMIME_PART_ENCODING_DEFAULT);
-	
-	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
-		return GMIME_PART_ENCODING_DEFAULT;
-	
-	switch (required) {
-	case GMIME_BEST_ENCODING_7BIT:
-		if (best->count0 > 0) {
-			encoding = GMIME_PART_ENCODING_BASE64;
-		} else if (best->count8 > 0) {
-			if (best->count8 >= (best->total * 17 / 100))
-				encoding = GMIME_PART_ENCODING_BASE64;
-			else
-				encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-		} else if (best->maxline > 998) {
-			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-		}
-		break;
-	case GMIME_BEST_ENCODING_8BIT:
-		if (best->count0 > 0) {
-			encoding = GMIME_PART_ENCODING_BASE64;
-		} else if (best->maxline > 998) {
-			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-		}
-		break;
-	case GMIME_BEST_ENCODING_BINARY:
-		if (best->count0 + best->count8 > 0)
-			encoding = GMIME_PART_ENCODING_BINARY;
-		break;
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterBestClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_best_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterBest),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_best_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterBest", &info, 0);
 	}
 	
-	if (encoding == GMIME_PART_ENCODING_DEFAULT && best->hadfrom)
-		encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-	
-	return encoding;
+	return type;
 }
-   
+
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_best_class_init (GMimeFilterBestClass *klass)
 {
-	g_free (filter);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_best_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_best_init (GMimeFilterBest *filter, GMimeFilterBestClass *klass)
+{
+	filter->frombuf[5] = '\0';
+}
+
+static void
+g_mime_filter_best_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -280,3 +209,113 @@ filter_reset (GMimeFilter *filter)
 	best->startline = TRUE;
 	best->midline = FALSE;
 }
+
+
+/**
+ * g_mime_filter_best_new:
+ * @flags: filter flags
+ *
+ * Creates a new GMimeFilterBest filter. @flags are used to determine
+ * which information to keep statistics of. If the
+ * #GMIME_FILTER_BEST_CHARSET bit is set, the filter will be able to
+ * compute the best charset for encoding the stream of data
+ * filtered. If the #GMIME_FILTER_BEST_ENCODING bit is set, the filter
+ * will be able to compute the best Content-Transfer-Encoding for use
+ * with the stream being filtered.
+ *
+ * Note: In order for the #g_mime_filter_best_charset() function to
+ * work, the stream being filtered MUST already be encoded in UTF-8.
+ *
+ * Returns a new best filter with flags @flags.
+ **/
+GMimeFilter *
+g_mime_filter_best_new (unsigned int flags)
+{
+	GMimeFilterBest *new;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_BEST, NULL, NULL);
+	new->flags = flags;
+	filter_reset ((GMimeFilter *) new);
+	
+	return (GMimeFilter *) new;
+}
+
+
+/**
+ * g_mime_filter_best_charset:
+ * @best: best filter
+ *
+ * Calculates the best charset for encoding the stream filtered
+ * through the @best filter.
+ *
+ * Returns a pointer to a string containing the name of the charset
+ * best suited for the text filtered through @best.
+ **/
+const char *
+g_mime_filter_best_charset (GMimeFilterBest *best)
+{
+	const char *charset;
+	
+	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), NULL);
+	
+	if (!(best->flags & GMIME_FILTER_BEST_CHARSET))
+		return NULL;
+	
+	charset = g_mime_charset_best_name (&best->charset);
+	
+	return charset ? charset : "us-ascii";
+}
+
+
+/**
+ * g_mime_filter_best_encoding:
+ * @best: best filter
+ * @required: encoding that all data must fit within
+ *
+ * Calculates the best Content-Transfer-Encoding for the stream
+ * filtered through @best that fits within the @required encoding.
+ *
+ * Returns the best encoding for the stream filtered by @best.
+ **/
+GMimePartEncodingType
+g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)
+{
+	GMimePartEncodingType encoding = GMIME_PART_ENCODING_DEFAULT;
+	
+	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_PART_ENCODING_DEFAULT);
+	
+	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
+		return GMIME_PART_ENCODING_DEFAULT;
+	
+	switch (required) {
+	case GMIME_BEST_ENCODING_7BIT:
+		if (best->count0 > 0) {
+			encoding = GMIME_PART_ENCODING_BASE64;
+		} else if (best->count8 > 0) {
+			if (best->count8 >= (best->total * 17 / 100))
+				encoding = GMIME_PART_ENCODING_BASE64;
+			else
+				encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+		} else if (best->maxline > 998) {
+			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+		}
+		break;
+	case GMIME_BEST_ENCODING_8BIT:
+		if (best->count0 > 0) {
+			encoding = GMIME_PART_ENCODING_BASE64;
+		} else if (best->maxline > 998) {
+			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+		}
+		break;
+	case GMIME_BEST_ENCODING_BINARY:
+		if (best->count0 + best->count8 > 0)
+			encoding = GMIME_PART_ENCODING_BINARY;
+		break;
+	}
+	
+	if (encoding == GMIME_PART_ENCODING_DEFAULT && best->hadfrom)
+		encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+	
+	return encoding;
+}
+

@@ -26,6 +26,7 @@
 #endif
 
 #include <string.h> /* for memcpy */
+
 #include "gmime-filter.h"
 
 
@@ -38,21 +39,64 @@ struct _GMimeFilterPrivate {
 #define BACK_HEAD (64)
 #define _PRIVATE(o) (((GMimeFilter *)(o))->priv)
 
+static void g_mime_filter_class_init (GMimeFilterClass *klass);
+static void g_mime_filter_init (GMimeFilter *filter, GMimeFilterClass *klass);
+static void g_mime_filter_finalize (GObject *object);
+
+static GMimeFilter *filter_copy (GMimeFilter *filter);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
+static void filter_reset (GMimeFilter *filter);
 
 
-/**
- * g_mime_filter_construct:
- * @filter: filter
- * @filter_template: filter template
- *
- * Initializes a filter object using the virtual methods in @filter_template.
- **/
-void
-g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template)
+static GObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_filter_get_type (void)
 {
-	g_return_if_fail (filter != NULL);
-	g_return_if_fail (filter_template != NULL);
+	static GType type = 0;
 	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilter),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeFilter", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_filter_class_init (GMimeFilterClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_filter_finalize;
+	
+	klass->copy = filter_copy;
+	klass->filter = filter_filter;
+	klass->complete = filter_complete;
+	klass->reset = filter_reset;
+}
+
+static void
+g_mime_filter_init (GMimeFilter *filter, GMimeFilterClass *klass)
+{
 	filter->priv = g_new0 (struct _GMimeFilterPrivate, 1);
 	filter->outptr = NULL;
 	filter->outreal = NULL;
@@ -62,31 +106,26 @@ g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template)
 	filter->backbuf = NULL;
 	filter->backsize = 0;
 	filter->backlen = 0;
+}
+
+static void
+g_mime_filter_finalize (GObject *object)
+{
+	GMimeFilter *filter = (GMimeFilter *) object;
 	
-	filter->destroy = filter_template->destroy;
-	filter->copy = filter_template->copy;
-	filter->filter = filter_template->filter;
-	filter->complete = filter_template->complete;
-	filter->reset = filter_template->reset;
+	g_free (filter->priv->inbuf);
+	g_free (filter->priv);
+	g_free (filter->outreal);
+	g_free (filter->backbuf);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 
-/**
- * g_mime_filter_destroy:
- * @filter: filter
- *
- * Destroys @filter and releases the memory to the system.
- **/
-void
-g_mime_filter_destroy (GMimeFilter *filter)
+static GMimeFilter *
+filter_copy (GMimeFilter *filter)
 {
-	if (filter) {
-		g_free (filter->priv->inbuf);
-		g_free (filter->priv);
-		g_free (filter->outreal);
-		g_free (filter->backbuf);
-		filter->destroy (filter);
-	}
+	return NULL;
 }
 
 
@@ -101,7 +140,9 @@ g_mime_filter_destroy (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_copy (GMimeFilter *filter)
 {
-	return filter->copy (filter);
+	g_return_val_if_fail (GMIME_IS_FILTER (filter), NULL);
+	
+	return GMIME_FILTER_GET_CLASS (filter)->copy (filter);
 }
 
 
@@ -112,10 +153,8 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				char *in, size_t len, size_t prespace,
 				char **out, size_t *outlen, size_t *outprespace))
 {
-	/*
-	  here we take a performance hit, if the input buffer doesn't
-	  have the pre-space required.  We make a buffer that does ...
-	*/
+	/* here we take a performance hit, if the input buffer doesn't
+	   have the pre-space required.  We make a buffer that does... */
 	if (prespace < filter->backlen) {
 		struct _GMimeFilterPrivate *p = _PRIVATE (filter);
 		size_t newlen = len + prespace + filter->backlen;
@@ -146,6 +185,14 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 }
 
 
+static void
+filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+	       char **out, size_t *outlen, size_t *outprespace)
+{
+	/* no-op */
+}
+
+
 /**
  * g_mime_filter_filter:
  * @filter: filter
@@ -159,13 +206,21 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
  * Filters the input data and writes it to @out.
  **/
 void
-g_mime_filter_filter (GMimeFilter *filter,
-		      char *in, size_t len, size_t prespace,
+g_mime_filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		      char **out, size_t *outlen, size_t *outprespace)
 {
-	g_return_if_fail (filter != NULL);
+	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	filter_run (filter, in, len, prespace, out, outlen, outprespace, filter->filter);
+	filter_run (filter, in, len, prespace, out, outlen, outprespace,
+		    GMIME_FILTER_GET_CLASS (filter)->filter);
+}
+
+
+static void
+filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+		 char **out, size_t *outlen, size_t *outprespace)
+{
+	/* no-op */
 }
 
 
@@ -186,9 +241,17 @@ g_mime_filter_complete (GMimeFilter *filter,
 			char *in, size_t len, size_t prespace,
 			char **out, size_t *outlen, size_t *outprespace)
 {
-	g_return_if_fail (filter != NULL);
+	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	filter_run (filter, in, len, prespace, out, outlen, outprespace, filter->complete);
+	filter_run (filter, in, len, prespace, out, outlen, outprespace,
+		    GMIME_FILTER_GET_CLASS (filter)->complete);
+}
+
+
+static void
+filter_reset (GMimeFilter *filter)
+{
+	/* no-op */
 }
 
 
@@ -201,9 +264,9 @@ g_mime_filter_complete (GMimeFilter *filter,
 void
 g_mime_filter_reset (GMimeFilter *filter)
 {
-	g_return_if_fail (filter != NULL);
+	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	filter->reset (filter);
+	GMIME_FILTER_GET_CLASS (filter)->reset (filter);
 	
 	/* could free some buffers, if they are really big? */
 	filter->backlen = 0;
@@ -222,7 +285,7 @@ g_mime_filter_reset (GMimeFilter *filter)
 void
 g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 {
-	g_return_if_fail (filter != NULL);
+	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
 	if (filter->backsize < length) {
 		/* g_realloc copies data, unnecessary overhead */
@@ -247,7 +310,7 @@ g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 void
 g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)
 {
-	g_return_if_fail (filter != NULL);
+	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
 	if (filter->outsize < size) {
 		size_t offset = filter->outptr - filter->outreal;

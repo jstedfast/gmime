@@ -142,7 +142,7 @@ g_mime_stream_filter_finalize (GObject *object)
 	f = p->filters;
 	while (f) {
 		fn = f->next;
-		g_mime_filter_destroy (f->filter);
+		g_object_unref (f->filter);
 		g_free (f);
 		f = fn;
 	}
@@ -421,7 +421,9 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 	struct _filter *f, *fn;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (fstream), -1);
-	g_return_val_if_fail (filter != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_FILTER (filter), -1);
+	
+	g_object_ref (filter);
 	
 	p = fstream->priv;
 	
@@ -467,7 +469,7 @@ g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id)
 		fn = f->next;
 		if (fn->id == id) {
 			f->next = fn->next;
-			g_mime_filter_destroy (fn->filter);
+			g_object_unref (fn->filter);
 			g_free (fn);
 		}
 		f = f->next;

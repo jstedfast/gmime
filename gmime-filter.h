@@ -30,11 +30,24 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <glib-object.h>
 #include <sys/types.h>
 
+#include "gmime-type-utils.h"
+
+#define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
+#define GMIME_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))
+#define GMIME_FILTER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER, GMimeFilterClass))
+#define GMIME_IS_FILTER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER))
+#define GMIME_IS_FILTER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER))
+#define GMIME_FILTER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER, GMimeFilterClass))
+
 typedef struct _GMimeFilter GMimeFilter;
+typedef struct _GMimeFilterClass GMimeFilterClass;
 
 struct _GMimeFilter {
+	GObject parent_object;
+	
 	struct _GMimeFilterPrivate *priv;
 	
 	char *outreal;		/* real malloc'd buffer */
@@ -46,28 +59,26 @@ struct _GMimeFilter {
 	char *backbuf;
 	size_t backsize;
 	size_t backlen;		/* significant data there */
+};
+
+struct _GMimeFilterClass {
+	GObjectClass parent_class;
 	
 	/* virtual functions */
-	void (*destroy)  (GMimeFilter *filter);
-	
 	GMimeFilter *(*copy) (GMimeFilter *filter);
 	
-	void (*filter)   (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
+	void (*filter)   (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			  char **out, size_t *outlen, size_t *outprespace);
 	
-	void (*complete) (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
+	void (*complete) (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			  char **out, size_t *outlen, size_t *outprespace);
 	
 	void (*reset)    (GMimeFilter *filter);
 };
 
-#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
 
-void g_mime_filter_construct (GMimeFilter *filter, GMimeFilter *filter_template);
+GType g_mime_filter_get_type (void);
 
-void g_mime_filter_destroy (GMimeFilter *filter);
 
 GMimeFilter *g_mime_filter_copy (GMimeFilter *filter);
 
@@ -80,6 +91,7 @@ void g_mime_filter_complete (GMimeFilter *filter,
 			     char **out, size_t *outlen, size_t *outprespace);
 
 void g_mime_filter_reset (GMimeFilter *filter);
+
 
 /* sets/returns number of bytes backed up on the input */
 void g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length);

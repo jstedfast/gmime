@@ -31,10 +31,28 @@ extern "C" {
 
 #include "gmime-filter.h"
 
-typedef struct _GMimeFilterStrip {
-	GMimeFilter parent;
+#define GMIME_TYPE_FILTER_STRIP            (g_mime_filter_strip_get_type ())
+#define GMIME_FILTER_STRIP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_STRIP, GMimeFilterStrip))
+#define GMIME_FILTER_STRIP_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_STRIP, GMimeFilterStripClass))
+#define GMIME_IS_FILTER_STRIP(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_STRIP))
+#define GMIME_IS_FILTER_STRIP_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_STRIP))
+#define GMIME_FILTER_STRIP_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_STRIP, GMimeFilterStripClass))
+
+typedef struct _GMimeFilterStrip GMimeFilterStrip;
+typedef struct _GMimeFilterStripClass GMimeFilterStripClass;
+
+struct _GMimeFilterStrip {
+	GMimeFilter parent_object;
 	
-} GMimeFilterStrip;
+};
+
+struct _GMimeFilterStripClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_strip_get_class (void);
 
 GMimeFilter *g_mime_filter_strip_new (void);
 

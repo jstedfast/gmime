@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,16 @@ extern "C" {
 
 #include "gmime-filter.h"
 
+#define GMIME_TYPE_FILTER_CRLF            (g_mime_filter_crlf_get_type ())
+#define GMIME_FILTER_CRLF(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_CRLF, GMimeFilterCRLF))
+#define GMIME_FILTER_CRLF_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_CRLF, GMimeFilterCRLFClass))
+#define GMIME_IS_FILTER_CRLF(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_CRLF))
+#define GMIME_IS_FILTER_CRLF_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_CRLF))
+#define GMIME_FILTER_CRLF_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_CRLF, GMimeFilterCRLFClass))
+
+typedef struct _GMimeFilterCRLF GMimeFilterCRLF;
+typedef struct _GMimeFilterCRLFClass GMimeFilterCRLFClass;
+
 typedef enum {
 	GMIME_FILTER_CRLF_ENCODE,
 	GMIME_FILTER_CRLF_DECODE
@@ -41,15 +51,23 @@ typedef enum {
 	GMIME_FILTER_CRLF_MODE_CRLF_ONLY,
 } GMimeFilterCRLFMode;
 
-typedef struct _GMimeFilterCRLF {
-	GMimeFilter parent;
+struct _GMimeFilterCRLF {
+	GMimeFilter parent_object;
 	
 	GMimeFilterCRLFDirection direction;
 	GMimeFilterCRLFMode mode;
 	gboolean saw_cr;
 	gboolean saw_lf;
 	gboolean saw_dot;
-} GMimeFilterCRLF;
+};
+
+struct _GMimeFilterCRLFClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_crlf_get_type (void);
 
 GMimeFilter *g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode);
 

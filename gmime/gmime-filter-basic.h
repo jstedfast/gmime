@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,6 +31,16 @@ extern "C" {
 
 #include "gmime-filter.h"
 
+#define GMIME_TYPE_FILTER_BASIC            (g_mime_filter_basic_get_type ())
+#define GMIME_FILTER_BASIC(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasic))
+#define GMIME_FILTER_BASIC_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasicClass))
+#define GMIME_IS_FILTER_BASIC(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_BASIC))
+#define GMIME_IS_FILTER_BASIC_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_BASIC))
+#define GMIME_FILTER_BASIC_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_BASIC, GMimeFilterBasicClass))
+
+typedef struct _GMimeFilterBasic GMimeFilterBasic;
+typedef struct _GMimeFilterBasicClass GMimeFilterBasicClass;
+
 typedef enum {
 	GMIME_FILTER_BASIC_BASE64_ENC = 1,
 	GMIME_FILTER_BASIC_BASE64_DEC,
@@ -40,15 +50,23 @@ typedef enum {
 	GMIME_FILTER_BASIC_UU_DEC,
 } GMimeFilterBasicType;
 
-typedef struct _GMimeFilterBasic {
-	GMimeFilter parent;
+struct _GMimeFilterBasic {
+	GMimeFilter parent_object;
 	
 	GMimeFilterBasicType type;
 	
 	unsigned char uubuf[60];
 	int state;
 	int save;
-} GMimeFilterBasic;
+};
+
+struct _GMimeFilterBasicClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_basic_get_type (void);
 
 GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);
 

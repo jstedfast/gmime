@@ -28,158 +28,76 @@
 
 #include "gmime-filter-yenc.h"
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_yenc_class_init (GMimeFilterYencClass *klass);
+static void g_mime_filter_yenc_init (GMimeFilterYenc *filter, GMimeFilterYencClass *klass);
+static void g_mime_filter_yenc_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
+
+static GMimeFilterClass *parent_class = NULL;
 
 
-/**
- * g_mime_filter_yenc_new:
- * @direction: encode direction
- *
- * Creates a new yEnc filter.
- *
- * Returns a new yEnc filter.
- **/
-GMimeFilter *
-g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
+GType
+g_mime_filter_yenc_get_type (void)
 {
-	GMimeFilterYenc *new;
+	static GType type = 0;
 	
-	new = g_new (GMimeFilterYenc, 1);
-	
-	new->direction = direction;
-	new->part = 0;
-	new->pcrc = GMIME_YENCODE_CRC_INIT;
-	new->crc = GMIME_YENCODE_CRC_INIT;
-	
-	switch (direction) {
-	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
-		new->state = GMIME_YENCODE_STATE_INIT;
-		break;
-	case GMIME_FILTER_YENC_DIRECTION_DECODE:
-		new->state = GMIME_YDECODE_STATE_INIT;
-		break;
-	default:
-		g_assert_not_reached ();
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterYencClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_yenc_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterYenc),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_yenc_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterYenc", &info, 0);
 	}
 	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	return GMIME_FILTER (new);
-}
-
-
-/**
- * g_mime_filter_yenc_set_state:
- * @yenc: yEnc filter
- * @state: encode/decode state
- *
- * Sets the current state of the yencoder/ydecoder
- **/
-void
-g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state)
-{
-	g_return_if_fail (yenc != NULL);
-	
-	yenc->state = state;
-}
-
-
-/**
- * g_mime_filter_yenc_set_crc:
- * @yenc: yEnc filter
- * @crc: crc32
- *
- * Sets the current crc32 value on the yEnc filter @yenc to @crc.
- **/
-void
-g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
-{
-	g_return_if_fail (yenc != NULL);
-	
-	yenc->crc = crc;
-}
-
-
-#if 0
-/* FIXME: once we parse out the yenc part id, we can re-enable this interface */
-/**
- * g_mime_filter_yenc_get_part:
- * @yenc: yEnc filter
- *
- * Gets the part id of the current decoded yEnc stream or -1 on fail.
- *
- * Returns the part id of the current decoded yEnc stream or -1 on
- * fail.
- **/
-int
-g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
-{
-	g_return_val_if_fail (yenc != NULL, -1);
-	
-	if (yenc->state & GMIME_YDECODE_STATE_PART)
-		return yenc->part;
-	
-	return -1;
-}
-#endif
-
-/**
- * g_mime_filter_yenc_get_pcrc:
- * @yenc: yEnc filter
- *
- * Get the computed part crc or (guint32) -1 on fail.
- *
- * Returns the computed part crc or (guint32) -1 on fail.
- **/
-guint32
-g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
-{
-	g_return_val_if_fail (yenc != NULL, -1);
-	
-	return GMIME_YENCODE_CRC_FINAL (yenc->pcrc);
-}
-
-
-/**
- * g_mime_filter_yenc_get_crc:
- * @yenc: yEnc filter
- *
- * Get the computed crc or (guint32) -1 on fail.
- *
- * Returns the computed crc or (guint32) -1 on fail.
- **/
-guint32
-g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc)
-{
-	g_return_val_if_fail (yenc != NULL, -1);
-	
-	return GMIME_YENCODE_CRC_FINAL (yenc->crc);
+	return type;
 }
 
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_yenc_class_init (GMimeFilterYencClass *klass)
 {
-	g_free (filter);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_yenc_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_yenc_init (GMimeFilterYenc *filter, GMimeFilterYencClass *klass)
+{
+	filter->part = 0;
+	filter->pcrc = GMIME_YENCODE_CRC_INIT;
+	filter->crc = GMIME_YENCODE_CRC_INIT;
+}
+
+static void
+g_mime_filter_yenc_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -333,6 +251,126 @@ filter_reset (GMimeFilter *filter)
 	}
 	yenc->pcrc = GMIME_YENCODE_CRC_INIT;
 	yenc->crc = GMIME_YENCODE_CRC_INIT;
+}
+
+
+/**
+ * g_mime_filter_yenc_new:
+ * @direction: encode direction
+ *
+ * Creates a new yEnc filter.
+ *
+ * Returns a new yEnc filter.
+ **/
+GMimeFilter *
+g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
+{
+	GMimeFilterYenc *new;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_YENC, NULL, NULL);
+	new->direction = direction;
+	
+	switch (direction) {
+	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+		new->state = GMIME_YENCODE_STATE_INIT;
+		break;
+	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+		new->state = GMIME_YDECODE_STATE_INIT;
+		break;
+	default:
+		g_assert_not_reached ();
+	}
+	
+	return (GMimeFilter *) new;
+}
+
+
+/**
+ * g_mime_filter_yenc_set_state:
+ * @yenc: yEnc filter
+ * @state: encode/decode state
+ *
+ * Sets the current state of the yencoder/ydecoder
+ **/
+void
+g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state)
+{
+	g_return_if_fail (GMIME_IS_FILTER_YENC (yenc));
+	
+	yenc->state = state;
+}
+
+
+/**
+ * g_mime_filter_yenc_set_crc:
+ * @yenc: yEnc filter
+ * @crc: crc32
+ *
+ * Sets the current crc32 value on the yEnc filter @yenc to @crc.
+ **/
+void
+g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
+{
+	g_return_if_fail (GMIME_IS_FILTER_YENC (yenc));
+	
+	yenc->crc = crc;
+}
+
+
+#if 0
+/* FIXME: once we parse out the yenc part id, we can re-enable this interface */
+/**
+ * g_mime_filter_yenc_get_part:
+ * @yenc: yEnc filter
+ *
+ * Gets the part id of the current decoded yEnc stream or -1 on fail.
+ *
+ * Returns the part id of the current decoded yEnc stream or -1 on
+ * fail.
+ **/
+int
+g_mime_filter_yenc_get_part (GMimeFilterYenc *yenc)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	
+	if (yenc->state & GMIME_YDECODE_STATE_PART)
+		return yenc->part;
+	
+	return -1;
+}
+#endif
+
+/**
+ * g_mime_filter_yenc_get_pcrc:
+ * @yenc: yEnc filter
+ *
+ * Get the computed part crc or (guint32) -1 on fail.
+ *
+ * Returns the computed part crc or (guint32) -1 on fail.
+ **/
+guint32
+g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	
+	return GMIME_YENCODE_CRC_FINAL (yenc->pcrc);
+}
+
+
+/**
+ * g_mime_filter_yenc_get_crc:
+ * @yenc: yEnc filter
+ *
+ * Get the computed crc or (guint32) -1 on fail.
+ *
+ * Returns the computed crc or (guint32) -1 on fail.
+ **/
+guint32
+g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc)
+{
+	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
+	
+	return GMIME_YENCODE_CRC_FINAL (yenc->crc);
 }
 
 

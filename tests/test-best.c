@@ -53,6 +53,7 @@ int main (int argc, char **argv)
 							   GMIME_FILTER_BEST_ENCODING);
 	
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (istream), GMIME_FILTER (best));
+	g_object_unref (best);
 	
 	null = g_mime_stream_null_new ();
 	

@@ -91,6 +91,7 @@ int main (int argc, char **argv)
 				       GMIME_FILTER_HTML_ESCAPE_8BIT |
 				       GMIME_FILTER_HTML_CITE, 0);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (ostream), html);
+	g_object_unref (html);
 	
 	for (i = 1; i < argc; i++) {
 		FILE *fp;

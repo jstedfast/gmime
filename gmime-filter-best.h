@@ -33,6 +33,16 @@ extern "C" {
 #include "gmime-charset.h"
 #include "gmime-utils.h"
 
+#define GMIME_TYPE_FILTER_BEST            (g_mime_filter_best_get_type ())
+#define GMIME_FILTER_BEST(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBest))
+#define GMIME_FILTER_BEST_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
+#define GMIME_IS_FILTER_BEST(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_BEST))
+#define GMIME_IS_FILTER_BEST_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_BEST))
+#define GMIME_FILTER_BEST_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBestClass))
+
+typedef struct _GMimeFilterBest GMimeFilterBest;
+typedef struct _GMimeFilterBestClass GMimeFilterBestClass;
+
 enum {
 	GMIME_FILTER_BEST_CHARSET      = (1 << 0),
 	GMIME_FILTER_BEST_ENCODING     = (1 << 1),
@@ -44,8 +54,8 @@ typedef enum {
 	GMIME_BEST_ENCODING_BINARY,
 } GMimeBestEncoding;
 
-typedef struct _GMimeFilterBest {
-	GMimeFilter parent;
+struct _GMimeFilterBest {
+	GMimeFilter parent_object;
 	
 	unsigned int flags;
 	
@@ -66,7 +76,15 @@ typedef struct _GMimeFilterBest {
 	
 	unsigned int startline : 1;
 	unsigned int midline : 1;
-} GMimeFilterBest;
+};
+
+struct _GMimeFilterBestClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_best_get_type (void);
 
 GMimeFilter *g_mime_filter_best_new (unsigned int flags);
 

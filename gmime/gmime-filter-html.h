@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -30,6 +30,16 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include "gmime-filter.h"
+
+#define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
+#define GMIME_FILTER_HTML(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))
+#define GMIME_FILTER_HTML_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
+#define GMIME_IS_FILTER_HTML(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_FILTER_HTML))
+#define GMIME_IS_FILTER_HTML_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_FILTER_HTML))
+#define GMIME_FILTER_HTML_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTMLClass))
+
+typedef struct _GMimeFilterHTML GMimeFilterHTML;
+typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 
 
 /**
@@ -97,8 +107,8 @@ extern "C" {
 #define GMIME_FILTER_HTML_CITE              (1 << 7)
 
 
-typedef struct _GMimeFilterHTML {
-	GMimeFilter parent;
+struct _GMimeFilterHTML {
+	GMimeFilter parent_object;
 	
 	guint32 flags;
 	guint32 colour;
@@ -107,7 +117,15 @@ typedef struct _GMimeFilterHTML {
 	guint32 pre_open     : 1;
 	guint32 saw_citation : 1;
 	guint32 coloured     : 1;
-} GMimeFilterHTML;
+};
+
+struct _GMimeFilterHTMLClass {
+	GMimeFilterClass parent_class;
+	
+};
+
+
+GType g_mime_filter_html_get_type (void);
 
 GMimeFilter *g_mime_filter_html_new (guint32 flags, guint32 colour);
 

@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,57 +33,74 @@
 
 #define d(x)
 
-static void filter_destroy (GMimeFilter *filter);
+static void g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass);
+static void g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass);
+static void g_mime_filter_html_finalize (GObject *object);
+
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, 
-			   size_t prespace, char **out, 
-			   size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, 
-			     size_t prespace, char **out, 
-			     size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			     char **out, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
-static GMimeFilter filter_template = {
-	NULL, NULL, NULL, NULL,
-	0, 0, NULL, 0, 0,
-	filter_destroy,
-	filter_copy,
-	filter_filter,
-	filter_complete,
-	filter_reset,
-};
+
+static GMimeFilterClass *parent_class = NULL;
 
 
-/**
- * g_mime_filter_html_new:
- * @flags: html flags
- * @colour: citation colour
- *
- * Creates a new GMimeFilterHTML filter.
- *
- * Returns a new html filter.
- **/
-GMimeFilter *
-g_mime_filter_html_new (guint32 flags, guint32 colour)
+GType
+g_mime_filter_html_get_type (void)
 {
-	GMimeFilterHTML *new;
+	static GType type = 0;
 	
-	new = g_new (GMimeFilterHTML, 1);
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeFilterHTMLClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_filter_html_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeFilterHTML),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_filter_html_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_FILTER, "GMimeFilterHTML", &info, 0);
+	}
 	
-	new->flags = flags;
-	new->colour = colour;
-	
-	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
-	
-	return GMIME_FILTER (new);
+	return type;
 }
 
 
 static void
-filter_destroy (GMimeFilter *filter)
+g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 {
-	g_free (filter);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
+	
+	object_class->finalize = g_mime_filter_html_finalize;
+	
+	filter_class->copy = filter_copy;
+	filter_class->filter = filter_filter;
+	filter_class->complete = filter_complete;
+	filter_class->reset = filter_reset;
 }
+
+static void
+g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
+{
+	;
+}
+
+static void
+g_mime_filter_html_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
@@ -516,4 +533,26 @@ filter_reset (GMimeFilter *filter)
 	html->pre_open = FALSE;
 	html->saw_citation = FALSE;
 	html->coloured = FALSE;
+}
+
+
+/**
+ * g_mime_filter_html_new:
+ * @flags: html flags
+ * @colour: citation colour
+ *
+ * Creates a new GMimeFilterHTML filter.
+ *
+ * Returns a new html filter.
+ **/
+GMimeFilter *
+g_mime_filter_html_new (guint32 flags, guint32 colour)
+{
+	GMimeFilterHTML *new;
+	
+	new = g_object_new (GMIME_TYPE_FILTER_HTML, NULL, NULL);
+	new->flags = flags;
+	new->colour = colour;
+	
+	return (GMimeFilter *) new;
 }
