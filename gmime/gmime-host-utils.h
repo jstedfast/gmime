@@ -32,11 +32,11 @@ extern "C" {
 #endif /* __cplusplus */
 
 int g_gethostbyname_r (const char *name, struct hostent *host,
-		       char *buf, size_t buflen, int *herr);
+		       char *buf, size_t buflen, GError **err);
 
 int g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 		       struct hostent *host, char *buf,
-		       size_t buflen, int *herr);
+		       size_t buflen, GError **err);
 
 #ifdef __cplusplus
 }

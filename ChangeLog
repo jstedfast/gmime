@@ -1,5 +1,9 @@
 2004-02-05  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-host-utils.c (g_gethostbyname_r): Replace the herr
+	argument with a GError to make the interface a bit nicer to use.
+	(g_gethostbyaddr_r): Same.
+
 	* gmime/url-scanner.c: Added single/double quotes to url_braces[]
 	in case the user is quoting the url.
 	(g_url_web_end): Add "-;:" to list of punctuation to strip off the

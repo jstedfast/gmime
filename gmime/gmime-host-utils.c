@@ -39,6 +39,7 @@
 #endif
 #include <errno.h>
 
+#include "gmime-error.h"
 #include "gmime-host-utils.h"
 
 
@@ -49,7 +50,7 @@ G_LOCK_DEFINE_STATIC (gethost_mutex);
 
 #define ALIGN(x) (((x) + (sizeof (char *) - 1)) & ~(sizeof (char *) - 1))
 
-#define GETHOST_PROCESS(h, host, buf, buflen, herr) G_STMT_START {     \
+#define GETHOST_PROCESS(h, host, buf, buflen) G_STMT_START {           \
 	int num_aliases = 0, num_addrs = 0;                            \
 	int req_length;                                                \
 	char *p;                                                       \
@@ -74,7 +75,6 @@ G_LOCK_DEFINE_STATIC (gethost_mutex);
 	req_length += strlen (h->h_name) + 1;                          \
 	                                                               \
 	if (buflen < req_length) {                                     \
-		*herr = ERANGE;                                        \
 		G_UNLOCK (gethost_mutex);                              \
 		return ERANGE;                                         \
 	}                                                              \
@@ -124,43 +124,7 @@ G_LOCK_DEFINE_STATIC (gethost_mutex);
 } G_STMT_END
 
 
-#ifdef ENABLE_IPv6
-/* some helpful utils for IPv6 lookups */
 #define IPv6_BUFLEN_MIN  (sizeof (char *) * 3)
-
-static int
-ai_to_herr (int error)
-{
-	switch (error) {
-	case EAI_NONAME:
-	case EAI_FAIL:
-		return HOST_NOT_FOUND;
-		break;
-	case EAI_SERVICE:
-		return NO_DATA;
-		break;
-	case EAI_ADDRFAMILY:
-		return NO_ADDRESS;
-		break;
-	case EAI_NODATA:
-		return NO_DATA;
-		break;
-	case EAI_MEMORY:
-		return ENOMEM;
-		break;
-	case EAI_AGAIN:
-		return TRY_AGAIN;
-		break;
-	case EAI_SYSTEM:
-		return errno;
-		break;
-	default:
-		return NO_RECOVERY;
-		break;
-	}
-}
-
-#endif /* ENABLE_IPv6 */
 
 
 /**
@@ -169,17 +133,17 @@ ai_to_herr (int error)
  * @host: a buffer pointing to a struct hostent to use for storage
  * @buf: a buffer to use for hostname storage
  * @buflen: the size of @buf
- * @herr: a pointer to a variable to store an error code in
+ * @err: a GError
  *
  * A reentrant implementation of gethostbyname()
  *
  * Return value: 0 on success, ERANGE if @buflen is too small,
- * "something else" otherwise (in which case *@herr will be set to
- * one of the gethostbyname() error codes).
+ * "something else" otherwise -1 is returned and @err is set
+ * appropriately.
  **/
 int
 g_gethostbyname_r (const char *name, struct hostent *host,
-		   char *buf, size_t buflen, int *herr)
+		   char *buf, size_t buflen, GError **err)
 {
 #ifdef ENABLE_IPv6
 	struct addrinfo hints, *res;
@@ -193,7 +157,7 @@ g_gethostbyname_r (const char *name, struct hostent *host,
 	hints.ai_protocol = 0;
 	
 	if ((retval = getaddrinfo (name, NULL, &hints, &res)) != 0) {
-		*herr = ai_to_herr (retval);
+		g_set_error (err, GMIME_ERROR, retval, gai_strerror (retval));
 		return -1;
 	}
 	
@@ -238,18 +202,30 @@ g_gethostbyname_r (const char *name, struct hostent *host,
 #else /* No support for IPv6 addresses */
 #ifdef HAVE_GETHOSTBYNAME_R
 #ifdef GETHOSTBYNAME_R_FIVE_ARGS
-	if (gethostbyname_r (name, host, buf, buflen, herr))
+	int herr = 0;
+	
+	if (gethostbyname_r (name, host, buf, buflen, &herr) && errno == 0 && herr == 0)
 		return 0;
-	else
-		return errno;
+	
+	if (errno == ERANGE)
+		return ERANGE;
+	
+	g_set_error (err, GMIME_ERROR, errno ? errno : herr, errno ? g_strerror (errno) : hstrerror (herr));
+	
+	return -1;
 #else
 	struct hostent *hp;
-	int retval;
+	int retval, herr;
 	
-	retval = gethostbyname_r (name, host, buf, buflen, &hp, herr);
-	if (hp != NULL)
-		*herr = 0;
-	return retval;
+	if ((retval = gethostbyname_r (name, host, buf, buflen, &hp, &herr)) == ERANGE)
+		return ERANGE;
+	
+	if (hp == NULL) {
+		g_set_error (err, GMIME_ERROR, herr, hstrerror (herr));
+		return -1;
+	}
+	
+	return 0;
 #endif
 #else /* No support for gethostbyname_r */
 	struct hostent *h;
@@ -259,12 +235,12 @@ g_gethostbyname_r (const char *name, struct hostent *host,
 	h = gethostbyname (name);
 	
 	if (!h) {
-		*herr = h_errno;
+		g_set_error (err, GMIME_ERROR, h_errno, hstrerror (h_errno));
 		G_UNLOCK (gethost_mutex);
 		return -1;
 	}
 	
-	GETHOST_PROCESS (h, host, buf, buflen, herr);
+	GETHOST_PROCESS (h, host, buf, buflen);
 	
 	G_UNLOCK (gethost_mutex);
 	
@@ -282,24 +258,24 @@ g_gethostbyname_r (const char *name, struct hostent *host,
  * @host: a buffer pointing to a struct hostent to use for storage
  * @buf: a buffer to use for hostname storage
  * @buflen: the size of @buf
- * @herr: a pointer to a variable to store an error code in
+ * @err: a GError
  *
  * A reentrant implementation of gethostbyaddr()
  *
  * Return value: 0 on success, ERANGE if @buflen is too small,
- * "something else" otherwise (in which case *@herr will be set to
- * one of the gethostbyaddr() error codes).
+ * "something else" otherwise -1 is returned and @err is set
+ * appropriately.
  **/
 int
 g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 		   struct hostent *host, char *buf,
-		   size_t buflen, int *herr)
+		   size_t buflen, GError **err)
 {
 #ifdef ENABLE_IPv6
 	int retval, len;
 	
 	if ((retval = getnameinfo ((const struct sockaddr *) addr, addrlen, buf, buflen, NULL, 0, NI_NAMEREQD)) != 0) {
-		*herr = ai_to_herr (retval);
+		g_set_error (err, GMIME_ERROR, retval, gai_strerror (retval));
 		return -1;
 	}
 	
@@ -333,21 +309,30 @@ g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 #else /* No support for IPv6 addresses */
 #ifdef HAVE_GETHOSTBYADDR_R
 #ifdef GETHOSTBYADDR_R_SEVEN_ARGS
-	if (gethostbyaddr_r (addr, addrlen, af, host, buf, buflen, herr))
+	int herr = 0;
+	
+	if (gethostbyaddr_r (addr, addrlen, af, host, buf, buflen, &herr) && errno == 0 && herr == 0)
 		return 0;
-	else
-		return errno;
+	
+	if (errno == ERANGE)
+		return ERANGE;
+	
+	g_set_error (err, GMIME_ERROR, errno ? errno : herr, errno ? g_strerror (errno) : hstrerror (herr));
+	
+	return -1;
 #else
 	struct hostent *hp;
-	int retval;
+	int retval, herr;
 	
-	retval = gethostbyaddr_r (addr, addrlen, af, host, buf, buflen, &hp, herr);
-	if (hp != NULL)
-		*herr = 0;
-	else
-		retval = -1;
+	if ((retval = gethostbyaddr_r (addr, addrlen, af, host, buf, buflen, &hp, &herr)) == ERANGE)
+		return ERANGE;
 	
-	return retval;
+	if (hp == NULL) {
+		g_set_error (err, GMIME_ERROR, herr, hstrerror (herr));
+		return -1;
+	}
+	
+	return 0;
 #endif
 #else /* No support for gethostbyaddr_r */
 	struct hostent *h;
@@ -357,12 +342,12 @@ g_gethostbyaddr_r (const char *addr, int addrlen, int af,
 	h = gethostbyaddr (addr, addrlen, af);
 	
 	if (!h) {
-		*herr = h_errno;
+		g_set_error (err, GMIME_ERROR, h_errno, hstrerror (h_errno));
 		G_UNLOCK (gethost_mutex);
 		return -1;
 	}
 	
-	GETHOST_PROCESS (h, host, buf, buflen, herr);
+	GETHOST_PROCESS (h, host, buf, buflen);
 	
 	G_UNLOCK (gethost_mutex);
 	
