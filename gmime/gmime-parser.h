@@ -71,6 +71,9 @@ GMimeParser *g_mime_parser_new_with_stream (GMimeStream *stream);
 
 void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
 
+gboolean g_mime_parser_get_persist_stream (GMimeParser *parser);
+void g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist);
+
 void g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from);
 gboolean g_mime_parser_get_scan_from (GMimeParser *parser);
 

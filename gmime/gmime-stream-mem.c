@@ -357,8 +357,10 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
  * @mem: memory stream
  * @array: stream data
  *
- * Sets the byte array on the memory stream. Note: The memory stream
- * is not responsible for freeing the byte array.
+ * Sets the byte array on the memory stream.
+ *
+ * Note: The memory stream is not responsible for freeing the byte
+ * array.
  **/
 void
 g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
@@ -379,4 +381,41 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 	stream->position = 0;
 	stream->bound_start = 0;
 	stream->bound_end = -1;
+}
+
+
+/**
+ * g_mime_stream_mem_get_owner:
+ * @mem: memory stream
+ *
+ * Gets whether or not @mem owns the backend memory buffer.
+ *
+ * Returns %TRUE if @mem owns the backend memory buffer or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_stream_mem_get_owner (GMimeStreamMem *mem)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_MEM (mem), FALSE);
+	
+	return mem->owner;
+}
+
+
+/**
+ * g_mime_stream_mem_set_owner:
+ * @mem: memory stream
+ * @owner: owner
+ *
+ * Sets whether or not @mem owns the backend memory buffer.
+ *
+ * Note: @owner should be %TRUE if the stream should free the backend
+ * memory buffer when destroyed or %FALSE otherwise.
+ **/
+void
+g_mime_stream_mem_set_owner (GMimeStreamMem *mem, gboolean owner)
+{
+	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
+	
+	mem->owner = owner;
 }

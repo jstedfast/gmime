@@ -133,6 +133,8 @@ GMIME_STREAM_CAT_GET_CLASS
 GMimeStreamFile
 g_mime_stream_file_new
 g_mime_stream_file_new_with_bounds
+g_mime_stream_file_get_owner
+g_mime_stream_file_set_owner
 
 <SUBSECTION Private>
 g_mime_stream_file_get_type
@@ -152,6 +154,8 @@ GMIME_STREAM_FILE_GET_CLASS
 GMimeStreamFs
 g_mime_stream_fs_new
 g_mime_stream_fs_new_with_bounds
+g_mime_stream_fs_get_owner
+g_mime_stream_fs_set_owner
 
 <SUBSECTION Private>
 g_mime_stream_fs_get_type
@@ -173,6 +177,8 @@ g_mime_stream_mem_new
 g_mime_stream_mem_new_with_byte_array
 g_mime_stream_mem_new_with_buffer
 g_mime_stream_mem_set_byte_array
+g_mime_stream_mem_get_owner
+g_mime_stream_mem_set_owner
 
 <SUBSECTION Private>
 g_mime_stream_mem_get_type
@@ -877,6 +883,8 @@ GMimeParserHeaderRegexFunc
 g_mime_parser_new
 g_mime_parser_new_with_stream
 g_mime_parser_init_with_stream
+g_mime_parser_get_persist_stream
+g_mime_parser_set_persist_stream
 g_mime_parser_set_scan_from
 g_mime_parser_get_scan_from
 g_mime_parser_set_header_regex

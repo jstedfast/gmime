@@ -304,6 +304,9 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
  *
  * Creates a new GMimeStreamFile object around @fp.
  *
+ * Note: The created GMimeStreamFile object will own the FILE pointer
+ * passed in.
+ *
  * Returns a stream using @fp.
  **/
 GMimeStream *
@@ -330,6 +333,9 @@ g_mime_stream_file_new (FILE *fp)
  * Creates a new GMimeStreamFile object around @fp with bounds @start
  * and @end.
  *
+ * Note: The created GMimeStreamFile object will own the FILE pointer
+ * passed in.
+ *
  * Returns a stream using @fp with bounds @start and @end.
  **/
 GMimeStream *
@@ -344,4 +350,41 @@ g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
 	g_mime_stream_construct (GMIME_STREAM (fstream), start, end);
 	
 	return GMIME_STREAM (fstream);
+}
+
+
+/**
+ * g_mime_stream_file_get_owner:
+ * @stream: file stream
+ *
+ * Gets whether or not @stream owns the backend FILE pointer.
+ *
+ * Returns %TRUE if @stream owns the backend FILE pointer or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_stream_file_get_owner (GMimeStreamFile *stream)
+{
+	g_return_val_if_fail (GMIME_IS_STREAM_FILE (stream), FALSE);
+	
+	return stream->owner;
+}
+
+
+/**
+ * g_mime_stream_file_set_owner:
+ * @stream: file stream
+ * @owner: owner
+ *
+ * Sets whether or not @stream owns the backend FILE pointer.
+ *
+ * Note: @owner should be %TRUE if the stream should fclose() the
+ * backend FILE pointer when destroyed or %FALSE otherwise.
+ **/
+void
+g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner)
+{
+	g_return_if_fail (GMIME_IS_STREAM_FILE (stream));
+	
+	stream->owner = owner;
 }

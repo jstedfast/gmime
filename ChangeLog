@@ -1,3 +1,26 @@
+2003-06-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (g_mime_parser_get_persist_stream): New
+	function to get whether or not the parser will attempt to keep the
+	content on disk when it constructs messages.
+	(g_mime_parser_set_persist_stream): New function to set whether or
+	not the above should be done.
+	(parser_scan_mime_part_content): Only load content if persist and
+	seekable are both TRUE.
+
+	* gmime/gmime-stream-fs.c (g_mime_stream_fs_get_owner): Same idea.
+	(g_mime_stream_fs_set_owner): And here.
+
+	* gmime/gmime-stream-file.c (g_mime_stream_file_get_owner): New
+	function, just like StreamMem.
+	(g_mime_stream_file_set_owner): Same.
+
+	* gmime/gmime-stream-mem.c (g_mime_stream_mem_set_owner): New
+	function to set whether or not the memory stream should free the
+	backend memory buffer when finalized.
+	(g_mime_stream_mem_get_owner): New function to get the above
+	attribute.
+
 2003-06-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gtrie.c (g_trie_free): Free the fail_states array.

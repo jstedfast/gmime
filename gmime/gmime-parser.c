@@ -96,11 +96,12 @@ struct _GMimeParserPrivate {
 	off_t headers_start;
 	off_t header_start;
 	
-	unsigned int unstep:28;
+	unsigned int unstep:27;
 	unsigned int midline:1;
 	unsigned int seekable:1;
 	unsigned int scan_from:1;
 	unsigned int have_regex:1;
+	unsigned int persist_stream:1;
 	
 	GMimeContentType *content_type;
 	struct _header_raw *headers;
@@ -246,6 +247,7 @@ g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 	
 	parser->priv->scan_from = FALSE;
 	parser->priv->have_regex = FALSE;
+	parser->priv->persist_stream = TRUE;
 }
 
 static void
@@ -399,6 +401,51 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 	
 	parser_close (parser);
 	parser_init (parser, stream);
+}
+
+
+/**
+ * g_mime_parser_get_persist_stream:
+ * @parser: MIME parser object
+ *
+ * Gets whether or not the underlying stream is persistant.
+ *
+ * Returns %TRUE if the @parser will leave the content on disk or
+ * %FALSE if it will load the content into memory.
+ **/
+gboolean
+g_mime_parser_get_persist_stream (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
+	
+	return (parser->priv->persist_stream && parser->priv->seekable);
+}
+
+
+/**
+ * g_mime_parser_set_persist_stream:
+ * @parser: MIME parser object
+ * @persist: persist attribute
+ *
+ * Sets whether or not the @parser's underlying stream is persistant.
+ *
+ * If @persist is %TRUE, the @parser will attempt to construct
+ * messages/parts whos content will remain on disk rather than being
+ * loaded into memory so as to reduce memory usage. This is the default.
+ *
+ * If @persist is %FALSE, the @parser will always load message content
+ * into memory.
+ *
+ * Note: This attribute only serves as a hint to the @parser. If the
+ * underlying stream does not support seeking, then this attribute
+ * will be ignored.
+ **/
+void
+g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
+{
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+	
+	parser->priv->persist_stream = persist;
 }
 
 
@@ -1005,7 +1052,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GMimeStream *stream;
 	off_t start, end;
 	
-	if (priv->seekable)
+	if (priv->persist_stream && priv->seekable)
 		start = parser_offset (parser, NULL);
 	else
 		content = g_byte_array_new ();
@@ -1013,17 +1060,17 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	*found = parser_scan_content (parser, content);
 	if (*found != FOUND_EOS) {
 		/* last '\n' belongs to the boundary */
-		if (priv->seekable)
+		if (priv->persist_stream && priv->seekable)
 			end = parser_offset (parser, NULL) - 1;
 		else
 			g_byte_array_set_size (content, MAX (content->len - 1, 0));
-	} else if (priv->seekable) {
+	} else if (priv->persist_stream && priv->seekable) {
 		end = parser_offset (parser, NULL);
 	}
 	
 	encoding = g_mime_part_get_encoding (mime_part);
 	
-	if (priv->seekable) {
+	if (priv->persist_stream && priv->seekable) {
 		stream = g_mime_stream_substream (priv->stream, start, end);
 	} else {
 		stream = g_mime_stream_mem_new_with_byte_array (content);

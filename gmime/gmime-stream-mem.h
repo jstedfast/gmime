@@ -63,6 +63,9 @@ GMimeStream *g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len);
 
 void g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array);
 
+gboolean g_mime_stream_mem_get_owner (GMimeStreamMem *mem);
+void g_mime_stream_mem_set_owner (GMimeStreamMem *mem, gboolean owner);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
