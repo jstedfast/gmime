@@ -1,3 +1,9 @@
+2004-06-22  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_construct_leaf_part): Only destroy
+	the existing content_type on the object if it is non-NULL.
+	(parser_construct_multipart): Same.
+
 2004-06-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Added --enable-profile option and removed

@@ -1199,7 +1199,8 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_content_type_destroy (object->content_type);
+	if (object->content_type)
+		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
 	
 	/* skip empty line after headers */
@@ -1306,7 +1307,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_content_type_destroy (object->content_type);
+	if (object->content_type)
+		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
 	
 	multipart = (GMimeMultipart *) object;
