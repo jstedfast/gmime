@@ -167,7 +167,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	if (fromcount > 0) {
 		if (from->mode == GMIME_FILTER_FROM_MODE_ARMOR)
-			len += (fromcount * 3);
+			len += (fromcount * 2);
 		else
 			len += fromcount;
 		
