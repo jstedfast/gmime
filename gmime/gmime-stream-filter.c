@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
+ *           Michael Zucchi <notzed@ximian.com>
  *
  *  Copyright 2001-2004 Ximian, Inc. (www.ximian.com)
  *
