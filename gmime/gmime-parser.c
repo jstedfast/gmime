@@ -1176,6 +1176,14 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 	return found;
 }
 
+static gboolean
+found_immediate_boundary (struct _GMimeParserPrivate *priv)
+{
+	struct _boundary_stack *s = priv->bounds;
+	
+	return !strncmp (s->boundary, priv->inptr, s->boundarylenfinal);
+}
+
 static GMimeObject *
 parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type, int *found)
 {
@@ -1213,13 +1221,14 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		
 		if (*found == FOUND_BOUNDARY)
 			*found = parser_scan_multipart_subparts (parser, multipart);
-		parser_pop_boundary (parser);
 		
-		/* eat end boundary */
-		parser_skip_line (parser);
-		
-		if (*found == FOUND_END_BOUNDARY)
+		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv)) {
+			/* eat end boundary */
+			parser_skip_line (parser);
 			*found = parser_scan_multipart_postface (parser, multipart);
+		}
+		
+		parser_pop_boundary (parser);
 	} else {
 		g_warning ("multipart without boundary encountered");
 		/* this will scan everything into the preface */

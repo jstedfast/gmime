@@ -1,5 +1,11 @@
 2003-05-22  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-parser.c (parser_construct_multipart): Fixed to
+	properly handle multiparts which do not end with their own
+	end-boundary. See bug #113527 for details.
+
+2003-05-22  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* configure.in: Check for sys/param.h
 
 	* gmime/gmime-stream-mmap.h: Removed sys/mman.h and unistd.h from
