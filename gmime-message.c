@@ -296,14 +296,65 @@ message_get_header (GMimeObject *object, const char *header)
 static void
 message_remove_header (GMimeObject *object, const char *header)
 {
+	GMimeMessage *message = (GMimeMessage *) object;
+	InternetAddressList *addrlist;
+	int i;
+	
 	if (!g_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a multipart */
+           doesn't belong on a message */
 	
-	if (g_strncasecmp ("Content-", header, 8))
-		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	if (!g_strncasecmp ("Content-", header, 8))
+		return;
+	
+	for (i = 0; headers[i]; i++) {
+		if (!g_strcasecmp (headers[i], header))
+			break;
+	}
+	
+	switch (i) {
+	case HEADER_FROM:
+		g_free (message->from);
+		message->from = NULL;
+		break;
+	case HEADER_REPLY_TO:
+		g_free (message->reply_to);
+		message->reply_to = NULL;
+		break;
+	case HEADER_TO:
+		addrlist = g_hash_table_lookup (message->recipients, GMIME_RECIPIENT_TYPE_TO);
+		g_hash_table_remove (message->recipients, GMIME_RECIPIENT_TYPE_TO);
+		internet_address_list_destroy (addrlist);
+		break;
+	case HEADER_CC:
+		addrlist = g_hash_table_lookup (message->recipients, GMIME_RECIPIENT_TYPE_CC);
+		g_hash_table_remove (message->recipients, GMIME_RECIPIENT_TYPE_CC);
+		internet_address_list_destroy (addrlist);
+		break;
+	case HEADER_BCC:
+		addrlist = g_hash_table_lookup (message->recipients, GMIME_RECIPIENT_TYPE_BCC);
+		g_hash_table_remove (message->recipients, GMIME_RECIPIENT_TYPE_BCC);
+		internet_address_list_destroy (addrlist);
+		break;
+	case HEADER_SUBJECT:
+		g_free (message->subject);
+		message->subject = NULL;
+		break;
+	case HEADER_DATE:
+		message->date = 0;
+		message->gmt_offset = 0;
+		break;
+	case HEADER_MESSAGE_ID:
+		g_free (message->message_id);
+		message->message_id = NULL;
+		break;
+	default:
+		break;
+	}
+	
+	GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 

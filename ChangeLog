@@ -1,3 +1,9 @@
+2002-08-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (message_remove_header): If the header to be
+	removed is one of the special headers, then g_free() the cached
+	value on the message object and set it to NULL. Fixes bug #90138.
+
 2002-08-05  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.
