@@ -1,3 +1,8 @@
+2002-09-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (parse_broken_date): Wrap printfs in d() to
+	prevent them from printing anything unless debugging is turned on.
+
 2002-09-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (get_tzone): Fixed to not get false positives when

@@ -547,7 +547,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	while (token) {
 		if (is_weekday (token) && !got_wday) {
 			if ((n = get_wday (token->start, token->len)) != -1) {
-				printf ("weekday; ");
+				d(printf ("weekday; "));
 				got_wday = TRUE;
 				tm.tm_wday = n;
 				goto next_token;
@@ -556,7 +556,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		
 		if (is_month (token) && !got_month) {
 			if ((n = get_month (token->start, token->len)) != -1) {
-				printf ("month; ");
+				d(printf ("month; "));
 				got_month = TRUE;
 				tm.tm_mon = n;
 				goto next_token;
@@ -565,7 +565,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		
 		if (is_time (token) && !tm.tm_hour && !tm.tm_min && !tm.tm_sec) {
 			if (get_time (token->start, token->len, &hour, &min, &sec)) {
-				printf ("time; ");
+				d(printf ("time; "));
 				tm.tm_hour = hour;
 				tm.tm_min = min;
 				tm.tm_sec = sec;
@@ -577,7 +577,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 			struct _date_token *t = token;
 			
 			if ((n = get_tzone (&t)) != -1) {
-				printf ("tzone; ");
+				d(printf ("tzone; "));
 				got_tzone = TRUE;
 				offset = n;
 				goto next_token;
@@ -587,23 +587,23 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		if (is_numeric (token)) {
 			if (token->len == 4 && !tm.tm_year) {
 				if ((n = get_year (token->start, token->len)) != -1) {
-					printf ("year; ");
+					d(printf ("year; "));
 					tm.tm_year = n - 1900;
 					goto next_token;
 				}
 			} else {
 				if (!got_month && !got_wday && token->next && is_numeric (token->next)) {
-					printf ("mon; ");
+					d(printf ("mon; "));
 					n = decode_int (token->start, token->len);
 					got_month = TRUE;
 					tm.tm_mon = n - 1;
 					goto next_token;
 				} else if (!tm.tm_mday && (n = get_mday (token->start, token->len)) != -1) {
-					printf ("mday; ");
+					d(printf ("mday; "));
 					tm.tm_mday = n;
 					goto next_token;
 				} else if (!tm.tm_year) {
-					printf ("2-digit year; ");
+					d(printf ("2-digit year; "));
 					n = get_year (token->start, token->len);
 					tm.tm_year = n - 1900;
 					goto next_token;
@@ -611,14 +611,14 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 			}
 		}
 		
-		printf ("???; ");
+		d(printf ("???; "));
 		
 	next_token:
 		
 		token = token->next;
 	}
 	
-	printf ("\n");
+	d(printf ("\n"));
 		
 	time = mktime (&tm);
 #if defined(HAVE_TIMEZONE)
