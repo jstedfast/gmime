@@ -201,9 +201,9 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t written = 0, n;
 	
- again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
+	again:
 		n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, len);
 		memcpy (buffer->buffer + buffer->buflen, buf, n);
 		buffer->buflen += n;
@@ -211,11 +211,12 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 		len -= n;
 		if (len) {
 			/* flush our buffer... */
-			n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
-			if (n > 0) {
+			if ((n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) != -1) {
 				memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
+				buffer->buflen -= n;
 				goto again;
-			}
+			} else
+				return -1;
 		}
 		break;
 	default:
