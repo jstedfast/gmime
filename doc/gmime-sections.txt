@@ -23,6 +23,12 @@ g_mime_stream_write_to_stream
 </SECTION>
 
 <SECTION>
+<FILE>gmime-stream-buffer</FILE>
+g_mime_stream_buffer_new
+g_mime_stream_buffer_gets
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream-file</FILE>
 GMIME_STREAM_FILE_TYPE
 GMIME_IS_STREAM_FILE

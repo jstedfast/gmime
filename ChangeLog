@@ -1,5 +1,7 @@
 2001-09-23  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* doc/gmime-docs.sgml: Documented streams.
+
 	* gmime-stream-fs.c (stream_write): Seek to the position we think
 	we're at before attempting to write, and increment the stream
 	position after the write.
