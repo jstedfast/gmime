@@ -1,3 +1,8 @@
+2004-02-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/internet-address.c (internet_address_to_string): Check
+	that ia->name is not an empty string.
+
 2004-02-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (parser_construct_multipart): Pop our end
