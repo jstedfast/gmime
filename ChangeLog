@@ -1,5 +1,10 @@
 2002-08-02  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-message-part.c: Fix some comments that say "message/*"
+	(which is meant as a wildcard mime-type match) and change them to
+	just "message" to prevent compiler warnings about a /* being
+	inside a comment.
+
 	* gmime-charset.c: Get rid of a #include "unicode.h". This is no
 	longer needed since we use glib2's unicode stuff.
 
