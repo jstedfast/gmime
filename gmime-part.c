@@ -828,7 +828,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 	char bbuf[27];
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (g_mime_content_type_is (mime_part->mime_type, "multipart", "*"));
+	g_return_if_fail (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*"));
 	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
