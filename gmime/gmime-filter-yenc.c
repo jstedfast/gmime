@@ -136,7 +136,7 @@ g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc)
 {
 	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
 	
-	return yenc->pcrc;
+	return GMIME_YENCODE_CRC_FINAL (yenc->pcrc);
 }
 
 
@@ -151,7 +151,7 @@ g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc)
 {
 	g_return_val_if_fail (GMIME_IS_FILTER_YENC (yenc), -1);
 	
-	return yenc->crc;
+	return GMIME_YENCODE_CRC_FINAL (yenc->crc);
 }
 
 

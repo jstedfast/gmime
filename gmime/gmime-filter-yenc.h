@@ -52,8 +52,8 @@ typedef enum _GMimeFilterYencDirection {
 #define GMIME_YDECODE_STATE_DECODE   (1 << 14)
 #define GMIME_YDECODE_STATE_END      (1 << 15)
 
-#define GMIME_YENCODE_CRC_INIT           (~0)
-#define GMIME_YENCODE_CRC_FINALIZE(crc)  (crc ~= crc)
+#define GMIME_YENCODE_CRC_INIT       (~0)
+#define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
 
 typedef struct _GMimeFilterYenc {
 	GMimeFilter parent;

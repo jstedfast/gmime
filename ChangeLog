@@ -1,5 +1,11 @@
 2002-03-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-filter-yenc.c (g_mime_filter_yenc_get_pcrc): Finalize the
+	crc before returning.
+	(g_mime_filter_yenc_get_crc): Same.
+
+2002-03-12  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-filter-yenc.c: New filter to encode/decode yEnc streams.
 
 2002-03-03  Jeffrey Stedfast  <fejj@ximian.com>
