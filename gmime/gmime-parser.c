@@ -378,7 +378,7 @@ g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
 {
 	g_return_if_fail (GMIME_IS_PARSER (parser));
 	
-	parser->priv->scan_from = TRUE;
+	parser->priv->scan_from = scan_from ? 1 : 0;
 }
 
 
@@ -412,6 +412,8 @@ parser_fill (GMimeParser *parser)
 	inptr = priv->inptr;
 	inend = priv->inend;
 	inlen = inend - inptr;
+	
+	g_assert (inptr <= inend);
 	
 	atleast = MAX (atleast, priv->bounds ? priv->bounds->boundarylenmax : 0);
 	
@@ -470,18 +472,38 @@ g_mime_parser_tell (GMimeParser *parser)
 }
 
 
+/**
+ * g_mime_parser_eos:
+ * @parser: MIME parser
+ *
+ * Tests the end-of-stream indicator for @parser's internal stream.
+ *
+ * Returns %TRUE on EOS or %FALSE otherwise.
+ **/
+gboolean
+g_mime_parser_eos (GMimeParser *parser)
+{
+	struct _GMimeParserPrivate *priv;
+	
+	g_return_val_if_fail (GMIME_IS_STREAM (parser->priv->stream), TRUE);
+	
+	priv = parser->priv;
+	return g_mime_stream_eos (priv->stream) && priv->inptr == priv->inend;
+}
+
 static int
 parser_step_from (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
-	gboolean from_found = FALSE;
 	size_t len;
 	
 	g_byte_array_set_size (priv->from_line, 0);
 	
 	inptr = priv->inptr;
+	
+	g_assert (inptr <= priv->inend);
 	
 	do {
 	refill:
@@ -490,25 +512,34 @@ parser_step_from (GMimeParser *parser)
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
+		*inend = '\n';
 		
-		start = inptr;
-		while (inptr < inend && *inptr != '\n')
-			inptr++;
-		
-		len = inptr - start;
-		
-		if (!from_found && len >= 5)
-			from_found = !strncmp (start, "From ", 5);
-		
-		if (from_found) {
-			g_byte_array_append (priv->from_line, start, len);
+		while (inptr < inend) {
+			start = inptr;
+			while (*inptr != '\n')
+				inptr++;
 			
-			if (inptr < inend)
-				break;
+			if (inptr + 1 >= inend) {
+				/* we don't have enough data */
+				priv->inptr = start;
+				goto refill;
+			}
+			
+			len = inptr - start;
+			inptr++;
+			
+			if (len >= 5 && !strncmp (start, "From ", 5)) {
+				g_byte_array_append (priv->from_line, start, len);
+				goto got_from;
+			}
 		}
 		
 		priv->inptr = inptr;
 	} while (1);
+	
+ got_from:
+	
+	priv->state = GMIME_PARSER_STATE_HEADERS;
 	
 	priv->inptr = inptr;
 	
@@ -631,9 +662,12 @@ parser_step_headers (GMimeParser *parser)
 	inend = priv->inend;
 	
 	header_backup (priv, inptr, inend - inptr);
-	header_parse (priv, hend);
+	/*header_parse (priv, hend);*/
 	
  headers_end:
+	
+	if (priv->headerptr > priv->headerbuf)
+		header_parse (priv, hend);
 	
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
 	
@@ -699,8 +733,10 @@ parser_skip_line (GMimeParser *parser)
 	inptr = priv->inptr;
 	
 	do {
-		if (parser_fill (parser) <= 0)
+		if (parser_fill (parser) <= 0) {
+			inptr = priv->inptr;
 			break;
+		}
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
@@ -716,7 +752,7 @@ parser_skip_line (GMimeParser *parser)
 	
 	priv->midline = FALSE;
 	
-	priv->inptr = inptr + 1;
+	priv->inptr = MIN (inptr + 1, priv->inend);
 }
 
 enum {
@@ -731,8 +767,8 @@ enum {
 } G_STMT_END
 
 #define possible_boundary(scan_from, start, len)                                      \
-                         ((scan_from && len > 5 && !strncmp (start, "From ", len)) || \
-			  (len >= 3 && (start[0] == '-' && start[1] == '-')))
+                         ((scan_from && len >= 5 && !strncmp (start, "From ", 5)) ||  \
+			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
 /* Optimization Notes:
  *
@@ -760,12 +796,13 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	
 	g_assert (priv->inptr <= priv->inend);
 	
-	start = inptr = priv->inptr;
+	inptr = priv->inptr;
 	
 	do {
 	refill:
 		nleft = priv->inend - inptr;
 		if (parser_fill (parser) <= 0) {
+			start = priv->inptr;
 			found = FOUND_EOS;
 			break;
 		}
@@ -799,6 +836,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 						if (len >= s->boundarylenfinal &&
 						    !strncmp (s->boundary, start,
 							      s->boundarylenfinal)) {
+							d(printf ("found end boundary\n"));
 							found = FOUND_END_BOUNDARY;
 							goto boundary;
 						}
@@ -806,6 +844,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 						if (len == s->boundarylen &&
 						    !strncmp (s->boundary, start,
 							      s->boundarylen)) {
+							d(printf ("found boundary\n"));
 							found = FOUND_BOUNDARY;
 							goto boundary;
 						}
@@ -887,7 +926,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	mime_part = (GMimePart *) object;
 	
-	/* skip empty line */
+	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
 	parser_scan_mime_part_content (parser, mime_part, found);
@@ -985,7 +1024,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	multipart = (GMimeMultipart *) object;
 	
-	/* skip empty line */
+	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
 	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
@@ -1094,7 +1133,7 @@ parser_construct_message (GMimeParser *parser)
 	g_mime_object_unref (object);
 	
 	if (priv->scan_from) {
-		priv->state = GMIME_PARSER_STATE_INIT;
+		priv->state = GMIME_PARSER_STATE_FROM;
 		parser_pop_boundary (parser);
 	}
 	

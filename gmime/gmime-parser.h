@@ -75,6 +75,8 @@ GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser);
 
 off_t g_mime_parser_tell (GMimeParser *parser);
 
+gboolean g_mime_parser_eos (GMimeParser *parser);
+
 char *g_mime_parser_get_from (GMimeParser *parser);
 
 #ifdef __cplusplus

@@ -254,7 +254,7 @@ stream_eos (GMimeStream *stream)
  *
  * Tests the end-of-stream indicator for @stream.
  *
- * Returns TRUE on EOS or FALSE otherwise.
+ * Returns %TRUE on EOS or %FALSE otherwise.
  **/
 gboolean
 g_mime_stream_eos (GMimeStream *stream)

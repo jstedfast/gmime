@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table gen-multibyte test-mime test-parser test-streams test-html test-iconv
+noinst_PROGRAMS = gen-table gen-multibyte test-mime test-parser test-mbox test-streams test-html test-iconv
 
 bin_SCRIPTS = gmime-config
 
@@ -105,6 +105,11 @@ test_parser_LDFLAGS =
 test_parser_DEPENDENCIES = $(DEPS)
 test_parser_LDADD = $(LDADDS)
 
+test_mbox_SOURCES = test-mbox.c
+test_mbox_LDFLAGS = 
+test_mbox_DEPENDENCIES = $(DEPS)
+test_mbox_LDADD = $(LDADDS)
+
 test_streams_SOURCES = test-streams.c
 test_streams_LDFLAGS = 
 test_streams_DEPENDENCIES = $(DEPS)
@@ -141,7 +146,7 @@ MIMEtests : test-mime
 	@echo "## MIME regression tests"
 	@echo "##"
 
-PARSERtests : test-parser
+PARSERtests : test-parser test-mbox
 	@echo "##"
 	@echo "## MIME Parser regression tests"
 	@echo "##"
