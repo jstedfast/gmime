@@ -87,6 +87,7 @@ g_mime_stream_file_class_init (GMimeStreamFileClass *klass)
 	stream_class->close = stream_close;
 	stream_class->eos = stream_eos;
 	stream_class->reset = stream_reset;
+	stream_class->seek = stream_seek;
 	stream_class->tell = stream_tell;
 	stream_class->length = stream_length;
 	stream_class->substream = stream_substream;
@@ -264,16 +265,19 @@ static ssize_t
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	off_t len;
+	off_t bound_end;
 	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
 	fseek (fstream->fp, 0, SEEK_END);
-	len = ftell (fstream->fp);
+	bound_end = ftell (fstream->fp);
 	fseek (fstream->fp, stream->position, SEEK_SET);
 	
-	return len;
+	if (bound_end < stream->bound_start)
+		return -1;
+	
+	return bound_end - stream->bound_start;
 }
 
 static GMimeStream *

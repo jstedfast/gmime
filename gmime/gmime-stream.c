@@ -90,6 +90,7 @@ g_mime_stream_class_init (GMimeStreamClass *klass)
 	klass->close = stream_close;
 	klass->eos = stream_eos;
 	klass->reset = stream_reset;
+	klass->seek = stream_seek;
 	klass->tell = stream_tell;
 	klass->length = stream_length;
 	klass->substream = stream_substream;

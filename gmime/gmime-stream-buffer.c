@@ -92,6 +92,7 @@ g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass)
 	stream_class->close = stream_close;
 	stream_class->eos = stream_eos;
 	stream_class->reset = stream_reset;
+	stream_class->seek = stream_seek;
 	stream_class->tell = stream_tell;
 	stream_class->length = stream_length;
 	stream_class->substream = stream_substream;

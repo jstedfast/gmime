@@ -1,3 +1,38 @@
+2002-05-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-partial.c: New test suite for gmime-message-partial.c.
+
+	* gmime-stream-cat.c: Several fixes.
+	(g_mime_stream_cat_class_init): Overload the seek method.
+
+	* gmime-stream-mmap.c (g_mime_stream_mmap_class_init): Overload
+	the seek method.
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_class_init):
+	Overload the seek method.
+
+	* gmime-stream-null.c (g_mime_stream_null_class_init): Overload
+	the seek method.
+
+	* gmime-stream-filter.c (g_mime_stream_filter_class_init):
+	Overload the seek method.
+
+	* gmime-stream.c (g_mime_stream_class_init): Overload the seek
+	method.
+
+	* gmime-stream-mem.c (g_mime_stream_mem_class_init): Overload the
+	seek method.
+
+	* gmime-stream-file.c (g_mime_stream_file_class_init): Overload
+	the seek method.
+	(stream_length): The length of the stream is bound_end -
+	bound_start.
+
+	* gmime-stream-fs.c (g_mime_stream_fs_class_init): Overload the
+	seek method.
+	(stream_length): The length of the stream is bound_end -
+	bound_start.
+
 2002-05-10  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-cat.c (stream_reset): Use stream_seek().
@@ -1345,12 +1380,12 @@
 	* gmime-utils.c (g_mime_utils_8bit_header_encode): same.
 
 	* gmime-parser.c (find_header_part_end): new utility function to
-	find the dividing line between body & header.  * gmime-parser.c
-	(g_mime_parser_construct_part): sync.  * gmime-parser.c
+	find the dividing line between body & header.
+	(g_mime_parser_construct_part): sync.
 	(g_mime_parser_construct_message): sync.
 
-	* gmime-parser.c (get_header_block): remove unused func.  *
-	gmime-parser.c (rfc822_headers): remove unused static array.
+	* gmime-parser.c (get_header_block): remove unused func.
+	(rfc822_headers): remove unused static array.
 
 2001-07-02  Jeffrey Stedfast  <fejj@ximian.com>
 

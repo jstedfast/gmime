@@ -93,6 +93,7 @@ g_mime_stream_cat_class_init (GMimeStreamCatClass *klass)
 	stream_class->close = stream_close;
 	stream_class->eos = stream_eos;
 	stream_class->reset = stream_reset;
+	stream_class->seek = stream_seek;
 	stream_class->tell = stream_tell;
 	stream_class->length = stream_length;
 	stream_class->substream = stream_substream;
@@ -256,19 +257,24 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	if (cat->sources == NULL)
 		return -1;
 	
- seek:
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		if (offset < 0)
+	seek_set:
+		if (offset < stream->bound_start)
 			return -1;
 		
 		current = NULL;
 		p = cat->sources;
-		real = 0;
+		real = stream->bound_start;
 		while (real < offset && p) {
 			real += p->length;
 			current = p;
 			p = p->next;
+		}
+		
+		if (p == NULL) {
+			/* bound_end < offset */
+			return -1;
 		}
 		
 		/* reset all the streams after this point */
@@ -286,6 +292,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			stream->position = offset;
 			cat->current = current;
 		}
+		
 		return ret;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
@@ -294,8 +301,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		
 		/* calculate offset relative to the beginning of the stream */
 		offset = stream->position + offset;
-		whence = GMIME_STREAM_SEEK_SET;
-		goto seek;
+		goto seek_set;
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (offset > 0)
@@ -311,8 +317,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		
 		/* calculate offset relative to the beginning of the stream */
 		offset = real + offset;
-		whence = GMIME_STREAM_SEEK_SET;
-		goto seek;
+		goto seek_set;
 		break;
 	default:
 		g_assert_not_reached ();
