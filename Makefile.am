@@ -28,6 +28,7 @@ libgmime_la_SOURCES = 		\
 	gmime-parser.c		\
 	gmime-part.c		\
 	gmime-stream.c		\
+	gmime-stream-buffer.c	\
 	gmime-stream-file.c	\
 	gmime-stream-filter.c	\
 	gmime-stream-fs.c	\
@@ -52,6 +53,7 @@ gmimeinc_HEADERS = 		\
 	gmime-parser.h		\
 	gmime-part.h		\
 	gmime-stream.h		\
+	gmime-stream-buffer.h	\
 	gmime-stream-file.h	\
 	gmime-stream-filter.c	\
 	gmime-stream-fs.h	\

@@ -1,5 +1,13 @@
 2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-buffer.c (g_mime_stream_buffer_gets): Implemented.
+	(stream_reset): Implemented.
+	(stream_eos): Implemented.
+	(stream_write): Reimplemented.
+	(stream_read): Reimplemented.
+
+2001-09-21  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-stream-buffer.[c,h]: New stream that buffers reads or
 	writes to/from another stream. Will also implement a gets() method
 	for Charles.

@@ -32,13 +32,9 @@ extern "C" {
 #include "gmime-stream.h"
 
 typedef enum {
-	GMIME_STREAM_BUFFER_BUFFER  = 0x00,
-	GMIME_STREAM_BUFFER_NEWLINE,
-	
-	GMIME_STREAM_BUFFER_READ    = 0x00,
-	GMIME_STREAM_BUFFER_WRITE   = 0xf0,
-
-	GMIME_STREAM_BUFFER_MODE    = 0xf0,
+	GMIME_STREAM_BUFFER_CACHE_READ,
+	GMIME_STREAM_BUFFER_BLOCK_READ,
+	GMIME_STREAM_BUFFER_BLOCK_WRITE,
 } GMimeStreamBufferMode;
 
 typedef struct _GMimeStreamBuffer {
@@ -61,7 +57,7 @@ typedef struct _GMimeStreamBuffer {
 GMimeStream *g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode);
 
 
-ssize_t g_mime_stream_buffer_gets (GMimeStreamBuffer *stream, char *buf, size_t max);
+ssize_t g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max);
 
 #ifdef __cplusplus
 }
