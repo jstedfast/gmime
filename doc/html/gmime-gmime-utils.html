@@ -427,7 +427,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     BASE64_ENCODE_LEN(x)</PRE
+>#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */</PRE
 ></TD
 ></TR
 ></TABLE
@@ -490,7 +490,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     QP_ENCODE_LEN(x)</PRE
+>#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2108,7 +2108,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_UUDECODE_STATE_INIT</PRE
+>#define GMIME_UUDECODE_STATE_INIT   (0)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2134,7 +2134,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_UUDECODE_STATE_BEGIN</PRE
+>#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2160,7 +2160,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_UUDECODE_STATE_END</PRE
+>#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -2186,7 +2186,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_UUDECODE_STATE_MASK</PRE
+>#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)</PRE
 ></TD
 ></TR
 ></TABLE

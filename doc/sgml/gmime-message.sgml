@@ -89,7 +89,8 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
-<programlisting>#define     GMIME_RECIPIENT_TYPE_TO</programlisting>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
+</programlisting>
 <para>
 Recipients in the To: header.</para>
 <para>
@@ -97,7 +98,8 @@ Recipients in the To: header.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
-<programlisting>#define     GMIME_RECIPIENT_TYPE_CC</programlisting>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+</programlisting>
 <para>
 Recipients in the Cc: header.</para>
 <para>
@@ -105,7 +107,8 @@ Recipients in the Cc: header.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
-<programlisting>#define     GMIME_RECIPIENT_TYPE_BCC</programlisting>
+<programlisting>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+</programlisting>
 <para>
 Recipients in the Bcc: header.</para>
 <para>

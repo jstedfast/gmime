@@ -1,5 +1,11 @@
 2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Bumped version to 1.0.0
+
+	* README: Updated.
+
+2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gen-table.c: Updated.
 
 	* gmime-utils.c (quoted_decode): Oops. ESPECIALs are allowed

@@ -105,7 +105,8 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <title>Details</title>
 <refsect2>
 <title><anchor id="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN()</title>
-<programlisting>#define     BASE64_ENCODE_LEN(x)</programlisting>
+<programlisting>#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
+</programlisting>
 <para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
@@ -121,7 +122,8 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN()</title>
-<programlisting>#define     QP_ENCODE_LEN(x)</programlisting>
+<programlisting>#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
+</programlisting>
 <para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
@@ -479,25 +481,29 @@ flush off the last little bit.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</title>
-<programlisting>#define     GMIME_UUDECODE_STATE_INIT</programlisting>
+<programlisting>#define GMIME_UUDECODE_STATE_INIT   (0)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</title>
-<programlisting>#define     GMIME_UUDECODE_STATE_BEGIN</programlisting>
+<programlisting>#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</title>
-<programlisting>#define     GMIME_UUDECODE_STATE_END</programlisting>
+<programlisting>#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</title>
-<programlisting>#define     GMIME_UUDECODE_STATE_MASK</programlisting>
+<programlisting>#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
+</programlisting>
 <para>
 
 </para></refsect2>

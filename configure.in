@@ -10,8 +10,8 @@ AM_CONFIG_HEADER(config.h)
 # glib_cflags:  cflags to store in gmime-config
 # glib_libs:    libs to store in gmime-config
 
-GMIME_MAJOR_VERSION=0
-GMIME_MINOR_VERSION=9
+GMIME_MAJOR_VERSION=1
+GMIME_MINOR_VERSION=0
 GMIME_MICRO_VERSION=0
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
@@ -123,6 +123,8 @@ dnl Check for libiconv
 AM_ICONV()
 
 CFLAGS="$CFLAGS -I$srcdir"
+LDFLAGS_save="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBICONV"
 
 AC_MSG_CHECKING(preferred charset formats for system iconv)
 AC_TRY_RUN([
@@ -141,6 +143,8 @@ AC_TRY_RUN([
 	*** ftp://ftp.gnu.org/pub/gnu/libiconv
 	])
 ])
+
+LDFLAGS="$LDFLAGS_save"
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
