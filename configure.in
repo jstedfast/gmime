@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=0
 GMIME_MINOR_VERSION=7
-GMIME_MICRO_VERSION=3
+GMIME_MICRO_VERSION=4
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -52,13 +52,14 @@ LDFLAGS=${_ldflags}
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
 AC_CHECK_HEADERS(alloca.h)
 
-AC_CHECK_FUNCS(isblank strftime localtime alloca)
+AC_CHECK_FUNCS(isblank strftime localtime alloca mmap munmap msync)
 
 AC_CHECK_FUNCS(memchr memrchr memmem strlen strcpy strncpy strlcpy stpcpy strcat strncat strlcat strchr strrchr strnstr strstr strncasestr strcasestr strncasecmp strcasecmp)
 

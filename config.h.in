@@ -11,6 +11,9 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+/* Define if you have the <sys/mman.h> header file.  */
+#undef HAVE_SYS_MMAN_H
+
 /* Define if you have the <alloca.h> header file.  */
 #undef HAVE_ALLOCA_H
 
@@ -47,8 +50,14 @@
 /* Define if you have the alloca function.  */
 #undef HAVE_ALLOCA
 
-/* Define if you have the alloca function.  */
-#undef HAVE_ALLOCA
+/* Define if you have the mmap function.  */
+#undef HAVE_MMAP
+
+/* Define if you have the munmap function.  */
+#undef HAVE_MUNMAP
+
+/* Define if you have the msync function.  */
+#undef HAVE_MSYNC
 
 /* Define if you have the memchr function.  */
 #undef HAVE_MEMCHR

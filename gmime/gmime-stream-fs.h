@@ -29,8 +29,6 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
-#include <stdio.h>
 #include <unistd.h>
 #include "gmime-stream.h"
 

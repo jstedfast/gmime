@@ -32,9 +32,6 @@
 #include "strlib.h"
 #include <ctype.h>
 
-#define ENABLE_ZENTIMER
-#include "zentimer.h"
-
 #define d(x) x
 
 #ifndef HAVE_ISBLANK
@@ -121,7 +118,7 @@ special_header (const char *header)
 static void
 parser_read_headers (GMimeStream *stream, GByteArray *buffer)
 {
-	guint offset;
+	size_t offset;
 	
 	do {
 		offset = buffer->len;
@@ -154,8 +151,6 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 	} else
 		internal = FALSE;
 	
-	ZenTimerStart ();
-	
 	boundary_len = strlen (boundary);
 	end_boundary_len = strlen (end_boundary);
 	
@@ -184,9 +179,6 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 			g_byte_array_set_size (buffer, 0);
 		
 	} while (!g_mime_stream_eos (stream));
-	
-	ZenTimerStop ();
-	ZenTimerReport ("gmime::parser_read_until_boundary");
 	
 	if (internal)
 		g_byte_array_free (buffer, TRUE);
