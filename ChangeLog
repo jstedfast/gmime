@@ -1,3 +1,24 @@
+2004-05-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (write_subject): New function. Use
+	unstructured folding rather than the default.
+	(g_mime_message_init): Register the subject header writer.
+
+	* gmime/gmime-utils.c (g_mime_utils_structured_header_fold): New
+	function (same as g_mime_utils_header_fold() but more
+	appropriately named).
+	(g_mime_utils_unstructured_header_fold): Fold unstructured headers
+	like Subject.
+	(header_fold): Moved all of the g_mime_utils_header_fold() logic
+	into here with a small adjustment to differentiate structured vs
+	unstructured header folding.
+
+2004-05-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-param.c (param_list_format): Modified to try and
+	squeeze more characters per line and still keep it under 76 chars
+	per line.
+
 2004-05-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-filter-gzip.c (g_mime_filter_gzip_finalize): Call

@@ -718,9 +718,9 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 	
 	while (param) {
 		gboolean encoded = FALSE;
-		gboolean quote = FALSE;
 		unsigned nlen, vlen;
 		int here = out->len;
+		int quote = 0;
 		char *value;
 		
 		if (!param->value) {
@@ -728,8 +728,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 			continue;
 		}
 		
-		value = encode_param (param->value, &encoded);
-		if (!value) {
+		if (!(value = encode_param (param->value, &encoded))) {
 			w(g_warning ("appending parameter %s=%s violates rfc2184",
 				     param->name, param->value));
 			value = g_strdup (param->value);
@@ -740,29 +739,26 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 			
 			for (ch = value; *ch; ch++) {
 				if (is_tspecial (*ch) || is_lwsp (*ch))
-					break;
+					quote++;
 			}
-			
-			quote = ch && *ch;
 		}
 		
 		nlen = strlen (param->name);
 		vlen = strlen (value);
 		
-		if (used + nlen + vlen > GMIME_FOLD_LEN - 8) {
-			if (fold)
-				g_string_append (out, ";\n\t");
-			else
-				g_string_append (out, "; ");
-			
+		if (fold && (used + nlen + vlen + quote > GMIME_FOLD_LEN - 2)) {
+			g_string_append (out, ";\n\t");
 			here = out->len;
-			used = 0;
-		} else
-			out = g_string_append (out, "; ");
+			used = 1;
+		} else {
+			g_string_append (out, "; ");
+			here = out->len;
+			used += 2;
+		}
 		
-		if (nlen + vlen > GMIME_FOLD_LEN - 10) {
+		if (nlen + vlen + quote > GMIME_FOLD_LEN - 2) {
 			/* we need to do special rfc2184 parameter wrapping */
-			int maxlen = GMIME_FOLD_LEN - (nlen + 10);
+			int maxlen = GMIME_FOLD_LEN - (nlen + 6);
 			char *inptr, *inend;
 			int i = 0;
 			
@@ -789,7 +785,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 						g_string_append (out, "; ");
 					
 					here = out->len;
-					used = 0;
+					used = 1;
 				}
 				
 				g_string_append_printf (out, "%s*%d%s=", param->name,

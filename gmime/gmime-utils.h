@@ -73,6 +73,8 @@ GMimeReferences *g_mime_references_decode (const char *text);
 void g_mime_references_append (GMimeReferences **refs, const char *msgid);
 void g_mime_references_clear (GMimeReferences **refs);
 
+char  *g_mime_utils_structured_header_fold (const char *in);
+char  *g_mime_utils_unstructured_header_fold (const char *in);
 char  *g_mime_utils_header_fold (const char *in);
 char  *g_mime_utils_header_printf (const char *format, ...);
 

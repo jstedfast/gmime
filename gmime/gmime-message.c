@@ -56,6 +56,7 @@ static void message_add_recipients_from_string (GMimeMessage *message, char *typ
 static void message_set_subject (GMimeMessage *message, const char *subject);
 
 static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
 
@@ -132,6 +133,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	
+	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Subject", write_subject);
 	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Received", write_received);
 	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Message-Id", write_msgid);
 }
@@ -509,6 +511,22 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 	g_string_free (str, TRUE);
 	
 	return nwritten;
+}
+
+static ssize_t
+write_subject (GMimeStream *stream, const char *name, const char *value)
+{
+	char *unfolded, *folded;
+	ssize_t n;
+	
+	unfolded = g_strdup_printf ("%s: %s\n", name, value);
+	folded = g_mime_utils_unstructured_header_fold (unfolded);
+	g_free (unfolded);
+	
+	n = g_mime_stream_write_string (stream, folded);
+	g_free (folded);
+	
+	return n;
 }
 
 static ssize_t

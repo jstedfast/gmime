@@ -981,16 +981,8 @@ g_mime_references_clear (GMimeReferences **refs)
 }
 
 
-/**
- * g_mime_utils_header_fold:
- * @in: input header string
- *
- * Folds a header according to the rules in rfc822.
- *
- * Returns an allocated string containing the folded header.
- **/
-char *
-g_mime_utils_header_fold (const char *in)
+static char *
+header_fold (const char *in, gboolean structured)
 {
 	gboolean last_was_lwsp = FALSE;
 	register const char *inptr;
@@ -1009,9 +1001,12 @@ g_mime_utils_header_fold (const char *in)
 		len = strcspn (inptr, " \t\n");
 		
 		if (outlen + len > GMIME_FOLD_LEN) {
-			if (last_was_lwsp)
+			if (last_was_lwsp) {
+				if (structured)
+					out->str[out->len - 1] = '\t';
+				
 				g_string_insert_c (out, out->len - 1, '\n');
-			else
+			} else
 				g_string_append (out, "\n\t");
 			outlen = 1;
 			
@@ -1058,6 +1053,51 @@ g_mime_utils_header_fold (const char *in)
 
 
 /**
+ * g_mime_utils_structured_header_fold:
+ * @in: input header string
+ *
+ * Folds a structured header according to the rules in rfc822.
+ *
+ * Returns an allocated string containing the folded header.
+ **/
+char *
+g_mime_utils_structured_header_fold (const char *in)
+{
+	return header_fold (in, TRUE);
+}
+
+
+/**
+ * g_mime_utils_unstructured_header_fold:
+ * @in: input header string
+ *
+ * Folds an unstructured header according to the rules in rfc822.
+ *
+ * Returns an allocated string containing the folded header.
+ **/
+char *
+g_mime_utils_unstructured_header_fold (const char *in)
+{
+	return header_fold (in, FALSE);
+}
+
+
+/**
+ * g_mime_utils_header_fold:
+ * @in: input header string
+ *
+ * Folds a structured header according to the rules in rfc822.
+ *
+ * Returns an allocated string containing the folded header.
+ **/
+char *
+g_mime_utils_header_fold (const char *in)
+{
+	return header_fold (in, TRUE);
+}
+
+
+/**
  * g_mime_utils_header_printf:
  * @format: string format
  * @Varargs: arguments
@@ -1078,7 +1118,7 @@ g_mime_utils_header_printf (const char *format, ...)
 	buf = g_strdup_vprintf (format, ap);
 	va_end (ap);
 	
-	ret = g_mime_utils_header_fold (buf);
+	ret = header_fold (buf, TRUE);
 	g_free (buf);
 	
 	return ret;
