@@ -47,7 +47,7 @@
 #define w(x)
 #endif /* ENABLE_WARNINGS */
 
-#define d(x) x
+#define d(x)
 
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);

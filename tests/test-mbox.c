@@ -61,6 +61,7 @@ test_parser (GMimeStream *stream)
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	g_mime_parser_set_scan_from (parser, TRUE);
+	/*g_mime_parser_set_respect_content_length (parser, TRUE);*/
 	
 	g_mime_parser_set_header_regex (parser, "^X-Evolution$", header_cb, NULL);
 	
