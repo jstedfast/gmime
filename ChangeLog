@@ -1,3 +1,19 @@
+2003-12-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): If scanning for eoln
+	results in finding inend, request a refill and try again (changed
+	from inptr + 1 >= inend).
+
+2003-12-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/internet-address.c (decode_domain): Make sure domain->len
+	> 0 before checking domain->str[domain->len - 1].
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_start): Properly set the
+	O_NONBLOCK flag on each of the pipes (ie. we need to get the
+	current flags first and then add the O_NONBLOCK flag rather than
+	just setting the O_NONBLOCK flag by itself).
+
 2003-12-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.

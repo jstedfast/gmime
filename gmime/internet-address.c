@@ -669,7 +669,7 @@ decode_domain (const char **in)
 			if (!(atom = decode_atom (&inptr))) {
 				w(g_warning ("Unexpected char '%c' in domain: %s", *inptr, *in));
 				/* remove the last '.' */
-				if (domain->str[domain->len - 1] == '.')
+				if (domain->len && domain->str[domain->len - 1] == '.')
 					g_string_truncate (domain, domain->len - 1);
 				break;
 			}
