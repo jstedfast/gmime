@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __G_MIME_FILTER_HTML_H__
-#define __G_MIME_FILTER_HTML_H__
+#ifndef __GMIME_FILTER_HTML_H__
+#define __GMIME_FILTER_HTML_H__
 
 #include <gmime/gmime-filter.h>
 
