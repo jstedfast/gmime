@@ -45,8 +45,6 @@ typedef enum {
 struct _GMimeCipherContext {
 	GMimeObject parent_object;
 	
-	struct _GMimeCipherContextPrivate *priv;
-	
 	void                  (*destroy)    (GMimeCipherContext *ctx);
 	
 	char *                (*get_passwd) (GMimeCipherContext *ctx, const char *prompt);

@@ -1,3 +1,10 @@
+2001-11-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-pgp-context.[c,h]: New source files, mostly implemented -
+	god only knows if they actually work or not yet tho ;-)
+
+	* gmime-pgp-mime.[c,h]: Same.
+
 2001-11-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* strlib.c (strlcpy): BSD defines the prototype as returning
