@@ -25,8 +25,11 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
+#include "strlib.h"
 
 struct _type_bucket {
 	char *type;

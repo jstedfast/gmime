@@ -359,7 +359,6 @@ GMimeMessage *
 g_mime_message_new (gboolean pretty_headers)
 {
 	GMimeMessage *message;
-	GMimeHeader *headers;
 	int i;
 	
 	message = g_object_new (GMIME_TYPE_MESSAGE, NULL, NULL);

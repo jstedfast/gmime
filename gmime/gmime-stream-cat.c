@@ -249,7 +249,6 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
-	off_t bound_end;
 	
 	if (cat->current == NULL)
 		return TRUE;
@@ -364,7 +363,7 @@ stream_length (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = GMIME_STREAM_CAT (stream);
 	struct _cat_node *p;
-	ssize_t n, len = 0;
+	ssize_t len = 0;
 	
 	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;

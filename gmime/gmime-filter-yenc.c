@@ -231,6 +231,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 							in = inptr;
 							len = inend - in;
 						} else {
+							/* we don't have enough... */
 							g_mime_filter_backup (filter, in, left);
 						}
 						break;

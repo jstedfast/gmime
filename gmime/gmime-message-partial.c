@@ -26,12 +26,13 @@
 #endif
 
 #include <stdlib.h>
+#include <string.h>
 
 #include "gmime-message-partial.h"
 #include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
 #include "gmime-parser.h"
-
+#include "strlib.h"
 
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
@@ -348,7 +349,6 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeStream *stream, *substream;
 	GMimeDataWrapper *wrapper;
 	GPtrArray *parts;
-	char *message_id;
 	const char *id;
 	off_t start;
 	size_t len;

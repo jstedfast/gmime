@@ -40,7 +40,6 @@
 #define d(x)
 
 static void g_mime_parser_class_init (GMimeParserClass *klass);
-static void g_mime_parser_class_finalize (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);
 static void g_mime_parser_finalize (GObject *object);
 
@@ -231,8 +230,6 @@ g_mime_parser_class_init (GMimeParserClass *klass)
 static void
 g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 {
-	struct _GMimeParserPrivate *priv;
-	
 	parser->priv = g_new (struct _GMimeParserPrivate, 1);
 	parser_init (parser, NULL);
 }
@@ -957,7 +954,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 {
 	GByteArray *buffer;
 	const char *face;
-	int len, found;
+	int found;
 	
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer);
@@ -985,9 +982,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 static int
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 {
-	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentType *content_type;
-	struct _header_raw *header;
 	GMimeObject *subpart;
 	int found;
 	

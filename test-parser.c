@@ -12,9 +12,12 @@
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 
+#if 0
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
+#endif
+#define TEST_WRITE_TO_STREAM
 
 void
 print_depth (int depth)
@@ -99,6 +102,14 @@ test_parser (GMimeStream *stream)
 		
 		g_free (body);
 	}
+#endif
+	
+#ifdef TEST_WRITE_TO_STREAM
+	stream = g_mime_stream_fs_new (2);
+	g_mime_object_write_to_stream (message, stream);
+	g_mime_stream_flush (stream);
+	GMIME_STREAM_FS (stream)->fd = -1;
+	g_mime_stream_unref (stream);
 #endif
 	
 #ifdef PRINT_MIME_STRUCT

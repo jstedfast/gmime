@@ -178,7 +178,6 @@ static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimePart *mime_part = (GMimePart *) object;
-	GMimePartEncodingType encoding;
 	char *text;
 	int i;
 	
@@ -360,7 +359,6 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
-	const char *buffer;
 	
 	/* write the content headers */
 	nwritten = g_mime_header_write_to_stream (object->headers, stream);
@@ -553,8 +551,6 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
-	const GMimeContentType *type;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_md5)

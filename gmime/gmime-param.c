@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -786,12 +787,11 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 				}
 				
 				g_string_sprintfa (out, "%s*%d%s=", param->name, i++, encoded ? "*" : "");
-				if (encoded || !quote)
-					g_string_append_len (out, inptr, (unsigned) (ptr - inptr));
-				else
-					g_string_append_len_quoted (out, inptr, (unsigned) (ptr - inptr));
 				
-				d(printf ("wrote: %s\n", out->str + here));
+				if (encoded || !quote)
+					g_string_append_len (out, inptr, ptr - inptr);
+				else
+					g_string_append_len_quoted (out, inptr, ptr - inptr);
 				
 				used += (out->len - here);
 				

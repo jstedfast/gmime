@@ -27,11 +27,14 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
 
 #include "gmime-multipart.h"
 #include "gmime-utils.h"
+#include "strlib.h"
+
 
 #define d(x) x
 
@@ -228,7 +231,6 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	ssize_t nwritten, total = 0;
-	const char *buffer;
 	GMimeObject *part;
 	GList *node;
 	
