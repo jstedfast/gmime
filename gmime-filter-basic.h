@@ -36,6 +36,8 @@ typedef enum {
 	GMIME_FILTER_BASIC_BASE64_DEC,
 	GMIME_FILTER_BASIC_QP_ENC,
 	GMIME_FILTER_BASIC_QP_DEC,
+	GMIME_FILTER_BASIC_UU_ENC,
+	GMIME_FILTER_BASIC_UU_DEC,
 } GMimeFilterBasicType;
 
 typedef struct _GMimeFilterBasic {
@@ -45,6 +47,7 @@ typedef struct _GMimeFilterBasic {
 	
 	int state;
 	int save;
+	int uulen;
 } GMimeFilterBasic;
 
 GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);

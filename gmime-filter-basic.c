@@ -61,6 +61,7 @@ g_mime_filter_basic_new_type (GMimeFilterBasicType type)
 	new->type = type;
 	new->state = 0;
 	new->save = 0;
+	new->uulen = 0;
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &template);
 	
@@ -105,6 +106,10 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		newlen = g_mime_utils_quoted_encode_step (in, len, filter->outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 4 + 4);
 		break;
+	case GMIME_FILTER_BASIC_UU_ENC:
+		g_message ("FIXME: Implement this");
+		newlen = 0;
+		break;
 	case GMIME_FILTER_BASIC_BASE64_DEC:
 		/* output can't possibly exceed the input size */
 		g_mime_filter_set_size (filter, len + 3, FALSE);
@@ -116,6 +121,11 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		g_mime_filter_set_size (filter, len, FALSE);
 		newlen = g_mime_utils_quoted_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len);
+		break;
+	case GMIME_FILTER_BASIC_UU_DEC:
+		/* output can't possibly exceed the input size */
+		g_mime_filter_set_size (filter, len, FALSE);
+		newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &basic->state, &basic->save, &basic->uulen);
 		break;
 	}
 	
@@ -177,4 +187,5 @@ filter_reset (GMimeFilter *filter)
 		basic->state = 0;
 	}
 	basic->save = 0;
+	basic->uulen = 0;
 }

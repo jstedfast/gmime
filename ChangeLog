@@ -1,3 +1,10 @@
+2001-10-03  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-filter-basic.[ch]: added support for decoding a uuencoded
+	stream; added a placeholder for uuencoding a stream.
+
+	* md5-utils.c: commented out d(x) macro.
+
 2001-10-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-buffer.h: buflen should be an ssize_t not a
