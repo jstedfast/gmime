@@ -104,7 +104,6 @@ header_init_bits (unsigned short bit, unsigned short bitcopy, int remove, unsign
 static void
 header_decode_init (void)
 {
-	unsigned short bit = 1;
 	int i;
 	
 	for (i = 0; i < 256; i++) {
@@ -127,15 +126,6 @@ header_decode_init (void)
 	header_init_bits (IS_DSPECIAL, 0, FALSE, CHARS_DSPECIAL);
 	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
 	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
-	
-	for (i = 0; i < 9; i++) {
-		if (gmime_special_table['/'] & bit)
-			fprintf (stderr, "bit %d (%d) is set\n", i, bit);
-		bit <<= 1;
-	}
-	
-	if (is_atom ('/'))
-		fprintf (stderr, "/ is an atom char\n");
 }
 
 int main (int argc, char **argv)
