@@ -1322,10 +1322,11 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv)) {
 			/* eat end boundary */
 			parser_skip_line (parser);
+			parser_pop_boundary (parser);
 			*found = parser_scan_multipart_postface (parser, multipart);
+		} else {
+			parser_pop_boundary (parser);
 		}
-		
-		parser_pop_boundary (parser);
 	} else {
 		w(g_warning ("multipart without boundary encountered"));
 		/* this will scan everything into the preface */
