@@ -1,3 +1,9 @@
+2001-05-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_mailbox): Oops, test to make sure we
+	won't be running past the end of the buffer when considering a
+	retry. Thanks to Charles Kerr for this fix.
+
 2001-03-29  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-part.c (g_mime_part_append_pre_encoded_content): fix small

@@ -561,7 +561,7 @@ decode_mailbox (const char **in)
 			inptr++;
 			bracket = TRUE;
 			pre = decode_word (&inptr);
-		} else if (!retried) {
+		} else if (!retried && *inptr) {
 			w(g_warning ("Unexpected char '%c' in address: %s: attempting recovery.",
 				     *inptr, *in));
 			/* chew up this bad char and then attempt 1 more pass at parsing */

@@ -749,11 +749,11 @@ g_mime_part_append_pre_encoded_content (GMimePart *mime_part, const gchar *conte
 	/* make sure we've got a content byte array */
 	if (mime_part->content == NULL)
 		mime_part->content = g_byte_array_new ();
-
+	
 	/* make sure we've got enough room for the new decoded data */
 	clen = mime_part->content->len;
-	g_byte_array_set_size (mime_part->content, clen+len);
-
+	g_byte_array_set_size (mime_part->content, clen + len);
+	
 	/* write the decoded data */
 	raw = mime_part->content->data + clen;
 	switch (encoding) {
