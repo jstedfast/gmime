@@ -1,0 +1,429 @@
+<!doctype book PUBLIC "-//OASIS//DTD DocBook V3.1//EN" [
+<!notation PNG system "PNG">
+<!entity % local.notation.class "| PNG">
+]>
+<book id="gmime-tut">
+
+  <bookinfo>
+    <title>GMime 2.0 tutorial</title>
+    <date>May 18, 2003</date>
+    <authorgroup>
+      <author>
+	<firstname>Jeffrey</firstname>
+	<surname>Stedfast</surname>
+	<affiliation>
+	  <address>
+          <email>fejj@ximian.com</email>
+        </address>
+	</affiliation>
+      </author>
+    </authorgroup>
+    <abstract>
+      <para>This tutorial is meant to demonstrate how to use the GMime
+    C API.</para>
+    </abstract>
+  </bookinfo>
+  
+  <toc></toc>
+  
+  <!-- ***************************************************************** -->
+  <chapter id="ch-availability">
+    <title>Tutorial Availability</title>
+    
+    <para>A copy of this tutorial is distributed with each source-code
+release of GMime in both SGML and HTML formats. For binary
+distributions, please check with your vendor.</para>
+    
+    <para>An online version of this tutorial is also available at <ulink
+url="http://spruce.sourceforge.net/gmime/tutorial/">http://spruce.sourceforge.net/gmime/tutorial/</ulink>.
+    </para>
+    
+  </chapter>
+  
+  <!-- ***************************************************************** -->
+  <chapter id="ch-introduction">
+    <title>Introduction</title>
+    
+    <para>GMime is a library for parsing and creating messages using the
+Multipurpose Internet Mail Extension (MIME) format. It is licensed
+under the <ulink
+url="http://http://www.gnu.org/licenses/licenses.html#GPL">GNU General
+Public License (GPL)</ulink> so you are free to develop your Free
+Software applications using GMime without having to spend anything for
+licenses or royalties.</para>
+    
+    <para>The primary author and maintainer of GMime is:</para>
+    
+    <itemizedlist>
+      <listitem>
+	<simpara>Jeffrey Stedfast <ulink url="mailto:fejj@ximian.com">fejj@ximian.com</ulink></simpara>
+      </listitem>
+    </itemizedlist>
+    
+    <para>GMime is esentially an object-oriented application programmers
+interface (API). Although written completely in C, it is implemented
+using the idea of classes and callback functions (pointers to
+functions).</para>
+    
+    <para>GMime is built upon another library called GLib which also
+serves as the foundation for such libraries as the GIMP ToolKit
+(Gtk+). GLib is mostly a portability layer but also contains
+additional functionality such as hash tables, linked lists, etc. For
+more information on GLib, you should see the API reference at <ulink
+url="http://http://developer.gnome.org/doc/API/2.0/glib/index.html">http://developer.gnome.org/doc/API/2.0/glib/index.html</ulink>.</para>
+    
+  </chapter>
+  
+  <!-- ***************************************************************** -->
+  <chapter id="ch-getting-started">
+    <title>Getting Started</title>
+    
+    <para>The first thing to do, of course, is download the GMime source
+and install it. You can always get the latest version from <ulink
+url="http://spruce.sourceforge.net/gmime/sources/">http://spruce.sourceforge.net/gmime/sources/building.sgml</ulink>. GMime
+uses GNU autoconf for configuration. Once untar'd, type
+<literal>./configure --help</literal> to see a list of options.</para>
+    
+    <para>More information about building GMime is available in either the
+source distribution under <filename>docs/reference/</filename> or via
+the online reference at <ulink
+url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.sourceforge.net/gmime/doc/gmime-building.html</link>.</para>
+    
+  </chapter>
+  
+  <!-- ***************************************************************** -->
+  <chapter id="ch-basics">
+    <title>Getting Down to the Basics</title>
+    
+    <!-- ----------------------------------------------------------------- -->
+    <sect1 id="sec-compiling">
+      <title>Compiling</title>
+      
+      <para>The first thing you need to learn how to do is compile
+      your program with the proper compiler flags so that your program
+      will include the correct GMime headers and linker flags.</para>
+
+      <para>To compile and link a simple program, you'll want to do
+      the following:</para>
+
+      <para>
+        <literallayout>
+          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-2.0`</literal>
+        </literallayout>
+      </para>
+    </sect1>
+    
+    <!-- ----------------------------------------------------------------- -->
+    <sect1 id="sec-stream-basics">
+      <title>GMimeStream Basics</title>
+      
+      <para>Before we get too deep into using GMime, it is important
+      to understand how to use the underlying I/O classes since GMime
+      is so very heavily dependant upon them.</para>
+      
+      <para>If you've looked at the API at all already, you will have
+      probably noticed that the stream functions work very much like
+      those of the standard low-level Unix I/O functions (those that
+      use file descriptors) but with a few extras taken from the
+      higher-level Standard C I/O API.</para>
+      
+      <para>Lets take a moment to regres back to our early days of
+      programming where we learned how to write "Hello World!" on the
+      console:</para>
+      
+      <programlisting role="C">
+#include <stdio.h>
+
+int main (int argc, char **argv)
+{
+	fprintf (stdout, "Hello World!\n");
+	fflush (stdout);
+	
+	return 0;
+}
+      </programlisting>
+      
+      <para>Everyone should recognize what that program does. The
+      above program, rewritten to use GMime's stream classes would
+      look something like this:</para>
+
+      <programlisting role="C">
+#include <stdio.h>
+#include <gmime/gmime.h>
+
+int main (int argc, char **argv)
+{
+	GMimeStream *stream;
+	
+	/* initialize GMime */
+	g_mime_init (0);
+	
+	/* create a stream around stdout */
+	stream = g_mime_stream_file_new (stdout);
+	
+	/* 'printf' */
+	g_mime_stream_printf (stream, "Hello World!\n");
+	
+	/* flush stdout */
+	g_mime_stream_flush (stream);
+	
+	/* free/close the stream */
+	g_object_unref (stream);
+	
+	return 0;
+}
+      </programlisting>
+      
+      <para>Hopefully, the only thing that may be new to you in either
+      of the above examples is the flushing of the stream after
+      writing to it. Most likely, in both examples, it is an unneeded
+      call, however it is there for completenss and you should
+      probably get into the habbit of flushing a stream after you've
+      finished writing to it. Like fflush(), g_mime_stream_flush()
+      will flush any write-buffers that the previous calls to
+      write-calls may have left.</para>
+      
+      <para>The first function called in the second example is
+      <literal>g_mime_init</literal> with a value of
+      <literal>0</literal>. If you haven't guessed,
+      <literal>g_mime_init</literal> initializes the GMime library. It
+      takes a single bit-mask argument specifying which options to
+      enable. Currently there is only one optional bit-flag,
+      <literal>GMIME_INIT_FLAG_UTF8</literal> which is the default
+      anyway, so a value of <literal>0</literal> is used here. The
+      UTF-8 flag only exits for historical reasons.</para>
+      
+      The only other line that should need explaining might be:</para>
+      
+      <programlisting role="C">
+	stream = g_mime_stream_file_new (stdout);
+      </programlisting>
+      
+      <para>This line creates a new object of type GMimeStreamFile which
+      takes a <literal>FILE*</literal> argument. Once the
+      GMimeStreamFile is created, it takes ownership of the
+      <literal>FILE*</literal> so be careful if you want to be able to
+      ever use that <literal>FILE*</literal> handle again later in
+      your program or if you do not wish for it to be closed when the
+      GMimeStreamFile is closed later.</para>
+      
+      <para>One way of working around this is to do something like the
+      following example:</para>
+      
+      <programlisting role="C">
+#include <stdio.h>
+#include <unistd.h>
+#include <gmime/gmime.h>
+
+int main (int argc, char **argv)
+{
+	GMimeStream *stream;
+	
+	/* initialize GMime */
+	g_mime_init (0);
+	
+	/* create a stream around stdout */
+	stream = g_mime_stream_fs_new (dup (fileno (stdout)));
+	
+	/* 'printf' */
+	g_mime_stream_printf (stream, "Hello World!\n");
+	
+	/* flush stdout */
+	g_mime_stream_flush (stream);
+	
+	/* free/close the stream */
+	g_object_unref (stream);
+	
+	return 0;
+}
+      </programlisting>
+      
+      <para>Here we have made a duplicate copy of stdout to give to
+      <literal>g_mime_stream_fs_new</literal>. GMimeStreamFs is the
+      second type of stream meant for basic I/O, but instead of using
+      a <literal>FILE*</literal> handle, it instead uses an integer
+      file descriptor. The <literal>fileno()</literal> function
+      returns the integer file descriptor for a given
+      <literal>FILE*</literal> handle. The <literal>dup()</literal>
+      function makes a duplicate of the file descriptor passed to
+      it. More information can be read about these 2 functions by
+      using <literal>man</literal> on your local Unix system or by
+      reading the Reference Manual for your libc.</para>
+      
+      <para>Next, lets examine some of the other stream
+      functions.</para>
+      
+      <programlisting role="C">
+	g_mime_stream_eos (stream);
+      </programlisting>
+      
+      <para>This function is useful for finding out if the
+      End-Of-Stream has been reached. This is similar in functionality
+      to Standard C's <literal>feof()</literal> function.</para>
+      
+      <programlisting role="C">
+	g_mime_stream_reset (stream);
+      </programlisting>
+      
+      <para>This function will reset the state of a stream. Usually
+      this only means 'rewinding' to the beginning of the file. For
+      more complex streams, such as GMimeStreamFilter, however, this
+      will also reset the state of all the the filters that have been
+      attached to it (more on this later).</para>
+      
+      <programlisting role="C">
+	g_mime_stream_length (stream);
+      </programlisting>
+      
+      <para>This function will return the length of the stream if
+      known, or -1 otherwise. For the most part, this function should
+      be avoided unless you absolutely need to know the stream length
+      and there is no other way to get it. The reason to avoid using
+      it is that it may be inaccurate if any filters are to be applied
+      as well as possibly being slow depending on the underlying
+      'device'.</para>
+      
+      <programlisting role="C">
+	g_mime_stream_substream (stream, start, end);
+      </programlisting>
+      
+      <para>This last function will return a substream of the original
+      stream, where the beginning of the new substream is the start
+      offset and the end is the end offset. These start and end
+      offsets MUST be within the bounds of the original
+      stream. Substreams can be useful if you want to only allow
+      reading and writing to a subsection of the original
+      stream.</para>
+
+    </sect1>
+    
+    <!-- ----------------------------------------------------------------- -->
+    <sect1 id="sec-stream-classes">
+      <title>Stream Class Overview</title>
+      
+      <para>There are a number of stream classes included with GMime,
+      but we are only going to go over the more widely useful stream
+      classes. You should be able to figure out the others on your
+      own.</para>
+      
+      <para>We've already seen GMimeStreamFile and GMimeStreamFs in
+      action in the prevous chapter, so lets skip them and start with
+      GMimeStreamMem.</para>
+      
+      <para>GMimeStremMem is a stream abstraction that reads and
+      writes to a memory buffer. Like any other stream, the basic
+      stream functions (read, write, seek, substream, eos, etc) apply
+      here as well. Internally, GMimeStreamMem uses the GLib
+      GByteArray structure for storage so you may want to read up on
+      that.</para>
+      
+      <para>There are several ways to instantiate a GMimeStreamMem
+      object. You will probably use
+      <literal>g_mime_stream_mem_new()</literal> most of the
+      time. There may be times, however, when you will already have a
+      memory buffer that you'd like to use as a stream. There are
+      several ways to create a GMimeStreamMem object to use this
+      buffer (or a copy of it).</para>
+      
+      <para>The first is
+      <literal>g_mime_stream_mem_new_with_byte_array()</literal>. This
+      assumes that you are already using a GByteArray and want to use
+      it as a stream. As explained in the previous chapter about
+      GMimeStreamFile and ownership, the same applies here. When the
+      GMimeStreamMem is destroyed, so is the GByteArray structure and
+      the memory buffer it contained. To get around this, create a new
+      GMimeStreamMem object using
+      <literal>g_mime_stream_mem_new()</literal> and then use
+      <literal>g_mime_stream_mem_set_byte_array()</literal> to set the
+      GByteArray as the memory buffer. This will make it so that
+      GMimeStreamMem does not own the GByteArray, so when the
+      GMimeStremMem object is destroyed, the GByteArray will
+      remain.</para>
+      
+      <para>Also at your disposal for creating GMimeStreamMem objects
+      with an initial buffer is
+      <literal>g_mime_stream_mem_new_with_buffer()</literal>. This
+      function, however, will duplicate the buffer passed to it so if
+      you have memory quotas you are trying to keep, you may wish to
+      find a way to use one of the above methods.</para>
+      
+      <para>That pretty much sums up how to use GMimeStreamMem. The
+      next most widely used stream class is probably
+      GMimeStreamBuffer. This stream class actually wraps another
+      stream object adding additional functionality such as read and
+      write buffering and a few additional read methods.</para>
+      
+      <para>As you may or may not know, buffering reads and writes is
+      a great way to improve I/O performance in applications. The time
+      it takes to do a lot of small reads and writes accululates
+      fast.</para>
+
+      <para>When using a GMimeStreamBuffer in
+      <literal>GMIME_STREAM_BUFFER_BLOCK_READ</literal> mode, a block
+      of 4K (4096 bytes) will be read into an intermediate
+      buffer. Each time your application performs a read on this
+      GMimeStreamBuffer stream, a chunk of that intermediate buffer
+      will be copied to your read buffer until all 4K have been read,
+      at which point GMimeStremBuffer will pre-scan the next 4K and so
+      on.</para>
+      
+      <para>Similarly, using mode
+      <literal>GMIME_STREAM_BUFFER_BLOCK_WRITE</literal> will copy
+      each of your application write-buffers into an intermediate 4K
+      buffer. When that 4K buffer fills up, it will be flushed to the
+      underlying stream. You may also use
+      <literal>g_mime_stream_flush()</literal> to force the
+      intermediate buffer to be written to the underlying
+      stream.</para>
+      
+      <para>Note that the intermediate buffer size is 4096 bytes. You
+      should be aware that if you will mostly be reading and writing
+      blocks of larger than 4K, it is probably best to avoid using
+      GMimeStreamBuffer as it will not likely gain you any performance
+      and will likely decrease performance instead.</para>
+      
+      <para>GMimeStreamBuffer also adds 2 convenience functions for
+      reading. While they will both work with any stream class, they
+      are obviously much faster if used with a GMimeStreamBuffer in
+      mode <literal>GMIME_STREAM_BUFFER_BLOCK_READ</literal>. These
+      functions are:</para>
+      
+      <programlisting role="C">
+ssize_t g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max);
+
+void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
+      </programlisting>
+      
+      <para>The first function is similar to Standard C's
+      <literal>fgets()</literal> function (although the arguments are
+      in a slightly different order). It reads up to the first
+      <literal>max - 1</literal> bytes, stopping after a
+      <literal>\n</literal> character if found. <literal>buf</literal>
+      will always be nul-terminated.</para>
+      
+      <para>The second function,
+      <literal>g_mime_stream_buffer_readln()</literal>, has no
+      Standard C equivalent that I am aware of, but you should get the
+      idea of what it does based on the function name (I hope). It
+      reads exactly one (1) line (including the <literal>\n</literal>
+      character) and appends it to the end of
+      <literal>buffer</literal>.</para>
+      
+      <para>The last stream class you really need to know (and the
+      last one I have the patience to explain) is
+      GMimeStreamFilter. This is a special stream class which you can
+      attach GMimeFilters to so that reading/writing to this stream
+      will automagically convert the stream from one form to
+      another. GMime uses this stream internally for converting base64
+      encoded attachments into their raw form and vice versa.</para>
+      
+      <note>
+	<para>As previously mentioned about
+        <literal>g_mime_stream_reset()</literal>, resetting a stream of
+        this type will also reset all of the filters applied.</para>
+      </note>
+      
+    </sect1>
+  </chapter>
+
+</book>
