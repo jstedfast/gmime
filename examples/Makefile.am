@@ -2,9 +2,11 @@
 
 SUBDIRS = .
 
+extra_DIST = README
+
 INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
 
-bin_PROGRAMS = basic-example imap-example
+noinst_PROGRAMS = basic-example imap-example
 
 DEPS = $(top_builddir)/gmime/libgmime-2.0.la
 LDADDS = $(top_builddir)/gmime/libgmime-2.0.la $(GLIB_LIBS)

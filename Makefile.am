@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gmime src tests docs .
+SUBDIRS = gmime src tests docs examples .
 
 bin_SCRIPTS = gmime-config
 
@@ -45,3 +45,29 @@ $(libgmime_2_0_la_SOURCES): $(srcdir)/gmime
 dist-hook: gmime.spec
 	-cp gmime.spec $(distdir)
 	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)
+
+# This is a version of the automake-1.7 distcheck rule modified to
+# pass --enable-gtk-doc to ./configure and to not chmod distdir to
+# 0444 so that the gtk-docs can actually build.
+#
+mydistcheck: dist
+	-rm -rf $(distdir)
+	GZIP=$(GZIP_ENV) $(TAR) zxf $(distdir).tar.gz
+	mkdir $(distdir)/=build
+	mkdir $(distdir)/=inst
+	dc_install_base=`cd $(distdir)/=inst && pwd`; \
+	cd $(distdir)/=build \
+	  && ../configure --srcdir=.. --prefix=$$dc_install_base --enable-gtk-doc \
+	  && $(MAKE) $(AM_MAKEFLAGS) \
+	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
+	  && $(MAKE) $(AM_MAKEFLAGS) check \
+	  && $(MAKE) $(AM_MAKEFLAGS) install \
+	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
+	  && $(MAKE) $(AM_MAKEFLAGS) uninstall \
+	  && $(MAKE) $(AM_MAKEFLAGS) dist
+	-rm -rf $(distdir)
+	@banner="$(distdir).tar.gz is ready for distribution"; \
+	dashes=`echo "$$banner" | sed s/./=/g`; \
+	echo "$$dashes"; \
+	echo "$$banner"; \
+	echo "$$dashes"

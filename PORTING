@@ -24,7 +24,7 @@ still strict in that encoded-words MUST be valid rfc822 atoms.
 - g_mime_utils_8bit_header_encode() has been renamed to
 g_mime_utils_header_encode_text() to be more clear as to what type of
 header this is supposed to encode. If you haven't guessed, this
-function is for encoded rfc822 'text' headers (such as Subject).
+function is for encoding rfc822 'text' headers (such as Subject).
 
 - g_mime_utils_8bit_header_encode_phrase() has been renamed to
 g_mime_utils_header_encode_phrase() mostly for consistancy with the

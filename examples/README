@@ -1,0 +1,34 @@
+                               GMime Examples
+                   by Jeffrey Stedfast <fejj@ximian.com>
+
+
+Example: basic-example.c
+------------------------
+
+This example code illustrates a good number of the common tasks an
+application developer using GMime is likely to use, including parsing
+messages, verifying pgp signatures, adding/removing MIME parts and
+writing messages back out again.
+
+
+Example: imap-example.c
+-----------------------
+
+Although the name implies that this example source contains t0p
+s3kret imap hackery action, in reality, it doesn't. The focus of this
+example is more how to split out MIME parts into separate files and
+then to restore them back into the original MIME structure using a
+technique similar to (but not exactly) IMAP's BODYSTRUCTURE and
+single-part FETCHing.
+
+I think you'll find this example is worth looking at if you plan on
+using GMime with your IMAP library.
+
+
+
+Don't forget to take a look at any test programs that came bundled
+with this distribution (they will be in tests/), as they will also
+provide you with samples that you may find useful.
+
+Questions and/or Comments on these examples should be sent to
+<fejj@ximian.com>

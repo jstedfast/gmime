@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=2
 GMIME_MINOR_VERSION=1
-GMIME_MICRO_VERSION=1
+GMIME_MICRO_VERSION=2
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -229,9 +229,9 @@ AC_CACHE_CHECK([if gethostbyname_r wants five arguments], ac_cv_gethostbyname_r_
 
 		(void)gethostbyname_r ("www.ximian.com", &hent, buffer, bufsize, &h_errno);
 	],[
-		ac_cv_gethostbyname_r_five_args=yes
+		ac_cv_gethostbyname_r_five_args="yes"
 	],[
-		ac_cv_gethostbyname_r_five_args=no
+		ac_cv_gethostbyname_r_five_args="no"
 	])
 ])])
 	
@@ -262,9 +262,9 @@ AC_CACHE_CHECK([if gethostbyaddr_r wants seven arguments], ac_cv_gethostbyaddr_r
 
 		(void)gethostbyaddr_r ("www.ximian.com", 14, AF_INET, &hent, buffer, bufsize, &h_errno);
 	],[
-		ac_cv_gethostbyaddr_r_seven_args=yes
+		ac_cv_gethostbyaddr_r_seven_args="yes"
 	],[
-		ac_cv_gethostbyaddr_r_seven_args=no
+		ac_cv_gethostbyaddr_r_seven_args="no"
 	])
 ])])
 	
@@ -276,8 +276,8 @@ fi
 dnl **************************************************
 dnl * IPv6 support
 dnl **************************************************
-AC_ARG_ENABLE(ipv6, [  --enable-ipv6=[no/yes]      Enable support for resolving IPv6 addresses.],,enable_ipv6=no)
-if test "x$enable_ipv6" = "xyes"; then
+AC_ARG_ENABLE(ipv6, [  --enable-ipv6=[yes/no]      Enable support for resolving IPv6 addresses.],,enable_ipv6="auto")
+if test "x$enable_ipv6" != "xno"; then
 AC_CACHE_CHECK([if system has necessary structs and functions for IPv6 support], msg_ipv6,
 [
 	AC_TRY_COMPILE([
@@ -295,14 +295,15 @@ AC_CACHE_CHECK([if system has necessary structs and functions for IPv6 support],
 		getaddrinfo ("www.ximian.com", NULL, &hints, &res);
 		freeaddrinfo (res);
 	],[
-		msg_ipv6=yes
+		enable_ipv6="yes"
+		msg_ipv6="yes"
 	],[
-		enable_ipv6=no
-		msg_ipv6=no
+		enable_ipv6="no"
+		msg_ipv6="no"
 	])
 ])
 else
-	msg_ipv6=no
+	enable_ipv6="no"
 fi
 
 if test "x$enable_ipv6" = "xyes"; then
