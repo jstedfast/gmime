@@ -1,3 +1,16 @@
+2001-12-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (datetok): reimplement to not use GLists
+	(appending is slow) and also to not g_strndup the token, instead
+	just remember it's offset and length so we can examine it later.
+	(decode_int): New function to decode an int.
+	(get_wday): Now takes an inlen argument.
+	(get_mday): Same. Also calls decode_int.
+	(get_month): Here too.
+	(get_year): Again here... also calls decode_int.
+	(get_tzone): Modified to use struct _date_token.
+	(get_time): Completely rewritten.
+
 2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* memchunk.[c,h]: A memchunk library similar to g_mem_chunk's but
