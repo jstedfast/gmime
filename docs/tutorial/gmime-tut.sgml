@@ -87,7 +87,7 @@ uses GNU autoconf for configuration. Once untar'd, type
     <para>More information about building GMime is available in either the
 source distribution under <filename>docs/reference/</filename> or via
 the online reference at <ulink
-url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.sourceforge.net/gmime/doc/gmime-building.html</link>.</para>
+url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.sourceforge.net/gmime/doc/gmime-building.html</ulink>.</para>
     
   </chapter>
   
@@ -132,7 +132,7 @@ url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.
       console:</para>
       
       <programlisting role="C">
-#include <stdio.h>
+#include &lt;stdio.h&gt;
 
 int main (int argc, char **argv)
 {
@@ -148,8 +148,8 @@ int main (int argc, char **argv)
       look something like this:</para>
 
       <programlisting role="C">
-#include <stdio.h>
-#include <gmime/gmime.h>
+#include &lt;stdio.h&gt;
+#include &lt;gmime/gmime.h&gt;
 
 int main (int argc, char **argv)
 {
@@ -180,8 +180,8 @@ int main (int argc, char **argv)
       call, however it is there for completenss and you should
       probably get into the habbit of flushing a stream after you've
       finished writing to it. Like fflush(), g_mime_stream_flush()
-      will flush any write-buffers that the previous calls to
-      write-calls may have left.</para>
+      will flush any write-buffers that the previous write-calls may
+      have left.</para>
       
       <para>The first function called in the second example is
       <literal>g_mime_init</literal> with a value of
@@ -191,9 +191,9 @@ int main (int argc, char **argv)
       enable. Currently there is only one optional bit-flag,
       <literal>GMIME_INIT_FLAG_UTF8</literal> which is the default
       anyway, so a value of <literal>0</literal> is used here. The
-      UTF-8 flag only exits for historical reasons.</para>
+      UTF-8 flag only exists for historical reasons.</para>
       
-      The only other line that should need explaining might be:</para>
+      <para>The only other line that should need explaining might be:</para>
       
       <programlisting role="C">
 	stream = g_mime_stream_file_new (stdout);
@@ -211,9 +211,9 @@ int main (int argc, char **argv)
       following example:</para>
       
       <programlisting role="C">
-#include <stdio.h>
-#include <unistd.h>
-#include <gmime/gmime.h>
+#include &lt;stdio.h&gt;
+#include &lt;unistd.h&gt;
+#include &lt;gmime/gmime.h&gt;
 
 int main (int argc, char **argv)
 {
@@ -239,7 +239,7 @@ int main (int argc, char **argv)
       </programlisting>
       
       <para>Here we have made a duplicate copy of stdout to give to
-      <literal>g_mime_stream_fs_new</literal>. GMimeStreamFs is the
+      <literal>g_mime_stream_fs_new()</literal>. GMimeStreamFs is the
       second type of stream meant for basic I/O, but instead of using
       a <literal>FILE*</literal> handle, it instead uses an integer
       file descriptor. The <literal>fileno()</literal> function
@@ -281,7 +281,7 @@ int main (int argc, char **argv)
       and there is no other way to get it. The reason to avoid using
       it is that it may be inaccurate if any filters are to be applied
       as well as possibly being slow depending on the underlying
-      'device'.</para>
+      storage device.</para>
       
       <programlisting role="C">
 	g_mime_stream_substream (stream, start, end);
@@ -418,12 +418,150 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       encoded attachments into their raw form and vice versa.</para>
       
       <note>
-	<para>As previously mentioned about
-        <literal>g_mime_stream_reset()</literal>, resetting a stream of
-        this type will also reset all of the filters applied.</para>
+	<para>As previously mentioned in the last chapter concerning
+        <literal>g_mime_stream_reset()</literal>, resetting a
+        GMimeStreamFilter stream will also reset all of the filters
+        applied.</para>
+      </note>
+      
+      <para>A great example usage of GMimeStreamFilter can be found in
+      the <filename>src/uuencode.c</filename> source file found in the
+      source distribution. Here's a clip of that source file
+      illustrating how to use stream filters:</para>
+      
+      <programlisting role="C">
+	GMimeStream *istream, *ostream, *fstream;
+	GMimeFilter *filter;
+	int fd;
+	
+	...
+	
+	if (g_mime_stream_printf (ostream, "begin %.3o %s\n", st.st_mode & 0777, name) == -1) {
+		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		g_object_unref (ostream);
+		exit (1);
+	}
+	
+	istream = g_mime_stream_fs_new (fd);
+	
+	fstream = g_mime_stream_filter_new_with_stream (ostream);
+	
+	filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
+	g_object_unref (filter);
+	
+	if (g_mime_stream_write_to_stream (istream, fstream) == -1) {
+		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		g_object_unref (fstream);
+		g_object_unref (istream);
+		g_object_unref (ostream);
+		exit (1);
+	}
+	
+	g_mime_stream_flush (fstream);
+	g_object_unref (fstream);
+	g_object_unref (istream);
+	
+	if (g_mime_stream_write_string (ostream, "end\n") == -1) {
+		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		g_object_unref (ostream);
+		exit (1);
+	}
+	
+	g_object_unref (ostream);
+      </programlisting>
+      
+      <para>The above snippet of code will read the contents of input
+      stream (<literal>istream</literal>) and write it to our output
+      stream (<literal>ostream</literal>), but only after it has
+      passed through our filter-stream
+      (<literal>fstream</literal>). The filter attached to
+      <literal>fstream</literal> is one of the basic MIME filters that
+      encodes data in the traditional UUCP format. You have probably
+      run a program to do this many times in the past using the Unix
+      command <literal>uuencode</literal>. Never thought writing a
+      replacement for <literal>uuencode</literal> could be so easy,
+      did you? Well, it is. And not only is it <emphasis>that easy</emphasis>, but it
+      also runs three times faster than the
+      <literal>uuencode</literal> shipped with GNU Sharutils (at least
+      up to and including the 4.2.1 release).</para>
+      
+    </sect1>
+    
+    <!-- ----------------------------------------------------------------- -->
+    <sect1 id="sec-filter-classes">
+      <title>Filter Class Overview</title>
+      
+      <para>GMime comes pre-bundled with a number of stream filters
+      for your convenience and more may be added in the future. For
+      now, lets breeze through a summary of some of the more important
+      ones:</para>
+      
+      <para>GMimeFilterBasic is used quite a lot internally in GMime
+      for encoding and decoding the content of MIME parts. This class
+      contains a mode for encoding and decoding each of Base64,
+      Quoted-Printable, and Uuencode.</para>
+      
+      <para>If you are interested in converting between charsets for
+      your users, you will likely want to become familiar with
+      GMimeFilterCharset which provides a convenient way to convert
+      text of one charset into another charset.</para>
+      
+      <para>GMimeFilterCRLF will likely become very useful to you if
+      you are implementing any internet standards or DOS/Unix
+      compatability. This filter is meant for converting line endings
+      from the traditional Unix sequence (LF) to the internet standard
+      (and DOS) sequence, CRLF, and vice versa. Also included in this
+      filter is a way to escape and unescape lines beginning with '.'
+      in the method used by the SMTP and POP protocols.</para>
+      
+      <para>GMimeFilterFrom is one you will likely need to use if ever
+      you need to write to an mbox-formatted mail spool. At present,
+      it has 2 modes: <literal>GMIME_FILTER_FROM_MODE_ESCAPE</literal>
+      and <literal>GMIME_FILTER_FROM_MODE_ARMOR</literal>. If you are
+      writing to an mbox-formatted spool, you will always want to use
+      the <literal>ESCAPE</literal> mode which will escape lines
+      beginning with "From " by prepending a '>' character, resulting
+      in ">From ". The other mode might come in handy if you are
+      implementing a multipart/signed method where you are
+      quoted-printable encoding a text stream and need to special-case
+      From-lines in order to protect against Unix systems which will
+      alter the message when writing it to an mbox file such as the
+      previously mentioned filter mode. The result is something like
+      "=46rom " which prevents the need to prepend a '>' character
+      when the message arrives at a Unix machine.</para>
+      
+      <para>Also included are: GMimeFilterBest (which will likely not
+      concern you), GMimeFilterEnriched (which will convert
+      text/enriched and/or text/rtf to text/html), and GMimeFilterHTML
+      which will convert text/plain into text/html with options to
+      wrap strings that appear to be hyperlinks with appropriate &lt;a
+      href=...&gt; tags; GMimeFilterStrip (again, likely this won't
+      concern you), and finally GMimeFilterYenc which will encode or
+      decode the horrific YEncode format that has recently crawled out
+      of the woodwork on Usenet. I emplore you, if you decide to use
+      the YEncode filter in your application,
+      <emphasis>please</emphasis> only use it for compatability with
+      the broken news agents that so evilly pollute our beautiful
+      internet with this rubbish and don't add support to your
+      application to send this nasty format.</para>
+      
+      <para>For an example on how to use filters, please see the end
+      of the previous chapter where it talks about GMimeStreamFilter
+      and provides a snippet from
+      <filename>src/uuencode.c</filename></para>
+      
+      <note>
+	<para>Note: Since it is non-obvious, filters are applied to a
+	stream in the same order that they are added to the
+	GMimeFilterStream. This means that if you add a base64 encode
+	filter and then add a CRLF filter, the stream will first be
+	base64 encoded and then the end-of-line formatting will be
+	canonicalised to CRLF.</para>
       </note>
       
     </sect1>
+    
   </chapter>
 
 </book>

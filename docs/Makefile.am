@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = reference
+SUBDIRS = reference tutorial
 
 EXTRA_DIST = \
 	gmime-config.txt	\

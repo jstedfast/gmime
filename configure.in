@@ -258,6 +258,7 @@ AC_OUTPUT(
 Makefile
 docs/Makefile
 docs/reference/Makefile
+docs/tutorial/Makefile
 gmime/Makefile
 gmime/gmime.h
 src/Makefile
