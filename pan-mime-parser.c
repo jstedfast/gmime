@@ -151,8 +151,8 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 	} else
 		internal = FALSE;
 	
-	boundary_len = strlen (boundary);
-	end_boundary_len = strlen (end_boundary);
+	boundary_len = boundary ? strlen (boundary) : 0;
+	end_boundary_len = end_boundary ? strlen (end_boundary) : 0;
 	
 	do {
 		offset = buffer->len;

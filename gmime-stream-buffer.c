@@ -559,7 +559,9 @@ g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer)
 		if (len <= 0)
 			break;
 		
-		g_byte_array_append (buffer, linebuf, len);
+		if (buffer)
+			g_byte_array_append (buffer, linebuf, len);
+		
 		if (linebuf[len - 1] == '\n')
 			break;
 	}

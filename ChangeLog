@@ -1,3 +1,8 @@
+2001-11-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c (parser_read_until_boundary): Make sure
+	boundary is non-NULL before calling strlen on it.
+
 2001-11-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (g_mime_parser_construct_part_internal): Fixed a
