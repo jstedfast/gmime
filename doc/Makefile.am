@@ -35,9 +35,9 @@ maintainer-clean-local: clean
 	rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt 
 
 install-data-local:
-	install -d -m 0755 $(TARGET_DIR)
-	install -m 0644 $(srcdir)/html/*.html $(TARGET_DIR)
-	install -m 0644 $(srcdir)/html/index.sgml $(TARGET_DIR)
+	$(INSTALL) -d -m 0755 $(TARGET_DIR)
+	$(INSTALL_DATA) $(srcdir)/html/*.html $(TARGET_DIR)
+	$(INSTALL_DATA) $(srcdir)/html/index.sgml $(TARGET_DIR)
 	gtkdoc-fixxref --module=$(DOC_MODULE) --html-dir=$(HTML_DIR)
 
 dist-hook:
