@@ -1,5 +1,9 @@
 2004-03-24  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.0.14
+
 	* gmime/gmime-charset.c (g_mime_charset_name): Use my own strdown
 	implementation to 'strdown' the alloca()'d charset name.
 	(g_mime_charset_map_init): Instead of strdup()ing the charset name
