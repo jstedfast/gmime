@@ -30,6 +30,10 @@
 #include <string.h>
 #include <locale.h>
 
+#ifdef HAVE_CODESET
+#include <langinfo.h>
+#endif
+
 #include "gmime-charset-map-private.h"
 #include "gmime-charset.h"
 
@@ -59,7 +63,7 @@ struct {
 	{ "utf-8",           "UTF-8"      },
 	
 	/* ANSI_X3.4-1968 is used on some systems and should be
-           treated the same as US-ASCII */
+	   treated the same as US-ASCII */
 	{ "ANSI_X3.4-1968",  NULL         },
 	
 	/* 10646 is a special case, its usually UCS-2 big endian */
@@ -93,6 +97,15 @@ struct {
 
 static GHashTable *iconv_charsets = NULL;
 static char *locale_charset = NULL;
+
+#ifdef G_THREADS_ENABLED
+static GStaticMutex charset_lock = G_STATIC_MUTEX_INIT;
+#define CHARSET_LOCK()   g_static_mutex_lock (&charset_lock);
+#define CHARSET_UNLOCK() g_static_mutex_unlock (&charset_lock);
+#else
+#define CHARSET_LOCK()
+#define CHARSET_UNLOCK()
+#endif /* G_THREADS_ENABLED */
 
 
 static void
@@ -136,6 +149,10 @@ g_mime_charset_init (void)
 		g_hash_table_insert (iconv_charsets, charset, iconv_name);
 	}
 	
+#ifdef HAVE_CODESET
+	locale_charset = g_strdup (nl_langinfo (CODESET));
+	g_strdown (locale_charset);
+#else
 	locale = setlocale (LC_ALL, NULL);
 	
 	if (!locale || !strcmp (locale, "C") || !strcmp (locale, "POSIX")) {
@@ -166,6 +183,7 @@ g_mime_charset_init (void)
 			locale_charset = NULL;
 		}
 	}
+#endif
 	
 	g_atexit (g_mime_charset_shutdown);
 }
@@ -201,16 +219,19 @@ g_mime_charset_name (const char *charset)
 	if (charset == NULL)
 		return NULL;
 	
-	if (!iconv_charsets)
-		return charset;
-	
 	name = g_alloca (strlen (charset) + 1);
 	strcpy (name, charset);
 	g_strdown (name);
 	
+	CHARSET_LOCK ();
+	if (!iconv_charsets)
+		g_mime_charset_init ();
+	
 	iconv_name = g_hash_table_lookup (iconv_charsets, name);
-	if (iconv_name)
+	if (iconv_name) {
+		CHARSET_UNLOCK ();
 		return iconv_name;
+	}
 	
 	if (!strncmp (name, "iso", 3)) {
 		int iso, codepage;
@@ -267,6 +288,8 @@ g_mime_charset_name (const char *charset)
 	}
 	
 	g_hash_table_insert (iconv_charsets, g_strdup (name), iconv_name);
+	
+	CHARSET_UNLOCK ();
 	
 	return iconv_name;
 }

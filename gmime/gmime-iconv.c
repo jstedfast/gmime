@@ -30,10 +30,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#ifdef _REENTRANT
-#include <pthread.h>
-#endif
-
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "memchunk.h"
@@ -56,14 +52,15 @@ static struct _iconv_cache_bucket *iconv_cache_buckets;
 static GHashTable *iconv_cache;
 static GHashTable *iconv_open_hash;
 static unsigned int iconv_cache_size = 0;
-#ifdef _REENTRANT
-static pthread_mutex_t iconv_cache_lock = PTHREAD_MUTEX_INITIALIZER;
-#define ICONV_CACHE_LOCK()   pthread_mutex_lock (&iconv_cache_lock)
-#define ICONV_CACHE_UNLOCK() pthread_mutex_unlock (&iconv_cache_lock)
+
+#ifdef G_THREADS_ENABLED
+static GStaticMutex iconv_cache_lock = G_STATIC_MUTEX_INIT;
+#define ICONV_CACHE_LOCK()   g_static_mutex_lock (&iconv_cache_lock)
+#define ICONV_CACHE_UNLOCK() g_static_mutex_unlock (&iconv_cache_lock)
 #else
 #define ICONV_CACHE_LOCK()
 #define ICONV_CACHE_UNLOCK()
-#endif /* _REENTRANT */
+#endif /* G_THREADS_ENABLED */
 
 
 /* caller *must* hold the iconv_cache_lock to call any of the following functions */

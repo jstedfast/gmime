@@ -1,3 +1,16 @@
+2002-08-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c: Instead of checking for #ifdef _REENTRANT, just
+	check #ifdef G_THREADS_ENABLED and use a GStaticMutex rather than
+	a pthread_mutex_t.
+
+	* gmime-charset.c (g_mime_charset_init): Use nl_langinfo() if it
+	is available.
+	(g_mime_charset_name): Call g_mime_charset_init() if
+	iconv_charsets is NULL (meaning the programmer did not properly
+	initialize gmime). Also do mutex locking around the use of the
+	iconv_charset hash table.
+
 2002-08-10  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* test-pgpmime.c (test_multipart_signed): Unref the content object
