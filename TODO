@@ -5,53 +5,11 @@ tasks are presented in.
 
 
 
-- rfc2047 encode parameters in the MIME Content fields where
-appropriate. This means we can't always wrap parameter values in
-quotes (it is illegal to quote rfc2047 encoded atoms).
-** I think this is fixed now.
-
-- Should only quote parameter values when required (ie when they
-contain whitespace, semicolons, or other illegal chars).
-** I think this is fixed too?
-
 - Possibly make the GMime parser async.
 
 - Write a broken date parser. (job for lex/bison?)
 
-- Comply with RFC2184 and work around the common non-compliance
-  methods (namely the Outlook/Netscape method).
-
-FIXME's:
-
-- The rfc2047 encoder should watch white space and encode it if it
-appears between two atoms that will be encoded. For example, it
-currently performs in the following manner:
-
-(pretend 'a' and 'b' need to be encoded)
-original text: a b
-encoded (currently): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?b?=
-encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_b?=
-encoded (correctly): =?iso-8859-1?Q?a_?= =?iso-8859-1?Q?b?=
-encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_?= =?iso-8859-1?Q?b?=
-
-After deocding, the first equates to: ab 
-This is incorrect, the RFC specifies that whitespace between 
-encoded atoms be ignored.
-** This should be fixed now.
-
-- Parsing quoted strings needs to be smarter - need to check for
-escaped quotes and such.
-** This should be fixed now.
-
-- InternetAddress needs to be smarter about quoting an address - what
-if the name component of the address has embedded quotes? They need to
-be escaped.
-** I think this is fixed now.
-
-
-
-
-
+- modify address parser:
 
 <charles> on usenet it's not uncommon to have header like "From: Joe Bob"
 <charles> where people use no address at all to avoid spammers

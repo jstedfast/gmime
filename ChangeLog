@@ -1,5 +1,12 @@
 2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* strlib.c (strncasecmp): Do null-checking.
+
+	* TODO: Remove features that have already been
+	implemented/fixed/whatever.
+
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* memchunk.c (memchunk_clean): Prune 'cleaned' nodes from our
 	free-node list. Thanks to Charles Kerr for discovering this bug.
 

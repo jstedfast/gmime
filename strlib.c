@@ -714,7 +714,7 @@ strncasecmp (const char *s1, const char *s2, size_t n)
 	register const unsigned char *p1 = s1, *p2 = s2;
 	const unsigned char *q1 = s1 + n;
 	
-	for ( ; p1 < q1; p1++, p2++)
+	for ( ; *p1 && p1 < q1; p1++, p2++)
 		if (lowercase (*p1) != lowercase (*p2))
 			return *p1 - *p2;
 	
