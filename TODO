@@ -4,15 +4,10 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
-- make g_mime_utils_8bit_header_encode_phrase() really use the
-encode_phrase code. Likewise, the 8bit_header_encode() code probably
-should not be using it. Seems I got these backwards. Probably should
-do some function renaming as well.
-
 - better handling of invalid raw 8bit headers. need to somehow provide
 a way for the app to tell gmime how to handle these. perhaps a
 callback set on the parser object that gets called if gmime fails to
-be able to convert i to UTF-8 (after trying locale charset of course).
+be able to convert it to UTF-8 (after trying locale charset of course).
 
 - have gmime-filter-charset auto-detect windows charsets and change
 the iconv_t if/when needed? will this work?

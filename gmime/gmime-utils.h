@@ -27,7 +27,7 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
 #include <glib.h>
 #include <time.h>
@@ -88,6 +88,12 @@ char *g_mime_utils_header_encode_text (const unsigned char *in);
 
 char *g_mime_utils_header_decode_phrase (const unsigned char *in);
 char *g_mime_utils_header_encode_phrase (const unsigned char *in);
+
+#ifndef GMIME_DISABLE_DEPRECATED
+char *g_mime_utils_8bit_header_decode (const unsigned char *in);
+char *g_mime_utils_8bit_header_encode (const unsigned char *in);
+char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *in);
+#endif
 
 /* do incremental base64 (de/en)coding */
 size_t g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);

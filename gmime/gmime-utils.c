@@ -1895,7 +1895,7 @@ rfc2047_encode (const unsigned char *in, gboolean phrase)
  * g_mime_utils_header_encode_phrase:
  * @in: header to encode
  *
- * Encodes a header 'phrase' according to the rules in rfc2047.
+ * Encodes a 'phrase' header according to the rules in rfc2047.
  *
  * Returns the encoded 'phrase'. Useful for encoding internet
  * addresses.
@@ -1914,9 +1914,9 @@ g_mime_utils_header_encode_phrase (const unsigned char *in)
  * g_mime_utils_header_encode_text:
  * @in: header to encode
  *
- * Encodes a header according to the rules in rfc2047.
+ * Encodes a 'text' header according to the rules in rfc2047.
  *
- * Returns the header as several encoded atoms. Useful for encoding
+ * Returns the encoded header. Useful for encoding
  * headers like "Subject".
  **/
 char *
@@ -1926,6 +1926,63 @@ g_mime_utils_header_encode_text (const unsigned char *in)
 		return NULL;
 	
 	return rfc2047_encode (in, FALSE);
+}
+
+
+/**
+ * g_mime_utils_8bit_header_decode:
+ * @in: header to decode
+ *
+ * Decodes an rfc2047 encoded header.
+ *
+ * Note: This function is deprecated. Use
+ * #g_mime_utils_header_decode_text() instead.
+ *
+ * Returns the decoded header (which will be in UTF-8 if at all
+ * possible).
+ **/
+char *
+g_mime_utils_8bit_header_decode (const unsigned char *in)
+{
+	return g_mime_utils_header_decode_text (in);
+}
+
+
+/**
+ * g_mime_utils_8bit_header_encode:
+ * @in: header to encode
+ *
+ * Encodes a 'text' header according to the rules in rfc2047.
+ *
+ * Note: This function is deprecated. Use
+ * #g_mime_utils_header_encode_text() instead.
+ *
+ * Returns the encoded header. Useful for encoding
+ * headers like "Subject".
+ **/
+char *
+g_mime_utils_8bit_header_encode (const unsigned char *in)
+{
+	return g_mime_utils_header_encode_text (in);
+}
+
+
+/**
+ * g_mime_utils_8bit_header_encode_phrase:
+ * @in: header to encode
+ *
+ * Encodes a 'phrase' header according to the rules in rfc2047.
+ *
+ * Note: This function is deprecated. Use
+ * #g_mime_utils_header_encode_phrase() instead.
+ *
+ * Returns the encoded 'phrase'. Useful for encoding internet
+ * addresses.
+ **/
+char *
+g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
+{
+	return g_mime_utils_header_encode_phrase (in);
 }
 
 

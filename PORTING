@@ -9,6 +9,35 @@ will attempt to list the main things to watch out for when migrating
 to the new release from the prior version.
 
 
+Porting from GMime 2.0 to GMime 2.2
+-----------------------------------
+
+Most of the changes here are internal but there are a few API changes
+you should be aware of.
+
+- g_mime_utils_8bit_header_decode() has been split into 2
+functions. We now have g_mime_utils_header_decode_text() and
+g_mime_utils_header_decode_phrase(). header_decode_text() no longer
+requires encoded-words to be rfc822 atoms. header_decode_phrase() is
+still strict in that encoded-words MUST be valid rfc822 atoms.
+
+- g_mime_utils_8bit_header_encode() has been renamed to
+g_mime_utils_header_encode_text() to be more clear as to what type of
+header this is supposed to encode. If you haven't guessed, this
+function is for encoded rfc822 'text' headers (such as Subject).
+
+- g_mime_utils_8bit_header_encode_phrase() has been renamed to
+g_mime_utils_header_encode_phrase() mostly for consistancy with the
+previous 2 changes.
+
+- g_mime_charset_name() has been renamed to
+g_mime_charset_iconv_name() for clarity.
+
+- g_mime_charset_locale_name() has been renamed to
+g_mime_locale_charset(). Hmmm, was this a bad rename?
+
+
+
 Porting from GMime 1.0 to GMime 2.0
 -----------------------------------
 

@@ -1,3 +1,13 @@
+2003-03-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* PORTING: Began writing a porting guide for developers porting
+	their applications from GMime 2.0 to GMime 2.2.
+
+	* gmime/gmime-utils.c (g_mime_utils_8bit_header_encode_phrase):
+	Re-added for binary compatability. At least for now?
+	(g_mime_utils_8bit_header_encode): Same.
+	(g_mime_utils_8bit_header_decode): Here too.
+
 2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/internet-address.c (internet_address_new_name): Use
