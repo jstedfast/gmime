@@ -1,3 +1,13 @@
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.c (memchunk_clean): Prune 'cleaned' nodes from our
+	free-node list. Thanks to Charles Kerr for discovering this bug.
+
+	* strlib.c (strncasecmp): Moved the return calculation to within
+	the loop so as to only take a difference if the chars are not
+	identical. This also fixes a bug that would falsely return
+	non-zero for string that were identical for the first n bytes.
+
 2001-12-20  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream.c (g_mime_stream_construct): 'type' is now an

@@ -56,7 +56,12 @@ struct _MemChunk {
 static int
 tree_compare (MemChunkNodeInfo *a, MemChunkNodeInfo *b)
 {
-	return a->block - b->block;
+	if (a->block > b->block)
+		return 1;
+	else if (a->block < b->block)
+		return -1;
+	else
+		return 0;
 }
 
 static int
@@ -202,6 +207,21 @@ memchunk_clean (MemChunk *memchunk)
 	info = next;
 	while (info) {
 		if (info->atoms == memchunk->atomcount) {
+			MemChunkFreeNode *prev = (MemChunkFreeNode *) &memchunk->free;
+			
+			node = memchunk->free;
+			while (node) {
+				if (tree_search (info, (void *) node) != 0) {
+					/* prune this node from our free-node list */
+					prev->next = node->next;
+				} else {
+					prev = node;
+				}
+				
+				node = node->next;
+			}
+			
+			/* free the block */
 			g_ptr_array_remove_fast (memchunk->blocks, info->block);
 			g_free (info->block);
 		}
