@@ -974,8 +974,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	if (priv->seekable) {
 		stream = g_mime_stream_substream (priv->stream, start, end);
 	} else {
-		stream = g_mime_stream_mem_new ();
-		g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), content);
+		stream = g_mime_stream_mem_new_with_byte_array (content);
 	}
 	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
