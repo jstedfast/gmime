@@ -749,13 +749,13 @@ g_mime_part_append_pre_encoded_content (GMimePart *mime_part, const gchar *conte
 	/* make sure we've got a content byte array */
 	if (mime_part->content == NULL)
 		mime_part->content = g_byte_array_new ();
-	
-	clen = mime_part->content->len;
-	
+
 	/* make sure we've got enough room for the new decoded data */
-	g_byte_array_set_size (mime_part->content, clen + len);
-	
+	clen = mime_part->content->len;
+	g_byte_array_set_size (mime_part->content, clen+len);
+
 	/* write the decoded data */
+	raw = mime_part->content->data + clen;
 	switch (encoding) {
 	case GMIME_PART_ENCODING_BASE64:
 		len = g_mime_utils_base64_decode_step (content, len, raw, &mime_part->append_state,
