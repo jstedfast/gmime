@@ -26,6 +26,7 @@
 
 #include <glib.h>
 
+#include <sys/types.h>
 #include <netdb.h>
 
 #ifdef __cplusplus
