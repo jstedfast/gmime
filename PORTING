@@ -1,7 +1,7 @@
 It is my intention to make migrating code using one version of GMime
 to another as easy as I can and so for the most part, I will try not
-to break API compatability between versions, however this isn't always
-easy to do.
+to break API/ABI compatability between versions, however this isn't
+always easy to do.
 
 This document is intended to help developers port their application(s)
 from one version of GMime to another. For each new major release, I
@@ -12,8 +12,14 @@ to the new release from the prior version.
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
 
-Most of the changes here are internal but there are a few API changes
-you should be aware of.
+Note: GMime 2.2 is both API and ABI compatable with GMime 2.0 meaning
+that any program written for GMime 2.0 will compile fine with GMime
+2.2 and any program linked against GMime 2.0's libraries will also
+work with GMime 2.2's libraries.
+
+Most of the changes made between 2.0 and 2.2 were internal but there
+are a few API changes you should be aware of (as these interfaces will
+be deprecated in some future version, probably 3.0).
 
 - g_mime_utils_8bit_header_decode() has been split into 2
 functions. We now have g_mime_utils_header_decode_text() and
@@ -36,6 +42,15 @@ g_mime_charset_iconv_name() for clarity.
 - g_mime_charset_locale_name() has been renamed to
 g_mime_locale_charset(). Hmmm, was this a bad rename?
 
+- g_mime_cipher_context_verify() no longer returns a
+GMimeCipherValidity, instead it returns a GMimeSignatureValidity which
+is far more useful. Never fear, you may still use the
+GMimeCipherValidity APIs for the time being - they work fine given a
+GMimeSignatureValidity structure.
+
+- g_mime_multipart_signed_verify() also now returns a
+GMimeSignatureValidity structure rather than a GMimeCipherValidity
+structure. See changes to g_mime_cipher_context_verify() for details.
 
 
 Porting from GMime 1.0 to GMime 2.0
@@ -115,8 +130,8 @@ argument. Instead, they take a GMimeParser object.
 
 
 
-If you find more trouble spots when porting your code from GMime 1.0's
-API to GMime 2.0's API, please feel free to send me additional notes
-to add to this porting document.
+If you find more trouble spots when porting your code from one version
+of GMime to a later version, please feel free to send me additional
+notes to add to this porting document.
 
 					-- fejj@ximian.com

@@ -1,3 +1,9 @@
+2004-05-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-data-wrapper.c (g_mime_data_wrapper_set_stream):
+	Updated gtk-doc comments to note that you'll probably also want to
+	call g_mime_data_wrapper_set_encoding().
+
 2004-05-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-message.c (write_subject): New function. Use

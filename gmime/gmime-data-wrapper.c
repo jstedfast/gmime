@@ -116,7 +116,7 @@ g_mime_data_wrapper_new (void)
  *
  * Creates a new GMimeDataWrapper object around @stream.
  *
- * Returns a data wrapper around @stream. Since the wrapper owns it's
+ * Returns a data wrapper around @stream. Since the wrapper owns its
  * own reference on the stream, caller is responsible for unrefing
  * it's own copy.
  **/
@@ -142,8 +142,11 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
  * @wrapper: data wrapper
  * @stream: stream
  *
- * Replaces the wrapper's internal stream with @stream.
- * Note: caller is responsible for it's own reference on
+ * Replaces the wrapper's internal stream with @stream. Don't forget,
+ * if @stream is not of the same encoding as the old stream, you'll
+ * want to call #g_mime_data_wrapper_set_encoding as well.
+ *
+ * Note: caller is responsible for its own reference on
  * @stream.
  **/
 void
