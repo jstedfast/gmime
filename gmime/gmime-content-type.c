@@ -30,6 +30,7 @@
 #include <ctype.h>
 
 #include "gmime-content-type.h"
+#include "gmime-table-private.h"
 
 #define d(x)
 
@@ -110,23 +111,32 @@ GMimeContentType *
 g_mime_content_type_new_from_string (const char *string)
 {
 	GMimeContentType *mime_type;
-	char *type = NULL, *subtype = NULL;
-	register char *inptr;
+	char *type = NULL, *subtype;
+	register const char *inptr;
 	
 	g_return_val_if_fail (string != NULL, NULL);
 	
+	inptr = string;
+	
 	/* get the type */
-	type = (char *) string;
-	for (inptr = type; *inptr && *inptr != '/' && *inptr != ';'; inptr++);
+	type = (char *) inptr;
+	while (*inptr && is_ttoken (*inptr))
+		inptr++;
+	
 	type = g_strndup (type, (unsigned) (inptr - type));
 	g_strstrip (type);
 	
 	/* get the subtype */
-	if (*inptr != ';') {
+	if (*inptr == '/') {
 		inptr++;
-		for (subtype = inptr; *inptr && *inptr != ';'; inptr++);
+		subtype = (char *) inptr;
+		while (*inptr && is_ttoken (*inptr))
+			inptr++;
+		
 		subtype = g_strndup (subtype, (unsigned) (inptr - subtype));
 		g_strstrip (subtype);
+	} else {
+		subtype = NULL;
 	}
 	
 	mime_type = g_mime_content_type_new (type, subtype);

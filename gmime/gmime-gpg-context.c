@@ -579,15 +579,9 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	char *status_fd = NULL, *passwd_fd = NULL;
 	int i, maxfd, errnosave, fds[10];
 	GPtrArray *argv;
-	struct stat st;
 	
 	for (i = 0; i < 10; i++)
 		fds[i] = -1;
-	
-	if (*gpg->path == '/' && stat (gpg->path, &st) == -1)
-		goto exception;
-	
-	/* FIXME: check permissions on st.st_mode ? */
 	
 	maxfd = gpg->need_passwd ? 10 : 8;
 	for (i = 0; i < maxfd; i += 2) {

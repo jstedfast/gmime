@@ -1,3 +1,16 @@
+2002-11-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-content-type.c
+	(g_mime_content_type_new_from_string): #include
+	"gmime-table-private.h" and use is_ttoken() to correctly parse
+	type/subtype. Fixes bug #98463.
+
+2002-11-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_start): Don't bother
+	stat()ing gpg->path, if the file doesn't exist, the exec() call
+	will return immediately anyway.
+
 2002-11-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 1.90.5.
