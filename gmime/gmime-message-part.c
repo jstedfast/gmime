@@ -186,23 +186,20 @@ message_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	ssize_t nwritten, total = 0;
 	
 	/* write the content headers */
-	nwritten = g_mime_header_write_to_stream (object->headers, stream);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 		return -1;
 	
 	total += nwritten;
 	
 	/* terminate the headers */
-	nwritten = g_mime_stream_write (stream, "\n", 1);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
 		return -1;
 	
 	total += nwritten;
 	
 	/* write the message */
 	if (part->message) {
-		nwritten = g_mime_object_write_to_stream (GMIME_OBJECT (part->message), stream);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_object_write_to_stream (GMIME_OBJECT (part->message), stream)) == -1)
 			return -1;
 		
 		total += nwritten;

@@ -174,6 +174,18 @@ set_disposition (GMimePart *mime_part, const char *disposition)
 	mime_part->disposition = g_mime_disposition_new (disposition);
 }
 
+static void
+sync_content_disposition (GMimePart *mime_part)
+{
+	char *str;
+	
+	if (mime_part->disposition) {
+		str = g_mime_disposition_header (mime_part->disposition, FALSE);
+		g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Disposition", str);
+		g_free (str);
+	}
+}
+
 static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
@@ -363,9 +375,10 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
 	
+	sync_content_disposition (mime_part);
+	
 	/* write the content headers */
-	nwritten = g_mime_header_write_to_stream (object->headers, stream);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 		return -1;
 	
 	total += nwritten;
@@ -376,8 +389,7 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	total++;
 	
-	nwritten = write_content (mime_part, stream);
-	if (nwritten == -1)
+	if ((nwritten = write_content (mime_part, stream)) == -1)
 		return -1;
 	
 	total += nwritten;
@@ -870,17 +882,6 @@ g_mime_part_encoding_from_string (const char *encoding)
 	else if (!strcasecmp (encoding, "x-uuencode"))
 		return GMIME_PART_ENCODING_UUENCODE;
 	else return GMIME_PART_ENCODING_DEFAULT;
-}
-
-
-static void
-sync_content_disposition (GMimePart *mime_part)
-{
-	char *str;
-	
-	str = g_mime_disposition_header (mime_part->disposition, FALSE);
-	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Disposition", str);
-	g_free (str);
 }
 
 

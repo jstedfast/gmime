@@ -1001,14 +1001,16 @@ header_fold (const char *in, gboolean structured)
 		len = strcspn (inptr, " \t\n");
 		
 		if (outlen + len > GMIME_FOLD_LEN) {
-			if (last_was_lwsp) {
-				if (structured)
-					out->str[out->len - 1] = '\t';
-				
-				g_string_insert_c (out, out->len - 1, '\n');
-			} else
-				g_string_append (out, "\n\t");
-			outlen = 1;
+			if (outlen > 1) {
+				if (last_was_lwsp) {
+					if (structured)
+						out->str[out->len - 1] = '\t';
+					
+					g_string_insert_c (out, out->len - 1, '\n');
+				} else
+					g_string_append (out, "\n\t");
+				outlen = 1;
+			}
 			
 			/* check for very long words, just cut them up */
 			while (outlen + len > GMIME_FOLD_LEN) {
@@ -1026,6 +1028,7 @@ header_fold (const char *in, gboolean structured)
 			inptr += len;
 			last_was_lwsp = FALSE;
 		} else {
+			last_was_lwsp = TRUE;
 			if (*inptr == '\t') {
 				/* tabs are a good place to fold, odds
 				   are that this is where the previous
@@ -1033,11 +1036,9 @@ header_fold (const char *in, gboolean structured)
 				g_string_append (out, "\n\t");
 				outlen = 1;
 				inptr++;
-				last_was_lwsp = FALSE;
 			} else {
 				g_string_append_c (out, *inptr++);
 				outlen++;
-				last_was_lwsp = TRUE;
 			}
 		}
 	}

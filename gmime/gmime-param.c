@@ -25,7 +25,6 @@
 #include <config.h>
 #endif
 
-#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -42,7 +41,7 @@
 #ifdef ENABLE_WARNINGS
 #define w(x) x
 #else
-#define w(x) x
+#define w(x)
 #endif /* ENABLE_WARNINGS */
 
 #define d(x)
@@ -560,12 +559,10 @@ decode_param_list (const char *in)
 			
 			if (encoded) {
 				/* singleton encoded rfc2184 param value */
-				fprintf (stderr, "singleton encoded rfc2184 param value: %s\n", value);
 				param->value = rfc2184_decode (value);
 				g_free (value);
 			} else {
 				/* normal parameter value */
-				fprintf (stderr, "normal param value: %s\n", value);
 				param->value = value;
 			}
 			

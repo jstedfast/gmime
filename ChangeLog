@@ -1,5 +1,14 @@
 2004-06-03  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-part.c (sync_content_disposition): Moved. Also
+	protect against a NULL disposition.
+	(mime_part_write_to_stream): Sync the Content-Disposition header
+	before writing to the stream.
+
+	* gmime/gmime-utils.c (header_fold): Fixed a folding bug where we
+	could get a blank line (well, wasn't really blank - but we would
+	get a "\n\t\n" sequence which isn't really useful nor desirable).
+
 	* gmime/gen-table.c: Added a new bit and corresponding macro.
 
 	* gmime/gmime-table-private.h: Updated.

@@ -238,8 +238,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		g_mime_multipart_set_boundary (multipart, NULL);
 	
 	/* write the content headers */
-	nwritten = g_mime_header_write_to_stream (object->headers, stream);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 		return -1;
 	
 	total += nwritten;
@@ -252,8 +251,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		
 		total++;
 		
-		nwritten = g_mime_stream_write_string (stream, multipart->preface);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->preface)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -264,15 +262,13 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		part = node->data;
 		
 		/* write the boundary */
-		nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
 		
 		/* write this part out */
-		nwritten = g_mime_object_write_to_stream (part, stream);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_object_write_to_stream (part, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -280,16 +276,14 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		node = node->next;
 	}
 	
-	nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary)) == -1)
 		return -1;
 	
 	total += nwritten;
 	
 	/* write the postface */
 	if (multipart->postface) {
-		nwritten = g_mime_stream_write_string (stream, multipart->postface);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->postface)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -639,10 +633,8 @@ read_random_pool (char *buffer, size_t bytes)
 {
 	int fd;
 	
-	fd = open ("/dev/urandom", O_RDONLY);
-	if (fd == -1) {
-		fd = open ("/dev/random", O_RDONLY);
-		if (fd == -1)
+	if ((fd = open ("/dev/urandom", O_RDONLY)) == -1) {
+		if ((fd = open ("/dev/random", O_RDONLY)) == -1)
 			return;
 	}
 	

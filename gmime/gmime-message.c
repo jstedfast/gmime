@@ -759,23 +759,20 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	ssize_t nwritten, total = 0;
 	
 	/* write the content headers */
-	nwritten = g_mime_header_write_to_stream (object->headers, stream);
-	if (nwritten == -1)
+	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 		return -1;
 	
 	total += nwritten;
 	
 	if (message->mime_part) {
-		nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
-		if (nwritten == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
 			return -1;
 		
 		total += nwritten;
 		
 		nwritten = g_mime_object_write_to_stream (message->mime_part, stream);
 	} else {
-		nwritten = g_mime_stream_write (stream, "\n", 1);
-		if (nwritten == -1)
+		if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
 			return -1;
 	}
 	
