@@ -1,3 +1,11 @@
+2003-09-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/internet-address.c (internet_address_list_length): Changed
+	to take a const argument.
+	(internet_address_to_string): Now takes a const InternetAddress.
+	(internet_address_list_to_string): Now takes a const
+	InternetAddressList.
+
 2003-09-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream.c (g_mime_stream_read): If len == 0, return 0.

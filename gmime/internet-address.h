@@ -69,13 +69,13 @@ void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 InternetAddressList *internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_append (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_concat (InternetAddressList *a, InternetAddressList *b);
-int internet_address_list_length (InternetAddressList *list);
+int internet_address_list_length (const InternetAddressList *list);
 void internet_address_list_destroy (InternetAddressList *list);
 
 InternetAddressList *internet_address_parse_string (const char *string);
 
-char *internet_address_to_string (InternetAddress *ia, gboolean encode);
-char *internet_address_list_to_string (InternetAddressList *list, gboolean encode);
+char *internet_address_to_string (const InternetAddress *ia, gboolean encode);
+char *internet_address_list_to_string (const InternetAddressList *list, gboolean encode);
 
 #ifdef __cplusplus
 }

@@ -365,9 +365,9 @@ internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
  * Returns the number of internet addresses in @list.
  **/
 int
-internet_address_list_length (InternetAddressList *list)
+internet_address_list_length (const InternetAddressList *list)
 {
-	InternetAddressList *node;
+	const InternetAddressList *node;
 	int len = 0;
 	
 	node = list;
@@ -418,7 +418,7 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 }
 
 static void
-internet_address_list_to_string_internal (InternetAddressList *list, gboolean encode, GString *string)
+internet_address_list_to_string_internal (const InternetAddressList *list, gboolean encode, GString *string)
 {
 	while (list) {
 		char *addr;
@@ -448,7 +448,7 @@ internet_address_list_to_string_internal (InternetAddressList *list, gboolean en
  * rfc822 format.
  **/
 char *
-internet_address_to_string (InternetAddress *ia, gboolean encode)
+internet_address_to_string (const InternetAddress *ia, gboolean encode)
 {
 	char *str = NULL;
 	
@@ -492,7 +492,7 @@ internet_address_to_string (InternetAddress *ia, gboolean encode)
  * Returns a string containing the list of addresses in rfc822 format.
  **/
 char *
-internet_address_list_to_string (InternetAddressList *list, gboolean encode)
+internet_address_list_to_string (const InternetAddressList *list, gboolean encode)
 {
 	GString *string;
 	char *str;
