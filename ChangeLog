@@ -1,3 +1,13 @@
+2002-05-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-pgp-mime.c: Use gmime-filter-strip instead.
+
+	* gmime-filter-strip.[c,h]: Replacement for
+	gmime-filter-chomp.[c,h]. Strips whitespace from the end of lines
+	rather than from the end of a stream (like chomp did).
+
+	* gmime-filter-chomp.[c,h]: Removed.
+
 2002-05-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated documentation.

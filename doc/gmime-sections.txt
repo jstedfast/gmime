@@ -146,11 +146,6 @@ g_mime_filter_charset_new
 </SECTION>
 
 <SECTION>
-<FILE>gmime-filter-chomp</FILE>
-g_mime_filter_chomp_new
-</SECTION>
-
-<SECTION>
 <FILE>gmime-filter-crlf</FILE>
 GMimeFilterCRLFDirection
 GMimeFilterCRLFMode
@@ -173,6 +168,11 @@ GMIME_FILTER_HTML_CONVERT_ADDRESSES
 GMIME_FILTER_HTML_ESCAPE_8BIT
 GMIME_FILTER_HTML_CITE
 g_mime_filter_html_new
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-strip</FILE>
+g_mime_filter_strip_new
 </SECTION>
 
 <SECTION>

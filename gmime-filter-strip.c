@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@
 
 #include <stdio.h>
 
-#include "gmime-filter-chomp.h"
+#include "gmime-filter-strip.h"
 #include "strlib.h"
 
 static void filter_destroy (GMimeFilter *filter);
@@ -54,20 +54,19 @@ static GMimeFilter filter_template = {
 	filter_reset,
 };
 
-
 /**
- * g_mime_filter_chomp_new:
+ * g_mime_filter_strip_new:
  *
- * Creates a new GMimeFilterChomp filter.
+ * Creates a new GMimeFilterStrip filter.
  *
- * Returns a new chomp filter.
+ * Returns a new strip filter.
  **/
 GMimeFilter *
-g_mime_filter_chomp_new ()
+g_mime_filter_strip_new ()
 {
-	GMimeFilterChomp *new;
+	GMimeFilterStrip *new;
 	
-	new = g_new (GMimeFilterChomp, 1);
+	new = g_new (GMimeFilterStrip, 1);
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
@@ -84,47 +83,42 @@ filter_destroy (GMimeFilter *filter)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	return g_mime_filter_chomp_new ();
+	return g_mime_filter_strip_new ();
 }
 
 static void
 filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
-	register unsigned char *inptr, *s;
-	const unsigned char *inend;
-	register char *outptr;
+	register unsigned char *inptr, *last;
+	unsigned char *inend, *start;
+	char *outptr;
 	
-	g_mime_filter_set_size (filter, len + prespace, FALSE);
+	g_mime_filter_set_size (filter, len, FALSE);
 	
-	inend = in + len;
-	inptr = in;
+	last = inptr = (unsigned char *) in;
+	inend = (unsigned char *) in + len;
 	
 	outptr = filter->outbuf;
 	
 	while (inptr < inend) {
-		s = inptr;
-		while (inptr < inend && isspace ((int) *inptr))
+		start = inptr;
+		while (inptr < inend && *inptr != '\n') {
+			if (*inptr != ' ' && *inptr != '\t')
+				last = inptr;
 			inptr++;
+		}
 		
+		memcpy (outptr, start, last - start);
+		outptr += (last - start);
 		if (inptr < inend) {
-			while (s < inptr)
-				*outptr++ = (char) *s++;
-			
-			while (inptr < inend && !isspace ((int) *inptr))
-				*outptr++ = (char) *inptr++;
-		} else {
-#if 0
-			if ((inend - s) >= 2 && *s == '\r' && *(s + 1) == '\n')
-				*outptr++ = *s++;
-			if (*s == '\n')
-				*outptr++ = *s++;
-#endif		
-			if (s < inend)
-				g_mime_filter_backup (filter, s, inend - s);
-			break;
+			/* write the newline */
+			*outptr++ = (char) *inptr++;
+			last = inptr;
 		}
 	}
+	
+	g_mime_filter_backup (filter, last, inptr - last);
 	
 	*out = filter->outbuf;
 	*outlen = outptr - filter->outbuf;
@@ -135,30 +129,10 @@ static void
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	unsigned char *inptr;
 	char *outptr;
 	
 	if (len)
 		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
-	
-	if (filter->backlen) {
-		inptr = (unsigned char *) filter->backbuf;
-		outptr = filter->outbuf + *outlen;
-		
-		/* in the case of a canonical eoln */
-		if (*inptr == '\r' && *(inptr + 1) == '\n') {
-			*outptr++ = (char) *inptr++;
-			(*outlen)++;
-		}
-		
-		if (*inptr == '\n') {
-			*outptr++ = (char) *inptr++;
-			(*outlen)++;
-		}
-		
-		/* to protect against further complete calls */
-		g_mime_filter_backup (filter, "", 0);
-	}
 }
 
 static void

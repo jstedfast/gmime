@@ -51,6 +51,7 @@
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-filter-html.h"
+#include "gmime-filter-strip.h"
 #include "gmime-filter-yenc.h"
 
 /* GMIME version */

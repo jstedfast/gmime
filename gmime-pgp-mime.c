@@ -27,7 +27,7 @@
 
 #include "gmime-pgp-mime.h"
 #include "gmime-stream-filter.h"
-#include "gmime-filter-chomp.h"
+#include "gmime-filter-strip.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-stream-mem.h"
@@ -241,7 +241,7 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	GMimeContentType *mime_type;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter, *from_filter, *chomp_filter;
+	GMimeFilter *crlf_filter, *from_filter, *strip_filter;
 	GMimeStream *stream, *sigstream;
 	GSList *encodings = NULL;
 	char *hash_type = NULL;
@@ -264,8 +264,8 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
 	
 	/* Note: see rfc3156, section 5.4 (this is the big thing that changed between rfc2015 and rfc3156) */
-	chomp_filter = g_mime_filter_chomp_new ();
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), chomp_filter);
+	strip_filter = g_mime_filter_strip_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), strip_filter);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
@@ -365,7 +365,7 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 	GMimeDataWrapper *wrapper;
 	GMimePart *part, *multipart, *sigpart;
 	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter, *chomp_filter;
+	GMimeFilter *crlf_filter, *strip_filter;
 	GMimeStream *stream, *sigstream;
 	GMimeCipherValidity *valid;
 	
@@ -382,8 +382,8 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	
 	/* Note: see rfc3156, section 5.4 (this is the big thing that changed between rfc2015 and rfc3156) */
-	chomp_filter = g_mime_filter_chomp_new ();
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), chomp_filter);
+	strip_filter = g_mime_filter_strip_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), strip_filter);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,

@@ -27,10 +27,10 @@ libgmime_la_SOURCES = 		\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
 	gmime-filter-charset.c	\
-	gmime-filter-chomp.c	\
 	gmime-filter-crlf.c	\
 	gmime-filter-from.c	\
 	gmime-filter-html.c	\
+	gmime-filter-strip.c	\
 	gmime-filter-yenc.c	\
 	gmime-header.c		\
 	gmime-iconv.c		\
@@ -68,10 +68,10 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
 	gmime-filter-charset.h	\
-	gmime-filter-chomp.h	\
 	gmime-filter-crlf.h	\
 	gmime-filter-from.h	\
 	gmime-filter-html.h	\
+	gmime-filter-strip.h	\
 	gmime-filter-yenc.h	\
 	gmime-header.h		\
 	gmime-iconv.h		\
