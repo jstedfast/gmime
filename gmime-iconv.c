@@ -95,7 +95,10 @@ iconv_node_set_used (struct _iconv_node *node, gboolean used)
 	
 	if (used) {
 		/* this should be a lone unused node, so prepend it to the used list */
+		node->prev = NULL;
 		node->next = node->bucket->used;
+		if (node->bucket->used)
+			node->bucket->used->prev = node;
 		node->bucket->used = node;
 		
 		/* add to the open hash */
@@ -160,7 +163,10 @@ iconv_cache_bucket_add (struct _iconv_cache_bucket *bucket)
 static void
 iconv_cache_bucket_add_node (struct _iconv_cache_bucket *bucket, struct _iconv_node *node)
 {
-	node = bucket->unused;
+	node->prev = NULL;
+	node->next = bucket->unused;
+	if (bucket->unused)
+		bucket->unused->prev = node;
 	bucket->unused = node;
 }
 
@@ -189,6 +195,8 @@ iconv_cache_bucket_get_first_unused (struct _iconv_cache_bucket *bucket)
 	if (bucket->unused) {
 		node = bucket->unused;
 		bucket->unused = node->next;
+		if (bucket->unused)
+			bucket->unused->prev = NULL;
 		node->next = NULL;
 	}
 	

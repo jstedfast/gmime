@@ -1,3 +1,8 @@
+2002-01-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c (iconv_cache_bucket_add_node): Fixed an oops.
+	(iconv_cache_bucket_get_first_unused): Fixed another oops.
+
 2002-01-20  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-data-wrapper.c (g_mime_data_wrapper_write_to_stream):
@@ -11,7 +16,8 @@
 	found the "begin" line. Also, we no longer need uulen.
 	(filter_complete): Same.
 
-	* gmime-part.c (g_mime_part_encoding_to_string): Handle x-uuencode.
+	* gmime-part.c (g_mime_part_encoding_to_string): Handle
+	x-uuencode.
 	(g_mime_part_encoding_from_string): Same.
 	(g_mime_part_set_pre_encoded_content): Here too.
 	(write_content): And again here.
