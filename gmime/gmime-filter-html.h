@@ -45,7 +45,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 /**
  * GMIME_FILTER_HTML_PRE:
  *
- * Wrap stream in <pre> tags.
+ * Wrap stream in &lt;pre&gt; tags.
  **/
 #define GMIME_FILTER_HTML_PRE               (1 << 0)
 
@@ -53,7 +53,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 /**
  * GMIME_FILTER_HTML_CONVERT_NL:
  *
- * Convert new-lines ('\n') into <br> tags.
+ * Convert new-lines ('\n') into &lt;br&gt; tags.
  **/
 #define GMIME_FILTER_HTML_CONVERT_NL        (1 << 1)
 
@@ -70,7 +70,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 /**
  * GMIME_FILTER_HTML_CONVERT_URLS:
  *
- * Wrap detected URLs in <a href=...> tags.
+ * Wrap detected URLs in &lt;a href=...&gt; tags.
  **/
 #define GMIME_FILTER_HTML_CONVERT_URLS      (1 << 3)
 
@@ -102,7 +102,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 /**
  * GMIME_FILTER_HTML_CITE:
  *
- * Cites text by prepending "> " to each cited line.
+ * Cites text by prepending "&gt; " to each cited line.
  **/
 #define GMIME_FILTER_HTML_CITE              (1 << 7)
 

@@ -812,7 +812,7 @@ message_set_sender (GMimeMessage *message, const char *sender)
  * @sender: The name and address of the sender
  *
  * Set the sender's name and address on the MIME Message.
- * (ex: "\"Joe Sixpack\" <joe@sixpack.org>")
+ * (ex: "\"Joe Sixpack\" &lt;joe@sixpack.org&gt;")
  **/
 void
 g_mime_message_set_sender (GMimeMessage *message, const char *sender)

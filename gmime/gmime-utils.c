@@ -2413,7 +2413,7 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
  * @save: leftover bits that have not yet been decoded
  *
  * Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
- * uuencoded data. Assumes the "begin <mode> <file name>" line has
+ * uuencoded data. Assumes the "begin mode filename" line has
  * been stripped off.
  *
  * Returns the number of bytes decoded.
