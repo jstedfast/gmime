@@ -258,7 +258,6 @@ gmime/Makefile
 gmime/gmime.h
 src/Makefile
 tests/Makefile
-docs/Makefile
 gmime-config
 gmime-2.0.pc
 gmime.spec
