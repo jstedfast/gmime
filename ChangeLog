@@ -1,3 +1,13 @@
+2000-10-28  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* tests/Makefile.am: New automake file (when we make a release,
+	this directory should really be a part of the tarball as it
+	contains data for the test programs).
+
+	* Makefile.am (SUBDIRS): Add the 'tests' directory
+
+	* configure.in: Generate tests/Makefile
+
 2000-10-27  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-mime.c: Added code to test g_mime_message_get_body()

@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = . #doc
+SUBDIRS = . tests #doc
 
 INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@
 
@@ -95,4 +95,3 @@ $(srcdir)/libgmime:
 	ln -s $(srcdir)/. $(srcdir)/libgmime
 
 $(libgmime_la_SOURCES): $(srcdir)/libgmime
-
