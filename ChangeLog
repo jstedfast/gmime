@@ -1,3 +1,12 @@
+2004-12-01  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Error out if the user explicitly enables the mono
+	bindings and we can't find mcs.
+
+	* gmime.spec.in: Add support for the mono bindings, placing them
+	in a separate gmime-sharp package.  Patch from Ryan Skadberg
+	<skadz@stigmata.org>
+
 2004-11-29  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/AssemblyInfo.cs.in: Add @srcdir@ to AssemblyKeyFile so we
