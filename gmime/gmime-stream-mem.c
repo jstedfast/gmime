@@ -125,7 +125,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
 	
-	n = MIN (bound_end - stream->position, len);
+	n = MIN (bound_end - stream->position, (off_t) len);
 	if (n > 0) {
 		memcpy (buf, mem->buffer->data + stream->position, n);
 		stream->position += n;
@@ -152,7 +152,7 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	} else
 		bound_end = stream->bound_end;
 	
-	n = MIN (bound_end - stream->position, len);
+	n = MIN (bound_end - stream->position, (off_t) len);
 	if (n > 0) {
 		memcpy (mem->buffer->data + stream->position, buf, n);
 		stream->position += n;

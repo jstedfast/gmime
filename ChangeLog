@@ -1,3 +1,24 @@
+2003-08-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Simplified.
+
+	* gmime/gmime-stream-cat.c (stream_read): Same here.
+	(stream_write): And finally here.
+
+	* gmime/gmime-stream-file.c (stream_read): Same.
+	(stream_write): And again...
+
+	* gmime/gmime-stream-fs.c (stream_read): Here too.
+	(stream_write): And here.
+
+	* gmime/gmime-stream-mmap.c (stream_read): Same as the mem stream.
+	(stream_write): Same.
+
+	* gmime/gmime-stream-mem.c (stream_read): Need to fix the MIN
+	expresion so that both args are signed, otherwise 'len' will be
+	the min if the 'bytes-left' calculation is negative.
+	(stream_write): Same.
+
 2003-07-29  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-message.c (g_mime_message_get_recipients): Return
