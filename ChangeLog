@@ -1,3 +1,9 @@
+2002-06-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_scan_mime_part_content): If the parser
+	stream is not seekable, then scan the content into a memory
+	stream.
+
 2002-06-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-2.0.pc.in: New file for use in pkg-config.

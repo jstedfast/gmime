@@ -31,6 +31,7 @@
 
 #include "gmime-parser.h"
 
+#include "gmime-stream-mem.h"
 #include "gmime-message-part.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
@@ -95,8 +96,9 @@ struct _GMimeParserPrivate {
 	off_t headers_start;
 	off_t header_start;
 	
-	unsigned int unstep:29;
+	unsigned int unstep:28;
 	unsigned int midline:1;
+	unsigned int seekable:1;
 	unsigned int scan_from:1;
 	unsigned int have_regex:1;
 	
@@ -291,6 +293,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	
 	priv->unstep = 0;
 	priv->midline = FALSE;
+	priv->seekable = offset != -1;
 	priv->scan_from = FALSE;
 	priv->have_regex = FALSE;
 	
@@ -945,21 +948,36 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimePartEncodingType encoding;
+	GByteArray *content = NULL;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
 	off_t start, end;
 	
-	start = parser_offset (parser, NULL);
+	if (priv->seekable)
+		start = parser_offset (parser, NULL);
+	else
+		content = g_byte_array_new ();
+	
 	*found = parser_scan_content (parser, NULL);
 	if (*found != FOUND_EOS) {
 		/* last '\n' belongs to the boundary */
-		end = parser_offset (parser, NULL) - 1;
-	} else {
+		if (priv->seekable)
+			end = parser_offset (parser, NULL) - 1;
+		else
+			g_byte_array_set_size (content, MAX (content->len - 1, 0));
+	} else if (priv->seekable) {
 		end = parser_offset (parser, NULL);
 	}
 	
 	encoding = g_mime_part_get_encoding (mime_part);
-	stream = g_mime_stream_substream (priv->stream, start, end);
+	
+	if (priv->seekable) {
+		stream = g_mime_stream_substream (priv->stream, start, end);
+	} else {
+		stream = g_mime_stream_mem_new ();
+		g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), content);
+	}
+	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
 	g_mime_part_set_content_object (mime_part, wrapper);
 	g_mime_stream_unref (stream);

@@ -147,9 +147,9 @@ g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
 
 
 static GMimeCipherHash
-cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
+cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 {
-	return GMIME_CIPHER_HASH_DEFAULT;
+	return NULL;
 }
 
 
@@ -166,7 +166,7 @@ const char *
 g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
-		
+	
 	return GMIME_CIPHER_HASH_GET_CLASS (ctx)->hash_name (ctx, hash);
 }
 

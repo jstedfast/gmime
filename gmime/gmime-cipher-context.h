@@ -47,6 +47,8 @@ typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
 
 typedef struct _GMimeCipherValidity GMimeCipherValidity;
 
+typedef char * (*GMimePasswdFunc) (GMimeCipherContext *ctx, const char *prompt, gpointer user_data);
+
 typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
 	GMIME_CIPHER_HASH_MD2,
