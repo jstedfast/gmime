@@ -395,7 +395,7 @@ get_year (const gchar *str)
 static gboolean
 get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 {
-	gchar *p;
+	const gchar *p;
 	gint colons = 0;
 	gboolean digits = TRUE;
 	
@@ -406,8 +406,7 @@ get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 			digits = FALSE;
 	}
 	
-/* Ameol software doesn't put the seconds on the time */
-
+	/* Ameol software doesn't put the seconds on the time */
 	if (!digits || (colons != 2 && colons != 1))
 		return FALSE;
 	
