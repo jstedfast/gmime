@@ -146,6 +146,7 @@ g_mime_object_class_finalize (GMimeObjectClass *klass)
 static void
 g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
+	object->content_type = NULL;
 	object->headers = g_mime_header_new ();
 }
 
@@ -153,6 +154,9 @@ static void
 g_mime_object_finalize (GObject *object)
 {
 	GMimeObject *mime = (GMimeObject *) object;
+	
+	if (mime->content_type)
+		g_mime_content_type_destroy (mime->content_type);
 	
 	if (mime->headers)
 		g_mime_header_destroy (mime->headers);
@@ -336,6 +340,47 @@ g_mime_object_get_content_type (GMimeObject *object)
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
 	
 	return object->content_type;
+}
+
+
+/**
+ * g_mime_object_set_content_type_parameter:
+ * @object: MIME object
+ * @name: param name
+ * @value: param value
+ *
+ * Sets the content-type param @name to the value @value.
+ **/
+void
+g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (name != NULL);
+	
+	g_mime_content_type_set_parameter (object->content_type, name, value);
+	
+	sync_content_type (object);
+}
+
+
+/**
+ * g_mime_object_get_content_type_parameter:
+ * @object: MIME object
+ * @name: param name
+ *
+ * Gets the value of the content-type param @name set on the MIME part
+ * @object.
+ *
+ * Returns the value of the requested content-type param or %NULL on
+ * if the param doesn't exist.
+ **/
+const char *
+g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	g_return_val_if_fail (name != NULL, NULL);
+	
+	return g_mime_content_type_get_parameter (object->content_type, name);
 }
 
 

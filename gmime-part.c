@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2000-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -40,18 +40,285 @@
 #include "gmime-filter-basic.h"
 #include "md5-utils.h"
 
+/* GObject class methods */
+static void g_mime_part_base_class_init (GMimePartClass *klass);
+static void g_mime_part_base_class_finalize (GMimePartClass *klass);
+static void g_mime_part_class_init (GMimePartClass *klass);
+static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
+static void g_mime_part_finalize (GObject *object);
 
-static void g_mime_part_destroy (GMimeObject *object);
-
-static GMimeObject object_template = {
-	0, 0, g_mime_part_destroy
-};
-
+/* GMimeObject class methods */
+static void mime_part_init (GMimeObject *object);
+static void mime_part_add_header (GMimeObject *object, const char *header, const char *value);
+static void mime_part_set_header (GMimeObject *object, const char *header, const char *value);
+static const char *mime_part_get_header (GMimeObject *object, const char *header);
+static void mime_part_remove_header (GMimeObject *object, const char *header);
+static char *mime_part_get_headers (GMimeObject *object);
+static int mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 #define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
 
+
+static GMimeObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_part_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimePartClass),
+			(GBaseInitFunc) g_mime_part_base_class_init,
+			(GBaseFinalizeFunc) g_mime_part_base_class_finalize,
+			(GClassInitFunc) g_mime_part_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimePart),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_part_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimePart", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_part_base_class_init (GMimePartClass *klass)
+{
+	/* reset instance specific methods that don't get inherited */
+	;
+}
+
+static void
+g_mime_part_base_class_finalize (GMimePartClass *klass)
+{
+	;
+}
+
+static void
+g_mime_part_class_init (GMimePartClass *klass)
+{
+	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_OBJECT);
+	
+	gobject_class->finalize = g_mime_part_finalize;
+	
+	object_class->init = mime_part_init;
+	object_class->add_header = mime_part_add_header;
+	object_class->set_header = mime_part_set_header;
+	object_class->get_header = mime_part_get_header;
+	object_class->remove_header = mime_part_remove_header;
+	object_class->get_headers = mime_part_get_headers;
+	object_class->write_to_stream = mime_part_write_to_stream;
+	
+	g_mime_object_register_type ("*", "*", GMIME_TYPE_PART);
+}
+
+static void
+g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
+{
+	mime_part->encoding = GMIME_PART_ENCODING_DEFAULT;
+	mime_part->disposition = NULL;
+	mime_part->content_description = NULL;
+	mime_part->content_location = NULL;
+	mime_part->content_md5 = NULL;
+	mime_part->content_id = NULL;
+	mime_part->content = NULL;
+}
+
+static void
+g_mime_part_finalize (GObject *object)
+{
+	GMimePart *mime_part = (GMimePart *) object;
+	
+	if (mime_part->disposition)
+		g_mime_disposition_destroy (mime_part->disposition);
+	
+	g_free (mime_part->content_description);
+	g_free (mime_part->content_location);
+	g_free (mime_part->content_md5);
+	g_free (mime_part->content_id);
+	
+	if (mime_part->content)
+		g_mime_data_wrapper_destroy (mime_part->content);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+static void
+mime_part_init (GMimeObject *object)
+{
+	/* no-op */
+	GMIME_OBJECT_CLASS (parent_class)->init (object);
+}
+
+static void
+mime_part_add_header (GMimeObject *object, const char *header, const char *value)
+{
+	/* Make sure that the header is a Content-* header, else it
+           doesn't belong on a mime part */
+	
+	if (!strncasecmp ("Content-", header, 8))
+		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+}
+
+static void
+mime_part_set_header (GMimeObject *object, const char *header, const char *value)
+{
+	/* Make sure that the header is a Content-* header, else it
+           doesn't belong on a mime part */
+	
+	if (!strncasecmp ("Content-", header, 8))
+		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+}
+
+static const char *
+mime_part_get_header (GMimeObject *object, const char *header)
+{
+	/* Make sure that the header is a Content-* header, else it
+           doesn't belong on a mime part */
+	
+	if (!strncasecmp ("Content-", header, 8))
+		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
+	else
+		return NULL;
+}
+
+static void
+mime_part_remove_header (GMimeObject *object, const char *header)
+{
+	/* Make sure that the header is a Content-* header, else it
+           doesn't belong on a multipart */
+	
+	if (!strncasecmp ("Content-", header, 8))
+		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+}
+
+static char *
+mime_part_get_headers (GMimeObject *object)
+{
+	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
+}
+
+static ssize_t
+write_content (GMimePart *part, GMimeStream *stream)
+{
+	ssize_t nwritten, total = 0;
+	
+	if (!part->content)
+		return 0;
+	
+	/* Evil Genius's "slight" optimization: Since GMimeDataWrapper::write_to_stream()
+	 * decodes its content stream to the raw format, we can cheat by requesting its
+	 * content stream and not doing any encoding on the data if the source and
+	 * destination encodings are identical.
+	 */
+	
+	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
+		GMimeStream *filtered_stream;
+		const char *filename;
+		GMimeFilter *filter;
+		
+		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+		switch (part->encoding) {
+		case GMIME_PART_ENCODING_BASE64:
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
+		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
+		case GMIME_PART_ENCODING_UUENCODE:
+			filename = g_mime_part_get_filename (part);
+			nwritten = g_mime_stream_printf (stream, "begin 0644 %s\n",
+							 filename ? filename : "unknown");
+			if (nwritten == -1) {
+				g_mime_stream_unref (filtered_stream);
+				return -1;
+			}
+			
+			total += nwritten;
+			
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
+		default:
+			break;
+		}
+		
+		nwritten = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
+		g_mime_stream_flush (filtered_stream);
+		g_mime_stream_unref (filtered_stream);
+		
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+		
+		if (part->encoding == GMIME_PART_ENCODING_UUENCODE) {
+			/* FIXME: get rid of this special-case x-uuencode crap */
+			nwritten = g_mime_stream_write (stream, "end\n", 4);
+			if (nwritten == -1)
+				return -1;
+			
+			total += nwritten;
+		}
+	} else {
+		GMimeStream *content_stream;
+		
+		content_stream = g_mime_data_wrapper_get_stream (part->content);
+		g_mime_stream_reset (content_stream);
+		nwritten = g_mime_stream_write_to_stream (content_stream, stream);
+		g_mime_stream_unref (content_stream);
+		
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+	}
+	
+	return total;
+}
+
+static ssize_t
+mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
+{
+	GMimePart *mime_part = (GMimePart *) object;
+	ssize_t nwritten, total = 0;
+	const char *buffer;
+	
+	/* write the content headers */
+	nwritten = g_mime_header_write_to_stream (object->headers, stream);
+	if (nwritten == -1)
+		return -1;
+	
+	total += nwritten;
+	
+	/* terminate the headers */
+	if (g_mime_stream_write (stream, "\n", 1) == -1)
+		return -1;
+	
+	total++;
+	
+	nwritten = write_content (mime_part, stream);
+	if (nwritten == -1)
+		return -1;
+	
+	total += nwritten;
+	
+	return total;
+}
 
 
 /**
@@ -67,18 +334,12 @@ GMimePart *
 g_mime_part_new ()
 {
 	GMimePart *mime_part;
+	GMimeContentType *type;
 	
-	mime_part = g_new0 (GMimePart, 1);
-	g_mime_object_construct (GMIME_OBJECT (mime_part),
-				 &object_template,
-				 GMIME_PART_TYPE);
+	mime_part = g_object_new (GMIME_TYPE_PART, NULL, NULL);
 	
-	mime_part->headers = g_mime_header_new ();
-	
-	/* lets set the default content type just in case the
-	 * programmer forgets to set it ;-) */
-	mime_part->mime_type = g_mime_content_type_new ("text", "plain");
-	g_mime_header_set (mime_part->headers, "Content-Type", "text/plain");
+	type = g_mime_content_type_new ("text", "plain");
+	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), type);
 	
 	return mime_part;
 }
@@ -97,60 +358,14 @@ GMimePart *
 g_mime_part_new_with_type (const char *type, const char *subtype)
 {
 	GMimePart *mime_part;
-	char *content_type;
+	GMimeContentType *type;
 	
-	mime_part = g_new0 (GMimePart, 1);
-	g_mime_object_construct (GMIME_OBJECT (mime_part),
-				 &object_template,
-				 GMIME_PART_TYPE);
+	mime_part = g_object_new (GMIME_TYPE_PART, NULL, NULL);
 	
-	mime_part->headers = g_mime_header_new ();
-	
-	mime_part->mime_type = g_mime_content_type_new (type, subtype);
-	content_type = g_strdup_printf ("%s/%s", type, subtype);
-	g_mime_header_set (mime_part->headers, "Content-Type", content_type);
-	g_free (content_type);
+	type = g_mime_content_type_new (type, subtype);
+	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), type);
 	
 	return mime_part;
-}
-
-
-static void
-g_mime_part_destroy (GMimeObject *object)
-{
-	GMimePart *mime_part = (GMimePart *) object;
-	
-	g_return_if_fail (GMIME_IS_PART (object));
-	
-	g_mime_header_destroy (mime_part->headers);
-	
-	g_free (mime_part->description);
-	g_free (mime_part->content_id);
-	g_free (mime_part->content_md5);
-	g_free (mime_part->content_location);
-	
-	if (mime_part->mime_type)
-		g_mime_content_type_destroy (mime_part->mime_type);
-	
-	if (mime_part->disposition)
-		g_mime_disposition_destroy (mime_part->disposition);
-	
-	if (mime_part->children) {
-		GList *child;
-		
-		child = mime_part->children;
-		while (child) {
-			g_mime_object_unref (GMIME_OBJECT (child->data));
-			child = child->next;
-		}
-		
-		g_list_free (mime_part->children);
-	}
-	
-	if (mime_part->content)
-		g_mime_data_wrapper_destroy (mime_part->content);
-	
-	g_free (mime_part);
 }
 
 
@@ -168,7 +383,7 @@ g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const 
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_set (mime_part->headers, header, value);
+	g_mime_object_set_header (GMIME_OBJECT (mime_part), header, value);
 }
 
 
@@ -188,7 +403,7 @@ g_mime_part_get_content_header (GMimePart *mime_part, const char *header)
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	g_return_val_if_fail (header != NULL, NULL);
 	
-	return g_mime_header_get (mime_part->headers, header);
+	return g_mime_object_get_header (GMIME_OBJECT (mime_part), header);
 }
 
 
@@ -208,7 +423,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 		g_free (mime_part->description);
 	
 	mime_part->description = g_strdup (description);
-	g_mime_header_set (mime_part->headers, "Content-Description", description);
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
 }
 
 
@@ -246,7 +461,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 		g_free (mime_part->content_id);
 	
 	mime_part->content_id = g_strdup (content_id);
-	g_mime_header_set (mime_part->headers, "Content-Id", content_id);
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Id", content_id);
 }
 
 
@@ -282,30 +497,24 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	/* RFC 1864 states that you cannot set a Content-MD5 for these types */
-	type = g_mime_part_get_content_type (mime_part);
-	if (g_mime_content_type_is_type (type, "multipart", "*") ||
-	    g_mime_content_type_is_type (type, "message", "rfc822"))
-		return;
-	
 	if (mime_part->content_md5)
 		g_free (mime_part->content_md5);
 	
 	if (content_md5) {
 		mime_part->content_md5 = g_strdup (content_md5);
 	} else if (mime_part->content && mime_part->content->stream) {
+		GMimePartEncodingType encoding;
 		char digest[16], b64digest[32];
 		int len, state, save;
 		GMimeStream *stream;
 		GByteArray *buf;
 		
-		stream = mime_part->content->stream;
-		if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
+		encoding = g_mime_data_wrapper_get_encoding (mime_part->content);
+		stream = g_mime_data_wrapper_get_stream (mime_part->content);
+		if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (encoding)) {
+			g_mime_stream_unref (stream);
 			stream = g_mime_stream_mem_new ();
 			g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-		} else {
-			stream = mime_part->content->stream;
-			g_mime_stream_ref (stream);
 		}
 		
 		buf = GMIME_STREAM_MEM (stream)->buffer;
@@ -322,7 +531,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		
 		mime_part->content_md5 = g_strdup (b64digest);
 		
-		g_mime_header_set (mime_part->headers, "Content-Md5", b64digest);
+		g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", b64digest);
 	}
 }
 
@@ -346,18 +555,16 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
 	g_return_val_if_fail (mime_part->content != NULL, FALSE);
-	g_return_val_if_fail (mime_part->content_md5 != NULL, FALSE);
 	
-	stream = mime_part->content->stream;
-	if (!stream)
+	if (!mime_part->content_md5)
 		return FALSE;
 	
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
+	encoding = g_mime_data_wrapper_get_encoding (mime_part->content);
+	stream = g_mime_data_wrapper_get_stream (mime_part->content);
+	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (encoding)) {
+		g_mime_stream_unref (stream);
 		stream = g_mime_stream_mem_new ();
 		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-	} else {
-		stream = mime_part->content->stream;
-		g_mime_stream_ref (stream);
 	}
 	
 	buf = GMIME_STREAM_MEM (stream)->buffer;
@@ -410,7 +617,7 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 		g_free (mime_part->content_location);
 	
 	mime_part->content_location = g_strdup (content_location);
-	g_mime_header_set (mime_part->headers, "Content-Location", content_location);
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Location", content_location);
 }
 
 
@@ -431,54 +638,6 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 	return mime_part->content_location;
 }
 
-#if 0
-/* don't really need this anymore but keeping it just in case I find
-   it useful later... */
-static void
-unfold (char *str)
-{
-	register char *s, *d;
-	
-	for (d = s = str; *s; s++) {
-		if (*s != '\n') {
-			if (*s == '\t')
-				*d++ = ' ';
-			else
-				*d++ = *s;
-		}
-	}
-	
-	*d = '\0';
-}
-#endif
-
-static void
-sync_content_type (GMimePart *mime_part)
-{
-	GMimeContentType *mime_type;
-	GMimeParam *params;
-	GString *string;
-	char *type, *p;
-	
-	mime_type = mime_part->mime_type;
-	
-	string = g_string_new ("Content-Type: ");
-	
-	type = g_mime_content_type_to_string (mime_type);
-	g_string_append (string, type);
-	g_free (type);
-	
-	params = mime_type->params;
-	if (params)
-		g_mime_param_write_to_string (params, FALSE, string);
-	
-	p = string->str;
-	g_string_free (string, FALSE);
-	
-	type = p + strlen ("Content-Type: ");
-	g_mime_header_set (mime_part->headers, "Content-Type", type);
-	g_free (p);
-}
 
 /**
  * g_mime_part_set_content_type:
@@ -493,12 +652,7 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (mime_type != NULL);
 	
-	if (mime_part->mime_type)
-		g_mime_content_type_destroy (mime_part->mime_type);
-	
-	mime_part->mime_type = mime_type;
-	
-	sync_content_type (mime_part);
+	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), mime_type);
 }
 
 
@@ -516,7 +670,7 @@ g_mime_part_get_content_type (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	return mime_part->mime_type;
+	return g_mime_object_get_content_type (GMIME_OBJECT (mime_part));
 }
 
 
@@ -536,7 +690,7 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	mime_part->encoding = encoding;
-	g_mime_header_set (mime_part->headers, "Content-Transfer-Encoding",
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Transfer-Encoding",
 			   g_mime_part_encoding_to_string (encoding));
 }
 
@@ -631,7 +785,7 @@ sync_content_disposition (GMimePart *mime_part)
 	char *str;
 	
 	str = g_mime_disposition_header (mime_part->disposition, FALSE);
-	g_mime_header_set (mime_part->headers, "Content-Disposition", str);
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Disposition", str);
 	g_free (str);
 }
 
@@ -763,9 +917,8 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 	
 	g_mime_disposition_add_parameter (mime_part->disposition, "filename", filename);
 	
-	g_mime_content_type_add_parameter (mime_part->mime_type, "name", filename);
+	g_mime_object_set_content_type_param (GMIME_OBJECT (mime_part), "name", filename);
 	
-	sync_content_type (mime_part);
 	sync_content_disposition (mime_part);
 }
 
@@ -793,80 +946,10 @@ g_mime_part_get_filename (const GMimePart *mime_part)
 	
 	if (!filename) {
 		/* check the "name" param in the content-type */
-		return g_mime_content_type_get_parameter (mime_part->mime_type, "name");
+		return g_mime_object_get_content_type_parameter (GMIME_OBJECT (mime_part), "name");
 	}
 	
 	return filename;
-}
-
-
-static void
-read_random_pool (char *buffer, size_t bytes)
-{
-	int fd;
-	
-	fd = open ("/dev/urandom", O_RDONLY);
-	if (fd == -1) {
-		fd = open ("/dev/random", O_RDONLY);
-		if (fd == -1)
-			return;
-	}
-	
-	read (fd, buffer, bytes);
-	close (fd);
-}
-
-
-/**
- * g_mime_part_set_boundary:
- * @mime_part: Mime part
- * @boundary: the boundary for the multi-part or NULL to generate a random one.
- *
- * Sets the boundary on the multipart mime part.
- **/
-void
-g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
-{
-	char bbuf[35];
-	
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*"));
-	
-	if (!boundary) {
-		/* Generate a fairly random boundary string. */
-		char digest[16], *p;
-		int state, save;
-		
-		read_random_pool (digest, 16);
-		
-		strcpy (bbuf, "=-");
-		p = bbuf + 2;
-		state = save = 0;
-		p += g_mime_utils_base64_encode_step (digest, 16, p, &state, &save);
-		*p = '\0';
-		
-		boundary = bbuf;
-	}
-	
-	g_mime_content_type_add_parameter (mime_part->mime_type, "boundary", boundary);
-	sync_content_type (mime_part);
-}
-
-
-/**
- * g_mime_part_get_boundary:
- * @mime_part: Mime part
- *
- * Gets the multipart boundary or %NULL on error.
- *
- * Returns the boundary on the mime part.
- **/
-const char *
-g_mime_part_get_boundary (GMimePart *mime_part)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	return g_mime_content_type_get_parameter (mime_part->mime_type, "boundary");
 }
 
 
@@ -992,7 +1075,6 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 }
 
 
-
 /**
  * g_mime_part_get_content_object:
  * @mime_part: MIME part object
@@ -1074,130 +1156,21 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 
 
 /**
- * g_mime_part_add_subpart:
- * @mime_part: Parent Mime part
- * @subpart: Child Mime part
- *
- * Adds a subpart to the parent mime part which *must* be a
- * multipart.
- **/
-void
-g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (GMIME_IS_PART (subpart));
-	
-	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
-		mime_part->children = g_list_append (mime_part->children, subpart);
-		g_mime_object_ref (GMIME_OBJECT (subpart));
-	}
-}
-
-
-static void
-write_content (GMimePart *part, GMimeStream *stream)
-{
-	ssize_t written;
-	
-	if (!part->content)
-		return;
-	
-	/* Evil Genius's "slight" optimization: Since GMimeDataWrapper::write_to_stream()
-	 * decodes its content stream to the raw format, we can cheat by requesting its
-	 * content stream and not doing any encoding on the data if the source and
-	 * destination encodings are identical.
-	 */
-	
-	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
-		GMimeStream *filtered_stream;
-		const char *filename;
-		GMimeFilter *filter;
-		
-		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-		switch (part->encoding) {
-		case GMIME_PART_ENCODING_BASE64:
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-			break;
-		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-			break;
-		case GMIME_PART_ENCODING_UUENCODE:
-			filename = g_mime_part_get_filename (part);
-			g_mime_stream_printf (stream, "begin 0644 %s\n", filename ? filename : "unknown");
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-			break;
-		default:
-			break;
-		}
-		
-		written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
-		g_mime_stream_flush (filtered_stream);
-		g_mime_stream_unref (filtered_stream);
-		
-		if (part->encoding == GMIME_PART_ENCODING_UUENCODE) {
-			/* FIXME: get rid of this special-case x-uuencode crap */
-			g_mime_stream_write (stream, "end\n", 4);
-		}
-	} else {
-		GMimeStream *content_stream;
-		
-		content_stream = g_mime_data_wrapper_get_stream (part->content);
-		g_mime_stream_reset (content_stream);
-		written = g_mime_stream_write_to_stream (content_stream, stream);
-		g_mime_stream_unref (content_stream);
-	}
-	
-	/* this is just so that I get a warning on fail... */
-	g_return_if_fail (written != -1);
-}
-
-
-/**
  * g_mime_part_write_to_stream:
  * @mime_part: MIME Part
  * @stream: output stream
  *
  * Writes the contents of the MIME Part to @stream.
+ *
+ * Returns the number of bytes written or -1 on fail.
  **/
-void
+ssize_t
 g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 {
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (stream != NULL);
+	g_return_if_fail (GMIME_IS_PART (mime_part), -1);
+	g_return_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
-		const char *boundary;
-		GList *child;
-		
-		/* make sure there's a boundary, else force a random boundary */
-		boundary = g_mime_part_get_boundary (mime_part);
-		if (!boundary) {
-			g_mime_part_set_boundary (mime_part, NULL);
-			boundary = g_mime_part_get_boundary (mime_part);
-		}
-		
-		/* write the mime headers */
-		g_mime_header_write_to_stream (mime_part->headers, stream);
-		
-		child = mime_part->children;
-		while (child) {
-			g_mime_stream_printf (stream, "\n--%s\n", boundary);
-			g_mime_part_write_to_stream (child->data, stream);
-			
-			child = child->next;
-		}
-		
-		g_mime_stream_printf (stream, "\n--%s--\n", boundary);
-	} else {
-		/* write the mime headers */
-		g_mime_header_write_to_stream (mime_part->headers, stream);
-		
-		g_mime_stream_write (stream, "\n", 1);
-		write_content (mime_part, stream);
-	}
+	return g_mime_object_write_to_stream (GMIME_OBJECT (mime_part), stream);
 }
 
 
@@ -1212,20 +1185,7 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 char *
 g_mime_part_to_string (GMimePart *mime_part)
 {
-	GMimeStream *stream;
-	GByteArray *buf;
-	char *str;
-	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	buf = g_byte_array_new ();
-	stream = g_mime_stream_mem_new ();
-	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), buf);
-	g_mime_part_write_to_stream (mime_part, stream);
-	g_mime_stream_unref (stream);
-	g_byte_array_append (buf, "", 1);
-	str = buf->data;
-	g_byte_array_free (buf, FALSE);
-	
-	return str;
+	return g_mime_object_to_string (GMIME_OBJECT (mime_part));
 }

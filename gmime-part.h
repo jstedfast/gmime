@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2000-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
  *
  */
 
+
 #ifndef __GMIME_PART_H__
 #define __GMIME_PART_H__
 
@@ -30,14 +31,21 @@ extern "C" {
 
 #include <glib.h>
 #include <stdio.h>
+
 #include "gmime-object.h"
 #include "gmime-param.h"
-#include "gmime-header.h"
-#include "gmime-content-type.h"
 #include "gmime-disposition.h"
 #include "gmime-data-wrapper.h"
-#include "gmime-stream.h"
 
+#define GMIME_TYPE_PART            (g_mime_part_get_type ())
+#define GMIME_PART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PART, GMimePart))
+#define GMIME_PART_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PART, GMimePartClass))
+#define GMIME_IS_PART(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_PART))
+#define GMIME_IS_PART_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PART))
+#define GMIME_PART_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_PART, GMimePartClass))
+
+typedef struct _GMimePart GMimePart;
+typedef struct _GMimePartClass GMimePartClass;
 
 struct _GMimePart {
 	GMimeObject parent_object;
@@ -50,15 +58,15 @@ struct _GMimePart {
 	char *content_id;
 	
 	GMimeDataWrapper *content;
-	
-	GList *children;   /* of type GMimePart */
 };
 
-typedef struct _GMimePart GMimePart;
+struct _GMimePartClass {
+	GMimeObjectClass parent_class;
+	
+};
 
-#define GMIME_PART_TYPE       g_str_hash ("GMimePart")
-#define GMIME_IS_PART(object) (object && ((GMimeObject *) object)->type == GMIME_PART_TYPE)
-#define GMIME_PART(object)    ((GMimePart *) object)
+
+GType g_mime_part_get_type (void);
 
 /* constructors */
 GMimePart *g_mime_part_new (void);
@@ -119,8 +127,6 @@ void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 /* utility functions */
 void g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
 char *g_mime_part_to_string (GMimePart *mime_part);
-
-const GMimePart *g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const char *content_id);
 
 #ifdef __cplusplus
 }

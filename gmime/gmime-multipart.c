@@ -136,7 +136,6 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 static void
 g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
-	multipart->content_type = NULL;
 	multipart->boundary = NULL;
 	multipart->preface = NULL;
 	multipart->postface = NULL;
@@ -148,9 +147,6 @@ g_mime_multipart_finalize (GObject *object)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	GList *node;
-	
-	if (multipart->content_type)
-		g_mime_content_type_destroy (multipart->content_type);
 	
 	g_free (multipart->boundary);
 	g_free (multipart->preface);
@@ -190,6 +186,10 @@ multipart_add_header (GMimeObject *object, const char *header, const char *value
 static void
 multipart_set_header (GMimeObject *object, const char *header, const char *value)
 {
+	/* RFC 1864 states that you cannot set a Content-MD5 on a multipart */
+	if (!strcasecmp ("Content-MD5", header))
+		return;
+	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a multipart */
 	
@@ -298,6 +298,29 @@ multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 	multipart->parts = g_list_append (multipart->parts, part);
 }
 
+
+/**
+ * g_mime_multipart_new:
+ *
+ * Creates a new MIME multipart object with a default content-type of
+ * multipart/mixed.
+ *
+ * Returns an empty MIME multipart object with a default content-type of
+ * multipart/mixed.
+ **/
+GMimeMultipart *
+g_mime_multipart_new ()
+{
+	GMimeMultipart *multipart;
+	GMimeContentType *type;
+	
+	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL, NULL);
+	
+	type = g_mime_content_type_new ("multipart", "mixed");
+	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
+	
+	return multipart;
+}
 
 /**
  * g_mime_multipart_add_part:
@@ -548,6 +571,8 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 	
 	g_free (multipart->boundary);
 	multipart->boundary = g_strdup (boundary);
+	
+	g_mime_object_set_content_type_parameter (GMIME_OBJECT (multipart), "boundary", boundary);
 }
 
 

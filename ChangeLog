@@ -1,5 +1,20 @@
 2002-04-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-part.c (g_mime_part_add_subpart): Removed.
+	(g_mime_part_set_boundary): Removed.
+	(g_mime_part_get_boundary): Removed.
+
+	* gmime-object.c (g_mime_object_get_content_type_parameter): New
+	function.
+	(g_mime_object_set_content_type_parameter): New function.
+
+	* gmime-multipart.c (g_mime_multipart_new): New function, forgot
+	to implement it before ;-)
+	(multipart_set_boundary): Set the boundary parameter on the
+	content-type.
+
+2002-04-06  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-part.c (g_mime_part_foreach): Removed.
 	(g_mime_part_get_subpart_from_content_id): Same.
 

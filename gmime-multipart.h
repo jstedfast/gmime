@@ -32,7 +32,6 @@ extern "C" {
 #include <glib.h>
 
 #include "gmime-object.h"
-#include "gmime-content-type.h"
 
 #define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
 #define GMIME_MULTIPART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
@@ -47,7 +46,6 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
 struct _GMimeMultipart {
 	GMimeObject parent_object;
 	
-	GMimeContentType *content_type;
 	char *boundary;
 	
 	char *preface;
