@@ -98,4 +98,4 @@ $(libgmime_la_SOURCES): $(srcdir)/libgmime
 
 install-data-local:
 	-mkdir -p $(DESTDIR)$(datadir)/aclocal
-	$(INSTALL_DATA) gmime.m4 $(DESTDIR)$(datadir)/aclocal/gmime.m4
+	$(INSTALL_DATA) $(srcdir)/gmime.m4 $(DESTDIR)$(datadir)/aclocal/gmime.m4
