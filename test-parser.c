@@ -34,8 +34,7 @@ print_mime_struct (GMimeObject *part, int depth)
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
 	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
-	
-	
+		
 	if (GMIME_IS_MULTIPART (part)) {
 		GList *subpart;
 		

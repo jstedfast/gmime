@@ -444,6 +444,7 @@ parser_step_from (GMimeParser *parser)
 		unsigned int hlen, hoff;                                  \
 		                                                          \
 		hlen = hoff = priv->headerptr - priv->headerbuf;          \
+		hlen = hlen ? hlen : 1;                                   \
 		                                                          \
 		while (hlen < hoff + len)                                 \
 			hlen <<= 1;                                       \
@@ -544,7 +545,7 @@ parser_step_headers (GMimeParser *parser)
 			}
 		}
 		
-		priv->inptr = inend;
+		priv->inptr = inptr;
 	} while (1);
 	
 	inptr = priv->inptr;
@@ -693,9 +694,10 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 			
 			if (inptr < inend) {
 				inptr++;
-				len++;
 				if (possible_boundary (priv->scan_from, start, len)) {
 					struct _boundary_stack *s;
+					
+					d(printf ("checking boundary '%.*s'\n", len, start));
 					
 					s = priv->bounds;
 					while (s) {
@@ -716,6 +718,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 						s = s->parent;
 					}
 				}
+				len++;
 			} else if (!found_eos) {
 				/* not enough to tell if we found a boundary */
 				priv->inptr = start;
