@@ -572,12 +572,12 @@ g_mime_message_to_string (GMimeMessage *message)
 	return str;
 }
 
-static gchar *
+static const gchar *
 handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolean *is_html)
 {
 	const GMimePart *last = NULL;
 	GList *child;
-	gchar *text = NULL;
+	const gchar *text = NULL;
 	
 	child = multipart->children;
 	while (child) {
@@ -590,7 +590,7 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
 		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html")) {
 			/* we got what we wanted */
 			*is_html = !want_plain;
-			text = g_strdup (mime_part->content);
+			text = mime_part->content;
 			break;
 		} else {
 			last = mime_part;
@@ -602,7 +602,7 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
 	if (!text && last) {
 		/* we didn't get the type we wanted but still got the body */
 		*is_html = want_plain;
-		text = g_strdup (last->content);
+		text = last->content;
 	}
 	
 	return text;
@@ -619,11 +619,11 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
  * some assumptions that are not necessarily true. It is recommended
  * that you traverse the MIME structure yourself.
  **/
-gchar *
+const gchar *
 g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html)
 {
 	const GMimeContentType *type;
-	gchar *body = NULL;
+	const gchar *body = NULL;
 	
 	type = g_mime_part_get_content_type (message->mime_part);
 	if (g_mime_content_type_is_type (type, "text", "*")) {
@@ -632,7 +632,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 		else
 			*is_html = want_plain;
 		
-		body = g_strdup (message->mime_part->content);
+		body = message->mime_part->content;
 	} else if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
 		/* Get the prefered part from the multipart/alternative */
 		body = handle_multipart_alternative (message->mime_part, want_plain, is_html);
@@ -648,7 +648,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 			else
 				*is_html = want_plain;
 			
-			body = g_strdup (first_part->content);
+			body = first_part->content;
 		} else if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
 			/* Get the prefered part from the multipart/alternative */
 			body = handle_multipart_alternative (first_part, want_plain, is_html);
@@ -660,6 +660,13 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 	return body;
 }
 
+
+/**
+ * g_mime_message_get_headers: Return the raw message headers
+ * @message: MIME Message
+ *
+ * Return an allocated string containing the raw message headers.
+ **/
 gchar *
 g_mime_message_get_headers (GMimeMessage *message)
 {

@@ -1,3 +1,16 @@
+2000-10-28  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-utils.c (parse_rfc822_date): Fixed the off-by-one-hour
+	bug.
+
+	* test-mime.c: Updated to reflect changes to
+	g_mime_message_get_body().
+
+	* gmime-message.c (g_mime_message_get_headers): Added Gtk-Doc
+	comment.
+	(g_mime_message_get_body): Modified to return a const pointer to
+	the message body rather than allocating it.
+
 2000-10-28  Charles Kerr <charles@superpimp.org>
 
 	* gmime-message.c (g_mime_message_get_headers): New function

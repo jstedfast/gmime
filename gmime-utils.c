@@ -363,6 +363,8 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	
 	token = tokens;
 	
+	memset ((void *)&tm, 0, sizeof (struct tm));
+	
 	if ((n = get_wday (token->data)) != -1) {
 		/* not all dates may have this... */
 		tm.tm_wday = n;
