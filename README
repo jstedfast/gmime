@@ -10,14 +10,32 @@ the Multipurpose Internet Mail Extension (MIME) as defined by the
 following RFCs:
 
  * 0822: Standard for the Format of Arpa Internet Text Messages
- * 2045: Multipurpose Internet Mail Extensions (MIME) Part One: Format
-         of Internet Message Bodies
- * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two: Media
-         Types
+ * 2045: Multipurpose Internet Mail Extensions (MIME) Part One:
+         Format of Internet Message Bodies
+ * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two:
+         Media Types
  * 2047: Multipurpose Internet Mail Extensions (MIME) Part Three:
          Message Header Extensions for Non-ASCII Text
+ * 2048: Multipurpose Internet Mail Extensions (MIME) Part Four:
+         Registration Procedures
+ * 2049: Multipurpose Internet Mail Extensions (MIME) Part Five:
+         Conformance Criteria and Examples
  * 2183: Communicating Presentation Information in Internet Messages:
          The Content-Disposition Header Field
+
+Other RFCs of interest:
+
+ * 1847: Security Multiparts for MIME: Multipart/Signed and 
+         Multipart/Encrypted
+ * 1872: The MIME Multipart/Related Content-type
+ * 1927: Suggested Additional MIME Types for Associating Documents
+ * 2015: MIME Security with Pretty Good Privacy (PGP)
+ * 2311: S/MIME Version 2 Message Specification
+ * 2312: S/MIME Version 2 Certificate Handling
+ * 2424: Content Duration MIME Header Definition
+ * 2632: S/MIME Version 3 Certificate Handling
+ * 2633: S/MIME Version 3 Message Specification
+ * 2634: Enhanced Security Services for S/MIME
 
 
 LICENSE INFORMATION

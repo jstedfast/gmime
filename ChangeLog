@@ -1,3 +1,9 @@
+2000-12-05  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* README: Updated with more RFCs, etc.
+
+	* rfc/* Added a bunch more rfcs of interest.
+
 2000-12-04  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-mime.c: Added test code for the address parser.
