@@ -15,7 +15,8 @@ bin_SCRIPTS = gmime-config
 ## the value NONE in configure if the user doesn't specify them (this
 ## is an autoconf feature, not a bug).
 
-CLEANFILES = gmimeConf.sh iconv-detect.h
+CLEANFILES = gmimeConf.sh
+DISTCLEANFILES = iconv-detect.h
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh

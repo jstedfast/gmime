@@ -1,5 +1,9 @@
 2004-11-16  Joe Shaw  <joeshaw@novell.com>
 
+	* Makefile.am: iconv-detect.h should be in DISTCLEANFILES, not
+	CLEANFILES, or else the build fails following a "make clean"
+	unless you re-autogen.
+
 	* gmime/internet-address.[ch]: Added functions
 	internet_address_list_next() and
 	internet_address_list_get_address() since we can't poke at the
