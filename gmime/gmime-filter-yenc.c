@@ -156,7 +156,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 					}
 				
 					/* go to the next line */
-					for ( ; inptr < inend && *inptr != '\n'; inptr++);
+					while (inptr < inend && *inptr != '\n')
+						inptr++;
 					
 					if (inptr < inend)
 						inptr++;
