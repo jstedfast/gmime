@@ -1,3 +1,14 @@
+2003-02-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c (g_url_file_end): If the file:// url is
+	preceded with some sort of brace, when scanning for the end of the
+	url - take this into consideration.
+	(g_url_web_end): Same.
+
+2003-02-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c: #include <sys/time.h>
+
 2003-02-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/url-scanner.c: Fixed the table to treat >=127 as a CTRL
