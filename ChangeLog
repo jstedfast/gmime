@@ -1,3 +1,12 @@
+2001-11-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (is_8bit_word_encoded): Make into a macro, we
+	don't need to do a strlen because the atom is a GString which
+	means we have it's length already. This also saves us some
+	overhead of calling a function.
+	(g_mime_utils_8bit_header_decode): Update to pass the len argument
+	to is_8bit_word_encoded.
+
 2001-11-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 0.7.3

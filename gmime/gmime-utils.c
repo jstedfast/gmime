@@ -735,13 +735,7 @@ quoted_decode (const guchar *in, gint len, guchar *out)
 	return -1;
 }
 
-static gboolean
-is_8bit_word_encoded (const guchar *atom)
-{
-	guint len = strlen (atom);
-	
-	return len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2);
-}
+#define is_8bit_word_encoded(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
 
 static guchar *
 decode_encoded_8bit_word (const guchar *word)
@@ -824,7 +818,7 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 			guchar *dword = NULL;
 			const guchar *word;
 			
-			if ((was_encoded = is_8bit_word_encoded (atom->str)))
+			if ((was_encoded = is_8bit_word_encoded (atom->str, atom->len)))
 				word = dword = decode_encoded_8bit_word (atom->str);
 			else
 				word = atom->str;
@@ -879,7 +873,7 @@ g_mime_utils_8bit_header_decode (const guchar *in)
 		guchar *dword = NULL;
 		const guchar *word;
 		
-		if ((was_encoded = is_8bit_word_encoded (atom->str)))
+		if ((was_encoded = is_8bit_word_encoded (atom->str, atom->len)))
 			word = dword = decode_encoded_8bit_word (atom->str);
 		else
 			word = atom->str;
