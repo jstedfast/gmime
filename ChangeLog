@@ -1,3 +1,8 @@
+2003-08-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/md5-utils.c (md5_get_digest_from_file): Open in binary
+	mode, fixes a bug when built on Win32 systems.
+
 2003-08-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.

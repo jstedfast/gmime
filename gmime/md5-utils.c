@@ -332,7 +332,7 @@ md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 	d(fprintf (stderr, "generating checksum\n"));
 	
 	md5_init (&ctx);
-	fp = fopen (filename, "r");
+	fp = fopen (filename, "rb");
 	if (!fp)
 		return;
 	
