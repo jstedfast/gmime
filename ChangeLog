@@ -1,3 +1,25 @@
+2002-06-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-2.0.pc.in: New file for use in pkg-config.
+
+	* gmime-filter-strip.[c,h]: New source files implementing a stream
+	filter for stripping trailing whitespace from lines (needed for
+	PGP/MIME).
+
+	* gmime-exception.[c,h]: New source files implementing generic
+	error reporting functionality.
+
+	* gmime-cipher-context.[c,h]: New abstract class for performing
+	common functionality (such as encryption, decryption, signing,
+	verifying, importing keys, and exporting keys) needed by any MIME
+	cipher suite (PGP/MIME and S/MIME specifically).
+
+	* gmime-multipart-signed.[c,h]: New source files implementing the
+	multipart/signed specification.
+
+	* gmime-multipart-encrypted.[c,h]: New source files implementing
+	the multipart/encrypted specification.
+
 2002-06-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* test-mbox.c (test_parser): Test the new set_header_regex

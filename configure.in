@@ -188,6 +188,7 @@ AC_OUTPUT(
   tests/Makefile
   doc/Makefile
   gmime-config
+  gmime-2.0.pc
   gmime.spec
   gmime.h
 )
