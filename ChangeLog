@@ -1,3 +1,17 @@
+2003-12-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_start): Modified the code
+	that closes the child's fds to use fcntl and also to start at fd =
+	3 so as to get rid of the need to check for stdin/out/err.
+
+	* gmime/gmime-filter-from.c (filter_filter): Fixed to malloc the
+	correct buffer length.
+
+2003-09-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream.c (g_mime_stream_read): If len == 0, return 0.
+	(g_mime_stream_write): Same.
+
 2003-08-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/md5-utils.c (md5_get_digest_from_file): Open in binary

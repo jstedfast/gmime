@@ -166,7 +166,12 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	}
 	
 	if (fromcount > 0) {
-		g_mime_filter_set_size (filter, len + (fromcount * from->mode), FALSE);
+		if (from->mode == GMIME_FILTER_FROM_MODE_ARMOR)
+			len += fromcount * 2;
+		else
+			len += fromcount;
+		
+		g_mime_filter_set_size (filter, len, FALSE);
 		
 		node = head;
 		inptr = in;
