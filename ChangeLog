@@ -1,3 +1,10 @@
+2002-09-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c (g_mime_charset_name): Don't g_assert after
+	using strtoul on the iso charset name, seems that some news
+	clients use 'isolatin' as if it were a real charset (it's not) and
+	we don't want to abort() on this.
+
 2002-09-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.

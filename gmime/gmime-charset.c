@@ -248,12 +248,10 @@ g_mime_charset_name (const char *charset)
 		
 		iso = strtoul (buf, &p, 10);
 		
-		g_assert (p > buf);
-		
 		if (iso == 10646) {
 			/* they all become ICONV_10646 */
 			iconv_name = g_strdup (ICONV_10646);
-		} else {
+		} else if (p > buf) {
 			buf = p;
 			if (*buf == '-' || *buf == '_')
 				buf++;
@@ -274,6 +272,10 @@ g_mime_charset_name (const char *charset)
 				iconv_name = g_strdup_printf (ICONV_ISO_S_FORMAT,
 							      iso, p);
 			}
+		} else {
+			/* p == buf, which probably means we've
+			   encountered an invalid iso charset name */
+			iconv_name = g_strdup (name);
 		}
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
