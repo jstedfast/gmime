@@ -35,7 +35,12 @@
 #include "gmime-iconv-utils.h"
 
 
+#ifdef ENABLE_WARNINGS
 #define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #define d(x)
 
 /* public functions that we don't care for the user of GMime to know or care about */

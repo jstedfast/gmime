@@ -37,8 +37,13 @@
 #include "gmime-iconv-utils.h"
 
 
-#define d(x) x
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
 #define w(x)
+#endif /* ENABLE_WARNINGS */
+
+#define d(x)
 
 
 static unsigned char tohex[16] = {

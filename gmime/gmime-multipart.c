@@ -35,7 +35,7 @@
 #include "gmime-utils.h"
 
 
-#define d(x) x
+#define d(x)
 
 /* GObject class methods */
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
