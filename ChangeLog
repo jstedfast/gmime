@@ -1,5 +1,9 @@
 2003-03-02  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Bumped version to 2.0.3
+
+	* configure.in: Bumped version to 2.0.3
+
 	* gmime/gmime-iconv.c (iconv_cache_bucket_new): If the current
 	list of cache buckets is non-NULL, set list->prev to the new
 	bucket being prepended.
