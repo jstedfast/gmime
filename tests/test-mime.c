@@ -430,7 +430,14 @@ test_date (void)
 	out = g_mime_utils_header_format_date (date, offset);
 	fprintf (stderr, "date out: [%s]\n", out);
 	g_free (out);
-
+	
+	in = "Tue, 30 Mar 2004 13:01:38 +0000";
+	fprintf (stderr, "date  in: [%s]\n", in);
+	date = g_mime_utils_header_decode_date (in, &offset);
+	out = g_mime_utils_header_format_date (date, offset);
+	fprintf (stderr, "date out: [%s]\n", out);
+	g_free (out);
+	
 #if 0
 	{
 		char *string;
