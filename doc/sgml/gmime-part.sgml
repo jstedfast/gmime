@@ -14,15 +14,7 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-PART-CAPS">GMIME_TYPE_PART</link>
-#define     <link linkend="GMIME-IS-PART-CAPS">GMIME_IS_PART</link>                   (obj)
-#define     <link linkend="GMIME-PART-CAPS">GMIME_PART</link>                      (obj)
-#define     <link linkend="GMIME-PART-CLASS-CAPS">GMIME_PART_CLASS</link>                (klass)
-#define     <link linkend="GMIME-IS-PART-CLASS-CAPS">GMIME_IS_PART_CLASS</link>             (klass)
-#define     <link linkend="GMIME-PART-GET-CLASS-CAPS">GMIME_PART_GET_CLASS</link>            (obj)
 struct      <link linkend="GMimePart">GMimePart</link>;
-struct      <link linkend="GMimePartClass">GMimePartClass</link>;
-<link linkend="GType">GType</link>       <link linkend="g-mime-part-get-type">g_mime_part_get_type</link>            (void);
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new">g_mime_part_new</link>                 (void);
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new-with-type">g_mime_part_new_with_type</link>       (const char *type,
                                              const char *subtype);
@@ -97,6 +89,8 @@ void        <link linkend="g-mime-part-set-content-object">g_mime_part_set_conte
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-part-write-to-stream">g_mime_part_write_to_stream</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -113,98 +107,6 @@ char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>  
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-TYPE-PART-CAPS">GMIME_TYPE_PART</title>
-<programlisting>#define GMIME_TYPE_PART            (g_mime_part_get_type ())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-PART-CAPS">GMIME_IS_PART()</title>
-<programlisting>#define GMIME_IS_PART(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_PART))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PART-CAPS">GMIME_PART()</title>
-<programlisting>#define GMIME_PART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PART, GMimePart))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PART-CLASS-CAPS">GMIME_PART_CLASS()</title>
-<programlisting>#define GMIME_PART_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PART, GMimePartClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-PART-CLASS-CAPS">GMIME_IS_PART_CLASS()</title>
-<programlisting>#define GMIME_IS_PART_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PART))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PART-GET-CLASS-CAPS">GMIME_PART_GET_CLASS()</title>
-<programlisting>#define GMIME_PART_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_PART, GMimePartClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimePart">struct GMimePart</title>
 <programlisting>struct GMimePart {
@@ -223,27 +125,6 @@ char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>  
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimePartClass">struct GMimePartClass</title>
-<programlisting>struct GMimePartClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-part-get-type">g_mime_part_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_part_get_type            (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-part-new">g_mime_part_new ()</title>
 <programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_part_new                 (void);</programlisting>
 <para>
@@ -251,7 +132,7 @@ Creates a new MIME Part object with a default content-type of
 text/plain.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -268,7 +149,7 @@ text/plain.
 Creates a new MIME Part with a sepcified type.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -291,7 +172,7 @@ Creates a new MIME Part with a sepcified type.</para>
 Set an arbitrary MIME content header.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -315,7 +196,7 @@ Gets the value of the requested header if it exists, or <literal>NULL</literal>
 otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -338,7 +219,7 @@ otherwise.</para>
 Set the content description for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -359,7 +240,7 @@ Gets the value of the Content-Description for the specified mime
 part if it exists or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -378,7 +259,7 @@ part if it exists or <literal>NULL</literal> otherwise.</para>
 Set the content id for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -398,7 +279,7 @@ Gets the content-id of the specified mime part if it exists, or
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -417,7 +298,7 @@ Gets the content-id of the specified mime part if it exists, or
 Set the content md5 for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -437,7 +318,7 @@ Gets the md5sum contained in the Content-Md5 header of the
 specified mime part if it exists, or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -455,7 +336,7 @@ specified mime part if it exists, or <literal>NULL</literal> otherwise.</para>
 Verify the content md5 for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -476,7 +357,7 @@ return FALSE if the mime part does not contain a Content-MD5.
 Set the content location for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -497,7 +378,7 @@ Gets the value of the Content-Location header if it exists, or
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -516,7 +397,7 @@ Gets the value of the Content-Location header if it exists, or
 Set the content type/subtype for the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -537,7 +418,7 @@ Gets the Content-Type object for the given mime part or <literal>NULL</literal> 
 error.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -560,7 +441,7 @@ GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64 and
 GMIME_PART_ENCODING_QUOTEDPRINTABLE.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -580,7 +461,7 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</para>
 Gets the content encoding of the mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -603,7 +484,7 @@ or GMIME_PART_ENCODING_UUENCODE.
 Gets the string value of the content encoding.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -628,7 +509,7 @@ Gets the content encoding enumeration value based on the input
 string.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -653,7 +534,7 @@ GMIME_PART_ENCODING_UUENCODE.
 Set the content disposition for the specified mime part</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -674,7 +555,7 @@ Set the content disposition for the specified mime part</para>
 Set the content disposition for the specified mime part</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -694,7 +575,7 @@ Set the content disposition for the specified mime part</para>
 Gets the content disposition if set or <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -715,7 +596,7 @@ Gets the content disposition if set or <literal>NULL</literal> otherwise.</para>
 Add a content-disposition parameter to the specified mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -740,7 +621,7 @@ Gets the value of the Content-Disposition parameter specified by
 <parameter>attribute</parameter>, or <literal>NULL</literal> if the parameter does not exist.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -764,7 +645,7 @@ Sets the "filename" parameter on the Content-Disposition and also sets the
 "name" parameter on the Content-Type.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -784,7 +665,7 @@ Gets the filename of the specificed mime part, or <literal>NULL</literal> if the
 part does not have the filename or name parameter set.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -806,7 +687,7 @@ and if not then checks the "name" parameter in the Content-Type.
 Sets the content of the Mime Part (only non-multiparts)</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -832,7 +713,7 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 Sets the encoding type and raw content on the mime part after decoding the content.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -859,7 +740,7 @@ Sets the encoding type and raw content on the mime part after decoding the conte
 Sets the content of the Mime Part (only non-multiparts)</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -880,7 +761,7 @@ Gets the raw contents of the mime part and sets <parameter>len</parameter> to th
 of the raw data buffer.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -904,7 +785,7 @@ Gets the internal data-wrapper of the specified mime part, or <literal>NULL</lit
 on error.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -923,7 +804,7 @@ on error.</para>
 Sets the content object on the mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -943,7 +824,7 @@ Sets the content object on the mime part.</para>
 Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -964,7 +845,7 @@ Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 Allocates a string buffer containing the MIME Part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

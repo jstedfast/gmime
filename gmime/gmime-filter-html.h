@@ -31,14 +31,71 @@ extern "C" {
 
 #include "gmime-filter.h"
 
+
+/**
+ * GMIME_FILTER_HTML_PRE:
+ *
+ * Wrap stream in <pre> tags.
+ **/
 #define GMIME_FILTER_HTML_PRE               (1 << 0)
+
+
+/**
+ * GMIME_FILTER_HTML_CONVERT_NL:
+ *
+ * Convert new-lines ('\n') into <br> tags.
+ **/
 #define GMIME_FILTER_HTML_CONVERT_NL        (1 << 1)
+
+
+/**
+ * GMIME_FILTER_HTML_CONVERT_SPACES:
+ *
+ * Preserve whitespace by converting spaces into their appropriate
+ * html entities.
+ **/
 #define GMIME_FILTER_HTML_CONVERT_SPACES    (1 << 2)
+
+
+/**
+ * GMIME_FILTER_HTML_CONVERT_URLS:
+ *
+ * Wrap detected URLs in <a href=...> tags.
+ **/
 #define GMIME_FILTER_HTML_CONVERT_URLS      (1 << 3)
+
+
+/**
+ * GMIME_FILTER_HTML_MARK_CITATION:
+ *
+ * Change the colour of citation text.
+ **/
 #define GMIME_FILTER_HTML_MARK_CITATION     (1 << 4)
+
+
+/**
+ * GMIME_FILTER_HTML_CONVERT_ADDRESSES:
+ *
+ * Wrap email addresses in "mailto:" href tags.
+ **/
 #define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 << 5)
+
+
+/**
+ * GMIME_FILTER_HTML_ESCAPE_8BIT:
+ *
+ * Converts 8bit characters to '?'.
+ **/
 #define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 << 6)
+
+
+/**
+ * GMIME_FILTER_HTML_CITE:
+ *
+ * Cites text by prepending "> " to each cited line.
+ **/
 #define GMIME_FILTER_HTML_CITE              (1 << 7)
+
 
 typedef struct _GMimeFilterHTML {
 	GMimeFilter parent;

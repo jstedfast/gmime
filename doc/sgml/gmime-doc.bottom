@@ -1,6 +1,7 @@
     &gmime-gmime;
     &gmime-gmime-stream;
     &gmime-gmime-stream-buffer;
+    &gmime-gmime-stream-cat;
     &gmime-gmime-stream-file;
     &gmime-gmime-stream-fs;
     &gmime-gmime-stream-mem;
@@ -23,6 +24,7 @@
     &gmime-gmime-part;
     &gmime-gmime-multipart;
     &gmime-gmime-message;
+    &gmime-gmime-message-partial;
     &gmime-gmime-utils;
     &gmime-internet-address;
     &gmime-gmime-parser;

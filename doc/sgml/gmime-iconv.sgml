@@ -55,7 +55,7 @@ descriptor can be used with iconv (or the g_mime_iconv wrapper) any
 number of times until closed using g_mime_iconv_close.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -76,7 +76,7 @@ value.
 <programlisting>#define     g_mime_iconv(cd,inbuf,inleft,outbuf,outleft)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -106,7 +106,7 @@ value.
 Closes the iconv descriptor <parameter>cd</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

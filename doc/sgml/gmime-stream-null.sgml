@@ -14,16 +14,10 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-STREAM-NULL-CAPS">GMIME_TYPE_STREAM_NULL</link>
-#define     <link linkend="GMIME-IS-STREAM-NULL-CAPS">GMIME_IS_STREAM_NULL</link>            (obj)
-#define     <link linkend="GMIME-STREAM-NULL-CAPS">GMIME_STREAM_NULL</link>               (obj)
-#define     <link linkend="GMIME-STREAM-NULL-CLASS-CAPS">GMIME_STREAM_NULL_CLASS</link>         (klass)
-#define     <link linkend="GMIME-IS-STREAM-NULL-CLASS-CAPS">GMIME_IS_STREAM_NULL_CLASS</link>      (klass)
-#define     <link linkend="GMIME-STREAM-NULL-GET-CLASS-CAPS">GMIME_STREAM_NULL_GET_CLASS</link>     (obj)
 struct      <link linkend="GMimeStreamNull">GMimeStreamNull</link>;
-struct      <link linkend="GMimeStreamNullClass">GMimeStreamNullClass</link>;
-<link linkend="GType">GType</link>       <link linkend="g-mime-stream-null-get-type">g_mime_stream_null_get_type</link>     (void);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-null-new">g_mime_stream_null_new</link>         (void);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -41,98 +35,6 @@ struct      <link linkend="GMimeStreamNullClass">GMimeStreamNullClass</link>;
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-TYPE-STREAM-NULL-CAPS">GMIME_TYPE_STREAM_NULL</title>
-<programlisting>#define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-NULL-CAPS">GMIME_IS_STREAM_NULL()</title>
-<programlisting>#define GMIME_IS_STREAM_NULL(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_NULL))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-NULL-CAPS">GMIME_STREAM_NULL()</title>
-<programlisting>#define GMIME_STREAM_NULL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-NULL-CLASS-CAPS">GMIME_STREAM_NULL_CLASS()</title>
-<programlisting>#define GMIME_STREAM_NULL_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-NULL-CLASS-CAPS">GMIME_IS_STREAM_NULL_CLASS()</title>
-<programlisting>#define GMIME_IS_STREAM_NULL_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_NULL))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-NULL-GET-CLASS-CAPS">GMIME_STREAM_NULL_GET_CLASS()</title>
-<programlisting>#define GMIME_STREAM_NULL_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="GMimeStreamNull">struct GMimeStreamNull</title>
 <programlisting>struct GMimeStreamNull {
 	GMimeStream parent_object;
@@ -144,34 +46,13 @@ struct      <link linkend="GMimeStreamNullClass">GMimeStreamNullClass</link>;
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeStreamNullClass">struct GMimeStreamNullClass</title>
-<programlisting>struct GMimeStreamNullClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-stream-null-get-type">g_mime_stream_null_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_stream_null_get_type     (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-stream-null-new">g_mime_stream_null_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_null_new         (void);</programlisting>
 <para>
 Creates a new GMimeStreamNull object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -12,6 +12,7 @@
 <!entity gmime-multipart SYSTEM "sgml/gmime-multipart.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
+<!entity gmime-message-partial SYSTEM "sgml/gmime-message-partial.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
@@ -20,6 +21,7 @@
 <!entity gmime-iconv-utils SYSTEM "sgml/gmime-iconv-utils.sgml">
 <!entity gmime-stream SYSTEM "sgml/gmime-stream.sgml">
 <!entity gmime-stream-buffer SYSTEM "sgml/gmime-stream-buffer.sgml">
+<!entity gmime-stream-cat SYSTEM "sgml/gmime-stream-cat.sgml">
 <!entity gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
 <!entity gmime-stream-fs SYSTEM "sgml/gmime-stream-fs.sgml">
 <!entity gmime-stream-mem SYSTEM "sgml/gmime-stream-mem.sgml">
@@ -219,6 +221,7 @@
     &gmime;
     &gmime-stream;
     &gmime-stream-buffer;
+    &gmime-stream-cat;
     &gmime-stream-file;
     &gmime-stream-fs;
     &gmime-stream-mem;
@@ -241,6 +244,7 @@
     &gmime-part;
     &gmime-multipart;
     &gmime-message;
+    &gmime-message-partial;
     &gmime-utils;
     &internet-address;
     &gmime-parser;

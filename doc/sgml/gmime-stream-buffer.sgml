@@ -14,16 +14,8 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-STREAM-BUFFER-CAPS">GMIME_TYPE_STREAM_BUFFER</link>
-#define     <link linkend="GMIME-IS-STREAM-BUFFER-CAPS">GMIME_IS_STREAM_BUFFER</link>          (obj)
-#define     <link linkend="GMIME-STREAM-BUFFER-CAPS">GMIME_STREAM_BUFFER</link>             (obj)
-#define     <link linkend="GMIME-STREAM-BUFFER-CLASS-CAPS">GMIME_STREAM_BUFFER_CLASS</link>       (klass)
-#define     <link linkend="GMIME-IS-STREAM-BUFFER-CLASS-CAPS">GMIME_IS_STREAM_BUFFER_CLASS</link>    (klass)
-#define     <link linkend="GMIME-STREAM-BUFFER-GET-CLASS-CAPS">GMIME_STREAM_BUFFER_GET_CLASS</link>   (obj)
 enum        <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link>;
 struct      <link linkend="GMimeStreamBuffer">GMimeStreamBuffer</link>;
-struct      <link linkend="GMimeStreamBufferClass">GMimeStreamBufferClass</link>;
-<link linkend="GType">GType</link>       <link linkend="g-mime-stream-buffer-get-type">g_mime_stream_buffer_get_type</link>   (void);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-buffer-new">g_mime_stream_buffer_new</link>       (<link linkend="GMimeStream">GMimeStream</link> *source,
                                              <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link> mode);
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-buffer-gets">g_mime_stream_buffer_gets</link>       (<link linkend="GMimeStream">GMimeStream</link> *stream,
@@ -31,6 +23,8 @@ struct      <link linkend="GMimeStreamBufferClass">GMimeStreamBufferClass</link>
                                              <link linkend="size-t">size_t</link> max);
 void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_readln</link>     (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GByteArray">GByteArray</link> *buffer);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -47,98 +41,6 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-TYPE-STREAM-BUFFER-CAPS">GMIME_TYPE_STREAM_BUFFER</title>
-<programlisting>#define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-BUFFER-CAPS">GMIME_IS_STREAM_BUFFER()</title>
-<programlisting>#define GMIME_IS_STREAM_BUFFER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_BUFFER))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-BUFFER-CAPS">GMIME_STREAM_BUFFER()</title>
-<programlisting>#define GMIME_STREAM_BUFFER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-BUFFER-CLASS-CAPS">GMIME_STREAM_BUFFER_CLASS()</title>
-<programlisting>#define GMIME_STREAM_BUFFER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-BUFFER-CLASS-CAPS">GMIME_IS_STREAM_BUFFER_CLASS()</title>
-<programlisting>#define GMIME_IS_STREAM_BUFFER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-BUFFER-GET-CLASS-CAPS">GMIME_STREAM_BUFFER_GET_CLASS()</title>
-<programlisting>#define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimeStreamBufferMode">enum GMimeStreamBufferMode</title>
 <programlisting>typedef enum {
@@ -169,27 +71,6 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeStreamBufferClass">struct GMimeStreamBufferClass</title>
-<programlisting>struct GMimeStreamBufferClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-stream-buffer-get-type">g_mime_stream_buffer_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_stream_buffer_get_type   (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-stream-buffer-new">g_mime_stream_buffer_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_buffer_new       (<link linkend="GMimeStream">GMimeStream</link> *source,
                                              <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link> mode);</programlisting>
@@ -197,7 +78,7 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 Creates a new GMimeStreamBuffer object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -224,7 +105,7 @@ the buffer. A #'\0' is stored after the last character in the
 buffer.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -250,7 +131,7 @@ on fail.
 Reads a single line into <parameter>buffer</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

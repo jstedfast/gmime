@@ -53,7 +53,7 @@ enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 Creates a new filter of type <parameter>type</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

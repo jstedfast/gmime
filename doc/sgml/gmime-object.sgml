@@ -14,17 +14,9 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-OBJECT-CAPS">GMIME_TYPE_OBJECT</link>
-#define     <link linkend="GMIME-IS-OBJECT-CAPS">GMIME_IS_OBJECT</link>                 (obj)
-#define     <link linkend="GMIME-OBJECT-CAPS">GMIME_OBJECT</link>                    (obj)
-#define     <link linkend="GMIME-OBJECT-CLASS-CAPS">GMIME_OBJECT_CLASS</link>              (klass)
-#define     <link linkend="GMIME-IS-OBJECT-CLASS-CAPS">GMIME_IS_OBJECT_CLASS</link>           (klass)
-#define     <link linkend="GMIME-OBJECT-GET-CLASS-CAPS">GMIME_OBJECT_GET_CLASS</link>          (obj)
 struct      <link linkend="GMimeObject">GMimeObject</link>;
-struct      <link linkend="GMimeObjectClass">GMimeObjectClass</link>;
 void        (<link linkend="GMimePartFunc">*GMimePartFunc</link>)                (<link linkend="GMimeObject">GMimeObject</link> *part,
                                              <link linkend="gpointer">gpointer</link> data);
-<link linkend="GType">GType</link>       <link linkend="g-mime-object-get-type">g_mime_object_get_type</link>          (void);
 void        <link linkend="g-mime-object-register-type">g_mime_object_register_type</link>     (const char *type,
                                              const char *subtype,
                                              <link linkend="GType">GType</link> object_type);
@@ -60,6 +52,8 @@ char*       <link linkend="g-mime-object-get-headers">g_mime_object_get_headers<
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-object-write-to-stream">g_mime_object_write_to_stream</link>   (<link linkend="GMimeObject">GMimeObject</link> *object,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</link>         (<link linkend="GMimeObject">GMimeObject</link> *object);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -77,98 +71,6 @@ char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</lin
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-TYPE-OBJECT-CAPS">GMIME_TYPE_OBJECT</title>
-<programlisting>#define GMIME_TYPE_OBJECT            (g_mime_object_get_type ())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-OBJECT-CAPS">GMIME_IS_OBJECT()</title>
-<programlisting>#define GMIME_IS_OBJECT(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_OBJECT))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-OBJECT-CAPS">GMIME_OBJECT()</title>
-<programlisting>#define GMIME_OBJECT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_OBJECT, GMimeObject))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-OBJECT-CLASS-CAPS">GMIME_OBJECT_CLASS()</title>
-<programlisting>#define GMIME_OBJECT_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_OBJECT, GMimeObjectClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-OBJECT-CLASS-CAPS">GMIME_IS_OBJECT_CLASS()</title>
-<programlisting>#define GMIME_IS_OBJECT_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_OBJECT))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-OBJECT-GET-CLASS-CAPS">GMIME_OBJECT_GET_CLASS()</title>
-<programlisting>#define GMIME_OBJECT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_OBJECT, GMimeObjectClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="GMimeObject">struct GMimeObject</title>
 <programlisting>struct GMimeObject {
 	GObject parent_object;
@@ -183,18 +85,12 @@ char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</lin
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeObjectClass">struct GMimeObjectClass</title>
-<programlisting>struct GMimeObjectClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
 <title><anchor id="GMimePartFunc">GMimePartFunc ()</title>
 <programlisting>void        (*GMimePartFunc)                (<link linkend="GMimeObject">GMimeObject</link> *part,
                                              <link linkend="gpointer">gpointer</link> data);</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -204,21 +100,6 @@ char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</lin
 </entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
 <entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-object-get-type">g_mime_object_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_object_get_type          (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
 
 
 </entry></row>
@@ -237,7 +118,7 @@ Note: You may use the wildcard "*" to match any type and/or
 subtype.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -265,7 +146,7 @@ class that can handle <parameter>type</parameter>/*. If that also fails, then it
 the generic part class, <link linkend="GMimePart">GMimePart</link>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -287,7 +168,7 @@ of <parameter>type</parameter>/<parameter>subtype</parameter>.
 Ref's a MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -303,7 +184,7 @@ Ref's a MIME object.</para>
 Unref's a MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -320,7 +201,7 @@ Unref's a MIME object.</para>
 Sets the content-type for the specified MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -341,7 +222,7 @@ Gets the Content-Type object for the given MIME object or <literal>NULL</literal
 fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -362,7 +243,7 @@ fail.</para>
 Sets the content-type param <parameter>name</parameter> to the value <parameter>value</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -387,7 +268,7 @@ Gets the value of the content-type param <parameter>name</parameter> set on the 
 <parameter>object</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -410,7 +291,7 @@ if the param doesn't exist.
 Sets the Content-Id of the MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -429,7 +310,7 @@ Sets the Content-Id of the MIME object.</para>
 Gets the Content-Id of the MIME object or NULL if one is not set.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -449,7 +330,7 @@ Gets the Content-Id of the MIME object or NULL if one is not set.</para>
 Adds an arbitrary header to the MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -473,7 +354,7 @@ Adds an arbitrary header to the MIME object.</para>
 Sets an arbitrary header on the MIME object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -497,7 +378,7 @@ Gets the value of the requested header if it exists or <literal>NULL</literal>
 otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -520,7 +401,7 @@ otherwise.
 Removed the specified header if it exists.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -540,7 +421,7 @@ Allocates a string buffer containing all of the MIME object's raw
 headers.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -559,7 +440,7 @@ headers.</para>
 Write the contents of the MIME object to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -580,7 +461,7 @@ Write the contents of the MIME object to <parameter>stream</parameter>.</para>
 Allocates a string buffer containing the contents of <parameter>object</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -107,7 +107,7 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 Creates a new <link linkend="InternetAddress">InternetAddress</link> object</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -124,7 +124,7 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 <parameter>addr</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -145,7 +145,7 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 Creates a new <link linkend="InternetAddress">InternetAddress</link> object with group name <parameter>name</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -163,7 +163,7 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 Ref's the internet address.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -179,7 +179,7 @@ Ref's the internet address.</para>
 Unref's the internet address.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -196,7 +196,7 @@ Unref's the internet address.</para>
 Set the name of the internet address.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -216,7 +216,7 @@ Set the name of the internet address.</para>
 Set the internet address's address.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -236,7 +236,7 @@ Set the internet address's address.</para>
 Set the members of the internet address group.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -256,7 +256,7 @@ Set the members of the internet address group.</para>
 Add a contact to the internet address group.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -278,7 +278,7 @@ Prepends the internet address to the list of internet addresses
 pointed to by <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -302,7 +302,7 @@ Appends the internet address to the list of internet addresses
 pointed to by <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -325,7 +325,7 @@ pointed to by <parameter>list</parameter>.</para>
 Concatenates a copy of list <parameter>b</parameter> onto the end of list <parameter>a</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -346,7 +346,7 @@ Concatenates a copy of list <parameter>b</parameter> onto the end of list <param
 Calculates the length of the list of addresses.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -364,7 +364,7 @@ Calculates the length of the list of addresses.</para>
 Destroys the list of internet addresses.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -381,7 +381,7 @@ Destroys the list of internet addresses.</para>
 Construct a list of internet addresses from the given string.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -402,7 +402,7 @@ Allocates a string containing the contents of the <link linkend="InternetAddress
 object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -426,7 +426,7 @@ Allocates a string buffer containing the rfc822 formatted addresses
 in <parameter>list</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

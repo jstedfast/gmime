@@ -167,7 +167,7 @@ message_partial_set_content_type (GMimeObject *object, GMimeContentType *content
  * g_mime_message_partial_new:
  * @id: message/partial part id
  * @number: message/partial part number
- * @total: total message/partial parts that combine to form a single message/rfc822 part.
+ * @total: total number of message/partial parts
  *
  * Creates a new MIME message/partial object.
  *
@@ -203,6 +203,14 @@ g_mime_message_partial_new (const char *id, int number, int total)
 }
 
 
+/**
+ * g_mime_message_partial_get_id:
+ * @partial: message/partial object
+ *
+ * Gets the message/partial id parameter value.
+ *
+ * Returns the message/partial id or %NULL on fail.
+ **/
 const char *
 g_mime_message_partial_get_id (GMimeMessagePartial *partial)
 {
@@ -212,6 +220,14 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
 }
 
 
+/**
+ * g_mime_message_partial_get_number:
+ * @partial: message/partial object
+ *
+ * Gets the message/partial part number.
+ *
+ * Returns the message/partial part number or -1 on fail.
+ **/
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)
 {
@@ -221,6 +237,16 @@ g_mime_message_partial_get_number (GMimeMessagePartial *partial)
 }
 
 
+/**
+ * g_mime_message_partial_get_total:
+ * @partial: message/partial object
+ *
+ * Gets the total number of message/partial parts needed to
+ * reconstruct the original message.
+ *
+ * Returns the total number of message/partial parts needed to
+ * reconstruct the original message or -1 on fail.
+ **/
 int
 g_mime_message_partial_get_total (GMimeMessagePartial *partial)
 {
@@ -252,7 +278,7 @@ partial_compare (const void *v1, const void *v2)
  * Reconstructs the GMimeMessage from the given message/partial parts
  * in @partials.
  *
- * Returns a GMimeMessage object on success or %NULL on error.
+ * Returns a GMimeMessage object on success or %NULL on fail.
  **/
 GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
@@ -341,6 +367,21 @@ message_partial_message_new (GMimeMessage *base)
 	return message;
 }
 
+
+/**
+ * g_mime_message_partial_split_message:
+ * @message: message object
+ * @max_size: max size
+ * @nparts: number of parts
+ *
+ * Splits @message into an array of #GMimeMessage objects each
+ * containing a single #GMimeMessagePartial object containing
+ * @max_size bytes or fewer. @nparts is set to the number of
+ * #GMimeMessagePartial objects created.
+ *
+ * Returns an array of #GMimeMessage objects and sets @nparts to th
+ * number of messages returned or %NULL on fail.
+ **/
 GMimeMessage **
 g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, size_t *nparts)
 {

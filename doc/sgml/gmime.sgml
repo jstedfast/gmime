@@ -38,7 +38,7 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 <programlisting>#define     GMIME_CHECK_VERSION(major,minor,micro)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -57,8 +57,7 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-INIT-FLAG-UTF8-CAPS">GMIME_INIT_FLAG_UTF8</title>
-<programlisting>#define GMIME_INIT_FLAG_UTF8  (1 &lt;&lt; 0)  /* here for backward compatability */
-</programlisting>
+<programlisting>#define     GMIME_INIT_FLAG_UTF8</programlisting>
 <para>
 
 </para></refsect2>
@@ -66,10 +65,10 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 <title><anchor id="g-mime-init">g_mime_init ()</title>
 <programlisting>void        g_mime_init                     (<link linkend="guint32">guint32</link> flags);</programlisting>
 <para>
-Initailizes GMime.</para>
+Initializes GMime.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -1,0 +1,94 @@
+<refentry id="gmime-gmime-stream-cat">
+<refmeta>
+<refentrytitle>gmime-stream-cat</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-stream-cat</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeStreamCat">GMimeStreamCat</link>;
+<link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-cat-new">g_mime_stream_cat_new</link>          (void);
+int         <link linkend="g-mime-stream-cat-add-source">g_mime_stream_cat_add_source</link>    (<link linkend="GMimeStreamCat">GMimeStreamCat</link> *cat,
+                                             <link linkend="GMimeStream">GMimeStream</link> *source);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeStreamCat">struct GMimeStreamCat</title>
+<programlisting>struct GMimeStreamCat {
+	GMimeStream parent_object;
+	
+	struct _cat_node *sources;
+	struct _cat_node *current;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-cat-new">g_mime_stream_cat_new ()</title>
+<programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_cat_new          (void);</programlisting>
+<para>
+Creates a new GMimeStreamCat object.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new cat stream.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-cat-add-source">g_mime_stream_cat_add_source ()</title>
+<programlisting>int         g_mime_stream_cat_add_source    (<link linkend="GMimeStreamCat">GMimeStreamCat</link> *cat,
+                                             <link linkend="GMimeStream">GMimeStream</link> *source);</programlisting>
+<para>
+Adds the <parameter>source</parameter> stream to the cat stream <parameter>cat</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>cat</parameter>&nbsp;:</entry>
+<entry> cat stream
+</entry></row>
+<row><entry align="right"><parameter>source</parameter>&nbsp;:</entry>
+<entry> a source stream
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

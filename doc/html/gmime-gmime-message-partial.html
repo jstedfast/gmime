@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-content-type</TITLE
+>gmime-message-partial</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-header"
-HREF="gmime-gmime-header.html"><LINK
+TITLE="gmime-message"
+HREF="gmime-gmime-message.html"><LINK
 REL="NEXT"
-TITLE="gmime-disposition"
-HREF="gmime-gmime-disposition.html"></HEAD
+TITLE="gmime-utils"
+HREF="gmime-gmime-utils.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-disposition.html"
+HREF="gmime-gmime-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-CONTENT-TYPE"
->gmime-content-type</A
+NAME="GMIME-GMIME-MESSAGE-PARTIAL"
+>gmime-message-partial</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2811"
+NAME="AEN5865"
 ></A
 ><H2
 >Name</H2
->gmime-content-type&nbsp;--&nbsp;</DIV
+>gmime-message-partial&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2814"
+NAME="AEN5868"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,70 +147,77 @@ CLASS="SYNOPSIS"
 >&#13;
 
 struct      <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
 >;
 <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
 >* <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-NEW"
->g_mime_content_type_new</A
->   (const char *type,
-                                             const char *subtype);
-<A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
->* <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-NEW-FROM-STRING"
->g_mime_content_type_new_from_string</A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-NEW"
+>g_mime_message_partial_new</A
 >
-                                            (const char *string);
-void        <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-DESTROY"
->g_mime_content_type_destroy</A
->     (<A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);
-char*       <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-TO-STRING"
->g_mime_content_type_to_string</A
->   (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);
-<GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
->    <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-IS-TYPE"
->g_mime_content_type_is_type</A
->     (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *type,
-                                             const char *subtype);
-void        <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-SET-PARAMETER"
->g_mime_content_type_set_parameter</A
+                                            (const char *id,
+                                             int number,
+                                             int total);
+const char* <A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-GET-ID"
+>g_mime_message_partial_get_id</A
+>   (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);
+int         <A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-GET-NUMBER"
+>g_mime_message_partial_get_number</A
 >
                                             (<A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *attribute,
-                                             const char *value);
-const char* <A
-HREF="gmime-gmime-content-type.html#G-MIME-CONTENT-TYPE-GET-PARAMETER"
->g_mime_content_type_get_parameter</A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);
+int         <A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-GET-TOTAL"
+>g_mime_message_partial_get_total</A
 >
-                                            (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *attribute);</PRE
+                                            (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);
+<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* <A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-RECONSTRUCT-MESSAGE"
+>g_mime_message_partial_reconstruct_message</A
+>
+                                            (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> **partials,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> num);
+<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>** <A
+HREF="gmime-gmime-message-partial.html#G-MIME-MESSAGE-PARTIAL-SPLIT-MESSAGE"
+>g_mime_message_partial_split_message</A
+>
+                                            (<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> max_size,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> *nparts);
+&#13;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -218,7 +225,7 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2833"
+NAME="AEN5889"
 ></A
 ><H2
 >Description</H2
@@ -228,20 +235,20 @@ NAME="AEN2833"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2836"
+NAME="AEN5892"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2838"
+NAME="AEN5894"
 ></A
 ><H3
 ><A
-NAME="GMIMECONTENTTYPE"
+NAME="GMIMEMESSAGEPARTIAL"
 ></A
->struct GMimeContentType</H3
+>struct GMimeMessagePartial</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -251,12 +258,12 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeContentType {
-	char *type;
-	char *subtype;
+>struct GMimeMessagePartial {
+	GMimePart parent_object;
 	
-	GMimeParam *params;
-	GHashTable *param_hash;
+	char *id;
+	int number;
+	int total;
 };</PRE
 ></TD
 ></TR
@@ -267,13 +274,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2843"
+NAME="AEN5899"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CONTENT-TYPE-NEW"
+NAME="G-MIME-MESSAGE-PARTIAL-NEW"
 ></A
->g_mime_content_type_new ()</H3
+>g_mime_message_partial_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -284,31 +291,23 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
->* g_mime_content_type_new   (const char *type,
-                                             const char *subtype);</PRE
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+>* g_mime_message_partial_new
+                                            (const char *id,
+                                             int number,
+                                             int total);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a Content-Type object with type <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
-> and subtype <TT
-CLASS="PARAMETER"
-><I
->subtype</I
-></TT
->.</P
+>Creates a new MIME message/partial object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2852"
+NAME="AEN5906"
 ></A
 ><P
 ></P
@@ -328,14 +327,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->type</I
+>id</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME type (or NULL for "text")</TD
+> message/partial part id</TD
 ></TR
 ><TR
 ><TD
@@ -345,14 +344,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->subtype</I
+>number</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME subtype (or NULL for "plain")</TD
+> message/partial part number</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>total</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> total number of message/partial parts</TD
 ></TR
 ><TR
 ><TD
@@ -367,7 +383,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new MIME Content-Type object.</TD
+>an empty MIME message/partial object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -378,13 +394,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2869"
+NAME="AEN5927"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CONTENT-TYPE-NEW-FROM-STRING"
+NAME="G-MIME-MESSAGE-PARTIAL-GET-ID"
 ></A
->g_mime_content_type_new_from_string ()</H3
+>g_mime_message_partial_get_id ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -394,22 +410,21 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
->* g_mime_content_type_new_from_string
-                                            (const char *string);</PRE
+>const char* g_mime_message_partial_get_id   (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Constructs a new Content-Type object based on the input string.</P
+>Gets the message/partial id parameter value.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2876"
+NAME="AEN5934"
 ></A
 ><P
 ></P
@@ -429,14 +444,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>partial</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> input string containing a content-type (and params)</TD
+> message/partial object</TD
 ></TR
 ><TR
 ><TD
@@ -451,7 +466,10 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new MIME Content-Type based on the input string.</TD
+>the message/partial id or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -462,13 +480,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2889"
+NAME="AEN5948"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CONTENT-TYPE-DESTROY"
+NAME="G-MIME-MESSAGE-PARTIAL-GET-NUMBER"
 ></A
->g_mime_content_type_destroy ()</H3
+>g_mime_message_partial_get_number ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -478,316 +496,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_content_type_destroy     (<A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);</PRE
-></TD
-></TR
-></TABLE
-><P
->Destroys the given MIME Content-Type object.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2896"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mime_type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME Content-Type object to destroy</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2905"
-></A
-><H3
-><A
-NAME="G-MIME-CONTENT-TYPE-TO-STRING"
-></A
->g_mime_content_type_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->char*       g_mime_content_type_to_string   (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type);</PRE
-></TD
-></TR
-></TABLE
-><P
->Allocates a string buffer containing the type and subtype defined
-by the <TT
-CLASS="PARAMETER"
-><I
->mime_type</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2913"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mime_type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME Content-Type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->an allocated string containing the type and subtype of the
-content-type in the format: type/subtype.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2926"
-></A
-><H3
-><A
-NAME="G-MIME-CONTENT-TYPE-IS-TYPE"
-></A
->g_mime_content_type_is_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
->    g_mime_content_type_is_type     (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *type,
-                                             const char *subtype);</PRE
-></TD
-></TR
-></TABLE
-><P
->Compares the given type and subtype with that of the given mime
-type object.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2934"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mime_type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME Content-Type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME type to compare against</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->subtype</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME subtype to compare against</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->TRUE if the MIME types match or FALSE otherwise. You may
-use "*" in place of <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
-> and/or <TT
-CLASS="PARAMETER"
-><I
->subtype</I
-></TT
-> as a wilcard.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2957"
-></A
-><H3
-><A
-NAME="G-MIME-CONTENT-TYPE-SET-PARAMETER"
-></A
->g_mime_content_type_set_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_content_type_set_parameter
+>int         g_mime_message_partial_get_number
                                             (<A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *attribute,
-                                             const char *value);</PRE
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Sets a parameter on the Content-Type.</P
+>Gets the message/partial part number.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2964"
+NAME="AEN5955"
 ></A
 ><P
 ></P
@@ -807,140 +531,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->mime_type</I
+>partial</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Content-Type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->attribute</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> parameter name (aka attribute)</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> parameter value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2981"
-></A
-><H3
-><A
-NAME="G-MIME-CONTENT-TYPE-GET-PARAMETER"
-></A
->g_mime_content_type_get_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_content_type_get_parameter
-                                            (const <A
-HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
->GMimeContentType</A
-> *mime_type,
-                                             const char *attribute);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the parameter value specified by <TT
-CLASS="PARAMETER"
-><I
->attribute</I
-></TT
-> if it's available.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2989"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mime_type</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> MIME Content-Type</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->attribute</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> parameter name (aka attribute)</TD
+> message/partial object</TD
 ></TR
 ><TR
 ><TD
@@ -955,13 +553,380 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a const pointer to the paramer value specified by
+>the message/partial part number or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5968"
+></A
+><H3
+><A
+NAME="G-MIME-MESSAGE-PARTIAL-GET-TOTAL"
+></A
+>g_mime_message_partial_get_total ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_message_partial_get_total
+                                            (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> *partial);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Gets the total number of message/partial parts needed to
+reconstruct the original message.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5975"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>partial</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> message/partial object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the total number of message/partial parts needed to
+reconstruct the original message or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5988"
+></A
+><H3
+><A
+NAME="G-MIME-MESSAGE-PARTIAL-RECONSTRUCT-MESSAGE"
+></A
+>g_mime_message_partial_reconstruct_message ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* g_mime_message_partial_reconstruct_message
+                                            (<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> **partials,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> num);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Reconstructs the GMimeMessage from the given message/partial parts
+in <TT
+CLASS="PARAMETER"
+><I
+>partials</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5998"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>partials</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> an array of message/partial mime parts</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>num</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> the number of elements in <TT
+CLASS="PARAMETER"
+><I
+>partials</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a GMimeMessage object on success or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6017"
+></A
+><H3
+><A
+NAME="G-MIME-MESSAGE-PARTIAL-SPLIT-MESSAGE"
+></A
+>g_mime_message_partial_split_message ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>** g_mime_message_partial_split_message
+                                            (<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> max_size,
+                                             <GTKDOCLINK
+HREF="SIZE-T"
+>size_t</GTKDOCLINK
+> *nparts);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Splits <TT
+CLASS="PARAMETER"
+><I
+>message</I
+></TT
+> into an array of <A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> objects each
+containing a single <A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> object containing
 <TT
 CLASS="PARAMETER"
 ><I
->attribute</I
+>max_size</I
 ></TT
-> or <TT
+> bytes or fewer. <TT
+CLASS="PARAMETER"
+><I
+>nparts</I
+></TT
+> is set to the number of
+<A
+HREF="gmime-gmime-message-partial.html#GMIMEMESSAGEPARTIAL"
+>GMimeMessagePartial</A
+> objects created.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6033"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>message</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> message object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>max_size</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> max size</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>nparts</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> number of parts</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an array of <A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> objects and sets <TT
+CLASS="PARAMETER"
+><I
+>nparts</I
+></TT
+> to th
+number of messages returned or <TT
 CLASS="LITERAL"
 >NULL</TT
 > on fail.</TD
@@ -988,7 +953,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-header.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1042,7 +1007,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-disposition.html"
+HREF="gmime-gmime-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1060,7 +1025,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-header</B
+>gmime-message</B
 ></FONT
 ></TD
 ><TD
@@ -1070,7 +1035,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-disposition</B
+>gmime-utils</B
 ></FONT
 ></TD
 ></TR

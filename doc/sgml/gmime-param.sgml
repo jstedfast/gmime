@@ -62,7 +62,7 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 Creates a new GMimeParam node with name <parameter>name</parameter> and value <parameter>value</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -83,7 +83,7 @@ Creates a new GMimeParam node with name <parameter>name</parameter> and value <p
 Creates a parameter list based on the input string.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -102,7 +102,7 @@ Releases all memory used by this mime param back to the Operating
 System.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -121,7 +121,7 @@ Appends a new parameter with name <parameter>name</parameter> and value <paramet
 parameter list <parameter>params</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -147,7 +147,7 @@ parameter list <parameter>params</parameter>.</para>
 Appends <parameter>param</parameter> to the param list <parameter>params</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -175,7 +175,7 @@ it's immediate value.
 Writes the params out to the string <parameter>string</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

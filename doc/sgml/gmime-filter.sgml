@@ -15,7 +15,6 @@
 
 
 struct      <link linkend="GMimeFilter">GMimeFilter</link>;
-#define     <link linkend="GMIME-FILTER-CAPS">GMIME_FILTER</link>                    (filter)
 void        <link linkend="g-mime-filter-construct">g_mime_filter_construct</link>         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="GMimeFilter">GMimeFilter</link> *filter_template);
 void        <link linkend="g-mime-filter-destroy">g_mime_filter_destroy</link>           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
@@ -41,6 +40,7 @@ void        <link linkend="g-mime-filter-backup">g_mime_filter_backup</link>    
 void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="size-t">size_t</link> size,
                                              <link linkend="gboolean">gboolean</link> keep);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -92,23 +92,6 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMIME-FILTER-CAPS">GMIME_FILTER()</title>
-<programlisting>#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-filter-construct">g_mime_filter_construct ()</title>
 <programlisting>void        g_mime_filter_construct         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="GMimeFilter">GMimeFilter</link> *filter_template);</programlisting>
@@ -116,7 +99,7 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 Initializes a filter object using the virtual methods in <parameter>filter_template</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -135,7 +118,7 @@ Initializes a filter object using the virtual methods in <parameter>filter_templ
 Destroys <parameter>filter</parameter> and releases the memory to the system.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -151,7 +134,7 @@ Destroys <parameter>filter</parameter> and releases the memory to the system.</p
 Copies <parameter>filter</parameter> into a new GMimeFilter object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -175,7 +158,7 @@ Copies <parameter>filter</parameter> into a new GMimeFilter object.</para>
 Filters the input data and writes it to <parameter>out</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -215,7 +198,7 @@ Filters the input data and writes it to <parameter>out</parameter>.</para>
 Completes the filtering.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -249,7 +232,7 @@ Completes the filtering.</para>
 Resets the filter.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -268,7 +251,7 @@ Sets number of bytes backed up on the input, new calls replace
 previous ones</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -292,7 +275,7 @@ previous ones</para>
 Ensure this much size available for filter output (if required)</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

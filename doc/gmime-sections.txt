@@ -7,17 +7,9 @@ g_mime_init
 
 <SECTION>
 <FILE>gmime-stream</FILE>
-GMIME_TYPE_STREAM
-GMIME_IS_STREAM
-GMIME_STREAM
-GMIME_STREAM_CLASS
-GMIME_IS_STREAM_CLASS
-GMIME_STREAM_GET_CLASS
 GMimeSeekWhence
 GMimeStreamIOVector
 GMimeStream
-GMimeStreamClass
-g_mime_stream_get_type
 g_mime_stream_construct
 g_mime_stream_ref
 g_mime_stream_unref
@@ -36,121 +28,179 @@ g_mime_stream_write_string
 g_mime_stream_printf
 g_mime_stream_write_to_stream
 g_mime_stream_writev
+
+<SUBSECTION Private>
+g_mime_stream_get_type
+
+<SUBSECTION Standard>
+GMimeStreamClass
+GMIME_TYPE_STREAM
+GMIME_STREAM
+GMIME_IS_STREAM
+GMIME_STREAM_CLASS
+GMIME_IS_STREAM_CLASS
+GMIME_STREAM_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-buffer</FILE>
-GMIME_TYPE_STREAM_BUFFER
-GMIME_IS_STREAM_BUFFER
-GMIME_STREAM_BUFFER
-GMIME_STREAM_BUFFER_CLASS
-GMIME_IS_STREAM_BUFFER_CLASS
-GMIME_STREAM_BUFFER_GET_CLASS
 GMimeStreamBufferMode
 GMimeStreamBuffer
-GMimeStreamBufferClass
-g_mime_stream_buffer_get_type
 g_mime_stream_buffer_new
 g_mime_stream_buffer_gets
 g_mime_stream_buffer_readln
+
+<SUBSECTION Private>
+g_mime_stream_buffer_get_type
+
+<SUBSECTION Standard>
+GMimeStreamBufferClass
+GMIME_TYPE_STREAM_BUFFER
+GMIME_STREAM_BUFFER
+GMIME_IS_STREAM_BUFFER
+GMIME_STREAM_BUFFER_CLASS
+GMIME_IS_STREAM_BUFFER_CLASS
+GMIME_STREAM_BUFFER_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>gmime-stream-cat</FILE>
+GMimeStreamCat
+g_mime_stream_cat_new
+g_mime_stream_cat_add_source
+
+<SUBSECTION Private>
+g_mime_stream_cat_get_type
+
+<SUBSECTION Standard>
+GMimeStreamCatClass
+GMIME_TYPE_STREAM_CAT
+GMIME_STREAM_CAT
+GMIME_IS_STREAM_CAT
+GMIME_STREAM_CAT_CLASS
+GMIME_IS_STREAM_CAT_CLASS
+GMIME_STREAM_CAT_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-file</FILE>
+GMimeStreamFile
+g_mime_stream_file_new
+g_mime_stream_file_new_with_bounds
+
+<SUBSECTION Private>
+g_mime_stream_file_get_type
+
+<SUBSECTION Standard>
+GMimeStreamFileClass
 GMIME_TYPE_STREAM_FILE
-GMIME_IS_STREAM_FILE
 GMIME_STREAM_FILE
+GMIME_IS_STREAM_FILE
 GMIME_STREAM_FILE_CLASS
 GMIME_IS_STREAM_FILE_CLASS
 GMIME_STREAM_FILE_GET_CLASS
-GMimeStreamFile
-GMimeStreamFileClass
-g_mime_stream_file_get_type
-g_mime_stream_file_new
-g_mime_stream_file_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-fs</FILE>
+GMimeStreamFs
+g_mime_stream_fs_new
+g_mime_stream_fs_new_with_bounds
+
+<SUBSECTION Private>
+g_mime_stream_fs_get_type
+
+<SUBSECTION Standard>
+GMimeStreamFsClass
 GMIME_TYPE_STREAM_FS
-GMIME_IS_STREAM_FS
 GMIME_STREAM_FS
+GMIME_IS_STREAM_FS
 GMIME_STREAM_FS_CLASS
 GMIME_IS_STREAM_FS_CLASS
 GMIME_STREAM_FS_GET_CLASS
-GMimeStreamFs
-GMimeStreamFsClass
-g_mime_stream_fs_get_type
-g_mime_stream_fs_new
-g_mime_stream_fs_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-mem</FILE>
-GMIME_TYPE_STREAM_MEM
-GMIME_IS_STREAM_MEM
-GMIME_STREAM_MEM
-GMIME_STREAM_MEM_CLASS
-GMIME_IS_STREAM_MEM_CLASS
-GMIME_STREAM_MEM_GET_CLASS
 GMimeStreamMem
-GMimeStreamMemClass
-g_mime_stream_mem_get_type
 g_mime_stream_mem_new
 g_mime_stream_mem_new_with_byte_array
 g_mime_stream_mem_new_with_buffer
 g_mime_stream_mem_set_byte_array
+
+<SUBSECTION Private>
+g_mime_stream_mem_get_type
+
+<SUBSECTION Standard>
+GMimeStreamMemClass
+GMIME_TYPE_STREAM_MEM
+GMIME_STREAM_MEM
+GMIME_IS_STREAM_MEM
+GMIME_STREAM_MEM_CLASS
+GMIME_IS_STREAM_MEM_CLASS
+GMIME_STREAM_MEM_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-mmap</FILE>
+GMimeStreamMmap
+g_mime_stream_mmap_new
+g_mime_stream_mmap_new_with_bounds
+
+<SUBSECTION Private>
+g_mime_stream_mmap_get_type
+
+<SUBSECTION Standard>
+GMimeStreamMmapClass
 GMIME_TYPE_STREAM_MMAP
-GMIME_IS_STREAM_MMAP
 GMIME_STREAM_MMAP
+GMIME_IS_STREAM_MMAP
 GMIME_STREAM_MMAP_CLASS
 GMIME_IS_STREAM_MMAP_CLASS
 GMIME_STREAM_MMAP_GET_CLASS
-GMimeStreamMmap
-GMimeStreamMmapClass
-g_mime_stream_mmap_get_type
-g_mime_stream_mmap_new
-g_mime_stream_mmap_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-null</FILE>
+GMimeStreamNull
+g_mime_stream_null_new
+
+<SUBSECTION Private>
+g_mime_stream_null_get_type
+
+<SUBSECTION Standard>
+GMimeStreamNullClass
 GMIME_TYPE_STREAM_NULL
-GMIME_IS_STREAM_NULL
 GMIME_STREAM_NULL
+GMIME_IS_STREAM_NULL
 GMIME_STREAM_NULL_CLASS
 GMIME_IS_STREAM_NULL_CLASS
 GMIME_STREAM_NULL_GET_CLASS
-GMimeStreamNull
-GMimeStreamNullClass
-g_mime_stream_null_get_type
-g_mime_stream_null_new
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-filter</FILE>
-GMIME_TYPE_STREAM_FILTER
-GMIME_IS_STREAM_FILTER
-GMIME_STREAM_FILTER
-GMIME_STREAM_FILTER_CLASS
-GMIME_IS_STREAM_FILTER_CLASS
-GMIME_STREAM_FILTER_GET_CLASS
 GMimeStreamFilter
-GMimeStreamFilterClass
-g_mime_stream_filter_get_type
 g_mime_stream_filter_new_with_stream
 g_mime_stream_filter_add
 g_mime_stream_filter_remove
+
+<SUBSECTION Private>
+g_mime_stream_filter_get_type
+
+<SUBSECTION Standard>
+GMimeStreamFilterClass
+GMIME_TYPE_STREAM_FILTER
+GMIME_STREAM_FILTER
+GMIME_IS_STREAM_FILTER
+GMIME_STREAM_FILTER_CLASS
+GMIME_IS_STREAM_FILTER_CLASS
+GMIME_STREAM_FILTER_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter</FILE>
 GMimeFilter
-GMIME_FILTER
 g_mime_filter_construct
 g_mime_filter_destroy
 g_mime_filter_copy
@@ -159,6 +209,9 @@ g_mime_filter_complete
 g_mime_filter_reset
 g_mime_filter_backup
 g_mime_filter_set_size
+
+<SUBSECTION Standard>
+GMIME_FILTER
 </SECTION>
 
 <SECTION>
@@ -247,6 +300,7 @@ g_mime_param_write_to_string
 
 <SECTION>
 <FILE>gmime-header</FILE>
+GMimeHeader
 GMimeHeaderFunc
 g_mime_header_new
 g_mime_header_destroy
@@ -273,9 +327,9 @@ g_mime_content_type_get_parameter
 
 <SECTION>
 <FILE>gmime-disposition</FILE>
-GMimeDisposition
 GMIME_DISPOSITION_ATTACHMENT
 GMIME_DISPOSITION_INLINE
+GMimeDisposition
 g_mime_disposition_new
 g_mime_disposition_destroy
 g_mime_disposition_set
@@ -287,16 +341,8 @@ g_mime_disposition_header
 
 <SECTION>
 <FILE>gmime-object</FILE>
-GMIME_TYPE_OBJECT
-GMIME_IS_OBJECT
-GMIME_OBJECT
-GMIME_OBJECT_CLASS
-GMIME_IS_OBJECT_CLASS
-GMIME_OBJECT_GET_CLASS
 GMimeObject
-GMimeObjectClass
 GMimePartFunc
-g_mime_object_get_type
 g_mime_object_register_type
 g_mime_object_new_type
 g_mime_object_ref
@@ -314,19 +360,23 @@ g_mime_object_remove_header
 g_mime_object_get_headers
 g_mime_object_write_to_stream
 g_mime_object_to_string
+
+<SUBSECTION Private>
+g_mime_object_get_type
+
+<SUBSECTION Standard>
+GMIME_OBJECT
+GMIME_IS_OBJECT
+GMIME_TYPE_OBJECT
+GMIME_OBJECT_CLASS
+GMIME_IS_OBJECT_CLASS
+GMIME_OBJECT_GET_CLASS
+GMimeObjectClass
 </SECTION>
 
 <SECTION>
 <FILE>gmime-part</FILE>
-GMIME_TYPE_PART
-GMIME_IS_PART
-GMIME_PART
-GMIME_PART_CLASS
-GMIME_IS_PART_CLASS
-GMIME_PART_GET_CLASS
 GMimePart
-GMimePartClass
-g_mime_part_get_type
 g_mime_part_new
 g_mime_part_new_with_type
 g_mime_part_set_content_header
@@ -361,19 +411,23 @@ g_mime_part_get_content_object
 g_mime_part_set_content_object
 g_mime_part_write_to_stream
 g_mime_part_to_string
+
+<SUBSECTION Private>
+g_mime_part_get_type
+
+<SUBSECTION Standard>
+GMIME_PART
+GMIME_IS_PART
+GMIME_TYPE_PART
+GMIME_PART_CLASS
+GMIME_IS_PART_CLASS
+GMIME_PART_GET_CLASS
+GMimePartClass
 </SECTION>
 
 <SECTION>
 <FILE>gmime-multipart</FILE>
-GMIME_TYPE_MULTIPART
-GMIME_IS_MULTIPART
-GMIME_MULTIPART
-GMIME_MULTIPART_CLASS
-GMIME_IS_MULTIPART_CLASS
-GMIME_MULTIPART_GET_CLASS
 GMimeMultipart
-GMimeMultipartClass
-g_mime_multipart_get_type
 g_mime_multipart_new
 g_mime_multipart_new_with_subtype
 g_mime_multipart_set_preface
@@ -390,28 +444,31 @@ g_mime_multipart_remove_part
 g_mime_multipart_remove_part_at
 g_mime_multipart_foreach
 g_mime_multipart_get_subpart_from_content_id
+
+<SUBSECTION Private>
+g_mime_multipart_get_type
+
+<SUBSECTION Standard>
+GMIME_MULTIPART
+GMIME_IS_MULTIPART
+GMIME_TYPE_MULTIPART
+GMIME_MULTIPART_CLASS
+GMIME_IS_MULTIPART_CLASS
+GMIME_MULTIPART_GET_CLASS
+GMimeMultipartClass
 </SECTION>
 
 <SECTION>
 <FILE>gmime-message</FILE>
-GMIME_TYPE_MESSAGE
-GMIME_IS_MESSAGE
-GMIME_MESSAGE
-GMIME_MESSAGE_CLASS
-GMIME_IS_MESSAGE_CLASS
-GMIME_MESSAGE_GET_CLASS
-GMimeHeader
+GMIME_RECIPIENT_TYPE_TO
+GMIME_RECIPIENT_TYPE_CC
+GMIME_RECIPIENT_TYPE_BCC
 GMimeMessage
-GMimeMessageClass
-g_mime_message_get_type
 g_mime_message_new
 g_mime_message_set_sender
 g_mime_message_get_sender
 g_mime_message_set_reply_to
 g_mime_message_get_reply_to
-GMIME_RECIPIENT_TYPE_TO
-GMIME_RECIPIENT_TYPE_CC
-GMIME_RECIPIENT_TYPE_BCC
 g_mime_message_add_recipient
 g_mime_message_add_recipients_from_string
 g_mime_message_get_recipients
@@ -431,6 +488,41 @@ g_mime_message_to_string
 g_mime_message_get_body
 g_mime_message_get_headers
 g_mime_message_foreach_part
+
+<SUBSECTION Private>
+g_mime_message_get_type
+
+<SUBSECTION Standard>
+GMIME_MESSAGE
+GMIME_IS_MESSAGE
+GMIME_TYPE_MESSAGE
+GMIME_MESSAGE_CLASS
+GMIME_IS_MESSAGE_CLASS
+GMIME_MESSAGE_GET_CLASS
+GMimeMessageClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-message-partial</FILE>
+GMimeMessagePartial
+g_mime_message_partial_new
+g_mime_message_partial_get_id
+g_mime_message_partial_get_number
+g_mime_message_partial_get_total
+g_mime_message_partial_reconstruct_message
+g_mime_message_partial_split_message
+
+<SUBSECTION Private>
+g_mime_message_partial_get_type
+
+<SUBSECTION Standard>
+GMIME_MESSAGE_PARTIAL
+GMIME_IS_MESSAGE_PARTIAL
+GMIME_TYPE_MESSAGE_PARTIAL
+GMIME_MESSAGE_PARTIAL_CLASS
+GMIME_IS_MESSAGE_PARTIAL_CLASS
+GMIME_MESSAGE_PARTIAL_GET_CLASS
+GMimeMessagePartialClass
 </SECTION>
 
 <SECTION>
@@ -490,23 +582,28 @@ internet_address_list_to_string
 
 <SECTION>
 <FILE>gmime-parser</FILE>
-GMIME_TYPE_PARSER
-GMIME_IS_PARSER
-GMIME_PARSER
-GMIME_PARSER_CLASS
-GMIME_IS_PARSER_CLASS
-GMIME_PARSER_GET_CLASS
 GMimeParser
-GMimeParserClass
-g_mime_parser_get_type
 g_mime_parser_new
 g_mime_parser_init_with_stream
 g_mime_parser_set_scan_from
 g_mime_parser_get_scan_from
 g_mime_parser_tell
+g_mime_parser_eos
 g_mime_parser_construct_part
 g_mime_parser_construct_message
 g_mime_parser_get_from
+
+<SUBSECTION Private>
+g_mime_parser_get_type
+
+<SUBSECTION Standard>
+GMIME_PARSER
+GMIME_IS_PARSER
+GMIME_TYPE_PARSER
+GMIME_PARSER_CLASS
+GMIME_IS_PARSER_CLASS
+GMIME_PARSER_GET_CLASS
+GMimeParserClass
 </SECTION>
 
 <SECTION>

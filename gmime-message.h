@@ -71,9 +71,30 @@ struct _GMimeMessageClass {
 };
 
 
+/**
+ * GMIME_RECIPIENT_TYPE_TO:
+ *
+ * Recipients in the To: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_TO  "To"
+
+
+/**
+ * GMIME_RECIPIENT_TYPE_CC:
+ *
+ * Recipients in the Cc: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+
+
+/**
+ * GMIME_RECIPIENT_TYPE_BCC:
+ *
+ * Recipients in the Bcc: header.
+ **/
 #define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+
+
 
 GType g_mime_message_get_type (void);
 

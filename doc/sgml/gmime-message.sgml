@@ -14,16 +14,10 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-MESSAGE-CAPS">GMIME_TYPE_MESSAGE</link>
-#define     <link linkend="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE</link>                (obj)
-#define     <link linkend="GMIME-MESSAGE-CAPS">GMIME_MESSAGE</link>                   (obj)
-#define     <link linkend="GMIME-MESSAGE-CLASS-CAPS">GMIME_MESSAGE_CLASS</link>             (klass)
-#define     <link linkend="GMIME-IS-MESSAGE-CLASS-CAPS">GMIME_IS_MESSAGE_CLASS</link>          (klass)
-#define     <link linkend="GMIME-MESSAGE-GET-CLASS-CAPS">GMIME_MESSAGE_GET_CLASS</link>         (obj)
-struct      <link linkend="GMimeHeader">GMimeHeader</link>;
+#define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
+#define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
+#define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
 struct      <link linkend="GMimeMessage">GMimeMessage</link>;
-struct      <link linkend="GMimeMessageClass">GMimeMessageClass</link>;
-<link linkend="GType">GType</link>       <link linkend="g-mime-message-get-type">g_mime_message_get_type</link>         (void);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
 void        <link linkend="g-mime-message-set-sender">g_mime_message_set_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *sender);
@@ -31,9 +25,6 @@ const char* <link linkend="g-mime-message-get-sender">g_mime_message_get_sender<
 void        <link linkend="g-mime-message-set-reply-to">g_mime_message_set_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *reply_to);
 const char* <link linkend="g-mime-message-get-reply-to">g_mime_message_get_reply_to</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message);
-#define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
-#define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
-#define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
 void        <link linkend="g-mime-message-add-recipient">g_mime_message_add_recipient</link>    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              char *type,
                                              const char *name,
@@ -78,6 +69,8 @@ char*       <link linkend="g-mime-message-get-headers">g_mime_message_get_header
 void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_part</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
                                              <link linkend="gpointer">gpointer</link> data);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -95,100 +88,26 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-TYPE-MESSAGE-CAPS">GMIME_TYPE_MESSAGE</title>
-<programlisting>#define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
-</programlisting>
+<title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_TO</programlisting>
+<para>
+Recipients in the To: header.</para>
 <para>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE()</title>
-<programlisting>#define GMIME_IS_MESSAGE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MESSAGE))
-</programlisting>
+<title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_CC</programlisting>
+<para>
+Recipients in the Cc: header.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
+</para></refsect2>
 <refsect2>
-<title><anchor id="GMIME-MESSAGE-CAPS">GMIME_MESSAGE()</title>
-<programlisting>#define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
-</programlisting>
+<title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_BCC</programlisting>
 <para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-MESSAGE-CLASS-CAPS">GMIME_MESSAGE_CLASS()</title>
-<programlisting>#define GMIME_MESSAGE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-MESSAGE-CLASS-CAPS">GMIME_IS_MESSAGE_CLASS()</title>
-<programlisting>#define GMIME_IS_MESSAGE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-MESSAGE-GET-CLASS-CAPS">GMIME_MESSAGE_GET_CLASS()</title>
-<programlisting>#define GMIME_MESSAGE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMimeHeader">struct GMimeHeader</title>
-<programlisting>struct GMimeHeader;</programlisting>
+Recipients in the Bcc: header.</para>
 <para>
 
 </para></refsect2>
@@ -216,27 +135,6 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeMessageClass">struct GMimeMessageClass</title>
-<programlisting>struct GMimeMessageClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-message-get-type">g_mime_message_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_message_get_type         (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-message-new">g_mime_message_new ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_message_new            (<link linkend="gboolean">gboolean</link> pretty_headers);</programlisting>
 <para>
@@ -246,7 +144,7 @@ strictly a cosmetic thing, so if you are unsure, it is safe to say
 no (<literal>FALSE</literal>).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -266,7 +164,7 @@ Set the sender's name and address on the MIME Message.
 (ex: "\"Joe Sixpack\" &lt;joe<parameter>sixpack</parameter>.org&gt;")</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -285,7 +183,7 @@ Set the sender's name and address on the MIME Message.
 Gets the email address of the sender from <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -304,7 +202,7 @@ Gets the email address of the sender from <parameter>message</parameter>.</para>
 Set the sender's Reply-To address on the MIME Message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -323,7 +221,7 @@ Set the sender's Reply-To address on the MIME Message.</para>
 Gets the Reply-To address from <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -334,27 +232,6 @@ Gets the Reply-To address from <parameter>message</parameter>.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the sender's Reply-To address from the MIME Message.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
-</programlisting>
-<para>
-
-</para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-add-recipient">g_mime_message_add_recipient ()</title>
 <programlisting>void        g_mime_message_add_recipient    (<link linkend="GMimeMessage">GMimeMessage</link> *message,
@@ -367,7 +244,7 @@ recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECI
 <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -399,7 +276,7 @@ Message. Available recipient types include:
 specified in rfc822.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -425,7 +302,7 @@ recipient types include: <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECI
 <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link> and <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -448,7 +325,7 @@ Message.
 Set the Subject field on a MIME Message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -467,7 +344,7 @@ Set the Subject field on a MIME Message.</para>
 Gets the message's subject.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -487,7 +364,7 @@ Gets the message's subject.</para>
 Sets the sent-date on a MIME Message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -512,7 +389,7 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 <parameter>gmt_offset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -534,7 +411,7 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 Gets the message's sent date in string format.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -553,7 +430,7 @@ Gets the message's sent date in string format.</para>
 Set the Message-Id on a message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -572,7 +449,7 @@ Set the Message-Id on a message.</para>
 Gets the Message-Id header of <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -593,7 +470,7 @@ Add an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -618,7 +495,7 @@ Set an arbitrary message header to the MIME Message such as X-Mailer,
 X-Priority, or In-Reply-To.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -642,7 +519,7 @@ Gets the value of the requested header <parameter>header</parameter> if it exist
 <literal>NULL</literal> otherwise.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -664,7 +541,7 @@ Gets the value of the requested header <parameter>header</parameter> if it exist
 Set the root-level MIME part of the message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -684,7 +561,7 @@ Set the root-level MIME part of the message.</para>
 Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -705,7 +582,7 @@ Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 Allocates a string buffer containing the mime message <parameter>message</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -726,7 +603,7 @@ Attempts to get the body of the message in the preferred format
 specified by <parameter>want_plain</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -756,7 +633,7 @@ recommended that you traverse the MIME structure yourself.
 Allocates a string buffer containing the raw message headers.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -776,7 +653,7 @@ Allocates a string buffer containing the raw message headers.</para>
 Calls <parameter>callback</parameter> on each of the mime parts in the mime message.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

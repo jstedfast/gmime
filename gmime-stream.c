@@ -346,7 +346,7 @@ stream_tell (GMimeStream *stream)
  *
  * Gets the current offset within the stream.
  *
- * Returns the current position within the stream.
+ * Returns the current position within the stream or -1 on fail.
  **/
 off_t
 g_mime_stream_tell (GMimeStream *stream)
@@ -477,7 +477,7 @@ g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
  *
  * Writes @string to @stream.
  *
- * Returns the number of bytes written or -1 on error.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_write_string (GMimeStream *stream, const char *string)
@@ -497,7 +497,7 @@ g_mime_stream_write_string (GMimeStream *stream, const char *string)
  *
  * Write formatted output to a stream.
  *
- * Returns the number of bytes written or -1 on error.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
@@ -530,7 +530,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
  *
  * Attempts to write stream @src to stream @dest.
  *
- * Returns the number of bytes written or -1 on error.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
@@ -574,7 +574,7 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
  *
  * Writes at most @count blocks described by @vector to @stream.
  *
- * Returns the number of bytes written.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count)

@@ -14,15 +14,7 @@
 
 
 
-#define     <link linkend="GMIME-TYPE-PARSER-CAPS">GMIME_TYPE_PARSER</link>
-#define     <link linkend="GMIME-IS-PARSER-CAPS">GMIME_IS_PARSER</link>                 (obj)
-#define     <link linkend="GMIME-PARSER-CAPS">GMIME_PARSER</link>                    (obj)
-#define     <link linkend="GMIME-PARSER-CLASS-CAPS">GMIME_PARSER_CLASS</link>              (klass)
-#define     <link linkend="GMIME-IS-PARSER-CLASS-CAPS">GMIME_IS_PARSER_CLASS</link>           (klass)
-#define     <link linkend="GMIME-PARSER-GET-CLASS-CAPS">GMIME_PARSER_GET_CLASS</link>          (obj)
 struct      <link linkend="GMimeParser">GMimeParser</link>;
-struct      <link linkend="GMimeParserClass">GMimeParserClass</link>;
-<link linkend="GType">GType</link>       <link linkend="g-mime-parser-get-type">g_mime_parser_get_type</link>          (void);
 <link linkend="GMimeParser">GMimeParser</link>* <link linkend="g-mime-parser-new">g_mime_parser_new</link>              (void);
 void        <link linkend="g-mime-parser-init-with-stream">g_mime_parser_init_with_stream</link>  (<link linkend="GMimeParser">GMimeParser</link> *parser,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
@@ -30,10 +22,13 @@ void        <link linkend="g-mime-parser-set-scan-from">g_mime_parser_set_scan_f
                                              <link linkend="gboolean">gboolean</link> scan_from);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-parser-get-scan-from">g_mime_parser_get_scan_from</link>     (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="off-t">off_t</link>       <link linkend="g-mime-parser-tell">g_mime_parser_tell</link>              (<link linkend="GMimeParser">GMimeParser</link> *parser);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-parser-eos">g_mime_parser_eos</link>               (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-parser-construct-part">g_mime_parser_construct_part</link>   (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>
                                             (<link linkend="GMimeParser">GMimeParser</link> *parser);
 char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>          (<link linkend="GMimeParser">GMimeParser</link> *parser);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -51,98 +46,6 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-TYPE-PARSER-CAPS">GMIME_TYPE_PARSER</title>
-<programlisting>#define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-PARSER-CAPS">GMIME_IS_PARSER()</title>
-<programlisting>#define GMIME_IS_PARSER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_PARSER))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PARSER-CAPS">GMIME_PARSER()</title>
-<programlisting>#define GMIME_PARSER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PARSER-CLASS-CAPS">GMIME_PARSER_CLASS()</title>
-<programlisting>#define GMIME_PARSER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_PARSER, GMimeParserClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-PARSER-CLASS-CAPS">GMIME_IS_PARSER_CLASS()</title>
-<programlisting>#define GMIME_IS_PARSER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_PARSER))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>klass</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PARSER-GET-CLASS-CAPS">GMIME_PARSER_GET_CLASS()</title>
-<programlisting>#define GMIME_PARSER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_PARSER, GMimeParserClass))
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="GMimeParser">struct GMimeParser</title>
 <programlisting>struct GMimeParser {
 	GObject parent_object;
@@ -154,34 +57,13 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeParserClass">struct GMimeParserClass</title>
-<programlisting>struct GMimeParserClass;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-parser-get-type">g_mime_parser_get_type ()</title>
-<programlisting><link linkend="GType">GType</link>       g_mime_parser_get_type          (void);</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-parser-new">g_mime_parser_new ()</title>
 <programlisting><link linkend="GMimeParser">GMimeParser</link>* g_mime_parser_new              (void);</programlisting>
 <para>
 Creates a new parser object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -213,7 +95,7 @@ recommended that you use <link linkend="g-mime-parser-tell">g_mime_parser_tell</
 to need the current offset of the <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -233,7 +115,7 @@ to need the current offset of the <parameter>parser</parameter>.</para>
 Sets whether or not <parameter>parser</parameter> should scan mbox-style From-lines.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -252,7 +134,7 @@ Sets whether or not <parameter>parser</parameter> should scan mbox-style From-li
 Gets whether or not <parameter>parser</parameter> is set to scan mbox-style From-lines.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -271,7 +153,7 @@ From-lines.
 Gets the current stream offset from the parser's internal stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -284,13 +166,31 @@ or -1 on error.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="g-mime-parser-eos">g_mime_parser_eos ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_parser_eos               (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
+<para>
+Tests the end-of-stream indicator for <parameter>parser</parameter>'s internal stream.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
+<entry> MIME parser
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
 <programlisting><link linkend="GMimeObject">GMimeObject</link>* g_mime_parser_construct_part   (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
 <para>
 Constructs a MIME part from <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -309,7 +209,7 @@ Constructs a MIME part from <parameter>parser</parameter>.</para>
 Constructs a MIME message from <parameter>parser</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -328,7 +228,7 @@ Gets the mbox-style From-line of the most recently parsed message
 (gotten from <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

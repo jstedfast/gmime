@@ -32,8 +32,22 @@ extern "C" {
 #include <glib.h>
 #include "gmime-param.h"
 
+
+/**
+ * GMIME_DISPOSITION_ATTACHMENT:
+ *
+ * Standard attachment disposition.
+ **/
 #define GMIME_DISPOSITION_ATTACHMENT "attachment"
+
+
+/**
+ * GMIME_DISPOSITION_INLINE:
+ *
+ * Standard inline disposition.
+ **/
 #define GMIME_DISPOSITION_INLINE     "inline"
+
 
 struct _GMimeDisposition {
 	char *disposition;

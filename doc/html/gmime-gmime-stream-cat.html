@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-charset</TITLE
+>gmime-stream-cat</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-parser"
-HREF="gmime-gmime-parser.html"><LINK
+TITLE="gmime-stream-buffer"
+HREF="gmime-gmime-stream-buffer.html"><LINK
 REL="NEXT"
-TITLE="gmime-iconv"
-HREF="gmime-gmime-iconv.html"></HEAD
+TITLE="gmime-stream-file"
+HREF="gmime-gmime-stream-file.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-parser.html"
+HREF="gmime-gmime-stream-buffer.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-iconv.html"
+HREF="gmime-gmime-stream-file.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-CHARSET"
->gmime-charset</A
+NAME="GMIME-GMIME-STREAM-CAT"
+>gmime-stream-cat</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN7506"
+NAME="AEN807"
 ></A
 ><H2
 >Name</H2
->gmime-charset&nbsp;--&nbsp;</DIV
+>gmime-stream-cat&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN7509"
+NAME="AEN810"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,26 +146,29 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-void        <A
-HREF="gmime-gmime-charset.html#G-MIME-CHARSET-INIT"
->g_mime_charset_init</A
->             (void);
-const char* <A
-HREF="gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME"
->g_mime_charset_locale_name</A
->      (void);
-const char* <A
-HREF="gmime-gmime-charset.html#G-MIME-CHARSET-NAME"
->g_mime_charset_name</A
->             (const char *charset);
-const char* <A
-HREF="gmime-gmime-charset.html#G-MIME-CHARSET-BEST"
->g_mime_charset_best</A
->             (const char *in,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> inlen);</PRE
+struct      <A
+HREF="gmime-gmime-stream-cat.html#GMIMESTREAMCAT"
+>GMimeStreamCat</A
+>;
+<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* <A
+HREF="gmime-gmime-stream-cat.html#G-MIME-STREAM-CAT-NEW"
+>g_mime_stream_cat_new</A
+>          (void);
+int         <A
+HREF="gmime-gmime-stream-cat.html#G-MIME-STREAM-CAT-ADD-SOURCE"
+>g_mime_stream_cat_add_source</A
+>    (<A
+HREF="gmime-gmime-stream-cat.html#GMIMESTREAMCAT"
+>GMimeStreamCat</A
+> *cat,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *source);
+&#13;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -173,7 +176,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN7517"
+NAME="AEN819"
 ></A
 ><H2
 >Description</H2
@@ -183,20 +186,20 @@ NAME="AEN7517"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN7520"
+NAME="AEN822"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN7522"
+NAME="AEN824"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CHARSET-INIT"
+NAME="GMIMESTREAMCAT"
 ></A
->g_mime_charset_init ()</H3
+>struct GMimeStreamCat</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -206,27 +209,28 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_charset_init             (void);</PRE
+>struct GMimeStreamCat {
+	GMimeStream parent_object;
+	
+	struct _cat_node *sources;
+	struct _cat_node *current;
+};</PRE
 ></TD
 ></TR
 ></TABLE
-><P
->Initializes the locale charset variable for later calls to
-gmime_charset_locale_name. Only really needs to be called for non-
-iso-8859-1 locales.</P
 ><P
 ></P
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN7528"
+NAME="AEN829"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CHARSET-LOCALE-NAME"
+NAME="G-MIME-STREAM-CAT-NEW"
 ></A
->g_mime_charset_locale_name ()</H3
+>g_mime_stream_cat_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -236,18 +240,21 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const char* g_mime_charset_locale_name      (void);</PRE
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_cat_new          (void);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Gets the user's locale charset (or iso-8859-1 by default).</P
+>Creates a new GMimeStreamCat object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN7534"
+NAME="AEN836"
 ></A
 ><P
 ></P
@@ -272,7 +279,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the user's locale charset (or iso-8859-1 by default).</TD
+>a new cat stream.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -283,13 +290,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN7543"
+NAME="AEN845"
 ></A
 ><H3
 ><A
-NAME="G-MIME-CHARSET-NAME"
+NAME="G-MIME-STREAM-CAT-ADD-SOURCE"
 ></A
->g_mime_charset_name ()</H3
+>g_mime_stream_cat_add_source ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -299,15 +306,27 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->const char* g_mime_charset_name             (const char *charset);</PRE
+>int         g_mime_stream_cat_add_source    (<A
+HREF="gmime-gmime-stream-cat.html#GMIMESTREAMCAT"
+>GMimeStreamCat</A
+> *cat,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *source);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Attempts to find an iconv-friendly charset name for <TT
+>Adds the <TT
 CLASS="PARAMETER"
 ><I
->charset</I
+>source</I
+></TT
+> stream to the cat stream <TT
+CLASS="PARAMETER"
+><I
+>cat</I
 ></TT
 >.</P
 ><P
@@ -315,7 +334,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN7550"
+NAME="AEN855"
 ></A
 ><P
 ></P
@@ -335,14 +354,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->charset</I
+>cat</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> charset name</TD
+> cat stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>source</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a source stream</TD
 ></TR
 ><TR
 ><TD
@@ -357,122 +393,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an iconv-friendly charset name for <TT
-CLASS="PARAMETER"
-><I
->charset</I
-></TT
->.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN7564"
-></A
-><H3
-><A
-NAME="G-MIME-CHARSET-BEST"
-></A
->g_mime_charset_best ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_charset_best             (const char *in,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> inlen);</PRE
-></TD
-></TR
-></TABLE
-><P
->Computes the best charset to use to encode this text buffer.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN7571"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->in</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> a UTF-8 text buffer</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->inlen</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> length of <TT
-CLASS="PARAMETER"
-><I
->in</I
-></TT
-></TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->the charset name best suited for the input text or <TT
-CLASS="LITERAL"
->NULL</TT
-> if
-it is US-ASCII safe.</TD
+>0 on success or -1 on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -496,7 +417,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-parser.html"
+HREF="gmime-gmime-stream-buffer.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -550,7 +471,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-iconv.html"
+HREF="gmime-gmime-stream-file.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -568,7 +489,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-parser</B
+>gmime-stream-buffer</B
 ></FONT
 ></TD
 ><TD
@@ -578,7 +499,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-iconv</B
+>gmime-stream-file</B
 ></FONT
 ></TD
 ></TR

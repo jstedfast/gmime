@@ -106,11 +106,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <title>Details</title>
 <refsect2>
 <title><anchor id="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN()</title>
-<programlisting>#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
-</programlisting>
+<programlisting>#define     BASE64_ENCODE_LEN(x)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -123,11 +122,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN()</title>
-<programlisting>#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
-</programlisting>
+<programlisting>#define     QP_ENCODE_LEN(x)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -163,7 +161,7 @@ Decodes the rfc822 date string and saves the GMT offset into
 <parameter>saveoffset</parameter> if non-NULL.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -188,7 +186,7 @@ Allocates a string buffer containing the rfc822 formatted date
 string represented by <parameter>time</parameter> and <parameter>offset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -209,7 +207,7 @@ string represented by <parameter>time</parameter> and <parameter>offset</paramet
 Folds a header according to the rules in rfc822.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -229,7 +227,7 @@ Allocates a buffer containing a formatted header specified by the
 <parameter>Varargs</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -251,7 +249,7 @@ by <parameter>format</parameter> and the following arguments.
 Quotes <parameter>string</parameter> as needed according to the rules in rfc2045.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -272,7 +270,7 @@ as defined by rfc2045.
 Unquotes and unescapes a string.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -290,7 +288,7 @@ Determines if <parameter>text</parameter> contains 8bit characters within the fi
 bytes.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -315,7 +313,7 @@ Determines the best content encoding for the first <parameter>len</parameter> by
 <parameter>text</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -338,7 +336,7 @@ particular case means best compression)
 Decodes and rfc2047 encoded header.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -356,7 +354,7 @@ Decodes and rfc2047 encoded header.</para>
 Encodes a header according to the rules in rfc2047.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -376,7 +374,7 @@ headers like "Subject".
 Encodes a header phrase according to the rules in rfc2047.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -399,7 +397,7 @@ internet addresses.
 Decodes a chunk of base64 encoded data.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -436,7 +434,7 @@ left-over state in state and save (initialise to 0 on first
 invocation).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -473,7 +471,7 @@ when finished encoding data with <link linkend="g-mime-utils-base64-encode-step"
 to flush off the last little bit.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -498,29 +496,25 @@ to flush off the last little bit.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</title>
-<programlisting>#define GMIME_UUDECODE_STATE_INIT   (0)
-</programlisting>
+<programlisting>#define     GMIME_UUDECODE_STATE_INIT</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-BEGIN-CAPS">GMIME_UUDECODE_STATE_BEGIN</title>
-<programlisting>#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)
-</programlisting>
+<programlisting>#define     GMIME_UUDECODE_STATE_BEGIN</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-END-CAPS">GMIME_UUDECODE_STATE_END</title>
-<programlisting>#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)
-</programlisting>
+<programlisting>#define     GMIME_UUDECODE_STATE_END</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-MASK-CAPS">GMIME_UUDECODE_STATE_MASK</title>
-<programlisting>#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
-</programlisting>
+<programlisting>#define     GMIME_UUDECODE_STATE_MASK</programlisting>
 <para>
 
 </para></refsect2>
@@ -537,7 +531,7 @@ uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
 been stripped off.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -575,7 +569,7 @@ state in <parameter>uubuf</parameter>, <parameter>state</parameter> and <paramet
 invocation).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -614,7 +608,7 @@ Uuencodes a chunk of data. Call this when finished encoding data
 with <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link> to flush off the last little bit.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -652,7 +646,7 @@ Decodes a block of quoted-printable encoded data. Performs a
 'decode step' on a chunk of QP encoded data.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -688,7 +682,7 @@ step', saves left-over state in state and save (initialise to -1 on
 first invocation).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -725,7 +719,7 @@ encoding data with <link linkend="g-mime-utils-quoted-encode-step">g_mime_utils_
 the last little bit.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
