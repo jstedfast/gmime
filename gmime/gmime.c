@@ -31,7 +31,7 @@
 GQuark gmime_error_quark;
 
 
-static int initialized = FALSE;
+static unsigned int initialized = 0;
 
 
 /**
@@ -46,10 +46,8 @@ static int initialized = FALSE;
 void
 g_mime_init (guint32 flags)
 {
-	if (initialized)
+	if (initialized++)
 		return;
-	
-	initialized = TRUE;
 	
 	g_type_init ();
 	
@@ -80,11 +78,9 @@ g_mime_init (guint32 flags)
 void
 g_mime_shutdown (void)
 {
-	if (!initialized)
+	if (--initialized)
 		return;
 	
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_shutdown ();
-	
-	initialized = FALSE;
 }

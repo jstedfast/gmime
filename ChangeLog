@@ -1,3 +1,8 @@
+2004-07-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime.c (g_mime_init): Make intialisation ref-counted.
+	(g_mime_shutdown): Updated.
+
 2004-07-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Break
