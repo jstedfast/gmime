@@ -418,9 +418,12 @@ parser_step_headers (GMimeParser *parser)
 	inend = parser->inend;
 	
 	header_backup (parser, inptr, inend - inptr);
-	header_parse (parser, hend);
+	/*header_parse (parser, hend);*/
 	
  headers_end:
+	
+	if (priv->headerptr > priv->headerbuf)
+		header_parse (priv, hend);
 	
 	parser->state = GMIME_PARSER_STATE_HEADERS_END;
 	
@@ -473,13 +476,16 @@ parser_skip_line (GMimeParser *parser)
 	inptr = parser->inptr;
 	
 	do {
-		if (parser_fill (parser) <= 0)
+		if (parser_fill (parser) <= 0) {
+			inptr = priv->inptr;
 			break;
+		}
 		
 		inptr = parser->inptr;
 		inend = parser->inend;
+		*inend = '\n';
 		
-		while (inptr < inend && *inptr != '\n')
+		while (*inptr != '\n')
 			inptr++;
 		
 		if (inptr < inend)
@@ -490,7 +496,7 @@ parser_skip_line (GMimeParser *parser)
 	
 	parser->midline = FALSE;
 	
-	parser->inptr = inptr + 1;
+	parser->inptr = MIN (inptr + 1, priv->inend);
 }
 
 enum {
@@ -504,7 +510,7 @@ enum {
 		g_byte_array_append (content, start, len); \
 } G_STMT_END
 
-#define possible_boundary(start, len)  (len >= 3 && (start[0] == '-' && start[1] == '-'))
+#define possible_boundary(start, len)  (len >= 2 && (start[0] == '-' && start[1] == '-'))
 
 /* Optimization Notes:
  *
@@ -531,12 +537,13 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	
 	g_assert (parser->inptr <= parser->inend);
 	
-	start = inptr = parser->inptr;
+	inptr = parser->inptr;
 	
 	do {
 	refill:
 		nleft = parser->inend - inptr;
 		if (parser_fill (parser) <= 0) {
+			start = priv->inptr;
 			found = FOUND_EOS;
 			break;
 		}
@@ -727,7 +734,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	g_mime_part_set_content_type (mime_part, content_type);
 	
-	/* skip empty line */
+	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
 	parser_scan_mime_part_content (parser, mime_part, found);
@@ -818,7 +825,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	g_mime_part_set_content_type (multipart, content_type);
 	
-	/* skip empty line */
+	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
 	boundary = g_mime_content_type_get_parameter (content_type, "boundary");

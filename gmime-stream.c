@@ -145,7 +145,7 @@ g_mime_stream_close (GMimeStream *stream)
  *
  * Tests the end-of-stream indicator for @stream.
  *
- * Returns TRUE on EOS or FALSE otherwise.
+ * Returns %TRUE on EOS or %FALSE otherwise.
  **/
 gboolean
 g_mime_stream_eos (GMimeStream *stream)
@@ -186,12 +186,12 @@ g_mime_stream_reset (GMimeStream *stream)
  * the argument @offset according to the
  * directive @whence as follows:
  *
- *     GMIME_STREAM_SEEK_SET: The offset is set to @offset bytes.
+ *     #GMIME_STREAM_SEEK_SET: The offset is set to @offset bytes.
  *
- *     GMIME_STREAM_SEEK_CUR: The offset is set to its current
+ *     #GMIME_STREAM_SEEK_CUR: The offset is set to its current
  *     location plus @offset bytes.
  *
- *     GMIME_STREAM_SEEK_END: The offset is set to the size of the
+ *     #GMIME_STREAM_SEEK_END: The offset is set to the size of the
  *     stream plus @offset bytes.
  *
  * Returns the resultant position on success or -1 on fail.
@@ -307,7 +307,7 @@ g_mime_stream_unref (GMimeStream *stream)
  * @start: start boundary
  * @end: end boundary
  *
- * Set the bounds on a stream.
+ * Sets the bounds on the stream @stream.
  **/
 void
 g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
@@ -331,7 +331,7 @@ g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
  *
  * Writes @string to @stream.
  *
- * Returns the number of bytes written.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_write_string (GMimeStream *stream, const char *string)
@@ -351,7 +351,7 @@ g_mime_stream_write_string (GMimeStream *stream, const char *string)
  *
  * Write formatted output to a stream.
  *
- * Returns the number of bytes written.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
@@ -384,7 +384,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
  *
  * Attempts to write stream @src to stream @dest.
  *
- * Returns the number of bytes written.
+ * Returns the number of bytes written or -1 on fail.
  **/
 ssize_t
 g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
