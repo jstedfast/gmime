@@ -289,7 +289,7 @@ if test "x$enable_mono" = "xyes"; then
 	AC_SUBST(CSC)
 	AC_SUBST(GACUTIL)
 	
-	PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp >= 0.91.1)
+	PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp >= 1.0.6)
 	AC_SUBST(GTK_SHARP_LIBS)
 	
 	AC_PATH_PROG(GAPI_CODEGEN, gapi-codegen, no)

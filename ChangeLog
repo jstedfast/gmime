@@ -1,3 +1,8 @@
+2005-03-23  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Require gtk-sharp >= 1.0.6 for important
+	memory leak fixes
+
 2005-03-15  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Makefile.am: Build ObjectStream.cs
