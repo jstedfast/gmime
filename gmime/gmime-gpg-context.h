@@ -60,8 +60,8 @@ GType g_mime_gpg_context_get_type (void);
 
 GMimeCipherContext *g_mime_gpg_context_new (GMimeSession *session, const char *path);
 
-void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean trust);
 gboolean g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx);
+void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust);
 
 #ifdef __cplusplus
 }

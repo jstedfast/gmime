@@ -33,8 +33,8 @@ extern "C" {
 
 typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
-	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
-	GMIME_FILTER_FROM_MODE_ARMOR    = 2,
+	GMIME_FILTER_FROM_MODE_ESCAPE   = 0,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 1,
 } GMimeFilterFromMode;
 
 typedef struct _GMimeFilterFrom {

@@ -33,7 +33,7 @@ extern "C" {
 
 typedef struct _GMimeHeader GMimeHeader;
 
-typedef void (*GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer data);
+typedef void (*GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
 typedef ssize_t (*GMimeHeaderWriteFunc) (GMimeStream *stream, const char *name, const char *value);
 
 GMimeHeader *g_mime_header_new (void);
@@ -52,7 +52,7 @@ ssize_t g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *s
 
 char *g_mime_header_to_string (const GMimeHeader *header);
 
-void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, gpointer data);
+void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, gpointer user_data);
 
 void g_mime_header_set_write_func (GMimeHeader *header, const char *name, GMimeHeaderWriteFunc func);
 

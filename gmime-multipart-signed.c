@@ -239,6 +239,24 @@ sign_prepare (GMimeObject *mime_part)
 }
 
 
+/**
+ * g_mime_multipart_signed_sign:
+ * @mps: multipart/signed object
+ * @content: MIME part to sign
+ * @ctx: encryption cipher context
+ * @userid: user id to sign with
+ * @hash: preferred digest algorithm
+ * @ex: exception
+ *
+ * Attempts to sign the @content MIME part with @userid's private key
+ * using the @ctx signing context with the @hash algorithm. If
+ * successful, the signed #GMimeObject is set as the signed part of
+ * the multipart/signed object @mps.
+ *
+ * Returns 0 on success or -1 on fail. If the signing fails, an
+ * exception will be set on @ex to provide information as to why the
+ * failure occured.
+ **/
 int
 g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCipherContext *ctx, const char *userid,
@@ -336,6 +354,19 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 }
 
 
+/**
+ * g_mime_multipart_signed_verify:
+ * @mps: multipart/signed object
+ * @ctx: encryption cipher context
+ * @ex: exception
+ *
+ * Attempts to verify the signed MIME part contained within the
+ * multipart/signed object @mps using the @ctx cipher context.
+ *
+ * Returns a new #GMimeCipherValidity object on success or %NULL on
+ * fail. If the signing fails, an exception will be set on @ex to
+ * provide information as to why the failure occured.
+ **/
 GMimeCipherValidity *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *ctx,
 				GMimeException *ex)

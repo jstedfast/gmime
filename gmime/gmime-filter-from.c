@@ -52,10 +52,20 @@ static GMimeFilter filter_template = {
 
 /**
  * g_mime_filter_from_new:
+ * @mode: filter mode
  *
- * Creates a new GMimeFilterFrom filter.
+ * Creates a new GMimeFilterFrom filter. If @mode is
+ * #GMIME_FILTER_FROM_MODE_ARMOR, the from-filter will encode from
+ * lines using the quoted-printable encoding resulting in "=46rom ".
+ * Using the #GMIME_FILTER_FROM_MODE_DEFAULT or
+ * #GMIME_FILTER_FROM_MODE_ESCAPE mode (they are the same), from lines
+ * will be escaped to ">From ".
  *
- * Returns a new from filter.
+ * Note: If you plan on using a from-filter in mode ARMOR, you should
+ * remember to also use a #GMimeFilterBasic filter with mode
+ * #GMIME_FILTER_BASIC_QP_ENC.
+ *
+ * Returns a new from filter with mode @mode.
  **/
 GMimeFilter *
 g_mime_filter_from_new (GMimeFilterFromMode mode)

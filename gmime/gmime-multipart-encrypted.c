@@ -202,6 +202,23 @@ g_mime_multipart_encrypted_new ()
 }
 
 
+/**
+ * g_mime_multipart_encrypted_encrypt:
+ * @mpe: multipart/encrypted object
+ * @content: MIME part to encrypt
+ * @ctx: encryption cipher context
+ * @recipients: an array of recipients to encrypt to
+ * @ex: exception
+ *
+ * Attempts to encrypt the @content MIME part to the public keys of
+ * @recipients using the @ctx encryption context. If successful, the
+ * encrypted #GMimeObject is set as the encrypted part of the
+ * multipart/encrypted object @mpe.
+ *
+ * Returns 0 on success or -1 on fail. If the encryption fails, an
+ * exception will be set on @ex to provide information as to why the
+ * failure occured.
+ **/
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 				    GMimeCipherContext *ctx, GPtrArray *recipients,
@@ -280,6 +297,19 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 }
 
 
+/**
+ * g_mime_multipart_encrypted_decrypt:
+ * @mpe: multipart/encrypted object
+ * @ctx: decryption cipher context
+ * @ex: exception
+ *
+ * Attempts to decrypt the encrypted MIME part contained within the
+ * multipart/encrypted object @mpe using the @ctx decryption context.
+ *
+ * Returns the decrypted MIME part on success or %NULL on fail. If the
+ * decryption fails, an exception will be set on @ex to provide
+ * information as to why the failure occured.
+ **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherContext *ctx,
 				    GMimeException *ex)

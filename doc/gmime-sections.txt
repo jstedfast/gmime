@@ -741,7 +741,6 @@ g_mime_exception_free
 
 <SECTION>
 <FILE>gmime-cipher-context</FILE>
-GMIME_CIPHER_CONTEXT
 GMimeCipherHash
 GMimeCipherContext
 GMimeCipherValidity

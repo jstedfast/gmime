@@ -157,7 +157,7 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 
 
 /**
- * g_mime_cipher_hash_id:
+ * g_mime_cipher_hash_name:
  * @ctx: Cipher Context
  * @hash: hash id
  *

@@ -1,4 +1,22 @@
-2002-08-03  Jeffrey Stedfast  <fejj@ximian.com>
+2002-08-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+	* gmime-multipart-signed.c (g_mime_multipart_signed_sign):
+	Documented.
+	(g_mime_multipart_signed_verify): Documented.
+
+	* gmime-filter-from.c (g_mime_filter_from_new): Updated the
+	documentation to explain the new mode argument.
+
+	* gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_encrypt): Documented.
+	(g_mime_multipart_encrypted_decrypt): Documented.
+
+	* gmime-gpg-context.c (g_mime_gpg_context_get_always_trust):
+	Implemented.
+
+2002-08-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.
 
