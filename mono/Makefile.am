@@ -5,6 +5,7 @@ ASSEMBLY_NAME = gmime-sharp
 references = $(GTK_SHARP_LIBS)
 XML_SOURCES = sources.xml
 
+PACKAGE_SHARP = $(PACKAGE)-sharp
 TARGET = $(ASSEMBLY)
 ASSEMBLY = $(ASSEMBLY_NAME).dll
 gapidir = $(datadir)/gapi
@@ -12,6 +13,9 @@ noinst_DATA = $(ASSEMBLY) $(ASSEMBLY).config
 gapi_DATA = $(API)
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = gmime-sharp.pc
 
 sources = 				\
 	#
@@ -32,7 +36,8 @@ EXTRA_DIST =			\
 	$(METADATA)		\
 	$(customs)		\
 	$(sources)		\
-	$(XML_SOURCES)
+	$(XML_SOURCES)		\
+	gmime-sharp.pc.in
 
 $(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)
@@ -50,22 +55,22 @@ $(ASSEMBLY): $(build_sources) generated-stamp $(ASSEMBLY_NAME).pub
 install-data-local:
 	@if test -n '$(TARGET)'; then									\
 	  if test -n '$(DESTDIR)'; then								\
-	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE) /root $(DESTDIR)$(libdir)";		\
-	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE) /root $(DESTDIR)$(libdir) || exit 1;	\
+	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir)";		\
+	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir) || exit 1;	\
 	  else												\
-	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE) /gacdir $(libdir)";			\
-	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE) /gacdir $(libdir) || exit 1;		\
+	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /gacdir $(libdir)";			\
+	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /gacdir $(libdir) || exit 1;		\
 	  fi;												\
 	fi
 
 uninstall-local:
 	@if test -n '$(TARGET)'; then									\
 	  if test -n '$(DESTDIR)'; then								\
-	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE) /root $(DESTDIR)$(libdir)";	\
-	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE) /root $(DESTDIR)$(libdir) || exit 1;	\
+	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir)";	\
+	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir) || exit 1;  \
 	  else												\
-	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE) /gacdir $(libdir)";	\
-	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE) /gacdir $(libdir) || exit 1;	\
+	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /gacdir $(libdir)";	\
+	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /gacdir $(libdir) || exit 1;	\
 	  fi;												\
 	fi
 

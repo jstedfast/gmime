@@ -1,0 +1,7 @@
+prefix=@prefix@
+libdir=${prefix}/lib
+
+Name: gmime-sharp 
+Description: .NET binding for GMime
+Version: @VERSION@
+Libs: -r:${libdir}/mono/gmime-sharp/gmime-sharp.dll

@@ -1,5 +1,19 @@
 2004-11-16  Joe Shaw  <joeshaw@novell.com>
 
+	* configure.in: Generate mono/gmime-sharp.pc.
+
+	* mono/GMime.metadata: Convert all ssize_t and off_t values to
+	ints in C#, since they're not automatically handled by the
+	generator right now.
+
+	* mono/Makefile.am: Install the gmime-sharp stuff as gmime-sharp
+	and not gmime.
+
+	* mono/gmime-sharp.pc.in: Added.  pkgconfig file for the mono
+	bindings.
+
+2004-11-16  Joe Shaw  <joeshaw@novell.com>
+
 	* Makefile.am: iconv-detect.h should be in DISTCLEANFILES, not
 	CLEANFILES, or else the build fails following a "make clean"
 	unless you re-autogen.

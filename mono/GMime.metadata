@@ -12,19 +12,24 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
   <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
 
-  <!-- This returns ssize_t, which the generator doesn't deal with nicely. -->
-  <attr path="/api/namespace/callback[@cname='GMimeHeaderWriter']/return-type" name="type">long</attr>
+  <!-- Certain things return ssize_t and off_t, which the generator doesn't deal with nicely. -->
+  <!-- FIXME: These would likely need to be changed for 64-bit -->
+  <attr path="/api/namespace/callback/return-type[@type='ssize_t']" name="type">int</attr>
+  <attr path="/api/namespace/*/method/return-type[@type='ssize_t']" name="type">int</attr>
+  <attr path="/api/namespace/*/method/return-type[@type='off_t']" name="type">int</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='off_t']" name="type">int</attr>
 
   <!-- Make some structures opaque -->
   <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="opaque">1</attr>
   <attr path="/api/namespace/struct[@cname='GMimeSignatureValidity']" name="opaque">1</attr>
   <attr path="/api/namespace/struct[@cname='InternetAddress']" name="opaque">1</attr>
 
-  <!-- Hide some problematic methods/constructors -->
+  <!-- Hide some problematic elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>
 </metadata>
