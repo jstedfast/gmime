@@ -1,4 +1,4 @@
-2003-10-28  Pawel Salek <pawsa@theochem.kth.se>
+2003-10-28  Pawel Salek  <pawsa@theochem.kth.se>
 
 	* gmime.h.in: Use macros rather than the global variables to
 	prevent compiler warnings.
