@@ -56,7 +56,7 @@ static void mime_part_set_header (GMimeObject *object, const char *header, const
 static const char *mime_part_get_header (GMimeObject *object, const char *header);
 static void mime_part_remove_header (GMimeObject *object, const char *header);
 static char *mime_part_get_headers (GMimeObject *object);
-static int mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 #define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
