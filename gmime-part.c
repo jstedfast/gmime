@@ -271,7 +271,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 /**
  * g_mime_part_set_content_md5:
  * @mime_part: Mime part
- * @content_md5: content md5 or NULL to generate the md5 digest.
+ * @content_md5: content md5 or %NULL to generate the md5 digest.
  *
  * Set the content md5 for the specified mime part.
  **/
@@ -333,8 +333,8 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
  *
  * Verify the content md5 for the specified mime part.
  *
- * Returns TRUE if the md5 is valid or FALSE otherwise. Note: will
- * return FALSE if the mime part does not contain a Content-MD5.
+ * Returns %TRUE if the md5 is valid or %FALSE otherwise. Note: will
+ * also return %FALSE if the mime part does not contain a Content-MD5.
  **/
 gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
@@ -399,7 +399,7 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
  * @mime_part: Mime part
  * @content_location: content location
  *
- * Set the content location for the specified mime part.
+ * Sets the content location for the specified mime part.
  **/
 void
 g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location)
@@ -525,10 +525,12 @@ g_mime_part_get_content_type (GMimePart *mime_part)
  * @mime_part: Mime part
  * @encoding: Mime encoding
  *
- * Set the content encoding for the specified mime part. Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * Sets the content encoding for the specified mime part. Available
+ * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
+ * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
+ * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
+ * #GMIME_PART_ENCODING_QUOTEDPRINTABLE or
+ * #GMIME_PART_ENCODING_UUENCODE.
  **/
 void
 g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
@@ -549,9 +551,10 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
  *
  * Returns the content encoding for the specified mime part. The
  * return value will be one of the following:
- * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
- * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 or
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * #GMIME_PART_ENCODING_DEFAULT, #GMIME_PART_ENCODING_7BIT,
+ * #GMIME_PART_ENCODING_8BIT, #GMIME_PART_ENCODING_BINARY,
+ * #GMIME_PART_ENCODING_BASE64, #GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+ * or #GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
@@ -568,11 +571,12 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  *
  * Gets the string value of the content encoding.
  *
- * Returns the encoding type as a string. Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
- * and GMIME_PART_ENCODING_UUENCODE.
+ * Returns the encoding type as a string. Available values for the
+ * encoding are: #GMIME_PART_ENCODING_DEFAULT,
+ * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
+ * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
+ * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * #GMIME_PART_ENCODING_UUENCODE.
  **/
 const char *
 g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
@@ -582,7 +586,9 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 		return "7bit";
         case GMIME_PART_ENCODING_8BIT:
 		return "8bit";
-        case GMIME_PART_ENCODING_BASE64:
+	case GMIME_PART_ENCODING_BINARY:
+		return "binary";
+	case GMIME_PART_ENCODING_BASE64:
 		return "base64";
         case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		return "quoted-printable";
@@ -602,11 +608,12 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * Gets the content encoding enumeration value based on the input
  * string.
  *
- * Returns the encoding string as a GMimePartEncodingType.  Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE and
- * GMIME_PART_ENCODING_UUENCODE.
+ * Returns the encoding string as a #GMimePartEncodingType.  Available
+ * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
+ * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
+ * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
+ * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * #GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_encoding_from_string (const char *encoding)
@@ -615,6 +622,8 @@ g_mime_part_encoding_from_string (const char *encoding)
 		return GMIME_PART_ENCODING_7BIT;
 	else if (!g_strcasecmp (encoding, "8bit"))
 		return GMIME_PART_ENCODING_8BIT;
+	else if (!g_strcasecmp (encoding, "binary"))
+		return GMIME_PART_ENCODING_BINARY;
 	else if (!g_strcasecmp (encoding, "base64"))
 		return GMIME_PART_ENCODING_BASE64;
 	else if (!g_strcasecmp (encoding, "quoted-printable"))
@@ -730,7 +739,7 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
  * @attribute, or %NULL if the parameter does not exist.
  *
  * Returns the value of a previously defined content-disposition
- * parameter specified by #name.
+ * parameter specified by @attribute.
  **/
 const char *
 g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
@@ -750,8 +759,8 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
  * @mime_part: Mime part
  * @filename: the filename of the Mime Part's content
  *
- * Sets the "filename" parameter on the Content-Disposition and also sets the
- * "name" parameter on the Content-Type.
+ * Sets the "filename" parameter on the Content-Disposition and also
+ * sets the "name" parameter on the Content-Type.
  **/
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
@@ -820,9 +829,10 @@ read_random_pool (char *buffer, size_t bytes)
 /**
  * g_mime_part_set_boundary:
  * @mime_part: Mime part
- * @boundary: the boundary for the multi-part or NULL to generate a random one.
+ * @boundary: the boundary
  *
- * Sets the boundary on the multipart mime part.
+ * Sets the boundary on the multipart mime part to @boundary. If
+ * @boundary is %NULL, a random boundary will be generated for you.
  **/
 void
 g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
@@ -926,7 +936,8 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
  * @len: length of the content
  * @encoding: content encoding
  *
- * Sets the encoding type and raw content on the mime part after decoding the content.
+ * Sets the encoding type and raw content on the mime part after
+ * decoding the content.
  **/
 void
 g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
@@ -1020,7 +1031,7 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * of the raw data buffer.
  * 
  * Returns a const char * pointer to the raw contents of the MIME Part
- * and sets %len to the length of the buffer.
+ * and sets @len to the length of the buffer.
  **/
 const char *
 g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
@@ -1234,7 +1245,7 @@ g_mime_part_to_string (GMimePart *mime_part)
 /**
  * g_mime_part_foreach: 
  * @mime_part: the MIME part
- * @callback: function to call for #mime_part and all it's subparts
+ * @callback: callback function
  * @data: extra data to pass to the callback
  * 
  * Calls @callback on @mime_part and each of it's subparts.
@@ -1262,12 +1273,12 @@ g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data
 /**
  * g_mime_part_get_subpart_from_content_id: 
  * @mime_part: the MIME part
- * @content_id: the content id of the part to look for
+ * @content_id: the content-id of the part to look for
  *
  * Gets the mime part with the content-id @content_id from the
  * multipart @mime_part.
  *
- * Returns the GMimePart whose content-id matches the search string,
+ * Returns the #GMimePart whose content-id matches the search string,
  * or %NULL if a match cannot be found.
  **/
 const GMimePart *
