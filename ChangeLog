@@ -1,3 +1,7 @@
+2000-11-14  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* doc/html/index.sgml: Added - apparently we need this :-)
+
 2000-11-10  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/gmime-docs.sgml: Added a new paragraph explaining the
