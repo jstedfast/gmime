@@ -1,5 +1,9 @@
 2003-05-21  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.0.7
+
 	* gmime/gmime-message.c (handle_multipart_mixed): Don't look at
 	the subtype of the first_type unless we have already defined
 	first_type. Fixes a crash.
