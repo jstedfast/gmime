@@ -17,7 +17,40 @@ TITLE="gmime-iconv-utils"
 HREF="gmime-gmime-iconv-utils.html"><LINK
 REL="NEXT"
 TITLE="gmime-gpg-context"
-HREF="gmime-gmime-gpg-context.html"></HEAD
+HREF="gmime-gmime-gpg-context.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-iconv-utils.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-gpg-context.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-CIPHER-CONTEXT"
@@ -135,13 +136,6 @@ NAME="AEN8419"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -382,9 +376,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 > *validity,
                                              const char *description);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -413,13 +404,6 @@ NAME="AEN8488"
 NAME="GMIMECIPHERHASH"
 ></A
 >enum GMimeCipherHash</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >typedef enum {
@@ -431,9 +415,6 @@ CLASS="PROGRAMLISTING"
 	GMIME_CIPHER_HASH_TIGER192,
 	GMIME_CIPHER_HASH_HAVAL5160
 } GMimeCipherHash;</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -447,16 +428,10 @@ NAME="AEN8493"
 NAME="GMIMECIPHERCONTEXT"
 ></A
 >struct GMimeCipherContext</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeCipherContext {
+
 	GObject parent_object;
 	
 	GMimeSession *session;
@@ -466,9 +441,6 @@ CLASS="PROGRAMLISTING"
 	const char *encrypt_protocol;
 	const char *key_protocol;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -482,19 +454,9 @@ NAME="AEN8498"
 NAME="GMIMECIPHERVALIDITY"
 ></A
 >struct GMimeCipherValidity</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeCipherValidity;</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -508,13 +470,6 @@ NAME="AEN8503"
 NAME="G-MIME-CIPHER-HASH-ID"
 ></A
 >g_mime_cipher_hash_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -525,9 +480,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 >GMimeCipherContext</A
 > *ctx,
                                              const char *hash);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the hash id based on the hash name <TT
 CLASS="PARAMETER"
@@ -540,18 +492,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8513"><SPAN
 STYLE="white-space: nowrap"
@@ -565,16 +514,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8518"><SPAN
 STYLE="white-space: nowrap"
@@ -588,16 +535,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > hash name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8523"><SPAN
 STYLE="white-space: nowrap"
@@ -609,7 +554,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the equivalent hash id or <GTKDOCLINK
 HREF="GMIME-CIPHER-HASH-DEFAULT-CAPS"
@@ -630,13 +574,6 @@ NAME="AEN8529"
 NAME="G-MIME-CIPHER-HASH-NAME"
 ></A
 >g_mime_cipher_hash_name ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_cipher_hash_name         (<A
@@ -647,9 +584,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERHASH"
 >GMimeCipherHash</A
 > hash);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the hash name based on the hash id <TT
 CLASS="PARAMETER"
@@ -662,18 +596,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8539"><SPAN
 STYLE="white-space: nowrap"
@@ -687,16 +618,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8544"><SPAN
 STYLE="white-space: nowrap"
@@ -710,16 +639,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > hash id</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8549"><SPAN
 STYLE="white-space: nowrap"
@@ -731,7 +658,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the equivalent hash name or <TT
 CLASS="LITERAL"
@@ -752,13 +678,6 @@ NAME="AEN8555"
 NAME="G-MIME-CIPHER-SIGN"
 ></A
 >g_mime_cipher_sign ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_cipher_sign              (<A
@@ -782,9 +701,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Signs the input stream and writes the resulting signature to the output stream.</P
 ><P
@@ -792,18 +708,15 @@ HREF="GERROR"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8567"><SPAN
 STYLE="white-space: nowrap"
@@ -817,16 +730,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8572"><SPAN
 STYLE="white-space: nowrap"
@@ -840,16 +751,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > private key to use to sign the stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8577"><SPAN
 STYLE="white-space: nowrap"
@@ -863,16 +772,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > preferred Message-Integrity-Check hash algorithm</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8582"><SPAN
 STYLE="white-space: nowrap"
@@ -886,16 +793,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8587"><SPAN
 STYLE="white-space: nowrap"
@@ -909,16 +814,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8592"><SPAN
 STYLE="white-space: nowrap"
@@ -932,16 +835,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8597"><SPAN
 STYLE="white-space: nowrap"
@@ -953,7 +854,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >0 on success or -1 on fail.</P
 ></TD
@@ -971,13 +871,6 @@ NAME="AEN8602"
 NAME="G-MIME-CIPHER-VERIFY"
 ></A
 >g_mime_cipher_verify ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1003,9 +896,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Verifies the signature. If <TT
 CLASS="PARAMETER"
@@ -1034,18 +924,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8619"><SPAN
 STYLE="white-space: nowrap"
@@ -1059,16 +946,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8624"><SPAN
 STYLE="white-space: nowrap"
@@ -1082,16 +967,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > secure hash used</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8629"><SPAN
 STYLE="white-space: nowrap"
@@ -1105,16 +988,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8634"><SPAN
 STYLE="white-space: nowrap"
@@ -1128,16 +1009,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > optional detached-signature stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8639"><SPAN
 STYLE="white-space: nowrap"
@@ -1151,16 +1030,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8644"><SPAN
 STYLE="white-space: nowrap"
@@ -1172,7 +1049,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a GMimeCipherValidity structure containing information
 about the integrity of the input stream or <TT
@@ -1195,13 +1071,6 @@ NAME="AEN8650"
 NAME="G-MIME-CIPHER-ENCRYPT"
 ></A
 >g_mime_cipher_encrypt ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_cipher_encrypt           (<A
@@ -1229,9 +1098,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Encrypts (and optionally signs) the cleartext input stream and
 writes the resulting ciphertext to the output stream.</P
@@ -1240,18 +1106,15 @@ writes the resulting ciphertext to the output stream.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8663"><SPAN
 STYLE="white-space: nowrap"
@@ -1265,16 +1128,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8668"><SPAN
 STYLE="white-space: nowrap"
@@ -1288,16 +1149,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > sign as well as encrypt</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8673"><SPAN
 STYLE="white-space: nowrap"
@@ -1311,7 +1170,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > key id (or email address) to use when signing (assuming <TT
 CLASS="PARAMETER"
@@ -1326,9 +1184,8 @@ CLASS="LITERAL"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8680"><SPAN
 STYLE="white-space: nowrap"
@@ -1342,16 +1199,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > an array of recipient key ids and/or email addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8685"><SPAN
 STYLE="white-space: nowrap"
@@ -1365,16 +1220,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > cleartext input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8690"><SPAN
 STYLE="white-space: nowrap"
@@ -1388,16 +1241,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > ciphertext output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8695"><SPAN
 STYLE="white-space: nowrap"
@@ -1411,16 +1262,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8700"><SPAN
 STYLE="white-space: nowrap"
@@ -1432,7 +1281,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >0 on success or -1 on fail.</P
 ></TD
@@ -1450,13 +1298,6 @@ NAME="AEN8705"
 NAME="G-MIME-CIPHER-DECRYPT"
 ></A
 >g_mime_cipher_decrypt ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_cipher_decrypt           (<A
@@ -1475,9 +1316,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decrypts the ciphertext input stream and writes the resulting
 cleartext to the output stream.</P
@@ -1486,18 +1324,15 @@ cleartext to the output stream.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8716"><SPAN
 STYLE="white-space: nowrap"
@@ -1511,16 +1346,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8721"><SPAN
 STYLE="white-space: nowrap"
@@ -1534,16 +1367,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input/ciphertext stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8726"><SPAN
 STYLE="white-space: nowrap"
@@ -1557,16 +1388,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output/cleartext stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8731"><SPAN
 STYLE="white-space: nowrap"
@@ -1580,16 +1409,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8736"><SPAN
 STYLE="white-space: nowrap"
@@ -1601,7 +1428,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >0 on success or -1 for fail.</P
 ></TD
@@ -1619,13 +1445,6 @@ NAME="AEN8741"
 NAME="G-MIME-CIPHER-IMPORT-KEYS"
 ></A
 >g_mime_cipher_import_keys ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_cipher_import_keys       (<A
@@ -1640,9 +1459,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Imports a stream of keys/certificates contained within <TT
 CLASS="PARAMETER"
@@ -1661,18 +1477,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8753"><SPAN
 STYLE="white-space: nowrap"
@@ -1686,16 +1499,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8758"><SPAN
 STYLE="white-space: nowrap"
@@ -1709,16 +1520,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream (containing keys)</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8763"><SPAN
 STYLE="white-space: nowrap"
@@ -1732,16 +1541,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8768"><SPAN
 STYLE="white-space: nowrap"
@@ -1753,7 +1560,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >0 on success or -1 on fail.</P
 ></TD
@@ -1771,13 +1577,6 @@ NAME="AEN8773"
 NAME="G-MIME-CIPHER-EXPORT-KEYS"
 ></A
 >g_mime_cipher_export_keys ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_cipher_export_keys       (<A
@@ -1796,9 +1595,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="GERROR"
 >GError</GTKDOCLINK
 > **err);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Exports the keys/certificates in <TT
 CLASS="PARAMETER"
@@ -1822,18 +1618,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8787"><SPAN
 STYLE="white-space: nowrap"
@@ -1847,16 +1640,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Cipher Context</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8792"><SPAN
 STYLE="white-space: nowrap"
@@ -1870,16 +1661,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > an array of key ids</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8797"><SPAN
 STYLE="white-space: nowrap"
@@ -1893,16 +1682,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8802"><SPAN
 STYLE="white-space: nowrap"
@@ -1916,16 +1703,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > exception</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8807"><SPAN
 STYLE="white-space: nowrap"
@@ -1937,7 +1722,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >0 on success or -1 on fail.</P
 ></TD
@@ -1955,22 +1739,12 @@ NAME="AEN8812"
 NAME="G-MIME-CIPHER-VALIDITY-INIT"
 ></A
 >g_mime_cipher_validity_init ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_cipher_validity_init     (<A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Initializes the validity structure.</P
 ><P
@@ -1978,18 +1752,15 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8820"><SPAN
 STYLE="white-space: nowrap"
@@ -2003,7 +1774,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
@@ -2021,13 +1791,6 @@ NAME="AEN8825"
 NAME="G-MIME-CIPHER-VALIDITY-NEW"
 ></A
 >g_mime_cipher_validity_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -2035,9 +1798,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 >* g_mime_cipher_validity_new
                                             (void);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new validity structure.</P
 ><P
@@ -2045,18 +1805,15 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8833"><SPAN
 STYLE="white-space: nowrap"
@@ -2068,7 +1825,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new validity structure.</P
 ></TD
@@ -2086,22 +1842,12 @@ NAME="AEN8838"
 NAME="G-MIME-CIPHER-VALIDITY-CLEAR"
 ></A
 >g_mime_cipher_validity_clear ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_cipher_validity_clear    (<A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Clears the contents of the validity structure.</P
 ><P
@@ -2109,18 +1855,15 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8846"><SPAN
 STYLE="white-space: nowrap"
@@ -2134,7 +1877,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
@@ -2152,22 +1894,12 @@ NAME="AEN8851"
 NAME="G-MIME-CIPHER-VALIDITY-FREE"
 ></A
 >g_mime_cipher_validity_free ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_cipher_validity_free     (<A
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Frees the memory used by <TT
 CLASS="PARAMETER"
@@ -2180,18 +1912,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8860"><SPAN
 STYLE="white-space: nowrap"
@@ -2205,7 +1934,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
@@ -2223,13 +1951,6 @@ NAME="AEN8865"
 NAME="G-MIME-CIPHER-VALIDITY-GET-VALID"
 ></A
 >g_mime_cipher_validity_get_valid ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2240,9 +1961,6 @@ HREF="GBOOLEAN"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the validity of the validity structure <TT
 CLASS="PARAMETER"
@@ -2255,18 +1973,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8875"><SPAN
 STYLE="white-space: nowrap"
@@ -2280,16 +1995,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8880"><SPAN
 STYLE="white-space: nowrap"
@@ -2301,7 +2014,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 ><TT
 CLASS="LITERAL"
@@ -2330,13 +2042,6 @@ NAME="AEN8888"
 NAME="G-MIME-CIPHER-VALIDITY-SET-VALID"
 ></A
 >g_mime_cipher_validity_set_valid ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_cipher_validity_set_valid
@@ -2348,9 +2053,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > valid);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the validness on the validity structure.</P
 ><P
@@ -2358,18 +2060,15 @@ HREF="GBOOLEAN"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8897"><SPAN
 STYLE="white-space: nowrap"
@@ -2383,16 +2082,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8902"><SPAN
 STYLE="white-space: nowrap"
@@ -2406,7 +2103,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > <TT
 CLASS="LITERAL"
@@ -2430,13 +2126,6 @@ NAME="AEN8909"
 NAME="G-MIME-CIPHER-VALIDITY-GET-DESCRIPTION"
 ></A
 >g_mime_cipher_validity_get_description ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_cipher_validity_get_description
@@ -2444,9 +2133,6 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the description set on the validity structure <TT
 CLASS="PARAMETER"
@@ -2459,18 +2145,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8918"><SPAN
 STYLE="white-space: nowrap"
@@ -2484,16 +2167,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8923"><SPAN
 STYLE="white-space: nowrap"
@@ -2505,7 +2186,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >any description set on the validity structure.</P
 ></TD
@@ -2523,13 +2203,6 @@ NAME="AEN8928"
 NAME="G-MIME-CIPHER-VALIDITY-SET-DESCRIPTION"
 ></A
 >g_mime_cipher_validity_set_description ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_cipher_validity_set_description
@@ -2538,9 +2211,6 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 >GMimeCipherValidity</A
 > *validity,
                                              const char *description);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the description on the validity structure.</P
 ><P
@@ -2548,18 +2218,15 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8936"><SPAN
 STYLE="white-space: nowrap"
@@ -2573,16 +2240,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity structure</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN8941"><SPAN
 STYLE="white-space: nowrap"
@@ -2596,7 +2261,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > validity description</P
 ></TD
@@ -2605,109 +2269,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-iconv-utils.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-iconv-utils</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-gpg-context.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-gpg-context&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-iconv-utils</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-gpg-context</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

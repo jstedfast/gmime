@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -75,6 +76,7 @@ char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</lin
 <refsect2>
 <title><anchor id="GMimeObject">struct GMimeObject</title>
 <programlisting>struct GMimeObject {
+
 	GObject parent_object;
 	
 	GMimeContentType *content_type;
@@ -94,13 +96,13 @@ char*       <link linkend="g-mime-object-to-string">g_mime_object_to_string</lin
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>data</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-register-type">g_mime_object_register_type ()</title>
@@ -118,14 +120,14 @@ subtype.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
-<listitem><para> mime type
-</para></listitem></varlistentry>
+<listitem><simpara> mime type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> mime subtype
-</para></listitem></varlistentry>
+<listitem><simpara> mime subtype
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>object_type</parameter>&nbsp;:</term>
-<listitem><para> object type
-</para></listitem></varlistentry>
+<listitem><simpara> object type
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-new-type">g_mime_object_new_type ()</title>
@@ -142,14 +144,14 @@ the generic part class, <link linkend="GMimePart">GMimePart</link>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
-<listitem><para> mime type
-</para></listitem></varlistentry>
+<listitem><simpara> mime type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> mime subtype
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an appropriate <link linkend="GMimeObject">GMimeObject</link> registered to handle mime-types
+<listitem><simpara> mime subtype
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an appropriate <link linkend="GMimeObject">GMimeObject</link> registered to handle mime-types
 of <parameter>type</parameter>/<parameter>subtype</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-ref">g_mime_object_ref ()</title>
@@ -160,8 +162,8 @@ Ref's a MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-unref">g_mime_object_unref ()</title>
@@ -172,8 +174,8 @@ Unref's a MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-set-content-type">g_mime_object_set_content_type ()</title>
@@ -185,11 +187,11 @@ Sets the content-type for the specified MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME type
-</para></listitem></varlistentry>
+<listitem><simpara> MIME type
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-get-content-type">g_mime_object_get_content_type ()</title>
@@ -202,10 +204,10 @@ fail.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content-type object for the specified MIME object.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content-type object for the specified MIME object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-set-content-type-parameter">g_mime_object_set_content_type_parameter ()</title>
@@ -219,14 +221,14 @@ Sets the content-type param <parameter>name</parameter> to the value <parameter>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> param name
-</para></listitem></varlistentry>
+<listitem><simpara> param name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> param value
-</para></listitem></varlistentry>
+<listitem><simpara> param value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-get-content-type-parameter">g_mime_object_get_content_type_parameter ()</title>
@@ -240,14 +242,14 @@ Gets the value of the content-type param <parameter>name</parameter> set on the 
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> param name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the requested content-type param or <literal>NULL</literal> on
+<listitem><simpara> param name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of the requested content-type param or <literal>NULL</literal> on
 if the param doesn't exist.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-set-content-id">g_mime_object_set_content_id ()</title>
@@ -259,11 +261,11 @@ Sets the Content-Id of the MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content_id</parameter>&nbsp;:</term>
-<listitem><para> content-id (addr-spec portion)
-</para></listitem></varlistentry>
+<listitem><simpara> content-id (addr-spec portion)
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-get-content-id">g_mime_object_get_content_id ()</title>
@@ -274,10 +276,10 @@ Gets the Content-Id of the MIME object or NULL if one is not set.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> MIME object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a const pointer to the Content-Id header.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a const pointer to the Content-Id header.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-add-header">g_mime_object_add_header ()</title>
@@ -290,14 +292,14 @@ Adds an arbitrary header to the MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> header value
-</para></listitem></varlistentry>
+<listitem><simpara> header value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-set-header">g_mime_object_set_header ()</title>
@@ -310,14 +312,14 @@ Sets an arbitrary header on the MIME object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> header value
-</para></listitem></varlistentry>
+<listitem><simpara> header value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-get-header">g_mime_object_get_header ()</title>
@@ -330,14 +332,14 @@ otherwise.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the header <parameter>header</parameter> if it exists or <literal>NULL</literal>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of the header <parameter>header</parameter> if it exists or <literal>NULL</literal>
 otherwise.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-remove-header">g_mime_object_remove_header ()</title>
@@ -349,11 +351,11 @@ Removed the specified header if it exists.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-get-headers">g_mime_object_get_headers ()</title>
@@ -365,10 +367,10 @@ headers.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing all of the raw MIME headers.
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing all of the raw MIME headers.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-write-to-stream">g_mime_object_write_to_stream ()</title>
@@ -380,13 +382,13 @@ Write the contents of the MIME object to <parameter>stream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>-1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>-1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-object-to-string">g_mime_object_to_string ()</title>
@@ -397,11 +399,11 @@ Allocates a string buffer containing the contents of <parameter>object</paramete
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>object</parameter>&nbsp;:</term>
-<listitem><para> mime object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the contents of the mime
+<listitem><simpara> mime object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the contents of the mime
 object.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

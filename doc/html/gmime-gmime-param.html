@@ -17,7 +17,40 @@ TITLE="gmime-filter-yenc"
 HREF="gmime-gmime-filter-yenc.html"><LINK
 REL="NEXT"
 TITLE="gmime-header"
-HREF="gmime-gmime-header.html"></HEAD
+HREF="gmime-gmime-header.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-filter-yenc.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-header.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-PARAM"
@@ -135,13 +136,6 @@ NAME="AEN2502"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -213,9 +207,6 @@ HREF="GBOOLEAN"
 HREF="GSTRING"
 >GString</GTKDOCLINK
 > *string);</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -244,23 +235,14 @@ NAME="AEN2528"
 NAME="GMIMEPARAM"
 ></A
 >struct GMimeParam</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeParam {
+
 	struct _GMimeParam *next;
 	char *name;
 	char *value;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -274,13 +256,6 @@ NAME="AEN2533"
 NAME="G-MIME-PARAM-NEW"
 ></A
 >g_mime_param_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -288,9 +263,6 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 >* g_mime_param_new                (const char *name,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new GMimeParam node with name <TT
 CLASS="PARAMETER"
@@ -308,18 +280,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2543"><SPAN
 STYLE="white-space: nowrap"
@@ -333,16 +302,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > parameter name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2548"><SPAN
 STYLE="white-space: nowrap"
@@ -356,16 +323,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > parameter value</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2553"><SPAN
 STYLE="white-space: nowrap"
@@ -377,7 +342,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new paramter structure.</P
 ></TD
@@ -395,22 +359,12 @@ NAME="AEN2558"
 NAME="G-MIME-PARAM-NEW-FROM-STRING"
 ></A
 >g_mime_param_new_from_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 >* g_mime_param_new_from_string    (const char *string);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a parameter list based on the input string.</P
 ><P
@@ -418,18 +372,15 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2566"><SPAN
 STYLE="white-space: nowrap"
@@ -443,16 +394,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2571"><SPAN
 STYLE="white-space: nowrap"
@@ -464,7 +413,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a GMimeParam structure based on <TT
 CLASS="PARAMETER"
@@ -487,22 +435,12 @@ NAME="AEN2577"
 NAME="G-MIME-PARAM-DESTROY"
 ></A
 >g_mime_param_destroy ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_param_destroy            (<A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 > *param);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Releases all memory used by this mime param back to the Operating
 System.</P
@@ -511,18 +449,15 @@ System.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2585"><SPAN
 STYLE="white-space: nowrap"
@@ -536,7 +471,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime param list to destroy</P
 ></TD
@@ -554,13 +488,6 @@ NAME="AEN2590"
 NAME="G-MIME-PARAM-APPEND"
 ></A
 >g_mime_param_append ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -572,9 +499,6 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 > *params,
                                              const char *name,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Appends a new parameter with name <TT
 CLASS="PARAMETER"
@@ -598,18 +522,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2602"><SPAN
 STYLE="white-space: nowrap"
@@ -623,16 +544,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2607"><SPAN
 STYLE="white-space: nowrap"
@@ -646,16 +565,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > new param name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2612"><SPAN
 STYLE="white-space: nowrap"
@@ -669,16 +586,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > new param value</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2617"><SPAN
 STYLE="white-space: nowrap"
@@ -690,7 +605,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a param list with the new param of name <TT
 CLASS="PARAMETER"
@@ -724,13 +638,6 @@ NAME="AEN2625"
 NAME="G-MIME-PARAM-APPEND-PARAM"
 ></A
 >g_mime_param_append_param ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -744,9 +651,6 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 > *param);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Appends <TT
 CLASS="PARAMETER"
@@ -764,18 +668,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2637"><SPAN
 STYLE="white-space: nowrap"
@@ -789,16 +690,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2642"><SPAN
 STYLE="white-space: nowrap"
@@ -812,16 +711,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param to append</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2647"><SPAN
 STYLE="white-space: nowrap"
@@ -833,7 +730,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a param list with the new param <TT
 CLASS="PARAMETER"
@@ -862,13 +758,6 @@ NAME="AEN2654"
 NAME="G-MIME-PARAM-WRITE-TO-STRING"
 ></A
 >g_mime_param_write_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_param_write_to_string    (<A
@@ -883,9 +772,6 @@ HREF="GBOOLEAN"
 HREF="GSTRING"
 >GString</GTKDOCLINK
 > *string);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Assumes the output string contains only the Content-* header and
 it's immediate value.</P
@@ -901,18 +787,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2666"><SPAN
 STYLE="white-space: nowrap"
@@ -926,16 +809,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME Param list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2671"><SPAN
 STYLE="white-space: nowrap"
@@ -949,16 +830,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > specifies whether or not to fold headers</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2676"><SPAN
 STYLE="white-space: nowrap"
@@ -972,7 +851,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output string</P
 ></TD
@@ -981,109 +859,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-filter-yenc.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-filter-yenc</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-header.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-header&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-filter-yenc</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-header</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

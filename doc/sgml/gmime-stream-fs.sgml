@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -43,6 +44,7 @@ struct      <link linkend="GMimeStreamFs">GMimeStreamFs</link>;
 <refsect2>
 <title><anchor id="GMimeStreamFs">struct GMimeStreamFs</title>
 <programlisting>struct GMimeStreamFs {
+
 	GMimeStream parent_object;
 	
 	gboolean owner;
@@ -62,10 +64,10 @@ Creates a new GMimeStreamFs object around <parameter>fd</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
-<listitem><para> file descriptor
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> file descriptor
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a stream using <parameter>fd</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-fs-new-with-bounds">g_mime_stream_fs_new_with_bounds ()</title>
@@ -80,16 +82,16 @@ and <parameter>end</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
-<listitem><para> file descriptor
-</para></listitem></varlistentry>
+<listitem><simpara> file descriptor
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>start</parameter>&nbsp;:</term>
-<listitem><para> start boundary
-</para></listitem></varlistentry>
+<listitem><simpara> start boundary
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>end</parameter>&nbsp;:</term>
-<listitem><para> end boundary
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> end boundary
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -48,6 +49,7 @@ struct      <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>;
 <refsect2>
 <title><anchor id="GMimeFilterHTML">struct GMimeFilterHTML</title>
 <programlisting>struct GMimeFilterHTML {
+
 	GMimeFilter parent_object;
 	
 	struct _GUrlScanner *scanner;
@@ -137,13 +139,13 @@ Creates a new GMimeFilterHTML filter.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
-<listitem><para> html flags
-</para></listitem></varlistentry>
+<listitem><simpara> html flags
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>colour</parameter>&nbsp;:</term>
-<listitem><para> citation colour
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new html filter.
-</para></listitem></varlistentry>
+<listitem><simpara> citation colour
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new html filter.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -52,6 +53,7 @@ const char* <link linkend="g-mime-content-type-get-parameter">g_mime_content_typ
 <refsect2>
 <title><anchor id="GMimeContentType">struct GMimeContentType</title>
 <programlisting>struct GMimeContentType {
+
 	char *type;
 	char *subtype;
 	
@@ -72,13 +74,13 @@ Creates a Content-Type object with type <parameter>type</parameter> and subtype 
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
-<listitem><para> MIME type (or NULL for "text")
-</para></listitem></varlistentry>
+<listitem><simpara> MIME type (or NULL for "text")
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> MIME subtype (or NULL for "plain")
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new MIME Content-Type object.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME subtype (or NULL for "plain")
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new MIME Content-Type object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-new-from-string">g_mime_content_type_new_from_string ()</title>
@@ -90,10 +92,10 @@ Constructs a new Content-Type object based on the input string.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> input string containing a content-type (and params)
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new MIME Content-Type based on the input string.
-</para></listitem></varlistentry>
+<listitem><simpara> input string containing a content-type (and params)
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new MIME Content-Type based on the input string.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-destroy">g_mime_content_type_destroy ()</title>
@@ -104,8 +106,8 @@ Destroys the given MIME Content-Type object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME Content-Type object to destroy
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Content-Type object to destroy
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-to-string">g_mime_content_type_to_string ()</title>
@@ -117,11 +119,11 @@ by the <parameter>mime_type</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME Content-Type
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the type and subtype of the
+<listitem><simpara> MIME Content-Type
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the type and subtype of the
 content-type in the format: type/subtype.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-is-type">g_mime_content_type_is_type ()</title>
@@ -135,17 +137,17 @@ type object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME Content-Type
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Content-Type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
-<listitem><para> MIME type to compare against
-</para></listitem></varlistentry>
+<listitem><simpara> MIME type to compare against
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> MIME subtype to compare against
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>TRUE if the MIME types match or FALSE otherwise. You may
+<listitem><simpara> MIME subtype to compare against
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>TRUE if the MIME types match or FALSE otherwise. You may
 use "*" in place of <parameter>type</parameter> and/or <parameter>subtype</parameter> as a wilcard.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-set-parameter">g_mime_content_type_set_parameter ()</title>
@@ -159,14 +161,14 @@ Sets a parameter on the Content-Type.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME Content-Type
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Content-Type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name (aka attribute)
-</para></listitem></varlistentry>
+<listitem><simpara> parameter name (aka attribute)
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> parameter value
-</para></listitem></varlistentry>
+<listitem><simpara> parameter value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-content-type-get-parameter">g_mime_content_type_get_parameter ()</title>
@@ -179,14 +181,14 @@ Gets the parameter value specified by <parameter>attribute</parameter> if it's a
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> MIME Content-Type
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Content-Type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name (aka attribute)
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a const pointer to the paramer value specified by
+<listitem><simpara> parameter name (aka attribute)
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a const pointer to the paramer value specified by
 <parameter>attribute</parameter> or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -47,6 +48,7 @@ void        <link linkend="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_s
 <refsect2>
 <title><anchor id="GMimeStreamMem">struct GMimeStreamMem</title>
 <programlisting>struct GMimeStreamMem {
+
 	GMimeStream parent_object;
 	
 	gboolean owner;
@@ -64,8 +66,8 @@ Creates a new GMimeStreamMem object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new memory stream.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-new-with-byte-array">g_mime_stream_mem_new_with_byte_array ()</title>
@@ -77,10 +79,10 @@ Creates a new GMimeStreamMem with data <parameter>array</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>array</parameter>&nbsp;:</term>
-<listitem><para> source data
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream using <parameter>array</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> source data
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new memory stream using <parameter>array</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-new-with-buffer">g_mime_stream_mem_new_with_buffer ()</title>
@@ -94,13 +96,13 @@ contents with the first <parameter>len</parameter> bytes of <parameter>buffer</p
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>buffer</parameter>&nbsp;:</term>
-<listitem><para> stream data
-</para></listitem></varlistentry>
+<listitem><simpara> stream data
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> data length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new memory stream initialized with <parameter>buffer</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> data length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new memory stream initialized with <parameter>buffer</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mem-set-byte-array">g_mime_stream_mem_set_byte_array ()</title>
@@ -114,11 +116,11 @@ is not responsible for freeing the byte array.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mem</parameter>&nbsp;:</term>
-<listitem><para> memory stream
-</para></listitem></varlistentry>
+<listitem><simpara> memory stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>array</parameter>&nbsp;:</term>
-<listitem><para> stream data
-</para></listitem></varlistentry>
+<listitem><simpara> stream data
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

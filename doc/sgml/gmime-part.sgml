@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -112,6 +113,7 @@ char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>  
 <refsect2>
 <title><anchor id="GMimePart">struct GMimePart</title>
 <programlisting>struct GMimePart {
+
 	GMimeObject parent_object;
 	
 	GMimePartEncodingType encoding;
@@ -135,9 +137,9 @@ text/plain.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME Part object with a default content-type of
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME Part object with a default content-type of
 text/plain.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-new-with-type">g_mime_part_new_with_type ()</title>
@@ -149,13 +151,13 @@ Creates a new MIME Part with a sepcified type.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>type</parameter>&nbsp;:</term>
-<listitem><para> content-type
-</para></listitem></varlistentry>
+<listitem><simpara> content-type
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> content-subtype
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME Part object with the specified content-type.
-</para></listitem></varlistentry>
+<listitem><simpara> content-subtype
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME Part object with the specified content-type.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-header">g_mime_part_set_content_header ()</title>
@@ -168,14 +170,14 @@ Set an arbitrary MIME content header.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> mime part
-</para></listitem></varlistentry>
+<listitem><simpara> mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> header value
-</para></listitem></varlistentry>
+<listitem><simpara> header value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-header">g_mime_part_get_content_header ()</title>
@@ -188,13 +190,13 @@ otherwise.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> mime part
-</para></listitem></varlistentry>
+<listitem><simpara> mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the content header <parameter>header</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of the content header <parameter>header</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-description">g_mime_part_set_content_description ()</title>
@@ -207,11 +209,11 @@ Set the content description for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>description</parameter>&nbsp;:</term>
-<listitem><para> content description
-</para></listitem></varlistentry>
+<listitem><simpara> content description
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-description">g_mime_part_get_content_description ()</title>
@@ -224,10 +226,10 @@ part if it exists or <literal>NULL</literal> otherwise.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content description for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content description for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-id">g_mime_part_set_content_id ()</title>
@@ -239,11 +241,11 @@ Set the content id for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content_id</parameter>&nbsp;:</term>
-<listitem><para> content id
-</para></listitem></varlistentry>
+<listitem><simpara> content id
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-id">g_mime_part_get_content_id ()</title>
@@ -255,10 +257,10 @@ Gets the content-id of the specified mime part if it exists, or
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content id for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content id for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-md5">g_mime_part_set_content_md5 ()</title>
@@ -270,11 +272,11 @@ Set the content md5 for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content_md5</parameter>&nbsp;:</term>
-<listitem><para> content md5 or NULL to generate the md5 digest.
-</para></listitem></varlistentry>
+<listitem><simpara> content md5 or NULL to generate the md5 digest.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-md5">g_mime_part_get_content_md5 ()</title>
@@ -286,10 +288,10 @@ specified mime part if it exists, or <literal>NULL</literal> otherwise.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content md5 for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content md5 for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-verify-content-md5">g_mime_part_verify_content_md5 ()</title>
@@ -300,11 +302,11 @@ Verify the content md5 for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>TRUE if the md5 is valid or FALSE otherwise. Note: will
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>TRUE if the md5 is valid or FALSE otherwise. Note: will
 return FALSE if the mime part does not contain a Content-MD5.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-location">g_mime_part_set_content_location ()</title>
@@ -317,11 +319,11 @@ Set the content location for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content_location</parameter>&nbsp;:</term>
-<listitem><para> content location
-</para></listitem></varlistentry>
+<listitem><simpara> content location
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-location">g_mime_part_get_content_location ()</title>
@@ -334,10 +336,10 @@ Gets the value of the Content-Location header if it exists, or
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content location for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content location for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-type">g_mime_part_set_content_type ()</title>
@@ -349,11 +351,11 @@ Set the content type/subtype for the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>mime_type</parameter>&nbsp;:</term>
-<listitem><para> Mime content-type
-</para></listitem></varlistentry>
+<listitem><simpara> Mime content-type
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-type">g_mime_part_get_content_type ()</title>
@@ -366,10 +368,10 @@ error.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content-type object for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content-type object for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-encoding">g_mime_part_set_encoding ()</title>
@@ -385,11 +387,11 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
-<listitem><para> Mime encoding
-</para></listitem></varlistentry>
+<listitem><simpara> Mime encoding
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-encoding">g_mime_part_get_encoding ()</title>
@@ -401,15 +403,15 @@ Gets the content encoding of the mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content encoding for the specified mime part. The
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content encoding for the specified mime part. The
 return value will be one of the following:
 GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
 GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BINARY,
 GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
 or GMIME_PART_ENCODING_UUENCODE.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-encoding-to-string">g_mime_part_encoding_to_string ()</title>
@@ -420,15 +422,15 @@ Gets the string value of the content encoding.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
-<listitem><para> Mime encoding
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the encoding type as a string. Available
+<listitem><simpara> Mime encoding
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the encoding type as a string. Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
 GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
 GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
 GMIME_PART_ENCODING_QUOTEDPRINTABLE and
 GMIME_PART_ENCODING_UUENCODE.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-encoding-from-string">g_mime_part_encoding_from_string ()</title>
@@ -441,15 +443,15 @@ string.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
-<listitem><para> Mime encoding in string format
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the encoding string as a GMimePartEncodingType.  Available
+<listitem><simpara> Mime encoding in string format
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the encoding string as a GMimePartEncodingType.  Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
 GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
 GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
 GMIME_PART_ENCODING_QUOTEDPRINTABLE and
 GMIME_PART_ENCODING_UUENCODE.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-disposition-object">g_mime_part_set_content_disposition_object ()</title>
@@ -462,11 +464,11 @@ Set the content disposition for the specified mime part</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-disposition">g_mime_part_set_content_disposition ()</title>
@@ -479,11 +481,11 @@ Set the content disposition for the specified mime part</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition
-</para></listitem></varlistentry>
+<listitem><simpara> disposition
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-disposition">g_mime_part_get_content_disposition ()</title>
@@ -495,10 +497,10 @@ Gets the content disposition if set or <literal>NULL</literal> otherwise.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the content disposition for the specified mime part.
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the content disposition for the specified mime part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-add-content-disposition-parameter">g_mime_part_add_content_disposition_parameter ()</title>
@@ -512,14 +514,14 @@ Add a content-disposition parameter to the specified mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name
-</para></listitem></varlistentry>
+<listitem><simpara> parameter name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> parameter value
-</para></listitem></varlistentry>
+<listitem><simpara> parameter value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-disposition-parameter">g_mime_part_get_content_disposition_parameter ()</title>
@@ -533,14 +535,14 @@ Gets the value of the Content-Disposition parameter specified by
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of a previously defined content-disposition
+<listitem><simpara> parameter name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of a previously defined content-disposition
 parameter specified by <link linkend="name">name</link>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-filename">g_mime_part_set_filename ()</title>
@@ -553,11 +555,11 @@ Sets the "filename" parameter on the Content-Disposition and also sets the
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>filename</parameter>&nbsp;:</term>
-<listitem><para> the filename of the Mime Part's content
-</para></listitem></varlistentry>
+<listitem><simpara> the filename of the Mime Part's content
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-filename">g_mime_part_get_filename ()</title>
@@ -569,12 +571,12 @@ part does not have the filename or name parameter set.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the filename of the specified MIME Part. It first checks to
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the filename of the specified MIME Part. It first checks to
 see if the "filename" parameter was set on the Content-Disposition
 and if not then checks the "name" parameter in the Content-Type.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content">g_mime_part_set_content ()</title>
@@ -587,14 +589,14 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> raw mime part content
-</para></listitem></varlistentry>
+<listitem><simpara> raw mime part content
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> raw content length
-</para></listitem></varlistentry>
+<listitem><simpara> raw content length
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-pre-encoded-content">g_mime_part_set_pre_encoded_content ()</title>
@@ -609,17 +611,17 @@ Sets the encoding type and raw content on the mime part after decoding the conte
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> encoded mime part content
-</para></listitem></varlistentry>
+<listitem><simpara> encoded mime part content
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> length of the content
-</para></listitem></varlistentry>
+<listitem><simpara> length of the content
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>encoding</parameter>&nbsp;:</term>
-<listitem><para> content encoding
-</para></listitem></varlistentry>
+<listitem><simpara> content encoding
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-byte-array">g_mime_part_set_content_byte_array ()</title>
@@ -632,11 +634,11 @@ Sets the content of the Mime Part (only non-multiparts)</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> Mime part
-</para></listitem></varlistentry>
+<listitem><simpara> Mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> raw mime part content.
-</para></listitem></varlistentry>
+<listitem><simpara> raw mime part content.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content">g_mime_part_get_content ()</title>
@@ -649,14 +651,14 @@ of the raw data buffer.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> MIME part object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME part object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> pointer to the content length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a const char * pointer to the raw contents of the MIME Part
+<listitem><simpara> pointer to the content length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a const char * pointer to the raw contents of the MIME Part
 and sets <literal>len</literal> to the length of the buffer.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-object">g_mime_part_get_content_object ()</title>
@@ -669,10 +671,10 @@ on error.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> MIME part object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the data-wrapper for the mime part's contents.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME part object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the data-wrapper for the mime part's contents.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-set-content-object">g_mime_part_set_content_object ()</title>
@@ -684,11 +686,11 @@ Sets the content object on the mime part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> MIME Part
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> content object
-</para></listitem></varlistentry>
+<listitem><simpara> content object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-write-to-stream">g_mime_part_write_to_stream ()</title>
@@ -700,13 +702,13 @@ Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> MIME Part
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-to-string">g_mime_part_to_string ()</title>
@@ -717,10 +719,10 @@ Allocates a string buffer containing the MIME Part.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mime_part</parameter>&nbsp;:</term>
-<listitem><para> MIME Part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the MIME Part.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the MIME Part.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

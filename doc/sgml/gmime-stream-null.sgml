@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -39,6 +40,7 @@ struct      <link linkend="GMimeStreamNull">GMimeStreamNull</link>;
 <refsect2>
 <title><anchor id="GMimeStreamNull">struct GMimeStreamNull</title>
 <programlisting>struct GMimeStreamNull {
+
 	GMimeStream parent_object;
 	
 	size_t written;
@@ -55,8 +57,8 @@ Creates a new GMimeStreamNull object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new null stream (similar to /dev/null on Unix).
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new null stream (similar to /dev/null on Unix).
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -61,6 +62,7 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 <refsect2>
 <title><anchor id="GMimeParser">struct GMimeParser</title>
 <programlisting>struct GMimeParser {
+
 	GObject parent_object;
 	
 	struct _GMimeParserPrivate *priv;
@@ -80,22 +82,22 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>offset</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-new">g_mime_parser_new ()</title>
@@ -105,8 +107,8 @@ Creates a new parser object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new parser object.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new parser object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-new-with-stream">g_mime_parser_new_with_stream ()</title>
@@ -117,10 +119,10 @@ Creates a new parser object preset to parse <parameter>stream</parameter>.</para
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> raw message or part stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new parser object.
-</para></listitem></varlistentry>
+<listitem><simpara> raw message or part stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new parser object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-init-with-stream">g_mime_parser_init_with_stream ()</title>
@@ -148,11 +150,11 @@ to need the current offset of the <parameter>parser</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> raw message or part stream
-</para></listitem></varlistentry>
+<listitem><simpara> raw message or part stream
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-set-scan-from">g_mime_parser_set_scan_from ()</title>
@@ -164,11 +166,11 @@ Sets whether or not <parameter>parser</parameter> should scan mbox-style From-li
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>scan_from</parameter>&nbsp;:</term>
-<listitem><para> <literal>TRUE</literal> to scan From-lines or <literal>FALSE</literal> otherwise
-</para></listitem></varlistentry>
+<listitem><simpara> <literal>TRUE</literal> to scan From-lines or <literal>FALSE</literal> otherwise
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-scan-from">g_mime_parser_get_scan_from ()</title>
@@ -179,11 +181,11 @@ Gets whether or not <parameter>parser</parameter> is set to scan mbox-style From
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>whether or not <parameter>parser</parameter> is set to scan mbox-style
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>whether or not <parameter>parser</parameter> is set to scan mbox-style
 From-lines.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-set-header-regex">g_mime_parser_set_header_regex ()</title>
@@ -199,17 +201,17 @@ with <parameter>user_data</parameter> as the user_data argument.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>regex</parameter>&nbsp;:</term>
-<listitem><para> regular expression
-</para></listitem></varlistentry>
+<listitem><simpara> regular expression
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>header_cb</parameter>&nbsp;:</term>
-<listitem><para> callback function
-</para></listitem></varlistentry>
+<listitem><simpara> callback function
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
-<listitem><para> user data
-</para></listitem></varlistentry>
+<listitem><simpara> user data
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-tell">g_mime_parser_tell ()</title>
@@ -220,11 +222,11 @@ Gets the current stream offset from the parser's internal stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the current stream offset from the parser's internal stream
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the current stream offset from the parser's internal stream
 or -1 on error.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-eos">g_mime_parser_eos ()</title>
@@ -235,10 +237,10 @@ Tests the end-of-stream indicator for <parameter>parser</parameter>'s internal s
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
@@ -249,10 +251,10 @@ Constructs a MIME part from <parameter>parser</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME part based on <parameter>parser</parameter> or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a MIME part based on <parameter>parser</parameter> or <literal>NULL</literal> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-message">g_mime_parser_construct_message ()</title>
@@ -264,10 +266,10 @@ Constructs a MIME message from <parameter>parser</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME message or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a MIME message or <literal>NULL</literal> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-from">g_mime_parser_get_from ()</title>
@@ -279,11 +281,11 @@ Gets the mbox-style From-line of the most recently parsed message
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the mbox-style From-line of the most recently parsed
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the mbox-style From-line of the most recently parsed
 message or <literal>NULL</literal> on error.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-get-from-offset">g_mime_parser_get_from_offset ()</title>
@@ -295,11 +297,11 @@ Gets the offset of the most recently parsed mbox-style From-line
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>parser</parameter>&nbsp;:</term>
-<listitem><para> MIME parser object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the offset of the most recently parsed mbox-style From-line
+<listitem><simpara> MIME parser object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the offset of the most recently parsed mbox-style From-line
 or -1 on error.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

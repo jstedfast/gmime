@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -104,6 +105,7 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 <refsect2>
 <title><anchor id="GMimeCipherContext">struct GMimeCipherContext</title>
 <programlisting>struct GMimeCipherContext {
+
 	GObject parent_object;
 	
 	GMimeSession *session;
@@ -133,13 +135,13 @@ Gets the hash id based on the hash name <parameter>hash</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
-<listitem><para> hash name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the equivalent hash id or <link linkend="GMIME-CIPHER-HASH-DEFAULT-CAPS">GMIME_CIPHER_HASH_DEFAULT</link> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> hash name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the equivalent hash id or <link linkend="GMIME-CIPHER-HASH-DEFAULT-CAPS">GMIME_CIPHER_HASH_DEFAULT</link> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-hash-name">g_mime_cipher_hash_name ()</title>
@@ -151,13 +153,13 @@ Gets the hash name based on the hash id <parameter>hash</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
-<listitem><para> hash id
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the equivalent hash name or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> hash id
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the equivalent hash name or <literal>NULL</literal> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-sign">g_mime_cipher_sign ()</title>
@@ -173,25 +175,25 @@ Signs the input stream and writes the resulting signature to the output stream.<
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>userid</parameter>&nbsp;:</term>
-<listitem><para> private key to use to sign the stream
-</para></listitem></varlistentry>
+<listitem><simpara> private key to use to sign the stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
-<listitem><para> preferred Message-Integrity-Check hash algorithm
-</para></listitem></varlistentry>
+<listitem><simpara> preferred Message-Integrity-Check hash algorithm
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>istream</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ostream</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-verify">g_mime_cipher_verify ()</title>
@@ -209,24 +211,24 @@ verify the integirity of the <parameter>istream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
-<listitem><para> secure hash used
-</para></listitem></varlistentry>
+<listitem><simpara> secure hash used
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>istream</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>sigstream</parameter>&nbsp;:</term>
-<listitem><para> optional detached-signature stream
-</para></listitem></varlistentry>
+<listitem><simpara> optional detached-signature stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a GMimeCipherValidity structure containing information
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a GMimeCipherValidity structure containing information
 about the integrity of the input stream or <literal>NULL</literal> on failure to
 execute at all.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-encrypt">g_mime_cipher_encrypt ()</title>
@@ -244,28 +246,28 @@ writes the resulting ciphertext to the output stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>sign</parameter>&nbsp;:</term>
-<listitem><para> sign as well as encrypt
-</para></listitem></varlistentry>
+<listitem><simpara> sign as well as encrypt
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>userid</parameter>&nbsp;:</term>
-<listitem><para> key id (or email address) to use when signing (assuming <parameter>sign</parameter> is <literal>TRUE</literal>)
-</para></listitem></varlistentry>
+<listitem><simpara> key id (or email address) to use when signing (assuming <parameter>sign</parameter> is <literal>TRUE</literal>)
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>recipients</parameter>&nbsp;:</term>
-<listitem><para> an array of recipient key ids and/or email addresses
-</para></listitem></varlistentry>
+<listitem><simpara> an array of recipient key ids and/or email addresses
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>istream</parameter>&nbsp;:</term>
-<listitem><para> cleartext input stream
-</para></listitem></varlistentry>
+<listitem><simpara> cleartext input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ostream</parameter>&nbsp;:</term>
-<listitem><para> ciphertext output stream
-</para></listitem></varlistentry>
+<listitem><simpara> ciphertext output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-decrypt">g_mime_cipher_decrypt ()</title>
@@ -280,19 +282,19 @@ cleartext to the output stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>istream</parameter>&nbsp;:</term>
-<listitem><para> input/ciphertext stream
-</para></listitem></varlistentry>
+<listitem><simpara> input/ciphertext stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ostream</parameter>&nbsp;:</term>
-<listitem><para> output/cleartext stream
-</para></listitem></varlistentry>
+<listitem><simpara> output/cleartext stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 for fail.
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 for fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-import-keys">g_mime_cipher_import_keys ()</title>
@@ -306,16 +308,16 @@ into the key/certificate database controlled by <parameter>ctx</parameter>.</par
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>istream</parameter>&nbsp;:</term>
-<listitem><para> input stream (containing keys)
-</para></listitem></varlistentry>
+<listitem><simpara> input stream (containing keys)
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-export-keys">g_mime_cipher_export_keys ()</title>
@@ -330,19 +332,19 @@ the key/certificate database controlled by <parameter>ctx</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> Cipher Context
-</para></listitem></varlistentry>
+<listitem><simpara> Cipher Context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>keys</parameter>&nbsp;:</term>
-<listitem><para> an array of key ids
-</para></listitem></varlistentry>
+<listitem><simpara> an array of key ids
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ostream</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-init">g_mime_cipher_validity_init ()</title>
@@ -353,8 +355,8 @@ Initializes the validity structure.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-new">g_mime_cipher_validity_new ()</title>
@@ -365,8 +367,8 @@ Creates a new validity structure.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new validity structure.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new validity structure.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-clear">g_mime_cipher_validity_clear ()</title>
@@ -377,8 +379,8 @@ Clears the contents of the validity structure.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-free">g_mime_cipher_validity_free ()</title>
@@ -389,8 +391,8 @@ Frees the memory used by <parameter>validity</parameter> back to the system.</pa
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-get-valid">g_mime_cipher_validity_get_valid ()</title>
@@ -402,10 +404,10 @@ Gets the validity of the validity structure <parameter>validity</parameter>.</pa
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> if <parameter>validity</parameter> is valid or <literal>FALSE</literal> otherwise.
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara><literal>TRUE</literal> if <parameter>validity</parameter> is valid or <literal>FALSE</literal> otherwise.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-set-valid">g_mime_cipher_validity_set_valid ()</title>
@@ -418,11 +420,11 @@ Sets the validness on the validity structure.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>valid</parameter>&nbsp;:</term>
-<listitem><para> <literal>TRUE</literal> if valid else <literal>FALSE</literal>
-</para></listitem></varlistentry>
+<listitem><simpara> <literal>TRUE</literal> if valid else <literal>FALSE</literal>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description ()</title>
@@ -434,10 +436,10 @@ Gets the description set on the validity structure <parameter>validity</paramete
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>any description set on the validity structure.
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>any description set on the validity structure.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-cipher-validity-set-description">g_mime_cipher_validity_set_description ()</title>
@@ -450,11 +452,11 @@ Sets the description on the validity structure.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>validity</parameter>&nbsp;:</term>
-<listitem><para> validity structure
-</para></listitem></varlistentry>
+<listitem><simpara> validity structure
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>description</parameter>&nbsp;:</term>
-<listitem><para> validity description
-</para></listitem></varlistentry>
+<listitem><simpara> validity description
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

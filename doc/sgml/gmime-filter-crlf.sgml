@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -42,6 +43,7 @@ enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
 <refsect2>
 <title><anchor id="GMimeFilterCRLF">struct GMimeFilterCRLF</title>
 <programlisting>struct GMimeFilterCRLF {
+
 	GMimeFilter parent_object;
 	
 	GMimeFilterCRLFDirection direction;
@@ -84,13 +86,13 @@ Creates a new GMimeFilterCRLF filter.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>direction</parameter>&nbsp;:</term>
-<listitem><para> encode direction
-</para></listitem></varlistentry>
+<listitem><simpara> encode direction
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>mode</parameter>&nbsp;:</term>
-<listitem><para> crlf or crlf &amp; dot mode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new crlf(/dot) filter.
-</para></listitem></varlistentry>
+<listitem><simpara> crlf or crlf &amp; dot mode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new crlf(/dot) filter.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -57,6 +58,7 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 <refsect2>
 <title><anchor id="GMimeStreamBuffer">struct GMimeStreamBuffer</title>
 <programlisting>struct GMimeStreamBuffer {
+
 	GMimeStream parent_object;
 	
 	GMimeStream *source;
@@ -82,13 +84,13 @@ Creates a new GMimeStreamBuffer object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>source</parameter>&nbsp;:</term>
-<listitem><para> source stream
-</para></listitem></varlistentry>
+<listitem><simpara> source stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>mode</parameter>&nbsp;:</term>
-<listitem><para> buffering mode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new buffer stream with source <parameter>source</parameter> and mode <parameter>mode</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> buffering mode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new buffer stream with source <parameter>source</parameter> and mode <parameter>mode</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-buffer-gets">g_mime_stream_buffer_gets ()</title>
@@ -105,17 +107,17 @@ buffer.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>buf</parameter>&nbsp;:</term>
-<listitem><para> line buffer
-</para></listitem></varlistentry>
+<listitem><simpara> line buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>max</parameter>&nbsp;:</term>
-<listitem><para> max length of a line
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of characters read into <parameter>buf</parameter> on success and -1
+<listitem><simpara> max length of a line
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of characters read into <parameter>buf</parameter> on success and -1
 on fail.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-buffer-readln">g_mime_stream_buffer_readln ()</title>
@@ -127,11 +129,11 @@ Reads a single line into <parameter>buffer</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>buffer</parameter>&nbsp;:</term>
-<listitem><para> output buffer
-</para></listitem></varlistentry>
+<listitem><simpara> output buffer
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

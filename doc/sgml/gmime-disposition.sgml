@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -70,6 +71,7 @@ Standard inline disposition.</para>
 <refsect2>
 <title><anchor id="GMimeDisposition">struct GMimeDisposition</title>
 <programlisting>struct GMimeDisposition {
+
 	char *disposition;
 	GMimeParam *params;
 	GHashTable *param_hash;
@@ -87,10 +89,10 @@ Creates a new GMimeDisposition object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition header (and params)
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition header (and params)
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new disposition object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-destroy">g_mime_disposition_destroy ()</title>
@@ -101,8 +103,8 @@ Destroy the disposition object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-set">g_mime_disposition_set ()</title>
@@ -117,11 +119,11 @@ should be displayed by the MUA.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> disposition value
-</para></listitem></varlistentry>
+<listitem><simpara> disposition value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-get">g_mime_disposition_get ()</title>
@@ -132,11 +134,11 @@ Gets the disposition or <literal>NULL</literal> on fail.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the disposition string which is probably one of
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the disposition string which is probably one of
 GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-add-parameter">g_mime_disposition_add_parameter ()</title>
@@ -151,14 +153,14 @@ disposition.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name
-</para></listitem></varlistentry>
+<listitem><simpara> parameter name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> parameter value
-</para></listitem></varlistentry>
+<listitem><simpara> parameter value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-get-parameter">g_mime_disposition_get_parameter ()</title>
@@ -171,13 +173,13 @@ Gets the value of the parameter <parameter>attribute</parameter>, or <literal>NU
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>attribute</parameter>&nbsp;:</term>
-<listitem><para> parameter name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the parameter of name <parameter>attribute</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> parameter name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of the parameter of name <parameter>attribute</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-disposition-header">g_mime_disposition_header ()</title>
@@ -190,13 +192,13 @@ represented by the disposition object <parameter>disposition</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>disposition</parameter>&nbsp;:</term>
-<listitem><para> disposition object
-</para></listitem></varlistentry>
+<listitem><simpara> disposition object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>fold</parameter>&nbsp;:</term>
-<listitem><para> fold header if needed
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string containing the disposition header
-</para></listitem></varlistentry>
+<listitem><simpara> fold header if needed
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a string containing the disposition header
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

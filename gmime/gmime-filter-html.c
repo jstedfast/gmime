@@ -183,18 +183,65 @@ citation_depth (const char *in)
 	return depth;
 }
 
-static char *
-writeln (GMimeFilter *filter, const char *in, const char *inend, char *outptr, char **outend)
+static __inline__ gunichar
+html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 {
-	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
-	register const char *inptr = in;
+	register const unsigned char *inptr = *in;
+	register unsigned char c, r;
+	register gunichar u, m;
 	
 	while (inptr < inend) {
-		unsigned char u;
+		r = *inptr++;
+	loop:
+		if (r < 0x80) {
+			*in = inptr;
+			return r;
+		} else if (r < 0xf8) { /* valid start char? */
+			u = r;
+			m = 0x7f80;	/* used to mask out the length bits */
+			do {
+				if (inptr >= inend)
+					return 0xffff;
+				
+				c = *inptr++;
+				if ((c & 0xc0) != 0x80) {
+					r = c;
+					goto loop;
+				}
+				
+				u = (u << 6) | (c & 0x3f);
+				r <<= 1;
+				m <<= 5;
+			} while (r & 0x40);
+			
+			*in = inptr;
+			
+			u &= ~m;
+			
+			return u;
+		}
+	}
+	
+	return 0xffff;
+}
+
+static char *
+writeln (GMimeFilter *filter, const unsigned char *in, const unsigned char *inend, char *outptr, char **outend)
+{
+	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
+	const unsigned char *inptr = in;
+	
+	while (inptr < inend) {
+		gunichar u;
 		
-		outptr = check_size (filter, outptr, outend, 9);
+		outptr = check_size (filter, outptr, outend, 16);
 		
-		switch ((u = (unsigned char) *inptr++)) {
+		u = html_utf8_getc (&inptr, inend);
+		switch (u) {
+		case 0xffff:
+			g_warning ("truncated UTF-8 sequence encountered");
+			return outptr;
+			break;
 		case '<':
 			outptr = g_stpcpy (outptr, "&lt;");
 			html->column++;
@@ -231,13 +278,13 @@ writeln (GMimeFilter *filter, const char *in, const char *inend, char *outptr, c
 			}
 			/* otherwise, FALL THROUGH */
 		default:
-			if (!(u >= 0x20 && u < 0x80)) {
+			if (u >= 0x20 && u < 0x80) {
+				*outptr++ = (char) (u & 0xff);
+			} else {
 				if (html->flags & GMIME_FILTER_HTML_ESCAPE_8BIT)
 					*outptr++ = '?';
 				else
-					outptr += g_snprintf (outptr, 9, "&#%d;", (int) u);
-			} else {
-				*outptr++ = (char) u;
+					outptr += sprintf (outptr, "&#%u;", u);
 			}
 			html->column++;
 			break;
@@ -410,7 +457,8 @@ filter_reset (GMimeFilter *filter)
  * @flags: html flags
  * @colour: citation colour
  *
- * Creates a new GMimeFilterHTML filter.
+ * Creates a new GMimeFilterHTML filter which can be used to convert a
+ * plain UTF-8 text stream into an html stream.
  *
  * Returns a new html filter.
  **/

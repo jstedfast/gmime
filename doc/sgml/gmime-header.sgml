@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -69,16 +70,16 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-new">g_mime_header_new ()</title>
@@ -88,8 +89,8 @@ Creates a new GMimeHeader object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new header object.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new header object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-destroy">g_mime_header_destroy ()</title>
@@ -100,8 +101,8 @@ Destroy the header object</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-add">g_mime_header_add ()</title>
@@ -116,14 +117,14 @@ obtained for them) otherwise the header will be unset.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> header value
-</para></listitem></varlistentry>
+<listitem><simpara> header value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-set">g_mime_header_set ()</title>
@@ -139,14 +140,14 @@ can be obtained for them) otherwise the header will be unset.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> header value
-</para></listitem></varlistentry>
+<listitem><simpara> header value
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-get">g_mime_header_get ()</title>
@@ -158,13 +159,13 @@ Gets the value of the header requested.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the value of the header requested.
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the value of the header requested.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-remove">g_mime_header_remove ()</title>
@@ -176,11 +177,11 @@ Remove the specified header.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> header name
-</para></listitem></varlistentry>
+<listitem><simpara> header name
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-write-to-stream">g_mime_header_write_to_stream ()</title>
@@ -192,13 +193,13 @@ Write the headers to a stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-to-string">g_mime_header_to_string ()</title>
@@ -210,10 +211,10 @@ contained in <parameter>header</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string containing the header block
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a string containing the header block
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-header-foreach">g_mime_header_foreach ()</title>
@@ -226,14 +227,14 @@ Calls <parameter>func</parameter> for each header name/value pair.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>header</parameter>&nbsp;:</term>
-<listitem><para> header object
-</para></listitem></varlistentry>
+<listitem><simpara> header object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>func</parameter>&nbsp;:</term>
-<listitem><para> function to be called for each header.
-</para></listitem></varlistentry>
+<listitem><simpara> function to be called for each header.
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
-<listitem><para> User data to be passed to the func.
-</para></listitem></varlistentry>
+<listitem><simpara> User data to be passed to the func.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

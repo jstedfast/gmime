@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -60,6 +61,7 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 <refsect2>
 <title><anchor id="GMimeFilter">struct GMimeFilter</title>
 <programlisting>struct GMimeFilter {
+
 	GObject parent_object;
 	
 	struct _GMimeFilterPrivate *priv;
@@ -87,10 +89,10 @@ Copies <parameter>filter</parameter> into a new GMimeFilter object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a duplicate of <parameter>filter</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a duplicate of <parameter>filter</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-filter">g_mime_filter_filter ()</title>
@@ -107,26 +109,26 @@ Filters the input data and writes it to <parameter>out</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input buffer
-</para></listitem></varlistentry>
+<listitem><simpara> input buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> input buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> input buffer length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>prespace</parameter>&nbsp;:</term>
-<listitem><para> prespace buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> prespace buffer length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> pointer to output buffer
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>outlen</parameter>&nbsp;:</term>
-<listitem><para> pointer to output length
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>outprespace</parameter>&nbsp;:</term>
-<listitem><para> pointer to output prespace buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output prespace buffer length
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-complete">g_mime_filter_complete ()</title>
@@ -143,26 +145,26 @@ Completes the filtering.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input buffer
-</para></listitem></varlistentry>
+<listitem><simpara> input buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> input length
-</para></listitem></varlistentry>
+<listitem><simpara> input length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>prespace</parameter>&nbsp;:</term>
-<listitem><para> prespace buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> prespace buffer length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> pointer to output buffer
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>outlen</parameter>&nbsp;:</term>
-<listitem><para> pointer to output length
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>outprespace</parameter>&nbsp;:</term>
-<listitem><para> pointer to output prespace buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> pointer to output prespace buffer length
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-reset">g_mime_filter_reset ()</title>
@@ -173,8 +175,8 @@ Resets the filter.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-backup">g_mime_filter_backup ()</title>
@@ -188,14 +190,14 @@ previous ones</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>data</parameter>&nbsp;:</term>
-<listitem><para> 
-</para></listitem></varlistentry>
+<listitem><simpara> 
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>length</parameter>&nbsp;:</term>
-<listitem><para> 
-</para></listitem></varlistentry>
+<listitem><simpara> 
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-set-size">g_mime_filter_set_size ()</title>
@@ -208,14 +210,14 @@ Ensure this much size available for filter output (if required)</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>size</parameter>&nbsp;:</term>
-<listitem><para> 
-</para></listitem></varlistentry>
+<listitem><simpara> 
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>keep</parameter>&nbsp;:</term>
-<listitem><para> 
-</para></listitem></varlistentry>
+<listitem><simpara> 
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -17,7 +17,40 @@ TITLE="gmime-stream-cat"
 HREF="gmime-gmime-stream-cat.html"><LINK
 REL="NEXT"
 TITLE="gmime-stream-fs"
-HREF="gmime-gmime-stream-fs.html"></HEAD
+HREF="gmime-gmime-stream-fs.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-stream-cat.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-stream-fs.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-STREAM-FILE"
@@ -135,13 +136,6 @@ NAME="AEN850"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -180,9 +174,6 @@ HREF="OFF-T"
 >off_t</GTKDOCLINK
 > end);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -211,24 +202,15 @@ NAME="AEN867"
 NAME="GMIMESTREAMFILE"
 ></A
 >struct GMimeStreamFile</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeStreamFile {
+
 	GMimeStream parent_object;
 	
 	gboolean owner;
 	FILE *fp;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -242,13 +224,6 @@ NAME="AEN872"
 NAME="G-MIME-STREAM-FILE-NEW"
 ></A
 >g_mime_stream_file_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -258,9 +233,6 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="FILE-CAPS"
 >FILE</GTKDOCLINK
 > *fp);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new GMimeStreamFile object around <TT
 CLASS="PARAMETER"
@@ -273,18 +245,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN882"><SPAN
 STYLE="white-space: nowrap"
@@ -298,16 +267,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > file pointer</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN887"><SPAN
 STYLE="white-space: nowrap"
@@ -319,7 +286,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a stream using <TT
 CLASS="PARAMETER"
@@ -342,13 +308,6 @@ NAME="AEN893"
 NAME="G-MIME-STREAM-FILE-NEW-WITH-BOUNDS"
 ></A
 >g_mime_stream_file_new_with_bounds ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -367,9 +326,6 @@ HREF="OFF-T"
 HREF="OFF-T"
 >off_t</GTKDOCLINK
 > end);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new GMimeStreamFile object around <TT
 CLASS="PARAMETER"
@@ -393,18 +349,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN907"><SPAN
 STYLE="white-space: nowrap"
@@ -418,16 +371,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > file pointer</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN912"><SPAN
 STYLE="white-space: nowrap"
@@ -441,16 +392,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > start boundary</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN917"><SPAN
 STYLE="white-space: nowrap"
@@ -464,16 +413,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > end boundary</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN922"><SPAN
 STYLE="white-space: nowrap"
@@ -485,7 +432,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a stream using <TT
 CLASS="PARAMETER"
@@ -509,109 +455,34 @@ CLASS="PARAMETER"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-stream-cat.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-stream-cat</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-stream-fs.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-stream-fs&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-stream-cat</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-stream-fs</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -50,6 +51,7 @@ int         <link linkend="g-mime-multipart-encrypted-encrypt">g_mime_multipart_
 <refsect2>
 <title><anchor id="GMimeMultipartEncrypted">struct GMimeMultipartEncrypted</title>
 <programlisting>struct GMimeMultipartEncrypted {
+
 	GMimeMultipart parent_object;
 	
 	char *protocol;
@@ -69,8 +71,8 @@ Creates a new MIME multipart/encrypted object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart/encrypted object.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME multipart/encrypted object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-encrypted-encrypt">g_mime_multipart_encrypted_encrypt ()</title>
@@ -89,24 +91,24 @@ multipart/encrypted object <parameter>mpe</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mpe</parameter>&nbsp;:</term>
-<listitem><para> multipart/encrypted object
-</para></listitem></varlistentry>
+<listitem><simpara> multipart/encrypted object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> MIME part to encrypt
-</para></listitem></varlistentry>
+<listitem><simpara> MIME part to encrypt
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> encryption cipher context
-</para></listitem></varlistentry>
+<listitem><simpara> encryption cipher context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>recipients</parameter>&nbsp;:</term>
-<listitem><para> an array of recipients to encrypt to
-</para></listitem></varlistentry>
+<listitem><simpara> an array of recipients to encrypt to
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail. If the encryption fails, an
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail. If the encryption fails, an
 exception will be set on <parameter>err</parameter> to provide information as to why the
 failure occured.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-encrypted-decrypt">g_mime_multipart_encrypted_decrypt ()</title>
@@ -121,18 +123,18 @@ multipart/encrypted object <parameter>mpe</parameter> using the <parameter>ctx</
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mpe</parameter>&nbsp;:</term>
-<listitem><para> multipart/encrypted object
-</para></listitem></varlistentry>
+<listitem><simpara> multipart/encrypted object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> decryption cipher context
-</para></listitem></varlistentry>
+<listitem><simpara> decryption cipher context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the decrypted MIME part on success or <literal>NULL</literal> on fail. If the
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the decrypted MIME part on success or <literal>NULL</literal> on fail. If the
 decryption fails, an exception will be set on <parameter>err</parameter> to provide
 information as to why the failure occured.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -45,6 +46,7 @@ void        <link linkend="g-mime-gpg-context-set-always-trust">g_mime_gpg_conte
 <refsect2>
 <title><anchor id="GMimeGpgContext">struct GMimeGpgContext</title>
 <programlisting>struct GMimeGpgContext {
+
 	GMimeCipherContext parent_object;
 	
 	char *path;
@@ -64,13 +66,13 @@ Creates a new gpg cipher context object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>session</parameter>&nbsp;:</term>
-<listitem><para> session
-</para></listitem></varlistentry>
+<listitem><simpara> session
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>path</parameter>&nbsp;:</term>
-<listitem><para> path to gpg binary
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new gpg cipher context object.
-</para></listitem></varlistentry>
+<listitem><simpara> path to gpg binary
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new gpg cipher context object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-gpg-context-get-always-trust">g_mime_gpg_context_get_always_trust ()</title>
@@ -82,10 +84,10 @@ Gets the <parameter>always_trust</parameter> flag on the gpg context.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> gpg context
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the <parameter>always_trust</parameter> flag on the gpg context.
-</para></listitem></varlistentry>
+<listitem><simpara> gpg context
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the <parameter>always_trust</parameter> flag on the gpg context.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-gpg-context-set-always-trust">g_mime_gpg_context_set_always_trust ()</title>
@@ -99,11 +101,11 @@ encryption.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> gpg context
-</para></listitem></varlistentry>
+<listitem><simpara> gpg context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>always_trust</parameter>&nbsp;:</term>
-<listitem><para> always truct flag
-</para></listitem></varlistentry>
+<listitem><simpara> always truct flag
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

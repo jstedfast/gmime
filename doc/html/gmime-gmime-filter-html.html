@@ -17,7 +17,40 @@ TITLE="gmime-filter-from"
 HREF="gmime-gmime-filter-from.html"><LINK
 REL="NEXT"
 TITLE="gmime-filter-md5"
-HREF="gmime-gmime-filter-md5.html"></HEAD
+HREF="gmime-gmime-filter-md5.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-filter-from.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-filter-md5.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-FILTER-HTML"
@@ -135,13 +136,6 @@ NAME="AEN1923"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -197,9 +191,6 @@ HREF="GUINT32"
 >guint32</GTKDOCLINK
 > colour);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -228,16 +219,10 @@ NAME="AEN1944"
 NAME="GMIMEFILTERHTML"
 ></A
 >struct GMimeFilterHTML</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeFilterHTML {
+
 	GMimeFilter parent_object;
 	
 	struct _GUrlScanner *scanner;
@@ -248,9 +233,6 @@ CLASS="PROGRAMLISTING"
 	guint32 column       : 31;
 	guint32 pre_open     : 1;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -264,19 +246,9 @@ NAME="AEN1949"
 NAME="GMIME-FILTER-HTML-PRE-CAPS"
 ></A
 >GMIME_FILTER_HTML_PRE</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_PRE</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Wrap stream in &lt;pre&gt; tags.</P
 ><P
@@ -292,19 +264,9 @@ NAME="AEN1955"
 NAME="GMIME-FILTER-HTML-CONVERT-NL-CAPS"
 ></A
 >GMIME_FILTER_HTML_CONVERT_NL</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_CONVERT_NL</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Convert new-lines ('\n') into &lt;br&gt; tags.</P
 ><P
@@ -320,19 +282,9 @@ NAME="AEN1961"
 NAME="GMIME-FILTER-HTML-CONVERT-SPACES-CAPS"
 ></A
 >GMIME_FILTER_HTML_CONVERT_SPACES</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_CONVERT_SPACES</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Preserve whitespace by converting spaces into their appropriate
 html entities.</P
@@ -349,19 +301,9 @@ NAME="AEN1967"
 NAME="GMIME-FILTER-HTML-CONVERT-URLS-CAPS"
 ></A
 >GMIME_FILTER_HTML_CONVERT_URLS</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_CONVERT_URLS</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Wrap detected URLs in &lt;a href=...&gt; tags.</P
 ><P
@@ -377,19 +319,9 @@ NAME="AEN1973"
 NAME="GMIME-FILTER-HTML-MARK-CITATION-CAPS"
 ></A
 >GMIME_FILTER_HTML_MARK_CITATION</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_MARK_CITATION</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Change the colour of citation text.</P
 ><P
@@ -405,19 +337,9 @@ NAME="AEN1979"
 NAME="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS"
 ></A
 >GMIME_FILTER_HTML_CONVERT_ADDRESSES</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_CONVERT_ADDRESSES</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Wrap email addresses in "mailto:" href tags.</P
 ><P
@@ -433,19 +355,9 @@ NAME="AEN1985"
 NAME="GMIME-FILTER-HTML-ESCAPE-8BIT-CAPS"
 ></A
 >GMIME_FILTER_HTML_ESCAPE_8BIT</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_ESCAPE_8BIT</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Converts 8bit characters to '?'.</P
 ><P
@@ -461,19 +373,9 @@ NAME="AEN1991"
 NAME="GMIME-FILTER-HTML-CITE-CAPS"
 ></A
 >GMIME_FILTER_HTML_CITE</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define     GMIME_FILTER_HTML_CITE</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Cites text by prepending "&gt; " to each cited line.</P
 ><P
@@ -489,13 +391,6 @@ NAME="AEN1997"
 NAME="G-MIME-FILTER-HTML-NEW"
 ></A
 >g_mime_filter_html_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -509,9 +404,6 @@ HREF="GUINT32"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > colour);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new GMimeFilterHTML filter.</P
 ><P
@@ -519,18 +411,15 @@ HREF="GUINT32"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2007"><SPAN
 STYLE="white-space: nowrap"
@@ -544,16 +433,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > html flags</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2012"><SPAN
 STYLE="white-space: nowrap"
@@ -567,16 +454,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > citation colour</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN2017"><SPAN
 STYLE="white-space: nowrap"
@@ -588,7 +473,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new html filter.</P
 ></TD
@@ -597,109 +481,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-filter-from.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-filter-from</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-filter-md5.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-filter-md5&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-filter-from</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-filter-md5</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

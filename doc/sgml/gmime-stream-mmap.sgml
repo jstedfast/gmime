@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -47,6 +48,7 @@ struct      <link linkend="GMimeStreamMmap">GMimeStreamMmap</link>;
 <refsect2>
 <title><anchor id="GMimeStreamMmap">struct GMimeStreamMmap</title>
 <programlisting>struct GMimeStreamMmap {
+
 	GMimeStream parent_object;
 	
 	gboolean owner;
@@ -71,16 +73,16 @@ Creates a new GMimeStreamMmap object around <parameter>fd</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
-<listitem><para> file descriptor
-</para></listitem></varlistentry>
+<listitem><simpara> file descriptor
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>prot</parameter>&nbsp;:</term>
-<listitem><para> protection flags
-</para></listitem></varlistentry>
+<listitem><simpara> protection flags
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
-<listitem><para> map flags
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> map flags
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a stream using <parameter>fd</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-mmap-new-with-bounds">g_mime_stream_mmap_new_with_bounds ()</title>
@@ -97,22 +99,22 @@ and <parameter>end</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fd</parameter>&nbsp;:</term>
-<listitem><para> file descriptor
-</para></listitem></varlistentry>
+<listitem><simpara> file descriptor
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>prot</parameter>&nbsp;:</term>
-<listitem><para> protection flags
-</para></listitem></varlistentry>
+<listitem><simpara> protection flags
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
-<listitem><para> map flags
-</para></listitem></varlistentry>
+<listitem><simpara> map flags
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>start</parameter>&nbsp;:</term>
-<listitem><para> start boundary
-</para></listitem></varlistentry>
+<listitem><simpara> start boundary
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>end</parameter>&nbsp;:</term>
-<listitem><para> end boundary
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> end boundary
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a stream using <parameter>fd</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

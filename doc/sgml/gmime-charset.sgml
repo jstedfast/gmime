@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -60,8 +61,8 @@ Gets the user's locale charset (or iso-8859-1 by default).</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the user's locale charset (or iso-8859-1 by default).
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the user's locale charset (or iso-8859-1 by default).
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-name">g_mime_charset_name ()</title>
@@ -72,10 +73,10 @@ Attempts to find an iconv-friendly charset name for <parameter>charset</paramete
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
-<listitem><para> charset name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an iconv-friendly charset name for <parameter>charset</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> charset name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an iconv-friendly charset name for <parameter>charset</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-init">g_mime_charset_init ()</title>
@@ -86,8 +87,8 @@ Initializes a charset mask structure.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
-<listitem><para> charset mask
-</para></listitem></varlistentry>
+<listitem><simpara> charset mask
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-step">g_mime_charset_step ()</title>
@@ -103,14 +104,14 @@ limiting what charsets our <parameter>charset</parameter>-&gt;mask can match.</p
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input text buffer (must be in UTF-8)
-</para></listitem></varlistentry>
+<listitem><simpara> input text buffer (must be in UTF-8)
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> input buffer length
-</para></listitem></varlistentry>
+<listitem><simpara> input buffer length
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-best-name">g_mime_charset_best_name ()</title>
@@ -121,11 +122,11 @@ Gets the best charset name based on the charset mask <parameter>charset</paramet
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>charset</parameter>&nbsp;:</term>
-<listitem><para> charset mask
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a pointer to a string containing the best charset name that
+<listitem><simpara> charset mask
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a pointer to a string containing the best charset name that
 can represent the charset mask <parameter>charset</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-charset-best">g_mime_charset_best ()</title>
@@ -137,14 +138,14 @@ Computes the best charset to use to encode this text buffer.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> a UTF-8 text buffer
-</para></listitem></varlistentry>
+<listitem><simpara> a UTF-8 text buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> length of <parameter>in</parameter>
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the charset name best suited for the input text or <literal>NULL</literal> if
+<listitem><simpara> length of <parameter>in</parameter>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the charset name best suited for the input text or <literal>NULL</literal> if
 it is US-ASCII safe.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

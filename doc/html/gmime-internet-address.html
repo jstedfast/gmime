@@ -17,7 +17,40 @@ TITLE="gmime-utils"
 HREF="gmime-gmime-utils.html"><LINK
 REL="NEXT"
 TITLE="gmime-parser"
-HREF="gmime-gmime-parser.html"></HEAD
+HREF="gmime-gmime-parser.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-utils.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-parser.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-INTERNET-ADDRESS"
@@ -135,13 +136,6 @@ NAME="AEN7206"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -321,9 +315,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > encode);</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -352,13 +343,6 @@ NAME="AEN7261"
 NAME="INTERNETADDRESSTYPE"
 ></A
 >enum InternetAddressType</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >typedef enum {
@@ -366,9 +350,6 @@ CLASS="PROGRAMLISTING"
 	INTERNET_ADDRESS_NAME,
 	INTERNET_ADDRESS_GROUP
 } InternetAddressType;</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -382,22 +363,13 @@ NAME="AEN7266"
 NAME="INTERNETADDRESSLIST"
 ></A
 >struct InternetAddressList</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct InternetAddressList {
+
 	struct _InternetAddressList *next;
 	InternetAddress *address;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -411,16 +383,10 @@ NAME="AEN7271"
 NAME="INTERNETADDRESS"
 ></A
 >struct InternetAddress</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct InternetAddress {
+
 	InternetAddressType type;
 	unsigned int refcount;
 	char *name;
@@ -429,9 +395,6 @@ CLASS="PROGRAMLISTING"
 		InternetAddressList *members;
 	} value;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -445,22 +408,12 @@ NAME="AEN7276"
 NAME="INTERNET-ADDRESS-NEW"
 ></A
 >internet_address_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >* internet_address_new       (void);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -471,18 +424,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7285"><SPAN
 STYLE="white-space: nowrap"
@@ -494,7 +444,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -515,13 +464,6 @@ NAME="AEN7291"
 NAME="INTERNET-ADDRESS-NEW-NAME"
 ></A
 >internet_address_new_name ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -529,9 +471,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >* internet_address_new_name  (const char *name,
                                              const char *addr);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -553,18 +492,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7302"><SPAN
 STYLE="white-space: nowrap"
@@ -578,16 +514,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > person's name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7307"><SPAN
 STYLE="white-space: nowrap"
@@ -601,16 +535,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > person's address</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7312"><SPAN
 STYLE="white-space: nowrap"
@@ -622,7 +554,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -643,22 +574,12 @@ NAME="AEN7318"
 NAME="INTERNET-ADDRESS-NEW-GROUP"
 ></A
 >internet_address_new_group ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >* internet_address_new_group (const char *name);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -674,18 +595,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7328"><SPAN
 STYLE="white-space: nowrap"
@@ -699,16 +617,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > group name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7333"><SPAN
 STYLE="white-space: nowrap"
@@ -720,7 +636,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a new <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -741,22 +656,12 @@ NAME="AEN7339"
 NAME="INTERNET-ADDRESS-REF"
 ></A
 >internet_address_ref ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_ref            (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Ref's the internet address.</P
 ><P
@@ -764,18 +669,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7347"><SPAN
 STYLE="white-space: nowrap"
@@ -789,7 +691,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
@@ -807,22 +708,12 @@ NAME="AEN7352"
 NAME="INTERNET-ADDRESS-UNREF"
 ></A
 >internet_address_unref ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_unref          (<A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Unref's the internet address.</P
 ><P
@@ -830,18 +721,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7360"><SPAN
 STYLE="white-space: nowrap"
@@ -855,7 +743,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
@@ -873,13 +760,6 @@ NAME="AEN7365"
 NAME="INTERNET-ADDRESS-SET-NAME"
 ></A
 >internet_address_set_name ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_set_name       (<A
@@ -887,9 +767,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
                                              const char *name);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the name of the internet address.</P
 ><P
@@ -897,18 +774,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7373"><SPAN
 STYLE="white-space: nowrap"
@@ -922,16 +796,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7378"><SPAN
 STYLE="white-space: nowrap"
@@ -945,7 +817,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > group or contact's name</P
 ></TD
@@ -963,13 +834,6 @@ NAME="AEN7383"
 NAME="INTERNET-ADDRESS-SET-ADDR"
 ></A
 >internet_address_set_addr ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_set_addr       (<A
@@ -977,9 +841,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia,
                                              const char *addr);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the internet address's address.</P
 ><P
@@ -987,18 +848,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7391"><SPAN
 STYLE="white-space: nowrap"
@@ -1012,16 +870,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7396"><SPAN
 STYLE="white-space: nowrap"
@@ -1035,7 +891,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > contact's email address</P
 ></TD
@@ -1053,13 +908,6 @@ NAME="AEN7401"
 NAME="INTERNET-ADDRESS-SET-GROUP"
 ></A
 >internet_address_set_group ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_set_group      (<A
@@ -1070,9 +918,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 >InternetAddressList</A
 > *group);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the members of the internet address group.</P
 ><P
@@ -1080,18 +925,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7410"><SPAN
 STYLE="white-space: nowrap"
@@ -1105,16 +947,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7415"><SPAN
 STYLE="white-space: nowrap"
@@ -1128,7 +968,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a list of internet addresses</P
 ></TD
@@ -1146,13 +985,6 @@ NAME="AEN7420"
 NAME="INTERNET-ADDRESS-ADD-MEMBER"
 ></A
 >internet_address_add_member ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_add_member     (<A
@@ -1163,9 +995,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *member);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Add a contact to the internet address group.</P
 ><P
@@ -1173,18 +1002,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7429"><SPAN
 STYLE="white-space: nowrap"
@@ -1198,16 +1024,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7434"><SPAN
 STYLE="white-space: nowrap"
@@ -1221,7 +1045,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > group member's internet address</P
 ></TD
@@ -1239,13 +1062,6 @@ NAME="AEN7439"
 NAME="INTERNET-ADDRESS-LIST-PREPEND"
 ></A
 >internet_address_list_prepend ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1260,9 +1076,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Prepends the internet address to the list of internet addresses
 pointed to by <TT
@@ -1276,18 +1089,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7450"><SPAN
 STYLE="white-space: nowrap"
@@ -1301,16 +1111,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a list of internet addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7455"><SPAN
 STYLE="white-space: nowrap"
@@ -1324,16 +1132,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address to prepend</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7460"><SPAN
 STYLE="white-space: nowrap"
@@ -1345,7 +1151,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the resultant list.</P
 ></TD
@@ -1363,13 +1168,6 @@ NAME="AEN7465"
 NAME="INTERNET-ADDRESS-LIST-APPEND"
 ></A
 >internet_address_list_append ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1384,9 +1182,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Appends the internet address to the list of internet addresses
 pointed to by <TT
@@ -1400,18 +1195,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7476"><SPAN
 STYLE="white-space: nowrap"
@@ -1425,16 +1217,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a list of internet addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7481"><SPAN
 STYLE="white-space: nowrap"
@@ -1448,16 +1238,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > internet address to append</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7486"><SPAN
 STYLE="white-space: nowrap"
@@ -1469,7 +1257,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the resultant list.</P
 ></TD
@@ -1487,13 +1274,6 @@ NAME="AEN7491"
 NAME="INTERNET-ADDRESS-LIST-CONCAT"
 ></A
 >internet_address_list_concat ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1508,9 +1288,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 >InternetAddressList</A
 > *b);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Concatenates a copy of list <TT
 CLASS="PARAMETER"
@@ -1528,18 +1305,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7503"><SPAN
 STYLE="white-space: nowrap"
@@ -1553,16 +1327,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > first list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7508"><SPAN
 STYLE="white-space: nowrap"
@@ -1576,16 +1348,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > second list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7513"><SPAN
 STYLE="white-space: nowrap"
@@ -1597,7 +1367,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the resulting list.</P
 ></TD
@@ -1615,22 +1384,12 @@ NAME="AEN7518"
 NAME="INTERNET-ADDRESS-LIST-LENGTH"
 ></A
 >internet_address_list_length ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         internet_address_list_length    (<A
 HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 >InternetAddressList</A
 > *list);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Calculates the length of the list of addresses.</P
 ><P
@@ -1638,18 +1397,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7526"><SPAN
 STYLE="white-space: nowrap"
@@ -1663,16 +1419,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > list of internet addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7531"><SPAN
 STYLE="white-space: nowrap"
@@ -1684,7 +1438,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of internet addresses in <TT
 CLASS="PARAMETER"
@@ -1707,22 +1460,12 @@ NAME="AEN7537"
 NAME="INTERNET-ADDRESS-LIST-DESTROY"
 ></A
 >internet_address_list_destroy ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        internet_address_list_destroy   (<A
 HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 >InternetAddressList</A
 > *list);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Destroys the list of internet addresses.</P
 ><P
@@ -1730,18 +1473,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7545"><SPAN
 STYLE="white-space: nowrap"
@@ -1755,7 +1495,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > address list</P
 ></TD
@@ -1773,13 +1512,6 @@ NAME="AEN7550"
 NAME="INTERNET-ADDRESS-PARSE-STRING"
 ></A
 >internet_address_parse_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1787,9 +1519,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 >InternetAddressList</A
 >* internet_address_parse_string
                                             (const char *string);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Construct a list of internet addresses from the given string.</P
 ><P
@@ -1797,18 +1526,15 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7558"><SPAN
 STYLE="white-space: nowrap"
@@ -1822,16 +1548,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a string containing internet addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7563"><SPAN
 STYLE="white-space: nowrap"
@@ -1843,7 +1567,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a linked list of internet addresses. *Must* be free'd by
 the caller.</P
@@ -1862,13 +1585,6 @@ NAME="AEN7568"
 NAME="INTERNET-ADDRESS-TO-STRING"
 ></A
 >internet_address_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       internet_address_to_string      (<A
@@ -1879,9 +1595,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > encode);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string containing the contents of the <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -1893,18 +1606,15 @@ object.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7578"><SPAN
 STYLE="white-space: nowrap"
@@ -1918,16 +1628,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Internet Address object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7583"><SPAN
 STYLE="white-space: nowrap"
@@ -1941,16 +1649,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > TRUE if the address should be rfc2047 encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7588"><SPAN
 STYLE="white-space: nowrap"
@@ -1962,7 +1668,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
@@ -1984,13 +1689,6 @@ NAME="AEN7594"
 NAME="INTERNET-ADDRESS-LIST-TO-STRING"
 ></A
 >internet_address_list_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       internet_address_list_to_string (<A
@@ -2001,9 +1699,6 @@ HREF="gmime-internet-address.html#INTERNETADDRESSLIST"
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
 > encode);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string buffer containing the rfc822 formatted addresses
 in <TT
@@ -2017,18 +1712,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7604"><SPAN
 STYLE="white-space: nowrap"
@@ -2042,16 +1734,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > list of internet addresses</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7609"><SPAN
 STYLE="white-space: nowrap"
@@ -2065,7 +1755,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > <TT
 CLASS="LITERAL"
@@ -2075,9 +1764,8 @@ CLASS="LITERAL"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7615"><SPAN
 STYLE="white-space: nowrap"
@@ -2089,7 +1777,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a string containing the list of addresses in rfc822 format.</P
 ></TD
@@ -2098,109 +1785,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-utils.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-utils</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-parser.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-parser&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-utils</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-parser</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

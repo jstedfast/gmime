@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -44,6 +45,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <refsect2>
 <title><anchor id="GMimeStreamFilter">struct GMimeStreamFilter</title>
 <programlisting>struct GMimeStreamFilter {
+
 	GMimeStream parent_object;
 	
 	struct _GMimeStreamFilterPrivate *priv;
@@ -65,10 +67,10 @@ stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> source stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new filter stream with <parameter>stream</parameter> as its source.
-</para></listitem></varlistentry>
+<listitem><simpara> source stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new filter stream with <parameter>stream</parameter> as its source.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-filter-add">g_mime_stream_filter_add ()</title>
@@ -80,13 +82,13 @@ Adds a <parameter>filter</parameter> to <parameter>fstream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fstream</parameter>&nbsp;:</term>
-<listitem><para> filter stream
-</para></listitem></varlistentry>
+<listitem><simpara> filter stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>filter</parameter>&nbsp;:</term>
-<listitem><para> filter
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an id for the filter.
-</para></listitem></varlistentry>
+<listitem><simpara> filter
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an id for the filter.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-filter-remove">g_mime_stream_filter_remove ()</title>
@@ -99,11 +101,11 @@ filter_add).</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fstream</parameter>&nbsp;:</term>
-<listitem><para> filter stream
-</para></listitem></varlistentry>
+<listitem><simpara> filter stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>id</parameter>&nbsp;:</term>
-<listitem><para> filter id
-</para></listitem></varlistentry>
+<listitem><simpara> filter id
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

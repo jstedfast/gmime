@@ -17,7 +17,40 @@ TITLE="gmime-data-wrapper"
 HREF="gmime-gmime-data-wrapper.html"><LINK
 REL="NEXT"
 TITLE="gmime-part"
-HREF="gmime-gmime-part.html"></HEAD
+HREF="gmime-gmime-part.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-data-wrapper.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-part.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-OBJECT"
@@ -135,13 +136,6 @@ NAME="AEN3522"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -311,9 +305,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -342,16 +333,10 @@ NAME="AEN3572"
 NAME="GMIMEOBJECT"
 ></A
 >struct GMimeObject</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeObject {
+
 	GObject parent_object;
 	
 	GMimeContentType *content_type;
@@ -359,9 +344,6 @@ CLASS="PROGRAMLISTING"
 	
 	char *content_id;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -375,13 +357,6 @@ NAME="AEN3577"
 NAME="GMIMEPARTFUNC"
 ></A
 >GMimePartFunc ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        (*GMimePartFunc)                (<A
@@ -392,26 +367,20 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 HREF="GPOINTER"
 >gpointer</GTKDOCLINK
 > data);</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3585"><SPAN
 STYLE="white-space: nowrap"
@@ -425,16 +394,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3590"><SPAN
 STYLE="white-space: nowrap"
@@ -448,7 +415,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >&#13;</P
 ></TD
@@ -466,13 +432,6 @@ NAME="AEN3595"
 NAME="G-MIME-OBJECT-REGISTER-TYPE"
 ></A
 >g_mime_object_register_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_register_type     (const char *type,
@@ -481,9 +440,6 @@ CLASS="PROGRAMLISTING"
 HREF="GTYPE"
 >GType</GTKDOCLINK
 > object_type);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Registers the object type <TT
 CLASS="PARAMETER"
@@ -503,18 +459,15 @@ subtype.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3606"><SPAN
 STYLE="white-space: nowrap"
@@ -528,16 +481,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime type</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3611"><SPAN
 STYLE="white-space: nowrap"
@@ -551,16 +502,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime subtype</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3616"><SPAN
 STYLE="white-space: nowrap"
@@ -574,7 +523,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > object type</P
 ></TD
@@ -592,13 +540,6 @@ NAME="AEN3621"
 NAME="G-MIME-OBJECT-NEW-TYPE"
 ></A
 >g_mime_object_new_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -606,9 +547,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 >* g_mime_object_new_type         (const char *type,
                                              const char *subtype);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Performs a lookup of registered <A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
@@ -645,18 +583,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3635"><SPAN
 STYLE="white-space: nowrap"
@@ -670,16 +605,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime type</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3640"><SPAN
 STYLE="white-space: nowrap"
@@ -693,16 +626,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime subtype</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3645"><SPAN
 STYLE="white-space: nowrap"
@@ -714,7 +645,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an appropriate <A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
@@ -746,22 +676,12 @@ NAME="AEN3653"
 NAME="G-MIME-OBJECT-REF"
 ></A
 >g_mime_object_ref ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_ref               (<A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Ref's a MIME object.</P
 ><P
@@ -769,18 +689,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3661"><SPAN
 STYLE="white-space: nowrap"
@@ -794,7 +711,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
@@ -812,22 +728,12 @@ NAME="AEN3666"
 NAME="G-MIME-OBJECT-UNREF"
 ></A
 >g_mime_object_unref ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_unref             (<A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Unref's a MIME object.</P
 ><P
@@ -835,18 +741,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3674"><SPAN
 STYLE="white-space: nowrap"
@@ -860,7 +763,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
@@ -878,13 +780,6 @@ NAME="AEN3679"
 NAME="G-MIME-OBJECT-SET-CONTENT-TYPE"
 ></A
 >g_mime_object_set_content_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_set_content_type  (<A
@@ -895,9 +790,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the content-type for the specified MIME object.</P
 ><P
@@ -905,18 +797,15 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3688"><SPAN
 STYLE="white-space: nowrap"
@@ -930,16 +819,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3693"><SPAN
 STYLE="white-space: nowrap"
@@ -953,7 +840,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME type</P
 ></TD
@@ -971,13 +857,6 @@ NAME="AEN3698"
 NAME="G-MIME-OBJECT-GET-CONTENT-TYPE"
 ></A
 >g_mime_object_get_content_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const <A
@@ -988,9 +867,6 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the Content-Type object for the given MIME object or <TT
 CLASS="LITERAL"
@@ -1002,18 +878,15 @@ fail.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3708"><SPAN
 STYLE="white-space: nowrap"
@@ -1027,16 +900,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3713"><SPAN
 STYLE="white-space: nowrap"
@@ -1048,7 +919,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content-type object for the specified MIME object.</P
 ></TD
@@ -1066,13 +936,6 @@ NAME="AEN3718"
 NAME="G-MIME-OBJECT-SET-CONTENT-TYPE-PARAMETER"
 ></A
 >g_mime_object_set_content_type_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_set_content_type_parameter
@@ -1082,9 +945,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 > *object,
                                              const char *name,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the content-type param <TT
 CLASS="PARAMETER"
@@ -1102,18 +962,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3728"><SPAN
 STYLE="white-space: nowrap"
@@ -1127,16 +984,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3733"><SPAN
 STYLE="white-space: nowrap"
@@ -1150,16 +1005,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3738"><SPAN
 STYLE="white-space: nowrap"
@@ -1173,7 +1026,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param value</P
 ></TD
@@ -1191,13 +1043,6 @@ NAME="AEN3743"
 NAME="G-MIME-OBJECT-GET-CONTENT-TYPE-PARAMETER"
 ></A
 >g_mime_object_get_content_type_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_object_get_content_type_parameter
@@ -1206,9 +1051,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object,
                                              const char *name);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the content-type param <TT
 CLASS="PARAMETER"
@@ -1227,18 +1069,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3753"><SPAN
 STYLE="white-space: nowrap"
@@ -1252,16 +1091,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3758"><SPAN
 STYLE="white-space: nowrap"
@@ -1275,16 +1112,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > param name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3763"><SPAN
 STYLE="white-space: nowrap"
@@ -1296,7 +1131,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the value of the requested content-type param or <TT
 CLASS="LITERAL"
@@ -1318,13 +1152,6 @@ NAME="AEN3769"
 NAME="G-MIME-OBJECT-SET-CONTENT-ID"
 ></A
 >g_mime_object_set_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_set_content_id    (<A
@@ -1332,9 +1159,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object,
                                              const char *content_id);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the Content-Id of the MIME object.</P
 ><P
@@ -1342,18 +1166,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3777"><SPAN
 STYLE="white-space: nowrap"
@@ -1367,16 +1188,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3782"><SPAN
 STYLE="white-space: nowrap"
@@ -1390,7 +1209,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content-id (addr-spec portion)</P
 ></TD
@@ -1408,22 +1226,12 @@ NAME="AEN3787"
 NAME="G-MIME-OBJECT-GET-CONTENT-ID"
 ></A
 >g_mime_object_get_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_object_get_content_id    (<A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the Content-Id of the MIME object or NULL if one is not set.</P
 ><P
@@ -1431,18 +1239,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3795"><SPAN
 STYLE="white-space: nowrap"
@@ -1456,16 +1261,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3800"><SPAN
 STYLE="white-space: nowrap"
@@ -1477,7 +1280,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a const pointer to the Content-Id header.</P
 ></TD
@@ -1495,13 +1297,6 @@ NAME="AEN3805"
 NAME="G-MIME-OBJECT-ADD-HEADER"
 ></A
 >g_mime_object_add_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_add_header        (<A
@@ -1510,9 +1305,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 > *object,
                                              const char *header,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Adds an arbitrary header to the MIME object.</P
 ><P
@@ -1520,18 +1312,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3813"><SPAN
 STYLE="white-space: nowrap"
@@ -1545,16 +1334,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3818"><SPAN
 STYLE="white-space: nowrap"
@@ -1568,16 +1355,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3823"><SPAN
 STYLE="white-space: nowrap"
@@ -1591,7 +1376,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header value</P
 ></TD
@@ -1609,13 +1393,6 @@ NAME="AEN3828"
 NAME="G-MIME-OBJECT-SET-HEADER"
 ></A
 >g_mime_object_set_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_set_header        (<A
@@ -1624,9 +1401,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 > *object,
                                              const char *header,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets an arbitrary header on the MIME object.</P
 ><P
@@ -1634,18 +1408,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3836"><SPAN
 STYLE="white-space: nowrap"
@@ -1659,16 +1430,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3841"><SPAN
 STYLE="white-space: nowrap"
@@ -1682,16 +1451,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3846"><SPAN
 STYLE="white-space: nowrap"
@@ -1705,7 +1472,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header value</P
 ></TD
@@ -1723,13 +1489,6 @@ NAME="AEN3851"
 NAME="G-MIME-OBJECT-GET-HEADER"
 ></A
 >g_mime_object_get_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_object_get_header        (<A
@@ -1737,9 +1496,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object,
                                              const char *header);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the requested header if it exists or <TT
 CLASS="LITERAL"
@@ -1751,18 +1507,15 @@ otherwise.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3860"><SPAN
 STYLE="white-space: nowrap"
@@ -1776,16 +1529,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3865"><SPAN
 STYLE="white-space: nowrap"
@@ -1799,16 +1550,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3870"><SPAN
 STYLE="white-space: nowrap"
@@ -1820,7 +1569,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the value of the header <TT
 CLASS="PARAMETER"
@@ -1847,13 +1595,6 @@ NAME="AEN3877"
 NAME="G-MIME-OBJECT-REMOVE-HEADER"
 ></A
 >g_mime_object_remove_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_object_remove_header     (<A
@@ -1861,9 +1602,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object,
                                              const char *header);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Removed the specified header if it exists.</P
 ><P
@@ -1871,18 +1609,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3885"><SPAN
 STYLE="white-space: nowrap"
@@ -1896,16 +1631,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3890"><SPAN
 STYLE="white-space: nowrap"
@@ -1919,7 +1652,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
@@ -1937,22 +1669,12 @@ NAME="AEN3895"
 NAME="G-MIME-OBJECT-GET-HEADERS"
 ></A
 >g_mime_object_get_headers ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_object_get_headers       (<A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string buffer containing all of the MIME object's raw
 headers.</P
@@ -1961,18 +1683,15 @@ headers.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3903"><SPAN
 STYLE="white-space: nowrap"
@@ -1986,16 +1705,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3908"><SPAN
 STYLE="white-space: nowrap"
@@ -2007,7 +1724,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing all of the raw MIME headers.</P
 ></TD
@@ -2025,13 +1741,6 @@ NAME="AEN3913"
 NAME="G-MIME-OBJECT-WRITE-TO-STREAM"
 ></A
 >g_mime_object_write_to_stream ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2045,9 +1754,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Write the contents of the MIME object to <TT
 CLASS="PARAMETER"
@@ -2060,18 +1766,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3924"><SPAN
 STYLE="white-space: nowrap"
@@ -2085,16 +1788,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3929"><SPAN
 STYLE="white-space: nowrap"
@@ -2108,16 +1809,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3934"><SPAN
 STYLE="white-space: nowrap"
@@ -2129,7 +1828,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >-1 on fail.</P
 ></TD
@@ -2147,22 +1845,12 @@ NAME="AEN3939"
 NAME="G-MIME-OBJECT-TO-STRING"
 ></A
 >g_mime_object_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_object_to_string         (<A
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *object);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string buffer containing the contents of <TT
 CLASS="PARAMETER"
@@ -2175,18 +1863,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3948"><SPAN
 STYLE="white-space: nowrap"
@@ -2200,16 +1885,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN3953"><SPAN
 STYLE="white-space: nowrap"
@@ -2221,7 +1904,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing the contents of the mime
 object.</P
@@ -2231,109 +1913,34 @@ object.</P
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-data-wrapper.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-data-wrapper</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-part.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-part&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-data-wrapper</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-part</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

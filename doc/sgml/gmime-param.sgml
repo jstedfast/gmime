@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -48,6 +49,7 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 <refsect2>
 <title><anchor id="GMimeParam">struct GMimeParam</title>
 <programlisting>struct GMimeParam {
+
 	struct _GMimeParam *next;
 	char *name;
 	char *value;
@@ -66,13 +68,13 @@ Creates a new GMimeParam node with name <parameter>name</parameter> and value <p
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> parameter name
-</para></listitem></varlistentry>
+<listitem><simpara> parameter name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> parameter value
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new paramter structure.
-</para></listitem></varlistentry>
+<listitem><simpara> parameter value
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new paramter structure.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-new-from-string">g_mime_param_new_from_string ()</title>
@@ -83,10 +85,10 @@ Creates a parameter list based on the input string.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> input string
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a GMimeParam structure based on <parameter>string</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> input string
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a GMimeParam structure based on <parameter>string</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-destroy">g_mime_param_destroy ()</title>
@@ -98,8 +100,8 @@ System.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>param</parameter>&nbsp;:</term>
-<listitem><para> Mime param list to destroy
-</para></listitem></varlistentry>
+<listitem><simpara> Mime param list to destroy
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-append">g_mime_param_append ()</title>
@@ -113,17 +115,17 @@ parameter list <parameter>params</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>params</parameter>&nbsp;:</term>
-<listitem><para> param list
-</para></listitem></varlistentry>
+<listitem><simpara> param list
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> new param name
-</para></listitem></varlistentry>
+<listitem><simpara> new param name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>value</parameter>&nbsp;:</term>
-<listitem><para> new param value
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a param list with the new param of name <parameter>name</parameter> and value
+<listitem><simpara> new param value
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a param list with the new param of name <parameter>name</parameter> and value
 <parameter>value</parameter> appended to the list of params <parameter>params</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-append-param">g_mime_param_append_param ()</title>
@@ -135,14 +137,14 @@ Appends <parameter>param</parameter> to the param list <parameter>params</parame
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>params</parameter>&nbsp;:</term>
-<listitem><para> param list
-</para></listitem></varlistentry>
+<listitem><simpara> param list
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>param</parameter>&nbsp;:</term>
-<listitem><para> param to append
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a param list with the new param <parameter>param</parameter> appended to the list
+<listitem><simpara> param to append
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a param list with the new param <parameter>param</parameter> appended to the list
 of params <parameter>params</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-write-to-string">g_mime_param_write_to_string ()</title>
@@ -159,14 +161,14 @@ Writes the params out to the string <parameter>string</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>param</parameter>&nbsp;:</term>
-<listitem><para> MIME Param list
-</para></listitem></varlistentry>
+<listitem><simpara> MIME Param list
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>fold</parameter>&nbsp;:</term>
-<listitem><para> specifies whether or not to fold headers
-</para></listitem></varlistentry>
+<listitem><simpara> specifies whether or not to fold headers
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> output string
-</para></listitem></varlistentry>
+<listitem><simpara> output string
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

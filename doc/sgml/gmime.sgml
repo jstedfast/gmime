@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -42,16 +43,16 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>major</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>minor</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
+<listitem><simpara>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>micro</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="GMIME-INIT-FLAG-UTF8-CAPS">GMIME_INIT_FLAG_UTF8</title>
@@ -76,8 +77,8 @@ Initializes GMime.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>flags</parameter>&nbsp;:</term>
-<listitem><para> initialization flags
-</para></listitem></varlistentry>
+<listitem><simpara> initialization flags
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -50,6 +51,7 @@ int         <link linkend="g-mime-multipart-signed-sign">g_mime_multipart_signed
 <refsect2>
 <title><anchor id="GMimeMultipartSigned">struct GMimeMultipartSigned</title>
 <programlisting>struct GMimeMultipartSigned {
+
 	GMimeMultipart parent_object;
 	
 	char *protocol;
@@ -68,8 +70,8 @@ Creates a new MIME multipart/signed object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart/signed object.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME multipart/signed object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-signed-sign">g_mime_multipart_signed_sign ()</title>
@@ -88,27 +90,27 @@ the multipart/signed object <parameter>mps</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mps</parameter>&nbsp;:</term>
-<listitem><para> multipart/signed object
-</para></listitem></varlistentry>
+<listitem><simpara> multipart/signed object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content</parameter>&nbsp;:</term>
-<listitem><para> MIME part to sign
-</para></listitem></varlistentry>
+<listitem><simpara> MIME part to sign
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> encryption cipher context
-</para></listitem></varlistentry>
+<listitem><simpara> encryption cipher context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>userid</parameter>&nbsp;:</term>
-<listitem><para> user id to sign with
-</para></listitem></varlistentry>
+<listitem><simpara> user id to sign with
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>hash</parameter>&nbsp;:</term>
-<listitem><para> preferred digest algorithm
-</para></listitem></varlistentry>
+<listitem><simpara> preferred digest algorithm
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail. If the signing fails, an
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail. If the signing fails, an
 exception will be set on <parameter>err</parameter> to provide information as to why the
 failure occured.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-signed-verify">g_mime_multipart_signed_verify ()</title>
@@ -123,18 +125,18 @@ multipart/signed object <parameter>mps</parameter> using the <parameter>ctx</par
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mps</parameter>&nbsp;:</term>
-<listitem><para> multipart/signed object
-</para></listitem></varlistentry>
+<listitem><simpara> multipart/signed object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ctx</parameter>&nbsp;:</term>
-<listitem><para> encryption cipher context
-</para></listitem></varlistentry>
+<listitem><simpara> encryption cipher context
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="GMimeCipherValidity">GMimeCipherValidity</link> object on success or <literal>NULL</literal> on
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new <link linkend="GMimeCipherValidity">GMimeCipherValidity</link> object on success or <literal>NULL</literal> on
 fail. If the signing fails, an exception will be set on <parameter>err</parameter> to
 provide information as to why the failure occured.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

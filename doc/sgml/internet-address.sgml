@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -80,6 +81,7 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 <refsect2>
 <title><anchor id="InternetAddressList">struct InternetAddressList</title>
 <programlisting>struct InternetAddressList {
+
 	struct _InternetAddressList *next;
 	InternetAddress *address;
 };
@@ -90,6 +92,7 @@ char*       <link linkend="internet-address-list-to-string">internet_address_lis
 <refsect2>
 <title><anchor id="InternetAddress">struct InternetAddress</title>
 <programlisting>struct InternetAddress {
+
 	InternetAddressType type;
 	unsigned int refcount;
 	char *name;
@@ -110,8 +113,8 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object</par
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-name">internet_address_new_name ()</title>
@@ -124,13 +127,13 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> person's name
-</para></listitem></varlistentry>
+<listitem><simpara> person's name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>addr</parameter>&nbsp;:</term>
-<listitem><para> person's address
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</para></listitem></varlistentry>
+<listitem><simpara> person's address
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
@@ -141,10 +144,10 @@ Creates a new <link linkend="InternetAddress">InternetAddress</link> object with
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> group name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new <link linkend="InternetAddress">InternetAddress</link> object.
-</para></listitem></varlistentry>
+<listitem><simpara> group name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new <link linkend="InternetAddress">InternetAddress</link> object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-ref">internet_address_ref ()</title>
@@ -155,8 +158,8 @@ Ref's the internet address.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-unref">internet_address_unref ()</title>
@@ -167,8 +170,8 @@ Unref's the internet address.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-name">internet_address_set_name ()</title>
@@ -180,11 +183,11 @@ Set the name of the internet address.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>name</parameter>&nbsp;:</term>
-<listitem><para> group or contact's name
-</para></listitem></varlistentry>
+<listitem><simpara> group or contact's name
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-addr">internet_address_set_addr ()</title>
@@ -196,11 +199,11 @@ Set the internet address's address.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>addr</parameter>&nbsp;:</term>
-<listitem><para> contact's email address
-</para></listitem></varlistentry>
+<listitem><simpara> contact's email address
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-set-group">internet_address_set_group ()</title>
@@ -212,11 +215,11 @@ Set the members of the internet address group.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>group</parameter>&nbsp;:</term>
-<listitem><para> a list of internet addresses
-</para></listitem></varlistentry>
+<listitem><simpara> a list of internet addresses
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-add-member">internet_address_add_member ()</title>
@@ -228,11 +231,11 @@ Add a contact to the internet address group.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address
-</para></listitem></varlistentry>
+<listitem><simpara> internet address
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>member</parameter>&nbsp;:</term>
-<listitem><para> group member's internet address
-</para></listitem></varlistentry>
+<listitem><simpara> group member's internet address
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-prepend">internet_address_list_prepend ()</title>
@@ -246,13 +249,13 @@ pointed to by <parameter>list</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>list</parameter>&nbsp;:</term>
-<listitem><para> a list of internet addresses
-</para></listitem></varlistentry>
+<listitem><simpara> a list of internet addresses
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address to prepend
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resultant list.
-</para></listitem></varlistentry>
+<listitem><simpara> internet address to prepend
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the resultant list.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-append">internet_address_list_append ()</title>
@@ -266,13 +269,13 @@ pointed to by <parameter>list</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>list</parameter>&nbsp;:</term>
-<listitem><para> a list of internet addresses
-</para></listitem></varlistentry>
+<listitem><simpara> a list of internet addresses
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> internet address to append
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resultant list.
-</para></listitem></varlistentry>
+<listitem><simpara> internet address to append
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the resultant list.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-concat">internet_address_list_concat ()</title>
@@ -285,13 +288,13 @@ Concatenates a copy of list <parameter>b</parameter> onto the end of list <param
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>a</parameter>&nbsp;:</term>
-<listitem><para> first list
-</para></listitem></varlistentry>
+<listitem><simpara> first list
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>b</parameter>&nbsp;:</term>
-<listitem><para> second list
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resulting list.
-</para></listitem></varlistentry>
+<listitem><simpara> second list
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the resulting list.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-length">internet_address_list_length ()</title>
@@ -302,10 +305,10 @@ Calculates the length of the list of addresses.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>list</parameter>&nbsp;:</term>
-<listitem><para> list of internet addresses
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of internet addresses in <parameter>list</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> list of internet addresses
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of internet addresses in <parameter>list</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-destroy">internet_address_list_destroy ()</title>
@@ -316,8 +319,8 @@ Destroys the list of internet addresses.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>list</parameter>&nbsp;:</term>
-<listitem><para> address list
-</para></listitem></varlistentry>
+<listitem><simpara> address list
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
@@ -329,11 +332,11 @@ Construct a list of internet addresses from the given string.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> a string containing internet addresses
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a linked list of internet addresses. *Must* be free'd by
+<listitem><simpara> a string containing internet addresses
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a linked list of internet addresses. *Must* be free'd by
 the caller.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-to-string">internet_address_to_string ()</title>
@@ -346,14 +349,14 @@ object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>ia</parameter>&nbsp;:</term>
-<listitem><para> Internet Address object
-</para></listitem></varlistentry>
+<listitem><simpara> Internet Address object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>encode</parameter>&nbsp;:</term>
-<listitem><para> TRUE if the address should be rfc2047 encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the <link linkend="InternetAddress">InternetAddress</link> object as an allocated string in
+<listitem><simpara> TRUE if the address should be rfc2047 encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the <link linkend="InternetAddress">InternetAddress</link> object as an allocated string in
 rfc822 format.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="internet-address-list-to-string">internet_address_list_to_string ()</title>
@@ -366,13 +369,13 @@ in <parameter>list</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>list</parameter>&nbsp;:</term>
-<listitem><para> list of internet addresses
-</para></listitem></varlistentry>
+<listitem><simpara> list of internet addresses
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>encode</parameter>&nbsp;:</term>
-<listitem><para> <literal>TRUE</literal> if the address should be rfc2047 encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string containing the list of addresses in rfc822 format.
-</para></listitem></varlistentry>
+<listitem><simpara> <literal>TRUE</literal> if the address should be rfc2047 encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a string containing the list of addresses in rfc822 format.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

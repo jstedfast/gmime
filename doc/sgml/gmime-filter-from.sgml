@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -40,6 +41,7 @@ enum        <link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link>;
 <refsect2>
 <title><anchor id="GMimeFilterFrom">struct GMimeFilterFrom</title>
 <programlisting>struct GMimeFilterFrom {
+
 	GMimeFilter parent_object;
 	
 	GMimeFilterFromMode mode;
@@ -79,10 +81,10 @@ remember to also use a <link linkend="GMimeFilterBasic">GMimeFilterBasic</link> 
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>mode</parameter>&nbsp;:</term>
-<listitem><para> filter mode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new from filter with mode <parameter>mode</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> filter mode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new from filter with mode <parameter>mode</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -47,6 +48,7 @@ void        <link linkend="g-mime-session-forget-passwd">g_mime_session_forget_p
 <refsect2>
 <title><anchor id="GMimeSession">struct GMimeSession</title>
 <programlisting>struct GMimeSession {
+
 	GObject parent_object;
 	
 };
@@ -67,23 +69,23 @@ Requests the password for item <parameter>item</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>session</parameter>&nbsp;:</term>
-<listitem><para> session object
-</para></listitem></varlistentry>
+<listitem><simpara> session object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>prompt</parameter>&nbsp;:</term>
-<listitem><para> prompt to present to the user
-</para></listitem></varlistentry>
+<listitem><simpara> prompt to present to the user
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>secret</parameter>&nbsp;:</term>
-<listitem><para> <literal>TRUE</literal> if the characters the user types should be hidden
-</para></listitem></varlistentry>
+<listitem><simpara> <literal>TRUE</literal> if the characters the user types should be hidden
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>item</parameter>&nbsp;:</term>
-<listitem><para> item name
-</para></listitem></varlistentry>
+<listitem><simpara> item name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a string buffer containing the password for the requested
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a string buffer containing the password for the requested
 item or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-session-forget-passwd">g_mime_session_forget_passwd ()</title>
@@ -96,14 +98,14 @@ Forgets the password for item <parameter>item</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>session</parameter>&nbsp;:</term>
-<listitem><para> session object
-</para></listitem></varlistentry>
+<listitem><simpara> session object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>item</parameter>&nbsp;:</term>
-<listitem><para> item name
-</para></listitem></varlistentry>
+<listitem><simpara> item name
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>err</parameter>&nbsp;:</term>
-<listitem><para> exception
-</para></listitem></varlistentry>
+<listitem><simpara> exception
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-session-is-online">g_mime_session_is_online ()</title>
@@ -115,10 +117,10 @@ that we are connected to the internet).</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>session</parameter>&nbsp;:</term>
-<listitem><para> session object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> if the session is online or <literal>FALSE</literal> otherwise.
-</para></listitem></varlistentry>
+<listitem><simpara> session object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara><literal>TRUE</literal> if the session is online or <literal>FALSE</literal> otherwise.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

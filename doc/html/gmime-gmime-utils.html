@@ -17,7 +17,40 @@ TITLE="gmime-message-partial"
 HREF="gmime-gmime-message-partial.html"><LINK
 REL="NEXT"
 TITLE="internet-address"
-HREF="gmime-internet-address.html"></HEAD
+HREF="gmime-internet-address.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-message-partial.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-internet-address.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-UTILS"
@@ -135,13 +136,6 @@ NAME="AEN6378"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -426,9 +420,6 @@ HREF="SIZE-T"
                                              unsigned char *out,
                                              int *state,
                                              int *save);</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -457,36 +448,23 @@ NAME="AEN6452"
 NAME="BASE64-ENCODE-LEN-CAPS"
 ></A
 >BASE64_ENCODE_LEN()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6458"><SPAN
 STYLE="white-space: nowrap"
@@ -500,7 +478,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >&#13;</P
 ></TD
@@ -518,36 +495,23 @@ NAME="AEN6463"
 NAME="QP-ENCODE-LEN-CAPS"
 ></A
 >QP_ENCODE_LEN()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6469"><SPAN
 STYLE="white-space: nowrap"
@@ -561,7 +525,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >&#13;</P
 ></TD
@@ -579,13 +542,6 @@ NAME="AEN6474"
 NAME="GMIMEPARTENCODINGTYPE"
 ></A
 >enum GMimePartEncodingType</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >typedef enum {
@@ -598,9 +554,6 @@ CLASS="PROGRAMLISTING"
 	GMIME_PART_ENCODING_UUENCODE,
 	GMIME_PART_NUM_ENCODINGS
 } GMimePartEncodingType;</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -614,22 +567,13 @@ NAME="AEN6479"
 NAME="GMIMEREFERENCES"
 ></A
 >struct GMimeReferences</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeReferences {
+
 	struct _GMimeReferences *next;
 	char *msgid;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -643,13 +587,6 @@ NAME="AEN6484"
 NAME="G-MIME-UTILS-HEADER-DECODE-DATE"
 ></A
 >g_mime_utils_header_decode_date ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -657,9 +594,6 @@ HREF="TIME-T"
 >time_t</GTKDOCLINK
 >      g_mime_utils_header_decode_date (const char *in,
                                              int *saveoffset);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes the rfc822 date string and saves the GMT offset into
 <TT
@@ -673,18 +607,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6493"><SPAN
 STYLE="white-space: nowrap"
@@ -698,16 +629,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input date string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6498"><SPAN
 STYLE="white-space: nowrap"
@@ -721,16 +650,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 ></P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6503"><SPAN
 STYLE="white-space: nowrap"
@@ -742,7 +669,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the time_t representation of the date string specified by
 <TT
@@ -767,13 +693,6 @@ NAME="AEN6509"
 NAME="G-MIME-UTILS-HEADER-FORMAT-DATE"
 ></A
 >g_mime_utils_header_format_date ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_header_format_date (<GTKDOCLINK
@@ -781,9 +700,6 @@ HREF="TIME-T"
 >time_t</GTKDOCLINK
 > time,
                                              int offset);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string buffer containing the rfc822 formatted date
 string represented by <TT
@@ -802,18 +718,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6519"><SPAN
 STYLE="white-space: nowrap"
@@ -827,16 +740,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > time_t date representation</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6524"><SPAN
 STYLE="white-space: nowrap"
@@ -850,16 +761,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Timezone offset</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6529"><SPAN
 STYLE="white-space: nowrap"
@@ -871,7 +780,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a valid string representation of the date.</P
 ></TD
@@ -889,20 +797,10 @@ NAME="AEN6534"
 NAME="G-MIME-UTILS-GENERATE-MESSAGE-ID"
 ></A
 >g_mime_utils_generate_message_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_generate_message_id
                                             (const char *fqdn);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Generates a unique Message-Id.</P
 ><P
@@ -910,18 +808,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6541"><SPAN
 STYLE="white-space: nowrap"
@@ -935,16 +830,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Fully qualified domain name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6546"><SPAN
 STYLE="white-space: nowrap"
@@ -956,7 +849,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a unique string in an addr-spec format suitable for use as
 a Message-Id.</P
@@ -975,19 +867,9 @@ NAME="AEN6551"
 NAME="G-MIME-UTILS-DECODE-MESSAGE-ID"
 ></A
 >g_mime_utils_decode_message_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_decode_message_id  (const char *message_id);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes a msg-id as defined by rfc822.</P
 ><P
@@ -995,18 +877,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6558"><SPAN
 STYLE="white-space: nowrap"
@@ -1020,16 +899,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > string containing a message-id</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6563"><SPAN
 STYLE="white-space: nowrap"
@@ -1041,7 +918,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the addr-spec portion of the msg-id.</P
 ></TD
@@ -1059,22 +935,12 @@ NAME="AEN6568"
 NAME="G-MIME-REFERENCES-DECODE"
 ></A
 >g_mime_references_decode ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-utils.html#GMIMEREFERENCES"
 >GMimeReferences</A
 >* g_mime_references_decode   (const char *text);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes a list of msg-ids as in the References and/or In-Reply-To
 headers defined in rfc822.</P
@@ -1083,18 +949,15 @@ headers defined in rfc822.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6576"><SPAN
 STYLE="white-space: nowrap"
@@ -1108,16 +971,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > string containing a list of msg-ids</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6581"><SPAN
 STYLE="white-space: nowrap"
@@ -1129,7 +990,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a list of referenced msg-ids.</P
 ></TD
@@ -1147,13 +1007,6 @@ NAME="AEN6586"
 NAME="G-MIME-REFERENCES-APPEND"
 ></A
 >g_mime_references_append ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_references_append        (<A
@@ -1161,9 +1014,6 @@ HREF="gmime-gmime-utils.html#GMIMEREFERENCES"
 >GMimeReferences</A
 > **refs,
                                              const char *msgid);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Appends a reference to msgid to the list of references.</P
 ><P
@@ -1171,18 +1021,15 @@ HREF="gmime-gmime-utils.html#GMIMEREFERENCES"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6594"><SPAN
 STYLE="white-space: nowrap"
@@ -1196,16 +1043,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > the address of a GMimeReferences list</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6599"><SPAN
 STYLE="white-space: nowrap"
@@ -1219,7 +1064,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a message-id string</P
 ></TD
@@ -1237,22 +1081,12 @@ NAME="AEN6604"
 NAME="G-MIME-REFERENCES-CLEAR"
 ></A
 >g_mime_references_clear ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_references_clear         (<A
 HREF="gmime-gmime-utils.html#GMIMEREFERENCES"
 >GMimeReferences</A
 > **refs);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Clears the GMimeReferences list and resets it to <TT
 CLASS="LITERAL"
@@ -1263,18 +1097,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6613"><SPAN
 STYLE="white-space: nowrap"
@@ -1288,7 +1119,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > address of a GMimeReferences list</P
 ></TD
@@ -1306,19 +1136,9 @@ NAME="AEN6618"
 NAME="G-MIME-UTILS-HEADER-FOLD"
 ></A
 >g_mime_utils_header_fold ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_header_fold        (const char *in);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Folds a header according to the rules in rfc822.</P
 ><P
@@ -1326,18 +1146,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6625"><SPAN
 STYLE="white-space: nowrap"
@@ -1351,16 +1168,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input header string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6630"><SPAN
 STYLE="white-space: nowrap"
@@ -1372,7 +1187,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing the folded header.</P
 ></TD
@@ -1390,20 +1204,10 @@ NAME="AEN6635"
 NAME="G-MIME-UTILS-HEADER-PRINTF"
 ></A
 >g_mime_utils_header_printf ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_header_printf      (const char *format,
                                              ...);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a buffer containing a formatted header specified by the
 <TT
@@ -1417,18 +1221,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6643"><SPAN
 STYLE="white-space: nowrap"
@@ -1442,16 +1243,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > string format</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6648"><SPAN
 STYLE="white-space: nowrap"
@@ -1465,16 +1264,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > arguments</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6653"><SPAN
 STYLE="white-space: nowrap"
@@ -1486,7 +1283,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing the folded header specified
 by <TT
@@ -1510,19 +1306,9 @@ NAME="AEN6659"
 NAME="G-MIME-UTILS-QUOTE-STRING"
 ></A
 >g_mime_utils_quote_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_quote_string       (const char *string);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Quotes <TT
 CLASS="PARAMETER"
@@ -1535,18 +1321,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6667"><SPAN
 STYLE="white-space: nowrap"
@@ -1560,16 +1343,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6672"><SPAN
 STYLE="white-space: nowrap"
@@ -1581,7 +1362,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing the escaped and quoted (if
 needed to be) input string. The decision to quote the string is
@@ -1602,19 +1382,9 @@ NAME="AEN6677"
 NAME="G-MIME-UTILS-UNQUOTE-STRING"
 ></A
 >g_mime_utils_unquote_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_utils_unquote_string     (char *string);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Unquotes and unescapes a string.</P
 ><P
@@ -1622,18 +1392,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6684"><SPAN
 STYLE="white-space: nowrap"
@@ -1647,7 +1414,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > string</P
 ></TD
@@ -1665,13 +1431,6 @@ NAME="AEN6689"
 NAME="G-MIME-UTILS-TEXT-IS-8BIT"
 ></A
 >g_mime_utils_text_is_8bit ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -1682,9 +1441,6 @@ HREF="GBOOLEAN"
 HREF="SIZE-T"
 >size_t</GTKDOCLINK
 > len);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Determines if <TT
 CLASS="PARAMETER"
@@ -1703,18 +1459,15 @@ bytes.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6700"><SPAN
 STYLE="white-space: nowrap"
@@ -1728,16 +1481,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > text to check for 8bit chars</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6705"><SPAN
 STYLE="white-space: nowrap"
@@ -1751,16 +1502,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > text length</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6710"><SPAN
 STYLE="white-space: nowrap"
@@ -1772,7 +1521,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 ><TT
 CLASS="LITERAL"
@@ -1797,13 +1545,6 @@ NAME="AEN6717"
 NAME="G-MIME-UTILS-BEST-ENCODING"
 ></A
 >g_mime_utils_best_encoding ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1815,9 +1556,6 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 HREF="SIZE-T"
 >size_t</GTKDOCLINK
 > len);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Determines the best content encoding for the first <TT
 CLASS="PARAMETER"
@@ -1836,18 +1574,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6728"><SPAN
 STYLE="white-space: nowrap"
@@ -1861,16 +1596,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > text to encode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6733"><SPAN
 STYLE="white-space: nowrap"
@@ -1884,16 +1617,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > text length</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6738"><SPAN
 STYLE="white-space: nowrap"
@@ -1905,7 +1636,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a <A
 HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
@@ -1928,19 +1658,9 @@ NAME="AEN6744"
 NAME="G-MIME-UTILS-8BIT-HEADER-DECODE"
 ></A
 >g_mime_utils_8bit_header_decode ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_8bit_header_decode (unsigned char *in);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes and rfc2047 encoded header.</P
 ><P
@@ -1948,18 +1668,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6751"><SPAN
 STYLE="white-space: nowrap"
@@ -1973,16 +1690,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header to decode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6756"><SPAN
 STYLE="white-space: nowrap"
@@ -1994,7 +1709,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the mime encoded header as 8bit text.</P
 ></TD
@@ -2012,19 +1726,9 @@ NAME="AEN6761"
 NAME="G-MIME-UTILS-8BIT-HEADER-ENCODE"
 ></A
 >g_mime_utils_8bit_header_encode ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_8bit_header_encode (unsigned char *in);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Encodes a header according to the rules in rfc2047.</P
 ><P
@@ -2032,18 +1736,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6768"><SPAN
 STYLE="white-space: nowrap"
@@ -2057,16 +1758,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header to encode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6773"><SPAN
 STYLE="white-space: nowrap"
@@ -2078,7 +1777,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the header as several encoded atoms. Useful for encoding
 headers like "Subject".</P
@@ -2097,20 +1795,10 @@ NAME="AEN6778"
 NAME="G-MIME-UTILS-8BIT-HEADER-ENCODE-PHRASE"
 ></A
 >g_mime_utils_8bit_header_encode_phrase ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_utils_8bit_header_encode_phrase
                                             (unsigned char *in);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Encodes a header phrase according to the rules in rfc2047.</P
 ><P
@@ -2118,18 +1806,15 @@ CLASS="PROGRAMLISTING"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6785"><SPAN
 STYLE="white-space: nowrap"
@@ -2143,16 +1828,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header to encode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6790"><SPAN
 STYLE="white-space: nowrap"
@@ -2164,7 +1847,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the header phrase as 1 encoded atom. Useful for encoding
 internet addresses.</P
@@ -2183,13 +1865,6 @@ NAME="AEN6795"
 NAME="G-MIME-UTILS-BASE64-DECODE-STEP"
 ></A
 >g_mime_utils_base64_decode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2206,9 +1881,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes a chunk of base64 encoded data.</P
 ><P
@@ -2216,18 +1888,15 @@ HREF="GUINT32"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6805"><SPAN
 STYLE="white-space: nowrap"
@@ -2241,16 +1910,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6810"><SPAN
 STYLE="white-space: nowrap"
@@ -2264,16 +1931,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > max length of data to decode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6815"><SPAN
 STYLE="white-space: nowrap"
@@ -2287,16 +1952,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6820"><SPAN
 STYLE="white-space: nowrap"
@@ -2310,7 +1973,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -2322,9 +1984,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6826"><SPAN
 STYLE="white-space: nowrap"
@@ -2338,16 +1999,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been decoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6831"><SPAN
 STYLE="white-space: nowrap"
@@ -2359,7 +2018,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes decoded (which have been dumped in <TT
 CLASS="PARAMETER"
@@ -2382,13 +2040,6 @@ NAME="AEN6837"
 NAME="G-MIME-UTILS-BASE64-ENCODE-STEP"
 ></A
 >g_mime_utils_base64_encode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2405,9 +2056,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Base64 encodes a chunk of data. Performs an 'encode step', only
 encodes blocks of 3 characters to the output at a time, saves
@@ -2418,18 +2066,15 @@ invocation).</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6847"><SPAN
 STYLE="white-space: nowrap"
@@ -2443,16 +2088,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6852"><SPAN
 STYLE="white-space: nowrap"
@@ -2466,16 +2109,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > length of the input</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6857"><SPAN
 STYLE="white-space: nowrap"
@@ -2489,16 +2130,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6862"><SPAN
 STYLE="white-space: nowrap"
@@ -2512,7 +2151,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -2524,9 +2162,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6868"><SPAN
 STYLE="white-space: nowrap"
@@ -2540,16 +2177,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6873"><SPAN
 STYLE="white-space: nowrap"
@@ -2561,7 +2196,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -2579,13 +2213,6 @@ NAME="AEN6878"
 NAME="G-MIME-UTILS-BASE64-ENCODE-CLOSE"
 ></A
 >g_mime_utils_base64_encode_close ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2603,9 +2230,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Base64 encodes the input stream to the output stream. Call this
 when finished encoding data with <A
@@ -2618,18 +2242,15 @@ to flush off the last little bit.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6889"><SPAN
 STYLE="white-space: nowrap"
@@ -2643,16 +2264,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6894"><SPAN
 STYLE="white-space: nowrap"
@@ -2666,16 +2285,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > length of the input</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6899"><SPAN
 STYLE="white-space: nowrap"
@@ -2689,16 +2306,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6904"><SPAN
 STYLE="white-space: nowrap"
@@ -2712,7 +2327,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -2724,9 +2338,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6910"><SPAN
 STYLE="white-space: nowrap"
@@ -2740,16 +2353,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6915"><SPAN
 STYLE="white-space: nowrap"
@@ -2761,7 +2372,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -2779,19 +2389,9 @@ NAME="AEN6920"
 NAME="GMIME-UUDECODE-STATE-INIT-CAPS"
 ></A
 >GMIME_UUDECODE_STATE_INIT</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define GMIME_UUDECODE_STATE_INIT   (0)</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -2805,19 +2405,9 @@ NAME="AEN6925"
 NAME="GMIME-UUDECODE-STATE-BEGIN-CAPS"
 ></A
 >GMIME_UUDECODE_STATE_BEGIN</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define GMIME_UUDECODE_STATE_BEGIN  (1 &lt;&lt; 16)</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -2831,19 +2421,9 @@ NAME="AEN6930"
 NAME="GMIME-UUDECODE-STATE-END-CAPS"
 ></A
 >GMIME_UUDECODE_STATE_END</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define GMIME_UUDECODE_STATE_END    (1 &lt;&lt; 17)</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -2857,19 +2437,9 @@ NAME="AEN6935"
 NAME="GMIME-UUDECODE-STATE-MASK-CAPS"
 ></A
 >GMIME_UUDECODE_STATE_MASK</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -2883,13 +2453,6 @@ NAME="AEN6940"
 NAME="G-MIME-UTILS-UUDECODE-STEP"
 ></A
 >g_mime_utils_uudecode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -2906,9 +2469,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
 uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
@@ -2918,18 +2478,15 @@ been stripped off.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6950"><SPAN
 STYLE="white-space: nowrap"
@@ -2943,16 +2500,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6955"><SPAN
 STYLE="white-space: nowrap"
@@ -2966,16 +2521,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > max length of data to decode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6960"><SPAN
 STYLE="white-space: nowrap"
@@ -2989,16 +2542,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6965"><SPAN
 STYLE="white-space: nowrap"
@@ -3012,7 +2563,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -3024,9 +2574,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6971"><SPAN
 STYLE="white-space: nowrap"
@@ -3040,16 +2589,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been decoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6976"><SPAN
 STYLE="white-space: nowrap"
@@ -3061,7 +2608,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes decoded.</P
 ></TD
@@ -3079,13 +2625,6 @@ NAME="AEN6981"
 NAME="G-MIME-UTILS-UUENCODE-STEP"
 ></A
 >g_mime_utils_uuencode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3103,9 +2642,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Uuencodes a chunk of data. Performs an 'encode step', only encodes
 blocks of 45 characters to the output at a time, saves left-over
@@ -3131,18 +2667,15 @@ invocation).</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6994"><SPAN
 STYLE="white-space: nowrap"
@@ -3156,16 +2689,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN6999"><SPAN
 STYLE="white-space: nowrap"
@@ -3179,16 +2710,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream length</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7004"><SPAN
 STYLE="white-space: nowrap"
@@ -3202,16 +2731,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7009"><SPAN
 STYLE="white-space: nowrap"
@@ -3225,16 +2752,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > temporary buffer of 60 bytes</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7014"><SPAN
 STYLE="white-space: nowrap"
@@ -3248,7 +2773,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -3260,9 +2784,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7020"><SPAN
 STYLE="white-space: nowrap"
@@ -3276,16 +2799,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7025"><SPAN
 STYLE="white-space: nowrap"
@@ -3297,7 +2818,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -3315,13 +2835,6 @@ NAME="AEN7030"
 NAME="G-MIME-UTILS-UUENCODE-CLOSE"
 ></A
 >g_mime_utils_uuencode_close ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3339,9 +2852,6 @@ HREF="SIZE-T"
 HREF="GUINT32"
 >guint32</GTKDOCLINK
 > *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Uuencodes a chunk of data. Call this when finished encoding data
 with <A
@@ -3353,18 +2863,15 @@ HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUENCODE-STEP"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7041"><SPAN
 STYLE="white-space: nowrap"
@@ -3378,16 +2885,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7046"><SPAN
 STYLE="white-space: nowrap"
@@ -3401,16 +2906,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream length</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7051"><SPAN
 STYLE="white-space: nowrap"
@@ -3424,16 +2927,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7056"><SPAN
 STYLE="white-space: nowrap"
@@ -3447,16 +2948,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > temporary buffer of 60 bytes</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7061"><SPAN
 STYLE="white-space: nowrap"
@@ -3470,7 +2969,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -3482,9 +2980,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7067"><SPAN
 STYLE="white-space: nowrap"
@@ -3498,16 +2995,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7072"><SPAN
 STYLE="white-space: nowrap"
@@ -3519,7 +3014,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -3537,13 +3031,6 @@ NAME="AEN7077"
 NAME="G-MIME-UTILS-QUOTED-DECODE-STEP"
 ></A
 >g_mime_utils_quoted_decode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3557,9 +3044,6 @@ HREF="SIZE-T"
                                              unsigned char *out,
                                              int *savestate,
                                              int *saved);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Decodes a block of quoted-printable encoded data. Performs a
 'decode step' on a chunk of QP encoded data.</P
@@ -3568,18 +3052,15 @@ HREF="SIZE-T"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7086"><SPAN
 STYLE="white-space: nowrap"
@@ -3593,16 +3074,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7091"><SPAN
 STYLE="white-space: nowrap"
@@ -3616,16 +3095,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > max length of data to decode</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7096"><SPAN
 STYLE="white-space: nowrap"
@@ -3639,16 +3116,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7101"><SPAN
 STYLE="white-space: nowrap"
@@ -3662,7 +3137,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -3674,9 +3148,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7107"><SPAN
 STYLE="white-space: nowrap"
@@ -3690,16 +3163,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been decoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7112"><SPAN
 STYLE="white-space: nowrap"
@@ -3711,7 +3182,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes decoded.</P
 ></TD
@@ -3729,13 +3199,6 @@ NAME="AEN7117"
 NAME="G-MIME-UTILS-QUOTED-ENCODE-STEP"
 ></A
 >g_mime_utils_quoted_encode_step ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3749,9 +3212,6 @@ HREF="SIZE-T"
                                              unsigned char *out,
                                              int *state,
                                              int *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Quoted-printable encodes a block of text. Performs an 'encode
 step', saves left-over state in state and save (initialise to -1 on
@@ -3761,18 +3221,15 @@ first invocation).</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7126"><SPAN
 STYLE="white-space: nowrap"
@@ -3786,16 +3243,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7131"><SPAN
 STYLE="white-space: nowrap"
@@ -3809,16 +3264,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > length of the input</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7136"><SPAN
 STYLE="white-space: nowrap"
@@ -3832,16 +3285,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7141"><SPAN
 STYLE="white-space: nowrap"
@@ -3855,7 +3306,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -3867,9 +3317,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7147"><SPAN
 STYLE="white-space: nowrap"
@@ -3883,16 +3332,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7152"><SPAN
 STYLE="white-space: nowrap"
@@ -3904,7 +3351,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -3922,13 +3368,6 @@ NAME="AEN7157"
 NAME="G-MIME-UTILS-QUOTED-ENCODE-CLOSE"
 ></A
 >g_mime_utils_quoted_encode_close ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3943,9 +3382,6 @@ HREF="SIZE-T"
                                              unsigned char *out,
                                              int *state,
                                              int *save);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Quoted-printable encodes a block of text. Call this when finished
 encoding data with <A
@@ -3958,18 +3394,15 @@ the last little bit.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7167"><SPAN
 STYLE="white-space: nowrap"
@@ -3983,16 +3416,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > input stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7172"><SPAN
 STYLE="white-space: nowrap"
@@ -4006,16 +3437,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > length of the input</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7177"><SPAN
 STYLE="white-space: nowrap"
@@ -4029,16 +3458,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output string</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7182"><SPAN
 STYLE="white-space: nowrap"
@@ -4052,7 +3479,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > holds the number of bits that are stored in <TT
 CLASS="PARAMETER"
@@ -4064,9 +3490,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7188"><SPAN
 STYLE="white-space: nowrap"
@@ -4080,16 +3505,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > leftover bits that have not yet been encoded</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN7193"><SPAN
 STYLE="white-space: nowrap"
@@ -4101,7 +3524,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes encoded.</P
 ></TD
@@ -4110,109 +3532,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-message-partial.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-message-partial</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-internet-address.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>internet-address&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-message-partial</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->internet-address</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

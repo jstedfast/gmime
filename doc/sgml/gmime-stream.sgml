@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -97,6 +98,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <refsect2>
 <title><anchor id="GMimeStream">struct GMimeStream</title>
 <programlisting>struct GMimeStream {
+
 	GObject parent_object;
 	
 	/* Note: these are private fields!! */
@@ -121,14 +123,14 @@ Initializes a new stream with bounds <parameter>start</parameter> and <parameter
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>start</parameter>&nbsp;:</term>
-<listitem><para> start boundary
-</para></listitem></varlistentry>
+<listitem><simpara> start boundary
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>end</parameter>&nbsp;:</term>
-<listitem><para> end boundary
-</para></listitem></varlistentry>
+<listitem><simpara> end boundary
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-ref">g_mime_stream_ref ()</title>
@@ -139,8 +141,8 @@ Ref's a stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-unref">g_mime_stream_unref ()</title>
@@ -151,8 +153,8 @@ Unref's a stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-read">g_mime_stream_read ()</title>
@@ -165,16 +167,16 @@ Attempts to read up to <parameter>len</parameter> bytes from <parameter>stream</
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>buf</parameter>&nbsp;:</term>
-<listitem><para> buffer
-</para></listitem></varlistentry>
+<listitem><simpara> buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> buffer length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes read or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> buffer length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes read or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-write">g_mime_stream_write ()</title>
@@ -187,16 +189,16 @@ Attempts to write up to <parameter>len</parameter> bytes of <parameter>buf</para
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>buf</parameter>&nbsp;:</term>
-<listitem><para> buffer
-</para></listitem></varlistentry>
+<listitem><simpara> buffer
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> buffer length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> buffer length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-flush">g_mime_stream_flush ()</title>
@@ -207,10 +209,10 @@ Sync's the stream to disk.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-seek">g_mime_stream_seek ()</title>
@@ -236,16 +238,16 @@ directive <parameter>whence</parameter> as follows:
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>offset</parameter>&nbsp;:</term>
-<listitem><para> positional offset
-</para></listitem></varlistentry>
+<listitem><simpara> positional offset
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>whence</parameter>&nbsp;:</term>
-<listitem><para> seek directive
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the resultant position on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> seek directive
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the resultant position on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-tell">g_mime_stream_tell ()</title>
@@ -256,10 +258,10 @@ Gets the current offset within the stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the current position within the stream or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the current position within the stream or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-reset">g_mime_stream_reset ()</title>
@@ -270,10 +272,10 @@ Resets the stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-eos">g_mime_stream_eos ()</title>
@@ -284,10 +286,10 @@ Tests the end-of-stream indicator for <parameter>stream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-close">g_mime_stream_close ()</title>
@@ -298,10 +300,10 @@ Closes the stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-length">g_mime_stream_length ()</title>
@@ -312,10 +314,10 @@ Gets the length of the stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the length of the stream or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the length of the stream or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-substream">g_mime_stream_substream ()</title>
@@ -328,16 +330,16 @@ Creates a new substream of <parameter>stream</parameter> with bounds <parameter>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>start</parameter>&nbsp;:</term>
-<listitem><para> start boundary
-</para></listitem></varlistentry>
+<listitem><simpara> start boundary
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>end</parameter>&nbsp;:</term>
-<listitem><para> end boundary
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> end boundary
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-set-bounds">g_mime_stream_set_bounds ()</title>
@@ -350,14 +352,14 @@ Set the bounds on a stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>start</parameter>&nbsp;:</term>
-<listitem><para> start boundary
-</para></listitem></varlistentry>
+<listitem><simpara> start boundary
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>end</parameter>&nbsp;:</term>
-<listitem><para> end boundary
-</para></listitem></varlistentry>
+<listitem><simpara> end boundary
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-write-string">g_mime_stream_write_string ()</title>
@@ -369,13 +371,13 @@ Writes <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string to write
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> string to write
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-printf">g_mime_stream_printf ()</title>
@@ -388,16 +390,16 @@ Write formatted output to a stream.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>fmt</parameter>&nbsp;:</term>
-<listitem><para> format
-</para></listitem></varlistentry>
+<listitem><simpara> format
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>...</parameter>&nbsp;:</term>
-<listitem><para> arguments
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> arguments
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-write-to-stream">g_mime_stream_write_to_stream ()</title>
@@ -409,13 +411,13 @@ Attempts to write stream <parameter>src</parameter> to stream <parameter>dest</p
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>src</parameter>&nbsp;:</term>
-<listitem><para> source stream
-</para></listitem></varlistentry>
+<listitem><simpara> source stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>dest</parameter>&nbsp;:</term>
-<listitem><para> destination stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> destination stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-writev">g_mime_stream_writev ()</title>
@@ -428,16 +430,16 @@ Writes at most <parameter>count</parameter> blocks described by <parameter>vecto
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
-<listitem><para> stream
-</para></listitem></varlistentry>
+<listitem><simpara> stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>vector</parameter>&nbsp;:</term>
-<listitem><para> i/o vector
-</para></listitem></varlistentry>
+<listitem><simpara> i/o vector
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>count</parameter>&nbsp;:</term>
-<listitem><para> number of vector elements
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes written or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> number of vector elements
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes written or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

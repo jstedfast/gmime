@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -56,14 +57,14 @@ the destination charset described in <parameter>cd</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>cd</parameter>&nbsp;:</term>
-<listitem><para> conversion descriptor
-</para></listitem></varlistentry>
+<listitem><simpara> conversion descriptor
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in source charset
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the original string
+<listitem><simpara> string in source charset
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing the original string
 converted to the new charset.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-strndup">g_mime_iconv_strndup ()</title>
@@ -78,18 +79,18 @@ conversion descriptor <parameter>cd</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>cd</parameter>&nbsp;:</term>
-<listitem><para> conversion descriptor
-</para></listitem></varlistentry>
+<listitem><simpara> conversion descriptor
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in source charset
-</para></listitem></varlistentry>
+<listitem><simpara> string in source charset
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>n</parameter>&nbsp;:</term>
-<listitem><para> number of bytes to convert
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
+<listitem><simpara> number of bytes to convert
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to the destination charset as described by the
 conversion descriptor <parameter>cd</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-utf8-to-locale">g_mime_iconv_utf8_to_locale ()</title>
@@ -101,11 +102,11 @@ user's locale charset.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in UTF-8 charset
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing <parameter>string</parameter> converted to the
+<listitem><simpara> string in UTF-8 charset
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing <parameter>string</parameter> converted to the
 user's locale charset.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-utf8-to-locale-length">g_mime_iconv_utf8_to_locale_length ()</title>
@@ -119,14 +120,14 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in UTF-8 charset
-</para></listitem></varlistentry>
+<listitem><simpara> string in UTF-8 charset
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>n</parameter>&nbsp;:</term>
-<listitem><para> number of bytes to convert
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
+<listitem><simpara> number of bytes to convert
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to the user's locale charset.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-locale-to-utf8">g_mime_iconv_locale_to_utf8 ()</title>
@@ -137,10 +138,10 @@ Allocates a new string buffer containing <parameter>string</parameter> in UTF-8.
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in locale charset
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing <parameter>string</parameter> converted to UTF-8.
-</para></listitem></varlistentry>
+<listitem><simpara> string in locale charset
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing <parameter>string</parameter> converted to UTF-8.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-iconv-locale-to-utf8-length">g_mime_iconv_locale_to_utf8_length ()</title>
@@ -154,14 +155,14 @@ Allocates a new string buffer containing the first <parameter>n</parameter> byte
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string in locale charset
-</para></listitem></varlistentry>
+<listitem><simpara> string in locale charset
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>n</parameter>&nbsp;:</term>
-<listitem><para> number of bytes to convert
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new string buffer containing the first <parameter>n</parameter> bytes of
+<listitem><simpara> number of bytes to convert
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new string buffer containing the first <parameter>n</parameter> bytes of
 <parameter>string</parameter> converted to UTF-8.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

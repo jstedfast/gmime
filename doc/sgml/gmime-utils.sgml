@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -122,10 +123,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>x</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN()</title>
@@ -135,10 +136,10 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>x</parameter>&nbsp;:</term>
-<listitem><para>
+<listitem><simpara>
 
 
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="GMimePartEncodingType">enum GMimePartEncodingType</title>
@@ -159,6 +160,7 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <refsect2>
 <title><anchor id="GMimeReferences">struct GMimeReferences</title>
 <programlisting>struct GMimeReferences {
+
 	struct _GMimeReferences *next;
 	char *msgid;
 };
@@ -177,15 +179,15 @@ Decodes the rfc822 date string and saves the GMT offset into
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input date string
-</para></listitem></varlistentry>
+<listitem><simpara> input date string
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>saveoffset</parameter>&nbsp;:</term>
-<listitem><para>
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the time_t representation of the date string specified by
+<listitem><simpara>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the time_t representation of the date string specified by
 <parameter>in</parameter>. If 'saveoffset' is non-NULL, the value of the timezone offset
 will be stored.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-format-date">g_mime_utils_header_format_date ()</title>
@@ -198,13 +200,13 @@ string represented by <parameter>time</parameter> and <parameter>offset</paramet
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>time</parameter>&nbsp;:</term>
-<listitem><para> time_t date representation
-</para></listitem></varlistentry>
+<listitem><simpara> time_t date representation
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>offset</parameter>&nbsp;:</term>
-<listitem><para> Timezone offset
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a valid string representation of the date.
-</para></listitem></varlistentry>
+<listitem><simpara> Timezone offset
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a valid string representation of the date.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-generate-message-id">g_mime_utils_generate_message_id ()</title>
@@ -216,11 +218,11 @@ Generates a unique Message-Id.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>fqdn</parameter>&nbsp;:</term>
-<listitem><para> Fully qualified domain name
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a unique string in an addr-spec format suitable for use as
+<listitem><simpara> Fully qualified domain name
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a unique string in an addr-spec format suitable for use as
 a Message-Id.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-decode-message-id">g_mime_utils_decode_message_id ()</title>
@@ -231,10 +233,10 @@ Decodes a msg-id as defined by rfc822.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>message_id</parameter>&nbsp;:</term>
-<listitem><para> string containing a message-id
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the addr-spec portion of the msg-id.
-</para></listitem></varlistentry>
+<listitem><simpara> string containing a message-id
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the addr-spec portion of the msg-id.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-references-decode">g_mime_references_decode ()</title>
@@ -246,10 +248,10 @@ headers defined in rfc822.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>text</parameter>&nbsp;:</term>
-<listitem><para> string containing a list of msg-ids
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a list of referenced msg-ids.
-</para></listitem></varlistentry>
+<listitem><simpara> string containing a list of msg-ids
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a list of referenced msg-ids.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-references-append">g_mime_references_append ()</title>
@@ -261,11 +263,11 @@ Appends a reference to msgid to the list of references.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>refs</parameter>&nbsp;:</term>
-<listitem><para> the address of a GMimeReferences list
-</para></listitem></varlistentry>
+<listitem><simpara> the address of a GMimeReferences list
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>msgid</parameter>&nbsp;:</term>
-<listitem><para> a message-id string
-</para></listitem></varlistentry>
+<listitem><simpara> a message-id string
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-references-clear">g_mime_references_clear ()</title>
@@ -276,8 +278,8 @@ Clears the GMimeReferences list and resets it to <literal>NULL</literal>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>refs</parameter>&nbsp;:</term>
-<listitem><para> address of a GMimeReferences list
-</para></listitem></varlistentry>
+<listitem><simpara> address of a GMimeReferences list
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-fold">g_mime_utils_header_fold ()</title>
@@ -288,10 +290,10 @@ Folds a header according to the rules in rfc822.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input header string
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the folded header.
-</para></listitem></varlistentry>
+<listitem><simpara> input header string
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the folded header.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-printf">g_mime_utils_header_printf ()</title>
@@ -304,14 +306,14 @@ Allocates a buffer containing a formatted header specified by the
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>format</parameter>&nbsp;:</term>
-<listitem><para> string format
-</para></listitem></varlistentry>
+<listitem><simpara> string format
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>...</parameter>&nbsp;:</term>
-<listitem><para> arguments
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the folded header specified
+<listitem><simpara> arguments
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the folded header specified
 by <parameter>format</parameter> and the following arguments.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quote-string">g_mime_utils_quote_string ()</title>
@@ -322,13 +324,13 @@ Quotes <parameter>string</parameter> as needed according to the rules in rfc2045
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> input string
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an allocated string containing the escaped and quoted (if
+<listitem><simpara> input string
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an allocated string containing the escaped and quoted (if
 needed to be) input string. The decision to quote the string is
 based on whether or not the input string contains any 'tspecials'
 as defined by rfc2045.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-unquote-string">g_mime_utils_unquote_string ()</title>
@@ -339,8 +341,8 @@ Unquotes and unescapes a string.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>string</parameter>&nbsp;:</term>
-<listitem><para> string
-</para></listitem></varlistentry>
+<listitem><simpara> string
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit ()</title>
@@ -353,14 +355,14 @@ bytes.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>text</parameter>&nbsp;:</term>
-<listitem><para> text to check for 8bit chars
-</para></listitem></varlistentry>
+<listitem><simpara> text to check for 8bit chars
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> text length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para><literal>TRUE</literal> if the text contains 8bit characters or <literal>FALSE</literal>
+<listitem><simpara> text length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara><literal>TRUE</literal> if the text contains 8bit characters or <literal>FALSE</literal>
 otherwise.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-best-encoding">g_mime_utils_best_encoding ()</title>
@@ -374,15 +376,15 @@ Determines the best content encoding for the first <parameter>len</parameter> by
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>text</parameter>&nbsp;:</term>
-<listitem><para> text to encode
-</para></listitem></varlistentry>
+<listitem><simpara> text to encode
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>len</parameter>&nbsp;:</term>
-<listitem><para> text length
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> that is determined to be the best
+<listitem><simpara> text length
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> that is determined to be the best
 encoding type for the specified block of text. ("best" in this
 particular case means best compression)
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode ()</title>
@@ -393,10 +395,10 @@ Decodes and rfc2047 encoded header.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> header to decode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the mime encoded header as 8bit text.
-</para></listitem></varlistentry>
+<listitem><simpara> header to decode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the mime encoded header as 8bit text.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode ()</title>
@@ -407,11 +409,11 @@ Encodes a header according to the rules in rfc2047.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> header to encode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the header as several encoded atoms. Useful for encoding
+<listitem><simpara> header to encode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the header as several encoded atoms. Useful for encoding
 headers like "Subject".
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase ()</title>
@@ -423,11 +425,11 @@ Encodes a header phrase according to the rules in rfc2047.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> header to encode
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the header phrase as 1 encoded atom. Useful for encoding
+<listitem><simpara> header to encode
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the header phrase as 1 encoded atom. Useful for encoding
 internet addresses.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-decode-step">g_mime_utils_base64_decode_step ()</title>
@@ -442,22 +444,22 @@ Decodes a chunk of base64 encoded data.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> max length of data to decode
-</para></listitem></varlistentry>
+<listitem><simpara> max length of data to decode
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been decoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes decoded (which have been dumped in <parameter>out</parameter>).
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been decoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes decoded (which have been dumped in <parameter>out</parameter>).
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step ()</title>
@@ -475,22 +477,22 @@ invocation).</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> length of the input
-</para></listitem></varlistentry>
+<listitem><simpara> length of the input
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output string
-</para></listitem></varlistentry>
+<listitem><simpara> output string
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close ()</title>
@@ -508,22 +510,22 @@ to flush off the last little bit.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> length of the input
-</para></listitem></varlistentry>
+<listitem><simpara> length of the input
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output string
-</para></listitem></varlistentry>
+<listitem><simpara> output string
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="GMIME-UUDECODE-STATE-INIT-CAPS">GMIME_UUDECODE_STATE_INIT</title>
@@ -568,22 +570,22 @@ been stripped off.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> max length of data to decode
-</para></listitem></varlistentry>
+<listitem><simpara> max length of data to decode
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been decoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes decoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been decoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes decoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step ()</title>
@@ -602,25 +604,25 @@ invocation).</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> input stream length
-</para></listitem></varlistentry>
+<listitem><simpara> input stream length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>uubuf</parameter>&nbsp;:</term>
-<listitem><para> temporary buffer of 60 bytes
-</para></listitem></varlistentry>
+<listitem><simpara> temporary buffer of 60 bytes
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close ()</title>
@@ -637,25 +639,25 @@ with <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> input stream length
-</para></listitem></varlistentry>
+<listitem><simpara> input stream length
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>uubuf</parameter>&nbsp;:</term>
-<listitem><para> temporary buffer of 60 bytes
-</para></listitem></varlistentry>
+<listitem><simpara> temporary buffer of 60 bytes
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step ()</title>
@@ -671,22 +673,22 @@ Decodes a block of quoted-printable encoded data. Performs a
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> max length of data to decode
-</para></listitem></varlistentry>
+<listitem><simpara> max length of data to decode
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output stream
-</para></listitem></varlistentry>
+<listitem><simpara> output stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>savestate</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>saved</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been decoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes decoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been decoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes decoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-encode-step">g_mime_utils_quoted_encode_step ()</title>
@@ -703,22 +705,22 @@ first invocation).</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> length of the input
-</para></listitem></varlistentry>
+<listitem><simpara> length of the input
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output string
-</para></listitem></varlistentry>
+<listitem><simpara> output string
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quoted-encode-close">g_mime_utils_quoted_encode_close ()</title>
@@ -736,22 +738,22 @@ the last little bit.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>in</parameter>&nbsp;:</term>
-<listitem><para> input stream
-</para></listitem></varlistentry>
+<listitem><simpara> input stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>inlen</parameter>&nbsp;:</term>
-<listitem><para> length of the input
-</para></listitem></varlistentry>
+<listitem><simpara> length of the input
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>out</parameter>&nbsp;:</term>
-<listitem><para> output string
-</para></listitem></varlistentry>
+<listitem><simpara> output string
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>state</parameter>&nbsp;:</term>
-<listitem><para> holds the number of bits that are stored in <parameter>save</parameter>
-</para></listitem></varlistentry>
+<listitem><simpara> holds the number of bits that are stored in <parameter>save</parameter>
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>save</parameter>&nbsp;:</term>
-<listitem><para> leftover bits that have not yet been encoded
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of bytes encoded.
-</para></listitem></varlistentry>
+<listitem><simpara> leftover bits that have not yet been encoded
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of bytes encoded.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

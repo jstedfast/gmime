@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -39,6 +40,7 @@ struct      <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>;
 <refsect2>
 <title><anchor id="GMimeFilterStrip">struct GMimeFilterStrip</title>
 <programlisting>struct GMimeFilterStrip {
+
 	GMimeFilter parent_object;
 	
 };
@@ -54,8 +56,8 @@ Creates a new GMimeFilterStrip filter.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new strip filter.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new strip filter.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

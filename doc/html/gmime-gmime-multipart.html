@@ -17,7 +17,40 @@ TITLE="gmime-part"
 HREF="gmime-gmime-part.html"><LINK
 REL="NEXT"
 TITLE="gmime-multipart-encrypted"
-HREF="gmime-gmime-multipart-encrypted.html"></HEAD
+HREF="gmime-gmime-multipart-encrypted.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-part.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-multipart-encrypted.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-MULTIPART"
@@ -135,13 +136,6 @@ NAME="AEN4759"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -302,9 +296,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 > *multipart,
                                              const char *content_id);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -333,16 +324,10 @@ NAME="AEN4808"
 NAME="GMIMEMULTIPART"
 ></A
 >struct GMimeMultipart</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeMultipart {
+
 	GMimeObject parent_object;
 	
 	char *boundary;
@@ -352,9 +337,6 @@ CLASS="PROGRAMLISTING"
 	
 	GList *subparts;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -368,22 +350,12 @@ NAME="AEN4813"
 NAME="G-MIME-MULTIPART-NEW"
 ></A
 >g_mime_multipart_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 >* g_mime_multipart_new        (void);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new MIME multipart object with a default content-type of
 multipart/mixed.</P
@@ -392,18 +364,15 @@ multipart/mixed.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4821"><SPAN
 STYLE="white-space: nowrap"
@@ -415,7 +384,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an empty MIME multipart object with a default content-type of
 multipart/mixed.</P
@@ -434,13 +402,6 @@ NAME="AEN4826"
 NAME="G-MIME-MULTIPART-NEW-WITH-SUBTYPE"
 ></A
 >g_mime_multipart_new_with_subtype ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -448,9 +409,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 >* g_mime_multipart_new_with_subtype
                                             (const char *subtype);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new MIME multipart object with a content-type of
 multipart/<TT
@@ -464,18 +422,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4835"><SPAN
 STYLE="white-space: nowrap"
@@ -489,16 +444,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content-type subtype</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4840"><SPAN
 STYLE="white-space: nowrap"
@@ -510,7 +463,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an empty MIME multipart object with a content-type of
 multipart/<TT
@@ -534,13 +486,6 @@ NAME="AEN4846"
 NAME="G-MIME-MULTIPART-SET-PREFACE"
 ></A
 >g_mime_multipart_set_preface ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_set_preface    (<A
@@ -548,9 +493,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              const char *preface);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the preface on the multipart.</P
 ><P
@@ -558,18 +500,15 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4854"><SPAN
 STYLE="white-space: nowrap"
@@ -583,16 +522,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4859"><SPAN
 STYLE="white-space: nowrap"
@@ -606,7 +543,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > preface</P
 ></TD
@@ -624,22 +560,12 @@ NAME="AEN4864"
 NAME="G-MIME-MULTIPART-GET-PREFACE"
 ></A
 >g_mime_multipart_get_preface ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_multipart_get_preface    (<A
 HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the preface on the multipart.</P
 ><P
@@ -647,18 +573,15 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4872"><SPAN
 STYLE="white-space: nowrap"
@@ -672,16 +595,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4877"><SPAN
 STYLE="white-space: nowrap"
@@ -693,7 +614,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a pointer to the preface string on the multipart.</P
 ></TD
@@ -711,13 +631,6 @@ NAME="AEN4882"
 NAME="G-MIME-MULTIPART-SET-POSTFACE"
 ></A
 >g_mime_multipart_set_postface ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_set_postface   (<A
@@ -725,9 +638,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              const char *postface);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the postface on the multipart.</P
 ><P
@@ -735,18 +645,15 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4890"><SPAN
 STYLE="white-space: nowrap"
@@ -760,16 +667,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4895"><SPAN
 STYLE="white-space: nowrap"
@@ -783,7 +688,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > postface</P
 ></TD
@@ -801,22 +705,12 @@ NAME="AEN4900"
 NAME="G-MIME-MULTIPART-GET-POSTFACE"
 ></A
 >g_mime_multipart_get_postface ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_multipart_get_postface   (<A
 HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the postface on the multipart.</P
 ><P
@@ -824,18 +718,15 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4908"><SPAN
 STYLE="white-space: nowrap"
@@ -849,16 +740,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4913"><SPAN
 STYLE="white-space: nowrap"
@@ -870,7 +759,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a pointer to the postface string on the multipart.</P
 ></TD
@@ -888,13 +776,6 @@ NAME="AEN4918"
 NAME="G-MIME-MULTIPART-SET-BOUNDARY"
 ></A
 >g_mime_multipart_set_boundary ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_set_boundary   (<A
@@ -902,9 +783,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              const char *boundary);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets <TT
 CLASS="PARAMETER"
@@ -926,18 +804,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4929"><SPAN
 STYLE="white-space: nowrap"
@@ -951,16 +826,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4934"><SPAN
 STYLE="white-space: nowrap"
@@ -974,7 +847,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > boundary or <TT
 CLASS="LITERAL"
@@ -995,22 +867,12 @@ NAME="AEN4940"
 NAME="G-MIME-MULTIPART-GET-BOUNDARY"
 ></A
 >g_mime_multipart_get_boundary ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_multipart_get_boundary   (<A
 HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the boundary on the multipart. If the internal boundary is
 <TT
@@ -1023,18 +885,15 @@ and returned.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4949"><SPAN
 STYLE="white-space: nowrap"
@@ -1048,16 +907,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4954"><SPAN
 STYLE="white-space: nowrap"
@@ -1069,7 +926,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the boundary on the multipart.</P
 ></TD
@@ -1087,13 +943,6 @@ NAME="AEN4959"
 NAME="G-MIME-MULTIPART-ADD-PART"
 ></A
 >g_mime_multipart_add_part ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_add_part       (<A
@@ -1104,9 +953,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Adds a mime part to the multipart.</P
 ><P
@@ -1114,18 +960,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4968"><SPAN
 STYLE="white-space: nowrap"
@@ -1139,16 +982,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4973"><SPAN
 STYLE="white-space: nowrap"
@@ -1162,7 +1003,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime part</P
 ></TD
@@ -1180,13 +1020,6 @@ NAME="AEN4978"
 NAME="G-MIME-MULTIPART-ADD-PART-AT"
 ></A
 >g_mime_multipart_add_part_at ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_add_part_at    (<A
@@ -1198,9 +1031,6 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *part,
                                              int index);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Adds a mime part to the multipart at the position <TT
 CLASS="PARAMETER"
@@ -1213,18 +1043,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4988"><SPAN
 STYLE="white-space: nowrap"
@@ -1238,16 +1065,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4993"><SPAN
 STYLE="white-space: nowrap"
@@ -1261,16 +1086,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4998"><SPAN
 STYLE="white-space: nowrap"
@@ -1284,7 +1107,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > position to insert the mime part</P
 ></TD
@@ -1302,22 +1124,12 @@ NAME="AEN5003"
 NAME="G-MIME-MULTIPART-GET-NUMBER"
 ></A
 >g_mime_multipart_get_number ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >int         g_mime_multipart_get_number     (<A
 HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the number of mime parts contained within the multipart.</P
 ><P
@@ -1325,18 +1137,15 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5011"><SPAN
 STYLE="white-space: nowrap"
@@ -1350,16 +1159,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5016"><SPAN
 STYLE="white-space: nowrap"
@@ -1371,7 +1178,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of mime parts contained within the multipart.</P
 ></TD
@@ -1389,13 +1195,6 @@ NAME="AEN5021"
 NAME="G-MIME-MULTIPART-GET-PART"
 ></A
 >g_mime_multipart_get_part ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1406,9 +1205,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              int index);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the mime part at position <TT
 CLASS="PARAMETER"
@@ -1421,18 +1217,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5031"><SPAN
 STYLE="white-space: nowrap"
@@ -1446,16 +1239,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5036"><SPAN
 STYLE="white-space: nowrap"
@@ -1469,16 +1260,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > position of the mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5041"><SPAN
 STYLE="white-space: nowrap"
@@ -1490,7 +1279,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the mime part at position <TT
 CLASS="PARAMETER"
@@ -1513,13 +1301,6 @@ NAME="AEN5047"
 NAME="G-MIME-MULTIPART-REMOVE-PART"
 ></A
 >g_mime_multipart_remove_part ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_remove_part    (<A
@@ -1530,9 +1311,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 HREF="gmime-gmime-object.html#GMIMEOBJECT"
 >GMimeObject</A
 > *part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Removes the specified mime part from the multipart.</P
 ><P
@@ -1540,18 +1318,15 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5056"><SPAN
 STYLE="white-space: nowrap"
@@ -1565,16 +1340,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5061"><SPAN
 STYLE="white-space: nowrap"
@@ -1588,7 +1361,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime part</P
 ></TD
@@ -1606,13 +1378,6 @@ NAME="AEN5066"
 NAME="G-MIME-MULTIPART-REMOVE-PART-AT"
 ></A
 >g_mime_multipart_remove_part_at ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -1624,9 +1389,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              int index);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Removes the mime part at position <TT
 CLASS="PARAMETER"
@@ -1639,18 +1401,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5076"><SPAN
 STYLE="white-space: nowrap"
@@ -1664,16 +1423,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5081"><SPAN
 STYLE="white-space: nowrap"
@@ -1687,16 +1444,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > position of the mime part to remove</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5086"><SPAN
 STYLE="white-space: nowrap"
@@ -1708,7 +1463,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the mime part that was removed.</P
 ></TD
@@ -1726,13 +1480,6 @@ NAME="AEN5091"
 NAME="G-MIME-MULTIPART-FOREACH"
 ></A
 >g_mime_multipart_foreach ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_multipart_foreach        (<A
@@ -1747,9 +1494,6 @@ HREF="gmime-gmime-object.html#GMIMEPARTFUNC"
 HREF="GPOINTER"
 >gpointer</GTKDOCLINK
 > user_data);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Calls <TT
 CLASS="PARAMETER"
@@ -1767,18 +1511,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5103"><SPAN
 STYLE="white-space: nowrap"
@@ -1792,16 +1533,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5108"><SPAN
 STYLE="white-space: nowrap"
@@ -1815,7 +1554,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > function to call for <TT
 CLASS="PARAMETER"
@@ -1827,9 +1565,8 @@ CLASS="PARAMETER"
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5114"><SPAN
 STYLE="white-space: nowrap"
@@ -1843,7 +1580,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > extra data to pass to the callback</P
 ></TD
@@ -1861,13 +1597,6 @@ NAME="AEN5119"
 NAME="G-MIME-MULTIPART-GET-SUBPART-FROM-CONTENT-ID"
 ></A
 >g_mime_multipart_get_subpart_from_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const <A
@@ -1879,9 +1608,6 @@ HREF="gmime-gmime-multipart.html#GMIMEMULTIPART"
 >GMimeMultipart</A
 > *multipart,
                                              const char *content_id);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the mime part with the content-id <TT
 CLASS="PARAMETER"
@@ -1900,18 +1626,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5130"><SPAN
 STYLE="white-space: nowrap"
@@ -1925,16 +1648,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > a multipart</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5135"><SPAN
 STYLE="white-space: nowrap"
@@ -1948,16 +1669,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > the content id of the part to look for</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN5140"><SPAN
 STYLE="white-space: nowrap"
@@ -1969,7 +1688,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the GMimeObject whose content-id matches the search string,
 or <TT
@@ -1982,109 +1700,34 @@ CLASS="LITERAL"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-part.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-part</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-multipart-encrypted.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-multipart-encrypted&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-part</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-multipart-encrypted</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

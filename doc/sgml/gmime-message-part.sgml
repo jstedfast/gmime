@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -46,6 +47,7 @@ void        <link linkend="g-mime-message-part-set-message">g_mime_message_part_
 <refsect2>
 <title><anchor id="GMimeMessagePart">struct GMimeMessagePart</title>
 <programlisting>struct GMimeMessagePart {
+
 	GMimeObject parent_object;
 	
 	GMimeMessage *message;
@@ -64,11 +66,11 @@ of message/<parameter>subtype</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> message subtype or <literal>NULL</literal> for "rfc822"
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME message part object with a default
+<listitem><simpara> message subtype or <literal>NULL</literal> for "rfc822"
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME message part object with a default
 content-type of message/<parameter>subtype</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-new-with-message">g_mime_message_part_new_with_message ()</title>
@@ -82,14 +84,14 @@ of message/<parameter>subtype</parameter> containing <parameter>message</paramet
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> message subtype or <literal>NULL</literal> for "rfc822"
-</para></listitem></varlistentry>
+<listitem><simpara> message subtype or <literal>NULL</literal> for "rfc822"
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>message</parameter>&nbsp;:</term>
-<listitem><para> message
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a MIME message part object with a default content-type of
+<listitem><simpara> message
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a MIME message part object with a default content-type of
 message/<parameter>subtype</parameter> containing <parameter>message</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-get-message">g_mime_message_part_get_message ()</title>
@@ -101,10 +103,10 @@ Gets the message object on the message part object <parameter>part</parameter>.<
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para> message part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the message part contained within <parameter>part</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> message part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the message part contained within <parameter>part</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-part-set-message">g_mime_message_part_set_message ()</title>
@@ -116,11 +118,11 @@ Sets the <parameter>message</parameter> object on the message part object <param
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para> message part
-</para></listitem></varlistentry>
+<listitem><simpara> message part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>message</parameter>&nbsp;:</term>
-<listitem><para> message
-</para></listitem></varlistentry>
+<listitem><simpara> message
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

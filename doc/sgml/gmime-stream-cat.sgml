@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -41,6 +42,7 @@ int         <link linkend="g-mime-stream-cat-add-source">g_mime_stream_cat_add_s
 <refsect2>
 <title><anchor id="GMimeStreamCat">struct GMimeStreamCat</title>
 <programlisting>struct GMimeStreamCat {
+
 	GMimeStream parent_object;
 	
 	struct _cat_node *sources;
@@ -58,8 +60,8 @@ Creates a new GMimeStreamCat object.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new cat stream.
-</para></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a new cat stream.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-cat-add-source">g_mime_stream_cat_add_source ()</title>
@@ -71,13 +73,13 @@ Adds the <parameter>source</parameter> stream to the cat stream <parameter>cat</
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>cat</parameter>&nbsp;:</term>
-<listitem><para> cat stream
-</para></listitem></varlistentry>
+<listitem><simpara> cat stream
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>source</parameter>&nbsp;:</term>
-<listitem><para> a source stream
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>0 on success or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> a source stream
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>0 on success or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

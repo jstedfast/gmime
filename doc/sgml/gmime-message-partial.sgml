@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -54,6 +55,7 @@ int         <link linkend="g-mime-message-partial-get-total">g_mime_message_part
 <refsect2>
 <title><anchor id="GMimeMessagePartial">struct GMimeMessagePartial</title>
 <programlisting>struct GMimeMessagePartial {
+
 	GMimePart parent_object;
 	
 	char *id;
@@ -76,16 +78,16 @@ Creates a new MIME message/partial object.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>id</parameter>&nbsp;:</term>
-<listitem><para> message/partial part id
-</para></listitem></varlistentry>
+<listitem><simpara> message/partial part id
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>number</parameter>&nbsp;:</term>
-<listitem><para> message/partial part number
-</para></listitem></varlistentry>
+<listitem><simpara> message/partial part number
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>total</parameter>&nbsp;:</term>
-<listitem><para> total number of message/partial parts
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME message/partial object.
-</para></listitem></varlistentry>
+<listitem><simpara> total number of message/partial parts
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME message/partial object.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-partial-get-id">g_mime_message_partial_get_id ()</title>
@@ -96,10 +98,10 @@ Gets the message/partial id parameter value.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>partial</parameter>&nbsp;:</term>
-<listitem><para> message/partial object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the message/partial id or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> message/partial object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the message/partial id or <literal>NULL</literal> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-partial-get-number">g_mime_message_partial_get_number ()</title>
@@ -111,10 +113,10 @@ Gets the message/partial part number.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>partial</parameter>&nbsp;:</term>
-<listitem><para> message/partial object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the message/partial part number or -1 on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> message/partial object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the message/partial part number or -1 on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-partial-get-total">g_mime_message_partial_get_total ()</title>
@@ -127,11 +129,11 @@ reconstruct the original message.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>partial</parameter>&nbsp;:</term>
-<listitem><para> message/partial object
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the total number of message/partial parts needed to
+<listitem><simpara> message/partial object
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the total number of message/partial parts needed to
 reconstruct the original message or -1 on fail.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-partial-reconstruct-message">g_mime_message_partial_reconstruct_message ()</title>
@@ -145,13 +147,13 @@ in <parameter>partials</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>partials</parameter>&nbsp;:</term>
-<listitem><para> an array of message/partial mime parts
-</para></listitem></varlistentry>
+<listitem><simpara> an array of message/partial mime parts
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>num</parameter>&nbsp;:</term>
-<listitem><para> the number of elements in <parameter>partials</parameter>
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a GMimeMessage object on success or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+<listitem><simpara> the number of elements in <parameter>partials</parameter>
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a GMimeMessage object on success or <literal>NULL</literal> on fail.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-partial-split-message">g_mime_message_partial_split_message ()</title>
@@ -168,17 +170,17 @@ containing a single <link linkend="GMimeMessagePartial">GMimeMessagePartial</lin
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>message</parameter>&nbsp;:</term>
-<listitem><para> message object
-</para></listitem></varlistentry>
+<listitem><simpara> message object
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>max_size</parameter>&nbsp;:</term>
-<listitem><para> max size
-</para></listitem></varlistentry>
+<listitem><simpara> max size
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>nparts</parameter>&nbsp;:</term>
-<listitem><para> number of parts
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an array of <link linkend="GMimeMessage">GMimeMessage</link> objects and sets <parameter>nparts</parameter> to th
+<listitem><simpara> number of parts
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an array of <link linkend="GMimeMessage">GMimeMessage</link> objects and sets <parameter>nparts</parameter> to th
 number of messages returned or <literal>NULL</literal> on fail.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>

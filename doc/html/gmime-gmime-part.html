@@ -17,7 +17,40 @@ TITLE="gmime-object"
 HREF="gmime-gmime-object.html"><LINK
 REL="NEXT"
 TITLE="gmime-multipart"
-HREF="gmime-gmime-multipart.html"></HEAD
+HREF="gmime-gmime-multipart.html"><META
+NAME="GENERATOR"
+CONTENT="GTK-Doc V0.10 (SGML mode)"><STYLE
+TYPE="text/css"
+>.synopsis, .classsynopsis {
+    background: #eeeeee;
+    border: solid 1px #aaaaaa;
+    padding: 0.5em;
+}
+.programlisting {
+    background: #eeeeff;
+    border: solid 1px #aaaaff;
+    padding: 0.5em;
+}
+.variablelist {
+    padding: 4px;
+    margin-left: 3em;
+}
+.navigation {
+    background: #ffeeee;
+    border: solid 1px #ffaaaa;
+    margin-top: 0.5em;
+    margin-bottom: 0.5em;
+}
+.navigation a {
+    color: #770000;
+}
+.navigation a:visited {
+    color: #550000;
+}
+.navigation .title {
+    font-size: 200%;
+}</STYLE
+></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -25,96 +58,64 @@ TEXT="#000000"
 LINK="#0000FF"
 VLINK="#840084"
 ALINK="#0000FF"
-><DIV
-CLASS="NAVHEADER"
 ><TABLE
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+CLASS="navigation"
+SUMMARY="Navigation header"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
-><TH
-COLSPAN="4"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="5"
->GMime Library Reference Manual</FONT
-></TH
-></TR
-><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-object.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
-></A
+><IMG
+SRC="left.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Prev"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
 ><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
+ACCESSKEY="u"
 HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
+><IMG
+SRC="up.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Up"></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
-ALIGN="right"
 ><A
+ACCESSKEY="h"
+HREF="book1.html"
+><IMG
+SRC="home.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Home"></A
+></TD
+><TH
+WIDTH="100%"
+align="center"
+>GMime Library Reference Manual</TH
+><TD
+><A
+ACCESSKEY="n"
 HREF="gmime-gmime-multipart.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
+><IMG
+SRC="right.png"
+WIDTH="24"
+HEIGHT="24"
+BORDER="0"
+ALT="Next"></A
 ></TD
 ></TR
 ></TABLE
-></DIV
 ><H1
 ><A
 NAME="GMIME-GMIME-PART"
@@ -135,13 +136,6 @@ NAME="AEN3966"
 ></A
 ><H2
 >Synopsis</H2
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="SYNOPSIS"
 >&#13;
@@ -474,9 +468,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);
 &#13;</PRE
-></TD
-></TR
-></TABLE
 ></DIV
 ><DIV
 CLASS="REFSECT1"
@@ -505,16 +496,10 @@ NAME="AEN4058"
 NAME="GMIMEPART"
 ></A
 >struct GMimePart</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimePart {
+
 	GMimeObject parent_object;
 	
 	GMimePartEncodingType encoding;
@@ -525,9 +510,6 @@ CLASS="PROGRAMLISTING"
 	
 	GMimeDataWrapper *content;
 };</PRE
-></TD
-></TR
-></TABLE
 ><P
 ></P
 ></DIV
@@ -541,22 +523,12 @@ NAME="AEN4063"
 NAME="G-MIME-PART-NEW"
 ></A
 >g_mime_part_new ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 >*  g_mime_part_new                 (void);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new MIME Part object with a default content-type of
 text/plain.</P
@@ -565,18 +537,15 @@ text/plain.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4071"><SPAN
 STYLE="white-space: nowrap"
@@ -588,7 +557,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an empty MIME Part object with a default content-type of
 text/plain.</P
@@ -607,13 +575,6 @@ NAME="AEN4076"
 NAME="G-MIME-PART-NEW-WITH-TYPE"
 ></A
 >g_mime_part_new_with_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -621,9 +582,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 >*  g_mime_part_new_with_type       (const char *type,
                                              const char *subtype);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Creates a new MIME Part with a sepcified type.</P
 ><P
@@ -631,18 +589,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4084"><SPAN
 STYLE="white-space: nowrap"
@@ -656,16 +611,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content-type</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4089"><SPAN
 STYLE="white-space: nowrap"
@@ -679,16 +632,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content-subtype</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4094"><SPAN
 STYLE="white-space: nowrap"
@@ -700,7 +651,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an empty MIME Part object with the specified content-type.</P
 ></TD
@@ -718,13 +668,6 @@ NAME="AEN4099"
 NAME="G-MIME-PART-SET-CONTENT-HEADER"
 ></A
 >g_mime_part_set_content_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_header  (<A
@@ -733,9 +676,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 > *mime_part,
                                              const char *header,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set an arbitrary MIME content header.</P
 ><P
@@ -743,18 +683,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4107"><SPAN
 STYLE="white-space: nowrap"
@@ -768,16 +705,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4112"><SPAN
 STYLE="white-space: nowrap"
@@ -791,16 +726,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4117"><SPAN
 STYLE="white-space: nowrap"
@@ -814,7 +747,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header value</P
 ></TD
@@ -832,13 +764,6 @@ NAME="AEN4122"
 NAME="G-MIME-PART-GET-CONTENT-HEADER"
 ></A
 >g_mime_part_get_content_header ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_header  (<A
@@ -846,9 +771,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *header);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the requested header if it exists, or <TT
 CLASS="LITERAL"
@@ -860,18 +782,15 @@ otherwise.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4131"><SPAN
 STYLE="white-space: nowrap"
@@ -885,16 +804,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4136"><SPAN
 STYLE="white-space: nowrap"
@@ -908,16 +825,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > header name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4141"><SPAN
 STYLE="white-space: nowrap"
@@ -929,7 +844,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the value of the content header <TT
 CLASS="PARAMETER"
@@ -952,13 +866,6 @@ NAME="AEN4147"
 NAME="G-MIME-PART-SET-CONTENT-DESCRIPTION"
 ></A
 >g_mime_part_set_content_description ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_description
@@ -967,9 +874,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *description);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content description for the specified mime part.</P
 ><P
@@ -977,18 +881,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4155"><SPAN
 STYLE="white-space: nowrap"
@@ -1002,16 +903,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4160"><SPAN
 STYLE="white-space: nowrap"
@@ -1025,7 +924,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content description</P
 ></TD
@@ -1043,13 +941,6 @@ NAME="AEN4165"
 NAME="G-MIME-PART-GET-CONTENT-DESCRIPTION"
 ></A
 >g_mime_part_get_content_description ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_description
@@ -1057,9 +948,6 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the Content-Description for the specified mime
 part if it exists or <TT
@@ -1071,18 +959,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4174"><SPAN
 STYLE="white-space: nowrap"
@@ -1096,16 +981,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4179"><SPAN
 STYLE="white-space: nowrap"
@@ -1117,7 +1000,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content description for the specified mime part.</P
 ></TD
@@ -1135,13 +1017,6 @@ NAME="AEN4184"
 NAME="G-MIME-PART-SET-CONTENT-ID"
 ></A
 >g_mime_part_set_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_id      (<A
@@ -1149,9 +1024,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *content_id);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content id for the specified mime part.</P
 ><P
@@ -1159,18 +1031,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4192"><SPAN
 STYLE="white-space: nowrap"
@@ -1184,16 +1053,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4197"><SPAN
 STYLE="white-space: nowrap"
@@ -1207,7 +1074,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content id</P
 ></TD
@@ -1225,22 +1091,12 @@ NAME="AEN4202"
 NAME="G-MIME-PART-GET-CONTENT-ID"
 ></A
 >g_mime_part_get_content_id ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_id      (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the content-id of the specified mime part if it exists, or
 <TT
@@ -1252,18 +1108,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4211"><SPAN
 STYLE="white-space: nowrap"
@@ -1277,16 +1130,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4216"><SPAN
 STYLE="white-space: nowrap"
@@ -1298,7 +1149,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content id for the specified mime part.</P
 ></TD
@@ -1316,13 +1166,6 @@ NAME="AEN4221"
 NAME="G-MIME-PART-SET-CONTENT-MD5"
 ></A
 >g_mime_part_set_content_md5 ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_md5     (<A
@@ -1330,9 +1173,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *content_md5);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content md5 for the specified mime part.</P
 ><P
@@ -1340,18 +1180,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4229"><SPAN
 STYLE="white-space: nowrap"
@@ -1365,16 +1202,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4234"><SPAN
 STYLE="white-space: nowrap"
@@ -1388,7 +1223,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content md5 or NULL to generate the md5 digest.</P
 ></TD
@@ -1406,22 +1240,12 @@ NAME="AEN4239"
 NAME="G-MIME-PART-GET-CONTENT-MD5"
 ></A
 >g_mime_part_get_content_md5 ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_md5     (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the md5sum contained in the Content-Md5 header of the
 specified mime part if it exists, or <TT
@@ -1433,18 +1257,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4248"><SPAN
 STYLE="white-space: nowrap"
@@ -1458,16 +1279,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4253"><SPAN
 STYLE="white-space: nowrap"
@@ -1479,7 +1298,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content md5 for the specified mime part.</P
 ></TD
@@ -1497,13 +1315,6 @@ NAME="AEN4258"
 NAME="G-MIME-PART-VERIFY-CONTENT-MD5"
 ></A
 >g_mime_part_verify_content_md5 ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -1513,9 +1324,6 @@ HREF="GBOOLEAN"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Verify the content md5 for the specified mime part.</P
 ><P
@@ -1523,18 +1331,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4267"><SPAN
 STYLE="white-space: nowrap"
@@ -1548,16 +1353,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4272"><SPAN
 STYLE="white-space: nowrap"
@@ -1569,7 +1372,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >TRUE if the md5 is valid or FALSE otherwise. Note: will
 return FALSE if the mime part does not contain a Content-MD5.</P
@@ -1588,13 +1390,6 @@ NAME="AEN4277"
 NAME="G-MIME-PART-SET-CONTENT-LOCATION"
 ></A
 >g_mime_part_set_content_location ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_location
@@ -1603,9 +1398,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *content_location);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content location for the specified mime part.</P
 ><P
@@ -1613,18 +1405,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4285"><SPAN
 STYLE="white-space: nowrap"
@@ -1638,16 +1427,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4290"><SPAN
 STYLE="white-space: nowrap"
@@ -1661,7 +1448,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content location</P
 ></TD
@@ -1679,13 +1465,6 @@ NAME="AEN4295"
 NAME="G-MIME-PART-GET-CONTENT-LOCATION"
 ></A
 >g_mime_part_get_content_location ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_location
@@ -1693,9 +1472,6 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the Content-Location header if it exists, or
 <TT
@@ -1707,18 +1483,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4304"><SPAN
 STYLE="white-space: nowrap"
@@ -1732,16 +1505,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4309"><SPAN
 STYLE="white-space: nowrap"
@@ -1753,7 +1524,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content location for the specified mime part.</P
 ></TD
@@ -1771,13 +1541,6 @@ NAME="AEN4314"
 NAME="G-MIME-PART-SET-CONTENT-TYPE"
 ></A
 >g_mime_part_set_content_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_type    (<A
@@ -1788,9 +1551,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 >GMimeContentType</A
 > *mime_type);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content type/subtype for the specified mime part.</P
 ><P
@@ -1798,18 +1558,15 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4323"><SPAN
 STYLE="white-space: nowrap"
@@ -1823,16 +1580,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4328"><SPAN
 STYLE="white-space: nowrap"
@@ -1846,7 +1601,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime content-type</P
 ></TD
@@ -1864,13 +1618,6 @@ NAME="AEN4333"
 NAME="G-MIME-PART-GET-CONTENT-TYPE"
 ></A
 >g_mime_part_get_content_type ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const <A
@@ -1881,9 +1628,6 @@ HREF="gmime-gmime-content-type.html#GMIMECONTENTTYPE"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the Content-Type object for the given mime part or <TT
 CLASS="LITERAL"
@@ -1895,18 +1639,15 @@ error.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4343"><SPAN
 STYLE="white-space: nowrap"
@@ -1920,16 +1661,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4348"><SPAN
 STYLE="white-space: nowrap"
@@ -1941,7 +1680,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content-type object for the specified mime part.</P
 ></TD
@@ -1959,13 +1697,6 @@ NAME="AEN4353"
 NAME="G-MIME-PART-SET-ENCODING"
 ></A
 >g_mime_part_set_encoding ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_encoding        (<A
@@ -1976,9 +1707,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content encoding for the specified mime part. Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
@@ -1990,18 +1718,15 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4362"><SPAN
 STYLE="white-space: nowrap"
@@ -2015,16 +1740,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4367"><SPAN
 STYLE="white-space: nowrap"
@@ -2038,7 +1761,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime encoding</P
 ></TD
@@ -2056,13 +1778,6 @@ NAME="AEN4372"
 NAME="G-MIME-PART-GET-ENCODING"
 ></A
 >g_mime_part_get_encoding ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -2073,9 +1788,6 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the content encoding of the mime part.</P
 ><P
@@ -2083,18 +1795,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4381"><SPAN
 STYLE="white-space: nowrap"
@@ -2108,16 +1817,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4386"><SPAN
 STYLE="white-space: nowrap"
@@ -2129,7 +1836,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content encoding for the specified mime part. The
 return value will be one of the following:
@@ -2152,22 +1858,12 @@ NAME="AEN4391"
 NAME="G-MIME-PART-ENCODING-TO-STRING"
 ></A
 >g_mime_part_encoding_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_encoding_to_string  (<A
 HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the string value of the content encoding.</P
 ><P
@@ -2175,18 +1871,15 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4399"><SPAN
 STYLE="white-space: nowrap"
@@ -2200,16 +1893,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime encoding</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4404"><SPAN
 STYLE="white-space: nowrap"
@@ -2221,7 +1912,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the encoding type as a string. Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
@@ -2244,13 +1934,6 @@ NAME="AEN4409"
 NAME="G-MIME-PART-ENCODING-FROM-STRING"
 ></A
 >g_mime_part_encoding_from_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -2258,9 +1941,6 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > g_mime_part_encoding_from_string
                                             (const char *encoding);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the content encoding enumeration value based on the input
 string.</P
@@ -2269,18 +1949,15 @@ string.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4417"><SPAN
 STYLE="white-space: nowrap"
@@ -2294,16 +1971,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime encoding in string format</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4422"><SPAN
 STYLE="white-space: nowrap"
@@ -2315,7 +1990,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the encoding string as a GMimePartEncodingType.  Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
@@ -2338,13 +2012,6 @@ NAME="AEN4427"
 NAME="G-MIME-PART-SET-CONTENT-DISPOSITION-OBJECT"
 ></A
 >g_mime_part_set_content_disposition_object ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_disposition_object
@@ -2356,9 +2023,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-disposition.html#GMIMEDISPOSITION"
 >GMimeDisposition</A
 > *disposition);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content disposition for the specified mime part</P
 ><P
@@ -2366,18 +2030,15 @@ HREF="gmime-gmime-disposition.html#GMIMEDISPOSITION"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4436"><SPAN
 STYLE="white-space: nowrap"
@@ -2391,16 +2052,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4441"><SPAN
 STYLE="white-space: nowrap"
@@ -2414,7 +2073,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > disposition object</P
 ></TD
@@ -2432,13 +2090,6 @@ NAME="AEN4446"
 NAME="G-MIME-PART-SET-CONTENT-DISPOSITION"
 ></A
 >g_mime_part_set_content_disposition ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_disposition
@@ -2447,9 +2098,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *disposition);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Set the content disposition for the specified mime part</P
 ><P
@@ -2457,18 +2105,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4454"><SPAN
 STYLE="white-space: nowrap"
@@ -2482,16 +2127,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4459"><SPAN
 STYLE="white-space: nowrap"
@@ -2505,7 +2148,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > disposition</P
 ></TD
@@ -2523,13 +2165,6 @@ NAME="AEN4464"
 NAME="G-MIME-PART-GET-CONTENT-DISPOSITION"
 ></A
 >g_mime_part_get_content_disposition ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_disposition
@@ -2537,9 +2172,6 @@ CLASS="PROGRAMLISTING"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the content disposition if set or <TT
 CLASS="LITERAL"
@@ -2550,18 +2182,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4473"><SPAN
 STYLE="white-space: nowrap"
@@ -2575,16 +2204,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4478"><SPAN
 STYLE="white-space: nowrap"
@@ -2596,7 +2223,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the content disposition for the specified mime part.</P
 ></TD
@@ -2614,13 +2240,6 @@ NAME="AEN4483"
 NAME="G-MIME-PART-ADD-CONTENT-DISPOSITION-PARAMETER"
 ></A
 >g_mime_part_add_content_disposition_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_add_content_disposition_parameter
@@ -2630,9 +2249,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 > *mime_part,
                                              const char *attribute,
                                              const char *value);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Add a content-disposition parameter to the specified mime part.</P
 ><P
@@ -2640,18 +2256,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4491"><SPAN
 STYLE="white-space: nowrap"
@@ -2665,16 +2278,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4496"><SPAN
 STYLE="white-space: nowrap"
@@ -2688,16 +2299,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > parameter name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4501"><SPAN
 STYLE="white-space: nowrap"
@@ -2711,7 +2320,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > parameter value</P
 ></TD
@@ -2729,13 +2337,6 @@ NAME="AEN4506"
 NAME="G-MIME-PART-GET-CONTENT-DISPOSITION-PARAMETER"
 ></A
 >g_mime_part_get_content_disposition_parameter ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content_disposition_parameter
@@ -2744,9 +2345,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *attribute);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the value of the Content-Disposition parameter specified by
 <TT
@@ -2763,18 +2361,15 @@ CLASS="LITERAL"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4516"><SPAN
 STYLE="white-space: nowrap"
@@ -2788,16 +2383,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4521"><SPAN
 STYLE="white-space: nowrap"
@@ -2811,16 +2404,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > parameter name</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4526"><SPAN
 STYLE="white-space: nowrap"
@@ -2832,7 +2423,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the value of a previously defined content-disposition
 parameter specified by <GTKDOCLINK
@@ -2854,13 +2444,6 @@ NAME="AEN4532"
 NAME="G-MIME-PART-SET-FILENAME"
 ></A
 >g_mime_part_set_filename ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_filename        (<A
@@ -2868,9 +2451,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part,
                                              const char *filename);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the "filename" parameter on the Content-Disposition and also sets the
 "name" parameter on the Content-Type.</P
@@ -2879,18 +2459,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4540"><SPAN
 STYLE="white-space: nowrap"
@@ -2904,16 +2481,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4545"><SPAN
 STYLE="white-space: nowrap"
@@ -2927,7 +2502,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > the filename of the Mime Part's content</P
 ></TD
@@ -2945,22 +2519,12 @@ NAME="AEN4550"
 NAME="G-MIME-PART-GET-FILENAME"
 ></A
 >g_mime_part_get_filename ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_filename        (const <A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the filename of the specificed mime part, or <TT
 CLASS="LITERAL"
@@ -2972,18 +2536,15 @@ part does not have the filename or name parameter set.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4559"><SPAN
 STYLE="white-space: nowrap"
@@ -2997,16 +2558,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4564"><SPAN
 STYLE="white-space: nowrap"
@@ -3018,7 +2577,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the filename of the specified MIME Part. It first checks to
 see if the "filename" parameter was set on the Content-Disposition
@@ -3038,13 +2596,6 @@ NAME="AEN4569"
 NAME="G-MIME-PART-SET-CONTENT"
 ></A
 >g_mime_part_set_content ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content         (<A
@@ -3056,9 +2607,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="SIZE-T"
 >size_t</GTKDOCLINK
 > len);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the content of the Mime Part (only non-multiparts)</P
 ><P
@@ -3066,18 +2614,15 @@ HREF="SIZE-T"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4578"><SPAN
 STYLE="white-space: nowrap"
@@ -3091,16 +2636,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4583"><SPAN
 STYLE="white-space: nowrap"
@@ -3114,16 +2657,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > raw mime part content</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4588"><SPAN
 STYLE="white-space: nowrap"
@@ -3137,7 +2678,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > raw content length</P
 ></TD
@@ -3155,13 +2695,6 @@ NAME="AEN4593"
 NAME="G-MIME-PART-SET-PRE-ENCODED-CONTENT"
 ></A
 >g_mime_part_set_pre_encoded_content ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_pre_encoded_content
@@ -3178,9 +2711,6 @@ HREF="SIZE-T"
 HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
 > encoding);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the encoding type and raw content on the mime part after decoding the content.</P
 ><P
@@ -3188,18 +2718,15 @@ HREF="gmime-gmime-utils.html#GMIMEPARTENCODINGTYPE"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4603"><SPAN
 STYLE="white-space: nowrap"
@@ -3213,16 +2740,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4608"><SPAN
 STYLE="white-space: nowrap"
@@ -3236,16 +2761,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > encoded mime part content</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4613"><SPAN
 STYLE="white-space: nowrap"
@@ -3259,16 +2782,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > length of the content</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4618"><SPAN
 STYLE="white-space: nowrap"
@@ -3282,7 +2803,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content encoding</P
 ></TD
@@ -3300,13 +2820,6 @@ NAME="AEN4623"
 NAME="G-MIME-PART-SET-CONTENT-BYTE-ARRAY"
 ></A
 >g_mime_part_set_content_byte_array ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_byte_array
@@ -3318,9 +2831,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GBYTEARRAY"
 >GByteArray</GTKDOCLINK
 > *content);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the content of the Mime Part (only non-multiparts)</P
 ><P
@@ -3328,18 +2838,15 @@ HREF="GBYTEARRAY"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4632"><SPAN
 STYLE="white-space: nowrap"
@@ -3353,16 +2860,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > Mime part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4637"><SPAN
 STYLE="white-space: nowrap"
@@ -3376,7 +2881,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > raw mime part content.</P
 ></TD
@@ -3394,13 +2898,6 @@ NAME="AEN4642"
 NAME="G-MIME-PART-GET-CONTENT"
 ></A
 >g_mime_part_get_content ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >const char* g_mime_part_get_content         (const <A
@@ -3411,9 +2908,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="SIZE-T"
 >size_t</GTKDOCLINK
 > *len);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the raw contents of the mime part and sets <TT
 CLASS="PARAMETER"
@@ -3427,18 +2921,15 @@ of the raw data buffer.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4652"><SPAN
 STYLE="white-space: nowrap"
@@ -3452,16 +2943,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME part object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4657"><SPAN
 STYLE="white-space: nowrap"
@@ -3475,16 +2964,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > pointer to the content length</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4662"><SPAN
 STYLE="white-space: nowrap"
@@ -3496,7 +2983,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >a const char * pointer to the raw contents of the MIME Part
 and sets <TT
@@ -3518,13 +3004,6 @@ NAME="AEN4668"
 NAME="G-MIME-PART-GET-CONTENT-OBJECT"
 ></A
 >g_mime_part_get_content_object ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
@@ -3535,9 +3014,6 @@ HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Gets the internal data-wrapper of the specified mime part, or <TT
 CLASS="LITERAL"
@@ -3549,18 +3025,15 @@ on error.</P
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4678"><SPAN
 STYLE="white-space: nowrap"
@@ -3574,16 +3047,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME part object</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4683"><SPAN
 STYLE="white-space: nowrap"
@@ -3595,7 +3066,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the data-wrapper for the mime part's contents.</P
 ></TD
@@ -3613,13 +3083,6 @@ NAME="AEN4688"
 NAME="G-MIME-PART-SET-CONTENT-OBJECT"
 ></A
 >g_mime_part_set_content_object ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >void        g_mime_part_set_content_object  (<A
@@ -3630,9 +3093,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
 >GMimeDataWrapper</A
 > *content);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Sets the content object on the mime part.</P
 ><P
@@ -3640,18 +3100,15 @@ HREF="gmime-gmime-data-wrapper.html#GMIMEDATAWRAPPER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4697"><SPAN
 STYLE="white-space: nowrap"
@@ -3665,16 +3122,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME Part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4702"><SPAN
 STYLE="white-space: nowrap"
@@ -3688,7 +3143,6 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > content object</P
 ></TD
@@ -3706,13 +3160,6 @@ NAME="AEN4707"
 NAME="G-MIME-PART-WRITE-TO-STREAM"
 ></A
 >g_mime_part_write_to_stream ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
@@ -3726,9 +3173,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Writes the contents of the MIME Part to <TT
 CLASS="PARAMETER"
@@ -3741,18 +3185,15 @@ CLASS="PARAMETER"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4718"><SPAN
 STYLE="white-space: nowrap"
@@ -3766,16 +3207,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME Part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4723"><SPAN
 STYLE="white-space: nowrap"
@@ -3789,16 +3228,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > output stream</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4728"><SPAN
 STYLE="white-space: nowrap"
@@ -3810,7 +3247,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >the number of bytes written or -1 on fail.</P
 ></TD
@@ -3828,22 +3264,12 @@ NAME="AEN4733"
 NAME="G-MIME-PART-TO-STRING"
 ></A
 >g_mime_part_to_string ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
 ><PRE
 CLASS="PROGRAMLISTING"
 >char*       g_mime_part_to_string           (<A
 HREF="gmime-gmime-part.html#GMIMEPART"
 >GMimePart</A
 > *mime_part);</PRE
-></TD
-></TR
-></TABLE
 ><P
 >Allocates a string buffer containing the MIME Part.</P
 ><P
@@ -3851,18 +3277,15 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><P
 ></P
 ><TABLE
-CLASS="VARIABLELIST"
+CLASS="variablelist"
 BORDER="0"
 CELLSPACING="0"
 CELLPADDING="4"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
 ><TBODY
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4741"><SPAN
 STYLE="white-space: nowrap"
@@ -3876,16 +3299,14 @@ CLASS="PARAMETER"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 > MIME Part</P
 ></TD
 ></TR
 ><TR
 ><TD
-ALIGN="RIGHT"
+ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="20%"
 ><A
 NAME="AEN4746"><SPAN
 STYLE="white-space: nowrap"
@@ -3897,7 +3318,6 @@ CLASS="EMPHASIS"
 ><TD
 ALIGN="LEFT"
 VALIGN="TOP"
-WIDTH="80%"
 ><P
 >an allocated string containing the MIME Part.</P
 ></TD
@@ -3906,109 +3326,34 @@ WIDTH="80%"
 ></TABLE
 ></DIV
 ></DIV
-><DIV
-CLASS="NAVFOOTER"
-><BR
-CLEAR="all"><BR><TABLE
+><TABLE
+CLASS="navigation"
 WIDTH="100%"
-BORDER="0"
-BGCOLOR="#000000"
-CELLPADDING="1"
-CELLSPACING="0"
+SUMMARY="Navigation footer"
+CELLPADDING="2"
+CELLSPACING="2"
 ><TR
+VALIGN="middle"
 ><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="left"
 ><A
+ACCESSKEY="p"
 HREF="gmime-gmime-object.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->&#60;&#60;&#60; Previous Page</B
-></FONT
+>&lt;&lt;&lt;&nbsp;gmime-object</B
 ></A
 ></TD
 ><TD
-WIDTH="25%"
-BGCOLOR="#0000C0"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="book1.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Home</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#00C000"
-ALIGN="center"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
-><A
-HREF="libgmime.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Up</B
-></FONT
-></A
-></B
-></FONT
-></TD
-><TD
-WIDTH="25%"
-BGCOLOR="#C00000"
 ALIGN="right"
 ><A
+ACCESSKEY="n"
 HREF="gmime-gmime-multipart.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
 ><B
->Next Page &#62;&#62;&#62;</B
-></FONT
+>gmime-multipart&nbsp;&gt;&gt;&gt;</B
 ></A
-></TD
-></TR
-><TR
-><TD
-COLSPAN="2"
-ALIGN="left"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-object</B
-></FONT
-></TD
-><TD
-COLSPAN="2"
-ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-multipart</B
-></FONT
 ></TD
 ></TR
 ></TABLE
-></DIV
 ></BODY
 ></HTML
 >

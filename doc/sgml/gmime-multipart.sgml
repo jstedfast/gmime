@@ -10,6 +10,7 @@
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>
+
 <synopsis>
 
 
@@ -69,6 +70,7 @@ const <link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-mult
 <refsect2>
 <title><anchor id="GMimeMultipart">struct GMimeMultipart</title>
 <programlisting>struct GMimeMultipart {
+
 	GMimeObject parent_object;
 	
 	char *boundary;
@@ -91,9 +93,9 @@ multipart/mixed.</para>
 <para>
 
 </para><variablelist role="params">
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart object with a default content-type of
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME multipart object with a default content-type of
 multipart/mixed.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-new-with-subtype">g_mime_multipart_new_with_subtype ()</title>
@@ -106,11 +108,11 @@ multipart/<parameter>subtype</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>subtype</parameter>&nbsp;:</term>
-<listitem><para> content-type subtype
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>an empty MIME multipart object with a content-type of
+<listitem><simpara> content-type subtype
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>an empty MIME multipart object with a content-type of
 multipart/<parameter>subtype</parameter>.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-set-preface">g_mime_multipart_set_preface ()</title>
@@ -122,11 +124,11 @@ Sets the preface on the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>preface</parameter>&nbsp;:</term>
-<listitem><para> preface
-</para></listitem></varlistentry>
+<listitem><simpara> preface
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-preface">g_mime_multipart_get_preface ()</title>
@@ -137,10 +139,10 @@ Gets the preface on the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a pointer to the preface string on the multipart.
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a pointer to the preface string on the multipart.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-set-postface">g_mime_multipart_set_postface ()</title>
@@ -152,11 +154,11 @@ Sets the postface on the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>postface</parameter>&nbsp;:</term>
-<listitem><para> postface
-</para></listitem></varlistentry>
+<listitem><simpara> postface
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-postface">g_mime_multipart_get_postface ()</title>
@@ -167,10 +169,10 @@ Gets the postface on the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a pointer to the postface string on the multipart.
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>a pointer to the postface string on the multipart.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-set-boundary">g_mime_multipart_set_boundary ()</title>
@@ -183,11 +185,11 @@ Sets <parameter>boundary</parameter> as the boundary on the multipart. If <param
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>boundary</parameter>&nbsp;:</term>
-<listitem><para> boundary or <literal>NULL</literal> to autogenerate one
-</para></listitem></varlistentry>
+<listitem><simpara> boundary or <literal>NULL</literal> to autogenerate one
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-boundary">g_mime_multipart_get_boundary ()</title>
@@ -200,10 +202,10 @@ and returned.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the boundary on the multipart.
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the boundary on the multipart.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-add-part">g_mime_multipart_add_part ()</title>
@@ -215,11 +217,11 @@ Adds a mime part to the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para> mime part
-</para></listitem></varlistentry>
+<listitem><simpara> mime part
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-add-part-at">g_mime_multipart_add_part_at ()</title>
@@ -232,14 +234,14 @@ Adds a mime part to the multipart at the position <parameter>index</parameter>.<
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para> mime part
-</para></listitem></varlistentry>
+<listitem><simpara> mime part
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>index</parameter>&nbsp;:</term>
-<listitem><para> position to insert the mime part
-</para></listitem></varlistentry>
+<listitem><simpara> position to insert the mime part
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-number">g_mime_multipart_get_number ()</title>
@@ -250,10 +252,10 @@ Gets the number of mime parts contained within the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the number of mime parts contained within the multipart.
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the number of mime parts contained within the multipart.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-part">g_mime_multipart_get_part ()</title>
@@ -265,13 +267,13 @@ Gets the mime part at position <parameter>index</parameter> within the multipart
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>index</parameter>&nbsp;:</term>
-<listitem><para> position of the mime part
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the mime part at position <parameter>index</parameter>.
-</para></listitem></varlistentry>
+<listitem><simpara> position of the mime part
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the mime part at position <parameter>index</parameter>.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-remove-part">g_mime_multipart_remove_part ()</title>
@@ -283,11 +285,11 @@ Removes the specified mime part from the multipart.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>part</parameter>&nbsp;:</term>
-<listitem><para> mime part
-</para></listitem></varlistentry>
+<listitem><simpara> mime part
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-remove-part-at">g_mime_multipart_remove_part_at ()</title>
@@ -300,13 +302,13 @@ Removes the mime part at position <parameter>index</parameter> from the multipar
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> multipart
-</para></listitem></varlistentry>
+<listitem><simpara> multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>index</parameter>&nbsp;:</term>
-<listitem><para> position of the mime part to remove
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the mime part that was removed.
-</para></listitem></varlistentry>
+<listitem><simpara> position of the mime part to remove
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the mime part that was removed.
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-foreach">g_mime_multipart_foreach ()</title>
@@ -319,14 +321,14 @@ Calls <parameter>callback</parameter> on <parameter>multipart</parameter> and ea
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> a multipart
-</para></listitem></varlistentry>
+<listitem><simpara> a multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>callback</parameter>&nbsp;:</term>
-<listitem><para> function to call for <parameter>multipart</parameter> and all of its subparts
-</para></listitem></varlistentry>
+<listitem><simpara> function to call for <parameter>multipart</parameter> and all of its subparts
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>user_data</parameter>&nbsp;:</term>
-<listitem><para> extra data to pass to the callback
-</para></listitem></varlistentry>
+<listitem><simpara> extra data to pass to the callback
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 <refsect2>
 <title><anchor id="g-mime-multipart-get-subpart-from-content-id">g_mime_multipart_get_subpart_from_content_id ()</title>
@@ -340,14 +342,14 @@ multipart <parameter>multipart</parameter>.</para>
 
 </para><variablelist role="params">
 <varlistentry><term><parameter>multipart</parameter>&nbsp;:</term>
-<listitem><para> a multipart
-</para></listitem></varlistentry>
+<listitem><simpara> a multipart
+</simpara></listitem></varlistentry>
 <varlistentry><term><parameter>content_id</parameter>&nbsp;:</term>
-<listitem><para> the content id of the part to look for
-</para></listitem></varlistentry>
-<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>the GMimeObject whose content-id matches the search string,
+<listitem><simpara> the content id of the part to look for
+</simpara></listitem></varlistentry>
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><simpara>the GMimeObject whose content-id matches the search string,
 or <literal>NULL</literal> if a match cannot be found.
-</para></listitem></varlistentry>
+</simpara></listitem></varlistentry>
 </variablelist></refsect2>
 
 </refsect1>
