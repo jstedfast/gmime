@@ -1,68 +1,65 @@
-<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
-<!notation PNG system "PNG">
-<!entity % local.notation.class "| PNG">
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY gmime-Init SYSTEM "xml/gmime.xml">
+<!ENTITY GMimeSession SYSTEM "xml/gmime-session.xml">
+<!ENTITY GMimeSessionSimple SYSTEM "xml/gmime-session-simple.xml">
+<!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
+<!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
+<!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
+<!ENTITY GMimeDisposition SYSTEM "xml/gmime-disposition.xml">
+<!ENTITY GMimeObject SYSTEM "xml/gmime-object.xml">
+<!ENTITY GMimeDataWrapper SYSTEM "xml/gmime-data-wrapper.xml">
+<!ENTITY GMimeMultipart SYSTEM "xml/gmime-multipart.xml">
+<!ENTITY GMimeMultipartEncrypted SYSTEM "xml/gmime-multipart-encrypted.xml">
+<!ENTITY GMimeMultipartSigned SYSTEM "xml/gmime-multipart-signed.xml">
+<!ENTITY GMimePart SYSTEM "xml/gmime-part.xml">
+<!ENTITY GMimeMessage SYSTEM "xml/gmime-message.xml">
+<!ENTITY GMimeMessagePart SYSTEM "xml/gmime-message-part.xml">
+<!ENTITY GMimeMessagePartial SYSTEM "xml/gmime-message-partial.xml">
+<!ENTITY gmime-utils SYSTEM "xml/gmime-utils.xml">
+<!ENTITY gmime-host-utils SYSTEM "xml/gmime-host-utils.xml">
+<!ENTITY InternetAddress SYSTEM "xml/internet-address.xml">
+<!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
+<!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
+<!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
+<!ENTITY gmime-iconv-utils SYSTEM "xml/gmime-iconv-utils.xml">
+<!ENTITY GMimeStream SYSTEM "xml/gmime-stream.xml">
+<!ENTITY GMimeStreamBuffer SYSTEM "xml/gmime-stream-buffer.xml">
+<!ENTITY GMimeStreamCat SYSTEM "xml/gmime-stream-cat.xml">
+<!ENTITY GMimeStreamFile SYSTEM "xml/gmime-stream-file.xml">
+<!ENTITY GMimeStreamFs SYSTEM "xml/gmime-stream-fs.xml">
+<!ENTITY GMimeStreamMem SYSTEM "xml/gmime-stream-mem.xml">
+<!ENTITY GMimeStreamMmap SYSTEM "xml/gmime-stream-mmap.xml">
+<!ENTITY GMimeStreamNull SYSTEM "xml/gmime-stream-null.xml">
+<!ENTITY GMimeStreamFilter SYSTEM "xml/gmime-stream-filter.xml">
+<!ENTITY GMimeFilter SYSTEM "xml/gmime-filter.xml">
+<!ENTITY GMimeFilterBasic SYSTEM "xml/gmime-filter-basic.xml">
+<!ENTITY GMimeFilterBest SYSTEM "xml/gmime-filter-best.xml">
+<!ENTITY GMimeFilterCharset SYSTEM "xml/gmime-filter-charset.xml">
+<!ENTITY GMimeFilterCRLF SYSTEM "xml/gmime-filter-crlf.xml">
+<!ENTITY GMimeFilterEnriched SYSTEM "xml/gmime-filter-enriched.xml">
+<!ENTITY GMimeFilterFrom SYSTEM "xml/gmime-filter-from.xml">
+<!ENTITY GMimeFilterGZip SYSTEM "xml/gmime-filter-gzip.xml">
+<!ENTITY GMimeFilterHTML SYSTEM "xml/gmime-filter-html.xml">
+<!ENTITY GMimeFilterMd5 SYSTEM "xml/gmime-filter-md5.xml">
+<!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
+<!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
+<!ENTITY GMimeFilterYenc SYSTEM "xml/gmime-filter-yenc.xml">
+<!ENTITY GMimeCipherContext SYSTEM "xml/gmime-cipher-context.xml">
+<!ENTITY GMimeGpgContext SYSTEM "xml/gmime-gpg-context.xml">
 
-<!entity hash "#">
-<!entity percent "%">
-<!entity gmime-Init SYSTEM "sgml/gmime.sgml">
-<!entity GMimeSession SYSTEM "sgml/gmime-session.sgml">
-<!entity GMimeSessionSimple SYSTEM "sgml/gmime-session-simple.sgml">
-<!entity GMimeParam SYSTEM "sgml/gmime-param.sgml">
-<!entity GMimeHeader SYSTEM "sgml/gmime-header.sgml">
-<!entity GMimeContentType SYSTEM "sgml/gmime-content-type.sgml">
-<!entity GMimeDisposition SYSTEM "sgml/gmime-disposition.sgml">
-<!entity GMimeObject SYSTEM "sgml/gmime-object.sgml">
-<!entity GMimeDataWrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
-<!entity GMimeMultipart SYSTEM "sgml/gmime-multipart.sgml">
-<!entity GMimeMultipartEncrypted SYSTEM "sgml/gmime-multipart-encrypted.sgml">
-<!entity GMimeMultipartSigned SYSTEM "sgml/gmime-multipart-signed.sgml">
-<!entity GMimePart SYSTEM "sgml/gmime-part.sgml">
-<!entity GMimeMessage SYSTEM "sgml/gmime-message.sgml">
-<!entity GMimeMessagePart SYSTEM "sgml/gmime-message-part.sgml">
-<!entity GMimeMessagePartial SYSTEM "sgml/gmime-message-partial.sgml">
-<!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
-<!entity gmime-host-utils SYSTEM "sgml/gmime-host-utils.sgml">
-<!entity InternetAddress SYSTEM "sgml/internet-address.sgml">
-<!entity GMimeParser SYSTEM "sgml/gmime-parser.sgml">
-<!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
-<!entity gmime-iconv SYSTEM "sgml/gmime-iconv.sgml">
-<!entity gmime-iconv-utils SYSTEM "sgml/gmime-iconv-utils.sgml">
-<!entity GMimeStream SYSTEM "sgml/gmime-stream.sgml">
-<!entity GMimeStreamBuffer SYSTEM "sgml/gmime-stream-buffer.sgml">
-<!entity GMimeStreamCat SYSTEM "sgml/gmime-stream-cat.sgml">
-<!entity GMimeStreamFile SYSTEM "sgml/gmime-stream-file.sgml">
-<!entity GMimeStreamFs SYSTEM "sgml/gmime-stream-fs.sgml">
-<!entity GMimeStreamMem SYSTEM "sgml/gmime-stream-mem.sgml">
-<!entity GMimeStreamMmap SYSTEM "sgml/gmime-stream-mmap.sgml">
-<!entity GMimeStreamNull SYSTEM "sgml/gmime-stream-null.sgml">
-<!entity GMimeStreamFilter SYSTEM "sgml/gmime-stream-filter.sgml">
-<!entity GMimeFilter SYSTEM "sgml/gmime-filter.sgml">
-<!entity GMimeFilterBasic SYSTEM "sgml/gmime-filter-basic.sgml">
-<!entity GMimeFilterBest SYSTEM "sgml/gmime-filter-best.sgml">
-<!entity GMimeFilterCharset SYSTEM "sgml/gmime-filter-charset.sgml">
-<!entity GMimeFilterCRLF SYSTEM "sgml/gmime-filter-crlf.sgml">
-<!entity GMimeFilterEnriched SYSTEM "sgml/gmime-filter-enriched.sgml">
-<!entity GMimeFilterFrom SYSTEM "sgml/gmime-filter-from.sgml">
-<!entity GMimeFilterGZip SYSTEM "sgml/gmime-filter-gzip.sgml">
-<!entity GMimeFilterHTML SYSTEM "sgml/gmime-filter-html.sgml">
-<!entity GMimeFilterMd5 SYSTEM "sgml/gmime-filter-md5.sgml">
-<!entity GMimeFilterStrip SYSTEM "sgml/gmime-filter-strip.sgml">
-<!entity GMimeFilterWindows SYSTEM "sgml/gmime-filter-windows.sgml">
-<!entity GMimeFilterYenc SYSTEM "sgml/gmime-filter-yenc.sgml">
-<!entity GMimeCipherContext SYSTEM "sgml/gmime-cipher-context.sgml">
-<!entity GMimeGpgContext SYSTEM "sgml/gmime-gpg-context.sgml">
+<!ENTITY index-Class-Tree SYSTEM "tree_index.sgml">
 
-<!entity index-Class-Tree SYSTEM "sgml/tree_index.sgml">
+<!ENTITY gmime-Building SYSTEM "building.sgml">
+<!ENTITY gmime-Compiling SYSTEM "compiling.sgml">
+<!ENTITY gmime-Resources SYSTEM "resources.sgml">
+<!ENTITY gmime-Questions SYSTEM "question_index.sgml">
+<!ENTITY gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
 
-<!entity gmime-Building SYSTEM "building.sgml">
-<!entity gmime-Compiling SYSTEM "compiling.sgml">
-<!entity gmime-Resources SYSTEM "resources.sgml">
-<!entity gmime-Questions SYSTEM "question_index.sgml">
-<!entity gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
-
-<!entity gmime-Streams SYSTEM "streams.sgml">
-<!entity gmime-Filters SYSTEM "filters.sgml">
-<!entity gmime-DataWrappers SYSTEM "data-wrappers.sgml">
+<!ENTITY gmime-Streams SYSTEM "streams.sgml">
+<!ENTITY gmime-Filters SYSTEM "filters.sgml">
+<!ENTITY gmime-DataWrappers SYSTEM "data-wrappers.sgml">
 ]>
 
 <book id="index">

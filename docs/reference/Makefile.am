@@ -12,8 +12,20 @@ DOC_SOURCE_DIR = $(top_srcdir)/gmime
 
 HTML_DIR = $(datadir)/gtk-doc/html
 
-TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE_VERSIONED)
+# Images to copy into HTML directory
+HTML_IMAGES = 
 
+#TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE_VERSIONED)
+
+# Extra options to supply to gtkdoc-scan
+SCAN_OPTIONS = --deprecated-guards="GMIME_DISABLE_DEPRECATED"
+
+#SCANOBJ_FILES = $(DOC_MODULE).hierarchy
+
+# Extra options to supply to gtkdoc-mkdb
+MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files=trio
+
+# Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)
 content_files = 			\
 	building.sgml			\
 	changes-2.0.sgml		\
@@ -22,106 +34,37 @@ content_files = 			\
 	filters.sgml			\
 	question_index.sgml		\
 	resources.sgml			\
-	streams.sgml
+	streams.sgml			\
+	tree_index.sgml
 
-ignore_headers = 			\
+# Used for dependencies
+HFILE_GLOB=$(top_srcdir)/gmime/*.h
+CFILE_GLOB=$(top_srcdir)/gmime/*.c
+
+# Header files to ignore when scanning
+IGNORE_HFILES = 			\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
 	gmime-type-utils.h
 
-EXTRA_DIST = 				\
+# Extra options to supply to gtkdoc-fixref
+FIXXREF_OPTIONS = 
+
+include $(top_srcdir)/gtk-doc.make
+
+# Other files to distribute
+EXTRA_DIST += 				\
 	$(content_files)		\
 	$(DOC_MODULE)-docs.sgml		\
 	$(DOC_MODULE)-sections.txt	\
 	gmime.hierarchy
 
-SCANOBJ_FILES = $(DOC_MODULE).hierarchy
+########################################################################
 
-if ENABLE_GTK_DOC
-all-local: html-build.stamp
+BUILT_EXTRA_DIST = 
 
-#### scan ####
-
-scan-build.stamp:
-	@echo '*** Scanning header files ***'
-	cd $(srcdir) && \
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="$(ignore_headers)"
-	touch scan-build.stamp
-
-#### templates ####
-
-tmpl-build.stamp: scan-build.stamp gmime-docs.sgml $(content_files)
-	@echo '*** Rebuilding template files ***'
-	cd $(srcdir) && gtkdoc-mktmpl --module=$(DOC_MODULE)
-	touch tmpl-build.stamp
-
-tmpl.stamp: tmpl-build.stamp
-	@true
-
-#### sgml ####
-
-sgml-build.stamp: tmpl.stamp
-	@echo '*** Building SGML ***'
-	cd $(srcdir) && gtkdoc-mkdb --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR)
-	touch sgml-build.stamp
-
-sgml.stamp: sgml-build.stamp
-	@true
-
-#### html ####
-
-html-build.stamp: sgml.stamp
-	@echo '*** Building HTML ***'
-	rm -rf $(srcdir)/html
-	mkdir $(srcdir)/html
-	cd $(srcdir)/html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MAIN_SGML_FILE)
-	@echo '-- Fixing Crossreferences' 
-	cd $(srcdir) && gtkdoc-fixxref --module-dir=html --html-dir=$(HTML_DIR)
-	touch html-build.stamp
-endif
-
-##############
-
-clean-local:
-	rm -f *~ *.bak *.signals *.args *-unused.txt *-undocumented.txt *.stamp
-
-maintainer-clean-local: clean
-	rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt 
-
-install-data-local:
-	$(mkinstalldirs) $(DESTDIR)$(TARGET_DIR)
-	(installfiles=`echo $(srcdir)/html/*`; \
-	if test "$$installfiles" = '$(srcdir)/html/*'; \
-	then echo '-- Nothing to install' ; \
-	else \
-	  for i in $$installfiles; do \
-	    echo '-- Installing '$$i ; \
-	    $(INSTALL_DATA) $$i $(DESTDIR)$(TARGET_DIR); \
-	  done; \
-	  echo '-- Installing $(srcdir)/html/index.sgml' ; \
-	  $(INSTALL_DATA) $(srcdir)/html/index.sgml $(DESTDIR)$(TARGET_DIR); \
-	fi)
-
-#
-# Require gtk-doc when making dist
-#
-if ENABLE_GTK_DOC
-dist-check-gtkdoc:
-else
-dist-check-gtkdoc:
-	@echo "*** gtk-doc must be installed and enabled in order to make dist"
-	@false
-endif
-
-dist-hook: dist-check-gtkdoc dist-hook-local
-	mkdir $(distdir)/tmpl
-	mkdir $(distdir)/sgml
-	mkdir $(distdir)/html
-	-cp $(srcdir)/tmpl/*.sgml $(distdir)/tmpl
-	-cp $(srcdir)/sgml/*.sgml $(distdir)/sgml
-	-cp $(srcdir)/html/* $(distdir)/html
-
-uninstall:
-	rm -rf $(DESTDIR)$(TARGET_DIR)
-
-.PHONY : dist-hook-local
+dist-hook-local: $(BUILT_EXTRA_DIST)
+	files='$(BUILT_EXTRA_DIST)';				\
+	for f in $$files; do					\
+	  if test -f $$f; then d=.; else d=$(srcdir); fi;	\
+	  cp $$d/$$f $(distdir) || exit 1; done
