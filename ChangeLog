@@ -1,5 +1,10 @@
 2001-11-26  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-filter-from.c (filter_filter): initialize fromcount to 0.
+
+	* test-pgpmime.c: Updated to use gmime-pgp-mime instead of
+	pgp-mime.
+
 	* test-pgp.c: Updated to use gmime-pgp-context instead of
 	pgp-utils.
 

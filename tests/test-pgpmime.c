@@ -25,19 +25,19 @@
 
 #include "gmime.h"
 #include "gmime-exception.h"
-#include "pgp-mime.h"
+#include "gmime-pgp-mime.h"
 
 
-static gchar *path = "/usr/bin/gpg";
-static PgpType type = PGP_TYPE_GPG;
-static gchar *userid = "pgp-mime@xtorshun.org";
-static gchar *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+static char *path = "/usr/bin/gpg";
+static GMimePgpType type = GMIME_PGP_TYPE_GPG;
+static char *userid = "pgp-mime@xtorshun.org";
+static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
 
-static gchar *
-pgp_get_passphrase (const gchar *prompt, gpointer data)
+static char *
+get_passwd (const char *prompt, gpointer data)
 {
 #if 0
-	gchar buffer[256];
+	char buffer[256];
 	
 	fprintf (stdout, "%s\nPassphrase: %s\n", prompt, passphrase);
 	fgets (buffer, 255, stdin);
@@ -47,26 +47,25 @@ pgp_get_passphrase (const gchar *prompt, gpointer data)
 }
 
 void
-test_multipart_signed (void)
+test_multipart_signed (GMimePgpContext *ctx)
 {
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
 	GMimePart *text_part, *signed_part;
+	GMimeCipherValidity *validity;
 	GMimeException *ex;
-	gchar *body;
-	gchar *text;
+	char *body, *text;
 	gboolean is_html;
 	
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
-	g_mime_part_set_content_id (text_part, "1");
 	g_mime_part_set_content (text_part, "This is a test of the emergency broadcast system with an md5 clearsign.\n",
 				 strlen ("This is a test of the emergency broadcast system with an md5 clearsign.\n"));
 	
 	/* sign the part */
 	ex = g_mime_exception_new ();
-	pgp_mime_part_sign (&text_part, userid, PGP_HASH_TYPE_MD5, ex);
+	g_mime_pgp_mime_part_sign (ctx, &text_part, userid, GMIME_CIPHER_HASH_MD5, ex);
 	if (g_mime_exception_is_set (ex)) {
 		g_mime_part_destroy (text_part);
 		fprintf (stdout, "pgp_mime_part_sign failed: %s\n",
@@ -75,11 +74,12 @@ test_multipart_signed (void)
 		return;
 	}
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				    "Federico Mena-Quintero", "federico@helixcode.com");
+				      "Federico Mena-Quintero",
+				      "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, text_part);
@@ -101,8 +101,13 @@ test_multipart_signed (void)
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
 	
+	validity = g_mime_pgp_mime_part_verify (ctx, text_part, ex);
 	fprintf (stdout, "Trying to verify signature...%s\n",
-		 pgp_mime_part_verify_signature (text_part, ex) ? "valid" : "invalid");
+		 g_mime_cipher_validity_get_valid (validity) ? "valid" : "invalid");
+	fprintf (stdout, "Validity diagnostics: \n%s\n",
+		 g_mime_cipher_validity_get_description (validity));
+	g_mime_cipher_validity_free (validity);
+	
 	if (g_mime_exception_is_set (ex))
 		fprintf (stdout, "error: %s\n", g_mime_exception_get_description (ex));
 	
@@ -112,15 +117,14 @@ test_multipart_signed (void)
 }
 
 void
-test_multipart_encrypted (void)
+test_multipart_encrypted (GMimePgpContext *ctx)
 {
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
 	GMimePart *text_part, *decrypted_part;
 	GMimeException *ex;
 	GPtrArray *recipients;
-	gchar *body;
-	gchar *text;
+	char *body, *text;
 	gboolean is_html;
 	
 	text_part = g_mime_part_new ();
@@ -134,7 +138,7 @@ test_multipart_encrypted (void)
 	ex = g_mime_exception_new ();
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, userid);
-	pgp_mime_part_encrypt (&text_part, recipients, ex);
+	g_mime_pgp_mime_part_encrypt (ctx, &text_part, recipients, ex);
 	g_ptr_array_free (recipients, TRUE);
 	if (g_mime_exception_is_set (ex)) {
 		g_mime_part_destroy (text_part);
@@ -145,7 +149,7 @@ test_multipart_encrypted (void)
 	}
 	g_mime_exception_free (ex);
 	
-	message = g_mime_message_new ();
+	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
@@ -173,13 +177,13 @@ test_multipart_encrypted (void)
 	
 	/* okay, now to test our decrypt function... */
 	ex = g_mime_exception_new ();
-	decrypted_part = pgp_mime_part_decrypt (text_part, ex);
+	decrypted_part = g_mime_pgp_mime_part_decrypt (ctx, text_part, ex);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stdout, "failed to decrypt part.\n");
 	} else {
-		gchar *text;
+		char *text;
 		
-		text = g_mime_part_to_string (decrypted_part, FALSE);
+		text = g_mime_part_to_string (decrypted_part);
 		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
 		g_free (text);
 		g_mime_part_destroy (decrypted_part);
@@ -191,11 +195,15 @@ test_multipart_encrypted (void)
 
 int main (int argc, char *argv[])
 {
-	pgp_mime_init (path, type, pgp_get_passphrase, NULL);
+	GMimePgpContext *ctx;
 	
-	test_multipart_signed ();
+	ctx = g_mime_pgp_context_new (type, path, get_passwd, NULL);
 	
-	test_multipart_encrypted ();
+	test_multipart_signed (ctx);
+	
+	test_multipart_encrypted (ctx);
+	
+	g_mime_object_unref (GMIME_OBJECT (ctx));
 	
 	return 0;
 }
