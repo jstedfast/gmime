@@ -202,8 +202,8 @@ CELLPADDING="6"
 CLASS="PROGRAMLISTING"
 >typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
-	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
-	GMIME_FILTER_FROM_MODE_ARMOR    = 2,
+	GMIME_FILTER_FROM_MODE_ESCAPE   = 0,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 1,
 } GMimeFilterFromMode;</PRE
 ></TD
 ></TR
@@ -241,13 +241,42 @@ HREF="gmime-gmime-filter-from.html#GMIMEFILTERFROMMODE"
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeFilterFrom filter.</P
+>Creates a new GMimeFilterFrom filter. If <TT
+CLASS="PARAMETER"
+><I
+>mode</I
+></TT
+> is
+<GTKDOCLINK
+HREF="GMIME-FILTER-FROM-MODE-ARMOR-CAPS"
+>GMIME_FILTER_FROM_MODE_ARMOR</GTKDOCLINK
+>, the from-filter will encode from
+lines using the quoted-printable encoding resulting in "=46rom ".
+Using the <GTKDOCLINK
+HREF="GMIME-FILTER-FROM-MODE-DEFAULT-CAPS"
+>GMIME_FILTER_FROM_MODE_DEFAULT</GTKDOCLINK
+> or
+<GTKDOCLINK
+HREF="GMIME-FILTER-FROM-MODE-ESCAPE-CAPS"
+>GMIME_FILTER_FROM_MODE_ESCAPE</GTKDOCLINK
+> mode (they are the same), from lines
+will be escaped to "&gt;From ".</P
+><P
+>Note: If you plan on using a from-filter in mode ARMOR, you should
+remember to also use a <GTKDOCLINK
+HREF="GMIMEFILTERBASIC"
+>GMimeFilterBasic</GTKDOCLINK
+> filter with mode
+<GTKDOCLINK
+HREF="GMIME-FILTER-BASIC-QP-ENC-CAPS"
+>GMIME_FILTER_BASIC_QP_ENC</GTKDOCLINK
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1864"
+NAME="AEN1871"
 ></A
 ><P
 ></P
@@ -274,7 +303,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> filter mode</TD
 ></TR
 ><TR
 ><TD
@@ -289,7 +318,12 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new from filter.</TD
+>a new from filter with mode <TT
+CLASS="PARAMETER"
+><I
+>mode</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE

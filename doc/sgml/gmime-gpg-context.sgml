@@ -21,7 +21,7 @@ struct      <link linkend="GMimeGpgContext">GMimeGpgContext</link>;
                                             (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx);
 void        <link linkend="g-mime-gpg-context-set-always-trust">g_mime_gpg_context_set_always_trust</link>
                                             (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx,
-                                             <link linkend="gboolean">gboolean</link> trust);
+                                             <link linkend="gboolean">gboolean</link> always_trust);
 
 
 </synopsis>
@@ -79,6 +79,8 @@ Creates a new gpg cipher context object.</para>
 <programlisting><link linkend="gboolean">gboolean</link>    g_mime_gpg_context_get_always_trust
                                             (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx);</programlisting>
 <para>
+Gets the <parameter>always_trust</parameter> flag on the gpg context.</para>
+<para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
@@ -86,18 +88,16 @@ Creates a new gpg cipher context object.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry>
+<entry> gpg context
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the <parameter>always_trust</parameter> flag on the gpg context.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-gpg-context-set-always-trust">g_mime_gpg_context_set_always_trust ()</title>
 <programlisting>void        g_mime_gpg_context_set_always_trust
                                             (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx,
-                                             <link linkend="gboolean">gboolean</link> trust);</programlisting>
+                                             <link linkend="gboolean">gboolean</link> always_trust);</programlisting>
 <para>
 Sets the <parameter>always_trust</parameter> flag on the gpg context which is used for
 encryption.</para>
@@ -110,12 +110,9 @@ encryption.</para>
 <tbody>
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
 <entry> gpg context
-<parameter>always_trust</parameter> always truct flag
 </entry></row>
-<row><entry align="right"><parameter>trust</parameter>&nbsp;:</entry>
-<entry>
-
-
+<row><entry align="right"><parameter>always_trust</parameter>&nbsp;:</entry>
+<entry> always truct flag
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

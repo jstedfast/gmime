@@ -36,8 +36,8 @@ enum        <link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link>;
 <title><anchor id="GMimeFilterFromMode">enum GMimeFilterFromMode</title>
 <programlisting>typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
-	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
-	GMIME_FILTER_FROM_MODE_ARMOR    = 2,
+	GMIME_FILTER_FROM_MODE_ESCAPE   = 0,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 1,
 } GMimeFilterFromMode;
 </programlisting>
 <para>
@@ -47,7 +47,17 @@ enum        <link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link>;
 <title><anchor id="g-mime-filter-from-new">g_mime_filter_from_new ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_from_new         (<link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link> mode);</programlisting>
 <para>
-Creates a new GMimeFilterFrom filter.</para>
+Creates a new GMimeFilterFrom filter. If <parameter>mode</parameter> is
+<link linkend="GMIME-FILTER-FROM-MODE-ARMOR-CAPS">GMIME_FILTER_FROM_MODE_ARMOR</link>, the from-filter will encode from
+lines using the quoted-printable encoding resulting in "=46rom ".
+Using the <link linkend="GMIME-FILTER-FROM-MODE-DEFAULT-CAPS">GMIME_FILTER_FROM_MODE_DEFAULT</link> or
+<link linkend="GMIME-FILTER-FROM-MODE-ESCAPE-CAPS">GMIME_FILTER_FROM_MODE_ESCAPE</link> mode (they are the same), from lines
+will be escaped to "&gt;From ".
+</para>
+<para>
+Note: If you plan on using a from-filter in mode ARMOR, you should
+remember to also use a <link linkend="GMimeFilterBasic">GMimeFilterBasic</link> filter with mode
+<link linkend="GMIME-FILTER-BASIC-QP-ENC-CAPS">GMIME_FILTER_BASIC_QP_ENC</link>.</para>
 <para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
@@ -56,9 +66,9 @@ Creates a new GMimeFilterFrom filter.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>mode</parameter>&nbsp;:</entry>
-<entry>
+<entry> filter mode
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new from filter.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new from filter with mode <parameter>mode</parameter>.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

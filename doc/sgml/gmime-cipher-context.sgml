@@ -14,7 +14,6 @@
 
 
 
-#define     <link linkend="GMIME-CIPHER-CONTEXT-CAPS">GMIME_CIPHER_CONTEXT</link>            (obj)
 enum        <link linkend="GMimeCipherHash">GMimeCipherHash</link>;
 struct      <link linkend="GMimeCipherContext">GMimeCipherContext</link>;
 struct      <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>;
@@ -85,23 +84,6 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-CIPHER-CONTEXT-CAPS">GMIME_CIPHER_CONTEXT()</title>
-<programlisting>#define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="GMimeCipherHash">enum GMimeCipherHash</title>
 <programlisting>typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
@@ -143,6 +125,28 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 <programlisting><link linkend="GMimeCipherHash">GMimeCipherHash</link> g_mime_cipher_hash_id       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              const char *hash);</programlisting>
 <para>
+Gets the hash id based on the hash name <parameter>hash</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry> hash name
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the equivalent hash id or <link linkend="GMIME-CIPHER-HASH-DEFAULT-CAPS">GMIME_CIPHER_HASH_DEFAULT</link> on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-hash-name">g_mime_cipher_hash_name ()</title>
+<programlisting>const char* g_mime_cipher_hash_name         (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash);</programlisting>
+<para>
 Gets the hash name based on the hash id <parameter>hash</parameter>.</para>
 <para>
 
@@ -158,28 +162,6 @@ Gets the hash name based on the hash id <parameter>hash</parameter>.</para>
 <entry> hash id
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the equivalent hash name or <literal>NULL</literal> on fail.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-cipher-hash-name">g_mime_cipher_hash_name ()</title>
-<programlisting>const char* g_mime_cipher_hash_name         (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
-                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash);</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

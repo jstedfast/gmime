@@ -83,6 +83,11 @@ Creates a new MIME multipart/encrypted object.</para>
                                              <link linkend="GPtrArray">GPtrArray</link> *recipients,
                                              <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
 <para>
+Attempts to encrypt the <parameter>content</parameter> MIME part to the public keys of
+<parameter>recipients</parameter> using the <parameter>ctx</parameter> encryption context. If successful, the
+encrypted <link linkend="GMimeObject">GMimeObject</link> is set as the encrypted part of the
+multipart/encrypted object <parameter>mpe</parameter>.</para>
+<para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
@@ -90,23 +95,23 @@ Creates a new MIME multipart/encrypted object.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>mpe</parameter>&nbsp;:</entry>
-<entry>
+<entry> multipart/encrypted object
 </entry></row>
 <row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
-<entry>
+<entry> MIME part to encrypt
 </entry></row>
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry>
+<entry> encryption cipher context
 </entry></row>
 <row><entry align="right"><parameter>recipients</parameter>&nbsp;:</entry>
-<entry>
+<entry> an array of recipients to encrypt to
 </entry></row>
 <row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry>
+<entry> exception
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail. If the encryption fails, an
+exception will be set on <parameter>ex</parameter> to provide information as to why the
+failure occured.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -116,6 +121,9 @@ Creates a new MIME multipart/encrypted object.</para>
                                              <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
                                              <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
 <para>
+Attempts to decrypt the encrypted MIME part contained within the
+multipart/encrypted object <parameter>mpe</parameter> using the <parameter>ctx</parameter> decryption context.</para>
+<para>
 
 </para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
@@ -123,17 +131,17 @@ Creates a new MIME multipart/encrypted object.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>mpe</parameter>&nbsp;:</entry>
-<entry>
+<entry> multipart/encrypted object
 </entry></row>
 <row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
-<entry>
+<entry> decryption cipher context
 </entry></row>
 <row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry>
+<entry> exception
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the decrypted MIME part on success or <literal>NULL</literal> on fail. If the
+decryption fails, an exception will be set on <parameter>ex</parameter> to provide
+information as to why the failure occured.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

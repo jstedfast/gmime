@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-GPG-CONTEXT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN9219"
+NAME="AEN9241"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN9219"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN9222"
+NAME="AEN9244"
 ></A
 ><H2
 >Synopsis</H2
@@ -183,7 +183,7 @@ HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
-> trust);
+> always_trust);
 &#13;</PRE
 ></TD
 ></TR
@@ -192,7 +192,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9235"
+NAME="AEN9257"
 ></A
 ><H2
 >Description</H2
@@ -202,14 +202,14 @@ NAME="AEN9235"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9238"
+NAME="AEN9260"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9240"
+NAME="AEN9262"
 ></A
 ><H3
 ><A
@@ -240,7 +240,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9245"
+NAME="AEN9267"
 ></A
 ><H3
 ><A
@@ -274,7 +274,7 @@ HREF="gmime-gmime-session.html#GMIMESESSION"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9253"
+NAME="AEN9275"
 ></A
 ><P
 ></P
@@ -344,7 +344,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9270"
+NAME="AEN9292"
 ></A
 ><H3
 ><A
@@ -372,11 +372,18 @@ HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
 ></TR
 ></TABLE
 ><P
+>Gets the <TT
+CLASS="PARAMETER"
+><I
+>always_trust</I
+></TT
+> flag on the gpg context.</P
+><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9277"
+NAME="AEN9301"
 ></A
 ><P
 ></P
@@ -403,7 +410,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> gpg context</TD
 ></TR
 ><TR
 ><TD
@@ -418,7 +425,12 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>the <TT
+CLASS="PARAMETER"
+><I
+>always_trust</I
+></TT
+> flag on the gpg context.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -429,7 +441,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9290"
+NAME="AEN9315"
 ></A
 ><H3
 ><A
@@ -453,7 +465,7 @@ HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
-> trust);</PRE
+> always_trust);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -470,7 +482,7 @@ encryption.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9299"
+NAME="AEN9324"
 ></A
 ><P
 ></P
@@ -497,13 +509,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> gpg context
-<TT
-CLASS="PARAMETER"
-><I
->always_trust</I
-></TT
-> always truct flag</TD
+> gpg context</TD
 ></TR
 ><TR
 ><TD
@@ -513,14 +519,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->trust</I
+>always_trust</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> always truct flag</TD
 ></TR
 ></TBODY
 ></TABLE

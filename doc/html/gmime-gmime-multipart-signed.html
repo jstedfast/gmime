@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-MULTIPART-SIGNED"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN5359"
+NAME="AEN5379"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN5359"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN5362"
+NAME="AEN5382"
 ></A
 ><H2
 >Synopsis</H2
@@ -209,7 +209,7 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5379"
+NAME="AEN5399"
 ></A
 ><H2
 >Description</H2
@@ -219,14 +219,14 @@ NAME="AEN5379"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5382"
+NAME="AEN5402"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5384"
+NAME="AEN5404"
 ></A
 ><H3
 ><A
@@ -257,7 +257,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5389"
+NAME="AEN5409"
 ></A
 ><H3
 ><A
@@ -288,7 +288,7 @@ HREF="gmime-gmime-multipart-signed.html#GMIMEMULTIPARTSIGNED"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5396"
+NAME="AEN5416"
 ></A
 ><P
 ></P
@@ -324,7 +324,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5405"
+NAME="AEN5425"
 ></A
 ><H3
 ><A
@@ -365,11 +365,44 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 ></TR
 ></TABLE
 ><P
+>Attempts to sign the <TT
+CLASS="PARAMETER"
+><I
+>content</I
+></TT
+> MIME part with <TT
+CLASS="PARAMETER"
+><I
+>userid</I
+></TT
+>'s private key
+using the <TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+> signing context with the <TT
+CLASS="PARAMETER"
+><I
+>hash</I
+></TT
+> algorithm. If
+successful, the signed <A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> is set as the signed part of
+the multipart/signed object <TT
+CLASS="PARAMETER"
+><I
+>mps</I
+></TT
+>.</P
+><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5415"
+NAME="AEN5442"
 ></A
 ><P
 ></P
@@ -396,7 +429,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> multipart/signed object</TD
 ></TR
 ><TR
 ><TD
@@ -413,7 +446,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> MIME part to sign</TD
 ></TR
 ><TR
 ><TD
@@ -430,7 +463,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> encryption cipher context</TD
 ></TR
 ><TR
 ><TD
@@ -447,7 +480,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> user id to sign with</TD
 ></TR
 ><TR
 ><TD
@@ -464,7 +497,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> preferred digest algorithm</TD
 ></TR
 ><TR
 ><TD
@@ -481,7 +514,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> exception</TD
 ></TR
 ><TR
 ><TD
@@ -496,7 +529,14 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>0 on success or -1 on fail. If the signing fails, an
+exception will be set on <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> to provide information as to why the
+failure occured.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -507,7 +547,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5448"
+NAME="AEN5476"
 ></A
 ><H3
 ><A
@@ -543,11 +583,24 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 ></TR
 ></TABLE
 ><P
+>Attempts to verify the signed MIME part contained within the
+multipart/signed object <TT
+CLASS="PARAMETER"
+><I
+>mps</I
+></TT
+> using the <TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+> cipher context.</P
+><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5457"
+NAME="AEN5488"
 ></A
 ><P
 ></P
@@ -574,7 +627,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> multipart/signed object</TD
 ></TR
 ><TR
 ><TD
@@ -591,7 +644,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> encryption cipher context</TD
 ></TR
 ><TR
 ><TD
@@ -608,7 +661,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> exception</TD
 ></TR
 ><TR
 ><TD
@@ -623,7 +676,20 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+>a new <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
+>GMimeCipherValidity</A
+> object on success or <TT
+CLASS="LITERAL"
+>NULL</TT
+> on
+fail. If the signing fails, an exception will be set on <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> to
+provide information as to why the failure occured.</TD
 ></TR
 ></TBODY
 ></TABLE
