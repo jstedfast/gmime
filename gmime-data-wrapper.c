@@ -232,14 +232,17 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	case GMIME_PART_ENCODING_BASE64:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	case GMIME_PART_ENCODING_UUENCODE:
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		g_object_unref (filter);
 		break;
 	default:
 		break;

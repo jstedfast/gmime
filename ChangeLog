@@ -11,6 +11,9 @@
 	* gmime-filter-strip.[c,h]:
 	* gmime-filter-yenc.[c,h]: Ported to the new GMimeFilter.
 
+	* gmime-data-wrapper.c (write_to_stream): Unref the filter after
+	adding it to the filtered stream.
+
 	* gmime-multipart-encrypted.c
 	(g_mime_multipart_encrypted_encrypt): Unref the filters once we've
 	added them to the filtered_stream.
