@@ -53,41 +53,6 @@
 #endif /* __aix__, __irix__, __sun__ */
 
 
-static struct {
-	char *name;
-	unsigned int bit;	/* assigned bit */
-} tables[] = {
-	/* These are the 8bit character sets (other than iso-8859-1,
-	 * which is special-cased) which are supported by both other
-	 * mailers and the GNOME environment. Note that the order
-	 * they're listed in is the order they'll be tried in, so put
-	 * the more-popular ones first.
-	 */
-	{ "iso-8859-2", 0 },	/* Central/Eastern European */
-	{ "iso-8859-4", 0 },	/* Baltic */
-	{ "koi8-r", 0 },	/* Russian */
-	{ "koi8-u", 0 },	/* Ukranian */
-	{ "iso-8859-5", 0 },	/* Least-popular Russian encoding */
-	{ "iso-8859-7", 0 },	/* Greek */
-	{ "iso-8859-8", 0 },    /* Hebrew; Visual */
-	{ "iso-8859-9", 0 },	/* Turkish */
-	{ "iso-8859-13", 0 },	/* Baltic again */
-	{ "iso-8859-15", 0 },	/* New-and-improved iso-8859-1, but most
-				 * programs that support this support UTF8
-				 */
-	{ "windows-1251", 0 },	/* Russian */
-	{ 0, 0 }
-};
-
-unsigned int encoding_map[256 * 256];
-
-#if G_BYTE_ORDER == G_BIG_ENDIAN
-#define UCS "UCS-4BE"
-#else
-#define UCS "UCS-4LE"
-#endif
-
-
 struct {
 	char *charset;
 	char *iconv_name;
@@ -501,8 +466,39 @@ g_mime_charset_best (const char *in, size_t inlen)
 #include <errno.h>
 #include <iconv.h>
 
-/* the following functions are copied from glib2... */
+static struct {
+	char *name;
+	unsigned int bit;	/* assigned bit */
+} tables[] = {
+	/* These are the 8bit character sets (other than iso-8859-1,
+	 * which is special-cased) which are supported by both other
+	 * mailers and the GNOME environment. Note that the order
+	 * they're listed in is the order they'll be tried in, so put
+	 * the more-popular ones first.
+	 */
+	{ "iso-8859-2", 0 },	/* Central/Eastern European */
+	{ "iso-8859-4", 0 },	/* Baltic */
+	{ "koi8-r", 0 },	/* Russian */
+	{ "koi8-u", 0 },	/* Ukranian */
+	{ "iso-8859-5", 0 },	/* Least-popular Russian encoding */
+	{ "iso-8859-7", 0 },	/* Greek */
+	{ "iso-8859-8", 0 },    /* Hebrew; Visual */
+	{ "iso-8859-9", 0 },	/* Turkish */
+	{ "iso-8859-13", 0 },	/* Baltic again */
+	{ "iso-8859-15", 0 },	/* New-and-improved iso-8859-1, but most
+				 * programs that support this support UTF8
+				 */
+	{ "windows-1251", 0 },	/* Russian */
+	{ 0, 0 }
+};
 
+unsigned int encoding_map[256 * 256];
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+#define UCS "UCS-4BE"
+#else
+#define UCS "UCS-4LE"
+#endif
 
 int main (int argc, char **argv)
 {

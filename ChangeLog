@@ -1,5 +1,8 @@
 2002-03-21  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-charset.c: Moved tables[] into the #ifdef
+	BUILD_CHARSET_MAP block.
+
 	* gmime-filter-charset.c (filter_filter): Same fix as I made
 	earlier to g_mime_iconv_strndup.
 
