@@ -55,7 +55,7 @@ scan-build.stamp:
 
 #### templates ####
 
-tmpl-build.stamp: scan-build.stamp
+tmpl-build.stamp: scan-build.stamp gmime-docs.sgml $(content_files)
 	@echo '*** Rebuilding template files ***'
 	cd $(srcdir) && gtkdoc-mktmpl --module=$(DOC_MODULE)
 	touch tmpl-build.stamp
