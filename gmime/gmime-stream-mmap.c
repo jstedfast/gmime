@@ -261,7 +261,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
-			real = offset <= 0 ? stream->bound_start + mstream->maplen + offset: -1;
+			real = offset <= 0 ? stream->bound_start + mstream->maplen + offset : -1;
 			if (real != -1) {
 				if (real < stream->bound_start)
 					real = stream->bound_start;

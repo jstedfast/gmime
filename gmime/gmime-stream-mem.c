@@ -214,7 +214,7 @@ static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t real, bound_end;
+	off_t bound_end, real = stream->position;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
@@ -229,6 +229,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		break;
 	case GMIME_STREAM_SEEK_CUR:
 		real = stream->position + offset;
+		break;
 	}
 	
 	if (real < stream->bound_start)

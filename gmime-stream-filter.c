@@ -157,29 +157,6 @@ g_mime_stream_filter_finalize (GObject *object)
 }
 
 
-static void
-stream_destroy (GMimeStream *stream)
-{
-	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
-	struct _filter *fn, *f;
-	
-	f = p->filters;
-	while (f) {
-		fn = f->next;
-		g_mime_filter_destroy (f->filter);
-		g_free (f);
-		f = fn;
-	}
-	
-	g_free (p->realbuffer);
-	g_free (p);
-	
-	g_mime_stream_unref (filter->source);
-	
-	g_free (filter);
-}
-
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {

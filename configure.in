@@ -26,21 +26,6 @@ VERSION=$GMIME_VERSION
 
 AM_INIT_AUTOMAKE(gmime, $VERSION)
 
-dnl Remove this when I'm done porting to glib2
-AC_ARG_ENABLE(build, [  --enable-build        Use to force the build ], enable_build="$enableval", enable_build="no")
-if test "x${enable_build}" != "xyes"; then
-	echo "Note: This branch is a work-in-progress toward porting gmime to glib2."
-	echo "You probably want the gmime-1 branch. You have 2 options:"
-	echo
-	echo "1. Checkout the gmime-1 branch by doing the following:"
-	echo "        cvs -z3 co -r gmime-1 gmime"
-	echo
-	echo "2. Continue building this branch anyway by doing:"
-	echo "        ./autogen.sh --enable-build"
-	echo
-	exit 0
-fi
-
 AC_CANONICAL_HOST
 
 dnl Checks for programs.
@@ -121,7 +106,7 @@ fi
 dnl Turn on a bunch of warnings
 AC_ARG_ENABLE(warnings, [  --enable-warnings		Enable a bunch of compile warning options], enable_warnings="$enableval", enable_warnings=no)
 if test x$enable_warnings = xyes; then
-  CFLAGS="$CFLAGS -Werror -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
+  CFLAGS="$CFLAGS -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
 fi
 
 dnl We need at *least* glib 2.0.0
