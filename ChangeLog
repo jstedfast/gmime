@@ -1,5 +1,9 @@
 2004-08-22  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped the version to 2.1.8
+
 	* gmime/gmime.h.in: #include <gmime/gmime-session-simple.h> for
 	ia64 build fix on Debian (required because of the way gtk-doc's
 	scan program works).
