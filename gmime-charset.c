@@ -41,7 +41,9 @@
 
 #if defined (__aix__) || defined (__irix__) || defined (__sun__)
 #define CANONICAL_ISO_D_FORMAT "ISO%d-%d"
-#define CANONICAL_ISO_S_FORMAT "ISO%d-%s"
+/* this one is for charsets like ISO-2022-JP, for which at least
+   Solaris wants a - after the ISO */
+#define CANONICAL_ISO_S_FORMAT "ISO-%d-%s"
 #elif defined (__hpux__)
 #define CANONICAL_ISO_D_FORMAT "iso%d%d"
 #define CANONICAL_ISO_S_FORMAT "iso%d%s"

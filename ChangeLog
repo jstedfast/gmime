@@ -1,5 +1,8 @@
 2002-03-20  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-charset.c: Changed the canonical format for
+	CANONINICAL_ISO_S_FORMAT for Solaris.
+
 	* gmime-utils.c (rfc2047_decode_word): strcasecmp on charenc, not
 	charset because charset has not yet been initialized.
 
