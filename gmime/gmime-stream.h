@@ -47,7 +47,7 @@ extern "C" {
 typedef enum {
 	GMIME_STREAM_SEEK_SET = SEEK_SET,
 	GMIME_STREAM_SEEK_CUR = SEEK_CUR,
-	GMIME_STREAM_SEEK_END = SEEK_END,
+	GMIME_STREAM_SEEK_END = SEEK_END
 } GMimeSeekWhence;
 
 typedef struct {

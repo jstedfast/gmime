@@ -44,7 +44,7 @@ typedef struct _GMimeMultipartEncryptedClass GMimeMultipartEncryptedClass;
 
 enum {
 	GMIME_MULTIPART_ENCRYPTED_VERSION,
-	GMIME_MULTIPART_ENCRYPTED_CONTENT,
+	GMIME_MULTIPART_ENCRYPTED_CONTENT
 };
 
 struct _GMimeMultipartEncrypted {

@@ -43,7 +43,7 @@ typedef struct _GMimeFilterYencClass GMimeFilterYencClass;
 
 typedef enum {
 	GMIME_FILTER_YENC_DIRECTION_ENCODE,
-	GMIME_FILTER_YENC_DIRECTION_DECODE,
+	GMIME_FILTER_YENC_DIRECTION_DECODE
 } GMimeFilterYencDirection;
 
 #define GMIME_YDECODE_STATE_INIT     (0)

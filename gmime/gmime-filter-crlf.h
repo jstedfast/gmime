@@ -48,7 +48,7 @@ typedef enum {
 
 typedef enum {
 	GMIME_FILTER_CRLF_MODE_CRLF_DOTS,
-	GMIME_FILTER_CRLF_MODE_CRLF_ONLY,
+	GMIME_FILTER_CRLF_MODE_CRLF_ONLY
 } GMimeFilterCRLFMode;
 
 struct _GMimeFilterCRLF {

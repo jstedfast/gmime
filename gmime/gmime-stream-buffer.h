@@ -42,7 +42,7 @@ extern "C" {
 typedef enum {
 	GMIME_STREAM_BUFFER_CACHE_READ,
 	GMIME_STREAM_BUFFER_BLOCK_READ,
-	GMIME_STREAM_BUFFER_BLOCK_WRITE,
+	GMIME_STREAM_BUFFER_BLOCK_WRITE
 } GMimeStreamBufferMode;
 
 typedef struct _GMimeStreamBuffer GMimeStreamBuffer;

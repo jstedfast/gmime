@@ -44,7 +44,7 @@ typedef struct _GMimeMultipartSignedClass GMimeMultipartSignedClass;
 
 enum {
 	GMIME_MULTIPART_SIGNED_CONTENT,
-	GMIME_MULTIPART_SIGNED_SIGNATURE,
+	GMIME_MULTIPART_SIGNED_SIGNATURE
 };
 
 struct _GMimeMultipartSigned {

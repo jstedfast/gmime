@@ -37,7 +37,7 @@ typedef enum {
 	GMIME_ERROR_PARSE_ERROR         = -2,
 	GMIME_ERROR_PROTOCOL_ERROR      = -3,
 	GMIME_ERROR_BAD_PASSWORD        = -4,
-	GMIME_ERROR_NO_VALID_RECIPIENTS = -5,
+	GMIME_ERROR_NO_VALID_RECIPIENTS = -5
 } GMimeError;
 
 #define GMIME_ERROR_QUARK (g_quark_from_static_string ("gmime"))

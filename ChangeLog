@@ -1,3 +1,29 @@
+2003-10-28  Pawel Salek <pawsa@theochem.kth.se>
+
+	* gmime.h.in: Use macros rather than the global variables to
+	prevent compiler warnings.
+
+	* gmime-error.h: Removed the trailing comma after the last enum
+	value to fix ANSI compile warnings.
+
+	* gmime-filter-basic.h: Same.
+
+	* gmime-filter-best.h: Here too.
+
+	* gmime-filter-crlf.h: And here.
+
+	* gmime-filter-from.h: Same.
+
+	* gmime-filter-yenc.h: Again here.
+
+	* gmime-multipart-encrypted.h: And here.
+
+	* gmime-multipart-signed.h: Here too.
+
+	* gmime-stream-buffer.h: Same.
+
+	* gmime-stream.h: And finally here.
+
 2003-10-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Added a check for altzone.

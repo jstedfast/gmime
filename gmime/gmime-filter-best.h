@@ -45,13 +45,13 @@ typedef struct _GMimeFilterBestClass GMimeFilterBestClass;
 
 enum {
 	GMIME_FILTER_BEST_CHARSET      = (1 << 0),
-	GMIME_FILTER_BEST_ENCODING     = (1 << 1),
+	GMIME_FILTER_BEST_ENCODING     = (1 << 1)
 };
 
 typedef enum {
 	GMIME_BEST_ENCODING_7BIT,
 	GMIME_BEST_ENCODING_8BIT,
-	GMIME_BEST_ENCODING_BINARY,
+	GMIME_BEST_ENCODING_BINARY
 } GMimeBestEncoding;
 
 struct _GMimeFilterBest {

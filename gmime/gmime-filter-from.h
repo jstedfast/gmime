@@ -44,7 +44,7 @@ typedef struct _GMimeFilterFromClass GMimeFilterFromClass;
 typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
 	GMIME_FILTER_FROM_MODE_ESCAPE   = 0,
-	GMIME_FILTER_FROM_MODE_ARMOR    = 1,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 1
 } GMimeFilterFromMode;
 
 struct _GMimeFilterFrom {

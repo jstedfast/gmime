@@ -83,10 +83,10 @@ static const guint gmime_interface_age = 0;
 static const guint gmime_binary_age    = 0;
 
 #define GMIME_CHECK_VERSION(major,minor,micro)    \
-    (gmime_major_version > (major) || \
-     (gmime_major_version == (major) && gmime_minor_version > (minor)) || \
-     (gmime_major_version == (major) && gmime_minor_version == (minor) && \
-      gmime_micro_version >= (micro)))
+    (@GMIME_MAJOR_VERSION@ > (major) || \
+     (@GMIME_MAJOR_VERSION@ == (major) && @GMIME_MINOR_VERSION@ > (minor)) || \
+     (@GMIME_MAJOR_VERSION@ == (major) && @GMIME_MINOR_VERSION@ == (minor) && \
+      @GMIME_MICRO_VERSION@ >= (micro)))
 
 
 /**
