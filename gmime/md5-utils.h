@@ -33,7 +33,7 @@ typedef struct {
 	guint32 bits[2];
 	unsigned char in[64];
 	int doByteReverse;
-} MD5Context ;
+} MD5Context;
 
 
 void md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16]);

@@ -33,7 +33,7 @@
 static void md5_transform (guint32 buf[4], const guint32 in[16]);
 
 static int _ie = 0x44332211;
-static union _endian { int i; char b[4]; } *_endian = (union _endian *)&_ie;
+static union _endian { int i; char b[4]; } *_endian = (union _endian *) &_ie;
 #define	IS_BIG_ENDIAN()		(_endian->b[0] == '\x44')
 #define	IS_LITTLE_ENDIAN()	(_endian->b[0] == '\x11')
 
@@ -73,10 +73,10 @@ md5_init (MD5Context *ctx)
 	ctx->bits[0] = 0;
 	ctx->bits[1] = 0;
 	
-	if (IS_BIG_ENDIAN())	
-		ctx->doByteReverse = 1;		
+	if (IS_BIG_ENDIAN ())
+		ctx->doByteReverse = 1;
 	else 
-		ctx->doByteReverse = 0;	
+		ctx->doByteReverse = 0;
 }
 
 

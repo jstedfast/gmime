@@ -35,8 +35,7 @@ InternetAddress with a name of "Joe Bob" and a NULL addr
 <fejj> I'll have to modify my internet_address_to_string code to handle that too
 <fejj> but that should be easy
 
-- S/MIMEv3 ?
-
+- S/MIMEv3: http://www.ietf.org/html.charters/smime-charter.html
 
 
 

@@ -13,7 +13,10 @@ following RFCs:
  * 1521: MIME (Multipurpose Internet Mail Extensions) Part One:
          Mechanisms for Specifying and Describing the Format of 
          Internet Message Bodies
+ * 1847: Security Multiparts for MIME: Multipart/Signed and 
+         Multipart/Encrypted
  * 1864: The Content-MD5 Header Field (Obsoletes rfc1544)
+ * 2015: MIME Security with Pretty Good Privacy (PGP)
  * 2045: Multipurpose Internet Mail Extensions (MIME) Part One:
          Format of Internet Message Bodies
  * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two:
@@ -30,14 +33,12 @@ following RFCs:
          Sets, Languages, and Continuations
  * 2231: MIME Parameter Value and Encoded Word Extensions: Character
          Sets, Languages, and Continuations (Obsoletes rfc2184)
+ * 3156: MIME Security with OpenPGP (Updates rfc2015)
 
 Other RFCs of interest:
 
- * 1847: Security Multiparts for MIME: Multipart/Signed and 
-         Multipart/Encrypted
  * 1872: The MIME Multipart/Related Content-type
  * 1927: Suggested Additional MIME Types for Associating Documents
- * 2015: MIME Security with Pretty Good Privacy (PGP)
  * 2311: S/MIME Version 2 Message Specification
  * 2312: S/MIME Version 2 Certificate Handling
  * 2387: The Multipart/Related Content-Type.
@@ -46,7 +47,8 @@ Other RFCs of interest:
  * 2632: S/MIME Version 3 Certificate Handling
  * 2633: S/MIME Version 3 Message Specification
  * 2634: Enhanced Security Services for S/MIME
- * 3156: MIME Security with OpenPGP (Updates rfc2015)
+ * 3280: Internet X.509 Public Key Infrastructure ertificate and 
+         Certificate Revocation List (CRL) Profile
 
 Cryptography related RFCs:
 
@@ -55,6 +57,7 @@ Cryptography related RFCs:
  * 2314: PKCS #10: Certification Request Syntax
  * 2315: PKCS #7: Cryptographic Message Syntax
  * 2631: Diffie-Hellman Key Agreement Method
+
 
 LICENSE INFORMATION
 -------------------
@@ -143,6 +146,9 @@ of GMime.
 
   TODO                  Description of planned GMime development
 
+  PORTING               Guide for developers porting their application
+                        from an older version of GMime
+
 
 You can find online developer documentation at
 http://spruce.sourceforge.net/gmime/doc
@@ -151,5 +157,6 @@ http://spruce.sourceforge.net/gmime/doc
 REPORTING BUGS
 --------------
 
-Bugs may be reported to the GMime development team by sending email to:
-fejj@helixcode.com
+Bugs may be reported to the GMime development team by sending email to
+fejj@helixcode.com and/or by submitting a bug report for the gmime
+module at http://bugzilla.gnome.org/

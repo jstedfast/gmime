@@ -5,3 +5,6 @@
 ALWAYS update the ChangeLog accurately when commiting changes to
 gmime. This is as much for me as it is for any other contributors.
 It allows everyone to know exactly what's being modified and when.
+
+Please also try to conform to the same coding conventions used within
+this module (such as tab-width and brace location).
