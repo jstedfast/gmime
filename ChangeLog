@@ -1,5 +1,9 @@
 2004-06-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.1.6
+
 	* gmime/gmime-parser.c (parser_construct_multipart): Instead of
 	using g_mime_object_set_content_type(), destroy the current
 	content_type object and set our own on it directly. This prevents
