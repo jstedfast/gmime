@@ -1,3 +1,11 @@
+2002-05-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-file.c (stream_length): The length of the stream is
+	bound_end - bound_start.
+
+	* gmime-stream-fs.c (stream_length): The length of the stream is
+	bound_end - bound_start.
+
 2002-05-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-charset.c (main): Gnerate the multibyte charsets without
@@ -1193,12 +1201,12 @@
 	* gmime-utils.c (g_mime_utils_8bit_header_encode): same.
 
 	* gmime-parser.c (find_header_part_end): new utility function to
-	find the dividing line between body & header.  * gmime-parser.c
-	(g_mime_parser_construct_part): sync.  * gmime-parser.c
+	find the dividing line between body & header.
+	(g_mime_parser_construct_part): sync.
 	(g_mime_parser_construct_message): sync.
 
-	* gmime-parser.c (get_header_block): remove unused func.  *
-	gmime-parser.c (rfc822_headers): remove unused static array.
+	* gmime-parser.c (get_header_block): remove unused func.
+	(rfc822_headers): remove unused static array.
 
 2001-07-02  Jeffrey Stedfast  <fejj@ximian.com>
 

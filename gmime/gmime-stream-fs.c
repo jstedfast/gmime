@@ -228,15 +228,15 @@ static ssize_t
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
-	off_t len;
+	off_t bound_end;
 	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	len = lseek (fstream->fd, 0, SEEK_END);
+	bound_end = lseek (fstream->fd, 0, SEEK_END);
 	lseek (fstream->fd, stream->position, SEEK_SET);
 	
-	return len;
+	return bound_end - stream->bound_start;
 }
 
 static GMimeStream *
