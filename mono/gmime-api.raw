@@ -2030,8 +2030,14 @@
       <method name="Destroy" cname="internet_address_list_destroy">
         <return-type type="void"/>
       </method>
+      <method name="GetAddress" cname="internet_address_list_get_address">
+        <return-type type="InternetAddress*"/>
+      </method>
       <method name="Length" cname="internet_address_list_length">
         <return-type type="int"/>
+      </method>
+      <method name="Next" cname="internet_address_list_next">
+        <return-type type="InternetAddressList*"/>
       </method>
       <method name="Prepend" cname="internet_address_list_prepend">
         <return-type type="InternetAddressList*"/>

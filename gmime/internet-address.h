@@ -70,6 +70,8 @@ void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 InternetAddressList *internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_append (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_concat (InternetAddressList *a, InternetAddressList *b);
+InternetAddressList *internet_address_list_next (const InternetAddressList *list);
+InternetAddress *internet_address_list_get_address (const InternetAddressList *list);
 int internet_address_list_length (const InternetAddressList *list);
 void internet_address_list_destroy (InternetAddressList *list);
 

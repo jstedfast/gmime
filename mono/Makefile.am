@@ -20,6 +20,7 @@ build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
 
 customs = 				\
 	Global.custom			\
+	Message.custom			\
 	#
 
 build_customs = $(addprefix $(srcdir)/, $(customs))

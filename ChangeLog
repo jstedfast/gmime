@@ -1,3 +1,22 @@
+2004-11-16  Joe Shaw  <joeshaw@novell.com>
+
+	* gmime/internet-address.[ch]: Added functions
+	internet_address_list_next() and
+	internet_address_list_get_address() since we can't poke at the
+	structures by hand in mono.
+
+	* mono/GMime.metadata: Remove a bunch of commented out stuff, hide
+	the entire InternetAddressList structure.  We'd prefer to do it
+	with .net datatypes.
+
+	* mono/Message.custom: Added.  Adds a GetRecipients() method which
+	returns an ICollection of InternetAddresses, and a
+	GetRecipientsAsString() method which returns a stringified list
+	for pretty printing.
+
+	* mono/gmime-api.raw: Regenerate this for the new
+	InternetAddress.GetAddress() and Next() methods.
+
 2004-11-15  Joe Shaw  <joeshaw@novell.com>
 
 	* Added a mono binding

@@ -362,6 +362,36 @@ internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
 
 
 /**
+ * internet_address_list_next:
+ * @list: list of internet addresses
+ *
+ * Returns the following node in @list.
+ **/
+InternetAddressList *
+internet_address_list_next (const InternetAddressList *list)
+{
+	if (!list)
+		return NULL;
+
+	return list->next;
+}
+
+/**
+ * internet_address_list_get_address:
+ * @list: list of internet addresses
+ *
+ * Returns the #InternetAddress currently pointed to in @list.
+ **/
+InternetAddress *
+internet_address_list_get_address (const InternetAddressList *list)
+{
+	if (!list)
+		return NULL;
+
+	return list->address;
+}
+
+/**
  * internet_address_list_length:
  * @list: list of internet addresses
  *
