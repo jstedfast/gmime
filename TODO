@@ -18,6 +18,8 @@ contain whitespace, semicolons, or other illegal chars).
 
 - Write a broken date parser. (job for lex/bison?)
 
+- Comply with RFC2184 and work around the common non-compliance
+  methods (namely the Outlook/Netscape method).
 
 FIXME's:
 
