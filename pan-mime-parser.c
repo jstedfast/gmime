@@ -115,24 +115,6 @@ special_header (const char *field)
 	return (!g_strcasecmp (field, "MIME-Version:") || content_header (field) != -1);
 }
 
-
-static void
-parser_readln (GMimeStream *stream, GByteArray *buffer)
-{
-	char linebuf[1024];
-	ssize_t len;
-	
-	while (!g_mime_stream_eos (stream)) {
-		len = g_mime_stream_buffer_gets (stream, linebuf, sizeof (linebuf));
-		if (len <= 0)
-			break;
-		
-		g_byte_array_append (buffer, linebuf, len);
-		if (linebuf[len - 1] == '\n')
-			break;
-	}
-}
-
 static void
 parser_read_headers (GMimeStream *stream, GByteArray *buffer)
 {
@@ -140,7 +122,7 @@ parser_read_headers (GMimeStream *stream, GByteArray *buffer)
 	
 	do {
 		offset = buffer->len;
-		parser_readln (stream, buffer);
+		g_mime_stream_buffer_readln (stream, buffer);
 	} while (!g_mime_stream_eos (stream) && *(buffer->data + offset) != '\n');
 	
 	/* strip off the empty line */
@@ -170,7 +152,7 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 	
 	do {
 		offset = buffer->len;
-		parser_readln (stream, buffer);
+		g_mime_stream_buffer_readln (stream, buffer);
 		len = buffer->len - offset;
 		
 		if (boundary && len == strlen (boundary) &&

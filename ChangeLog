@@ -1,3 +1,10 @@
+2001-10-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c: Updated to use g_mime_stream_buffer_readln.
+
+	* gmime-stream-buffer.c (g_mime_stream_buffer_readln): New
+	convenience function to read a single line from a stream.
+
 2001-10-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c (g_mime_part_write_to_stream): No longer takes a

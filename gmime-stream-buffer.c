@@ -445,3 +445,28 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 	
 	return (outptr - buf);
 }
+
+
+/**
+ * g_mime_stream_buffer_readln:
+ * @stream:
+ * @buffer:
+ *
+ * Reads a single line into @buffer.
+ **/
+void
+g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer)
+{
+	char linebuf[1024];
+	ssize_t len;
+	
+	while (!g_mime_stream_eos (stream)) {
+		len = g_mime_stream_buffer_gets (stream, linebuf, sizeof (linebuf));
+		if (len <= 0)
+			break;
+		
+		g_byte_array_append (buffer, linebuf, len);
+		if (linebuf[len - 1] == '\n')
+			break;
+	}
+}

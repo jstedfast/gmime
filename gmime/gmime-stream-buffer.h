@@ -59,6 +59,8 @@ GMimeStream *g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMod
 
 ssize_t g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max);
 
+void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
