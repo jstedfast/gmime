@@ -10,6 +10,9 @@ appropriate. This means we can't always wrap parameter values in
 quotes (it is illegal to quote rfc2047 encoded atoms).
 ** I think this is fixed now.
 
+- Should only quote parameter values when required (ie when they
+contain whitespace, semicolons, or other illegal chars).
+
 - Expand InternetAddress to correctly handle rfc0822 address 'groups'
 (Are these even in use still?).
 
@@ -20,8 +23,24 @@ quotes (it is illegal to quote rfc2047 encoded atoms).
 
 FIXME's:
 
+- The rfc2047 encoder should watch white space and encode it if it
+appears between two atoms that will be encoded. For example, it
+currently performs in the following manner:
+
+(pretend 'a' and 'b' need to be encoded)
+original text: a b
+encoded (currently): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?b?=
+encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_b?=
+encoded (correctly): =?iso-8859-1?Q?a_?= =?iso-8859-1?Q?b?=
+encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_?= =?iso-8859-1?Q?b?=
+
+After deocding, the first equates to: ab 
+This is incorrect, the RFC specifies that whitespace between 
+encoded atoms be ignored.
+
 - Parsing quoted strings needs to be smarter - need to check for
 escaped quotes and such.
+** This should be fixed now.
 
 - InternetAddress needs to be smarter about quoting an address - what
 if the name component of the address has embedded quotes? They need to
