@@ -9,12 +9,12 @@
 static unsigned short gmime_special_table[256] = {
 	  5,  5,  5,  5,  5,  5,  5,  5,  5,103,  7,  5,  5, 39,  5,  5,
 	  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
-	242,448, 76,192,192,192,192,192, 76, 76,448,448, 76,448, 72,324,
-	448,448,448,448,448,448,448,448,448,448, 76, 76, 76,260, 76, 68,
-	 76,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
-	448,448,448,448,448,448,448,448,448,448,448,108,236,108,192,320,
-	192,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
-	448,448,448,448,448,448,448,448,448,448,448,192,192,192,192,  5,
+	242,960, 76,704,704,192,704,192, 76, 76,448,960, 76,960,584,324,
+	960,960,960,960,960,960,960,960,960,960, 76, 76, 76,260, 76, 68,
+	 76,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,
+	960,960,960,960,960,960,960,960,960,960,960,108,236,108,704,832,
+	704,960,960,960,960,960,960,960,960,960,960,960,960,960,960,960,
+	960,960,960,960,960,960,960,960,960,960,960,704,704,704,704,  5,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
@@ -26,15 +26,16 @@ static unsigned short gmime_special_table[256] = {
 };
 
 enum {
-	IS_CTRL    	= (1 << 0),
-	IS_LWSP    	= (1 << 1),
-	IS_TSPECIAL	= (1 << 2),
-	IS_SPECIAL 	= (1 << 3),
-	IS_SPACE   	= (1 << 4),
-	IS_DSPECIAL	= (1 << 5),
-	IS_QPSAFE  	= (1 << 6),
-	IS_ESAFE   	= (1 << 7), /* encoded word safe */
-	IS_PSAFE   	= (1 << 8)  /* encode word in phrase safe */
+	IS_CTRL     = (1 << 0),
+	IS_LWSP     = (1 << 1),
+	IS_TSPECIAL = (1 << 2),
+	IS_SPECIAL  = (1 << 3),
+	IS_SPACE    = (1 << 4),
+	IS_DSPECIAL = (1 << 5),
+	IS_QPSAFE   = (1 << 6),
+	IS_ESAFE    = (1 << 7), /* encoded word safe */
+	IS_PSAFE    = (1 << 8), /* encode word in phrase safe */
+	IS_ATTRCHAR = (1 << 9)  /* attribute-char from rfc2184 */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -48,6 +49,7 @@ enum {
 #define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
+#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)
 
 #define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
 #define CHARS_TSPECIAL "()<>@,;:\\\"/[]?="
@@ -56,5 +58,6 @@ enum {
 #define CHARS_DSPECIAL "[]\\\r \t"         /* not in domains */
 #define CHARS_ESPECIAL "()<>@,;:\"/[]?.=_" /* encoded word specials (rfc2047 5.1) */
 #define CHARS_PSPECIAL "!*+-/=_"           /* encoded phrase specials (rfc2047 5.3) */
+#define CHARS_ATTRCHAR "*'% "              /* attribute-char from rfc2184 */
 
 #define GMIME_FOLD_LEN 76

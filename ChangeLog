@@ -1,3 +1,17 @@
+2004-06-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gen-table.c: Added a new bit and corresponding macro.
+
+	* gmime/gmime-table-private.h: Updated.
+
+	* gmime/gmime-param.c (encode_param): If conversion into the best
+	charset fails, fall back to using UTF-8. Also use the new
+	convenience macro, is_attrchar(), to decide which characters in
+	the param value to encode.
+	(param_list_format): Use is_attrchar() for calculating how many
+	characters we expect to either have to quote or encode.
+	(decode_param_list): Rewritten.
+
 2004-05-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-data-wrapper.c (g_mime_data_wrapper_set_stream):

@@ -25,11 +25,13 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
 
 #include "gmime-param.h"
+#include "gmime-common.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
 #include "gmime-utils.h"
@@ -40,7 +42,7 @@
 #ifdef ENABLE_WARNINGS
 #define w(x) x
 #else
-#define w(x)
+#define w(x) x
 #endif /* ENABLE_WARNINGS */
 
 #define d(x)
@@ -73,104 +75,6 @@ g_mime_param_new (const char *name, const char *value)
 	param->value = g_strdup (value);
 	
 	return param;
-}
-
-
-#define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
-
-static size_t
-hex_decode (const unsigned char *in, size_t len, unsigned char *out)
-{
-	register const unsigned char *inptr;
-	register unsigned char *outptr;
-	const unsigned char *inend;
-	
-	inptr = in;
-	inend = in + len;
-	
-	outptr = out;
-	
-	while (inptr < inend) {
-		if (*inptr == '%') {
-			if (isxdigit (inptr[1]) && isxdigit (inptr[2])) {
-				*outptr++ = HEXVAL (inptr[1]) * 16 + HEXVAL (inptr[2]);
-				inptr += 3;
-			} else
-				*outptr++ = *inptr++;
-		} else
-			*outptr++ = *inptr++;
-	}
-	
-	*outptr = '\0';
-	
-	return outptr - out;
-}
-
-/* an rfc2184 encoded string looks something like:
- * us-ascii'en'This%20is%20even%20more%20
- */
-static char *
-rfc2184_decode (const char *in, size_t len)
-{
-	const char *inptr = in;
-	const char *inend = in + len;
-	const char *charset = NULL;
-	char *decoded = NULL;
-	char *charenc;
-	
-	/* skips to the end of the charset / beginning of the locale */
-	inptr = memchr (inptr, '\'', len);
-	if (!inptr)
-		return NULL;
-	
-	/* save the charset */
-	len = inptr - in;
-	charenc = g_alloca (len + 1);
-	memcpy (charenc, in, len);
-	charenc[len] = '\0';
-	charset = charenc;
-	
-	/* skip to the end of the locale */
-	inptr = memchr (inptr + 1, '\'', (unsigned int) (inend - inptr - 1));
-	if (!inptr)
-		return NULL;
-	
-	inptr++;
-	if (inptr < inend) {
-		len = inend - inptr;
-		if (strcasecmp (charset, "UTF-8") != 0) {
-			char *udecoded;
-			iconv_t cd;
-			
-			decoded = g_alloca (len + 1);
-			len = hex_decode (inptr, len, decoded);
-			
-			cd = g_mime_iconv_open ("UTF-8", charset);
-			if (cd == (iconv_t) -1) {
-				d(g_warning ("Cannot convert from %s to UTF-8, param display may "
-					     "be corrupt: %s", charset, g_strerror (errno)));
-				charset = g_mime_locale_charset ();
-				cd = g_mime_iconv_open ("UTF-8", charset);
-				if (cd == (iconv_t) -1)
-					return NULL;
-			}
-			
-			udecoded = g_mime_iconv_strndup (cd, decoded, len);
-			g_mime_iconv_close (cd);
-			
-			if (!udecoded) {
-				d(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
-					     "corrupt: %s", (int)len, decoded, g_strerror (errno)));
-			}
-			
-			decoded = udecoded;
-		} else {
-			decoded = g_malloc (len + 1);
-			hex_decode (inptr, len, decoded);
-		}
-	}
-	
-	return decoded;
 }
 
 static void
@@ -309,13 +213,13 @@ decode_param_token (const char **in)
 }
 
 static gboolean
-decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *value_is_encoded)
+decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encoded)
 {
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
 	char *param;
 	
-	*value_is_encoded = FALSE;
+	*encoded = FALSE;
 	*part = -1;
 	
 	param = decode_param_token (&inptr);
@@ -329,8 +233,7 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *value
 		decode_lwsp (&inptr);
 		if (*inptr == '=') {
 			/* form := param*=value */
-			if (value_is_encoded)
-				*value_is_encoded = TRUE;
+			*encoded = TRUE;
 		} else {
 			/* form := param*#=value or param*#*=value */
 			*part = decode_int (&inptr);
@@ -338,9 +241,8 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *value
 			decode_lwsp (&inptr);
 			if (*inptr == '*') {
 				/* form := param*#*=value */
-				if (value_is_encoded)
-					*value_is_encoded = TRUE;
 				inptr++;
+				*encoded = TRUE;
 				decode_lwsp (&inptr);
 			}
 		}
@@ -355,72 +257,46 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *value
 	return is_rfc2184;
 }
 
-static int
-decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc2184_param)
+static gboolean
+decode_param (const char **in, char **paramp, char **valuep, int *id, gboolean *encoded)
 {
-	gboolean is_rfc2184_encoded = FALSE;
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
 	char *param, *value = NULL;
-	int rfc2184_part = -1;
+	char *val;
 	
-	*is_rfc2184_param = FALSE;
-	
-	is_rfc2184 = decode_rfc2184_param (&inptr, &param, &rfc2184_part,
-					   &is_rfc2184_encoded);
+	is_rfc2184 = decode_rfc2184_param (&inptr, &param, id, encoded);
 	
 	if (*inptr == '=') {
 		inptr++;
 		value = decode_value (&inptr);
 		
-		if (is_rfc2184) {
-			/* We have ourselves an rfc2184 parameter */
-			if (rfc2184_part == -1) {
-				/* rfc2184 allows the value to be broken into
-				 * multiple parts - this isn't one of them so
-				 * it is safe to decode it.
+		if (!is_rfc2184 && value) {
+			if (!strncmp (value, "=?", 2)) {
+				/* We have a broken param value that is rfc2047 encoded.
+				 * Since both Outlook and Netscape/Mozilla do this, we
+				 * should handle this case.
 				 */
-				char *val;
 				
-				val = rfc2184_decode (value, strlen (value));
-				if (val) {
+				if ((val = g_mime_utils_header_decode_text (value))) {
 					g_free (value);
 					value = val;
 				}
-			} else {
-				/* Since we are expecting to find the rest of
-				 * this paramter value later, let our caller know.
-				 */
-				*is_rfc2184_param = TRUE;
 			}
-		} else if (value && !strncmp (value, "=?", 2)) {
-			/* We have a broken param value that is rfc2047 encoded.
-			 * Since both Outlook and Netscape/Mozilla do this, we
-			 * should handle this case.
-			 */
-			char *val;
 			
-			val = g_mime_utils_header_decode_text (value);
-			if (val) {
-				g_free (value);
-				value = val;
+			if (!g_utf8_validate (value, -1, NULL)) {
+				/* A (broken) mailer has sent us an unencoded 8bit value.
+				 * Attempt to save it by assuming it's in the user's
+				 * locale and converting to UTF-8 */
+				
+				if ((val = g_mime_iconv_locale_to_utf8 (value))) {
+					g_free (value);
+					value = val;
+				} else {
+					d(g_warning ("Failed to convert %s param value (\"%s\") to UTF-8: %s",
+						     param, value, g_strerror (errno)));
+				}
 			}
-		}
-	}
-	
-	if (value && !g_utf8_validate (value, -1, NULL)) {
-		/* A (broken) mailer has sent us an unencoded 8bit value.
-		 * Attempt to save it by assuming it's in the user's
-		 * locale and converting to UTF-8 */
-		char *buf;
-		
-		buf = g_mime_iconv_locale_to_utf8 (value);
-		if (buf) {
-			g_free (value);
-			value = buf;
-		} else {
-			d(g_warning ("Failed to convert %s param value (\"%s\") to UTF-8: %s",
-				     param, value, g_strerror (errno)));
 		}
 	}
 	
@@ -428,98 +304,306 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 		*paramp = param;
 		*valuep = value;
 		*in = inptr;
-		return 0;
+		return TRUE;
 	} else {
 		g_free (param);
 		g_free (value);
-		return 1;
+		return FALSE;
 	}
 }
 
-static GMimeParam *
-decode_param_list (const char **in)
+
+struct _rfc2184_part {
+	char *value;
+	int id;
+};
+
+struct _rfc2184_param {
+	struct _rfc2184_param *next;
+	const char *charset;
+	GMimeParam *param;
+	GPtrArray *parts;
+	char *lang;
+};
+
+static int
+rfc2184_sort_cb (const void *v0, const void *v1)
 {
-	const char *inptr = *in;
-	GMimeParam *head = NULL, *tail = NULL;
-	gboolean last_was_rfc2184 = FALSE;
-	gboolean is_rfc2184 = FALSE;
+	const struct _rfc2184_part *p0 = *((struct _rfc2184_part **) v0);
+	const struct _rfc2184_part *p1 = *((struct _rfc2184_part **) v1);
 	
-	decode_lwsp (&inptr);
+	return p0->id - p1->id;
+}
+
+#define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
+
+static size_t
+hex_decode (const unsigned char *in, size_t len, unsigned char *out)
+{
+	register const unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
 	
-	do {
-		GMimeParam *param = NULL;
-		char *name, *value;
-		
-		/* invalid format? */
-		if (decode_param (&inptr, &name, &value, &is_rfc2184) != 0) {
-			if (*inptr == ';') {
-				continue;
-			}
-			break;
-		}
-		
-		if (is_rfc2184 && tail && !strcasecmp (name, tail->name)) {
-			/* rfc2184 allows a parameter to be broken into multiple parts
-			 * and it looks like we've found one. Append this value to the
-			 * last value.
-			 */
-			GString *gvalue;
-			
-			gvalue = g_string_new (tail->value);
-			g_string_append (gvalue, value);
-			g_free (tail->value);
-			g_free (value);
-			g_free (name);
-			
-			tail->value = gvalue->str;
-			g_string_free (gvalue, FALSE);
-		} else {
-			if (last_was_rfc2184) {
-				/* We've finished gathering the values for the last param
-				 * so it is now safe to decode it.
-				 */
-				char *val;
-				
-				val = rfc2184_decode (tail->value, strlen (tail->value));
-				if (val) {
-					g_free (tail->value);
-					tail->value = val;
-				}
-			}
-			
-			param = g_new (GMimeParam, 1);
-			param->next = NULL;
-			param->name = name;
-			param->value = value;
-			
-			if (head == NULL)
-				head = param;
-			if (tail)
-				tail->next = param;
-			tail = param;
-		}
-		
-		last_was_rfc2184 = is_rfc2184;
-		
-		decode_lwsp (&inptr);
-	} while (*inptr++ == ';');
+	inptr = in;
+	inend = in + len;
 	
-	if (last_was_rfc2184) {
-		/* We've finished gathering the values for the last param
-		 * so it is now safe to decode it.
-		 */
-		char *val;
+	outptr = out;
+	
+	while (inptr < inend) {
+		if (*inptr == '%') {
+			if (isxdigit (inptr[1]) && isxdigit (inptr[2])) {
+				*outptr++ = HEXVAL (inptr[1]) * 16 + HEXVAL (inptr[2]);
+				inptr += 3;
+			} else
+				*outptr++ = *inptr++;
+		} else
+			*outptr++ = *inptr++;
+	}
+	
+	*outptr = '\0';
+	
+	return outptr - out;
+}
+
+static const char *
+rfc2184_param_charset (const char **in, char **langp)
+{
+	const char *lang, *inptr = *in;
+	char *charset;
+	size_t len;
+	
+	if (langp)
+		*langp = NULL;
+	
+	while (*inptr != '\0' && *inptr != '\'')
+		inptr++;
+	
+	if (*inptr != '\'')
+		return NULL;
+	
+	len = inptr - *in;
+	charset = g_alloca (len + 1);
+	memcpy (charset, *in, len);
+	charset[len] = '\0';
+	
+	lang = ++inptr;
+	while (*inptr != '\0' && *inptr != '\'')
+		inptr++;
+	
+	if (*inptr == '\'') {
+		if (langp)
+			*langp = g_strndup (lang, inptr - lang);
 		
-		val = rfc2184_decode (tail->value, strlen (tail->value));
-		if (val) {
-			g_free (tail->value);
-			tail->value = val;
-		}
+		inptr++;
 	}
 	
 	*in = inptr;
 	
-	return head;
+	return g_mime_charset_canon_name (charset);
+}
+
+static char *
+charset_convert (const char *charset, char *in, size_t inlen)
+{
+	gboolean locale = FALSE;
+	char *result = NULL;
+	iconv_t cd;
+	
+	if (!charset || !strcasecmp (charset, "UTF-8") || !strcasecmp (charset, "us-ascii")) {
+		/* we shouldn't need any charset conversion here... */
+		if (g_utf8_validate (in, inlen, NULL))
+			return in;
+		
+		charset = g_mime_locale_charset ();
+		locale = TRUE;
+	}
+	
+	/* need charset conversion */
+	cd = g_mime_iconv_open ("UTF-8", charset);
+	if (cd == (iconv_t) -1 && !locale) {
+		charset = g_mime_locale_charset ();
+		cd = g_mime_iconv_open ("UTF-8", charset);
+	}
+	
+	if (cd != (iconv_t) -1) {
+		result = g_mime_iconv_strndup (cd, in, inlen);
+		g_mime_iconv_close (cd);
+	}
+	
+	if (result == NULL)
+		result = in;
+	else
+		g_free (in);
+	
+	return result;
+}
+
+static char *
+rfc2184_decode (const char *value)
+{
+	const char *inptr = value;
+	const char *charset;
+	char *udecoded;
+	char *decoded;
+	size_t len;
+	
+	charset = rfc2184_param_charset (&inptr, NULL);
+	
+	len = strlen (inptr);
+	decoded = g_alloca (len + 1);
+	len = hex_decode (inptr, len, decoded);
+	
+	return charset_convert (charset, g_strdup (decoded), len);
+}
+
+static void
+rfc2184_param_add_part (struct _rfc2184_param *rfc2184, char *value, int id, gboolean encoded)
+{
+	struct _rfc2184_part *part;
+	size_t len;
+	
+	part = g_new (struct _rfc2184_part, 1);
+	g_ptr_array_add (rfc2184->parts, part);
+	part->id = id;
+	
+	if (encoded) {
+		len = strlen (value);
+		part->value = g_malloc (len + 1);
+		hex_decode (value, len, part->value);
+		g_free (value);
+	} else {
+		part->value = value;
+	}
+}
+
+static struct _rfc2184_param *
+rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
+{
+	struct _rfc2184_param *rfc2184;
+	struct _rfc2184_part *part;
+	const char *inptr = value;
+	
+	rfc2184 = g_new (struct _rfc2184_param, 1);
+	rfc2184->parts = g_ptr_array_new ();
+	rfc2184->next = NULL;
+	
+	rfc2184->charset = rfc2184_param_charset (&inptr, &rfc2184->lang);
+	
+	if (inptr == value) {
+		rfc2184_param_add_part (rfc2184, value, id, encoded);
+	} else {
+		rfc2184_param_add_part (rfc2184, g_strdup (inptr), id, encoded);
+		g_free (value);
+	}
+	
+	rfc2184->param = g_new (GMimeParam, 1);
+	rfc2184->param->next = NULL;
+	rfc2184->param->name = name;
+	rfc2184->param->value = NULL;
+	
+	return rfc2184;
+}
+
+static GMimeParam *
+decode_param_list (const char *in)
+{
+	struct _rfc2184_param *rfc2184, *list, *t;
+	GMimeParam *param, *params, *tail;
+	struct _rfc2184_part *part;
+	GHashTable *rfc2184_hash;
+	const char *inptr = in;
+	char *name, *value;
+	gboolean encoded;
+	GString *gvalue;
+	int id, i;
+	
+	params = NULL;
+	tail = (GMimeParam *) &params;
+	
+	list = NULL;
+	t = (struct _rfc2184_param *) &list;
+	rfc2184_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	
+	decode_lwsp (&inptr);
+	
+	do {
+		/* invalid format? */
+		if (!decode_param (&inptr, &name, &value, &id, &encoded)) {
+			decode_lwsp (&inptr);
+			
+			if (*inptr == ';')
+				continue;
+			
+			break;
+		}
+		
+		if (id != -1) {
+			/* we have a multipart rfc2184 param */
+			if (!(rfc2184 = g_hash_table_lookup (rfc2184_hash, name))) {
+				rfc2184 = rfc2184_param_new (name, value, id, encoded);
+				param = rfc2184->param;
+				t->next = rfc2184;
+				t = rfc2184;
+				
+				g_hash_table_insert (rfc2184_hash, param->name, rfc2184);
+				
+				tail->next = param;
+				tail = param;
+			} else {
+				rfc2184_param_add_part (rfc2184, value, id, encoded);
+				g_free (name);
+			}
+		} else {
+			param = g_new (GMimeParam, 1);
+			param->next = NULL;
+			param->name = name;
+			
+			if (encoded) {
+				/* singleton encoded rfc2184 param value */
+				fprintf (stderr, "singleton encoded rfc2184 param value: %s\n", value);
+				param->value = rfc2184_decode (value);
+				g_free (value);
+			} else {
+				/* normal parameter value */
+				fprintf (stderr, "normal param value: %s\n", value);
+				param->value = value;
+			}
+			
+			tail->next = param;
+			tail = param;
+		}
+		
+		decode_lwsp (&inptr);
+	} while (*inptr++ == ';');
+	
+	g_hash_table_destroy (rfc2184_hash);
+	
+	rfc2184 = list;
+	while (rfc2184 != NULL) {
+		t = rfc2184->next;
+		
+		param = rfc2184->param;
+		gvalue = g_string_new ("");
+		
+		g_ptr_array_sort (rfc2184->parts, rfc2184_sort_cb);
+		for (i = 0; i < rfc2184->parts->len; i++) {
+			part = rfc2184->parts->pdata[i];
+			g_string_append (gvalue, part->value);
+			g_free (part->value);
+			g_free (part);
+		}
+		
+		g_ptr_array_free (rfc2184->parts, TRUE);
+		
+		param->value = charset_convert (rfc2184->charset, gvalue->str, gvalue->len);
+		g_string_free (gvalue, FALSE);
+		
+		g_free (rfc2184->lang);
+		g_free (rfc2184);
+		rfc2184 = t;
+	}
+	
+	return params;
 }
 
 
@@ -536,7 +620,7 @@ g_mime_param_new_from_string (const char *string)
 {
 	g_return_val_if_fail (string != NULL, NULL);
 	
-	return decode_param_list (&string);
+	return decode_param_list (string);
 }
 
 
@@ -631,6 +715,7 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	unsigned char *outbuf = NULL;
 	iconv_t cd = (iconv_t) -1;
 	const char *charset = NULL;
+	unsigned char c;
 	char *outstr;
 	GString *out;
 	
@@ -655,7 +740,12 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	if (cd != (iconv_t) -1) {
 		outbuf = g_mime_iconv_strdup (cd, in);
 		g_mime_iconv_close (cd);
-		inptr = outbuf;
+		if (outbuf == NULL) {
+			charset = "UTF-8";
+			inptr = in;
+		} else {
+			inptr = outbuf;
+		}
 	} else {
 		charset = "UTF-8";
 		inptr = in;
@@ -665,18 +755,11 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	out = g_string_new ("");
 	g_string_append_printf (out, "%s''", charset);
 	
-	while (inptr && *inptr) {
-		unsigned char c = *inptr++;
-		
-		/* FIXME: make sure that '\'', '*', and ';' are also encoded */
-		
-		if (c > 127) {
+	while ((c = *inptr++)) {
+		if (!is_attrchar (c))
 			g_string_append_printf (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
-		} else if (is_lwsp (c) || !(gmime_special_table[c] & IS_ESAFE)) {
-			g_string_append_printf (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
-		} else {
+		else
 			g_string_append_c (out, c);
-		}
 	}
 	
 	g_free (outbuf);
@@ -738,7 +821,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 			char *ch;
 			
 			for (ch = value; *ch; ch++) {
-				if (is_tspecial (*ch) || is_lwsp (*ch))
+				if (!is_attrchar (*ch) || is_lwsp (*ch))
 					quote++;
 			}
 		}

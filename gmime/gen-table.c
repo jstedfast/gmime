@@ -36,6 +36,7 @@ enum {
 #define CHARS_DSPECIAL "[]\\\r \t"	   /* not in domains */
 #define CHARS_ESPECIAL "()<>@,;:\"/[]?.=_" /* encoded word specials (rfc2047 5.1) */
 #define CHARS_PSPECIAL "!*+-/=_"           /* encoded phrase specials (rfc2047 5.3) */
+#define CHARS_ATTRCHAR "*'% "              /* attribute-char from rfc2184 */
 
 static unsigned short gmime_special_table[256];
 
@@ -48,7 +49,8 @@ enum {
 	IS_DSPECIAL	= (1 << 5),
 	IS_QPSAFE	= (1 << 6),
 	IS_ESAFE	= (1 << 7),  /* encoded word safe */
-	IS_PSAFE	= (1 << 8)   /* encoded word in phrase safe */
+	IS_PSAFE	= (1 << 8),  /* encoded word in phrase safe */
+	IS_ATTRCHAR     = (1 << 9)   /* attribute-char from rfc2184 */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -62,6 +64,7 @@ enum {
 #define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
+#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)
 
 /* code to rebuild the gmime_special_table */
 static void
@@ -108,23 +111,24 @@ header_decode_init (void)
 	
 	for (i = 0; i < 256; i++) {
 		gmime_special_table[i] = 0;
-		if (i < 32)
+		if (i < 32 || i == 127)
 			gmime_special_table[i] |= IS_CTRL;
+		if (i > 32 && i < 127)
+			gmime_special_table[i] |= IS_ATTRCHAR;
 		if ((i >= 33 && i <= 60) || (i >= 62 && i <= 126) || i == 32)
 			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
 		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
 			gmime_special_table[i] |= IS_PSAFE;
 	}
 	
-	gmime_special_table['\t'] |= IS_QPSAFE;
-	
-	gmime_special_table[127] |= IS_CTRL;
 	gmime_special_table[' '] |= IS_SPACE;
+	gmime_special_table['\t'] |= IS_QPSAFE;
 	header_init_bits (IS_LWSP, 0, FALSE, CHARS_LWSP);
 	header_init_bits (IS_TSPECIAL, IS_CTRL, FALSE, CHARS_TSPECIAL);
 	header_init_bits (IS_SPECIAL, 0, FALSE, CHARS_SPECIAL);
 	header_init_bits (IS_DSPECIAL, 0, FALSE, CHARS_DSPECIAL);
 	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
+	header_remove_bits (IS_ATTRCHAR, CHARS_TSPECIAL CHARS_ATTRCHAR);
 	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
 }
 
@@ -148,15 +152,16 @@ int main (int argc, char **argv)
 	
 	/* print out the enum */
 	printf ("enum {\n");
-	printf ("\tIS_CTRL    \t= (1 << 0),\n");
-	printf ("\tIS_LWSP    \t= (1 << 1),\n");
-	printf ("\tIS_TSPECIAL\t= (1 << 2),\n");
-	printf ("\tIS_SPECIAL \t= (1 << 3),\n");
-	printf ("\tIS_SPACE   \t= (1 << 4),\n");
-	printf ("\tIS_DSPECIAL\t= (1 << 5),\n");
-	printf ("\tIS_QPSAFE  \t= (1 << 6),\n");
-	printf ("\tIS_ESAFE   \t= (1 << 7), /* encoded word safe */\n");
-	printf ("\tIS_PSAFE   \t= (1 << 8)  /* encode word in phrase safe */\n");
+	printf ("\tIS_CTRL     = (1 << 0),\n");
+	printf ("\tIS_LWSP     = (1 << 1),\n");
+	printf ("\tIS_TSPECIAL = (1 << 2),\n");
+	printf ("\tIS_SPECIAL  = (1 << 3),\n");
+	printf ("\tIS_SPACE    = (1 << 4),\n");
+	printf ("\tIS_DSPECIAL = (1 << 5),\n");
+	printf ("\tIS_QPSAFE   = (1 << 6),\n");
+	printf ("\tIS_ESAFE    = (1 << 7), /* encoded word safe */\n");
+	printf ("\tIS_PSAFE    = (1 << 8), /* encode word in phrase safe */\n");
+	printf ("\tIS_ATTRCHAR = (1 << 9)  /* attribute-char from rfc2184 */\n");
 	printf ("};\n\n");
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
@@ -169,7 +174,9 @@ int main (int argc, char **argv)
 	printf ("#define is_fieldname(x) ((gmime_special_table[(unsigned char)(x)] & (IS_CTRL|IS_SPACE)) == 0)\n");
 	printf ("#define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)\n");
 	printf ("#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)\n");
-	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n\n");
+	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n");
+	printf ("#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)\n");
+	printf ("\n");
 	
 	printf ("#define CHARS_LWSP \" \\t\\n\\r\"               /* linear whitespace chars */\n");
 	printf ("#define CHARS_TSPECIAL \"()<>@,;:\\\\\\\"/[]?=\"\n");
@@ -177,7 +184,10 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_CSPECIAL \"()\\\\\\r\"	           /* not in comments */\n");
 	printf ("#define CHARS_DSPECIAL \"[]\\\\\\r \\t\"         /* not in domains */\n");
 	printf ("#define CHARS_ESPECIAL \"()<>@,;:\\\"/[]?.=_\" /* encoded word specials (rfc2047 5.1) */\n");
-	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n\n");
+	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n");
+	printf ("#define CHARS_ATTRCHAR \"*'% \"              /* attribute-char from rfc2184 */\n");
+	printf ("\n");
+	
 	printf ("#define GMIME_FOLD_LEN 76\n");
 	
 	return 0;
