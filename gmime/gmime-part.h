@@ -55,11 +55,13 @@ struct _GMimePartDisposition {
 typedef struct _GMimePartDisposition GMimePartDisposition;
 
 struct _GMimePart {
-	gchar *description;
-	gchar *content_id;
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
+	gchar *description;
+	gchar *content_id;
+	gchar *content_md5;
+	gchar *content_location;
 	
 	GByteArray *content;
 	
@@ -83,6 +85,12 @@ const gchar *g_mime_part_get_content_description (const GMimePart *mime_part);
 
 void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
 const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
+
+void g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5);
+const gchar *g_mime_part_get_content_md5 (GMimePart *mime_part);
+
+void g_mime_part_set_content_location (GMimePart *mime_part, const gchar *content_location);
+const gchar *g_mime_part_get_content_location (GMimePart *mime_part);
 
 void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);

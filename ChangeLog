@@ -1,3 +1,29 @@
+2001-01-04  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-parser.c (g_mime_parser_construct_part): Added support for
+	parsing Content-Location and Content-Md5 headers. Trim excess
+	trailing \n's. Also fix a bug where the end boundary would get
+	included as part of the last MIME Part's contents.
+	(g_strstrbound): Bounded strstr.
+
+	* configure.in:
+	* README: Updated version to 0.4.0
+
+	* Makefile.am: Added md5-utils to the build.
+
+	* md5-utils.[c,h]: Added.
+
+	* gmime-part.c (g_mime_part_to_string): Slightly new
+	implementation. Also added in support for Content-Location and
+	Content-Md5 headers.
+	(g_mime_part_destroy): Return if the mime part is
+	NULL. Also free the new content_location and content_md5 headers.
+	(g_mime_part_set_content_md5): Implemented.
+	(g_mime_part_get_content_md5): Implemented.
+	(g_mime_part_set_content_location): Implemented.
+	(g_mime_part_get_content_location): Implemented.
+	(get_content_type): Append a '\n'.
+
 2001-01-01  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/gmime-sections.txt: Updated.

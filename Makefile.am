@@ -21,7 +21,8 @@ libgmime_la_SOURCES = 		\
 	gmime-parser.c		\
 	gmime-part.c		\
 	gmime-utils.c		\
-	internet-address.c	
+	internet-address.c	\
+	md5-utils.c
 
 gmimeincdir = $(includedir)/gmime
 gmimeinc_HEADERS = 		\
@@ -32,7 +33,8 @@ gmimeinc_HEADERS = 		\
 	gmime-parser.h		\
 	gmime-part.h		\
 	gmime-utils.h		\
-	internet-address.h
+	internet-address.h	\
+	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime.la
 LDADDS = $(top_builddir)/libgmime.la @GLIB_LIBS@
