@@ -30,9 +30,19 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <glib-object.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdarg.h>
+
+#include "gmime-type-utils.h"
+
+#define GMIME_TYPE_STREAM                 (g_mime_stream_get_type ())
+#define GMIME_STREAM(obj)                 (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
+#define GMIME_STREAM_CLASS(klass)         (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))
+#define GMIME_IS_STREAM(obj)              (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM))
+#define GMIME_IS_STREAM_CLASS(klass)      (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
+#define GMIME_STREAM_GET_CLASS(obj)       (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
 
 typedef enum {
 	GMIME_STREAM_SEEK_SET = SEEK_SET,
@@ -40,27 +50,27 @@ typedef enum {
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
 
-struct _IOVector {
+typedef struct _GMimeStreamIOVector {
 	gpointer data;
 	size_t len;
-};
-
-typedef struct _IOVector IOVector;
+} GMimeStreamIOVector;
 
 typedef struct _GMimeStream GMimeStream;
+typedef struct _GMimeStreamClass GMimeStreamClass;
 
 struct _GMimeStream {
+	GObject parent_object;
+	
 	/* Note: these are private fields!! */
 	GMimeStream *super_stream;
-	
-	unsigned int type;
-	int refcount;
 	
 	off_t position;
 	off_t bound_start;
 	off_t bound_end;
-	
-	void     (*destroy) (GMimeStream *stream);
+};
+
+struct _GMimeStreamClass {
+	GObjectClass parent_class;
 	
 	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
 	ssize_t  (*write)   (GMimeStream *stream, char *buf, size_t len);
@@ -74,10 +84,11 @@ struct _GMimeStream {
 	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
 };
 
-#define GMIME_STREAM(stream)  ((GMimeStream *) stream)
 
-void g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template,
-			      unsigned int type, off_t start, off_t end);
+GType g_mime_stream_get_type (void);
+
+void g_mime_stream_construct (GMimeStream *stream, off_t start, off_t end);
+
 
 /* public methods */
 ssize_t   g_mime_stream_read    (GMimeStream *stream, char *buf, size_t len);
@@ -103,7 +114,7 @@ ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...)
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
 
 
-size_t    g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count);
+ssize_t    g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
 
 #ifdef __cplusplus
 }

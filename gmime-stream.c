@@ -25,43 +25,113 @@
 #include <config.h>
 #endif
 
-#include "gmime-stream.h"
 #include <string.h>
+
+#include "gmime-stream.h"
+
+
+static void g_mime_stream_base_class_init (GMimeStreamClass *class);
+static void g_mime_stream_base_class_finalize (GMimeStreamClass *class);
+static void g_mime_stream_class_init (GMimeStreamClass *klass);
+static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);
+static void g_mime_stream_destroy (GMimeStream *stream);
+static void g_mime_stream_finalize (GObject *object);
+
+static GObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamClass),
+			(GBaseInitFunc) g_mime_stream_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStream),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStream", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_stream_base_class_init (GMimeStreamClass *klass)
+{
+	/* reset instance specifc methods that don't get inherited */
+	;
+}
+
+static void
+g_mime_stream_base_class_finalize (GMimeStreamClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_class_init (GMimeStreamClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_stream_finalize;
+	
+	klass->destroy = g_mime_stream_destroy;
+}
+
+static void
+g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass)
+{
+	stream->super_stream = NULL;
+	
+	stream->position = 0;
+	stream->bound_start = 0;
+	stream->bound_end = 0;
+}
+
+static void
+g_mime_stream_destroy (GMimeStream *stream)
+{
+	g_signal_handlers_destroy (G_OBJECT (stream));
+}
+
+static void
+g_mime_stream_finalize (GObject *object)
+{
+	GMimeStream *stream = (GMimeStream *) object;
+	
+	if (stream->super_stream)
+		g_mime_stream_unref (stream->super_stream);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
 
 
 /**
  * g_mime_stream_construct:
  * @stream: stream
- * @stream_template: stream template
- * @type: stream type
  * @start: start boundary
  * @end: end boundary
  *
- * Initializes a new stream of type @type, using the virtual methods
- * from @stream_template, with bounds @start and @end.
+ * Initializes a new stream with bounds @start and @end.
  **/
 void
-g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, unsigned int type, off_t start, off_t end)
+g_mime_stream_construct (GMimeStream *stream, off_t start, off_t end)
 {
-	stream->super_stream = NULL;
-	stream->refcount = 1;
-	stream->type = type;
-	
 	stream->position = start;
 	stream->bound_start = start;
 	stream->bound_end = end;
-	
-	stream->destroy = stream_template->destroy;
-	stream->read = stream_template->read;
-	stream->write = stream_template->write;
-	stream->flush = stream_template->flush;
-	stream->close = stream_template->close;
-	stream->reset = stream_template->reset;
-	stream->seek = stream_template->seek;
-	stream->tell = stream_template->tell;
-	stream->eos = stream_template->eos;
-	stream->length = stream_template->length;
-	stream->substream = stream_template->substream;
 }
 
 
@@ -78,10 +148,10 @@ g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, unsi
 ssize_t
 g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (buf != NULL, -1);
 	
-	return stream->read (stream, buf, len);
+	return GMIME_STREAM_CLASS (stream)->read (stream, buf, len);
 }
 
 
@@ -98,10 +168,10 @@ g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 ssize_t
 g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (buf != NULL, -1);
 	
-	return stream->write (stream, buf, len);
+	return GMIME_STREAM_CLASS (stream)->write (stream, buf, len);
 }
 
 
@@ -116,9 +186,9 @@ g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
 int
 g_mime_stream_flush (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->flush (stream);
+	return GMIME_STREAM_CLASS (stream)->flush (stream);
 }
 
 
@@ -133,9 +203,9 @@ g_mime_stream_flush (GMimeStream *stream)
 int
 g_mime_stream_close (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->close (stream);
+	return GMIME_STREAM_CLASS (stream)->close (stream);
 }
 
 
@@ -150,12 +220,12 @@ g_mime_stream_close (GMimeStream *stream)
 gboolean
 g_mime_stream_eos (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, TRUE);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), TRUE);
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return TRUE;
 	
-	return stream->eos (stream);
+	return GMIME_STREAM_CLASS (stream)->eos (stream);
 }
 
 
@@ -170,9 +240,9 @@ g_mime_stream_eos (GMimeStream *stream)
 int
 g_mime_stream_reset (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->reset (stream);
+	return GMIME_STREAM_CLASS (stream)->reset (stream);
 }
 
 
@@ -199,9 +269,9 @@ g_mime_stream_reset (GMimeStream *stream)
 off_t
 g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->seek (stream, offset, whence);
+	return GMIME_STREAM_CLASS (stream)->seek (stream, offset, whence);
 }
 
 
@@ -216,9 +286,9 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 off_t
 g_mime_stream_tell (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->tell (stream);
+	return GMIME_STREAM_CLASS (stream)->tell (stream);
 }
 
 
@@ -233,9 +303,9 @@ g_mime_stream_tell (GMimeStream *stream)
 ssize_t
 g_mime_stream_length (GMimeStream *stream)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return stream->length (stream);
+	return GMIME_STREAM_CLASS (stream)->length (stream);
 }
 
 
@@ -254,9 +324,9 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStream *sub;
 	
-	g_return_val_if_fail (stream != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
-	sub = stream->substream (stream, start, end);
+	sub = GMIME_STREAM_CLASS (stream)->substream (stream, start, end);
 	sub->super_stream = stream;
 	g_mime_stream_ref (stream);
 	
@@ -273,9 +343,9 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 void
 g_mime_stream_ref (GMimeStream *stream)
 {
-	g_return_if_fail (stream != NULL);
+	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
-	stream->refcount++;
+	g_object_ref ((GObject *) stream);
 }
 
 
@@ -288,16 +358,9 @@ g_mime_stream_ref (GMimeStream *stream)
 void
 g_mime_stream_unref (GMimeStream *stream)
 {
-	g_return_if_fail (stream != NULL);
+	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
-	if (stream->refcount <= 1) {
-		if (stream->super_stream)
-			g_mime_stream_unref (stream->super_stream);
-		
-		stream->destroy (stream);
-	} else {
-		stream->refcount--;
-	}
+	g_object_unref ((GObject *) stream);
 }
 
 
@@ -312,7 +375,7 @@ g_mime_stream_unref (GMimeStream *stream)
 void
 g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
 {
-	g_return_if_fail (stream != NULL);
+	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
 	stream->bound_start = start;
 	stream->bound_end = end;
@@ -336,7 +399,7 @@ g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
 ssize_t
 g_mime_stream_write_string (GMimeStream *stream, const char *string)
 {
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (string != NULL, -1);
 	
 	return g_mime_stream_write (stream, (char *) string, strlen (string));
@@ -360,7 +423,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
 	char *string;
 	ssize_t ret;
 	
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	g_return_val_if_fail (fmt != NULL, -1);
 	
 	va_start (args, fmt);
@@ -392,8 +455,8 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 	ssize_t nread, nwritten, total = 0;
 	char buf[4096];
 	
-	g_return_val_if_fail (src != NULL, -1);
-	g_return_val_if_fail (dest != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (src), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (dest), -1);
 	
 	while (!g_mime_stream_eos (src)) {
 		nread = g_mime_stream_read (src, buf, sizeof (buf));
@@ -430,10 +493,13 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
  *
  * Returns the number of bytes written.
  **/
-size_t
-g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count)
+ssize_t
+g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count)
 {
-	size_t i, total = 0;
+	ssize_t total = 0;
+	int i;
+	
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	for (i = 0; i < count; i++) {
 		ssize_t n, nwritten = 0;

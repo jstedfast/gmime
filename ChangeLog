@@ -1,3 +1,11 @@
+2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-type-utils.h: New file to contain some more-friendly
+	type-cast macros around the glib2 ones.
+
+	* gmime-stream.[c,h]: Now subclasses GObject. Not sure if I got
+	everything right, but I think it's mostly there?
+
 2002-03-15  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-filter-charset.c: fixed minor compiler warnings.
