@@ -1,9 +1,9 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Michael Zucchi <notzed@helixcode.com>
- *           Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Michael Zucchi <notzed@ximian.com>
+ *           Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2000-2004 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
