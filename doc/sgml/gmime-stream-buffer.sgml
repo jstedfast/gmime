@@ -98,7 +98,7 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_buffer_new       (<link linkend="GMimeStream">GMimeStream</link> *source,
                                              <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link> mode);</programlisting>
 <para>
-</para>
+Creates a new GMimeStreamBuffer object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

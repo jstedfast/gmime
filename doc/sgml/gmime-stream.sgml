@@ -16,6 +16,7 @@
 
 struct      <link linkend="GMimeStream">GMimeStream</link>;
 enum        <link linkend="GMimeSeekWhence">GMimeSeekWhence</link>;
+struct      <link linkend="IOVector">IOVector</link>;
 #define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (stream)
 void        <link linkend="g-mime-stream-construct">g_mime_stream_construct</link>         (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream_template,
@@ -108,6 +109,16 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 	GMIME_STREAM_SEEK_CUR = SEEK_CUR,
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="IOVector">struct IOVector</title>
+<programlisting>struct IOVector {
+	gpointer data;
+	size_t len;
+};
 </programlisting>
 <para>
 
@@ -307,7 +318,7 @@ stream plus <parameter>offset</parameter> bytes.</para>
 <title><anchor id="g-mime-stream-tell">g_mime_stream_tell ()</title>
 <programlisting><link linkend="off-t">off_t</link>       g_mime_stream_tell              (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-</para>
+Gets the current offset within the stream.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -379,7 +390,7 @@ Closes the stream.</para>
 <title><anchor id="g-mime-stream-length">g_mime_stream_length ()</title>
 <programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_length            (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-</para>
+Gets the length of the stream.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -399,7 +410,7 @@ Closes the stream.</para>
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);</programlisting>
 <para>
-</para>
+Creates a new substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

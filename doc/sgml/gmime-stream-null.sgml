@@ -79,7 +79,7 @@
 <title><anchor id="g-mime-stream-null-new">g_mime_stream_null_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_null_new         (void);</programlisting>
 <para>
-</para>
+Creates a new GMimeStreamNull object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

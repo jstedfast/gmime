@@ -2,6 +2,7 @@
 <FILE>gmime-stream</FILE>
 GMimeStream
 GMimeSeekWhence
+IOVector
 GMIME_STREAM
 g_mime_stream_construct
 g_mime_stream_ref
@@ -247,7 +248,6 @@ g_mime_part_get_boundary
 g_mime_part_set_content
 g_mime_part_set_pre_encoded_content
 g_mime_part_set_content_byte_array
-g_mime_part_set_content_stream
 g_mime_part_get_content
 g_mime_part_get_content_object
 g_mime_part_set_content_object

@@ -328,7 +328,10 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 
 /**
  * g_mime_stream_filter_new_with_stream:
- * @stream:
+ * @stream: source stream
+ *
+ * Creates a new GMimeStreamFilter object using @stream as the source
+ * stream.
  *
  * Returns a new filter stream with @stream as its source.
  **/

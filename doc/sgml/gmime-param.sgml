@@ -59,7 +59,7 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new                (const char *name,
                                              const char *value);</programlisting>
 <para>
-</para>
+Creates a new GMimeParam node with name <parameter>name</parameter> and value <parameter>value</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -80,7 +80,7 @@ void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_s
 <title><anchor id="g-mime-param-new-from-string">g_mime_param_new_from_string ()</title>
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new_from_string    (const char *string);</programlisting>
 <para>
-</para>
+Creates a parameter list based on the input string.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -117,7 +117,8 @@ System.</para>
                                              const char *name,
                                              const char *value);</programlisting>
 <para>
-</para>
+Appends a new parameter with name <parameter>name</parameter> and value <parameter>value</parameter> to the
+parameter list <parameter>params</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -143,7 +144,7 @@ System.</para>
 <programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_append_param       (<link linkend="GMimeParam">GMimeParam</link> *params,
                                              <link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
 <para>
-</para>
+Appends <parameter>param</parameter> to the param list <parameter>params</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

@@ -38,7 +38,7 @@
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
 <programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_parser_construct_part    (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-</para>
+Constructs a GMimePart object based on <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -58,7 +58,7 @@
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="gboolean">gboolean</link> preserve_headers);</programlisting>
 <para>
-</para>
+Constructs a GMimeMessage object based on <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

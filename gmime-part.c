@@ -51,7 +51,10 @@ static GMimeObject object_template = {
 
 
 /**
- * g_mime_part_new: Create a new MIME Part object
+ * g_mime_part_new:
+ *
+ * Creates a new MIME Part object with a default content-type of
+ * text/plain.
  *
  * Returns an empty MIME Part object with a default content-type of
  * text/plain.
@@ -78,9 +81,11 @@ g_mime_part_new ()
 
 
 /**
- * g_mime_part_new_with_type: Create a new MIME Part with a sepcified type
+ * g_mime_part_new_with_type:
  * @type: content-type
  * @subtype: content-subtype
+ *
+ * Creates a new MIME Part with a sepcified type.
  *
  * Returns an empty MIME Part object with the specified content-type.
  **/
@@ -107,7 +112,7 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 
 
 /**
- * g_mime_part_destroy: Destroy the MIME Part
+ * g_mime_part_destroy:
  * @mime_part: Mime part to destroy
  *
  * Releases all memory used by this mime part and all child mime parts.
@@ -151,9 +156,9 @@ g_mime_part_destroy (GMimePart *mime_part)
 
 /**
  * g_mime_part_set_content_header:
- * @mime_part:
- * @header:
- * @value:
+ * @mime_part: mime part
+ * @header: header name
+ * @value: header value
  *
  * Set an arbitrary MIME content header.
  **/
@@ -169,8 +174,11 @@ g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const 
 
 /**
  * g_mime_part_get_content_header:
- * @mime_part:
- * @header:
+ * @mime_part: mime part
+ * @header: header name
+ *
+ * Gets the value of the requested header if it exists, or %NULL
+ * otherwise.
  *
  * Returns the value of the content header @header.
  **/
@@ -185,7 +193,7 @@ g_mime_part_get_content_header (GMimePart *mime_part, const char *header)
 
 
 /**
- * g_mime_part_set_content_description: Set the content description
+ * g_mime_part_set_content_description:
  * @mime_part: Mime part
  * @description: content description
  *
@@ -205,8 +213,11 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 
 
 /**
- * g_mime_part_get_content_description: Get the content description
+ * g_mime_part_get_content_description:
  * @mime_part: Mime part
+ *
+ * Gets the value of the Content-Description for the specified mime
+ * part if it exists or %NULL otherwise.
  *
  * Returns the content description for the specified mime part.
  **/
@@ -220,7 +231,7 @@ g_mime_part_get_content_description (const GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content_id: Set the content id
+ * g_mime_part_set_content_id:
  * @mime_part: Mime part
  * @content_id: content id
  *
@@ -240,8 +251,11 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 
 
 /**
- * g_mime_part_get_content_id: Get the content id
+ * g_mime_part_get_content_id:
  * @mime_part: Mime part
+ *
+ * Gets the content-id of the specified mime part if it exists, or
+ * %NULL otherwise.
  *
  * Returns the content id for the specified mime part.
  **/
@@ -255,7 +269,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content_md5: Set the content md5
+ * g_mime_part_set_content_md5:
  * @mime_part: Mime part
  * @content_md5: content md5 or NULL to generate the md5 digest.
  *
@@ -314,7 +328,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 
 
 /**
- * g_mime_part_verify_content_md5: Verify the content md5
+ * g_mime_part_verify_content_md5:
  * @mime_part: Mime part
  *
  * Verify the content md5 for the specified mime part.
@@ -363,8 +377,11 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_get_content_md5: Get the content md5
+ * g_mime_part_get_content_md5:
  * @mime_part: Mime part
+ *
+ * Gets the md5sum contained in the Content-Md5 header of the
+ * specified mime part if it exists, or %NULL otherwise.
  *
  * Returns the content md5 for the specified mime part.
  **/
@@ -378,7 +395,7 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content_location: Set the content location
+ * g_mime_part_set_content_location:
  * @mime_part: Mime part
  * @content_location: content location
  *
@@ -398,8 +415,11 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 
 
 /**
- * g_mime_part_get_content_location: Get the content location
+ * g_mime_part_get_content_location:
  * @mime_part: Mime part
+ *
+ * Gets the value of the Content-Location header if it exists, or
+ * %NULL otherwise.
  *
  * Returns the content location for the specified mime part.
  **/
@@ -458,7 +478,7 @@ sync_content_type (GMimePart *mime_part)
 }
 
 /**
- * g_mime_part_set_content_type: Set the content type/subtype
+ * g_mime_part_set_content_type:
  * @mime_part: Mime part
  * @mime_type: Mime content-type
  *
@@ -482,6 +502,9 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 /**
  * g_mime_part_get_content_type: Get the content type/subtype
  * @mime_part: Mime part
+ *
+ * Gets the Content-Type object for the given mime part or %NULL on
+ * error.
  *
  * Returns the content-type object for the specified mime part.
  **/
@@ -519,6 +542,8 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
  * g_mime_part_get_encoding: Get the content encoding
  * @mime_part: Mime part
  *
+ * Gets the content encoding of the mime part.
+ *
  * Returns the content encoding for the specified mime part. The
  * return value will be one of the following:
  * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
@@ -537,6 +562,8 @@ g_mime_part_get_encoding (GMimePart *mime_part)
 /**
  * g_mime_part_encoding_to_string:
  * @encoding: Mime encoding
+ *
+ * Gets the string value of the content encoding.
  *
  * Returns the encoding type as a string. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
@@ -565,6 +592,9 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 /**
  * g_mime_part_encoding_from_string:
  * @encoding: Mime encoding in string format
+ *
+ * Gets the content encoding enumeration value based on the input
+ * string.
  *
  * Returns the encoding string as a GMimePartEncodingType.
  * Available values for the encoding are:
@@ -599,7 +629,7 @@ sync_content_disposition (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content_disposition_object: Set the content disposition
+ * g_mime_part_set_content_disposition_object:
  * @mime_part: Mime part
  * @disposition: disposition object
  *
@@ -620,7 +650,7 @@ g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDispositi
 
 
 /**
- * g_mime_part_set_content_disposition: Set the content disposition
+ * g_mime_part_set_content_disposition:
  * @mime_part: Mime part
  * @disposition: disposition
  *
@@ -641,8 +671,10 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const char *dispositi
 
 
 /**
- * g_mime_part_get_content_disposition: Get the content disposition
+ * g_mime_part_get_content_disposition:
  * @mime_part: Mime part
+ *
+ * Gets the content disposition if set or %NULL otherwise.
  *
  * Returns the content disposition for the specified mime part.
  **/
@@ -659,7 +691,7 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_add_content_disposition_parameter: Add a content-disposition parameter
+ * g_mime_part_add_content_disposition_parameter:
  * @mime_part: Mime part
  * @attribute: parameter name
  * @value: parameter value
@@ -684,9 +716,12 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 
 
 /**
- * g_mime_part_get_content_disposition_parameter: Get a content-disposition parameter
+ * g_mime_part_get_content_disposition_parameter:
  * @mime_part: Mime part
  * @attribute: parameter name
+ *
+ * Gets the value of the Content-Disposition parameter specified by
+ * @attribute, or %NULL if the parameter does not exist.
  *
  * Returns the value of a previously defined content-disposition
  * parameter specified by #name.
@@ -707,7 +742,7 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 
 
 /**
- * g_mime_part_set_filename: Set the "filename" content-disposition parameter
+ * g_mime_part_set_filename:
  * @mime_part: Mime part
  * @filename: the filename of the Mime Part's content
  *
@@ -734,8 +769,11 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 
 
 /**
- * g_mime_part_get_filename: Get the filename of the specified mime part (if it exists)
+ * g_mime_part_get_filename:
  * @mime_part: Mime part
+ *
+ * Gets the filename of the specificed mime part, or %NULL if the mime
+ * part does not have the filename or name parameter set.
  *
  * Returns the filename of the specified MIME Part. It first checks to
  * see if the "filename" parameter was set on the Content-Disposition
@@ -778,11 +816,11 @@ read_random_pool (char *buffer, size_t bytes)
 
 
 /**
- * g_mime_part_set_boundary: Set the multi-part boundary (not used on non-multiparts)
+ * g_mime_part_set_boundary:
  * @mime_part: Mime part
  * @boundary: the boundary for the multi-part or NULL to generate a random one.
  *
- * Sets the boundary on the mime part.
+ * Sets the boundary on the multipart mime part.
  **/
 void
 g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
@@ -790,6 +828,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 	char bbuf[27];
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (g_mime_content_type_is (mime_part->mime_type, "multipart", "*"));
 	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
@@ -813,8 +852,10 @@ g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary)
 
 
 /**
- * g_mime_part_get_boundary: Get the multi-part boundary
+ * g_mime_part_get_boundary:
  * @mime_part: Mime part
+ *
+ * Gets the multipart boundary or %NULL on error.
  *
  * Returns the boundary on the mime part.
  **/
@@ -828,7 +869,7 @@ g_mime_part_get_boundary (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content: Set the content of the mime part
+ * g_mime_part_set_content:
  * @mime_part: Mime part
  * @content: raw mime part content
  * @len: raw content length
@@ -853,7 +894,7 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len)
 
 
 /**
- * g_mime_part_set_content_byte_array: Set the content of the mime part
+ * g_mime_part_set_content_byte_array:
  * @mime_part: Mime part
  * @content: raw mime part content.
  *
@@ -877,7 +918,7 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 
 
 /**
- * g_mime_part_set_pre_encoded_content: Set the pre-encoded content of the mime part
+ * g_mime_part_set_pre_encoded_content:
  * @mime_part: Mime part
  * @content: encoded mime part content
  * @len: length of the content
@@ -950,6 +991,9 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  * g_mime_part_get_content_object:
  * @mime_part: MIME part object
  *
+ * Gets the internal data-wrapper of the specified mime part, or %NULL
+ * on error.
+ *
  * Returns the data-wrapper for the mime part's contents.
  **/
 const GMimeDataWrapper *
@@ -965,8 +1009,11 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * g_mime_part_get_content: 
  * @mime_part: MIME part object
  * @len: pointer to the content length
+ *
+ * Gets the raw contents of the mime part and sets @len to the length
+ * of the raw data buffer.
  * 
- * Returns a char * pointer to the raw contents of the MIME Part
+ * Returns a const char * pointer to the raw contents of the MIME Part
  * and sets %len to the length of the buffer.
  **/
 const char *
@@ -1021,7 +1068,7 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 
 
 /**
- * g_mime_part_add_subpart: Add a subpart to a multipart
+ * g_mime_part_add_subpart:
  * @mime_part: Parent Mime part
  * @subpart: Child Mime part
  *
@@ -1031,13 +1078,10 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 void
 g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
 {
-	const GMimeContentType *type;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (GMIME_IS_PART (subpart));
 	
-	type = g_mime_part_get_content_type (mime_part);
-	if (g_mime_content_type_is_type (type, "multipart", "*")) {
+	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
 		mime_part->children = g_list_append (mime_part->children, subpart);
 		g_mime_object_ref (GMIME_OBJECT (subpart));
 	}
@@ -1078,7 +1122,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 
 
 /**
- * g_mime_part_write_to_stream: Write the MIME Part to a string
+ * g_mime_part_write_to_stream:
  * @mime_part: MIME Part
  * @stream: output stream
  *
@@ -1127,8 +1171,10 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 
 
 /**
- * g_mime_part_to_string: Write the MIME Part to a string
+ * g_mime_part_to_string:
  * @mime_part: MIME Part
+ *
+ * Allocates a string buffer containing the MIME Part.
  *
  * Returns an allocated string containing the MIME Part.
  **/
@@ -1160,7 +1206,7 @@ g_mime_part_to_string (GMimePart *mime_part)
  * @callback: function to call for #mime_part and all it's subparts
  * @data: extra data to pass to the callback
  * 
- * Calls #callback on #mime_part and each of it's subparts.
+ * Calls @callback on @mime_part and each of it's subparts.
  **/
 void
 g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data)
@@ -1187,8 +1233,11 @@ g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data
  * @mime_part: the MIME part
  * @content_id: the content id of the part to look for
  *
+ * Gets the mime part with the content-id @content_id from the
+ * multipart @mime_part.
+ *
  * Returns the GMimePart whose content-id matches the search string,
- * or NULL if a match cannot be found.
+ * or %NULL if a match cannot be found.
  **/
 const GMimePart *
 g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const char *content_id)

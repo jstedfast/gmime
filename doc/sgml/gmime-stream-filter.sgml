@@ -85,7 +85,8 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_filter_new_with_stream
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-</para>
+Creates a new GMimeStreamFilter object using <parameter>stream</parameter> as the source
+stream.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -94,7 +95,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
+<entry> source stream
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new filter stream with <parameter>stream</parameter> as its source.
 </entry></row>

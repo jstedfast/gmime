@@ -255,7 +255,7 @@ Set the sender's name and address on the MIME Message.
 <title><anchor id="g-mime-message-get-sender">g_mime_message_get_sender ()</title>
 <programlisting>const char* g_mime_message_get_sender       (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Gets the email address of the sender from <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -293,7 +293,7 @@ Set the sender's Reply-To address on the MIME Message.</para>
 <title><anchor id="g-mime-message-get-reply-to">g_mime_message_get_reply_to ()</title>
 <programlisting>const char* g_mime_message_get_reply_to     (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Gets the Reply-To address from <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -371,7 +371,7 @@ specified in rfc822.</para>
 <programlisting><link linkend="GList">GList</link>*      g_mime_message_get_recipients   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *type);</programlisting>
 <para>
-</para>
+Gets a GList of recipients of type <parameter>type</parameter> from <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -415,7 +415,7 @@ Set the Subject field on a MIME Message.</para>
 <title><anchor id="g-mime-message-get-subject">g_mime_message_get_subject ()</title>
 <programlisting>const char* g_mime_message_get_subject      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Gets the message's subject.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -460,7 +460,7 @@ Set the sent-date on a MIME Message.</para>
                                              int *gmt_offset);</programlisting>
 <para>
 Stores the date in time_t format in <link linkend="date">date</link> and the GMT offset in
-<link linkend="gmt-offset">gmt_offset</link>.</para>
+<parameter>gmt_offset</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -482,7 +482,7 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 <title><anchor id="g-mime-message-get-date-string">g_mime_message_get_date_string ()</title>
 <programlisting>char*       g_mime_message_get_date_string  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Gets the message's sent date in string format.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -520,7 +520,7 @@ Set the Message-Id on a message.</para>
 <title><anchor id="g-mime-message-get-message-id">g_mime_message_get_message_id ()</title>
 <programlisting>const char* g_mime_message_get_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Gets the Message-Id header of <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -589,7 +589,8 @@ X-Priority, or In-Reply-To.</para>
 <programlisting>const char* g_mime_message_get_header       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *header);</programlisting>
 <para>
-</para>
+Gets the value of the requested header <parameter>header</parameter> if it exists, or
+<literal>NULL</literal> otherwise.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -650,7 +651,7 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
 <title><anchor id="g-mime-message-to-string">g_mime_message_to_string ()</title>
 <programlisting>char*       g_mime_message_to_string        (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the mime message <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -670,7 +671,8 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
                                              <link linkend="gboolean">gboolean</link> want_plain,
                                              <link linkend="gboolean">gboolean</link> *is_html);</programlisting>
 <para>
-</para>
+Attempts to get the body of the message in the preferred format
+specified by <parameter>want_plain</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -688,7 +690,7 @@ Write the contents of the MIME Message to <parameter>string</parameter>.</para>
 <entry> body returned is in html format
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the prefered form of the message body. Sets the value of
-<link linkend="is-html">is_html</link> to TRUE if the part returned is in HTML format, otherwise
+<parameter>is_html</parameter> to TRUE if the part returned is in HTML format, otherwise
 FALSE.
 Note: This function is NOT guarenteed to always work as it
 makes some assumptions that are not necessarily true. It is
@@ -699,7 +701,7 @@ recommended that you traverse the MIME structure yourself.
 <title><anchor id="g-mime-message-get-headers">g_mime_message_get_headers ()</title>
 <programlisting>char*       g_mime_message_get_headers      (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
 <para>
-</para>
+Allocates a string buffer containing the raw message headers.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -719,7 +721,7 @@ recommended that you traverse the MIME structure yourself.
                                              <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
                                              <link linkend="gpointer">gpointer</link> data);</programlisting>
 <para>
-Calls <link linkend="callback">callback</link> on each of the mime parts in the mime message.</para>
+Calls <parameter>callback</parameter> on each of the mime parts in the mime message.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

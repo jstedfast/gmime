@@ -46,6 +46,8 @@ static unsigned char tohex[16] = {
  * @name: parameter name
  * @value: parameter value
  *
+ * Creates a new GMimeParam node with name @name and value @value.
+ *
  * Returns a new paramter structure.
  **/
 GMimeParam *
@@ -463,6 +465,8 @@ decode_param_list (const char **in)
  * g_mime_param_new_from_string: Create a new MIME Param object
  * @string: input string
  *
+ * Creates a parameter list based on the input string.
+ *
  * Returns a GMimeParam structure based on @string.
  **/
 GMimeParam *
@@ -502,6 +506,9 @@ g_mime_param_destroy (GMimeParam *param)
  * @name: new param name
  * @value: new param value
  *
+ * Appends a new parameter with name @name and value @value to the
+ * parameter list @params.
+ *
  * Returns a param list with the new param of name @name and value
  * @value appended to the list of params @params.
  **/
@@ -530,6 +537,8 @@ g_mime_param_append (GMimeParam *params, const char *name, const char *value)
  * g_mime_param_append_param:
  * @params: param list
  * @param: param to append
+ *
+ * Appends @param to the param list @params.
  *
  * Returns a param list with the new param @param appended to the list
  * of params @params.

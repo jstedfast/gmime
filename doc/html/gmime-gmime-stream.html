@@ -154,6 +154,10 @@ enum        <A
 HREF="gmime-gmime-stream.html#GMIMESEEKWHENCE"
 >GMimeSeekWhence</A
 >;
+struct      <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
+>;
 #define     <A
 HREF="gmime-gmime-stream.html#GMIME-STREAM-CAPS"
 >GMIME_STREAM</A
@@ -371,9 +375,9 @@ HREF="gmime-gmime-stream.html#G-MIME-STREAM-WRITEV"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
-                                             <GTKDOCLINK
-HREF="IOVECTOR"
->IOVector</GTKDOCLINK
+                                             <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
 > *vector,
                                              <GTKDOCLINK
 HREF="SIZE-T"
@@ -386,7 +390,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN117"
+NAME="AEN118"
 ></A
 ><H2
 >Description</H2
@@ -396,14 +400,14 @@ NAME="AEN117"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN120"
+NAME="AEN121"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN122"
+NAME="AEN123"
 ></A
 ><H3
 ><A
@@ -452,7 +456,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN127"
+NAME="AEN128"
 ></A
 ><H3
 ><A
@@ -482,7 +486,36 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN132"
+NAME="AEN133"
+></A
+><H3
+><A
+NAME="IOVECTOR"
+></A
+>struct IOVector</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct IOVector {
+	gpointer data;
+	size_t len;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN138"
 ></A
 ><H3
 ><A
@@ -507,7 +540,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN137"
+NAME="AEN143"
 ></A
 ><P
 ></P
@@ -545,7 +578,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN146"
+NAME="AEN152"
 ></A
 ><H3
 ><A
@@ -609,7 +642,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN160"
+NAME="AEN166"
 ></A
 ><P
 ></P
@@ -715,7 +748,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN185"
+NAME="AEN191"
 ></A
 ><H3
 ><A
@@ -745,7 +778,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN192"
+NAME="AEN198"
 ></A
 ><P
 ></P
@@ -783,7 +816,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN201"
+NAME="AEN207"
 ></A
 ><H3
 ><A
@@ -813,7 +846,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN208"
+NAME="AEN214"
 ></A
 ><P
 ></P
@@ -851,7 +884,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN217"
+NAME="AEN223"
 ></A
 ><H3
 ><A
@@ -904,7 +937,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN229"
+NAME="AEN235"
 ></A
 ><P
 ></P
@@ -991,7 +1024,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN250"
+NAME="AEN256"
 ></A
 ><H3
 ><A
@@ -1044,7 +1077,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN262"
+NAME="AEN268"
 ></A
 ><P
 ></P
@@ -1131,7 +1164,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN283"
+NAME="AEN289"
 ></A
 ><H3
 ><A
@@ -1161,7 +1194,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN290"
+NAME="AEN296"
 ></A
 ><P
 ></P
@@ -1214,7 +1247,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN303"
+NAME="AEN309"
 ></A
 ><H3
 ><A
@@ -1295,7 +1328,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN322"
+NAME="AEN328"
 ></A
 ><P
 ></P
@@ -1382,7 +1415,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN343"
+NAME="AEN349"
 ></A
 ><H3
 ><A
@@ -1409,13 +1442,13 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ></TR
 ></TABLE
 ><P
-></P
+>Gets the current offset within the stream.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN351"
+NAME="AEN357"
 ></A
 ><P
 ></P
@@ -1468,7 +1501,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN364"
+NAME="AEN370"
 ></A
 ><H3
 ><A
@@ -1498,7 +1531,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN371"
+NAME="AEN377"
 ></A
 ><P
 ></P
@@ -1551,7 +1584,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN384"
+NAME="AEN390"
 ></A
 ><H3
 ><A
@@ -1589,7 +1622,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN393"
+NAME="AEN399"
 ></A
 ><P
 ></P
@@ -1642,7 +1675,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN406"
+NAME="AEN412"
 ></A
 ><H3
 ><A
@@ -1672,7 +1705,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN413"
+NAME="AEN419"
 ></A
 ><P
 ></P
@@ -1725,7 +1758,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN426"
+NAME="AEN432"
 ></A
 ><H3
 ><A
@@ -1752,13 +1785,13 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ></TR
 ></TABLE
 ><P
-></P
+>Gets the length of the stream.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN434"
+NAME="AEN440"
 ></A
 ><P
 ></P
@@ -1811,7 +1844,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN447"
+NAME="AEN453"
 ></A
 ><H3
 ><A
@@ -1846,13 +1879,28 @@ HREF="OFF-T"
 ></TR
 ></TABLE
 ><P
-></P
+>Creates a new substream of <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+> with bounds <TT
+CLASS="PARAMETER"
+><I
+>start</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>end</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN457"
+NAME="AEN466"
 ></A
 ><P
 ></P
@@ -1954,7 +2002,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN481"
+NAME="AEN490"
 ></A
 ><H3
 ><A
@@ -1992,7 +2040,7 @@ HREF="OFF-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN490"
+NAME="AEN499"
 ></A
 ><P
 ></P
@@ -2064,7 +2112,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN507"
+NAME="AEN516"
 ></A
 ><H3
 ><A
@@ -2108,7 +2156,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN517"
+NAME="AEN526"
 ></A
 ><P
 ></P
@@ -2178,7 +2226,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN534"
+NAME="AEN543"
 ></A
 ><H3
 ><A
@@ -2213,7 +2261,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN542"
+NAME="AEN551"
 ></A
 ><P
 ></P
@@ -2300,7 +2348,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN563"
+NAME="AEN572"
 ></A
 ><H3
 ><A
@@ -2347,7 +2395,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN574"
+NAME="AEN583"
 ></A
 ><P
 ></P
@@ -2417,7 +2465,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN591"
+NAME="AEN600"
 ></A
 ><H3
 ><A
@@ -2440,9 +2488,9 @@ HREF="SIZE-T"
 HREF="gmime-gmime-stream.html#GMIMESTREAM"
 >GMimeStream</A
 > *stream,
-                                             <GTKDOCLINK
-HREF="IOVECTOR"
->IOVector</GTKDOCLINK
+                                             <A
+HREF="gmime-gmime-stream.html#IOVECTOR"
+>IOVector</A
 > *vector,
                                              <GTKDOCLINK
 HREF="SIZE-T"
@@ -2473,7 +2521,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN604"
+NAME="AEN613"
 ></A
 ><P
 ></P

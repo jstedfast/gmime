@@ -64,6 +64,7 @@ g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, int 
 	stream->substream = stream_template->substream;
 }
 
+
 /**
  * g_mime_stream_read:
  * @stream: stream
@@ -208,6 +209,8 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
  * g_mime_stream_tell:
  * @stream: stream
  *
+ * Gets the current offset within the stream.
+ *
  * Returns the current position within the stream.
  **/
 off_t
@@ -222,6 +225,8 @@ g_mime_stream_tell (GMimeStream *stream)
 /**
  * g_mime_stream_length:
  * @stream: stream
+ *
+ * Gets the length of the stream.
  *
  * Returns the length of the stream or -1 on fail.
  **/
@@ -239,6 +244,8 @@ g_mime_stream_length (GMimeStream *stream)
  * @stream: stream
  * @start: start boundary
  * @end: end boundary
+ *
+ * Creates a new substream of @stream with bounds @start and @end.
  *
  * Returns a substream of @stream with bounds @start and @end.
  **/

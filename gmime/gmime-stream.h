@@ -40,10 +40,12 @@ typedef enum {
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
 
-typedef struct _IOVector {
+struct _IOVector {
 	gpointer data;
 	size_t len;
-} IOVector;
+};
+
+typedef struct _IOVector IOVector;
 
 typedef struct _GMimeStream GMimeStream;
 

@@ -378,6 +378,8 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
  * @source: source stream
  * @mode: buffering mode
  *
+ * Creates a new GMimeStreamBuffer object.
+ *
  * Returns a new buffer stream with source @source and mode @mode.
  **/
 GMimeStream *

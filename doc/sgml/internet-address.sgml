@@ -77,7 +77,7 @@ void        <link linkend="internet-address-add-member">internet_address_add_mem
 <title><anchor id="internet-address-new">internet_address_new ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new       (void);</programlisting>
 <para>
-</para>
+Creates a new InternetAddress object</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -93,7 +93,8 @@ void        <link linkend="internet-address-add-member">internet_address_add_mem
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const <link linkend="gchar">gchar</link> *name,
                                              const <link linkend="gchar">gchar</link> *addr);</programlisting>
 <para>
-</para>
+Creates a new InternetAddress object with name <parameter>name</parameter> and address
+<parameter>addr</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -114,7 +115,7 @@ void        <link linkend="internet-address-add-member">internet_address_add_mem
 <title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
 <programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const <link linkend="gchar">gchar</link> *name);</programlisting>
 <para>
-</para>
+Creates a new InternetAddress object with group name <parameter>name</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -141,7 +142,7 @@ Destroy the InternetAddress object pointed to by <parameter>ia</parameter>.</par
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> Internet Address object to destroy
+<entry> InternetAddress object to destroy
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -228,6 +229,8 @@ Add a contact to the internet address group.</para>
 <title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
 <programlisting><link linkend="GList">GList</link>*      internet_address_parse_string   (const <link linkend="gchar">gchar</link> *string);</programlisting>
 <para>
+Construct a list of internet addresses from the given string.</para>
+<para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
 <tgroup cols="2">
@@ -235,11 +238,10 @@ Add a contact to the internet address group.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry>
+<entry> a string containing internet addresses
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
-
-
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a linked list of internet addresses. *Must* be free'd by
+the caller.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -247,7 +249,8 @@ Add a contact to the internet address group.</para>
 <programlisting><link linkend="gchar">gchar</link>*      internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="gboolean">gboolean</link> encode);</programlisting>
 <para>
-</para>
+Allocates a string containing the contents of the InternetAddress
+object.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

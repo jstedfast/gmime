@@ -83,7 +83,7 @@
 <title><anchor id="g-mime-stream-fs-new">g_mime_stream_fs_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_fs_new           (int fd);</programlisting>
 <para>
-</para>
+Creates a new GMimeStreamFs object around <parameter>fd</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -104,7 +104,8 @@
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);</programlisting>
 <para>
-</para>
+Creates a new GMimeStreamFs object around <parameter>fd</parameter> with bounds <parameter>start</parameter>
+and <parameter>end</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

@@ -166,7 +166,9 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 /**
  * g_mime_stream_null_new:
  *
- * Returns a new null stream (ie something similar to /dev/null).
+ * Creates a new GMimeStreamNull object.
+ *
+ * Returns a new null stream (similar to /dev/null on Unix).
  **/
 GMimeStream *
 g_mime_stream_null_new (void)

@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4835"
+NAME="AEN4865"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN4835"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4838"
+NAME="AEN4868"
 ></A
 ><H2
 >Synopsis</H2
@@ -510,7 +510,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4936"
+NAME="AEN4966"
 ></A
 ><H2
 >Description</H2
@@ -520,14 +520,14 @@ NAME="AEN4936"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4939"
+NAME="AEN4969"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4941"
+NAME="AEN4971"
 ></A
 ><H3
 ><A
@@ -552,7 +552,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4946"
+NAME="AEN4976"
 ></A
 ><P
 ></P
@@ -590,7 +590,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4955"
+NAME="AEN4985"
 ></A
 ><H3
 ><A
@@ -615,7 +615,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4960"
+NAME="AEN4990"
 ></A
 ><P
 ></P
@@ -653,7 +653,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4969"
+NAME="AEN4999"
 ></A
 ><H3
 ><A
@@ -678,13 +678,19 @@ HREF="TIME-T"
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes the rfc822 date string and saves the GMT offset into
+<TT
+CLASS="PARAMETER"
+><I
+>saveoffset</I
+></TT
+> if non-NULL.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4976"
+NAME="AEN5007"
 ></A
 ><P
 ></P
@@ -744,9 +750,11 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >the time_t representation of the date string specified by
-<GTKDOCLINK
-HREF="IN"
->in</GTKDOCLINK
+<TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
 >. If 'saveoffset' is non-NULL, the value of the timezone offset
 will be stored.</TD
 ></TR
@@ -759,7 +767,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4994"
+NAME="AEN5025"
 ></A
 ><H3
 ><A
@@ -784,13 +792,24 @@ HREF="TIME-T"
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a string buffer containing the rfc822 formatted date
+string represented by <TT
+CLASS="PARAMETER"
+><I
+>time</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5001"
+NAME="AEN5034"
 ></A
 ><P
 ></P
@@ -860,7 +879,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5018"
+NAME="AEN5051"
 ></A
 ><H3
 ><A
@@ -881,13 +900,13 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
-></P
+>Folds a header according to the rules in rfc822.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5024"
+NAME="AEN5057"
 ></A
 ><P
 ></P
@@ -940,7 +959,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5037"
+NAME="AEN5070"
 ></A
 ><H3
 ><A
@@ -962,13 +981,19 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
-></P
+>Allocates a buffer containing a formatted header specified by the
+<TT
+CLASS="PARAMETER"
+><I
+>Varargs</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5043"
+NAME="AEN5077"
 ></A
 ><P
 ></P
@@ -1028,9 +1053,11 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >an allocated string containing the folded header specified
-by <GTKDOCLINK
-HREF="FORMAT"
->format</GTKDOCLINK
+by <TT
+CLASS="PARAMETER"
+><I
+>format</I
+></TT
 > and the following arguments.</TD
 ></TR
 ></TBODY
@@ -1042,7 +1069,7 @@ HREF="FORMAT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5061"
+NAME="AEN5095"
 ></A
 ><H3
 ><A
@@ -1063,13 +1090,18 @@ CLASS="PROGRAMLISTING"
 ></TR
 ></TABLE
 ><P
-></P
+>Quotes <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+> as needed according to the rules in rfc2045.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5067"
+NAME="AEN5102"
 ></A
 ><P
 ></P
@@ -1125,7 +1157,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5080"
+NAME="AEN5115"
 ></A
 ><H3
 ><A
@@ -1152,7 +1184,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5086"
+NAME="AEN5121"
 ></A
 ><P
 ></P
@@ -1179,7 +1211,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->&nbsp;</TD
+> string</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1190,7 +1222,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5095"
+NAME="AEN5130"
 ></A
 ><H3
 ><A
@@ -1221,13 +1253,24 @@ HREF="GUINT"
 ></TR
 ></TABLE
 ><P
-></P
+>Determines if <TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+> contains 8bit characters within the first <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>
+bytes.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5104"
+NAME="AEN5141"
 ></A
 ><P
 ></P
@@ -1298,7 +1341,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5121"
+NAME="AEN5158"
 ></A
 ><H3
 ><A
@@ -1330,13 +1373,24 @@ HREF="GUINT"
 ></TR
 ></TABLE
 ><P
-></P
+>Determines the best content encoding for the first <TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+> bytes of
+<TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5130"
+NAME="AEN5169"
 ></A
 ><P
 ></P
@@ -1408,7 +1462,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5147"
+NAME="AEN5186"
 ></A
 ><H3
 ><A
@@ -1435,13 +1489,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes and rfc2047 encoded header.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5155"
+NAME="AEN5194"
 ></A
 ><P
 ></P
@@ -1494,7 +1548,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5168"
+NAME="AEN5207"
 ></A
 ><H3
 ><A
@@ -1521,13 +1575,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Encodes a header according to the rules in rfc2047.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5176"
+NAME="AEN5215"
 ></A
 ><P
 ></P
@@ -1581,7 +1635,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5189"
+NAME="AEN5228"
 ></A
 ><H3
 ><A
@@ -1609,13 +1663,13 @@ HREF="GUCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Encodes a header phrase according to the rules in rfc2047.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5197"
+NAME="AEN5236"
 ></A
 ><P
 ></P
@@ -1669,7 +1723,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5210"
+NAME="AEN5249"
 ></A
 ><H3
 ><A
@@ -1712,13 +1766,13 @@ HREF="GUINT32"
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes a chunk of base64 encoded data.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5222"
+NAME="AEN5261"
 ></A
 ><P
 ></P
@@ -1833,9 +1887,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded (which have been dumped in <GTKDOCLINK
-HREF="OUT"
->out</GTKDOCLINK
+>the number of bytes decoded (which have been dumped in <TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
 >).</TD
 ></TR
 ></TBODY
@@ -1847,7 +1903,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5253"
+NAME="AEN5292"
 ></A
 ><H3
 ><A
@@ -1890,13 +1946,16 @@ HREF="GUINT32"
 ></TR
 ></TABLE
 ><P
-></P
+>Base64 encodes a chunk of data. Performs an 'encode step', only
+encodes blocks of 3 characters to the output at a time, saves
+left-over state in state and save (initialise to 0 on first
+invocation).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5265"
+NAME="AEN5304"
 ></A
 ><P
 ></P
@@ -2011,10 +2070,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Performs an 'encode step',
-only encodes blocks of 3 characters to the output at a time, saves
-left-over state in state and save (initialise to 0 on first
-invocation).</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2025,7 +2081,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5295"
+NAME="AEN5334"
 ></A
 ><H3
 ><A
@@ -2069,13 +2125,15 @@ HREF="GUINT32"
 ></TR
 ></TABLE
 ><P
-></P
+>Base64 encodes the input stream to the output stream. Call this
+when finished encoding data with g_mime_utils_base64_encode_step to
+flush off the last little bit.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5307"
+NAME="AEN5346"
 ></A
 ><P
 ></P
@@ -2190,9 +2248,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Call this when finished
-encoding data with base64_encode_step to flush off the last little
-bit.</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2203,7 +2259,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5337"
+NAME="AEN5376"
 ></A
 ><H3
 ><A
@@ -2250,13 +2306,15 @@ HREF="GCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
+uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
+been stripped off.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5350"
+NAME="AEN5389"
 ></A
 ><P
 ></P
@@ -2300,7 +2358,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> max length of data to decode ( normally strlen(in) ??)</TD
+> max length of data to decode (normally strlen (in) ??)</TD
 ></TR
 ><TR
 ><TD
@@ -2389,9 +2447,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded. Performs a 'decode step' on
-a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
-line has been stripped off.</TD
+>the number of bytes decoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2402,7 +2458,7 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5384"
+NAME="AEN5423"
 ></A
 ><H3
 ><A
@@ -2453,13 +2509,31 @@ HREF="GCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Uuencodes a chunk of data. Performs an 'encode step', only encodes
+blocks of 45 characters to the output at a time, saves left-over
+state in <TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>, <TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+> (initialize to 0 on first
+invocation).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5398"
+NAME="AEN5440"
 ></A
 ><P
 ></P
@@ -2609,25 +2683,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Performs an 'encode step',
-only encodes blocks of 45 characters to the output at a time, saves
-left-over state in <TT
-CLASS="PARAMETER"
-><I
->uubuf</I
-></TT
->, <TT
-CLASS="PARAMETER"
-><I
->state</I
-></TT
-> and <TT
-CLASS="PARAMETER"
-><I
->save</I
-></TT
-> (initialize to 0 on first
-invocation).</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2638,7 +2694,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5439"
+NAME="AEN5478"
 ></A
 ><H3
 ><A
@@ -2689,13 +2745,14 @@ HREF="GCHAR"
 ></TR
 ></TABLE
 ><P
-></P
+>Uuencodes a chunk of data. Call this when finished encoding data
+with g_mime_utils_uuencode_step to flush off the last little bit.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5453"
+NAME="AEN5492"
 ></A
 ><P
 ></P
@@ -2845,9 +2902,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Call this when finished
-encoding data with uuencode_step to flush off the last little
-bit.</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2858,7 +2913,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5491"
+NAME="AEN5530"
 ></A
 ><H3
 ><A
@@ -2901,13 +2956,14 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
-></P
+>Decodes a block of quoted-printable encoded data. Performs a
+'decode step' on a chunk of QP encoded data.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5503"
+NAME="AEN5542"
 ></A
 ><P
 ></P
@@ -3022,8 +3078,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded. Performs a 'decode step' on a
-chunk of QP encoded data.</TD
+>the number of bytes decoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -3034,7 +3089,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5533"
+NAME="AEN5572"
 ></A
 ><H3
 ><A
@@ -3077,13 +3132,15 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
-></P
+>Quoted-printable encodes a block of text. Performs an 'encode
+step', saves left-over state in state and save (initialise to -1 on
+first invocation).</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5545"
+NAME="AEN5584"
 ></A
 ><P
 ></P
@@ -3198,9 +3255,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Performs an 'encode step',
-saves left-over state in state and save (initialise to -1 on first
-invocation).</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -3211,7 +3266,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5575"
+NAME="AEN5614"
 ></A
 ><H3
 ><A
@@ -3255,13 +3310,15 @@ HREF="GINT"
 ></TR
 ></TABLE
 ><P
-></P
+>Quoted-printable encodes a block of text. Call this when finished
+encoding data with g_mime_utils_quoted_encode_step to flush off the
+last little bit.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5587"
+NAME="AEN5626"
 ></A
 ><P
 ></P
@@ -3376,9 +3433,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes encoded. Call this when finished
-encoding data with quoted_encode_step to flush off the last little
-bit.</TD
+>the number of bytes encoded.</TD
 ></TR
 ></TBODY
 ></TABLE
