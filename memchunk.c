@@ -127,7 +127,7 @@ memchunk_alloc0 (MemChunk *memchunk)
 	void *mem;
 	
 	mem = memchunk_alloc (memchunk);
-	memset (mem, 0, memchunk->blocksize);
+	memset (mem, 0, memchunk->atomsize);
 	
 	return mem;
 }
@@ -178,7 +178,7 @@ memchunk_clean (MemChunk *memchunk)
 	if (memchunk->blocks->len == 0 || node == NULL)
 		return;
 	
-	tree = g_tree_new (tree_compare);
+	tree = g_tree_new ((GCompareFunc) tree_compare);
 	for (i = 0; i < memchunk->blocks->len; i++) {
 		info = alloca (sizeof (MemChunkNodeInfo));
 		info->next = next;
@@ -192,9 +192,9 @@ memchunk_clean (MemChunk *memchunk)
 	}
 	
 	while (node) {
-		info = g_tree_search (tree, tree_search, node);
+		info = g_tree_search (tree, (GSearchFunc) tree_search, node);
 		if (info)
-			info->atomcount += node->atoms;
+			info->atoms += node->atoms;
 		
 		node = node->next;
 	}
