@@ -4,9 +4,9 @@
 	free-node list. Thanks to Charles Kerr for discovering this bug.
 
 	* strlib.c (strncasecmp): Moved the return calculation to within
-	the loop so as to only take a difference if the chars are not
+	the loop so as to only take a difference if the strings are not
 	identical. This also fixes a bug that would falsely return
-	non-zero for string that were identical for the first n bytes.
+	non-zero for strings that were identical for the first n bytes.
 
 2001-12-20  Jeffrey Stedfast  <fejj@ximian.com>
 

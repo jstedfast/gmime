@@ -716,7 +716,7 @@ strncasecmp (const char *s1, const char *s2, size_t n)
 	
 	for ( ; p1 < q1; p1++, p2++)
 		if (lowercase (*p1) != lowercase (*p2))
-			lowercase (*p1) - lowercase (*p2);
+			return *p1 - *p2;
 	
 	return 0;
 }
