@@ -1,5 +1,7 @@
 2002-11-01  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime.h.in: Wrap in #ifdef __cplusplus
+
 	* gmime-filter-html.c (html_convert): If flush is TRUE, flush any
 	remaining input rather than backing it up.
 
