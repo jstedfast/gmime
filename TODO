@@ -7,8 +7,6 @@ tasks are presented in.
 
 - Possibly make the GMime parser async.
 
-- Write a broken date parser. (job for lex/bison?)
-
 - make thread-safe
 
 - modify address parser:
