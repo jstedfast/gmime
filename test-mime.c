@@ -314,16 +314,16 @@ static char *addresses[] = {
 };
 
 static void
-dump_addrlist (GList *addrlist, int i, gboolean group, gboolean destroy)
+dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean destroy)
 {
+	InternetAddressList *addr;
 	InternetAddress *ia;
-	GList *addr;
 	
 	addr = addrlist;
 	while (addr) {
 		char *str;
 		
-		ia = addr->data;
+		ia = addr->address;
 		addr = addr->next;
 		
 		if (i != -1)
@@ -349,9 +349,6 @@ dump_addrlist (GList *addrlist, int i, gboolean group, gboolean destroy)
 		fprintf (stderr, "%sRewritten (encoded): %s\n\n", group ? "\t" : "",
 			 str ? str : "");
 		g_free (str);
-		
-		if (destroy)
-			internet_address_destroy (ia);
 	}
 }
 
@@ -361,7 +358,7 @@ test_addresses (void)
 	int i;
 	
 	for (i = 0; addresses[i]; i++) {
-		GList *addrlist;
+		InternetAddressList *addrlist;
 		
 		addrlist = internet_address_parse_string (addresses[i]);
 		if (!addrlist) {
@@ -370,6 +367,8 @@ test_addresses (void)
 		}
 		
 		dump_addrlist (addrlist, i, FALSE, TRUE);
+		
+		internet_address_list_destroy (addrlist);
 	}
 }
 

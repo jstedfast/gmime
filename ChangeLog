@@ -1,5 +1,39 @@
 2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* internet-address.c (internet_address_new): Initialize the
+	refcount to 1.
+	(internet_address_destroy): This is now an internal function.
+	(internet_address_ref): New function to ref an InternetAddress
+	object.
+	(internet_address_unref): New function to unref an InternetAddress
+	object.
+	(internet_address_set_group): Updated to use the new
+	internet_address_list functions.
+	(internet_address_add_member): Same.
+	(internet_address_list_prepend): New function to manipulate a list
+	of InternetAddress objects.
+	(internet_address_list_append): Same.
+	(internet_address_list_concat): Another new function.
+	(internet_address_list_length): Again...
+	(internet_address_list_destroy): Destroy a list of addresses.
+	(internet_address_list_to_string): New utility function to write a
+	list of addresses to a string.
+	(internet_address_parse_string): Optimized slightly by not using
+	GLists' generic append function and also updated to use
+	InternetAddressList.
+
+	* gmime-message.c (recipients_destroy): Updated to call
+	internet_address_list_destroy.
+	(sync_recipient_header): Updated to let the InternetAddress code
+	do the work for us.
+	(g_mime_message_add_recipient): Updated to use the new
+	InternetAddress API.
+	(g_mime_message_add_recipients_from_string): Same.
+	(g_mime_message_get_recipients): Return an InternetaddressList
+	instead of GList.
+
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* strlib.c (strncasecmp): Do null-checking.
 
 	* TODO: Remove features that have already been
