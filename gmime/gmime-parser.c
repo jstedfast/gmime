@@ -45,6 +45,20 @@ static gchar *content_headers[] = {
 	NULL
 };
 
+static void
+header_unfold (gchar *header)
+{
+	/* strip all \n's and replace tabs with spaces - this should
+           undo any header folding */
+	gchar *src, *dst;
+	
+	for (src = dst = header; *src; src++) {
+		if (*src != '\n')
+			*dst++ = *src != '\t' ? *src : ' ';
+	}
+	*dst = '\0';
+}
+
 static int
 content_header (const gchar *field)
 {
@@ -340,6 +354,7 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 		
 		value = g_strndup (value, (gint) (q - value));
 		g_strstrip (value);
+		header_unfold (value);
 		
 		switch (i) {
 		case HEADER_FROM:

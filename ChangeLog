@@ -1,5 +1,9 @@
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* gmime-parser.c (header_unfold): New function to unfold a header
+	(to be used internally).
+	(construct_headers): Unfold headers as we parse them.
+
 	* configure.in: Changed version to 0.1.1.
 
 	* gmime-part.c (get_content_disposition): Append a ";" before
