@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2002 Ximain, Inc. (www.ximian.com)
+ *  Copyright 2002 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@
 #include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
 
@@ -62,6 +63,7 @@ static char *charsets[] = {
 static int num_charsets = sizeof (charsets) / sizeof (charsets[0]);
 
 
+#if 0
 static void
 test_cache (void)
 {
@@ -102,6 +104,7 @@ test_cache (void)
 	
 	g_slist_free (open_cds);
 }
+#endif
 
 
 struct {
@@ -192,4 +195,5 @@ int main (int argc, char **argv)
 	/*test_cache ();*/
 	
 	test_utils ();
+	return 0;
 }

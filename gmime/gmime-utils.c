@@ -1807,7 +1807,7 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
 	while (inptr > in && i) {
 		inptr--;
 		if (gmime_base64_rank[*inptr] != 0xff) {
-			if (*inptr == '=')
+			if (*inptr == '=' && outptr > out)
 				outptr--;
 			i--;
 		}

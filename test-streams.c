@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdarg.h>
+#include <stdlib.h>
 
 static GSList *test = NULL;
 
@@ -39,7 +40,7 @@ test_abort (void)
 	fprintf (stderr, "stream tests failed while in:\n\t");
 	n = test;
 	while (n) {
-		fprintf (stderr, "%s", n->data);
+		fprintf (stderr, "%s", (char*)n->data);
 		if (n->next)
 			fprintf (stderr, ": ");
 		n = n->next;
