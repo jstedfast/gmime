@@ -34,6 +34,8 @@ extern "C" {
 
 void        g_mime_charset_init (void);
 
+void        g_mime_charset_shutdown (void);
+
 const char *g_mime_charset_locale_name (void);
 
 const char *g_mime_charset_name (const char *charset);

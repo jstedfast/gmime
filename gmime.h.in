@@ -76,4 +76,6 @@ static const guint gmime_binary_age    = 0;
 
 void g_mime_init (guint32 flags);
 
+void g_mime_shutdown (void);
+
 #endif /* __GMIME_H__ */

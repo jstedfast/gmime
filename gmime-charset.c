@@ -108,12 +108,19 @@ iconv_charset_free (gpointer key, gpointer value, gpointer user_data)
 	g_free (value);
 }
 
-static void
+
+/**
+ * g_mime_charset_shutdown:
+ *
+ * Frees internal lookup tables created in #g_mime_charset_init().
+ **/
+void
 g_mime_charset_shutdown (void)
 {
 	g_hash_table_foreach (iconv_charsets, iconv_charset_free, NULL);
 	g_hash_table_destroy (iconv_charsets);
 	g_free (locale_charset);
+	iconv_charsets = NULL;
 }
 
 
@@ -172,8 +179,6 @@ g_mime_charset_init (void)
 			locale_charset = NULL;
 		}
 	}
-	
-	g_atexit (g_mime_charset_shutdown);
 }
 
 

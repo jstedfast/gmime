@@ -119,6 +119,13 @@ iconv_node_set_used (struct _iconv_node *node, gboolean used)
 		
 		/* remove from the iconv open hash */
 		g_hash_table_remove (iconv_open_hash, node->cd);
+		
+		/* prepend the node to the unused list */
+		node->prev = NULL;
+		node->next = node->bucket->unused;
+		if (node->bucket->unused)
+			node->bucket->unused->prev = node;
+		node->bucket->unused = node;
 	}
 }
 
@@ -250,11 +257,21 @@ iconv_cache_bucket_flush_unused (struct _iconv_cache_bucket *bucket)
 }
 
 
+static gboolean initialized = FALSE;
 
-static void
+
+/**
+ * g_mime_iconv_shutdown:
+ *
+ * Frees internal iconv caches created in #g_mime_iconv_init().
+ **/
+void
 g_mime_iconv_shutdown (void)
 {
 	struct _iconv_cache_bucket *bucket, *next;
+	
+	if (!initialized)
+		return;
 	
 	bucket = iconv_cache_buckets;
 	while (bucket) {
@@ -267,6 +284,8 @@ g_mime_iconv_shutdown (void)
 	g_hash_table_destroy (iconv_open_hash);
 	
 	memchunk_destroy (node_chunk);
+	
+	initialized = FALSE;
 }
 
 
@@ -279,8 +298,6 @@ g_mime_iconv_shutdown (void)
 void
 g_mime_iconv_init (void)
 {
-	static gboolean initialized = FALSE;
-	
 	if (initialized)
 		return;
 	
@@ -293,8 +310,6 @@ g_mime_iconv_init (void)
 	iconv_cache_tail = (struct _iconv_cache_bucket *) &iconv_cache_buckets;
 	iconv_cache = g_hash_table_new (g_str_hash, g_str_equal);
 	iconv_open_hash = g_hash_table_new (g_direct_hash, g_direct_equal);
-	
-	g_atexit (g_mime_iconv_shutdown);
 	
 	initialized = TRUE;
 }

@@ -29,6 +29,7 @@
 
 
 int gmime_interfaces_utf8 = FALSE;
+static gboolean initialized = FALSE;
 
 
 /**
@@ -40,8 +41,6 @@ int gmime_interfaces_utf8 = FALSE;
 void
 g_mime_init (guint32 flags)
 {
-	static int initialized = FALSE;
-	
 	if (initialized)
 		return;
 	
@@ -53,4 +52,23 @@ g_mime_init (guint32 flags)
 	g_mime_charset_init ();
 	
 	g_mime_iconv_init ();
+}
+
+
+/**
+ * g_mime_shutdown:
+ *
+ * Frees internally allocated tables created in #g_mime_init(). Also
+ * calls #g_mime_charset_map_shutdown() and #g_mime_iconv_shutdown().
+ **/
+void
+g_mime_shutdown (void)
+{
+	if (!initialized)
+		return;
+	
+	g_mime_iconv_shutdown ();
+	g_mime_charset_shutdown ();
+	
+	initialized = FALSE;
 }
