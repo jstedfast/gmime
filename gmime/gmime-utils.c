@@ -987,6 +987,7 @@ header_fold (const char *in, gboolean structured)
 	gboolean last_was_lwsp = FALSE;
 	register const char *inptr;
 	size_t len, outlen, i;
+	size_t fieldlen;
 	GString *out;
 	char *ret;
 	
@@ -996,12 +997,16 @@ header_fold (const char *in, gboolean structured)
 		return g_strdup (in);
 	
 	out = g_string_new ("");
-	outlen = 0;
+	fieldlen = strcspn (inptr, ": \t\n");
+	g_string_append_len (out, inptr, fieldlen);
+	outlen = fieldlen;
+	inptr += fieldlen;
+	
 	while (*inptr && *inptr != '\n') {
 		len = strcspn (inptr, " \t\n");
 		
-		if (outlen + len > GMIME_FOLD_LEN) {
-			if (outlen > 1) {
+		if (len > 1 && outlen + len > GMIME_FOLD_LEN) {
+			if (outlen > 1 && out->len > fieldlen + 2) {
 				if (last_was_lwsp) {
 					if (structured)
 						out->str[out->len - 1] = '\t';
@@ -1012,19 +1017,25 @@ header_fold (const char *in, gboolean structured)
 				outlen = 1;
 			}
 			
-			/* check for very long words, just cut them up */
-			while (outlen + len > GMIME_FOLD_LEN) {
-				for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)
-					g_string_append_c (out, inptr[i]);
-				inptr += GMIME_FOLD_LEN - outlen;
-				len -= GMIME_FOLD_LEN - outlen;
-				g_string_append (out, "\n\t");
-				outlen = 1;
+			if (!structured) {
+				/* check for very long words, just cut them up */
+				while (outlen + len > GMIME_FOLD_LEN) {
+					for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)
+						g_string_append_c (out, inptr[i]);
+					inptr += GMIME_FOLD_LEN - outlen;
+					len -= GMIME_FOLD_LEN - outlen;
+					g_string_append (out, "\n\t");
+					outlen = 1;
+				}
+			} else {
+				g_string_append_len (out, inptr, len);
+				outlen += len;
+				inptr += len;
 			}
 			last_was_lwsp = FALSE;
 		} else if (len > 0) {
-			outlen += len;
 			g_string_append_len (out, inptr, len);
+			outlen += len;
 			inptr += len;
 			last_was_lwsp = FALSE;
 		} else {
