@@ -1,3 +1,17 @@
+2001-03-29  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-parser.c (g_mime_parser_construct_message_from_file): new
+	function to read a message from a FILE* instead of a character
+	array.  This can be used to reduce the memory requirements of very
+	large messages.
+
+	* gmime-parser.c (get_next_line): new internal function.
+	* gmime-parser.c (g_mime_parser_construct_part_from_file): same.
+	* gmime-parser.c (parse_content_headers): same.
+	* gmime-parser.c (find_header_end): same.
+	* gmime-parser.c (get_header_block): same.
+	* gmime-parser.c (get_header_block_from_file): same.
+
 2001-03-28  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (get_time): Fix a compile warning.
