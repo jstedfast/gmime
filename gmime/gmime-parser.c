@@ -740,8 +740,9 @@ parser_skip_line (GMimeParser *parser)
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
+		*inend = '\n';
 		
-		while (inptr < inend && *inptr != '\n')
+		while (*inptr != '\n')
 			inptr++;
 		
 		if (inptr < inend)

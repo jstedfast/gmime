@@ -33,7 +33,7 @@
  * g_mime_init:
  * @flags: initialization flags
  *
- * Initailizes GMime.
+ * Initializes GMime.
  **/
 void
 g_mime_init (guint32 flags)
