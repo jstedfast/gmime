@@ -30,7 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include "gmime-param.h"
+#include <gmime/gmime-param.h>
 
 
 /**

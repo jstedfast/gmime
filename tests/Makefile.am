@@ -71,3 +71,38 @@ test_pgpmime_LDADD = $(LDADDS)
 
 EXTRA_DIST = test1.eml test2.eml test3.eml
 
+check-local: tests
+
+testall : tests
+
+tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests PGPtests
+
+MIMEtests : test-mime
+	@echo "##"
+	@echo "## MIME regression tests"
+	@echo "##"
+
+PARSERtests : test-parser test-mbox test-partial
+	@echo "##"
+	@echo "## MIME Parser regression tests"
+	@echo "##"
+
+STREAMtests : test-streams
+	@echo "##"
+	@echo "## Stream regression tests"
+	@echo "##"
+
+FILTERtests : test-html
+	@echo "##"
+	@echo "## Filter regression tests"
+	@echo "##"
+
+ICONVtests : test-iconv
+	@echo "##"
+	@echo "## iconv cache regression tests"
+	@echo "##"
+
+PGPtests : test-pgp test-pgpmime
+	@echo "##"
+	@echo "## PGP tests"
+	@echo "##"

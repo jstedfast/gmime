@@ -20,10 +20,11 @@
  *
  */
 
+
 #include <string.h>
 
-#include "gmime.h"
-#include "gmime-filter-html.h"
+#include <gmime/gmime.h>
+
 
 int main (int argc, char **argv)
 {

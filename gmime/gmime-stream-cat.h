@@ -30,7 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_CAT            (g_mime_stream_cat_get_type ())
 #define GMIME_STREAM_CAT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_CAT, GMimeStreamCat))

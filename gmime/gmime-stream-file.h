@@ -31,7 +31,7 @@ extern "C" {
 
 #include <glib.h>
 #include <stdio.h>
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_FILE            (g_mime_stream_file_get_type ())
 #define GMIME_STREAM_FILE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFile))

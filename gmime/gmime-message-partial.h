@@ -31,8 +31,8 @@ extern "C" {
 
 #include <glib.h>
 
-#include "gmime-part.h"
-#include "gmime-message.h"
+#include <gmime/gmime-part.h>
+#include <gmime/gmime-message.h>
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
 #define GMIME_MESSAGE_PARTIAL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))

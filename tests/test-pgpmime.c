@@ -25,7 +25,7 @@
 #include <string.h>
 #include <glib.h>
 
-#include "gmime.h"
+#include <gmime/gmime.h>
 
 static char *path = "/usr/bin/gpg";
 static char *userid = "pgp-mime@xtorshun.org";

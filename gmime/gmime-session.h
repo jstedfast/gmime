@@ -32,8 +32,8 @@ extern "C" {
 #include <glib.h>
 #include <glib-object.h>
 
-#include "gmime-type-utils.h"
-#include "gmime-exception.h"
+#include <gmime/gmime-type-utils.h>
+#include <gmime/gmime-exception.h>
 
 #define GMIME_TYPE_SESSION            (g_mime_session_get_type ())
 #define GMIME_SESSION(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))

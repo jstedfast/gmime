@@ -32,10 +32,10 @@ extern "C" {
 #include <glib.h>
 #include <glib-object.h>
 
-#include "gmime-type-utils.h"
-#include "gmime-content-type.h"
-#include "gmime-stream.h"
-#include "gmime-utils.h"
+#include <gmime/gmime-type-utils.h>
+#include <gmime/gmime-content-type.h>
+#include <gmime/gmime-stream.h>
+#include <gmime/gmime-utils.h>
 
 #define GMIME_TYPE_DATA_WRAPPER            (g_mime_data_wrapper_get_type ())
 #define GMIME_DATA_WRAPPER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))

@@ -35,7 +35,7 @@ extern "C" {
 #include <unistd.h>
 #include <stdarg.h>
 
-#include "gmime-type-utils.h"
+#include <gmime/gmime-type-utils.h>
 
 #define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
 #define GMIME_STREAM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))

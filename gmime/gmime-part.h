@@ -32,10 +32,10 @@ extern "C" {
 #include <glib.h>
 #include <stdio.h>
 
-#include "gmime-object.h"
-#include "gmime-param.h"
-#include "gmime-disposition.h"
-#include "gmime-data-wrapper.h"
+#include <gmime/gmime-object.h>
+#include <gmime/gmime-param.h>
+#include <gmime/gmime-disposition.h>
+#include <gmime/gmime-data-wrapper.h>
 
 #define GMIME_TYPE_PART            (g_mime_part_get_type ())
 #define GMIME_PART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PART, GMimePart))

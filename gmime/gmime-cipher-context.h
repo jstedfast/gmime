@@ -32,9 +32,9 @@ extern "C" {
 #include <glib.h>
 #include <glib-object.h>
 
-#include "gmime-stream.h"
-#include "gmime-session.h"
-#include "gmime-exception.h"
+#include <gmime/gmime-stream.h>
+#include <gmime/gmime-session.h>
+#include <gmime/gmime-exception.h>
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
 #define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))

@@ -31,7 +31,7 @@ extern "C" {
 
 #include <sys/mman.h>
 #include <unistd.h>
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())
 #define GMIME_STREAM_MMAP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmap))

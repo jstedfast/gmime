@@ -33,10 +33,10 @@ extern "C" {
 #include <glib-object.h>
 #include <errno.h>
 
-#include "gmime-object.h"
-#include "gmime-message.h"
-#include "gmime-content-type.h"
-#include "gmime-stream.h"
+#include <gmime/gmime-object.h>
+#include <gmime/gmime-message.h>
+#include <gmime/gmime-content-type.h>
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())
 #define GMIME_PARSER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))

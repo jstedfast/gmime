@@ -35,7 +35,7 @@ extern "C" {
 #endif /* __cplusplus }*/
 
 typedef enum {
-#include "gmime-exception-list.def"
+#include <gmime/gmime-exception-list.def>
 } ExceptionId;
 
 struct _GMimeException {

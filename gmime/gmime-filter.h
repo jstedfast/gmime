@@ -33,7 +33,7 @@ extern "C" {
 #include <glib-object.h>
 #include <sys/types.h>
 
-#include "gmime-type-utils.h"
+#include <gmime/gmime-type-utils.h>
 
 #define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
 #define GMIME_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))

@@ -1,23 +1,23 @@
 ## Process this file with automake to produce Makefile.in
 
 # The name of the module.
-DOC_MODULE=gmime
-DOC_MODULE_VERSIONED=$(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
+DOC_MODULE = gmime
+DOC_MODULE_VERSIONED = $(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 
 # The top-level SGML file.
-DOC_MAIN_SGML_FILE=gmime-docs.sgml
+DOC_MAIN_SGML_FILE = gmime-docs.sgml
 
 # The directory containing the source code (if it contains documentation).
-DOC_SOURCE_DIR=..
+DOC_SOURCE_DIR = $(top_srcdir)/gmime
 
-EXTRA_DIST=gmime-docs.sgml gmime-sections.txt
+EXTRA_DIST = gmime-docs.sgml gmime-sections.txt
 
-HTML_DIR=$(datadir)/gtk-doc/html
+HTML_DIR = $(datadir)/gtk-doc/html
 
-TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE_VERSIONED)
+TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE_VERSIONED)
 
 scan:
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h acconfig.h config.h memchunk.h iconv-detect.h zentimer.h zenprofiler.h"
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h memchunk.h"
 
 templates: scan
 	gtkdoc-mktmpl --module=$(DOC_MODULE)

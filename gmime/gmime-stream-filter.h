@@ -29,8 +29,8 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-stream.h"
-#include "gmime-filter.h"
+#include <gmime/gmime-stream.h>
+#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
 #define GMIME_STREAM_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))

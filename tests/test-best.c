@@ -29,9 +29,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include <gmime.h>
-#include <gmime-filter-best.h>
-
+#include <gmime/gmime.h>
 
 
 int main (int argc, char **argv)

@@ -22,9 +22,8 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <glib.h>
 
-#include "gmime.h"
+#include <gmime/gmime.h>
 
 #define ENABLE_ZENTIMER
 #include "zentimer.h"

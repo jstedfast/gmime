@@ -1,6 +1,9 @@
 2002-11-07  Jeffrey Stedfast  <fejj@ximian.com>
 
-	* test-*.c: Moved to tests/
+	* gmime*.[c,h]: Moved to gmime/ subdirectory. Also updated to
+	#include <gmime/some-header.h> instead of #include "some-header.h"
+
+	* test-*.c: Moved to tests/ subdirectory.
 
 2002-11-06  Jeffrey Stedfast  <fejj@ximian.com>
 

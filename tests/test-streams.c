@@ -21,7 +21,6 @@
  */
 
 
-#include "gmime.h"
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -29,6 +28,9 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
+
+#include <gmime/gmime.h>
+
 
 static GSList *test = NULL;
 

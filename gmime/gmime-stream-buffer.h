@@ -29,7 +29,7 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
 #define GMIME_STREAM_BUFFER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))

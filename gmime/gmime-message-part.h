@@ -29,8 +29,8 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-object.h"
-#include "gmime-message.h"
+#include <gmime/gmime-object.h>
+#include <gmime/gmime-message.h>
 
 #define GMIME_TYPE_MESSAGE_PART            (g_mime_message_part_get_type ())
 #define GMIME_MESSAGE_PART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePart))

@@ -32,10 +32,10 @@ extern "C" {
 #include <stdarg.h>
 #include <time.h>
 
-#include "gmime-object.h"
-#include "gmime-header.h"
-#include "gmime-stream.h"
-#include "internet-address.h"
+#include <gmime/gmime-object.h>
+#include <gmime/gmime-header.h>
+#include <gmime/gmime-stream.h>
+#include <gmime/internet-address.h>
 
 #define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
 #define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))

@@ -25,12 +25,11 @@
 #include <config.h>
 #endif
 
-#include <glib.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "gmime-iconv.h"
-#include "gmime-iconv-utils.h"
+
+#include <gmime/gmime.h>
 
 
 #if 0

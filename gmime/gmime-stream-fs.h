@@ -30,7 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <unistd.h>
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())
 #define GMIME_STREAM_FS(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))

@@ -29,7 +29,7 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-filter.h"
+#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
 #define GMIME_FILTER_HTML(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))

@@ -28,7 +28,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 
-#include "gmime.h"
+#include <gmime/gmime.h>
+
 
 void
 print_depth (int depth)

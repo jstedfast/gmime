@@ -188,13 +188,14 @@ AC_SUBST(GMIME_INCLUDEDIR)
 AC_SUBST(HTML_DIR)
 
 AC_OUTPUT(
-  Makefile
-  tests/Makefile
-  doc/Makefile
-  gmime-config
-  gmime-2.0.pc
-  gmime.spec
-  gmime.h
+Makefile
+gmime/Makefile
+gmime/gmime.h
+tests/Makefile
+doc/Makefile
+gmime-config
+gmime-2.0.pc
+gmime.spec
 )
 
 echo "

@@ -31,7 +31,7 @@ extern "C" {
 
 #include <glib.h>
 
-#include "gmime-object.h"
+#include <gmime/gmime-object.h>
 
 #define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
 #define GMIME_MULTIPART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))

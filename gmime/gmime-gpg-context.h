@@ -29,7 +29,7 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-cipher-context.h"
+#include <gmime/gmime-cipher-context.h>
 
 #define GMIME_TYPE_GPG_CONTEXT            (g_mime_gpg_context_get_type ())
 #define GMIME_GPG_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))

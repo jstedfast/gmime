@@ -29,7 +29,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include "gmime-stream.h"
+#include <gmime/gmime-stream.h>
 
 typedef struct _GMimeHeader GMimeHeader;
 

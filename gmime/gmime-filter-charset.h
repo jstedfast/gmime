@@ -29,7 +29,7 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-filter.h"
+#include <gmime/gmime-filter.h>
 #include <iconv.h>
 
 #define GMIME_TYPE_FILTER_CHARSET            (g_mime_filter_charset_get_type ())

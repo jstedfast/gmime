@@ -29,8 +29,8 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-multipart.h"
-#include "gmime-cipher-context.h"
+#include <gmime/gmime-multipart.h>
+#include <gmime/gmime-cipher-context.h>
 
 #define GMIME_TYPE_MULTIPART_SIGNED            (g_mime_multipart_signed_get_type ())
 #define GMIME_MULTIPART_SIGNED(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MULTIPART_SIGNED, GMimeMultipartSigned))

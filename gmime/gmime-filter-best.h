@@ -29,9 +29,9 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include "gmime-filter.h"
-#include "gmime-charset.h"
-#include "gmime-utils.h"
+#include <gmime/gmime-filter.h>
+#include <gmime/gmime-charset.h>
+#include <gmime/gmime-utils.h>
 
 #define GMIME_TYPE_FILTER_BEST            (g_mime_filter_best_get_type ())
 #define GMIME_FILTER_BEST(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBest))
