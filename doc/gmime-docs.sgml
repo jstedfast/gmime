@@ -11,6 +11,7 @@
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
 <!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
+<!entity gmime-iconv SYSTEM "sgml/gmime-iconv.sgml">
 <!entity gmime-stream SYSTEM "sgml/gmime-stream.sgml">
 <!entity gmime-stream-buffer SYSTEM "sgml/gmime-stream-buffer.sgml">
 <!entity gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
@@ -212,5 +213,6 @@
     &internet-address;
     &gmime-parser;
     &gmime-charset;
+    &gmime-iconv;
   </chapter>
 </book>

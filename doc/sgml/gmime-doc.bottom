@@ -24,3 +24,4 @@
     &gmime-internet-address;
     &gmime-gmime-parser;
     &gmime-gmime-charset;
+    &gmime-gmime-iconv;

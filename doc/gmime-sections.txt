@@ -362,3 +362,11 @@ g_mime_charset_init
 g_mime_charset_locale_name
 g_mime_charset_name
 </SECTION>
+
+<SECTION>
+<FILE>gmime-iconv</FILE>
+g_mime_iconv_init
+g_mime_iconv_open
+g_mime_iconv
+g_mime_iconv_close
+</SECTION>

@@ -1,0 +1,122 @@
+<refentry id="gmime-gmime-iconv" revision="15 Jan 2002">
+<refmeta>
+<refentrytitle>gmime-iconv</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-iconv</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+void        <link linkend="g-mime-iconv-init">g_mime_iconv_init</link>               (void);
+<link linkend="iconv-t">iconv_t</link>     <link linkend="g-mime-iconv-open">g_mime_iconv_open</link>               (const char *to,
+                                             const char *from);
+#define     <link linkend="g-mime-iconv">g_mime_iconv</link>                    (cd,inbuf,inleft,outbuf,outleft)
+int         <link linkend="g-mime-iconv-close">g_mime_iconv_close</link>              (<link linkend="iconv-t">iconv_t</link> cd);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="g-mime-iconv-init">g_mime_iconv_init ()</title>
+<programlisting>void        g_mime_iconv_init               (void);</programlisting>
+<para>
+Initialize GMime's iconv cache. This *MUST* be called before any
+gmime-iconv interfaces will work correctly.</para>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-open">g_mime_iconv_open ()</title>
+<programlisting><link linkend="iconv-t">iconv_t</link>     g_mime_iconv_open               (const char *to,
+                                             const char *from);</programlisting>
+<para>
+Allocates a coversion descriptor suitable for converting byte
+sequences from charset <parameter>from</parameter> to charset <parameter>to</parameter>. The resulting
+descriptor can be used with iconv (or the g_mime_iconv wrapper) any
+number of times until closed using g_mime_iconv_close.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>to</parameter>&nbsp;:</entry>
+<entry> charset to convert to
+</entry></row>
+<row><entry align="right"><parameter>from</parameter>&nbsp;:</entry>
+<entry> charset to convert from
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new conversion descriptor for use with iconv on success
+or (iconv_t) -1 on fail as well as setting an appropriate errno
+value.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv">g_mime_iconv()</title>
+<programlisting>#define     g_mime_iconv(cd,inbuf,inleft,outbuf,outleft)</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>inbuf</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>inleft</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>outbuf</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><parameter>outleft</parameter>&nbsp;:</entry>
+<entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-iconv-close">g_mime_iconv_close ()</title>
+<programlisting>int         g_mime_iconv_close              (<link linkend="iconv-t">iconv_t</link> cd);</programlisting>
+<para>
+Closes the iconv descriptor <parameter>cd</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>cd</parameter>&nbsp;:</entry>
+<entry> iconv conversion descriptor
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail as well as setting an
+appropriate errno value.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

@@ -1,3 +1,22 @@
+2002-01-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped the version to 0.7.7
+
+	* doc/*: Updated to document the new gmime-iconv interfaces.
+
+	* gmime-filter-charset.c (g_mime_filter_charset_new): Use
+	g_mime_iconv_open instead of iconv_open. Also no longer need to
+	use g_mime_charset_name() since gmime-iconv does this for us.
+	(filter_destroy): Use g_mime_iconv_close() instead of
+	iconv_close().
+
+	* gmime-iconv.c (g_mime_iconv_open): New wrapper around
+	iconv_open() so that we can cache the results. This'll be a major
+	speedup for systems like Solaris where iconv_open() must dlopen a
+	module for each of the charsets. Also uses g_mime_charset_name()
+	to get the iconv-friendly charset name for you.
+	(g_mime_iconv_close): New wrapper around iconv_close().
+
 2002-01-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 0.7.6

@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-parser</TITLE
+>gmime-iconv</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,9 +13,6 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="internet-address"
-HREF="gmime-internet-address.html"><LINK
-REL="NEXT"
 TITLE="gmime-charset"
 HREF="gmime-gmime-charset.html"></HEAD
 ><BODY
@@ -49,7 +46,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-charset.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -102,36 +99,27 @@ SIZE="3"
 WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
-><A
-HREF="gmime-gmime-charset.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
-></TD
+>&nbsp;</TD
 ></TR
 ></TABLE
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-PARSER"
->gmime-parser</A
+NAME="GMIME-GMIME-ICONV"
+>gmime-iconv</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN6161"
+NAME="AEN6292"
 ></A
 ><H2
 >Name</H2
->gmime-parser&nbsp;--&nbsp;</DIV
+>gmime-iconv&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN6164"
+NAME="AEN6295"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,31 +134,29 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-<A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-PART"
->g_mime_parser_construct_part</A
->    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);
-<A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
->* <A
-HREF="gmime-gmime-parser.html#G-MIME-PARSER-CONSTRUCT-MESSAGE"
->g_mime_parser_construct_message</A
->
-                                            (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> preserve_headers);</PRE
+void        <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-INIT"
+>g_mime_iconv_init</A
+>               (void);
+<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+>     <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-OPEN"
+>g_mime_iconv_open</A
+>               (const char *to,
+                                             const char *from);
+#define     <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV"
+>g_mime_iconv</A
+>                    (cd,inbuf,inleft,outbuf,outleft)
+int         <A
+HREF="gmime-gmime-iconv.html#G-MIME-ICONV-CLOSE"
+>g_mime_iconv_close</A
+>              (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -178,7 +164,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6174"
+NAME="AEN6304"
 ></A
 ><H2
 >Description</H2
@@ -188,20 +174,20 @@ NAME="AEN6174"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6177"
+NAME="AEN6307"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6179"
+NAME="AEN6309"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-PART"
+NAME="G-MIME-ICONV-INIT"
 ></A
->g_mime_parser_construct_part ()</H3
+>g_mime_iconv_init ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -211,24 +197,64 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-part.html#GMIMEPART"
->GMimePart</A
->*  g_mime_parser_construct_part    (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
+>void        g_mime_iconv_init               (void);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
+>Initialize GMime's iconv cache. This *MUST* be called before any
+gmime-iconv interfaces will work correctly.</P
+><P
 ></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6315"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV-OPEN"
+></A
+>g_mime_iconv_open ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+>     g_mime_iconv_open               (const char *to,
+                                             const char *from);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Allocates a coversion descriptor suitable for converting byte
+sequences from charset <TT
+CLASS="PARAMETER"
+><I
+>from</I
+></TT
+> to charset <TT
+CLASS="PARAMETER"
+><I
+>to</I
+></TT
+>. The resulting
+descriptor can be used with iconv (or the g_mime_iconv wrapper) any
+number of times until closed using g_mime_iconv_close.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6187"
+NAME="AEN6324"
 ></A
 ><P
 ></P
@@ -248,14 +274,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>to</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> raw MIME Part stream</TD
+> charset to convert to</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>from</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset to convert from</TD
 ></TR
 ><TR
 ><TD
@@ -270,7 +313,9 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimePart object based on the data.</TD
+>a new conversion descriptor for use with iconv on success
+or (iconv_t) -1 on fail as well as setting an appropriate errno
+value.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -281,13 +326,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6200"
+NAME="AEN6341"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARSER-CONSTRUCT-MESSAGE"
+NAME="G-MIME-ICONV"
 ></A
->g_mime_parser_construct_message ()</H3
+>g_mime_iconv()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -297,29 +342,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-message.html#GMIMEMESSAGE"
->GMimeMessage</A
->* g_mime_parser_construct_message
-                                            (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBOOLEAN"
->gboolean</GTKDOCLINK
-> preserve_headers);</PRE
+>#define     g_mime_iconv(cd,inbuf,inleft,outbuf,outleft)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6209"
+NAME="AEN6346"
 ></A
 ><P
 ></P
@@ -339,14 +371,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>cd</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> an rfc0822 message stream</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -356,14 +388,138 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->preserve_headers</I
+>inbuf</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> if TRUE, then store the arbitrary headers</TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inleft</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>outbuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>outleft</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6371"
+></A
+><H3
+><A
+NAME="G-MIME-ICONV-CLOSE"
+></A
+>g_mime_iconv_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_iconv_close              (<GTKDOCLINK
+HREF="ICONV-T"
+>iconv_t</GTKDOCLINK
+> cd);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Closes the iconv descriptor <TT
+CLASS="PARAMETER"
+><I
+>cd</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6379"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>cd</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> iconv conversion descriptor</TD
 ></TR
 ><TR
 ><TD
@@ -378,7 +534,8 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeMessage object based on the rfc0822 data.</TD
+>0 on success or -1 on fail as well as setting an
+appropriate errno value.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -402,7 +559,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-internet-address.html"
+HREF="gmime-gmime-charset.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -455,16 +612,7 @@ SIZE="3"
 WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
-><A
-HREF="gmime-gmime-charset.html"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->Next Page &#62;&#62;&#62;</B
-></FONT
-></A
-></TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -474,19 +622,13 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->internet-address</B
+>gmime-charset</B
 ></FONT
 ></TD
 ><TD
 COLSPAN="2"
 ALIGN="right"
-><FONT
-COLOR="#FFFFFF"
-SIZE="3"
-><B
->gmime-charset</B
-></FONT
-></TD
+>&nbsp;</TD
 ></TR
 ></TABLE
 ></DIV

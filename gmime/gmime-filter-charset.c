@@ -29,6 +29,7 @@
 
 #include "gmime-filter-charset.h"
 #include "gmime-charset.h"
+#include "gmime-iconv.h"
 
 
 static void filter_destroy (GMimeFilter *filter);
@@ -67,10 +68,7 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 	GMimeFilterCharset *new;
 	iconv_t cd;
 	
-	from_charset = g_mime_charset_name (from_charset);
-	to_charset = g_mime_charset_name (to_charset);
-	
-	cd = iconv_open (from_charset, to_charset);
+	cd = g_mime_iconv_open (from_charset, to_charset);
 	if (cd == (iconv_t) -1)
 		return NULL;
 	
@@ -93,7 +91,7 @@ filter_destroy (GMimeFilter *filter)
 	g_free (charset->from_charset);
 	g_free (charset->to_charset);
 	if (charset->cd != (iconv_t) -1)
-		iconv_close (charset->cd);
+		g_mime_iconv_close (charset->cd);
 	g_free (filter);
 }
 
@@ -141,7 +139,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		
 		converted = filter->outsize - outleft;
 		if (errno == E2BIG)
-			g_mime_filter_set_size (filter, inleft * 5 + filter->outsize, TRUE);
+			g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
 		
 	} while (errno == E2BIG);
 	
@@ -205,7 +203,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			converted = filter->outsize - outleft;
 			if (errno == E2BIG)
-				g_mime_filter_set_size (filter, inleft * 5 + filter->outsize, TRUE);
+				g_mime_filter_set_size (filter, inleft * 5 + filter->outsize + 16, TRUE);
 			
 		} while (errno == E2BIG);
 	} else {
