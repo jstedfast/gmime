@@ -1,3 +1,12 @@
+2002-07-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version to 1.0.4
+
+	* README: Updated.
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix a logic mistake
+	in the calculation of the number of bytes converted.
+
 2002-07-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.0.3
