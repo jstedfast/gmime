@@ -28,6 +28,7 @@
 <ANCHOR id ="G-MIME-PART-GET-CONTENT-ID" href="gmime/gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-ID">
 <ANCHOR id ="G-MIME-PART-SET-CONTENT-MD5" href="gmime/gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-MD5">
 <ANCHOR id ="G-MIME-PART-GET-CONTENT-MD5" href="gmime/gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-MD5">
+<ANCHOR id ="G-MIME-PART-VERIFY-CONTENT-MD5" href="gmime/gmime-gmime-part.html#G-MIME-PART-VERIFY-CONTENT-MD5">
 <ANCHOR id ="G-MIME-PART-SET-CONTENT-LOCATION" href="gmime/gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-LOCATION">
 <ANCHOR id ="G-MIME-PART-GET-CONTENT-LOCATION" href="gmime/gmime-gmime-part.html#G-MIME-PART-GET-CONTENT-LOCATION">
 <ANCHOR id ="G-MIME-PART-SET-CONTENT-TYPE" href="gmime/gmime-gmime-part.html#G-MIME-PART-SET-CONTENT-TYPE">
