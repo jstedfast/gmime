@@ -579,7 +579,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
   </chapter>
   
   <!-- ***************************************************************** -->
-  <chapter id="ch-getting-started">
+  <chapter id="ch-mime">
     <title>MIME, MIME, and more MIME</title>
     
     <!-- ----------------------------------------------------------------- -->
@@ -607,9 +607,9 @@ save_attachment (GMimePart *part)
 	...
       </programlisting>
       
-      <para>The <literl>g_mime_part_get_filename()</literal> function
+      <para>The <literal>g_mime_part_get_filename()</literal> function
       will first check for a <literal>filename</literal> parameter in
-      the Content-Disposition header</para>. If that parameter exists,
+      the Content-Disposition header. If that parameter exists,
       it will return the value as the filename. However, if that does
       not exist, it will fall back to checking for the
       <literal>name</literal> parameter sometimes found in the
@@ -643,8 +643,8 @@ save_attachment (GMimePart *part)
       
       <para>In order to get the content of a MIME part (eg. the body
       of a part, not including the headers), you'll want to use
-      <literal>g_mime_part_get_content_object()</literal>.</para> To
-      wrote the content object to a stream, you can use
+      <literal>g_mime_part_get_content_object()</literal>. To write
+      the content object to a stream, you can use
       <literal>g_mime_data_wrapper_write_to_stream()</literal>. On
       fail, this function will return <literal>-1</literal>, otherwise
       it will return some positive value which will usually equate the
