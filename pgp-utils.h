@@ -53,7 +53,7 @@ gboolean pgp_detect (const gchar *text);
 
 gboolean pgp_sign_detect (const gchar *text);
 
-gchar *pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex);
+gchar *pgp_decrypt (const gchar *ciphertext, gint cipherlen, gint *outlen, GMimeException *ex);
 
 gchar *pgp_encrypt (const gchar *in, gint inlen, const GPtrArray *recipients,
 		    gboolean sign, const gchar *userid, GMimeException *ex);

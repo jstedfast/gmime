@@ -403,8 +403,8 @@ pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 	GMimePart *multipart, *encrypted_part, *part;
 	const GMimeContentType *mime_type;
 	gchar *cleartext, *ciphertext = NULL;
+	gint outlen, cipherlen;
 	GList *child;
-	gint outlen;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
@@ -420,10 +420,8 @@ pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 		encrypted_part = child->data;
 		mime_type = g_mime_part_get_content_type (encrypted_part);
 		if (g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
-			guint len;
-			
-			ciphertext = (gchar *) g_mime_part_get_content (encrypted_part, &len);
-			ciphertext = g_strndup (ciphertext, len);
+			ciphertext = (gchar *) g_mime_part_get_content (encrypted_part, &cipherlen);
+			ciphertext = g_strndup (ciphertext, cipherlen);
 			if (pgp_detect (ciphertext))
 				break;
 			
@@ -440,7 +438,7 @@ pgp_mime_part_decrypt (GMimePart *mime_part, GMimeException *ex)
 	}
 	
 	/* get the cleartext */
-	cleartext = pgp_decrypt (ciphertext, &outlen, ex);
+	cleartext = pgp_decrypt (ciphertext, cipherlen, &outlen, ex);
 	g_free (ciphertext);
 	if (g_mime_exception_is_set (ex))
 		return NULL;

@@ -404,6 +404,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 /**
  * pgp_decrypt:
  * @ciphertext: ciphertext to decrypt
+ * @cipherlen: ciphertext length
  * @outlen: output length of the decrypted data (to be set by #pgp_decrypt)
  * @ex: exception
  *
@@ -413,7 +414,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
  * the case that the cleartext is a binary stream.
  **/
 gchar *
-pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
+pgp_decrypt (const gchar *ciphertext, gint cipherlen, gint *outlen, GMimeException *ex)
 {
 	char *argv[15];
 	char *plaintext = NULL;
@@ -480,7 +481,7 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
 	argv[i++] = NULL;
 	
 	retval = crypto_exec_with_passwd (pgp_path, argv,
-					  ciphertext, strlen (ciphertext),
+					  ciphertext, cipherlen,
 					  passwd_fds, passphrase,
 					  &plaintext, outlen,
 					  &diagnostics);

@@ -1,3 +1,10 @@
+2001-01-09  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* pgp-utils.c (pgp_decrypt): Take a cipherlen argument.
+
+	* pgp-mime.c (pgp_mime_part_decrypt): Pass in a cipherlen to
+	pgp_decrypt.
+
 2001-01-07  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_content_md5): Don't allow the
