@@ -237,7 +237,7 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!strcasecmp (mime_type->type, type)) {
+	if (!strcmp (type, "*") || !strcasecmp (mime_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;

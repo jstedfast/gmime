@@ -1,3 +1,8 @@
+2004-12-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-content-type.c (g_mime_content_type_is_type): Fixed
+	to do as advertised - allow wildcard matching for type.
+
 2004-12-06  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Makefile.am: Add InternetAddress.custom
