@@ -1,3 +1,8 @@
+2002-07-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix for
+	nul-terminating some multibyte charsets.
+
 2002-06-28  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-gpg-context.c (gpg_ctx_op_step): If we get an EOF from the

@@ -20,13 +20,16 @@
  *
  */
 
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
 
 #include <glib.h>
-#include <errno.h>
+#include <stdio.h>
 #include <string.h>
+#include <errno.h>
+
 #include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 
@@ -72,24 +75,24 @@ char *
 g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 {
 	size_t inleft, outleft, converted = 0;
-	ICONV_CONST char *inbuf;
 	char *out, *outbuf;
+	const char *inbuf;
 	size_t outlen;
 	
 	if (cd == (iconv_t) -1)
 		return g_strndup (string, n);
 	
 	outlen = n * 2 + 16;
-	out = g_malloc (outlen + 1);
+	out = g_malloc (outlen + 4);
 	
-	inbuf = (ICONV_CONST char *) string;
+	inbuf = string;
 	inleft = n;
 	
 	do {
 		outbuf = out + converted;
 		outleft = outlen - converted;
 		
-		converted = iconv (cd, &inbuf, &inleft, &outbuf, &outleft);
+		converted = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
 		if (converted == (size_t) -1) {
 			if (errno != E2BIG && errno != EINVAL)
 				goto fail;
@@ -104,7 +107,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		converted = outlen - outleft;
 		if (errno == E2BIG) {
 			outlen += inleft * 2 + 16;
-			out = g_realloc (out, outlen + 1);
+			out = g_realloc (out, outlen + 4);
 			outbuf = out + converted;
 		}
 		
@@ -119,7 +122,14 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	
 	/* flush the iconv conversion */
 	iconv (cd, NULL, NULL, &outbuf, &outleft);
-	*outbuf = '\0';
+	
+	/* Note: not all charsets can be nul-terminated with a single
+           nul byte. UCS2, for example, needs 2 nul bytes and UCS4
+           needs 4. I hope that 4 nul bytes is enough to terminate all
+           multibyte charsets? */
+	
+	/* nul-terminate the string */
+	memset (outbuf, 0, 4);
 	
 	/* reset the cd */
 	iconv (cd, NULL, NULL, NULL, NULL);
