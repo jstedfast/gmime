@@ -61,7 +61,7 @@ g_mime_filter_basic_new_type (GMimeFilterBasicType type)
 	new->type = type;
 	new->state = 0;
 	new->save = 0;
-	new->uulen = 0;
+	new->uulen = '\0';
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &template);
 	
@@ -187,5 +187,5 @@ filter_reset (GMimeFilter *filter)
 		basic->state = 0;
 	}
 	basic->save = 0;
-	basic->uulen = 0;
+	basic->uulen = '\0';
 }
