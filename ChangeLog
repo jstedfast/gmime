@@ -1,3 +1,9 @@
+2004-08-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Changed the iconv-detect logic to not error-out on
+	fail. The code can properly handle the case where iconv-detect.h
+	doesn't exist, so let it do that instead.
+
 2004-07-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Don't use
