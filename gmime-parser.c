@@ -306,50 +306,50 @@ parser_offset (GMimeParser *parser, unsigned char *cur)
 	return (parser->offset - (parser->inend - inptr));
 }
 
-#define header_backup(parser, start, len) G_STMT_START {                    \
-	if (parser->headerleft <= len) {                                    \
-		unsigned int hlen, hoff;                                  \
-		                                                          \
+#define header_backup(parser, start, len) G_STMT_START {                      \
+	if (parser->headerleft <= len) {                                      \
+		unsigned int hlen, hoff;                                      \
+		                                                              \
 		hlen = hoff = parser->headerptr - parser->headerbuf;          \
-		hlen = hlen ? hlen : 1;                                   \
-		                                                          \
-		while (hlen < hoff + len)                                 \
-			hlen <<= 1;                                       \
-		                                                          \
+		hlen = hlen ? hlen : 1;                                       \
+		                                                              \
+		while (hlen < hoff + len)                                     \
+			hlen <<= 1;                                           \
+		                                                              \
 		parser->headerbuf = g_realloc (parser->headerbuf, hlen + 1);  \
 		parser->headerptr = parser->headerbuf + hoff;                 \
-		parser->headerleft = hlen - hoff;                           \
-	}                                                                 \
-	                                                                  \
-	memcpy (parser->headerptr, start, len);                             \
-	parser->headerptr += len;                                           \
-	parser->headerleft -= len;                                          \
+		parser->headerleft = hlen - hoff;                             \
+	}                                                                     \
+	                                                                      \
+	memcpy (parser->headerptr, start, len);                               \
+	parser->headerptr += len;                                             \
+	parser->headerleft -= len;                                            \
 } G_STMT_END
 
 #define header_parse(parser, hend) G_STMT_START {                           \
-	register unsigned char *colon;                                    \
-	struct _header_raw *header;                                       \
-	unsigned int hlen;                                                \
-	                                                                  \
-	header = g_new (struct _header_raw, 1);                           \
-	header->next = NULL;                                              \
-	                                                                  \
+	register unsigned char *colon;                                      \
+	struct _header_raw *header;                                         \
+	unsigned int hlen;                                                  \
+	                                                                    \
+	header = g_new (struct _header_raw, 1);                             \
+	header->next = NULL;                                                \
+	                                                                    \
 	*parser->headerptr = '\0';                                          \
 	colon = parser->headerbuf;                                          \
-	while (*colon && *colon != ':')                                   \
-		colon++;                                                  \
-	                                                                  \
+	while (*colon && *colon != ':')                                     \
+		colon++;                                                    \
+	                                                                    \
 	hlen = colon - parser->headerbuf;                                   \
-	                                                                  \
+	                                                                    \
 	header->name = g_strstrip (g_strndup (parser->headerbuf, hlen));    \
-	header->value = g_strstrip (g_strdup (colon + 1));                \
+	header->value = g_strstrip (g_strdup (colon + 1));                  \
 	header->offset = parser->header_start;                              \
-	                                                                  \
-	hend->next = header;                                              \
-	hend = header;                                                    \
-	                                                                  \
-	parser->headerleft += parser->headerptr - parser->headerbuf;            \
-	parser->headerptr = parser->headerbuf;                                \
+	                                                                    \
+	hend->next = header;                                                \
+	hend = header;                                                      \
+	                                                                    \
+	parser->headerleft += parser->headerptr - parser->headerbuf;        \
+	parser->headerptr = parser->headerbuf;                              \
 } G_STMT_END
 
 static int
@@ -646,8 +646,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	if (parser->seekable) {
 		stream = g_mime_stream_substream (parser->stream, start, end);
 	} else {
-		stream = g_mime_stream_mem_new ();
-		g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), content);
+		stream = g_mime_stream_mem_new_with_byte_array (content);
 	}
 	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);

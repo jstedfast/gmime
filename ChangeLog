@@ -1,3 +1,9 @@
+2002-06-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_scan_mime_part_content): Use
+	g_mime_stream_mem_new_with_byte_array() so that the mem stream
+	owns the byte array so we don't leak.
+
 2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.0.0
