@@ -143,18 +143,18 @@ g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
 	
 	if ((h = g_hash_table_lookup (header->hash, name))) {
 		g_free (h->value);
-		if (value)
-			h->value = g_mime_utils_8bit_header_encode (value);
-		else
-			h->value = NULL;
+		h->value = g_strdup (value);
 	} else {
 		n = g_new (struct raw_header, 1);
 		n->next = NULL;
 		n->name = g_strdup (name);
-		n->value = value ? g_mime_utils_8bit_header_encode (value) : NULL;
+		n->value = g_strdup (value);
 		
-		for (h = header->headers; h && h->next; h = h->next);
-		if (h)
+		h = header->headers;
+		while (h && h->next)
+			h = h->next;
+		
+		if (h != NULL)
 			h->next = n;
 		else
 			header->headers = n;
@@ -185,7 +185,7 @@ g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
 	n = g_new (struct raw_header, 1);
 	n->next = NULL;
 	n->name = g_strdup (name);
-	n->value = value ? g_mime_utils_8bit_header_encode (value) : NULL;
+	n->value = g_strdup (value);
 	
 	for (h = header->headers; h && h->next; h = h->next);
 	

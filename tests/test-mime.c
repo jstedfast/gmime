@@ -342,6 +342,7 @@ static char *addresses[] = {
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
 	"Tõivo Leedjärv <leedjarv@interest.ee>",
 	"fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
+	"\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
 	NULL
 };
 
