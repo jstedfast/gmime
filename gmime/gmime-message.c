@@ -710,7 +710,7 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
 			
 			body = decode_body_part (mime_part);
 			break;
-		} else {
+		} else if (g_mime_content_type_is_type (type, "text", "*")) {
 			last = mime_part;
 		}
 		
@@ -757,7 +757,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 		/* Get the prefered part from the multipart/alternative */
 		body = handle_multipart_alternative (message->mime_part, want_plain, is_html);
 	} else if (g_mime_content_type_is_type (type, "multipart", "*")) {
-		/* The message body has to be in the first MIME part of the multipart */
+		/* The message body should be in the first MIME part of the multipart */
 		GMimePart *first_part;
 		
 		first_part = message->mime_part->children->data;

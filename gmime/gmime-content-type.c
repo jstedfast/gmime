@@ -43,15 +43,25 @@ g_mime_content_type_new (const gchar *type, const gchar *subtype)
 	
 	mime_type = g_new0 (GMimeContentType, 1);
 	
-	if (type)
+	if (type && *type && subtype && *subtype) {
 		mime_type->type = g_strdup (type);
-	else
-		mime_type->type = g_strdup ("text");
-	
-	if (subtype)
 		mime_type->subtype = g_strdup (subtype);
-	else
-		mime_type->subtype = g_strdup ("plain");
+	} else {
+		if (type && *type) {
+			mime_type->type = g_strdup (type);
+			if (!g_strcasecmp (type, "text"))
+				mime_type->subtype = g_strdup ("plain");
+			else
+				mime_type->subtype = g_strdup ("octet-stream");
+		} else {
+			mime_type->type = g_strdup ("application");
+			mime_type->subtype = g_strdup ("octet-stream");
+		}
+		
+		g_warning ("Invalid or incomplete type: %s%s%s: defaulting to %s/%s",
+			   type ? type : "", subtype ? "/" : "", subtype ? subtype : "",
+			   mime_type->type, mime_type->subtype);
+	}
 	
 	return mime_type;
 }
@@ -67,33 +77,38 @@ GMimeContentType *
 g_mime_content_type_new_from_string (const gchar *string)
 {
 	GMimeContentType *mime_type;
-	gchar *type = NULL, *subtype = NULL;
-	gchar *eptr;
+	guchar *type = NULL, *subtype = NULL;
+	guchar *eptr;
 	
 	g_return_val_if_fail (string != NULL, NULL);
 	
 	/* get the type */
 	type = (gchar *) string;
-	for (eptr = type; *eptr && *eptr != '/'; eptr++);
+	for (eptr = type; *eptr && *eptr != '/' && *eptr != ';'; eptr++);
 	type = g_strndup (type, (gint) (eptr - type));
 	g_strstrip (type);
 	
 	/* get the subtype */
-	subtype = eptr + 1;
-	for (eptr = subtype; *eptr && *eptr != ';'; eptr++);
-	subtype = g_strndup (subtype, (gint) (eptr - subtype));
-	g_strstrip (subtype);
-		
+	if (*eptr != ';') {
+		subtype = eptr + 1;
+		for (eptr = subtype; *eptr && *eptr != ';'; eptr++);
+		subtype = g_strndup (subtype, (gint) (eptr - subtype));
+		g_strstrip (subtype);
+	}
+	
 	mime_type = g_mime_content_type_new (type, subtype);
 	g_free (type);
 	g_free (subtype);
 	
 	while (*eptr == ';') {
 		/* looks like we've got some parameters */
-		gchar *name, *value, *ch;
+		guchar *name, *value, *ch;
+		
+		while (*eptr && (*eptr == ';' || isspace (*eptr)))
+			eptr++;
 		
 		/* get the param name - skip past all whitespace */
-		for (name = eptr + 1; *name && isspace (*name); name++);
+		for (name = eptr; *name && isspace (*name); name++);
 		
 		for (eptr = name; *eptr && *eptr != '='; eptr++);
 		name = g_strndup (name, (gint) (eptr - name));
@@ -101,8 +116,7 @@ g_mime_content_type_new_from_string (const gchar *string)
 		g_strstrip (name);
 		
 		/* change the param name to lowercase */
-		for (ch = name; *ch; ch++)
-			*ch = tolower (*ch);
+		g_strdown (name);
 		
 		/* skip any whitespace */
 		for (value = eptr + 1; *value && isspace (*value); value++);

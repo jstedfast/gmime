@@ -1,3 +1,15 @@
+2000-11-28  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string):
+	Ignore extranious semicolons between parameters. Handle the event
+	where the content-type doesn't specify a subtype (this is broken
+	but some mailers will send "Content-Type: text" for example).
+	(g_mime_content_type_new): If there isn't a type or subtype, print
+	a warning and try to do some smart defaulting action.
+
+	* gmime-message.c (handle_multipart_alternative): Only remember
+	the last subpart if it was a text part.
+
 2000-11-19  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/html/*:
