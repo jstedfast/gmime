@@ -33,6 +33,7 @@ build_customs = $(addprefix $(srcdir)/, $(customs))
 
 EXTRA_DIST =			\
 	$(ASSEMBLY).config.in	\
+	$(ASSEMBLY_NAME).pub	\
 	AssemblyInfo.cs.in	\
 	$(RAW_API)		\
 	$(METADATA)		\

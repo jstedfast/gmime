@@ -3,4 +3,4 @@ using System.Runtime.CompilerServices;
 
 [assembly:AssemblyVersion("@API_VERSION@")]
 [assembly:AssemblyDelaySign(true)]
-[assembly:AssemblyKeyFile("gmime-sharp.pub")]
+[assembly:AssemblyKeyFile("@srcdir@/gmime-sharp.pub")]

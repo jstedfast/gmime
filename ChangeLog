@@ -1,3 +1,10 @@
+2004-11-29  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/AssemblyInfo.cs.in: Add @srcdir@ to AssemblyKeyFile so we
+	build when builddir != srcdir.
+
+	* mono/Makefile.am: Add gmime-sharp.pub to EXTRA_DIST.
+
 2004-11-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-gpg-context.c: #define _POSIX_SOURCE so it compiles
