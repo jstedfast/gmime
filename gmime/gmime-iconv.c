@@ -45,8 +45,8 @@ typedef struct {
 } IconvCacheNode;
 
 
-static Cache *iconv_cache;
-static GHashTable *iconv_open_hash;
+static Cache *iconv_cache = NULL;
+static GHashTable *iconv_open_hash = NULL;
 
 #ifdef GMIME_ICONV_DEBUG
 static int cache_misses = 0;
@@ -128,16 +128,28 @@ iconv_cache_node_expire (Cache *cache, CacheNode *node)
 }
 
 
-static void
+
+/**
+ * g_mime_iconv_shutdown:
+ *
+ * Frees internal iconv caches created in #g_mime_iconv_init().
+ **/
+void
 g_mime_iconv_shutdown (void)
 {
+	if (!iconv_cache)
+		return;
+	
 #ifdef GMIME_ICONV_DEBUG
 	fprintf (stderr, "There were %d iconv cache misses\n", cache_misses);
 	fprintf (stderr, "The following %d iconv cache buckets are still open:\n", iconv_cache->size);
 	shutdown = 1;
 #endif
 	cache_free (iconv_cache);
+	iconv_cache = NULL;
+	
 	g_hash_table_destroy (iconv_open_hash);
+	iconv_open_hash = NULL;
 }
 
 
@@ -150,9 +162,7 @@ g_mime_iconv_shutdown (void)
 void
 g_mime_iconv_init (void)
 {
-	static gboolean initialized = FALSE;
-	
-	if (initialized)
+	if (iconv_cache)
 		return;
 	
 	g_mime_charset_map_init ();
@@ -160,10 +170,6 @@ g_mime_iconv_init (void)
 	iconv_open_hash = g_hash_table_new (g_direct_hash, g_direct_equal);
 	iconv_cache = cache_new (iconv_cache_node_expire, iconv_cache_node_free,
 				 sizeof (IconvCacheNode), ICONV_CACHE_SIZE);
-	
-	g_atexit (g_mime_iconv_shutdown);
-	
-	initialized = TRUE;
 }
 
 

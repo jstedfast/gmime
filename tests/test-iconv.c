@@ -204,5 +204,7 @@ int main (int argc, char **argv)
 	
 	test_utils ();
 	
+	g_mime_iconv_shutdown ();
+	
 	return 0;
 }

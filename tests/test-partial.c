@@ -114,5 +114,7 @@ int main (int argc, char **argv)
 	g_mime_object_unref (GMIME_OBJECT (message));
 	g_mime_stream_unref (stream);
 	
+	g_mime_shutdown ();
+	
 	return 0;
 }

@@ -90,8 +90,6 @@ int main (int argc, char **argv)
 	GMimeStream *stream;
 	int fd;
 	
-	g_mime_init (0);
-	
 	if (argc > 1)
 		filename = argv[1];
 	else
@@ -100,6 +98,8 @@ int main (int argc, char **argv)
 	fd = open (filename, O_RDONLY);
 	if (fd == -1)
 		return 0;
+	
+	g_mime_init (0);
 	
 #ifdef STREAM_MMAP
 	stream = g_mime_stream_mmap_new (fd, PROT_READ, MAP_PRIVATE);
@@ -126,6 +126,8 @@ int main (int argc, char **argv)
 	test_parser (stream);
 	
 	g_object_unref (stream);
+	
+	g_mime_shutdown ();
 	
 	return 0;
 }

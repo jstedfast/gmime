@@ -1,3 +1,17 @@
+2004-01-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime.c (g_mime_shutdown): New public function to shutdown
+	GMime. Fixes a segfault in applications that dynamically
+	load/unload GMime during execution.
+
+	* gmime/gmime-iconv.c (g_mime_iconv_init): Don't register an
+	atexit handler.
+	(g_mime_iconv_shutdown): Make public.
+
+	* gmime/gmime-charset.c (g_mime_charset_map_init): Don't set a
+	g_atexit handler for the shutdown routine.
+	(g_mime_charset_map_shutdown): Make public.
+
 2004-01-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-param.c: Disable debugging and conditionally disable

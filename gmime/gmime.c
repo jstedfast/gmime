@@ -28,17 +28,21 @@
 #include "gmime.h"
 
 
+static int initialized = FALSE;
+
+
 /**
  * g_mime_init:
  * @flags: initialization flags
  *
  * Initializes GMime.
+ *
+ * Note: Calls #g_mime_charset_map_init() and #g_mime_iconv_init() as
+ * well.
  **/
 void
 g_mime_init (guint32 flags)
 {
-	static int initialized = FALSE;
-	
 	if (initialized)
 		return;
 	
@@ -59,4 +63,23 @@ g_mime_init (guint32 flags)
 	g_mime_object_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "news", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "partial", g_mime_message_partial_get_type ());
+}
+
+
+/**
+ * g_mime_shutdown:
+ *
+ * Frees internally allocated tables created in #g_mime_init(). Also
+ * calls #g_mime_charset_map_shutdown() and #g_mime_iconv_shutdown().
+ **/
+void
+g_mime_shutdown (void)
+{
+	if (!initialized)
+		return;
+	
+	g_mime_charset_shutdown ();
+	g_mime_iconv_shutdown ();
+	
+	initialized = FALSE;
 }

@@ -3,6 +3,7 @@
 GMIME_CHECK_VERSION
 GMIME_INIT_FLAG_UTF8
 g_mime_init
+g_mime_shutdown
 </SECTION>
 
 <SECTION>
@@ -937,6 +938,7 @@ GMimeParserClass
 <SECTION>
 <FILE>gmime-charset</FILE>
 g_mime_charset_map_init
+g_mime_charset_map_shutdown
 g_mime_locale_charset
 g_mime_charset_locale_name
 g_mime_locale_language
@@ -953,6 +955,7 @@ g_mime_charset_best
 <SECTION>
 <FILE>gmime-iconv</FILE>
 g_mime_iconv_init
+g_mime_iconv_shutdown
 g_mime_iconv_open
 g_mime_iconv
 g_mime_iconv_close

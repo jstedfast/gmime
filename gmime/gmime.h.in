@@ -101,6 +101,7 @@ static const guint gmime_binary_age    = 0;
 #define GMIME_INIT_FLAG_UTF8  (1 << 0)
 
 void g_mime_init (guint32 flags);
+void g_mime_shutdown (void);
 
 #ifdef __cplusplus
 }

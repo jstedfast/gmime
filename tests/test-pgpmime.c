@@ -304,5 +304,7 @@ int main (int argc, char *argv[])
 	g_object_unref (ctx);
 	g_object_unref (session);
 	
+	g_mime_shutdown ();
+	
 	return 0;
 }

@@ -32,6 +32,7 @@ extern "C" {
 #include <iconv.h>
 
 void g_mime_iconv_init (void);
+void g_mime_iconv_shutdown (void);
 
 iconv_t g_mime_iconv_open (const char *to, const char *from);
 

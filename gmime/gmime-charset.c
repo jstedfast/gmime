@@ -154,13 +154,27 @@ iconv_charset_free (gpointer key, gpointer value, gpointer user_data)
 	g_free (value);
 }
 
-static void
-g_mime_charset_shutdown (void)
+
+/**
+ * g_mime_charset_map_shutdown:
+ *
+ * Frees internal lookup tables created in #g_mime_charset_map_init().
+ **/
+void
+g_mime_charset_map_shutdown (void)
 {
+	if (!iconv_charsets)
+		return;
+	
 	g_hash_table_foreach (iconv_charsets, iconv_charset_free, NULL);
 	g_hash_table_destroy (iconv_charsets);
+	iconv_charsets = NULL;
+	
 	g_free (locale_charset);
+	locale_charset = NULL;
+	
 	g_free (locale_lang);
+	locale_lang = NULL;
 }
 
 
@@ -266,8 +280,6 @@ g_mime_charset_map_init (void)
 		locale_parse_lang (locale);
 	}
 #endif
-	
-	g_atexit (g_mime_charset_shutdown);
 }
 
 

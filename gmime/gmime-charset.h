@@ -33,6 +33,7 @@ extern "C" {
 #include <sys/types.h>
 
 void        g_mime_charset_map_init (void);
+void        g_mime_charset_map_shutdown (void);
 
 const char *g_mime_locale_charset (void);
 const char *g_mime_locale_language (void);

@@ -473,5 +473,7 @@ int main (int argc, char *argv[])
 	
 	g_mime_iconv_close (cd);
 	
+	g_mime_shutdown ();
+	
 	return 0;
 }

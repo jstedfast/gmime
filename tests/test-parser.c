@@ -203,5 +203,7 @@ int main (int argc, char **argv)
 	
 	g_mime_stream_unref (stream);
 	
+	g_mime_shutdown ();
+	
 	return 0;
 }
