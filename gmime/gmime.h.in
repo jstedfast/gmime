@@ -41,6 +41,7 @@
 #include "gmime-filter.h"
 #include "gmime-filter-basic.h"
 #include "gmime-filter-crlf.h"
+#include "gmime-filter-html.h"
 
 /* GMIME version */
 static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;
