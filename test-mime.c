@@ -180,13 +180,6 @@ test_encodings (void)
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
-
-	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
 	
 	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr");
 	fprintf (stderr, "encoded: %s\n", enc);
@@ -259,6 +252,7 @@ static gchar *addresses[] = {
 	"fejj@helixcode.com (Jeffrey Stedfast)",
 	"<fejj@helixcode.com> (Jeff)",
 	"=?iso-8859-1?q?Kristoffer=20Br=E5nemyr?= <ztion@swipenet.se>",
+	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
 	NULL
 };
 
