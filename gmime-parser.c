@@ -422,8 +422,8 @@ parser_step_headers (GMimeParser *parser)
 	
  headers_end:
 	
-	if (priv->headerptr > priv->headerbuf)
-		header_parse (priv, hend);
+	if (parser->headerptr > parser->headerbuf)
+		header_parse (parser, hend);
 	
 	parser->state = GMIME_PARSER_STATE_HEADERS_END;
 	
@@ -477,7 +477,7 @@ parser_skip_line (GMimeParser *parser)
 	
 	do {
 		if (parser_fill (parser) <= 0) {
-			inptr = priv->inptr;
+			inptr = parser->inptr;
 			break;
 		}
 		
@@ -496,7 +496,7 @@ parser_skip_line (GMimeParser *parser)
 	
 	parser->midline = FALSE;
 	
-	parser->inptr = MIN (inptr + 1, priv->inend);
+	parser->inptr = MIN (inptr + 1, parser->inend);
 }
 
 enum {
@@ -543,7 +543,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 	refill:
 		nleft = parser->inend - inptr;
 		if (parser_fill (parser) <= 0) {
-			start = priv->inptr;
+			start = parser->inptr;
 			found = FOUND_EOS;
 			break;
 		}
