@@ -1,3 +1,8 @@
+2004-08-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* docs/reference/gmime-docs.sgml: Fixed to use DocBook 4.1 to get
+	rid of some build warnings. Thanks to Karl Eichwalder for the fix.
+
 2004-03-24  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.
