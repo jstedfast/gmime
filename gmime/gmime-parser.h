@@ -67,6 +67,7 @@ typedef void (*GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *hea
 GType g_mime_parser_get_type (void);
 
 GMimeParser *g_mime_parser_new (void);
+GMimeParser *g_mime_parser_new_with_stream (GMimeStream *stream);
 
 void g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream);
 

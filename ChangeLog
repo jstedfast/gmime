@@ -1,3 +1,10 @@
+2002-11-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (g_mime_parser_init): Initialize scan_from
+	and have_regex here instead of in parser_init() since we don't
+	want these flags to be reset when a new stream gets set.
+	(g_mime_parser_new_with_stream): New convenience function.
+
 2002-11-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-utils.c (decode_msgid): Eat the '<' before

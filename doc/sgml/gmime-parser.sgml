@@ -21,6 +21,7 @@ void        (<link linkend="GMimeParserHeaderRegexFunc">*GMimeParserHeaderRegexF
                                              <link linkend="off-t">off_t</link> offset,
                                              <link linkend="gpointer">gpointer</link> user_data);
 <link linkend="GMimeParser">GMimeParser</link>* <link linkend="g-mime-parser-new">g_mime_parser_new</link>              (void);
+<link linkend="GMimeParser">GMimeParser</link>* <link linkend="g-mime-parser-new-with-stream">g_mime_parser_new_with_stream</link>  (<link linkend="GMimeStream">GMimeStream</link> *stream);
 void        <link linkend="g-mime-parser-init-with-stream">g_mime_parser_init_with_stream</link>  (<link linkend="GMimeParser">GMimeParser</link> *parser,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 void        <link linkend="g-mime-parser-set-scan-from">g_mime_parser_set_scan_from</link>     (<link linkend="GMimeParser">GMimeParser</link> *parser,
@@ -104,6 +105,20 @@ Creates a new parser object.</para>
 <para>
 
 </para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new parser object.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="g-mime-parser-new-with-stream">g_mime_parser_new_with_stream ()</title>
+<programlisting><link linkend="GMimeParser">GMimeParser</link>* g_mime_parser_new_with_stream  (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
+<para>
+Creates a new parser object preset to parse <parameter>stream</parameter>.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>stream</parameter>&nbsp;:</term>
+<listitem><para> raw message or part stream
+</para></listitem></varlistentry>
 <varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new parser object.
 </para></listitem></varlistentry>
 </variablelist></refsect2>

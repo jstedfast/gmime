@@ -243,6 +243,9 @@ g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 {
 	parser->priv = g_new (struct _GMimeParserPrivate, 1);
 	parser_init (parser, NULL);
+	
+	parser->priv->scan_from = FALSE;
+	parser->priv->have_regex = FALSE;
 }
 
 static void
@@ -295,8 +298,6 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->unstep = 0;
 	priv->midline = FALSE;
 	priv->seekable = offset != -1;
-	priv->scan_from = FALSE;
-	priv->have_regex = FALSE;
 	
 	priv->headers = NULL;
 	
@@ -344,6 +345,26 @@ g_mime_parser_new (void)
 	GMimeParser *parser;
 	
 	parser = g_object_new (GMIME_TYPE_PARSER, NULL, NULL);
+	
+	return parser;
+}
+
+
+/**
+ * g_mime_parser_new_with_stream:
+ * @stream: raw message or part stream
+ *
+ * Creates a new parser object preset to parse @stream.
+ *
+ * Returns a new parser object.
+ **/
+GMimeParser *
+g_mime_parser_new_with_stream (GMimeStream *stream)
+{
+	GMimeParser *parser;
+	
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
 	
 	return parser;
 }

@@ -360,6 +360,7 @@
 <ANCHOR id ="GMIMEPARSER" href="gmime/gmime-gmime-parser.html#GMIMEPARSER">
 <ANCHOR id ="GMIMEPARSERHEADERREGEXFUNC" href="gmime/gmime-gmime-parser.html#GMIMEPARSERHEADERREGEXFUNC">
 <ANCHOR id ="G-MIME-PARSER-NEW" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-NEW">
+<ANCHOR id ="G-MIME-PARSER-NEW-WITH-STREAM" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-NEW-WITH-STREAM">
 <ANCHOR id ="G-MIME-PARSER-INIT-WITH-STREAM" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-INIT-WITH-STREAM">
 <ANCHOR id ="G-MIME-PARSER-SET-SCAN-FROM" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-SET-SCAN-FROM">
 <ANCHOR id ="G-MIME-PARSER-GET-SCAN-FROM" href="gmime/gmime-gmime-parser.html#G-MIME-PARSER-GET-SCAN-FROM">
