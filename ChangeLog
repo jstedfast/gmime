@@ -1,3 +1,38 @@
+2003-04-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Check for netdb.h, gethostname and gethostbyname.
+
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Guard
+	against systems without netdb.h, gethostname() and/or
+	gethostbyname(). Seems MingW does not have these things.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_get_diagnostics): Flush the
+	diagnostics stream and append a nul-byte. This allows us to return
+	a const char * which will allow us to avoid strdup/free later.
+	(gpg_ctx_free): Unref the diagnostics stream.
+	(gpg_ctx_new): Get the locale charset and setup a charset filter
+	for the diagnostics stream (use a stream instead of a GByteArray
+	like we did before so we can do charset conversion more easily).
+	(gpg_ctx_op_step): Use g_mime_stream_write() to append data to the
+	diagnostics buffer instead of g_byte_array_append() - this way we
+	get some charset filtering action. When reporting errors, use
+	gpg_ctx_get_diagnostics(). Also make the errors reported to the
+	user a little nicer.
+	(gpg_sign): Diagnostics is now const, so don't free the result.
+	(gpg_verify): Same. But also don't exit the main loop when gpg
+	exits - there could still be data in the pipes left to read.
+	(gpg_encrypt): Same as gpg_sign().
+	(gpg_decrypt): Same here.
+	(gpg_import_keys): Here too.
+	(gpg_export_keys): And here.
+	(gpg_ctx_parse_status): Convert the userid hint to UTF-8.
+
+2003-04-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Bumped version to 2.0.5
+
+	* configure.in: Bumped version to 2.0.5
+
 2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-message.c (g_mime_message_set_subject): Encode the

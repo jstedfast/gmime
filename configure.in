@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=2
 GMIME_MINOR_VERSION=0
-GMIME_MICRO_VERSION=4
+GMIME_MICRO_VERSION=5
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -53,6 +53,7 @@ dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
+AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
 
@@ -60,7 +61,7 @@ AC_CHECK_TYPE(off_t, long)
 AC_CHECK_TYPE(size_t, unsigned int)
 AC_CHECK_TYPE(ssize_t, int)
 
-AC_CHECK_FUNCS(isblank strftime localtime mmap munmap msync)
+AC_CHECK_FUNCS(isblank strftime localtime gethostname gethostbyname mmap munmap msync)
 AC_CHECK_FUNCS(gmtime_r)
 
 dnl Specific dir for HTML output ?

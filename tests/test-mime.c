@@ -343,6 +343,7 @@ static char *addresses[] = {
 	"Tõivo Leedjärv <leedjarv@interest.ee>",
 	"fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
 	"\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
+	"Patrick Lamaizière <email@domain>",
 	NULL
 };
 
