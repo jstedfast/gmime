@@ -1330,7 +1330,6 @@ gint
 g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
 {
 	register unsigned char *outptr, *bufptr;
-	const register unsigned char *inptr;
 	register guint32 saved;
 	int i;
 	
