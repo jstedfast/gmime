@@ -518,10 +518,18 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 	}
 	
 	t = mktime (&tm);
-#if defined(HAVE_TIMEZONE)
-	t -= timezone;
-#elif defined(HAVE_TM_GMTOFF)
+#if defined (HAVE_TM_GMTOFF)
 	t += tm.tm_gmtoff;
+#elif defined (HAVE_TIMEZONE)
+	if (tm.tm_isdst > 0) {
+#if defined (HAVE_ALTZONE)
+		t -= altzone;
+#else /* !defined (HAVE_ALTZONE) */
+		t -= (timezone - 3600);
+#endif
+	} else {
+		t -= timezone;
+	}
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
 #endif
@@ -554,7 +562,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	int hour, min, sec, offset, n;
 	struct _date_token *token;
 	struct tm tm;
-	time_t time;
+	time_t t;
 	
 	memset ((void *) &tm, 0, sizeof (struct tm));
 	got_wday = got_month = got_tzone = FALSE;
@@ -637,11 +645,19 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	
 	d(printf ("\n"));
 		
-	time = mktime (&tm);
-#if defined(HAVE_TIMEZONE)
-	time -= timezone;
-#elif defined(HAVE_TM_GMTOFF)
-	time += tm.tm_gmtoff;
+	t = mktime (&tm);
+#if defined (HAVE_TM_GMTOFF)
+	t += tm.tm_gmtoff;
+#elif defined (HAVE_TIMEZONE)
+	if (tm.tm_isdst > 0) {
+#if defined (HAVE_ALTZONE)
+		t -= altzone;
+#else /* !defined (HAVE_ALTZONE) */
+		t -= (timezone - 3600);
+#endif
+	} else {
+		t -= timezone;
+	}
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
 #endif
@@ -649,12 +665,12 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	/* t is now GMT of the time we want, but not offset by the timezone ... */
 	
 	/* this should convert the time to the GMT equiv time */
-	time -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
+	t -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
 	
 	if (tzone)
 		*tzone = offset;
 	
-	return time;
+	return t;
 }
 
 #if 0

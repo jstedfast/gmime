@@ -1,3 +1,10 @@
+2003-10-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Added a check for altzone.
+
+	* gmime/gmime-utils.c (parse_broken_date, parse_rfc822_date):
+	Account for altzone if the system libc defines it.
+
 2003-09-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-host-utils.c (g_gethostbyaddr_r): IPv6
