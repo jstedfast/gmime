@@ -1,5 +1,11 @@
 2002-04-17  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-part.c (g_mime_part_encoding_from_string): Added support
+	for the binary encoding.
+	(g_mime_part_encoding_to_string): Same.
+
+	* gmime-utils.h: Added GMIME_PART_ENCODING_BINARY.
+
 	* gmime-parser.c (parser_scan_multipart_subparts): Don't leak
 	objects!
 

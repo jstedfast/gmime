@@ -743,7 +743,8 @@ g_mime_part_get_content_type (GMimePart *mime_part)
  * Set the content encoding for the specified mime part. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64 and
+ * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
  **/
 void
 g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
@@ -765,8 +766,9 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
  * Returns the content encoding for the specified mime part. The
  * return value will be one of the following:
  * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
- * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 or
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BINARY,
+ * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
+ * or GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
@@ -786,8 +788,9 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  * Returns the encoding type as a string. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
- * and GMIME_PART_ENCODING_UUENCODE.
+ * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
+ * GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * GMIME_PART_ENCODING_UUENCODE.
  **/
 const char *
 g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
@@ -797,6 +800,8 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 		return "7bit";
         case GMIME_PART_ENCODING_8BIT:
 		return "8bit";
+	case GMIME_PART_ENCODING_BINARY:
+		return "binary";
         case GMIME_PART_ENCODING_BASE64:
 		return "base64";
         case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
@@ -820,7 +825,8 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * Returns the encoding string as a GMimePartEncodingType.  Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
+ * GMIME_PART_ENCODING_QUOTEDPRINTABLE and
  * GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
@@ -830,6 +836,8 @@ g_mime_part_encoding_from_string (const char *encoding)
 		return GMIME_PART_ENCODING_7BIT;
 	else if (!g_strcasecmp (encoding, "8bit"))
 		return GMIME_PART_ENCODING_8BIT;
+	else if (!g_strcasecmp (encoding, "binary"))
+		return GMIME_PART_ENCODING_BINARY;
 	else if (!g_strcasecmp (encoding, "base64"))
 		return GMIME_PART_ENCODING_BASE64;
 	else if (!g_strcasecmp (encoding, "quoted-printable"))

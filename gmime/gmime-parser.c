@@ -39,18 +39,6 @@
 
 #define d(x)
 
-
-/* Optimization note: according to gprof, nearly 50% of the time spent
-   in this parser is spent in g_mime_stream_get_type () and other
-   GObject type-casts */
-#undef GMIME_STREAM
-#define GMIME_STREAM(stream) ((GMimeStream *) stream)
-#undef g_mime_stream_unref
-#define g_mime_stream_unref(stream) g_object_unref (stream)
-#undef g_mime_object_unref
-#define g_mime_object_unref(object) g_object_unref (object)
-
-
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_class_finalize (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);
