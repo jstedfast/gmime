@@ -30,4 +30,6 @@ test-streams
 test-mbox
 test-html
 test-iconv
+test-pgp
+test-pgpmime
 gmime.spec
