@@ -1,0 +1,93 @@
+It is my intention to make migrating code using one version of GMime
+to another as easy as I can and so for the most part, I will try not
+to break API compatability between versions, however this isn't always
+easy to do.
+
+This document is intended to help developers port their application(s)
+from one version of GMime to another. For each new major release, I
+will attempt to list the main things to watch out for when migrating
+to the new release from the prior version.
+
+
+Porting from GMime 1.0 to GMime 2.0
+-----------------------------------
+
+The major change here is that I've dropped my own base object class
+and have replaced it with GObject from glib-2.0. This should be a
+pleasant change since you (the developer) will now be able to do many
+more things such as setting arbitrary data on all GMime objects. For
+additional information about GObject, please see the GObject Reference
+Manual at http://developer.gnome.org/doc/API/2.0/gobject/
+
+- The first thing you need to know is that any function returning a
+non-const pointer to any object /must/ be unref'd when you are done
+with it. Since all objects in GMime now subclass GObject, you may
+safely use g_object_unref() (GMimeStream's may be also be unref'd
+using g_mime_stream_unref(), but either way is fine).
+
+Don't forget that g_mime_part_get_content_object() returns a
+ref-counted GMimeDataWrapper object now, and so you /must/ unref it
+when you have finished using it. You must also remember to unref any
+GMimeDataWrapper object that you /set/ on a GMimePart using
+g_mime_part_set_content_object() as the GMimePart will now ref the
+content object that you set on it.
+
+- GMimeMultipart is a new class which is to be used for all multipart
+MIME parts rather than GMimePart (as in 1.0). There are also some
+subclasses of GMimeMultipart for other things.
+
+- g_mime_part_[g,s]et_boundary() have been removed (see above). You
+must now create a GMimeMultipart object and use
+g_mime_multipart_[g,s]et_boundary().
+
+- g_mime_part_add_subpart() has been replaced with
+g_mime_multipart_add_part().
+
+- g_mime_part_foreach() has been replaced with
+g_mime_multipart_foreach() and/or g_mime_message_foreach_part().
+
+- g_mime_part_get_subpart_from_content_id() has been replaced with
+g_mime_multipart_get_subpart_from_content_id().
+
+- Another new class is GMimeMessagePart which is to be used for all
+MIME parts containing an rfc822 message. All 1.0 GMimePart's
+representing message/rfc822 parts (as well as message/news parts?)
+need to be migrated over to be GMimeMessagePart objects.
+
+- GMimeMessagePartial is another class meant for handling the
+message/partial MIME type. All 1.0 GMimePart's holding data of this
+type should be replaced with GMimeMessagePartial objects.
+
+- g_mime_message_write_to_stream() and g_mime_part_write_to_stream()
+functions have been consolidated into a virtual method. Replace calls
+to these functions with g_mime_object_write_to_stream(). Note: while
+g_mime_part_write_to_stream() and g_mime_message_write_to_stream()
+still exist, it is suggested you migrate to
+g_mime_object_write_to_stream(). Same goes for g_mime_part_to_string()
+and g_mime_message_to_string().
+
+- GMimeMessage's structure has changed a bit. You will not be able to
+do message->header, instead you want to do ((GMimeObject *)
+message)->header.
+
+- g_mime_message_set_message_id() now takes a message_id argument
+without the encapsulating <>'s (it now just takes the addr-spec
+portion of the msg-id).
+
+- GMimeFilterFrom has changed slightly, you will want to replace all
+calls to g_mime_filter_from_new () with g_mime_filter_from_new
+(GMIME_FILTER_FROM_MODE_DEFAULT) (GMIME_FILTER_FROM_MODE_DEFAULT is
+equivalent to (int) 0).
+
+- GMimeParser has had a number of API additions, but
+g_mime_parser_construct_part() and g_mime_parser_construct_message()
+still exist, however they no longer take a GMimeStream
+argument. Instead, they take a GMimeParser object.
+
+
+
+If you find more trouble spots when porting your code from GMime 1.0's
+API to GMime 2.0's API, please feel free to send me additional notes
+to add to this porting document.
+
+					-- fejj@ximian.com

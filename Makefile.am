@@ -19,6 +19,7 @@ confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
 
 EXTRA_DIST = 			\
+	PORTING			\
 	gmimeConf.sh.in 	\
 	gmime-2.0.pc.in		\
 	gmime.spec.in 		\
