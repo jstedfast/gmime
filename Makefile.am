@@ -103,7 +103,7 @@ test_mime_LDADD = $(LDADDS)
 test_parser_SOURCES = test-parser.c
 test_parser_LDFLAGS = 
 test_parser_DEPENDENCIES = $(DEPS)
-test_parser_LDADD = -static $(LDADDS)
+test_parser_LDADD = $(LDADDS)
 
 test_streams_SOURCES = test-streams.c
 test_streams_LDFLAGS = 
@@ -177,7 +177,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4 zentimer.h zenprofiler.h
+EXTRA_DIST = iconv-detect.c gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4 zentimer.h zenprofiler.h
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.

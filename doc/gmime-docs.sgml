@@ -1,4 +1,5 @@
 <!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity gmime SYSTEM "sgml/gmime.sgml">
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
@@ -210,6 +211,7 @@
     for the particular function to know for sure whther you need to
     free it or not and how.</para>
 
+    &gmime;
     &gmime-stream;
     &gmime-stream-buffer;
     &gmime-stream-file;

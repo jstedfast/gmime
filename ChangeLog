@@ -1,3 +1,10 @@
+2002-04-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* docs/*: Updated.
+
+	* configure.in: Add $srcdir to the include path so it catches
+	iconv-detect.h.
+
 2002-04-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (datetok): Treat ',' as a token delimeter. Also

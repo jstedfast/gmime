@@ -113,7 +113,7 @@ NAME="FILTERS"
 ><P
 >Stream filters are an efficient way of converting data from
     one format to another. To use a stream filter, you must first
-    construct a GMimeStreamFilter object and then add the desired
+    construct a GMimeStreamFilter stream and then add the desired
     filters to it.</P
 ><P
 >GMime comes equipped with some basic filters:
@@ -143,8 +143,8 @@ NAME="FILTERS"
     messages which means that message bodies are forbidden to contain
     lines starting with "From ". The common way to escape these from
     lines in message bodies is to prepend the line with a greater-than
-    character ('&#62;'). You'll find GMimeFilterFrom handy when dealing
-    with this.</P
+    character ('&#62;') producing "&#62;From ". You'll find GMimeFilterFrom
+    handy when dealing with this.</P
 ><P
 >The GMimeFilterHTML filter converts a normal text stream
     into an html stream. This is especially useful if you are using a

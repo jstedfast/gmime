@@ -616,7 +616,7 @@ Set the root-level MIME part of the message.</para>
 <programlisting>void        g_mime_message_write_to_stream  (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-Write the contents of the MIME Message to <parameter>string</parameter>.</para>
+Write the contents of the MIME Message to <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

@@ -17,6 +17,8 @@
 void        <link linkend="g-mime-charset-init">g_mime_charset_init</link>             (void);
 const char* <link linkend="g-mime-charset-locale-name">g_mime_charset_locale_name</link>      (void);
 const char* <link linkend="g-mime-charset-name">g_mime_charset_name</link>             (const char *charset);
+const char* <link linkend="g-mime-charset-best">g_mime_charset_best</link>             (const char *in,
+                                             <link linkend="size-t">size_t</link> inlen);
 </synopsis>
 </refsynopsisdiv>
 
@@ -74,6 +76,29 @@ Attempts to find an iconv-friendly charset name for <parameter>charset</paramete
 <entry> charset name
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an iconv-friendly charset name for <parameter>charset</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-charset-best">g_mime_charset_best ()</title>
+<programlisting>const char* g_mime_charset_best             (const char *in,
+                                             <link linkend="size-t">size_t</link> inlen);</programlisting>
+<para>
+Computes the best charset to use to encode this text buffer.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> a UTF-8 text buffer
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> length of <parameter>in</parameter>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the charset name best suited for the input text or <literal>NULL</literal> if
+it is US-ASCII safe.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 
