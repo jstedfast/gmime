@@ -26,6 +26,7 @@
 #endif
 
 #include <string.h>
+
 #include "gmime-stream-buffer.h"
 
 #define BLOCK_BUFFER_LEN   4096
