@@ -1,5 +1,9 @@
 2002-06-25  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_decrypt): Ugh, the
+	g_return_val_if_fail()'s should be returning NULL.
+
 	* test-pgp.c: New test suite to make sure that the gpg code works.
 
 	* gmime-gpg-context.c: Keep more state as it seems we needed

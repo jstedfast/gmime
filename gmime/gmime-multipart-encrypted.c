@@ -291,9 +291,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	const char *protocol;
 	char *content_type;
 	
-	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), -1);
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
-	g_return_val_if_fail (ctx->encrypt_protocol != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), NULL);
+	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (ctx->encrypt_protocol != NULL, NULL);
 	
 	if (mpe->decrypted) {
 		/* we seem to have already decrypted the part */
