@@ -32,15 +32,29 @@ extern "C" {
 #include <glib.h>
 #include "gmime-stream.h"
 
-typedef struct _GMimeStreamNull {
-	GMimeStream parent;
+#define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
+#define GMIME_STREAM_NULL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
+#define GMIME_STREAM_NULL_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
+#define GMIME_IS_STREAM_NULL(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_NULL))
+#define GMIME_IS_STREAM_NULL_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_NULL))
+#define GMIME_STREAM_NULL_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNullClass))
+
+typedef struct _GMimeStreamNull GMimeStreamNull;
+typedef struct _GMimeStreamNullClass GMimeStreamNullClass;
+
+struct _GMimeStreamNull {
+	GMimeStream parent_object;
 	
 	size_t written;
-} GMimeStreamNull;
+};
 
-#define GMIME_STREAM_NULL_TYPE g_str_hash ("GMimeStreamNull")
-#define GMIME_IS_STREAM_NULL(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_NULL_TYPE)
-#define GMIME_STREAM_NULL(stream) ((GMimeStreamNull *) stream)
+struct _GMimeStreamNullClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_null_get_type (void);
 
 GMimeStream *g_mime_stream_null_new (void);
 

@@ -47,6 +47,7 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
+
 static GMimeStreamClass *parent_class = NULL;
 
 

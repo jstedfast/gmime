@@ -26,9 +26,16 @@
 #endif
 
 #include <string.h>
+
 #include "gmime-stream-null.h"
 
-static void stream_destroy (GMimeStream *stream);
+static void g_mime_stream_null_base_class_init (GMimeStreamNullClass *klass);
+static void g_mime_stream_null_base_class_finalize (GMimeStreamNullClass *klass);
+static void g_mime_stream_null_class_init (GMimeStreamNullClass *klass);
+static void g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass);
+static void g_mime_stream_null_destroy (GMimeStreamNull *stream);
+static void g_mime_stream_null_finalize (GObject *object);
+
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
@@ -40,23 +47,89 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream stream_template = {
-	NULL, 0,
-	1, 0, 0, 0, stream_destroy,
-	stream_read, stream_write,
-	stream_flush, stream_close,
-	stream_eos, stream_reset,
-	stream_seek, stream_tell,
-	stream_length, stream_substream,
-};
+
+static GMimeStreamClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_null_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamNullClass),
+			(GBaseInitFunc) g_mime_stream_null_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_null_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_null_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStreamNull),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_null_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamNull", &info, 0);
+	}
+	
+	return type;
+}
+
 
 static void
-stream_destroy (GMimeStream *stream)
+g_mime_stream_null_base_class_init (GMimeStreamNullClass *klass)
 {
-	GMimeStreamNull *null = (GMimeStreamNull *) stream;
-	
-	g_free (null);
+	/* reset instance specifc methods that don't get inherited */
+	;
 }
+
+static void
+g_mime_stream_null_base_class_finalize (GMimeStreamNullClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_null_class_init (GMimeStreamNullClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_stream_null_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+	
+	klass->destroy = g_mime_stream_null_destroy;
+}
+
+static void
+g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass)
+{
+	stream->written = 0;
+}
+
+static void
+g_mime_stream_null_destroy (GMimeStreamNull *stream)
+{
+	g_signal_handlers_destroy (G_OBJECT (stream));
+}
+
+static void
+g_mime_stream_null_finalize (GObject *object)
+{
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
@@ -175,9 +248,9 @@ g_mime_stream_null_new (void)
 {
 	GMimeStreamNull *null;
 	
-	null = g_new0 (GMimeStreamNull, 1);
+	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL, NULL);
 	
-	g_mime_stream_construct (GMIME_STREAM (null), &stream_template, GMIME_STREAM_NULL_TYPE, 0, -1);
+	g_mime_stream_construct (GMIME_STREAM (null), 0, -1);
 	
 	return GMIME_STREAM (null);
 }
