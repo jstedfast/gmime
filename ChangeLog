@@ -1,3 +1,10 @@
+2003-03-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-filter-charset.c (filter_filter): Set outlen equal
+	to outbuf - filter->outbuf - this is a much clearer way to
+	calculate the outlen. The other way might have even been wrong.
+	(filter_complete): Same.
+
 2003-03-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Bumped version to 2.0.3
