@@ -358,7 +358,7 @@ g_mime_parser_new (void)
 {
 	GMimeParser *parser;
 	
-	parser = g_object_new (GMIME_TYPE_PARSER, NULL, NULL);
+	parser = g_object_new (GMIME_TYPE_PARSER, NULL);
 	
 	return parser;
 }
@@ -1156,8 +1156,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 		header = header->next;
 	}
 	
-	content_type = parser_content_type (parser);
-	if (!content_type)
+	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
@@ -1259,8 +1258,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		/* get the headers */
 		parser_step_headers (parser);
 		
-		content_type = parser_content_type (parser);
-		if (!content_type)
+		if (!(content_type = parser_content_type (parser)))
 			content_type = g_mime_content_type_new ("text", "plain");
 		
 		parser_unstep (parser);
@@ -1353,8 +1351,7 @@ parser_construct_part (GMimeParser *parser)
 	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
 		;
 	
-	content_type = parser_content_type (parser);
-	if (!content_type)
+	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
@@ -1416,8 +1413,7 @@ parser_construct_message (GMimeParser *parser)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
 	}
 	
-	content_type = parser_content_type (parser);
-	if (!content_type)
+	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
