@@ -1,3 +1,8 @@
+2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c (g_mime_iconv_open): If the from charset is
+	"x-unknown", replace it with the user's locale charset.
+
 2002-06-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_scan_mime_part_content): If the parser
