@@ -1,3 +1,13 @@
+2001-10-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-basic.c (filter_filter): Implemented uuencoding.
+	(filter_complete): Implemented uuencoding.
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): New function to
+	flush the uuencoder.
+	(g_mime_utils_uuencode_step): New function to uuencode a block of
+	data.
+
 2001-10-05  Jeffrey Stedfast  <fejj@ximian.com>
 
 	Fixes for c++ compilation

@@ -107,8 +107,11 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		g_assert (newlen <= len * 4 + 4);
 		break;
 	case GMIME_FILTER_BASIC_UU_ENC:
-		g_message ("FIXME: Implement this");
-		newlen = 0;
+		/* won't go to more than 2 * (x + 2) + 62 */
+		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
+		newlen = g_mime_utils_uuencode_step (in, len, filter->outbuf, basic->uubuf, &basic->state,
+						     &basic->save, &basic->uulen);
+		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
 	case GMIME_FILTER_BASIC_BASE64_DEC:
 		/* output can't possibly exceed the input size */
@@ -155,8 +158,11 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		g_assert (newlen <= len * 4 + 4);
 		break;
 	case GMIME_FILTER_BASIC_UU_ENC:
-		g_message ("FIXME: Implement this");
-		newlen = 0;
+		/* won't go to more than 2 * (x + 2) + 62 */
+		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
+		newlen = g_mime_utils_uuencode_close (in, len, filter->outbuf, basic->uubuf, &basic->state,
+						      &basic->save, &basic->uulen);
+		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
 	case GMIME_FILTER_BASIC_BASE64_DEC:
 		/* output can't possibly exceed the input size */

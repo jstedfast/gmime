@@ -36,6 +36,7 @@
 
 #define d(x)
 
+#define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 
 #define GMIME_FOLD_LEN  76
@@ -1129,18 +1130,18 @@ g_mime_utils_8bit_header_encode (const guchar *in)
  * bit.
  **/
 gint
-g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	guchar *outptr = out;
-	gint c1, c2;
+	unsigned char *outptr = out;
+	int c1, c2;
 	
 	if (inlen > 0)
 		outptr += g_mime_utils_base64_encode_step (in, inlen, outptr, state, save);
 	
-	c1 = ((guchar *)save)[1];
-	c2 = ((guchar *)save)[2];
+	c1 = ((unsigned char *)save)[1];
+	c2 = ((unsigned char *)save)[2];
 	
-	switch (((guchar *)save)[0]) {
+	switch (((unsigned char *)save)[0]) {
 	case 2:
 		outptr[2] = base64_alphabet [(c2 & 0x0f) << 2];
 		goto skip;
@@ -1176,10 +1177,10 @@ g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out, gin
  * invocation).
  **/
 gint
-g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
+g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
 	
 	if (inlen <= 0)
 		return 0;
@@ -1189,17 +1190,17 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 	
 	d(printf("we have %d chars, and %d saved chars\n", inlen, ((gchar *)save)[0]));
 	
-	if (inlen + ((guchar *)save)[0] > 2) {
-		const guchar *inend = in + inlen - 2;
+	if (inlen + ((unsigned char *)save)[0] > 2) {
+		const unsigned char *inend = in + inlen - 2;
 		register int c1 = 0, c2 = 0, c3 = 0;
 		register int already;
 		
 		already = *state;
 		
 		switch (((gchar *)save)[0]) {
-		case 1:	c1 = ((guchar *)save)[1]; goto skip1;
-		case 2:	c1 = ((guchar *)save)[1];
-			c2 = ((guchar *)save)[2]; goto skip2;
+		case 1:	c1 = ((unsigned char *)save)[1]; goto skip1;
+		case 2:	c1 = ((unsigned char *)save)[1];
+			c2 = ((unsigned char *)save)[2]; goto skip2;
 		}
 		
 		/* yes, we jump into the loop, no i'm not going to change it, its beautiful! */
@@ -1220,7 +1221,7 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
 			}
 		}
 		
-		((guchar *)save)[0] = 0;
+		((unsigned char *)save)[0] = 0;
 		inlen = 2 - (inptr - inend);
 		*state = already;
 	}
@@ -1260,37 +1261,37 @@ g_mime_utils_base64_encode_step (const guchar *in, gint inlen, guchar *out, gint
  * Returns the number of bytes decoded (which have been dumped in #out).
  **/
 gint
-g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint *save)
+g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar c;
-	register guint v;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	register guint32 saved;
+	unsigned char c;
 	int i;
 	
 	inend = in + inlen;
 	outptr = out;
 	
 	/* convert 4 base64 bytes to 3 normal bytes */
-	v = *save;
+	saved = *save;
 	i = *state;
 	inptr = in;
 	while (inptr < inend) {
 		c = gmime_base64_rank[*inptr++];
 		if (c != 0xff) {
-			v = (v << 6) | c;
+			saved = (saved << 6) | c;
 			i++;
 			if (i == 4) {
-				*outptr++ = v >> 16;
-				*outptr++ = v >> 8;
-				*outptr++ = v;
+				*outptr++ = saved >> 16;
+				*outptr++ = saved >> 8;
+				*outptr++ = saved;
 				i = 0;
 			}
 		}
 	}
 	
-	*save = v;
+	*save = saved;
 	*state = i;
 	
 	/* quick scan back for '=' on the end somewhere */
@@ -1311,6 +1312,160 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
 
 
 /**
+ * g_mime_utils_uuencode_close: uuencode a chunk of data
+ * @in: input stream
+ * @inlen: input stream length
+ * @out: output stream
+ * @uubuf: temporary buffer of 60 bytes
+ * @state: holds the number of bits that are stored in @save
+ * @save: leftover bits that have not yet been encoded
+ * @uulen: holds the value of the length-char which is used to calculate
+ *         how many more chars need to be decoded for that 'line'
+ *
+ * Returns the number of bytes encoded. Call this when finished
+ * encoding data with uuencode_step to flush off the last little
+ * bit.
+ **/
+gint
+g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
+{
+	register unsigned char *outptr, *bufptr;
+	const register unsigned char *inptr;
+	register guint32 saved;
+	int i;
+	
+	outptr = out;
+	
+	if (inlen > 0)
+		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save, uulen);
+	
+	bufptr = uubuf + ((*uulen / 3) * 4);
+	saved = *save;
+	i = *state;
+	
+	if (i > 0) {
+		while (i < 3) {
+			saved <<= 8 | 0;
+			i++;
+		}
+		
+		if (i == 3) {
+			/* convert 3 normal bytes into 4 uuencoded bytes */
+			unsigned char b0, b1, b2;
+			
+			b0 = saved >> 16;
+			b1 = saved >> 8 & 0xff;
+			b2 = saved & 0xff;
+			
+			*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+		}
+	}
+	
+	if (*uulen || *state) {
+		int cplen = (((*uulen + (*state ? 3 : 0)) / 3) * 4);
+		
+		*outptr++ = GMIME_UUENCODE_CHAR (*uulen + *state);
+		memcpy (outptr, uubuf, cplen);
+		outptr += cplen;
+		*outptr++ = '\n';
+		*uulen = 0;
+	}
+	
+	*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
+	*outptr++ = '\n';
+	
+	*save = 0;
+	*state = 0;
+	
+	return (outptr - out);
+}
+
+
+/**
+ * g_mime_utils_uuencode_step: uuencode a chunk of data
+ * @in: input stream
+ * @len: input stream length
+ * @out: output stream
+ * @uubuf: temporary buffer of 60 bytes
+ * @state: holds the number of bits that are stored in @save
+ * @save: leftover bits that have not yet been encoded
+ * @uulen: holds the value of the length-char which is used to calculate
+ *         how many more chars need to be decoded for that 'line'
+ *
+ * Returns the number of bytes encoded. Performs an 'encode step',
+ * only encodes blocks of 45 characters to the output at a time, saves
+ * left-over state in @uubuf, @state and @save (initialize to 0 on first
+ * invocation).
+ **/
+gint
+g_mime_utils_uuencode_step (const guchar *in, gint inlen, guchar *out, guchar *uubuf, gint *state, guint32 *save, gchar *uulen)
+{
+	register unsigned char *outptr, *bufptr;
+	const register unsigned char *inptr;
+	const unsigned char *inend;
+	register guint32 saved;
+	int i;
+	
+	if (*uulen <= 0)
+		*uulen = 0;
+	
+	inptr = in;
+	inend = in + inlen;
+	
+	outptr = out;
+	
+	bufptr = uubuf + ((*uulen / 3) * 4);
+	
+	saved = *save;
+	i = *state;
+	
+	while (inptr < inend) {
+		while (*uulen < 45 && inptr < inend) {
+			while (i < 3 && inptr < inend) {
+				saved = (saved << 8) | *inptr++;
+				i++;
+			}
+			
+			if (i == 3) {
+				/* convert 3 normal bytes into 4 uuencoded bytes */
+				unsigned char b0, b1, b2;
+				
+				b0 = saved >> 16;
+				b1 = saved >> 8 & 0xff;
+				b2 = saved & 0xff;
+				
+				*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
+				*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+				
+				i = 0;
+				saved = 0;
+				*uulen += 3;
+			}
+		}
+		
+		if (*uulen >= 45) {
+			*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
+			memcpy (outptr, uubuf, ((*uulen / 3) * 4));
+			outptr += ((*uulen / 3) * 4);
+			*outptr++ = '\n';
+			*uulen = 0;
+			bufptr = uubuf;
+		}
+	}
+	
+	*save = saved;
+	*state = i;
+	
+	return (outptr - out);
+}
+
+
+/**
  * g_mime_utils_uudecode_step: uudecode a chunk of data
  * @in: input stream
  * @inlen: max length of data to decode ( normally strlen(in) ??)
@@ -1320,17 +1475,17 @@ g_mime_utils_base64_decode_step (const guchar *in, gint inlen, guchar *out, gint
  * @uulen: holds the value of the length-char which is used to calculate
  *         how many more chars need to be decoded for that 'line'
  *
- * Returns the number of bytes decoded. Performs a 'uudecode step' on
+ * Returns the number of bytes decoded. Performs a 'decode step' on
  * a chunk of uuencoded data. Assumes the "begin <mode> <file name>"
  * line has been stripped off.
  **/
 gint
 g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *state, guint32 *save, gchar *uulen)
 {
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar ch;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	unsigned char ch;
 	register guint32 saved;
 	gboolean last_was_eoln;
 	int i;
@@ -1366,7 +1521,7 @@ g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *sta
 			i++;
 			if (i == 4) {
 				/* convert 4 uuencoded bytes to 3 normal bytes */
-				guchar b0, b1, b2, b3;
+				unsigned char b0, b1, b2, b3;
 				
 				b0 = saved >> 24;
 				b1 = saved >> 16 & 0xff;
@@ -1417,7 +1572,7 @@ g_mime_utils_uudecode_step (const guchar *in, gint inlen, guchar *out, gint *sta
 gint
 g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
-	register guchar *outptr = out;
+	register unsigned char *outptr = out;
 	int last;
 	
 	if (inlen > 0)
@@ -1460,9 +1615,9 @@ g_mime_utils_quoted_encode_close (const guchar *in, gint inlen, guchar *out, gin
 gint
 g_mime_utils_quoted_encode_step (const guchar *in, gint inlen, guchar *out, gint *state, gint *save)
 {
-	const register guchar *inptr, *inend;
-	register guchar *outptr;
-	guchar c;
+	const register unsigned char *inptr, *inend;
+	register unsigned char *outptr;
+	unsigned char c;
 	register int sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
 	
@@ -1559,10 +1714,10 @@ g_mime_utils_quoted_decode_step (const guchar *in, gint inlen, guchar *out, gint
 	 * Note: Trailing rubbish (at the end of input), like = or =x
 	 * or =\r will be lost.
 	 */
-	const register guchar *inptr;
-	register guchar *outptr;
-	const guchar *inend;
-	guchar c;
+	const register unsigned char *inptr;
+	register unsigned char *outptr;
+	const unsigned char *inend;
+	unsigned char c;
 	int state, save;
 	
 	inend = in + inlen;
