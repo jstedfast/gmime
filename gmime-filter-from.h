@@ -31,7 +31,7 @@ extern "C" {
 
 #include "gmime-filter.h"
 
-typedef enum _GMimeFilterFromMode {
+typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
 	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
 	GMIME_FILTER_FROM_MODE_ARMOR    = 2,

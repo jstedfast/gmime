@@ -82,7 +82,7 @@ void        <link linkend="g-mime-part-set-content-byte-array">g_mime_part_set_c
                                              <link linkend="GByteArray">GByteArray</link> *content);
 const char* <link linkend="g-mime-part-get-content">g_mime_part_get_content</link>         (const <link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="size-t">size_t</link> *len);
-const <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* <link linkend="g-mime-part-get-content-object">g_mime_part_get_content_object</link>
+<link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* <link linkend="g-mime-part-get-content-object">g_mime_part_get_content_object</link>
                                             (const <link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content-object">g_mime_part_set_content_object</link>  (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *content);
@@ -778,7 +778,7 @@ and sets <literal>len</literal> to the length of the buffer.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-get-content-object">g_mime_part_get_content_object ()</title>
-<programlisting>const <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* g_mime_part_get_content_object
+<programlisting><link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* g_mime_part_get_content_object
                                             (const <link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
 <para>
 Gets the internal data-wrapper of the specified mime part, or <literal>NULL</literal>

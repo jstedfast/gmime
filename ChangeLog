@@ -1,5 +1,9 @@
 2002-08-03  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* doc/*: Updated.
+
+2002-08-03  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-message.c (g_mime_message_set_message_id): Revert Charles'
 	previous fix and just g_return_if_fail() if the message_id is NULL
 	instead.

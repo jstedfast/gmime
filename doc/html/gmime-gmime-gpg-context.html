@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-stream-buffer</TITLE
+>GMimeGpgContext</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-stream"
-HREF="gmime-gmime-stream.html"><LINK
+TITLE="GMimeCipherContext"
+HREF="gmime-gmime-cipher-context.html"><LINK
 REL="NEXT"
-TITLE="gmime-stream-cat"
-HREF="gmime-gmime-stream-cat.html"></HEAD
+TITLE="GMimeSession"
+HREF="gmime-gmime-session.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-cipher-context.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-session.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-STREAM-BUFFER"
->gmime-stream-buffer</A
+NAME="GMIME-GMIME-GPG-CONTEXT"
+>GMimeGpgContext</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN687"
+NAME="AEN9219"
 ></A
 ><H2
 >Name</H2
->gmime-stream-buffer&nbsp;--&nbsp;</DIV
+>GMimeGpgContext&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN690"
+NAME="AEN9222"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,54 +146,44 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-enum        <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
->;
 struct      <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFER"
->GMimeStreamBuffer</A
+HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
+>GMimeGpgContext</A
 >;
 <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
 >* <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-NEW"
->g_mime_stream_buffer_new</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
-                                             <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);
+HREF="gmime-gmime-gpg-context.html#G-MIME-GPG-CONTEXT-NEW"
+>g_mime_gpg_context_new</A
+>  (<A
+HREF="gmime-gmime-session.html#GMIMESESSION"
+>GMimeSession</A
+> *session,
+                                             const char *path);
 <GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-GETS"
->g_mime_stream_buffer_gets</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-gpg-context.html#G-MIME-GPG-CONTEXT-GET-ALWAYS-TRUST"
+>g_mime_gpg_context_get_always_trust</A
+>
+                                            (<A
+HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
+>GMimeGpgContext</A
+> *ctx);
 void        <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-READLN"
->g_mime_stream_buffer_readln</A
->     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
+HREF="gmime-gmime-gpg-context.html#G-MIME-GPG-CONTEXT-SET-ALWAYS-TRUST"
+>g_mime_gpg_context_set_always_trust</A
+>
+                                            (<A
+HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
+>GMimeGpgContext</A
+> *ctx,
                                              <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> trust);
 &#13;</PRE
 ></TD
 ></TR
@@ -202,7 +192,7 @@ HREF="GBYTEARRAY"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN706"
+NAME="AEN9235"
 ></A
 ><H2
 >Description</H2
@@ -212,20 +202,20 @@ NAME="AEN706"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN709"
+NAME="AEN9238"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN711"
+NAME="AEN9240"
 ></A
 ><H3
 ><A
-NAME="GMIMESTREAMBUFFERMODE"
+NAME="GMIMEGPGCONTEXT"
 ></A
->enum GMimeStreamBufferMode</H3
+>struct GMimeGpgContext</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -235,47 +225,11 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_STREAM_BUFFER_CACHE_READ,
-	GMIME_STREAM_BUFFER_BLOCK_READ,
-	GMIME_STREAM_BUFFER_BLOCK_WRITE,
-} GMimeStreamBufferMode;</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN716"
-></A
-><H3
-><A
-NAME="GMIMESTREAMBUFFER"
-></A
->struct GMimeStreamBuffer</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->struct GMimeStreamBuffer {
-	GMimeStream parent_object;
+>struct GMimeGpgContext {
+	GMimeCipherContext parent_object;
 	
-	GMimeStream *source;
-	
-	unsigned char *buffer;
-	unsigned char *bufptr;
-	unsigned char *bufend;
-	ssize_t buflen;
-	
-	GMimeStreamBufferMode mode;
+	char *path;
+	gboolean always_trust;
 };</PRE
 ></TD
 ></TR
@@ -286,13 +240,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN721"
+NAME="AEN9245"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-NEW"
+NAME="G-MIME-GPG-CONTEXT-NEW"
 ></A
->g_mime_stream_buffer_new ()</H3
+>g_mime_gpg_context_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -303,27 +257,24 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* g_mime_stream_buffer_new       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
-                                             <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);</PRE
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+>* g_mime_gpg_context_new  (<A
+HREF="gmime-gmime-session.html#GMIMESESSION"
+>GMimeSession</A
+> *session,
+                                             const char *path);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeStreamBuffer object.</P
+>Creates a new gpg cipher context object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN730"
+NAME="AEN9253"
 ></A
 ><P
 ></P
@@ -343,14 +294,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->source</I
+>session</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> source stream</TD
+> session</TD
 ></TR
 ><TR
 ><TD
@@ -360,14 +311,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->mode</I
+>path</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> buffering mode</TD
+> path to gpg binary</TD
 ></TR
 ><TR
 ><TD
@@ -382,17 +333,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new buffer stream with source <TT
-CLASS="PARAMETER"
-><I
->source</I
-></TT
-> and mode <TT
-CLASS="PARAMETER"
-><I
->mode</I
-></TT
->.</TD
+>a new gpg cipher context object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -403,13 +344,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN749"
+NAME="AEN9270"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-GETS"
+NAME="G-MIME-GPG-CONTEXT-GET-ALWAYS-TRUST"
 ></A
->g_mime_stream_buffer_gets ()</H3
+>g_mime_gpg_context_get_always_trust ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -420,47 +361,22 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     g_mime_stream_buffer_gets       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);</PRE
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_gpg_context_get_always_trust
+                                            (<A
+HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
+>GMimeGpgContext</A
+> *ctx);</PRE
 ></TD
 ></TR
 ></TABLE
-><P
->Reads in at most one less than <TT
-CLASS="PARAMETER"
-><I
->max</I
-></TT
-> characters from <TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
-> and
-stores them into the buffer pointed to by <TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
->. Reading stops after
-an EOS or newline (#'\n'). If a newline is read, it is stored into
-the buffer. A #'\0' is stored after the last character in the
-buffer.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN761"
+NAME="AEN9277"
 ></A
 ><P
 ></P
@@ -480,48 +396,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>ctx</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> line buffer</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->max</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> max length of a line</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -536,13 +418,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of characters read into <TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
-> on success and -1
-on fail.</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -553,13 +429,13 @@ on fail.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN783"
+NAME="AEN9290"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-READLN"
+NAME="G-MIME-GPG-CONTEXT-SET-ALWAYS-TRUST"
 ></A
->g_mime_stream_buffer_readln ()</H3
+>g_mime_gpg_context_set_always_trust ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -569,30 +445,32 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_stream_buffer_readln     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
+>void        g_mime_gpg_context_set_always_trust
+                                            (<A
+HREF="gmime-gmime-gpg-context.html#GMIMEGPGCONTEXT"
+>GMimeGpgContext</A
+> *ctx,
                                              <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);</PRE
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> trust);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Reads a single line into <TT
+>Sets the <TT
 CLASS="PARAMETER"
 ><I
->buffer</I
+>always_trust</I
 ></TT
->.</P
+> flag on the gpg context which is used for
+encryption.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN792"
+NAME="AEN9299"
 ></A
 ><P
 ></P
@@ -612,14 +490,20 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>ctx</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> stream</TD
+> gpg context
+<TT
+CLASS="PARAMETER"
+><I
+>always_trust</I
+></TT
+> always truct flag</TD
 ></TR
 ><TR
 ><TD
@@ -629,14 +513,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->buffer</I
+>trust</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output buffer</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -660,7 +544,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-cipher-context.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -714,7 +598,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-session.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -732,7 +616,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream</B
+>GMimeCipherContext</B
 ></FONT
 ></TD
 ><TD
@@ -742,7 +626,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-cat</B
+>GMimeSession</B
 ></FONT
 ></TD
 ></TR

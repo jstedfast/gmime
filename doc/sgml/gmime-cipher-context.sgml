@@ -1,0 +1,544 @@
+<refentry id="gmime-gmime-cipher-context">
+<refmeta>
+<refentrytitle>GMimeCipherContext</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>GMimeCipherContext</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+#define     <link linkend="GMIME-CIPHER-CONTEXT-CAPS">GMIME_CIPHER_CONTEXT</link>            (obj)
+enum        <link linkend="GMimeCipherHash">GMimeCipherHash</link>;
+struct      <link linkend="GMimeCipherContext">GMimeCipherContext</link>;
+struct      <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>;
+<link linkend="GMimeCipherHash">GMimeCipherHash</link> <link linkend="g-mime-cipher-hash-id">g_mime_cipher_hash_id</link>       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *hash);
+const char* <link linkend="g-mime-cipher-hash-name">g_mime_cipher_hash_name</link>         (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash);
+int         <link linkend="g-mime-cipher-sign">g_mime_cipher_sign</link>              (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+<link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-cipher-verify">g_mime_cipher_verify</link>   (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *sigstream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-encrypt">g_mime_cipher_encrypt</link>           (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="gboolean">gboolean</link> sign,
+                                             const char *userid,
+                                             <link linkend="GPtrArray">GPtrArray</link> *recipients,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-decrypt">g_mime_cipher_decrypt</link>           (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-import">g_mime_cipher_import</link>            (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-export">g_mime_cipher_export</link>            (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GPtrArray">GPtrArray</link> *keys,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+void        <link linkend="g-mime-cipher-validity-init">g_mime_cipher_validity_init</link>     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
+<link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-cipher-validity-new">g_mime_cipher_validity_new</link>
+                                            (void);
+void        <link linkend="g-mime-cipher-validity-clear">g_mime_cipher_validity_clear</link>    (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
+void        <link linkend="g-mime-cipher-validity-free">g_mime_cipher_validity_free</link>     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-cipher-validity-get-valid">g_mime_cipher_validity_get_valid</link>
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
+void        <link linkend="g-mime-cipher-validity-set-valid">g_mime_cipher_validity_set_valid</link>
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
+                                             <link linkend="gboolean">gboolean</link> valid);
+const char* <link linkend="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description</link>
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
+void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher_validity_set_description</link>
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
+                                             const char *description);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMIME-CIPHER-CONTEXT-CAPS">GMIME_CIPHER_CONTEXT()</title>
+<programlisting>#define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
+</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>obj</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeCipherHash">enum GMimeCipherHash</title>
+<programlisting>typedef enum {
+	GMIME_CIPHER_HASH_DEFAULT,
+	GMIME_CIPHER_HASH_MD2,
+	GMIME_CIPHER_HASH_MD5,
+	GMIME_CIPHER_HASH_SHA1,
+	GMIME_CIPHER_HASH_RIPEMD160,
+	GMIME_CIPHER_HASH_TIGER192,
+	GMIME_CIPHER_HASH_HAVAL5160
+} GMimeCipherHash;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeCipherContext">struct GMimeCipherContext</title>
+<programlisting>struct GMimeCipherContext {
+	GObject parent_object;
+	
+	GMimeSession *session;
+	
+	/* these must be set by the subclass */
+	const char *sign_protocol;
+	const char *encrypt_protocol;
+	const char *key_protocol;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMimeCipherValidity">struct GMimeCipherValidity</title>
+<programlisting>struct GMimeCipherValidity;</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-hash-id">g_mime_cipher_hash_id ()</title>
+<programlisting><link linkend="GMimeCipherHash">GMimeCipherHash</link> g_mime_cipher_hash_id       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *hash);</programlisting>
+<para>
+Gets the hash name based on the hash id <parameter>hash</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry> hash id
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the equivalent hash name or <literal>NULL</literal> on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-hash-name">g_mime_cipher_hash_name ()</title>
+<programlisting>const char* g_mime_cipher_hash_name         (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash);</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-sign">g_mime_cipher_sign ()</title>
+<programlisting>int         g_mime_cipher_sign              (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Signs the input stream and writes the resulting signature to the output stream.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>userid</parameter>&nbsp;:</entry>
+<entry> private key to use to sign the stream
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry> preferred Message-Integrity-Check hash algorithm
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>ostream</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-verify">g_mime_cipher_verify ()</title>
+<programlisting><link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* g_mime_cipher_verify   (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *sigstream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Verifies the signature. If <parameter>istream</parameter> is a clearsigned stream,
+you should pass <literal>NULL</literal> as the sigstream parameter. Otherwise
+<parameter>sigstream</parameter> is assumed to be the signature stream and is used to
+verify the integirity of the <parameter>istream</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry> secure hash used
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>sigstream</parameter>&nbsp;:</entry>
+<entry> optional detached-signature stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeCipherValidity structure containing information
+about the integrity of the input stream or <literal>NULL</literal> on failure to
+execute at all.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-encrypt">g_mime_cipher_encrypt ()</title>
+<programlisting>int         g_mime_cipher_encrypt           (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="gboolean">gboolean</link> sign,
+                                             const char *userid,
+                                             <link linkend="GPtrArray">GPtrArray</link> *recipients,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Encrypts (and optionally signs) the cleartext input stream and
+writes the resulting ciphertext to the output stream.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>sign</parameter>&nbsp;:</entry>
+<entry> sign as well as encrypt
+</entry></row>
+<row><entry align="right"><parameter>userid</parameter>&nbsp;:</entry>
+<entry> key id (or email address) to use when signing (assuming <parameter>sign</parameter> is <literal>TRUE</literal>)
+</entry></row>
+<row><entry align="right"><parameter>recipients</parameter>&nbsp;:</entry>
+<entry> an array of recipient key ids and/or email addresses
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> cleartext input stream
+</entry></row>
+<row><entry align="right"><parameter>ostream</parameter>&nbsp;:</entry>
+<entry> ciphertext output stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-decrypt">g_mime_cipher_decrypt ()</title>
+<programlisting>int         g_mime_cipher_decrypt           (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Decrypts the ciphertext input stream and writes the resulting
+cleartext to the output stream.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> input/ciphertext stream
+</entry></row>
+<row><entry align="right"><parameter>ostream</parameter>&nbsp;:</entry>
+<entry> output/cleartext stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 for fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-import">g_mime_cipher_import ()</title>
+<programlisting>int         g_mime_cipher_import            (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Imports a stream of keys/certificates contained within <parameter>istream</parameter>
+into the key/certificate database controlled by <parameter>ctx</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> input stream (containing keys)
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-export">g_mime_cipher_export ()</title>
+<programlisting>int         g_mime_cipher_export            (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GPtrArray">GPtrArray</link> *keys,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Exports the keys/certificates in <parameter>keys</parameter> to the stream <parameter>ostream</parameter> from
+the key/certificate database controlled by <parameter>ctx</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>keys</parameter>&nbsp;:</entry>
+<entry> an array of key ids
+</entry></row>
+<row><entry align="right"><parameter>ostream</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-init">g_mime_cipher_validity_init ()</title>
+<programlisting>void        g_mime_cipher_validity_init     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
+<para>
+Initializes the validity structure.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-new">g_mime_cipher_validity_new ()</title>
+<programlisting><link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* g_mime_cipher_validity_new
+                                            (void);</programlisting>
+<para>
+Creates a new validity structure.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new validity structure.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-clear">g_mime_cipher_validity_clear ()</title>
+<programlisting>void        g_mime_cipher_validity_clear    (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
+<para>
+Clears the contents of the validity structure.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-free">g_mime_cipher_validity_free ()</title>
+<programlisting>void        g_mime_cipher_validity_free     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
+<para>
+Frees the memory used by <parameter>validity</parameter> back to the system.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-get-valid">g_mime_cipher_validity_get_valid ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_cipher_validity_get_valid
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> if <parameter>validity</parameter> is valid.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-set-valid">g_mime_cipher_validity_set_valid ()</title>
+<programlisting>void        g_mime_cipher_validity_set_valid
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
+                                             <link linkend="gboolean">gboolean</link> valid);</programlisting>
+<para>
+Sets the validness on the validity structure.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+<row><entry align="right"><parameter>valid</parameter>&nbsp;:</entry>
+<entry> <literal>TRUE</literal> if valid else <literal>FALSE</literal>
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-get-description">g_mime_cipher_validity_get_description ()</title>
+<programlisting>const char* g_mime_cipher_validity_get_description
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>any description set on the validity structure.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-validity-set-description">g_mime_cipher_validity_set_description ()</title>
+<programlisting>void        g_mime_cipher_validity_set_description
+                                            (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity,
+                                             const char *description);</programlisting>
+<para>
+Sets the description on the validity structure.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>validity</parameter>&nbsp;:</entry>
+<entry> validity structure
+</entry></row>
+<row><entry align="right"><parameter>description</parameter>&nbsp;:</entry>
+<entry> validity description
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

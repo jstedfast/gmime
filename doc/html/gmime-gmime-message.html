@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-multipart"
-HREF="gmime-gmime-multipart.html"><LINK
+TITLE="GMimeMultipartSigned"
+HREF="gmime-gmime-multipart-signed.html"><LINK
 REL="NEXT"
-TITLE="gmime-message-partial"
-HREF="gmime-gmime-message-partial.html"></HEAD
+TITLE="GMimeMessagePart"
+HREF="gmime-gmime-message-part.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-multipart.html"
+HREF="gmime-gmime-multipart-signed.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-message-partial.html"
+HREF="gmime-gmime-message-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-MESSAGE"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN5190"
+NAME="AEN5483"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN5190"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN5193"
+NAME="AEN5486"
 ></A
 ><H2
 >Synopsis</H2
@@ -398,7 +398,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5259"
+NAME="AEN5552"
 ></A
 ><H2
 >Description</H2
@@ -408,14 +408,14 @@ NAME="AEN5259"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN5262"
+NAME="AEN5555"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5264"
+NAME="AEN5557"
 ></A
 ><H3
 ><A
@@ -431,7 +431,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_RECIPIENT_TYPE_TO</PRE
+>#define	GMIME_RECIPIENT_TYPE_TO  "To"</PRE
 ></TD
 ></TR
 ></TABLE
@@ -443,7 +443,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5270"
+NAME="AEN5563"
 ></A
 ><H3
 ><A
@@ -459,7 +459,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_RECIPIENT_TYPE_CC</PRE
+>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"</PRE
 ></TD
 ></TR
 ></TABLE
@@ -471,7 +471,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5276"
+NAME="AEN5569"
 ></A
 ><H3
 ><A
@@ -487,7 +487,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_RECIPIENT_TYPE_BCC</PRE
+>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"</PRE
 ></TD
 ></TR
 ></TABLE
@@ -499,7 +499,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5282"
+NAME="AEN5575"
 ></A
 ><H3
 ><A
@@ -541,7 +541,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5287"
+NAME="AEN5580"
 ></A
 ><H3
 ><A
@@ -588,7 +588,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5298"
+NAME="AEN5591"
 ></A
 ><P
 ></P
@@ -641,7 +641,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5311"
+NAME="AEN5604"
 ></A
 ><H3
 ><A
@@ -678,7 +678,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5319"
+NAME="AEN5612"
 ></A
 ><P
 ></P
@@ -733,7 +733,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5332"
+NAME="AEN5625"
 ></A
 ><H3
 ><A
@@ -768,7 +768,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5340"
+NAME="AEN5633"
 ></A
 ><P
 ></P
@@ -821,7 +821,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5353"
+NAME="AEN5646"
 ></A
 ><H3
 ><A
@@ -852,7 +852,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5360"
+NAME="AEN5653"
 ></A
 ><P
 ></P
@@ -907,7 +907,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5373"
+NAME="AEN5666"
 ></A
 ><H3
 ><A
@@ -942,7 +942,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5381"
+NAME="AEN5674"
 ></A
 ><P
 ></P
@@ -995,7 +995,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5394"
+NAME="AEN5687"
 ></A
 ><H3
 ><A
@@ -1039,7 +1039,7 @@ HREF="gmime-gmime-message.html#GMIME-RECIPIENT-TYPE-BCC-CAPS"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5404"
+NAME="AEN5697"
 ></A
 ><P
 ></P
@@ -1128,7 +1128,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5425"
+NAME="AEN5718"
 ></A
 ><H3
 ><A
@@ -1174,7 +1174,7 @@ specified in rfc822.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5435"
+NAME="AEN5728"
 ></A
 ><P
 ></P
@@ -1246,7 +1246,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5452"
+NAME="AEN5745"
 ></A
 ><H3
 ><A
@@ -1302,7 +1302,7 @@ HREF="gmime-gmime-message.html#GMIME-RECIPIENT-TYPE-BCC-CAPS"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5465"
+NAME="AEN5758"
 ></A
 ><P
 ></P
@@ -1373,7 +1373,7 @@ Message.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5482"
+NAME="AEN5775"
 ></A
 ><H3
 ><A
@@ -1404,7 +1404,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5489"
+NAME="AEN5782"
 ></A
 ><P
 ></P
@@ -1459,7 +1459,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5502"
+NAME="AEN5795"
 ></A
 ><H3
 ><A
@@ -1489,7 +1489,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5509"
+NAME="AEN5802"
 ></A
 ><P
 ></P
@@ -1542,7 +1542,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5522"
+NAME="AEN5815"
 ></A
 ><H3
 ><A
@@ -1577,7 +1577,7 @@ HREF="TIME-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5530"
+NAME="AEN5823"
 ></A
 ><P
 ></P
@@ -1649,7 +1649,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5547"
+NAME="AEN5840"
 ></A
 ><H3
 ><A
@@ -1693,7 +1693,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5557"
+NAME="AEN5850"
 ></A
 ><P
 ></P
@@ -1765,7 +1765,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5574"
+NAME="AEN5867"
 ></A
 ><H3
 ><A
@@ -1795,7 +1795,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5581"
+NAME="AEN5874"
 ></A
 ><P
 ></P
@@ -1848,7 +1848,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5594"
+NAME="AEN5887"
 ></A
 ><H3
 ><A
@@ -1879,7 +1879,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5601"
+NAME="AEN5894"
 ></A
 ><P
 ></P
@@ -1934,7 +1934,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5614"
+NAME="AEN5907"
 ></A
 ><H3
 ><A
@@ -1969,7 +1969,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5622"
+NAME="AEN5915"
 ></A
 ><P
 ></P
@@ -2022,7 +2022,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5635"
+NAME="AEN5928"
 ></A
 ><H3
 ><A
@@ -2055,7 +2055,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5642"
+NAME="AEN5935"
 ></A
 ><P
 ></P
@@ -2127,7 +2127,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5659"
+NAME="AEN5952"
 ></A
 ><H3
 ><A
@@ -2160,7 +2160,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5666"
+NAME="AEN5959"
 ></A
 ><P
 ></P
@@ -2232,7 +2232,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5683"
+NAME="AEN5976"
 ></A
 ><H3
 ><A
@@ -2272,7 +2272,7 @@ CLASS="LITERAL"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5692"
+NAME="AEN5985"
 ></A
 ><P
 ></P
@@ -2345,7 +2345,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5710"
+NAME="AEN6003"
 ></A
 ><H3
 ><A
@@ -2379,7 +2379,7 @@ HREF="gmime-gmime-object.html#GMIMEOBJECT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5718"
+NAME="AEN6011"
 ></A
 ><P
 ></P
@@ -2434,7 +2434,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5731"
+NAME="AEN6024"
 ></A
 ><H3
 ><A
@@ -2476,7 +2476,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5741"
+NAME="AEN6034"
 ></A
 ><P
 ></P
@@ -2546,7 +2546,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5758"
+NAME="AEN6051"
 ></A
 ><H3
 ><A
@@ -2581,7 +2581,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5766"
+NAME="AEN6059"
 ></A
 ><P
 ></P
@@ -2634,7 +2634,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5779"
+NAME="AEN6072"
 ></A
 ><H3
 ><A
@@ -2678,7 +2678,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5789"
+NAME="AEN6082"
 ></A
 ><P
 ></P
@@ -2782,7 +2782,7 @@ recommended that you traverse the MIME structure yourself.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5813"
+NAME="AEN6106"
 ></A
 ><H3
 ><A
@@ -2812,7 +2812,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5820"
+NAME="AEN6113"
 ></A
 ><P
 ></P
@@ -2865,7 +2865,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5833"
+NAME="AEN6126"
 ></A
 ><H3
 ><A
@@ -2908,7 +2908,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5843"
+NAME="AEN6136"
 ></A
 ><P
 ></P
@@ -2993,7 +2993,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-multipart.html"
+HREF="gmime-gmime-multipart-signed.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -3047,7 +3047,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-message-partial.html"
+HREF="gmime-gmime-message-part.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -3065,7 +3065,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-multipart</B
+>GMimeMultipartSigned</B
 ></FONT
 ></TD
 ><TD
@@ -3075,7 +3075,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-message-partial</B
+>GMimeMessagePart</B
 ></FONT
 ></TD
 ></TR

@@ -16,8 +16,8 @@ REL="PREVIOUS"
 TITLE="gmime-filter-from"
 HREF="gmime-gmime-filter-from.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-yenc"
-HREF="gmime-gmime-filter-yenc.html"></HEAD
+TITLE="gmime-filter-strip"
+HREF="gmime-gmime-filter-strip.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-yenc.html"
+HREF="gmime-gmime-filter-strip.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-FILTER-HTML"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1867"
+NAME="AEN1882"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN1867"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1870"
+NAME="AEN1885"
 ></A
 ><H2
 >Synopsis</H2
@@ -199,7 +199,7 @@ HREF="GUINT32"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1885"
+NAME="AEN1900"
 ></A
 ><H2
 >Description</H2
@@ -209,14 +209,14 @@ NAME="AEN1885"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1888"
+NAME="AEN1903"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1890"
+NAME="AEN1905"
 ></A
 ><H3
 ><A
@@ -232,7 +232,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_PRE</PRE
+>#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -244,7 +244,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1896"
+NAME="AEN1911"
 ></A
 ><H3
 ><A
@@ -260,7 +260,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_CONVERT_NL</PRE
+>#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -272,7 +272,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1902"
+NAME="AEN1917"
 ></A
 ><H3
 ><A
@@ -288,7 +288,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_CONVERT_SPACES</PRE
+>#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -301,7 +301,7 @@ html entities.</P
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1908"
+NAME="AEN1923"
 ></A
 ><H3
 ><A
@@ -317,7 +317,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_CONVERT_URLS</PRE
+>#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -329,7 +329,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1914"
+NAME="AEN1929"
 ></A
 ><H3
 ><A
@@ -345,7 +345,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_MARK_CITATION</PRE
+>#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -357,7 +357,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1920"
+NAME="AEN1935"
 ></A
 ><H3
 ><A
@@ -373,7 +373,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_CONVERT_ADDRESSES</PRE
+>#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -385,7 +385,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1926"
+NAME="AEN1941"
 ></A
 ><H3
 ><A
@@ -401,7 +401,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_ESCAPE_8BIT</PRE
+>#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -413,7 +413,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1932"
+NAME="AEN1947"
 ></A
 ><H3
 ><A
@@ -429,7 +429,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_FILTER_HTML_CITE</PRE
+>#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -441,7 +441,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1938"
+NAME="AEN1953"
 ></A
 ><H3
 ><A
@@ -478,7 +478,7 @@ HREF="GUINT32"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1947"
+NAME="AEN1962"
 ></A
 ><P
 ></P
@@ -615,7 +615,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-yenc.html"
+HREF="gmime-gmime-filter-strip.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -643,7 +643,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-yenc</B
+>gmime-filter-strip</B
 ></FONT
 ></TD
 ></TR

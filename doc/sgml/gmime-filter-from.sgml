@@ -14,7 +14,8 @@
 
 
 
-<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-from-new">g_mime_filter_from_new</link>         (void);
+enum        <link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link>;
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-from-new">g_mime_filter_from_new</link>         (<link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link> mode);
 </synopsis>
 </refsynopsisdiv>
 
@@ -32,8 +33,19 @@
 <refsect1>
 <title>Details</title>
 <refsect2>
+<title><anchor id="GMimeFilterFromMode">enum GMimeFilterFromMode</title>
+<programlisting>typedef enum {
+	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
+	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 2,
+} GMimeFilterFromMode;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="g-mime-filter-from-new">g_mime_filter_from_new ()</title>
-<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_from_new         (void);</programlisting>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_from_new         (<link linkend="GMimeFilterFromMode">GMimeFilterFromMode</link> mode);</programlisting>
 <para>
 Creates a new GMimeFilterFrom filter.</para>
 <para>
@@ -43,6 +55,9 @@ Creates a new GMimeFilterFrom filter.</para>
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
+<row><entry align="right"><parameter>mode</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new from filter.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

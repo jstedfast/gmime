@@ -1,4 +1,5 @@
     &gmime-gmime;
+    &gmime-gmime-session;
     &gmime-gmime-stream;
     &gmime-gmime-stream-buffer;
     &gmime-gmime-stream-cat;
@@ -14,6 +15,7 @@
     &gmime-gmime-filter-crlf;
     &gmime-gmime-filter-from;
     &gmime-gmime-filter-html;
+    &gmime-gmime-filter-strip;
     &gmime-gmime-filter-yenc;
     &gmime-gmime-data-wrapper;
     &gmime-gmime-param;
@@ -23,7 +25,10 @@
     &gmime-gmime-object;
     &gmime-gmime-part;
     &gmime-gmime-multipart;
+    &gmime-gmime-multipart-encrypted;
+    &gmime-gmime-multipart-signed;
     &gmime-gmime-message;
+    &gmime-gmime-message-part;
     &gmime-gmime-message-partial;
     &gmime-gmime-utils;
     &gmime-internet-address;
@@ -31,3 +36,6 @@
     &gmime-gmime-charset;
     &gmime-gmime-iconv;
     &gmime-gmime-iconv-utils;
+    &gmime-gmime-exception;
+    &gmime-gmime-cipher-context;
+    &gmime-gmime-gpg-context;

@@ -1,0 +1,147 @@
+<refentry id="gmime-gmime-multipart-signed">
+<refmeta>
+<refentrytitle>GMimeMultipartSigned</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>GMimeMultipartSigned</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link>;
+<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link>* <link linkend="g-mime-multipart-signed-new">g_mime_multipart_signed_new</link>
+                                            (void);
+int         <link linkend="g-mime-multipart-signed-sign">g_mime_multipart_signed_sign</link>    (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
+                                             <link linkend="GMimeObject">GMimeObject</link> *content,
+                                             <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+<link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-multipart-signed-verify">g_mime_multipart_signed_verify</link>
+                                            (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
+                                             <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeMultipartSigned">struct GMimeMultipartSigned</title>
+<programlisting>struct GMimeMultipartSigned {
+	GMimeMultipart parent_object;
+	
+	char *protocol;
+	char *micalg;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-signed-new">g_mime_multipart_signed_new ()</title>
+<programlisting><link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link>* g_mime_multipart_signed_new
+                                            (void);</programlisting>
+<para>
+Creates a new MIME multipart/signed object.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME multipart/signed object.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-signed-sign">g_mime_multipart_signed_sign ()</title>
+<programlisting>int         g_mime_multipart_signed_sign    (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
+                                             <link linkend="GMimeObject">GMimeObject</link> *content,
+                                             <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             const char *userid,
+                                             <link linkend="GMimeCipherHash">GMimeCipherHash</link> hash,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mps</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>userid</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>hash</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-multipart-signed-verify">g_mime_multipart_signed_verify ()</title>
+<programlisting><link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* g_mime_multipart_signed_verify
+                                            (<link linkend="GMimeMultipartSigned">GMimeMultipartSigned</link> *mps,
+                                             <link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mps</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

@@ -57,7 +57,15 @@ void        <link linkend="g-mime-init">g_mime_init</link>                     (
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-INIT-FLAG-UTF8-CAPS">GMIME_INIT_FLAG_UTF8</title>
-<programlisting>#define     GMIME_INIT_FLAG_UTF8</programlisting>
+<programlisting>#define GMIME_INIT_FLAG_UTF8  (1 &lt;&lt; 0)
+</programlisting>
+<para>
+Initialization flag to enable UTF-8 interfaces throughout GMime.
+</para>
+<para>
+Note: this flag is really a no-op and remains only for backward
+compatablity. Interfaces will be UTF-8 whether this flag is used or
+not.</para>
 <para>
 
 </para></refsect2>

@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 # The name of the module.
-DOC_MODULE=gmime-2.0
+DOC_MODULE=gmime
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=gmime-docs.sgml
@@ -13,7 +13,7 @@ EXTRA_DIST=gmime-docs.sgml gmime-sections.txt
 
 HTML_DIR=$(datadir)/gtk-doc/html
 
-TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
+TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 
 scan:
 	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h acconfig.h config.h strlib.h memchunk.h iconv-detect.h zentimer.h zenprofiler.h"

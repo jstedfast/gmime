@@ -3,6 +3,7 @@
 <!entity hash "#">
 <!entity percent "%">
 <!entity gmime SYSTEM "sgml/gmime.sgml">
+<!entity gmime-session SYSTEM "sgml/gmime-session.sgml">
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
@@ -10,8 +11,11 @@
 <!entity gmime-object SYSTEM "sgml/gmime-object.sgml">
 <!entity gmime-data-wrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
 <!entity gmime-multipart SYSTEM "sgml/gmime-multipart.sgml">
+<!entity gmime-multipart-encrypted SYSTEM "sgml/gmime-multipart-encrypted.sgml">
+<!entity gmime-multipart-signed SYSTEM "sgml/gmime-multipart-signed.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
+<!entity gmime-message-part SYSTEM "sgml/gmime-message-part.sgml">
 <!entity gmime-message-partial SYSTEM "sgml/gmime-message-partial.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
 <!entity internet-address SYSTEM "sgml/internet-address.sgml">
@@ -34,7 +38,11 @@
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
+<!entity gmime-filter-strip SYSTEM "sgml/gmime-filter-strip.sgml">
 <!entity gmime-filter-yenc SYSTEM "sgml/gmime-filter-yenc.sgml">
+<!entity gmime-exception SYSTEM "sgml/gmime-exception.sgml">
+<!entity gmime-cipher-context SYSTEM "sgml/gmime-cipher-context.sgml">
+<!entity gmime-gpg-context SYSTEM "sgml/gmime-gpg-context.sgml">
 ]>
 
 <book>
@@ -234,6 +242,7 @@
     &gmime-filter-crlf;
     &gmime-filter-from;
     &gmime-filter-html;
+    &gmime-filter-strip;
     &gmime-filter-yenc;
     &gmime-param;
     &gmime-header;
@@ -243,7 +252,10 @@
     &gmime-object;
     &gmime-part;
     &gmime-multipart;
+    &gmime-multipart-encrypted;
+    &gmime-multipart-signed;
     &gmime-message;
+    &gmime-message-part;
     &gmime-message-partial;
     &gmime-utils;
     &internet-address;
@@ -251,5 +263,9 @@
     &gmime-charset;
     &gmime-iconv;
     &gmime-iconv-utils;
+    &gmime-exception;
+    &gmime-cipher-context;
+    &gmime-gpg-context;
+    &gmime-session;
   </chapter>
 </book>

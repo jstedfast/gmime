@@ -84,6 +84,11 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMimeStreamIOVector">GMimeStreamIOVector</title>
+<programlisting>typedef struct {
+	gpointer data;
+	size_t len;
+} GMimeStreamIOVector;
+</programlisting>
 <para>
 
 </para></refsect2>

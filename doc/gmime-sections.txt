@@ -6,6 +6,26 @@ g_mime_init
 </SECTION>
 
 <SECTION>
+<FILE>gmime-session</FILE>
+GMimeSession
+g_mime_session_request_passwd
+g_mime_session_forget_passwd
+g_mime_session_is_online
+
+<SUBSECTION Private>
+g_mime_session_get_type
+
+<SUBSECTION Standard>
+GMimeSessionClass
+GMIME_TYPE_SESSION
+GMIME_SESSION
+GMIME_IS_SESSION
+GMIME_SESSION_CLASS
+GMIME_IS_SESSION_CLASS
+GMIME_SESSION_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream</FILE>
 GMimeSeekWhence
 GMimeStreamIOVector
@@ -234,6 +254,7 @@ g_mime_filter_crlf_new
 
 <SECTION>
 <FILE>gmime-filter-from</FILE>
+GMimeFilterFromMode
 g_mime_filter_from_new
 </SECTION>
 
@@ -248,6 +269,12 @@ GMIME_FILTER_HTML_CONVERT_ADDRESSES
 GMIME_FILTER_HTML_ESCAPE_8BIT
 GMIME_FILTER_HTML_CITE
 g_mime_filter_html_new
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-strip</FILE>
+GMimeFilterStrip
+g_mime_filter_strip_new
 </SECTION>
 
 <SECTION>
@@ -301,7 +328,7 @@ g_mime_param_write_to_string
 <SECTION>
 <FILE>gmime-header</FILE>
 GMimeHeader
-GMimeHeaderFunc
+GMimeHeaderForeachFunc
 g_mime_header_new
 g_mime_header_destroy
 g_mime_header_add
@@ -459,6 +486,46 @@ GMimeMultipartClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-multipart-encrypted</FILE>
+GMimeMultipartEncrypted
+g_mime_multipart_encrypted_new
+g_mime_multipart_encrypted_encrypt
+g_mime_multipart_encrypted_decrypt
+
+<SUBSECTION Private>
+g_mime_multipart_encrypted_get_type
+
+<SUBSECTION Standard>
+GMIME_MULTIPART_ENCRYPTED
+GMIME_IS_MULTIPART_ENCRYPTED
+GMIME_TYPE_MULTIPART_ENCRYPTED
+GMIME_MULTIPART_ENCRYPTED_CLASS
+GMIME_IS_MULTIPART_ENCRYPTED_CLASS
+GMIME_MULTIPART_ENCRYPTED_GET_CLASS
+GMimeMultipartEncryptedClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-multipart-signed</FILE>
+GMimeMultipartSigned
+g_mime_multipart_signed_new
+g_mime_multipart_signed_sign
+g_mime_multipart_signed_verify
+
+<SUBSECTION Private>
+g_mime_multipart_signed_get_type
+
+<SUBSECTION Standard>
+GMIME_MULTIPART_SIGNED
+GMIME_IS_MULTIPART_SIGNED
+GMIME_TYPE_MULTIPART_SIGNED
+GMIME_MULTIPART_SIGNED_CLASS
+GMIME_IS_MULTIPART_SIGNED_CLASS
+GMIME_MULTIPART_SIGNED_GET_CLASS
+GMimeMultipartSignedClass
+</SECTION>
+
+<SECTION>
 <FILE>gmime-message</FILE>
 GMIME_RECIPIENT_TYPE_TO
 GMIME_RECIPIENT_TYPE_CC
@@ -500,6 +567,27 @@ GMIME_MESSAGE_CLASS
 GMIME_IS_MESSAGE_CLASS
 GMIME_MESSAGE_GET_CLASS
 GMimeMessageClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-message-part</FILE>
+GMimeMessagePart
+g_mime_message_part_new
+g_mime_message_part_new_with_message
+g_mime_message_part_get_message
+g_mime_message_part_set_message
+
+<SUBSECTION Private>
+g_mime_message_part_get_type
+
+<SUBSECTION Standard>
+GMIME_MESSAGE_PART
+GMIME_IS_MESSAGE_PART
+GMIME_TYPE_MESSAGE_PART
+GMIME_MESSAGE_PART_CLASS
+GMIME_IS_MESSAGE_PART_CLASS
+GMIME_MESSAGE_PART_GET_CLASS
+GMimeMessagePartClass
 </SECTION>
 
 <SECTION>
@@ -583,15 +671,18 @@ internet_address_list_to_string
 <SECTION>
 <FILE>gmime-parser</FILE>
 GMimeParser
+GMimeParserHeaderRegexFunc
 g_mime_parser_new
 g_mime_parser_init_with_stream
 g_mime_parser_set_scan_from
 g_mime_parser_get_scan_from
+g_mime_parser_set_header_regex
 g_mime_parser_tell
 g_mime_parser_eos
 g_mime_parser_construct_part
 g_mime_parser_construct_message
 g_mime_parser_get_from
+g_mime_parser_get_from_offset
 
 <SUBSECTION Private>
 g_mime_parser_get_type
@@ -630,4 +721,77 @@ g_mime_iconv_utf8_to_locale
 g_mime_iconv_utf8_to_locale_length
 g_mime_iconv_locale_to_utf8
 g_mime_iconv_locale_to_utf8_length
+</SECTION>
+
+<SECTION>
+<FILE>gmime-exception</FILE>
+ExceptionId
+GMimeException
+g_mime_exception_new
+g_mime_exception_init
+g_mime_exception_clear
+g_mime_exception_set
+g_mime_exception_setv
+g_mime_exception_get_id
+g_mime_exception_get_description
+g_mime_exception_is_set
+g_mime_exception_xfer
+g_mime_exception_free
+</SECTION>
+
+<SECTION>
+<FILE>gmime-cipher-context</FILE>
+GMIME_CIPHER_CONTEXT
+GMimeCipherHash
+GMimeCipherContext
+GMimeCipherValidity
+g_mime_cipher_hash_id
+g_mime_cipher_hash_name
+g_mime_cipher_sign
+g_mime_cipher_verify
+g_mime_cipher_encrypt
+g_mime_cipher_decrypt
+g_mime_cipher_import
+g_mime_cipher_export
+
+g_mime_cipher_validity_init
+g_mime_cipher_validity_new
+g_mime_cipher_validity_clear
+g_mime_cipher_validity_free
+g_mime_cipher_validity_get_valid
+g_mime_cipher_validity_set_valid
+g_mime_cipher_validity_get_description
+g_mime_cipher_validity_set_description
+
+<SUBSECTION Private>
+g_mime_cipher_context_get_type
+
+<SUBSECTION Standard>
+GMIME_CIPHER_CONTEXT
+GMIME_IS_CIPHER_CONTEXT
+GMIME_TYPE_CIPHER_CONTEXT
+GMIME_CIPHER_CONTEXT_CLASS
+GMIME_IS_CIPHER_CONTEXT_CLASS
+GMIME_CIPHER_CONTEXT_GET_CLASS
+GMimeCipherContextClass
+</SECTION>
+
+<SECTION>
+<FILE>gmime-gpg-context</FILE>
+GMimeGpgContext
+g_mime_gpg_context_new
+g_mime_gpg_context_get_always_trust
+g_mime_gpg_context_set_always_trust
+
+<SUBSECTION Private>
+g_mime_gpg_context_get_type
+
+<SUBSECTION Standard>
+GMIME_GPG_CONTEXT
+GMIME_IS_GPG_CONTEXT
+GMIME_TYPE_GPG_CONTEXT
+GMIME_GPG_CONTEXT_CLASS
+GMIME_IS_GPG_CONTEXT_CLASS
+GMIME_GPG_CONTEXT_GET_CLASS
+GMimeGpgContextClass
 </SECTION>

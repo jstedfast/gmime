@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-header</TITLE
+>gmime-exception</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-param"
-HREF="gmime-gmime-param.html"><LINK
+TITLE="gmime-iconv-utils"
+HREF="gmime-gmime-iconv-utils.html"><LINK
 REL="NEXT"
-TITLE="gmime-content-type"
-HREF="gmime-gmime-content-type.html"></HEAD
+TITLE="GMimeCipherContext"
+HREF="gmime-gmime-cipher-context.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-cipher-context.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-HEADER"
->gmime-header</A
+NAME="GMIME-GMIME-EXCEPTION"
+>gmime-exception</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2588"
+NAME="AEN8412"
 ></A
 ><H2
 >Name</H2
->gmime-header&nbsp;--&nbsp;</DIV
+>gmime-exception&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2591"
+NAME="AEN8415"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,103 +146,100 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-struct      <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
+enum        <A
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
 >;
-void        (<A
-HREF="gmime-gmime-header.html#GMIMEHEADERFOREACHFUNC"
->*GMimeHeaderForeachFunc</A
->)       (const char *name,
-                                             const char *value,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);
+struct      <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+>;
 <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
 >* <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-NEW"
->g_mime_header_new</A
->              (void);
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-NEW"
+>g_mime_exception_new</A
+>        (void);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-DESTROY"
->g_mime_header_destroy</A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-INIT"
+>g_mime_exception_init</A
 >           (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-ADD"
->g_mime_header_add</A
->               (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name,
-                                             const char *value);
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-CLEAR"
+>g_mime_exception_clear</A
+>          (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *exception);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-SET"
->g_mime_header_set</A
->               (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name,
-                                             const char *value);
-const char* <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-GET"
->g_mime_header_get</A
->               (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name);
-void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-REMOVE"
->g_mime_header_remove</A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-SET"
+>g_mime_exception_set</A
 >            (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name);
-<GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-WRITE-TO-STREAM"
->g_mime_header_write_to_stream</A
->   (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex,
                                              <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);
-char*       <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-TO-STRING"
->g_mime_header_to_string</A
->         (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> id,
+                                             const char *desc);
 void        <A
-HREF="gmime-gmime-header.html#G-MIME-HEADER-FOREACH"
->g_mime_header_foreach</A
->           (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-SETV"
+>g_mime_exception_setv</A
+>           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex,
                                              <A
-HREF="gmime-gmime-header.html#GMIMEHEADERFOREACHFUNC"
->GMimeHeaderForeachFunc</A
-> func,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> id,
+                                             const char *format,
+                                             ...);
+<A
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> <A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-GET-ID"
+>g_mime_exception_get_id</A
+>         (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+const char* <A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-GET-DESCRIPTION"
+>g_mime_exception_get_description</A
+>
+                                            (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+#define     <A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-IS-SET"
+>g_mime_exception_is_set</A
+>         (ex)
+void        <A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-XFER"
+>g_mime_exception_xfer</A
+>           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex_dst,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex_src);
+void        <A
+HREF="gmime-gmime-exception.html#G-MIME-EXCEPTION-FREE"
+>g_mime_exception_free</A
+>           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *exception);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -250,7 +247,7 @@ HREF="GPOINTER"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2619"
+NAME="AEN8443"
 ></A
 ><H2
 >Description</H2
@@ -260,20 +257,20 @@ NAME="AEN2619"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2622"
+NAME="AEN8446"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2624"
+NAME="AEN8448"
 ></A
 ><H3
 ><A
-NAME="GMIMEHEADER"
+NAME="EXCEPTIONID"
 ></A
->struct GMimeHeader</H3
+>enum ExceptionId</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -283,7 +280,9 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeHeader;</PRE
+>typedef enum {
+#include "gmime-exception-list.def"
+} ExceptionId;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -293,13 +292,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2629"
+NAME="AEN8453"
 ></A
 ><H3
 ><A
-NAME="GMIMEHEADERFOREACHFUNC"
+NAME="GMIMEEXCEPTION"
 ></A
->GMimeHeaderForeachFunc ()</H3
+>struct GMimeException</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -309,99 +308,27 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        (*GMimeHeaderForeachFunc)       (const char *name,
-                                             const char *value,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
+>struct GMimeException {
+	/* do not access the fields directly */
+	ExceptionId id;
+	char *desc;
+};</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2635"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->data</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->&nbsp;</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
 ></DIV
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2652"
+NAME="AEN8458"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-NEW"
+NAME="G-MIME-EXCEPTION-NEW"
 ></A
->g_mime_header_new ()</H3
+>g_mime_exception_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -412,20 +339,20 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
->* g_mime_header_new              (void);</PRE
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+>* g_mime_exception_new        (void);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeHeader object.</P
+>Create and returns a new exception object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2659"
+NAME="AEN8465"
 ></A
 ><P
 ></P
@@ -450,7 +377,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new header object.</TD
+>the newly allocated exception object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -461,13 +388,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2668"
+NAME="AEN8474"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-DESTROY"
+NAME="G-MIME-EXCEPTION-INIT"
 ></A
->g_mime_header_destroy ()</H3
+>g_mime_exception_init ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -477,21 +404,23 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_destroy           (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);</PRE
+>void        g_mime_exception_init           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Destroy the header object</P
+>Init an exception. This routine is mainly
+useful when using a statically allocated
+exception.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2675"
+NAME="AEN8481"
 ></A
 ><P
 ></P
@@ -511,14 +440,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>ex</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
+> exception</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -529,13 +458,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2684"
+NAME="AEN8490"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-ADD"
+NAME="G-MIME-EXCEPTION-CLEAR"
 ></A
->g_mime_header_add ()</H3
+>g_mime_exception_clear ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -545,33 +474,23 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_add               (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name,
-                                             const char *value);</PRE
+>void        g_mime_exception_clear          (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *exception);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Adds a header. If <TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
-> is <TT
-CLASS="LITERAL"
->NULL</TT
->, a space will be set aside for it
-(useful for setting the order of headers before values can be
-obtained for them) otherwise the header will be unset.</P
+>Clear an exception, that is, set the exception ID to
+GMIME_EXCEPTION_NONE and free the description text. If the
+exception is NULL, this funtion just returns.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2693"
+NAME="AEN8497"
 ></A
 ><P
 ></P
@@ -591,48 +510,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>exception</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header value</TD
+> the exception object</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -643,13 +528,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2710"
+NAME="AEN8506"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-SET"
+NAME="G-MIME-EXCEPTION-SET"
 ></A
->g_mime_header_set ()</H3
+>g_mime_exception_set ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -659,335 +544,37 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_header_set               (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name,
-                                             const char *value);</PRE
-></TD
-></TR
-></TABLE
-><P
->Set the value of the specified header. If <TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
-> is <TT
-CLASS="LITERAL"
->NULL</TT
-> and the
-header, <TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->, had not been previously set, a space will be set
-aside for it (useful for setting the order of headers before values
-can be obtained for them) otherwise the header will be unset.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2720"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->value</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header value</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2737"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-GET"
-></A
->g_mime_header_get ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->const char* g_mime_header_get               (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name);</PRE
-></TD
-></TR
-></TABLE
-><P
->Gets the value of the header requested.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2744"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->the value of the header requested.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2761"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-REMOVE"
-></A
->g_mime_header_remove ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_header_remove            (<A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
-                                             const char *name);</PRE
-></TD
-></TR
-></TABLE
-><P
->Remove the specified header.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2768"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->name</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header name</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2781"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-WRITE-TO-STREAM"
-></A
->g_mime_header_write_to_stream ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     g_mime_header_write_to_stream   (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+>void        g_mime_exception_set            (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex,
                                              <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream);</PRE
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> id,
+                                             const char *desc);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Write the headers to a stream.</P
+>Set the value of an exception. The exception id is 
+a unique number representing the exception. The 
+textual description is a small text explaining 
+what happened and provoked the exception.</P
+><P
+>When <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> is NULL, nothing is done, this routine
+simply returns.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2790"
+NAME="AEN8516"
 ></A
 ><P
 ></P
@@ -1007,14 +594,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>ex</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
+> exception object </TD
 ></TR
 ><TR
 ><TD
@@ -1024,29 +611,31 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>id</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output stream</TD
+> exception id </TD
 ></TR
 ><TR
 ><TD
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
 ><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
+>desc</I
+></TT
+>&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes written or -1 on fail.</TD
+> textual description of the exception</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1057,13 +646,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2807"
+NAME="AEN8533"
 ></A
 ><H3
 ><A
-NAME="G-MIME-HEADER-TO-STRING"
+NAME="G-MIME-EXCEPTION-SETV"
 ></A
->g_mime_header_to_string ()</H3
+>g_mime_exception_setv ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -1073,123 +662,43 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->char*       g_mime_header_to_string         (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header);</PRE
-></TD
-></TR
-></TABLE
-><P
->Allocates a string buffer containing the raw rfc822 headers
-contained in <TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN2815"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->header</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> header object</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->a string containing the header block</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN2828"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-FOREACH"
-></A
->g_mime_header_foreach ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_header_foreach           (const <A
-HREF="gmime-gmime-header.html#GMIMEHEADER"
->GMimeHeader</A
-> *header,
+>void        g_mime_exception_setv           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex,
                                              <A
-HREF="gmime-gmime-header.html#GMIMEHEADERFOREACHFUNC"
->GMimeHeaderForeachFunc</A
-> func,
-                                             <GTKDOCLINK
-HREF="GPOINTER"
->gpointer</GTKDOCLINK
-> data);</PRE
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> id,
+                                             const char *format,
+                                             ...);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Calls <TT
+>Set the value of an exception. The exception id is 
+a unique number representing the exception. The 
+textual description is a small text explaining 
+what happened and provoked the exception. 
+In this version, the string is created from the format 
+string and the variable argument list.</P
+><P
+>It is safe to say:
+  g_mime_exception_setv (ex, ..., g_mime_exception_get_description (ex), ...);</P
+><P
+>When <TT
 CLASS="PARAMETER"
 ><I
->func</I
+>ex</I
 ></TT
-> for each header name/value pair.</P
+> is NULL, nothing is done, this routine
+simply returns.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2838"
+NAME="AEN8544"
 ></A
 ><P
 ></P
@@ -1209,14 +718,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->header</I
+>ex</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> header object</TD
+> exception object </TD
 ></TR
 ><TR
 ><TD
@@ -1226,14 +735,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->func</I
+>id</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> function to be called for each header.</TD
+> exception id </TD
 ></TR
 ><TR
 ><TD
@@ -1243,7 +752,270 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->data</I
+>format</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> format of the description string. The format string is
+used as in printf().</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>...</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> arguments</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8565"
+></A
+><H3
+><A
+NAME="G-MIME-EXCEPTION-GET-ID"
+></A
+>g_mime_exception_get_id ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-exception.html#EXCEPTIONID"
+>ExceptionId</A
+> g_mime_exception_get_id         (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Return the id of an exception. 
+If <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> is NULL, return GMIME_EXCEPTION_NONE;</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8574"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> The exception object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Exception ID.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8587"
+></A
+><H3
+><A
+NAME="G-MIME-EXCEPTION-GET-DESCRIPTION"
+></A
+>g_mime_exception_get_description ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_exception_get_description
+                                            (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Return the exception description text. 
+If <TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+> is NULL, return NULL;</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8595"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> The exception object</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Exception description text.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8608"
+></A
+><H3
+><A
+NAME="G-MIME-EXCEPTION-IS-SET"
+></A
+>g_mime_exception_is_set()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define     g_mime_exception_is_set(ex)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8613"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -1251,6 +1023,167 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8622"
+></A
+><H3
+><A
+NAME="G-MIME-EXCEPTION-XFER"
+></A
+>g_mime_exception_xfer ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_exception_xfer           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex_dst,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex_src);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Transfer the content of an exception from
+an exception object to another. 
+The destination exception receives the id and
+the description text of the source exception.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8630"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex_dst</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Destination exception object </TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex_src</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Source exception object</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN8643"
+></A
+><H3
+><A
+NAME="G-MIME-EXCEPTION-FREE"
+></A
+>g_mime_exception_free ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_exception_free           (<A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *exception);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Free an exception object. If the exception is NULL, nothing is
+done, the routine simply returns.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN8650"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>exception</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> The exception object to free</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1274,7 +1207,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-param.html"
+HREF="gmime-gmime-iconv-utils.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1328,7 +1261,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-content-type.html"
+HREF="gmime-gmime-cipher-context.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -1346,7 +1279,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-param</B
+>gmime-iconv-utils</B
 ></FONT
 ></TD
 ><TD
@@ -1356,7 +1289,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-content-type</B
+>GMimeCipherContext</B
 ></FONT
 ></TD
 ></TR

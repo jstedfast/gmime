@@ -1,0 +1,127 @@
+<refentry id="gmime-gmime-gpg-context">
+<refmeta>
+<refentrytitle>GMimeGpgContext</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>GMimeGpgContext</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeGpgContext">GMimeGpgContext</link>;
+<link linkend="GMimeCipherContext">GMimeCipherContext</link>* <link linkend="g-mime-gpg-context-new">g_mime_gpg_context_new</link>  (<link linkend="GMimeSession">GMimeSession</link> *session,
+                                             const char *path);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-gpg-context-get-always-trust">g_mime_gpg_context_get_always_trust</link>
+                                            (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx);
+void        <link linkend="g-mime-gpg-context-set-always-trust">g_mime_gpg_context_set_always_trust</link>
+                                            (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx,
+                                             <link linkend="gboolean">gboolean</link> trust);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeGpgContext">struct GMimeGpgContext</title>
+<programlisting>struct GMimeGpgContext {
+	GMimeCipherContext parent_object;
+	
+	char *path;
+	gboolean always_trust;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-gpg-context-new">g_mime_gpg_context_new ()</title>
+<programlisting><link linkend="GMimeCipherContext">GMimeCipherContext</link>* g_mime_gpg_context_new  (<link linkend="GMimeSession">GMimeSession</link> *session,
+                                             const char *path);</programlisting>
+<para>
+Creates a new gpg cipher context object.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>session</parameter>&nbsp;:</entry>
+<entry> session
+</entry></row>
+<row><entry align="right"><parameter>path</parameter>&nbsp;:</entry>
+<entry> path to gpg binary
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new gpg cipher context object.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-gpg-context-get-always-trust">g_mime_gpg_context_get_always_trust ()</title>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_gpg_context_get_always_trust
+                                            (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx);</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-gpg-context-set-always-trust">g_mime_gpg_context_set_always_trust ()</title>
+<programlisting>void        g_mime_gpg_context_set_always_trust
+                                            (<link linkend="GMimeGpgContext">GMimeGpgContext</link> *ctx,
+                                             <link linkend="gboolean">gboolean</link> trust);</programlisting>
+<para>
+Sets the <parameter>always_trust</parameter> flag on the gpg context which is used for
+encryption.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> gpg context
+<parameter>always_trust</parameter> always truct flag
+</entry></row>
+<row><entry align="right"><parameter>trust</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

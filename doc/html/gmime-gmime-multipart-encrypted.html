@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-stream-buffer</TITLE
+>GMimeMultipartEncrypted</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-stream"
-HREF="gmime-gmime-stream.html"><LINK
+TITLE="gmime-multipart"
+HREF="gmime-gmime-multipart.html"><LINK
 REL="NEXT"
-TITLE="gmime-stream-cat"
-HREF="gmime-gmime-stream-cat.html"></HEAD
+TITLE="GMimeMultipartSigned"
+HREF="gmime-gmime-multipart-signed.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-multipart.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-multipart-signed.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-STREAM-BUFFER"
->gmime-stream-buffer</A
+NAME="GMIME-GMIME-MULTIPART-ENCRYPTED"
+>GMimeMultipartEncrypted</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN687"
+NAME="AEN5239"
 ></A
 ><H2
 >Name</H2
->gmime-stream-buffer&nbsp;--&nbsp;</DIV
+>GMimeMultipartEncrypted&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN690"
+NAME="AEN5242"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,54 +146,61 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-enum        <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
->;
 struct      <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFER"
->GMimeStreamBuffer</A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
 >;
 <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
 >* <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-NEW"
->g_mime_stream_buffer_new</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
+HREF="gmime-gmime-multipart-encrypted.html#G-MIME-MULTIPART-ENCRYPTED-NEW"
+>g_mime_multipart_encrypted_new</A
+>
+                                            (void);
+int         <A
+HREF="gmime-gmime-multipart-encrypted.html#G-MIME-MULTIPART-ENCRYPTED-ENCRYPT"
+>g_mime_multipart_encrypted_encrypt</A
+>
+                                            (<A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
+> *mpe,
                                              <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);
-<GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-GETS"
->g_mime_stream_buffer_gets</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *content,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
                                              <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);
-void        <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-READLN"
->g_mime_stream_buffer_readln</A
->     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+<A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* <A
+HREF="gmime-gmime-multipart-encrypted.html#G-MIME-MULTIPART-ENCRYPTED-DECRYPT"
+>g_mime_multipart_encrypted_decrypt</A
+>
+                                            (<A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
+> *mpe,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
 &#13;</PRE
 ></TD
 ></TR
@@ -202,7 +209,7 @@ HREF="GBYTEARRAY"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN706"
+NAME="AEN5259"
 ></A
 ><H2
 >Description</H2
@@ -212,20 +219,20 @@ NAME="AEN706"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN709"
+NAME="AEN5262"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN711"
+NAME="AEN5264"
 ></A
 ><H3
 ><A
-NAME="GMIMESTREAMBUFFERMODE"
+NAME="GMIMEMULTIPARTENCRYPTED"
 ></A
->enum GMimeStreamBufferMode</H3
+>struct GMimeMultipartEncrypted</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -235,47 +242,12 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_STREAM_BUFFER_CACHE_READ,
-	GMIME_STREAM_BUFFER_BLOCK_READ,
-	GMIME_STREAM_BUFFER_BLOCK_WRITE,
-} GMimeStreamBufferMode;</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN716"
-></A
-><H3
-><A
-NAME="GMIMESTREAMBUFFER"
-></A
->struct GMimeStreamBuffer</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->struct GMimeStreamBuffer {
-	GMimeStream parent_object;
+>struct GMimeMultipartEncrypted {
+	GMimeMultipart parent_object;
 	
-	GMimeStream *source;
+	char *protocol;
 	
-	unsigned char *buffer;
-	unsigned char *bufptr;
-	unsigned char *bufend;
-	ssize_t buflen;
-	
-	GMimeStreamBufferMode mode;
+	GMimeObject *decrypted;
 };</PRE
 ></TD
 ></TR
@@ -286,13 +258,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN721"
+NAME="AEN5269"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-NEW"
+NAME="G-MIME-MULTIPART-ENCRYPTED-NEW"
 ></A
->g_mime_stream_buffer_new ()</H3
+>g_mime_multipart_encrypted_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -303,27 +275,102 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* g_mime_stream_buffer_new       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
+>* g_mime_multipart_encrypted_new
+                                            (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a new MIME multipart/encrypted object.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN5276"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an empty MIME multipart/encrypted object.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN5285"
+></A
+><H3
+><A
+NAME="G-MIME-MULTIPART-ENCRYPTED-ENCRYPT"
+></A
+>g_mime_multipart_encrypted_encrypt ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_multipart_encrypted_encrypt
+                                            (<A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
+> *mpe,
                                              <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);</PRE
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+> *content,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *recipients,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
 ></TD
 ></TR
 ></TABLE
-><P
->Creates a new GMimeStreamBuffer object.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN730"
+NAME="AEN5295"
 ></A
 ><P
 ></P
@@ -343,14 +390,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->source</I
+>mpe</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> source stream</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -360,14 +407,65 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->mode</I
+>content</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> buffering mode</TD
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>recipients</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -382,17 +480,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new buffer stream with source <TT
-CLASS="PARAMETER"
-><I
->source</I
-></TT
-> and mode <TT
-CLASS="PARAMETER"
-><I
->mode</I
-></TT
->.</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -403,13 +491,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN749"
+NAME="AEN5324"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-GETS"
+NAME="G-MIME-MULTIPART-ENCRYPTED-DECRYPT"
 ></A
->g_mime_stream_buffer_gets ()</H3
+>g_mime_multipart_encrypted_decrypt ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -419,48 +507,31 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     g_mime_stream_buffer_gets       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);</PRE
+><A
+HREF="gmime-gmime-object.html#GMIMEOBJECT"
+>GMimeObject</A
+>* g_mime_multipart_encrypted_decrypt
+                                            (<A
+HREF="gmime-gmime-multipart-encrypted.html#GMIMEMULTIPARTENCRYPTED"
+>GMimeMultipartEncrypted</A
+> *mpe,
+                                             <A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
 ></TD
 ></TR
 ></TABLE
-><P
->Reads in at most one less than <TT
-CLASS="PARAMETER"
-><I
->max</I
-></TT
-> characters from <TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
-> and
-stores them into the buffer pointed to by <TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
->. Reading stops after
-an EOS or newline (#'\n'). If a newline is read, it is stored into
-the buffer. A #'\0' is stored after the last character in the
-buffer.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN761"
+NAME="AEN5333"
 ></A
 ><P
 ></P
@@ -480,14 +551,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>mpe</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> stream</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -497,14 +568,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->buf</I
+>ctx</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> line buffer</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -514,14 +585,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->max</I
+>ex</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> max length of a line</TD
+>&nbsp;</TD
 ></TR
 ><TR
 ><TD
@@ -536,107 +607,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of characters read into <TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
-> on success and -1
-on fail.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN783"
-></A
-><H3
-><A
-NAME="G-MIME-STREAM-BUFFER-READLN"
-></A
->g_mime_stream_buffer_readln ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_stream_buffer_readln     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);</PRE
-></TD
-></TR
-></TABLE
-><P
->Reads a single line into <TT
-CLASS="PARAMETER"
-><I
->buffer</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN792"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->stream</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->buffer</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> output buffer</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -660,7 +631,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-multipart.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -714,7 +685,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-multipart-signed.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -732,7 +703,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream</B
+>gmime-multipart</B
 ></FONT
 ></TD
 ><TD
@@ -742,7 +713,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-cat</B
+>GMimeMultipartSigned</B
 ></FONT
 ></TD
 ></TR

@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-stream-buffer</TITLE
+>GMimeMessagePart</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-stream"
-HREF="gmime-gmime-stream.html"><LINK
+TITLE="gmime-message"
+HREF="gmime-gmime-message.html"><LINK
 REL="NEXT"
-TITLE="gmime-stream-cat"
-HREF="gmime-gmime-stream-cat.html"></HEAD
+TITLE="gmime-message-partial"
+HREF="gmime-gmime-message-partial.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-message-partial.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-STREAM-BUFFER"
->gmime-stream-buffer</A
+NAME="GMIME-GMIME-MESSAGE-PART"
+>GMimeMessagePart</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN687"
+NAME="AEN6158"
 ></A
 ><H2
 >Name</H2
->gmime-stream-buffer&nbsp;--&nbsp;</DIV
+>GMimeMessagePart&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN690"
+NAME="AEN6161"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,54 +146,51 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-enum        <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
->;
 struct      <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFER"
->GMimeStreamBuffer</A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
 >;
 <A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
 >* <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-NEW"
->g_mime_stream_buffer_new</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
+HREF="gmime-gmime-message-part.html#G-MIME-MESSAGE-PART-NEW"
+>g_mime_message_part_new</A
+>   (const char *subtype);
+<A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+>* <A
+HREF="gmime-gmime-message-part.html#G-MIME-MESSAGE-PART-NEW-WITH-MESSAGE"
+>g_mime_message_part_new_with_message</A
+>
+                                            (const char *subtype,
                                              <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);
-<GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-GETS"
->g_mime_stream_buffer_gets</A
->       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message);
+<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* <A
+HREF="gmime-gmime-message-part.html#G-MIME-MESSAGE-PART-GET-MESSAGE"
+>g_mime_message_part_get_message</A
+>
+                                            (<A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+> *part);
 void        <A
-HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-READLN"
->g_mime_stream_buffer_readln</A
->     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);
+HREF="gmime-gmime-message-part.html#G-MIME-MESSAGE-PART-SET-MESSAGE"
+>g_mime_message_part_set_message</A
+> (<A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+> *part,
+                                             <A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message);
 &#13;</PRE
 ></TD
 ></TR
@@ -202,7 +199,7 @@ HREF="GBYTEARRAY"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN706"
+NAME="AEN6176"
 ></A
 ><H2
 >Description</H2
@@ -212,20 +209,20 @@ NAME="AEN706"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN709"
+NAME="AEN6179"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN711"
+NAME="AEN6181"
 ></A
 ><H3
 ><A
-NAME="GMIMESTREAMBUFFERMODE"
+NAME="GMIMEMESSAGEPART"
 ></A
->enum GMimeStreamBufferMode</H3
+>struct GMimeMessagePart</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -235,47 +232,10 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_STREAM_BUFFER_CACHE_READ,
-	GMIME_STREAM_BUFFER_BLOCK_READ,
-	GMIME_STREAM_BUFFER_BLOCK_WRITE,
-} GMimeStreamBufferMode;</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN716"
-></A
-><H3
-><A
-NAME="GMIMESTREAMBUFFER"
-></A
->struct GMimeStreamBuffer</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->struct GMimeStreamBuffer {
-	GMimeStream parent_object;
+>struct GMimeMessagePart {
+	GMimeObject parent_object;
 	
-	GMimeStream *source;
-	
-	unsigned char *buffer;
-	unsigned char *bufptr;
-	unsigned char *bufend;
-	ssize_t buflen;
-	
-	GMimeStreamBufferMode mode;
+	GMimeMessage *message;
 };</PRE
 ></TD
 ></TR
@@ -286,13 +246,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN721"
+NAME="AEN6186"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-NEW"
+NAME="G-MIME-MESSAGE-PART-NEW"
 ></A
->g_mime_stream_buffer_new ()</H3
+>g_mime_message_part_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -303,27 +263,26 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 ><A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
->* g_mime_stream_buffer_new       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *source,
-                                             <A
-HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
->GMimeStreamBufferMode</A
-> mode);</PRE
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+>* g_mime_message_part_new   (const char *subtype);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeStreamBuffer object.</P
+>Creates a new MIME message part object with a default content-type
+of message/<TT
+CLASS="PARAMETER"
+><I
+>subtype</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN730"
+NAME="AEN6194"
 ></A
 ><P
 ></P
@@ -343,31 +302,17 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->source</I
+>subtype</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> source stream</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->mode</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> buffering mode</TD
+> message subtype or <TT
+CLASS="LITERAL"
+>NULL</TT
+> for "rfc822"</TD
 ></TR
 ><TR
 ><TD
@@ -382,15 +327,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new buffer stream with source <TT
+>an empty MIME message part object with a default
+content-type of message/<TT
 CLASS="PARAMETER"
 ><I
->source</I
-></TT
-> and mode <TT
-CLASS="PARAMETER"
-><I
->mode</I
+>subtype</I
 ></TT
 >.</TD
 ></TR
@@ -403,13 +344,13 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN749"
+NAME="AEN6209"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-GETS"
+NAME="G-MIME-MESSAGE-PART-NEW-WITH-MESSAGE"
 ></A
->g_mime_stream_buffer_gets ()</H3
+>g_mime_message_part_new_with_message ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -419,48 +360,37 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="SSIZE-T"
->ssize_t</GTKDOCLINK
->     g_mime_stream_buffer_gets       (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             char *buf,
-                                             <GTKDOCLINK
-HREF="SIZE-T"
->size_t</GTKDOCLINK
-> max);</PRE
+><A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+>* g_mime_message_part_new_with_message
+                                            (const char *subtype,
+                                             <A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Reads in at most one less than <TT
+>Creates a new MIME message part object with a default content-type
+of message/<TT
 CLASS="PARAMETER"
 ><I
->max</I
+>subtype</I
 ></TT
-> characters from <TT
+> containing <TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>message</I
 ></TT
-> and
-stores them into the buffer pointed to by <TT
-CLASS="PARAMETER"
-><I
->buf</I
-></TT
->. Reading stops after
-an EOS or newline (#'\n'). If a newline is read, it is stored into
-the buffer. A #'\0' is stored after the last character in the
-buffer.</P
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN761"
+NAME="AEN6219"
 ></A
 ><P
 ></P
@@ -480,14 +410,17 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>subtype</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> stream</TD
+> message subtype or <TT
+CLASS="LITERAL"
+>NULL</TT
+> for "rfc822"</TD
 ></TR
 ><TR
 ><TD
@@ -497,31 +430,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->buf</I
+>message</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> line buffer</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->max</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> max length of a line</TD
+> message</TD
 ></TR
 ><TR
 ><TD
@@ -536,13 +452,18 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of characters read into <TT
+>a MIME message part object with a default content-type of
+message/<TT
 CLASS="PARAMETER"
 ><I
->buf</I
+>subtype</I
 ></TT
-> on success and -1
-on fail.</TD
+> containing <TT
+CLASS="PARAMETER"
+><I
+>message</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -553,13 +474,13 @@ on fail.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN783"
+NAME="AEN6239"
 ></A
 ><H3
 ><A
-NAME="G-MIME-STREAM-BUFFER-READLN"
+NAME="G-MIME-MESSAGE-PART-GET-MESSAGE"
 ></A
->g_mime_stream_buffer_readln ()</H3
+>g_mime_message_part_get_message ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -569,22 +490,22 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_stream_buffer_readln     (<A
-HREF="gmime-gmime-stream.html#GMIMESTREAM"
->GMimeStream</A
-> *stream,
-                                             <GTKDOCLINK
-HREF="GBYTEARRAY"
->GByteArray</GTKDOCLINK
-> *buffer);</PRE
+><A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+>* g_mime_message_part_get_message
+                                            (<A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+> *part);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Reads a single line into <TT
+>Gets the message object on the message part object <TT
 CLASS="PARAMETER"
 ><I
->buffer</I
+>part</I
 ></TT
 >.</P
 ><P
@@ -592,7 +513,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN792"
+NAME="AEN6248"
 ></A
 ><P
 ></P
@@ -612,14 +533,116 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->stream</I
+>part</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> stream</TD
+> message part</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the message part contained within <TT
+CLASS="PARAMETER"
+><I
+>part</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6262"
+></A
+><H3
+><A
+NAME="G-MIME-MESSAGE-PART-SET-MESSAGE"
+></A
+>g_mime_message_part_set_message ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_message_part_set_message (<A
+HREF="gmime-gmime-message-part.html#GMIMEMESSAGEPART"
+>GMimeMessagePart</A
+> *part,
+                                             <A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Sets the <TT
+CLASS="PARAMETER"
+><I
+>message</I
+></TT
+> object on the message part object <TT
+CLASS="PARAMETER"
+><I
+>part</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6272"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>part</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> message part</TD
 ></TR
 ><TR
 ><TD
@@ -629,14 +652,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->buffer</I
+>message</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> output buffer</TD
+> message</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -660,7 +683,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-stream.html"
+HREF="gmime-gmime-message.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -714,7 +737,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-stream-cat.html"
+HREF="gmime-gmime-message-partial.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -732,7 +755,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream</B
+>gmime-message</B
 ></FONT
 ></TD
 ><TD
@@ -742,7 +765,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-stream-cat</B
+>gmime-message-partial</B
 ></FONT
 ></TD
 ></TR

@@ -15,7 +15,7 @@
 
 
 struct      <link linkend="GMimeHeader">GMimeHeader</link>;
-void        (<link linkend="GMimeHeaderFunc">*GMimeHeaderFunc</link>)              (const char *name,
+void        (<link linkend="GMimeHeaderForeachFunc">*GMimeHeaderForeachFunc</link>)       (const char *name,
                                              const char *value,
                                              <link linkend="gpointer">gpointer</link> data);
 <link linkend="GMimeHeader">GMimeHeader</link>* <link linkend="g-mime-header-new">g_mime_header_new</link>              (void);
@@ -34,7 +34,7 @@ void        <link linkend="g-mime-header-remove">g_mime_header_remove</link>    
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 char*       <link linkend="g-mime-header-to-string">g_mime_header_to_string</link>         (const <link linkend="GMimeHeader">GMimeHeader</link> *header);
 void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>           (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             <link linkend="GMimeHeaderFunc">GMimeHeaderFunc</link> func,
+                                             <link linkend="GMimeHeaderForeachFunc">GMimeHeaderForeachFunc</link> func,
                                              <link linkend="gpointer">gpointer</link> data);
 </synopsis>
 </refsynopsisdiv>
@@ -59,8 +59,8 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimeHeaderFunc">GMimeHeaderFunc ()</title>
-<programlisting>void        (*GMimeHeaderFunc)              (const char *name,
+<title><anchor id="GMimeHeaderForeachFunc">GMimeHeaderForeachFunc ()</title>
+<programlisting>void        (*GMimeHeaderForeachFunc)       (const char *name,
                                              const char *value,
                                              <link linkend="gpointer">gpointer</link> data);</programlisting>
 <para>
@@ -252,7 +252,7 @@ contained in <parameter>header</parameter>.</para>
 <refsect2>
 <title><anchor id="g-mime-header-foreach">g_mime_header_foreach ()</title>
 <programlisting>void        g_mime_header_foreach           (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             <link linkend="GMimeHeaderFunc">GMimeHeaderFunc</link> func,
+                                             <link linkend="GMimeHeaderForeachFunc">GMimeHeaderForeachFunc</link> func,
                                              <link linkend="gpointer">gpointer</link> data);</programlisting>
 <para>
 Calls <parameter>func</parameter> for each header name/value pair.</para>
@@ -270,7 +270,9 @@ Calls <parameter>func</parameter> for each header name/value pair.</para>
 <entry> function to be called for each header.
 </entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
-<entry> User data to be passed to the func.
+<entry>
+
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

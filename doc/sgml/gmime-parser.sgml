@@ -15,18 +15,28 @@
 
 
 struct      <link linkend="GMimeParser">GMimeParser</link>;
+void        (<link linkend="GMimeParserHeaderRegexFunc">*GMimeParserHeaderRegexFunc</link>)   (<link linkend="GMimeParser">GMimeParser</link> *parser,
+                                             const char *header,
+                                             const char *value,
+                                             <link linkend="off-t">off_t</link> offset,
+                                             <link linkend="gpointer">gpointer</link> user_data);
 <link linkend="GMimeParser">GMimeParser</link>* <link linkend="g-mime-parser-new">g_mime_parser_new</link>              (void);
 void        <link linkend="g-mime-parser-init-with-stream">g_mime_parser_init_with_stream</link>  (<link linkend="GMimeParser">GMimeParser</link> *parser,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 void        <link linkend="g-mime-parser-set-scan-from">g_mime_parser_set_scan_from</link>     (<link linkend="GMimeParser">GMimeParser</link> *parser,
                                              <link linkend="gboolean">gboolean</link> scan_from);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-parser-get-scan-from">g_mime_parser_get_scan_from</link>     (<link linkend="GMimeParser">GMimeParser</link> *parser);
+void        <link linkend="g-mime-parser-set-header-regex">g_mime_parser_set_header_regex</link>  (<link linkend="GMimeParser">GMimeParser</link> *parser,
+                                             const char *regex,
+                                             <link linkend="GMimeParserHeaderRegexFunc">GMimeParserHeaderRegexFunc</link> header_cb,
+                                             <link linkend="gpointer">gpointer</link> user_data);
 <link linkend="off-t">off_t</link>       <link linkend="g-mime-parser-tell">g_mime_parser_tell</link>              (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-parser-eos">g_mime_parser_eos</link>               (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="GMimeObject">GMimeObject</link>* <link linkend="g-mime-parser-construct-part">g_mime_parser_construct_part</link>   (<link linkend="GMimeParser">GMimeParser</link> *parser);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>
                                             (<link linkend="GMimeParser">GMimeParser</link> *parser);
 char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>          (<link linkend="GMimeParser">GMimeParser</link> *parser);
+<link linkend="off-t">off_t</link>       <link linkend="g-mime-parser-get-from-offset">g_mime_parser_get_from_offset</link>   (<link linkend="GMimeParser">GMimeParser</link> *parser);
 
 
 </synopsis>
@@ -56,6 +66,38 @@ char*       <link linkend="g-mime-parser-get-from">g_mime_parser_get_from</link>
 <para>
 
 </para></refsect2>
+<refsect2>
+<title><anchor id="GMimeParserHeaderRegexFunc">GMimeParserHeaderRegexFunc ()</title>
+<programlisting>void        (*GMimeParserHeaderRegexFunc)   (<link linkend="GMimeParser">GMimeParser</link> *parser,
+                                             const char *header,
+                                             const char *value,
+                                             <link linkend="off-t">off_t</link> offset,
+                                             <link linkend="gpointer">gpointer</link> user_data);</programlisting>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>offset</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
+<entry>
+
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-parser-new">g_mime_parser_new ()</title>
 <programlisting><link linkend="GMimeParser">GMimeParser</link>* g_mime_parser_new              (void);</programlisting>
@@ -144,6 +186,36 @@ Gets whether or not <parameter>parser</parameter> is set to scan mbox-style From
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>whether or not <parameter>parser</parameter> is set to scan mbox-style
 From-lines.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-parser-set-header-regex">g_mime_parser_set_header_regex ()</title>
+<programlisting>void        g_mime_parser_set_header_regex  (<link linkend="GMimeParser">GMimeParser</link> *parser,
+                                             const char *regex,
+                                             <link linkend="GMimeParserHeaderRegexFunc">GMimeParserHeaderRegexFunc</link> header_cb,
+                                             <link linkend="gpointer">gpointer</link> user_data);</programlisting>
+<para>
+Sets the regular expression pattern <parameter>regex</parameter> on <parameter>parser</parameter>. Whenever a
+header matching the pattern <parameter>regex</parameter> is parsed, <parameter>header_cb</parameter> is called
+with <parameter>user_data</parameter> as the user_data argument.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
+<entry> MIME parser object
+</entry></row>
+<row><entry align="right"><parameter>regex</parameter>&nbsp;:</entry>
+<entry> regular expression
+</entry></row>
+<row><entry align="right"><parameter>header_cb</parameter>&nbsp;:</entry>
+<entry> callback function
+</entry></row>
+<row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
+<entry> user data
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -238,6 +310,26 @@ Gets the mbox-style From-line of the most recently parsed message
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the mbox-style From-line of the most recently parsed
 message or <literal>NULL</literal> on error.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-parser-get-from-offset">g_mime_parser_get_from_offset ()</title>
+<programlisting><link linkend="off-t">off_t</link>       g_mime_parser_get_from_offset   (<link linkend="GMimeParser">GMimeParser</link> *parser);</programlisting>
+<para>
+Gets the offset of the most recently parsed mbox-style From-line
+(gotten from <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>).</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>parser</parameter>&nbsp;:</entry>
+<entry> MIME parser object
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the offset of the most recently parsed mbox-style From-line
+or -1 on error.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 
