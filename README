@@ -77,7 +77,7 @@ try to parse a MIME message thus subtracting from the full benefits
 that MIME was meant to provide. GMime is meant to address this issue
 by following the MIME specification as closely as possible while also
 providing programmers with an extremely easy to use application
-programming interface.
+programming interface (API).
 
 
 OBTAINING GMIME
