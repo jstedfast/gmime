@@ -190,6 +190,9 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 	register unsigned char c, r;
 	register gunichar u, m;
 	
+	if (inptr == inend)
+		return 0;
+	
 	while (inptr < inend) {
 		r = *inptr++;
 	loop:
@@ -239,7 +242,7 @@ writeln (GMimeFilter *filter, const unsigned char *in, const unsigned char *inen
 		u = html_utf8_getc (&inptr, inend);
 		switch (u) {
 		case 0xffff:
-			g_warning ("truncated UTF-8 sequence encountered");
+			g_warning ("Invalid UTF-8 sequence encountered");
 			return outptr;
 			break;
 		case '<':
