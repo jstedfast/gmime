@@ -1,3 +1,20 @@
+2001-08-13  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-utils.c (encode_8bit_word): query nl_langinfo for the
+	codeset instead of just assuming iso-8859-1.  Thanks to
+	Volodymyr M . Lisivka <lvm@mystery.lviv.net> for suggesting
+	this patch.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_encode): same.
+
+	* gmime-parser.c (find_header_part_end): new utility function
+	to find the dividing line between body & header.
+	* gmime-parser.c (g_mime_parser_construct_part): sync.
+	* gmime-parser.c (g_mime_parser_construct_message): sync.
+
+	* gmime-parser.c (get_header_block): remove unused func.
+	* gmime-parser.c (rfc822_headers): remove unused static array.
+
 2001-07-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* zentimer.h: Added. Provides some timing macros for performace

@@ -43,21 +43,6 @@ enum {
 	CONTENT_ID
 };
 
-#if 0
-static char *rfc822_headers[] = {
-	"Return-Path",
-	"Received",
-	"Date",
-	"From",
-	"Reply-To",
-	"Subject",
-	"Sender",
-	"To",
-	"Cc",
-	NULL
-};
-#endif
-
 static gchar *content_headers[] = {
 	"Content-Type:",
 	"Content-Transfer-Encoding:",
@@ -123,6 +108,24 @@ g_strstrbound (const gchar *haystack, const gchar *needle, const gchar *end)
 		return NULL;
 }
 
+static const gchar *
+find_header_part_end (const gchar* in, guint inlen)
+{
+	const gchar * pch;
+	const gchar * hdr_end = NULL;
+
+	g_return_val_if_fail (in!=NULL, NULL);
+
+	if (*in == '\n') /* if the beginning is a '\n' there are no content headers */
+		hdr_end = in;
+	else if ((pch = g_strstrbound (in, "\n\n", in+inlen)) != NULL)
+		hdr_end = pch;
+	else if ((pch = g_strstrbound (in, "\n\r\n", in+inlen)) != NULL)
+		hdr_end = pch;
+
+	return hdr_end;
+}
+
 #define GMIME_PARSER_MAX_LINE_WIDTH 1024
 
 
@@ -159,29 +162,6 @@ get_header_block_from_file (FILE *fp)
 			break;
 		
 		g_array_append_vals (a, buf, strlen (buf));
-	}
-	
-	return a;
-}
-
-/**
- * get_header_block: Get the header block from a message.
- * @message: the message text; that is, header + body.
- *
- * This will read all of the headers into an unparsed GArray.
- **/
-static GArray *
-get_header_block (const gchar *pch)
-{
-	GArray *a = NULL;
-	const gchar *header_end;
-	
-	g_return_val_if_fail (pch != NULL, NULL);
-	
-	header_end = strstr (pch, "\n\n");
-	if (header_end != NULL) {
-		a = g_array_new (TRUE, FALSE, 1);
-		g_array_append_vals (a, pch, header_end - pch);
 	}
 	
 	return a;
@@ -493,7 +473,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 	
 	/* Headers */
 	/* if the beginning of the input is a '\n' then there are no content headers */
-	hdr_end = *in == '\n' ? in : g_strstrbound (in, "\n\n", inend);
+	hdr_end = find_header_part_end (in, inlen);
 	if (!hdr_end)
 		return NULL;
 	
@@ -704,7 +684,7 @@ g_mime_parser_construct_message (const gchar *in, guint inlen, gboolean save_ext
 	
 	g_return_val_if_fail (in != NULL, NULL);
 	
-	hdr_end = g_strstrbound (in, "\n\n", in + inlen);
+	hdr_end = find_header_part_end (in, inlen);
 	if (hdr_end != NULL) {
 		GMimePart *part;
 		

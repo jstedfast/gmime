@@ -32,6 +32,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <langinfo.h>
 
 #define d(x)
 
@@ -120,6 +121,20 @@ static char *tm_months[] = {
 static char *tm_days[] = {
 	"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"
 };
+
+#define DEFAULT_CODESET "iso-8859-1"
+
+static const gchar*
+get_codeset (void)
+{
+	const gchar * codeset;
+
+	codeset = nl_langinfo (CODESET);
+	if (!codeset || !*codeset)
+		codeset = DEFAULT_CODESET;
+
+	return codeset;
+}
 
 
 /**
@@ -970,8 +985,8 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	
 	if (this_was_encoded)
 		*this_was_encoded = TRUE;
-	
-	return g_strdup_printf ("=?iso-8859-1?%c?%s?=", encoding, encoded);
+
+	return g_strdup_printf ("=?%s?%c?%s=", get_codeset(), encoding, encoded);	
 }
 
 
@@ -1032,10 +1047,8 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 				ewhtspc = alloca (whtspc->len * 3 + 4);
 				len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
 				ewhtspc[len] = '\0';
-				
-				g_string_append (out, " =?iso-8859-1?q?");
-				g_string_append (out, ewhtspc);
-				g_string_append (out, "?= ");
+		
+				g_string_sprintfa (out, " =?%s?q?%s?= ", get_codeset(), ewhtspc);
 			} else {
 				g_string_append (out, whtspc->str);
 			}
@@ -1081,10 +1094,8 @@ g_mime_utils_8bit_header_encode (const guchar *in)
 			ewhtspc = alloca (whtspc->len * 3 + 4);
 			len = quoted_encode (whtspc->str, whtspc->len, ewhtspc, IS_ESAFE);
 			ewhtspc[len] = '\0';
-			
-			g_string_append (out, " =?iso-8859-1?q?");
-			g_string_append (out, ewhtspc);
-			g_string_append (out, "?= ");
+		
+			g_string_sprintfa (out, " =?%s?q?%s?= ", get_codeset(), ewhtspc);
 		} else {
 			g_string_append (out, whtspc->str);
 		}

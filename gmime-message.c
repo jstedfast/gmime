@@ -105,8 +105,6 @@ recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 void
 g_mime_message_destroy (GMimeMessage *message)
 {
-	int i;
-	
 	g_return_if_fail (message != NULL);
 	
 	g_free (message->header->from);
