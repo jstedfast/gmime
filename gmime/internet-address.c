@@ -139,7 +139,7 @@ internet_address_new_name (const char *name, const char *addr)
 	ia = internet_address_new ();
 	ia->type = INTERNET_ADDRESS_NAME;
 	if (name) {
-		ia->name = g_mime_utils_8bit_header_decode (name);
+		ia->name = g_mime_utils_header_decode_phrase (name);
 		g_mime_utils_unquote_string (ia->name);
 	}
 	ia->value.addr = g_strdup (addr);
@@ -164,7 +164,7 @@ internet_address_new_group (const char *name)
 	ia = internet_address_new ();
 	ia->type = INTERNET_ADDRESS_GROUP;
 	if (name) {
-		ia->name = g_mime_utils_8bit_header_decode (name);
+		ia->name = g_mime_utils_header_decode_phrase (name);
 		g_mime_utils_unquote_string (ia->name);
 	}
 	
@@ -186,7 +186,7 @@ internet_address_set_name (InternetAddress *ia, const char *name)
 	
 	g_free (ia->name);
 	if (name) {
-		ia->name = g_mime_utils_8bit_header_decode (name);
+		ia->name = g_mime_utils_header_decode_phrase (name);
 		g_mime_utils_unquote_string (ia->name);
 	} else
 		ia->name = NULL;
@@ -408,8 +408,8 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 	
 	g_return_val_if_fail (raw != NULL, NULL);
 	
-	if (rfc2047_encode && g_mime_utils_text_is_8bit (raw, strlen (raw))) {
-		name = g_mime_utils_8bit_header_encode_phrase (raw);
+	if (rfc2047_encode) {
+		name = g_mime_utils_header_encode_phrase (raw);
 	} else {
 		name = g_mime_utils_quote_string (raw);
 	}

@@ -395,7 +395,7 @@ decode_param (const char **in, char **paramp, char **valuep, gboolean *is_rfc218
 			 */
 			char *val;
 			
-			val = g_mime_utils_8bit_header_decode (value);
+			val = g_mime_utils_header_decode_text (value);
 			if (val) {
 				g_free (value);
 				value = val;

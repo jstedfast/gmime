@@ -948,7 +948,7 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	
 	message_set_subject (message, subject);
 	
-	encoded = g_mime_utils_8bit_header_encode (message->subject);
+	encoded = g_mime_utils_header_encode_text (message->subject);
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "Subject", encoded);
 	g_free (encoded);
 }

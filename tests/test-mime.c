@@ -180,19 +180,19 @@ test_encodings (void)
 	
 	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklagdoc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	enc = "=?iso-8859-1?B?dGVzdOb45S50eHQ=?=";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
@@ -200,99 +200,99 @@ test_encodings (void)
 		"=?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= "
 		"=?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	enc = "OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	enc = "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	enc = "OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem";
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (dec);
 	
 	dec = g_mime_iconv_strdup (cd, "OT - ich weiß, trotzdem");
 	fprintf (stderr, "pre-encoded: %s\n", dec);
-	enc = g_mime_utils_8bit_header_encode (dec);
+	enc = g_mime_utils_header_encode_text (dec);
 	g_free (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	enc = g_strdup ("=?iso-8859-1?Q?=DE?=:\t=?iso-8859-1?Q?=AD=BE=EF?= spells 0xdeadbeef");
 	fprintf (stderr, "incorrect: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
-	enc = g_mime_utils_8bit_header_encode (dec);
+	enc = g_mime_utils_header_encode_text (dec);
 	g_free (dec);
 	fprintf (stderr, "correct: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	dec = g_mime_iconv_strdup (cd, "Kristoffer Brånemyr");
 	fprintf (stderr, "pre-encoded: %s\n", dec);
-	enc = g_mime_utils_8bit_header_encode (dec);
+	enc = g_mime_utils_header_encode_phrase (dec);
 	g_free (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_phrase (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
-	enc = g_mime_utils_8bit_header_encode (dec);
+	enc = g_mime_utils_header_encode_text (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
 	g_free (dec);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
-	enc = g_mime_utils_8bit_header_encode_phrase (dec);
+	enc = g_mime_utils_header_encode_phrase (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
 	g_free (dec);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_phrase (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
 	fprintf (stderr, "test that white space between 8bit words is preserved\n");
 	dec = g_mime_iconv_strdup (cd, "åaåååaåå  \t  ååååaa");
-	enc = g_mime_utils_8bit_header_encode (dec);
+	enc = g_mime_utils_header_encode_text (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
 	g_free (dec);
-	dec = g_mime_utils_8bit_header_decode (enc);
+	dec = g_mime_utils_header_decode_text (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);

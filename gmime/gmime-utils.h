@@ -83,9 +83,11 @@ gboolean g_mime_utils_text_is_8bit (const unsigned char *text, size_t len);
 GMimePartEncodingType g_mime_utils_best_encoding (const unsigned char *text, size_t len);
 
 /* utilities to (de/en)code headers */
-char *g_mime_utils_8bit_header_decode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *in);
+char *g_mime_utils_header_decode_text (const unsigned char *in);
+char *g_mime_utils_header_encode_text (const unsigned char *in);
+
+char *g_mime_utils_header_decode_phrase (const unsigned char *in);
+char *g_mime_utils_header_encode_phrase (const unsigned char *in);
 
 /* do incremental base64 (de/en)coding */
 size_t g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);

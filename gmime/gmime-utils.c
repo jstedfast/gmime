@@ -1140,13 +1140,14 @@ g_mime_utils_unquote_string (char *string)
 gboolean
 g_mime_utils_text_is_8bit (const unsigned char *text, size_t len)
 {
-	const unsigned char *c, *inend;
+	register const unsigned char *inptr;
+	const unsigned char *inend;
 	
 	g_return_val_if_fail (text != NULL, FALSE);
 	
 	inend = text + len;
-	for (c = text; c < inend; c++)
-		if (*c > (unsigned char) 127)
+	for (inptr = text; *inptr && inptr < inend; inptr++)
+		if (*inptr > (unsigned char) 127)
 			return TRUE;
 	
 	return FALSE;
@@ -1314,15 +1315,134 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 
 
 /**
- * g_mime_utils_8bit_header_decode:
+ * g_mime_utils_header_decode_text:
  * @in: header to decode
  *
- * Decodes and rfc2047 encoded header.
+ * Decodes an rfc2047 encoded 'text' header.
  *
- * Returns the mime encoded header as 8bit text.
+ * Returns the decoded header (which will be in UTF-8 if at all
+ * possible).
  **/
 char *
-g_mime_utils_8bit_header_decode (const unsigned char *in)
+g_mime_utils_header_decode_text (const unsigned char *in)
+{
+	GString *out, *lwsp, *text;
+	const unsigned char *inptr;
+	unsigned char *decoded;
+	gboolean last_was_encoded = FALSE;
+	gboolean last_was_space = FALSE;
+	
+	out = g_string_sized_new (256);
+	lwsp = g_string_sized_new (256);
+	text = g_string_sized_new (256);
+	inptr = in;
+	
+	while (inptr && *inptr) {
+		unsigned char c = *inptr++;
+		
+		if (is_lwsp ((int) c) && !last_was_space) {
+			/* we reached the end of an atom */
+			unsigned char *dword = NULL;
+			const unsigned char *word;
+			gboolean was_encoded;
+			
+			if ((was_encoded = is_rfc2047_encoded_word (text->str, text->len)))
+				word = dword = rfc2047_decode_word (text->str, text->len);
+			else
+				word = text->str;
+			
+			if (word) {
+				if (!(last_was_encoded && was_encoded)) {
+					/* rfc2047 states that you
+                                           must ignore all whitespace
+                                           between encoded words */
+					g_string_append (out, lwsp->str);
+				}
+				
+				g_string_append (out, word);
+				g_free (dword);
+			} else {
+				was_encoded = FALSE;
+				g_string_append (out, lwsp->str);
+				g_string_append (out, text->str);
+			}
+			
+			last_was_encoded = was_encoded;
+			
+			g_string_truncate (lwsp, 0);
+			g_string_truncate (text, 0);
+			
+			if (is_lwsp (c)) {
+				g_string_append_c (lwsp, c);
+				last_was_space = TRUE;
+			} else {
+				/* This is mostly here for interoperability with broken
+                                   mailers that might do something stupid like:
+                                   =?iso-8859-1?Q?blah?=:\t=?iso-8859-1?Q?I_am_broken?= */
+				g_string_append_c (out, c);
+				last_was_encoded = FALSE;
+				last_was_space = FALSE;
+			}
+			
+			continue;
+		}
+		
+		if (!is_lwsp (c)) {
+			g_string_append_c (text, c);
+			last_was_space = FALSE;
+		} else {
+			g_string_append_c (lwsp, c);
+			last_was_space = TRUE;
+		}
+	}
+	
+	if (text->len || lwsp->len) {
+		unsigned char *dword = NULL;
+		const unsigned char *word;
+		gboolean was_encoded;
+		
+		if ((was_encoded = is_rfc2047_encoded_word (text->str, text->len)))
+			word = dword = rfc2047_decode_word (text->str, text->len);
+		else
+			word = text->str;
+		
+		if (word) {
+			if (!(last_was_encoded && was_encoded)) {
+				/* rfc2047 states that you
+				   must ignore all whitespace
+				   between encoded words */
+				g_string_append (out, lwsp->str);
+			}
+			
+			g_string_append (out, word);
+			g_free (dword);
+		} else {
+			g_string_append (out, lwsp->str);
+			g_string_append (out, text->str);
+		}
+	}
+	
+	g_string_free (lwsp, TRUE);
+	g_string_free (text, TRUE);
+	
+	decoded = out->str;
+	g_string_free (out, FALSE);
+	
+	return (char *) decoded;
+}
+
+
+/**
+ * g_mime_utils_header_decode_phrase:
+ * @in: header to decode
+ *
+ * Decodes an rfc2047 encoded 'phrase' header.
+ *
+ * Returns the decoded header (which will be in UTF-8 if at all
+ * possible).
+ **/
+char *
+g_mime_utils_header_decode_phrase (const unsigned char *in)
 {
 	GString *out, *lwsp, *atom;
 	const unsigned char *inptr;
@@ -1523,60 +1643,27 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 }
 
 
-/**
- * g_mime_utils_8bit_header_encode_phrase:
- * @in: header to encode
- *
- * Encodes a header phrase according to the rules in rfc2047.
- *
- * Returns the header phrase as 1 encoded atom. Useful for encoding
- * internet addresses.
- **/
-char *
-g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
-{
-	const char *charset;
-	GString *string;
-	size_t len;
-	char *str;
-	
-	if (in == NULL)
-		return NULL;
-	
-	len = strlen (in);
-	
-	charset = g_mime_charset_best (in, len);
-	charset = charset ? charset : "iso-8859-1";
-	
-	string = g_string_new ("");
-	
-	rfc2047_encode_word (string, in, strlen (in), charset, IS_ESAFE);
-	
-	str = string->str;
-	g_string_free (string, FALSE);
-	
-	return str;
-}
-
-
-enum _phrase_word_t {
+enum _rfc822_word_t {
 	WORD_ATOM,
+	WORD_QSTRING,
 	WORD_2047
 };
 
-struct _phrase_word {
-	struct _phrase_word *next;
+struct _rfc822_word {
+	struct _rfc822_word *next;
 	const unsigned char *start, *end;
-	enum _phrase_word_t type;
+	enum _rfc822_word_t type;
 	int encoding;
 };
 
 static gboolean
-word_types_compatable (enum _phrase_word_t type1, enum _phrase_word_t type2)
+word_types_compatable (enum _rfc822_word_t type1, enum _rfc822_word_t type2)
 {
 	switch (type1) {
 	case WORD_ATOM:
-		return FALSE;
+		return type2 != WORD_ATOM;
+	case WORD_QSTRING:
+		return type2 != WORD_2047;
 	case WORD_2047:
 		return type2 == WORD_2047;
 	default:
@@ -1584,16 +1671,17 @@ word_types_compatable (enum _phrase_word_t type1, enum _phrase_word_t type2)
 	}
 }
 
-static struct _phrase_word *
-rfc2047_encode_phrase_get_words (const unsigned char *in)
+/* okay, so 'text' fields don't actually contain 'word's, but we can group stuff similarly */
+static struct _rfc822_word *
+rfc2047_encode_get_rfc822_words (const unsigned char *in, gboolean phrase)
 {
 	const unsigned char *inptr, *start, *last;
-	struct _phrase_word *words, *tail, *word;
-	enum _phrase_word_t type = WORD_ATOM;
+	struct _rfc822_word *words, *tail, *word;
+	enum _rfc822_word_t type = WORD_ATOM;
 	int count = 0, encoding = 0;
 	
 	words = NULL;
-	tail = (struct _phrase_word *) &words;
+	tail = (struct _rfc822_word *) &words;
 	
 	last = start = inptr = in;
 	while (inptr && *inptr) {
@@ -1612,7 +1700,7 @@ rfc2047_encode_phrase_get_words (const unsigned char *in)
 		
 		if (g_unichar_isspace (c)) {
 			if (count > 0) {
-				word = g_new (struct _phrase_word, 1);
+				word = g_new (struct _rfc822_word, 1);
 				word->next = NULL;
 				word->start = start;
 				word->end = last;
@@ -1629,7 +1717,11 @@ rfc2047_encode_phrase_get_words (const unsigned char *in)
 			encoding = 0;
 		} else {
 			count++;
-			if (c > 127 && c < 256) {
+			if (phrase && c < 128) {
+				/* phrases can have qstring words */
+				if (!is_atom (c))
+					type = MAX (type, WORD_QSTRING);
+			} else if (c > 127 && c < 256) {
 				type = WORD_2047;
 				encoding = MAX (encoding, 1);
 			} else if (c >= 256) {
@@ -1642,7 +1734,7 @@ rfc2047_encode_phrase_get_words (const unsigned char *in)
 	}
 	
 	if (count > 0) {
-		word = g_new (struct _phrase_word, 1);
+		word = g_new (struct _rfc822_word, 1);
 		word->next = NULL;
 		word->start = start;
 		word->end = last;
@@ -1656,10 +1748,12 @@ rfc2047_encode_phrase_get_words (const unsigned char *in)
 	return words;
 }
 
+#define MERGED_WORD_LT_FOLDLEN(wlen, type) ((type) == WORD_2047 ? (wlen) < GMIME_FOLD_PREENCODED : (wlen) < (GMIME_FOLD_LEN - 8))
+
 static gboolean
-rfc2047_encode_phrase_merge_words (struct _phrase_word **wordsp)
+rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
 {
-	struct _phrase_word *word, *next, *words = *wordsp;
+	struct _rfc822_word *word, *next, *words = *wordsp;
 	gboolean merged = FALSE;
 	
 	/* scan the list, checking for words of similar types that can be merged */
@@ -1670,7 +1764,7 @@ rfc2047_encode_phrase_merge_words (struct _phrase_word **wordsp)
 		while (next) {
 			/* merge nodes of the same type AND we are not creating too long a string */
 			if (word_types_compatable (word->type, next->type)) {
-				if (next->end - word->start < GMIME_FOLD_PREENCODED) {
+				if (MERGED_WORD_LT_FOLDLEN (next->end - word->start, MAX (word->type, next->type))) {
 					/* the resulting word type is the MAX of the 2 types */
 					word->type = MAX (word->type, next->type);
 					
@@ -1701,21 +1795,42 @@ rfc2047_encode_phrase_merge_words (struct _phrase_word **wordsp)
 	return merged;
 }
 
-static char *
-rfc2047_encode_phrase (const unsigned char *in)
+static void
+g_string_append_len_quoted (GString *out, const char *in, size_t len)
 {
-	struct _phrase_word *words, *word, *prev = NULL;
+	register const char *inptr;
+	const char *inend;
+	
+	g_string_append_c (out, '"');
+	
+	inptr = in;
+	inend = in + len;
+	
+	while (inptr < inend) {
+		if ((*inptr == '"') || *inptr == '\\')
+			g_string_append_c (out, '\\');
+		
+		g_string_append_c (out, *inptr);
+		
+		inptr++;
+	}
+	
+	g_string_append_c (out, '"');
+}
+
+static char *
+rfc2047_encode (const unsigned char *in, gboolean phrase)
+{
+	struct _rfc822_word *words, *word, *prev = NULL;
+	gushort safemask = phrase ? IS_PSAFE : IS_ESAFE;
 	GString *out;
 	char *outstr;
 	
-	if (in == NULL)
-		return NULL;
-	
-	words = rfc2047_encode_phrase_get_words (in);
+	words = rfc2047_encode_get_rfc822_words (in, phrase);
 	if (!words)
 		return NULL;
 	
-	while (rfc2047_encode_phrase_merge_words (&words))
+	while (rfc2047_encode_merge_rfc822_words (&words))
 		;
 	
 	out = g_string_new ("");
@@ -1737,10 +1852,14 @@ rfc2047_encode_phrase (const unsigned char *in)
 		case WORD_ATOM:
 			g_string_append_len (out, word->start, word->end - word->start);
 			break;
+		case WORD_QSTRING:
+			g_assert (phrase);
+			g_string_append_len_quoted (out, word->start, word->end - word->start);
+			break;
 		case WORD_2047:
 			if (prev && prev->type == WORD_2047) {
 				/* include the whitespace chars between these 2 words in the
-                                   resulting rfc2047 encoded word. */
+				   resulting rfc2047 encoded word. */
 				len = word->end - prev->end;
 				start = prev->end;
 				
@@ -1752,10 +1871,9 @@ rfc2047_encode_phrase (const unsigned char *in)
 			}
 			
 			if (word->encoding == 1)
-				rfc2047_encode_word (out, start, len, "iso-8859-1", IS_PSAFE);
+				rfc2047_encode_word (out, start, len, "iso-8859-1", safemask);
 			else
-				rfc2047_encode_word (out, start, len,
-						     g_mime_charset_best (start, len), IS_PSAFE);
+				rfc2047_encode_word (out, start, len, g_mime_charset_best (start, len), safemask);
 			break;
 		}
 		
@@ -1774,7 +1892,26 @@ rfc2047_encode_phrase (const unsigned char *in)
 
 
 /**
- * g_mime_utils_8bit_header_encode:
+ * g_mime_utils_header_encode_phrase:
+ * @in: header to encode
+ *
+ * Encodes a header 'phrase' according to the rules in rfc2047.
+ *
+ * Returns the encoded 'phrase'. Useful for encoding internet
+ * addresses.
+ **/
+char *
+g_mime_utils_header_encode_phrase (const unsigned char *in)
+{
+	if (in == NULL)
+		return NULL;
+	
+	return rfc2047_encode (in, TRUE);
+}
+
+
+/**
+ * g_mime_utils_header_encode_text:
  * @in: header to encode
  *
  * Encodes a header according to the rules in rfc2047.
@@ -1783,9 +1920,12 @@ rfc2047_encode_phrase (const unsigned char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_8bit_header_encode (const unsigned char *in)
+g_mime_utils_header_encode_text (const unsigned char *in)
 {
-	return rfc2047_encode_phrase (in);
+	if (in == NULL)
+		return NULL;
+	
+	return rfc2047_encode (in, FALSE);
 }
 
 

@@ -1,5 +1,41 @@
 2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/internet-address.c (internet_address_new_name): Use
+	header_decode_phrase().
+	(internet_address_new_group): Same.
+	(internet_address_set_name): Again here.
+	(encoded_name): Always use encode_phrase() here if rfc2047_encode
+	is TRUE, even if the raw name contains no 8bit characters. It
+	*should* do the Right Thing (tm) now.
+
+	* gmime/gmime-param.c (decode_param): Use
+	g_mime_utils_header_decode_text().
+
+	* gmime/gmime-message.c (g_mime_message_set_subject): Use
+	g_mime_utils_header_encode_text().
+
+	* gmime/gmime-utils.c (g_mime_utils_header_encode_phrase):
+	Renamed. Also rewritten to do the Right Thing (ie. Group 'word's
+	by type and so forth).
+	(g_mime_utils_header_encode_text): Renamed from
+	8bit_header_encode() to make it clear that this function is meant
+	to encode 'text' fields (see rfc822 for the definition of 'text'
+	and for which headers have text values). Does the same basic
+	thing, but now shares a lot of code with encode_phrase().
+	(rfc2047_encode_get_rfc822_words): Renamed from
+	rfc2047_encode_phrase_get_words() - also now handles WORD_QSTRING
+	and takes an arg to determine whether or not to allow for QSTRING
+	words.
+	(g_mime_utils_text_is_8bit): Don't go past '\0' if we encounter
+	one before inend. Should allow our caller to cheat and pass in -1
+	instead of strlen()ing the string if the string is nul-terminated.
+	(g_mime_utils_header_decode_text): Renamed from
+	8bit_header_decode(). Also made a lot less strict.
+	(g_mime_utils_header_decode_phrase): Basically the same as
+	decode_text() but with the same strictness of previous versions.
+
+2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime-message.c (g_mime_message_set_subject): Encode the
 	subject before setting it in the raw header list.
 
