@@ -422,7 +422,7 @@ g_mime_parser_construct_part (GMimeStream *stream)
 }
 
 static void
-construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean preserve_headers)
+construct_message_headers (GMimeMessage *message, GByteArray *headers)
 {
 	char *field, *value, *raw, *q;
 	char *inptr, *inend;
@@ -493,7 +493,7 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 		case HEADER_UNKNOWN:
 		default:
 			/* possibly save the raw header */
-			if ((preserve_headers || fields[i]) && !special_header (field)) {
+			if (!special_header (field)) {
 				field[strlen (field) - 1] = '\0'; /* kill the ':' */
 				g_strstrip (field);
 				g_mime_header_add (message->header->headers, field, value);
@@ -515,14 +515,13 @@ construct_message_headers (GMimeMessage *message, GByteArray *headers, gboolean 
 /**
  * g_mime_parser_construct_message:
  * @stream: an rfc0822 message stream
- * @preserve_headers: if %TRUE, then store the arbitrary headers
  *
  * Constructs a GMimeMessage object based on @stream.
  *
  * Returns a GMimeMessage object based on the rfc0822 message stream.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
+g_mime_parser_construct_message (GMimeStream *stream)
 {
 	GMimeMessage *message = NULL;
 	GByteArray *headers;
@@ -536,8 +535,8 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
 		GMimePart *part;
 		int found;
 		
-		message = g_mime_message_new (!preserve_headers);
-		construct_message_headers (message, headers, preserve_headers);
+		message = g_mime_message_new (FALSE);
+		construct_message_headers (message, headers);
 		part = g_mime_parser_construct_part_internal (stream, headers, NULL, NULL, &found);
 		g_mime_message_set_mime_part (message, part);
 		g_mime_object_unref (GMIME_OBJECT (part));
