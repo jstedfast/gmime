@@ -52,6 +52,8 @@ LDFLAGS=${_ldflags}
 
 dnl Checks for header files.
 AC_HEADER_STDC
+AC_CHECK_HEADERS(string.h)
+AC_CHECK_HEADERS(stdlib.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
 AC_CHECK_HEADERS(alloca.h)
@@ -106,7 +108,7 @@ AC_SUBST(glib_libs)
 
 dnl Checks for library functions.
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(localtime isblank)
+AC_CHECK_FUNCS(alloca localtime isblank)
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
