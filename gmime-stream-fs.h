@@ -38,6 +38,7 @@ typedef struct _GMimeStreamFs {
 	GMimeStream parent;
 	
 	gboolean owner;
+	gboolean eos;
 	int fd;
 } GMimeStreamFs;
 

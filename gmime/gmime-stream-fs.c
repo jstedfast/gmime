@@ -79,8 +79,13 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	lseek (fstream->fd, stream->position, SEEK_SET);
 	
 	do {
-		nread = read (stream_fs->fd, buf, len);
+		nread = read (fstream->fd, buf, len);
 	} while (nread == -1 && errno == EINTR);
+	
+	if (nread > 0)
+		stream->position += nread;
+	else if (nread == 0)
+		fstream->eos = TRUE;
 	
 	return nread;
 }
@@ -138,17 +143,22 @@ stream_eos (GMimeStream *stream)
 	
 	g_return_val_if_fail (fstream->fd != -1, TRUE);
 	
-	return feof (fstream->fd) ? TRUE : FALSE;
+	return fstream->eos;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
+	off_t ret;
 	
 	g_return_val_if_fail (fstream->fd != -1, -1);
 	
-	return lseek (fstream->fd, stream->bound_start, SEEK_SET);
+	ret = lseek (fstream->fd, stream->bound_start, SEEK_SET);
+	if (ret != -1)
+		fstream->eos = FALSE;
+	
+	return ret;
 }
 
 static off_t
@@ -237,7 +247,8 @@ g_mime_stream_fs_new (int fd)
 	
 	fstream = g_new (GMimeStreamFs, 1);
 	fstream->owner = TRUE;
-	fstream->fd = fp;
+	fstream->eos = FALSE;
+	fstream->fd = fd;
 	
 	start = lseek (fd, 0, SEEK_CUR);
 	
@@ -262,6 +273,7 @@ g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end)
 	
 	fstream = g_new (GMimeStreamFs, 1);
 	fstream->owner = TRUE;
+	fstream->eos = FALSE;
 	fstream->fd = fd;
 	
 	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, end);

@@ -62,6 +62,7 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	ssize_t nread;
 	
 	if (stream->bound_end == -1 && stream->position > stream->bound_end)
 		return -1;
@@ -72,7 +73,12 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	/* make sure we are at the right position */
 	fseek (fstream->fp, stream->position, SEEK_SET);
 	
-	return fread (buf, 1, len, fstream->fp);
+	nread = fread (buf, 1, len, fstream->fp);
+	
+	if (nread > 0)
+		stream->position += nread;
+	
+	return nread;
 }
 
 static ssize_t
