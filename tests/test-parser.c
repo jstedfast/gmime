@@ -9,6 +9,9 @@
 
 #include "gmime.h"
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
+
 void
 print_depth (int depth)
 {
@@ -45,23 +48,22 @@ test_parser (gchar *data)
 	gboolean is_html;
 	gchar *text;
 	gchar *body;
-	time_t now, past;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	time (&past);
+	ZenTimerStart();
 	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
-	time (&now);
-	fprintf (stderr, "parsed message in %lus.\n", now - past);
-	time (&past);
+	ZenTimerStop();
+	ZenTimerReport ("gmime::parser_construct_message");
+	ZenTimerStart();
 	text = g_mime_message_to_string (message);
-	time (&now);
-	fprintf (stderr, "wrote message in %lus\n", now - past);
+	ZenTimerStop();
+	ZenTimerReport ("gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	
 	/* test of get_body */
 	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stderr, "Testing get_body (looking for html...%s)\n\n%s\n",
+	fprintf (stdout, "Testing get_body (looking for html...%s)\n\n%s\n",
 		 body && is_html ? "found" : "not found",
 		 body ? body : "No message body found");
 	

@@ -1,3 +1,13 @@
+2001-07-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* zentimer.h: Added. Provides some timing macros for performace
+	testing.
+
+	* zenprofiler.h: Added. Extends zentimer.h as a simple profiler
+	that gives nice printouts.
+
+	* test-parser.c: Use zentimer.h
+
 2001-06-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-header.c (g_mime_header_remove): New function.
