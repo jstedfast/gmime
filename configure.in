@@ -123,6 +123,8 @@ dnl Check for libiconv
 AM_ICONV()
 
 CFLAGS="$CFLAGS -I$srcdir"
+LDFLAGS_save="$LDFLAGS"
+LDFLAGS="$LDFLAGS $LIBICONV"
 
 AC_MSG_CHECKING(preferred charset formats for system iconv)
 AC_TRY_RUN([
@@ -141,6 +143,8 @@ AC_TRY_RUN([
 	*** ftp://ftp.gnu.org/pub/gnu/libiconv
 	])
 ])
+
+LDFLAGS="$LDFLAGS_save"
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
@@ -166,9 +170,9 @@ else
 	fi
 fi
 
-GMIME_LIBDIR='-L${libdir}'
-GMIME_INCLUDEDIR='-I${includedir}/gmime'
-GMIME_LIBS="-lgmime $LIBICONV"
+GMIME_LIBDIR="-L${libdir}"
+GMIME_INCLUDEDIR="-I${includedir}/gmime-2.0"
+GMIME_LIBS="-lgmime-2.0 $LIBICONV"
 
 dnl
 dnl Extra flags

@@ -6,7 +6,7 @@ includedir=@includedir@
 
 Name: GMime
 Version: @VERSION@
-Description: GMime is a set of utilities for parsing and creating messages using the Multipurpose Internet Mail Extension (MIME)
+Description: MIME parser and utility library
 Requires: glib-2.0,gobject-2.0
 Libs: -L${libdir} @GMIME_LIBS@ @LIBS@
 Cflags: -I${includedir}/gmime-2.0 @GMIME_CFLAGS@
