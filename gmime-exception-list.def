@@ -1,0 +1,13 @@
+/* WARNING: Exceptions MUST NOT be renumbered: they need to be
+ * consistent across libraries compiled at different times.
+ * Categories should be widely separated, old unused exceptions can
+ * never be deleted, and new exceptions can be added only to the
+ * ends of categories.
+ */
+
+GMIME_EXCEPTION_NONE = 0,
+
+/* Generic exceptions */
+GMIME_EXCEPTION_INVALID_PARAM,
+GMIME_EXCEPTION_SYSTEM,
+GMIME_EXCEPTION_USER_CANCEL

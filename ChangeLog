@@ -1,3 +1,21 @@
+2000-12-10  Jeffrey Stedfast  <fejj@helixcode.com>
+	Beginning of the GMIME_PGP_MIME branch.
+
+	* md5-utils.[c,h]: Added.
+
+	* gmime-exception*: An exception implementation stolen from Camel.
+
+	* pgp-utils.[c,h]: PGP interface code stolen from Spruce and
+	Evolution and modified to better handle binary data streams rather
+	than only text streams. Also made it so that the program using
+	GMime can specify the PGP program at run-time thus making it so
+	that there are no build-time dependencies on a PGP program.
+
+	* pgp-mime.[c,h]: A PGP/MIME (rfc2015) implementation using
+	pgp-utils and gmime-exception. It goes untested so far but I think
+	it should work, though I'd hesitate to say it's a perfect
+	implementation.
+
 2000-12-09  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_boundary): Generate a random
