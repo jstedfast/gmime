@@ -782,14 +782,12 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	
 	subparts = multipart->subparts;
 	while (subparts) {
-		const GMimeContentType *type;
 		GMimeObject *part = NULL;
 		GMimeObject *subpart;
 		
 		subpart = subparts->data;
-		type = g_mime_object_get_content_type (GMIME_OBJECT (subpart));
 		
-		if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		if (GMIME_IS_MULTIPART (subpart)) {
 			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart), content_id);
 		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
 			g_object_ref (subpart);

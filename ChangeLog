@@ -4,6 +4,9 @@
 	descend recursively... make the user descend into sub-multiparts
 	him/herself. This makes more sense since the callback will be
 	called on the multipart too...
+	(g_mime_multipart_get_subpart_from_content_id): Make checking if
+	the subpart is a multipart more efficient by using
+	GMIME_IS_MULTIPART macro.
 
 2003-07-15  Jeffrey Stedfast  <fejj@ximian.com>
 
