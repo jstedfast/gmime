@@ -292,8 +292,11 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	case GMIME_CIPHER_HASH_SHA1:
 		hash_type = "pgp-sha1";
 		break;
+	case GMIME_CIPHER_HASH_RIPEMD160:
+		hash_type = "pgp-ripemd160";
+		break;
 	default:
-		/* set a reasonable default */
+		/* set a reasonable default? */
 		hash = GMIME_CIPHER_HASH_SHA1;
 		hash_type = "pgp-sha1";
 		break;
