@@ -701,10 +701,10 @@ g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len)
 			if (c >= 128 && c < 256)
 				level = MAX (level, 1);
 			else if (c >= 256)
-				level = MAX (level, 2);
+				level = 2;
 		} else {
 			mask = 0;
-			level = MAX (level, 2);
+			level = 2;
 		}
 	}
 	

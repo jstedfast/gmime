@@ -1,3 +1,12 @@
+2005-03-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.1.13
+
+	* gmime/gmime-charset.c (g_mime_charset_step): Don't bother with
+	MAX() for cases where we'll just end up setting level to 2.
+
 2005-03-07  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metadata: Add the "owned" flag to the return
