@@ -1,3 +1,10 @@
+2002-07-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_step_headers): When refilling, make sure
+	that the refilled buffer is larger than the buffer was before
+	refilling, otherwise break out of the loop and parse whatever is
+	left. Fixes bug #89260 on bugzilla.gnome.org
+
 2002-07-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-cat.c (stream_read): Initialize `n' at the

@@ -677,7 +677,7 @@ parser_step_headers (GMimeParser *parser)
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
 	struct _header_raw *hend;
-	size_t len;
+	size_t len = 0;
 	
 	priv->midline = FALSE;
 	hend = (struct _header_raw *) &priv->headers;
@@ -685,10 +685,11 @@ parser_step_headers (GMimeParser *parser)
 	priv->header_start = parser_offset (parser, NULL);
 	
 	inptr = priv->inptr;
+	inend = priv->inend;
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= 0)
+		if (parser_fill (parser) <= len)
 			break;
 		
 		inptr = priv->inptr;
@@ -708,6 +709,7 @@ parser_step_headers (GMimeParser *parser)
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
 				priv->inptr = start;
+				len = inend - start;
 				goto refill;
 			}
 			
