@@ -47,6 +47,28 @@
       <year>2000-2002</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
+
+    <legalnotice>
+      <para>Permission is granted to make and distribute verbatim
+      copies of this manual provided the copyright notice and this
+      permission notice are preserved on all copies.</para>
+
+      <para>Permission is granted to copy and distribute modified
+      versions of this manual under the conditions for verbatim
+      copying, provided also that the entire resulting derived work is
+      distributed under the terms of a permission notice identical to
+      this one.</para>
+
+      <para>Permission is granted to copy and distribute translations
+      of this manual into another language, under the above conditions
+      for modified versions.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This manual documents the interfaces of the gmime
+      library and has some short notes to help get you up to speed
+      with using the library.</para>
+    </abstract>
   </bookinfo>
 
   <chapter id="gmime-notes">
@@ -86,7 +108,7 @@
     reads and writes to be nearly instantaneous and/or if you don't
     want to create a temporary file on disk.</para>
 
-    <para>The three (4) advanced stream types are GMimeStreamMmap,
+    <para>The four (4) advanced stream types are GMimeStreamMmap,
     GMimeStreamNull, GMimeStreamBuffer (as was mentioned previously)
     and GMimeStreamFilter.</para>
 
@@ -122,7 +144,7 @@
 
     <para>Stream filters are an efficient way of converting data from
     one format to another. To use a stream filter, you must first
-    construct a GMimeStreamFilter object and then add the desired
+    construct a GMimeStreamFilter stream and then add the desired
     filters to it.</para>
 
     <para>GMime comes equipped with some basic filters:
@@ -152,8 +174,8 @@
     messages which means that message bodies are forbidden to contain
     lines starting with "From ". The common way to escape these from
     lines in message bodies is to prepend the line with a greater-than
-    character ('>'). You'll find GMimeFilterFrom handy when dealing
-    with this.</para>
+    character ('>') producing ">From ". You'll find GMimeFilterFrom
+    handy when dealing with this.</para>
 
     <para>The GMimeFilterHTML filter converts a normal text stream
     into an html stream. This is especially useful if you are using a
@@ -167,9 +189,9 @@
     <para>Data wrappers are a very simple concept. They wrap
     data. Actually, they wrap around a source stream and contain
     information about the format of the source stream. This makes
-    writing a data wrapper to another stream incredibly easy because
-    it will unformat the data into it's raw form before writing it to
-    the output stream for you.</para>
+    writing a data wrapper to a stream incredibly easy because it will
+    decode the data into it's raw form before writing it to the output
+    stream for you.</para>
   </chapter>
 
   <chapter id="libgmime">
