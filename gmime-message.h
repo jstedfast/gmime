@@ -29,6 +29,7 @@ extern "C" {
 #endif /* __cplusplus }*/
 
 #include <glib.h>
+#include <stdarg.h>
 #include <time.h>
 #include "gmime-part.h"
 
@@ -92,9 +93,10 @@ void g_mime_message_add_arbitrary_header (GMimeMessage *message, const gchar *fi
 
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part);
 
+/* utility functions */
+gchar *g_mime_header_printf (const gchar *format, ...);
 gchar *g_mime_message_to_string (GMimeMessage *message);
 
-/* utility functions */
 gchar *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);
 gchar *g_mime_message_get_headers (GMimeMessage *message);
 

@@ -28,6 +28,8 @@
 #include <ctype.h>
 #include <locale.h>
 
+#define GMIME_FOLD_LEN  76
+
 /**
  * g_mime_message_new: Create a new MIME Message object
  *
@@ -433,6 +435,80 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
 }
 
 static gchar *
+header_fold (const gchar *in)
+{
+	const gchar *inptr, *space;
+	gint len, outlen, i;
+	GString *out;
+	gchar *ret;
+	
+	inptr = in;
+	len = strlen (in);
+	if (len <= GMIME_FOLD_LEN)
+		return g_strdup (in);
+	
+	out = g_string_new ("");
+	outlen = 0;
+	while (*inptr) {
+		space = strchr (inptr, ' ');
+		if (space)
+			len = space - inptr + 1;
+		else
+			len = strlen (inptr);
+		
+		if (outlen + len > GMIME_FOLD_LEN) {
+			g_string_append (out, "\n\t");
+			outlen = 1;
+			
+			/* check for very long words, just cut them up */
+			while (outlen + len > GMIME_FOLD_LEN) {
+				for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)
+					g_string_append_c (out, inptr[i]);
+				inptr += GMIME_FOLD_LEN - outlen;
+				len -= GMIME_FOLD_LEN - outlen;
+				g_string_append (out, "\n\t");
+				outlen = 1;
+			}
+		}
+		
+		outlen += len;
+		for (i = 0; i < len; i++) {
+			g_string_append_c (out, inptr[i]);
+		}
+		inptr += len;
+	}
+	
+	ret = out->str;
+	g_string_free (out, FALSE);
+	
+	return ret;	
+}
+
+
+/**
+ * g_mime_header_printf: Format a header.
+ * @format: string format
+ *
+ * Returns an allocated string containing the folded header specified
+ * by %format and the following arguments.
+ **/
+gchar *
+g_mime_header_printf (const gchar *format, ...)
+{
+	gchar *buf, *ret;
+	va_list ap;
+	
+	va_start (ap, format);
+	buf = g_strdup_vprintf (format, ap);
+	va_end (ap);
+	
+	ret = header_fold (buf);
+	g_free (buf);
+	
+	return ret;
+}
+
+static gchar *
 create_header (GMimeMessage *message)
 {
 	/* Make sure to not append "\n\n" to the end
@@ -455,7 +531,7 @@ create_header (GMimeMessage *message)
 			header = message->header->arbitrary_headers->pdata[i];
 			encoded_value = g_mime_utils_8bit_header_encode (header->value);
 			
-			buf = g_strdup_printf ("%s: %s\n", header->name, encoded_value);
+			buf = g_mime_header_printf ("%s: %s\n", header->name, encoded_value);
 			g_free (encoded_value);
 			
 			g_string_append (string, buf);
@@ -467,15 +543,17 @@ create_header (GMimeMessage *message)
 	if (!message->header->date)
 		g_mime_message_set_date (message, time (NULL), 0);
 	date = g_mime_message_get_date_string (message);
-	buf = g_strdup_printf ("Date: %s\n", date);
+	buf = g_mime_header_printf ("Date: %s\n", date);
 	g_string_append (string, buf);
 	g_free (date);
 	g_free (buf);
-	buf = g_strdup_printf ("From: %s\n", message->header->from ? message->header->from : "");
+	
+	buf = g_mime_header_printf ("From: %s\n", message->header->from ? message->header->from : "");
 	g_string_append (string, buf);
 	g_free (buf);
+	
 	if (message->header->reply_to) {
-		buf = g_strdup_printf ("Reply-To: %s\n", message->header->reply_to);
+		buf = g_mime_header_printf ("Reply-To: %s\n", message->header->reply_to);
 		g_string_append (string, buf);
 		g_free (buf);
 	}
@@ -501,8 +579,11 @@ create_header (GMimeMessage *message)
 				break;
 		}
 		g_string_append (recip, "\n");
-		g_string_append (string, recip->str);
+		buf = header_fold (recip->str);
 		g_string_free (recip, TRUE);
+		
+		g_string_append (string, buf);
+		g_free (buf);
 	}
 	
 	recipients = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_CC);
@@ -526,12 +607,15 @@ create_header (GMimeMessage *message)
 				break;
 		}
 		g_string_append (recip, "\n");
-		g_string_append (string, recip->str);
+		buf = header_fold (recip->str);
 		g_string_free (recip, TRUE);
+		
+		g_string_append (string, buf);
+		g_free (buf);
 	}
 	
 	subject = g_mime_utils_8bit_header_encode (message->header->subject);
-	buf = g_strdup_printf ("Subject: %s\n", subject ? subject : "");
+	buf = g_mime_header_printf ("Subject: %s\n", subject ? subject : "");
 	g_string_append (string, buf);
 	g_free (subject);
 	g_free (buf);

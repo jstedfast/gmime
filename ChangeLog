@@ -1,3 +1,10 @@
+2000-11-16  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-message.c (header_fold): New function to fold headers.
+	(g_mime_header_printf): New convenience function to print a
+	formatted header (which will get correctly folded).
+	(create_header): Correctly fold each header.
+
 2000-11-16  Charles Kerr <charles@superpimp.org>
 
 	* gmime-utils.c (datetok): don't crash if the date string passed
