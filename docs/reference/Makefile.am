@@ -87,7 +87,7 @@ endif
 ##############
 
 clean-local:
-	rm -f *~ *.bak *.hierarchy *.signals *.args *-unused.txt *-undocumented.txt *.stamp
+	rm -f *~ *.bak *.signals *.args *-unused.txt *-undocumented.txt *.stamp
 
 maintainer-clean-local: clean
 	rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt 
