@@ -170,15 +170,13 @@ internet_address_new_from_string (const gchar *string)
 	/* recreate the name from the tokens */
 	if (tokens->len) {
 		char *token = tokens->pdata[0];
+		char *end = token + strlen (token) - 1;
 		
-		if (*token == '(') {
-			char *p, *q;
+		if (*token == '(' && *end == ')') {
+			token++;
+			*end = '\0';
 			
-			p = tokens->pdata[0] + 1;
-			q = p + strlen (p) - 1;
-			*q = '\0';
-			
-			name = g_mime_utils_8bit_header_decode (p);
+			name = g_mime_utils_8bit_header_decode (token);
 		} else {
 			name = g_strjoinv (" ", (gchar **) tokens->pdata);
 		}
