@@ -323,8 +323,6 @@ stream_reset (GMimeStream *stream)
 static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
-	/*GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;*/
-	
 	return -1;
 }
 

@@ -1003,8 +1003,6 @@ g_mime_utils_header_fold (const char *in)
 	if (len <= GMIME_FOLD_LEN + 1)
 		return g_strdup (in);
 	
-	printf ("pre-folded: '%s'\n", in);
-	
 	out = g_string_new ("");
 	outlen = 0;
 	while (*inptr && *inptr != '\n') {
@@ -1054,8 +1052,6 @@ g_mime_utils_header_fold (const char *in)
 	
 	ret = out->str;
 	g_string_free (out, FALSE);
-	
-	printf ("post-folded: '%s'\n", ret);
 	
 	return ret;
 }
