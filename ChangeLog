@@ -1,5 +1,11 @@
 2000-12-02  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* Makefile.am: Install gmime.m4
+
+	* gmime.m4: Added.
+
+2000-12-02  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* gmime-part.c (g_mime_part_foreach): New convenience function for
 	manipulating each subpart of a mime part.
 

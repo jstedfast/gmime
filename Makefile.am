@@ -79,7 +79,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in libgmime.spec.in libgmime.spec
+EXTRA_DIST = gmimeConf.sh.in libgmime.spec.in libgmime.spec gmime.m4
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.
@@ -95,3 +95,7 @@ $(srcdir)/libgmime:
 	ln -s $(srcdir)/. $(srcdir)/libgmime
 
 $(libgmime_la_SOURCES): $(srcdir)/libgmime
+
+install-data-local:
+	-mkdir -p $(DESTDIR)$(datadir)/aclocal
+	$(INSTALL_DATA) gmime.m4 $(DESTDIR)$(datadir)/aclocal/gmime.m4
