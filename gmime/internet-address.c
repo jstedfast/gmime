@@ -36,7 +36,7 @@
 
 
 #define w(x) x
-
+#define d(x)
 
 /**
  * internet_address_new:
@@ -814,10 +814,15 @@ decode_mailbox (const char **in)
 				const char *cend;
 				
 				/* find the end of the comment */
-				for (cend = inptr - 1; cend > comment && is_lwsp (*cend); cend--);
+				cend = inptr - 1;
+				while (cend > comment && is_lwsp (*cend))
+					cend--;
+				
 				if (*cend == ')')
 					cend--;
+				
 				comment = g_strndup (comment + 1, cend - comment);
+				g_strstrip (comment);
 				
 				name = g_string_new (comment);
 				g_free (comment);
@@ -842,8 +847,8 @@ decode_mailbox (const char **in)
 				g_string_append (name, buf);
 				g_free (buf);
 			} else {
-				(g_warning ("Failed to convert \"%s\" to UTF-8: %s",
-					    name->str, g_strerror (errno)));
+				d(g_warning ("Failed to convert \"%s\" to UTF-8: %s",
+					     name->str, g_strerror (errno)));
 			}
 		}
 		

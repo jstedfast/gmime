@@ -1,3 +1,11 @@
+2002-08-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_mailbox): Changed a for-loop into a
+	while-loop to make the code a tad easier to read. Also fixed a
+	type-o that meant to wrap a debug printf in d(). While we're at
+	it, g_strstrip the resulting comment before using it as the name
+	part of the address.
+
 2002-08-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message-part.c: Fix some comments that say "message/*"

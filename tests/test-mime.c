@@ -327,6 +327,7 @@ static char *addresses[] = {
 	"<charles@broken.host.com.> (Charles Kerr)",
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
 	"Tõivo Leedjärv <leedjarv@interest.ee>",
+	"fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
 	NULL
 };
 
@@ -335,11 +336,10 @@ dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean de
 {
 	InternetAddressList *addr;
 	InternetAddress *ia;
+	char *str;
 	
 	addr = addrlist;
 	while (addr) {
-		char *str;
-		
 		ia = addr->address;
 		addr = addr->next;
 		
