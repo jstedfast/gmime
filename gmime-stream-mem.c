@@ -60,11 +60,14 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	off_t bound_end;
 	ssize_t n;
 	
-	g_return_val_if_fail (stream->position <= stream->bound_end, -1);
+	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	n = MIN (stream->bound_end - stream->position, len);
+	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	
+	n = MIN (bound_end - stream->position, len);
 	if (n > 0) {
 		memcpy (buf, mem->buffer->data + stream->position, n);
 		stream->position += n;
@@ -77,11 +80,23 @@ static ssize_t
 stream_write (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	off_t bound_end;
+	ssize_t n;
 	
-	g_byte_array_append (mem->buffer, buf, len);
-	stream->bound_end = mem->buffer->len;
+	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	return len;
+	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len)
+		g_byte_array_set_size (mem->buffer, stream->position + len);
+	
+	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	
+	n = MIN (bound_end - stream->position, len);
+	if (n > 0) {
+		memcpy (mem->buffer->data + stream->position, buf, n);
+		stream->position += n;
+	}
+	
+	return n;
 }
 
 static int
@@ -95,7 +110,7 @@ stream_close (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	if (mem->owner)
+	if (mem->owner && mem->buffer)
 		g_byte_array_free (mem->buffer, TRUE);
 	
 	mem->buffer = NULL;
@@ -108,14 +123,21 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	off_t bound_end;
 	
-	return mem->buffer ? stream->position >= stream->bound_end : TRUE;
+	g_return_val_if_fail (mem->buffer != NULL, TRUE);
+	
+	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	
+	return mem->buffer ? stream->position >= bound_end : TRUE;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	
+	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
 	stream->position = stream->bound_start;
 	
@@ -126,22 +148,25 @@ static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	off_t bound_end;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
+	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		stream->position = MIN (offset + stream->bound_start, stream->bound_end);
+		stream->position = MIN (offset + stream->bound_start, bound_end);
 		break;
 	case GMIME_STREAM_SEEK_END:
-		stream->position = MAX (offset + stream->bound_end, 0);
+		stream->position = MAX (offset + bound_end, 0);
 		break;
 	case GMIME_STREAM_SEEK_CUR:
 		stream->position += offset;
 		if (stream->position < stream->bound_start)
 			stream->position = stream->bound_start;
-		else if (stream->position > stream->bound_end)
-			stream->position = stream->bound_end;
+		else if (stream->position > bound_end)
+			stream->position = bound_end;
 	}
 	
 	return 0;
@@ -150,13 +175,24 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 static off_t
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	
+	g_return_val_if_fail (mem->buffer != NULL, -1);
+	
 	return stream->position - stream->bound_start;
 }
 
 static ssize_t
 stream_length (GMimeStream *stream)
 {
-	return stream->bound_end - stream->bound_start;
+	GMimeStreamMem *mem = GMIME_STREAM_MEM (stream);
+	off_t bound_end;
+	
+	g_return_val_if_fail (mem->buffer != NULL, -1);
+	
+	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	
+	return bound_end - stream->bound_start;
 }
 
 static GMimeStream *
@@ -188,7 +224,7 @@ g_mime_stream_mem_new (void)
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, 0);
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -209,7 +245,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 	mem->owner = TRUE;
 	mem->buffer = array;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, array->len);
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -227,13 +263,13 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_new0 (GMimeStreamMem, 1);
+	mem = g_new (GMimeStreamMem, 1);
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
 	g_byte_array_append (mem->buffer, buffer, len);
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, len);
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, -1);
 	
 	return GMIME_STREAM (mem);
 }
@@ -261,9 +297,9 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 	mem->buffer = array;
 	mem->owner = FALSE;
 	
-	stream = (GMimeStream *) mem;
+	stream = GMIME_STREAM (mem);
 	
 	stream->position = 0;
 	stream->bound_start = 0;
-	stream->bound_end = array->len;
+	stream->bound_end = -1;
 }

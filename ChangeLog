@@ -1,3 +1,29 @@
+2001-09-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-fs.c (stream_write): Seek to the position we think
+	we're at before attempting to write, and increment the stream
+	position after the write.
+
+	* gmime-stream-file.c (stream_write): Seek to the position we
+	think we're at... this is just in case we are or have substreams
+	that might have read or written in the meantime. Also remember to
+	increment the stream position after the write.
+	(stream_eos): Only return feof() if our end boundary is unlimited.
+
+	* gmime-stream-mem.c (stream_write): Start writing data at
+	stream->position rather always appending it to the end of the mem
+	stream. Also don't go writing past the end boundary if it's set.
+	(stream_length): Use a relative bound_end.
+	(stream_seek): Same.
+	(stream_eos): Here too.
+	(stream_write): And here.
+	(stream_read): And here.
+	(stream_substream): Correctly set the bounds.
+	(g_mime_stream_mem_new): Here too.
+	(g_mime_stream_mem_new_with_byte_array): And here.
+	(g_mime_stream_mem_new_with_buffer): Same.
+	(g_mime_stream_mem_set_byte_array): And finally here.
+
 2001-09-22  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* test-streams.c: New test suite for streams.
