@@ -1,5 +1,14 @@
 2003-05-26  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-common.c (g_mime_strcase_hash): Oops, fixed a bug.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Do not strip trailing whitespace when verifying, this should allow
+	us to verify both rfc2015 and rfc3156 signed messages (as well as
+	this being the correct way of doing it anyway).
+
+2003-05-26  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime-common.[c,h]: New source files implementing some
 	common routines scattered throughout the gmime sources (currently
 	a strcase_hash and strcase_equal implementation).

@@ -25,6 +25,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-common.h"
 
 #ifndef g_tolower
@@ -44,8 +46,10 @@ g_mime_strcase_hash (gconstpointer key)
 	const char *p = key;
 	guint h = 0;
 	
-	while (*p != '\0')
-		h = (h << 5) - h + g_tolower (*p++);
+	while (*p != '\0') {
+		h = (h << 5) - h + g_tolower (*p);
+		p++;
+	}
 	
 	return h;
 }
