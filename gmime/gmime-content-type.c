@@ -129,12 +129,15 @@ g_mime_content_type_new_from_string (const char *string)
 	/* get the subtype */
 	if (*inptr == '/') {
 		inptr++;
+		
+		while (is_lwsp (*inptr))
+			inptr++;
+		
 		subtype = (char *) inptr;
 		while (*inptr && is_ttoken (*inptr))
 			inptr++;
 		
 		subtype = g_strndup (subtype, (unsigned) (inptr - subtype));
-		g_strstrip (subtype);
 	} else {
 		subtype = NULL;
 	}
@@ -142,6 +145,9 @@ g_mime_content_type_new_from_string (const char *string)
 	mime_type = g_mime_content_type_new (type, subtype);
 	g_free (type);
 	g_free (subtype);
+	
+	while (is_lwsp (*inptr))
+		inptr++;
 	
 	if (*inptr++ == ';' && *inptr) {
 		GMimeParam *p;

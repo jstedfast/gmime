@@ -210,8 +210,9 @@ enum _GpgCtxMode {
 };
 
 enum _GpgTrustMetric {
-	GPG_TRUST_UNKNOWN,
+	GPG_TRUST_NONE,
 	GPG_TRUST_NEVER,
+	GPG_TRUST_UNDEFINED,
 	GPG_TRUST_MARGINAL,
 	GPG_TRUST_FULLY,
 	GPG_TRUST_ULTIMATE
@@ -264,9 +265,10 @@ struct _GpgCtx {
 	unsigned int bad_passwds:2;
 	
 	unsigned int validsig:1;
+	unsigned int nopubkey:1;
 	unsigned int trust:3;
 	
-	unsigned int padding:17;
+	unsigned int padding:16;
 };
 
 static struct _GpgCtx *
@@ -313,7 +315,8 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->passwd = NULL;
 	
 	gpg->validsig = FALSE;
-	gpg->trust = GPG_TRUST_UNKNOWN;
+	gpg->nopubkey = FALSE;
+	gpg->trust = GPG_TRUST_NONE;
 	
 	gpg->istream = NULL;
 	gpg->ostream = NULL;
@@ -876,14 +879,18 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 					gpg->trust = GPG_TRUST_FULLY;
 				} else if (!strncmp (status, "ULTIMATE", 8)) {
 					gpg->trust = GPG_TRUST_ULTIMATE;
+				} else if (!strncmp (status, "UNDEFINED", 9)) {
+					gpg->trust = GPG_TRUST_UNDEFINED;
 				}
 			} else if (!strncmp (status, "VALIDSIG", 8)) {
 				gpg->validsig = TRUE;
 			} else if (!strncmp (status, "BADSIG", 6)) {
 				gpg->validsig = FALSE;
 			} else if (!strncmp (status, "ERRSIG", 6)) {
-				/* Note: NO_PUBKEY often comes after an ERRSIG, but do we really care? */
+				/* Note: NO_PUBKEY often comes after an ERRSIG */
 				gpg->validsig = FALSE;
+			} else if (!strncmp (status, "NO_PUBKEY", 9)) {
+				gpg->nopubkey = TRUE;
 			}
 			break;
 		case GPG_CTX_MODE_ENCRYPT:
