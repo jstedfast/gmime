@@ -39,8 +39,8 @@ are authorized to give us the patch under those terms.
     <para>
 If you want to discuss your patch before or after developing it, mail
 <ulink url="mailto:fejj@ximian.com">fejj@ximian.com</ulink>.  But be
-sure to file the Bugzilla report as well this way it's likely to slip
-through the cracks.
+sure to file the Bugzilla report as well, this way it's less likely to
+slip through the cracks.
 </para>
   </refsect1>
   <refsect1>
