@@ -1,5 +1,27 @@
 2002-05-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-cat.c (stream_read): Don't allow our caller to read
+	past the end of the stream.
+	(stream_write): Same.
+	(stream_seek): Don't forget to add the current source stream's
+	bound_start when seeking on the current source stream.
+
+	* gmime-message-partial.c (g_mime_message_partial_init): Zero our
+	extra fields.
+	(g_mime_message_partial_finalize): Cleanup strdup'd memory.
+	(message_partial_set_content_type): Implemented.
+	(g_mime_message_partial_class_init): Override set_content_type().
+	(g_mime_message_partial_get_id): Simplify.
+	(g_mime_message_partial_get_number): Simplify.
+	(g_mime_message_partial_get_total): Simplify.
+
+	* gmime-multipart.c (multipart_set_content_type): Implement.
+	(g_mime_multipart_class_init): Override set_content_type().
+
+	* gmime-object.c: Make set_content_type() virtual.
+
+2002-05-12  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-message-partial.c (partial_compare): Fixed to work
 	properly.
 

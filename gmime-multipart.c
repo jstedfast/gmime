@@ -46,6 +46,7 @@ static void multipart_add_header (GMimeObject *object, const char *header, const
 static void multipart_set_header (GMimeObject *object, const char *header, const char *value);
 static const char *multipart_get_header (GMimeObject *object, const char *header);
 static void multipart_remove_header (GMimeObject *object, const char *header);
+static void multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *multipart_get_headers (GMimeObject *object);
 static int multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
@@ -103,6 +104,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	object_class->set_header = multipart_set_header;
 	object_class->get_header = multipart_get_header;
 	object_class->remove_header = multipart_remove_header;
+	object_class->set_content_type = multipart_set_content_type;
 	object_class->get_headers = multipart_get_headers;
 	object_class->write_to_stream = multipart_write_to_stream;
 	
@@ -200,6 +202,19 @@ multipart_remove_header (GMimeObject *object, const char *header)
 	
 	if (!strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+}
+
+static void
+multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type)
+{
+	GMimeMultipart *multipart = (GMimeMultipart *) object;
+	const char *boundary;
+	
+	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
+	g_free (multipart->boundary);
+	multipart->boundary = g_strdup (boundary);
+	
+	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
 static char *

@@ -42,6 +42,7 @@ static void g_mime_message_partial_finalize (GObject *object);
 static void message_partial_init (GMimeObject *object);
 static void message_partial_add_header (GMimeObject *object, const char *header, const char *value);
 static void message_partial_set_header (GMimeObject *object, const char *header, const char *value);
+static void message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
 
 static GMimePartClass *parent_class = NULL;
@@ -85,17 +86,24 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 	object_class->init = message_partial_init;
 	object_class->add_header = message_partial_add_header;
 	object_class->set_header = message_partial_set_header;
+	object_class->set_content_type = message_partial_set_content_type;
 }
 
 static void
-g_mime_message_partial_init (GMimeMessagePartial *message_partial, GMimeMessagePartialClass *klass)
+g_mime_message_partial_init (GMimeMessagePartial *partial, GMimeMessagePartialClass *klass)
 {
-	;
+	partial->id = NULL;
+	partial->number = -1;
+	partial->total = -1;
 }
 
 static void
 g_mime_message_partial_finalize (GObject *object)
 {
+	GMimeMessagePartial *partial = (GMimeMessagePartial *) object;
+	
+	g_free (partial->id);
+	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -134,6 +142,25 @@ message_partial_set_header (GMimeObject *object, const char *header, const char 
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 }
 
+static void
+message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type)
+{
+	GMimeMessagePartial *partial = (GMimeMessagePartial *) object;
+	const char *value;
+	
+	value = g_mime_content_type_get_parameter (content_type, "id");
+	g_free (partial->id);
+	partial->id = g_strdup (value);
+	
+	value = g_mime_content_type_get_parameter (content_type, "number");
+	partial->number = value ? atoi (value) : -1;
+	
+	value = g_mime_content_type_get_parameter (content_type, "total");
+	partial->total = value ? atoi (value) : -1;
+	
+	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
+}
+
 
 /**
  * g_mime_message_partial_new:
@@ -155,10 +182,16 @@ g_mime_message_partial_new (const char *id, int number, int total)
 	partial = g_object_new (GMIME_TYPE_MESSAGE_PARTIAL, NULL, NULL);
 	
 	type = g_mime_content_type_new ("message", "partial");
+	
+	partial->id = g_strdup (id);
 	g_mime_content_type_set_parameter (type, "id", id);
+	
+	partial->number = number;
 	num = g_strdup_printf ("%d", number);
 	g_mime_content_type_set_parameter (type, "number", num);
 	g_free (num);
+	
+	partial->total = total;
 	num = g_strdup_printf ("%d", total);
 	g_mime_content_type_set_parameter (type, "total", num);
 	g_free (num);
@@ -174,37 +207,25 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), NULL);
 	
-	return g_mime_object_get_content_type_parameter (GMIME_OBJECT (partial), "id");
+	return partial->id;
 }
 
 
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)
 {
-	const char *number;
-	
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), -1);
 	
-	number = g_mime_object_get_content_type_parameter (GMIME_OBJECT (partial), "number");
-	if (!number)
-		return -1;
-	
-	return atoi (number);
+	return partial->number;
 }
 
 
 int
 g_mime_message_partial_get_total (GMimeMessagePartial *partial)
 {
-	const char *total;
-	
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PARTIAL (partial), -1);
 	
-	total = g_mime_object_get_content_type_parameter (GMIME_OBJECT (partial), "total");
-	if (!total)
-		return -1;
-	
-	return atoi (total);
+	return partial->total;
 }
 
 

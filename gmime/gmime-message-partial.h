@@ -47,6 +47,9 @@ typedef struct _GMimeMessagePartialClass GMimeMessagePartialClass;
 struct _GMimeMessagePartial {
 	GMimePart parent_object;
 	
+	char *id;
+	int number;
+	int total;
 };
 
 struct _GMimeMessagePartialClass {

@@ -43,6 +43,7 @@ static void add_header (GMimeObject *object, const char *header, const char *val
 static void set_header (GMimeObject *object, const char *header, const char *value);
 static const char *get_header (GMimeObject *object, const char *header);
 static void remove_header (GMimeObject *object, const char *header);
+static void set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *get_headers (GMimeObject *object);
 static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
@@ -94,6 +95,7 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	klass->set_header = set_header;
 	klass->get_header = get_header;
 	klass->remove_header = remove_header;
+	klass->set_content_type = set_content_type;
 	klass->get_headers = get_headers;
 	klass->write_to_stream = write_to_stream;
 	
@@ -281,6 +283,18 @@ sync_content_type (GMimeObject *object)
 }
 
 
+static void
+set_content_type (GMimeObject *object, GMimeContentType *content_type)
+{
+	if (object->content_type)
+		g_mime_content_type_destroy (object->content_type);
+	
+	object->content_type = content_type;
+	
+	sync_content_type (object);
+}
+
+
 /**
  * g_mime_object_set_content_type:
  * @object: MIME object
@@ -294,12 +308,7 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	g_return_if_fail (mime_type != NULL);
 	
-	if (object->content_type)
-		g_mime_content_type_destroy (object->content_type);
-	
-	object->content_type = mime_type;
-	
-	sync_content_type (object);
+	GMIME_OBJECT_GET_CLASS (object)->set_content_type (object, mime_type);
 }
 
 

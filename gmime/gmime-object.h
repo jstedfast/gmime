@@ -66,6 +66,8 @@ struct _GMimeObjectClass {
 	const char * (*get_header)    (GMimeObject *object, const char *header);
 	void         (*remove_header) (GMimeObject *object, const char *header);
 	
+	void         (*set_content_type) (GMimeObject *object, GMimeContentType *content_type);
+	
 	char *       (*get_headers)   (GMimeObject *object);
 	
 	ssize_t      (*write_to_stream) (GMimeObject *object, GMimeStream *stream);
