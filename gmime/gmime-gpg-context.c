@@ -251,6 +251,7 @@ struct _GpgCtx {
 	
 	int exit_status;
 	
+	unsigned int utf8:1;
 	unsigned int exited:1;
 	unsigned int complete:1;
 	unsigned int seen_eof1:1;
@@ -269,7 +270,7 @@ struct _GpgCtx {
 	unsigned int validsig:1;
 	unsigned int nopubkey:1;
 	
-	unsigned int padding:16;
+	unsigned int padding:15;
 };
 
 static struct _GpgCtx *
@@ -341,9 +342,13 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 		g_object_unref (filter);
 		
 		gpg->diagnostics = fstream;
+		
+		gpg->utf8 = FALSE;
 	} else {
 		/* system charset is UTF-8, shouldn't need any conversion */
 		gpg->diagnostics = stream;
+		
+		gpg->utf8 = TRUE;
 	}
 	
 	return gpg;
@@ -754,6 +759,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 {
 	register unsigned char *inptr;
 	const unsigned char *status;
+	size_t nread, nwritten;
 	GMimeSigner *signer;
 	int len;
 	
@@ -800,7 +806,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			goto recycle;
 		}
 		
-		if (!(user = g_locale_to_utf8 (status, -1, &nread, &nwritten, NULL)))
+		if (gpg->utf8 || !(user = g_locale_to_utf8 (status, -1, &nread, &nwritten, NULL)))
 			user = g_strdup (status);
 		
 		g_strstrip (user);
@@ -838,6 +844,14 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
 			
 			return -1;
+		} else if (!gpg->utf8) {
+			char *locale_passwd;
+			
+			if ((locale_passwd = g_locale_from_utf8 (passwd, -1, &nread, &nwritten, NULL))) {
+				memset (passwd, 0, strlen (passwd));
+				g_free (passwd);
+				passwd = locale_passwd;
+			}
 		}
 		
 		gpg->passwd = g_strdup_printf ("%s\n", passwd);

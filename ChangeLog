@@ -1,3 +1,12 @@
+2004-05-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_new): Remember if our
+	environment is in UTF-8 or not.
+	(gpg_ctx_parse_status): Only convert the user name from the locale
+	charset to UTF-8 if the env isn't UTF-8.
+	(gpg_ctx_parse_status): Convert the password to the locale charset
+	if the locale isn't UTF-8.
+
 2004-05-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.
