@@ -40,7 +40,6 @@ InternetAddress *
 internet_address_new (const gchar *name, const gchar *address)
 {
 	InternetAddress *ia;
-	gchar *decoded;
 	
 	g_return_val_if_fail (address != NULL, NULL);
 	

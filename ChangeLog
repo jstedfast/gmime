@@ -1,4 +1,12 @@
+2000-10-24  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.c: added #include <stdlib.h> to pick up atoi.
+
+	* internet-address.c (internet_address_new): removed unused
+	variable `decoded'
+
 2022-10-24  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	Thanks to Charles Kerr of Pan fame for the following fixes.
 
 	* gmime-utils.c (encode_8bit_word): Oops, encode 'word' and not 'ptr'.
