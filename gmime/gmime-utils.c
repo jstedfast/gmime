@@ -223,6 +223,9 @@ datetok (const char *date)
 		while (*start && isspace ((int) *start))
 			start++;
 		
+		if (*start == '\0')
+			break;
+		
 		mask = gmime_datetok_table[*start];
 		
 		/* find the end of this token */
