@@ -34,6 +34,9 @@ extern "C" {
 
 #include "gmime-part.h"
 
+#define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
+#define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
+
 time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
 gchar *g_mime_utils_header_format_date (time_t time, gint offset);
 

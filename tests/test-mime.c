@@ -56,7 +56,8 @@ test_multipart (void)
 	mime_type = g_mime_content_type_new ("text", "plain");
 	g_mime_part_set_content_type (text_part, mime_type);
 	g_mime_part_set_content_id (text_part, "1");
-	g_mime_part_set_content (text_part, "This is the body of my message.\n");
+	g_mime_part_set_content (text_part, "This is the body of my message.\n",
+				 strlen ("This is the body of my message.\n"));
 	
 	g_mime_part_add_child (multi_part, text_part);
 	
@@ -65,7 +66,9 @@ test_multipart (void)
 	g_mime_part_set_content_type (html_part, mime_type);
 	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
 	g_mime_part_set_content_id (html_part, "2");
-	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>");
+	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>",
+				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
+	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
 	
 	g_mime_part_add_child (multi_part, html_part);
 	
@@ -90,9 +93,9 @@ test_multipart (void)
 	/* get the body in text/html */
 	body = g_mime_message_get_body (message, FALSE, &is_html);
 	fprintf (stdout, "Trying to get message body in html format:\n%s\n\n", body ? body : "(null)");
+	g_free (body);
 	if (is_html)
 		fprintf (stdout, "yep...got it in html format\n");
-	g_free (body);
 	
 	g_mime_message_destroy (message);
 	
@@ -112,7 +115,8 @@ test_onepart (void)
 	
 	mime_part = g_mime_part_new_with_type ("text", "plain");
 	
-	g_mime_part_set_content (mime_part, "This is the body of my message.\n");
+	g_mime_part_set_content (mime_part, "This is the body of my message.\n",
+				 strlen ("This is the body of my message.\n"));
 	
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");

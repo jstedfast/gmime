@@ -44,6 +44,7 @@ test_parser (gchar *data)
 	GMimeMessage *message;
 	gboolean is_html;
 	gchar *text;
+	const gchar *body;
 	time_t now, past;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
@@ -55,15 +56,14 @@ test_parser (gchar *data)
 	text = g_mime_message_to_string (message);
 	time (&now);
 	fprintf (stderr, "wrote message in %ds\n", now - past);
-	fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);
+	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	
 	/* test of get_body */
-	text = g_mime_message_get_body (message, FALSE, &is_html);
+	body = g_mime_message_get_body (message, FALSE, &is_html);
 	fprintf (stderr, "Testing get_body (looking for html...%s)\n\n%s\n",
-		 text && is_html ? "found" : "not found",
-		 text ? text : "No message body found");
-	g_free (text);
+		 body && is_html ? "found" : "not found",
+		 body ? body : "No message body found");
 	
 	/* print mime structure */
 	print_mime_struct (message->mime_part, 0);
@@ -96,7 +96,7 @@ int main (int argc, char *argv[])
 	
 	close (fd);
 	
-	fprintf (stdout, "%s\n", data);
+	/*fprintf (stdout, "%s\n", data);*/
 	
 	test_parser (data);
 	

@@ -920,8 +920,7 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 	
 	switch (g_mime_utils_best_encoding (word)) {
 	case GMIME_PART_ENCODING_BASE64:
-		/* this is a very precise calculation *cough* */
-		enclen = (guint) (len * 4 / 3) + 4;
+		enclen = BASE64_ENCODE_LEN (len);
 		encoded = alloca (enclen);
 		
 		encoding = 'b';
@@ -936,8 +935,7 @@ encode_8bit_word (const guchar *word, gushort safemask, gboolean *this_was_encod
 		
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		/* this is a very precise calculation *cough* */
-		enclen = (guint) (len * 3) + 4;
+		enclen = QP_ENCODE_LEN (len);
 		encoded = alloca (enclen);
 		
 		encoding = 'q';

@@ -1,3 +1,33 @@
+2000-11-29  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* configure.in: Bumped the version to 0.2.0 because the API has
+	changed a bit.
+
+	* test-parser.c:
+	* test-mime.c: Updated.
+
+	* gmime-utils.c (BASE64_ENCODE_LEN):
+	(QP_ENCODE_LEN): Macros for determining how much space we need to
+	encode a chunk of data to that encoding (estimate is liberal).
+	(encode_8bit_word): Use the macros to determine the length we
+	need.
+
+	* gmime-message.c (g_mime_message_get_body): Updated to reflect
+	changes to gmime-part.
+
+	* gmime-parser.c (get_mime_part): Updated.
+
+	* gmime-part.c (g_mime_part_set_content): Now takes a len argument
+	and has been updated to reflect the move to GByteArray.
+	(g_mime_part_destroy): Updated.
+	(g_mime_part_set_pre_encoded_content): New convenience function to
+	decode pre-encoded content and set it on the mime part.
+	(g_mime_part_get_content): Renamed from
+	g_mime_part_decode_contents.
+
+	* gmime-part.h: GMimePart->content is now a GByteArray that will
+	hold the raw content (in it's unencoded form).
+
 2000-11-28  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-content-type.c (g_mime_content_type_new_from_string):

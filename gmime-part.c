@@ -122,7 +122,8 @@ g_mime_part_destroy (GMimePart *mime_part)
 		g_list_free (mime_part->children);
 	}
 	
-	g_free (mime_part->content);
+	if (mime_part->content)
+		g_byte_array_free (mime_part->content, TRUE);
 	
 	g_free (mime_part);
 }
@@ -502,17 +503,66 @@ g_mime_part_get_boundary (GMimePart *mime_part)
 /**
  * g_mime_part_set_content: Set the content of the mime part
  * @mime_part: Mime part
- * @content: Mime part content
+ * @content: raw mime part content
+ * @len: raw content length
  *
  * Sets the content of the Mime Part (only non-multiparts)
  **/
 void
-g_mime_part_set_content (GMimePart *mime_part, const char *content)
+g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len)
 {
 	g_return_if_fail (mime_part != NULL);
 	
-	g_free (mime_part->content);
-	mime_part->content = g_strdup (content);
+	if (mime_part->content)
+		g_byte_array_free (mime_part->content, TRUE);
+	
+	mime_part->content = g_byte_array_new ();
+	g_byte_array_append (mime_part->content, content, len);
+}
+
+
+/**
+ * g_mime_part_set_pre_encoded_content: Set the pre-encoded content of the mime part
+ * @mime_part: Mime part
+ * @content: encoded mime part content
+ * @len: length of the content
+ * @encoding: content encoding
+ *
+ * Sets the encoding type and raw content on the mime part after decoding the content.
+ **/
+void
+g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content, guint len, GMimePartEncodingType encoding)
+{
+	gchar *raw;
+	gint save = 0, state = 0;
+	
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (content != NULL);
+	
+	if (mime_part->content)
+		g_byte_array_free (mime_part->content, TRUE);
+	
+	mime_part->content = g_byte_array_new ();
+	g_byte_array_set_size (mime_part->content, len);
+	raw = mime_part->content->data;
+	switch (encoding) {
+	case GMIME_PART_ENCODING_BASE64:
+		len = g_mime_utils_base64_decode_step (content, len, raw, &state, &save);
+		g_byte_array_set_size (mime_part->content, len);
+		break;
+	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		len = g_mime_utils_quoted_decode_step (content, len, raw, &state, &save);
+		g_byte_array_set_size (mime_part->content, len);
+		break;
+	default:
+		memcpy (raw, content, len);
+		
+		/* do some smart 8bit detection */
+		if (encoding == GMIME_PART_ENCODING_DEFAULT && g_mime_utils_text_is_8bit (raw))
+			encoding = GMIME_PART_ENCODING_8BIT;
+	}
+	
+	mime_part->encoding = encoding;
 }
 
 
@@ -617,6 +667,35 @@ get_content_type (GMimeContentType *mime_type)
 	return str;
 }
 
+static gchar *
+get_content (GMimePart *part)
+{
+	gchar *content;
+	gint save = 0, state = 0;
+	gint len;
+	
+	if (!part->content)
+		return g_strdup ("");
+	
+	switch (part->encoding) {
+	case GMIME_PART_ENCODING_BASE64:
+		content = g_malloc (BASE64_ENCODE_LEN (part->content->len));
+		len = g_mime_utils_base64_encode_close (part->content->data, part->content->len, content, &state, &save);
+		content[len] = '\0';
+		break;
+	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		state = -1;
+		content = g_malloc (QP_ENCODE_LEN (part->content->len));
+		len = g_mime_utils_quoted_encode_close (part->content->data, part->content->len, content, &state, &save);
+		content[len] = '\0';
+		break;
+	default:
+		content = g_strndup (part->content->data, part->content->len);
+	}
+	
+	return content;
+}
+
 /**
  * g_mime_part_to_string: Write the MIME Part to a string
  * @mime_part: MIME Part
@@ -679,6 +758,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		gchar *disposition;
 		gchar *description;
 		gchar *content_id;
+		gchar *content;
 		gchar *extras;
 		gchar *text;
 		
@@ -703,6 +783,8 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		else
 			extras = "";
 		
+		content = get_content (mime_part);
+		
 		if (disposition && *disposition) {
 			string = g_strdup_printf ("%sContent-Type: %s\n"
 						  "Content-Transfer-Encoding: %s\n"
@@ -715,7 +797,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 						  disposition,
 						  description,
 						  content_id,
-						  mime_part->content);
+						  content);
 		} else {
 			string = g_strdup_printf ("%sContent-Type: %s\n"
 						  "Content-Transfer-Encoding: %s\n"
@@ -726,13 +808,14 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 						  g_mime_part_encoding_to_string (mime_part->encoding),
 						  description,
 						  content_id,
-						  mime_part->content);
+						  content);
 		}
 		
 		g_free (content_type);
 		g_free (disposition);
 		g_free (description);
 		g_free (content_id);
+		g_free (content);
 	}
 	
 	return string;
@@ -740,37 +823,20 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 
 
 /**
- * g_mime_part_decode_contents: Convenience MIME Part decoding function.
+ * g_mime_part_get_content: 
  * @mime_part: the GMimePart to be decoded.
  * @len: decoded length (to be set after processing)
  * 
- * Returns a gchar * pointer to the decoded contents of the MIME Part
- * and sets %len to the length of the decoded buffer.
+ * Returns a gchar * pointer to the raw contents of the MIME Part
+ * and sets %len to the length of the buffer.
  **/
-gchar *
-g_mime_part_decode_contents (GMimePart *mime_part, guint *len)
+const gchar *
+g_mime_part_get_content (GMimePart *mime_part, guint *len)
 {
-	GMimePartEncodingType encoding;
-	const gchar *content;
-	gchar *body;
-	int state = 0, save = 0;
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (mime_part->content != NULL, NULL);
 	
-	encoding = g_mime_part_get_encoding (mime_part);
-	content = mime_part->content;
-	*len = strlen (content);
+	*len = mime_part->content->len;
 	
-	switch (encoding) {
-	case GMIME_PART_ENCODING_BASE64:
-		body = g_malloc (*len);
-		*len = g_mime_utils_base64_decode_step (content, *len, body, &state, &save);
-		break;
-	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		body = g_malloc (*len);
-		*len = g_mime_utils_quoted_decode_step (content, *len, body, &state, &save);
-		break;
-	default:
-		body = g_strdup (content);
-	}
-	
-	return body;
+	return mime_part->content->data;
 }

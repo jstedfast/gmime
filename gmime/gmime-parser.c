@@ -279,19 +279,23 @@ get_mime_part (const gchar *in, guint inlen)
 		g_free (boundary);
 		g_free (end_boundary);
 	} else {
+		GMimePartEncodingType encoding;
 		gchar *content;
+		guint len;
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
-			inptr++;
-			content = g_strndup (inptr, (gint) (inend - inptr));
-			g_strstrip (content);
+			for (inptr++; inptr < inend && isspace (*inptr); inptr++);
+			len = inend - inptr;
+			content = inptr;
 		} else {
-			content = g_strdup ("");
+			content = "";
+			len = 0;
 		}
 		
-		g_mime_part_set_content (mime_part, content);
-		g_free (content);
+		encoding = g_mime_part_get_encoding (mime_part);
+		
+		g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
 	}
 	
 	return mime_part;
