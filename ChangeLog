@@ -1,3 +1,8 @@
+2002-01-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c (iconv_node_new): Return the node - how did I miss
+	this!?
+
 2002-01-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Fixed more silliness.

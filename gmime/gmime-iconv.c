@@ -81,6 +81,8 @@ iconv_node_new (struct _iconv_cache_bucket *bucket)
 	node->bucket = bucket;
 	node->used = FALSE;
 	node->cd = (iconv_t) -1;
+	
+	return node;
 }
 
 static void
