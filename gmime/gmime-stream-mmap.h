@@ -33,8 +33,18 @@ extern "C" {
 #include <unistd.h>
 #include "gmime-stream.h"
 
-typedef struct _GMimeStreamMmap {
-	GMimeStream parent;
+#define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())
+#define GMIME_STREAM_MMAP(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmap))
+#define GMIME_STREAM_MMAP_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))
+#define GMIME_IS_STREAM_MMAP(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_MMAP))
+#define GMIME_IS_STREAM_MMAP_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_MMAP))
+#define GMIME_STREAM_MMAP_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmapClass))
+
+typedef struct _GMimeStreamMmap GMimeStreamMmap;
+typedef struct _GMimeStreamMmapClass GMimeStreamMmapClass;
+
+struct _GMimeStreamMmap {
+	GMimeStream parent_object;
 	
 	gboolean owner;
 	gboolean eos;
@@ -42,11 +52,15 @@ typedef struct _GMimeStreamMmap {
 	
 	char *map;
 	size_t maplen;
-} GMimeStreamMmap;
+};
 
-#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")
-#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MMAP_TYPE)
-#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)
+struct _GMimeStreamMmapClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_mmap_get_type (void);
 
 GMimeStream *g_mime_stream_mmap_new (int fd, int prot, int flags);
 GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, off_t end);
