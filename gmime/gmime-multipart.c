@@ -730,7 +730,7 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
  * @callback: function to call for @multipart and all of its subparts
  * @user_data: extra data to pass to the callback
  * 
- * Calls @callback on @multipart and each of its subparts.
+ * Calls @callback on each of @multipart's subparts.
  **/
 void
 g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data)
