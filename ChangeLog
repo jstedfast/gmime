@@ -1,3 +1,11 @@
+2003-03-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-iconv.c (iconv_cache_bucket_new): If the current
+	list of cache buckets is non-NULL, set list->prev to the new
+	bucket being prepended.
+	(g_mime_iconv_open): Only expire unused if the cache size is
+	greater than the max allowable size.
+
 2003-02-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream-filter.c (stream_read): Set priv->flushed to
