@@ -42,7 +42,7 @@ static const char *message_part_get_header (GMimeObject *object, const char *hea
 static void message_part_remove_header (GMimeObject *object, const char *header);
 static void message_part_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *message_part_get_headers (GMimeObject *object);
-static int message_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t message_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 
 static GMimeObjectClass *parent_class = NULL;
