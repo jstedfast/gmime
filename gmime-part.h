@@ -111,8 +111,8 @@ const gchar *g_mime_part_get_filename (GMimePart *mime_part);
 void g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary);
 const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
 
-void g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len);
-void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
+void g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len);
+void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content,
 					  guint len, GMimePartEncodingType encoding);
 const gchar *g_mime_part_get_content (const GMimePart *mime_part, guint *len);
 

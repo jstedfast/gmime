@@ -691,7 +691,7 @@ g_mime_part_get_boundary (GMimePart *mime_part)
  * Sets the content of the Mime Part (only non-multiparts)
  **/
 void
-g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len)
+g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len)
 {
 	g_return_if_fail (mime_part != NULL);
 	
@@ -713,7 +713,7 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len)
  * Sets the encoding type and raw content on the mime part after decoding the content.
  **/
 void
-g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content, guint len, GMimePartEncodingType encoding)
+g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content, guint len, GMimePartEncodingType encoding)
 {
 	gchar *raw;
 	gint save = 0, state = 0;
