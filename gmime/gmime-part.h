@@ -42,15 +42,12 @@ extern "C" {
 struct _GMimePart {
 	GMimeObject parent_object;
 	
-	GMimeHeader *headers;
-	
-	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimeDisposition *disposition;
-	char *description;
-	char *content_id;
-	char *content_md5;
+	char *content_description;
 	char *content_location;
+	char *content_md5;
+	char *content_id;
 	
 	GMimeDataWrapper *content;
 	
@@ -122,8 +119,6 @@ void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 /* utility functions */
 void g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
 char *g_mime_part_to_string (GMimePart *mime_part);
-
-void g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data);
 
 const GMimePart *g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const char *content_id);
 

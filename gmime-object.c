@@ -271,6 +271,75 @@ g_mime_object_new_type (const char *type, const char *subtype)
 
 
 static void
+sync_content_type (GMimeObject *object)
+{
+	GMimeContentType *content_type;
+	GMimeParam *params;
+	GString *string;
+	char *type, *p;
+	
+	content_type = object->content_type;
+	
+	string = g_string_new ("Content-Type: ");
+	
+	type = g_mime_content_type_to_string (content_type);
+	g_string_append (string, type);
+	g_free (type);
+	
+	params = content_type->params;
+	if (params)
+		g_mime_param_write_to_string (params, FALSE, string);
+	
+	p = string->str;
+	g_string_free (string, FALSE);
+	
+	type = p + strlen ("Content-Type: ");
+	g_mime_header_set (object->headers, "Content-Type", type);
+	g_free (p);
+}
+
+
+/**
+ * g_mime_object_set_content_type:
+ * @object: MIME object
+ * @type: MIME type
+ *
+ * Set the content type/subtype for the specified MIME object.
+ **/
+void
+g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *type)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (type != NULL);
+	
+	if (object->content_type)
+		g_mime_content_type_destroy (object->content_type);
+	
+	object->content_type = type;
+	
+	sync_content_type (object);
+}
+
+
+/**
+ * g_mime_object_get_content_type:
+ * @object: MIME object
+ *
+ * Gets the Content-Type object for the given MIME object or %NULL on
+ * fail.
+ *
+ * Returns the content-type object for the specified MIME object.
+ **/
+const GMimeContentType *
+g_mime_object_get_content_type (GMimeObject *object)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	
+	return object->content_type;
+}
+
+
+static void
 add_header (GMimeObject *object, const char *header, const char *value)
 {
 	g_mime_header_add (object->headers, header, value);

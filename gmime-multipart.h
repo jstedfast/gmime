@@ -89,6 +89,11 @@ int g_mime_multipart_get_number (GMimeMultipart *multipart);
 void g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 const char *g_mime_multipart_get_boundary (GMimeMultipart *multipart);
 
+void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data);
+
+const GMimeObject *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
+								 const char *content_id);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

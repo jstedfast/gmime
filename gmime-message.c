@@ -800,13 +800,13 @@ multipart_get_body (GMimeMultipart *multipart, gboolean want_plain, gboolean *is
 		GMimeObject *mime_part;
 		
 		mime_part = subpart->data;
-		type = g_mime_part_get_content_type (mime_part);
+		type = g_mime_object_get_content_type (mime_part);
 		
 		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html")) {
 			/* we got what we came for */
 			*is_html = !want_plain;
 			
-			content = g_mime_part_get_content (mime_part, &len);
+			content = g_mime_part_get_content (GMIME_PART (mime_part), &len);
 			g_free (body);
 			body = g_strndup (content, len);
 			break;
@@ -831,7 +831,7 @@ multipart_get_body (GMimeMultipart *multipart, gboolean want_plain, gboolean *is
 		/* we didn't get the type we wanted but still got the body */
 		*is_html = want_plain;
 		
-		content = g_mime_part_get_content (first, &len);
+		content = g_mime_part_get_content (GMIME_PART (first), &len);
 		body = g_strndup (content, len);
 	}
 	
@@ -866,7 +866,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (is_html != NULL, NULL);
 	
-	type = g_mime_part_get_content_type (message->mime_part);
+	type = g_mime_object_get_content_type (message->mime_part);
 	if (g_mime_content_type_is_type (type, "text", "*")) {
 		/* this *has* to be the message body */
 		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html"))
@@ -874,7 +874,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 		else
 			*is_html = want_plain;
 		
-		content = g_mime_part_get_content (message->mime_part, &len);
+		content = g_mime_part_get_content (GMIME_PART (message->mime_part), &len);
 		body = g_strndup (content, len);
 	} else if (g_mime_content_type_is_type (type, "multipart", "*")) {
 		/* lets see if we can find a body in the multipart */
@@ -916,5 +916,6 @@ g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpoi
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (callback != NULL);
 	
-	g_mime_part_foreach (message->mime_part, callback, data);
+	if (GMIME_IS_MULTIPART (message->mime_part))
+		g_mime_multipart_foreach (GMIME_MULTIPART (message->mime_part), callback, data);
 }

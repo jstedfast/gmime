@@ -1,3 +1,17 @@
+2002-04-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (g_mime_part_foreach): Removed.
+	(g_mime_part_get_subpart_from_content_id): Same.
+
+	* gmime-multipart.c (g_mime_multipart_foreach): Moved here from
+	gmime-part.c:g_mime_part_foreach since this is really only meant
+	to work on multiparts.
+	(g_mime_multipart_get_subpart_from_content_id): Same idea here too.
+
+	* gmime-object.c (g_mime_object_set_content_type): Move
+	g_mime_part_set_content_type up to the GMimeObject abstraction.
+	(g_mime_object_get_content_type): Same.
+
 2002-04-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c: Initial port to GObject.

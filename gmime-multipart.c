@@ -595,3 +595,82 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->get_boundary (multipart);
 }
+
+
+/**
+ * g_mime_multipart_foreach: 
+ * @multipart: a multipart
+ * @callback: function to call for @multipart and all of its subparts
+ * @user_data: extra data to pass to the callback
+ * 
+ * Calls @callback on @multipart and each of its subparts.
+ **/
+void
+g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data)
+{
+	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	g_return_if_fail (callback != NULL);
+	
+	callback (GMIME_OBJECT (multipart), user_data);
+	
+	if (multipart->subparts) {
+		GList *subpart;
+		
+		subpart = multipart->subparts;
+		while (subpart) {
+			GMimeObject *part = subpart->data;
+			
+			if (GMIME_IS_MULTIPART (part))
+				g_mime_multipart_foreach (GMIME_MULTIPART (part), callback, user_data);
+			else
+				callback (part, user_data);
+			
+			subpart = subpart->next;
+		}
+	}
+}
+
+
+/**
+ * g_mime_multipart_get_subpart_from_content_id: 
+ * @multipart: a multipart
+ * @content_id: the content id of the part to look for
+ *
+ * Gets the mime part with the content-id @content_id from the
+ * multipart @multipart.
+ *
+ * Returns the GMimeObject whose content-id matches the search string,
+ * or %NULL if a match cannot be found.
+ **/
+const GMimeObject *
+g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)
+{
+	GList *subparts;
+	
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
+	g_return_val_if_fail (content_id != NULL, NULL);
+	
+	subparts = multipart->subparts;
+	while (subparts) {
+		const GMimeContentType *type;
+		const GMimeObject *part;
+		GMimePart *subpart;
+		
+		subpart = (GMimeObject *) subparts->data;
+		type = g_mime_object_get_content_type (GMIME_OBJECT (subpart));
+		
+		if (g_mime_content_type_is_type (type, "multipart", "*")) {
+			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart),
+									     content_id);
+		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
+			part = subpart;
+		}
+		
+		if (part)
+			return part;
+		
+		subparts = subparts->next;
+	}
+	
+	return NULL;
+}
