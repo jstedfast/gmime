@@ -34,6 +34,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "memchunk.h"
+
 #define d(x)
 
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
@@ -151,28 +153,42 @@ g_mime_utils_header_format_date (time_t time, int offset)
 
 /* This is where it gets ugly... */
 
-static GList *
+struct _date_token {
+	struct _date_token *next;
+	const unsigned char *start;
+	unsigned int len;
+};
+
+static MemChunk *datetok_memchunk = NULL;
+
+static struct _date_token *
 datetok (const char *date)
 {
-	GList *tokens = NULL;
-	char *token, *start, *end;
+	struct _date_token *tokens = NULL, *token, *tail = (struct _date_token *) &tokens;
+	const unsigned char *start, *end;
 	
 	g_return_val_if_fail (date != NULL, NULL);
 	
-	start = (char *) date;
+	if (datetok_memchunk == NULL)
+		datetok_memchunk = memchunk_new (sizeof (struct _date_token), 16, FALSE);
+	
+	start = date;
 	while (*start) {
 		/* kill leading whitespace */
-		for ( ; *start && isspace ((int)*start); start++);
+		for ( ; *start && isspace ((int) *start); start++);
 		
 		/* find the end of this token */
-		for (end = start; *end && !isspace ((int)*end); end++);
+		for (end = start; *end && !isspace ((int) *end); end++);
 		
-		token = g_strndup (start, (end - start));
-		
-		if (token && *token)
-			tokens = g_list_append (tokens, token);
-		else
-			g_free (token);
+		if (end != start) {
+			token = memchunk_alloc (datetok_memchunk);
+			token->next = NULL;
+			token->start = start;
+			token->len = end - start;
+			
+			tail->next = token;
+			tail = token;
+		}
 		
 		if (*end)
 			start = end + 1;
@@ -183,9 +199,37 @@ datetok (const char *date)
 	return tokens;
 }
 
+static int
+decode_int (const unsigned char *in, unsigned int inlen)
+{
+	register const unsigned char *inptr;
+	const unsigned char *inend;
+	int sign = 1, val = 0;
+	
+	inptr = in;
+	inend = in + inlen;
+	
+	if (*inptr == '-') {
+		sign = -1;
+		inptr++;
+	} else if (*inptr == '+')
+		inptr++;
+	
+	for ( ; inptr < inend; inptr++) {
+		if (!isdigit ((int) *inptr))
+			return  -1;
+		else
+			val = (val * 10) + (*inptr - '0');
+	}
+	
+	val *= sign;
+	
+	return val;
+}
+
 #if 0
-static gint
-get_days_in_month (gint month, gint year)
+static int
+get_days_in_month (int month, int year)
 {
         switch (month) {
 	case 1:
@@ -213,32 +257,30 @@ get_days_in_month (gint month, gint year)
 #endif
 
 static int
-get_wday (char *str)
+get_wday (const unsigned char *in, unsigned int inlen)
 {
-	gint i;
+	int wday;
 	
-	g_return_val_if_fail (str != NULL, -1);
+	g_return_val_if_fail (in != NULL, -1);
 	
-	for (i = 0; i < 7; i++)
-		if (!strncasecmp (str, tm_days[i], 3))
-			return i;
+	if (inlen < 3)
+		return -1;
+	
+	for (wday = 0; wday < 7; wday++)
+		if (!strncasecmp (in, tm_days[wday], 3))
+			return wday;
 	
 	return -1;  /* unknown week day */
 }
 
 static int
-get_mday (char *str)
+get_mday (const unsigned char *in, unsigned int inlen)
 {
-	char *p;
 	int mday;
 	
-	g_return_val_if_fail (str != NULL, -1);
+	g_return_val_if_fail (in != NULL, -1);
 	
-	for (p = str; *p; p++)
-		if (!isdigit ((int) *p))
-			return -1;
-	
-	mday = atoi (str);
+	mday = decode_int (in, inlen);
 	
 	if (mday < 0 || mday > 31)
 		mday = -1;
@@ -247,30 +289,32 @@ get_mday (char *str)
 }
 
 static int
-get_month (char *str)
+get_month (const unsigned char *in, unsigned int inlen)
 {
 	int i;
 	
-	g_return_val_if_fail (str != NULL, -1);
+	g_return_val_if_fail (in != NULL, -1);
+	
+	if (inlen < 3)
+		return -1;
 	
 	for (i = 0; i < 12; i++)
-		if (!strncasecmp (str, tm_months[i], 3))
+		if (!strncasecmp (in, tm_months[i], 3))
 			return i;
 	
 	return -1;  /* unknown month */
 }
 
 static int
-get_year (const char *str)
+get_year (const unsigned char *in, unsigned int inlen)
 {
-	const char *p;
 	int year;
 	
-	for (p = str; *p; p++)
-		if (!isdigit ((int) *p))
-			return -1;
+	g_return_val_if_fail (in != NULL, -1);
 	
-	year = atoi (str);
+	year = decode_int (in, inlen);
+	if (year == -1)
+		return -1;
 	
 	if (year < 100)
 		year += (year < 70) ? 2000 : 1900;
@@ -282,54 +326,61 @@ get_year (const char *str)
 }
 
 static gboolean
-get_time (const char *in, int *hour, int *min, int *sec)
+get_time (const unsigned char *in, unsigned int inlen, int *hour, int *min, int *sec)
 {
-	const char *p;
-	int colons = 0;
-	gboolean digits = TRUE;
+	register const unsigned char *inptr;
+	const unsigned char *inend;
+	int *val, colons = 0;
 	
-	for (p = in; *p && digits; p++) {
-		if (*p == ':')
+	*hour = *min = *sec = 0;
+	
+	inend = in + inlen;
+	val = hour;
+	for (inptr = in; inptr < inend; inptr++) {
+		if (*inptr == ':') {
 			colons++;
-		else if (!isdigit ((int) *p))
-			digits = FALSE;
+			switch (colons) {
+			case 1:
+				val = min;
+				break;
+			case 2:
+				val = sec;
+				break;
+			default:
+				return FALSE;
+			}
+		} else if (!isdigit ((int) *inptr))
+			return FALSE;
+		else
+			*val = (*val * 10) + (*inptr - '0');
 	}
 	
-	/* Ameol software doesn't put the seconds on the time */
-	if (!digits || (colons != 2 && colons != 1))
-		return FALSE;
-	
-	if (colons == 2)
-		return sscanf (in, "%d:%d:%d", hour, min, sec) == 3;
-	else {
-		*sec = 0;
-		return sscanf (in, "%d:%d", hour, min) == 2;
-	}
+	return TRUE;
 }
 
 static int
-get_tzone (GList **token)
+get_tzone (struct _date_token **token)
 {
-	int tz = -1;
 	int i;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
-		char *str = (*token)->data;
+		const unsigned char *inptr = (*token)->start;
+		unsigned int inlen = (*token)->len;
 		
-		if (*str == '+' || *str == '-') {
-			tz = atoi (str);
-			return tz;
+		if (*inptr == '+' || *inptr == '-') {
+			return decode_int (inptr, inlen);
 		} else {
 			int t;
 			
-			if (*str == '(')
-				str++;
+			if (*inptr == '(')
+				inptr++;
 			
-			for (t = 0; t < 15; t++)
-				if (!strncmp (str, tz_offsets[t].name, strlen (tz_offsets[t].name))) {
-					tz = tz_offsets[t].offset;
-					return tz;
-				}
+			for (t = 0; t < 15; t++) {
+				unsigned int len = MIN (strlen (tz_offsets[t].name), inlen - 1);
+				
+				if (!strncmp (inptr, tz_offsets[t].name, len))
+					return tz_offsets[t].offset;
+			}
 		}
 	}
 	
@@ -337,12 +388,12 @@ get_tzone (GList **token)
 }
 
 static time_t
-parse_rfc822_date (GList *tokens, int *tzone)
+parse_rfc822_date (struct _date_token *tokens, int *tzone)
 {
-	GList *token;
+	int hour, min, sec, offset, n;
+	struct _date_token *token;
 	struct tm tm;
 	time_t t;
-	int hour, min, sec, offset, n;
 	
 	g_return_val_if_fail (tokens != NULL, (time_t) 0);
 	
@@ -350,35 +401,35 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	
 	memset ((void *) &tm, 0, sizeof (struct tm));
 	
-	if ((n = get_wday (token->data)) != -1) {
+	if ((n = get_wday (token->start, token->len)) != -1) {
 		/* not all dates may have this... */
 		tm.tm_wday = n;
 		token = token->next;
 	}
 	
 	/* get the mday */
-	if (!token || (n = get_mday (token->data)) == -1)
+	if (!token || (n = get_mday (token->start, token->len)) == -1)
 		return (time_t) 0;
 	
 	tm.tm_mday = n;
 	token = token->next;
 	
 	/* get the month */
-	if (!token || (n = get_month (token->data)) == -1)
+	if (!token || (n = get_month (token->start, token->len)) == -1)
 		return (time_t) 0;
 	
 	tm.tm_mon = n;
 	token = token->next;
 	
 	/* get the year */
-	if (!token || (n = get_year (token->data)) == -1)
+	if (!token || (n = get_year (token->start, token->len)) == -1)
 		return (time_t) 0;
 	
 	tm.tm_year = n - 1900;
 	token = token->next;
 	
 	/* get the hour/min/sec */
-	if (!token || !get_time (token->data, &hour, &min, &sec))
+	if (!token || !get_time (token->start, token->len, &hour, &min, &sec))
 		return (time_t) 0;
 	
 	tm.tm_hour = hour;
@@ -388,7 +439,7 @@ parse_rfc822_date (GList *tokens, int *tzone)
 	
 	/* get the timezone */
 	if (!token || (n = get_tzone (&token)) == -1) {
-		/* I guess we assume tz is GMT? */			
+		/* I guess we assume tz is GMT? */
 		offset = 0;
 	} else {
 		offset = n;
@@ -415,12 +466,12 @@ parse_rfc822_date (GList *tokens, int *tzone)
 }
 
 static time_t
-parse_broken_date (GList *tokens, int *tzone)
+parse_broken_date (struct _date_token *tokens, int *tzone)
 {
 #if 0
-	GList *token;
-	struct tm tm;
+	struct _date_token *token;
 	int hour, min, sec, n;
+	struct tm tm;
 	
 	if (tzone)
 		*tzone = 0;
@@ -444,7 +495,7 @@ parse_broken_date (GList *tokens, int *tzone)
 time_t
 g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 {
-	GList *token, *tokens;
+	struct _date_token *token, *tokens;
 	time_t date;
 	
 	tokens = datetok (in);
@@ -454,12 +505,11 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 		date = parse_broken_date (tokens, saveoffset);
 	
 	/* cleanup */
-	token = tokens;
-	while (token) {
-		g_free (token->data);
-		token = token->next;
+	while (tokens) {
+		token = tokens;
+		tokens = tokens->next;
+		memchunk_free (datetok_memchunk, token);
 	}
-	g_list_free (tokens);
 	
 	return date;
 }
@@ -476,7 +526,7 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 char *
 g_mime_utils_header_fold (const char *in)
 {
-	const char *inptr, *space;
+	register const char *inptr;
 	size_t len, outlen, i;
 	GString *out;
 	char *ret;

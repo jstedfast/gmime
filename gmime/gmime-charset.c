@@ -77,7 +77,7 @@ g_mime_charset_init (void)
 			
 			/* ; is a hack for debian systems and / is a hack for Solaris systems */
 			for (p = codeset; *p && !strchr ("@;/", *p); p++);
-			locale_charset = g_strndup (codeset, p - codeset);
+			locale_charset = g_strndup (codeset, (unsigned) (p - codeset));
 			g_strdown (locale_charset);
 		} else {
 			/* charset unknown */

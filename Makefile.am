@@ -17,6 +17,7 @@ libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 libgmime_la_SOURCES = 		\
 	alloca.c		\
 	strlib.c		\
+	memchunk.c		\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
@@ -83,6 +84,7 @@ gmimeinclude_HEADERS = 		\
 
 noinst_HEADERS = 		\
 	strlib.h		\
+	memchunk.h		\
 	gmime-table-private.h	\
 	md5-utils.h
 

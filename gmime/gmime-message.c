@@ -31,7 +31,6 @@
 
 #include "gmime-message.h"
 #include "gmime-utils.h"
-#include "internet-address.h"
 #include "gmime-stream-mem.h"
 
 static void g_mime_message_destroy (GMimeObject *object);
@@ -95,19 +94,9 @@ g_mime_message_new (gboolean pretty_headers)
 static gboolean
 recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 {
-	GList *recipients = value;
+	InternetAddressList *recipients = value;
 	
-	if (recipients) {
-		GList *recipient;
-		
-		recipient = recipients;
-		while (recipient) {
-			internet_address_destroy (recipient->data);
-			recipient = recipient->next;
-		}
-		
-		g_list_free (recipients);
-	}
+	internet_address_list_destroy (recipients);
 	
 	return TRUE;
 }
@@ -228,33 +217,20 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 static void
 sync_recipient_header (GMimeMessage *message, const char *type)
 {
-	GList *recipients;
+	InternetAddressList *recipients;
 	
 	/* sync the specified recipient header */
 	recipients = g_mime_message_get_recipients (message, type);
 	if (recipients) {
-		GString *recip;
+		char *string;
 		
-		recip = g_string_new ("");
-		while (recipients) {
-			InternetAddress *ia;
-			char *address;
-			
-			ia = recipients->data;
-			address = internet_address_to_string (ia, TRUE);
-			g_string_append (recip, address);
-			g_free (address);
-			
-			recipients = recipients->next;
-			if (recipients)
-				g_string_append (recip, ", ");
-		}
-		
-		g_mime_header_set (message->header->headers, type, recip->str);
-		g_string_free (recip, TRUE);
+		string = internet_address_list_to_string (recipients, TRUE);
+		g_mime_header_set (message->header->headers, type, string);
+		g_free (string);
 	} else
 		g_mime_header_set (message->header->headers, type, NULL);
 }
+
 
 /**
  * g_mime_message_add_recipient:
@@ -270,15 +246,17 @@ sync_recipient_header (GMimeMessage *message, const char *type)
 void
 g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *name, const char *address)
 {
+	InternetAddressList *recipients;
 	InternetAddress *ia;
-	GList *recipients;
 	
 	ia = internet_address_new_name (name, address);
 	
 	recipients = g_hash_table_lookup (message->header->recipients, type);
 	g_hash_table_remove (message->header->recipients, type);
 	
-	recipients = g_list_append (recipients, ia);
+	recipients = internet_address_list_append (recipients, ia);
+	internet_address_unref (ia);
+	
 	g_hash_table_insert (message->header->recipients, type, recipients);
 	sync_recipient_header (message, type);
 }
@@ -299,7 +277,7 @@ g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *nam
 void
 g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
 {
-	GList *recipients, *addrlist;
+	InternetAddressList *recipients, *addrlist;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (string != NULL);
@@ -309,7 +287,7 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
 	
 	addrlist = internet_address_parse_string (string);
 	if (addrlist)
-		recipients = g_list_concat (recipients, addrlist);
+		recipients = internet_address_list_concat (recipients, addrlist);
 	
 	g_hash_table_insert (message->header->recipients, type, recipients);
 	
@@ -322,14 +300,14 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
  * @message: MIME Message
  * @type: Recipient type
  *
- * Gets a GList of recipients of type @type from @message.
+ * Gets a list of recipients of type @type from @message.
  *
  * Returns a list of recipients of a chosen type from the MIME
  * Message. Available recipient types include:
  * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
  * GMIME_RECIPIENT_TYPE_BCC.
  **/
-GList *
+InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);

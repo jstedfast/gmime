@@ -36,31 +36,47 @@ typedef enum {
 	INTERNET_ADDRESS_GROUP
 } InternetAddressType;
 
+typedef struct _InternetAddress InternetAddress;
+typedef struct _InternetAddressList InternetAddressList;
+
 struct _InternetAddress {
 	InternetAddressType type;
+	unsigned int refcount;
 	char *name;
 	union {
 		char *addr;
-		GList *members;
+		InternetAddressList *members;
 	} value;
 };
 
-typedef struct _InternetAddress InternetAddress;
+struct _InternetAddressList {
+	struct _InternetAddressList *next;
+	InternetAddress *address;
+};
 
 InternetAddress *internet_address_new (void);
 InternetAddress *internet_address_new_name (const char *name, const char *addr);
 InternetAddress *internet_address_new_group (const char *name);
 
-void internet_address_destroy (InternetAddress *ia);
+void internet_address_ref (InternetAddress *ia);
+void internet_address_unref (InternetAddress *ia);
+/*void internet_address_destroy (InternetAddress *ia);*/
 
 void internet_address_set_name (InternetAddress *ia, const char *name);
 void internet_address_set_addr (InternetAddress *ia, const char *addr);
-void internet_address_set_group (InternetAddress *ia, GList *group);
+void internet_address_set_group (InternetAddress *ia, InternetAddressList *group);
 void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 
-GList *internet_address_parse_string (const char *string);
+InternetAddressList *internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia);
+InternetAddressList *internet_address_list_append (InternetAddressList *list, InternetAddress *ia);
+InternetAddressList *internet_address_list_concat (InternetAddressList *a, InternetAddressList *b);
+int internet_address_list_length (InternetAddressList *list);
+void internet_address_list_destroy (InternetAddressList *list);
+
+InternetAddressList *internet_address_parse_string (const char *string);
 
 char *internet_address_to_string (InternetAddress *ia, gboolean encode);
+char *internet_address_list_to_string (InternetAddressList *list, gboolean encode);
 
 #ifdef __cplusplus
 }

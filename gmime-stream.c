@@ -41,7 +41,7 @@
  * from @stream_template, with bounds @start and @end.
  **/
 void
-g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, int type, off_t start, off_t end)
+g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template, unsigned int type, off_t start, off_t end)
 {
 	stream->super_stream = NULL;
 	stream->refcount = 1;

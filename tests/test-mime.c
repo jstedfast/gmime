@@ -25,6 +25,9 @@
 
 #include "gmime.h"
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
+
 void
 test_parser (char *data)
 {
@@ -311,16 +314,16 @@ static char *addresses[] = {
 };
 
 static void
-dump_addrlist (GList *addrlist, int i, gboolean group, gboolean destroy)
+dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean destroy)
 {
+	InternetAddressList *addr;
 	InternetAddress *ia;
-	GList *addr;
 	
 	addr = addrlist;
 	while (addr) {
 		char *str;
 		
-		ia = addr->data;
+		ia = addr->address;
 		addr = addr->next;
 		
 		if (i != -1)
@@ -346,9 +349,6 @@ dump_addrlist (GList *addrlist, int i, gboolean group, gboolean destroy)
 		fprintf (stderr, "%sRewritten (encoded): %s\n\n", group ? "\t" : "",
 			 str ? str : "");
 		g_free (str);
-		
-		if (destroy)
-			internet_address_destroy (ia);
 	}
 }
 
@@ -358,7 +358,7 @@ test_addresses (void)
 	int i;
 	
 	for (i = 0; addresses[i]; i++) {
-		GList *addrlist;
+		InternetAddressList *addrlist;
 		
 		addrlist = internet_address_parse_string (addresses[i]);
 		if (!addrlist) {
@@ -367,8 +367,12 @@ test_addresses (void)
 		}
 		
 		dump_addrlist (addrlist, i, FALSE, TRUE);
+		
+		internet_address_list_destroy (addrlist);
 	}
 }
+
+/*#include "date-strings.h"*/
 
 void
 test_date (void)
@@ -390,6 +394,28 @@ test_date (void)
 	out = g_mime_utils_header_format_date (date, offset);
 	fprintf (stderr, "date out: [%s]\n", out);
 	g_free (out);
+
+#if 0
+	{
+		char *string;
+		int i;
+		
+		ZenTimerStart ();
+		for (i = 0; i < num_date_strings; i++) {
+			in = date_strings[i];
+			printf ("date  in: [%s]\n", in);
+			date = g_mime_utils_header_decode_date (in, &offset);
+			out = g_mime_utils_header_format_date (date, offset);
+			printf ("date out: [%s]\n", out);
+			g_free (out);
+		}
+		ZenTimerStop ();
+		
+		string = g_strdup_printf ("date parser (%d dates parsed)", num_date_strings);
+		ZenTimerReport (string);
+		g_free (string);
+	}
+#endif
 }
 
 

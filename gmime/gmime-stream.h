@@ -53,7 +53,7 @@ struct _GMimeStream {
 	/* Note: these are private fields!! */
 	GMimeStream *super_stream;
 	
-	int type;
+	unsigned int type;
 	int refcount;
 	
 	off_t position;
@@ -77,7 +77,7 @@ struct _GMimeStream {
 #define GMIME_STREAM(stream)  ((GMimeStream *) stream)
 
 void g_mime_stream_construct (GMimeStream *stream, GMimeStream *stream_template,
-			      int type, off_t start, off_t end);
+			      unsigned int type, off_t start, off_t end);
 
 /* public methods */
 ssize_t   g_mime_stream_read    (GMimeStream *stream, char *buf, size_t len);

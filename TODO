@@ -5,46 +5,35 @@ tasks are presented in.
 
 
 
-- rfc2047 encode parameters in the MIME Content fields where
-appropriate. This means we can't always wrap parameter values in
-quotes (it is illegal to quote rfc2047 encoded atoms).
-** I think this is fixed now.
-
-- Should only quote parameter values when required (ie when they
-contain whitespace, semicolons, or other illegal chars).
-** I think this is fixed too?
-
 - Possibly make the GMime parser async.
 
 - Write a broken date parser. (job for lex/bison?)
 
+- make thread-safe
 
-FIXME's:
+- modify address parser:
 
-- The rfc2047 encoder should watch white space and encode it if it
-appears between two atoms that will be encoded. For example, it
-currently performs in the following manner:
+<charles> on usenet it's not uncommon to have header like "From: Joe Bob"
+<charles> where people use no address at all to avoid spammers
+<fejj> ok
+<charles> It would be nice if internet-address handled this
+<charles> have ->name == "Joe Bob" and ->value.addr == NULL
+<fejj> oh, so only support writing them? ah, that should be easy
+<charles> It looks like the else clause on line 582 is where a "Joe Bob" string fails
+<fejj> I was pondering how I could possibly parse that as a name :)
+<charles> No, I am asking about parsing
+<fejj> oh
+<charles> It would be nice for internet_address_parse_string() to return an InternetAddress with a name of "Joe Bob" and a NULL addr
+<fejj> ah, okay
+<fejj> I guess I can do that
+<fejj> I'll have to modify my internet_address_to_string code to handle that too
+<fejj> but that should be easy
 
-(pretend 'a' and 'b' need to be encoded)
-original text: a b
-encoded (currently): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?b?=
-encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_b?=
-encoded (correctly): =?iso-8859-1?Q?a_?= =?iso-8859-1?Q?b?=
-encoded (correctly): =?iso-8859-1?Q?a?= =?iso-8859-1?Q?_?= =?iso-8859-1?Q?b?=
 
-After deocding, the first equates to: ab 
-This is incorrect, the RFC specifies that whitespace between 
-encoded atoms be ignored.
-** This should be fixed now.
 
-- Parsing quoted strings needs to be smarter - need to check for
-escaped quotes and such.
-** This should be fixed now.
 
-- InternetAddress needs to be smarter about quoting an address - what
-if the name component of the address has embedded quotes? They need to
-be escaped.
-** I think this is fixed now.
+
+
 
 All questions and comments should be directed toward the author,
 Jeffrey Stedfast <fejj@helixcode.com>

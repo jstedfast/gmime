@@ -43,7 +43,15 @@
 InternetAddress *
 internet_address_new ()
 {
-	return g_new0 (InternetAddress, 1);
+	InternetAddress *ia;
+	
+	ia = g_new (InternetAddress, 1);
+	ia->type = INTERNET_ADDRESS_NONE;
+	ia->refcount = 1;
+	ia->name = NULL;
+	ia->value.addr = NULL;
+	
+	return ia;
 }
 
 
@@ -53,30 +61,49 @@ internet_address_new ()
  * 
  * Destroy the InternetAddress object pointed to by @ia.
  **/
-void
+static void
 internet_address_destroy (InternetAddress *ia)
 {
 	if (ia) {
 		g_free (ia->name);
 		
 		if (ia->type == INTERNET_ADDRESS_GROUP) {
-			GList *members;
-			
-			members = ia->value.members;
-			while (members) {
-				InternetAddress *member;
-				
-				member = members->data;
-				internet_address_destroy (member);
-				members = members->next;
-			}
-			
-			g_list_free (ia->value.members);
+			internet_address_list_destroy (ia->value.members);
 		} else {
 			g_free (ia->value.addr);
 		}
 		
 		g_free (ia);
+	}
+}
+
+
+/**
+ * internet_address_ref:
+ * @ia: address
+ *
+ * Ref's the internet address.
+ **/
+void
+internet_address_ref (InternetAddress *ia)
+{
+	ia->refcount++;
+}
+
+
+/**
+ * internet_address_unref:
+ * @ia: address
+ *
+ * Unref's the internet address.
+ **/
+void
+internet_address_unref (InternetAddress *ia)
+{
+	if (ia->refcount <= 1) {
+		internet_address_destroy (ia);
+	} else {
+		ia->refcount--;
 	}
 }
 
@@ -182,24 +209,15 @@ internet_address_set_addr (InternetAddress *ia, const char *addr)
  * Set the members of the internet address group.
  **/
 void
-internet_address_set_group (InternetAddress *ia, GList *group)
+internet_address_set_group (InternetAddress *ia, InternetAddressList *group)
 {
-	GList *members;
+	InternetAddressList *members, *next;
 	
 	g_return_if_fail (ia != NULL);
 	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
 	
 	ia->type = INTERNET_ADDRESS_GROUP;
-	members = ia->value.members;
-	while (members) {
-		InternetAddress *member;
-
-		member = members->data;
-		internet_address_destroy (member);
-		members = members->next;
-	}
-	
-	g_list_free (ia->value.members);
+	internet_address_list_destroy (ia->value.members);
 	ia->value.members = group;
 }
 
@@ -216,10 +234,161 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 {
 	g_return_if_fail (ia != NULL);
 	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
+	g_return_if_fail (member != NULL);
 	
 	ia->type = INTERNET_ADDRESS_GROUP;
-	ia->value.members = g_list_append (ia->value.members, member);
+	ia->value.members = internet_address_list_append (ia->value.members, member);
 }
+
+
+
+/**
+ * internet_address_list_prepend:
+ * @list: a list of internet addresses
+ * @ia: internet address to prepend
+ *
+ * Prepends the internet address to the list of internet addresses
+ * pointed to by @list.
+ *
+ * Returns the resultant list.
+ **/
+InternetAddressList *
+internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
+{
+	InternetAddressList *node;
+	
+	g_return_if_fail (ia != NULL);
+	
+	internet_address_ref (ia);
+	node = g_new (InternetAddressList, 1);
+	node->next = list;
+	node->address = ia;
+	
+	return node;
+}
+
+
+/**
+ * internet_address_list_append:
+ * @list: a list of internet addresses
+ * @ia: internet address to append
+ *
+ * Appends the internet address to the list of internet addresses
+ * pointed to by @list.
+ *
+ * Returns the resultant list.
+ **/
+InternetAddressList *
+internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
+{
+	InternetAddressList *node, *n;
+	
+	g_return_if_fail (ia != NULL);
+	
+	internet_address_ref (ia);
+	node = g_new (InternetAddressList, 1);
+	node->next = NULL;
+	node->address = ia;
+	
+	if (list == NULL)
+		return node;
+	
+	n = list;
+	while (n->next)
+		n = n->next;
+	
+	n->next = node;
+	
+	return list;
+}
+
+
+/**
+ * internet_address_list_concat:
+ * @a: first list
+ * @b: second list
+ *
+ * Concatenates a copy of list @b onto the end of list @a.
+ *
+ * Returns the resulting list.
+ **/
+InternetAddressList *
+internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
+{
+	InternetAddressList *node, *tail, *n;
+	
+	if (b == NULL)
+		return a;
+	
+	/* find the end of list a */
+	if (a != NULL) {
+		tail = a;
+		while (tail->next)
+			tail = tail->next;
+	} else {
+		tail = (InternetAddressList *) &a;
+	}
+	
+	/* concat a copy of list b to list a */
+	node = b;
+	while (node) {
+		internet_address_ref (node->address);
+		n = g_new (InternetAddressList, 1);
+		n->next = NULL;
+		n->address = node->address;
+		tail->next = n;
+		tail = n;
+		
+		node = node->next;
+	}
+	
+	return a;
+}
+
+
+/**
+ * internet_address_list_length:
+ * @list: list of internet addresses
+ *
+ * Calculates the length of the list of addresses.
+ *
+ * Returns the number of internet addresses in @list.
+ **/
+int
+internet_address_list_length (InternetAddressList *list)
+{
+	InternetAddressList *node;
+	int len = 0;
+	
+	node = list;
+	while (node) {
+		node = node->next;
+		len++;
+	}
+	
+	return len;
+}
+
+/**
+ * internet_address_list_destroy:
+ * @list: address list
+ *
+ * Destroys the list of internet addresses.
+ **/
+void
+internet_address_list_destroy (InternetAddressList *list)
+{
+	InternetAddressList *node, *next;
+	
+	node = list;
+	while (node) {
+		next = node->next;
+		internet_address_unref (node->address);
+		g_free (node);
+		node = next;
+	}
+}
+
 
 static char *
 encoded_name (const char *raw, gboolean rfc2047_encode)
@@ -237,6 +406,24 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 	return name;
 }
 
+static void
+internet_address_list_to_string_internal (InternetAddressList *list, gboolean encode, GString *string)
+{
+	while (list) {
+		char *addr;
+		
+		addr = internet_address_to_string (list->address, encode);
+		if (addr) {
+			g_string_append (string, addr);
+			g_free (addr);
+			if (list->next)
+				g_string_append (string, ", ");
+		}
+		
+		list = list->next;
+	}
+}
+
 
 /**
  * internet_address_to_string:
@@ -252,51 +439,61 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 char *
 internet_address_to_string (InternetAddress *ia, gboolean encode)
 {
-	char *string = NULL;
+	char *str = NULL;
 	
 	if (ia->type == INTERNET_ADDRESS_NAME) {
 		if (ia->name) {
 			char *name;
 			
 			name = encoded_name (ia->name, encode);
-			string = g_strdup_printf ("%s <%s>", name,
-						  ia->value.addr);
+			str = g_strdup_printf ("%s <%s>", name, ia->value.addr);
 			g_free (name);
 		} else {
-			string = g_strdup (ia->value.addr);
+			str = g_strdup (ia->value.addr);
 		}
 	} else if (ia->type == INTERNET_ADDRESS_GROUP) {
-		GList *members;
-		GString *gstr;
+		InternetAddressList *members;
+		GString *string;
 		
-		gstr = g_string_new (ia->name);
-		g_string_append (gstr, ": ");
+		string = g_string_new (ia->name);
+		g_string_append (string, ": ");
 		
 		members = ia->value.members;
-		while (members) {
-			InternetAddress *member;
-			char *addr;
-			
-			member = members->data;
-			members = members->next;
-			
-			addr = internet_address_to_string (member, encode);
-			if (addr) {
-				g_string_append (gstr, addr);
-				g_free (addr);
-				if (members)
-					g_string_append (gstr, ", ");
-			}
-		}
+		internet_address_list_to_string_internal (members, encode, string);
+		g_string_append (string, ";");
 		
-		g_string_append (gstr, ";");
-		
-		string = gstr->str;
-		g_string_free (gstr, FALSE);
+		str = string->str;
+		g_string_free (string, FALSE);
 	}
 	
-	return string;
+	return str;
 }
+
+
+/**
+ * internet_address_list_to_string:
+ * @list: list of internet addresses
+ * @encode: TRUE if the address should be rfc2047 encoded
+ *
+ * Allocates a string buffer containing the rfc822 formatted addresses
+ * in @list.
+ *
+ * Returns a string containing the list of addresses in rfc822 format.
+ **/
+char *
+internet_address_list_to_string (InternetAddressList *list, gboolean encode)
+{
+	GString *string;
+	char *str;
+	
+	string = g_string_new ("");
+	internet_address_list_to_string_internal (list, encode, string);
+	str = string->str;
+	g_string_free (string, FALSE);
+	
+	return str;
+}
+
 
 static void
 decode_lwsp (const char **in)
@@ -711,16 +908,22 @@ decode_address (const char **in)
 			InternetAddress *member;
 			
 			member = decode_mailbox (&inptr);
-			if (member)
+			if (member) {
 				internet_address_add_member (addr, member);
+				internet_address_unref (member);
+			}
 			
 			decode_lwsp (&inptr);
 			while (*inptr == ',') {
 				inptr++;
 				decode_lwsp (&inptr);
 				member = decode_mailbox (&inptr);
-				if (member)
+				if (member) {
+					/* FIXME: this could be optimized by keeping a tail
+                                           pointer */
 					internet_address_add_member (addr, member);
+					internet_address_unref (member);
+				}
 				
 				decode_lwsp (&inptr);
 			}
@@ -753,13 +956,15 @@ decode_address (const char **in)
  * Returns a linked list of internet addresses. *Must* be free'd by
  * the caller.
  **/
-GList *
+InternetAddressList *
 internet_address_parse_string (const char *string)
 {
-	GList *addrlist = NULL;
+	InternetAddressList *node, *tail, *addrlist = NULL;
 	const char *inptr;
 	
 	inptr = string;
+	
+	tail = (InternetAddressList *) &addrlist;
 	
 	while (inptr && *inptr) {
 		InternetAddress *addr;
@@ -769,11 +974,16 @@ internet_address_parse_string (const char *string)
 		
 		addr = decode_address (&inptr);
 		
-		if (addr)
-			addrlist = g_list_append (addrlist, addr);
-		else
+		if (addr) {
+			node = g_new (InternetAddressList, 1);
+			node->next = NULL;
+			node->address = addr;
+			tail->next = node;
+			tail = node;
+		} else {
 			w(g_warning ("Invalid or incomplete address: %.*s",
 				     inptr - start, start));
+		}
 		
 		decode_lwsp (&inptr);
 		if (*inptr == ',')

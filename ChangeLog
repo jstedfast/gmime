@@ -1,3 +1,119 @@
+2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* strlib.c (strncasecmp): Convert the chars to lowercase before
+	diffing.
+
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Bumped version number to 0.7.5 since the
+	internet-address API and bits of the gmime-message API have
+	changed.
+
+	* internet-address.c (internet_address_new): Initialize the
+	refcount to 1.
+	(internet_address_destroy): This is now an internal function.
+	(internet_address_ref): New function to ref an InternetAddress
+	object.
+	(internet_address_unref): New function to unref an InternetAddress
+	object.
+	(internet_address_set_group): Updated to use the new
+	internet_address_list functions.
+	(internet_address_add_member): Same.
+	(internet_address_list_prepend): New function to manipulate a list
+	of InternetAddress objects.
+	(internet_address_list_append): Same.
+	(internet_address_list_concat): Another new function.
+	(internet_address_list_length): Again...
+	(internet_address_list_destroy): Destroy a list of addresses.
+	(internet_address_list_to_string): New utility function to write a
+	list of addresses to a string.
+	(internet_address_parse_string): Optimized slightly by not using
+	GLists' generic append function and also updated to use
+	InternetAddressList.
+
+	* gmime-message.c (recipients_destroy): Updated to call
+	internet_address_list_destroy.
+	(sync_recipient_header): Updated to let the InternetAddress code
+	do the work for us.
+	(g_mime_message_add_recipient): Updated to use the new
+	InternetAddress API.
+	(g_mime_message_add_recipients_from_string): Same.
+	(g_mime_message_get_recipients): Return an InternetaddressList
+	instead of GList.
+
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* strlib.c (strncasecmp): Do null-checking.
+
+	* TODO: Remove features that have already been
+	implemented/fixed/whatever.
+
+2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.c (memchunk_clean): Prune 'cleaned' nodes from our
+	free-node list. Thanks to Charles Kerr for discovering this bug.
+
+	* strlib.c (strncasecmp): Moved the return calculation to within
+	the loop so as to only take a difference if the strings are not
+	identical. This also fixes a bug that would falsely return
+	non-zero for strings that were identical for the first n bytes.
+
+2001-12-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream.c (g_mime_stream_construct): 'type' is now an
+	unsigned int rather than a signed int.
+
+	* memchunk.c (memchunk_clean): Oops. Don't forget to free the tree
+	after we're finished with it...
+
+2001-12-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Various compiler warning fixes to several source files (mostly
+	"unused variable" type stuff).
+
+2001-12-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (datetok): reimplement to not use GLists
+	(appending is slow) and also to not g_strndup the token, instead
+	just remember it's offset and length so we can examine it later.
+	(decode_int): New function to decode an int.
+	(get_wday): Now takes an inlen argument.
+	(get_mday): Same. Also calls decode_int.
+	(get_month): Here too.
+	(get_year): Again here... also calls decode_int.
+	(get_tzone): Modified to use struct _date_token.
+	(get_time): Completely rewritten.
+
+2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.[c,h]: A memchunk library similar to g_mem_chunk's but
+	faster.
+
+2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Added a --enable-warnings to turn on compiler
+	warnings.
+
+	* gmime-utils.c: Various compiler warning cleanup.
+
+	* gmime-object.c (g_mime_object_construct): Change the type
+	argument to be of type unsigned rather than int.
+
+	* gmime-filter-html.c (url_extract): g_strndup takes an unsigned
+	length argument.
+
+	* gmime-filter-from.c (filter_filter): memcpy takes an unsigned
+	length argument.
+
+	* gmime-disposition.c (g_mime_disposition_new): g_strndup takes an
+	unsigned length argument.
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string):
+	g_strndup takes an unsigned length argument.
+
+	* gmime-charset.c (g_mime_charset_init): g_strndup takes an
+	unsigned length argument.
+
 2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c (g_mime_part_destroy): Now an internal-only method.

@@ -145,11 +145,12 @@ static unsigned short special_chars[256] = {
 #define is_url_char(c)  (isprint ((int) c) && !(special_chars[(unsigned char) c] & IS_NON_URL))
 #define is_trailing_garbage(c) (!isprint ((int) c) || (special_chars[(unsigned char) c] & IS_GARBAGE))
 
+#if 0
+/* this is for building the special_chars table... */
 static void
 table_init (void)
 {
 	char *c;
-	int i;
 	
 	memset (special_chars, 0, sizeof (special_chars));
 	for (c = NON_EMAIL_CHARS; *c; c++)
@@ -159,6 +160,7 @@ table_init (void)
 	for (c = TRAILING_URL_GARBAGE; *c; c++)
 		special_chars[(int) *c] |= IS_GARBAGE;
 }
+#endif
 
 static char *
 url_extract (char **in, int inlen, gboolean check, gboolean *backup)
@@ -181,7 +183,7 @@ url_extract (char **in, int inlen, gboolean check, gboolean *backup)
 	
 	if (check) {
 		/* make sure we weren't fooled. */
-		p = memchr (*in, ':', (char *) inptr - *in);
+		p = memchr (*in, ':', (unsigned) ((char *) inptr - *in));
 		if (!p)
 			return NULL;
 	}
@@ -191,7 +193,7 @@ url_extract (char **in, int inlen, gboolean check, gboolean *backup)
 		return NULL;
 	}
 	
-	url = g_strndup (*in, (char *) inptr - *in);
+	url = g_strndup (*in, (unsigned) ((char *) inptr - *in));
 	*in = inptr;
 	
 	return url;
@@ -230,7 +232,7 @@ email_address_extract (char **in, char *inend, char *start, char **outptr, gbool
 	if (dot > end)
 		return NULL;
 	
-	addr = g_strndup (pre, end - pre);
+	addr = g_strndup (pre, (unsigned) (end - pre));
 	*outptr -= (*in - pre);
 	*in = end;
 	
@@ -468,7 +470,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	}
 	
 	if (inptr < inend)
-		g_mime_filter_backup (filter, inptr, inend - inptr);
+		g_mime_filter_backup (filter, inptr, (unsigned) (inend - inptr));
 	
 	if (flush && html->pre_open) {
 		outptr = check_size (filter, outptr, &outend, 10);

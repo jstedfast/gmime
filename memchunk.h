@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __GMIME_OBJECT_H__
-#define __GMIME_OBJECT_H__
+#ifndef __MEMCHUNK_H__
+#define __MEMCHUNK_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,25 +30,26 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <sys/types.h>
 
-typedef struct _GMimeObject GMimeObject;
+typedef struct _MemChunk MemChunk;
 
-struct _GMimeObject {
-	unsigned type;
-	int refcount;
-	
-	void (*destroy) (GMimeObject *object);
-};
+MemChunk *memchunk_new (size_t atomsize, size_t atomcount, gboolean autoclean);
 
-#define GMIME_OBJECT(object) ((GMimeObject *) object)
+void     *memchunk_alloc (MemChunk *memchunk);
 
-void g_mime_object_construct (GMimeObject *object, GMimeObject *object_template, unsigned type);
+void     *memchunk_alloc0 (MemChunk *memchunk);
 
-void g_mime_object_ref       (GMimeObject *object);
-void g_mime_object_unref     (GMimeObject *object);
+void      memchunk_free (MemChunk *memchunk, void *mem);
+
+void      memchunk_reset (MemChunk *memchunk);
+
+void      memchunk_clean (MemChunk *memchunk);
+
+void      memchunk_destroy (MemChunk *memchunk);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_OBJECT_H__ */
+#endif /* __MEMCHUNK_H__ */

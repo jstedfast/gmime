@@ -34,7 +34,7 @@ extern "C" {
 typedef struct _GMimeObject GMimeObject;
 
 struct _GMimeObject {
-	int type;
+	unsigned type;
 	int refcount;
 	
 	void (*destroy) (GMimeObject *object);
@@ -42,7 +42,7 @@ struct _GMimeObject {
 
 #define GMIME_OBJECT(object) ((GMimeObject *) object)
 
-void g_mime_object_construct (GMimeObject *object, GMimeObject *object_template, int type);
+void g_mime_object_construct (GMimeObject *object, GMimeObject *object_template, unsigned type);
 
 void g_mime_object_ref       (GMimeObject *object);
 void g_mime_object_unref     (GMimeObject *object);
