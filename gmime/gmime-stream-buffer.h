@@ -56,7 +56,7 @@ struct _GMimeStreamBuffer {
 	unsigned char *buffer;
 	unsigned char *bufptr;
 	unsigned char *bufend;
-	ssize_t buflen;
+	size_t buflen;
 	
 	GMimeStreamBufferMode mode;
 };

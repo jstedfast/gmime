@@ -1,3 +1,8 @@
+2004-03-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-buffer.c (stream_write): Fixed a bug when
+	writing across block boundaries.
+
 2004-03-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-cipher-context.c (g_mime_cipher_verify): Allow the

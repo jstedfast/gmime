@@ -208,6 +208,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		memcpy (buffer->buffer + buffer->buflen, buf, n);
 		buffer->buflen += n;
 		written += n;
+		buf += n;
 		len -= n;
 		if (len) {
 			/* flush our buffer... */
