@@ -252,8 +252,8 @@ get_mime_part (const gchar *in, guint inlen)
 	}
 	
 	if (is_multipart && boundary && end_boundary) {
-		/* get all the child parts */
-		GMimePart *child;
+		/* get all the subparts */
+		GMimePart *subpart;
 		gchar *part_begin, *part_end;
 		
 		part_begin = strstr (inptr, boundary);
@@ -267,9 +267,9 @@ get_mime_part (const gchar *in, guint inlen)
 			if (!part_end || part_end >= inend)
 				part_end = inend;
 			
-			/* get the child part */
-			child = get_mime_part (part_begin, (guint) (part_end - part_begin));
-			g_mime_part_add_child (mime_part, child);
+			/* get the subpart */
+			subpart = get_mime_part (part_begin, (guint) (part_end - part_begin));
+			g_mime_part_add_subpart (mime_part, subpart);
 			
 			/* the next part begins where the last one left off */
 			part_begin = part_end;

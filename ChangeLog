@@ -1,4 +1,27 @@
 2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
+	Synced with HEAD.
+
+	* pgp-mime.c (pgp_mime_part_encrypt): Updated to use add_subpart
+	rather than add_child.
+	(pgp_mime_part_sign): And here too.
+
+2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c: Hmmm, why weren't multiparts using the internal
+	get_content_type function rather than ...content_type_to_string?
+	Possible FIXME: Should content_type_to_string do what
+	get_content_type does? or should it remain untouched and just
+	return "type/subtype"?
+
+	* gmime-part.h: No more boundary data member.
+
+	* gmime-part.c (g_mime_part_get_boundary): Updated, as we no
+	longer store the boundary on the MIME Part and instead only on the
+	content-type (where it belongs).
+	(g_mime_part_set_boundary): And here too.
+	(g_mime_part_destroy): No longer need to destroy the boundary.
+
+2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-pgpmime.c: Implemented.
 
@@ -6,6 +29,34 @@
 	mime_type on the multipart.
 	(pgp_mime_part_encrypt): And here too. Also set the version_part
 	encoding to 7bit.
+
+2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_get_subpart_from_content_id): Erm,
+	smack me. This needs to be recursive (this is what happens when I
+	code really late at night).
+
+2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* configure.in (GMIME_MINOR_VERSION): Updated to 0.3.0
+
+	* gmime-parser.c (get_mime_part): Updated to reflect the
+	add_subpart API change.
+
+	* test-mime.c (test_multipart): And here too.
+
+	* gmime-part.h (g_mime_part_add_child): Macro added for backward
+	source compatability.
+
+	* gmime-part.c (g_mime_part_get_subpart_from_content_id): Renamed
+	from g_mime_part_get_child_from_content_id as I think I'm gonna
+	start calling them subparts in the API as it's a bit clearer than
+	calling them children. Also fixed up some of the logic (what if
+	the parent mime part had a content-id? The way the code was before
+	it'd never search the subparts). Oh, it also returns const now.
+	(g_mime_part_add_subpart): Renamed from g_mime_part_add_child and
+	also now does some error checking to make sure the parent part is
+	a multipart.
 
 2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
 
@@ -20,6 +71,11 @@
 	specify which userid to use when signing).
 	(crypto_exec_with_passwd): Only strlen (passphrase) if passphrase
 	is non-NULL, otherwise just pretend it's length is 0.
+
+2000-12-10  Charles Kerr <charles@superpimp.org>
+
+	* gmime-part.c (g_mime_part_get_child_by_content_id): new
+	utility function.
 
 2000-12-10  Jeffrey Stedfast  <fejj@helixcode.com>
 

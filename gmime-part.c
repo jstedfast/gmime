@@ -112,8 +112,6 @@ g_mime_part_destroy (GMimePart *mime_part)
 		}
 	}
 	
-	g_free (mime_part->boundary);
-	
 	if (mime_part->children) {
 		GList *child;
 		
@@ -503,8 +501,6 @@ g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary)
 	
 	g_return_if_fail (mime_part != NULL);
 	
-	g_free (mime_part->boundary);
-	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
 		char digest[16], *p;
@@ -521,7 +517,7 @@ g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary)
 		boundary = bbuf;
 	}
 	
-	mime_part->boundary = g_strdup (boundary);
+	g_mime_content_type_add_parameter (mime_part->mime_type, "boundary", boundary);
 }
 
 
@@ -536,7 +532,7 @@ g_mime_part_get_boundary (GMimePart *mime_part)
 {
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
-	return mime_part->boundary;
+	return g_mime_content_type_get_parameter (mime_part->mime_type, "boundary");
 }
 
 
@@ -627,20 +623,24 @@ g_mime_part_get_content (GMimePart *mime_part, guint *len)
 
 
 /**
- * g_mime_part_add_child: Add a child mime part to a multipart
+ * g_mime_part_add_subpart: Add a subpart to a multipart
  * @mime_part: Parent Mime part
- * @child: Child Mime part
+ * @subpart: Child Mime part
  *
- * Adds a child mime part to the parent mime part which *must* be a
+ * Adds a subpart to the parent mime part which *must* be a
  * multipart.
  **/
 void
-g_mime_part_add_child (GMimePart *mime_part, GMimePart *child)
+g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart)
 {
-	g_return_if_fail (mime_part != NULL);
-	g_return_if_fail (child != NULL);
+	const GMimeContentType *type;
 	
-	mime_part->children = g_list_append (mime_part->children, child);
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (subpart != NULL);
+	
+	type = g_mime_part_get_content_type (mime_part);
+	if (g_mime_content_type_is_type (type, "multipart", "*"))
+		mime_part->children = g_list_append (mime_part->children, subpart);
 }
 
 static gchar *
@@ -721,6 +721,9 @@ get_content_type (GMimeContentType *mime_type)
 			break;
 	}
 	
+	/* FIXME: we should probably 'fold' this header as it's
+           possible that this one could get a bit long */
+	
 	str = string->str;
 	g_string_free (string, FALSE);
 	
@@ -772,15 +775,19 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
 	if (g_mime_content_type_is_type (mime_part->mime_type, "multipart", "*")) {
+		const gchar *boundary;
 		GString *contents;
 		GList *child;
 		gchar *content_type;
 		
 		/* make sure there's a boundary, else force a random boundary */
-		if (!mime_part->boundary)
+		boundary = g_mime_part_get_boundary (mime_part);
+		if (!boundary) {
 			g_mime_part_set_boundary (mime_part, NULL);
+			boundary = g_mime_part_get_boundary (mime_part);
+		}
 		
-		content_type = g_mime_content_type_to_string (mime_part->mime_type);
+		content_type = get_content_type (mime_part->mime_type);
 		
 		contents = g_string_new ("");
 		
@@ -790,7 +797,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 			
 			mime_string = g_mime_part_to_string (child->data, FALSE);
 			
-			part = g_strdup_printf ("--%s\n%s\n", mime_part->boundary, mime_string);
+			part = g_strdup_printf ("--%s\n%s\n", boundary, mime_string);
 			
 			g_string_append (contents, part);
 			
@@ -803,16 +810,18 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 		if (toplevel) {
 			/* add message header stuff first */
 			string = g_strdup_printf ("MIME-Version: 1.0\n"
-						  "Content-Type: %s; boundary=\"%s\"\n\n"
+						  "Content-Type: %s\n\n"
 						  "This is a multi-part message in MIME format.\n\n"
 						  "%s\n--%s--\n",
-						  content_type, mime_part->boundary,
-						  contents->str, mime_part->boundary);
+						  content_type,
+						  contents->str,
+						  boundary);
 		} else {
-			string = g_strdup_printf ("Content-Type: %s; boundary=\"%s\"\n\n"
+			string = g_strdup_printf ("Content-Type: %s\n\n"
 						  "%s\n--%s--\n",
-						  content_type, mime_part->boundary,
-						  contents->str, mime_part->boundary);
+						  content_type,
+						  contents->str,
+						  boundary);
 		}
 		
 		g_free (content_type);
@@ -911,4 +920,47 @@ g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data
 			child = child->next;
 		}
 	}
+}
+
+
+/**
+ * g_mime_part_get_subpart_from_content_id: 
+ * @mime_part: the MIME part
+ * @content_id: the content id of the part to look for
+ *
+ * Returns the GMimePart whose content-id matches the search string,
+ * or NULL if a match cannot be found.
+ **/
+const GMimePart *
+g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const gchar *content_id)
+{
+	GList *child;
+	
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (content_id != NULL, NULL);
+	
+	if (mime_part->content_id && !strcmp (mime_part->content_id, content_id))
+		return mime_part;
+	
+	child = mime_part->children;
+	while (child) {
+		const GMimeContentType *type;
+		const GMimePart *part = NULL;
+		GMimePart *subpart;
+		
+		subpart = (GMimePart *) child->data;
+		type = g_mime_part_get_content_type (subpart);
+		
+		if (g_mime_content_type_is_type (type, "multipart", "*"))
+			part = g_mime_part_get_subpart_from_content_id (subpart, content_id);
+		else if (subpart->content_id && !strcmp (subpart->content_id, content_id))
+			part = subpart;
+		
+		if (part)
+			return part;
+		
+		child = child->next;
+	}
+	
+	return NULL;
 }

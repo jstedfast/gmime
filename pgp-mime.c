@@ -126,8 +126,8 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	g_mime_part_set_content_type (multipart, mime_type);
 	
 	/* add the parts to the multipart */
-	g_mime_part_add_child (multipart, part);
-	g_mime_part_add_child (multipart, signed_part);
+	g_mime_part_add_subpart (multipart, part);
+	g_mime_part_add_subpart (multipart, signed_part);
 	
 	/* replace the input part with the output part */
 	*mime_part = multipart;
@@ -188,8 +188,8 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	g_mime_part_set_content_type (multipart, mime_type);
 	
 	/* add the parts to the multipart */
-	g_mime_part_add_child (multipart, version_part);
-	g_mime_part_add_child (multipart, encrypted_part);
+	g_mime_part_add_subpart (multipart, version_part);
+	g_mime_part_add_subpart (multipart, encrypted_part);
 	
 	/* replace the input part with the output part */
 	*mime_part = multipart;
