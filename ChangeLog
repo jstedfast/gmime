@@ -1,3 +1,8 @@
+2003-03-11  Charles Kerr <charles@rebelbase.com>
+
+	* gmime/md5-utils.c (md5_get_digest_from_file): fix
+	dangling file pointer.
+
 2003-03-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Check that the compiler supports the inline
