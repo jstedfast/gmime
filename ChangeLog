@@ -1,3 +1,7 @@
+2002-11-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Make sure to include -liconv on systems that need it.
+
 2002-11-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Check for gethostbyname in -lnsl and also bump the

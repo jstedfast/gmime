@@ -122,14 +122,16 @@ AC_SUBST(glib_libs)
 dnl *****************************
 dnl *** Checks for libnsl     ***
 dnl *****************************
-AC_CHECK_LIB(nsl, gethostbyname, LIBS="$LIBS -lnsl")
+LIBNSL=""
+AC_CHECK_LIB(nsl, gethostbyname, LIBNSL="-lnsl")
 
 dnl Check for libiconv
 AM_ICONV()
 
+CFLAGS_save="$CFLAGS"
 CFLAGS="$CFLAGS -I$srcdir"
-LDFLAGS_save="$LDFLAGS"
-LDFLAGS="$LDFLAGS $LIBICONV"
+LIBS_save="$LIBS"
+LIBS="$LIBS $LIBICONV"
 
 AC_MSG_CHECKING(preferred charset formats for system iconv)
 AC_TRY_RUN([
@@ -149,7 +151,8 @@ AC_TRY_RUN([
 	])
 ])
 
-LDFLAGS="$LDFLAGS_save"
+CFLAGS="$CFLAGS_save"
+LIBS="$LIBS_save"
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
@@ -175,21 +178,29 @@ else
 	fi
 fi
 
-GMIME_LIBDIR="-L${libdir}"
-GMIME_INCLUDEDIR="-I${includedir}/gmime-2.0"
-GMIME_LIBS="-lgmime-2.0 $LIBICONV"
 
-dnl
-dnl Extra flags
-dnl
-GMIME_CFLAGS=""
+dnl Extra libs
+if test "x$LIBNSL" != "x"; then
+	EXTRA_LIBS="$LIBNSL"
+fi
+if test "x$LIBICONV" != "x"; then
+	EXTRA_LIBS="$EXTRA_LIBS $LIBICONV"
+fi
 
 AC_SUBST(CFLAGS)
-AC_SUBST(GMIME_CFLAGS)
 
-AC_SUBST(GMIME_LIBDIR)
+LIBS="$LIBS $EXTRA_LIBS"
+AC_SUBST(LIBS)
+
+GMIME_LIBDIR="-L${libdir}"
+GMIME_INCLUDEDIR="-I${includedir}/gmime-2.0"
+GMIME_LIBS="-lgmime-2.0 $EXTRA_LIBS"
+GMIME_CFLAGS=""
+
 AC_SUBST(GMIME_LIBS)
+AC_SUBST(GMIME_LIBDIR)
 AC_SUBST(GMIME_INCLUDEDIR)
+AC_SUBST(GMIME_CFLAGS)
 AC_SUBST(HTML_DIR)
 
 AC_OUTPUT(

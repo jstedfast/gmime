@@ -4,14 +4,19 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
+- remove gmime-header.c:g_mime_header_set_write_func() and instead
+make it so that we just never wrap Message-Id and have a special
+header-wrapping mechanism for the Received header. Any other headers I
+need to worry about?
+
 - gmime-filter-html.c: Use Aho-Corasik's string search algorithm (or
 else a UTF-8 regex library) to search for url patterns. Seems some
 libc implementations segfault when the input data is not in the locale
 charset.
 
-- Possibly make the GMime parser async.
-
 - make thread-safe
+
+- Possibly make the GMime parser async.
 
 - modify address parser:
 
