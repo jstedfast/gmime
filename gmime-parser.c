@@ -328,7 +328,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 		gchar *part_begin, *part_end;
 		
 		part_begin = g_strstrbound (inptr, boundary, inend);
-		while (part_begin < inend) {
+		while (part_begin && part_begin < inend) {
 			/* make sure we're not looking at the end boundary */
 			if (!strncmp (part_begin, end_boundary, strlen (end_boundary)))
 				break;
