@@ -1,3 +1,10 @@
+2004-04-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-filter.c (stream_read): Check that we haven't
+	already flushed the stream if the source stream is at EOS - fixes
+	an infinite loop case if the user doesn't use a loop to check
+	eos() each loop.
+
 2004-04-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream-cat.c (stream_write): This should be writing

@@ -163,70 +163,73 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t n)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	struct _filter *f;
-	ssize_t size;
+	ssize_t nread;
 	
-	p->last_was_read = TRUE;
+	priv->last_was_read = TRUE;
 	
-	if (p->filteredlen <= 0) {
+	if (priv->filteredlen <= 0) {
 		size_t presize = READ_SIZE;
 		
-		size = g_mime_stream_read (filter->source, p->buffer, READ_SIZE);
-		if (size <= 0) {
+		nread = g_mime_stream_read (filter->source, priv->buffer, READ_SIZE);
+		if (nread <= 0) {
 			/* this is somewhat untested */
-			if (g_mime_stream_eos (filter->source)) {
-				f = p->filters;
-				p->filtered = p->buffer;
-				p->filteredlen = 0;
-				while (f) {
-					g_mime_filter_complete (f->filter, p->filtered, p->filteredlen,
-								presize, &p->filtered, &p->filteredlen,
+			if (g_mime_stream_eos (filter->source) && !priv->flushed) {
+				priv->filtered = priv->buffer;
+				priv->filteredlen = 0;
+				f = priv->filters;
+				
+				while (f != NULL) {
+					g_mime_filter_complete (f->filter, priv->filtered, priv->filteredlen,
+								presize, &priv->filtered, &priv->filteredlen,
 								&presize);
 					f = f->next;
 				}
-				size = p->filteredlen;
-				p->flushed = TRUE;
+				
+				nread = priv->filteredlen;
+				priv->flushed = TRUE;
 			}
-			if (size <= 0)
-				return size;
-		} else {
-			f = p->filters;
-			p->filtered = p->buffer;
-			p->filteredlen = size;
 			
-			while (f) {
-				g_mime_filter_filter (f->filter, p->filtered, p->filteredlen, presize,
-						      &p->filtered, &p->filteredlen, &presize);
+			if (nread <= 0)
+				return nread;
+		} else {
+			priv->filtered = priv->buffer;
+			priv->filteredlen = nread;
+			f = priv->filters;
+			
+			while (f != NULL) {
+				g_mime_filter_filter (f->filter, priv->filtered, priv->filteredlen, presize,
+						      &priv->filtered, &priv->filteredlen, &presize);
 				
 				f = f->next;
 			}
 		}
 	}
 	
-	size = MIN (n, p->filteredlen);
-	memcpy (buf, p->filtered, size);
-	p->filteredlen -= size;
-	p->filtered += size;
+	nread = MIN (n, priv->filteredlen);
+	memcpy (buf, priv->filtered, nread);
+	priv->filteredlen -= nread;
+	priv->filtered += nread;
 	
-	return size;
+	return nread;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t n)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	char *buffer = (char *) buf;
 	ssize_t nwritten = n;
 	struct _filter *f;
 	size_t presize;
 	
-	p->last_was_read = FALSE;
+	priv->last_was_read = FALSE;
 	
-	f = p->filters;
+	f = priv->filters;
 	presize = 0;
-	while (f) {
+	while (f != NULL) {
 		g_mime_filter_filter (f->filter, buffer, n, presize, &buffer, &n, &presize);
 		
 		f = f->next;
@@ -243,12 +246,12 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	size_t presize, len;
 	struct _filter *f;
 	char *buffer;
 	
-	if (p->last_was_read) {
+	if (priv->last_was_read) {
 		/* no-op */
 		return 0;
 	}
@@ -256,9 +259,9 @@ stream_flush (GMimeStream *stream)
 	buffer = "";
 	len = 0;
 	presize = 0;
-	f = p->filters;
+	f = priv->filters;
 	
-	while (f) {
+	while (f != NULL) {
 		g_mime_filter_complete (f->filter, buffer, len, presize, &buffer, &len, &presize);
 		
 		f = f->next;
@@ -274,11 +277,10 @@ static int
 stream_close (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	
-	if (!p->last_was_read) {
+	if (!priv->last_was_read)
 		stream_flush (stream);
-	}
 	
 	return g_mime_stream_close (filter->source);
 }
@@ -287,12 +289,12 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	
-	if (p->filteredlen > 0)
+	if (priv->filteredlen > 0)
 		return FALSE;
 	
-	if (!p->flushed)
+	if (!priv->flushed)
 		return FALSE;
 	
 	return g_mime_stream_eos (filter->source);
@@ -302,15 +304,15 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
-	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	struct _filter *f;
 	
-	p->filteredlen = 0;
-	p->flushed = FALSE;
+	priv->filteredlen = 0;
+	priv->flushed = FALSE;
 	
 	/* and reset filters */
-	f = p->filters;
-	while (f) {
+	f = priv->filters;
+	while (f != NULL) {
 		g_mime_filter_reset (f->filter);
 		f = f->next;
 	}
@@ -343,7 +345,6 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	GMimeStreamFilter *sub;
-	/*struct _filter *f, *fn;*/
 	
 	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
 	sub->source = filter->source;
@@ -421,7 +422,7 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 int
 g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 {
-	struct _GMimeStreamFilterPrivate *p;
+	struct _GMimeStreamFilterPrivate *priv;
 	struct _filter *f, *fn;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (fstream), -1);
@@ -429,14 +430,14 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 	
 	g_object_ref (filter);
 	
-	p = fstream->priv;
+	priv = fstream->priv;
 	
 	fn = g_new (struct _filter, 1);
 	fn->next = NULL;
 	fn->filter = filter;
-	fn->id = p->filterid++;
+	fn->id = priv->filterid++;
 	
-	f = (struct _filter *) &p->filters;
+	f = (struct _filter *) &priv->filters;
 	while (f->next)
 		f = f->next;
 	
@@ -458,17 +459,17 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 void
 g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id)
 {
-	struct _GMimeStreamFilterPrivate *p;
+	struct _GMimeStreamFilterPrivate *priv;
 	struct _filter *f, *fn;
 	
 	g_return_if_fail (GMIME_IS_STREAM_FILTER (fstream));
 	
-	p = fstream->priv;
+	priv = fstream->priv;
 	
 	if (id == -1)
 		return;
 	
-	f = (struct _filter *) &p->filters;
+	f = (struct _filter *) &priv->filters;
 	while (f && f->next) {
 		fn = f->next;
 		if (fn->id == id) {
