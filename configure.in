@@ -111,9 +111,8 @@ dnl We need at *least* glib 1.2.0
 AM_PATH_GLIB(1.2.0, ,
              AC_MSG_ERROR(Cannot find GLIB: Is glib-config in path?))
 
-glib_cflags=`$GLIB_CONFIG glib --cflags`
-glib_libs=`$GLIB_CONFIG glib --libs`
-GLIB_LIBS="$glib_libs"
+glib_cflags="$GLIB_CFLAGS"
+glib_libs="$GLIB_LIBS"
 AC_SUBST(glib_cflags)
 AC_SUBST(glib_libs)
 
