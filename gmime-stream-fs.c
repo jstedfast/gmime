@@ -61,7 +61,7 @@ stream_destroy (GMimeStream *stream)
 {
 	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	
-	if (fstream->owner && fstream->fd)
+	if (fstream->owner && fstream->fd != -1)
 		close (fstream->fd);
 	
 	g_free (fstream);
