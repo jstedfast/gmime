@@ -30,221 +30,135 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef _REENTRANT
+#include <pthread.h>
+#endif
+
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "memchunk.h"
 
 
-#define ICONV_CACHE_SIZE   (10)
-
-
-struct _iconv_node {
-	struct _iconv_node *next;
-	struct _iconv_node *prev;
-	
-	struct _iconv_cache_bucket *bucket;
-	
-	gboolean used;
-	iconv_t cd;
-};
+#define ICONV_CACHE_SIZE   (16)
 
 struct _iconv_cache_bucket {
 	struct _iconv_cache_bucket *next;
 	struct _iconv_cache_bucket *prev;
-	
-	struct _iconv_node *unused;
-	struct _iconv_node *used;
-	
+	guint32 refcount;
+	gboolean used;
+	iconv_t cd;
 	char *key;
 };
 
 
-
+static MemChunk *cache_chunk;
 static struct _iconv_cache_bucket *iconv_cache_buckets;
-static struct _iconv_cache_bucket *iconv_cache_tail;
-static unsigned int iconv_cache_size = 0;
 static GHashTable *iconv_cache;
 static GHashTable *iconv_open_hash;
-static MemChunk *node_chunk;
+static unsigned int iconv_cache_size = 0;
+#ifdef _REENTRANT
+static pthread_mutex_t iconv_cache_lock = PTHREAD_MUTEX_INITIALIZER;
+#define ICONV_CACHE_LOCK()   pthread_mutex_lock (&iconv_cache_lock)
+#define ICONV_CACHE_UNLOCK() pthread_mutex_unlock (&iconv_cache_lock)
+#else
+#define ICONV_CACHE_LOCK()
+#define ICONV_CACHE_UNLOCK()
+#endif /* _REENTRANT */
 
 
-static struct _iconv_node *
-iconv_node_new (struct _iconv_cache_bucket *bucket)
-{
-	struct _iconv_node *node;
-	
-	node = memchunk_alloc (node_chunk);
-	node->next = NULL;
-	node->prev = NULL;
-	node->bucket = bucket;
-	node->used = FALSE;
-	node->cd = (iconv_t) -1;
-	
-	return node;
-}
-
-static void
-iconv_node_set_used (struct _iconv_node *node, gboolean used)
-{
-	if (node->used == used)
-		return;
-	
-	node->used = used;
-	
-	if (used) {
-		/* this should be a lone unused node, so prepend it to the used list */
-		node->prev = NULL;
-		node->next = node->bucket->used;
-		if (node->bucket->used)
-			node->bucket->used->prev = node;
-		node->bucket->used = node;
-		
-		/* add to the open hash */
-		g_hash_table_insert (iconv_open_hash, node->cd, node);
-	} else {
-		/* this could be anywhere in the used node list... */
-		if (node->prev) {
-			node->prev->next = node->next;
-			if (node->next)
-				node->next->prev = node->prev;
-		} else {
-			node->bucket->used = node->next;
-			if (node->next)
-				node->next->prev = NULL;
-		}
-		
-		/* remove from the iconv open hash */
-		g_hash_table_remove (iconv_open_hash, node->cd);
-	}
-}
-
-static void
-iconv_node_destroy (struct _iconv_node *node)
-{
-	if (node) {
-		if (node->cd != (iconv_t) -1)
-			iconv_close (node->cd);
-		
-		memchunk_free (node_chunk, node);
-	}
-}
+/* caller *must* hold the iconv_cache_lock to call any of the following functions */
 
 
-
+/**
+ * iconv_cache_bucket_new:
+ * @key: cache key
+ * @cd: iconv descriptor
+ *
+ * Creates a new cache bucket, inserts it into the cache and
+ * increments the cache size.
+ *
+ * Returns a pointer to the newly allocated cache bucket.
+ **/
 static struct _iconv_cache_bucket *
-iconv_cache_bucket_new (const char *key)
+iconv_cache_bucket_new (const char *key, iconv_t cd)
 {
 	struct _iconv_cache_bucket *bucket;
 	
-	bucket = g_new (struct _iconv_cache_bucket, 1);
+	bucket = memchunk_alloc (cache_chunk);
 	bucket->next = NULL;
 	bucket->prev = NULL;
-	bucket->unused = NULL;
-	bucket->used = NULL;
 	bucket->key = g_strdup (key);
+	bucket->refcount = 1;
+	bucket->used = TRUE;
+	bucket->cd = cd;
+	
+	g_hash_table_insert (iconv_cache, bucket->key, bucket);
+	
+	/* FIXME: Since iconv_cache_expire_unused() traverses the list
+           from head to tail, perhaps it might be better to append new
+           nodes rather than prepending? This way older cache buckets
+           expire first? */
+	bucket->next = iconv_cache_buckets;
+	iconv_cache_buckets = bucket;
+	
+	iconv_cache_size++;
 	
 	return bucket;
 }
 
-static void
-iconv_cache_bucket_add (struct _iconv_cache_bucket *bucket)
-{
-	if (iconv_cache_buckets)
-		bucket->prev = iconv_cache_tail;
-	
-	iconv_cache_tail->next = bucket;
-	iconv_cache_tail = bucket;
-	
-	g_hash_table_insert (iconv_cache, bucket->key, bucket);
-}
 
+/**
+ * iconv_cache_bucket_expire:
+ * @bucket: cache bucket
+ *
+ * Expires a single cache bucket @bucket. This should only ever be
+ * called on a bucket that currently has no used iconv descriptors
+ * open.
+ **/
 static void
-iconv_cache_bucket_add_node (struct _iconv_cache_bucket *bucket, struct _iconv_node *node)
+iconv_cache_bucket_expire (struct _iconv_cache_bucket *bucket)
 {
-	node->prev = NULL;
-	node->next = bucket->unused;
-	if (bucket->unused)
-		bucket->unused->prev = node;
-	bucket->unused = node;
-}
-
-static void
-iconv_cache_bucket_remove (struct _iconv_cache_bucket *bucket)
-{
+	g_hash_table_remove (iconv_cache, bucket->key);
+	
 	if (bucket->prev) {
 		bucket->prev->next = bucket->next;
 		if (bucket->next)
 			bucket->next->prev = bucket->prev;
-		else
-			iconv_cache_tail = bucket->prev;
 	} else {
-		bucket->next->prev = NULL;
 		iconv_cache_buckets = bucket->next;
-		if (!iconv_cache_buckets)
-			iconv_cache_tail = (struct _iconv_cache_bucket *) &iconv_cache_buckets;
-	}
-}
-
-static struct _iconv_node *
-iconv_cache_bucket_get_first_unused (struct _iconv_cache_bucket *bucket)
-{
-	struct _iconv_node *node = NULL;
-	
-	if (bucket->unused) {
-		node = bucket->unused;
-		bucket->unused = node->next;
-		if (bucket->unused)
-			bucket->unused->prev = NULL;
-		node->next = NULL;
-	}
-	
-	return node;
-}
-
-static void
-iconv_cache_bucket_destroy (struct _iconv_cache_bucket *bucket)
-{
-	struct _iconv_node *node, *next;
-	
-	node = bucket->unused;
-	while (node) {
-		next = node->next;
-		iconv_node_destroy (node);
-		node = next;
-	}
-	
-	node = bucket->used;
-	while (node) {
-		next = node->next;
-		iconv_node_destroy (node);
-		node = next;
+		if (bucket->next)
+			bucket->next->prev = NULL;
 	}
 	
 	g_free (bucket->key);
-	g_free (bucket);
+	iconv_close (bucket->cd);
+	memchunk_free (cache_chunk, bucket);
+	
+	iconv_cache_size--;
 }
 
+
+/**
+ * iconv_cache_expire_unused:
+ *
+ * Expires as many unused cache buckets as it needs to in order to get
+ * the total number of buckets < ICONV_CACHE_SIZE.
+ **/
 static void
-iconv_cache_bucket_flush_unused (struct _iconv_cache_bucket *bucket)
+iconv_cache_expire_unused (void)
 {
-	struct _iconv_node *node, *next;
+	struct _iconv_cache_bucket *bucket, *next;
 	
-	node = bucket->unused;
-	while (node && iconv_cache_size >= ICONV_CACHE_SIZE) {
-		next = node->next;
-		iconv_node_destroy (node);
-		iconv_cache_size--;
-		node = next;
-	}
-	
-	bucket->unused = node;
-	
-	if (!bucket->unused && !bucket->used) {
-		/* expire this cache bucket... */
-		iconv_cache_bucket_remove (bucket);
+	bucket = iconv_cache_buckets;
+	while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
+		next = bucket->next;
+		
+		if (bucket->refcount == 0)
+			iconv_cache_bucket_expire (bucket);
+		
+		bucket = next;
 	}
 }
-
 
 
 static void
@@ -255,14 +169,18 @@ g_mime_iconv_shutdown (void)
 	bucket = iconv_cache_buckets;
 	while (bucket) {
 		next = bucket->next;
-		iconv_cache_bucket_destroy (bucket);
+		
+		g_free (bucket->key);
+		iconv_close (bucket->cd);
+		memchunk_free (cache_chunk, bucket);
+		
 		bucket = next;
 	}
 	
 	g_hash_table_destroy (iconv_cache);
 	g_hash_table_destroy (iconv_open_hash);
 	
-	memchunk_destroy (node_chunk);
+	memchunk_destroy (cache_chunk);
 }
 
 
@@ -282,13 +200,12 @@ g_mime_iconv_init (void)
 	
 	g_mime_charset_init ();
 	
-	node_chunk = memchunk_new (sizeof (struct _iconv_node),
-				   ICONV_CACHE_SIZE, FALSE);
-	
 	iconv_cache_buckets = NULL;
-	iconv_cache_tail = (struct _iconv_cache_bucket *) &iconv_cache_buckets;
 	iconv_cache = g_hash_table_new (g_str_hash, g_str_equal);
 	iconv_open_hash = g_hash_table_new (g_direct_hash, g_direct_equal);
+	
+	cache_chunk = memchunk_new (sizeof (struct _iconv_cache_bucket),
+				    ICONV_CACHE_SIZE, FALSE);
 	
 	g_atexit (g_mime_iconv_shutdown);
 	
@@ -313,8 +230,7 @@ g_mime_iconv_init (void)
 iconv_t
 g_mime_iconv_open (const char *to, const char *from)
 {
-	struct _iconv_cache_bucket *bucket, *prev;
-	struct _iconv_node *node;
+	struct _iconv_cache_bucket *bucket;
 	iconv_t cd;
 	char *key;
 	
@@ -331,52 +247,55 @@ g_mime_iconv_open (const char *to, const char *from)
 	key = g_alloca (strlen (from) + strlen (to) + 2);
 	sprintf (key, "%s:%s", from, to);
 	
+	ICONV_CACHE_LOCK ();
+	
 	bucket = g_hash_table_lookup (iconv_cache, key);
 	if (bucket) {
-		node = iconv_cache_bucket_get_first_unused (bucket);
+		if (bucket->used) {
+			cd = iconv_open (to, from);
+			if (cd == (iconv_t) -1)
+				goto exception;
+		} else {
+			/* Apparently iconv on Solaris <= 7 segfaults if you pass in
+			 * NULL for anything but inbuf; work around that. (NULL outbuf
+			 * or NULL *outbuf is allowed by Unix98.)
+			 */
+			size_t inleft = 0, outleft = 0;
+			char *outbuf = NULL;
+			
+			cd = bucket->cd;
+			bucket->used = TRUE;
+			
+			/* reset the descriptor */
+			iconv (cd, NULL, &inleft, &outbuf, &outleft);
+		}
+		
+		bucket->refcount++;
 	} else {
-		/* make room for another cache bucket */
-		bucket = iconv_cache_tail;
-		while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
-			prev = bucket->prev;
-			iconv_cache_bucket_flush_unused (bucket);
-			bucket = prev;
-		}
-		
-		bucket = iconv_cache_bucket_new (key);
-		iconv_cache_bucket_add (bucket);
-		
-		node = NULL;
-	}
-	
-	if (node == NULL) {
-		node = iconv_node_new (bucket);
-		
-		/* make room for this node */
-		bucket = iconv_cache_tail;
-		while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
-			prev = bucket->prev;
-			iconv_cache_bucket_flush_unused (bucket);
-			bucket = prev;
-		}
-		
 		cd = iconv_open (to, from);
-		if (cd == (iconv_t) -1) {
-			iconv_node_destroy (node);
-			return cd;
-		}
+		if (cd == (iconv_t) -1)
+			goto exception;
 		
-		node->cd = cd;
+		iconv_cache_expire_unused ();
 		
-		iconv_cache_bucket_add_node (node->bucket, node);
-	} else {
-		cd = node->cd;
-		
-		/* reset the iconv descriptor */
-		iconv (cd, NULL, NULL, NULL, NULL);
+		bucket = iconv_cache_bucket_new (key, cd);
 	}
 	
-	iconv_node_set_used (node, TRUE);
+	g_hash_table_insert (iconv_open_hash, cd, bucket->key);
+	
+	ICONV_CACHE_UNLOCK ();
+	
+	return cd;
+	
+ exception:
+	
+	ICONV_CACHE_UNLOCK ();
+	
+	if (errno == EINVAL)
+		g_warning ("Conversion from '%s' to '%s' is not supported", from, to);
+	else
+		g_warning ("Could not open converter from '%s' to '%s': %s",
+			   from, to, g_strerror (errno));
 	
 	return cd;
 }
@@ -394,18 +313,41 @@ g_mime_iconv_open (const char *to, const char *from)
 int
 g_mime_iconv_close (iconv_t cd)
 {
-	struct _iconv_node *node;
+	struct _iconv_cache_bucket *bucket;
+	const char *key;
 	
 	if (cd == (iconv_t) -1)
 		return 0;
 	
-	node = g_hash_table_lookup (iconv_open_hash, cd);
-	if (node) {
-		iconv_node_set_used (node, FALSE);
+	ICONV_CACHE_LOCK ();
+	
+	key = g_hash_table_lookup (iconv_open_hash, cd);
+	if (key) {
+		g_hash_table_remove (iconv_open_hash, cd);
+		
+		bucket = g_hash_table_lookup (iconv_cache, key);
+		g_assert (bucket);
+		
+		bucket->refcount--;
+		
+		if (cd == bucket->cd)
+			bucket->used = FALSE;
+		else
+			iconv_close (cd);
+		
+		if (!bucket->refcount && iconv_cache_size > ICONV_CACHE_SIZE) {
+			/* expire this cache bucket */
+			iconv_cache_bucket_expire (bucket);
+		}
 	} else {
+		ICONV_CACHE_UNLOCK ();
+		
 		g_warning ("This iconv context wasn't opened using g_mime_iconv_open()!");
+		
 		return iconv_close (cd);
 	}
+	
+	ICONV_CACHE_UNLOCK ();
 	
 	return 0;
 }

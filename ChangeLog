@@ -1,3 +1,11 @@
+2002-08-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv.c: Implemented an all new iconv cache. Also has the
+	beginnings of thread-safety but I'd really need to fix the
+	Makefiles to conditionally link with -lpthread before it'd be of
+	any value as well as needing to make gmime-charset.c's functions
+	thread-safe.
+
 2002-08-07  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message.c (message_remove_header): If the header to be
