@@ -344,8 +344,17 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	
 	g_mime_stream_reset (stream);
 	
-	parts = g_ptr_array_new ();
 	len = g_mime_stream_length (stream);
+	
+	/* optimization */
+	if (len <= max_size) {
+		g_mime_stream_unref (stream);
+		*nparts = 1;
+		g_mime_object_ref (GMIME_OBJECT (message));
+		return &message;
+	}
+	
+	parts = g_ptr_array_new ();
 	for (i = 0, start = 0; start < len; i++) {
 		substream = g_mime_stream_substream (stream, start, MIN (len, start + max_size));
 		g_ptr_array_add (parts, substream);
