@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4244"
+NAME="AEN4708"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN4244"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4247"
+NAME="AEN4711"
 ></A
 ><H2
 >Synopsis</H2
@@ -160,66 +160,33 @@ HREF="TIME-T"
 >      <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-DECODE-DATE"
 >g_mime_utils_header_decode_date</A
-> (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saveoffset);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+> (const char *in,
+                                             int *saveoffset);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FORMAT-DATE"
 >g_mime_utils_header_format_date</A
 > (<GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
 > time,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> offset);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+                                             int offset);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FOLD"
 >g_mime_utils_header_fold</A
->        (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+>        (const char *in);
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-PRINTF"
 >g_mime_utils_header_printf</A
->      (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
+>      (const char *format,
                                              ...);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
+char*       <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTE-STRING"
 >g_mime_utils_quote_string</A
->       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+>       (const char *string);
 void        <A
 HREF="gmime-gmime-utils.html#G-MIME-UTILS-UNQUOTE-STRING"
 >g_mime_utils_unquote_string</A
->     (<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+>     (char *string);
 <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
@@ -543,7 +510,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4356"
+NAME="AEN4809"
 ></A
 ><H2
 >Description</H2
@@ -553,14 +520,14 @@ NAME="AEN4356"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4359"
+NAME="AEN4812"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4361"
+NAME="AEN4814"
 ></A
 ><H3
 ><A
@@ -585,7 +552,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4366"
+NAME="AEN4819"
 ></A
 ><P
 ></P
@@ -623,7 +590,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4375"
+NAME="AEN4828"
 ></A
 ><H3
 ><A
@@ -648,7 +615,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4380"
+NAME="AEN4833"
 ></A
 ><P
 ></P
@@ -686,7 +653,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4389"
+NAME="AEN4842"
 ></A
 ><H3
 ><A
@@ -705,14 +672,8 @@ CLASS="PROGRAMLISTING"
 ><GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
->      g_mime_utils_header_decode_date (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> *saveoffset);</PRE
+>      g_mime_utils_header_decode_date (const char *in,
+                                             int *saveoffset);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -723,7 +684,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4398"
+NAME="AEN4849"
 ></A
 ><P
 ></P
@@ -798,7 +759,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4416"
+NAME="AEN4867"
 ></A
 ><H3
 ><A
@@ -814,17 +775,11 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_format_date (<GTKDOCLINK
+>char*       g_mime_utils_header_format_date (<GTKDOCLINK
 HREF="TIME-T"
 >time_t</GTKDOCLINK
 > time,
-                                             <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
-> offset);</PRE
+                                             int offset);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -835,7 +790,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4425"
+NAME="AEN4874"
 ></A
 ><P
 ></P
@@ -905,7 +860,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4442"
+NAME="AEN4891"
 ></A
 ><H3
 ><A
@@ -921,13 +876,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_fold        (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *in);</PRE
+>char*       g_mime_utils_header_fold        (const char *in);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -938,7 +887,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4450"
+NAME="AEN4897"
 ></A
 ><P
 ></P
@@ -991,7 +940,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4463"
+NAME="AEN4910"
 ></A
 ><H3
 ><A
@@ -1007,13 +956,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_header_printf      (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
+>char*       g_mime_utils_header_printf      (const char *format,
                                              ...);</PRE
 ></TD
 ></TR
@@ -1025,7 +968,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4471"
+NAME="AEN4916"
 ></A
 ><P
 ></P
@@ -1099,7 +1042,7 @@ HREF="FORMAT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4489"
+NAME="AEN4934"
 ></A
 ><H3
 ><A
@@ -1115,13 +1058,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_utils_quote_string       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>char*       g_mime_utils_quote_string       (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1132,7 +1069,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4497"
+NAME="AEN4940"
 ></A
 ><P
 ></P
@@ -1188,7 +1125,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4510"
+NAME="AEN4953"
 ></A
 ><H3
 ><A
@@ -1204,10 +1141,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->void        g_mime_utils_unquote_string     (<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>void        g_mime_utils_unquote_string     (char *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1218,7 +1152,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4517"
+NAME="AEN4959"
 ></A
 ><P
 ></P
@@ -1256,7 +1190,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4526"
+NAME="AEN4968"
 ></A
 ><H3
 ><A
@@ -1293,7 +1227,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4535"
+NAME="AEN4977"
 ></A
 ><P
 ></P
@@ -1364,7 +1298,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4552"
+NAME="AEN4994"
 ></A
 ><H3
 ><A
@@ -1402,7 +1336,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4561"
+NAME="AEN5003"
 ></A
 ><P
 ></P
@@ -1474,7 +1408,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4578"
+NAME="AEN5020"
 ></A
 ><H3
 ><A
@@ -1507,7 +1441,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4586"
+NAME="AEN5028"
 ></A
 ><P
 ></P
@@ -1560,7 +1494,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4599"
+NAME="AEN5041"
 ></A
 ><H3
 ><A
@@ -1593,7 +1527,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4607"
+NAME="AEN5049"
 ></A
 ><P
 ></P
@@ -1647,7 +1581,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4620"
+NAME="AEN5062"
 ></A
 ><H3
 ><A
@@ -1681,7 +1615,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4628"
+NAME="AEN5070"
 ></A
 ><P
 ></P
@@ -1735,7 +1669,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4641"
+NAME="AEN5083"
 ></A
 ><H3
 ><A
@@ -1784,7 +1718,7 @@ HREF="GUINT32"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4653"
+NAME="AEN5095"
 ></A
 ><P
 ></P
@@ -1913,7 +1847,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4684"
+NAME="AEN5126"
 ></A
 ><H3
 ><A
@@ -1962,7 +1896,7 @@ HREF="GUINT32"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4696"
+NAME="AEN5138"
 ></A
 ><P
 ></P
@@ -2091,7 +2025,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4726"
+NAME="AEN5168"
 ></A
 ><H3
 ><A
@@ -2141,7 +2075,7 @@ HREF="GUINT32"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4738"
+NAME="AEN5180"
 ></A
 ><P
 ></P
@@ -2269,7 +2203,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4768"
+NAME="AEN5210"
 ></A
 ><H3
 ><A
@@ -2322,7 +2256,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4781"
+NAME="AEN5223"
 ></A
 ><P
 ></P
@@ -2468,7 +2402,7 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4815"
+NAME="AEN5257"
 ></A
 ><H3
 ><A
@@ -2525,7 +2459,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4829"
+NAME="AEN5271"
 ></A
 ><P
 ></P
@@ -2704,7 +2638,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4870"
+NAME="AEN5312"
 ></A
 ><H3
 ><A
@@ -2761,7 +2695,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4884"
+NAME="AEN5326"
 ></A
 ><P
 ></P
@@ -2924,7 +2858,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4922"
+NAME="AEN5364"
 ></A
 ><H3
 ><A
@@ -2973,7 +2907,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4934"
+NAME="AEN5376"
 ></A
 ><P
 ></P
@@ -3100,7 +3034,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4964"
+NAME="AEN5406"
 ></A
 ><H3
 ><A
@@ -3149,7 +3083,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4976"
+NAME="AEN5418"
 ></A
 ><P
 ></P
@@ -3277,7 +3211,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN5006"
+NAME="AEN5448"
 ></A
 ><H3
 ><A
@@ -3327,7 +3261,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN5018"
+NAME="AEN5460"
 ></A
 ><P
 ></P

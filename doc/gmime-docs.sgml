@@ -2,6 +2,8 @@
 <!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
 <!entity gmime-header SYSTEM "sgml/gmime-header.sgml">
 <!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
+<!entity gmime-disposition SYSTEM "sgml/gmime-disposition.sgml">
+<!entity gmime-object SYSTEM "sgml/gmime-object.sgml">
 <!entity gmime-data-wrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
 <!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
 <!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
@@ -18,6 +20,7 @@
 <!entity gmime-filter SYSTEM "sgml/gmime-filter.sgml">
 <!entity gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
+<!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
 ]>
 
 <book>
@@ -131,9 +134,12 @@
     &gmime-filter;
     &gmime-filter-basic;
     &gmime-filter-crlf;
+    &gmime-filter-html;
     &gmime-param;
     &gmime-header;
     &gmime-content-type;
+    &gmime-disposition;
+    &gmime-object;
     &gmime-data-wrapper;
     &gmime-part;
     &gmime-message;

@@ -50,8 +50,9 @@ void g_mime_disposition_destroy (GMimeDisposition *disposition);
 void g_mime_disposition_set (GMimeDisposition *disposition, const char *value);
 const char *g_mime_disposition_get (GMimeDisposition *disposition);
 
-void g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *name, const char *value);
-const char *g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *name);
+void g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *attribute,
+				       const char *value);
+const char *g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *attribute);
 
 char *g_mime_disposition_header (GMimeDisposition *disposition, gboolean fold);
 

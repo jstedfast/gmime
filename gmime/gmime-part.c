@@ -661,22 +661,23 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 /**
  * g_mime_part_add_content_disposition_parameter: Add a content-disposition parameter
  * @mime_part: Mime part
- * @name: parameter name
+ * @attribute: parameter name
  * @value: parameter value
  *
  * Add a content-disposition parameter to the specified mime part.
  **/
 void
-g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *name, const char *value)
+g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute, const char *value)
 {
 	GMimeParam *param = NULL;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (attribute != NULL);
 	
 	if (!mime_part->disposition)
 		mime_part->disposition = g_mime_disposition_new (GMIME_DISPOSITION_ATTACHMENT);
 	
-	g_mime_disposition_add_parameter (mime_part->disposition, name, value);
+	g_mime_disposition_add_parameter (mime_part->disposition, attribute, value);
 	
 	sync_content_disposition (mime_part);
 }
@@ -685,22 +686,23 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 /**
  * g_mime_part_get_content_disposition_parameter: Get a content-disposition parameter
  * @mime_part: Mime part
- * @name: parameter name
+ * @attribute: parameter name
  *
  * Returns the value of a previously defined content-disposition
  * parameter specified by #name.
  **/
 const char *
-g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *name)
+g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
 {
 	GMimeParam *param;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+	g_return_val_if_fail (attribute != NULL, NULL);
 	
 	if (!mime_part->disposition)
 		return NULL;
 	
-	return g_mime_disposition_get_parameter (mime_part->disposition, name);
+	return g_mime_disposition_get_parameter (mime_part->disposition, attribute);
 }
 
 

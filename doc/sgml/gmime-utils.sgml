@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="17 Nov 2001">
+<refentry id="gmime-gmime-utils" revision="20 Nov 2001">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -16,15 +16,15 @@
 
 #define     <link linkend="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN</link>               (x)
 #define     <link linkend="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN</link>                   (x)
-<link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="gint">gint</link> *saveoffset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
-                                             <link linkend="gint">gint</link> offset);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const <link linkend="gchar">gchar</link> *in);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const <link linkend="gchar">gchar</link> *format,
+<link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const char *in,
+                                             int *saveoffset);
+char*       <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
+                                             int offset);
+char*       <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const char *in);
+char*       <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const char *format,
                                              ...);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string);
-void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
+char*       <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const char *string);
+void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (char *string);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text,
                                              <link linkend="guint">guint</link> len);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-utils-best-encoding">g_mime_utils_best_encoding</link>
@@ -136,8 +136,8 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date ()</title>
-<programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const <link linkend="gchar">gchar</link> *in,
-                                             <link linkend="gint">gint</link> *saveoffset);</programlisting>
+<programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const char *in,
+                                             int *saveoffset);</programlisting>
 <para>
 </para>
 <para>
@@ -160,8 +160,8 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-format-date">g_mime_utils_header_format_date ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_format_date (<link linkend="time-t">time_t</link> time,
-                                             <link linkend="gint">gint</link> offset);</programlisting>
+<programlisting>char*       g_mime_utils_header_format_date (<link linkend="time-t">time_t</link> time,
+                                             int offset);</programlisting>
 <para>
 </para>
 <para>
@@ -182,7 +182,7 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-fold">g_mime_utils_header_fold ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_fold        (const <link linkend="gchar">gchar</link> *in);</programlisting>
+<programlisting>char*       g_mime_utils_header_fold        (const char *in);</programlisting>
 <para>
 </para>
 <para>
@@ -200,7 +200,7 @@ will be stored.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-header-printf">g_mime_utils_header_printf ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_printf      (const <link linkend="gchar">gchar</link> *format,
+<programlisting>char*       g_mime_utils_header_printf      (const char *format,
                                              ...);</programlisting>
 <para>
 </para>
@@ -223,7 +223,7 @@ by <link linkend="format">format</link> and the following arguments.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-quote-string">g_mime_utils_quote_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_quote_string       (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting>char*       g_mime_utils_quote_string       (const char *string);</programlisting>
 <para>
 </para>
 <para>
@@ -244,7 +244,7 @@ as defined by rfc2045.
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-unquote-string">g_mime_utils_unquote_string ()</title>
-<programlisting>void        g_mime_utils_unquote_string     (<link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting>void        g_mime_utils_unquote_string     (char *string);</programlisting>
 <para>
 Unquotes and unescapes a string.</para>
 <para>

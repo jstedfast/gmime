@@ -13,8 +13,8 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-crlf"
-HREF="gmime-gmime-filter-crlf.html"><LINK
+TITLE="gmime-filter-html"
+HREF="gmime-gmime-filter-html.html"><LINK
 REL="NEXT"
 TITLE="gmime-header"
 HREF="gmime-gmime-header.html"></HEAD
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-filter-html.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-PARAM"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1666"
+NAME="AEN1760"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN1666"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1669"
+NAME="AEN1763"
 ></A
 ><H2
 >Synopsis</H2
@@ -156,24 +156,15 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 >* <A
 HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW"
 >g_mime_param_new</A
->                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);
+>                (const char *name,
+                                             const char *value);
 <A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 >* <A
 HREF="gmime-gmime-param.html#G-MIME-PARAM-NEW-FROM-STRING"
 >g_mime_param_new_from_string</A
->    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);
+>    (const char *string);
 void        <A
 HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
 >g_mime_param_destroy</A
@@ -181,16 +172,47 @@ HREF="gmime-gmime-param.html#G-MIME-PARAM-DESTROY"
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
 > *param);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
-HREF="gmime-gmime-param.html#G-MIME-PARAM-TO-STRING"
->g_mime_param_to_string</A
->          (<A
+<A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
-> *param);</PRE
+>* <A
+HREF="gmime-gmime-param.html#G-MIME-PARAM-APPEND"
+>g_mime_param_append</A
+>             (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *params,
+                                             const char *name,
+                                             const char *value);
+<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+>* <A
+HREF="gmime-gmime-param.html#G-MIME-PARAM-APPEND-PARAM"
+>g_mime_param_append_param</A
+>       (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *params,
+                                             <A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *param);
+void        <A
+HREF="gmime-gmime-param.html#G-MIME-PARAM-WRITE-TO-STRING"
+>g_mime_param_write_to_string</A
+>    (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *param,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> fold,
+                                             <GTKDOCLINK
+HREF="GSTRING"
+>GString</GTKDOCLINK
+> *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -198,7 +220,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1685"
+NAME="AEN1784"
 ></A
 ><H2
 >Description</H2
@@ -208,14 +230,14 @@ NAME="AEN1685"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1688"
+NAME="AEN1787"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1690"
+NAME="AEN1789"
 ></A
 ><H3
 ><A
@@ -232,8 +254,9 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeParam {
-	gchar *name;
-	gchar *value;
+	struct _GMimeParam *next;
+	char *name;
+	char *value;
 };</PRE
 ></TD
 ></TR
@@ -244,7 +267,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1695"
+NAME="AEN1794"
 ></A
 ><H3
 ><A
@@ -263,14 +286,8 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
->* g_mime_param_new                (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *value);</PRE
+>* g_mime_param_new                (const char *name,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -281,7 +298,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1704"
+NAME="AEN1801"
 ></A
 ><P
 ></P
@@ -351,7 +368,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1721"
+NAME="AEN1818"
 ></A
 ><H3
 ><A
@@ -370,10 +387,7 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
->* g_mime_param_new_from_string    (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *string);</PRE
+>* g_mime_param_new_from_string    (const char *string);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -384,7 +398,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1729"
+NAME="AEN1825"
 ></A
 ><P
 ></P
@@ -411,7 +425,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> string to parse into a GMimeParam structure</TD
+> input string</TD
 ></TR
 ><TR
 ><TD
@@ -426,9 +440,11 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a GMimeParam structure based on <GTKDOCLINK
-HREF="STRING"
->string</GTKDOCLINK
+>a GMimeParam structure based on <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
 >.</TD
 ></TR
 ></TBODY
@@ -440,7 +456,7 @@ HREF="STRING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1743"
+NAME="AEN1839"
 ></A
 ><H3
 ><A
@@ -471,7 +487,7 @@ System.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1750"
+NAME="AEN1846"
 ></A
 ><P
 ></P
@@ -498,7 +514,7 @@ CLASS="PARAMETER"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> Mime param to destroy</TD
+> Mime param list to destroy</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -509,13 +525,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1759"
+NAME="AEN1855"
 ></A
 ><H3
 ><A
-NAME="G-MIME-PARAM-TO-STRING"
+NAME="G-MIME-PARAM-APPEND"
 ></A
->g_mime_param_to_string ()</H3
+>g_mime_param_append ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -525,13 +541,15 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_param_to_string          (<A
+><A
 HREF="gmime-gmime-param.html#GMIMEPARAM"
 >GMimeParam</A
-> *param);</PRE
+>* g_mime_param_append             (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *params,
+                                             const char *name,
+                                             const char *value);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -542,7 +560,7 @@ HREF="gmime-gmime-param.html#GMIMEPARAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1767"
+NAME="AEN1863"
 ></A
 ><P
 ></P
@@ -562,14 +580,48 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->param</I
+>params</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> MIME Param</TD
+> param list</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> new param name</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>value</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> new param value</TD
 ></TR
 ><TR
 ><TD
@@ -584,8 +636,259 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->an allocated string containing the MIME Param in the form:
-name="value"</TD
+>a param list with the new param of name <TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+> and value
+<TT
+CLASS="PARAMETER"
+><I
+>value</I
+></TT
+> appended to the list of params <TT
+CLASS="PARAMETER"
+><I
+>params</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1887"
+></A
+><H3
+><A
+NAME="G-MIME-PARAM-APPEND-PARAM"
+></A
+>g_mime_param_append_param ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+>* g_mime_param_append_param       (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *params,
+                                             <A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *param);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1896"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>params</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> param list</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>param</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> param to append</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a param list with the new param <TT
+CLASS="PARAMETER"
+><I
+>param</I
+></TT
+> appended to the list
+of params <TT
+CLASS="PARAMETER"
+><I
+>params</I
+></TT
+>.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1915"
+></A
+><H3
+><A
+NAME="G-MIME-PARAM-WRITE-TO-STRING"
+></A
+>g_mime_param_write_to_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_param_write_to_string    (<A
+HREF="gmime-gmime-param.html#GMIMEPARAM"
+>GMimeParam</A
+> *param,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> fold,
+                                             <GTKDOCLINK
+HREF="GSTRING"
+>GString</GTKDOCLINK
+> *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Assumes the output string contains only the Content-* header and
+it's immediate value.</P
+><P
+>Writes the params out to the string <TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1926"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>param</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME Param list</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>fold</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> specifies whether or not to fold headers</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -609,7 +912,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-filter-html.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -681,7 +984,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-crlf</B
+>gmime-filter-html</B
 ></FONT
 ></TD
 ><TD

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-param" revision="17 Nov 2001">
+<refentry id="gmime-gmime-param" revision="20 Nov 2001">
 <refmeta>
 <refentrytitle>gmime-param</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -15,11 +15,18 @@
 
 
 struct      <link linkend="GMimeParam">GMimeParam</link>;
-<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new">g_mime_param_new</link>                (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *value);
-<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new-from-string">g_mime_param_new_from_string</link>    (const <link linkend="gchar">gchar</link> *string);
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new">g_mime_param_new</link>                (const char *name,
+                                             const char *value);
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-new-from-string">g_mime_param_new_from_string</link>    (const char *string);
 void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>            (<link linkend="GMimeParam">GMimeParam</link> *param);
-<link linkend="gchar">gchar</link>*      <link linkend="g-mime-param-to-string">g_mime_param_to_string</link>          (<link linkend="GMimeParam">GMimeParam</link> *param);
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-append">g_mime_param_append</link>             (<link linkend="GMimeParam">GMimeParam</link> *params,
+                                             const char *name,
+                                             const char *value);
+<link linkend="GMimeParam">GMimeParam</link>* <link linkend="g-mime-param-append-param">g_mime_param_append_param</link>       (<link linkend="GMimeParam">GMimeParam</link> *params,
+                                             <link linkend="GMimeParam">GMimeParam</link> *param);
+void        <link linkend="g-mime-param-write-to-string">g_mime_param_write_to_string</link>    (<link linkend="GMimeParam">GMimeParam</link> *param,
+                                             <link linkend="gboolean">gboolean</link> fold,
+                                             <link linkend="GString">GString</link> *string);
 </synopsis>
 </refsynopsisdiv>
 
@@ -39,8 +46,9 @@ void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>    
 <refsect2>
 <title><anchor id="GMimeParam">struct GMimeParam</title>
 <programlisting>struct GMimeParam {
-	gchar *name;
-	gchar *value;
+	struct _GMimeParam *next;
+	char *name;
+	char *value;
 };
 </programlisting>
 <para>
@@ -48,8 +56,8 @@ void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>    
 </para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-new">g_mime_param_new ()</title>
-<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new                (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new                (const char *name,
+                                             const char *value);</programlisting>
 <para>
 </para>
 <para>
@@ -70,7 +78,7 @@ void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>    
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-param-new-from-string">g_mime_param_new_from_string ()</title>
-<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new_from_string    (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_new_from_string    (const char *string);</programlisting>
 <para>
 </para>
 <para>
@@ -81,9 +89,9 @@ void        <link linkend="g-mime-param-destroy">g_mime_param_destroy</link>    
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> string to parse into a GMimeParam structure
+<entry> input string
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeParam structure based on <link linkend="string">string</link>.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeParam structure based on <parameter>string</parameter>.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -100,12 +108,14 @@ System.</para>
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
-<entry> Mime param to destroy
+<entry> Mime param list to destroy
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="g-mime-param-to-string">g_mime_param_to_string ()</title>
-<programlisting><link linkend="gchar">gchar</link>*      g_mime_param_to_string          (<link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
+<title><anchor id="g-mime-param-append">g_mime_param_append ()</title>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_append             (<link linkend="GMimeParam">GMimeParam</link> *params,
+                                             const char *name,
+                                             const char *value);</programlisting>
 <para>
 </para>
 <para>
@@ -115,11 +125,68 @@ System.</para>
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
-<entry> MIME Param
+<row><entry align="right"><parameter>params</parameter>&nbsp;:</entry>
+<entry> param list
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Param in the form:
-name="value"
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> new param name
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> new param value
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a param list with the new param of name <parameter>name</parameter> and value
+<parameter>value</parameter> appended to the list of params <parameter>params</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-append-param">g_mime_param_append_param ()</title>
+<programlisting><link linkend="GMimeParam">GMimeParam</link>* g_mime_param_append_param       (<link linkend="GMimeParam">GMimeParam</link> *params,
+                                             <link linkend="GMimeParam">GMimeParam</link> *param);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>params</parameter>&nbsp;:</entry>
+<entry> param list
+</entry></row>
+<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
+<entry> param to append
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a param list with the new param <parameter>param</parameter> appended to the list
+of params <parameter>params</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-param-write-to-string">g_mime_param_write_to_string ()</title>
+<programlisting>void        g_mime_param_write_to_string    (<link linkend="GMimeParam">GMimeParam</link> *param,
+                                             <link linkend="gboolean">gboolean</link> fold,
+                                             <link linkend="GString">GString</link> *string);</programlisting>
+<para>
+Assumes the output string contains only the Content-* header and
+it's immediate value.
+</para>
+<para>
+Writes the params out to the string <parameter>string</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>param</parameter>&nbsp;:</entry>
+<entry> MIME Param list
+</entry></row>
+<row><entry align="right"><parameter>fold</parameter>&nbsp;:</entry>
+<entry> specifies whether or not to fold headers
+</entry></row>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry> output string
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

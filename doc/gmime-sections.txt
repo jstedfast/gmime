@@ -140,7 +140,9 @@ GMimeParam
 g_mime_param_new
 g_mime_param_new_from_string
 g_mime_param_destroy
-g_mime_param_to_string
+g_mime_param_append
+g_mime_param_append_param
+g_mime_param_write_to_string
 </SECTION>
 
 <SECTION>
@@ -170,6 +172,20 @@ g_mime_content_type_get_parameter
 </SECTION>
 
 <SECTION>
+<FILE>gmime-disposition</FILE>
+GMimeDisposition
+GMIME_DISPOSITION_ATTACHMENT
+GMIME_DISPOSITION_INLINE
+g_mime_disposition_new
+g_mime_disposition_destroy
+g_mime_disposition_set
+g_mime_disposition_get
+g_mime_disposition_add_parameter
+g_mime_disposition_get_parameter
+g_mime_disposition_header
+</SECTION>
+
+<SECTION>
 <FILE>gmime-object</FILE>
 GMIME_OBJECT
 GMimeObject
@@ -184,8 +200,6 @@ GMIME_PART_TYPE
 GMIME_IS_PART
 GMIME_PART
 GMimePartEncodingType
-GMimePartDispositionParam
-GMimePartDisposition
 GMimePart
 GMimePartFunc
 g_mime_part_new
@@ -208,6 +222,7 @@ g_mime_part_set_encoding
 g_mime_part_get_encoding
 g_mime_part_encoding_to_string
 g_mime_part_encoding_from_string
+g_mime_part_set_content_disposition_object
 g_mime_part_set_content_disposition
 g_mime_part_get_content_disposition
 g_mime_part_add_content_disposition_parameter

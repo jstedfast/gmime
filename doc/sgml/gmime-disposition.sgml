@@ -1,0 +1,228 @@
+<refentry id="gmime-gmime-disposition" revision="20 Nov 2001">
+<refmeta>
+<refentrytitle>gmime-disposition</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-disposition</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeDisposition">GMimeDisposition</link>;
+#define     <link linkend="GMIME-DISPOSITION-ATTACHMENT-CAPS">GMIME_DISPOSITION_ATTACHMENT</link>
+#define     <link linkend="GMIME-DISPOSITION-INLINE-CAPS">GMIME_DISPOSITION_INLINE</link>
+<link linkend="GMimeDisposition">GMimeDisposition</link>* <link linkend="g-mime-disposition-new">g_mime_disposition_new</link>    (const char *disposition);
+void        <link linkend="g-mime-disposition-destroy">g_mime_disposition_destroy</link>      (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);
+void        <link linkend="g-mime-disposition-set">g_mime_disposition_set</link>          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *value);
+const char* <link linkend="g-mime-disposition-get">g_mime_disposition_get</link>          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);
+void        <link linkend="g-mime-disposition-add-parameter">g_mime_disposition_add_parameter</link>
+                                            (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *attribute,
+                                             const char *value);
+const char* <link linkend="g-mime-disposition-get-parameter">g_mime_disposition_get_parameter</link>
+                                            (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *attribute);
+char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header</link>       (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             <link linkend="gboolean">gboolean</link> fold);
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeDisposition">struct GMimeDisposition</title>
+<programlisting>struct GMimeDisposition {
+	char *disposition;
+	GMimeParam *params;
+	GHashTable *param_hash;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-DISPOSITION-ATTACHMENT-CAPS">GMIME_DISPOSITION_ATTACHMENT</title>
+<programlisting>#define GMIME_DISPOSITION_ATTACHMENT "attachment"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="GMIME-DISPOSITION-INLINE-CAPS">GMIME_DISPOSITION_INLINE</title>
+<programlisting>#define GMIME_DISPOSITION_INLINE     "inline"
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-new">g_mime_disposition_new ()</title>
+<programlisting><link linkend="GMimeDisposition">GMimeDisposition</link>* g_mime_disposition_new    (const char *disposition);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition header (and params)
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new disposition object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-destroy">g_mime_disposition_destroy ()</title>
+<programlisting>void        g_mime_disposition_destroy      (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
+<para>
+Destroy the disposition object.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-set">g_mime_disposition_set ()</title>
+<programlisting>void        g_mime_disposition_set          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *value);</programlisting>
+<para>
+Sets the disposition to <parameter>value</parameter> which may be one of
+GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE or, by your
+choice, any other string which would indicate how the MIME part
+should be displayed by the MUA.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> disposition value
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-get">g_mime_disposition_get ()</title>
+<programlisting>const char* g_mime_disposition_get          (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the disposition string which is probably one of
+GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-add-parameter">g_mime_disposition_add_parameter ()</title>
+<programlisting>void        g_mime_disposition_add_parameter
+                                            (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *attribute,
+                                             const char *value);</programlisting>
+<para>
+Adds a new parameter of name <parameter>name</parameter> and value <parameter>value</parameter> to the
+disposition.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
+<entry> parameter name
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> parameter value
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-get-parameter">g_mime_disposition_get_parameter ()</title>
+<programlisting>const char* g_mime_disposition_get_parameter
+                                            (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             const char *attribute);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
+<entry> parameter name
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of the parameter of name <parameter>attribute</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-disposition-header">g_mime_disposition_header ()</title>
+<programlisting>char*       g_mime_disposition_header       (<link linkend="GMimeDisposition">GMimeDisposition</link> *disposition,
+                                             <link linkend="gboolean">gboolean</link> fold);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+<row><entry align="right"><parameter>fold</parameter>&nbsp;:</entry>
+<entry> fold header if needed
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the disposition header
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

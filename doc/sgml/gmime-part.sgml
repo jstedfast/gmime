@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="17 Nov 2001">
+<refentry id="gmime-gmime-part" revision="20 Nov 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -18,8 +18,6 @@
 #define     <link linkend="GMIME-IS-PART-CAPS">GMIME_IS_PART</link>                   (object)
 #define     <link linkend="GMIME-PART-CAPS">GMIME_PART</link>                      (object)
 enum        <link linkend="GMimePartEncodingType">GMimePartEncodingType</link>;
-struct      <link linkend="GMimePartDispositionParam">GMimePartDispositionParam</link>;
-struct      <link linkend="GMimePartDisposition">GMimePartDisposition</link>;
 struct      <link linkend="GMimePart">GMimePart</link>;
 void        (<link linkend="GMimePartFunc">*GMimePartFunc</link>)                (<link linkend="GMimePart">GMimePart</link> *part,
                                              <link linkend="gpointer">gpointer</link> data);
@@ -60,6 +58,9 @@ void        <link linkend="g-mime-part-set-encoding">g_mime_part_set_encoding</l
 const char* <link linkend="g-mime-part-encoding-to-string">g_mime_part_encoding_to_string</link>  (<link linkend="GMimePartEncodingType">GMimePartEncodingType</link> encoding);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-part-encoding-from-string">g_mime_part_encoding_from_string</link>
                                             (const char *encoding);
+void        <link linkend="g-mime-part-set-content-disposition-object">g_mime_part_set_content_disposition_object</link>
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);
 void        <link linkend="g-mime-part-set-content-disposition">g_mime_part_set_content_disposition</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const char *disposition);
@@ -67,11 +68,11 @@ const char* <link linkend="g-mime-part-get-content-disposition">g_mime_part_get_
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-add-content-disposition-parameter">g_mime_part_add_content_disposition_parameter</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *name,
+                                             const char *attribute,
                                              const char *value);
 const char* <link linkend="g-mime-part-get-content-disposition-parameter">g_mime_part_get_content_disposition_parameter</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *name);
+                                             const char *attribute);
 void        <link linkend="g-mime-part-set-filename">g_mime_part_set_filename</link>        (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const char *filename);
 const char* <link linkend="g-mime-part-get-filename">g_mime_part_get_filename</link>        (const <link linkend="GMimePart">GMimePart</link> *mime_part);
@@ -178,23 +179,6 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMimePartDispositionParam">struct GMimePartDispositionParam</title>
-<programlisting>struct GMimePartDispositionParam;</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMimePartDisposition">struct GMimePartDisposition</title>
-<programlisting>struct GMimePartDisposition {
-	char *disposition;
-	GList *params;     /* of type GMimeParam */
-	GHashTable *param_hash;
-};
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
 <title><anchor id="GMimePart">struct GMimePart</title>
 <programlisting>struct GMimePart {
 	GMimeObject parent_object;
@@ -203,7 +187,7 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 	
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
-	GMimePartDisposition *disposition;
+	GMimeDisposition *disposition;
 	char *description;
 	char *content_id;
 	char *content_md5;
@@ -640,6 +624,27 @@ GMIME_PART_ENCODING_QUOTEDPRINTABLE.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="g-mime-part-set-content-disposition-object">g_mime_part_set_content_disposition_object ()</title>
+<programlisting>void        g_mime_part_set_content_disposition_object
+                                            (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeDisposition">GMimeDisposition</link> *disposition);</programlisting>
+<para>
+Set the content disposition for the specified mime part</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> Mime part
+</entry></row>
+<row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
+<entry> disposition object
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
 <title><anchor id="g-mime-part-set-content-disposition">g_mime_part_set_content_disposition ()</title>
 <programlisting>void        g_mime_part_set_content_disposition
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
@@ -657,7 +662,7 @@ Set the content disposition for the specified mime part</para>
 <entry> Mime part
 </entry></row>
 <row><entry align="right"><parameter>disposition</parameter>&nbsp;:</entry>
-<entry> content disposition
+<entry> disposition
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -683,7 +688,7 @@ Set the content disposition for the specified mime part</para>
 <title><anchor id="g-mime-part-add-content-disposition-parameter">g_mime_part_add_content_disposition_parameter ()</title>
 <programlisting>void        g_mime_part_add_content_disposition_parameter
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *name,
+                                             const char *attribute,
                                              const char *value);</programlisting>
 <para>
 Add a content-disposition parameter to the specified mime part.</para>
@@ -697,7 +702,7 @@ Add a content-disposition parameter to the specified mime part.</para>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> Mime part
 </entry></row>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
 <entry> parameter name
 </entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
@@ -708,7 +713,7 @@ Add a content-disposition parameter to the specified mime part.</para>
 <title><anchor id="g-mime-part-get-content-disposition-parameter">g_mime_part_get_content_disposition_parameter ()</title>
 <programlisting>const char* g_mime_part_get_content_disposition_parameter
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             const char *name);</programlisting>
+                                             const char *attribute);</programlisting>
 <para>
 </para>
 <para>
@@ -721,7 +726,7 @@ Add a content-disposition parameter to the specified mime part.</para>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> Mime part
 </entry></row>
-<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>attribute</parameter>&nbsp;:</entry>
 <entry> parameter name
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the value of a previously defined content-disposition
