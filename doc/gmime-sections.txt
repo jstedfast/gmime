@@ -637,8 +637,13 @@ GMimeMessagePartialClass
 BASE64_ENCODE_LEN
 QP_ENCODE_LEN
 GMimePartEncodingType
+GMimeReferences
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
+g_mime_utils_decode_message_id
+g_mime_references_decode
+g_mime_references_append
+g_mime_references_clear
 g_mime_utils_header_fold
 g_mime_utils_header_printf
 g_mime_utils_quote_string

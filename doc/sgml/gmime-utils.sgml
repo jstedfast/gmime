@@ -17,10 +17,16 @@
 #define     <link linkend="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN</link>               (x)
 #define     <link linkend="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN</link>                   (x)
 enum        <link linkend="GMimePartEncodingType">GMimePartEncodingType</link>;
+struct      <link linkend="GMimeReferences">GMimeReferences</link>;
 <link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const char *in,
                                              int *saveoffset);
 char*       <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
                                              int offset);
+char*       <link linkend="g-mime-utils-decode-message-id">g_mime_utils_decode_message_id</link>  (const char *message_id);
+<link linkend="GMimeReferences">GMimeReferences</link>* <link linkend="g-mime-references-decode">g_mime_references_decode</link>   (const char *text);
+void        <link linkend="g-mime-references-append">g_mime_references_append</link>        (<link linkend="GMimeReferences">GMimeReferences</link> **refs,
+                                             const char *msgid);
+void        <link linkend="g-mime-references-clear">g_mime_references_clear</link>         (<link linkend="GMimeReferences">GMimeReferences</link> **refs);
 char*       <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const char *in);
 char*       <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const char *format,
                                              ...);
@@ -155,6 +161,16 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 
 </para></refsect2>
 <refsect2>
+<title><anchor id="GMimeReferences">struct GMimeReferences</title>
+<programlisting>struct GMimeReferences {
+	struct _GMimeReferences *next;
+	char *msgid;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date ()</title>
 <programlisting><link linkend="time-t">time_t</link>      g_mime_utils_header_decode_date (const char *in,
                                              int *saveoffset);</programlisting>
@@ -200,6 +216,79 @@ string represented by <parameter>time</parameter> and <parameter>offset</paramet
 <entry> Timezone offset
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a valid string representation of the date.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-decode-message-id">g_mime_utils_decode_message_id ()</title>
+<programlisting>char*       g_mime_utils_decode_message_id  (const char *message_id);</programlisting>
+<para>
+Decodes a msg-id as defined by rfc822.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message_id</parameter>&nbsp;:</entry>
+<entry> string containing a message-id
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the addr-spec portion of the msg-id.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-references-decode">g_mime_references_decode ()</title>
+<programlisting><link linkend="GMimeReferences">GMimeReferences</link>* g_mime_references_decode   (const char *text);</programlisting>
+<para>
+Decodes a list of msg-ids as in the References and/or In-Reply-To
+headers defined in rfc822.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>text</parameter>&nbsp;:</entry>
+<entry> string containing a list of msg-ids
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a list of referenced msg-ids.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-references-append">g_mime_references_append ()</title>
+<programlisting>void        g_mime_references_append        (<link linkend="GMimeReferences">GMimeReferences</link> **refs,
+                                             const char *msgid);</programlisting>
+<para>
+Appends a reference to msgid to the list of references.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>refs</parameter>&nbsp;:</entry>
+<entry> the address of a GMimeReferences list
+</entry></row>
+<row><entry align="right"><parameter>msgid</parameter>&nbsp;:</entry>
+<entry> a message-id string
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-references-clear">g_mime_references_clear ()</title>
+<programlisting>void        g_mime_references_clear         (<link linkend="GMimeReferences">GMimeReferences</link> **refs);</programlisting>
+<para>
+Clears the GMimeReferences list and resets it to <literal>NULL</literal>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>refs</parameter>&nbsp;:</entry>
+<entry> address of a GMimeReferences list
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

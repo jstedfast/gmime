@@ -1,3 +1,21 @@
+2002-09-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* doc/*: Updated.
+
+	* gmime-utils.c (g_mime_utils_decode_message_id): New function to
+	decode a message-id as defined by rfc822.
+	(g_mime_references_decode): New function to decode a references or
+	in-reply-to header.
+	(g_mime_references_append): New function to append a raw
+	message-id to a GMimeReferences list.
+	(g_mime_references_clear): New function to clear a GMimeReferences
+	list.
+
+	* internet-address.c (decode_addrspec): New function to parse an
+	addr-spec needed by the msg-id decoder.
+	(decode_lwsp): Make public.
+	(decode_word): Same.
+
 2002-09-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (parse_broken_date): Wrap printfs in d() to

@@ -720,6 +720,158 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 }
 
 
+/* external symbols from internet-address.c */
+extern void decode_lwsp (const char **in);
+extern char *decode_word (const char **in);
+extern char *decode_addrspec (const char **in);
+
+
+static char *
+decode_msgid (const char **in)
+{
+	const char *inptr = *in;
+	char *msgid = NULL;
+	
+	decode_lwsp (&inptr);
+	if (*inptr == '<') {
+		decode_lwsp (&inptr);
+		if ((msgid = decode_addrspec (&inptr))) {
+			decode_lwsp (&inptr);
+			if (*inptr != '>') {
+				w(g_warning ("Invalid msg-id; missing '>': %s", *in));
+			} else {
+				inptr++;
+			}
+			
+			*in = inptr;
+		} else {
+			w(g_warning ("Invalid msg-id; missing addr-spec: %s", *in));
+		}
+	} else {
+		w(g_warning ("Invalid msg-id; missing '<': %s", *in));
+	}
+	
+	return msgid;
+}
+
+
+/**
+ * g_mime_utils_decode_message_id:
+ * @message_id: string containing a message-id
+ *
+ * Decodes a msg-id as defined by rfc822.
+ *
+ * Returns the addr-spec portion of the msg-id.
+ **/
+char *
+g_mime_utils_decode_message_id (const char *message_id)
+{
+	g_return_val_if_fail (message_id != NULL, NULL);
+	
+	return decode_msgid (&message_id);
+}
+
+
+/**
+ * g_mime_references_decode:
+ * @text: string containing a list of msg-ids
+ *
+ * Decodes a list of msg-ids as in the References and/or In-Reply-To
+ * headers defined in rfc822.
+ *
+ * Returns a list of referenced msg-ids.
+ **/
+GMimeReferences *
+g_mime_references_decode (const char *text)
+{
+	GMimeReferences *refs, *tail, *ref;
+	const char *inptr = text;
+	char *word, *msgid;
+	
+	g_return_val_if_fail (text != NULL, NULL);
+	
+	refs = NULL;
+	tail = (GMimeReferences *) &refs;
+	
+	while (*inptr) {
+		decode_lwsp (&inptr);
+		if (*inptr == '<') {
+			/* looks like a msg-id */
+			if ((msgid = decode_msgid (&inptr))) {
+				ref = g_new (GMimeReferences, 1);
+				ref->next = NULL;
+				ref->msgid = msgid;
+				tail->next = ref;
+				tail = ref;
+			} else {
+				w(g_warning ("Invalid References header: %s", inptr));
+				break;
+			}
+		} else if (*inptr) {
+			/* looks like part of a phrase */
+			if ((word = decode_word (&inptr))) {
+				g_free (word);
+			} else {
+				w(g_warning ("Invalid References header: %s", inptr));
+				break;
+			}
+		}
+	}
+	
+	return refs;
+}
+
+
+/**
+ * g_mime_references_append:
+ * @refs: the address of a GMimeReferences list
+ * @msgid: a message-id string
+ *
+ * Appends a reference to msgid to the list of references.
+ **/
+void
+g_mime_references_append (GMimeReferences **refs, const char *msgid)
+{
+	GMimeReferences *ref;
+	
+	g_return_if_fail (refs != NULL);
+	g_return_if_fail (msgid != NULL);
+	
+	ref = (GMimeReferences *) refs;
+	while (ref->next)
+		ref = ref->next;
+	
+	ref->next = g_new (GMimeReferences, 1);
+	ref->next->msgid = g_strdup (msgid);
+	ref->next->next = NULL;
+}
+
+
+/**
+ * g_mime_references_clear:
+ * @refs: address of a GMimeReferences list
+ *
+ * Clears the GMimeReferences list and resets it to %NULL.
+ **/
+void
+g_mime_references_clear (GMimeReferences **refs)
+{
+	GMimeReferences *ref, *next;
+	
+	g_return_if_fail (refs != NULL);
+	
+	ref = *refs;
+	while (ref) {
+		next = ref->next;
+		g_free (ref->msgid);
+		g_free (ref);
+		ref = next;
+	}
+	
+	*refs = NULL;
+}
+
+
 /**
  * g_mime_utils_header_fold:
  * @in: input header string
