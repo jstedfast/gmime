@@ -77,7 +77,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 		converted = iconv (cd, &inbuf, &inleft, &outbuf, &outleft);
 		if (converted == (size_t) -1) {
 			if (errno != E2BIG && errno != EINVAL)
-				goto noop;
+				goto eilseq;
 		}
 		
 		/*
@@ -110,13 +110,13 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	
 	return out;
 	
- noop:
+ eilseq:
 	g_free (out);
 	
 	/* reset the cd */
 	iconv (cd, NULL, NULL, NULL, NULL);
 	
-	return g_strndup (string, n);
+	return NULL;
 }
 
 

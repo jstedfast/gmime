@@ -1,5 +1,10 @@
 2002-01-17  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): If we get an EILSEQ,
+	just return NULL rather than g_strndup'ing the original
+	string. We'd rather get back NULL and know it failed than get back
+	a string thinking everything went okay.
+
 	* configure.in: Fixed some silliness, thanks to Charles Schmidt.
 
 2002-01-16  Jeffrey Stedfast  <fejj@ximian.com>
