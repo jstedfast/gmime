@@ -770,6 +770,10 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 				       _("Unexpected response from GnuPG: %s"),
 				       status + 11);
 		return -1;
+	} else if (!strncmp (status, "NODATA", 6)) {
+		/* this is an error */
+		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, _("No data provided"));
+		return -1;
 	} else {
 		switch (gpg->mode) {
 		case GPG_CTX_MODE_SIGN:
@@ -1004,7 +1008,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		char buffer[4096];
 		ssize_t nread;
 		
-		d(printf ("writing to gpg's stdin..."));
+		d(printf ("writing to gpg's stdin...\n"));
 		
 		/* write our stream to gpg's stdin */
 		nread = g_mime_stream_read (gpg->istream, buffer, sizeof (buffer));

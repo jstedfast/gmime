@@ -42,6 +42,11 @@ extern "C" {
 typedef struct _GMimeMultipartSigned GMimeMultipartSigned;
 typedef struct _GMimeMultipartSignedClass GMimeMultipartSignedClass;
 
+enum {
+	GMIME_MULTIPART_SIGNED_CONTENT,
+	GMIME_MULTIPART_SIGNED_SIGNATURE,
+};
+
 struct _GMimeMultipartSigned {
 	GMimeMultipart parent_object;
 	
@@ -57,7 +62,7 @@ struct _GMimeMultipartSignedClass {
 
 GType g_mime_multipart_signed_get_type (void);
 
-GMimeMultipart *g_mime_multipart_signed_new (void);
+GMimeMultipartSigned *g_mime_multipart_signed_new (void);
 
 int g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 				  GMimeCipherContext *ctx, const char *userid,

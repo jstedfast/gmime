@@ -156,7 +156,7 @@ multipart_encrypted_remove_header (GMimeObject *object, const char *header)
 static void
 multipart_encrypted_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	GMimeMultipartEncrypted *mpe = (GMimeMultipart *) object;
+	GMimeMultipartEncrypted *mpe = (GMimeMultipartEncrypted *) object;
 	const char *protocol;
 	
 	protocol = g_mime_content_type_get_parameter (content_type, "protocol");
@@ -186,10 +186,10 @@ multipart_encrypted_write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Returns an empty MIME multipart/encrypted object.
  **/
-GMimeMultipart *
+GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_new ()
 {
-	GMimeMultipart *multipart;
+	GMimeMultipartEncrypted *multipart;
 	GMimeContentType *type;
 	
 	multipart = g_object_new (GMIME_TYPE_MULTIPART_ENCRYPTED, NULL, NULL);
@@ -266,9 +266,9 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* save the version and encrypted parts */
 	/* FIXME: make sure there aren't any other parts?? */
-	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), version_part);
+	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), GMIME_OBJECT (version_part));
 	g_mime_object_unref (GMIME_OBJECT (version_part));
-	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), encrypted_part);
+	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), GMIME_OBJECT (encrypted_part));
 	g_mime_object_unref (GMIME_OBJECT (encrypted_part));
 	
 	/* set the content-type params for this multipart/encrypted part */
@@ -285,9 +285,11 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	const GMimeDataWrapper *wrapper;
+	const GMimeContentType *mime_type;
 	GMimeStream *stream, *ciphertext;
 	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter;
+	GMimeParser *parser;
 	const char *protocol;
 	char *content_type;
 	
@@ -316,7 +318,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		protocol = ctx->encrypt_protocol;
 	}
 	
-	version = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 0);
+	version = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_VERSION);
 	
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
@@ -332,8 +334,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_free (content_type);
 	
 	/* get the encrypted part and check that it is of type application/octet-stream */
-	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), 1);
-	mime_type = g_mime_object_get_content_type (encrypted_part);
+	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_CONTENT);
+	mime_type = g_mime_object_get_content_type (encrypted);
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
 		g_mime_object_unref (encrypted);
 		g_mime_object_unref (version);

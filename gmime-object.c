@@ -442,7 +442,8 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		break;
 	case HEADER_CONTENT_ID:
 		g_free (object->content_id);
-		object->content_id = g_strstrip (g_strdup (value));
+		object->content_id = g_strdup (value);
+		g_strstrip (object->content_id);
 		break;
 	default:
 		break;
@@ -470,6 +471,7 @@ g_mime_object_add_header (GMimeObject *object, const char *header, const char *v
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	g_return_if_fail (header != NULL);
+	g_return_if_fail (value != NULL);
 	
 	GMIME_OBJECT_GET_CLASS (object)->add_header (object, header, value);
 }
@@ -496,6 +498,7 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	g_return_if_fail (header != NULL);
+	g_return_if_fail (value != NULL);
 	
 	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value);
 }

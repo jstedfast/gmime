@@ -42,6 +42,11 @@ extern "C" {
 typedef struct _GMimeMultipartEncrypted GMimeMultipartEncrypted;
 typedef struct _GMimeMultipartEncryptedClass GMimeMultipartEncryptedClass;
 
+enum {
+	GMIME_MULTIPART_ENCRYPTED_VERSION,
+	GMIME_MULTIPART_ENCRYPTED_CONTENT,
+};
+
 struct _GMimeMultipartEncrypted {
 	GMimeMultipart parent_object;
 	
@@ -58,7 +63,7 @@ struct _GMimeMultipartEncryptedClass {
 
 GType g_mime_multipart_encrypted_get_type (void);
 
-GMimeMultipart *g_mime_multipart_encrypted_new (void);
+GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
 int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 					GMimeCipherContext *ctx, GPtrArray *recipients,

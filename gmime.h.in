@@ -34,6 +34,8 @@
 #include "gmime-object.h"
 #include "gmime-part.h"
 #include "gmime-multipart.h"
+#include "gmime-multipart-encrypted.h"
+#include "gmime-multipart-signed.h"
 #include "gmime-message.h"
 #include "gmime-message-part.h"
 #include "gmime-message-partial.h"
@@ -55,7 +57,12 @@
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-filter-html.h"
+#include "gmime-filter-strip.h"
 #include "gmime-filter-yenc.h"
+#include "gmime-exception.h"
+#include "gmime-session.h"
+#include "gmime-cipher-context.h"
+#include "gmime-gpg-context.h"
 
 /* GMIME version */
 static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;

@@ -54,6 +54,8 @@ g_mime_init (guint32 flags)
 	/* register our default mime object types */
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
 	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
+	g_mime_object_register_type ("multipart", "encrypted", g_mime_multipart_encrypted_get_type ());
+	g_mime_object_register_type ("multipart", "signed", g_mime_multipart_signed_get_type ());
 	g_mime_object_register_type ("message", "rfc822", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "news", g_mime_message_part_get_type ());

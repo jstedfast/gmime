@@ -368,7 +368,7 @@ g_mime_message_new (gboolean pretty_headers)
 	if (pretty_headers) {
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
 		for (i = 0; rfc822_headers[i]; i++) 
-			g_mime_object_set_header (GMIME_OBJECT (message), rfc822_headers[i], NULL);
+			g_mime_header_set (GMIME_OBJECT (message)->headers, rfc822_headers[i], NULL);
 	}
 	
 	return message;
