@@ -941,11 +941,16 @@ message_set_subject (GMimeMessage *message, const char *subject)
 void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 {
+	char *encoded;
+	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (subject != NULL);
 	
 	message_set_subject (message, subject);
-	g_mime_header_set (GMIME_OBJECT (message)->headers, "Subject", message->subject);
+	
+	encoded = g_mime_utils_8bit_header_encode (message->subject);
+	g_mime_header_set (GMIME_OBJECT (message)->headers, "Subject", encoded);
+	g_free (encoded);
 }
 
 
