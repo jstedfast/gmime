@@ -63,10 +63,6 @@ enum {
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESPECIAL) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
 
-#ifndef HAVE_ISBLANK
-#define isblank(c) ((c) == ' ' || (c) == '\t')
-#endif /* HAVE_ISBLANK */
-
 #define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
 #define CHARS_TSPECIAL "()<>@,;:\\\"/[]?="
 #define CHARS_SPECIAL "()<>@,;:\\\".[]"

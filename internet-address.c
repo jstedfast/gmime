@@ -321,7 +321,6 @@ static char *
 decode_quoted_string (const char **in)
 {
 	const char *inptr = *in;
-	GString *string = NULL;
 	char *out = NULL;
 	
 	decode_lwsp (&inptr);
@@ -657,7 +656,7 @@ decode_mailbox (const char **in)
 static InternetAddress *
 decode_address (const char **in)
 {
-	InternetAddress *addr = NULL, *member;
+	InternetAddress *addr = NULL;
 	const char *inptr, *start;
 	GString *name;
 	char *pre;
