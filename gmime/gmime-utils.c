@@ -34,16 +34,31 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "memchunk.h"
-
 #define d(x)
-
-#define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
-#define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
 #endif
+
+#define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
+#define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
+
+/* date parser macros */
+#define NUMERIC_CHARS          "1234567890"
+#define WEEKDAY_CHARS          "Sun,Mon,Tue,Wed,Thu,Fri,Sat,"
+#define MONTH_CHARS            "JanFebMarAprMayJunJulAugSepOctNovDec"
+#define TIMEZONE_ALPHA_CHARS   "UTCGMTESTEDTCSTCDTMSTPSTPDTZAMNY()"
+#define TIMEZONE_NUMERIC_CHARS "-+1234567890"
+#define TIME_CHARS             "1234567890:"
+
+#define DATE_TOKEN_NON_NUMERIC          (1 << 0)
+#define DATE_TOKEN_NON_WEEKDAY          (1 << 1)
+#define DATE_TOKEN_NON_MONTH            (1 << 2)
+#define DATE_TOKEN_NON_TIME             (1 << 3)
+#define DATE_TOKEN_HAS_COLON            (1 << 4)
+#define DATE_TOKEN_NON_TIMEZONE_ALPHA   (1 << 5)
+#define DATE_TOKEN_NON_TIMEZONE_NUMERIC (1 << 6)
+#define DATE_TOKEN_HAS_SIGN             (1 << 7)
 
 static char *base64_alphabet =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -91,6 +106,24 @@ static unsigned char gmime_uu_rank[256] = {
 	 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
 
+static unsigned char gmime_datetok_table[256] = {
+	128,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111, 79, 79,111,175,109,175,111,111,
+	 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,119,111,111,111,111,111,
+	111, 75,111, 79, 75, 79,105, 79,111,111,107,111,111, 73, 75,107,
+	 79,111,111, 73, 77, 79,111,109,111, 79, 79,111,111,111,111,111,
+	111,105,107,107,109,105,111,107,109,109,111,111,107,111,105,105,
+	107,111,105,111,105,105,107,111,111,107,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
+};
 
 /* hrm, is there a library for this shit? */
 static struct {
@@ -157,34 +190,34 @@ struct _date_token {
 	struct _date_token *next;
 	const unsigned char *start;
 	unsigned int len;
+	unsigned int mask;
 };
-
-static MemChunk *datetok_memchunk = NULL;
 
 static struct _date_token *
 datetok (const char *date)
 {
 	struct _date_token *tokens = NULL, *token, *tail = (struct _date_token *) &tokens;
 	const unsigned char *start, *end;
-	
-	g_return_val_if_fail (date != NULL, NULL);
-	
-	if (datetok_memchunk == NULL)
-		datetok_memchunk = memchunk_new (sizeof (struct _date_token), 16, FALSE);
+	unsigned int mask;
 	
 	start = date;
 	while (*start) {
 		/* kill leading whitespace */
 		for ( ; *start && isspace ((int) *start); start++);
 		
+		mask = 0;
+		
 		/* find the end of this token */
-		for (end = start; *end && !isspace ((int) *end); end++);
+		for (end = start; *end && !isspace ((int) *end) && (end > start ? !strchr ("-/", *end) : TRUE); end++) {
+			mask |= gmime_datetok_table[*end];
+		}
 		
 		if (end != start) {
-			token = memchunk_alloc (datetok_memchunk);
+			token = g_malloc (sizeof (struct _date_token));
 			token->next = NULL;
 			token->start = start;
 			token->len = end - start;
+			token->mask = mask;
 			
 			tail->next = token;
 			tail = token;
@@ -465,19 +498,169 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 	return t;
 }
 
+
+#define date_token_mask(t)  (((struct _date_token *) t)->mask)
+#define is_numeric(t)       ((date_token_mask (t) & DATE_TOKEN_NON_NUMERIC) == 0)
+#define is_weekday(t)       ((date_token_mask (t) & DATE_TOKEN_NON_WEEKDAY) == 0)
+#define is_month(t)         ((date_token_mask (t) & DATE_TOKEN_NON_MONTH) == 0)
+#define is_time(t)          (((date_token_mask (t) & DATE_TOKEN_NON_TIME) == 0) && (date_token_mask (t) & DATE_TOKEN_HAS_COLON))
+#define is_tzone_alpha(t)   ((date_token_mask (t) & DATE_TOKEN_NON_TIMEZONE_ALPHA) == 0)
+#define is_tzone_numeric(t) (((date_token_mask (t) & DATE_TOKEN_NON_TIMEZONE_NUMERIC) == 0) && (date_token_mask (t) & DATE_TOKEN_HAS_SIGN))
+#define is_tzone(t)         (is_tzone_alpha (t) || is_tzone_numeric (t))
+
 static time_t
 parse_broken_date (struct _date_token *tokens, int *tzone)
 {
-#if 0
+	gboolean got_wday, got_month, got_tzone;
+	int hour, min, sec, offset, n;
 	struct _date_token *token;
-	int hour, min, sec, n;
 	struct tm tm;
+	time_t time;
+	
+	memset ((void *) &tm, 0, sizeof (struct tm));
+	got_wday = got_month = got_tzone = FALSE;
+	offset = 0;
+	
+	token = tokens;
+	while (token) {
+		if (is_weekday (token) && !got_wday) {
+			if ((n = get_wday (token->start, token->len)) != -1) {
+				printf ("weekday; ");
+				got_wday = TRUE;
+				tm.tm_wday = n;
+				goto next_token;
+			}
+		}
+		
+		if (is_month (token) && !got_month) {
+			if ((n = get_month (token->start, token->len)) != -1) {
+				printf ("month; ");
+				got_month = TRUE;
+				tm.tm_mon = n;
+				goto next_token;
+			}
+		}
+		
+		if (is_time (token) && !tm.tm_hour && !tm.tm_min && !tm.tm_sec) {
+			if (get_time (token->start, token->len, &hour, &min, &sec)) {
+				printf ("time; ");
+				tm.tm_hour = hour;
+				tm.tm_min = min;
+				tm.tm_sec = sec;
+				goto next_token;
+			}
+		}
+		
+		if (is_tzone (token) && !got_tzone) {
+			struct _date_token *t = token;
+			
+			if ((n = get_tzone (&t)) != -1) {
+				printf ("tzone; ");
+				got_tzone = TRUE;
+				offset = n;
+				goto next_token;
+			}
+		}
+		
+		if (is_numeric (token)) {
+			if (token->len == 4 && !tm.tm_year) {
+				if ((n = get_year (token->start, token->len)) != -1) {
+					printf ("year; ");
+					tm.tm_year = n - 1900;
+					goto next_token;
+				}
+			} else {
+				if (!got_month && !got_wday && token->next && is_numeric (token->next)) {
+					printf ("mon; ");
+					n = decode_int (token->start, token->len);
+					got_month = TRUE;
+					tm.tm_mon = n - 1;
+					goto next_token;
+				} else if (!tm.tm_mday && (n = get_mday (token->start, token->len)) != -1) {
+					printf ("mday; ");
+					tm.tm_mday = n;
+					goto next_token;
+				} else if (!tm.tm_year) {
+					printf ("2-digit year; ");
+					n = get_year (token->start, token->len);
+					tm.tm_year = n - 1900;
+					goto next_token;
+				}
+			}
+		}
+		
+		printf ("???; ");
+		
+	next_token:
+		
+		token = token->next;
+	}
+	
+	printf ("\n");
+		
+	time = mktime (&tm);
+#if defined(HAVE_TIMEZONE)
+	time -= timezone;
+#elif defined(HAVE_TM_GMTOFF)
+	time += tm.tm_gmtoff;
+#else
+#error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
+#endif
+	
+	/* t is now GMT of the time we want, but not offset by the timezone ... */
+	
+	/* this should convert the time to the GMT equiv time */
+	time -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
 	
 	if (tzone)
-		*tzone = 0;
-#endif	
-	return (time_t) 0;
+		*tzone = offset;
+	
+	return time;
 }
+
+#if 0
+static void
+gmime_datetok_table_init ()
+{
+	int i;
+	
+	memset (gmime_datetok_table, 0, sizeof (gmime_datetok_table));
+	
+	for (i = 0; i < 256; i++) {
+		if (!strchr (NUMERIC_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_NUMERIC;
+		
+		if (!strchr (WEEKDAY_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_WEEKDAY;
+		
+		if (!strchr (MONTH_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_MONTH;
+		
+		if (!strchr (TIME_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_TIME;
+		
+		if (!strchr (TIMEZONE_ALPHA_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_TIMEZONE_ALPHA;
+		
+		if (!strchr (TIMEZONE_NUMERIC_CHARS, i))
+			gmime_datetok_table[i] |= DATE_TOKEN_NON_TIMEZONE_NUMERIC;
+		
+		if (((char) i) == ':')
+			gmime_datetok_table[i] |= DATE_TOKEN_HAS_COLON;
+		
+		if (strchr ("+-", i))
+			gmime_datetok_table[i] |= DATE_TOKEN_HAS_SIGN;
+	}
+	
+	printf ("static unsigned char gmime_datetok_table[256] = {");
+	for (i = 0; i < 256; i++) {
+		if (i % 16 == 0)
+			printf ("\n\t");
+		printf ("%3d,", gmime_datetok_table[i]);
+	}
+	printf ("\n};\n");
+}
+#endif
 
 
 /**
@@ -508,7 +691,7 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 	while (tokens) {
 		token = tokens;
 		tokens = tokens->next;
-		memchunk_free (datetok_memchunk, token);
+		g_free (token);
 	}
 	
 	return date;

@@ -1,3 +1,7 @@
+2002-01-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (parse_broken_date): Implemented.
+
 2002-01-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* memchunk.c (memchunk_clean): Oops, when tree_search() returns 0
