@@ -76,7 +76,7 @@ g_mime_stream_mmap_get_type (void)
 			(GInstanceInitFunc) g_mime_stream_mmap_init,
 		};
 		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamMmap", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_STREAM, "GMimeStreamMmap", &info, 0);
 	}
 	
 	return type;
@@ -102,7 +102,7 @@ g_mime_stream_mmap_class_init (GMimeStreamMmapClass *klass)
 	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
-	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	parent_class = g_type_class_ref (GMIME_TYPE_STREAM);
 	
 	object_class->finalize = g_mime_stream_mmap_finalize;
 	
@@ -142,7 +142,7 @@ g_mime_stream_mmap_finalize (GObject *object)
 			close (stream->fd);
 	}
 	
-	G_OBJECT_CLASS (parent_class)->finalize (object);
+	GMIME_STREAM_CLASS (parent_class)->finalize (object);
 }
 
 

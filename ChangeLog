@@ -1,5 +1,29 @@
 2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-null.c (g_mime_stream_null_get_type): Use
+	GMIME_TYPE_STREAM as our base class.
+	(g_mime_stream_null_class_init): Our parent class is a
+	GMIME_STREAM_CLASS, not a G_OBJECT_CLASS.
+	(g_mime_stream_null_finalize): Call our parent's finalize, which
+	is GMIME_STREAM_CLASS's finalize, not G_OBJECT_CLASS's finalize.
+
+	* gmime-stream-mmap.c: Same.
+
+	* gmime-stream-filter.c: Here too.
+
+	* gmime-stream-file.c: And here.
+
+	* gmime-stream-fs.c: Again here.
+
+	* gmime-stream-mem.c: And again...
+
+	* gmime-stream-buffer.c: And finally here.
+
+	* gmime-multipart.[c,h]: New class that inherits from GMimeObject
+	that represents a MIME multipart.
+
+2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-object.c: Ported to glib2 by subclassing GObject and also
 	added a GMimeHeader data member and methods to access those
 	headers as well as adding abstract methods for getting the headers

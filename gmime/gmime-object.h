@@ -44,7 +44,7 @@ extern "C" {
 #define GMIME_OBJECT_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_OBJECT, GMimeObjectClass))
 
 typedef struct _GMimeObject GMimeObject;
-typedef struct _GMimeObjectClass GMimeobjectClass;
+typedef struct _GMimeObjectClass GMimeObjectClass;
 
 struct _GMimeObject {
 	GObject parent_object;

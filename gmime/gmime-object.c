@@ -41,6 +41,7 @@ static void g_mime_object_class_finalize (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
+static void init (GMimeObject *object);
 static void add_header (GMimeObject *object, const char *header, const char *value);
 static void set_header (GMimeObject *object, const char *header, const char *value);
 static const char *get_header (GMimeObject *object, const char *header);
@@ -406,7 +407,7 @@ write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Write the contents of the MIME object to @stream.
  *
- * Returns the number of bytes written or -1 on fail.
+ * Returns -1 on fail.
  **/
 ssize_t
 g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
