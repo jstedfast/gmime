@@ -24,6 +24,7 @@
 
 #undef HAVE_ICONV
 #undef ICONV_CONST
+#undef HAVE_ICONV_DETECT_H
 
 #undef HAVE_MMAP
 #undef HAVE_MUNMAP

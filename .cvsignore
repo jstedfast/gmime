@@ -27,3 +27,4 @@ test-streams
 test-html
 test-iconv
 gmime.spec
+iconv-detect.h
