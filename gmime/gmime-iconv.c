@@ -349,7 +349,7 @@ g_mime_iconv_open (const char *to, const char *from)
 			bucket = prev;
 		}
 		
-		cd = iconv_open (from, to);
+		cd = iconv_open (to, from);
 		if (cd == (iconv_t) -1) {
 			iconv_node_destroy (node);
 			return cd;
