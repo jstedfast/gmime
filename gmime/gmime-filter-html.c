@@ -414,13 +414,19 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			inptr++;
 	}
 	
-	/* backup */
-	if (start < inend)
+	if (flush) {
+		/* flush the rest of our input buffer */
+		if (start < inend)
+			outptr = writeln (filter, start, inend, outptr, &outend);
+		
+		if (html->pre_open) {
+			/* close the pre-tag */
+			outptr = check_size (filter, outptr, &outend, 10);
+			outptr = g_stpcpy (outptr, "</pre>");
+		}
+	} else if (start < inend) {
+		/* backup */
 		g_mime_filter_backup (filter, start, (unsigned) (inend - start));
-	
-	if (flush && html->pre_open) {
-		outptr = check_size (filter, outptr, &outend, 10);
-		outptr = g_stpcpy (outptr, "</pre>");
 	}
 	
 	*out = filter->outbuf;

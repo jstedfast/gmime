@@ -1,3 +1,8 @@
+2002-11-01  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-html.c (html_convert): If flush is TRUE, flush any
+	remaining input rather than backing it up.
+
 2002-10-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-gpg-context.c: Renamed stdin to stdin_fd, stdout to

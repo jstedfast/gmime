@@ -223,9 +223,9 @@ struct _GpgCtx {
 	GPtrArray *recipients;
 	GMimeCipherHash hash;
 	
-	int stdin;
-	int stdout;
-	int stderr;
+	int stdin_fd;
+	int stdout_fd;
+	int stderr_fd;
 	int status_fd;
 	int passwd_fd;  /* only needed for sign/decrypt */
 	
