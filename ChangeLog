@@ -1,5 +1,9 @@
 2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Bumped version to 2.0.4
+
+	* configure.in: Bumped version to 2.0.4
+
 	* gmime/gmime-header.c (g_mime_header_add): Don't try to encode
 	the header here. This is not our responsibility.
 	(g_mime_header_set): Same.
