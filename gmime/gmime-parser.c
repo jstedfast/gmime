@@ -25,7 +25,8 @@
 #include <config.h>
 #endif
 
-#include "strlib.h"
+#include <sys/types.h>
+#include <regex.h>
 #include <ctype.h>
 
 #include "gmime-parser.h"
@@ -33,6 +34,8 @@
 #include "gmime-message-part.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
+
+#include "strlib.h"
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) ((c) == ' ' || (c) == '\t')
@@ -80,6 +83,10 @@ struct _GMimeParserPrivate {
 	
 	GByteArray *from_line;
 	
+	regex_t header_regex;
+	GMimeParserHeaderRegexFunc header_cb;
+	gpointer user_data;
+	
 	/* header buffer */
 	unsigned char *headerbuf;
 	unsigned char *headerptr;
@@ -88,9 +95,10 @@ struct _GMimeParserPrivate {
 	off_t headers_start;
 	off_t header_start;
 	
-	unsigned int unstep:30;
+	unsigned int unstep:29;
 	unsigned int midline:1;
 	unsigned int scan_from:1;
+	unsigned int have_regex:1;
 	
 	GMimeContentType *content_type;
 	struct _header_raw *headers;
@@ -241,6 +249,10 @@ g_mime_parser_finalize (GObject *object)
 	GMimeParser *parser = (GMimeParser *) object;
 	
 	parser_close (parser);
+	
+	if (parser->priv->have_regex)
+		regfree (&parser->priv->header_regex);
+	
 	g_free (parser->priv);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -280,6 +292,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->unstep = 0;
 	priv->midline = FALSE;
 	priv->scan_from = FALSE;
+	priv->have_regex = FALSE;
 	
 	priv->headers = NULL;
 	
@@ -395,6 +408,42 @@ g_mime_parser_get_scan_from (GMimeParser *parser)
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), FALSE);
 	
 	return parser->priv->scan_from;
+}
+
+
+/**
+ * g_mime_parser_set_header_regex:
+ * @parser: MIME parser object
+ * @regex: regular expression
+ * @header_cb: callback function
+ * @user_data: user data
+ *
+ * Sets the regular expression pattern @regex on @parser. Whenever a
+ * header matching the pattern @regex is parsed, @header_cb is called
+ * with @user_data as the user_data argument.
+ **/
+void
+g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
+				GMimeParserHeaderRegexFunc header_cb, gpointer user_data)
+{
+	struct _GMimeParserPrivate *priv;
+	
+	g_return_if_fail (GMIME_IS_PARSER (parser));
+	
+	priv = parser->priv;
+	
+	if (priv->have_regex) {
+		regfree (&priv->header_regex);
+		priv->have_regex = FALSE;
+	}
+	
+	if (!regex || !header_cb)
+		return;
+	
+	priv->header_cb = header_cb;
+	priv->user_data = user_data;
+	
+	priv->have_regex = !regcomp (&priv->header_regex, regex, REG_EXTENDED | REG_ICASE | REG_NOSUB);
 }
 
 
@@ -576,7 +625,7 @@ parser_step_from (GMimeParser *parser)
 	priv->headerleft -= len;                                          \
 } G_STMT_END
 
-#define header_parse(priv, hend) G_STMT_START {                           \
+#define header_parse(parser, priv, hend) G_STMT_START {                   \
 	register unsigned char *colon;                                    \
 	struct _header_raw *header;                                       \
 	unsigned int hlen;                                                \
@@ -600,6 +649,11 @@ parser_step_from (GMimeParser *parser)
 	                                                                  \
 	priv->headerleft += priv->headerptr - priv->headerbuf;            \
 	priv->headerptr = priv->headerbuf;                                \
+	                                                                  \
+	if (priv->have_regex &&                                           \
+	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))     \
+		priv->header_cb (parser, header->name, header->value,     \
+				 header->offset, priv->user_data);        \
 } G_STMT_END
 
 static int
@@ -657,7 +711,7 @@ parser_step_headers (GMimeParser *parser)
 					priv->midline = TRUE;
 				} else {
 					priv->midline = FALSE;
-					header_parse (priv, hend);
+					header_parse (parser, priv, hend);
 					priv->header_start = parser_offset (parser, inptr);
 				}
 			} else {
@@ -677,7 +731,7 @@ parser_step_headers (GMimeParser *parser)
  headers_end:
 	
 	if (priv->headerptr > priv->headerbuf)
-		header_parse (priv, hend);
+		header_parse (parser, priv, hend);
 	
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
 	

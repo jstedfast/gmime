@@ -1,3 +1,14 @@
+2002-06-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-mbox.c (test_parser): Test the new set_header_regex
+	function.
+
+	* gmime-parser.c (g_mime_parser_set_header_regex): New convenience
+	function to allow an application to be notified when a header
+	matching a particular pattern is parsed by the
+	parser. Particularly useful for finding the Status: header when
+	parsing mbox files.
+
 2002-06-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): Pull up past fixes

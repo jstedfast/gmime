@@ -27,6 +27,9 @@ tasks are presented in.
 <fejj> I'll have to modify my internet_address_to_string code to handle that too
 <fejj> but that should be easy
 
+- PGP/MIME (rfc3156) ?
+
+- S/MIMEv3 ?
 
 
 

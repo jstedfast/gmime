@@ -30,7 +30,7 @@ print_mime_struct (GMimeObject *part, int depth)
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
 	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
-		
+	
 	if (GMIME_IS_MULTIPART (part)) {
 		GList *subpart;
 		
@@ -47,6 +47,12 @@ print_mime_struct (GMimeObject *part, int depth)
 	}
 }
 
+static void
+header_cb (GMimeParser *parser, const char *header, const char *value, off_t offset, gpointer user_data)
+{
+	fprintf (stderr, "found \"%s:\" header at %d with a value of \"%s\"\n", header, offset, value);
+}
+
 void
 test_parser (GMimeStream *stream)
 {
@@ -57,6 +63,8 @@ test_parser (GMimeStream *stream)
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	g_mime_parser_set_scan_from (parser, TRUE);
+	
+	g_mime_parser_set_header_regex (parser, "^X-Evolution$", header_cb, NULL);
 	
 	while (!g_mime_parser_eos (parser)) {
 		message = g_mime_parser_construct_message (parser);
