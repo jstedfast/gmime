@@ -4,6 +4,11 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
+- better handling of invalid raw 8bit headers. need to somehow provide
+a way for the app to tell gmime how to handle these. perhaps a
+callback set on the parser object that gets called if gmime fails to
+be able to convert i to UTF-8 (after trying locale charset of course).
+
 - rename g_mime_charset_name() to g_mime_charset_iconv_name() to make
 it clearer. Probably make a macro for backward compat.
 
