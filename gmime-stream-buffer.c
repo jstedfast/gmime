@@ -68,8 +68,6 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t n, nread = 0;
 	
-	g_warning ("yay");
-	
  again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
@@ -130,8 +128,6 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	if (nread != -1)
 		stream->position += nread;
-	
-	g_warning ("read %d bytes, new stream position = %d", nread, stream->position);
 	
 	return nread;
 }
