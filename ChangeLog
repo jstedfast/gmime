@@ -1,3 +1,9 @@
+2003-03-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-header.c (g_mime_header_add): Don't try to encode
+	the header here. This is not our responsibility.
+	(g_mime_header_set): Same.
+
 2003-03-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-utils.c (rfc2047_encode_word): Add 1 to enclen so as
