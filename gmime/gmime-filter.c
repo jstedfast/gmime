@@ -21,6 +21,7 @@
  */
 
 
+#include <string.h> /* for memcpy */
 #include "gmime-filter.h"
 
 
