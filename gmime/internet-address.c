@@ -168,8 +168,21 @@ internet_address_new_from_string (const gchar *string)
 	}
 	
 	/* recreate the name from the tokens */
-	if (tokens->len)
-		name = g_strjoinv (" ", (gchar **) tokens->pdata);
+	if (tokens->len) {
+		char *token = tokens->pdata[0];
+		
+		if (*token == '(') {
+			char *p, *q;
+			
+			p = tokens->pdata[0] + 1;
+			q = p + strlen (p) - 1;
+			*q = '\0';
+			
+			name = g_mime_utils_8bit_header_decode (p);
+		} else {
+			name = g_strjoinv (" ", (gchar **) tokens->pdata);
+		}
+	}
 	
 	for (i = 0; i < tokens->len; i++)
 		g_free (tokens->pdata[i]);
