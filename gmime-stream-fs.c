@@ -32,8 +32,13 @@
 
 #include "gmime-stream-fs.h"
 
+static void g_mime_stream_fs_base_class_init (GMimeStreamFsClass *klass);
+static void g_mime_stream_fs_base_class_finalize (GMimeStreamFsClass *klass);
+static void g_mime_stream_fs_class_init (GMimeStreamFsClass *klass);
+static void g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass);
+static void g_mime_stream_fs_destroy (GMimeStreamFs *stream);
+static void g_mime_stream_fs_finalize (GObject *object);
 
-static void stream_destroy (GMimeStream *stream);
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
@@ -45,26 +50,94 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream stream_template = {
-	NULL, 0,
-	1, 0, 0, 0, stream_destroy,
-	stream_read, stream_write,
-	stream_flush, stream_close,
-	stream_eos, stream_reset,
-	stream_seek, stream_tell,
-	stream_length, stream_substream,
-};
+
+static GMimeStreamClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_fs_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamFsClass),
+			(GBaseInitFunc) g_mime_stream_fs_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_fs_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_fs_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStreamFs),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_fs_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamFs", &info, 0);
+	}
+	
+	return type;
+}
 
 
 static void
-stream_destroy (GMimeStream *stream)
+g_mime_stream_fs_base_class_init (GMimeStreamFsClass *klass)
 {
-	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
+	/* reset instance specifc methods that don't get inherited */
+	;
+}
+
+static void
+g_mime_stream_fs_base_class_finalize (GMimeStreamFsClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_fs_class_init (GMimeStreamFsClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
-	if (fstream->owner && fstream->fd)
-		close (fstream->fd);
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
-	g_free (fstream);
+	object_class->finalize = g_mime_stream_fs_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+	
+	klass->destroy = g_mime_stream_fs_destroy;
+}
+
+static void
+g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass)
+{
+	stream->owner = TRUE;
+	stream->eos = FALSE;
+	stream->fd = -1;
+}
+
+static void
+g_mime_stream_fs_destroy (GMimeStreamFs *stream)
+{
+	g_signal_handlers_destroy (G_OBJECT (stream));
+}
+
+static void
+g_mime_stream_fs_finalize (GObject *object)
+{
+	GMimeStreamFs *stream = (GMimeStreamFs *) object;
+	
+	if (stream->owner && stream->fd != -1)
+		close (stream->fd);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 static ssize_t
@@ -244,11 +317,11 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamFs *fstream;
 	
-	fstream = g_new (GMimeStreamFs, 1);
+	fstream = g_object_new (GMIME_TYPE_STREAM_FS, NULL, NULL);
 	fstream->owner = FALSE;
 	fstream->fd = GMIME_STREAM_FS (stream)->fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), start, end);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -268,14 +341,14 @@ g_mime_stream_fs_new (int fd)
 	GMimeStreamFs *fstream;
 	off_t start;
 	
-	fstream = g_new (GMimeStreamFs, 1);
+	fstream = g_object_new (GMIME_TYPE_STREAM_FS, NULL, NULL);
 	fstream->owner = TRUE;
 	fstream->eos = FALSE;
 	fstream->fd = fd;
 	
 	start = lseek (fd, 0, SEEK_CUR);
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, -1);
+	g_mime_stream_construct (GMIME_STREAM (fstream), start, -1);
 	
 	return GMIME_STREAM (fstream);
 }
@@ -297,12 +370,12 @@ g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end)
 {
 	GMimeStreamFs *fstream;
 	
-	fstream = g_new (GMimeStreamFs, 1);
+	fstream = g_object_new (GMIME_TYPE_STREAM_FS, NULL, NULL);
 	fstream->owner = TRUE;
 	fstream->eos = FALSE;
 	fstream->fd = fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &stream_template, GMIME_STREAM_FS_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), start, end);
 	
 	return GMIME_STREAM (fstream);
 }

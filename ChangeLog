@@ -1,15 +1,18 @@
 2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
-	* gmime-stream-file.c: Updated to subclass the new GMimeStream
+	* gmime-stream-fs.[c,h]: Updated to subclass the new GMimeStream
 	based on GObject.
 
-	* gmime-stream-mmap.c: Updated to subclass the new GMimeStream
+	* gmime-stream-file.[c,h]: Updated to subclass the new GMimeStream
 	based on GObject.
 
-	* gmime-stream-null.c: Updated to subclass the new GMimeStream
+	* gmime-stream-mmap.[c,h]: Updated to subclass the new GMimeStream
 	based on GObject.
 
-	* gmime-stream-mem.c: Updated to be based on the new
+	* gmime-stream-null.[c,h]: Updated to subclass the new GMimeStream
+	based on GObject.
+
+	* gmime-stream-mem.[c,h]: Updated to be based on the new
 	implementation of GMimeStream.
 
 	* gmime-type-utils.h: New file to contain some more-friendly

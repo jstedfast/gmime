@@ -32,17 +32,31 @@ extern "C" {
 #include <unistd.h>
 #include "gmime-stream.h"
 
-typedef struct _GMimeStreamFs {
-	GMimeStream parent;
+#define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())
+#define GMIME_STREAM_FS(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))
+#define GMIME_STREAM_FS_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))
+#define GMIME_IS_STREAM_FS(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_FS))
+#define GMIME_IS_STREAM_FS_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_FS))
+#define GMIME_STREAM_FS_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFsClass))
+
+typedef struct _GMimeStreamFs GMimeStreamFs;
+typedef struct _GMimeStreamFsClass GMimeStreamFsClass;
+
+struct _GMimeStreamFs {
+	GMimeStream parent_object;
 	
 	gboolean owner;
 	gboolean eos;
 	int fd;
-} GMimeStreamFs;
+};
 
-#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")
-#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FS_TYPE)
-#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)
+struct _GMimeStreamFsClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_fs_get_type (void);
 
 GMimeStream *g_mime_stream_fs_new (int fd);
 GMimeStream *g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end);

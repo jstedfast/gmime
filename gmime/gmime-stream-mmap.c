@@ -147,7 +147,7 @@ g_mime_stream_mmap_finalize (GObject *object)
 			munmap (stream->map, stream->maplen);
 #endif
 		
-		if (stream->fd)
+		if (stream->fd != -1)
 			close (stream->fd);
 	}
 	
