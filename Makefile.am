@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = . gmime tests doc
+SUBDIRS = gmime src tests doc .
 
 bin_SCRIPTS = gmime-config
 

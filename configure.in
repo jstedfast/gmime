@@ -191,6 +191,7 @@ AC_OUTPUT(
 Makefile
 gmime/Makefile
 gmime/gmime.h
+src/Makefile
 tests/Makefile
 doc/Makefile
 gmime-config
