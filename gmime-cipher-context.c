@@ -51,11 +51,11 @@ static int cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
 static int cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 			   GMimeStream *ostream, GMimeException *ex);
 
-static int cipher_import (GMimeCipherContext *ctx, GMimeStream *istream,
-			  GMimeException *ex);
+static int cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+			       GMimeException *ex);
 
-static int cipher_export (GMimeCipherContext *ctx, GPtrArray *keys,
-			  GMimeStream *ostream, GMimeException *ex);
+static int cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+			       GMimeStream *ostream, GMimeException *ex);
 
 
 static GObjectClass *parent_class = NULL;
@@ -101,8 +101,8 @@ g_mime_cipher_context_class_init (GMimeCipherContextClass *klass)
 	klass->verify = cipher_verify;
 	klass->encrypt = cipher_encrypt;
 	klass->decrypt = cipher_decrypt;
-	klass->import = cipher_import;
-	klass->export = cipher_export;
+	klass->import_keys = cipher_import_keys;
+	klass->export_keys = cipher_export_keys;
 }
 
 static void
@@ -324,7 +324,7 @@ g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 
 
 static int
-cipher_import (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
+cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
 {
 	g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 			      "You may not import keys with this cipher");
@@ -334,7 +334,7 @@ cipher_import (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex
 
 
 /**
- * g_mime_cipher_import:
+ * g_mime_cipher_import_keys:
  * @ctx: Cipher Context
  * @istream: input stream (containing keys)
  * @ex: exception
@@ -345,18 +345,18 @@ cipher_import (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex
  * Returns 0 on success or -1 on fail.
  **/
 int
-g_mime_cipher_import (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
+g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->import (ctx, istream, ex);
+	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->import_keys (ctx, istream, ex);
 }
 
 
 static int
-cipher_export (GMimeCipherContext *ctx, GPtrArray *keys,
-	       GMimeStream *ostream, GMimeException *ex)
+cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+		    GMimeStream *ostream, GMimeException *ex)
 {
 	g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 			      "You may not export keys with this cipher");
@@ -366,7 +366,7 @@ cipher_export (GMimeCipherContext *ctx, GPtrArray *keys,
 
 
 /**
- * g_mime_cipher_export:
+ * g_mime_cipher_export_keys:
  * @ctx: Cipher Context
  * @keys: an array of key ids
  * @ostream: output stream
@@ -378,14 +378,14 @@ cipher_export (GMimeCipherContext *ctx, GPtrArray *keys,
  * Returns 0 on success or -1 on fail.
  **/
 int
-g_mime_cipher_export (GMimeCipherContext *ctx, GPtrArray *keys,
-		      GMimeStream *ostream, GMimeException *ex)
+g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+			   GMimeStream *ostream, GMimeException *ex)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	g_return_val_if_fail (keys != NULL, -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->export (ctx, keys, ostream, ex);
+	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, ex);
 }
 
 

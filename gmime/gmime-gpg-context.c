@@ -69,11 +69,11 @@ static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
 static int gpg_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 			GMimeStream *ostream, GMimeException *ex);
 
-static int gpg_import (GMimeCipherContext *ctx, GMimeStream *istream,
-		       GMimeException *ex);
+static int gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+			    GMimeException *ex);
 
-static int gpg_export (GMimeCipherContext *ctx, GPtrArray *keys,
-		       GMimeStream *ostream, GMimeException *ex);
+static int gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+			    GMimeStream *ostream, GMimeException *ex);
 
 
 static GMimeCipherContextClass *parent_class = NULL;
@@ -120,8 +120,8 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	cipher_class->verify = gpg_verify;
 	cipher_class->encrypt = gpg_encrypt;
 	cipher_class->decrypt = gpg_decrypt;
-	cipher_class->import = gpg_import;
-	cipher_class->export = gpg_export;
+	cipher_class->import_keys = gpg_import_keys;
+	cipher_class->export_keys = gpg_export_keys;
 }
 
 static void
@@ -1454,13 +1454,13 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 }
 
 static int
-gpg_import (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
+gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
 {
 	return -1;
 }
 
 static int
-gpg_export (GMimeCipherContext *ctx, GPtrArray *keys, GMimeStream *ostream, GMimeException *ex)
+gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys, GMimeStream *ostream, GMimeException *ex)
 {
 	return -1;
 }

@@ -1,3 +1,13 @@
+2002-10-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-gpg-context.c (gpg_import_keys): Renamed.
+	(gpg_export_keys): Renamed.
+
+	* gmime-cipher-context.c (g_mime_cipher_export_keys): Renamed to
+	be friendlier toward c++.
+	(g_mime_cipher_import_keys): Renamed to be similarly named with
+	the above function.
+
 2002-09-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version.
