@@ -1,6 +1,11 @@
 Makefile
 Makefile.in
+html.stamp
+sgml.stamp
 tmpl
+tmpl.stamp
 gmime-decl-list.txt
 gmime-decl.txt
 gmime-unused.txt
+gmime-symbols.txt
+gmime-undocumented.txt
