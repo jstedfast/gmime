@@ -28,10 +28,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "internet-address.h"
 #include "gmime-table-private.h"
 #include "gmime-utils.h"

@@ -1,3 +1,18 @@
+2002-03-15  Charles Kerr <charles@rebelbase.com>
+
+	Syncing up with small changes from Pan...
+
+	* gmime-content-type.c: remove unused #include <alloca.h>
+	* gmime-message.c: same.
+	* gmime-part.c: same.
+	* internet-address.c: same.
+
+	* gmime-filter-basic.c: add #include <string.h> (strncmp)
+	* gmime-filter-yenc.c: add #include <string.h> (strncmp)
+	* gmime-iconv-utils.c: add #include <string.h> (strlen)
+	* gmime-iconv.c: add #include <string.h> (strlen)
+	* gmime-iconv.c: add #include <stdio.h> (sprintf)
+	
 2002-03-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-yenc.c (filter_reset): Added a switch-statement
