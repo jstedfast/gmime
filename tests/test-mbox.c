@@ -66,10 +66,13 @@ test_parser (GMimeStream *stream)
 	
 	while (!g_mime_parser_eos (parser)) {
 		message = g_mime_parser_construct_message (parser);
+		
 		from = g_mime_parser_get_from (parser);
 		fprintf (stdout, "%s\n", from);
+		g_free (from);
+		
 		print_mime_struct (message->mime_part, 0);
-		g_mime_object_unref (GMIME_OBJECT (message));
+		g_object_unref (message);
 	}
 	
 	g_object_unref (parser);
@@ -109,20 +112,20 @@ int main (int argc, char **argv)
 	istream = g_mime_stream_mem_new ();
 	g_mime_stream_write_to_stream (stream, istream);
 	g_mime_stream_reset (istream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	stream = istream;
 #endif
 	
 #ifdef STREAM_BUFFER
 	istream = g_mime_stream_buffer_new (stream,
 					    GMIME_STREAM_BUFFER_BLOCK_READ);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	stream = istream;
 #endif
 	
 	test_parser (stream);
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	return 0;
 }

@@ -1,3 +1,12 @@
+2003-05-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* tests/test-mbox.c: Fixed a memory leak.
+
+	* gmime/gmime-multipart-encrypted.c: Same as below.
+
+	* gmime/gmime-multipart-signed.c: Fixed the prototype for
+	write_to_stream().
+
 2003-05-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* docs/reference/streams.sgml: Updated for correctness.
