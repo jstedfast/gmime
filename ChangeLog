@@ -1,5 +1,9 @@
 2003-08-06  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.0.11
+
 	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Simplified.
 
 	* gmime/gmime-stream-cat.c (stream_read): Same here.
