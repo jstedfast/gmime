@@ -21,6 +21,7 @@
 <!entity GMimeMessagePart SYSTEM "sgml/gmime-message-part.sgml">
 <!entity GMimeMessagePartial SYSTEM "sgml/gmime-message-partial.sgml">
 <!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
+<!entity gmime-host-utils SYSTEM "sgml/gmime-host-utils.sgml">
 <!entity InternetAddress SYSTEM "sgml/internet-address.sgml">
 <!entity GMimeParser SYSTEM "sgml/gmime-parser.sgml">
 <!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
@@ -45,6 +46,7 @@
 <!entity GMimeFilterHTML SYSTEM "sgml/gmime-filter-html.sgml">
 <!entity GMimeFilterMd5 SYSTEM "sgml/gmime-filter-md5.sgml">
 <!entity GMimeFilterStrip SYSTEM "sgml/gmime-filter-strip.sgml">
+<!entity GMimeFilterStrip SYSTEM "sgml/gmime-filter-windows.sgml">
 <!entity GMimeFilterYenc SYSTEM "sgml/gmime-filter-yenc.sgml">
 <!entity GMimeCipherContext SYSTEM "sgml/gmime-cipher-context.sgml">
 <!entity GMimeGpgContext SYSTEM "sgml/gmime-gpg-context.sgml">
@@ -149,6 +151,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv;
     &gmime-iconv-utils;
     &gmime-utils;
+    &gmime-host-utils;
   </part>
 
   <part id="classes">
@@ -183,6 +186,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterHTML;
       &GMimeFilterMd5;
       &GMimeFilterStrip;
+      &GMimeFilterWindows;
       &GMimeFilterYenc;
     </chapter>
 

@@ -34,9 +34,11 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-filter-html.c		\
 	gmime-filter-md5.c		\
 	gmime-filter-strip.c		\
+	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
 	gmime-gpg-context.c		\
 	gmime-header.c			\
+	gmime-host-utils.c		\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
 	gmime-message.c			\
@@ -87,9 +89,11 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-html.h		\
 	gmime-filter-md5.h		\
 	gmime-filter-strip.h		\
+	gmime-filter-windows.h		\
 	gmime-filter-yenc.h		\
 	gmime-gpg-context.h		\
 	gmime-header.h			\
+	gmime-host-utils.h		\
 	gmime-iconv.h			\
 	gmime-iconv-utils.h		\
 	gmime-message.h			\

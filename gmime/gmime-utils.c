@@ -50,6 +50,7 @@
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
+#include "gmime-host-utils.h"
 
 #define d(x)
 #define w(x) x
@@ -759,7 +760,8 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	static unsigned int count = 0;
 	char host[MAXHOSTNAMELEN + 1];
 #ifdef HAVE_GETHOSTBYNAME
-	struct hostent *h = NULL;
+	struct hostent hostbuf;
+	char *buf = NULL;
 #endif
 	char *msgid;
 	
@@ -767,7 +769,22 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #ifdef HAVE_GETHOSTNAME
 		if (gethostname (host, sizeof (host)) == 0) {
 #ifdef HAVE_GETHOSTBYNAME
-			h = gethostbyname (host);
+			int ret, buflen = 1024, herr = 0;
+			
+			do {
+				if (buf != NULL)
+					buf = g_realloc (buf, buflen);
+				else
+					buf = g_malloc (buflen);
+				
+				if ((ret = g_gethostbyname_r (host, &hostbuf, buf, buflen, &herr)) != 0)
+					buflen += 256;
+			} while (ret != 0 && buflen < 8192);
+			
+			if (ret != 0) {
+				g_free (buf);
+				buf = NULL;
+			}
 #endif /* HAVE_GETHOSTBYNAME */
 		} else {
 			host[0] = '\0';
@@ -777,7 +794,8 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #endif /* HAVE_GETHOSTNAME */
 		
 #ifdef HAVE_GETHOSTBYNAME
-		fqdn = h ? h->h_name : (*host ? host : "localhost.localdomain");
+		fqdn = buf != NULL ? hostbuf.h_name : (*host ? host : "localhost.localdomain");
+		g_free (buf);
 #else
 		fqdn = *host ? host : "localhost.localdomain";
 #endif

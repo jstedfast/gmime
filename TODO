@@ -7,10 +7,12 @@ tasks are presented in.
 - better handling of invalid raw 8bit headers. need to somehow provide
 a way for the app to tell gmime how to handle these. perhaps a
 callback set on the parser object that gets called if gmime fails to
-be able to convert it to UTF-8 (after trying locale charset of course).
+be able to convert it to UTF-8 (after trying locale charset of
+course). Or... maybe some form of auto-charset-detection black magic?
 
 - have gmime-filter-charset auto-detect windows charsets and change
-the iconv_t if/when needed? will this work?
+the iconv_t if/when needed? will this work? Nah, probably not worth
+it...
 
 - implement gmime-filter-windows-charset to auto-detect if the text is
 actually windows-cp125x?

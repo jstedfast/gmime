@@ -536,6 +536,67 @@ g_mime_charset_canon_name (const char *charset)
 
 
 /**
+ * g_mime_charset_iso_to_windows:
+ * @isocharset: ISO-8859-# charset
+ *
+ * Maps the ISO-8859-# charset to the equivalent Windows-CP125#
+ * charset.
+ *
+ * Returns equivalent Windows charset.
+ **/
+const char *
+g_mime_charset_iso_to_windows (const char *isocharset)
+{
+	/* According to http://czyborra.com/charsets/codepages.html,
+	 * the charset mapping is as follows:
+	 *
+	 * us-ascii    maps to windows-cp1252
+	 * iso-8859-1  maps to windows-cp1252
+	 * iso-8859-2  maps to windows-cp1250
+	 * iso-8859-3  maps to windows-cp????
+	 * iso-8859-4  maps to windows-cp????
+	 * iso-8859-5  maps to windows-cp1251
+	 * iso-8859-6  maps to windows-cp1256
+	 * iso-8859-7  maps to windows-cp1253
+	 * iso-8859-8  maps to windows-cp1255
+	 * iso-8859-9  maps to windows-cp1254
+	 * iso-8859-10 maps to windows-cp????
+	 * iso-8859-11 maps to windows-cp????
+	 * iso-8859-12 maps to windows-cp????
+	 * iso-8859-13 maps to windows-cp1257
+	 *
+	 * Assumptions:
+	 *  - I'm going to assume that since iso-8859-4 and
+	 *    iso-8859-13 are Baltic that it also maps to
+	 *    windows-cp1257.
+	 */
+	
+	isocharset = g_mime_charset_canon_name (isocharset);
+	
+	if (!strcasecmp (isocharset, "iso-8859-1") || !strcasecmp (isocharset, "us-ascii"))
+		return "windows-cp1252";
+	else if (!strcasecmp (isocharset, "iso-8859-2"))
+		return "windows-cp1250";
+	else if (!strcasecmp (isocharset, "iso-8859-4"))
+		return "windows-cp1257";
+	else if (!strcasecmp (isocharset, "iso-8859-5"))
+		return "windows-cp1251";
+	else if (!strcasecmp (isocharset, "iso-8859-6"))
+		return "windows-cp1256";
+	else if (!strcasecmp (isocharset, "iso-8859-7"))
+		return "windows-cp1253";
+	else if (!strcasecmp (isocharset, "iso-8859-8"))
+		return "windows-cp1255";
+	else if (!strcasecmp (isocharset, "iso-8859-9"))
+		return "windows-cp1254";
+	else if (!strcasecmp (isocharset, "iso-8859-13"))
+		return "windows-cp1257";
+	
+	return isocharset;
+}
+
+
+/**
  * g_mime_charset_init:
  * @charset: charset mask
  *

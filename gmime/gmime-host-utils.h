@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2001 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2003 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,46 +21,25 @@
  */
 
 
-#ifndef __GMIME_CHARSET_H__
-#define __GMIME_CHARSET_H__
+#ifndef __GMIME_HOST_UTILS_H__
+#define __GMIME_HOST_UTILS_H__
+
+#include <netdb.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
-#include <sys/types.h>
+int g_gethostbyname_r (const char *name, struct hostent *host,
+		       char *buf, size_t buflen, int *herr);
 
-void        g_mime_charset_map_init (void);
-
-const char *g_mime_locale_charset (void);
-const char *g_mime_locale_language (void);
-
-const char *g_mime_charset_language (const char *charset);
-
-const char *g_mime_charset_canon_name (const char *charset);
-const char *g_mime_charset_iconv_name (const char *charset);
-
-const char *g_mime_charset_iso_to_windows (const char *isocharset);
-
-
-typedef struct _GMimeCharset {
-	unsigned int mask;
-	unsigned int level;
-} GMimeCharset;
-
-void g_mime_charset_init (GMimeCharset *charset);
-
-void g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len);
-
-const char *g_mime_charset_best_name (GMimeCharset *charset);
-
-const char *g_mime_charset_best (const char *in, size_t inlen);
-
+int g_gethostbyaddr_r (const char *addr, int addrlen, int af,
+		       struct hostent *hostbuf, char *buf,
+		       size_t buflen, int *herr);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_CHARSET_H__ */
+#endif /* __GMIME_HOST_UTILS_H__ */

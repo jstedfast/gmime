@@ -452,6 +452,26 @@ GMIME_FILTER_STRIP_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-windows</FILE>
+GMimeFilterWindows
+g_mime_filter_windows_new
+g_mime_filter_windows_is_windows_charset
+g_mime_filter_windows_real_charset
+
+<SUBSECTION Private>
+g_mime_filter_windows_get_type
+
+<SUBSECTION Standard>
+GMimeFilterWindowsClass
+GMIME_TYPE_FILTER_WINDOWS
+GMIME_FILTER_WINDOWS
+GMIME_IS_FILTER_WINDOWS
+GMIME_FILTER_WINDOWS_CLASS
+GMIME_IS_FILTER_WINDOWS_CLASS
+GMIME_FILTER_WINDOWS_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-yenc</FILE>
 GMIME_YENCODE_CRC_INIT
 GMIME_YENCODE_CRC_FINAL
@@ -853,6 +873,12 @@ g_mime_utils_quoted_encode_close
 </SECTION>
 
 <SECTION>
+<FILE>gmime-host-utils</FILE>
+g_gethostbyname_r
+g_gethostbyaddr_r
+</SECTION>
+
+<SECTION>
 <FILE>internet-address</FILE>
 InternetAddressType
 InternetAddressList
@@ -915,6 +941,7 @@ g_mime_locale_charset
 g_mime_locale_language
 g_mime_charset_canon_name
 g_mime_charset_iconv_name
+g_mime_charset_iso_to_windows
 g_mime_charset_init
 g_mime_charset_step
 g_mime_charset_best_name

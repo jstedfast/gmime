@@ -146,7 +146,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	mapptr = mstream->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nread = MIN (((off_t) (mstream->map + mstream->maplen) - mapptr), (off_t) len);
+		nread = MIN ((off_t) ((mstream->map + mstream->maplen) - mapptr), (off_t) len);
 	else
 		nread = MIN (stream->bound_end - stream->position, (off_t) len);
 	
@@ -173,7 +173,7 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	mapptr = mstream->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nwritten = MIN (((off_t) (mstream->map + mstream->maplen) - mapptr), (off_t) len);
+		nwritten = MIN ((off_t) ((mstream->map + mstream->maplen) - mapptr), (off_t) len);
 	else
 		nwritten = MIN (stream->bound_end - stream->position, (off_t) len);
 	

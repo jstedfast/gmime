@@ -1,3 +1,24 @@
+2003-08-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime.h.in: Added new headers.
+
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Use the
+	re-entrant g_gethostbyname_r() function rather than
+	gethostbyname() so that we are threadsafe.
+
+	* gmime/gmime-host-utils.[c,h]: New source files containing
+	gethostbyname_r() and gethostbyaddr_r() implementations.
+
+	* gmime/gmime-filter-windows.[c,h]: New source files implementing
+	a windows charset detection filter.
+
+	* gmime/gmime-charset.c (g_mime_charset_iso_to_windows): New
+	function to return the windows-cp125# equivalent charset for
+	iso-8859-# charsets.
+
+	* gmime/gmime-parser.c (parser_push_boundary): Soptimise a bit :-)
+	(parser_push_boundary): 
+
 2003-08-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Simplified.

@@ -49,6 +49,7 @@ extern "C" {
 #include <gmime/internet-address.h>
 #include <gmime/gmime-parser.h>
 #include <gmime/gmime-utils.h>
+#include <gmime/gmime-host-utils.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-stream-buffer.h>
 #include <gmime/gmime-stream-cat.h>
@@ -68,6 +69,7 @@ extern "C" {
 #include <gmime/gmime-filter-html.h>
 #include <gmime/gmime-filter-md5.h>
 #include <gmime/gmime-filter-strip.h>
+#include <gmime/gmime-filter-windows.h>
 #include <gmime/gmime-filter-yenc.h>
 #include <gmime/gmime-session.h>
 #include <gmime/gmime-cipher-context.h>
