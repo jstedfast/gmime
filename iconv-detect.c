@@ -42,6 +42,7 @@ enum {
 	ISO_DASH_D_LOWER           = (1 << 3),
 	ISO_DASH_D                 = (1 << 4),
 	ISO_D                      = (1 << 5),
+	UCS4                       = (1 << 6),
 	
 	/* iso-2022-jp */
 	ISO_DASH_D_DASH_S_LOWER  = (1 << 0),
@@ -83,6 +84,7 @@ static CharInfo iso10646_tests[] = {
 	{ "iso-10646",   "iso-%d",     ISO_DASH_D_LOWER },
 	{ "ISO-10646",   "ISO-%d",     ISO_DASH_D },
 	{ "ISO10646",    "ISO%d",      ISO_D },
+	{ "UCS-4BE",     "UCS-4BE",    UCS4 },
 };
 
 static int num_iso10646_tests = sizeof (iso10646_tests) / sizeof (CharInfo);

@@ -119,6 +119,7 @@ dnl Check for libiconv
 AM_ICONV()
 AC_MSG_CHECKING(preferred charset formats for system iconv)
 AC_TRY_RUN([
+#define CONFIGURE_IN
 #include "iconv-detect.c"
 ],[
 	AC_MSG_RESULT(found)
