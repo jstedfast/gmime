@@ -1,3 +1,11 @@
+2002-03-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-yenc.c (filter_reset): Added a switch-statement
+	based on direction. Yes, for now the INIT state for encode/decode
+	are both the same but this may change? Probably not but oh well
+	:-)
+	(g_mime_ydecode_step): Sync up with Charles' yenc fixes.
+
 2002-03-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-yenc.c: Compile fixes.

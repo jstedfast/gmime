@@ -65,9 +65,19 @@ g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
 	
 	new->direction = direction;
 	new->part = 0;
-	new->state = GMIME_YENCODE_STATE_INIT;
 	new->pcrc = GMIME_YENCODE_CRC_INIT;
 	new->crc = GMIME_YENCODE_CRC_INIT;
+	
+	switch (direction) {
+	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+		new->state = GMIME_YENCODE_STATE_INIT;
+		break;
+	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+		new->state = GMIME_YDECODE_STATE_INIT;
+		break;
+	default:
+		g_assert_not_reached ();
+	}
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
@@ -224,7 +234,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			left = inend - inptr;
 			if ((yenc->state & GMIME_YDECODE_STATE_BEGIN) && left > 0) {
-				/* we have found a 'ybegin' line but we may yet have a ypart line to yield
+				/* we have found an '=ybegin' line but we may yet have an "=ypart" line to yield
 				   before decoding the content */
 				if (left < 7 && !strncmp (inptr, "=ypart ", left)) {
 					g_mime_filter_backup (filter, inptr, left);
@@ -238,12 +248,15 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 					} else {
 						g_mime_filter_backup (filter, in, left);
 					}
+				} else {
+					/* guess it doesn't have a =ypart line */
+					yenc->state |= GMIME_YDECODE_STATE_DECODE;
 				}
 			}
 		}
 		
 		if ((yenc->state & GMIME_YDECODE_STATE_DECODE) && !(yenc->state & GMIME_YDECODE_STATE_END)) {
-			/* all yEnc headers been found so we can now start decoding */
+			/* all yEnc headers have been found so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
 			newlen = g_mime_ydecode_step (in, len, filter->outbuf, &yenc->state, &yenc->pcrc, &yenc->crc);
 			g_assert (newlen <= len + 3);
@@ -297,7 +310,14 @@ filter_reset (GMimeFilter *filter)
 {
 	GMimeFilterYenc *yenc = (GMimeFilterYenc *) filter;
 	
-	yenc->state = GMIME_YENCODE_STATE_INIT;
+	switch (yenc->direction) {
+	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+		yenc->state = GMIME_YENCODE_STATE_INIT;
+		break;
+	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+		yenc->state = GMIME_YDECODE_STATE_INIT;
+		break;
+	}
 	yenc->pcrc = GMIME_YENCODE_CRC_INIT;
 	yenc->crc = GMIME_YENCODE_CRC_INIT;
 }
@@ -362,18 +382,16 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	inptr = in;
 	while (inptr < inend) {
-		if ((ystate & YENC_NEWLINE_ESCAPE) == YENC_NEWLINE_ESCAPE && *inptr == 'y') {
+		ch = *inptr++;
+		
+		if ((ystate & YENC_NEWLINE_ESCAPE) == YENC_NEWLINE_ESCAPE) {
+			ystate &= ~GMIME_YDECODE_STATE_EOLN;
+			
 			if (*inptr == 'y') {
 				/* we probably have a =yend here */
 				ystate |= GMIME_YDECODE_STATE_END;
 				break;
-			} else {
-				ch = ystate & 0xff;
-				ystate &= 0xff00;
-				ystate &= ~GMIME_YDECODE_STATE_EOLN;
 			}
-		} else {
-			ch = *inptr++;
 		}
 		
 		if (ch == '\n') {
@@ -382,11 +400,6 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 		}
 		
 		if (ystate & GMIME_YDECODE_STATE_ESCAPE) {
-			if (ystate & GMIME_YDECODE_STATE_EOLN) {
-				/* hmmm, might have a \n=yend here? */
-				ystate = (ystate & 0xff00) | ch;
-				continue;
-			}
 			ystate &= ~GMIME_YDECODE_STATE_ESCAPE;
 			ch -= 64;
 		} else if (ch == '=') {
