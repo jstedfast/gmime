@@ -157,23 +157,14 @@ test_encodings (void)
 {
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
-
-	fprintf (stderr, "hello\n");
-
-	enc = g_strdup ("fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)");
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_8bit_header_decode (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-
+	
 	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
-
+	
 	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
@@ -250,32 +241,80 @@ static gchar *addresses[] = {
 	"Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
 	"\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	"fejj@helixcode.com (Jeffrey Stedfast)",
-	"<fejj@helixcode.com> (Jeff)",
+	"Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
 	"=?iso-8859-1?q?Kristoffer=20Br=E5nemyr?= <ztion@swipenet.se>",
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
+	"GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
+	"Local recipients: phil, joe, alex, bob",
+	"@develop:sblab!att!thumper.bellcore.com!nsb",
+	"\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA",
+	"Charles S. Kerr <charles@foo.com>",
+	"Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>",
+	"Charles Kerr, Pan Programmer <charles@superpimp.org>",
+	"Charles Kerr <charles@[127.0.0.1]>",
+	"Charles <charles@[127..0.1]>",
+	"<charles@>",
 	NULL
 };
+
+static void
+dump_addrlist (GList *addrlist, int i, gboolean group, gboolean destroy)
+{
+	InternetAddress *ia;
+	GList *addr;
+	
+	addr = addrlist;
+	while (addr) {
+		char *str;
+		
+		ia = addr->data;
+		addr = addr->next;
+		
+		if (i != -1)
+			fprintf (stderr, "Original: %s\n", addresses[i]);
+		if (ia->type == INTERNET_ADDRESS_GROUP) {
+			fprintf (stderr, "Address is a group:\n");
+			fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
+			dump_addrlist (ia->value.members, -1, TRUE, FALSE);
+			fprintf (stderr, "End of group.\n");
+		} else if (ia->type == INTERNET_ADDRESS_NAME) {
+			fprintf (stderr, "%sName: %s\n", group ? "\t" : "",
+				 ia->name ? ia->name : "");
+			fprintf (stderr, "%sEMail: %s\n", group ? "\t" : "",
+				 ia->value.addr ? ia->value.addr : "");
+		}
+		
+		str = internet_address_to_string (ia, FALSE);
+		fprintf (stderr, "%sRewritten (display): %s\n", group ? "\t" : "",
+			 str ? str : "");
+		g_free (str);
+		
+		str = internet_address_to_string (ia, TRUE);
+		fprintf (stderr, "%sRewritten (encoded): %s\n\n", group ? "\t" : "",
+			 str ? str : "");
+		g_free (str);
+		
+		if (destroy)
+			internet_address_destroy (ia);
+	}
+}
 
 void
 test_addresses (void)
 {
-	InternetAddress *ia;
-	gchar *str;
 	int i;
 	
 	for (i = 0; addresses[i]; i++) {
-		ia = internet_address_new_from_string (addresses[i]);
-		if (!ia) {
+		InternetAddress *ia;
+		GList *addrlist, *l;
+		
+		addrlist = internet_address_parse_string (addresses[i]);
+		if (!addrlist) {
 			fprintf (stderr, "failed to parse '%s'.\n", addresses[i]);
 			continue;
 		}
-		fprintf (stderr, "Original: %s\n", addresses[i]);
-		fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
-		fprintf (stderr, "EMail: %s\n", ia->address ? ia->address : "");
-		str = internet_address_to_string (ia, TRUE);
-		internet_address_destroy (ia);
-		fprintf (stderr, "Rewritten: %s\n\n", str ? str : "(null)");
-		g_free (str);
+		
+		dump_addrlist (addrlist, i, FALSE, TRUE);
 	}
 }
 

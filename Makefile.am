@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = test-mime test-parser
+noinst_PROGRAMS = gen-table test-mime test-parser
 
 bin_SCRIPTS = gmime-config
 
@@ -27,6 +27,7 @@ libgmime_la_SOURCES = 		\
 gmimeincdir = $(includedir)/gmime
 gmimeinc_HEADERS = 		\
 	gmime.h			\
+	gmime-table-private.h	\
 	gmime-content-type.h	\
 	gmime-message.h		\
 	gmime-param.h		\
@@ -48,6 +49,11 @@ test_parser_SOURCES = test-parser.c
 test_parser_LDFLAGS = 
 test_parser_DEPENDENCIES = $(DEPS)
 test_parser_LDADD = $(LDADDS)
+
+gen_table_SOURCES = gen-table.c
+gen_table_LDFLAGS = 
+gen_table_DEPENDENCIES = 
+gen_table_LDADD = 
 
 check-local: tests
 

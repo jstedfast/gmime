@@ -30,17 +30,35 @@ extern "C" {
 
 #include <glib.h>
 
+typedef enum {
+	INTERNET_ADDRESS_NONE,
+	INTERNET_ADDRESS_NAME,
+	INTERNET_ADDRESS_GROUP
+} InternetAddressType;
+
 struct _InternetAddress {
+	InternetAddressType type;
 	gchar *name;
-	gchar *address;
+	union {
+		gchar *addr;
+		GList *members;
+	} value;
 };
 
 typedef struct _InternetAddress InternetAddress;
 
-InternetAddress *internet_address_new (const gchar *name, const gchar *address);
-InternetAddress *internet_address_new_from_string (const gchar *string);
+InternetAddress *internet_address_new (void);
+InternetAddress *internet_address_new_name (const gchar *name, const gchar *addr);
+InternetAddress *internet_address_new_group (const gchar *name);
 
 void internet_address_destroy (InternetAddress *ia);
+
+void internet_address_set_name (InternetAddress *ia, const gchar *name);
+void internet_address_set_addr (InternetAddress *ia, const gchar *addr);
+void internet_address_set_group (InternetAddress *ia, GList *group);
+void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
+
+GList *internet_address_parse_string (const gchar *string);
 
 gchar *internet_address_to_string (InternetAddress *ia, gboolean rfc2047_encode);
 

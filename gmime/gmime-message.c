@@ -20,10 +20,14 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include "gmime-message.h"
 #include "gmime-utils.h"
 #include "internet-address.h"
-#include <config.h>
+
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
@@ -202,7 +206,7 @@ g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *n
 	InternetAddress *ia;
 	GList *recipients;
 	
-	ia = internet_address_new (name, address);
+	ia = internet_address_new_name (name, address);
 	
 	recipients = g_hash_table_lookup (message->header->recipients, type);
 	g_hash_table_remove (message->header->recipients, type);
@@ -227,9 +231,7 @@ g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *n
 void
 g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, const gchar *string)
 {
-	InternetAddress *ia;
-	GList *recipients;
-	gchar *ptr, *eptr, *recipient;
+	GList *recipients, *addrlist;
 	
 	g_return_if_fail (message != NULL);
 	g_return_if_fail (string != NULL);
@@ -237,38 +239,9 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
 	recipients = g_hash_table_lookup (message->header->recipients, type);
 	g_hash_table_remove (message->header->recipients, type);
 	
-	ptr = (gchar *) string;
-	
-	while (*ptr) {
-		gboolean in_quotes = FALSE;
-		
-		/* skip through leading whitespace */
-		for ( ; *ptr && isspace (*ptr); ptr++);
-		
-		if (*ptr == '"')
-			in_quotes = TRUE;
-		
-		/* find the end of this address */
-		eptr = ptr + 1;
-		while (*eptr) {
-			if (*eptr == '"' && *(eptr - 1) != '\\')
-				in_quotes = !in_quotes;
-			else if (*eptr == ',' && !in_quotes)
-				break;
-			
-			eptr++;
-		}
-		
-		recipient = g_strndup (ptr, (gint) (eptr - ptr));
-		ia = internet_address_new_from_string (recipient);
-		g_free (recipient);
-		recipients = g_list_append (recipients, ia);
-		
-		if (*eptr)
-			ptr = eptr + 1;
-		else
-			break;
-	}
+	addrlist = internet_address_parse_string (string);
+	if (addrlist)
+		recipients = g_list_concat (recipients, addrlist);
 	
 	g_hash_table_insert (message->header->recipients, type, recipients);
 }
@@ -523,7 +496,7 @@ create_header (GMimeMessage *message)
 		GString *recip;
 		
 		recip = g_string_new ("To: ");
-		while (TRUE) {
+		while (recipients) {
 			InternetAddress *ia;
 			gchar *address;
 			
@@ -535,8 +508,6 @@ create_header (GMimeMessage *message)
 			recipients = recipients->next;
 			if (recipients)
 				g_string_append (recip, ", ");
-			else
-				break;
 		}
 		g_string_append (recip, "\n");
 		buf = g_mime_utils_header_fold (recip->str);
@@ -551,7 +522,7 @@ create_header (GMimeMessage *message)
 		GString *recip;
 		
 		recip = g_string_new ("Cc: ");
-		while (TRUE) {
+		while (recipients) {
 			InternetAddress *ia;
 			gchar *address;
 			
@@ -563,8 +534,6 @@ create_header (GMimeMessage *message)
 			recipients = recipients->next;
 			if (recipients)
 				g_string_append (recip, ", ");
-			else
-				break;
 		}
 		g_string_append (recip, "\n");
 		buf = g_mime_utils_header_fold (recip->str);

@@ -1,3 +1,38 @@
+2001-04-01  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (g_mime_utils_quote_string): Made smarter.
+
+2001-03-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* Makefile.am: Added rules to build gen-table.c and added
+	gmime-table-private.h to the build.
+
+	* gen-table.c: New file to generate gmime-table-private.h if need
+	be.
+
+	* gmime-table-private.h: New file that contains
+	gmime_special_table.
+
+	* gmime-utils.c: Remove the gmime_special_table from here and
+	instead #include gmime-table-private.h.
+
+	* internet-address.c: #include gmime-table-private.h
+
+2001-03-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (create_header): Simplified a tad.
+	(g_mime_message_add_recipient): Updated for the new
+	InternetAddress API.
+	(g_mime_message_add_recipients_from_string): Simplified greatly
+	using the new InternetAddress API.
+
+	* internet-address.[c,h]: Completely rewritten to be a lot more
+	rfc0822 compliant.
+
+2001-03-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README, configure.in: Updated version to 0.5.0
+
 2001-03-29  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-parser.c (g_mime_parser_construct_message_from_file): new

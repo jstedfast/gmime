@@ -21,9 +21,14 @@
  *
  */
 
-#include "gmime-utils.h"
-#include "gmime-part.h"
+#ifdef HAVE_CONFIG_H
 #include <config.h>
+#endif
+
+#include "gmime-utils.h"
+#include "gmime-table-private.h"
+#include "gmime-part.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -35,31 +40,16 @@
 
 #define GMIME_FOLD_LEN  76
 
+#ifndef HAVE_ISBLANK
+#define isblank(c) (c == ' ' || c == '\t')
+#endif
+
 static char *base64_alphabet =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static unsigned char tohex[16] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
 	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
-};
-
-static unsigned short gmime_special_table[256] = {
-	  5,  5,  5,  5,  5,  5,  5,  5,  5,231,  7,  5,  5, 39,  5,  5,
-	  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,  5,
-	242,448, 76,192,192,192,192,192, 76, 76,448,448, 76,448, 72,324,
-	448,448,448,448,448,448,448,448,448,448, 76, 76, 76,  4, 76, 68,
-	 76,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
-	448,448,448,448,448,448,448,448,448,448,448,108,236,108,192, 64,
-	192,448,448,448,448,448,448,448,448,448,448,448,448,448,448,448,
-	448,448,448,448,448,448,448,448,448,448,448,192,192,192,192,  5,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
-	  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,  0,
 };
 
 static unsigned char gmime_base64_rank[256] = {
@@ -100,109 +90,6 @@ static unsigned char gmime_uu_rank[256] = {
 	 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31,
 };
 
-
-enum {
-	IS_CTRL		= 1<<0,
-	IS_LWSP		= 1<<1,
-	IS_TSPECIAL	= 1<<2,
-	IS_SPECIAL	= 1<<3,
-	IS_SPACE	= 1<<4,
-	IS_DSPECIAL	= 1<<5,
-	IS_QPSAFE	= 1<<6,
-	IS_ESAFE	= 1<<7,	/* encoded word safe */
-	IS_PSAFE	= 1<<8,	/* encoded word in phrase safe */
-};
-
-#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
-#define is_lwsp(x) ((gmime_special_table[(unsigned char)(x)] & IS_LWSP) != 0)
-#define is_tspecial(x) ((gmime_special_table[(unsigned char)(x)] & IS_TSPECIAL) != 0)
-#define is_type(x, t) ((gmime_special_table[(unsigned char)(x)] & (t)) != 0)
-#define is_ttoken(x) ((gmime_special_table[(unsigned char)(x)] & (IS_TSPECIAL|IS_LWSP|IS_CTRL)) == 0)
-#define is_atom(x) ((gmime_special_table[(unsigned char)(x)] & (IS_SPECIAL|IS_SPACE|IS_CTRL)) == 0)
-#define is_dtext(x) ((gmime_special_table[(unsigned char)(x)] & IS_DSPECIAL) == 0)
-#define is_fieldname(x) ((gmime_special_table[(unsigned char)(x)] & (IS_CTRL|IS_SPACE)) == 0)
-#define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)
-#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESPECIAL) != 0)
-#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
-
-#ifndef HAVE_ISBLANK
-#define isblank(c) ((c) == ' ' || (c) == '\t')
-#endif /* HAVE_ISBLANK */
-
-#define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
-#define CHARS_TSPECIAL "()<>@,;:\\\"/[]?="
-#define CHARS_SPECIAL "()<>@,;:\\\".[]"
-#define CHARS_CSPECIAL "()\\\r"	           /* not in comments */
-#define CHARS_DSPECIAL "[]\\\r \t"	   /* not in domains */
-#define CHARS_ESPECIAL "()<>@,;:\"/[]?.="  /* encoded word specials (rfc2047 5.1) */
-#define CHARS_PSPECIAL "!*+-/"             /* encoded phrase specials (rfc2047 5.3) */
-
-#ifdef BUILD_TABLE
-/* code to rebuild the gmime_special_table */
-static void
-header_remove_bits (gushort bit, guchar *vals)
-{
-	gint i;
-	
-	for (i = 0; vals[i]; i++)
-		gmime_special_table[vals[i]] &= ~bit;
-}
-
-static void
-header_init_bits (gushort bit, gushort bitcopy, gboolean remove, guchar *vals)
-{
-	gint i, len = strlen (vals);
-	
-	if (!remove) {
-		for (i = 0; i < len; i++) {
-			gmime_special_table[vals[i]] |= bit;
-		}
-		if (bitcopy) {
-			for (i = 0; i < 256; i++) {
-				if (gmime_special_table[i] & bitcopy)
-					gmime_special_table[i] |= bit;
-			}
-		}
-	} else {
-		for (i = 0; i < 256; i++)
-			gmime_special_table[i] |= bit;
-		for (i = 0; i < len; i++) {
-			gmime_special_table[vals[i]] &= ~bit;
-		}
-		if (bitcopy) {
-			for (i = 0; i < 256; i++) {
-				if (gmime_special_table[i] & bitcopy)
-					gmime_special_table[i] &= ~bit;
-			}
-		}
-	}
-}
-
-static void
-header_decode_init (void)
-{
-	gint i;
-	
-	for (i = 0; i < 256; i++) {
-		gmime_special_table[i] = 0;
-		if (i < 32)
-			gmime_special_table[i] |= IS_CTRL;
-		if ((i >= 33 && i <= 60) || (i >= 62 && i <= 126) || i == 32 || i == 9)
-			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
-		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
-			gmime_special_table[i] |= IS_PSAFE;
-	}
-	
-	gmime_special_table[127] |= IS_CTRL;
-	gmime_special_table[' '] |= IS_SPACE;
-	header_init_bits (IS_LWSP, 0, FALSE, CHARS_LWSP);
-	header_init_bits (IS_TSPECIAL, IS_CTRL, FALSE, CHARS_TSPECIAL);
-	header_init_bits (IS_SPECIAL, 0, FALSE, CHARS_SPECIAL);
-	header_init_bits (IS_DSPECIAL, 0, FALSE, CHARS_DSPECIAL);
-	header_remove_bits (IS_ESAFE, CHARS_ESPECIAL);
-	header_init_bits (IS_PSAFE, 0, FALSE, CHARS_PSPECIAL);
-}
-#endif /* BUILD_TABLE */
 
 /* hrm, is there a library for this shit? */
 static struct {
@@ -654,6 +541,28 @@ g_mime_utils_header_printf (const gchar *format, ...)
 	return ret;
 }
 
+static gboolean
+need_quotes (const char *string)
+{
+	gboolean quoted = FALSE;
+	const char *inptr;
+	
+	inptr = string;
+	
+	while (*inptr) {
+		if (*inptr == '\\')
+			inptr++;
+		else if (*inptr == '"')
+			quoted = !quoted;
+		else if (!quoted && is_tspecial (*inptr))
+			return TRUE;
+		
+		if (*inptr)
+			inptr++;
+	}
+	
+	return FALSE;
+}
 
 /**
  * g_mime_utils_quote_string: Quote a string.
@@ -667,18 +576,16 @@ g_mime_utils_header_printf (const gchar *format, ...)
 gchar *
 g_mime_utils_quote_string (const gchar *string)
 {
-	GString *out;
+	gboolean quote;
+	const gchar *c;
 	gchar *qstring;
-	guchar *c;
-	gboolean quote = FALSE;
+	GString *out;
 	
 	out = g_string_new ("");
+	quote = need_quotes (string);
 	
-	for (c = (guchar *) string; *c; c++) {
-		if (is_tspecial (*c))
-			quote = TRUE;
-		
-		if (*c == '"' || *c == '\\')
+	for (c = string; *c; c++) {
+		if ((*c == '"' && quote) || *c == '\\')
 			g_string_append_c (out, '\\');
 		
 		g_string_append_c (out, *c);
