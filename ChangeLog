@@ -1,5 +1,8 @@
 2004-03-09  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-cipher-context.c (g_mime_cipher_verify): Allow the
+	sigstream to be NULL (it is optional afterall).
+
 	Thanks to Peter Bloomfield for reminding me about
 	g_ascii_strdown() and g_ascii_strup() and for providing the
 	original patch.

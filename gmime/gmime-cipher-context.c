@@ -246,7 +246,6 @@ g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
-	g_return_val_if_fail (GMIME_IS_STREAM (sigstream), NULL);
 	
 	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->verify (ctx, hash, istream, sigstream, err);
 }
