@@ -4,6 +4,8 @@
 	the need for using external .dat files. Also attempt to condense
 	the charset-map table a bit.
 
+	* gen-multibyte.c: Removed.
+
 2002-04-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Change version info to 0.9.0
