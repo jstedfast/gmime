@@ -1,5 +1,5 @@
                             GMime, version 2.1.0
-                   by Jeffrey Stedfast <fejj@helixcode.com>
+                   by Jeffrey Stedfast <fejj@ximian.com>
 
 
 WHAT IS GMIME
@@ -158,5 +158,5 @@ REPORTING BUGS
 --------------
 
 Bugs may be reported to the GMime development team by sending email to
-fejj@helixcode.com and/or by submitting a bug report for the gmime
+fejj@ximian.com and/or by submitting a bug report for the gmime
 module at http://bugzilla.gnome.org/

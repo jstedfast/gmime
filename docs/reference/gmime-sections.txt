@@ -32,6 +32,26 @@ GMIME_SESSION_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-session-simple</FILE>
+GMimeSessionSimple
+g_mime_session_simple_set_request_passwd
+g_mime_session_simple_set_forget_passwd
+g_mime_session_simple_set_is_online
+
+<SUBSECTION Private>
+g_mime_session_simple_get_type
+
+<SUBSECTION Standard>
+GMimeSessionSimpleClass
+GMIME_TYPE_SESSION_SIMPLE
+GMIME_SESSION_SIMPLE
+GMIME_IS_SESSION_SIMPLE
+GMIME_SESSION_SIMPLE_CLASS
+GMIME_IS_SESSION_SIMPLE_CLASS
+GMIME_SESSION_SIMPLE_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream</FILE>
 GMimeSeekWhence
 GMimeStreamIOVector

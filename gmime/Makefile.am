@@ -49,6 +49,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-parser.c			\
 	gmime-part.c			\
 	gmime-session.c			\
+	gmime-session-simple.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
 	gmime-stream-cat.c		\
@@ -101,6 +102,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-parser.h			\
 	gmime-part.h			\
 	gmime-session.h			\
+	gmime-session-simple.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\
 	gmime-stream-cat.h		\
