@@ -28,6 +28,9 @@
 #include "gmime.h"
 
 
+GQuark gmime_error_quark = g_quark_from_static_string ("gmime");
+
+
 static int initialized = FALSE;
 
 

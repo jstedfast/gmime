@@ -31,17 +31,21 @@ extern "C" {
 
 #include <glib.h>
 
-typedef enum {
+extern GQuark gmime_error_quark;
+#define GMIME_ERROR_QUARK gmime_error_quark
+#define GMIME_ERROR GMIME_ERROR_QUARK
+
+/* errno is a positive value, so negative values should be safe to use */
+#define GMIME_ERROR_IS_SYSTEM(error) ((error) > 0)
+
+enum {
 	GMIME_ERROR_GENERAL             =  0,
 	GMIME_ERROR_NOT_SUPPORTED       = -1,
 	GMIME_ERROR_PARSE_ERROR         = -2,
 	GMIME_ERROR_PROTOCOL_ERROR      = -3,
 	GMIME_ERROR_BAD_PASSWORD        = -4,
 	GMIME_ERROR_NO_VALID_RECIPIENTS = -5
-} GMimeError;
-
-#define GMIME_ERROR_QUARK (g_quark_from_static_string ("gmime"))
-#define GMIME_ERROR GMIME_ERROR_QUARK
+};
 
 #ifdef __cplusplus
 }
