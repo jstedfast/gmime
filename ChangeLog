@@ -1,3 +1,9 @@
+2002-12-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (datetok): Modified to properly handle when
+	the first char of a token is a special char (such as a '-') that
+	is also used as a token delimiter.
+
 2002-12-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-filter-html.c (g_mime_filter_html_init): match

@@ -220,14 +220,15 @@ datetok (const char *date)
 	start = date;
 	while (*start) {
 		/* kill leading whitespace */
-		for ( ; *start && isspace ((int) *start); start++);
+		while (*start && isspace ((int) *start))
+			start++;
 		
-		mask = 0;
+		mask = gmime_datetok_table[*start];
 		
 		/* find the end of this token */
-		for (end = start; *end && !strchr ("-/,\t\r\n ", *end); end++) {
-			mask |= gmime_datetok_table[*end];
-		}
+		end = start + 1;
+		while (*end && !strchr ("-/,\t\r\n ", *end))
+			mask |= gmime_datetok_table[*end++];
 		
 		if (end != start) {
 			token = g_malloc (sizeof (struct _date_token));
