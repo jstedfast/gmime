@@ -1,3 +1,18 @@
+2002-11-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (write_received): New function to nicely
+	format Received headers.
+	(write_msgid): New writer function that doesn't fold the msg-id no
+	matter now long it is.
+	(g_mime_message_init): Override the writer functions for Received
+	and Message-Id headers. Should we also override the writer
+	function for Path headers to not wrap?
+
+	* gmime/internet-address.c (decode_addrspec): Get rid of an extra
+	call to decode_lwsp that wasn't needed.
+
+	* gmime/gmime-header.c (g_mime_header_register_writer): Renamed.
+
 2002-11-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Make sure to include -liconv on systems that need it.

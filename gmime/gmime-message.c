@@ -34,6 +34,7 @@
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
+#include "gmime-table-private.h"
 
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
@@ -53,6 +54,9 @@ static void message_set_sender (GMimeMessage *message, const char *sender);
 static void message_set_reply_to (GMimeMessage *message, const char *reply_to);
 static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
 static void message_set_subject (GMimeMessage *message, const char *subject);
+
+static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
 
 static GMimeObjectClass *parent_class = NULL;
@@ -127,6 +131,9 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	message->gmt_offset = 0;
 	message->message_id = NULL;
 	message->mime_part = NULL;
+	
+	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Received", write_received);
+	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Message-Id", write_msgid);
 }
 
 static gboolean
@@ -168,6 +175,259 @@ message_init (GMimeObject *object)
 {
 	/* no-op */
 	GMIME_OBJECT_CLASS (parent_class)->init (object);
+}
+
+
+typedef void (*token_skip_t) (const char **in);
+
+struct _received_token {
+	char *token;
+	int len;
+	token_skip_t skip;
+};
+
+extern void decode_lwsp   (const char **in);
+
+static void skip_atom     (const char **in);
+static void skip_domain   (const char **in);
+static void skip_addrspec (const char **in);
+static void skip_msgid    (const char **in);
+
+static struct _received_token received_tokens[] = {
+	{ "from ", 5, skip_domain   },
+	{ "by ",   3, skip_domain   },
+	{ "via ",  4, skip_atom     },
+	{ "with ", 5, skip_atom     },
+	{ "id ",   3, skip_msgid    },
+	{ "for ",  4, skip_addrspec }
+};
+
+#define NUM_RECEIVED_TOKENS (sizeof (received_tokens) / sizeof (received_tokens[0]))
+
+static void
+skip_atom (const char **in)
+{
+	register const char *inptr;
+	
+	decode_lwsp (in);
+	inptr = *in;
+	while (is_atom (*inptr))
+		inptr++;
+	*in = inptr;
+}
+
+static void
+skip_quoted_string (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	if (*inptr == '"') {
+		inptr++;
+		while (*inptr && *inptr != '"') {
+			if (*inptr == '\\')
+				inptr++;
+			
+			if (*inptr)
+				inptr++;
+		}
+		
+		if (*inptr == '"')
+			inptr++;
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_word (const char **in)
+{
+	decode_lwsp (in);
+	if (**in == '"') {
+		skip_quoted_string (in);
+	} else {
+		skip_atom (in);
+	}
+}
+
+static void
+skip_domain_subliteral (const char **in)
+{
+	const char *inptr = *in;
+	
+	while (*inptr && *inptr != '.' && *inptr != ']') {
+		if (is_dtext (*inptr)) {
+			inptr++;
+		} else if (is_lwsp (*inptr)) {
+			decode_lwsp (&inptr);
+		} else {
+			break;
+		}
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_domain_literal (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	while (*inptr && *inptr != ']') {
+		skip_domain_subliteral (&inptr);
+		if (*inptr && *inptr != ']')
+			inptr++;
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_domain (const char **in)
+{
+	const char *save, *inptr = *in;
+	
+	while (inptr && *inptr) {
+		decode_lwsp (&inptr);
+		if (*inptr == '[') {
+			/* domain literal */
+			inptr++;
+			skip_domain_literal (&inptr);
+			if (*inptr == ']')
+				inptr++;
+		} else {
+			skip_atom (&inptr);
+		}
+		
+		save = inptr;
+		decode_lwsp (&inptr);
+		if (*inptr != '.') {
+			inptr = save;
+			break;
+		}
+		
+		inptr++;
+	}
+	
+	*in = inptr;
+}
+
+static void
+skip_addrspec (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	skip_word (&inptr);
+	decode_lwsp (&inptr);
+	
+	while (*inptr == '.') {
+		skip_word (&inptr);
+		decode_lwsp (&inptr);
+	}
+	
+	if (*inptr == '@')
+		skip_domain (&inptr);
+	
+	*in = inptr;
+}
+
+static void
+skip_msgid (const char **in)
+{
+	const char *inptr = *in;
+	
+	decode_lwsp (&inptr);
+	if (*inptr == '<') {
+		inptr++;
+		decode_lwsp (&inptr);
+		skip_addrspec (&inptr);
+		if (*inptr == '>')
+			inptr++;
+	}
+	
+	*in = inptr;
+}
+
+
+static ssize_t
+write_received (GMimeStream *stream, const char *name, const char *value)
+{
+	const char *start, *inptr;
+	ssize_t nwritten;
+	GString *str;
+	int len, i;
+	
+	str = g_string_new (name);
+	g_string_append_len (str, ": ", 2);
+	len = 10;
+	
+	start = inptr = value;
+	while (*inptr) {
+		while (is_lwsp (*inptr))
+			inptr++;
+		
+		for (i = 0; i < NUM_RECEIVED_TOKENS; i++) {
+			if (!strncmp (inptr, received_tokens[i].token, received_tokens[i].len)) {
+				if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
+					g_string_append (str, "\n\t");
+					while (is_lwsp (*start))
+						start++;
+					len = 1;
+				}
+				
+				/* write the last section */
+				g_string_append_len (str, start, inptr - start);
+				len += (inptr - start);
+				start = inptr;
+				
+				inptr += received_tokens[i].len;
+				received_tokens[i].skip (&inptr);
+				
+				break;
+			}
+		}
+		
+		if (*inptr == ';') {
+			if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
+				g_string_append (str, "\n\t");
+				while (is_lwsp (*start))
+					start++;
+				len = 1;
+			}
+			
+			inptr++;
+			g_string_append_len (str, start, inptr - start);
+			len += (inptr - start);
+			start = inptr;
+		}
+		
+		inptr++;
+	}
+	
+	if ((inptr - start) + len > GMIME_FOLD_LEN && start != value) {
+		g_string_append (str, "\n\t");
+		while (is_lwsp (*start))
+			start++;
+		len = 1;
+	}
+	
+	g_string_append_len (str, start, inptr - start);
+	g_string_append_c (str, '\n');
+	
+	nwritten = g_mime_stream_write (stream, str->str, str->len);
+	g_string_free (str, TRUE);
+	
+	return nwritten;
+}
+
+static ssize_t
+write_msgid (GMimeStream *stream, const char *name, const char *value)
+{
+	/* we don't want to wrap the Message-Id header - seems to
+	   break a lot of clients (and servers) */
+	return g_mime_stream_printf (stream, "%s: %s\n", name, value);
 }
 
 

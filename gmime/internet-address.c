@@ -717,7 +717,6 @@ decode_addrspec (const char **in)
 	}
 	
 	addrspec = g_string_new (word);
-	decode_lwsp (&inptr);
 	g_free (word);
 	
 	/* get the rest of the local-part */

@@ -40,7 +40,7 @@ struct raw_header {
 
 struct _GMimeHeader {
 	GHashTable *hash;
-	GHashTable *write_hash;
+	GHashTable *writers;
 	struct raw_header *headers;
 };
 
@@ -79,7 +79,7 @@ g_mime_header_new ()
 	
 	new = g_new (GMimeHeader, 1);
 	new->hash = g_hash_table_new (header_hash, header_equal);
-	new->write_hash = g_hash_table_new (header_hash, header_equal);
+	new->writers = g_hash_table_new (header_hash, header_equal);
 	new->headers = NULL;
 	
 	return new;
@@ -115,8 +115,8 @@ g_mime_header_destroy (GMimeHeader *header)
 		}
 		
 		g_hash_table_destroy (header->hash);
-		g_hash_table_foreach (header->write_hash, writer_free, NULL);
-		g_hash_table_destroy (header->write_hash);
+		g_hash_table_foreach (header->writers, writer_free, NULL);
+		g_hash_table_destroy (header->writers);
 		g_free (header);
 	}
 }
@@ -284,7 +284,7 @@ write_default (GMimeStream *stream, const char *name, const char *value)
 ssize_t
 g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 {
-	GMimeHeaderWriteFunc header_write;
+	GMimeHeaderWriter header_write;
 	ssize_t nwritten, total = 0;
 	struct raw_header *h;
 	
@@ -294,7 +294,7 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 	h = header->headers;
 	while (h) {
 		if (h->value) {
-			header_write = g_hash_table_lookup (header->write_hash, h->name);
+			header_write = g_hash_table_lookup (header->writers, h->name);
 			if (header_write)
 				nwritten = (*header_write) (stream, h->name, h->value);
 			else
@@ -367,28 +367,29 @@ g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, g
 
 
 /**
- * g_mime_header_set_write_func:
+ * g_mime_header_register_writer:
  * @header: header object
  * @name: header name
- * @func: writer function
+ * @writer: writer function
  *
- * Changes the function used to write @name headers to @func. This is
- * useful if you want to change the default header folding style for a
- * particular header.
+ * Changes the function used to write @name headers to @writer (or the
+ * default if @writer is %NULL). This is useful if you want to change
+ * the default header folding style for a particular header.
  **/
 void
-g_mime_header_set_write_func (GMimeHeader *header, const char *name, GMimeHeaderWriteFunc func)
+g_mime_header_register_writer (GMimeHeader *header, const char *name, GMimeHeaderWriter writer)
 {
 	gpointer okey, oval;
 	
 	g_return_if_fail (header != NULL);
 	g_return_if_fail (name != NULL);
 	
-	if (g_hash_table_lookup (header->write_hash, name)) {
-		g_hash_table_lookup_extended (header->write_hash, name, &okey, &oval);
-		g_hash_table_remove (header->write_hash, name);
+	if (g_hash_table_lookup (header->writers, name)) {
+		g_hash_table_lookup_extended (header->writers, name, &okey, &oval);
+		g_hash_table_remove (header->writers, name);
 		g_free (okey);
 	}
 	
-	g_hash_table_insert (header->write_hash, g_strdup (name), func);
+	if (writer)
+		g_hash_table_insert (header->writers, g_strdup (name), writer);
 }
