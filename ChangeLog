@@ -3,6 +3,13 @@
 	* gmime-gpg-context.c (gpg_ctx_op_step): Loop on our reads while
 	errno is EINTR or EAGAIN. Also make sure to completely read stdout
 	and stderr by keeping better state.
+	(gpg_ctx_parse_status): If we encounted a NODATA error from gpg
+	and we have diagnostics output, use that as the exception string.
+	(gpg_ctx_op_exited): New function to determine if the gpg process
+	has exited.
+	(gpg_ctx_op_wait): Reuse any exit status information from
+	gpg_ctx_op_exited().
+	(gpg_verify): Check that the gpg process has not exited each loop.
 
 2002-06-26  Jeffrey Stedfast  <fejj@ximian.com>
 
