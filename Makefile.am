@@ -74,8 +74,8 @@ PARSERtests : test-parser
 	@echo "## MIME Parser regression tests"
 	@echo "##"
 
-dist-hook: libgmime.spec
-	-cp libgmime.spec $(distdir)
+dist-hook: gmime.spec
+	-cp gmime.spec $(distdir)
 	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)
 
 ## We create gmimeConf.sh here and not from configure because we want
@@ -90,7 +90,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in libgmime.spec.in libgmime.spec gmime.m4
+EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.

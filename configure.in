@@ -147,6 +147,6 @@ AC_OUTPUT(
   tests/Makefile
   doc/Makefile
   gmime-config
-  libgmime.spec
+  gmime.spec
   gmime.h
 )

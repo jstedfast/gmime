@@ -1,0 +1,60 @@
+# Note that this is NOT a relocatable package
+%define ver      @VERSION@
+%define prefix   /usr
+
+Summary: MIME library
+Name: gmime
+Version: %ver
+Release: 1
+Copyright: GPL
+Group: Development/Libraries
+URL: http://www.xtorshun.org/gmime/
+
+Source: http://www.xtorshun.org/gmime/sources/gmime-%{version}.tar.gz
+BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
+
+Requires: glib >= 1.2.0
+
+%description
+GMime is a set of utilities for parsing and creating messages using
+the Multipurpose Internet Mail Extension (MIME)
+
+%prep
+%setup
+
+%build
+if [ ! -f configure ]; then
+  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh --prefix=%prefix
+%else
+  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh --prefix=%prefix
+%endif
+
+if [ "$SMP" != "" ]; then
+  (make "MAKE=make -k -j $SMP"; exit 0)
+  make
+else
+  make
+fi
+
+%install
+rm -rf $RPM_BUILD_ROOT
+make prefix=$RPM_BUILD_ROOT%{prefix} install
+
+%clean
+rm -rf $RPM_BUILD_ROOT
+
+%files
+%defattr(-, root, root)
+
+%doc doc/html/* AUTHORS ChangeLog NEWS README COPYING TODO
+%{prefix}/lib/lib*.so.*
+
+%{prefix}/bin/gmime-config
+%{prefix}/lib/*.sh
+%{prefix}/lib/libgmime*
+%{prefix}/share/aclocal/gmime.m4
+%{prefix}/include/gmime/*.h
+
+%changelog
+* Sat Mar 24 2001 Leland Elie <lelie@airmail.net>
+- created spec file.
