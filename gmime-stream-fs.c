@@ -32,8 +32,6 @@
 
 #include "gmime-stream-fs.h"
 
-static void g_mime_stream_fs_base_class_init (GMimeStreamFsClass *klass);
-static void g_mime_stream_fs_base_class_finalize (GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_class_init (GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_finalize (GObject *object);
@@ -61,8 +59,8 @@ g_mime_stream_fs_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamFsClass),
-			(GBaseInitFunc) g_mime_stream_fs_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_fs_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_fs_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -77,19 +75,6 @@ g_mime_stream_fs_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_fs_base_class_init (GMimeStreamFsClass *klass)
-{
-	/* reset instance specifc methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_fs_base_class_finalize (GMimeStreamFsClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_fs_class_init (GMimeStreamFsClass *klass)

@@ -37,6 +37,7 @@ libgmime_la_SOURCES = 		\
 	gmime-multipart.c	\
 	gmime-object.c		\
 	gmime-param.c		\
+	gmime-parser.c		\
 	gmime-part.c		\
 	gmime-stream.c		\
 	gmime-stream-buffer.c	\
@@ -71,6 +72,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-multipart.h	\
 	gmime-object.h		\
 	gmime-param.h		\
+	gmime-parser.h		\
 	gmime-part.h		\
 	gmime-stream.h		\
 	gmime-stream-buffer.h	\

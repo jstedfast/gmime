@@ -107,9 +107,6 @@ const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part,
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (const GMimePart *mime_part);
 
-void g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary);
-const char *g_mime_part_get_boundary (GMimePart *mime_part);
-
 void g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content);
 void g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len);
 void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,

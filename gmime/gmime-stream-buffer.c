@@ -32,8 +32,6 @@
 #define BLOCK_BUFFER_LEN   4096
 #define BUFFER_GROW_SIZE   1024  /* should this also be 4k? */
 
-static void g_mime_stream_buffer_base_class_init (GMimeStreamBufferClass *klass);
-static void g_mime_stream_buffer_base_class_finalize (GMimeStreamBufferClass *klass);
 static void g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass);
 static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass);
 static void g_mime_stream_buffer_finalize (GObject *object);
@@ -61,8 +59,8 @@ g_mime_stream_buffer_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamBufferClass),
-			(GBaseInitFunc) g_mime_stream_buffer_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_buffer_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_buffer_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -77,19 +75,6 @@ g_mime_stream_buffer_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_buffer_base_class_init (GMimeStreamBufferClass *klass)
-{
-	/* reset instance specifc methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_buffer_base_class_finalize (GMimeStreamBufferClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass)

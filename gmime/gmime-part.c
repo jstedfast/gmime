@@ -41,8 +41,6 @@
 #include "md5-utils.h"
 
 /* GObject class methods */
-static void g_mime_part_base_class_init (GMimePartClass *klass);
-static void g_mime_part_base_class_finalize (GMimePartClass *klass);
 static void g_mime_part_class_init (GMimePartClass *klass);
 static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
 static void g_mime_part_finalize (GObject *object);
@@ -72,8 +70,8 @@ g_mime_part_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimePartClass),
-			(GBaseInitFunc) g_mime_part_base_class_init,
-			(GBaseFinalizeFunc) g_mime_part_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_part_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -88,19 +86,6 @@ g_mime_part_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_part_base_class_init (GMimePartClass *klass)
-{
-	/* reset instance specific methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_part_base_class_finalize (GMimePartClass *klass)
-{
-	;
-}
 
 static void
 g_mime_part_class_init (GMimePartClass *klass)

@@ -32,6 +32,7 @@
 void
 test_parser (char *data)
 {
+	GMimeParser *parser;
 	GMimeMessage *message;
 	GMimeStream *stream;
 	char *text;
@@ -39,7 +40,10 @@ test_parser (char *data)
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
 	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
-	message = g_mime_parser_construct_message (stream, TRUE);
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	message = g_mime_parser_construct_message (parser);
+	g_object_unref (parser);
 	g_mime_stream_unref (stream);
 	
 	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
@@ -424,6 +428,8 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
+	g_mime_init (0);
+	
 	test_date ();
 	
 	test_onepart ();

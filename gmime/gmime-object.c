@@ -34,10 +34,7 @@ struct _type_bucket {
 	GHashTable *subtype_hash;
 };
 
-static void g_mime_object_base_class_init (GMimeObjectClass *klass);
-static void g_mime_object_base_class_finalize (GMimeObjectClass *klass);
 static void g_mime_object_class_init (GMimeObjectClass *klass);
-static void g_mime_object_class_finalize (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
@@ -66,10 +63,10 @@ g_mime_object_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeObjectClass),
-			(GBaseInitFunc) g_mime_object_base_class_init,
-			(GBaseFinalizeFunc) g_mime_object_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_object_class_init,
-			(GClassFinalizeFunc) g_mime_object_class_finalize,
+			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeObject),
 			16,   /* n_preallocs */
@@ -82,19 +79,6 @@ g_mime_object_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_object_base_class_init (GMimeObjectClass *klass)
-{
-	/* reset instance specific methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_object_base_class_finalize (GMimeObjectClass *klass)
-{
-	;
-}
 
 static void
 g_mime_object_class_init (GMimeObjectClass *klass)
@@ -114,12 +98,6 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	klass->write_to_stream = write_to_stream;
 	
 	type_registry_init ();
-}
-
-static void
-g_mime_object_class_finalize (GMimeObjectClass *klass)
-{
-
 }
 
 static void

@@ -77,6 +77,12 @@ GMimeMultipart *g_mime_multipart_new (void);
 
 GMimeMultipart *g_mime_multipart_new_with_subtype (const char *subtype);
 
+void g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface);
+const char *g_mime_multipart_get_preface (GMimeMultipart *multipart);
+
+void g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface);
+const char *g_mime_multipart_get_postface (GMimeMultipart *multipart);
+
 void g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index);
 void g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);

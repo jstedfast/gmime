@@ -1,3 +1,29 @@
+2002-04-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.[c,h]: Brand spankin' new parser. Seems to work for
+	at least simple messages, needs a lot more love though.
+
+	* gmime-stream*.c: Don't use a base_class init or finalize.
+
+	* gmime-object.c: Same.
+
+	* gmime-part.c: Same here.
+
+	* gmime.c (g_mime_init): Call g_type_init.
+
+	* gmime-utils.c (g_mime_utils_header_fold): Slight bugfix to get
+	rid of extra whitespace at the end of a line.
+
+	* gmime-multipart.c (g_mime_multipart_set_preface): New accesor
+	function to set the multipart preface.
+	(g_mime_multipart_get_preface): New accesor function to get the
+	multipart preface.
+	(g_mime_multipart_set_postface): New accesor function to set the
+	multipart postface.
+	(g_mime_multipart_get_postface): New accesor function to get the
+	multipart postface.
+	(write_to_stream): Don't force a preface if we don't have one.
+
 2002-04-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-object.c: Don't tie the type-registry lifetime to the

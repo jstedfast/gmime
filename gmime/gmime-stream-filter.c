@@ -53,8 +53,6 @@ struct _GMimeStreamFilterPrivate {
 	int last_was_read;	/* was the last op read or write? */
 };
 
-static void g_mime_stream_filter_base_class_init (GMimeStreamFilterClass *klass);
-static void g_mime_stream_filter_base_class_finalize (GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_finalize (GObject *object);
@@ -82,8 +80,8 @@ g_mime_stream_filter_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamFilterClass),
-			(GBaseInitFunc) g_mime_stream_filter_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_filter_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_filter_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -98,19 +96,6 @@ g_mime_stream_filter_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_filter_base_class_init (GMimeStreamFilterClass *klass)
-{
-	/* reset instance specifc methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_filter_base_class_finalize (GMimeStreamFilterClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass)

@@ -26,21 +26,23 @@ print_depth (int depth)
 }
 
 void
-print_mime_struct (GMimePart *part, int depth)
+print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
+	GMimeObject *object;
 	
 	print_depth (depth);
-	type = g_mime_part_get_content_type (part);
+	type = g_mime_object_get_content_type (part);
 	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
 	
-	if (g_mime_content_type_is_type (type, "multipart", "*")) {
-		GList *child;
+	
+	if (GMIME_IS_MULTIPART (part)) {
+		GList *subpart;
 		
-		child = part->children;
-		while (child) {
-			print_mime_struct (child->data, depth + 1);
-			child = child->next;
+		subpart = GMIME_MULTIPART (part)->subparts;
+		while (subpart) {
+			print_mime_struct (subpart->data, depth + 1);
+			subpart = subpart->next;
 		}
 	}
 }
@@ -48,16 +50,22 @@ print_mime_struct (GMimePart *part, int depth)
 void
 test_parser (GMimeStream *stream)
 {
+	GMimeParser *parser;
 	GMimeMessage *message;
 	gboolean is_html;
 	char *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	
 	ZenTimerStart();
-	message = g_mime_parser_construct_message (stream, TRUE);
+	message = g_mime_parser_construct_message (parser);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::parser_construct_message");
+	
+	g_object_unref (parser);
 	
 	ZenTimerStart();
 	text = g_mime_message_to_string (message);
@@ -72,7 +80,7 @@ test_parser (GMimeStream *stream)
 		
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		stream = g_mime_stream_file_new (stdout);
-		g_mime_header_write_to_stream (message->header->headers, stream);
+		g_mime_header_write_to_stream (GMIME_OBJECT (message)->headers, stream);
 		g_mime_stream_flush (stream);
 		GMIME_STREAM_FILE (stream)->fp = NULL;
 		g_mime_stream_unref (stream);
@@ -114,6 +122,8 @@ int main (int argc, char **argv)
 	char *filename = NULL;
 	GMimeStream *stream, *istream;
 	int fd;
+	
+	g_mime_init (0);
 	
 	if (argc > 1)
 		filename = argv[1];

@@ -45,6 +45,8 @@ g_mime_init (guint32 flags)
 	
 	initialized = TRUE;
 	
+	g_type_init ();
+	
 	g_mime_charset_init ();
 	
 	g_mime_iconv_init ();

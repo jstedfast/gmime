@@ -31,8 +31,6 @@
 
 #define d(x) x
 
-static void g_mime_stream_base_class_init (GMimeStreamClass *class);
-static void g_mime_stream_base_class_finalize (GMimeStreamClass *class);
 static void g_mime_stream_class_init (GMimeStreamClass *klass);
 static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);
 static void g_mime_stream_finalize (GObject *object);
@@ -60,8 +58,8 @@ g_mime_stream_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamClass),
-			(GBaseInitFunc) g_mime_stream_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -76,19 +74,6 @@ g_mime_stream_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_base_class_init (GMimeStreamClass *klass)
-{
-	/* reset instance specific methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_base_class_finalize (GMimeStreamClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_class_init (GMimeStreamClass *klass)

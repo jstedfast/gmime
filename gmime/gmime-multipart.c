@@ -36,8 +36,6 @@
 #define d(x) x
 
 /* GObject class methods */
-static void g_mime_multipart_base_class_init (GMimeMultipartClass *klass);
-static void g_mime_multipart_base_class_finalize (GMimeMultipartClass *klass);
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
 static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass);
 static void g_mime_multipart_finalize (GObject *object);
@@ -73,8 +71,8 @@ g_mime_multipart_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeMultipartClass),
-			(GBaseInitFunc) g_mime_multipart_base_class_init,
-			(GBaseFinalizeFunc) g_mime_multipart_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_multipart_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -89,19 +87,6 @@ g_mime_multipart_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_multipart_base_class_init (GMimeMultipartClass *klass)
-{
-	/* reset instance specific methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_multipart_base_class_finalize (GMimeMultipartClass *klass)
-{
-	;
-}
 
 static void
 g_mime_multipart_class_init (GMimeMultipartClass *klass)
@@ -232,6 +217,10 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimeObject *part;
 	GList *node;
 	
+	/* make sure a boundary is set */
+	if (!multipart->boundary)
+		g_mime_multipart_set_boundary (multipart, NULL);
+	
 	/* write the content headers */
 	nwritten = g_mime_header_write_to_stream (object->headers, stream);
 	if (nwritten == -1)
@@ -246,16 +235,13 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	total++;
 	
 	/* write the preface */
-	buffer = multipart->preface ? multipart->preface : "This is a multipart message in MIME format.\n";
-	nwritten = g_mime_stream_write_string (stream, buffer);
-	if (nwritten == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* make sure a boundary is set */
-	if (!multipart->boundary)
-		g_mime_multipart_set_boundary (multipart, NULL);
+	if (multipart->preface) {
+		nwritten = g_mime_stream_write_string (stream, multipart->preface);
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+	}
 	
 	node = multipart->subparts;
 	while (node) {
@@ -278,13 +264,21 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		node = node->next;
 	}
 	
-	nwritten = g_mime_stream_printf (stream, "\n--%s--\n%s", multipart->boundary,
-					 multipart->postface ? multipart->postface : "");
+	nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary);
 	if (nwritten == -1)
 		return -1;
 	
 	total += nwritten;
-	
+
+	/* write the postface */
+	if (multipart->postface) {
+		nwritten = g_mime_stream_write_string (stream, multipart->postface);
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+	}
+		
 	return total;
 }
 
@@ -343,6 +337,74 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
 	
 	return multipart;
+}
+
+
+/**
+ * g_mime_multipart_set_preface:
+ * @multipart: multipart
+ * @preface: preface
+ *
+ * Sets the preface on the multipart.
+ **/
+void
+g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface)
+{
+	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	
+	g_free (multipart->preface);
+	multipart->preface = g_strdup (preface);
+}
+
+
+/**
+ * g_mime_multipart_get_preface:
+ * @multipart: multipart
+ *
+ * Gets the preface on the multipart.
+ *
+ * Returns a pointer to the preface string on the multipart.
+ **/
+const char *
+g_mime_multipart_get_preface (GMimeMultipart *multipart)
+{
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
+	
+	return multipart->preface;
+}
+
+
+/**
+ * g_mime_multipart_set_postface:
+ * @multipart: multipart
+ * @postface: postface
+ *
+ * Sets the postface on the multipart.
+ **/
+void
+g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface)
+{
+	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	
+	g_free (multipart->postface);
+	multipart->postface = g_strdup (postface);
+}
+
+
+/**
+ * g_mime_multipart_get_postface:
+ * @multipart: multipart
+ *
+ * Gets the postface on the multipart.
+ *
+ * Returns a pointer to the postface string on the multipart.
+ **/
+const char *
+g_mime_multipart_get_postface (GMimeMultipart *multipart)
+{
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
+	
+	return multipart->postface;
 }
 
 

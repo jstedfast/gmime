@@ -37,8 +37,6 @@
 
 #include "gmime-stream-mmap.h"
 
-static void g_mime_stream_mmap_base_class_init (GMimeStreamMmapClass *klass);
-static void g_mime_stream_mmap_base_class_finalize (GMimeStreamMmapClass *klass);
 static void g_mime_stream_mmap_class_init (GMimeStreamMmapClass *klass);
 static void g_mime_stream_mmap_init (GMimeStreamMmap *stream, GMimeStreamMmapClass *klass);
 static void g_mime_stream_mmap_finalize (GObject *object);
@@ -66,8 +64,8 @@ g_mime_stream_mmap_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamMmapClass),
-			(GBaseInitFunc) g_mime_stream_mmap_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_mmap_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_mmap_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -82,19 +80,6 @@ g_mime_stream_mmap_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_mmap_base_class_init (GMimeStreamMmapClass *klass)
-{
-	/* reset instance specifc methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_mmap_base_class_finalize (GMimeStreamMmapClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_mmap_class_init (GMimeStreamMmapClass *klass)

@@ -36,10 +36,7 @@
 #include "gmime-stream-mem.h"
 
 
-static void g_mime_message_base_class_init (GMimeMessageClass *klass);
-static void g_mime_message_base_class_finalize (GMimeMessageClass *klass);
 static void g_mime_message_class_init (GMimeMessageClass *klass);
-static void g_mime_message_class_finalize (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
 static void g_mime_message_finalize (GObject *object);
 
@@ -78,10 +75,10 @@ g_mime_message_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeMessageClass),
-			(GBaseInitFunc) g_mime_message_base_class_init,
-			(GBaseFinalizeFunc) g_mime_message_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_message_class_init,
-			(GClassFinalizeFunc) g_mime_message_class_finalize,
+			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeMessage),
 			0,   /* n_preallocs */
@@ -94,19 +91,6 @@ g_mime_message_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_message_base_class_init (GMimeMessageClass *klass)
-{
-	/* reset instance specific methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_message_base_class_finalize (GMimeMessageClass *klass)
-{
-	;
-}
 
 static void
 g_mime_message_class_init (GMimeMessageClass *klass)
@@ -126,13 +110,6 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->get_headers = message_get_headers;
 	object_class->write_to_stream = message_write_to_stream;
 }
-
-static void
-g_mime_message_class_finalize (GMimeMessageClass *klass)
-{
-	;
-}
-
 
 static void
 g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)

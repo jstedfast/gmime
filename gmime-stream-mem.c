@@ -29,8 +29,6 @@
 
 #include "gmime-stream-mem.h"
 
-static void g_mime_stream_mem_base_class_init (GMimeStreamMemClass *klass);
-static void g_mime_stream_mem_base_class_finalize (GMimeStreamMemClass *klass);
 static void g_mime_stream_mem_class_init (GMimeStreamMemClass *klass);
 static void g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass);
 static void g_mime_stream_mem_finalize (GObject *object);
@@ -58,8 +56,8 @@ g_mime_stream_mem_get_type (void)
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeStreamMemClass),
-			(GBaseInitFunc) g_mime_stream_mem_base_class_init,
-			(GBaseFinalizeFunc) g_mime_stream_mem_base_class_finalize,
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
 			(GClassInitFunc) g_mime_stream_mem_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
@@ -74,19 +72,6 @@ g_mime_stream_mem_get_type (void)
 	return type;
 }
 
-
-static void
-g_mime_stream_mem_base_class_init (GMimeStreamMemClass *klass)
-{
-	/* reset instance specifc methods that don't get inherited */
-	;
-}
-
-static void
-g_mime_stream_mem_base_class_finalize (GMimeStreamMemClass *klass)
-{
-	;
-}
 
 static void
 g_mime_stream_mem_class_init (GMimeStreamMemClass *klass)
