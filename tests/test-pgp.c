@@ -24,18 +24,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "pgp-utils.h"
 
-static gchar *path = "/usr/bin/gpg";
-static PgpType type = PGP_TYPE_GPG;
-static gchar *userid = "pgp-mime@xtorshun.org";
-static gchar *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+#include "gmime.h"
+#include "gmime-pgp-context.h"
 
-static gchar *
-pgp_get_passphrase (const gchar *prompt, gpointer data)
+static char *path = "/usr/bin/gpg";
+static GMimePgpType type = GMIME_PGP_TYPE_GPG;
+static char *userid = "pgp-mime@xtorshun.org";
+static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+
+static char *
+get_passwd (const char *prompt, gpointer data)
 {
 #if 0
-	gchar buffer[256];
+	char buffer[256];
 	
 	fprintf (stderr, "%s\nPassphrase: %s\n", prompt, passphrase);
 	fgets (buffer, 255, stdin);
@@ -45,13 +47,18 @@ pgp_get_passphrase (const gchar *prompt, gpointer data)
 }
 
 static int
-test_clearsign (const gchar *cleartext)
+test_clearsign (GMimePgpContext *ctx, const char *cleartext)
 {
-	gchar *ciphertext;
+	GMimeStream *stream, *ciphertext;
+	GByteArray *buffer;
 	GMimeException *ex;
 	
+	stream = g_mime_stream_mem_new_with_buffer (cleartext, strlen (cleartext));
+	ciphertext = g_mime_stream_mem_new ();
+	
 	ex = g_mime_exception_new ();
-	ciphertext = pgp_clearsign (cleartext, userid, PGP_HASH_TYPE_NONE, ex);
+	g_mime_pgp_clearsign (ctx, userid, GMIME_CIPHER_HASH_DEFAULT, stream, ciphertext, ex);
+	g_mime_stream_unref (stream);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_clearsign failed: %s\n",
 			 g_mime_exception_get_description (ex));
@@ -60,21 +67,26 @@ test_clearsign (const gchar *cleartext)
 	}
 	
 	g_mime_exception_free (ex);
-	fprintf (stderr, "clearsign:\n%s\n", ciphertext);
-	g_free (ciphertext);
+	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
+	fprintf (stderr, "clearsign:\n%.*s\n", buffer->len, buffer->data);
+	g_mime_stream_unref (ciphertext);
 	
 	return 1;
 }
 
 static int
-test_sign (const gchar *cleartext, PgpHashType hash)
+test_sign (GMimePgpContext *ctx, const char *cleartext, GMimeCipherHash hash)
 {
-	gchar *ciphertext;
+	GMimeStream *stream, *ciphertext;
+	GByteArray *buffer;
 	GMimeException *ex;
 	
+	stream = g_mime_stream_mem_new_with_buffer (cleartext, strlen (cleartext));
+	ciphertext = g_mime_stream_mem_new ();
+	
 	ex = g_mime_exception_new ();
-	ciphertext = pgp_sign (cleartext, strlen (cleartext),
-			       userid, hash, ex);
+	g_mime_pgp_sign (ctx, userid, hash, stream, ciphertext, ex);
+	g_mime_stream_unref (stream);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_sign failed: %s\n",
 			 g_mime_exception_get_description (ex));
@@ -83,27 +95,32 @@ test_sign (const gchar *cleartext, PgpHashType hash)
 	}
 	
 	g_mime_exception_free (ex);
-	fprintf (stderr, "signature:\n%s\n", ciphertext);
-	g_free (ciphertext);
+	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
+	fprintf (stderr, "signature:\n%.*s\n", buffer->len, buffer->data);
+	g_mime_stream_unref (ciphertext);
 	
 	return 1;
 }
 
 static int
-test_encrypt (const gchar *in, gint inlen)
+test_encrypt (GMimePgpContext *ctx, const char *in, int inlen)
 {
+	GMimeStream *stream, *ciphertext;
 	GPtrArray *recipients;
-	gchar *ciphertext;
+	GByteArray *buffer;
 	GMimeException *ex;
+	
+	stream = g_mime_stream_mem_new_with_buffer (in, inlen);
+	ciphertext = g_mime_stream_mem_new ();
 	
 	ex = g_mime_exception_new ();
 	
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, userid);
 	
-	ciphertext = pgp_encrypt (in, inlen, recipients, FALSE, NULL, ex);
+	g_mime_pgp_encrypt (ctx, FALSE, userid, recipients, stream, ciphertext, ex);
 	g_ptr_array_free (recipients, TRUE);
-	
+	g_mime_stream_unref (stream);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_encrypt failed: %s\n",
 			 g_mime_exception_get_description (ex));
@@ -112,22 +129,28 @@ test_encrypt (const gchar *in, gint inlen)
 	}
 	
 	g_mime_exception_free (ex);
-	fprintf (stderr, "ciphertext:\n%s\n", ciphertext);
-	g_free (ciphertext);
+	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
+	fprintf (stderr, "ciphertext:\n%.*s\n", buffer->len, buffer->data);
+	g_mime_stream_unref (ciphertext);
 	
 	return 1;
 }
 
 static int
-test_decrypt (const gchar *ciphertext)
+test_decrypt (GMimePgpContext *ctx, const char *ciphertext)
 {
-	gchar *cleartext;
+	GMimeStream *stream, *cleartext;
+	GByteArray *buffer;
 	GMimeException *ex;
-	gint len;
+	int len;
+	
+	stream = g_mime_stream_mem_new_with_buffer (ciphertext, strlen (ciphertext));
+	cleartext = g_mime_stream_mem_new ();
 	
 	ex = g_mime_exception_new ();
 	
-	cleartext = pgp_decrypt (ciphertext, strlen (ciphertext), &len, ex);
+	g_mime_pgp_decrypt (ctx, stream, cleartext, ex);
+	g_mime_stream_unref (stream);
 	if (g_mime_exception_is_set (ex)) {
 		fprintf (stderr, "pgp_encrypt failed: %s\n",
 			 g_mime_exception_get_description (ex));
@@ -136,31 +159,35 @@ test_decrypt (const gchar *ciphertext)
 	}
 	
 	g_mime_exception_free (ex);
-	fprintf (stderr, "cleartext:\n%*.s\n", len, cleartext);
-	g_free (cleartext);
+	buffer = GMIME_STREAM_MEM (cleartext)->buffer;
+	fprintf (stderr, "cleartext:\n%*.s\n", buffer->len, buffer->data);
+	g_mime_stream_unref (cleartext);
 	
 	return 1;
 }
 
 int main (int argc, char **argv)
 {
+	GMimePgpContext *ctx;
 	int i;
 	
-	pgp_init (path, type, pgp_get_passphrase, NULL);
+	ctx = g_mime_pgp_context_new (type, path, get_passwd, NULL);
 	
-	if (!test_clearsign ("This is a test of clearsign\n"))
+	if (!test_clearsign (ctx, "This is a test of clearsign\n"))
 		return 1;
 	
-	if (!test_sign ("This is a test of pgp sign using md5\n",
-			PGP_HASH_TYPE_MD5))
+	if (!test_sign (ctx, "This is a test of pgp sign using md5\n",
+			GMIME_CIPHER_HASH_MD5))
 		return 1;
 	
-	if (!test_sign ("This is a test of pgp sign using sha1\n",
-			PGP_HASH_TYPE_SHA1))
+	if (!test_sign (ctx, "This is a test of pgp sign using sha1\n",
+			GMIME_CIPHER_HASH_SHA1))
 		return 1;
 	
-	if (!test_encrypt ("Hello, this is a test\n", strlen ("Hello, this is a test\n")))
+	if (!test_encrypt (ctx, "Hello, this is a test\n", strlen ("Hello, this is a test\n")))
 		return 1;
+	
+	g_mime_object_unref (GMIME_OBJECT (ctx));
 	
 	return 0;
 }
