@@ -26,8 +26,6 @@
 #	include <config.h>
 #endif
 
-#ifdef PGP_PROGRAM
-
 #include "pgp-utils.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -49,8 +47,9 @@
 #include <signal.h>
 
 #define d(x) x
+#define _(x) x
 
-static gchar *pgp_path = NULL;
+static const gchar *pgp_path = NULL;
 static PgpType pgp_type = PGP_TYPE_NONE;
 static PgpPasswdFunc pgp_passwd_func = NULL;
 static gpointer pgp_data = NULL;
@@ -133,33 +132,6 @@ pgp_sign_detect (const gchar *text)
 	return FALSE;
 }
 
-/*
- * i'am not aware of pgp 2x & 5x
- * i only know gnupg, help me with the options
- * if they are different
- * jean charles <jcb@chez.com>
- */
-gboolean
-pgp_recipient_exists (const gchar *recipient)
-{
-	FILE *pipe;
-	char buf[512];
-	int retval = FALSE;
-	
-	pipe = popen (PGP_PROGRAM " --list-key", "r");
-	if (!pipe) {
-		fprintf (stderr, "Could not open a pipe to %s\n", PGP_PROGRAM);
-	} else {
-		while ((fgets (buf, 511, pipe))) {
-			if (strstr (buf, email)) {
-				retval = TRUE;
-			}
-			pclose (pipe);
-		}
-	}
-	return retval;
-}
-
 static int
 cleanup_child (pid_t child)
 {
@@ -217,7 +189,7 @@ cleanup_before_exec (int fd)
 }
 
 static int
-crypto_exec_with_passwd (char *path, char *argv[], const char *input, int inlen,
+crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int inlen,
 			 int passwd_fds[], const char *passphrase,
 			 char **output, int *outlen, char **diagnostics)
 {
@@ -233,11 +205,12 @@ crypto_exec_with_passwd (char *path, char *argv[], const char *input, int inlen,
         size_t passwd_remaining, passwd_incr, input_remaining, input_incr;
 	struct timeval timeout;
 	
+	
 	if ((pipe (ip_fds) < 0 ) ||
 	    (pipe (op_fds) < 0 ) ||
 	    (pipe (diag_fds) < 0 )) {
 		*diagnostics = g_strdup_printf ("Couldn't create pipe to %s: "
-						"%s", PGP_PROGRAM,
+						"%s", pgp_path,
 						g_strerror (errno));
 		return 0;
 	}
@@ -451,22 +424,22 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
 	int retval, i;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("No GPG/PGP program available."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No GPG/PGP program available."));
 		return NULL;
 	}
 	
-	passphrase = pgp_get_passphrase ();
+	passphrase = pgp_get_passphrase (NULL);
 	if (!passphrase) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("No password provided."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No password provided."));
 		return NULL;
 	}
 	
 	if (pipe (passwd_fds) < 0) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Couldn't create pipe to GPG/PGP: %s"),
-				      g_strerror (errno));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Couldn't create pipe to GPG/PGP: %s"),
+				       g_strerror (errno));
 		return NULL;
 	}
 	
@@ -514,7 +487,7 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
 	g_free (passphrase);
 	
 	if (retval != 0 || !*plaintext) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
 				       "%s", diagnostics);
 		g_free (plaintext);
 		g_free (diagnostics);
@@ -550,24 +523,24 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	char *command;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("No GPG/PGP program available."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No GPG/PGP program available."));
 		return NULL;
 	}
 	
 	if (sign) {
 		/* we only need the passphrase if we plan to sign */
-		passphrase = pgp_get_passphrase ();
+		passphrase = pgp_get_passphrase (NULL);
 		if (!passphrase) {
-			gmime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-					     _("No password provided."));
+			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
+					      _("No password provided."));
 			return NULL;
 		}
 		
 		if (pipe (passwd_fds) < 0) {
-			g_free (paassphrase);
-			gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("Couldn't create pipe to GPG/PGP: %s"),
+			g_free (passphrase);
+			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+					       _("Couldn't create pipe to GPG/PGP: %s"),
 					      g_strerror (errno));
 			return NULL;
 		}
@@ -578,8 +551,8 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	case PGP_TYPE_GPG:
 		if (recipients->len == 0) {
 			g_free (passphrase);
-			gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("No recipients specified"));
+			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+					       _("No recipients specified"));
 			return NULL;
 		}
 		
@@ -620,8 +593,8 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	case PGP_TYPE_PGP5:
 		if (recipients->len == 0) {
 			g_free (passphrase);
-			gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("No recipients specified"));
+			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+					       _("No recipients specified"));
 			return NULL;
 		}
 		
@@ -656,8 +629,8 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	case PGP_TYPE_PGP2:
 		if (recipients->len == 0) {
 			g_free (passphrase);
-			gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					      _("No recipients specified"));
+			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+					       _("No recipients specified"));
 			return NULL;
 		}
 		
@@ -706,8 +679,8 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	g_ptr_array_free (argv, TRUE);
 	
 	if (retval != 0 || !*cyphertext) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      "%s", diagnostics);
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       "%s", diagnostics);
 		g_free (cyphertext);
 		cyphertext = NULL;
 	}
@@ -746,23 +719,23 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 	int retval, i;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("No GPG/PGP program available."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No GPG/PGP program available."));
 		return NULL;
 	}
 	
-	passphrase = pgp_get_passphrase ();
+	passphrase = pgp_get_passphrase (userid);
 	if (!passphrase) {
-		gmime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				     _("No password provided."));
+		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
+				      _("No password provided."));
 		return NULL;
 	}
 	
 	if (pipe (passwd_fds) < 0) {
 		g_free (passphrase);
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Couldn't create pipe to GPG/PGP: %s"),
-				      g_strerror (errno));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Couldn't create pipe to GPG/PGP: %s"),
+				       g_strerror (errno));
 		return NULL;
 	}
 	
@@ -844,8 +817,8 @@ pgp_clearsign (const gchar *plaintext, const gchar *userid,
 	g_free (passphrase);
 	
 	if (retval != 0 || !*cyphertext) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      "%s", diagnostics);
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       "%s", diagnostics);
 		g_free (cyphertext);
 		cyphertext = NULL;
 	}
@@ -881,23 +854,23 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 	int retval, i;
 	
 	if (pgp_type == PGP_TYPE_NONE) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("No GPG/PGP program available."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("No GPG/PGP program available."));
 		return NULL;
 	}
 	
-	passphrase = pgp_get_passphrase ();
+	passphrase = pgp_get_passphrase (userid);
 	if (!passphrase) {
-		gmime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				     _("No password provided."));
+		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
+				      _("No password provided."));
 		return NULL;
 	}
 	
 	if (pipe (passwd_fds) < 0) {
 		g_free (passphrase);
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Couldn't create pipe to GPG/PGP: %s"),
-				      g_strerror (errno));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Couldn't create pipe to GPG/PGP: %s"),
+				       g_strerror (errno));
 		return NULL;
 	}
 	
@@ -996,8 +969,8 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 	g_free (passphrase);
 	
 	if (retval != 0 || !*cyphertext) {
-		gmime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				      "%s", diagnostics);
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       "%s", diagnostics);
 		g_free (cyphertext);
 		cyphertext = NULL;
 	}
@@ -1006,5 +979,3 @@ pgp_detached_clearsign (const gchar *plaintext, const gchar *userid,
 	
 	return cyphertext;
 }
-
-#endif /* PGP_PROGRAM */

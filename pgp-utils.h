@@ -24,8 +24,6 @@
 #ifndef __PGP_UTILS_H__
 #define __PGP_UTILS_H__
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <glib.h>
 #include "gmime-exception.h"
 
@@ -54,8 +52,6 @@ void pgp_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer
 gboolean pgp_detect (const gchar *text);
 
 gboolean pgp_sign_detect (const gchar *text);
-
-gboolean pgp_recipient_exists (const gchar *recipient);
 
 gchar *pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex);
 

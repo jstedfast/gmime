@@ -39,7 +39,7 @@ void pgp_mime_part_sign (GMimePart **part, const gchar *userid, PgpHashType hash
 
 gboolean pgp_mime_part_verify_signature (GMimePart *part, const gchar *sign_key, GMimeException *ex);
 
-void pgp_mime_part_encrypt (GMimePart **part, const gchar *recipients, gboolean sign, GMimeException *ex);
+void pgp_mime_part_encrypt (GMimePart **part, const GPtrArray *recipients, GMimeException *ex);
 
 void pgp_mime_part_decrypt (GMimePart **part, GMimeException *ex);
 

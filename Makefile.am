@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = test-mime test-parser
+noinst_PROGRAMS = test-mime test-parser test-pgp test-pgpmime
 
 bin_SCRIPTS = gmime-config
 
@@ -21,7 +21,10 @@ libgmime_la_SOURCES = 		\
 	gmime-parser.c		\
 	gmime-part.c		\
 	gmime-utils.c		\
-	internet-address.c	
+	internet-address.c	\
+	gmime-exception.c	\
+	pgp-utils.c		\
+	pgp-mime.c
 
 gmimeincdir = $(includedir)/gmime
 gmimeinc_HEADERS = 		\
@@ -32,7 +35,10 @@ gmimeinc_HEADERS = 		\
 	gmime-parser.h		\
 	gmime-part.h		\
 	gmime-utils.h		\
-	internet-address.h
+	internet-address.h	\
+	gmime-exception.h	\
+	pgp-utils.h		\
+	pgp-mime.h
 
 DEPS = $(top_builddir)/libgmime.la
 LDADDS = $(top_builddir)/libgmime.la @GLIB_LIBS@
@@ -47,11 +53,21 @@ test_parser_LDFLAGS =
 test_parser_DEPENDENCIES = $(DEPS)
 test_parser_LDADD = $(LDADDS)
 
+test_pgp_SOURCES = test-pgp.c
+test_pgp_LDFLAGS = 
+test_pgp_DEPENDENCIES = $(DEPS)
+test_pgp_LDADD = $(LDADDS)
+
+test_pgpmime_SOURCES = test-pgpmime.c
+test_pgpmime_LDFLAGS = 
+test_pgpmime_DEPENDENCIES = $(DEPS)
+test_pgpmime_LDADD = $(LDADDS)
+
 check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests
+tests: MIMEtests PARSERtests PGPtests PGPMIMEtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -61,6 +77,16 @@ MIMEtests : test-mime
 PARSERtests : test-parser
 	@echo "##"
 	@echo "## MIME Parser regression tests"
+	@echo "##"
+
+PGPtests : test-pgp
+	@echo "##"
+	@echo "## PGP regression tests"
+	@echo "##"
+
+PGPMIMEtests : test-pgpmime
+	@echo "##"
+	@echo "## PGP/MIME regression tests"
 	@echo "##"
 
 dist-hook: libgmime.spec

@@ -1,4 +1,15 @@
 2000-12-10  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-pgp.c: Added test program for pgp-utils.
+
+	* Makefile.am: Added gmime-exception.c, pgp-utils.c, and
+	pgp-mime.c to the build.
+
+	* pgp-utils.[c,h]: Fixes to make it build.
+
+	* pgp-mime.[c,h]: Fixes to make it build.
+
+2000-12-10  Jeffrey Stedfast  <fejj@helixcode.com>
 	Beginning of the GMIME_PGP_MIME branch.
 
 	* md5-utils.[c,h]: Added.

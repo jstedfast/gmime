@@ -22,7 +22,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <string.h>
+#include "pgp-utils.h"
+#include "pgp-mime.h"
 
 /**
  * pgp_mime_init:
@@ -36,7 +38,7 @@
 void
 pgp_mime_init (const gchar *path, PgpType type, PgpPasswdFunc callback, gpointer data)
 {
-	pgp_init (path, type, hash, callback, data);
+	pgp_init (path, type, callback, data);
 }
 
 
@@ -92,7 +94,7 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	g_string_free (string, FALSE);
 	
 	/* get the signature */
-	signature = pgp_detached_signature (cleartext, userid, hash, ex);
+	signature = pgp_detached_clearsign (cleartext, userid, hash, ex);
 	g_free (cleartext);
 	if (g_mime_exception_is_set (ex)) {
 		/* restore the original encoding */
@@ -103,7 +105,7 @@ pgp_mime_part_sign (GMimePart **mime_part, const gchar *userid, PgpHashType hash
 	/* construct the pgp-signature mime part */
 	signed_part = g_mime_part_new_with_type ("application", "pgp-signature");
 	g_mime_part_set_encoding (signed_part, GMIME_PART_ENCODING_7BIT);
-	g_mime_part_set_description (signed_part, "pgp signature");
+	g_mime_part_set_content_description (signed_part, "pgp signature");
 	g_mime_part_set_content (signed_part, signature, strlen (signature));
 	g_free (signature);
 	
@@ -161,8 +163,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	part = *mime_part;
 	
 	/* pgp encrypt */
-	ciphertext = pgp_encrypt (part->content->data, part->content->len, recipients, ex);
-	g_free (cleartext);
+	ciphertext = pgp_encrypt (part->content->data, part->content->len, recipients, FALSE, ex);
 	if (g_mime_exception_is_set (ex))
 		return;
 	
@@ -173,7 +174,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	/* construct the pgp-encrypted mime part */
 	encrypted_part = g_mime_part_new_with_type ("application", "octet-stream");
 	g_mime_part_set_encoding (encrypted_part, GMIME_PART_ENCODING_7BIT);
-	g_mime_part_set_description (encrypted_part, "pgp encrypted part");
+	g_mime_part_set_content_description (encrypted_part, "pgp encrypted part");
 	g_mime_part_set_content (encrypted_part, ciphertext, strlen (ciphertext));
 	g_free (ciphertext);
 	
@@ -198,7 +199,7 @@ void
 pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
 {
 	GMimePart *multipart, *encrypted_part, *part;
-	GMimeContentType *mime_type;
+	const GMimeContentType *mime_type;
 	gchar *cleartext, *ciphertext = NULL;
 	GList *child;
 	gint outlen;
@@ -216,7 +217,7 @@ pgp_mime_part_decrypt (GMimePart **mime_part, GMimeException *ex)
 	while (child) {
 		encrypted_part = child->data;
 		mime_type = g_mime_part_get_content_type (encrypted_part);
-		if (g_mime_content_type_is_type ("application", "octet-stream")) {
+		if (g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
 			guint len;
 			
 			ciphertext = (gchar *) g_mime_part_get_content (encrypted_part, &len);
