@@ -390,6 +390,25 @@ GMIME_FILTER_FROM_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-gzip</FILE>
+GMimeFilterGZip
+GMimeFilterGZipMode
+g_mime_filter_gzip_new
+
+<SUBSECTION Private>
+g_mime_filter_gzip_get_type
+
+<SUBSECTION Standard>
+GMimeFilterGZipClass
+GMIME_TYPE_FILTER_GZIP
+GMIME_FILTER_GZIP
+GMIME_IS_FILTER_GZIP
+GMIME_FILTER_GZIP_CLASS
+GMIME_IS_FILTER_GZIP_CLASS
+GMIME_FILTER_GZIP_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-html</FILE>
 GMimeFilterHTML
 GMIME_FILTER_HTML_PRE

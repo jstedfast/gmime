@@ -43,6 +43,7 @@
 <!entity GMimeFilterCRLF SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity GMimeFilterEnriched SYSTEM "sgml/gmime-filter-enriched.sgml">
 <!entity GMimeFilterFrom SYSTEM "sgml/gmime-filter-from.sgml">
+<!entity GMimeFilterGZip SYSTEM "sgml/gmime-filter-gzip.sgml">
 <!entity GMimeFilterHTML SYSTEM "sgml/gmime-filter-html.sgml">
 <!entity GMimeFilterMd5 SYSTEM "sgml/gmime-filter-md5.sgml">
 <!entity GMimeFilterStrip SYSTEM "sgml/gmime-filter-strip.sgml">
@@ -183,6 +184,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeFilterCRLF;
       &GMimeFilterEnriched;
       &GMimeFilterFrom;
+      &GMimeFilterGZip;
       &GMimeFilterHTML;
       &GMimeFilterMd5;
       &GMimeFilterStrip;
