@@ -33,9 +33,9 @@ extern "C" {
 #include "gmime-part.h"
 
 
-#define	GMIME_MESSAGE_RECIPIENTS_TO  "To"
-#define	GMIME_MESSAGE_RECIPIENTS_CC  "Cc"
-#define	GMIME_MESSAGE_RECIPIENTS_BCC "Bcc"
+#define	GMIME_RECIPIENT_TYPE_TO  "To"
+#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
 
 struct _GMimeHeader {
 	gchar *name;

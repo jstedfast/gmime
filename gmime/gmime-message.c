@@ -191,8 +191,8 @@ g_mime_message_get_reply_to (GMimeMessage *message)
  * @address: The recipient's address
  *
  * Add a recipient of a chosen type to the MIME Message. Available
- * recipient types include: GMIME_MESSAGE_RECIPIENTS_TO,
- * GMIME_MESSAGE_RECIPIENTS_CC and GMIME_MESSAGE_RECIPIENTS_BCC.
+ * recipient types include: GMIME_RECIPIENT_TYPE_TO,
+ * GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.
  **/
 void
 g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *name, const gchar *address)
@@ -218,8 +218,8 @@ g_mime_message_add_recipient (GMimeMessage *message, gchar *type, const gchar *n
  *
  * Add a list of recipients of a chosen type to the MIME
  * Message. Available recipient types include:
- * GMIME_MESSAGE_RECIPIENTS_TO, GMIME_MESSAGE_RECIPIENTS_CC and
- * GMIME_MESSAGE_RECIPIENTS_BCC. The string must be in the format
+ * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
+ * GMIME_RECIPIENT_TYPE_BCC. The string must be in the format
  * specified in rfc822.
  **/
 void
@@ -276,8 +276,8 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, gchar *type, c
  *
  * Get a list of recipients of a chosen type from the MIME
  * Message. Available recipient types include:
- * GMIME_MESSAGE_RECIPIENTS_TO, GMIME_MESSAGE_RECIPIENTS_CC and
- * GMIME_MESSAGE_RECIPIENTS_BCC.
+ * GMIME_RECIPIENT_TYPE_TO, GMIME_RECIPIENT_TYPE_CC and
+ * GMIME_RECIPIENT_TYPE_BCC.
  **/
 GList *
 g_mime_message_get_recipients (GMimeMessage *message, const gchar *type)
@@ -456,7 +456,7 @@ create_header (GMimeMessage *message)
 		g_free (buf);
 	}
 	
-	recipients = g_mime_message_get_recipients (message, GMIME_MESSAGE_RECIPIENTS_TO);
+	recipients = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
 	if (recipients) {
 		GString *recip;
 		
@@ -481,7 +481,7 @@ create_header (GMimeMessage *message)
 		g_string_free (recip, TRUE);
 	}
 	
-	recipients = g_mime_message_get_recipients (message, GMIME_MESSAGE_RECIPIENTS_CC);
+	recipients = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_CC);
 	if (recipients) {
 		GString *recip;
 		

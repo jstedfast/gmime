@@ -1,3 +1,15 @@
+2000-10-26  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-mime.c: Also updated.
+
+	* gmime-parser.c (construct_headers): Updated to reflect name
+	changes.
+
+	* gmime-message.c: Updated to reflect name changes.
+
+	* gmime-message.h: Changed the name of the recipient type
+	#defines.
+
 2000-10-24  Jeffrey Stedfast <fejj@helixcode.com>
 
 	* Makefile.am (SUBDIRS): Added "."

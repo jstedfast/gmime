@@ -348,13 +348,13 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 			g_free (raw);
 			break;
 		case HEADER_TO:
-			g_mime_message_add_recipients_from_string (message, GMIME_MESSAGE_RECIPIENTS_TO, value);
+			g_mime_message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_TO, value);
 			break;
 		case HEADER_CC:
-			g_mime_message_add_recipients_from_string (message, GMIME_MESSAGE_RECIPIENTS_CC, value);
+			g_mime_message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_CC, value);
 			break;
 		case HEADER_BCC:
-			g_mime_message_add_recipients_from_string (message, GMIME_MESSAGE_RECIPIENTS_BCC, value);
+			g_mime_message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_BCC, value);
 			break;
 		case HEADER_SUBJECT:
 			raw = g_mime_utils_8bit_header_decode (value);

@@ -1,3 +1,25 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+/*
+ *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *
+ *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation; either version 2 of the License, or
+ *  (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
+ *
+ */
+
 #include <stdio.h>
 #include <glib.h>
 
@@ -48,7 +70,7 @@ test_multipart (void)
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_MESSAGE_RECIPIENTS_TO,
+	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
@@ -78,7 +100,7 @@ test_onepart (void)
 	message = g_mime_message_new ();
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_MESSAGE_RECIPIENTS_TO,
+	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_add_arbitrary_header (message, "X-Mailer", "main.c");
