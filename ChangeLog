@@ -1,3 +1,11 @@
+2002-05-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-cat.c (stream_reset): Use stream_seek().
+	(stream_read): Seek to position before starting our read, this is
+	to protect against one of our source streams being read while we
+	weren't looking and/or a substream related to our cat stream.
+	(stream_write): Same.
+
 2002-05-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-message-partial.c: New class to handle MIME parts with a

@@ -136,6 +136,10 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		return -1;
 	}
 	
+	/* make sure our stream position is where it should be */
+	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
+		return -1;
+	
 	nread = g_mime_stream_read (current->stream, buf, len);
 	if (nread < 0)
 		return -1;
@@ -162,6 +166,10 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 		/* eos */
 		return -1;
 	}
+	
+	/* make sure our stream position is where it should be */
+	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
+		return -1;
 	
 	while (nwritten < len && current) {
 		n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten);
@@ -231,20 +239,11 @@ stream_eos (GMimeStream *stream)
 static int
 stream_reset (GMimeStream *stream)
 {
-	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
-	struct _cat_node *p;
+	int ret;
 	
-	cat->current = cat->sources;
-	p = cat->sources;
-	while (p) {
-		if (g_mime_stream_reset (p->stream) == -1)
-			return -1;
-		p = p->next;
-	}
+	ret = stream_seek (stream, stream->bound_start, GMIME_STREAM_SEEK_SET);
 	
-	stream->position = stream->bound_start;
-	
-	return 0;
+	return ret == -1 ? -1 : 0;
 }
 
 static off_t
@@ -269,6 +268,12 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		while (real < offset && p) {
 			real += p->length;
 			current = p;
+			p = p->next;
+		}
+		
+		/* reset all the streams after this point */
+		while (p) {
+			g_mime_stream_reset (p->stream);
 			p = p->next;
 		}
 		
