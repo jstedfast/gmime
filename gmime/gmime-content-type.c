@@ -29,10 +29,6 @@
 #include <string.h>
 #include <ctype.h>
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-
 #include "gmime-content-type.h"
 
 #define d(x)

@@ -30,6 +30,7 @@ libgmime_la_SOURCES = 		\
 	gmime-filter-crlf.c	\
 	gmime-filter-from.c	\
 	gmime-filter-html.c	\
+	gmime-filter-yenc.c	\
 	gmime-header.c		\
 	gmime-iconv.c		\
 	gmime-iconv-utils.c	\
@@ -69,6 +70,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-filter-crlf.h	\
 	gmime-filter-from.h	\
 	gmime-filter-html.h	\
+	gmime-filter-yenc.h	\
 	gmime-header.h		\
 	gmime-iconv.h		\
 	gmime-iconv-utils.h	\

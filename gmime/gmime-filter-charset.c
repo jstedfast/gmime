@@ -109,7 +109,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
 	size_t inleft, outleft, converted = 0;
-	const char *inbuf;
+	char *inbuf;
 	char *outbuf;
 	
 	if (charset->cd == (iconv_t) -1)
@@ -173,7 +173,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterCharset *charset = (GMimeFilterCharset *) filter;
 	size_t inleft, outleft, converted = 0;
-	const char *inbuf;
+	char *inbuf;
 	char *outbuf;
 	
 	if (charset->cd == (iconv_t) -1)

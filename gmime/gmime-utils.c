@@ -1771,17 +1771,19 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 	outptr = out;
 	
 	inptr = in;
-	while (inptr < inend && *inptr) {
-		if (*inptr == '\n' || last_was_eoln) {
-			if (last_was_eoln) {
-				uulen = gmime_uu_rank[*inptr];
-				last_was_eoln = FALSE;
-				if (uulen == 0) {
-					*state |= GMIME_UUDECODE_STATE_END;
-					break;
-				}
-			} else {
-				last_was_eoln = TRUE;
+	while (inptr < inend) {
+		if (*inptr == '\n') {
+			last_was_eoln = TRUE;
+			
+			inptr++;
+			continue;
+		} else if (!uulen || last_was_eoln) {
+			/* first octet on a line is the uulen octet */
+			uulen = gmime_uu_rank[*inptr];
+			last_was_eoln = FALSE;
+			if (uulen == 0) {
+				*state |= GMIME_UUDECODE_STATE_END;
+				break;
 			}
 			
 			inptr++;

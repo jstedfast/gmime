@@ -27,6 +27,8 @@
 
 #include <glib.h>
 #include <errno.h>
+#include <string.h>
+#include <stdio.h>
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -393,7 +395,6 @@ g_mime_iconv_open (const char *to, const char *from)
 int
 g_mime_iconv_close (iconv_t cd)
 {
-	struct _iconv_cache_bucket *bucket;
 	struct _iconv_node *node;
 	
 	if (cd == (iconv_t) -1)
