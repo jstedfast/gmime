@@ -62,8 +62,10 @@ typedef struct _GMimeFilterBest {
 	
 	unsigned char frombuf[6];
 	unsigned int fromlen : 4;
+	unsigned int hadfrom : 1;
+	
+	unsigned int startline : 1;
 	unsigned int midline : 1;
-	unsigned int hadfrom : 1; 
 } GMimeFilterBest;
 
 GMimeFilter *g_mime_filter_best_new (unsigned int flags);

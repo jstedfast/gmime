@@ -97,12 +97,16 @@ g_mime_filter_best_new (unsigned int flags)
 const char *
 g_mime_filter_best_charset (GMimeFilterBest *best)
 {
+	const char *charset;
+	
 	g_return_val_if_fail (best != NULL, NULL);
 	
 	if (!(best->flags & GMIME_FILTER_BEST_CHARSET))
 		return NULL;
 	
-	return g_mime_charset_best_name (&best->charset);
+	charset = g_mime_charset_best_name (&best->charset);
+	
+	return charset ? charset : "us-ascii";
 }
 
 
@@ -178,7 +182,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBest *best = (GMimeFilterBest *) filter;
-	register char *inptr, *inend;
+	register unsigned char *inptr, *inend;
 	unsigned int left;
 	
 	if (best->flags & GMIME_FILTER_BEST_CHARSET)
@@ -187,7 +191,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	if (best->flags & GMIME_FILTER_BEST_ENCODING) {
 		best->total += len;
 		
-		inptr = in;
+		inptr = (unsigned char *) in;
 		inend = inptr + len;
 		
 		while (inptr < inend) {
@@ -201,9 +205,15 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 						best->count8++;
 					
 					if (best->fromlen > 0 && best->fromlen < 5)
-						best->frombuf[best->fromlen++] = c;
+						best->frombuf[best->fromlen++] = c & 0xff;
 					
 					best->linelen++;
+				}
+				
+				if (c == '\n') {
+					best->startline = TRUE;
+					best->midline = FALSE;
+					best->maxline = MAX (best->maxline, best->linelen);
 				}
 			}
 			
@@ -213,35 +223,28 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			best->fromlen = 0;
 			
-			if (c == '\n' || !best->midline) {
-				/* we're at the beginning of a line */
-				best->midline = FALSE;
-				
-				/* update the max line length */
-				best->maxline = MAX (best->maxline, best->linelen);
-				
-				/* if we have not yet found a from-line, check for one */
-				if (!best->hadfrom) {
-					left = inend - inptr;
-					if (left > 0) {
-						best->midline = TRUE;
-						if (left < 5) {
-							if (!strncmp (inptr, "From ", left)) {
-								memcpy (best->frombuf, inptr, left);
-								best->frombuf[left] = '\0';
-								best->fromlen = left;
-								break;
-							}
-						} else {
-							if (!strncmp (inptr, "From ", 5)) {
-								best->hadfrom = TRUE;
-								
-								inptr += 5;
-							}
-						}
+			left = inend - inptr;
+			
+			/* if we have not yet found a from-line, check for one */
+			if (best->startline && !best->hadfrom && left > 0) {
+				if (left < 5) {
+					if (!strncmp (inptr, "From ", left)) {
+						memcpy (best->frombuf, inptr, left);
+						best->frombuf[left] = '\0';
+						best->fromlen = left;
+						break;
+					}
+				} else {
+					if (!strncmp (inptr, "From ", 5)) {
+						best->hadfrom = TRUE;
+						
+						inptr += 5;
 					}
 				}
 			}
+			
+			best->startline = FALSE;
+			best->midline = TRUE;
 		}
 	}
 	
@@ -273,6 +276,7 @@ filter_reset (GMimeFilter *filter)
 	best->maxline = 0;
 	best->linelen = 0;
 	best->fromlen = 0;
-	best->midline = FALSE;
 	best->hadfrom = FALSE;
+	best->startline = TRUE;
+	best->midline = FALSE;
 }

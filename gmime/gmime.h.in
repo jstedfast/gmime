@@ -53,6 +53,7 @@
 #include "gmime-stream-null.h"
 #include "gmime-filter.h"
 #include "gmime-filter-basic.h"
+#include "gmime-filter-best.h"
 #include "gmime-filter-charset.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"

@@ -8,6 +8,7 @@ VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
 noinst_PROGRAMS = 	\
 	gen-table 	\
+	test-best	\
 	test-mime 	\
 	test-parser 	\
 	test-mbox 	\
@@ -125,6 +126,11 @@ noinst_HEADERS = 			\
 
 DEPS = $(top_builddir)/libgmime-2.0.la
 LDADDS = $(top_builddir)/libgmime-2.0.la @GLIB_LIBS@
+
+test_best_SOURCES = test-best.c
+test_best_LDFLAGS = 
+test_best_DEPENDENCIES = $(DEPS)
+test_best_LDADD = $(LDADDS)
 
 test_mime_SOURCES = test-mime.c
 test_mime_LDFLAGS = 
