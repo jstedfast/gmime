@@ -1,3 +1,14 @@
+2002-07-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (g_string_append_len): Updated the usage of
+	strlcpy to match the new API (which was updated to match the
+	Solaris strlcpy API).
+
+	* strlib.c (strlcpy): Changed to behave the same as the Solaris
+	strlcpy function.
+	(strlcat): Changed to behave the same as the Solaris strlcat
+	function.
+
 2002-07-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix for
