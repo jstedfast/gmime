@@ -28,7 +28,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/param.h> /* for MAXHOSTNAMELEN */
 #include <string.h>
+#include <netdb.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -719,6 +721,48 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 	return date;
 }
 
+
+/**
+ * g_mime_utils_generate_message_id:
+ * @fqdn: Fully qualified domain name
+ *
+ * Generates a unique Message-Id.
+ *
+ * Returns a unique string in an addr-spec format suitable for use as
+ * a Message-Id.
+ **/
+char *
+g_mime_utils_generate_message_id (const char *fqdn)
+{
+#ifdef G_THREADS_ENABLED
+	static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
+#define MUTEX_LOCK()   g_static_mutex_lock (&mutex)
+#define MUTEX_UNLOCK() g_static_mutex_unlock (&mutex)
+#else
+#define MUTEX_LOCK()
+#define MUTEX_UNLOCK()
+#endif
+	static unsigned int count = 0;
+	char host[MAXHOSTNAMELEN + 1];
+	struct hostent *h = NULL;
+	char *msgid;
+	
+	if (!fqdn) {
+		if (gethostname (host, sizeof (host)) == 0) {
+			h = gethostbyname (host);
+		} else {
+			host[0] = '\0';
+		}
+		
+		fqdn = h ? h->h_name : (*host ? host : "localhost.localdomain");
+	}
+	
+	MUTEX_LOCK ();
+	msgid = g_strdup_printf ("%ul.%ul.%ul@%s", time (NULL), getpid (), count++, fqdn);
+	MUTEX_UNLOCK ();
+	
+	return msgid;
+}
 
 /* external symbols from internet-address.c */
 extern void decode_lwsp (const char **in);

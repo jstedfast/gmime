@@ -300,7 +300,7 @@ Sets the Content-Id of the MIME object.</para>
 <entry> MIME object
 </entry></row>
 <row><entry align="right"><parameter>content_id</parameter>&nbsp;:</entry>
-<entry> content-id
+<entry> content-id (addr-spec portion)
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

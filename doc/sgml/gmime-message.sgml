@@ -442,7 +442,7 @@ Set the Message-Id on a message.</para>
 <entry> MIME Message
 </entry></row>
 <row><entry align="right"><parameter>message_id</parameter>&nbsp;:</entry>
-<entry> message-id
+<entry> message-id (addr-spec portion)
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

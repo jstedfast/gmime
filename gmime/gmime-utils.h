@@ -62,6 +62,8 @@ typedef struct _GMimeReferences GMimeReferences;
 time_t g_mime_utils_header_decode_date (const char *in, int *saveoffset);
 char  *g_mime_utils_header_format_date (time_t time, int offset);
 
+char *g_mime_utils_generate_message_id (const char *fqdn);
+
 /* decode a message-id */
 char *g_mime_utils_decode_message_id (const char *message_id);
 
