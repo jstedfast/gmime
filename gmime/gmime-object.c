@@ -141,7 +141,7 @@ g_mime_object_finalize (GObject *object)
  *
  * Ref's a MIME object.
  *
- * WARNING: This method is deprecated. Use #g_object_ref instead.
+ * WARNING: This method is deprecated. Use g_object_ref() instead.
  **/
 void
 g_mime_object_ref (GMimeObject *object)
@@ -158,7 +158,7 @@ g_mime_object_ref (GMimeObject *object)
  *
  * Unref's a MIME object.
  *
- * WARNING: This method is deprecated. Use #g_object_unref instead.
+ * WARNING: This method is deprecated. Use g_object_unref() instead.
  **/
 void
 g_mime_object_unref (GMimeObject *object)
@@ -176,7 +176,7 @@ g_mime_object_unref (GMimeObject *object)
  * @object_type: object type
  *
  * Registers the object type @object_type for use with the
- * #g_mime_object_new_type convenience function.
+ * g_mime_object_new_type() convenience function.
  *
  * Note: You may use the wildcard "*" to match any type and/or
  * subtype.
@@ -222,7 +222,7 @@ init (GMimeObject *object)
  * @subtype: mime subtype
  *
  * Performs a lookup of registered #GMimeObject subclasses, registered
- * using #g_mime_object_register_type, to find an appropriate class
+ * using g_mime_object_register_type(), to find an appropriate class
  * capable of handling MIME parts of type @type/@subtype. If no class
  * has been registered to handle that type, it looks for a registered
  * class that can handle @type. If that also fails, then it will use

@@ -1049,7 +1049,7 @@ g_mime_part_get_filename (const GMimePart *mime_part)
  * @len: raw content length
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_part_set_content_object instead.
+ * g_mime_part_set_content_object() instead.
  *
  * Sets the content of the Mime Part (only non-multiparts)
  **/
@@ -1076,7 +1076,7 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len)
  * @content: raw mime part content.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_part_set_content_object instead.
+ * g_mime_part_set_content_object() instead.
  *
  * Sets the content of the Mime Part (only non-multiparts)
  **/
@@ -1105,7 +1105,7 @@ g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
  * @encoding: content encoding
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_part_set_content_object instead.
+ * g_mime_part_set_content_object() instead.
  *
  * Sets the encoding type and raw content on the mime part after
  * decoding the content.
@@ -1210,7 +1210,7 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * of the raw data buffer.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_get_content_object instead.
+ * g_mime_get_content_object() instead.
  * 
  * Returns a const char * pointer to the raw contents of the MIME Part
  * and sets @len to the length of the buffer. Note: textual content
@@ -1278,7 +1278,7 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
  * Writes the contents of the MIME Part to @stream.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_object_write_to_stream instead.
+ * g_mime_object_write_to_stream() instead.
  *
  * Returns the number of bytes written or -1 on fail.
  **/
@@ -1299,7 +1299,7 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
  * Allocates a string buffer containing the MIME Part.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_object_to_string instead.
+ * g_mime_object_to_string() instead.
  *
  * Returns an allocated string containing the MIME Part.
  **/

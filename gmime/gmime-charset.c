@@ -156,7 +156,7 @@ iconv_charset_free (gpointer key, gpointer value, gpointer user_data)
 /**
  * g_mime_charset_map_shutdown:
  *
- * Frees internal lookup tables created in #g_mime_charset_map_init().
+ * Frees internal lookup tables created in g_mime_charset_map_init().
  **/
 void
 g_mime_charset_map_shutdown (void)
@@ -221,7 +221,7 @@ locale_parse_lang (const char *locale)
  * g_mime_charset_map_init:
  *
  * Initializes the locale charset variable for later calls to
- * #g_mime_locale_charset(). Only really needs to be called for non-
+ * g_mime_locale_charset(). Only really needs to be called for non-
  * iso-8859-1 locales.
  **/
 void
@@ -503,7 +503,7 @@ static const char *windows_charsets[] = {
  * Attempts to find a canonical charset name for @charset.
  *
  * Note: Will normally return the same value as
- * #g_mime_charset_iconv_name() unless the system iconv does not use
+ * g_mime_charset_iconv_name() unless the system iconv does not use
  * the canonical ISO charset names (such as using ISO8859-1 rather
  * than the canonical form ISO-8859-1).
  *
@@ -556,7 +556,7 @@ g_mime_charset_canon_name (const char *charset)
  *
  * Attempts to find an iconv-friendly charset name for @charset.
  *
- * Note: This function is deprecated. Use #g_mime_charset_iconv_name
+ * Note: This function is deprecated. Use g_mime_charset_iconv_name()
  * instead.
  *
  * Returns an iconv-friendly charset name for @charset.
@@ -573,7 +573,7 @@ g_mime_charset_name (const char *charset)
  *
  * Gets the user's locale charset (or iso-8859-1 by default).
  *
- * Note: This function is deprecated. Use #g_mime_locale_charset
+ * Note: This function is deprecated. Use g_mime_locale_charset()
  * instead.
  *
  * Returns the user's locale charset (or iso-8859-1 by default).
@@ -662,7 +662,7 @@ g_mime_charset_init (GMimeCharset *charset)
 
 /**
  * g_mime_charset_step:
- * @charset:
+ * @charset: charset structure
  * @in: input text buffer (must be in UTF-8)
  * @len: input buffer length
  *

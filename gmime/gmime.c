@@ -40,7 +40,7 @@ static int initialized = FALSE;
  *
  * Initializes GMime.
  *
- * Note: Calls #g_mime_charset_map_init() and #g_mime_iconv_init() as
+ * Note: Calls g_mime_charset_map_init() and g_mime_iconv_init() as
  * well.
  **/
 void
@@ -74,8 +74,8 @@ g_mime_init (guint32 flags)
 /**
  * g_mime_shutdown:
  *
- * Frees internally allocated tables created in #g_mime_init(). Also
- * calls #g_mime_charset_map_shutdown() and #g_mime_iconv_shutdown().
+ * Frees internally allocated tables created in g_mime_init(). Also
+ * calls g_mime_charset_map_shutdown() and g_mime_iconv_shutdown().
  **/
 void
 g_mime_shutdown (void)

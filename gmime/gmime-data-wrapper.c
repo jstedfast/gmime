@@ -144,7 +144,7 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
  *
  * Replaces the wrapper's internal stream with @stream. Don't forget,
  * if @stream is not of the same encoding as the old stream, you'll
- * want to call #g_mime_data_wrapper_set_encoding as well.
+ * want to call g_mime_data_wrapper_set_encoding() as well.
  *
  * Note: caller is responsible for its own reference on
  * @stream.

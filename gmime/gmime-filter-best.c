@@ -223,7 +223,7 @@ filter_reset (GMimeFilter *filter)
  * will be able to compute the best Content-Transfer-Encoding for use
  * with the stream being filtered.
  *
- * Note: In order for the #g_mime_filter_best_charset() function to
+ * Note: In order for the g_mime_filter_best_charset() function to
  * work, the stream being filtered MUST already be encoded in UTF-8.
  *
  * Returns a new best filter with flags @flags.

@@ -184,7 +184,7 @@ g_mime_session_simple_set_request_passwd (GMimeSessionSimple *session, GMimeSimp
  *
  * Sets the @forget_passwd callback function on the simple session
  * object. @forget_passwd should uncache the passwd for 'item'. See
- * #g_mime_session_simple_set_request_passwd for further details.
+ * g_mime_session_simple_set_request_passwd() for further details.
  **/
 void
 g_mime_session_simple_set_forget_passwd (GMimeSessionSimple *session, GMimeSimpleForgetPasswdFunc forget_passwd)

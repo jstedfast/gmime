@@ -141,7 +141,7 @@ iconv_cache_node_expire (Cache *cache, CacheNode *node)
 /**
  * g_mime_iconv_shutdown:
  *
- * Frees internal iconv caches created in #g_mime_iconv_init().
+ * Frees internal iconv caches created in g_mime_iconv_init().
  **/
 void
 g_mime_iconv_shutdown (void)
@@ -189,12 +189,12 @@ g_mime_iconv_init (void)
  *
  * Allocates a coversion descriptor suitable for converting byte
  * sequences from charset @from to charset @to. The resulting
- * descriptor can be used with iconv (or the g_mime_iconv wrapper) any
- * number of times until closed using g_mime_iconv_close.
+ * descriptor can be used with iconv() (or the g_mime_iconv() wrapper) any
+ * number of times until closed using g_mime_iconv_close().
  *
- * Returns a new conversion descriptor for use with iconv on success
- * or (iconv_t) -1 on fail as well as setting an appropriate errno
- * value.
+ * Returns a new conversion descriptor for use with g_mime_iconv() on
+ * success or (iconv_t) -1 on fail as well as setting an appropriate
+ * errno value.
  **/
 iconv_t
 g_mime_iconv_open (const char *to, const char *from)

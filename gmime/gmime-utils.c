@@ -2035,8 +2035,8 @@ g_mime_utils_header_encode_text (const unsigned char *in)
  *
  * Decodes an rfc2047 encoded header.
  *
- * Note: This function is deprecated. Use
- * #g_mime_utils_header_decode_text instead.
+ * WARNING: This function is deprecated. Use
+ * g_mime_utils_header_decode_text() instead.
  *
  * Returns the decoded header (which will be in UTF-8 if at all
  * possible).
@@ -2054,8 +2054,8 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *
- * Note: This function is deprecated. Use
- * #g_mime_utils_header_encode_text instead.
+ * WARNING: This function is deprecated. Use
+ * g_mime_utils_header_encode_text() instead.
  *
  * Returns the encoded header. Useful for encoding
  * headers like "Subject".
@@ -2073,8 +2073,8 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
- * Note: This function is deprecated. Use
- * #g_mime_utils_header_encode_phrase instead.
+ * WARNING: This function is deprecated. Use
+ * g_mime_utils_header_encode_phrase() instead.
  *
  * Returns the encoded 'phrase'. Useful for encoding internet
  * addresses.
@@ -2095,7 +2095,7 @@ g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
  * @save: leftover bits that have not yet been encoded
  *
  * Base64 encodes the input stream to the output stream. Call this
- * when finished encoding data with #g_mime_utils_base64_encode_step
+ * when finished encoding data with g_mime_utils_base64_encode_step()
  * to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
@@ -2296,7 +2296,7 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * @save: leftover bits that have not yet been encoded
  *
  * Uuencodes a chunk of data. Call this when finished encoding data
- * with #g_mime_utils_uuencode_step to flush off the last little bit.
+ * with g_mime_utils_uuencode_step() to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
  **/
@@ -2557,7 +2557,7 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
  * @save: leftover bits that have not yet been encoded
  *
  * Quoted-printable encodes a block of text. Call this when finished
- * encoding data with #g_mime_utils_quoted_encode_step to flush off
+ * encoding data with g_mime_utils_quoted_encode_step() to flush off
  * the last little bit.
  *
  * Returns the number of bytes encoded.

@@ -236,7 +236,7 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
  * @sigstream is assumed to be the signature stream and is used to
  * verify the integirity of the @istream.
  *
- * Returns a GMimeSignatureValidity structure containing information
+ * Returns a #GMimeSignatureValidity structure containing information
  * about the integrity of the input stream or %NULL on failure to
  * execute at all.
  **/
@@ -395,7 +395,7 @@ g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  *
  * Allocates an new GMimeSigner.
  *
- * Returns a new GMimeSigner.
+ * Returns a new #GMimeSigner.
  **/
 GMimeSigner *
 g_mime_signer_new (void)
@@ -436,9 +436,9 @@ g_mime_signer_free (GMimeSigner *signer)
 /**
  * g_mime_signature_validity_new:
  *
- * Creates a new validity structure.
+ * Creates a new #GMimeSignatureValidity.
  *
- * Returns a new validity structure.
+ * Returns a new #GMimeSignatureValidity.
  **/
 GMimeSignatureValidity *
 g_mime_signature_validity_new (void)
@@ -490,7 +490,7 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
  *
  * Gets the signature status (GOOD, BAD, UNKNOWN).
  *
- * Returns the signature status.
+ * Returns a #GMimeSignatureStatus value.
  **/
 GMimeSignatureStatus
 g_mime_signature_validity_get_status (GMimeSignatureValidity *validity)
@@ -558,8 +558,8 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
  *
  * Gets the list of signers.
  *
- * Returns a list of signers which contain further information such as
- * trust and cipher keys.
+ * Returns a #GMimeSigner list which contain further information such
+ * as trust and cipher keys.
  **/
 const GMimeSigner *
 g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity)
@@ -606,9 +606,9 @@ g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSi
  * Creates a new validity structure.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_new instead.
+ * g_mime_signature_validity_new() instead.
  *
- * Returns a new validity structure.
+ * Returns a new #GMimeCipherValidity.
  **/
 GMimeCipherValidity *
 g_mime_cipher_validity_new (void)
@@ -643,7 +643,7 @@ g_mime_cipher_validity_init (GMimeCipherValidity *validity)
  * Gets the validity of the validity structure @validity.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_get_status instead.
+ * g_mime_signature_validity_get_status() instead.
  *
  * Returns %TRUE if @validity is valid or %FALSE otherwise.
  **/
@@ -665,7 +665,7 @@ g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity)
  * Sets the validness on the validity structure.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_set_status instead.
+ * g_mime_signature_validity_set_status() instead.
  **/
 void
 g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
@@ -683,7 +683,7 @@ g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid)
  * Gets the description set on the validity structure @validity.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_get_details instead.
+ * g_mime_signature_validity_get_details() instead.
  *
  * Returns any description set on the validity structure.
  **/
@@ -702,7 +702,7 @@ g_mime_cipher_validity_get_description (GMimeCipherValidity *validity)
  * Sets the description on the validity structure.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_set_details instead.
+ * g_mime_signature_validity_set_details() instead.
  **/
 void
 g_mime_cipher_validity_set_description (GMimeCipherValidity *validity, const char *description)
@@ -749,7 +749,7 @@ g_mime_cipher_validity_clear (GMimeCipherValidity *validity)
  * Frees the memory used by @validity back to the system.
  *
  * WARNING: This interface has been deprecated. Use
- * #g_mime_signature_validity_free instead.
+ * g_mime_signature_validity_free() instead.
  **/
 void
 g_mime_cipher_validity_free (GMimeCipherValidity *validity)

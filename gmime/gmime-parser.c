@@ -398,11 +398,11 @@ g_mime_parser_new_with_stream (GMimeStream *stream)
  * or resetting of the stream. Anything that will/could change the
  * current stream's offset is PROHIBITED.
  *
- * It is also recommended that you not use #g_mime_stream_tell because
- * it will not necessarily give you the current @parser offset since
- * @parser handles its own internal read-ahead buffer. Instead, it is
- * recommended that you use #g_mime_parser_tell if you have a reason
- * to need the current offset of the @parser.
+ * It is also recommended that you not use g_mime_stream_tell()
+ * because it will not necessarily give you the current @parser offset
+ * since @parser handles its own internal read-ahead buffer. Instead,
+ * it is recommended that you use g_mime_parser_tell() if you have a
+ * reason to need the current offset of the @parser.
  **/
 void
 g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
@@ -1459,7 +1459,7 @@ g_mime_parser_construct_message (GMimeParser *parser)
  * @parser: MIME parser object
  *
  * Gets the mbox-style From-line of the most recently parsed message
- * (gotten from #g_mime_parser_construct_message).
+ * (gotten from g_mime_parser_construct_message()).
  *
  * Returns the mbox-style From-line of the most recently parsed
  * message or %NULL on error.
@@ -1487,7 +1487,7 @@ g_mime_parser_get_from (GMimeParser *parser)
  * @parser: MIME parser object
  *
  * Gets the offset of the most recently parsed mbox-style From-line
- * (gotten from #g_mime_parser_construct_message).
+ * (gotten from g_mime_parser_construct_message()).
  *
  * Returns the offset of the most recently parsed mbox-style From-line
  * or -1 on error.

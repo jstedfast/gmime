@@ -1292,7 +1292,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
  * Write the contents of the MIME Message to @stream.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_object_write_to_stream instead.
+ * g_mime_object_write_to_stream() instead.
  *
  * Returns -1 on fail.
  **/
@@ -1313,7 +1313,7 @@ g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
  * Allocates a string buffer containing the mime message @message.
  *
  * WARNING: This interface is deprecated. Use
- * #g_mime_object_to_string instead.
+ * g_mime_object_to_string() instead.
  *
  * Returns an allocated string containing the MIME Message.
  **/
