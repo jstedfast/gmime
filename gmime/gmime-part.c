@@ -204,19 +204,6 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 }
 
 
-static void
-make_md5_safe (GString *string)
-{
-	gchar *ptr;
-	
-	ptr = string->str;
-	while ((ptr = strchr (ptr, '\n'))) {
-		g_string_insert_c (string, (ptr - string->str), '\r');
-		ptr += 2;
-	}
-}
-
-
 /**
  * g_mime_part_set_content_md5: Set the content md5
  * @mime_part: Mime part
@@ -235,17 +222,10 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5)
 	if (content_md5) {
 		mime_part->content_md5 = g_strdup (content_md5);
 	} else if (mime_part->content && mime_part->content->len) {
-		char *str, digest[16], b64digest[32];
+		char digest[16], b64digest[32];
 		int len, state, save;
-		GString *string;
 		
-		str = g_strndup (mime_part->content->data, mime_part->content->len);
-		string = g_string_new (str);
-		g_free (str);
-		
-		make_md5_safe (string);
-		md5_get_digest (string->str, string->len, digest);		
-		g_string_free (string, TRUE);
+		md5_get_digest (mime_part->content->data, mime_part->content->len, digest);
 		
 		state = save = 0;
 		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
@@ -253,6 +233,34 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5)
 		
 		mime_part->content_md5 = g_strdup (b64digest);
 	}
+}
+
+
+/**
+ * g_mime_part_verify_content_md5: Verify the content md5
+ * @mime_part: Mime part
+ *
+ * Verify the content md5 for the specified mime part.
+ *
+ * Returns TRUE if the md5 is valid or FALSE otherwise. Note: will
+ * return FALSE if the mime part does not contain a Content-MD5.
+ **/
+gboolean
+g_mime_part_verify_content_md5 (GMimePart *mime_part)
+{
+	char digest[16], b64digest[32];
+	int len, state, save;
+	
+	g_return_val_if_fail (mime_part != NULL, FALSE);
+	g_return_val_if_fail (mime_part->content_md5 != NULL, FALSE);
+	
+	md5_get_digest (mime_part->content->data, mime_part->content->len, digest);
+	
+	state = save = 0;
+	len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+	b64digest[len] = '\0';
+	
+	return !strcmp (b64digest, mime_part->content_md5);
 }
 
 
@@ -1018,7 +1026,7 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		
 		/* Content-Md5: */
 		if (mime_part->content_md5) {
-			content_md5 = g_strdup_printf ("Content-Md5: %s\n", mime_part->content_md5);
+			content_md5 = g_strdup_printf ("Content-MD5: %s\n", mime_part->content_md5);
 			g_string_append (string, content_md5);
 			g_free (content_md5);
 		}
