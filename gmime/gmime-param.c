@@ -636,17 +636,6 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static void
-g_string_append_len (GString *out, const char *in, size_t len)
-{
-	char *buf;
-	
-	buf = alloca (len + 1);
-	strlcpy (buf, in, len);
-	
-	g_string_append (out, buf);
-}
-
-static void
 param_list_format (GString *out, GMimeParam *param, gboolean fold)
 {
 	int used = out->len;
