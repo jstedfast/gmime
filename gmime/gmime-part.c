@@ -513,37 +513,6 @@ g_mime_part_set_content (GMimePart *mime_part, const char *content)
 	mime_part->content = g_strdup (content);
 }
 
-static gboolean
-is_8bit (const guchar *text)
-{
-	guchar *c;
-	
-	for (c = (guchar *) text; *c; c++)
-		if (*c > (guchar) 127)
-			return TRUE;
-	
-	return FALSE;
-}
-
-static gint
-best_encoding (const guchar *text)
-{
-	guchar *ch;
-	int count = 0;
-	int total;
-	
-	for (ch = (guchar *) text; *ch; ch++)
-		if (*ch > (guchar) 127)
-			count++;
-	
-	total = (int) (ch - text);
-	
-	if ((float) count <= total * 0.17)
-		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-	else
-		return GMIME_PART_ENCODING_BASE64;
-}
-
 
 /**
  * g_mime_part_add_child: Add a child mime part to a multipart

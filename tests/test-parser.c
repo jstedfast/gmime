@@ -12,6 +12,7 @@ void
 test_parser (gchar *data)
 {
 	GMimeMessage *message;
+	gboolean is_html;
 	gchar *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
@@ -19,6 +20,14 @@ test_parser (gchar *data)
 	text = g_mime_message_to_string (message);
 	fprintf (stderr, "Result should match previous MIME message dump\n\n%s\n", text);
 	g_free (text);
+	
+	/* test of get_body */
+	text = g_mime_message_get_body (message, FALSE, &is_html);
+	fprintf (stderr, "Testing get_body (looking for html...%s)\n\n%s\n",
+		 text && is_html ? "found" : "not found",
+		 text ? text : "No message body found");
+	g_free (text);
+	
 	g_mime_message_destroy (message);
 }
 

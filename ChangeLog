@@ -1,3 +1,19 @@
+2000-10-31  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-parser.c (test_parser): Test g_mime_message_get_body() here
+	as well.
+
+	* test-mime.c: Updated to reflect changes to get_body.
+	
+	* gmime-message.c (g_mime_message_get_body): Return an allocated
+	buffer because we want to return the decoded message body rather
+	than the (possibly) encoded form.
+	(create_header): Write out the arbitrary headers first as they may
+	contain headers like "Received:" which really ought to be at the
+	top.
+
+	* gmime-part.c: Removed some old cruft.
+
 2000-10-29  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* internet-address.c (encoded_name): Use

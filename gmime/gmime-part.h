@@ -107,8 +107,6 @@ const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
 /* utility functions */
 void g_mime_part_set_content (GMimePart *mime_part, const char *content);
 
-void g_mime_part_change_content_encoding (GMimePart *mime_part, GMimePartEncodingType encoding);
-
 void g_mime_part_add_child (GMimePart *mime_part, GMimePart *child);
 
 gchar *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
