@@ -348,7 +348,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	if (fstat (fd, &st) == -1)
 		return NULL;
 	
-	map = mmap (NULL, st.st_size + getpagesize (), prot, flags, fd, 0);
+	map = mmap (NULL, st.st_size, prot, flags, fd, 0);
 	if (map == MAP_FAILED)
 		return NULL;
 	
@@ -395,7 +395,7 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, of
 	} else
 		st.st_size = end /* - start */;
 	
-	map = mmap (NULL, st.st_size + getpagesize (), prot, flags, fd, 0);
+	map = mmap (NULL, st.st_size, prot, flags, fd, 0);
 	if (map == MAP_FAILED)
 		return NULL;
 	

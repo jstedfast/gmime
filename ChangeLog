@@ -1,3 +1,9 @@
+2003-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream-mmap.c (g_mime_stream_mmap_new): Don't add
+	getpagesize() to the file length.
+	(g_mime_stream_mmap_new_with_bounds): Same.
+
 2003-12-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Don't immediately
