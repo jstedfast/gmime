@@ -806,7 +806,6 @@ void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (GMIME_IS_PART (mime_part) || GMIME_IS_MULTIPART (mime_part));
 	
 	g_mime_object_ref (GMIME_OBJECT (mime_part));
 	

@@ -1,5 +1,14 @@
 2002-06-02  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime.c (g_mime_init): Register the message-part class.
+
+	* gmime-message-part.c: New class for handling message/* subparts.
+
+	* gmime-parser.c (parser_scan_message_part): Handle mime parts of
+	type message.
+	(parser_construct_leaf_part): Find out if the leaf part is
+	actually a message part.
+
 	* gmime-filter-from.c (g_mime_filter_from_new): Now takes a mode
 	argument to specify how "From "'s should be protected.
 	(filter_filter): If we are to armor the "From " then transform it

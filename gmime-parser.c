@@ -30,6 +30,7 @@
 
 #include "gmime-parser.h"
 
+#include "gmime-message-part.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
 
@@ -910,12 +911,50 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	g_mime_stream_unref (stream);
 }
 
+static void
+parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *found)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	GMimeContentType *content_type;
+	struct _header_raw *header;
+	GMimeMessage *message;
+	GMimeObject *object;
+	
+	/* get the headers */
+	parser->priv->state = GMIME_PARSER_STATE_HEADERS;
+	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
+		;
+	
+	message = g_mime_message_new (FALSE);
+	header = priv->headers;
+	while (header) {
+		g_mime_object_add_header (GMIME_OBJECT (message), header->name, header->value);
+		header = header->next;
+	}
+	
+	content_type = parser_content_type (parser);
+	if (!content_type)
+		content_type = g_mime_content_type_new ("text", "plain");
+	
+	parser_unstep (parser);
+	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*")) {
+		object = parser_construct_multipart (parser, content_type, found);
+	} else {
+		object = parser_construct_leaf_part (parser, content_type, found);
+	}
+	
+	g_mime_message_set_mime_part (message, object);
+	g_mime_object_unref (object);
+	
+	g_mime_message_part_set_message (mpart, message);
+	g_mime_object_unref (GMIME_OBJECT (message));
+}
+
 static GMimeObject *
 parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _header_raw *header;
-	GMimePart *mime_part;
 	GMimeObject *object;
 	
 	/* get the headers */
@@ -939,12 +978,14 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	g_mime_object_set_content_type (object, content_type);
 	
-	mime_part = (GMimePart *) object;
-	
 	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
-	parser_scan_mime_part_content (parser, mime_part, found);
+	if (GMIME_IS_MESSAGE_PART (object)) {
+		parser_scan_message_part (parser, (GMimeMessagePart *) object, found);
+	} else {
+		parser_scan_mime_part_content (parser, (GMimePart *) object, found);
+	}
 	
 	return object;
 }

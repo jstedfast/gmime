@@ -34,6 +34,7 @@ libgmime_la_SOURCES = 		\
 	gmime-iconv.c		\
 	gmime-iconv-utils.c	\
 	gmime-message.c		\
+	gmime-message-part.c	\
 	gmime-message-partial.c	\
 	gmime-multipart.c	\
 	gmime-object.c		\
@@ -71,6 +72,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-iconv.h		\
 	gmime-iconv-utils.h	\
 	gmime-message.h		\
+	gmime-message-part.h	\
 	gmime-message-partial.h	\
 	gmime-multipart.h	\
 	gmime-object.h		\

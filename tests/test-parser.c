@@ -15,7 +15,7 @@
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
-#define TEST_WRITE_TO_STREAM
+/*#define TEST_WRITE_TO_STREAM*/
 
 void
 print_depth (int depth)
@@ -44,6 +44,11 @@ print_mime_struct (GMimeObject *part, int depth)
 			print_mime_struct (subpart->data, depth + 1);
 			subpart = subpart->next;
 		}
+	} else if (GMIME_IS_MESSAGE_PART (part)) {
+		GMimeMessagePart *mpart = (GMimeMessagePart *) part;
+		
+		if (mpart->message)
+			print_mime_struct (mpart->message->mime_part, depth + 1);
 	}
 }
 
