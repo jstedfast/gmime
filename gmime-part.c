@@ -706,24 +706,21 @@ g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len)
 
 
 /**
- * g_mime_part_set_content: Set the content of the mime part
+ * g_mime_part_set_content_byte_array: Set the content of the mime part
  * @mime_part: Mime part
- * @content: raw mime part content.  GMimePart keeps this array and will g_free() it when no longer needed.
- * @len: raw content length
+ * @content: raw mime part content.
  *
  * Sets the content of the Mime Part (only non-multiparts)
  **/
 void
-g_mime_part_set_content_array (GMimePart *mime_part, gchar *content, guint len)
+g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
 {
 	g_return_if_fail (mime_part != NULL);
 	
 	if (mime_part->content)
 		g_byte_array_free (mime_part->content, TRUE);
 	
-	mime_part->content = g_byte_array_new ();
-	mime_part->content->data = (guint8*) content;
-	mime_part->content->len = len;
+	mime_part->content = content;
 }
 
 
