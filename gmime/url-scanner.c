@@ -139,6 +139,45 @@ enum {
 #define is_domain(x) ((url_scanner_table[(unsigned char)(x)] & IS_DOMAIN) != 0)
 #define is_urlsafe(x) ((url_scanner_table[(unsigned char)(x)] & (IS_ALPHA|IS_DIGIT|IS_URLSAFE)) != 0)
 
+static struct {
+	char open;
+	char close;
+} url_braces[] = {
+	{ '(', ')' },
+	{ '{', '}' },
+	{ '[', ']' },
+	{ '<', '>' },
+	{ '|', '|' },
+};
+
+static gboolean
+is_open_brace (char c)
+{
+	int i;
+	
+	for (i = 0; i < G_N_ELEMENTS (url_braces); i++) {
+		if (c == url_braces[i].open)
+			return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static char
+url_stop_at_brace (const char *in, size_t so)
+{
+	int i;
+	
+	if (so > 0) {
+		for (i = 0; i < 4; i++) {
+			if (in[so - 1] == url_braces[i].open)
+				return url_braces[i].close;
+		}
+	}
+	
+	return '\0';
+}
+
 
 gboolean
 g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
@@ -162,7 +201,7 @@ g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmat
 			inptr--;
 	}
 	
-	if (!is_atom (*inptr))
+	if (!is_atom (*inptr) || is_open_brace (*inptr))
 		inptr++;
 	
 	if (inptr == pos)
@@ -178,6 +217,7 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 {
 	const char *inptr = pos;
 	int parts = 0, digits;
+	gboolean got_dot = FALSE;
 	
 	g_assert (*inptr == '@');
 	
@@ -204,6 +244,8 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 			inptr++;
 		else
 			return FALSE;
+		
+		got_dot = TRUE;
 	} else {
 		while (inptr < inend) {
 			if (is_domain (*inptr))
@@ -214,43 +256,20 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 			while (inptr < inend && is_domain (*inptr))
 				inptr++;
 			
-			if (inptr < inend && *inptr == '.' && is_domain (inptr[1]))
+			if (inptr < inend && *inptr == '.' && is_domain (inptr[1])) {
+				if (*inptr == '.')
+					got_dot = TRUE;
 				inptr++;
+			}
 		}
 	}
 	
-	if (inptr == pos + 1)
+	if (inptr == pos + 1 || !got_dot)
 		return FALSE;
 	
 	match->um_eo = (inptr - in);
 	
 	return TRUE;
-}
-
-
-static struct {
-	char open;
-	char close;
-} url_braces[] = {
-	{ '(', ')' },
-	{ '{', '}' },
-	{ '[', ']' },
-	{ '<', '>' },
-};
-
-static char
-url_stop_at_brace (const char *in, size_t so)
-{
-	int i;
-	
-	if (so > 0) {
-		for (i = 0; i < 4; i++) {
-			if (in[so - 1] == url_braces[i].open)
-				return url_braces[i].close;
-		}
-	}
-	
-	return '\0';
 }
 
 
@@ -323,7 +342,31 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 				inptr++;
 			
 		} while (parts < 4);
+	} else if (is_atom (*inptr)) {
+		/* might be a domain or user@domain */
+		const char *save = inptr;
+		
+		while (inptr < inend) {
+			if (!is_atom (*inptr))
+				break;
+			
+			inptr++;
+			
+			while (inptr < inend && is_atom (*inptr))
+				inptr++;
+			
+			if (inptr < inend && *inptr == '.' && is_atom (inptr[1]))
+				inptr++;
+		}
+		
+		if (*inptr != '@')
+			inptr = save;
+		else
+			inptr++;
+		
+		goto domain;
 	} else if (is_domain (*inptr)) {
+	domain:
 		while (inptr < inend) {
 			if (is_domain (*inptr))
 				inptr++;
@@ -367,6 +410,13 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 			break;
 		}
 	}
+	
+	/* urls are extremely unlikely to end with any
+	 * punctuation, so strip any trailing
+	 * punctuation off. Also strip off any closing
+	 * braces or quotes. */
+	while (inptr > pos && strchr (",.:;?!-|)}]'\"", inptr[-1]))
+		inptr--;
 	
 	match->um_eo = (inptr - in);
 	

@@ -1,3 +1,24 @@
+2004-02-13  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_construct_multipart): Pop our end
+	boundary before scanning postface text data. Prevents a hang if a
+	multipart brokenly has 2 end boundaries.
+
+2004-02-05  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c: Added single/double quotes to url_braces[]
+	in case the user is quoting the url.
+	(g_url_web_end): Add "-;:" to list of punctuation to strip off the
+	end of urls. Also fixed to handle user@domain's
+	(g_url_addrspec_start): Strip open brace characters from the
+	beginning of the addr.
+	(g_url_web_start): Make sure "www" wasn't part of something not a
+	url (like "Ewww.Gross") by check that pos[-1] is either an open
+	brace or whitespace.
+	(g_url_addrspec_end): Don't allow toplevel domain addr-specs
+	(if we encounter something that looks like it is a toplevel domain
+	addr, it is more likely to be bogus than correct).
+
 2004-01-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-param.c: Disable debugging and conditionally disable
