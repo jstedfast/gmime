@@ -1,3 +1,9 @@
+2002-06-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-gpg-context.c (gpg_ctx_op_step): Loop on our reads while
+	errno is EINTR or EAGAIN. Also make sure to completely read stdout
+	and stderr by keeping better state.
+
 2002-06-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-multipart-signed.c (g_mime_multipart_signed_sign): Once
