@@ -108,14 +108,6 @@
     the output stream.</para>
   </chapter>
 
-  <chapter id="internet-addresses">
-    <title>Internet Addresses</title>
-  </chapter>
-
-  <chapter id="mime">
-    <title>Multipurpose Internet Mail Extension</title>
-  </chapter>
-
   <chapter id="libgmime">
     <title>GMime Library Reference</title>
 
