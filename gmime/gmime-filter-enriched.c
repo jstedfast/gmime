@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "gmime-common.h"
 #include "gmime-filter-enriched.h"
 
 /* text/enriched is rfc1896 */
@@ -133,24 +134,6 @@ g_mime_filter_enriched_get_type (void)
 	return type;
 }
 
-static int
-strcase_equal (gconstpointer v, gconstpointer v2)
-{
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
-}
-
-static guint
-strcase_hash (gconstpointer key)
-{
-	const char *p = key;
-	guint h = 0;
-	
-	while (*p != '\0')
-		h = (h << 5) - h + g_ascii_tolower (*p++);
-	
-	return h;
-}
-
 static void
 g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 {
@@ -168,7 +151,7 @@ g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 	filter_class->complete = filter_complete;
 	
 	if (!enriched_hash) {
-		enriched_hash = g_hash_table_new (strcase_hash, strcase_equal);
+		enriched_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 		for (i = 0; i < NUM_ENRICHED_TAGS; i++)
 			g_hash_table_insert (enriched_hash, enriched_tags[i].enriched,
 					     enriched_tags[i].html);

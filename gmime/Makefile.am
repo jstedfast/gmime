@@ -20,6 +20,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime.c				\
 	gmime-charset.c			\
 	gmime-cipher-context.c		\
+	gmime-common.c			\
 	gmime-content-type.c		\
 	gmime-data-wrapper.c		\
 	gmime-disposition.c		\
@@ -123,6 +124,7 @@ noinst_HEADERS = 			\
 	list.h				\
 	memchunk.h			\
 	url-scanner.h			\
+	gmime-common.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h
 

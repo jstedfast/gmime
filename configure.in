@@ -65,6 +65,9 @@ AC_CHECK_TYPE(ssize_t, int)
 dnl Check for the isblank GNUism
 AC_CHECK_FUNCS(isblank)
 
+dnl Check for strcase functions
+AC_CHECK_FUNCS(strncasecmp strcasecmp)
+
 dnl Check for some time functions
 AC_CHECK_FUNCS(strftime localtime gmtime_r)
 
@@ -166,43 +169,6 @@ AC_TRY_RUN([
 
 CFLAGS="$CFLAGS_save"
 LIBS="$LIBS_save"
-
-dnl Check for a system strcasecmp
-AC_MSG_CHECKING(for strcasecmp)
-AC_TRY_LINK([
-	#include <string.h>
-], [
-	strcasecmp ("US-ASCII", "us-ascii");
-], [
-	ac_cv_strcasecmp="yes"
-	AC_MSG_RESULT(yes)
-], [
-	ac_cv_strcasecmp="no"
-	AC_MSG_RESULT(no)
-])
-
-if test "$ac_cv_strcasecmp" = "no"; then
-	AC_DEFINE(strcasecmp, g_ascii_strcasecmp, [Define to `g_ascii_strcasecmp' if your system does not have a working strcasecmp.])
-fi
-
-dnl Check for a system strncasecmp
-AC_MSG_CHECKING(for strncasecmp)
-AC_TRY_LINK([
-	#include <string.h>
-], [
-	strncasecmp ("US-ASCII", "us-ascii", 8);
-], [
-	ac_cv_strcasecmp="yes"
-	AC_MSG_RESULT(yes)
-], [
-	ac_cv_strncasecmp="no"
-	AC_MSG_RESULT(no)
-])
-
-if test "$ac_cv_strncasecmp" = "no"; then
-	AC_DEFINE(strncasecmp, g_ascii_strncasecmp, [Define to `g_ascii_strncasecmp' if your system does not have a working strncasecmp.])
-fi
-
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,

@@ -1,3 +1,17 @@
+2003-05-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-common.[c,h]: New source files implementing some
+	common routines scattered throughout the gmime sources (currently
+	a strcase_hash and strcase_equal implementation).
+
+	* gmime/gmime-object.c (type_registry_init): Use the new
+	g_mime_strcase_[hash,equal] functions from gmime-common.h.
+	(g_mime_object_register_type): Here too.
+
+	* gmime/gmime-filter-enriched.c
+	(g_mime_filter_enriched_class_init): Use the new
+	g_mime_strcase_[hash,equal] functions from gmime-common.h.
+
 2003-05-22  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (parser_construct_multipart): Fixed to

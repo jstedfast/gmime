@@ -28,6 +28,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "gmime-common.h"
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
 #include "gmime-utils.h"
@@ -56,8 +57,6 @@ static void set_content_type (GMimeObject *object, GMimeContentType *content_typ
 static char *get_headers (GMimeObject *object);
 static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static int strcase_equal (gconstpointer v, gconstpointer v2);
-static guint strcase_hash (gconstpointer key);
 static void type_registry_init (void);
 
 static GHashTable *type_hash = NULL;
@@ -195,7 +194,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 		bucket = g_new (struct _type_bucket, 1);
 		bucket->type = g_strdup (type);
 		bucket->object_type = *type == '*' ? object_type : 0;
-		bucket->subtype_hash = g_hash_table_new (strcase_hash, strcase_equal);
+		bucket->subtype_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 		g_hash_table_insert (type_hash, bucket->type, bucket);
 	}
 	
@@ -657,25 +656,6 @@ g_mime_object_to_string (GMimeObject *object)
 }
 
 
-static int
-strcase_equal (gconstpointer v, gconstpointer v2)
-{
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
-}
-
-static guint
-strcase_hash (gconstpointer key)
-{
-	const char *p = key;
-	guint h = tolower (*p);
-	
-	if (h)
-		for (p += 1; *p != '\0'; p++)
-			h = (h << 5) - h + tolower (*p);
-	
-	return h;
-}
-
 static void
 subtype_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
 {
@@ -710,7 +690,7 @@ type_registry_init (void)
 	if (type_hash)
 		return;
 	
-	type_hash = g_hash_table_new (strcase_hash, strcase_equal);
+	type_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	
 	g_atexit (type_registry_shutdown);
 }
