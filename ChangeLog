@@ -1,3 +1,8 @@
+2001-02-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (parse_rfc822_date): Allow for time token to not
+	have a seconds field.
+
 2001-02-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c (g_mime_part_to_string): Oops. Don't init

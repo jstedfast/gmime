@@ -102,7 +102,7 @@ g_mime_content_type_new_from_string (const gchar *string)
 	
 	while (*eptr == ';') {
 		/* looks like we've got some parameters */
-		guchar *name, *value, *ch;
+		guchar *name, *value;
 		
 		while (*eptr && (*eptr == ';' || isspace (*eptr)))
 			eptr++;
@@ -287,7 +287,9 @@ g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gcha
 	GMimeParam *param;
 	
 	g_return_val_if_fail (mime_type != NULL, NULL);
-	g_return_val_if_fail (mime_type->param_hash != NULL, NULL);
+	
+	if (!mime_type->param_hash)
+		return NULL;
 	
 	param = g_hash_table_lookup (mime_type->param_hash, attribute);
 	

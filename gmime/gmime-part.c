@@ -818,7 +818,8 @@ get_content_disposition (GMimePart *mime_part)
 	GList *params;
 	gchar *str;
 	
-	g_return_val_if_fail (mime_part->disposition != NULL, NULL);
+	if (!mime_part->disposition)
+		return NULL;
 	
 	params = mime_part->disposition->params;
 	
