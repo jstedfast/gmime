@@ -43,6 +43,9 @@ install-data-local:
 		gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(DESTDIR)$(HTML_DIR); \
 	fi
 
+uninstall:
+	rm -rf $(DESTDIR)$(TARGET_DIR)
+
 dist-hook:
 	(cd $(srcdir) ; tar cvf - html) | (cd $(distdir); tar xf -)
 

@@ -227,7 +227,7 @@ dist-hook: gmime.spec
 ## the value NONE in configure if the user doesn't specify them (this
 ## is an autoconf feature, not a bug).
 
-CLEANFILES = gmimeConf.sh
+CLEANFILES = gmimeConf.sh iconv-detect.h
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
