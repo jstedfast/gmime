@@ -41,9 +41,10 @@ typedef enum {
 } GMimeError;
 
 #define GMIME_ERROR_QUARK (g_quark_from_static_string ("gmime"))
+#define GMIME_ERROR GMIME_ERROR_QUARK
 
 #ifdef __cplusplus
 }
-#endif
+#endif /* __cplusplus */
 
 #endif /* __GMIME_ERROR_H__ */

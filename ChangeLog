@@ -1,3 +1,8 @@
+2004-02-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime.c (g_mime_shutdown): Oops, call
+	g_mime_charset_map_shutdown(), not g_mime_charset_shutdown().
+
 2004-01-26  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime.c (g_mime_shutdown): New public function to shutdown

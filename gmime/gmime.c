@@ -78,7 +78,7 @@ g_mime_shutdown (void)
 	if (!initialized)
 		return;
 	
-	g_mime_charset_shutdown ();
+	g_mime_charset_map_shutdown ();
 	g_mime_iconv_shutdown ();
 	
 	initialized = FALSE;
