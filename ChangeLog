@@ -1,3 +1,8 @@
+2002-06-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Pull up past fixes
+	from the gmime-1 branch.
+
 2002-06-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime.c (g_mime_init): Register the message-part class.
