@@ -26,6 +26,29 @@
 #endif
 
 #include "gmime-pgp-context.h"
+#include "gmime-stream-fs.h"
+#include "gmime-stream-mem.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <errno.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <dirent.h>
+
+#include <signal.h>
+#include <sys/ioctl.h>
+#include <sys/time.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <termios.h>
+#include <unistd.h>
+#include <signal.h>
+
+#define d(x)
 
 static void                 pgp_destroy (GMimeCipherContext *ctx);
 
@@ -51,9 +74,11 @@ static int                  pgp_encrypt (GMimeCipherContext *ctx, gboolean sign,
 static int                  pgp_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 					 GMimeStream *ostream, GMimeException *ex);
 
+static void                 pgp_destroy (GMimeCipherContext *ctx);
+
 
 static GMimeCipherContext context_template = {
-	NULL,
+	{ 0, 0, NULL },
 	pgp_destroy,
 	pgp_sign,
 	pgp_clearsign,
@@ -74,11 +99,13 @@ static GMimeCipherContext context_template = {
  * Return value: the new GMimePgpContext
  **/
 GMimePgpContext *
-g_mime_pgp_context_new (GMimePgpType type, const char *path)
+g_mime_pgp_context_new (GMimePgpType type, const char *path,
+			GMimePgpPassphraseFunc get_passwd,
+			gpointer user_data)
 {
 	GMimePgpContext *context;
 	
-	if (type == CAMEL_PGP_TYPE_NONE || !path || !*path)
+	if (type == GMIME_PGP_TYPE_NONE || !path || !*path)
 		return NULL;
 	
 	context = g_new (GMimePgpContext, 1);
@@ -88,10 +115,20 @@ g_mime_pgp_context_new (GMimePgpType type, const char *path)
 	
 	context->type = type;
 	context->path = g_strdup (path);
+	context->get_passwd = get_passwd;
+	context->user_data = user_data;
 	
 	return context;
 }
 
+static void
+pgp_destroy (GMimeCipherContext *ctx)
+{
+	GMimePgpContext *context = (GMimePgpContext *) ctx;
+	
+	g_free (context->path);
+	g_free (context);
+}
 
 static const char *
 pgp_get_type_as_string (GMimePgpType type)
@@ -805,7 +842,7 @@ swrite (GMimeStream *istream)
 		return NULL;
 	}
 	
-	ostream = g_mime_stream_fs_new_with_fd (fd);
+	ostream = g_mime_stream_fs_new (fd);
 	g_mime_stream_write_to_stream (istream, ostream);
 	g_mime_stream_unref (ostream);
 	
@@ -876,8 +913,8 @@ pgp_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 		argv[i++] = "--no-secmem-warning";
 		argv[i++] = "--no-greeting";
 		argv[i++] = "--no-tty";
-		if (!g_mime_session_is_online (ctx->session))
-			argv[i++] = "--no-auto-key-retrieve";
+		/*if (!g_mime_session_is_online (ctx->session))
+		  argv[i++] = "--no-auto-key-retrieve";*/
 		
 		argv[i++] = "--yes";
 		argv[i++] = "--batch";
@@ -942,53 +979,8 @@ pgp_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 		g_mime_cipher_validity_set_valid (valid, TRUE);
 	}
 	
-	if (diagnostics) {
-		const char *locale;
-		char *desc, *outbuf;
-		size_t inlen, outlen;
-		iconv_t cd;
-		
-		inlen = strlen (diagnostics);
-		outlen = inlen * 4;
-		
-		desc = outbuf = g_new (unsigned char, outlen + 1);
-		
-		locale = e_iconv_locale_charset ();
-		if (!locale)
-			locale = "iso-8859-1";
-		
-		cd = e_iconv_open ("UTF-8", locale);
-		if (cd != (iconv_t) -1) {
-			const char *inbuf;
-			int ret;
-			
-			inbuf = diagnostics;
-			ret = e_iconv (cd, &inbuf, &inlen, &outbuf, &outlen);
-			if (ret >= 0) {
-				e_iconv (cd, NULL, 0, &outbuf, &outlen);
-			}
-			e_iconv_close (cd);
-			
-			*outbuf = '\0';
-		} else {
-			const char *inptr, *inend;
-			
-			g_warning ("GMimePgpContext::pgp_verify: cannot convert from %s to UTF-8", locale);
-			
-			inptr = diagnostics;
-			inend = inptr + inlen;
-			
-			while (inptr && inptr < inend && g_unichar_validate (g_utf8_get_char (inptr))) {
-				*outbuf++ = g_utf8_get_char (inptr) & 0xff;
-				inptr = g_utf8_next_char (inptr);
-			}
-			
-			*outbuf = '\0';
-		}
-		
-		g_mime_cipher_validity_set_description (valid, desc);
-		g_free (desc);
-	}
+	if (diagnostics)
+		g_mime_cipher_validity_set_description (valid, diagnostics);
 	
 	g_free (diagnostics);
 	g_free (cleartext);
@@ -1253,8 +1245,8 @@ pgp_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 		argv[i++] = "--yes";
 		argv[i++] = "--batch";
 		
-		if (!g_mime_session_is_online (ctx->session))
-			argv[i++] = "--no-auto-key-retrieve";
+		/*if (!g_mime_session_is_online (ctx->session))
+		  argv[i++] = "--no-auto-key-retrieve";*/
 		
 		argv[i++] = "--output";
 		argv[i++] = "-";            /* output to stdout */

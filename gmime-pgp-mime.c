@@ -28,7 +28,8 @@
 #include "gmime-pgp-mime.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-crlf.h"
-#include "gmime-filter-from"
+#include "gmime-filter-from.h"
+#include "gmime-stream-mem.h"
 #include "gmime-parser.h"
 
 #define d(x) x
@@ -38,17 +39,17 @@
 gboolean
 g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part)
 {
+	const GMimeContentType *type;
 	GMimeDataWrapper *wrapper;
 	GMimePart *part;
-	GMimeContentType *type;
 #ifdef ENABLE_PEDANTIC_PGPMIME
 	const char *param, *micalg;
 #endif
 	int nparts;
 	
 	/* check that we have a multipart/signed */
-	type = g_mime_mime_part_get_content_type (mime_part);
-	if (!g_mime_content_is_type (type, "multipart", "signed"))
+	type = g_mime_part_get_content_type (mime_part);
+	if (!g_mime_content_type_is_type (type, "multipart", "signed"))
 		return FALSE;
 	
 #ifdef ENABLE_PEDANTIC_PGPMIME
@@ -71,14 +72,14 @@ g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part)
 	/* The first part may be of any type except for 
 	 * application/pgp-signature - check it. */
 	part = GMIME_PART (mime_part->children->data);
-	type = g_mime_mime_part_get_content_type (part);
-	if (g_mime_content_is_type (type, "application", "pgp-signature"))
+	type = g_mime_part_get_content_type (part);
+	if (g_mime_content_type_is_type (type, "application", "pgp-signature"))
 		return FALSE;
 	
 	/* The second part should be application/pgp-signature. */
 	part = GMIME_PART (mime_part->children->next->data);
-	type = g_mime_mime_part_get_content_type (part);
-	if (!g_mime_content_is_type (type, "application", "pgp-signature"))
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application", "pgp-signature"))
 		return FALSE;
 	
 	return TRUE;
@@ -87,17 +88,17 @@ g_mime_pgp_mime_is_rfc2015_signed (GMimePart *mime_part)
 gboolean
 g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *mime_part)
 {
+	const GMimeContentType *type;
 	GMimeDataWrapper *wrapper;
 	GMimePart *part;
-	GMimeContentType *type;
 #ifdef ENABLE_PEDANTIC_PGPMIME
 	const char *param;
 #endif
 	int nparts;
 	
 	/* check that we have a multipart/encrypted */
-	type = g_mime_mime_part_get_content_type (mime_part);
-	if (!g_mime_content_is_type (type, "multipart", "encrypted"))
+	type = g_mime_part_get_content_type (mime_part);
+	if (!g_mime_content_type_is_type (type, "multipart", "encrypted"))
 		return FALSE;
 	
 #ifdef ENABLE_PEDANTIC_PGPMIME
@@ -114,15 +115,15 @@ g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *mime_part)
 	
 	/* The first part should be application/pgp-encrypted */
 	part = GMIME_PART (mime_part->children->data);
-	type = g_mime_mime_part_get_content_type (part);
-	if (!g_mime_content_is_type (type, "application", "pgp-encrypted"))
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application", "pgp-encrypted"))
 		return FALSE;
 	
 	/* The second part should be application/octet-stream - this
            is the one we care most about */
 	part = GMIME_PART (mime_part->children->next->data);
-	type = g_mime_mime_part_get_content_type (part);
-	if (!g_mime_content_is_type (type, "application", "octet-stream"))
+	type = g_mime_part_get_content_type (part);
+	if (!g_mime_content_type_is_type (type, "application", "octet-stream"))
 		return FALSE;
 	
 	return TRUE;
@@ -132,29 +133,29 @@ g_mime_pgp_mime_is_rfc2015_encrypted (GMimePart *mime_part)
 static void
 pgp_mime_part_sign_restore_part (GMimePart *mime_part, GSList **encodings)
 {
-	GMimeContentType *type;
+	const GMimeContentType *type;
 	
 	type = g_mime_part_get_content_type (mime_part);
 	
-	if (g_mime_content_type_is_type (mime_part, "multipart", "*")) {
-		int parts, i;
+	if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		GList *lpart;
 		
-		parts = g_mime_multipart_get_number (GMIME_MULTIPART (wrapper));
-		for (i = 0; i < parts; i++) {
-			GMimePart *part = g_mime_multipart_get_part (GMIME_MULTIPART (wrapper), i);
+		lpart = mime_part->children;
+		while (lpart) {
+			GMimePart *part = GMIME_PART (lpart->data);
 			
 			pgp_mime_part_sign_restore_part (part, encodings);
+			lpart = lpart->next;
 		}
 	} else {
 		GMimePartEncodingType encoding;
 		
-		if (g_mime_content_type_is_type (mime_part, "message", "rfc822")) {
-			/* restore the message parts' subparts */
-			pgp_mime_part_sign_restore_part (GMIME_PART (wrapper), encodings);
+		if (g_mime_content_type_is_type (type, "message", "rfc822")) {
+			/* no-op - don't descend into sub-messages */
 		} else {
 			encoding = GPOINTER_TO_INT ((*encodings)->data);
 			
-			g_mime_mime_part_set_content_encoding (mime_part, encoding);
+			g_mime_part_set_encoding (mime_part, encoding);
 			
 			*encodings = (*encodings)->next;
 		}
@@ -164,32 +165,32 @@ pgp_mime_part_sign_restore_part (GMimePart *mime_part, GSList **encodings)
 static void
 pgp_mime_part_sign_prepare_part (GMimePart *mime_part, GSList **encodings)
 {
-	GMimeContentType *type;
-	int parts, i;
+	const GMimeContentType *type;
 	
 	type = g_mime_part_get_content_type (mime_part);
 	
-	if (g_mime_content_type_is (type, "multipart", "*")) {
-		parts = g_mime_multipart_get_number (GMIME_MULTIPART (wrapper));
-		for (i = 0; i < parts; i++) {
-			GMimePart *part = g_mime_multipart_get_part (GMIME_MULTIPART (wrapper), i);
+	if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		GList *lpart;
+		
+		lpart = mime_part->children;
+		while (lpart) {
+			GMimePart *part = GMIME_PART (lpart->data);
 			
 			pgp_mime_part_sign_prepare_part (part, encodings);
+			lpart = lpart->next;
 		}
 	} else {
 		GMimePartEncodingType encoding;
 		
-		if (g_mime_content_type_is (type, "message", "rfc822")) {
-			/* prepare the message parts' subparts */
-			pgp_mime_part_sign_prepare_part (GMIME_PART (wrapper), encodings);
+		if (g_mime_content_type_is_type (type, "message", "rfc822")) {
+			/* no-op - don't descend into sub-messages */
 		} else {
-			encoding = g_mime_mime_part_get_encoding (mime_part);
+			encoding = g_mime_part_get_encoding (mime_part);
 			
 			/* FIXME: find the best encoding for this part and use that instead?? */
 			/* the encoding should really be QP or Base64 */
 			if (encoding != GMIME_PART_ENCODING_BASE64)
-				g_mime_mime_part_set_content_encoding (mime_part,
-								       GMIME_PART_ENCODING_QUOTEDPRINTABLE);
+				g_mime_part_set_encoding (mime_part, GMIME_PART_ENCODING_QUOTEDPRINTABLE);
 			
 			*encodings = g_slist_append (*encodings, GINT_TO_POINTER (encoding));
 		}
@@ -216,14 +217,14 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	GMimePart *part, *multipart, *signed_part;
 	GMimeContentType *mime_type;
 	GMimeDataWrapper *wrapper;
-	GMimeStreamFilter *filtered_stream;
+	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter, *from_filter;
 	GMimeStream *stream, *sigstream;
 	GSList *encodings = NULL;
 	char *hash_type = NULL;
 	
 	g_return_if_fail (mime_part != NULL);
-	g_return_if_fail (GMIME_IS_MIME_PART (*mime_part));
+	g_return_if_fail (GMIME_IS_PART (*mime_part));
 	g_return_if_fail (userid != NULL);
 	
 	part = *mime_part;
@@ -233,14 +234,14 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	crlf_filter = g_mime_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
-						   GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-	from_filter = g_mime_mime_filter_from_new ();
+	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
+					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
+	from_filter = g_mime_filter_from_new ();
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	g_mime_stream_filter_add (filtered_stream, GMIME_FILTER (crlf_filter));
-	g_mime_stream_filter_add (filtered_stream, GMIME_FILTER (from_filter));
-	g_mime_part_write_to_stream (part, GMIME_STREAM (filtered_stream));
-	g_mime_stream_unref (GMIME_STREAM (filtered_stream));
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
+	g_mime_part_write_to_stream (part, filtered_stream);
+	g_mime_stream_unref (filtered_stream);
 	
 	/* reset the stream */
 	g_mime_stream_reset (stream);
@@ -283,7 +284,7 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	g_slist_free (encodings);
 	
 	/* construct the pgp-signature mime part */
-	signed_part = g_mime_mime_part_new_with_type ("application", "pgp-signature");
+	signed_part = g_mime_part_new_with_type ("application", "pgp-signature");
 	wrapper = g_mime_data_wrapper_new ();
 	g_mime_data_wrapper_set_stream (wrapper, sigstream);
 	g_mime_stream_unref (sigstream);
@@ -305,7 +306,7 @@ g_mime_pgp_mime_part_sign (GMimePgpContext *context, GMimePart **mime_part, cons
 	g_mime_object_unref (GMIME_OBJECT (signed_part));
 	
 	/* replace the input part with the output part */
-	g_mime_object_unref (*mime_part);
+	g_mime_object_unref (GMIME_OBJECT (*mime_part));
 	*mime_part = multipart;
 }
 
@@ -323,7 +324,7 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 {
 	GMimeDataWrapper *wrapper;
 	GMimePart *part, *multipart, *sigpart;
-	GMimeStreamFilter *filtered_stream;
+	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter, *from_filter;
 	GMimeStream *stream, *sigstream;
 	GMimeCipherValidity *valid;
@@ -342,18 +343,18 @@ g_mime_pgp_mime_part_verify (GMimePgpContext *context, GMimePart *mime_part, GMi
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	from_filter = g_mime_filter_from_new ();
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	g_mime_stream_filter_add (filtered_stream, crlf_filter);
-	g_mime_stream_filter_add (filtered_stream, from_filter);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
 	
-	g_mime_part_write_to_stream (part, GMIME_STREAM (filtered_stream));
-	g_mime_stream_unref (GMIME_STREAM (filtered_stream));
+	g_mime_part_write_to_stream (part, filtered_stream);
+	g_mime_stream_unref (filtered_stream);
 	g_mime_stream_reset (stream);
 	
 	/* get the signed part */
 	sigpart = GMIME_PART (multipart->children->next->data);
 	sigstream = g_mime_stream_mem_new ();
-	g_mime_data_wrapper_write_to_stream (g_mime_part_get_content_object (sigpart),
-					     sigstream);
+	wrapper = (GMimeDataWrapper *) g_mime_part_get_content_object (sigpart);
+	g_mime_data_wrapper_write_to_stream (wrapper, sigstream);
 	g_mime_stream_reset (sigstream);
 	
 	/* verify */
@@ -381,10 +382,10 @@ void
 g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
 			      GPtrArray *recipients, GMimeException *ex)
 {
-	GMimeMultipart *multipart;
-	GMimePart *part, *version_part, *encrypted_part;
+	GMimePart *part, *multipart, *version_part, *encrypted_part;
+	GMimeDataWrapper *wrapper;
 	GMimeContentType *mime_type;
-	GMimeStreamFilter *filtered_stream;
+	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter;
 	GMimeStream *stream, *ciphertext;
 	
@@ -399,9 +400,9 @@ g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	g_mime_stream_filter_add (filtered_stream, GMIME_FILTER (crlf_filter));
-	g_mime_part_write_to_stream (part, GMIME_STREAM (filtered_stream));
-	g_mime_stream_unref (GMIME_STREAM (filtered_stream));
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
+	g_mime_part_write_to_stream (part, filtered_stream);
+	g_mime_stream_unref (filtered_stream);
 	g_mime_stream_reset (stream);
 	
 	/* pgp encrypt */
@@ -417,17 +418,17 @@ g_mime_pgp_mime_part_encrypt (GMimePgpContext *context, GMimePart **mime_part,
 	
 	/* construct the version part */
 	version_part = g_mime_part_new_with_type ("application", "pgp-encrypted");
-	g_mime_part_set_content_encoding (version_part, GMIME_PART_ENCODING_7BIT);
+	g_mime_part_set_encoding (version_part, GMIME_PART_ENCODING_7BIT);
 	g_mime_part_set_content (version_part, "Version: 1\n", strlen ("Version: 1\n"));
 	
 	/* construct the pgp-encrypted mime part */
-	encrypted_part = g_mime_mime_part_new_with_type ("application", "octet-stream");
+	encrypted_part = g_mime_part_new_with_type ("application", "octet-stream");
 	wrapper = g_mime_data_wrapper_new ();
 	g_mime_data_wrapper_set_stream (wrapper, ciphertext);
 	g_mime_stream_unref (ciphertext);
 	g_mime_part_set_content_object (encrypted_part, wrapper);
 	g_mime_part_set_filename (encrypted_part, "encrypted.asc");
-	g_mime_part_set_content_encoding (encrypted_part, GMIME_PART_ENCODING_7BIT);
+	g_mime_part_set_encoding (encrypted_part, GMIME_PART_ENCODING_7BIT);
 	
 	/* construct the container multipart/encrypted */
 	multipart = g_mime_part_new ();
@@ -460,8 +461,9 @@ GMimePart *
 g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GMimeException *ex)
 {
 	GMimePart *encrypted_part, *multipart, *part;
+	const GMimeContentType *mime_type;
 	GMimeStream *stream, *ciphertext;
-	GMimeStreamFilter *filtered_stream;
+	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
@@ -476,7 +478,7 @@ g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GM
 	/* get the encrypted part (second part) */
 	encrypted_part = GMIME_PART (multipart->children->next->data);
 	mime_type = g_mime_part_get_content_type (encrypted_part);
-	if (!g_mime_content_is_type (mime_type, "application", "octet-stream"))
+	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream"))
 		return NULL;
 	
 	/* get the ciphertext */
@@ -500,10 +502,10 @@ g_mime_pgp_mime_part_decrypt (GMimePgpContext *context, GMimePart *mime_part, GM
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 	g_mime_stream_unref (stream);
-	g_mime_stream_filter_add (filtered_stream, crlf_filter);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
 	
-	part = g_mime_parser_construct_part (GMIME_STREAM (filtered_stream));
-	g_mime_object_unref (GMIME_OBJECT (filtered_stream));
+	part = g_mime_parser_construct_part (filtered_stream);
+	g_mime_stream_unref (filtered_stream);
 	
 	return part;
 }

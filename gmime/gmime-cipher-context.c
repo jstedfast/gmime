@@ -46,7 +46,6 @@ void
 g_mime_cipher_context_construct (GMimeCipherContext *context, GMimeCipherContext *context_template, int type)
 {
 	context->destroy = context_template->destroy;
-	context->get_passwd = context_template->get_passwd;
 	context->sign = context_template->sign;
 	context->clearsign = context_template->clearsign;
 	context->verify = context_template->verify;

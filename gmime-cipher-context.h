@@ -42,12 +42,12 @@ typedef enum {
 	GMIME_CIPHER_HASH_SHA1
 } GMimeCipherHash;
 
+typedef struct _GMimeCipherContext GMimeCipherContext;
+
 struct _GMimeCipherContext {
 	GMimeObject parent_object;
 	
 	void                  (*destroy)    (GMimeCipherContext *ctx);
-	
-	char *                (*get_passwd) (GMimeCipherContext *ctx, const char *prompt);
 	
 	int                   (*sign)       (GMimeCipherContext *ctx, const char *userid,
 					     GMimeCipherHash hash, GMimeStream *istream,
@@ -69,8 +69,6 @@ struct _GMimeCipherContext {
 	int                   (*decrypt)    (GMimeCipherContext *ctx, GMimeStream *istream,
 					     GMimeStream *ostream, GMimeException *ex);
 };
-
-typedef struct _GMimeCipherContext GMimeCipherContext;
 
 #define GMIME_CIPHER_CONTEXT(ctx) ((GMimeCipherContext *) ctx)
 

@@ -44,8 +44,9 @@ libgmime_la_SOURCES = 		\
 	gmime-utils.c		\
 	internet-address.c	\
 	md5-utils.c		\
-	pgp-utils.c		\
-	pgp-mime.c
+	gmime-cipher-context.c	\
+	gmime-pgp-context.c	\
+	gmime-pgp-mime.c
 
 gmimeincludedir = $(includedir)/gmime
 gmimeinclude_HEADERS = 		\
@@ -76,8 +77,9 @@ gmimeinclude_HEADERS = 		\
 	gmime-stream-null.h	\
 	gmime-utils.h		\
 	internet-address.h	\
-	pgp-utils.h		\
-	pgp-mime.h
+	gmime-cipher-context.h	\
+	gmime-pgp-context.h	\
+	gmime-pgp-mime.h
 
 noinst_HEADERS = 		\
 	strlib.h		\
