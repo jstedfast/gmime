@@ -28,6 +28,8 @@
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 
+static iconv_t cd = (iconv_t) -1;
+
 void
 test_parser (char *data)
 {
@@ -173,40 +175,57 @@ static char *string = "I have no idea what to test here so I'll just test a "
 void
 test_encodings (void)
 {
-	char *enc, *dec;
 	int pos, state = -1, save = 0;
-
-	enc = g_strdup ("Re: !!! =?windows-1250?Q?Nab=EDz=EDm_scanov=E1n=ED_negativ=F9?= "
-			"=?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= "
-			"=?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=");
+	char *enc, *dec;
+	
+	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
 	g_free (dec);
 	
-	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem");
+	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklagdoc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
 	g_free (dec);
 	
-	enc = g_strdup ("OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem");
+	enc = "=?iso-8859-1?B?dGVzdOb45S50eHQ=?=";
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
 	g_free (dec);
 	
-	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem");
+	enc = "Re: !!! =?windows-1250?Q?Nab=EDz=EDm_scanov=E1n=ED_negativ=F9?= "
+		"=?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= "
+		"=?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=";
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
 	g_free (dec);
 	
-	enc = g_mime_utils_8bit_header_encode ("OT - ich weiß, trotzdem");
+	enc = "OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem";
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (dec);
+	
+	enc = "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem";
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (dec);
+	
+	enc = "OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem";
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (dec);
+	
+	dec = g_mime_iconv_strdup (cd, "OT - ich weiß, trotzdem");
+	fprintf (stderr, "pre-encoded: %s\n", dec);
+	enc = g_mime_utils_8bit_header_encode (dec);
+	g_free (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
@@ -240,45 +259,41 @@ test_encodings (void)
 	g_free (enc);
 	g_free (dec);
 	
-	enc = g_mime_utils_8bit_header_encode ("Kristoffer Brånemyr");
+	dec = g_mime_iconv_strdup (cd, "Kristoffer Brånemyr");
+	fprintf (stderr, "pre-encoded: %s\n", dec);
+	enc = g_mime_utils_8bit_header_encode (dec);
+	g_free (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
-	enc = g_mime_utils_8bit_header_encode_phrase ("Kristoffer Brånemyr");
+	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
+	enc = g_mime_utils_8bit_header_encode (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
+	g_free (dec);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
 	g_free (enc);
 	g_free (dec);
 	
-	enc = g_mime_utils_8bit_header_encode ("åaåååaåå aaaa ååååaa");
+	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
+	enc = g_mime_utils_8bit_header_encode_phrase (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
-	
-	dec = g_mime_utils_8bit_header_decode (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	
-	g_free (enc);
 	g_free (dec);
-	
-	enc = g_mime_utils_8bit_header_encode_phrase ("åaåååaåå aaaa ååååaa");
-	fprintf (stderr, "encoded: %s\n", enc);
-	
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	
 	g_free (enc);
 	g_free (dec);
 	
 	fprintf (stderr, "test that white space between 8bit words is preserved\n");
-	enc = g_mime_utils_8bit_header_encode ("åaåååaåå  \t  ååååaa");
+	dec = g_mime_iconv_strdup (cd, "åaåååaåå  \t  ååååaa");
+	enc = g_mime_utils_8bit_header_encode (dec);
 	fprintf (stderr, "encoded: %s\n", enc);
-	
+	g_free (dec);
 	dec = g_mime_utils_8bit_header_decode (enc);
 	fprintf (stderr, "decoded: %s\n", dec);
-	
 	g_free (enc);
 	g_free (dec);
 	
@@ -342,8 +357,12 @@ dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean de
 		ia = addr->address;
 		addr = addr->next;
 		
-		if (i != -1)
-			fprintf (stderr, "Original: %s\n", addresses[i]);
+		if (i != -1) {
+			str = g_mime_iconv_strdup (cd, addresses[i]);
+			fprintf (stderr, "Original: %s\n", str);
+			g_free (str);
+		}
+		
 		if (ia->type == INTERNET_ADDRESS_GROUP) {
 			fprintf (stderr, "Address is a group:\n");
 			fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
@@ -439,6 +458,8 @@ int main (int argc, char *argv[])
 {
 	g_mime_init (0);
 	
+	cd = g_mime_iconv_open ("UTF-8", "iso-8859-1");
+	
 	test_date ();
 	
 	test_onepart ();
@@ -448,6 +469,8 @@ int main (int argc, char *argv[])
 	test_encodings ();
 	
 	test_addresses ();
+	
+	g_mime_iconv_close (cd);
 	
 	return 0;
 }
