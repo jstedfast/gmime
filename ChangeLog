@@ -1,3 +1,14 @@
+2000-10-29  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* internet-address.c (encoded_name): Use
+	g_mime_utils_8bit_header_encode_phrase() to encode the addrspec.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_decode): Fix to make the
+	decoder more rfc compliant. As stated by rfc2047, all white space
+	between encoded words MUST be ignored.
+	(g_mime_utils_8bit_header_encode_phrase): New rfc2047 encoding
+	function for phrases (see rfc2047 section 5 part 3).
+
 2000-10-28  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-utils.c (parse_rfc822_date): Fixed the off-by-one-hour

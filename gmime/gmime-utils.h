@@ -42,6 +42,7 @@ gint g_mime_utils_best_encoding (const guchar *text);
 /* utilities to (de/en)code headers */
 gchar *g_mime_utils_8bit_header_decode (const guchar *in);
 gchar *g_mime_utils_8bit_header_encode (const guchar *in);
+gchar *g_mime_utils_8bit_header_encode_phrase (const guchar *in);
 
 /* do incremental base64 (de/en)coding */
 gint g_mime_utils_base64_decode_step (const guchar *in, gint len, guchar *out, gint *state, guint *save);

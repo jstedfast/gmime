@@ -204,7 +204,7 @@ encoded_name (const gchar *raw, gboolean rfc2047_encode)
 	g_return_val_if_fail (raw != NULL, NULL);
 	
 	if (rfc2047_encode && g_mime_utils_text_is_8bit (raw)) {
-		name = g_mime_utils_8bit_header_encode (raw);
+		name = g_mime_utils_8bit_header_encode_phrase (raw);
 	} else {
 		if (strchr (raw, ',') || strchr (raw, '.'))
 			name = g_strdup_printf ("\"%s\"", raw);
