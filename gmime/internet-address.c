@@ -82,7 +82,7 @@ internet_address_destroy (InternetAddress *ia)
 /**
  * internet_address_new_name: Create a new Internet Address object
  * @name: person's name
- * @address: person's address
+ * @addr: person's address
  * 
  * Returns a new Internet Address object.
  **/
@@ -153,7 +153,7 @@ internet_address_set_name (InternetAddress *ia, const char *name)
  * @ia: internet address
  * @addr: contact's email address
  *
- * Set the intenet address's address.
+ * Set the internet address's address.
  **/
 void
 internet_address_set_addr (InternetAddress *ia, const char *addr)

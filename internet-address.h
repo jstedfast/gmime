@@ -60,7 +60,7 @@ void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 
 GList *internet_address_parse_string (const gchar *string);
 
-gchar *internet_address_to_string (InternetAddress *ia, gboolean rfc2047_encode);
+gchar *internet_address_to_string (InternetAddress *ia, gboolean encode);
 
 #ifdef __cplusplus
 }

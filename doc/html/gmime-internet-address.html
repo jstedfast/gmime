@@ -4,7 +4,8 @@
 >internet-address</TITLE
 ><META
 NAME="GENERATOR"
-CONTENT="Modular DocBook HTML Stylesheet Version 1.52"><LINK
+CONTENT="Modular DocBook HTML Stylesheet Version 1.64
+"><LINK
 REL="HOME"
 TITLE="GMime Library Reference Manual"
 HREF="book1.html"><LINK
@@ -122,7 +123,7 @@ NAME="GMIME-INTERNET-ADDRESS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2598"
+NAME="AEN2622"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +131,7 @@ NAME="AEN2598"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2601"
+NAME="AEN2625"
 ></A
 ><H2
 >Synopsis</H2
@@ -145,6 +146,10 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+enum        <A
+HREF="gmime-internet-address.html#INTERNETADDRESSTYPE"
+>InternetAddressType</A
+>;
 struct      <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
@@ -155,25 +160,31 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 >* <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW"
 >internet_address_new</A
->       (const <GTKDOCLINK
+>       (void);
+<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+>* <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW-NAME"
+>internet_address_new_name</A
+>  (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 > *name,
                                              const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *address);
+> *addr);
 <A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 >* <A
-HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW-FROM-STRING"
->internet_address_new_from_string</A
->
-                                            (const <GTKDOCLINK
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-NEW-GROUP"
+>internet_address_new_group</A
+> (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *string);
+> *name);
 void        <A
 HREF="gmime-internet-address.html#INTERNET-ADDRESS-DESTROY"
 >internet_address_destroy</A
@@ -181,6 +192,60 @@ HREF="gmime-internet-address.html#INTERNET-ADDRESS-DESTROY"
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
 > *ia);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-NAME"
+>internet_address_set_name</A
+>       (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-ADDR"
+>internet_address_set_addr</A
+>       (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *addr);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-SET-GROUP"
+>internet_address_set_group</A
+>      (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             <GTKDOCLINK
+HREF="GLIST"
+>GList</GTKDOCLINK
+> *group);
+void        <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-ADD-MEMBER"
+>internet_address_add_member</A
+>     (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *member);
+<GTKDOCLINK
+HREF="GLIST"
+>GList</GTKDOCLINK
+>*      <A
+HREF="gmime-internet-address.html#INTERNET-ADDRESS-PARSE-STRING"
+>internet_address_parse_string</A
+>   (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string);
 <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
@@ -194,7 +259,7 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
-> rfc2047_encode);</PRE
+> encode);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -202,7 +267,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2618"
+NAME="AEN2660"
 ></A
 ><H2
 >Description</H2
@@ -212,14 +277,44 @@ NAME="AEN2618"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2621"
+NAME="AEN2663"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2623"
+NAME="AEN2665"
+></A
+><H3
+><A
+NAME="INTERNETADDRESSTYPE"
+></A
+>enum InternetAddressType</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>typedef enum {
+	INTERNET_ADDRESS_NONE,
+	INTERNET_ADDRESS_NAME,
+	INTERNET_ADDRESS_GROUP
+} InternetAddressType;</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2670"
 ></A
 ><H3
 ><A
@@ -236,8 +331,12 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct InternetAddress {
+	InternetAddressType type;
 	gchar *name;
-	gchar *address;
+	union {
+		gchar *addr;
+		GList *members;
+	} value;
 };</PRE
 ></TD
 ></TR
@@ -248,7 +347,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2628"
+NAME="AEN2675"
 ></A
 ><H3
 ><A
@@ -267,14 +366,7 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
->* internet_address_new       (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *name,
-                                             const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *address);</PRE
+>* internet_address_new       (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -284,6 +376,82 @@ HREF="GCHAR"
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN2682"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>a new Internet Address object.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2691"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-NEW-NAME"
+></A
+>internet_address_new_name ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+>* internet_address_new_name  (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2700"
+></A
 ><P
 ></P
 ><TABLE
@@ -319,7 +487,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->address</I
+>addr</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -352,13 +520,13 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2654"
+NAME="AEN2717"
 ></A
 ><H3
 ><A
-NAME="INTERNET-ADDRESS-NEW-FROM-STRING"
+NAME="INTERNET-ADDRESS-NEW-GROUP"
 ></A
->internet_address_new_from_string ()</H3
+>internet_address_new_group ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -371,11 +539,10 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-internet-address.html#INTERNETADDRESS"
 >InternetAddress</A
->* internet_address_new_from_string
-                                            (const <GTKDOCLINK
+>* internet_address_new_group (const <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
-> *string);</PRE
+> *name);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -385,6 +552,9 @@ HREF="GCHAR"
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN2725"
+></A
 ><P
 ></P
 ><TABLE
@@ -403,14 +573,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->string</I
+>name</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> rfc822 internet address string</TD
+> group name</TD
 ></TR
 ><TR
 ><TD
@@ -425,8 +595,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new Internet Address object based upon the rfc822 address
-string.</TD
+>a new Internet Address object.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -437,7 +606,7 @@ string.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2675"
+NAME="AEN2738"
 ></A
 ><H3
 ><A
@@ -461,14 +630,19 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
 ></TR
 ></TABLE
 ><P
->Destroy the InternetAddress object pointed to by <GTKDOCLINK
-HREF="IA"
->ia</GTKDOCLINK
+>Destroy the InternetAddress object pointed to by <TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
 >.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN2746"
+></A
 ><P
 ></P
 ><TABLE
@@ -505,7 +679,447 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2692"
+NAME="AEN2755"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-SET-NAME"
+></A
+>internet_address_set_name ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_set_name       (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *name);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the name of the internet address.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2763"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>name</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> group or contact's name</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2776"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-SET-ADDR"
+></A
+>internet_address_set_addr ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_set_addr       (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *addr);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the internet address's address.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2784"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>addr</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> contact's email address</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2797"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-SET-GROUP"
+></A
+>internet_address_set_group ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_set_group      (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             <GTKDOCLINK
+HREF="GLIST"
+>GList</GTKDOCLINK
+> *group);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Set the members of the internet address group.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2805"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>group</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> a list of internet addresses</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2818"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-ADD-MEMBER"
+></A
+>internet_address_add_member ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        internet_address_add_member     (<A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *ia,
+                                             <A
+HREF="gmime-internet-address.html#INTERNETADDRESS"
+>InternetAddress</A
+> *member);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Add a contact to the internet address group.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2826"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ia</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> internet address</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>member</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> group member's internet address</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2839"
+></A
+><H3
+><A
+NAME="INTERNET-ADDRESS-PARSE-STRING"
+></A
+>internet_address_parse_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GLIST"
+>GList</GTKDOCLINK
+>*      internet_address_parse_string   (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2846"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2859"
 ></A
 ><H3
 ><A
@@ -531,7 +1145,7 @@ HREF="gmime-internet-address.html#INTERNETADDRESS"
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
-> rfc2047_encode);</PRE
+> encode);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -541,6 +1155,9 @@ HREF="GBOOLEAN"
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
+><A
+NAME="AEN2868"
+></A
 ><P
 ></P
 ><TABLE
@@ -576,14 +1193,14 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->rfc2047_encode</I
+>encode</I
 ></TT
 >&nbsp;:</TD
 ><TD
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
-> TRUE if the address should be encoded</TD
+> TRUE if the address should be rfc2047 encoded</TD
 ></TR
 ><TR
 ><TD

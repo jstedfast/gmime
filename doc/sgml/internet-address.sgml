@@ -1,4 +1,4 @@
-<refentry id="gmime-internet-address" revision="18 Jan 2001">
+<refentry id="gmime-internet-address" revision="24 May 2001">
 <refmeta>
 <refentrytitle>internet-address</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -14,14 +14,24 @@
 
 
 
+enum        <link linkend="InternetAddressType">InternetAddressType</link>;
 struct      <link linkend="InternetAddress">InternetAddress</link>;
-<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new">internet_address_new</link>       (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *address);
-<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-from-string">internet_address_new_from_string</link>
-                                            (const <link linkend="gchar">gchar</link> *string);
+<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new">internet_address_new</link>       (void);
+<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-name">internet_address_new_name</link>  (const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *addr);
+<link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-group">internet_address_new_group</link> (const <link linkend="gchar">gchar</link> *name);
 void        <link linkend="internet-address-destroy">internet_address_destroy</link>        (<link linkend="InternetAddress">InternetAddress</link> *ia);
+void        <link linkend="internet-address-set-name">internet_address_set_name</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             const <link linkend="gchar">gchar</link> *name);
+void        <link linkend="internet-address-set-addr">internet_address_set_addr</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             const <link linkend="gchar">gchar</link> *addr);
+void        <link linkend="internet-address-set-group">internet_address_set_group</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             <link linkend="GList">GList</link> *group);
+void        <link linkend="internet-address-add-member">internet_address_add_member</link>     (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             <link linkend="InternetAddress">InternetAddress</link> *member);
+<link linkend="GList">GList</link>*      <link linkend="internet-address-parse-string">internet_address_parse_string</link>   (const <link linkend="gchar">gchar</link> *string);
 <link linkend="gchar">gchar</link>*      <link linkend="internet-address-to-string">internet_address_to_string</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             <link linkend="gboolean">gboolean</link> rfc2047_encode);
+                                             <link linkend="gboolean">gboolean</link> encode);
 </synopsis>
 </refsynopsisdiv>
 
@@ -39,10 +49,25 @@ void        <link linkend="internet-address-destroy">internet_address_destroy</l
 <refsect1>
 <title>Details</title>
 <refsect2>
+<title><anchor id="InternetAddressType">enum InternetAddressType</title>
+<programlisting>typedef enum {
+	INTERNET_ADDRESS_NONE,
+	INTERNET_ADDRESS_NAME,
+	INTERNET_ADDRESS_GROUP
+} InternetAddressType;
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="InternetAddress">struct InternetAddress</title>
 <programlisting>struct InternetAddress {
+	InternetAddressType type;
 	gchar *name;
-	gchar *address;
+	union {
+		gchar *addr;
+		GList *members;
+	} value;
 };
 </programlisting>
 <para>
@@ -50,8 +75,23 @@ void        <link linkend="internet-address-destroy">internet_address_destroy</l
 </para></refsect2>
 <refsect2>
 <title><anchor id="internet-address-new">internet_address_new ()</title>
-<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new       (const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *address);</programlisting>
+<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new       (void);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-new-name">internet_address_new_name ()</title>
+<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_name  (const <link linkend="gchar">gchar</link> *name,
+                                             const <link linkend="gchar">gchar</link> *addr);</programlisting>
 <para>
 </para>
 <para>
@@ -64,16 +104,15 @@ void        <link linkend="internet-address-destroy">internet_address_destroy</l
 <row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
 <entry> person's name
 </entry></row>
-<row><entry align="right"><parameter>address</parameter>&nbsp;:</entry>
+<row><entry align="right"><parameter>addr</parameter>&nbsp;:</entry>
 <entry> person's address
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="internet-address-new-from-string">internet_address_new_from_string ()</title>
-<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_from_string
-                                            (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<title><anchor id="internet-address-new-group">internet_address_new_group ()</title>
+<programlisting><link linkend="InternetAddress">InternetAddress</link>* internet_address_new_group (const <link linkend="gchar">gchar</link> *name);</programlisting>
 <para>
 </para>
 <para>
@@ -83,18 +122,17 @@ void        <link linkend="internet-address-destroy">internet_address_destroy</l
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
-<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
-<entry> rfc822 internet address string
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> group name
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object based upon the rfc822 address
-string.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a new Internet Address object.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="internet-address-destroy">internet_address_destroy ()</title>
 <programlisting>void        internet_address_destroy        (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
 <para>
-Destroy the InternetAddress object pointed to by <link linkend="ia">ia</link>.</para>
+Destroy the InternetAddress object pointed to by <parameter>ia</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -107,9 +145,105 @@ Destroy the InternetAddress object pointed to by <link linkend="ia">ia</link>.</
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="internet-address-set-name">internet_address_set_name ()</title>
+<programlisting>void        internet_address_set_name       (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
+<para>
+Set the name of the internet address.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address
+</entry></row>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> group or contact's name
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-set-addr">internet_address_set_addr ()</title>
+<programlisting>void        internet_address_set_addr       (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             const <link linkend="gchar">gchar</link> *addr);</programlisting>
+<para>
+Set the internet address's address.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address
+</entry></row>
+<row><entry align="right"><parameter>addr</parameter>&nbsp;:</entry>
+<entry> contact's email address
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-set-group">internet_address_set_group ()</title>
+<programlisting>void        internet_address_set_group      (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             <link linkend="GList">GList</link> *group);</programlisting>
+<para>
+Set the members of the internet address group.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address
+</entry></row>
+<row><entry align="right"><parameter>group</parameter>&nbsp;:</entry>
+<entry> a list of internet addresses
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-add-member">internet_address_add_member ()</title>
+<programlisting>void        internet_address_add_member     (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             <link linkend="InternetAddress">InternetAddress</link> *member);</programlisting>
+<para>
+Add a contact to the internet address group.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address
+</entry></row>
+<row><entry align="right"><parameter>member</parameter>&nbsp;:</entry>
+<entry> group member's internet address
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
+<programlisting><link linkend="GList">GList</link>*      internet_address_parse_string   (const <link linkend="gchar">gchar</link> *string);</programlisting>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
+<entry></entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
 <title><anchor id="internet-address-to-string">internet_address_to_string ()</title>
 <programlisting><link linkend="gchar">gchar</link>*      internet_address_to_string      (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             <link linkend="gboolean">gboolean</link> rfc2047_encode);</programlisting>
+                                             <link linkend="gboolean">gboolean</link> encode);</programlisting>
 <para>
 </para>
 <para>
@@ -122,8 +256,8 @@ Destroy the InternetAddress object pointed to by <link linkend="ia">ia</link>.</
 <row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
 <entry> Internet Address object
 </entry></row>
-<row><entry align="right"><parameter>rfc2047_encode</parameter>&nbsp;:</entry>
-<entry> TRUE if the address should be encoded
+<row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
+<entry> TRUE if the address should be rfc2047 encoded
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the InternetAddress object as an allocated string in rfc822
 format.

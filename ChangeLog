@@ -1,5 +1,7 @@
 2001-05-24  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* doc/*: Updated.
+
 	* doc/Makefile.am: Use $(INSTALL) and $(INSTALL_DATA) rather than
 	`install -m 644`
 

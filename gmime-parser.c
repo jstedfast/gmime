@@ -112,7 +112,7 @@ g_strstrbound (const gchar *haystack, const gchar *needle, const gchar *end)
 
 /**
  * get_header_block_from_file: Get the header block from a message.
- * @fp file pointer pointing to the beginning of the file block.
+ * @fp: file pointer pointing to the beginning of the file block.
  *
  * This will read all of the headers into an unparsed GArray and
  * leave fp_in pointing at the message body that comes after the
