@@ -232,9 +232,6 @@ CLEANFILES = gmimeConf.sh
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
 
-aclocalm4dir = $(datadir)/aclocal
-aclocalm4_DATA = gmime.m4
-
 EXTRA_DIST = 			\
 	gmimeConf.sh.in 	\
 	gmime-2.0.pc.in		\
