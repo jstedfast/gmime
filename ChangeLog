@@ -1,3 +1,16 @@
+2002-04-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (g_mime_message_add_recipients_from_string):
+	Destroy the temporary addrlist.
+
+2002-03-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Detect the iconv-friendly formats for iso charsets
+	at configure time and dump them into iconv-detect.h for use in
+	gmime-charset.c.
+
+	* gmime-charset.c: Updated to use iconv-detect.h if it exists.
+
 2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-param.c (rfc2184_decode): Don't bother using
