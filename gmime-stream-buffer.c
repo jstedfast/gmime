@@ -68,6 +68,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t n, nread = 0;
 	
+	g_warning ("yay");
+	
  again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
@@ -129,6 +131,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if (nread != -1)
 		stream->position += nread;
 	
+	g_warning ("read %d bytes, new stream position = %d", nread, stream->position);
+	
 	return nread;
 }
 
@@ -158,6 +162,9 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	default:
 		written = g_mime_stream_write (buffer->source, buf, len);
 	}
+	
+	if (written != -1)
+		stream->position += written;
 	
 	return written;
 }
@@ -258,7 +265,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 static off_t
 stream_tell (GMimeStream *stream)
 {
-	return stream->position - stream->bound_start;
+	return stream->position;
 }
 
 static ssize_t
@@ -270,35 +277,14 @@ stream_length (GMimeStream *stream)
 static GMimeStream *
 stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
-	/* FIXME: I don't think this'll work... */
-	GMimeStreamBuffer *buffer;
+	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	
-	buffer = g_new (GMimeStreamBuffer, 1);
+	/* FIXME: for cached reads we want to substream ourself rather
+           than substreaming our source because we have to assume that
+           the reason this stream is setup to do cached reads is
+           because the source streem is unseekable. */
 	
-	buffer->source = GMIME_STREAM_BUFFER (stream)->source;
-	g_mime_stream_ref (buffer->source);
-	
-	buffer->mode = GMIME_STREAM_BUFFER (stream)->mode;
-	
-	switch (buffer->mode) {
-	case GMIME_STREAM_BUFFER_BLOCK_READ:
-	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
-		buffer->buffer = g_malloc (BLOCK_BUFFER_LEN);
-		buffer->bufptr = NULL;
-		buffer->bufend = NULL;
-		buffer->buflen = 0;
-		break;
-	default:
-		buffer->buffer = g_malloc (BUFFER_GROW_SIZE);
-		buffer->bufptr = buffer->buffer;
-		buffer->bufend = buffer->buffer;
-		buffer->buflen = BUFFER_GROW_SIZE;
-	}
-	
-	g_mime_stream_construct (GMIME_STREAM (buffer), &template,
-				 GMIME_STREAM_BUFFER_TYPE, start, end);
-	
-	return GMIME_STREAM (buffer);
+	return g_mime_stream_substream (buffer->source, start, end);
 }
 
 
@@ -445,6 +431,10 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 			goto slow_and_painful;
 			break;
 		}
+		
+		/* increment our stream position pointer */
+		stream->position += (outptr - buf);
+		
 	} else {
 		/* ugh...do it the slow and painful way... */
 	slow_and_painful:

@@ -1,3 +1,13 @@
+2001-09-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-buffer.c (stream_write): Incremement the stream
+	position by the number of bytes we wrote.
+	(stream_tell): Return stream->position.
+	(stream_substream): Just return a substream of our source stream.
+	(g_mime_stream_buffer_gets): Increment the stream position by the
+	number of bytes read if and only if we are operating on a buffered
+	stream.
+
 2001-09-27  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-file.c (stream_tell): Return stream->position here
