@@ -23,6 +23,7 @@ gmime-config
 gmimeConf.sh
 gmime-2.0.pc
 gen-table
+test-best
 test-mime
 test-parser
 test-partial
