@@ -15,22 +15,38 @@
 
 
 enum        <link linkend="InternetAddressType">InternetAddressType</link>;
+struct      <link linkend="InternetAddressList">InternetAddressList</link>;
 struct      <link linkend="InternetAddress">InternetAddress</link>;
 <link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new">internet_address_new</link>       (void);
 <link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-name">internet_address_new_name</link>  (const char *name,
                                              const char *addr);
 <link linkend="InternetAddress">InternetAddress</link>* <link linkend="internet-address-new-group">internet_address_new_group</link> (const char *name);
-void        <link linkend="internet-address-destroy">internet_address_destroy</link>        (<link linkend="InternetAddress">InternetAddress</link> *ia);
+void        <link linkend="internet-address-ref">internet_address_ref</link>            (<link linkend="InternetAddress">InternetAddress</link> *ia);
+void        <link linkend="internet-address-unref">internet_address_unref</link>          (<link linkend="InternetAddress">InternetAddress</link> *ia);
 void        <link linkend="internet-address-set-name">internet_address_set_name</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              const char *name);
 void        <link linkend="internet-address-set-addr">internet_address_set_addr</link>       (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              const char *addr);
 void        <link linkend="internet-address-set-group">internet_address_set_group</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             <link linkend="GList">GList</link> *group);
+                                             <link linkend="InternetAddressList">InternetAddressList</link> *group);
 void        <link linkend="internet-address-add-member">internet_address_add_member</link>     (<link linkend="InternetAddress">InternetAddress</link> *ia,
                                              <link linkend="InternetAddress">InternetAddress</link> *member);
-<link linkend="GList">GList</link>*      <link linkend="internet-address-parse-string">internet_address_parse_string</link>   (const char *string);
+<link linkend="InternetAddressList">InternetAddressList</link>* <link linkend="internet-address-list-prepend">internet_address_list_prepend</link>
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *list,
+                                             <link linkend="InternetAddress">InternetAddress</link> *ia);
+<link linkend="InternetAddressList">InternetAddressList</link>* <link linkend="internet-address-list-append">internet_address_list_append</link>
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *list,
+                                             <link linkend="InternetAddress">InternetAddress</link> *ia);
+<link linkend="InternetAddressList">InternetAddressList</link>* <link linkend="internet-address-list-concat">internet_address_list_concat</link>
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *a,
+                                             <link linkend="InternetAddressList">InternetAddressList</link> *b);
+int         <link linkend="internet-address-list-length">internet_address_list_length</link>    (<link linkend="InternetAddressList">InternetAddressList</link> *list);
+void        <link linkend="internet-address-list-destroy">internet_address_list_destroy</link>   (<link linkend="InternetAddressList">InternetAddressList</link> *list);
+<link linkend="InternetAddressList">InternetAddressList</link>* <link linkend="internet-address-parse-string">internet_address_parse_string</link>
+                                            (const char *string);
 char*       <link linkend="internet-address-to-string">internet_address_to_string</link>      (<link linkend="InternetAddress">InternetAddress</link> *ia,
+                                             <link linkend="gboolean">gboolean</link> encode);
+char*       <link linkend="internet-address-list-to-string">internet_address_list_to_string</link> (<link linkend="InternetAddressList">InternetAddressList</link> *list,
                                              <link linkend="gboolean">gboolean</link> encode);
 </synopsis>
 </refsynopsisdiv>
@@ -60,13 +76,24 @@ char*       <link linkend="internet-address-to-string">internet_address_to_strin
 
 </para></refsect2>
 <refsect2>
+<title><anchor id="InternetAddressList">struct InternetAddressList</title>
+<programlisting>struct InternetAddressList {
+	struct _InternetAddressList *next;
+	InternetAddress *address;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
 <title><anchor id="InternetAddress">struct InternetAddress</title>
 <programlisting>struct InternetAddress {
 	InternetAddressType type;
+	unsigned int refcount;
 	char *name;
 	union {
 		char *addr;
-		GList *members;
+		InternetAddressList *members;
 	} value;
 };
 </programlisting>
@@ -130,10 +157,10 @@ Creates a new InternetAddress object with group name <parameter>name</parameter>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="internet-address-destroy">internet_address_destroy ()</title>
-<programlisting>void        internet_address_destroy        (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
+<title><anchor id="internet-address-ref">internet_address_ref ()</title>
+<programlisting>void        internet_address_ref            (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
 <para>
-Destroy the InternetAddress object pointed to by <parameter>ia</parameter>.</para>
+Ref's the internet address.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -142,7 +169,23 @@ Destroy the InternetAddress object pointed to by <parameter>ia</parameter>.</par
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
-<entry> InternetAddress object to destroy
+<entry> address
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-unref">internet_address_unref ()</title>
+<programlisting>void        internet_address_unref          (<link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
+<para>
+Unref's the internet address.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> address
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -188,7 +231,7 @@ Set the internet address's address.</para>
 <refsect2>
 <title><anchor id="internet-address-set-group">internet_address_set_group ()</title>
 <programlisting>void        internet_address_set_group      (<link linkend="InternetAddress">InternetAddress</link> *ia,
-                                             <link linkend="GList">GList</link> *group);</programlisting>
+                                             <link linkend="InternetAddressList">InternetAddressList</link> *group);</programlisting>
 <para>
 Set the members of the internet address group.</para>
 <para>
@@ -226,8 +269,114 @@ Add a contact to the internet address group.</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="internet-address-list-prepend">internet_address_list_prepend ()</title>
+<programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_prepend
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *list,
+                                             <link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
+<para>
+Prepends the internet address to the list of internet addresses
+pointed to by <parameter>list</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
+<entry> a list of internet addresses
+</entry></row>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address to prepend
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resultant list.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-list-append">internet_address_list_append ()</title>
+<programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_append
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *list,
+                                             <link linkend="InternetAddress">InternetAddress</link> *ia);</programlisting>
+<para>
+Appends the internet address to the list of internet addresses
+pointed to by <parameter>list</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
+<entry> a list of internet addresses
+</entry></row>
+<row><entry align="right"><parameter>ia</parameter>&nbsp;:</entry>
+<entry> internet address to append
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resultant list.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-list-concat">internet_address_list_concat ()</title>
+<programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_list_concat
+                                            (<link linkend="InternetAddressList">InternetAddressList</link> *a,
+                                             <link linkend="InternetAddressList">InternetAddressList</link> *b);</programlisting>
+<para>
+Concatenates a copy of list <parameter>b</parameter> onto the end of list <parameter>a</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>a</parameter>&nbsp;:</entry>
+<entry> first list
+</entry></row>
+<row><entry align="right"><parameter>b</parameter>&nbsp;:</entry>
+<entry> second list
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the resulting list.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-list-length">internet_address_list_length ()</title>
+<programlisting>int         internet_address_list_length    (<link linkend="InternetAddressList">InternetAddressList</link> *list);</programlisting>
+<para>
+Calculates the length of the list of addresses.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
+<entry> list of internet addresses
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of internet addresses in <parameter>list</parameter>.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-list-destroy">internet_address_list_destroy ()</title>
+<programlisting>void        internet_address_list_destroy   (<link linkend="InternetAddressList">InternetAddressList</link> *list);</programlisting>
+<para>
+Destroys the list of internet addresses.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
+<entry> address list
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
 <title><anchor id="internet-address-parse-string">internet_address_parse_string ()</title>
-<programlisting><link linkend="GList">GList</link>*      internet_address_parse_string   (const char *string);</programlisting>
+<programlisting><link linkend="InternetAddressList">InternetAddressList</link>* internet_address_parse_string
+                                            (const char *string);</programlisting>
 <para>
 Construct a list of internet addresses from the given string.</para>
 <para>
@@ -266,6 +415,29 @@ object.</para>
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the InternetAddress object as an allocated string in rfc822
 format.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="internet-address-list-to-string">internet_address_list_to_string ()</title>
+<programlisting>char*       internet_address_list_to_string (<link linkend="InternetAddressList">InternetAddressList</link> *list,
+                                             <link linkend="gboolean">gboolean</link> encode);</programlisting>
+<para>
+Allocates a string buffer containing the rfc822 formatted addresses
+in <parameter>list</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>list</parameter>&nbsp;:</entry>
+<entry> list of internet addresses
+</entry></row>
+<row><entry align="right"><parameter>encode</parameter>&nbsp;:</entry>
+<entry> TRUE if the address should be rfc2047 encoded
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a string containing the list of addresses in rfc822 format.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

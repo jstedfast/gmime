@@ -20,7 +20,7 @@ struct      <link linkend="IOVector">IOVector</link>;
 #define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (stream)
 void        <link linkend="g-mime-stream-construct">g_mime_stream_construct</link>         (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream_template,
-                                             int type,
+                                             unsigned int type,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);
 void        <link linkend="g-mime-stream-ref">g_mime_stream_ref</link>               (<link linkend="GMimeStream">GMimeStream</link> *stream);
@@ -78,7 +78,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 	/* Note: these are private fields!! */
 	GMimeStream *super_stream;
 	
-	int type;
+	unsigned int type;
 	int refcount;
 	
 	off_t position;
@@ -144,7 +144,7 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 <title><anchor id="g-mime-stream-construct">g_mime_stream_construct ()</title>
 <programlisting>void        g_mime_stream_construct         (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream_template,
-                                             int type,
+                                             unsigned int type,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);</programlisting>
 <para>

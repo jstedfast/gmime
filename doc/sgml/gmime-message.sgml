@@ -24,7 +24,6 @@ struct      <link linkend="GMimeHeader">GMimeHeader</link>;
 struct      <link linkend="GMimeMessageHeader">GMimeMessageHeader</link>;
 struct      <link linkend="GMimeMessage">GMimeMessage</link>;
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
-void        <link linkend="g-mime-message-destroy">g_mime_message_destroy</link>          (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-set-sender">g_mime_message_set_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *sender);
 const char* <link linkend="g-mime-message-get-sender">g_mime_message_get_sender</link>       (<link linkend="GMimeMessage">GMimeMessage</link> *message);
@@ -39,7 +38,8 @@ void        <link linkend="g-mime-message-add-recipients-from-string">g_mime_mes
                                             (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              char *type,
                                              const char *string);
-<link linkend="GList">GList</link>*      <link linkend="g-mime-message-get-recipients">g_mime_message_get_recipients</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+<link linkend="InternetAddressList">InternetAddressList</link>* <link linkend="g-mime-message-get-recipients">g_mime_message_get_recipients</link>
+                                            (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *type);
 void        <link linkend="g-mime-message-set-subject">g_mime_message_set_subject</link>      (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *subject);
@@ -199,7 +199,7 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 If <parameter>pretty_headers</parameter> is <literal>TRUE</literal>, then the standard rfc822 headers are
 initialized so as to put headers in a nice friendly order. This is
 strictly a cosmetic thing, so if you are unsure, it is safe to say
-<literal>no</literal> (<literal>FALSE</literal>).</para>
+no (<literal>FALSE</literal>).</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -211,23 +211,6 @@ strictly a cosmetic thing, so if you are unsure, it is safe to say
 <entry> make pretty headers 
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Message object.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-message-destroy">g_mime_message_destroy ()</title>
-<programlisting>void        g_mime_message_destroy          (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
-<para>
-Releases all memory used by the MIME Message and it's child MIME
-Parts back to the Operating System for reuse.</para>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
-<entry> MIME Message to destroy
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -368,10 +351,11 @@ specified in rfc822.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-message-get-recipients">g_mime_message_get_recipients ()</title>
-<programlisting><link linkend="GList">GList</link>*      g_mime_message_get_recipients   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+<programlisting><link linkend="InternetAddressList">InternetAddressList</link>* g_mime_message_get_recipients
+                                            (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const char *type);</programlisting>
 <para>
-Gets a GList of recipients of type <parameter>type</parameter> from <parameter>message</parameter>.</para>
+Gets a list of recipients of type <parameter>type</parameter> from <parameter>message</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">

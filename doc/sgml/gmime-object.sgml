@@ -18,7 +18,7 @@
 struct      <link linkend="GMimeObject">GMimeObject</link>;
 void        <link linkend="g-mime-object-construct">g_mime_object_construct</link>         (<link linkend="GMimeObject">GMimeObject</link> *object,
                                              <link linkend="GMimeObject">GMimeObject</link> *object_template,
-                                             int type);
+                                             unsigned int type);
 void        <link linkend="g-mime-object-ref">g_mime_object_ref</link>               (<link linkend="GMimeObject">GMimeObject</link> *object);
 void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>             (<link linkend="GMimeObject">GMimeObject</link> *object);
 </synopsis>
@@ -57,7 +57,7 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 <refsect2>
 <title><anchor id="GMimeObject">struct GMimeObject</title>
 <programlisting>struct GMimeObject {
-	int type;
+	unsigned int type;
 	int refcount;
 	
 	void (*destroy) (GMimeObject *object);
@@ -70,7 +70,7 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 <title><anchor id="g-mime-object-construct">g_mime_object_construct ()</title>
 <programlisting>void        g_mime_object_construct         (<link linkend="GMimeObject">GMimeObject</link> *object,
                                              <link linkend="GMimeObject">GMimeObject</link> *object_template,
-                                             int type);</programlisting>
+                                             unsigned int type);</programlisting>
 <para>
 Initializes a new object of type <parameter>type</parameter>, using the virtual methods
 from <parameter>object_template</parameter>.</para>

@@ -60,7 +60,7 @@ static char *rfc822_headers[] = {
  * If @pretty_headers is %TRUE, then the standard rfc822 headers are
  * initialized so as to put headers in a nice friendly order. This is
  * strictly a cosmetic thing, so if you are unsure, it is safe to say
- * %no (%FALSE).
+ * no (%FALSE).
  *
  * Returns an empty MIME Message object.
  **/

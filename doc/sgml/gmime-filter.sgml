@@ -40,7 +40,7 @@ void        <link linkend="g-mime-filter-backup">g_mime_filter_backup</link>    
                                              <link linkend="size-t">size_t</link> length);
 void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="size-t">size_t</link> size,
-                                             int keep);
+                                             <link linkend="gboolean">gboolean</link> keep);
 </synopsis>
 </refsynopsisdiv>
 
@@ -65,12 +65,12 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 	char *outreal;		/* real malloc'd buffer */
 	char *outbuf;		/* first 'writable' position allowed (outreal + outpre) */
 	char *outptr;
-	int outsize;
-	int outpre;		/* prespace of this buffer */
+	size_t outsize;
+	size_t outpre;		/* prespace of this buffer */
 	
 	char *backbuf;
-	int backsize;
-	int backlen;		/* significant data there */
+	size_t backsize;
+	size_t backlen;		/* significant data there */
 	
 	/* virtual functions */
 	void (*destroy)  (GMimeFilter *filter);
@@ -287,7 +287,7 @@ previous ones</para>
 <title><anchor id="g-mime-filter-set-size">g_mime_filter_set_size ()</title>
 <programlisting>void        g_mime_filter_set_size          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="size-t">size_t</link> size,
-                                             int keep);</programlisting>
+                                             <link linkend="gboolean">gboolean</link> keep);</programlisting>
 <para>
 Ensure this much size available for filter output (if required)</para>
 <para>

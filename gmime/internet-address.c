@@ -241,7 +241,6 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 }
 
 
-
 /**
  * internet_address_list_prepend:
  * @list: a list of internet addresses
@@ -368,6 +367,7 @@ internet_address_list_length (InternetAddressList *list)
 	
 	return len;
 }
+
 
 /**
  * internet_address_list_destroy:
@@ -900,6 +900,10 @@ decode_address (const char **in)
 	decode_lwsp (&inptr);
 	if (*inptr == ':') {
 		/* this is a group */
+		InternetAddressList *group = NULL, *tail;
+		
+		tail = (InternetAddressList *) &group;
+		
 		inptr++;
 		addr = internet_address_new_group (name->str);
 		
@@ -909,8 +913,10 @@ decode_address (const char **in)
 			
 			member = decode_mailbox (&inptr);
 			if (member) {
-				internet_address_add_member (addr, member);
-				internet_address_unref (member);
+				tail->next = g_new (InternetAddressList, 1);
+				tail = tail->next;
+				tail->next = NULL;
+				tail->address = member;
 			}
 			
 			decode_lwsp (&inptr);
@@ -919,10 +925,10 @@ decode_address (const char **in)
 				decode_lwsp (&inptr);
 				member = decode_mailbox (&inptr);
 				if (member) {
-					/* FIXME: this could be optimized by keeping a tail
-                                           pointer */
-					internet_address_add_member (addr, member);
-					internet_address_unref (member);
+					tail->next = g_new (InternetAddressList, 1);
+					tail = tail->next;
+					tail->next = NULL;
+					tail->address = member;
 				}
 				
 				decode_lwsp (&inptr);
@@ -934,6 +940,8 @@ decode_address (const char **in)
 		else
 			w(g_warning ("Invalid group spec, missing closing ';': %.*s",
 				     inptr - start, start));
+		
+		internet_address_set_group (addr, group);
 		
 		*in = inptr;
 	} else {

@@ -491,11 +491,11 @@ construct_message_headers (GMimeMessage *message, const char *in, int inlen, gbo
 /**
  * g_mime_parser_construct_message:
  * @stream: an rfc0822 message stream
- * @preserve_headers: if TRUE, then store the arbitrary headers
+ * @preserve_headers: if %TRUE, then store the arbitrary headers
  *
  * Constructs a GMimeMessage object based on @stream.
  *
- * Returns a GMimeMessage object based on the rfc0822 data.
+ * Returns a GMimeMessage object based on the rfc0822 message stream.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)

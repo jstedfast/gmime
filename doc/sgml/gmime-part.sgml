@@ -24,7 +24,6 @@ void        (<link linkend="GMimePartFunc">*GMimePartFunc</link>)               
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new">g_mime_part_new</link>                 (void);
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-part-new-with-type">g_mime_part_new_with_type</link>       (const char *type,
                                              const char *subtype);
-void        <link linkend="g-mime-part-destroy">g_mime_part_destroy</link>             (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-set-content-header">g_mime_part_set_content_header</link>  (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const char *header,
                                              const char *value);
@@ -258,22 +257,6 @@ Creates a new MIME Part with a sepcified type.</para>
 <entry> content-subtype
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an empty MIME Part object with the specified content-type.
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-part-destroy">g_mime_part_destroy ()</title>
-<programlisting>void        g_mime_part_destroy             (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
-<para>
-Releases all memory used by this mime part and all child mime parts.</para>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
-<entry> Mime part to destroy
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
