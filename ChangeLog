@@ -1,3 +1,10 @@
+2000-11-08  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-utils.c: Added Gtk-Doc style comments to all the
+	functions.
+	(g_mime_utils_best_encoding): Return a GMimePartEncodingType
+	instead of gint.
+
 2000-11-01  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* Makefile.am (INCLUDES): Add -DG_LOG_DOMAIN=\"gmime\"

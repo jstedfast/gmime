@@ -32,12 +32,14 @@ extern "C" {
 #include <glib.h>
 #include <time.h>
 
+#include "gmime-part.h"
+
 time_t g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset);
 gchar *g_mime_utils_header_format_date (time_t time, gint offset);
 
 /* encoding decision making utilities ;-) */
 gboolean g_mime_utils_text_is_8bit (const guchar *text);
-gint g_mime_utils_best_encoding (const guchar *text);
+GMimePartEncodingType g_mime_utils_best_encoding (const guchar *text);
 
 /* utilities to (de/en)code headers */
 gchar *g_mime_utils_8bit_header_decode (const guchar *in);
@@ -53,7 +55,7 @@ gint g_mime_utils_base64_encode_close (const guchar *in, gint inlen, guchar *out
 gint g_mime_utils_uudecode_step (const guchar *in, gint len, guchar *out, gint *state, guint32 *save, gchar *uulen);
 
 /* do incremental quoted-printable (de/en)coding */
-gint g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *savestate, gint *saveme);
+gint g_mime_utils_quoted_decode_step (const guchar *in, gint len, guchar *out, gint *savestate, gint *saved);
 gint g_mime_utils_quoted_encode_step (const guchar *in, gint len, guchar *out, gint *state, gint *save);
 gint g_mime_utils_quoted_encode_close (const guchar *in, gint len, guchar *out, gint *state, gint *save);
 

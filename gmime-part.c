@@ -50,7 +50,7 @@ g_mime_part_new ()
 
 
 /**
- * g_mime_part_new_with_type: Create a new MIME Part object with a sepcified type
+ * g_mime_part_new_with_type: Create a new MIME Part with a sepcified type
  * @type: content-type
  * @subtype: content-subtype
  *
