@@ -52,11 +52,14 @@ void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
+	gboolean has_md5;
 	
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
-	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
-		
+	has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
+	fprintf (stdout, "Content-Type: %s/%s%s", type->type, type->subtype,
+		 has_md5 ? "; md5sum=" : "\n");
+	
 	if (GMIME_IS_MULTIPART (part)) {
 		GList *subpart;
 		
@@ -70,6 +73,12 @@ print_mime_struct (GMimeObject *part, int depth)
 		
 		if (mpart->message)
 			print_mime_struct (mpart->message->mime_part, depth + 1);
+	} else if (has_md5) {
+		/* validate the Md5 sum */
+		if (g_mime_part_verify_content_md5 ((GMimePart *) part))
+			fprintf (stdout, "GOOD\n");
+		else
+			fprintf (stdout, "BAD\n");
 	}
 }
 

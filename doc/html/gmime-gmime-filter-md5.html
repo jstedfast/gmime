@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-filter-strip</TITLE
+>gmime-filter-md5</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-md5"
-HREF="gmime-gmime-filter-md5.html"><LINK
+TITLE="gmime-filter-html"
+HREF="gmime-gmime-filter-html.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-yenc"
-HREF="gmime-gmime-filter-yenc.html"></HEAD
+TITLE="gmime-filter-strip"
+HREF="gmime-gmime-filter-strip.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-md5.html"
+HREF="gmime-gmime-filter-html.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-yenc.html"
+HREF="gmime-gmime-filter-strip.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-FILTER-STRIP"
->gmime-filter-strip</A
+NAME="GMIME-GMIME-FILTER-MD5"
+>gmime-filter-md5</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN2085"
+NAME="AEN2027"
 ></A
 ><H2
 >Name</H2
->gmime-filter-strip&nbsp;--&nbsp;</DIV
+>gmime-filter-md5&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN2088"
+NAME="AEN2030"
 ></A
 ><H2
 >Synopsis</H2
@@ -147,16 +147,24 @@ CLASS="SYNOPSIS"
 >&#13;
 
 struct      <A
-HREF="gmime-gmime-filter-strip.html#GMIMEFILTERSTRIP"
->GMimeFilterStrip</A
+HREF="gmime-gmime-filter-md5.html#GMIMEFILTERMD5"
+>GMimeFilterMd5</A
 >;
 <A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
 >* <A
-HREF="gmime-gmime-filter-strip.html#G-MIME-FILTER-STRIP-NEW"
->g_mime_filter_strip_new</A
->        (void);
+HREF="gmime-gmime-filter-md5.html#G-MIME-FILTER-MD5-NEW"
+>g_mime_filter_md5_new</A
+>          (void);
+void        <A
+HREF="gmime-gmime-filter-md5.html#G-MIME-FILTER-MD5-GET-DIGEST"
+>g_mime_filter_md5_get_digest</A
+>    (<A
+HREF="gmime-gmime-filter-md5.html#GMIMEFILTERMD5"
+>GMimeFilterMd5</A
+> *md5,
+                                             unsigned char digest[16]);
 &#13;</PRE
 ></TD
 ></TR
@@ -165,7 +173,7 @@ HREF="gmime-gmime-filter-strip.html#G-MIME-FILTER-STRIP-NEW"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2094"
+NAME="AEN2038"
 ></A
 ><H2
 >Description</H2
@@ -175,20 +183,20 @@ NAME="AEN2094"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2097"
+NAME="AEN2041"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2099"
+NAME="AEN2043"
 ></A
 ><H3
 ><A
-NAME="GMIMEFILTERSTRIP"
+NAME="GMIMEFILTERMD5"
 ></A
->struct GMimeFilterStrip</H3
+>struct GMimeFilterMd5</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -198,9 +206,10 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->struct GMimeFilterStrip {
+>struct GMimeFilterMd5 {
 	GMimeFilter parent_object;
 	
+	MD5Context md5;
 };</PRE
 ></TD
 ></TR
@@ -211,13 +220,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2104"
+NAME="AEN2048"
 ></A
 ><H3
 ><A
-NAME="G-MIME-FILTER-STRIP-NEW"
+NAME="G-MIME-FILTER-MD5-NEW"
 ></A
->g_mime_filter_strip_new ()</H3
+>g_mime_filter_md5_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -230,12 +239,12 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
->* g_mime_filter_strip_new        (void);</PRE
+>* g_mime_filter_md5_new          (void);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeFilterStrip filter.</P
+>Creates a new Md5 filter.</P
 ><P
 ></P
 ><P
@@ -254,7 +263,7 @@ ALIGN="RIGHT"
 VALIGN="TOP"
 WIDTH="20%"
 ><A
-NAME="AEN2112"><SPAN
+NAME="AEN2056"><SPAN
 STYLE="white-space: nowrap"
 ><I
 CLASS="EMPHASIS"
@@ -266,7 +275,102 @@ ALIGN="LEFT"
 VALIGN="TOP"
 WIDTH="80%"
 ><P
->a new strip filter.</P
+>a new Md5 filter.</P
+></TD
+></TR
+></TBODY
+></TABLE
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2061"
+></A
+><H3
+><A
+NAME="G-MIME-FILTER-MD5-GET-DIGEST"
+></A
+>g_mime_filter_md5_get_digest ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_filter_md5_get_digest    (<A
+HREF="gmime-gmime-filter-md5.html#GMIMEFILTERMD5"
+>GMimeFilterMd5</A
+> *md5,
+                                             unsigned char digest[16]);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Outputs the md5 digest into <TT
+CLASS="PARAMETER"
+><I
+>digest</I
+></TT
+>.</P
+><P
+></P
+><P
+></P
+><TABLE
+CLASS="VARIABLELIST"
+BORDER="0"
+CELLSPACING="0"
+CELLPADDING="4"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+><TBODY
+><TR
+><TD
+ALIGN="RIGHT"
+VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN2070"><SPAN
+STYLE="white-space: nowrap"
+><TT
+CLASS="PARAMETER"
+><I
+>md5</I
+></TT
+>&nbsp;:</SPAN
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="80%"
+><P
+> md5 filter object</P
+></TD
+></TR
+><TR
+><TD
+ALIGN="RIGHT"
+VALIGN="TOP"
+WIDTH="20%"
+><A
+NAME="AEN2075"><SPAN
+STYLE="white-space: nowrap"
+><TT
+CLASS="PARAMETER"
+><I
+>digest</I
+></TT
+>&nbsp;:</SPAN
+></TD
+><TD
+ALIGN="LEFT"
+VALIGN="TOP"
+WIDTH="80%"
+><P
+> output buffer of at least 16 bytes</P
 ></TD
 ></TR
 ></TBODY
@@ -288,7 +392,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-md5.html"
+HREF="gmime-gmime-filter-html.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -342,7 +446,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-yenc.html"
+HREF="gmime-gmime-filter-strip.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -360,7 +464,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-md5</B
+>gmime-filter-html</B
 ></FONT
 ></TD
 ><TD
@@ -370,7 +474,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-yenc</B
+>gmime-filter-strip</B
 ></FONT
 ></TD
 ></TR

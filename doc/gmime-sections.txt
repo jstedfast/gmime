@@ -6,6 +6,12 @@ g_mime_init
 </SECTION>
 
 <SECTION>
+<FILE>gmime-error</FILE>
+GMimeError
+GMIME_ERROR_QUARK
+</SECTION>
+
+<SECTION>
 <FILE>gmime-session</FILE>
 GMimeSession
 g_mime_session_request_passwd
@@ -362,6 +368,25 @@ GMIME_IS_FILTER_HTML
 GMIME_FILTER_HTML_CLASS
 GMIME_IS_FILTER_HTML_CLASS
 GMIME_FILTER_HTML_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>gmime-filter-md5</FILE>
+GMimeFilterMd5
+g_mime_filter_md5_new
+g_mime_filter_md5_get_digest
+
+<SUBSECTION Private>
+g_mime_filter_md5_get_type
+
+<SUBSECTION Standard>
+GMimeFilterMd5Class
+GMIME_TYPE_FILTER_MD5
+GMIME_FILTER_MD5
+GMIME_IS_FILTER_MD5
+GMIME_FILTER_MD5_CLASS
+GMIME_IS_FILTER_MD5_CLASS
+GMIME_FILTER_MD5_GET_CLASS
 </SECTION>
 
 <SECTION>

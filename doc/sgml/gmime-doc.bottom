@@ -1,4 +1,5 @@
     &gmime-gmime;
+    &gmime-gmime-error;
     &gmime-gmime-session;
     &gmime-gmime-stream;
     &gmime-gmime-stream-buffer;
@@ -16,6 +17,7 @@
     &gmime-gmime-filter-crlf;
     &gmime-gmime-filter-from;
     &gmime-gmime-filter-html;
+    &gmime-gmime-filter-md5;
     &gmime-gmime-filter-strip;
     &gmime-gmime-filter-yenc;
     &gmime-gmime-data-wrapper;

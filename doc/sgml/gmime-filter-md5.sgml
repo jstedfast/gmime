@@ -1,0 +1,85 @@
+<refentry id="gmime-gmime-filter-md5">
+<refmeta>
+<refentrytitle>gmime-filter-md5</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMIME Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>gmime-filter-md5</refname><refpurpose></refpurpose>
+</refnamediv>
+
+<refsynopsisdiv><title>Synopsis</title>
+<synopsis>
+
+
+
+struct      <link linkend="GMimeFilterMd5">GMimeFilterMd5</link>;
+<link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-md5-new">g_mime_filter_md5_new</link>          (void);
+void        <link linkend="g-mime-filter-md5-get-digest">g_mime_filter_md5_get_digest</link>    (<link linkend="GMimeFilterMd5">GMimeFilterMd5</link> *md5,
+                                             unsigned char digest[16]);
+
+
+</synopsis>
+</refsynopsisdiv>
+
+
+
+
+
+
+
+<refsect1>
+<title>Description</title>
+<para>
+
+</para>
+</refsect1>
+
+<refsect1>
+<title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterMd5">struct GMimeFilterMd5</title>
+<programlisting>struct GMimeFilterMd5 {
+	GMimeFilter parent_object;
+	
+	MD5Context md5;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-md5-new">g_mime_filter_md5_new ()</title>
+<programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_md5_new          (void);</programlisting>
+<para>
+Creates a new Md5 filter.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><emphasis>Returns</emphasis> :</term><listitem><para>a new Md5 filter.
+</para></listitem></varlistentry>
+</variablelist></refsect2>
+<refsect2>
+<title><anchor id="g-mime-filter-md5-get-digest">g_mime_filter_md5_get_digest ()</title>
+<programlisting>void        g_mime_filter_md5_get_digest    (<link linkend="GMimeFilterMd5">GMimeFilterMd5</link> *md5,
+                                             unsigned char digest[16]);</programlisting>
+<para>
+Outputs the md5 digest into <parameter>digest</parameter>.</para>
+<para>
+
+</para><variablelist role="params">
+<varlistentry><term><parameter>md5</parameter>&nbsp;:</term>
+<listitem><para> md5 filter object
+</para></listitem></varlistentry>
+<varlistentry><term><parameter>digest</parameter>&nbsp;:</term>
+<listitem><para> output buffer of at least 16 bytes
+</para></listitem></varlistentry>
+</variablelist></refsect2>
+
+</refsect1>
+
+
+
+
+</refentry>

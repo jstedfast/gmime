@@ -39,6 +39,7 @@
 <!entity gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">
+<!entity gmime-filter-md5 SYSTEM "sgml/gmime-filter-md5.sgml">
 <!entity gmime-filter-strip SYSTEM "sgml/gmime-filter-strip.sgml">
 <!entity gmime-filter-yenc SYSTEM "sgml/gmime-filter-yenc.sgml">
 <!entity gmime-cipher-context SYSTEM "sgml/gmime-cipher-context.sgml">
@@ -163,7 +164,7 @@
     construct a GMimeStreamFilter stream and then add the desired
     filters to it.</para>
 
-    <para>GMime comes equipped with some basic filters:
+    <para>GMime comes equipped with some basic filters such as
     GMimeFilterBasic, GMimeFilterCharset, GMimeFilterCRLF,
     GMimeFilterFrom and GMimeFilterHTML.</para>
 
@@ -240,6 +241,7 @@
     &gmime-filter-crlf;
     &gmime-filter-from;
     &gmime-filter-html;
+    &gmime-filter-md5;
     &gmime-filter-strip;
     &gmime-filter-yenc;
     &gmime-param;

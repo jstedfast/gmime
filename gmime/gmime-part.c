@@ -36,9 +36,11 @@
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
+#include "gmime-stream-null.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
-#include "md5-utils.h"
+#include "gmime-filter-crlf.h"
+#include "gmime-filter-md5.h"
 
 /* GObject class methods */
 static void g_mime_part_class_init (GMimePartClass *klass);
@@ -550,46 +552,57 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
+	unsigned char digest[16], b64digest[32];
+	const GMimeContentType *content_type;
+	GMimeStreamFilter *filtered_stream;
+	GMimeFilter *md5_filter;
+	GMimeStream *stream;
+	int state, save;
+	size_t len;
+	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (mime_part->content_md5)
 		g_free (mime_part->content_md5);
 	
-	if (content_md5) {
-		mime_part->content_md5 = g_strdup (content_md5);
-	} else if (mime_part->content && mime_part->content->stream) {
-		GMimePartEncodingType encoding;
-		char digest[16], b64digest[32];
-		GMimeStream *stream;
-		GByteArray *buf;
-		int state, save;
-		size_t len;
-		
-		encoding = g_mime_data_wrapper_get_encoding (mime_part->content);
-		stream = g_mime_data_wrapper_get_stream (mime_part->content);
-		if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (encoding)) {
-			g_mime_stream_unref (stream);
-			stream = g_mime_stream_mem_new ();
-			g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-		}
-		
-		buf = GMIME_STREAM_MEM (stream)->buffer;
-		len = g_mime_stream_length (stream);
-		
-		if (len != (size_t) -1) {
-			md5_get_digest (buf->data + stream->bound_start, len, digest);
-			
-			state = save = 0;
-			len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
-			b64digest[len] = '\0';
-			
-			mime_part->content_md5 = g_strdup (b64digest);
-			
-			g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", b64digest);
-		}
-		
+	if (!content_md5) {
+		/* compute a md5sum */
+		stream = g_mime_stream_null_new ();
+		filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
 		g_mime_stream_unref (stream);
+		
+		content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+		if (g_mime_content_type_is_type (content_type, "text", "*")) {
+			GMimeFilter *crlf_filter;
+			
+			crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
+							      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
+			
+			g_mime_stream_filter_add (filtered_stream, crlf_filter);
+			g_object_unref (crlf_filter);
+		}
+		
+		md5_filter = g_mime_filter_md5_new ();
+		g_mime_stream_filter_add (filtered_stream, md5_filter);
+		
+		stream = (GMimeStream *) filtered_stream;
+		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
+		g_mime_stream_unref (stream);
+		
+		memset (digest, 0, 16);
+		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
+		g_object_unref (md5_filter);
+		
+		state = save = 0;
+		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+		b64digest[len] = '\0';
+		g_strstrip (b64digest);
+		
+		content_md5 = (const char *) b64digest;
 	}
+	
+	mime_part->content_md5 = g_strdup (content_md5);
+	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Md5", content_md5);
 }
 
 
@@ -605,10 +618,11 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
 {
-	GMimePartEncodingType encoding;
-	char digest[16], b64digest[32];
+	unsigned char digest[16], b64digest[32];
+	const GMimeContentType *content_type;
+	GMimeStreamFilter *filtered_stream;
+	GMimeFilter *md5_filter;
 	GMimeStream *stream;
-	GByteArray *buf;
 	int state, save;
 	size_t len;
 	
@@ -618,28 +632,36 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	if (!mime_part->content_md5)
 		return FALSE;
 	
-	encoding = g_mime_data_wrapper_get_encoding (mime_part->content);
-	stream = g_mime_data_wrapper_get_stream (mime_part->content);
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (encoding)) {
-		g_mime_stream_unref (stream);
-		stream = g_mime_stream_mem_new ();
-		g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
-	}
+	stream = g_mime_stream_null_new ();
+	filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
+	g_mime_stream_unref (stream);
 	
-	buf = GMIME_STREAM_MEM (stream)->buffer;
-	len = g_mime_stream_length (stream);
-	
-	if (len != (size_t) -1) {
-		md5_get_digest (buf->data + stream->bound_start, len, digest);
+	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
+	if (g_mime_content_type_is_type (content_type, "text", "*")) {
+		GMimeFilter *crlf_filter;
 		
-		state = save = 0;
-		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
-		b64digest[len] = '\0';
-	} else {
-		b64digest[0] = '\0';
+		crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
+						      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
+		
+		g_mime_stream_filter_add (filtered_stream, crlf_filter);
+		g_object_unref (crlf_filter);
 	}
 	
-	g_mime_stream_unref (GMIME_STREAM (stream));
+	md5_filter = g_mime_filter_md5_new ();
+	g_mime_stream_filter_add (filtered_stream, md5_filter);
+	
+	stream = (GMimeStream *) filtered_stream;
+	g_mime_data_wrapper_write_to_stream (mime_part->content, stream);
+	g_mime_stream_unref (stream);
+	
+	memset (digest, 0, 16);
+	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
+	g_object_unref (md5_filter);
+	
+	state = save = 0;
+	len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+	b64digest[len] = '\0';
+	g_strstrip (b64digest);
 	
 	return !strcmp (b64digest, mime_part->content_md5);
 }

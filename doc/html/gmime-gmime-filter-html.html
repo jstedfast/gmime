@@ -16,8 +16,8 @@ REL="PREVIOUS"
 TITLE="gmime-filter-from"
 HREF="gmime-gmime-filter-from.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-strip"
-HREF="gmime-gmime-filter-strip.html"></HEAD
+TITLE="gmime-filter-md5"
+HREF="gmime-gmime-filter-md5.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-strip.html"
+HREF="gmime-gmime-filter-md5.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -240,7 +240,7 @@ CLASS="PROGRAMLISTING"
 >struct GMimeFilterHTML {
 	GMimeFilter parent_object;
 	
-	struct _UrlRegexPattern *patterns;
+	struct _GUrlScanner *scanner;
 	
 	guint32 flags;
 	guint32 colour;
@@ -273,7 +273,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)</PRE
+>#define     GMIME_FILTER_HTML_PRE</PRE
 ></TD
 ></TR
 ></TABLE
@@ -301,7 +301,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)</PRE
+>#define     GMIME_FILTER_HTML_CONVERT_NL</PRE
 ></TD
 ></TR
 ></TABLE
@@ -329,7 +329,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)</PRE
+>#define     GMIME_FILTER_HTML_CONVERT_SPACES</PRE
 ></TD
 ></TR
 ></TABLE
@@ -358,7 +358,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)</PRE
+>#define     GMIME_FILTER_HTML_CONVERT_URLS</PRE
 ></TD
 ></TR
 ></TABLE
@@ -386,7 +386,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)</PRE
+>#define     GMIME_FILTER_HTML_MARK_CITATION</PRE
 ></TD
 ></TR
 ></TABLE
@@ -414,7 +414,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)</PRE
+>#define     GMIME_FILTER_HTML_CONVERT_ADDRESSES</PRE
 ></TD
 ></TR
 ></TABLE
@@ -442,7 +442,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)</PRE
+>#define     GMIME_FILTER_HTML_ESCAPE_8BIT</PRE
 ></TD
 ></TR
 ></TABLE
@@ -470,7 +470,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)</PRE
+>#define     GMIME_FILTER_HTML_CITE</PRE
 ></TD
 ></TR
 ></TABLE
@@ -666,7 +666,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-strip.html"
+HREF="gmime-gmime-filter-md5.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -694,7 +694,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-strip</B
+>gmime-filter-md5</B
 ></FONT
 ></TD
 ></TR

@@ -50,7 +50,7 @@ struct      <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>;
 <programlisting>struct GMimeFilterHTML {
 	GMimeFilter parent_object;
 	
-	struct _UrlRegexPattern *patterns;
+	struct _GUrlScanner *scanner;
 	
 	guint32 flags;
 	guint32 colour;
@@ -64,8 +64,7 @@ struct      <link linkend="GMimeFilterHTML">GMimeFilterHTML</link>;
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-PRE-CAPS">GMIME_FILTER_HTML_PRE</title>
-<programlisting>#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_PRE</programlisting>
 <para>
 Wrap stream in &lt;pre&gt; tags.</para>
 <para>
@@ -73,8 +72,7 @@ Wrap stream in &lt;pre&gt; tags.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-NL-CAPS">GMIME_FILTER_HTML_CONVERT_NL</title>
-<programlisting>#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_CONVERT_NL</programlisting>
 <para>
 Convert new-lines ('\n') into &lt;br&gt; tags.</para>
 <para>
@@ -82,8 +80,7 @@ Convert new-lines ('\n') into &lt;br&gt; tags.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-SPACES-CAPS">GMIME_FILTER_HTML_CONVERT_SPACES</title>
-<programlisting>#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_CONVERT_SPACES</programlisting>
 <para>
 Preserve whitespace by converting spaces into their appropriate
 html entities.</para>
@@ -92,8 +89,7 @@ html entities.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-URLS-CAPS">GMIME_FILTER_HTML_CONVERT_URLS</title>
-<programlisting>#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_CONVERT_URLS</programlisting>
 <para>
 Wrap detected URLs in &lt;a href=...&gt; tags.</para>
 <para>
@@ -101,8 +97,7 @@ Wrap detected URLs in &lt;a href=...&gt; tags.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-MARK-CITATION-CAPS">GMIME_FILTER_HTML_MARK_CITATION</title>
-<programlisting>#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_MARK_CITATION</programlisting>
 <para>
 Change the colour of citation text.</para>
 <para>
@@ -110,8 +105,7 @@ Change the colour of citation text.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS">GMIME_FILTER_HTML_CONVERT_ADDRESSES</title>
-<programlisting>#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_CONVERT_ADDRESSES</programlisting>
 <para>
 Wrap email addresses in "mailto:" href tags.</para>
 <para>
@@ -119,8 +113,7 @@ Wrap email addresses in "mailto:" href tags.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-ESCAPE-8BIT-CAPS">GMIME_FILTER_HTML_ESCAPE_8BIT</title>
-<programlisting>#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_ESCAPE_8BIT</programlisting>
 <para>
 Converts 8bit characters to '?'.</para>
 <para>
@@ -128,8 +121,7 @@ Converts 8bit characters to '?'.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CITE-CAPS">GMIME_FILTER_HTML_CITE</title>
-<programlisting>#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)
-</programlisting>
+<programlisting>#define     GMIME_FILTER_HTML_CITE</programlisting>
 <para>
 Cites text by prepending "&gt; " to each cited line.</para>
 <para>

@@ -29,6 +29,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-filter-crlf.c		\
 	gmime-filter-from.c		\
 	gmime-filter-html.c		\
+	gmime-filter-md5.c		\
 	gmime-filter-strip.c		\
 	gmime-filter-yenc.c		\
 	gmime-gpg-context.c		\
@@ -77,6 +78,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-crlf.h		\
 	gmime-filter-from.h		\
 	gmime-filter-html.h		\
+	gmime-filter-md5.h		\
 	gmime-filter-strip.h		\
 	gmime-filter-yenc.h		\
 	gmime-gpg-context.h		\
@@ -105,15 +107,15 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-null.h		\
 	gmime-type-utils.h		\
 	gmime-utils.h			\
-	internet-address.h
+	internet-address.h		\
+	md5-utils.h
 
 noinst_HEADERS = 			\
 	gtrie.h				\
 	memchunk.h			\
 	url-scanner.h			\
 	gmime-table-private.h		\
-	gmime-charset-map-private.h	\
-	md5-utils.h
+	gmime-charset-map-private.h
 
 libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
 
