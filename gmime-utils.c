@@ -295,19 +295,29 @@ datetok (const gchar *date)
 }
 
 static gint
-get_days_in_month (gint mon, gint year)
+get_days_in_month (gint month, gint year)
 {
-	switch (mon) {
-	case 1: case 3: case 5: case 7: case 8: case 10: case 12:
-		return 31;
-	case 4: case 6: case 9: case 11:
-		return 30;
+        switch (month) {
+	case 1:
+	case 3:
+	case 5:
+	case 7:
+	case 8:
+	case 10:
+	case 12:
+	        return 31;
+	case 4:
+	case 6:
+	case 9:
+	case 11:
+	        return 30;
 	case 2:
-		if ((year % 4 == 0 && year % 100 != 0) || year % 400 == 0)
-			return 29;
-		return 28;
+	        if (g_date_is_leap_year (year))
+		        return 29;
+		else
+		        return 28;
 	default:
-		return 30;
+	        return 0;
 	}
 }
 
@@ -394,10 +404,17 @@ get_time (gchar *in, gint *hour, gint *min, gint *sec)
 			digits = FALSE;
 	}
 	
-	if (!digits || colons != 2)
+/* Ameol software doesn't put the seconds on the time */
+
+	if (!digits || (colons != 2 && colons != 1))
 		return FALSE;
 	
-	return sscanf (in, "%d:%d:%d", hour, min, sec) == 3;
+	if (colons == 2)
+		return sscanf (in, "%d:%d:%d", hour, min, sec) == 3;
+	else {
+		*sec = 0;
+		return sscanf (in, "%d:%d", hour, min) == 2;
+	}
 }
 
 static gint

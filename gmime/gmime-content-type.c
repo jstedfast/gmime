@@ -287,7 +287,9 @@ g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const gcha
 	GMimeParam *param;
 	
 	g_return_val_if_fail (mime_type != NULL, NULL);
-	g_return_val_if_fail (mime_type->param_hash != NULL, NULL);
+	
+	if (!mime_type->param_hash)
+		return NULL;
 	
 	param = g_hash_table_lookup (mime_type->param_hash, attribute);
 	
