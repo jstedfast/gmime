@@ -283,12 +283,16 @@ int main (int argc, char **argv)
 {
 	int i;
 	
+	g_mime_init (0);
+	
 	for (i = 1; i < argc; i++) {
 		test_stream_file (argv[i]);
 		test_stream_fs (argv[i]);
 		test_stream_mem (argv[i]);
 		test_stream_buffer (argv[i]);
 	}
+	
+	g_mime_shutdown ();
 	
 	return 0;
 }
