@@ -1,7 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 # The name of the module.
-DOC_MODULE=gmime
+DOC_MODULE=gmime-2.0
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=gmime-docs.sgml
@@ -11,7 +11,7 @@ DOC_SOURCE_DIR=..
 
 EXTRA_DIST=gmime-docs.sgml gmime-sections.txt
 
-HTML_DIR=$(datadir)/gmime/html
+HTML_DIR=$(datadir)/gtk-doc/html
 
 TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
 
@@ -29,7 +29,7 @@ html:
 	-cd html && gtkdoc-mkhtml $(DOC_MODULE) ../$(DOC_MAIN_SGML_FILE)
 
 clean-local:
-	rm -f *~ *.bak *.hierarchy *.signals *.args *-unused.txt
+	rm -f *~ *.bak *.hierarchy *.signals *.args *-unused.txt *-undocumented.txt
 
 maintainer-clean-local: clean
 	rm -rf sgml html $(DOC_MODULE)-decl-list.txt $(DOC_MODULE)-decl.txt 

@@ -10,11 +10,11 @@ noinst_PROGRAMS = gen-table test-mime test-parser test-mbox test-streams test-ht
 
 bin_SCRIPTS = gmime-config
 
-lib_LTLIBRARIES = libgmime.la
+lib_LTLIBRARIES = libgmime-2.0.la
 
-libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
+libgmime_2_0_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
-libgmime_la_SOURCES = 		\
+libgmime_2_0_la_SOURCES = 	\
 	alloca.c		\
 	strlib.c		\
 	memchunk.c		\
@@ -54,7 +54,7 @@ libgmime_la_SOURCES = 		\
 	internet-address.c	\
 	md5-utils.c
 
-gmimeincludedir = $(includedir)/gmime
+gmimeincludedir = $(includedir)/gmime-2.0
 gmimeinclude_HEADERS = 		\
 	gmime.h			\
 	gmime-charset.h		\
@@ -98,8 +98,8 @@ noinst_HEADERS = 			\
 	gmime-charset-map-private.h	\
 	md5-utils.h
 
-DEPS = $(top_builddir)/libgmime.la
-LDADDS = $(top_builddir)/libgmime.la @GLIB_LIBS@
+DEPS = $(top_builddir)/libgmime-2.0.la
+LDADDS = $(top_builddir)/libgmime-2.0.la @GLIB_LIBS@
 
 test_mime_SOURCES = test-mime.c
 test_mime_LDFLAGS = 
@@ -188,7 +188,22 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4 zentimer.h zenprofiler.h
+
+EXTRA_DIST = 			\
+	gmimeConf.sh.in 	\
+	gmime-2.0.pc.in		\
+	gmime.spec.in 		\
+	gmime.m4 		\
+	zentimer.h 		\
+	zenprofiler.h
+
+BUILD_EXTRA_DIST = 		\
+	gmime.spec
+
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = gmime-2.0.pc
+
+$(pkgconfig_DATA): config.status
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.
@@ -203,7 +218,7 @@ $(srcdir)/libgmime:
 	-$(RM) $(srcdir)/libgmime
 	ln -s $(srcdir)/. $(srcdir)/libgmime
 
-$(libgmime_la_SOURCES): $(srcdir)/libgmime
+$(libgmime_2_0_la_SOURCES): $(srcdir)/libgmime
 
 install-data-local:
 	-mkdir -p $(DESTDIR)$(datadir)/aclocal
