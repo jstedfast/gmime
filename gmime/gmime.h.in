@@ -65,6 +65,7 @@ extern "C" {
 #include <gmime/gmime-filter-crlf.h>
 #include <gmime/gmime-filter-from.h>
 #include <gmime/gmime-filter-html.h>
+#include <gmime/gmime-filter-md5.h>
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-yenc.h>
 #include <gmime/gmime-session.h>
