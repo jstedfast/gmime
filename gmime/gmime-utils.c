@@ -1874,15 +1874,13 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static char *
-rfc2047_encode (const unsigned char *in, gboolean phrase)
+rfc2047_encode (const unsigned char *in, gushort safemask)
 {
 	struct _rfc822_word *words, *word, *prev = NULL;
-	gushort safemask = phrase ? IS_PSAFE : IS_ESAFE;
 	GString *out;
 	char *outstr;
 	
-	words = rfc2047_encode_get_rfc822_words (in, phrase);
-	if (!words)
+	if (!(words = rfc2047_encode_get_rfc822_words (in, safemask & IS_PSAFE)))
 		return NULL;
 	
 	while (rfc2047_encode_merge_rfc822_words (&words))
@@ -1908,7 +1906,7 @@ rfc2047_encode (const unsigned char *in, gboolean phrase)
 			g_string_append_len (out, word->start, word->end - word->start);
 			break;
 		case WORD_QSTRING:
-			g_assert (phrase);
+			g_assert (safemask & IS_PSAFE);
 			g_string_append_len_quoted (out, word->start, word->end - word->start);
 			break;
 		case WORD_2047:
@@ -1961,7 +1959,7 @@ g_mime_utils_header_encode_phrase (const unsigned char *in)
 	if (in == NULL)
 		return NULL;
 	
-	return rfc2047_encode (in, TRUE);
+	return rfc2047_encode (in, IS_PSAFE);
 }
 
 
@@ -1980,7 +1978,7 @@ g_mime_utils_header_encode_text (const unsigned char *in)
 	if (in == NULL)
 		return NULL;
 	
-	return rfc2047_encode (in, FALSE);
+	return rfc2047_encode (in, IS_ESAFE);
 }
 
 
