@@ -1,3 +1,8 @@
+2002-01-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* memchunk.c (memchunk_clean): Fixed a logic mistake that
+	prevented pruning of the head node.
+
 2002-01-01  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-message (g_mime_message_get_body): added g_return_val_if_fail

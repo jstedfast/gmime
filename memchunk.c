@@ -207,13 +207,16 @@ memchunk_clean (MemChunk *memchunk)
 	info = next;
 	while (info) {
 		if (info->atoms == memchunk->atomcount) {
-			MemChunkFreeNode *prev = (MemChunkFreeNode *) &memchunk->free;
+			MemChunkFreeNode *prev = NULL;
 			
 			node = memchunk->free;
 			while (node) {
 				if (tree_search (info, (void *) node) != 0) {
 					/* prune this node from our free-node list */
-					prev->next = node->next;
+					if (prev)
+						prev->next = node->next;
+					else
+						memchunk->free = node->next;
 				} else {
 					prev = node;
 				}
