@@ -1,3 +1,12 @@
+2002-05-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-cat.c (stream_reset): Same.
+
+	* gmime-stream-file.c (stream_reset): Same.
+
+	* gmime-stream-fs.c (stream_reset): If the stream position is
+	already reset, just return 0.
+
 2002-05-23  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated documentation.

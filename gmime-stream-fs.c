@@ -219,6 +219,9 @@ stream_reset (GMimeStream *stream)
 	
 	g_return_val_if_fail (fstream->fd != -1, -1);
 	
+	if (stream->position == stream->bound_start)
+		return 0;
+	
 	ret = lseek (fstream->fd, stream->bound_start, SEEK_SET);
 	if (ret != -1) {
 		fstream->eos = FALSE;

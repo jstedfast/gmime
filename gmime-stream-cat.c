@@ -267,6 +267,9 @@ stream_reset (GMimeStream *stream)
 {
 	int ret;
 	
+	if (stream->position == stream->bound_start)
+		return 0;
+	
 	ret = stream_seek (stream, stream->bound_start, GMIME_STREAM_SEEK_SET);
 	
 	return ret == -1 ? -1 : 0;
