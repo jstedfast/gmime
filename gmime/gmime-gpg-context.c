@@ -242,9 +242,8 @@ struct _GpgCtx {
 	GByteArray *diagnostics;
 	
 	unsigned int complete:1;
-	unsigned int await_read_stdout:1;
-	unsigned int await_read_stderr:1;
-	unsigned int seen_eof:1;
+	unsigned int seen_eof1:1;
+	unsigned int seen_eof2:1;
 	unsigned int always_trust:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
@@ -255,7 +254,7 @@ struct _GpgCtx {
 	unsigned int validsig:1;
 	unsigned int trust:3;
 	
-	unsigned int padding:18;
+	unsigned int padding:19;
 };
 
 static struct _GpgCtx *
@@ -269,9 +268,8 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	g_object_ref (session);
 	gpg->userid_hint = g_hash_table_new (g_str_hash, g_str_equal);
 	gpg->complete = FALSE;
-	gpg->await_read_stdout = FALSE;
-	gpg->await_read_stderr = FALSE;
-	gpg->seen_eof = FALSE;
+	gpg->seen_eof1 = FALSE;
+	gpg->seen_eof2 = FALSE;
 	gpg->pid = (pid_t) -1;
 	
 	gpg->path = g_strdup (path);
@@ -781,8 +779,6 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 		case GPG_CTX_MODE_SIGN:
 			if (!strncmp (status, "SIG_CREATED ", 12)) {
 				gpg->complete = TRUE;
-				gpg->await_read_stdout = TRUE;
-				gpg->await_read_stderr = FALSE;
 			}
 			break;
 		case GPG_CTX_MODE_VERIFY:
@@ -799,26 +795,23 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 				} 
 				
 				gpg->complete = TRUE;
+				
+				/* Since verifying a signature will never produce output
+				   on gpg's stdout descriptor, we use this EOF bit for
+				   making sure that we get a TRUST metric. */
+				gpg->seen_eof1 = TRUE;
 			} else if (!strncmp (status, "VALIDSIG", 8)) {
 				gpg->validsig = TRUE;
-				gpg->complete = TRUE;
 			} else if (!strncmp (status, "BADSIG", 6)) {
 				gpg->validsig = FALSE;
-				gpg->complete = TRUE;
 			} else if (!strncmp (status, "ERRSIG", 6)) {
 				/* Note: NO_PUBKEY often comes after an ERRSIG, but do we really care? */
 				gpg->validsig = FALSE;
-				gpg->complete = TRUE;
 			}
-			
-			gpg->await_read_stdout = FALSE;
-			gpg->await_read_stderr = TRUE;
-			
 			break;
 		case GPG_CTX_MODE_ENCRYPT:
 			if (!strncmp (status, "BEGIN_ENCRYPTION", 16)) {
-				gpg->await_read_stdout = TRUE;
-				gpg->await_read_stderr = FALSE;
+				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_ENCRYPTION", 14)) {
 				gpg->complete = TRUE;
 			} else if (!strncmp (status, "NO_RECP", 7)) {
@@ -829,8 +822,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 			break;
 		case GPG_CTX_MODE_DECRYPT:
 			if (!strncmp (status, "BEGIN_DECRYPTION", 16)) {
-				gpg->await_read_stdout = TRUE;
-				gpg->await_read_stderr = FALSE;
+				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
 				gpg->complete = TRUE;
 			}
@@ -967,8 +959,8 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		if (nread > 0) {
 			if (g_mime_stream_write (gpg->ostream, buffer, (size_t) nread) == -1)
 				goto exception;
-		} else if (gpg->await_read_stdout) {
-			gpg->seen_eof = TRUE;
+		} else {
+			gpg->seen_eof1 = TRUE;
 		}
 	}
 	
@@ -986,8 +978,8 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		
 		if (nread > 0) {
 			g_byte_array_append (gpg->diagnostics, buffer, nread);
-		} else if (gpg->await_read_stderr) {
-			gpg->seen_eof = TRUE;
+		} else {
+			gpg->seen_eof2 = TRUE;
 		}
 	}
 	
@@ -1090,7 +1082,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 static gboolean
 gpg_ctx_op_complete (struct _GpgCtx *gpg)
 {
-	return gpg->complete && gpg->seen_eof;
+	return gpg->complete && gpg->seen_eof1 && gpg->seen_eof2;
 }
 
 static void
