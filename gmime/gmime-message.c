@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2000-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -33,11 +33,26 @@
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
 
-static void g_mime_message_destroy (GMimeObject *object);
 
-static GMimeObject object_template = {
-	0, 0, g_mime_message_destroy
-};
+static void g_mime_message_base_class_init (GMimeMessageClass *klass);
+static void g_mime_message_base_class_finalize (GMimeMessageClass *klass);
+static void g_mime_message_class_init (GMimeMessageClass *klass);
+static void g_mime_message_class_finalize (GMimeMessageClass *klass);
+static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
+static void g_mime_message_finalize (GObject *object);
+
+/* GMimeObject class methods */
+static void message_init (GMimeObject *object);
+static void message_add_header (GMimeObject *object, const char *header, const char *value);
+static void message_set_header (GMimeObject *object, const char *header, const char *value);
+static const char *message_get_header (GMimeObject *object, const char *header);
+static void message_remove_header (GMimeObject *object, const char *header);
+static char *message_get_headers (GMimeObject *object);
+static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
+
+
+static GMimeObjectClass *parent_class = NULL;
+
 
 static char *rfc822_headers[] = {
 	"Return-Path",
@@ -51,6 +66,217 @@ static char *rfc822_headers[] = {
 	"Cc",
 	NULL
 };
+
+
+GType
+g_mime_message_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeMessageClass),
+			(GBaseInitFunc) g_mime_message_base_class_init,
+			(GBaseFinalizeFunc) g_mime_message_base_class_finalize,
+			(GClassInitFunc) g_mime_message_class_init,
+			(GClassFinalizeFunc) g_mime_message_class_finalize,
+			NULL, /* class_data */
+			sizeof (GMimeMesage),
+			0,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_message_init,
+		};
+		
+		type = g_type_register_static (GMIME_TYPE_OBJECT, "GMimeMessage", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_message_base_class_init (GMimeMessageClass *klass)
+{
+	/* reset instance specific methods that don't get inherited */
+	;
+}
+
+static void
+g_mime_message_base_class_finalize (GMimeMessageClass *klass)
+{
+	;
+}
+
+static void
+g_mime_message_class_init (GMimeMessageClass *klass)
+{
+	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
+	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (GMIME_TYPE_OBJECT);
+	
+	gobject_class->finalize = g_mime_message_finalize;
+	
+	object_class->init = init;
+	object_class->add_header = message_add_header;
+	object_class->set_header = message_set_header;
+	object_class->get_header = message_get_header;
+	object_class->remove_header = message_remove_header;
+	object_class->get_headers = message_get_headers;
+	object_class->write_to_stream = message_write_to_stream;
+}
+
+static void
+g_mime_message_class_finalize (GMimeMessageClass *klass)
+{
+	;
+}
+
+
+static void
+g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
+{
+	message->from = NULL;
+	message->reply_to = NULL;
+	message->recipients = g_hash_table_new (g_str_hash, g_str_equal);
+	message->subject = NULL;
+	message->date = 0;
+	message->gmt_offset = 0;
+	message->message_id = NULL;
+	message->mime_part = NULL;
+}
+
+static gboolean
+recipients_destroy (gpointer key, gpointer value, gpointer user_data)
+{
+	InternetAddressList *recipients = value;
+	
+	internet_address_list_destroy (recipients);
+	
+	return TRUE;
+}
+
+static void
+g_mime_object_finalize (GObject *object)
+{
+	GMimeMessage *message = (GMimeMessage *) object;
+	
+	g_free (message->from);
+	g_free (message->reply_to);
+	
+	/* destroy all recipients */
+	g_hash_table_foreach_remove (message->recipients, recipients_destroy, NULL);
+	g_hash_table_destroy (message->recipients);
+	
+	g_free (message->subject);
+	
+	g_free (message->message_id);
+	
+	/* unref child mime part */
+	if (message->mime_part)
+		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+static void
+message_init (GMimeObject *object)
+{
+	/* no-op */
+	GMIME_OBJECT_CLASS (parent_class)->init (object);
+}
+
+static void
+message_add_header (GMimeObject *object, const char *header, const char *value)
+{
+	if (!strcasecmp ("MIME-Version", header))
+		return;
+	
+	/* Make sure that the header is not a Content-* header, else it
+           doesn't belong on a message */
+	
+	if (strncasecmp ("Content-", header, 8))
+		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+}
+
+static void
+message_set_header (GMimeObject *object, const char *header, const char *value)
+{
+	if (!strcasecmp ("MIME-Version", header))
+		return;
+	
+	/* Make sure that the header is not a Content-* header, else it
+           doesn't belong on a message */
+	
+	if (strncasecmp ("Content-", header, 8))
+		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+}
+
+static const char *
+message_get_header (GMimeObject *object, const char *header)
+{
+	/* Make sure that the header is not a Content-* header, else it
+           doesn't belong on a message */
+	
+	if (!strcasecmp ("MIME-Version", header))
+		return "1.0";
+	
+	if (strncasecmp ("Content-", header, 8))
+		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
+	else
+		return NULL;
+}
+
+static void
+message_remove_header (GMimeObject *object, const char *header)
+{
+	if (!strcasecmp ("MIME-Version", header))
+		return;
+	
+	/* Make sure that the header is not a Content-* header, else it
+           doesn't belong on a multipart */
+	
+	if (!strncasecmp ("Content-", header, 8))
+		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+}
+
+static char *
+message_get_headers (GMimeObject *object)
+{
+	/* FIXME: get mime part headers too? */
+	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
+}
+
+static ssize_t
+message_write_to_stream (GMimeObject *object, GMimeStream *stream)
+{
+	ssize_t nwritten, total = 0;
+	
+	/* write the content headers */
+	nwritten = g_mime_header_write_to_stream (object->headers, stream);
+	if (nwritten == -1)
+		return -1;
+	
+	total += nwritten;
+	
+	if (message->mime_part) {
+		nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+		
+		nwritten = g_mime_object_write_to_stream (message->mime_part, stream);
+	} else {
+		nwritten = g_mime_stream_write (stream, "\n", 1);
+		if (nwritten == -1)
+			return -1;
+	}
+	
+	total += nwritten;
+	
+	return total;
+}
 
 
 /**
@@ -71,63 +297,15 @@ g_mime_message_new (gboolean pretty_headers)
 	GMimeHeader *headers;
 	int i;
 	
-	message = g_new0 (GMimeMessage, 1);
-	g_mime_object_construct (GMIME_OBJECT (message),
-				 &object_template,
-				 GMIME_MESSAGE_TYPE);
-	
-	message->header = g_new0 (GMimeMessageHeader, 1);
-	
-	message->header->recipients = g_hash_table_new (g_str_hash, g_str_equal);
-	
-	message->header->headers = headers = g_mime_header_new ();
+	message = g_object_new (GMIME_TYPE_MESSAGE, NULL, NULL);
 	
 	if (pretty_headers) {
 		/* Populate with the "standard" rfc822 headers so we can have a standard order */
 		for (i = 0; rfc822_headers[i]; i++) 
-			g_mime_header_set (headers, rfc822_headers[i], NULL);
+			g_mime_object_set_header (GMIME_OBJECT (message), rfc822_headers[i], NULL);
 	}
 	
 	return message;
-}
-
-static gboolean
-recipients_destroy (gpointer key, gpointer value, gpointer user_data)
-{
-	InternetAddressList *recipients = value;
-	
-	internet_address_list_destroy (recipients);
-	
-	return TRUE;
-}
-
-static void
-g_mime_message_destroy (GMimeObject *object)
-{
-	GMimeMessage *message = (GMimeMessage *) object;
-	
-	g_return_if_fail (GMIME_IS_MESSAGE (object));
-	
-	g_free (message->header->from);
-	g_free (message->header->reply_to);
-	
-	/* destroy all recipients */
-	g_hash_table_foreach_remove (message->header->recipients, recipients_destroy, NULL);
-	g_hash_table_destroy (message->header->recipients);
-	
-	g_free (message->header->subject);
-	
-	g_free (message->header->message_id);
-	
-	g_mime_header_destroy (message->header->headers);
-	
-	g_free (message->header);
-	
-	/* unref child mime part */
-	if (message->mime_part)
-		g_mime_object_unref (GMIME_OBJECT (message->mime_part));
-	
-	g_free (message);
 }
 
 
@@ -142,17 +320,13 @@ g_mime_message_destroy (GMimeObject *object)
 void
 g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 {
-	GMimeMessageHeader *header;
-	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	header = message->header;
+	if (message->from)
+		g_free (message->from);
 	
-	if (header->from)
-		g_free (header->from);
-	
-	header->from = g_strstrip (g_strdup (sender));
-	g_mime_header_set (header->headers, "From", header->from);
+	message->from = g_strstrip (g_strdup (sender));
+	g_mime_object_set_header (GMIME_OBJECT (message), "From", message->from);
 }
 
 
@@ -169,7 +343,7 @@ g_mime_message_get_sender (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->header->from;
+	return message->from;
 }
 
 
@@ -183,17 +357,13 @@ g_mime_message_get_sender (GMimeMessage *message)
 void
 g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 {
-	GMimeMessageHeader *header;
-	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	header = message->header;
+	if (message->reply_to)
+		g_free (message->reply_to);
 	
-	if (header->reply_to)
-		g_free (header->reply_to);
-	
-	header->reply_to = g_strstrip (g_strdup (reply_to));
-	g_mime_header_set (header->headers, "Reply-To", header->reply_to);
+	message->reply_to = g_strstrip (g_strdup (reply_to));
+	g_mime_object_set_header (GMIME_OBJECT (message), "Reply-To", message->reply_to);
 }
 
 
@@ -210,7 +380,7 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->header->reply_to;
+	return message->reply_to;
 }
 
 
@@ -225,10 +395,10 @@ sync_recipient_header (GMimeMessage *message, const char *type)
 		char *string;
 		
 		string = internet_address_list_to_string (recipients, TRUE);
-		g_mime_header_set (message->header->headers, type, string);
+		g_mime_object_set_header (GMIME_OBJECT (message), type, string);
 		g_free (string);
 	} else
-		g_mime_header_set (message->header->headers, type, NULL);
+		g_mime_object_set_header (GMIME_OBJECT (message), type, NULL);
 }
 
 
@@ -249,15 +419,20 @@ g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *nam
 	InternetAddressList *recipients;
 	InternetAddress *ia;
 	
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (type != NULL);
+	g_return_if_fail (name != NULL);
+	g_return_if_fail (address != NULL);
+	
 	ia = internet_address_new_name (name, address);
 	
-	recipients = g_hash_table_lookup (message->header->recipients, type);
-	g_hash_table_remove (message->header->recipients, type);
+	recipients = g_hash_table_lookup (message->recipients, type);
+	g_hash_table_remove (message->recipients, type);
 	
 	recipients = internet_address_list_append (recipients, ia);
 	internet_address_unref (ia);
 	
-	g_hash_table_insert (message->header->recipients, type, recipients);
+	g_hash_table_insert (message->recipients, type, recipients);
 	sync_recipient_header (message, type);
 }
 
@@ -280,10 +455,11 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
 	InternetAddressList *recipients, *addrlist;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (type != NULL);
 	g_return_if_fail (string != NULL);
 	
-	recipients = g_hash_table_lookup (message->header->recipients, type);
-	g_hash_table_remove (message->header->recipients, type);
+	recipients = g_hash_table_lookup (message->recipients, type);
+	g_hash_table_remove (message->recipients, type);
 	
 	addrlist = internet_address_parse_string (string);
 	if (addrlist) {
@@ -291,7 +467,7 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
 		internet_address_list_destroy (addrlist);
 	}
 	
-	g_hash_table_insert (message->header->recipients, type, recipients);
+	g_hash_table_insert (message->recipients, type, recipients);
 	
 	sync_recipient_header (message, type);
 }
@@ -313,8 +489,9 @@ InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (type != NULL);
 	
-	return g_hash_table_lookup (message->header->recipients, type);
+	return g_hash_table_lookup (message->recipients, type);
 }
 
 
@@ -328,17 +505,13 @@ g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 {
-	GMimeMessageHeader *header;
-	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	header = message->header;
+	if (message->subject)
+		g_free (message->subject);
 	
-	if (header->subject)
-		g_free (header->subject);
-	
-	header->subject = g_strstrip (g_strdup (subject));
-	g_mime_header_set (header->headers, "Subject", header->subject);
+	message->subject = g_strstrip (g_strdup (subject));
+	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", message->subject);
 }
 
 
@@ -355,7 +528,7 @@ g_mime_message_get_subject (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->header->subject;
+	return message->subject;
 }
 
 
@@ -374,11 +547,11 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	message->header->date = date;
-	message->header->gmt_offset = gmt_offset;
+	message->date = date;
+	message->gmt_offset = gmt_offset;
 	
 	date_str = g_mime_message_get_date_string (message);
-	g_mime_header_set (message->header->headers, "Date", date_str);
+	g_mime_object_set_header (GMIME_OBJECT (message), "Date", date_str);
 	g_free (date_str);
 }
 
@@ -396,9 +569,12 @@ void
 g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	g_return_if_fail (date != NULL);
 	
-	*date = message->header->date;
-	*gmt_offset = message->header->gmt_offset;
+	*date = message->date;
+	
+	if (gmt_offset)
+		*gmt_offset = message->gmt_offset;
 }
 
 
@@ -414,19 +590,11 @@ char *
 g_mime_message_get_date_string (GMimeMessage *message)
 {
 	char *date_str;
-	char *locale;
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	locale = g_strdup (setlocale (LC_TIME, ""));
-	setlocale (LC_TIME, "POSIX");
-	
-	date_str = g_mime_utils_header_format_date (message->header->date,
-						    message->header->gmt_offset);
-	
-	if (locale != NULL)
-		setlocale (LC_TIME, locale);
-	g_free (locale);
+	date_str = g_mime_utils_header_format_date (message->date,
+						    message->gmt_offset);
 	
 	return date_str;
 }
@@ -442,17 +610,13 @@ g_mime_message_get_date_string (GMimeMessage *message)
 void
 g_mime_message_set_message_id (GMimeMessage *message, const char *id)
 {
-	GMimeMessageHeader *header;
-	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
-	header = message->header;
+	if (message->message_id)
+		g_free (message->message_id);
 	
-	if (header->message_id)
-		g_free (header->message_id);
-	
-	header->message_id = g_strstrip (g_strdup (id));
-	g_mime_header_set (header->headers, "Message-Id", header->message_id);
+	message->message_id = g_strstrip (g_strdup (id));
+	g_mime_object_set_header (GMIME_OBJECT (message), "Message-Id", message->message_id);
 }
 
 
@@ -469,7 +633,7 @@ g_mime_message_get_message_id (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->header->message_id;
+	return message->message_id;
 }
 
 
@@ -488,7 +652,7 @@ g_mime_message_add_header (GMimeMessage *message, const char *header, const char
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_add (message->header->headers, header, value);
+	g_mime_object_add_header (GMIME_OBJECT (message), header, value);
 }
 
 
@@ -507,7 +671,7 @@ g_mime_message_set_header (GMimeMessage *message, const char *header, const char
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (header != NULL);
 	
-	g_mime_header_set (message->header->headers, header, value);
+	g_mime_object_set_header (GMIME_OBJECT (message), header, value);
 }
 
 
@@ -527,7 +691,7 @@ g_mime_message_get_header (GMimeMessage *message, const char *header)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (header != NULL, NULL);
 	
-	return g_mime_header_get (message->header->headers, header);
+	return g_mime_object_get_header (GMIME_OBJECT (message->header), header);
 }
 
 
@@ -539,10 +703,10 @@ g_mime_message_get_header (GMimeMessage *message, const char *header)
  * Set the root-level MIME part of the message.
  **/
 void
-g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
+g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (GMIME_IS_PART (mime_part));
+	g_return_if_fail (GMIME_IS_PART (mime_part) || GMIME_IS_MULTIPART (mime_part));
 	
 	g_mime_object_ref (GMIME_OBJECT (mime_part));
 	
@@ -559,20 +723,16 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
  * @stream: output stream
  *
  * Write the contents of the MIME Message to @stream.
+ *
+ * Returns -1 on fail.
  **/
-void
+ssize_t
 g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 {
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (stream != NULL);
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	g_mime_header_write_to_stream (message->header->headers, stream);
-	
-	if (message->mime_part) {
-		g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
-		g_mime_part_write_to_stream (message->mime_part, stream);
-	} else
-		g_mime_stream_write (stream, "\n", 1);
+	return g_mime_object_write_to_stream (GMIME_OBJECT (mesage));
 }
 
 
@@ -587,22 +747,9 @@ g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 char *
 g_mime_message_to_string (GMimeMessage *message)
 {
-	GMimeStream *stream;
-	GByteArray *array;
-	char *str;
-	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	array = g_byte_array_new ();
-	stream = g_mime_stream_mem_new ();
-	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
-	g_mime_message_write_to_stream (message, stream);
-	g_mime_stream_unref (stream);
-	g_byte_array_append (array, "", 1);
-	str = array->data;
-	g_byte_array_free (array, FALSE);
-	
-	return str;
+	return g_mime_object_to_string (GMIME_OBJECT (message));
 }
 
 
@@ -636,20 +783,20 @@ g_mime_message_to_string (GMimeMessage *message)
  * guarenteed to always be correct.
  **/
 static char *
-multipart_get_body (GMimePart *multipart, gboolean want_plain, gboolean *is_html)
+multipart_get_body (GMimeMultiart *multipart, gboolean want_plain, gboolean *is_html)
 {
 	GMimePart *first = NULL;
 	const char *content;
 	char *body = NULL;
-	GList *child;
+	GList *subpart;
 	size_t len;
 	
-	child = multipart->children;
-	while (child) {
+	subpart = multipart->parts;
+	while (subpart) {
 		const GMimeContentType *type;
-		GMimePart *mime_part;
+		GMimeObject *mime_part;
 		
-		mime_part = child->data;
+		mime_part = subpart->data;
 		type = g_mime_part_get_content_type (mime_part);
 		
 		if (g_mime_content_type_is_type (type, "text", want_plain ? "plain" : "html")) {
@@ -667,14 +814,14 @@ multipart_get_body (GMimePart *multipart, gboolean want_plain, gboolean *is_html
 			body = NULL;
 		} else if (g_mime_content_type_is_type (type, "multipart", "*") && !first && !body) {
 			/* look in the multipart for the body */
-			body = multipart_get_body (mime_part, want_plain, is_html);
+			body = multipart_get_body (GMIME_MULTIPART (mime_part), want_plain, is_html);
 			
 			/* You are probably asking: "why don't we break here?"
 			 * The answer is because the real message body could
 			 * be a part after this multipart */
 		}
 		
-		child = child->next;
+		subpart = subpart->next;
 	}
 	
 	if (!body && first) {
@@ -712,9 +859,9 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 	const char *content;
 	char *body = NULL;
 	size_t len = 0;
-
-	g_return_val_if_fail (message!=NULL, NULL);
-	g_return_val_if_fail (is_html!=NULL, NULL);
+	
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	g_return_val_if_fail (is_html != NULL, NULL);
 	
 	type = g_mime_part_get_content_type (message->mime_part);
 	if (g_mime_content_type_is_type (type, "text", "*")) {
@@ -728,7 +875,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 		body = g_strndup (content, len);
 	} else if (g_mime_content_type_is_type (type, "multipart", "*")) {
 		/* lets see if we can find a body in the multipart */
-		body = multipart_get_body (message->mime_part, want_plain, is_html);
+		body = multipart_get_body (GMIME_MULTIPART (message->mime_part), want_plain, is_html);
 	}
 	
 	return body;
@@ -748,7 +895,7 @@ g_mime_message_get_headers (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return g_mime_header_to_string (message->header->headers);
+	return g_mime_object_get_headers (GMIME_OBJECT (message));
 }
 
 

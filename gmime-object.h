@@ -64,7 +64,7 @@ struct _GMimeObjectClass {
 	
 	char *       (*get_headers)   (GMimeObject *object);
 	
-	int          (*write_to_stream) (GMimeObject *object, GMimeStream *stream);
+	ssize_t      (*write_to_stream) (GMimeObject *object, GMimeStream *stream);
 };
 
 
@@ -83,7 +83,7 @@ void g_mime_object_remove_header (GMimeObject *object, const char *header);
 
 char *g_mime_object_get_headers (GMimeObject *object);
 
-int g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
+ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 #ifdef __cplusplus
 }

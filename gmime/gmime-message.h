@@ -1,8 +1,8 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
+ *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+ *  Copyright 2000-2002 Ximain, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -27,22 +27,29 @@
 #ifdef __cplusplus
 extern "C" {
 #pragma }
-#endif /* __cplusplus }*/
+#endif /* __cplusplus */
 
-#include <glib.h>
 #include <stdarg.h>
 #include <time.h>
 
-#include "gmime-part.h"
+#include "gmime-object.h"
 #include "gmime-header.h"
 #include "gmime-stream.h"
 #include "internet-address.h"
 
-#define	GMIME_RECIPIENT_TYPE_TO  "To"
-#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
-#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+#define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
+#define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
+#define GMIME_MESSAGE_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_MESSAGE, GMimeMessageClass))
+#define GMIME_IS_MESSAGE(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_MESSAGE))
+#define GMIME_IS_MESSAGE_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_MESSAGE))
+#define GMIME_MESSAGE_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_MESSAGE, GMimeMessageClass))
 
-struct _GMimeMessageHeader {
+typedef struct _GMimeMessage GMimeMessage;
+typedef struct _GMimeMessageClass GMimeMessageClass;
+
+struct _GMimeMessage {
+	GMimeObject parent_object;
+	
 	char *from;
 	char *reply_to;
 	
@@ -55,24 +62,20 @@ struct _GMimeMessageHeader {
 	
 	char *message_id;
 	
-	GMimeHeader *headers;
+	GMimeObject *mime_part;
 };
 
-typedef struct _GMimeMessageHeader GMimeMessageHeader;
-
-struct _GMimeMessage {
-	GMimeObject parent_object;
+struct _GMimeMessageClass {
+	GMimeObjectClass parent_class;
 	
-	GMimeMessageHeader *header;
-	
-	GMimePart *mime_part;
 };
 
-typedef struct _GMimeMessage GMimeMessage;
 
-#define GMIME_MESSAGE_TYPE       g_str_hash ("GMimeMessage")
-#define GMIME_IS_MESSAGE(object) (object && ((GMimeObject *) object)->type == GMIME_MESSAGE_TYPE)
-#define GMIME_MESSAGE(object)    ((GMimeMessage *) object)
+#define	GMIME_RECIPIENT_TYPE_TO  "To"
+#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
+#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
+
+GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 
