@@ -57,7 +57,7 @@ struct _GMimeDataWrapper {
 struct _GMimeDataWrapperClass {
 	GObjectClass parent_class;
 	
-	ssize_t (*write_to_stream) (GMimeDataWrapper *wrapper, GMimeStream *stream);
+	ssize_t (* write_to_stream) (GMimeDataWrapper *wrapper, GMimeStream *stream);
 };
 
 

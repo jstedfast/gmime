@@ -65,15 +65,15 @@ struct _GMimeFilterClass {
 	GObjectClass parent_class;
 	
 	/* virtual functions */
-	GMimeFilter *(*copy) (GMimeFilter *filter);
+	GMimeFilter * (* copy) (GMimeFilter *filter);
 	
-	void (*filter)   (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
+	void (* filter)   (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
 	
-	void (*complete) (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
+	void (* complete) (GMimeFilter *filter, char *in, size_t len, size_t prespace,
+			   char **out, size_t *outlen, size_t *outprespace);
 	
-	void (*reset)    (GMimeFilter *filter);
+	void (* reset)    (GMimeFilter *filter);
 };
 
 

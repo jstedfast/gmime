@@ -57,17 +57,17 @@ struct _GMimeMultipart {
 struct _GMimeMultipartClass {
 	GMimeObjectClass parent_class;
 	
-	void (*add_part) (GMimeMultipart *multipart, GMimeObject *part);
-	void (*add_part_at) (GMimeMultipart *multipart, GMimeObject *part, int index);
-	void (*remove_part) (GMimeMultipart *multipart, GMimeObject *part);
+	void (* add_part) (GMimeMultipart *multipart, GMimeObject *part);
+	void (* add_part_at) (GMimeMultipart *multipart, GMimeObject *part, int index);
+	void (* remove_part) (GMimeMultipart *multipart, GMimeObject *part);
 	
-	GMimeObject * (*remove_part_at) (GMimeMultipart *multipart, int index);
-	GMimeObject * (*get_part) (GMimeMultipart *multipart, int index);
+	GMimeObject * (* remove_part_at) (GMimeMultipart *multipart, int index);
+	GMimeObject * (* get_part) (GMimeMultipart *multipart, int index);
 	
-	int  (*get_number) (GMimeMultipart *multipart);
+	int  (* get_number) (GMimeMultipart *multipart);
 	
-	void (*set_boundary) (GMimeMultipart *multipart, const char *boundary);
-	const char * (*get_boundary) (GMimeMultipart *multipart);
+	void (* set_boundary) (GMimeMultipart *multipart, const char *boundary);
+	const char * (* get_boundary) (GMimeMultipart *multipart);
 };
 
 

@@ -59,18 +59,18 @@ struct _GMimeObject {
 struct _GMimeObjectClass {
 	GObjectClass parent_class;
 	
-	void         (*init)          (GMimeObject *object);
+	void         (* init)          (GMimeObject *object);
 	
-	void         (*add_header)    (GMimeObject *object, const char *header, const char *value);
-	void         (*set_header)    (GMimeObject *object, const char *header, const char *value);
-	const char * (*get_header)    (GMimeObject *object, const char *header);
-	void         (*remove_header) (GMimeObject *object, const char *header);
+	void         (* add_header)    (GMimeObject *object, const char *header, const char *value);
+	void         (* set_header)    (GMimeObject *object, const char *header, const char *value);
+	const char * (* get_header)    (GMimeObject *object, const char *header);
+	void         (* remove_header) (GMimeObject *object, const char *header);
 	
-	void         (*set_content_type) (GMimeObject *object, GMimeContentType *content_type);
+	void         (* set_content_type) (GMimeObject *object, GMimeContentType *content_type);
 	
-	char *       (*get_headers)   (GMimeObject *object);
+	char *       (* get_headers)   (GMimeObject *object);
 	
-	ssize_t      (*write_to_stream) (GMimeObject *object, GMimeStream *stream);
+	ssize_t      (* write_to_stream) (GMimeObject *object, GMimeStream *stream);
 };
 
 

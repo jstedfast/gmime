@@ -71,31 +71,31 @@ struct _GMimeCipherContext {
 struct _GMimeCipherContextClass {
 	GObjectClass parent_class;
 	
-	GMimeCipherHash       (*hash_id)     (GMimeCipherContext *ctx, const char *hash);
+	GMimeCipherHash       (* hash_id)     (GMimeCipherContext *ctx, const char *hash);
 	
-	const char *          (*hash_name)   (GMimeCipherContext *ctx, GMimeCipherHash hash);
+	const char *          (* hash_name)   (GMimeCipherContext *ctx, GMimeCipherHash hash);
 	
-	int                   (*sign)        (GMimeCipherContext *ctx, const char *userid,
-					      GMimeCipherHash hash, GMimeStream *istream,
-					      GMimeStream *ostream, GError **err);
+	int                   (* sign)        (GMimeCipherContext *ctx, const char *userid,
+					       GMimeCipherHash hash, GMimeStream *istream,
+					       GMimeStream *ostream, GError **err);
 	
-	GMimeCipherValidity * (*verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					      GMimeStream *istream, GMimeStream *sigstream,
-					      GError **err);
+	GMimeCipherValidity * (* verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
+					       GMimeStream *istream, GMimeStream *sigstream,
+					       GError **err);
 	
-	int                   (*encrypt)     (GMimeCipherContext *ctx, gboolean sign,
-					      const char *userid, GPtrArray *recipients,
-					      GMimeStream *istream, GMimeStream *ostream,
-					      GError **err);
+	int                   (* encrypt)     (GMimeCipherContext *ctx, gboolean sign,
+					       const char *userid, GPtrArray *recipients,
+					       GMimeStream *istream, GMimeStream *ostream,
+					       GError **err);
 	
-	int                   (*decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
-					      GMimeStream *ostream, GError **err);
+	int                   (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
+					       GMimeStream *ostream, GError **err);
 	
-	int                   (*import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
-					      GError **err);
+	int                   (* import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
+					       GError **err);
 	
-	int                   (*export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
-					      GMimeStream *ostream, GError **err);
+	int                   (* export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
+					       GMimeStream *ostream, GError **err);
 };
 
 

@@ -72,16 +72,16 @@ struct _GMimeStream {
 struct _GMimeStreamClass {
 	GObjectClass parent_class;
 	
-	ssize_t  (*read)    (GMimeStream *stream, char *buf, size_t len);
-	ssize_t  (*write)   (GMimeStream *stream, const char *buf, size_t len);
-	int      (*flush)   (GMimeStream *stream);
-	int      (*close)   (GMimeStream *stream);
-	gboolean (*eos)     (GMimeStream *stream);
-	int      (*reset)   (GMimeStream *stream);
-	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-	off_t    (*tell)    (GMimeStream *stream);
-	ssize_t  (*length)  (GMimeStream *stream);
-	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
+	ssize_t  (* read)   (GMimeStream *stream, char *buf, size_t len);
+	ssize_t  (* write)  (GMimeStream *stream, const char *buf, size_t len);
+	int      (* flush)  (GMimeStream *stream);
+	int      (* close)  (GMimeStream *stream);
+	gboolean (* eos)    (GMimeStream *stream);
+	int      (* reset)  (GMimeStream *stream);
+	off_t    (* seek)   (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
+	off_t    (* tell)   (GMimeStream *stream);
+	ssize_t  (* length) (GMimeStream *stream);
+	GMimeStream * (* substream) (GMimeStream *stream, off_t start, off_t end);
 };
 
 

@@ -52,14 +52,14 @@ struct _GMimeSession {
 struct _GMimeSessionClass {
 	GObjectClass parent_class;
 	
-	gboolean (*is_online) (GMimeSession *session);
+	gboolean (* is_online) (GMimeSession *session);
 	
-	char *   (*request_passwd) (GMimeSession *session, const char *prompt,
-				    gboolean secret, const char *item,
-				    GError **err);
+	char *   (* request_passwd) (GMimeSession *session, const char *prompt,
+				     gboolean secret, const char *item,
+				     GError **err);
 	
-	void     (*forget_passwd)  (GMimeSession *session, const char *item,
-				    GError **err);
+	void     (* forget_passwd)  (GMimeSession *session, const char *item,
+				     GError **err);
 };
 
 
