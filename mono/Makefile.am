@@ -24,6 +24,7 @@ build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
 
 customs = 				\
 	Global.custom			\
+	InternetAddress.custom		\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom			\

@@ -1,3 +1,15 @@
+2004-12-06  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/Makefile.am: Add InternetAddress.custom
+
+	* mono/InternetAddress.custom: Added.  Implements a new class
+	which will handle the destroying of InternetAddressLists.
+	Implement ParseString, which basically implements a managed
+	version of internet_address_parse_string.
+
+	* mono/Message.custom: Use the InternetAddressList for
+	GetRecipients ().
+
 2004-12-01  Joe Shaw  <joeshaw@novell.com>
 
 	* configure.in: Error out if the user explicitly enables the mono
