@@ -118,7 +118,7 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	*/
 	if (prespace < filter->backlen) {
 		struct _GMimeFilterPrivate *p = _PRIVATE (filter);
-		int newlen = len + prespace + filter->backlen;
+		size_t newlen = len + prespace + filter->backlen;
 		
 		if (p->inlen < newlen) {
 			/* NOTE: g_realloc copies data, we dont need that (slower) */
@@ -250,7 +250,7 @@ g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)
 	g_return_if_fail (filter != NULL);
 	
 	if (filter->outsize < size) {
-		int offset = filter->outptr - filter->outreal;
+		size_t offset = filter->outptr - filter->outreal;
 		
 		if (keep) {
 			filter->outreal = g_realloc (filter->outreal, size + PRE_HEAD * 4);
