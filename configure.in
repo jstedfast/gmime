@@ -120,10 +120,10 @@ if test x$enable_warnings = xyes; then
   CFLAGS="$CFLAGS -Werror -Wcast-align -Wmissing-prototypes -Wreturn-type -Wuninitialized -Wconversion"
 fi
 
-dnl We need at *least* glib 1.3.6?
-AM_PATH_GLIB_2_0(1.3.6, ,
-		 AC_MSG_ERROR(Cannot find GLIB: Is glib-config in path?),
-		 gmodule, gobject, gthread)
+dnl We need at *least* glib 2.0.0
+AM_PATH_GLIB_2_0(2.0.0, ,
+		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
+		 gobject gmodule gthread)
 
 glib_cflags="$GLIB_CFLAGS"
 glib_libs="$GLIB_LIBS"

@@ -31,6 +31,7 @@
 #include <fcntl.h>
 
 #include "gmime-multipart.h"
+#include "gmime-part.h"
 #include "gmime-utils.h"
 
 #define d(x) x
@@ -139,7 +140,7 @@ g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 	multipart->boundary = NULL;
 	multipart->preface = NULL;
 	multipart->postface = NULL;
-	multipart->parts = NULL;
+	multipart->subparts = NULL;
 }
 
 static void
@@ -152,7 +153,7 @@ g_mime_multipart_finalize (GObject *object)
 	g_free (multipart->preface);
 	g_free (multipart->postface);
 	
-	node = multipart->parts;
+	node = multipart->subparts;
 	while (node) {
 		GMimeObject *part;
 		
@@ -160,7 +161,7 @@ g_mime_multipart_finalize (GObject *object)
 		g_mime_object_unref (part);
 		node = node->next;
 	}
-	g_list_free (multipart->parts);
+	g_list_free (multipart->subparts);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -259,7 +260,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	if (!multipart->boundary)
 		g_mime_multipart_set_boundary (multipart, NULL);
 	
-	node = multipart->parts;
+	node = multipart->subparts;
 	while (node) {
 		part = node->data;
 		
@@ -295,7 +296,7 @@ static void
 multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 {
 	g_mime_object_ref (part);
-	multipart->parts = g_list_append (multipart->parts, part);
+	multipart->subparts = g_list_append (multipart->subparts, part);
 }
 
 
@@ -322,6 +323,32 @@ g_mime_multipart_new ()
 	return multipart;
 }
 
+
+/**
+ * g_mime_multipart_new_with_subtype:
+ * @subtype: content-type subtype
+ *
+ * Creates a new MIME multipart object with a content-type of
+ * multipart/@subtype.
+ *
+ * Returns an empty MIME multipart object with a content-type of
+ * multipart/@subtype.
+ **/
+GMimeMultipart *
+g_mime_multipart_new_with_subtype (const char *subtype)
+{
+	GMimeMultipart *multipart;
+	GMimeContentType *type;
+	
+	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL, NULL);
+	
+	type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
+	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
+	
+	return multipart;
+}
+
+
 /**
  * g_mime_multipart_add_part:
  * @multipart: multipart
@@ -343,7 +370,7 @@ static void
 multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index)
 {
 	g_mime_object_ref (part);
-	multipart->parts = g_list_insert (multipart->parts, part, index);
+	multipart->subparts = g_list_insert (multipart->subparts, part, index);
 }
 
 
@@ -373,7 +400,7 @@ multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 	
 	/* *sigh* fucking glist... */
 	
-	node = multipart->parts;
+	node = multipart->subparts;
 	while (node) {
 		if (node->data == (gpointer) part)
 			break;
@@ -386,10 +413,10 @@ multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 		return;
 	}
 	
-	if (node == multipart->parts) {
+	if (node == multipart->subparts) {
 		if (node->next)
 			node->next->prev = NULL;
-		multipart->parts = node->next;
+		multipart->subparts = node->next;
 	} else {
 		if (node->next)
 			node->next->prev = node->prev;
@@ -424,7 +451,7 @@ multipart_remove_part_at (GMimeMultipart *multipart, int index)
 	GMimeObject *part;
 	GList *node;
 	
-	node = g_list_nth (multipart->parts, index);
+	node = g_list_nth (multipart->subparts, index);
 	if (!node) {
 		d(g_warning ("multipart_remove_part_at: no part at index %d within %p", index, multipart));
 		return NULL;
@@ -432,10 +459,10 @@ multipart_remove_part_at (GMimeMultipart *multipart, int index)
 	
 	part = node->data;
 	
-	if (node == multipart->parts) {
+	if (node == multipart->subparts) {
 		if (node->next)
 			node->next->prev = NULL;
-		multipart->parts = node->next;
+		multipart->subparts = node->next;
 	} else {
 		if (node->next)
 			node->next->prev = node->prev;
@@ -472,7 +499,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 	GMimeObject *part;
 	GList *node;
 	
-	node = g_list_nth (multipart->parts, index);
+	node = g_list_nth (multipart->subparts, index);
 	if (!node) {
 		d(g_warning ("multipart_get_part: no part at index %d within %p", index, multipart));
 		return NULL;
@@ -508,10 +535,10 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 static int
 multipart_get_number (GMimeMultipart *multipart)
 {
-	if (!multipart->parts)
+	if (!multipart->subparts)
 		return 0;
 	
-	return g_list_length (multipart->parts);
+	return g_list_length (multipart->subparts);
 }
 
 
@@ -679,15 +706,16 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	while (subparts) {
 		const GMimeContentType *type;
 		const GMimeObject *part;
-		GMimePart *subpart;
+		GMimeObject *subpart;
 		
-		subpart = (GMimeObject *) subparts->data;
+		subpart = subparts->data;
 		type = g_mime_object_get_content_type (GMIME_OBJECT (subpart));
 		
 		if (g_mime_content_type_is_type (type, "multipart", "*")) {
 			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart),
 									     content_id);
-		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
+		} else if (GMIME_PART (subpart)->content_id &&
+			   !strcmp (GMIME_PART (subpart)->content_id, content_id)) {
 			part = subpart;
 		}
 		

@@ -125,7 +125,7 @@ const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
 void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 
 /* utility functions */
-void g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
+ssize_t g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
 char *g_mime_part_to_string (GMimePart *mime_part);
 
 #ifdef __cplusplus

@@ -794,7 +794,7 @@ multipart_get_body (GMimeMultipart *multipart, gboolean want_plain, gboolean *is
 	GList *subpart;
 	size_t len;
 	
-	subpart = multipart->parts;
+	subpart = multipart->subparts;
 	while (subpart) {
 		const GMimeContentType *type;
 		GMimeObject *mime_part;

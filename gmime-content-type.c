@@ -238,15 +238,15 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 
 
 /**
- * g_mime_content_type_add_parameter:
+ * g_mime_content_type_set_parameter:
  * @mime_type: MIME Content-Type
  * @attribute: parameter name (aka attribute)
  * @value: parameter value
  *
- * Adds a parameter to the Content-Type.
+ * Sets a parameter on the Content-Type.
  **/
 void
-g_mime_content_type_add_parameter (GMimeContentType *mime_type, const char *attribute, const char *value)
+g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attribute, const char *value)
 {
 	GMimeParam *param = NULL;
 	

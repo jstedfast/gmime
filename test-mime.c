@@ -55,12 +55,13 @@ test_multipart (void)
 {
 	GMimeMessage *message;
 	GMimeContentType *mime_type;
-	GMimePart *multi_part, *text_part, *html_part;
+	GMimeMultipart *multipart;
+	GMimePart *text_part, *html_part;
 	char *body, *text;
 	gboolean is_html;
 	
-	multi_part = g_mime_part_new_with_type ("multipart", "alternative");
-	/*g_mime_part_set_boundary (multi_part, "spruce1234567890ABCDEFGHIJK");*/
+	multipart = g_mime_multipart_new_with_subtype ("alternative");
+	/*g_mime_multipart_set_boundary (multipart, "spruce1234567890ABCDEFGHIJK");*/
 	
 	text_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "plain");
@@ -71,7 +72,7 @@ test_multipart (void)
 	g_mime_part_set_content (text_part, "This is the body of my message.\n",
 				 strlen ("This is the body of my message.\n"));
 	
-	g_mime_part_add_subpart (multi_part, text_part);
+	g_mime_multipart_add_part (multipart, GMIME_OBJECT (text_part));
 	
 	html_part = g_mime_part_new ();
 	mime_type = g_mime_content_type_new ("text", "html");
@@ -83,7 +84,7 @@ test_multipart (void)
 	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
 	g_mime_part_set_content_id (html_part, "2");
 	
-	g_mime_part_add_subpart (multi_part, html_part);
+	g_mime_multipart_add_part (multipart, GMIME_OBJECT (html_part));
 	
 	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
@@ -92,7 +93,7 @@ test_multipart (void)
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, multi_part);
+	g_mime_message_set_mime_part (message, GMIME_OBJECT (multipart));
 	
 	text = g_mime_message_to_string (message);
 	
@@ -137,7 +138,8 @@ test_onepart (void)
 				    "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, mime_part);
+	
+	g_mime_message_set_mime_part (message, GMIME_OBJECT (mime_part));
 	
 	text = g_mime_message_to_string (message);
 	

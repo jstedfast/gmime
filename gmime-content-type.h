@@ -50,7 +50,7 @@ char *g_mime_content_type_to_string (const GMimeContentType *mime_type);
 
 gboolean g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype);
 
-void g_mime_content_type_add_parameter (GMimeContentType *mime_type, const char *attribute, const char *value);
+void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attribute, const char *value);
 const char *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute);
 
 

@@ -51,7 +51,7 @@ struct _GMimeMultipart {
 	char *preface;
 	char *postface;
 	
-	GList *parts;
+	GList *subparts;
 };
 
 struct _GMimeMultipartClass {
@@ -74,6 +74,8 @@ struct _GMimeMultipartClass {
 GType g_mime_multipart_get_type (void);
 
 GMimeMultipart *g_mime_multipart_new (void);
+
+GMimeMultipart *g_mime_multipart_new_with_subtype (const char *subtype);
 
 void g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index);

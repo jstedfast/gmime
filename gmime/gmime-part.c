@@ -358,12 +358,12 @@ GMimePart *
 g_mime_part_new_with_type (const char *type, const char *subtype)
 {
 	GMimePart *mime_part;
-	GMimeContentType *type;
+	GMimeContentType *content_type;
 	
 	mime_part = g_object_new (GMIME_TYPE_PART, NULL, NULL);
 	
-	type = g_mime_content_type_new (type, subtype);
-	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), type);
+	content_type = g_mime_content_type_new (type, subtype);
+	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);
 	
 	return mime_part;
 }
@@ -419,10 +419,10 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->description)
-		g_free (mime_part->description);
+	if (mime_part->content_description)
+		g_free (mime_part->content_description);
 	
-	mime_part->description = g_strdup (description);
+	mime_part->content_description = g_strdup (description);
 	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
 }
 
@@ -441,7 +441,7 @@ g_mime_part_get_content_description (const GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	return mime_part->description;
+	return mime_part->content_description;
 }
 
 
@@ -548,6 +548,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
 {
+	GMimePartEncodingType encoding;
 	char digest[16], b64digest[32];
 	int len, state, save;
 	GMimeStream *stream;
@@ -917,7 +918,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 	
 	g_mime_disposition_add_parameter (mime_part->disposition, "filename", filename);
 	
-	g_mime_object_set_content_type_param (GMIME_OBJECT (mime_part), "name", filename);
+	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mime_part), "name", filename);
 	
 	sync_content_disposition (mime_part);
 }
@@ -1167,8 +1168,8 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 ssize_t
 g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 {
-	g_return_if_fail (GMIME_IS_PART (mime_part), -1);
-	g_return_if_fail (GMIME_IS_STREAM (stream), -1);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	return g_mime_object_write_to_stream (GMIME_OBJECT (mime_part), stream);
 }

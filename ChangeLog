@@ -1,3 +1,15 @@
+2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-content-type.c (g_mime_content_type_set_parameter):
+	Renamed from g_mime_content_type_add_parameter.
+
+	* gmime-multipart.c (g_mime_multipart_new_with_subtype): New
+	convenience function.
+
+	* Makefile.am temporarily removed gmime-parser.c from the
+	build. It needs to be completely rewritten from scratch pretty
+	much.
+
 2002-04-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-part.c (g_mime_part_add_subpart): Removed.

@@ -33,6 +33,7 @@
 #include "gmime-data-wrapper.h"
 #include "gmime-object.h"
 #include "gmime-part.h"
+#include "gmime-multipart.h"
 #include "gmime-message.h"
 #include "internet-address.h"
 #include "gmime-parser.h"
