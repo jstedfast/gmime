@@ -1,5 +1,11 @@
 2002-07-29  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-message.c (message_get_headers): Write the toplevel MIME
+	Part's headers to the string as well, this fixes bug #88632 in
+	bugzilla.gnome.org.
+
+2002-07-29  Jeffrey Stedfast  <fejj@ximian.com>
+
 	The following changes are meant to address bug #88100 on
 	bugzilla.gnome.org - I'm as of yet unsure whether or not GMime
 	should override the Message-Id write function or if Pan should do

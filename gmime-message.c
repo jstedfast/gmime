@@ -306,11 +306,31 @@ message_remove_header (GMimeObject *object, const char *header)
 		return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
+
 static char *
 message_get_headers (GMimeObject *object)
 {
-	/* FIXME: get mime part headers too? */
-	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
+	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeStream *stream;
+	GByteArray *ba;
+	char *str;
+	
+	ba = g_byte_array_new ();
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), ba);
+	
+	g_mime_header_write_to_stream (object->headers, stream);
+	if (message->mime_part) {
+		g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+		g_mime_header_write_to_stream (message->mime_part->headers, stream);
+	}
+	
+	g_mime_stream_unref (stream);
+	g_byte_array_append (ba, "", 1);
+	str = ba->data;
+	g_byte_array_free (ba, FALSE);
+	
+	return str;
 }
 
 static ssize_t
