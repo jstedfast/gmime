@@ -323,12 +323,15 @@ skip_addrspec (const char **in)
 	decode_lwsp (&inptr);
 	
 	while (*inptr == '.') {
+		inptr++;
 		skip_word (&inptr);
 		decode_lwsp (&inptr);
 	}
 	
-	if (*inptr == '@')
+	if (*inptr == '@') {
+		inptr++;
 		skip_domain (&inptr);
+	}
 	
 	*in = inptr;
 }

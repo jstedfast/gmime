@@ -3,6 +3,8 @@
 	* gmime/gmime-message.c (write_received): After skipping the
 	special received token and it's value, skip any following comments
 	as well.
+	(skip_addrspec): Skip past the '.' and '@' chars before decoding
+	the next word or domain respectively.
 
 2002-11-20  Jeffrey Stedfast  <fejj@ximian.com>
 
