@@ -76,7 +76,7 @@ g_mime_disposition_new (const char *disposition)
 	
 	/* get content disposition part */
 	for (inptr = disposition; *inptr && *inptr != ';'; inptr++); /* find ; or \0 */
-	value = g_strndup (disposition, (int) (inptr - disposition));
+	value = g_strndup (disposition, (unsigned) (inptr - disposition));
 	g_strstrip (value);
 	
 	new->disposition = value;

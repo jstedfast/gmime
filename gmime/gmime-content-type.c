@@ -116,14 +116,14 @@ g_mime_content_type_new_from_string (const char *string)
 	/* get the type */
 	type = (char *) string;
 	for (inptr = type; *inptr && *inptr != '/' && *inptr != ';'; inptr++);
-	type = g_strndup (type, (int) (inptr - type));
+	type = g_strndup (type, (unsigned) (inptr - type));
 	g_strstrip (type);
 	
 	/* get the subtype */
 	if (*inptr != ';') {
 		inptr++;
 		for (subtype = inptr; *inptr && *inptr != ';'; inptr++);
-		subtype = g_strndup (subtype, (int) (inptr - subtype));
+		subtype = g_strndup (subtype, (unsigned) (inptr - subtype));
 		g_strstrip (subtype);
 	}
 	

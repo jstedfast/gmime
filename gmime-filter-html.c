@@ -181,7 +181,7 @@ url_extract (char **in, int inlen, gboolean check, gboolean *backup)
 	
 	if (check) {
 		/* make sure we weren't fooled. */
-		p = memchr (*in, ':', (char *) inptr - *in);
+		p = memchr (*in, ':', (unsigned) ((char *) inptr - *in));
 		if (!p)
 			return NULL;
 	}
@@ -191,7 +191,7 @@ url_extract (char **in, int inlen, gboolean check, gboolean *backup)
 		return NULL;
 	}
 	
-	url = g_strndup (*in, (char *) inptr - *in);
+	url = g_strndup (*in, (unsigned) ((char *) inptr - *in));
 	*in = inptr;
 	
 	return url;
@@ -230,7 +230,7 @@ email_address_extract (char **in, char *inend, char *start, char **outptr, gbool
 	if (dot > end)
 		return NULL;
 	
-	addr = g_strndup (pre, end - pre);
+	addr = g_strndup (pre, (unsigned) (end - pre));
 	*outptr -= (*in - pre);
 	*in = end;
 	
@@ -468,7 +468,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	}
 	
 	if (inptr < inend)
-		g_mime_filter_backup (filter, inptr, inend - inptr);
+		g_mime_filter_backup (filter, inptr, (unsigned) (inend - inptr));
 	
 	if (flush && html->pre_open) {
 		outptr = check_size (filter, outptr, &outend, 10);

@@ -1,5 +1,30 @@
 2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Added a --enable-warnings to turn on compiler
+	warnings.
+
+	* gmime-utils.c: Various compiler warning cleanup.
+
+	* gmime-object.c (g_mime_object_construct): Change the type
+	argument to be of type unsigned rather than int.
+
+	* gmime-filter-html.c (url_extract): g_strndup takes an unsigned
+	length argument.
+
+	* gmime-filter-from.c (filter_filter): memcpy takes an unsigned
+	length argument.
+
+	* gmime-disposition.c (g_mime_disposition_new): g_strndup takes an
+	unsigned length argument.
+
+	* gmime-content-type.c (g_mime_content_type_new_from_string):
+	g_strndup takes an unsigned length argument.
+
+	* gmime-charset.c (g_mime_charset_init): g_strndup takes an
+	unsigned length argument.
+
+2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-part.c (g_mime_part_destroy): Now an internal-only method.
 
 	* gmime-message.c (g_mime_message_destroy): Now an internal-only

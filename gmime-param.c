@@ -68,7 +68,7 @@ g_mime_param_new (const char *name, const char *value)
 #define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
 
 static char *
-hex_decode (const char *in, int len)
+hex_decode (const char *in, unsigned int len)
 {
 	register unsigned char *inptr, *outptr;
 	const unsigned char *inend;
@@ -99,7 +99,7 @@ hex_decode (const char *in, int len)
  * us-ascii'en'This%20is%20even%20more%20
  */
 static char *
-rfc2184_decode (const char *in, int len)
+rfc2184_decode (const char *in, unsigned int len)
 {
 	const char *inptr = in;
 	const char *inend = in + len;
@@ -114,19 +114,19 @@ rfc2184_decode (const char *in, int len)
 	
 #if 0
 	/* someday we'll need to do something with the charset... */
-	encoding = g_strndup (in, inptr - in);
+	encoding = g_strndup (in, (unsigned) (inptr - in));
 	charset = g_mime_iconv_charset_name (encoding);
 	g_free (encoding);
 #endif
 	
 	/* skip to the end of the locale */
-	inptr = memchr (inptr + 1, '\'', inend - inptr - 1);
+	inptr = memchr (inptr + 1, '\'', (unsigned) (inend - inptr - 1));
 	if (!inptr)
 		return NULL;
 	
 	inptr++;
 	if (inptr < inend)
-		decoded = hex_decode (inptr, inend - inptr);
+		decoded = hex_decode (inptr, (unsigned) (inend - inptr));
 	
 	return decoded;
 }
@@ -196,11 +196,11 @@ decode_quoted_string (const char **in)
 		
 		if (*inptr == '"') {
 			start++;
-			out = g_strndup (start, inptr - start);
+			out = g_strndup (start, (unsigned) (inptr - start));
 			inptr++;
 		} else {
 			/* string wasn't properly quoted */
-			out = g_strndup (start, inptr - start);
+			out = g_strndup (start, (unsigned) (inptr - start));
 		}
 	}
 	
@@ -222,7 +222,7 @@ decode_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, inptr - start);
+		return g_strndup (start, (unsigned) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -260,7 +260,7 @@ decode_param_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, inptr - start);
+		return g_strndup (start, (unsigned) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -593,7 +593,7 @@ encode_param (const unsigned char *in, gboolean *encoded)
 		} else if (is_lwsp (c) || !(gmime_special_table[c] & IS_ESAFE)) {
 			g_string_sprintfa (out, "%%%c%c", tohex[(c >> 4) & 0xf], tohex[c & 0xf]);
 		} else {
-			g_string_append_c (out, c);
+			g_string_append_c (out, (char) c);
 		}
 	}
 	
@@ -649,8 +649,8 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 	while (param) {
 		gboolean encoded = FALSE;
 		gboolean quote = FALSE;
+		unsigned nlen, vlen;
 		int here = out->len;
-		int nlen, vlen;
 		char *value;
 		
 		if (!param->value) {
@@ -725,9 +725,9 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 				
 				g_string_sprintfa (out, "%s*%d%s=", param->name, i++, encoded ? "*" : "");
 				if (encoded || !quote)
-					g_string_append_len (out, inptr, ptr - inptr);
+					g_string_append_len (out, inptr, (unsigned) (ptr - inptr));
 				else
-					g_string_append_len_quoted (out, inptr, ptr - inptr);
+					g_string_append_len_quoted (out, inptr, (unsigned) (ptr - inptr));
 				
 				d(printf ("wrote: %s\n", out->str + here));
 				

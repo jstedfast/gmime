@@ -95,7 +95,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
 	struct fromnode *head = NULL, *tail = (struct fromnode *) &head, *node;
 	register char *inptr, *inend;
-	int fromcount = 0, left;
+	unsigned int left;
+	int fromcount = 0;
 	char *outptr;
 	
 	inptr = in;
@@ -146,14 +147,14 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		inptr = in;
 		outptr = filter->outbuf;
 		while (node) {
-			memcpy (outptr, inptr, node->pointer - inptr);
+			memcpy (outptr, inptr, (unsigned) (node->pointer - inptr));
 			outptr += node->pointer - inptr;
 			*outptr++ = '>';
 			inptr = node->pointer;
 			node = node->next;
 		}
 		
-		memcpy (outptr, inptr, inend - inptr);
+		memcpy (outptr, inptr, (unsigned) (inend - inptr));
 		outptr += inend - inptr;
 		*out = filter->outbuf;
 		*outlen = outptr - filter->outbuf;

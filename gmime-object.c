@@ -38,7 +38,7 @@
  * from @object_template.
  **/
 void
-g_mime_object_construct (GMimeObject *object, GMimeObject *object_template, int type)
+g_mime_object_construct (GMimeObject *object, GMimeObject *object_template, unsigned type)
 {
 	object->type = type;
 	object->refcount = 1;
