@@ -1830,6 +1830,23 @@ rfc2047_encode_get_rfc822_words (const unsigned char *in, gboolean phrase)
 				type = WORD_2047;
 				encoding = 2;
 			}
+			
+			if (count >= GMIME_FOLD_PREENCODED) {
+				word = g_new (struct _rfc822_word, 1);
+				word->next = NULL;
+				word->start = start;
+				word->end = inptr;
+				word->type = type;
+				word->encoding = encoding;
+				
+				tail->next = word;
+				tail = word;
+				count = 0;
+				
+				start = inptr;
+				type = WORD_ATOM;
+				encoding = 0;
+			}
 		}
 		
 		last = inptr;

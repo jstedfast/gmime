@@ -176,7 +176,8 @@ static void
 test_encodings (void)
 {
 	int pos, state = -1, save = 0;
-	char *enc, *dec;
+	char *enc, *dec, *koi8r;
+	iconv_t ic;
 	
 	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
@@ -308,6 +309,24 @@ test_encodings (void)
 	g_mime_utils_unquote_string (enc);
 	fprintf (stderr, "unquoted: %s\n", enc);
 	g_free (enc);
+	
+	enc = "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?=";
+	koi8r = g_mime_utils_header_decode_text (enc);
+	
+	
+	enc = g_mime_utils_header_encode_text (koi8r);
+	fprintf (stderr, "encode_text: %s\n", enc);
+	dec = g_mime_utils_header_decode_text (enc);
+	fprintf (stderr, "decoded (%s): %s\n", !strcmp (koi8r, dec) ? "GOOD" : "BAD", dec);
+	g_free (enc);
+	g_free (dec);
+	
+	enc = g_mime_utils_header_encode_phrase (koi8r);
+	fprintf (stderr, "encode_phrase: %s\n", enc);
+	dec = g_mime_utils_header_decode_phrase (enc);
+	fprintf (stderr, "decoded (%s): %s\n", !strcmp (koi8r, dec) ? "GOOD" : "BAD", dec);
+	g_free (enc);
+	g_free (dec);
 	
 	enc = g_malloc (strlen (string) * 3);
 	pos = g_mime_utils_quoted_encode_close (string, strlen (string), enc, &state, &save);

@@ -1,3 +1,9 @@
+2004-07-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Break
+	apart long words so that they we don't generate encoded-word
+	tokens that are >75 chars. Fixes bug #145497.
+
 2004-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Updated.
