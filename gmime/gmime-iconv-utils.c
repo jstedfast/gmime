@@ -82,7 +82,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	outlen = n * 2 + 16;
 	out = g_malloc (outlen + 1);
 	
-	inbuf = string;
+	inbuf = (ICONV_CONST char *) string;
 	inleft = n;
 	
 	do {
