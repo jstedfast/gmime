@@ -1,3 +1,14 @@
+2004-11-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-gpg-context.c: #define _POSIX_SOURCE so it compiles
+	on IRIX.
+
+	* gmime/gmime-multipart-signed.c (multipart_signed_remove_header):
+	Same.
+
+	* gmime/gmime-multipart-encrypted.c
+	(multipart_encrypted_remove_header): Don't return.
+
 2004-11-19  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metadata: Don't autogenerate get GetDate method

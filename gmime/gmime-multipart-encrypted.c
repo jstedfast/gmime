@@ -154,7 +154,7 @@ multipart_encrypted_get_header (GMimeObject *object, const char *header)
 static void
 multipart_encrypted_remove_header (GMimeObject *object, const char *header)
 {
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static void
