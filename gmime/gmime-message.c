@@ -556,7 +556,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
  * @message: MIME Message
  * @stream: output stream
  *
- * Write the contents of the MIME Message to @string.
+ * Write the contents of the MIME Message to @stream.
  **/
 void
 g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)

@@ -57,7 +57,6 @@ static void g_mime_stream_filter_base_class_init (GMimeStreamFilterClass *klass)
 static void g_mime_stream_filter_base_class_finalize (GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass);
 static void g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *klass);
-static void g_mime_stream_filter_destroy (GMimeStreamFilter *stream);
 static void g_mime_stream_filter_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -132,8 +131,6 @@ g_mime_stream_filter_class_init (GMimeStreamFilterClass *klass)
 	stream_class->tell = stream_tell;
 	stream_class->length = stream_length;
 	stream_class->substream = stream_substream;
-	
-	klass->destroy = g_mime_stream_filter_destroy;
 }
 
 static void
@@ -147,12 +144,6 @@ g_mime_stream_filter_init (GMimeStreamFilter *stream, GMimeStreamFilterClass *kl
 	stream->priv->buffer = stream->priv->realbuffer + READ_PAD;
 	stream->priv->last_was_read = TRUE;
 	stream->priv->filteredlen = 0;
-}
-
-static void
-g_mime_stream_filter_destroy (GMimeStreamFilter *stream)
-{
-	g_signal_handlers_destroy (G_OBJECT (stream));
 }
 
 static void

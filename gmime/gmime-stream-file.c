@@ -31,7 +31,6 @@ static void g_mime_stream_file_base_class_init (GMimeStreamFileClass *klass);
 static void g_mime_stream_file_base_class_finalize (GMimeStreamFileClass *klass);
 static void g_mime_stream_file_class_init (GMimeStreamFileClass *klass);
 static void g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass);
-static void g_mime_stream_file_destroy (GMimeStreamFile *stream);
 static void g_mime_stream_file_finalize (GObject *object);
 
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
@@ -106,8 +105,6 @@ g_mime_stream_file_class_init (GMimeStreamFileClass *klass)
 	stream_class->tell = stream_tell;
 	stream_class->length = stream_length;
 	stream_class->substream = stream_substream;
-	
-	klass->destroy = g_mime_stream_file_destroy;
 }
 
 static void
@@ -115,12 +112,6 @@ g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass)
 {
 	stream->owner = TRUE;
 	stream->fp = NULL;
-}
-
-static void
-g_mime_stream_file_destroy (GMimeStreamFile *stream)
-{
-	g_signal_handlers_destroy (G_OBJECT (stream));
 }
 
 static void

@@ -1,3 +1,31 @@
+2002-03-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-object.c: Ported to glib2 by subclassing GObject and also
+	added a GMimeHeader data member and methods to access those
+	headers as well as adding abstract methods for getting the headers
+	as one big string buffer and writing the object headers/content to
+	a stream.
+
+	* gmime-stream-*.c (*_class_init): Don't set a destroy handler -
+	we can't, we don't have a virtual function pointer for it!
+
+	* gmime-stream.c (g_mime_stream_substream): Use GET_CLASS since we
+	are passing in an object.
+	(g_mime_stream_length): Same.
+	(g_mime_stream_tell): Here too.
+	(g_mime_stream_seek): And here.
+	(g_mime_stream_reset): And again here.
+	(g_mime_stream_eos): Again.
+	(g_mime_stream_close): Here too.
+	(g_mime_stream_flush): Same.
+	(g_mime_stream_write): Same here.
+	(g_mime_stream_read): And finally here.
+	(g_mime_stream_class_init): Setup default implementations of all
+	the stream methods. Also no longer set a destroy handler.
+
+	* gmime-stream-buffer.[c,h]: Updated to subclass the new
+	GMimeStream based on GObject.
+
 2002-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-filter.[c,h]: Updated to subclass the new

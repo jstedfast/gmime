@@ -37,12 +37,12 @@ extern "C" {
 
 #include "gmime-type-utils.h"
 
-#define GMIME_TYPE_STREAM                 (g_mime_stream_get_type ())
-#define GMIME_STREAM(obj)                 (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
-#define GMIME_STREAM_CLASS(klass)         (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))
-#define GMIME_IS_STREAM(obj)              (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM))
-#define GMIME_IS_STREAM_CLASS(klass)      (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
-#define GMIME_STREAM_GET_CLASS(obj)       (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
+#define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
+#define GMIME_STREAM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
+#define GMIME_STREAM_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM, GMimeStreamClass))
+#define GMIME_IS_STREAM(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM))
+#define GMIME_IS_STREAM_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
+#define GMIME_STREAM_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
 
 typedef enum {
 	GMIME_STREAM_SEEK_SET = SEEK_SET,

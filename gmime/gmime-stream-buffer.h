@@ -31,14 +31,25 @@ extern "C" {
 
 #include "gmime-stream.h"
 
+#define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
+#define GMIME_STREAM_BUFFER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
+#define GMIME_STREAM_BUFFER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
+#define GMIME_IS_STREAM_BUFFER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_STREAM_BUFFER))
+#define GMIME_IS_STREAM_BUFFER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
+#define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
+
+
 typedef enum {
 	GMIME_STREAM_BUFFER_CACHE_READ,
 	GMIME_STREAM_BUFFER_BLOCK_READ,
 	GMIME_STREAM_BUFFER_BLOCK_WRITE,
 } GMimeStreamBufferMode;
 
-typedef struct _GMimeStreamBuffer {
-	GMimeStream parent;
+typedef struct _GMimeStreamBuffer GMimeStreamBuffer;
+typedef struct _GMimeStreamBufferClass GMimeStreamBufferClass;
+
+struct _GMimeStreamBuffer {
+	GMimeStream parent_object;
 	
 	GMimeStream *source;
 	
@@ -48,14 +59,17 @@ typedef struct _GMimeStreamBuffer {
 	ssize_t buflen;
 	
 	GMimeStreamBufferMode mode;
-} GMimeStreamBuffer;
+};
 
-#define GMIME_STREAM_BUFFER_TYPE g_str_hash ("GMimeStreamBuffer")
-#define GMIME_IS_STREAM_BUFFER(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_BUFFER_TYPE)
-#define GMIME_STREAM_BUFFER(stream) ((GMimeStreamBuffer *) stream)
+struct _GMimeStreamBufferClass {
+	GMimeStreamClass parent_class;
+	
+};
+
+
+GType g_mime_stream_buffer_get_type (void);
 
 GMimeStream *g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode);
-
 
 ssize_t g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max);
 

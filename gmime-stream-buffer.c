@@ -32,7 +32,12 @@
 #define BLOCK_BUFFER_LEN   4096
 #define BUFFER_GROW_SIZE   1024  /* should this also be 4k? */
 
-static void stream_destroy (GMimeStream *stream);
+static void g_mime_stream_buffer_base_class_init (GMimeStreamBufferClass *klass);
+static void g_mime_stream_buffer_base_class_finalize (GMimeStreamBufferClass *klass);
+static void g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass);
+static void g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass);
+static void g_mime_stream_buffer_finalize (GObject *object);
+
 static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
 static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
 static int stream_flush (GMimeStream *stream);
@@ -44,29 +49,93 @@ static off_t stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
 
-static GMimeStream stream_template = {
-	NULL, 0,
-	1, 0, 0, 0, stream_destroy,
-	stream_read, stream_write,
-	stream_flush, stream_close,
-	stream_eos, stream_reset,
-	stream_seek, stream_tell,
-	stream_length, stream_substream,
-};
+
+static GMimeStreamClass *parent_class = NULL;
+
+
+GType
+g_mime_stream_buffer_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeStreamBufferClass),
+			(GBaseInitFunc) g_mime_stream_buffer_base_class_init,
+			(GBaseFinalizeFunc) g_mime_stream_buffer_base_class_finalize,
+			(GClassInitFunc) g_mime_stream_buffer_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeStreamBuffer),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_stream_buffer_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStreamBuffer", &info, 0);
+	}
+	
+	return type;
+}
+
 
 static void
-stream_destroy (GMimeStream *stream)
+g_mime_stream_buffer_base_class_init (GMimeStreamBufferClass *klass)
 {
-	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	
-	if (buffer->source)
-		g_mime_stream_unref (buffer->source);
-	
-	if (buffer->buffer)
-		g_free (buffer->buffer);
-	
-	g_free (buffer);
+	/* reset instance specifc methods that don't get inherited */
+	;
 }
+
+static void
+g_mime_stream_buffer_base_class_finalize (GMimeStreamBufferClass *klass)
+{
+	;
+}
+
+static void
+g_mime_stream_buffer_class_init (GMimeStreamBufferClass *klass)
+{
+	GMimeStreamClass *stream_class = GMIME_STREAM_CLASS (klass);
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_stream_buffer_finalize;
+	
+	stream_class->read = stream_read;
+	stream_class->write = stream_write;
+	stream_class->flush = stream_flush;
+	stream_class->close = stream_close;
+	stream_class->eos = stream_eos;
+	stream_class->reset = stream_reset;
+	stream_class->tell = stream_tell;
+	stream_class->length = stream_length;
+	stream_class->substream = stream_substream;
+}
+
+static void
+g_mime_stream_buffer_init (GMimeStreamBuffer *stream, GMimeStreamBufferClass *klass)
+{
+	stream->source = NULL;
+	stream->buffer = NULL;
+	stream->bufptr = NULL;
+	stream->bufend = NULL;
+	stream->buflen = 0;
+	stream->mode = 0;
+}
+
+static void
+g_mime_stream_buffer_finalize (GObject *object)
+{
+	GMimeStreamBuffer *stream = (GMimeStreamBuffer *) object;
+	
+	if (stream->source)
+		g_mime_stream_unref (stream->source);
+	
+	g_free (stream->buffer);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
@@ -373,7 +442,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
            the reason this stream is setup to do cached reads is
            because the source streem is unseekable. */
 	
-	return buffer->source->substream (buffer->source, start, end);
+	return GMIME_STREAM_GET_CLASS (buffer->source)->substream (buffer->source, start, end);
 }
 
 
@@ -391,9 +460,9 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 {
 	GMimeStreamBuffer *buffer;
 	
-	g_return_val_if_fail (source != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
-	buffer = g_new (GMimeStreamBuffer, 1);
+	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL, NULL);
 	
 	buffer->source = source;
 	g_mime_stream_ref (source);
@@ -415,8 +484,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 		buffer->buflen = BUFFER_GROW_SIZE;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (buffer), &stream_template,
-				 GMIME_STREAM_BUFFER_TYPE,
+	g_mime_stream_construct (GMIME_STREAM (buffer),
 				 source->bound_start,
 				 source->bound_end);
 	
@@ -447,7 +515,7 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 	ssize_t nread;
 	char c = '\0';
 	
-	g_return_val_if_fail (stream != NULL, -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	outptr = buf;
 	outend = buf + max - 1;
@@ -556,6 +624,8 @@ g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer)
 {
 	char linebuf[1024];
 	ssize_t len;
+	
+	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
 	while (!g_mime_stream_eos (stream)) {
 		len = g_mime_stream_buffer_gets (stream, linebuf, sizeof (linebuf));
