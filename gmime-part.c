@@ -737,3 +737,40 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 	
 	return string;
 }
+
+
+/**
+ * g_mime_part_decode_contents: Convenience MIME Part decoding function.
+ * @mime_part: the GMimePart to be decoded.
+ * @len: decoded length (to be set after processing)
+ * 
+ * Returns a gchar * pointer to the decoded contents of the MIME Part
+ * and sets %len to the length of the decoded buffer.
+ **/
+gchar *
+g_mime_part_decode_contents (GMimePart *mime_part, guint *len)
+{
+	GMimePartEncodingType encoding;
+	const gchar *content;
+	gchar *body;
+	int state = 0, save = 0;
+	
+	encoding = g_mime_part_get_encoding (mime_part);
+	content = mime_part->content;
+	*len = strlen (content);
+	
+	switch (encoding) {
+	case GMIME_PART_ENCODING_BASE64:
+		body = g_malloc (*len);
+		*len = g_mime_utils_base64_decode_step (content, *len, body, &state, &save);
+		break;
+	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		body = g_malloc (*len);
+		*len = g_mime_utils_quoted_decode_step (content, *len, body, &state, &save);
+		break;
+	default:
+		body = g_strdup (content);
+	}
+	
+	return body;
+}

@@ -110,6 +110,8 @@ void g_mime_part_add_child (GMimePart *mime_part, GMimePart *child);
 
 gchar *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
 
+gchar *g_mime_part_decode_contents (GMimePart *mime_part, guint *len);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

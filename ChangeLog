@@ -1,3 +1,9 @@
+2000-11-15  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_decode_contents): New convenience
+	function to decode the contents of a mime part (based on code by
+	Wayne Schuller).
+
 2000-11-14  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* doc/html/index.sgml: Added - apparently we need this :-)
