@@ -1,4 +1,4 @@
-<refentry id="gmime-pgp-utils" revision="4 Jan 2001">
+<refentry id="gmime-pgp-utils" revision="5 Jan 2001">
 <refmeta>
 <refentrytitle>pgp-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -98,10 +98,13 @@ void        <link linkend="pgp-init">pgp_init</link>                        (con
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>prompt</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -319,16 +322,22 @@ the preferred hash.
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>sigin</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>siglen</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

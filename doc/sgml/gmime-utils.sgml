@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="4 Jan 2001">
+<refentry id="gmime-gmime-utils" revision="5 Jan 2001">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -100,6 +100,7 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -115,6 +116,7 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <tbody>
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
