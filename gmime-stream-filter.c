@@ -185,7 +185,7 @@ stream_flush (GMimeStream *stream)
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *p = filter->priv;
 	struct _filter *f;
-	int len, presize;
+	size_t len, presize;
 	char *buffer;
 	
 	if (p->last_was_read) {

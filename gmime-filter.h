@@ -40,12 +40,12 @@ struct _GMimeFilter {
 	char *outreal;		/* real malloc'd buffer */
 	char *outbuf;		/* first 'writable' position allowed (outreal + outpre) */
 	char *outptr;
-	int outsize;
-	int outpre;		/* prespace of this buffer */
+	size_t outsize;
+	size_t outpre;		/* prespace of this buffer */
 	
 	char *backbuf;
-	int backsize;
-	int backlen;		/* significant data there */
+	size_t backsize;
+	size_t backlen;		/* significant data there */
 	
 	/* virtual functions */
 	void (*destroy)  (GMimeFilter *filter);
@@ -85,7 +85,7 @@ void g_mime_filter_reset (GMimeFilter *filter);
 void g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length);
 
 /* ensure this much size available for filter output */
-void g_mime_filter_set_size (GMimeFilter *filter, size_t size, int keep);
+void g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep);
 
 #ifdef __cplusplus
 }
