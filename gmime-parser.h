@@ -34,7 +34,7 @@ extern "C" {
 
 GMimePart *g_mime_parser_construct_part (GMimeStream *stream);
 
-GMimeMessage *g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers);
+GMimeMessage *g_mime_parser_construct_message (GMimeStream *stream);
 
 #ifdef __cplusplus
 }
