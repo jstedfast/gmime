@@ -1090,7 +1090,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 static gboolean
 gpg_ctx_op_complete (struct _GpgCtx *gpg)
 {
-	return gpg->complete && /*!gpg->await_read &&*/ gpg->seen_eof;
+	return gpg->complete && gpg->seen_eof;
 }
 
 static void
