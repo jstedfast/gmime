@@ -1,6 +1,10 @@
 2002-09-03  Tomasz K³oczko  <kloczek@pld.org.pl>
 
-	* doc/makefile.am: fixes for "make install DESTDIR=</install/prefix>".
+	* Makefile.am: fixes for automake >= 1.5 (removed duplicated
+	variables) and few minor cleanups and better method for install gmime
+	aclocal macros.
+
+	* doc/Makefile.am: fixes for "make install DESTDIR=</install/prefix>".
 
 2002-09-01  Jeffrey Stedfast  <fejj@ximian.com>
 

@@ -2,9 +2,9 @@
 
 SUBDIRS = . tests doc
 
-INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
+INCLUDES = -I@srcdir@ $(VERSION_FLAGS) $(GLIB_CFLAGS) -DG_LOG_DOMAIN=\"gmime\"
 
-VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
+VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\"
 
 noinst_PROGRAMS = 	\
 	gen-table 	\
@@ -23,7 +23,7 @@ bin_SCRIPTS = gmime-config
 
 lib_LTLIBRARIES = libgmime-2.0.la
 
-libgmime_2_0_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
+libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
 
 libgmime_2_0_la_SOURCES = 		\
 	memchunk.c			\
@@ -125,7 +125,7 @@ noinst_HEADERS = 			\
 	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime-2.0.la
-LDADDS = $(top_builddir)/libgmime-2.0.la @GLIB_LIBS@
+LDADDS = $(top_builddir)/libgmime-2.0.la $(GLIB_LIBS)
 
 test_best_SOURCES = test-best.c
 test_best_LDFLAGS = 
@@ -227,19 +227,18 @@ dist-hook: gmime.spec
 ## the value NONE in configure if the user doesn't specify them (this
 ## is an autoconf feature, not a bug).
 
-confexecdir = $(libdir)
-confexec_DATA = gmimeConf.sh
-
 CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
 
+aclocalm4dir = $(datadir)/aclocal
+aclocalm4_DATA = gmime.m4
+
 EXTRA_DIST = 			\
 	gmimeConf.sh.in 	\
 	gmime-2.0.pc.in		\
 	gmime.spec.in 		\
-	gmime.m4 		\
 	iconv-detect.c		\
 	zentimer.h 		\
 	zenprofiler.h
@@ -266,7 +265,3 @@ $(srcdir)/libgmime:
 	ln -s $(srcdir)/. $(srcdir)/libgmime
 
 $(libgmime_2_0_la_SOURCES): $(srcdir)/libgmime
-
-install-data-local:
-	-mkdir -p $(DESTDIR)$(datadir)/aclocal
-	$(INSTALL_DATA) $(srcdir)/gmime.m4 $(DESTDIR)$(datadir)/aclocal/gmime.m4
