@@ -939,10 +939,19 @@ g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const gchar *cont
 	
 	child = mime_part->children;
 	while (child) {
-		GMimePart *part = (GMimePart *) child->data;
-		const gchar *cid = part->content_id;
+		const GMimeContentType *type;
+		const GMimePart *part = NULL;
+		GMimePart *subpart;
 		
-		if (cid && !strcmp (cid, content_id))
+		subpart = (GMimePart *) child->data;
+		type = g_mime_part_get_content_type (subpart);
+		
+		if (g_mime_content_type_is_type (type, "multipart", "*"))
+			part = g_mime_part_get_subpart_from_content_id (subpart, content_id);
+		else if (subpart->content_id && !strcmp (subpart->content_id, content_id))
+			part = subpart;
+		
+		if (part)
 			return part;
 		
 		child = child->next;

@@ -1,5 +1,11 @@
 2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
 
+	* gmime-part.c (g_mime_part_get_subpart_from_content_id): Erm,
+	smack me. This needs to be recursive (this is what happens when I
+	code really late at night).
+
+2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
+
 	* configure.in (GMIME_MINOR_VERSION): Updated to 0.3.0
 
 	* gmime-parser.c (get_mime_part): Updated to reflect the
