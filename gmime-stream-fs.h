@@ -21,8 +21,8 @@
  */
 
 
-#ifndef __GMIME_STREAM_MEM_H__
-#define __GMIME_STREAM_MEM_H__
+#ifndef __GMIME_STREAM_FS_H__
+#define __GMIME_STREAM_FS_H__
 
 #ifdef __cplusplus
 extern "C" {
@@ -30,27 +30,26 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <stdio.h>
+#include <unistd.h>
 #include "gmime-stream.h"
 
-typedef struct _GMimeStreamMem {
+typedef struct _GMimeStreamFs {
 	GMimeStream parent;
 	
 	gboolean owner;
-	GByteArray *buffer;
-} GMimeStreamMem;
+	int fd;
+} GMimeStreamFs;
 
-#define GMIME_STREAM_MEM_TYPE g_str_hash ("GMimeStreamMem")
-#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MEM_TYPE)
-#define GMIME_STREAM_MEM(stream) ((GMimeStreamMem *) stream)
+#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")
+#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FS_TYPE)
+#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)
 
-GMimeStream *g_mime_stream_mem_new (void);
-GMimeStream *g_mime_stream_mem_new_with_byte_array (GByteArray *array);
-GMimeStream *g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len);
-
-void g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array);
+GMimeStream *g_mime_stream_fs_new (int fd);
+GMimeStream *g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_STREAM_MEM_H__ */
+#endif /* __GMIME_STREAM_FS_H__ */

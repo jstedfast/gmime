@@ -21,7 +21,12 @@
  */
 
 
-#include "gmime-stream-file.h"
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+
+#include "gmime-stream-fs.h"
 
 
 static void stream_destroy (GMimeStream *stream);
@@ -50,10 +55,10 @@ static GMimeStream template = {
 static void
 stream_destroy (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	
-	if (fstream->owner && fstream->fp)
-		fclose (fstream->fp);
+	if (fstream->owner && fstream->fd)
+		close (fstream->fd);
 	
 	g_free (fstream);
 }
@@ -61,7 +66,8 @@ stream_destroy (GMimeStream *stream)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
+	size_t nread;
 	
 	if (stream->bound_end == -1 && stream->position > stream->bound_end)
 		return -1;
@@ -70,15 +76,20 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		len = MIN (stream->bound_end - stream->position, len);
 	
 	/* make sure we are at the right position */
-	fseek (fstream->fp, stream->position, SEEK_SET);
+	lseek (fstream->fd, stream->position, SEEK_SET);
 	
-	return fread (buf, 1, len, fstream->fp);
+	do {
+		nread = read (stream_fs->fd, buf, len);
+	} while (nread == -1 && errno == EINTR);
+	
+	return nread;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, char *buf, size_t len)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
+	ssize_t written = 0, n;
 	
 	if (stream->bound_end == -1 && stream->position > stream->bound_end)
 		return -1;
@@ -86,30 +97,36 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, len);
 	
-	return fwrite (buf, 1, len, fstream->fp);
+	do {
+		n = write (fstream->fd, buf + written, len - written);
+		if (n > 0)
+			written += n;
+	} while (n == -1 && errno == EINTR);
+	
+	return written;
 }
 
 static int
 stream_flush (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	g_return_val_if_fail (fstream->fd != -1, -1);
 	
-	return fflush (fstream->fp);
+	return fsync (fstream->fd);
 }
 
 static int
 stream_close (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	int ret;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	g_return_val_if_fail (fstream->fd != -1, -1);
 	
-	ret = fclose (fstream->fp);
+	ret = close (fstream->fd);
 	if (ret != -1)
-		fstream->fp = NULL;
+		fstream->fd = -1;
 	
 	return ret;
 }
@@ -117,55 +134,55 @@ stream_close (GMimeStream *stream)
 static gboolean
 stream_eos (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	
-	g_return_val_if_fail (fstream->fp != NULL, TRUE);
+	g_return_val_if_fail (fstream->fd != -1, TRUE);
 	
-	return feof (fstream->fp) ? TRUE : FALSE;
+	return feof (fstream->fd) ? TRUE : FALSE;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	g_return_val_if_fail (fstream->fd != -1, -1);
 	
-	return fseek (fstream->fp, stream->bound_start, SEEK_SET);
+	return lseek (fstream->fd, stream->bound_start, SEEK_SET);
 }
 
 static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	off_t ret;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	g_return_val_if_fail (fstream->fd != -1, -1);
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		ret = fseek (fstream->fp, offset + stream->bound_start, SEEK_SET);
+		ret = lseek (fstream->fd, offset + stream->bound_start, SEEK_SET);
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (offset < 0) {
 			offset += stream->bound_end;
-			ret = fseek (fstream->fp, offset, SEEK_SET);
+			ret = lseek (fstream->fd, offset, SEEK_SET);
 		} else {
-			ret = fseek (fstream->fp, stream->bound_end, SEEK_SET);
+			ret = lseek (fstream->fd, stream->bound_end, SEEK_SET);
 		}
 		break;
 	case GMIME_STREAM_SEEK_CUR:
 		offset += stream->position;
 		if (offset < stream->bound_start) {
-			ret = fseek (fstream->fp, stream->bound_start, SEEK_SET);
+			ret = lseek (fstream->fd, stream->bound_start, SEEK_SET);
 		} else if (offset > stream->bound_end) {
-			ret = fseek (fstream->fp, stream->bound_end, SEEK_SET);
+			ret = lseek (fstream->fd, stream->bound_end, SEEK_SET);
 		} else {
-			ret = fseek (fstream->fp, offset, SEEK_CUR);
+			ret = lseek (fstream->fd, offset, SEEK_CUR);
 		}
 	}
 	
-	stream->position = ftell (fstream->fp);
+	stream->position = lseek (fstream->fd, 0, SEEK_CUR);
 	
 	return ret;
 }
@@ -179,15 +196,14 @@ stream_tell (GMimeStream *stream)
 static ssize_t
 stream_length (GMimeStream *stream)
 {
-	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	off_t len;
 	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	fseek (fstream->fp, 0, SEEK_END);
-	len = ftell (fstream->fp);
-	fseek (fstream->fp, stream->position, SEEK_SET);
+	len = lseek (fstream->fd, 0, SEEK_END);
+	lseek (fstream->fd, stream->position, SEEK_SET);
 	
 	return len;
 }
@@ -195,56 +211,60 @@ stream_length (GMimeStream *stream)
 static GMimeStream *
 stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
-	GMimeStreamFile *fstream;
+	GMimeStreamFs *fstream;
 	
-	fstream = g_new0 (GMimeStreamFile, 1);
+	fstream = g_new (GMimeStreamFs, 1);
 	fstream->owner = FALSE;
-	fstream->fp = GMIME_STREAM_FILE (stream)->fp;
+	fstream->fd = GMIME_STREAM_FS (stream)->fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }
 
 
 /**
- * g_mime_stream_file_new:
- * @fp: file pointer
+ * g_mime_stream_fs_new:
+ * @fd: file descriptor
  *
- * Returns a stream using @fp.
+ * Returns a stream using @fd.
  **/
 GMimeStream *
-g_mime_stream_file_new (FILE *fp)
+g_mime_stream_fs_new (int fd)
 {
-	GMimeStreamFile *fstream;
+	GMimeStreamFs *fstream;
+	off_t start;
 	
-	fstream = g_new (GMimeStreamFile, 1);
+	fstream = g_new (GMimeStreamFs, 1);
 	fstream->owner = TRUE;
-	fstream->fp = fp;
+	fstream->fd = fp;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, ftell (fp), -1);
+	start = lseek (fd, 0, SEEK_CUR);
+	
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, -1);
 	
 	return GMIME_STREAM (fstream);
 }
 
 
 /**
- * g_mime_stream_file_new_with_bounds:
- * @fp: file pointer
+ * g_mime_stream_fs_new_with_bounds:
+ * @fd: file descriptor
  * @start: start boundary
  * @end: end boundary
  *
- * Returns a stream using @fp with bounds @start and @end.
+ * Returns a stream using @fd with bounds @start and @end.
  **/
 GMimeStream *
-g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
+g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end)
 {
-	GMimeStreamFile *fstream;
+	GMimeStreamFs *fstream;
 	
-	fstream = g_new (GMimeStreamFile, 1);
-	fstream->fp = fp;
+	fstream = g_new (GMimeStreamFs, 1);
+	fstream->owner = TRUE;
+	fstream->fd = fd;
 	
-	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FS_TYPE, start, end);
 	
 	return GMIME_STREAM (fstream);
 }

@@ -18,11 +18,16 @@ libgmime_la_SOURCES = 		\
 	alloca.c		\
 	gmime-charset.c		\
 	gmime-content-type.c	\
+	gmime-data-wrapper.c	\
 	gmime-header.c		\
 	gmime-message.c		\
 	gmime-param.c		\
 	gmime-parser.c		\
 	gmime-part.c		\
+	gmime-stream.c		\
+	gmime-stream-file.c	\
+	gmime-stream-fs.c	\
+	gmime-stream-mem.c	\
 	gmime-utils.c		\
 	internet-address.c	\
 	md5-utils.c
@@ -33,11 +38,16 @@ gmimeinc_HEADERS = 		\
 	gmime-table-private.h	\
 	gmime-charset.h		\
 	gmime-content-type.h	\
+	gmime-data-wrapper.h	\
 	gmime-header.h		\
 	gmime-message.h		\
 	gmime-param.h		\
 	gmime-parser.h		\
 	gmime-part.h		\
+	gmime-stream.h		\
+	gmime-stream-file.h	\
+	gmime-stream-fs.h	\
+	gmime-stream-mem.h	\
 	gmime-utils.h		\
 	internet-address.h	\
 	md5-utils.h

@@ -24,12 +24,14 @@
 #include <config.h>
 #endif
 
-#include "gmime-message.h"
-#include "gmime-utils.h"
-#include "internet-address.h"
 #include <string.h>
 #include <ctype.h>
 #include <locale.h>
+
+#include "gmime-message.h"
+#include "gmime-utils.h"
+#include "internet-address.h"
+#include "gmime-stream-mem.h"
 
 
 static char *rfc822_headers[] = {
@@ -523,24 +525,24 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part)
 
 
 /**
- * g_mime_message_write_to_string: Write the MIME Message to a string
+ * g_mime_message_write_to_stream: Write the MIME Message to a stream
  * @message: MIME Message
- * @string: output string
+ * @stream: output stream
  *
  * Write the contents of the MIME Message to @string.
  **/
 void
-g_mime_message_write_to_string (GMimeMessage *message, GString *string)
+g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
 {
 	g_return_if_fail (message != NULL);
-	g_return_if_fail (string != NULL);
+	g_return_if_fail (stream != NULL);
 	
-	g_mime_header_write_to_string (message->header->headers, string);
+	g_mime_header_write_to_stream (message->header->headers, stream);
 	
 	if (message->mime_part)
-		g_mime_part_write_to_string (message->mime_part, TRUE, string);
+		g_mime_part_write_to_stream (message->mime_part, TRUE, stream);
 	else
-		g_string_append (string, "\n");
+		g_mime_stream_write (stream, "\n", 1);
 }
 
 
@@ -553,15 +555,20 @@ g_mime_message_write_to_string (GMimeMessage *message, GString *string)
 gchar *
 g_mime_message_to_string (GMimeMessage *message)
 {
-	GString *string;
-	gchar *str;
+	GMimeStream *stream;
+	GByteArray *array;
+	char *str;
 	
 	g_return_val_if_fail (message != NULL, NULL);
 	
-	string = g_string_new ("");
-	g_mime_message_write_to_string (message, string);
-	str = string->str;
-	g_string_free (string, FALSE);
+	array = g_byte_array_new ();
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
+	g_mime_message_write_to_stream (message, stream);
+	g_mime_stream_unref (stream);
+	g_byte_array_append (array, "", 1);
+	str = array->data;
+	g_byte_array_free (array, FALSE);
 	
 	return str;
 }

@@ -23,6 +23,27 @@
 
 #include "gmime-stream-mem.h"
 
+static void stream_destroy (GMimeStream *stream);
+static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static int stream_flush (GMimeStream *stream);
+static int stream_close (GMimeStream *stream);
+static gboolean stream_eos (GMimeStream *stream);
+static int stream_reset (GMimeStream *stream);
+static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
+static off_t stream_tell (GMimeStream *stream);
+static ssize_t stream_length (GMimeStream *stream);
+static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+
+static GMimeStream template = {
+	NULL, 0,
+	1, 0, 0, 0, stream_destroy,
+	stream_read, stream_write,
+	stream_flush, stream_close,
+	stream_eos, stream_reset,
+	stream_seek, stream_tell,
+	stream_length, stream_substream,
+};
 
 static void
 stream_destroy (GMimeStream *stream)
@@ -138,6 +159,20 @@ stream_length (GMimeStream *stream)
 	return stream->bound_end - stream->bound_start;
 }
 
+static GMimeStream *
+stream_substream (GMimeStream *stream, off_t start, off_t end)
+{
+	GMimeStreamMem *mem;
+	
+	mem = g_new (GMimeStreamMem, 1);
+	mem->owner = FALSE;
+	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
+	
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, start, end);
+	
+	return GMIME_STREAM (mem);
+}
+
 
 /**
  * g_mime_stream_mem_new:
@@ -147,33 +182,14 @@ GMimeStream *
 g_mime_stream_mem_new (void)
 {
 	GMimeStreamMem *mem;
-	GMimeStream *stream;
 	
-	mem = g_new0 (GMimeStreamMem, 1);
+	mem = g_new (GMimeStreamMem, 1);
 	mem->owner = TRUE;
-	xmem->buffer = g_byte_array_new ();
+	mem->buffer = g_byte_array_new ();
 	
-	stream = (GMimeStream *) mem;
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, 0);
 	
-	stream->refcount = 1;
-	stream->type = GMIME_STREAM_MEM_TYPE;
-	
-	stream->position = 0;
-	stream->bound_start = 0;
-	stream->bound_end = 0;
-	
-	stream->destroy = stream_destroy;
-	stream->read = stream_read;
-	stream->write = strea_write;
-	stream->flush = stream_flush;
-	stream->close = stream_close;
-	stream->reset = stream_reset;
-	stream->seek = stream_seek;
-	stream->tell = stream_tell;
-	stream->eos = stream_eos;
-	stream->length = stream_length;
-	
-	return stream;
+	return GMIME_STREAM (mem);
 }
 
 
@@ -186,33 +202,14 @@ GMimeStream *
 g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
-	GMimeStream *stream;
 	
-	mem = g_new0 (GMimeStreamMem, 1);
+	mem = g_new (GMimeStreamMem, 1);
 	mem->owner = TRUE;
 	mem->buffer = array;
 	
-	stream = (GMimeStream *) mem;
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, array->len);
 	
-	stream->refcount = 1;
-	stream->type = GMIME_STREAM_MEM_TYPE;
-	
-	stream->position = 0;
-	stream->bound_start = 0;
-	stream->bound_end = array->len;
-	
-	stream->destroy = stream_destroy;
-	stream->read = stream_read;
-	stream->write = strea_write;
-	stream->flush = stream_flush;
-	stream->close = stream_close;
-	stream->reset = stream_reset;
-	stream->seek = stream_seek;
-	stream->tell = stream_tell;
-	stream->eos = stream_eos;
-	stream->length = stream_length;
-	
-	return stream;
+	return GMIME_STREAM (mem);
 }
 
 
@@ -226,7 +223,6 @@ GMimeStream *
 g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
-	GMimeStream *stream;
 	
 	mem = g_new0 (GMimeStreamMem, 1);
 	mem->owner = TRUE;
@@ -234,27 +230,9 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 	
 	g_byte_array_append (mem->buffer, buffer, len);
 	
-	stream = (GMimeStream *) mem;
+	g_mime_stream_construct (GMIME_STREAM (mem), &template, GMIME_STREAM_MEM_TYPE, 0, len);
 	
-	stream->refcount = 1;
-	stream->type = GMIME_STREAM_MEM_TYPE;
-	
-	stream->position = 0;
-	stream->bound_start = 0;
-	stream->bound_end = len;
-	
-	stream->destroy = stream_destroy;
-	stream->read = stream_read;
-	stream->write = strea_write;
-	stream->flush = stream_flush;
-	stream->close = stream_close;
-	stream->reset = stream_reset;
-	stream->seek = stream_seek;
-	stream->tell = stream_tell;
-	stream->eos = stream_eos;
-	stream->length = stream_length;
-	
-	return stream;
+	return GMIME_STREAM (mem);
 }
 
 

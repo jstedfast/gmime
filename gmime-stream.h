@@ -40,16 +40,18 @@ typedef enum {
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
 
-typedef struct _GMimeStream {
+typedef struct _GMimeStream GMimeStream;
+
+struct _GMimeStream {
+	/* Note: these are private fields!! */
+	GMimeStream *super_stream;
+	
 	int type;
 	int refcount;
 	
 	off_t position;
 	off_t bound_start;
 	off_t bound_end;
-	
-	void *user_data;
-	void (*user_data_destroy) (void *user_data);
 	
 	void     (*destroy) (GMimeStream *stream);
 	
@@ -62,9 +64,13 @@ typedef struct _GMimeStream {
 	off_t    (*seek)    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
 	off_t    (*tell)    (GMimeStream *stream);
 	ssize_t  (*length)  (GMimeStream *stream);
-} GMimeStream;
+	GMimeStream *(*substream) (GMimeStream *stream, off_t start, off_t end);
+};
 
 #define GMIME_STREAM(stream)  ((GMimeStream *) stream)
+
+void g_mime_stream_construct (GMimeStream *stream, GMimeStream *template,
+			      int type, off_t start, off_t end);
 
 /* public methods */
 ssize_t   g_mime_stream_read    (GMimeStream *stream, char *buf, size_t len);
@@ -76,6 +82,8 @@ int       g_mime_stream_reset   (GMimeStream *stream);
 off_t     g_mime_stream_seek    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
 off_t     g_mime_stream_tell    (GMimeStream *stream);
 ssize_t   g_mime_stream_length  (GMimeStream *stream);
+
+GMimeStream *g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end);
 
 void      g_mime_stream_ref     (GMimeStream *stream);
 void      g_mime_stream_unref   (GMimeStream *stream);

@@ -33,7 +33,14 @@ extern "C" {
 #include <time.h>
 #include <stdarg.h>
 
-#include "gmime-part.h"
+typedef enum {
+        GMIME_PART_ENCODING_DEFAULT,
+        GMIME_PART_ENCODING_7BIT,
+        GMIME_PART_ENCODING_8BIT,
+        GMIME_PART_ENCODING_BASE64,
+        GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+        GMIME_PART_NUM_ENCODINGS
+} GMimePartEncodingType;
 
 #define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */

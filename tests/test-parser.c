@@ -42,19 +42,26 @@ print_mime_struct (GMimePart *part, int depth)
 }
 
 void
-test_parser (gchar *data)
+test_parser (char *data)
 {
 	GMimeMessage *message;
+	GMimeStream *stream;
 	gboolean is_html;
-	gchar *text;
-	gchar *body;
+	char *text;
+	char *body;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
+	
+	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
+	
 	ZenTimerStart();
-	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
+	message = g_mime_parser_construct_message (stream, TRUE);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::parser_construct_message");
 	ZenTimerStart();
+	
+	g_mime_stream_unref (stream);
+	
 	text = g_mime_message_to_string (message);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::message_to_string");

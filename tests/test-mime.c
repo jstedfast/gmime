@@ -26,13 +26,18 @@
 #include "gmime.h"
 
 void
-test_parser (gchar *data)
+test_parser (char *data)
 {
 	GMimeMessage *message;
-	gchar *text;
+	GMimeStream *stream;
+	char *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	message = g_mime_parser_construct_message (data, strlen (data), TRUE);
+	
+	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
+	message = g_mime_parser_construct_message (stream, TRUE);
+	g_mime_stream_unref (stream);
+	
 	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
 		 g_mime_message_get_header (message, "To"));
 	text = g_mime_message_to_string (message);
@@ -300,6 +305,7 @@ static gchar *addresses[] = {
 	"<charles@>",
 	"<charles@broken.host.com.> (Charles Kerr)",
 	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
+	"Tõivo Leedjärv <leedjarv@interest.ee>",
 	NULL
 };
 

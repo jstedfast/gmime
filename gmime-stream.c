@@ -24,6 +24,37 @@
 #include "gmime-stream.h"
 #include <string.h>
 
+
+/**
+ * g_mime_stream_construct:
+ * @stream:
+ * @template:
+ *
+ **/
+void
+g_mime_stream_construct (GMimeStream *stream, GMimeStream *template, int type, off_t start, off_t end)
+{
+	stream->super_stream = NULL;
+	stream->refcount = 1;
+	stream->type = type;
+	
+	stream->position = start;
+	stream->bound_start = start;
+	stream->bound_end = end;
+	
+	stream->destroy = template->destroy;
+	stream->read = template->read;
+	stream->write = template->write;
+	stream->flush = template->flush;
+	stream->close = template->close;
+	stream->reset = template->reset;
+	stream->seek = template->seek;
+	stream->tell = template->tell;
+	stream->eos = template->eos;
+	stream->length = template->length;
+	stream->substream = template->substream;
+}
+
 /**
  * g_mime_stream_read:
  * @stream:
@@ -40,7 +71,7 @@ g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
 	g_return_val_if_fail (stream != NULL, -1);
 	g_return_val_if_fail (buf != NULL, -1);
 	
-	return *(stream->read) (stream, buf, len);
+	return stream->read (stream, buf, len);
 }
 
 
@@ -60,7 +91,7 @@ g_mime_stream_write (GMimeStream *stream, char *buf, size_t len)
 	g_return_val_if_fail (stream != NULL, -1);
 	g_return_val_if_fail (buf != NULL, -1);
 	
-	return *(stream->write) (stream, buf, len);
+	return stream->write (stream, buf, len);
 }
 
 
@@ -77,7 +108,7 @@ g_mime_stream_flush (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->flush) (stream);
+	return stream->flush (stream);
 }
 
 
@@ -94,7 +125,7 @@ g_mime_stream_close (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->close) (stream);
+	return stream->close (stream);
 }
 
 
@@ -111,7 +142,7 @@ g_mime_stream_eos (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, TRUE);
 	
-	return *(stream->eos) (stream);
+	return stream->eos (stream);
 }
 
 
@@ -128,7 +159,7 @@ g_mime_stream_reset (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->reset) (stream);
+	return stream->reset (stream);
 }
 
 
@@ -145,7 +176,7 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->seek) (stream, offset, whence);
+	return stream->seek (stream, offset, whence);
 }
 
 
@@ -160,7 +191,7 @@ g_mime_stream_tell (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->tell) (stream);
+	return stream->tell (stream);
 }
 
 
@@ -175,7 +206,30 @@ g_mime_stream_length (GMimeStream *stream)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return *(stream->length) (stream);
+	return stream->length (stream);
+}
+
+
+/**
+ * g_mime_stream_substream:
+ * @stream:
+ * @start:
+ * @end:
+ *
+ * Returns a substream of @stream with bounds @start and @end.
+ **/
+GMimeStream *
+g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
+{
+	GMimeStream *sub;
+	
+	g_return_val_if_fail (stream != NULL, NULL);
+	
+	sub = stream->substream (stream, start, end);
+	sub->super_stream = stream;
+	g_mime_stream_ref (stream);
+	
+	return sub;
 }
 
 
@@ -206,10 +260,10 @@ g_mime_stream_unref (GMimeStream *stream)
 	g_return_if_fail (stream != NULL);
 	
 	if (stream->refcount <= 1) {
-		if (stream->user_data && stream->user_data_destroy)
-			*(stream->user_data_destroy) (stream->user_data);
+		if (stream->super_stream)
+			g_mime_stream_unref (stream->super_stream);
 		
-		*(stream->destroy) (stream);
+		stream->destroy (stream);
 	} else {
 		stream->refcount--;
 	}
@@ -253,7 +307,7 @@ g_mime_stream_write_string (GMimeStream *stream, const char *string)
 {
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	return g_mime_stream_write (stream, string, strlen (string));
+	return g_mime_stream_write (stream, (char *) string, strlen (string));
 }
 
 
@@ -274,7 +328,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
 	g_return_val_if_fail (stream != NULL, -1);
 	
 	va_start (args, fmt);
-	string = g_strdup_vprintf (args);
+	string = g_strdup_vprintf (fmt, args);
 	va_end (args);
 	
 	if (!string)

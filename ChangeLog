@@ -1,3 +1,62 @@
+2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-parser.c (test_parser): Updated.
+
+	* test-mime.c (test_parser): Updated.
+
+	* gmime-utils.h: Move the GMimePartEncodingType enum here.
+
+	* gmime-stream-fs.[c,h]: Implemented.
+
+	* gmime-stream.c (g_mime_stream_construct): New function to
+	initialize the stream data members.
+	(g_mime_stream_substream): New function to get a substream of
+	another stream.
+	(g_mime_stream_unref): If the stream is actually a substream,
+	unref it's "super" stream if we are destroying the substream.
+
+	* gmime-stream-mem.c (stream_substream): Implemented.
+	(g_mime_stream_mem_new): Updated to use g_mime_stream_construct().
+	(g_mime_stream_mem_new_with_byte_array): Same.
+	(g_mime_stream_mem_new_with_buffer): And here too.
+
+	* gmime-stream-file.c (stream_substream): Implemented.
+	(g_mime_stream_file_new): Updated to use
+	g_mime_stream_construct().
+	(g_mime_stream_file_new_with_bounds): Same.
+
+	* gmime-part.c (g_mime_part_set_content_md5): Updated to use
+	streams.
+	(g_mime_part_verify_content_md5): Same.
+	(g_mime_part_set_content): Updated to use streams and data
+	wrappers.
+	(g_mime_part_set_content_byte_array): Same.
+	(g_mime_part_set_pre_encoded_content): And here.
+	(g_mime_part_set_content_object): New function that allows one to
+	set the content object of a MIME part.
+	(g_mime_part_get_content): Updated to use streams.
+	(write_content): Same.
+	(g_mime_part_write_to_stream): Replacement for
+	g_mime_part_write_to_string().
+	(g_mime_part_to_string): Updated to use
+	g_mime_part_write_to_stream().
+	(g_mime_part_destroy): Updated to destroy the content object
+	rather than destroying a GByteArray (since we longer use a
+	GByteArray for the content data).
+
+	* gmime-parser.c (g_mime_parser_construct_message): Now takes a
+	stream argument instead of a string.
+	(g_mime_parser_construct_message_from_file): Deprecated.
+	(g_mime_parser_construct_part): Also takes a stream now.
+
+	* gmime-message.c (g_mime_message_write_to_stream): Replacement
+	for g_mime_message_write_to_string().
+	(g_mime_message_to_string): Updated.
+
+	* gmime-header.c (g_mime_header_write_to_stream): Replacement for
+	g_mime_header_write_to_string().
+	(g_mime_header_to_string): Updated.
+
 2001-09-17  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream.[c,h]: Abstract stream class.

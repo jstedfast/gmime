@@ -24,10 +24,12 @@
 #include <config.h>
 #endif
 
-#include "gmime-header.h"
-#include "gmime-utils.h"
 #include <string.h>
 #include <ctype.h>
+
+#include "gmime-header.h"
+#include "gmime-utils.h"
+#include "gmime-stream-mem.h"
 
 struct raw_header {
 	struct raw_header *next;
@@ -227,19 +229,19 @@ g_mime_header_remove (GMimeHeader *header, const gchar *name)
 
 
 /**
- * g_mime_header_write_to_string:
+ * g_mime_header_write_to_stream:
  * @header: header object
- * @string: string
+ * @stream: output stream
  *
- * Write the headers to a string
+ * Write the headers to a stream.
  **/
 void
-g_mime_header_write_to_string (const GMimeHeader *header, GString *string)
+g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 {
 	struct raw_header *h;
 	
 	g_return_if_fail (header != NULL);
-	g_return_if_fail (string != NULL);
+	g_return_if_fail (stream != NULL);
 	
 	h = header->headers;
 	while (h) {
@@ -247,7 +249,7 @@ g_mime_header_write_to_string (const GMimeHeader *header, GString *string)
 		
 		if (h->value) {
 			val = g_mime_utils_header_printf ("%s: %s\n", h->name, h->value);
-			g_string_append (string, val);
+			g_mime_stream_write_string (stream, val);
 			g_free (val);
 		}
 		
@@ -265,15 +267,20 @@ g_mime_header_write_to_string (const GMimeHeader *header, GString *string)
 gchar *
 g_mime_header_to_string (const GMimeHeader *header)
 {
-	GString *string;
-	gchar *str;
+	GMimeStream *stream;
+	GByteArray *array;
+	char *str;
 	
 	g_return_val_if_fail (header != NULL, NULL);
 	
-	string = g_string_new ("");
-	g_mime_header_write_to_string (header, string);
-	str = string->str;
-	g_string_free (string, FALSE);
+	array = g_byte_array_new ();
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
+	g_mime_header_write_to_stream (header, stream);
+	g_mime_stream_unref (stream);
+	g_byte_array_append (array, "", 1);
+	str = array->data;
+	g_byte_array_free (array, FALSE);
 	
 	return str;
 }

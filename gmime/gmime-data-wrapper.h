@@ -30,17 +30,9 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include <gmime-content-type.h>
-#include <gmime-stream.h>
-
-typedef enum {
-        GMIME_PART_ENCODING_DEFAULT,
-        GMIME_PART_ENCODING_7BIT,
-        GMIME_PART_ENCODING_8BIT,
-        GMIME_PART_ENCODING_BASE64,
-        GMIME_PART_ENCODING_QUOTEDPRINTABLE,
-        GMIME_PART_NUM_ENCODINGS
-} GMimePartEncodingType;
+#include "gmime-content-type.h"
+#include "gmime-utils.h"
+#include "gmime-stream.h"
 
 typedef struct _GMimeDataWrapper {
 	GMimePartEncodingType encoding;

@@ -29,6 +29,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include "gmime-stream.h"
 
 typedef struct _GMimeHeader GMimeHeader;
 
@@ -46,7 +47,7 @@ const gchar *g_mime_header_get (const GMimeHeader *header, const gchar *name);
 
 void g_mime_header_remove (GMimeHeader *header, const gchar *name);
 
-void g_mime_header_write_to_string (const GMimeHeader *header, GString *string);
+void g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
 
 gchar *g_mime_header_to_string (const GMimeHeader *header);
 

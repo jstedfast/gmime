@@ -32,20 +32,14 @@ extern "C" {
 #include <stdio.h>
 #include "gmime-param.h"
 #include "gmime-content-type.h"
+#include "gmime-data-wrapper.h"
+#include "gmime-stream.h"
 
-typedef enum {
-        GMIME_PART_ENCODING_DEFAULT,
-        GMIME_PART_ENCODING_7BIT,
-        GMIME_PART_ENCODING_8BIT,
-        GMIME_PART_ENCODING_BASE64,
-        GMIME_PART_ENCODING_QUOTEDPRINTABLE,
-        GMIME_PART_NUM_ENCODINGS
-} GMimePartEncodingType;
 
 typedef struct _GMimePartDispositionParam GMimePartDispositionParam;
 
 struct _GMimePartDisposition {
-	gchar *disposition;
+	char *disposition;
 	GList *params;     /* of type GMimeParam */
 	GHashTable *param_hash;
 };
@@ -56,12 +50,12 @@ struct _GMimePart {
 	GMimeContentType *mime_type;
 	GMimePartEncodingType encoding;
 	GMimePartDisposition *disposition;
-	gchar *description;
-	gchar *content_id;
-	gchar *content_md5;
-	gchar *content_location;
+	char *description;
+	char *content_id;
+	char *content_md5;
+	char *content_location;
 	
-	GByteArray *content;
+	GMimeDataWrapper *content;
 	
 	guint append_save;
 	guint append_state;
@@ -76,62 +70,63 @@ typedef void (*GMimePartFunc) (GMimePart *part, gpointer data);
 /* constructors / destructors */
 
 GMimePart *g_mime_part_new (void);
-GMimePart *g_mime_part_new_with_type (const gchar *type, const gchar *subtype);
+GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
 void g_mime_part_destroy (GMimePart *mime_part);
 
 /* accessor functions */
 
-void g_mime_part_set_content_description (GMimePart *mime_part, const gchar *description);
-const gchar *g_mime_part_get_content_description (const GMimePart *mime_part);
+void g_mime_part_set_content_description (GMimePart *mime_part, const char *description);
+const char *g_mime_part_get_content_description (const GMimePart *mime_part);
 
-void g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id);
-const gchar *g_mime_part_get_content_id (GMimePart *mime_part);
+void g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id);
+const char *g_mime_part_get_content_id (GMimePart *mime_part);
 
-void g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5);
+void g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5);
 gboolean g_mime_part_verify_content_md5 (GMimePart *mime_part);
-const gchar *g_mime_part_get_content_md5 (GMimePart *mime_part);
+const char *g_mime_part_get_content_md5 (GMimePart *mime_part);
 
-void g_mime_part_set_content_location (GMimePart *mime_part, const gchar *content_location);
-const gchar *g_mime_part_get_content_location (GMimePart *mime_part);
+void g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location);
+const char *g_mime_part_get_content_location (GMimePart *mime_part);
 
 void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);
 
 void g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
-const gchar *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
-GMimePartEncodingType g_mime_part_encoding_from_string (const gchar *encoding);
+const char *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
+GMimePartEncodingType g_mime_part_encoding_from_string (const char *encoding);
 
-void g_mime_part_set_content_disposition (GMimePart *mime_part, const gchar *disposition);
-const gchar *g_mime_part_get_content_disposition (GMimePart *mime_part);
+void g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition);
+const char *g_mime_part_get_content_disposition (GMimePart *mime_part);
 
-void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const gchar *name, const gchar *value);
-const gchar *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const gchar *name);
+void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *name, const char *value);
+const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *name);
 
-void g_mime_part_set_filename (GMimePart *mime_part, const gchar *filename);
-const gchar *g_mime_part_get_filename (const GMimePart *mime_part);
+void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
+const char *g_mime_part_get_filename (const GMimePart *mime_part);
 
-void g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary);
-const gchar *g_mime_part_get_boundary (GMimePart *mime_part);
+void g_mime_part_set_boundary (GMimePart *mime_part, const char *boundary);
+const char *g_mime_part_get_boundary (GMimePart *mime_part);
 
 void g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content);
-void g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len);
-void g_mime_part_append_pre_encoded_content (GMimePart *mime_part, const gchar *content,
-					     guint len, GMimePartEncodingType encoding);
-void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const gchar *content,
+void g_mime_part_set_content (GMimePart *mime_part, const char *content, guint len);
+void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 					  guint len, GMimePartEncodingType encoding);
-const gchar *g_mime_part_get_content (const GMimePart *mime_part, guint *len);
+
+void g_mime_part_set_content_stream (GMimePart *mime_part, GMimeStream *content);
+
+const char *g_mime_part_get_content (const GMimePart *mime_part, guint *len);
 
 void g_mime_part_add_subpart (GMimePart *mime_part, GMimePart *subpart);
 #define g_mime_part_add_child(mime_part, child) g_mime_part_add_subpart (mime_part, child)
 
 /* utility functions */
-void g_mime_part_write_to_string (GMimePart *mime_part, gboolean toplevel, GString *string);
-gchar *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
+void g_mime_part_write_to_stream (GMimePart *mime_part, gboolean toplevel, GMimeStream *stream);
+char *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
 
 void g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data);
 
-const GMimePart *g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const gchar *content_id);
+const GMimePart *g_mime_part_get_subpart_from_content_id (GMimePart *mime_part, const char *content_id);
 
 #ifdef __cplusplus
 }

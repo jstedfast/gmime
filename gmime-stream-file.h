@@ -31,16 +31,17 @@ extern "C" {
 
 #include <glib.h>
 #include <stdio.h>
-#include <gmime-stream.h>
+#include "gmime-stream.h"
 
 typedef struct _GMimeStreamFile {
 	GMimeStream parent;
 	
+	gboolean owner;
 	FILE *fp;
 } GMimeStreamFile;
 
 #define GMIME_STREAM_FILE_TYPE g_str_hash ("GMimeStreamFile")
-#define GMIME_IS_STREAM_FILE(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILE)
+#define GMIME_IS_STREAM_FILE(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_FILE_TYPE)
 #define GMIME_STREAM_FILE(stream) ((GMimeStreamFile *) stream)
 
 GMimeStream *g_mime_stream_file_new (FILE *fp);

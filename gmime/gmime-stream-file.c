@@ -24,12 +24,35 @@
 #include "gmime-stream-file.h"
 
 
+static void stream_destroy (GMimeStream *stream);
+static ssize_t stream_read (GMimeStream *stream, char *buf, size_t len);
+static ssize_t stream_write (GMimeStream *stream, char *buf, size_t len);
+static int stream_flush (GMimeStream *stream);
+static int stream_close (GMimeStream *stream);
+static gboolean stream_eos (GMimeStream *stream);
+static int stream_reset (GMimeStream *stream);
+static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
+static off_t stream_tell (GMimeStream *stream);
+static ssize_t stream_length (GMimeStream *stream);
+static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+
+static GMimeStream template = {
+	NULL, 0,
+	1, 0, 0, 0, stream_destroy,
+	stream_read, stream_write,
+	stream_flush, stream_close,
+	stream_eos, stream_reset,
+	stream_seek, stream_tell,
+	stream_length, stream_substream,
+};
+
+
 static void
 stream_destroy (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	if (fstream->fp)
+	if (fstream->owner && fstream->fp)
 		fclose (fstream->fp);
 	
 	g_free (fstream);
@@ -86,7 +109,7 @@ stream_close (GMimeStream *stream)
 	
 	ret = fclose (fstream->fp);
 	if (ret != -1)
-		fstream->fs = NULL;
+		fstream->fp = NULL;
 	
 	return ret;
 }
@@ -96,7 +119,7 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	g_return_if_fail (fstream->fp != NULL, TRUE);
+	g_return_val_if_fail (fstream->fp != NULL, TRUE);
 	
 	return feof (fstream->fp) ? TRUE : FALSE;
 }
@@ -169,78 +192,59 @@ stream_length (GMimeStream *stream)
 	return len;
 }
 
+static GMimeStream *
+stream_substream (GMimeStream *stream, off_t start, off_t end)
+{
+	GMimeStreamFile *fstream;
+	
+	fstream = g_new0 (GMimeStreamFile, 1);
+	fstream->owner = FALSE;
+	fstream->fp = GMIME_STREAM_FILE (stream)->fp;
+	
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
+	
+	return GMIME_STREAM (fstream);
+}
+
 
 /**
  * g_mime_stream_file_new:
- * @fp:
+ * @fp: file pointer
  *
+ * Returns a stream using @fp.
  **/
 GMimeStream *
 g_mime_stream_file_new (FILE *fp)
 {
 	GMimeStreamFile *fstream;
-	GMimeStream *stream;
 	
-	fstream = g_new0 (GMimeStreamFile, 1);
+	fstream = g_new (GMimeStreamFile, 1);
+	fstream->owner = TRUE;
 	fstream->fp = fp;
 	
-	stream = (GMimeStream *) fstream;
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, ftell (fp), -1);
 	
-	stream->refcount = 1;
-	stream->type = GMIME_STREAM_FILE_TYPE;
-	
-	stream->position = ftell (fp);
-	stream->bound_start = stream->position;
-	stream->bound_end = -1;
-	
-	stream->destroy = stream_destroy;
-	stream->read = stream_read;
-	stream->write = strea_write;
-	stream->flush = stream_flush;
-	stream->close = stream_close;
-	stream->seek = stream_seek;
-	stream->tell = stream_tell;
-	stream->reset = stream_reset;
-	stream->eos = stream_eos;
-	
-	return stream;
+	return GMIME_STREAM (fstream);
 }
 
 
 /**
  * g_mime_stream_file_new_with_bounds:
- * @fp:
- * @start:
- * @end:
+ * @fp: file pointer
+ * @start: start boundary
+ * @end: end boundary
  *
+ * Returns a stream using @fp with bounds @start and @end.
  **/
 GMimeStream *
 g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
 {
 	GMimeStreamFile *fstream;
-	GMimeStream *stream;
 	
-	file = g_new0 (GMimeStreamFile, 1);
+	fstream = g_new (GMimeStreamFile, 1);
 	fstream->fp = fp;
 	
-	stream = (GMimeStream *) fstream;
+	g_mime_stream_construct (GMIME_STREAM (fstream), &template, GMIME_STREAM_FILE_TYPE, start, end);
 	
-	stream->refcount = 1;
-	stream->type = GMIME_STREAM_FILE_TYPE;
-	
-	stream->position = start;
-	stream->bound_start = start;
-	stream->bound_end = end;
-	
-	stream->destroy = stream_destroy;
-	stream->read = stream_read;
-	stream->write = strea_write;
-	stream->flush = stream_flush;
-	stream->close = stream_close;
-	stream->seek = stream_seek;
-	stream->tell = stream_tell;
-	stream->reset = stream_reset;
-	stream->eos = stream_eos;
-	
-	return stream;
+	return GMIME_STREAM (fstream);
 }

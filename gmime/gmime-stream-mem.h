@@ -30,7 +30,7 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
-#include <gmime-stream.h>
+#include "gmime-stream.h"
 
 typedef struct _GMimeStreamMem {
 	GMimeStream parent;
@@ -40,7 +40,7 @@ typedef struct _GMimeStreamMem {
 } GMimeStreamMem;
 
 #define GMIME_STREAM_MEM_TYPE g_str_hash ("GMimeStreamMem")
-#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MEM)
+#define GMIME_IS_STREAM_MEM(stream) (((GMimeStream *) stream)->type == GMIME_STREAM_MEM_TYPE)
 #define GMIME_STREAM_MEM(stream) ((GMimeStreamMem *) stream)
 
 GMimeStream *g_mime_stream_mem_new (void);
