@@ -21,8 +21,8 @@ gmime.h
 iconv-detect.h
 gmime-config
 gmimeConf.sh
+gmime-2.0.pc
 gen-table
-gen-multibyte
 test-mime
 test-parser
 test-partial
