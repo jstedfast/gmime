@@ -58,8 +58,8 @@
 
 /* date parser macros */
 #define NUMERIC_CHARS          "1234567890"
-#define WEEKDAY_CHARS          "Sun,Mon,Tue,Wed,Thu,Fri,Sat,"
-#define MONTH_CHARS            "JanFebMarAprMayJunJulAugSepOctNovDec"
+#define WEEKDAY_CHARS          "SundayMondayTuesdayWednesdayThursdayFridaySaturday"
+#define MONTH_CHARS            "JanuaryFebruaryMarchAprilMayJuneJulyAugustSeptemberOctoberNovemberDecember"
 #define TIMEZONE_ALPHA_CHARS   "UTCGMTESTEDTCSTCDTMSTPSTPDTZAMNY()"
 #define TIMEZONE_NUMERIC_CHARS "-+1234567890"
 #define TIME_CHARS             "1234567890:"
@@ -125,12 +125,12 @@ static unsigned char gmime_uu_rank[256] = {
 static unsigned char gmime_datetok_table[256] = {
 	128,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
-	111,111,111,111,111,111,111,111, 79, 79,111,175,109,175,111,111,
+	111,111,111,111,111,111,111,111, 79, 79,111,175,111,175,111,111,
 	 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,119,111,111,111,111,111,
 	111, 75,111, 79, 75, 79,105, 79,111,111,107,111,111, 73, 75,107,
 	 79,111,111, 73, 77, 79,111,109,111, 79, 79,111,111,111,111,111,
-	111,105,107,107,109,105,111,107,109,109,111,111,107,111,105,105,
-	107,111,105,111,105,105,107,111,111,107,111,111,111,111,111,111,
+	111,105,107,107,109,105,111,107,105,105,111,111,107,107,105,105,
+	107,111,105,105,105,105,107,111,111,105,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
@@ -224,7 +224,7 @@ datetok (const char *date)
 		mask = 0;
 		
 		/* find the end of this token */
-		for (end = start; *end && !isspace ((int) *end) && (end > start ? !strchr ("-/", *end) : TRUE); end++) {
+		for (end = start; *end && !strchr ("-/,\t\r\n ", *end); end++) {
 			mask |= gmime_datetok_table[*end];
 		}
 		
@@ -495,9 +495,9 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 	}
 	
 	t = mktime (&tm);
-#if defined(HAVE_TIMEZONE)
+#if defined (HAVE_TIMEZONE)
 	t -= timezone;
-#elif defined(HAVE_TM_GMTOFF)
+#elif defined (HAVE_TM_GMTOFF)
 	t += tm.tm_gmtoff;
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
@@ -531,7 +531,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	int hour, min, sec, offset, n;
 	struct _date_token *token;
 	struct tm tm;
-	time_t time;
+	time_t t;
 	
 	memset ((void *) &tm, 0, sizeof (struct tm));
 	got_wday = got_month = got_tzone = FALSE;
@@ -541,7 +541,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	while (token) {
 		if (is_weekday (token) && !got_wday) {
 			if ((n = get_wday (token->start, token->len)) != -1) {
-				printf ("weekday; ");
+				d(printf ("weekday; "));
 				got_wday = TRUE;
 				tm.tm_wday = n;
 				goto next_token;
@@ -550,7 +550,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		
 		if (is_month (token) && !got_month) {
 			if ((n = get_month (token->start, token->len)) != -1) {
-				printf ("month; ");
+				d(printf ("month; "));
 				got_month = TRUE;
 				tm.tm_mon = n;
 				goto next_token;
@@ -559,7 +559,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		
 		if (is_time (token) && !tm.tm_hour && !tm.tm_min && !tm.tm_sec) {
 			if (get_time (token->start, token->len, &hour, &min, &sec)) {
-				printf ("time; ");
+				d(printf ("time; "));
 				tm.tm_hour = hour;
 				tm.tm_min = min;
 				tm.tm_sec = sec;
@@ -571,7 +571,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 			struct _date_token *t = token;
 			
 			if ((n = get_tzone (&t)) != -1) {
-				printf ("tzone; ");
+				d(printf ("tzone; "));
 				got_tzone = TRUE;
 				offset = n;
 				goto next_token;
@@ -581,23 +581,23 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		if (is_numeric (token)) {
 			if (token->len == 4 && !tm.tm_year) {
 				if ((n = get_year (token->start, token->len)) != -1) {
-					printf ("year; ");
+					d(printf ("year; "));
 					tm.tm_year = n - 1900;
 					goto next_token;
 				}
 			} else {
 				if (!got_month && !got_wday && token->next && is_numeric (token->next)) {
-					printf ("mon; ");
+					d(printf ("mon; "));
 					n = decode_int (token->start, token->len);
 					got_month = TRUE;
 					tm.tm_mon = n - 1;
 					goto next_token;
 				} else if (!tm.tm_mday && (n = get_mday (token->start, token->len)) != -1) {
-					printf ("mday; ");
+					d(printf ("mday; "));
 					tm.tm_mday = n;
 					goto next_token;
 				} else if (!tm.tm_year) {
-					printf ("2-digit year; ");
+					d(printf ("2-digit year; "));
 					n = get_year (token->start, token->len);
 					tm.tm_year = n - 1900;
 					goto next_token;
@@ -605,20 +605,20 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 			}
 		}
 		
-		printf ("???; ");
+		d(printf ("???; "));
 		
 	next_token:
 		
 		token = token->next;
 	}
 	
-	printf ("\n");
-		
-	time = mktime (&tm);
-#if defined(HAVE_TIMEZONE)
-	time -= timezone;
-#elif defined(HAVE_TM_GMTOFF)
-	time += tm.tm_gmtoff;
+	d(printf ("\n"));
+	
+	t = mktime (&tm);
+#if defined (HAVE_TIMEZONE)
+	t -= timezone;
+#elif defined (HAVE_TM_GMTOFF)
+	t += tm.tm_gmtoff;
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
 #endif
@@ -626,12 +626,12 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	/* t is now GMT of the time we want, but not offset by the timezone ... */
 	
 	/* this should convert the time to the GMT equiv time */
-	time -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
+	t -= ((offset / 100) * 60 * 60) + (offset % 100) * 60;
 	
 	if (tzone)
 		*tzone = offset;
 	
-	return time;
+	return t;
 }
 
 #if 0
@@ -1023,8 +1023,6 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 	inptr = in + 2;
 	inend = in + inlen - 2;
 	
-	fprintf (stderr, "rfc2047_decode_word: %.*s\n", inlen, in);
-	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
 		unsigned char *decoded;
@@ -1319,8 +1317,6 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	}
 	
 	g_free (uword);
-	
-	fprintf (stderr, "rfc2047_encode_word: =?%s?%c?%s?=\n", charset, encoding, encoded);
 	
 	g_string_sprintfa (string, "=?%s?%c?%s?=", charset, encoding, encoded);
 }
