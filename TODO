@@ -5,9 +5,9 @@ tasks are presented in.
 
 
 
-- Possibly make the GMime parser async.
+- Possibly make the GMime parser incremental.
 
-- make thread-safe
+- make thread-safe?
 
 - modify address parser:
 
@@ -28,9 +28,11 @@ tasks are presented in.
 <fejj> but that should be easy
 
 
-
-
-
+- Support auto-detection of more charsets:
+* Japanese: Standard - ISO-2022-JP, Common in US - S-JIS, Common in US but not recommended - EUC-JP
+* Korean: Standard - ISO-2022-KR and EUC-KR
+* Simplified Chinese (Mainland PRC China, Singapore): GB2312
+* Traditional Chinese (Taiwan, Hong Kong): Big5, EUC-TW
 
 
 All questions and comments should be directed toward the author,
