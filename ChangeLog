@@ -2,7 +2,7 @@
 
 	* gmime-stream-cat.c (stream_seek): Return the absolute offset
 	into the cat stream rather than the relative offset of one of the
-	substreams on success.
+	substreams on success. Fixed a few other things too.
 
 2002-05-16  Jeffrey Stedfast  <fejj@ximian.com>
 

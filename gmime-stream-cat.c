@@ -295,13 +295,14 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			p = p->next;
 		}
 		
-		if (p == NULL) {
+		if (p == NULL && real > 0) {
 			/* bound_end < offset */
 			return -1;
 		}
 		
 		/* reset all the streams after this point */
 		while (p) {
+			/* FIXME: return -1 if a reset fails? */
 			g_mime_stream_reset (p->stream);
 			p = p->next;
 		}
