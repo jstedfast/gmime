@@ -421,7 +421,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 		if ((ystate & YENC_NEWLINE_ESCAPE) == YENC_NEWLINE_ESCAPE) {
 			ystate &= ~GMIME_YDECODE_STATE_EOLN;
 			
-			if (*inptr == 'y') {
+			if (ch == 'y') {
 				/* we probably have a =yend here */
 				ystate |= GMIME_YDECODE_STATE_END;
 				break;
