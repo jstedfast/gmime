@@ -22,7 +22,7 @@ Manual at http://developer.gnome.org/doc/API/2.0/gobject/
 - The first thing you need to know is that any function returning a
 non-const pointer to any object /must/ be unref'd when you are done
 with it. Since all objects in GMime now subclass GObject, you may
-safely use g_object_unref() (GMimeStream's may be also be unref'd
+safely use g_object_unref() (GMimeStream's may also be unref'd
 using g_mime_stream_unref(), but either way is fine).
 
 Don't forget that g_mime_part_get_content_object() returns a
