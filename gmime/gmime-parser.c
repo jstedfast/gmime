@@ -258,6 +258,7 @@ g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 	parser->priv->scan_from = FALSE;
 	parser->priv->have_regex = FALSE;
 	parser->priv->persist_stream = TRUE;
+	parser->priv->respect_content_length = FALSE;
 }
 
 static void

@@ -1,5 +1,10 @@
 2004-04-24  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-parser.c (g_mime_parser_init): Initialise
+	respect_content_length.
+
+2004-04-24  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* README: Updated
 
 	* configure.in: Bumped version to 2.1.4
