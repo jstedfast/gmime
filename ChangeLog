@@ -1,7 +1,3 @@
-2002-01-19  Jeffrey Stedfast  <fejj@ximian.com>
-
-	* gmime-iconv.c (g_mime_iconv_open): Slight optimization.
-
 2002-01-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Fixed more silliness.

@@ -339,6 +339,8 @@ g_mime_iconv_open (const char *to, const char *from)
 	}
 	
 	if (node == NULL) {
+		node = iconv_node_new (bucket);
+		
 		/* make room for this node */
 		bucket = iconv_cache_tail;
 		while (bucket && iconv_cache_size >= ICONV_CACHE_SIZE) {
@@ -349,13 +351,13 @@ g_mime_iconv_open (const char *to, const char *from)
 		
 		cd = iconv_open (to, from);
 		if (cd == (iconv_t) -1) {
+			iconv_node_destroy (node);
 			return cd;
 		}
 		
-		node = iconv_node_new (bucket);
 		node->cd = cd;
 		
-		iconv_cache_bucket_add_node (bucket, node);
+		iconv_cache_bucket_add_node (node->bucket, node);
 	} else {
 		cd = node->cd;
 		
