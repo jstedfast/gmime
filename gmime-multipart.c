@@ -245,14 +245,14 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	total += nwritten;
 	
-	/* terminate the headers */
-	if (g_mime_stream_write (stream, "\n", 1) == -1)
-		return -1;
-	
-	total++;
-	
 	/* write the preface */
 	if (multipart->preface) {
+		/* terminate the headers */
+		if (g_mime_stream_write (stream, "\n", 1) == -1)
+			return -1;
+		
+		total++;
+		
 		nwritten = g_mime_stream_write_string (stream, multipart->preface);
 		if (nwritten == -1)
 			return -1;
@@ -286,7 +286,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		return -1;
 	
 	total += nwritten;
-
+	
 	/* write the postface */
 	if (multipart->postface) {
 		nwritten = g_mime_stream_write_string (stream, multipart->postface);

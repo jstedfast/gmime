@@ -12,11 +12,9 @@
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 
-#if 0
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
-#endif
 #define TEST_WRITE_TO_STREAM
 
 void
