@@ -28,7 +28,7 @@
 #include <errno.h>
 
 #include "gmime-filter-charset.h"
-#include "gmime-charset.h"x
+#include "gmime-charset.h"
 
 
 static void filter_destroy (GMimeFilter *filter);
@@ -153,8 +153,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	 * of the input buffer for the next conversion.
 	 */
 	
-	if (inlen > 0)
-		g_mime_filter_backup (filter, inbuf, inlen);
+	if (inleft > 0)
+		g_mime_filter_backup (filter, inbuf, inleft);
 	
 	*out = filter->outbuf;
 	*outlen = converted;
@@ -191,7 +191,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			outbuf = filter->outbuf + converted;
 			outleft = filter->outsize - converted;
 			
-			converted = iconv (charset->cd, &inbuf, &inlen, &outbuf, &outleft);
+			converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
 			if (converted == (size_t) -1) {
 				if (errno != E2BIG && errno != EINVAL)
 					goto noop;
