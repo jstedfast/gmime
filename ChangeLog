@@ -1,3 +1,11 @@
+2001-01-27  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_set_content_byte_array): So
+	set_content_array() was no good. After inspecting glib it was
+	discovered that there are hidden data members of a GByteArray that
+	hold info like if the data is NUL terminated, how much data is
+	allocated, etc.
+
 2001-01-26  Charles Kerr <charles@superpimp.org>
 
 	* gmime-part.c (g_mime_part_set_content_array): new function.
