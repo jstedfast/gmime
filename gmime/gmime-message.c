@@ -806,7 +806,7 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 static void
 sync_recipient_header (GMimeMessage *message, const char *type)
 {
-	InternetAddressList *recipients;
+	const InternetAddressList *recipients;
 	
 	/* sync the specified recipient header */
 	recipients = g_mime_message_get_recipients (message, type);
@@ -911,7 +911,7 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
  * Returns a list of recipients of a chosen type from the MIME
  * Message.
  **/
-InternetAddressList *
+const InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);

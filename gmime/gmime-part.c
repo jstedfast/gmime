@@ -1199,7 +1199,8 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * of the raw data buffer.
  * 
  * Returns a const char * pointer to the raw contents of the MIME Part
- * and sets %len to the length of the buffer.
+ * and sets %len to the length of the buffer. Note: textual content
+ * will not be converted to UTF-8.
  **/
 const char *
 g_mime_part_get_content (const GMimePart *mime_part, size_t *len)

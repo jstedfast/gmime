@@ -296,5 +296,7 @@ g_mime_message_part_get_message (GMimeMessagePart *part)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE_PART (part), NULL);
 	
+	g_object_ref (part->message);
+	
 	return part->message;
 }
