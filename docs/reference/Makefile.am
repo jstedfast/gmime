@@ -22,7 +22,6 @@ content_files = 			\
 	filters.sgml			\
 	question_index.sgml		\
 	resources.sgml			\
-	running.sgml			\
 	streams.sgml
 
 ignore_headers = 			\
