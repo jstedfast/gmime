@@ -603,14 +603,12 @@ g_mime_part_set_filename (GMimePart *mime_part, const gchar *filename)
 const gchar *
 g_mime_part_get_filename (const GMimePart *mime_part)
 {
-	GMimeParam *param;
+	GMimeParam *param = NULL;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
-	if (!mime_part->disposition || !mime_part->disposition->param_hash)
-		return NULL;
-	
-	param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
+	if (mime_part->disposition && mime_part->disposition->param_hash)
+		param = g_hash_table_lookup (mime_part->disposition->param_hash, "filename");
 	
 	if (!param || !param->value) {
 		/* check the "name" param in the content-type */

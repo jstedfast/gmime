@@ -1,3 +1,12 @@
+2001-05-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parse_content_headers): Simplified and also
+	unfolded content-headers.
+
+	* gmime-part.c (g_mime_part_get_filename): If there isn't a
+	disposition, make sure that we don't ignore the possibility of a
+	"name" param in the Content-Type header.
+
 2001-05-12  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (need_quotes): Include '.' as a char to quote.
