@@ -1,5 +1,8 @@
 2004-05-24  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-filter-gzip.c (g_mime_filter_gzip_finalize): Call
+	inflateEnd/deflateEnd to fix a memory leak.
+
 	* gmime/gmime-parser.c (parser_offset): If priv->offset == -1,
 	don't bother doing any pointer arithmetic as it will result in a
 	value that will break certain code (eg. the boundary matching
