@@ -747,10 +747,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
 		while (subpart) {
 			GMimeObject *part = subpart->data;
 			
-			if (GMIME_IS_MULTIPART (part))
-				g_mime_multipart_foreach (GMIME_MULTIPART (part), callback, user_data);
-			else
-				callback (part, user_data);
+			callback (part, user_data);
 			
 			subpart = subpart->next;
 		}
