@@ -22,4 +22,4 @@ gmimeConf.sh
 gen-table
 test-parser
 test-mime
-libgmime.spec
+gmime.spec
