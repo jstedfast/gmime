@@ -45,7 +45,7 @@
 	* acconfig.h: Added #undef's for some iconv stuff.
 
 	* gmime-filter-charset.c (g_mime_filter_charset_new): Put the
-	charset aruments in the right order.
+	charset arguments in the right order.
 
 	* gmime-iconv.c (g_mime_iconv_open): Swap the to/from arguments so
 	that they are in the same order as iconv_open.
@@ -395,7 +395,7 @@
 	the value or rfc2184 encoding it) the list of parameters and
 	optionally folds them suitable for header wrapping.
 
-	* gmime-disposition.[c,h]: New sources files to handle
+	* gmime-disposition.[c,h]: New source files to handle
 	parsing/generating Content-Disposition headers.
 
 	* gmime-part.c (g_mime_part_destroy): Updated to use
