@@ -3,7 +3,7 @@
 %define prefix   /usr
 
 Summary: libGMIME library
-Name: libgmime
+Name: gmime
 Version: %ver
 Release: 1
 Copyright: LGPL
@@ -11,7 +11,7 @@ Group: Development/Libraries
 Source: ftp://ftp.gnome.org/pub/GNOME/sources/libgmime/libgmime-%{ver}.tar.gz
 BuildRoot: /var/tmp/libgmime-%{PACKAGE_VERSION}-root
 
-URL: http://primates.helixcode.com/~fejj/GMIME/
+URL: http://primates.helixcode.com/~fejj/gmime/
 Prereq: /sbin/install-info
 Docdir: %{prefix}/doc
 
@@ -28,8 +28,8 @@ Libraries, include files, etc you can use to develop libgmime applications.
 
 
 %changelog
-
-- Built release 0.1.0
+* Dec 15 1999 Wayne Schuller <k_wayne@linuxpower.org>
+- Modified to make spec file work.
 
 %prep
 %setup
