@@ -87,7 +87,7 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 </programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -157,7 +157,7 @@ void        <link linkend="g-mime-cipher-validity-set-description">g_mime_cipher
 Constucts the GMimeCipherContext</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -184,7 +184,7 @@ Constucts the GMimeCipherContext</para>
 Signs the input stream and writes the resulting signature to the output stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -222,7 +222,7 @@ Signs the input stream and writes the resulting signature to the output stream.<
 Clearsigns the input stream and writes the resulting clearsign to the output stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -262,7 +262,7 @@ you should pass <literal>NULL</literal> as the sigstream parameter. Otherwise
 verify the integirity of the <parameter>istream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -301,7 +301,7 @@ Encrypts (and optionally signs) the cleartext input stream and
 writes the resulting ciphertext to the output stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -341,7 +341,7 @@ Decrypts the ciphertext input stream and writes the resulting
 cleartext to the output stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -368,7 +368,7 @@ cleartext to the output stream.</para>
 Initializes the validity structure.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -385,7 +385,7 @@ Initializes the validity structure.</para>
 Creates a new validity structure.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -400,7 +400,7 @@ Creates a new validity structure.</para>
 Clears the contents of the validity structure.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -416,7 +416,7 @@ Clears the contents of the validity structure.</para>
 Frees the memory used by <parameter>validity</parameter> back to the system.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -433,7 +433,7 @@ Frees the memory used by <parameter>validity</parameter> back to the system.</pa
 </para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -453,7 +453,7 @@ Frees the memory used by <parameter>validity</parameter> back to the system.</pa
 Sets the validness on the validity structure.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -473,7 +473,7 @@ Sets the validness on the validity structure.</para>
 </para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -493,7 +493,7 @@ Sets the validness on the validity structure.</para>
 Sets the description on the validity structure.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -14,15 +14,14 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-FILTER-TYPE-CAPS">GMIME_STREAM_FILTER_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER</link>          (stream)
-#define     <link linkend="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER</link>             (stream)
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-filter-new-with-stream">g_mime_stream_filter_new_with_stream</link>
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream);
 int         <link linkend="g-mime-stream-filter-add">g_mime_stream_filter_add</link>        (<link linkend="GMimeStreamFilter">GMimeStreamFilter</link> *fstream,
                                              <link linkend="GMimeFilter">GMimeFilter</link> *filter);
 void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_remove</link>     (<link linkend="GMimeStreamFilter">GMimeStreamFilter</link> *fstream,
                                              int id);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -40,47 +39,6 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-STREAM-FILTER-TYPE-CAPS">GMIME_STREAM_FILTER_TYPE</title>
-<programlisting>#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER()</title>
-<programlisting>#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILTER_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER()</title>
-<programlisting>#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-stream-filter-new-with-stream">g_mime_stream_filter_new_with_stream ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_filter_new_with_stream
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
@@ -89,7 +47,7 @@ Creates a new GMimeStreamFilter object using <parameter>stream</parameter> as th
 stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -108,7 +66,7 @@ stream.</para>
 Adds a <parameter>filter</parameter> to <parameter>fstream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -131,7 +89,7 @@ Removed a filter from the stream based on the id (as returned from
 filter_add).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -76,7 +76,7 @@ void        <link linkend="g-mime-exception-free">g_mime_exception_free</link>  
 Create and returns a new exception object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -93,7 +93,7 @@ useful when using a statically allocated
 exception.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -111,7 +111,7 @@ GMIME_EXCEPTION_NONE and free the description text. If the
 exception is NULL, this funtion just returns.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -136,7 +136,7 @@ When <parameter>ex</parameter> is NULL, nothing is done, this routine
 simply returns.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -167,14 +167,14 @@ string and the variable argument list.
 </para>
 <para>
 It is safe to say:
-g_mime_exception_setv (ex, ..., g_mime_exception_get_description (ex), ...);
+  g_mime_exception_setv (ex, ..., g_mime_exception_get_description (ex), ...);
 </para>
 <para>
 When <parameter>ex</parameter> is NULL, nothing is done, this routine
 simply returns.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -201,7 +201,7 @@ Return the id of an exception.
 If <parameter>ex</parameter> is NULL, return GMIME_EXCEPTION_NONE;</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -221,7 +221,7 @@ Return the exception description text.
 If <parameter>ex</parameter> is NULL, return NULL;</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -237,7 +237,7 @@ If <parameter>ex</parameter> is NULL, return NULL;</para>
 <programlisting>#define     g_mime_exception_is_set(ex)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -259,7 +259,7 @@ The destination exception receives the id and
 the description text of the source exception.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -279,7 +279,7 @@ Free an exception object. If the exception is NULL, nothing is
 done, the routine simply returns.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

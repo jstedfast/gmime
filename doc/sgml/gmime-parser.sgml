@@ -16,8 +16,7 @@
 
 <link linkend="GMimePart">GMimePart</link>*  <link linkend="g-mime-parser-construct-part">g_mime_parser_construct_part</link>    (<link linkend="GMimeStream">GMimeStream</link> *stream);
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-parser-construct-message">g_mime_parser_construct_message</link>
-                                            (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="gboolean">gboolean</link> preserve_headers);
+                                            (<link linkend="GMimeStream">GMimeStream</link> *stream);
 </synopsis>
 </refsynopsisdiv>
 
@@ -41,7 +40,7 @@
 Constructs a GMimePart object based on <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -55,22 +54,18 @@ Constructs a GMimePart object based on <parameter>stream</parameter>.</para>
 <refsect2>
 <title><anchor id="g-mime-parser-construct-message">g_mime_parser_construct_message ()</title>
 <programlisting><link linkend="GMimeMessage">GMimeMessage</link>* g_mime_parser_construct_message
-                                            (<link linkend="GMimeStream">GMimeStream</link> *stream,
-                                             <link linkend="gboolean">gboolean</link> preserve_headers);</programlisting>
+                                            (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
 Constructs a GMimeMessage object based on <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> an rfc0822 message stream
-</entry></row>
-<row><entry align="right"><parameter>preserve_headers</parameter>&nbsp;:</entry>
-<entry> if <literal>TRUE</literal>, then store the arbitrary headers
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 message stream.
 </entry></row>

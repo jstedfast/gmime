@@ -10,7 +10,6 @@ g_mime_init
 GMimeStream
 GMimeSeekWhence
 IOVector
-GMIME_STREAM
 g_mime_stream_construct
 g_mime_stream_ref
 g_mime_stream_unref
@@ -29,79 +28,99 @@ g_mime_stream_write_string
 g_mime_stream_printf
 g_mime_stream_write_to_stream
 g_mime_stream_writev
+
+<SUBSECTION Standard>
+GMIME_STREAM
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-buffer</FILE>
 GMimeStreamBufferMode
-GMIME_STREAM_BUFFER_TYPE
-GMIME_IS_STREAM_BUFFER
-GMIME_STREAM_BUFFER
+GMimeStreamBuffer
 g_mime_stream_buffer_new
 g_mime_stream_buffer_gets
 g_mime_stream_buffer_readln
+
+<SUBSECTION Standard>
+GMIME_STREAM_BUFFER_TYPE
+GMIME_IS_STREAM_BUFFER
+GMIME_STREAM_BUFFER
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-file</FILE>
+g_mime_stream_file_new
+g_mime_stream_file_new_with_bounds
+
+<SUBSECTION Standard>
 GMIME_STREAM_FILE_TYPE
 GMIME_IS_STREAM_FILE
 GMIME_STREAM_FILE
-g_mime_stream_file_new
-g_mime_stream_file_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-fs</FILE>
+g_mime_stream_fs_new
+g_mime_stream_fs_new_with_bounds
+
+<SUBSECTION Standard>
 GMIME_STREAM_FS_TYPE
 GMIME_IS_STREAM_FS
 GMIME_STREAM_FS
-g_mime_stream_fs_new
-g_mime_stream_fs_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-mem</FILE>
-GMIME_STREAM_MEM_TYPE
-GMIME_IS_STREAM_MEM
-GMIME_STREAM_MEM
 g_mime_stream_mem_new
 g_mime_stream_mem_new_with_byte_array
 g_mime_stream_mem_new_with_buffer
 g_mime_stream_mem_set_byte_array
+
+<SUBSECTION Standard>
+GMIME_STREAM_MEM_TYPE
+GMIME_IS_STREAM_MEM
+GMIME_STREAM_MEM
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-mmap</FILE>
+g_mime_stream_mmap_new
+g_mime_stream_mmap_new_with_bounds
+
+<SUBSECTION Standard>
 GMIME_STREAM_MMAP_TYPE
 GMIME_IS_STREAM_MMAP
 GMIME_STREAM_MMAP
-g_mime_stream_mmap_new
-g_mime_stream_mmap_new_with_bounds
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-null</FILE>
+g_mime_stream_null_new
+
+<SUBSECTION Standard>
 GMIME_STREAM_NULL_TYPE
 GMIME_IS_STREAM_NULL
 GMIME_STREAM_NULL
-g_mime_stream_null_new
 </SECTION>
 
 <SECTION>
 <FILE>gmime-stream-filter</FILE>
-GMIME_STREAM_FILTER_TYPE
-GMIME_IS_STREAM_FILTER
-GMIME_STREAM_FILTER
 g_mime_stream_filter_new_with_stream
 g_mime_stream_filter_add
 g_mime_stream_filter_remove
+
+<SUBSECTION Private>
+GMimeStreamFilterPrivate
+
+<SUBSECTION Standard>
+GMIME_STREAM_FILTER_TYPE
+GMIME_IS_STREAM_FILTER
+GMIME_STREAM_FILTER
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter</FILE>
 GMimeFilter
-GMIME_FILTER
 g_mime_filter_construct
 g_mime_filter_destroy
 g_mime_filter_copy
@@ -110,6 +129,9 @@ g_mime_filter_complete
 g_mime_filter_reset
 g_mime_filter_backup
 g_mime_filter_set_size
+
+<SUBSECTION Standard>
+GMIME_FILTER
 </SECTION>
 
 <SECTION>
@@ -203,6 +225,7 @@ g_mime_param_write_to_string
 
 <SECTION>
 <FILE>gmime-header</FILE>
+GMimeHeader
 GMimeHeaderFunc
 g_mime_header_new
 g_mime_header_destroy
@@ -243,18 +266,17 @@ g_mime_disposition_header
 
 <SECTION>
 <FILE>gmime-object</FILE>
-GMIME_OBJECT
 GMimeObject
 g_mime_object_construct
 g_mime_object_ref
 g_mime_object_unref
+
+<SUBSECTION Standard>
+GMIME_OBJECT
 </SECTION>
 
 <SECTION>
 <FILE>gmime-part</FILE>
-GMIME_PART_TYPE
-GMIME_IS_PART
-GMIME_PART
 GMimePartEncodingType
 GMimePart
 GMimePartFunc
@@ -297,17 +319,18 @@ g_mime_part_write_to_stream
 g_mime_part_to_string
 g_mime_part_foreach
 g_mime_part_get_subpart_from_content_id
+
+<SUBSECTION Standard>
+GMIME_PART_TYPE
+GMIME_IS_PART
+GMIME_PART
 </SECTION>
 
 <SECTION>
 <FILE>gmime-message</FILE>
-GMIME_MESSAGE_TYPE
-GMIME_IS_MESSAGE
-GMIME_MESSAGE
 GMIME_RECIPIENT_TYPE_TO
 GMIME_RECIPIENT_TYPE_CC
 GMIME_RECIPIENT_TYPE_BCC
-GMimeHeader
 GMimeMessageHeader
 GMimeMessage
 g_mime_message_new
@@ -334,6 +357,11 @@ g_mime_message_to_string
 g_mime_message_get_body
 g_mime_message_get_headers
 g_mime_message_foreach_part
+
+<SUBSECTION Standard>
+GMIME_MESSAGE_TYPE
+GMIME_IS_MESSAGE
+GMIME_MESSAGE
 </SECTION>
 
 <SECTION>

@@ -66,6 +66,12 @@ static const guint gmime_binary_age    = 0;
      (gmime_major_version == (major) && gmime_minor_version == (minor) && \
       gmime_micro_version >= (micro)))
 
+
+/**
+ * GMIME_INIT_FLAG_UTF8:
+ *
+ * Initialization flag to enable UTF-8 interfaces throughout GMime.
+ **/
 #define GMIME_INIT_FLAG_UTF8  (1 << 0)
 
 void g_mime_init (guint32 flags);

@@ -14,13 +14,13 @@
 
 
 
-#define     <link linkend="GMIME-OBJECT-CAPS">GMIME_OBJECT</link>                    (object)
 struct      <link linkend="GMimeObject">GMimeObject</link>;
 void        <link linkend="g-mime-object-construct">g_mime_object_construct</link>         (<link linkend="GMimeObject">GMimeObject</link> *object,
                                              <link linkend="GMimeObject">GMimeObject</link> *object_template,
                                              unsigned int type);
 void        <link linkend="g-mime-object-ref">g_mime_object_ref</link>               (<link linkend="GMimeObject">GMimeObject</link> *object);
 void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>             (<link linkend="GMimeObject">GMimeObject</link> *object);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -37,23 +37,6 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-OBJECT-CAPS">GMIME_OBJECT()</title>
-<programlisting>#define GMIME_OBJECT(object) ((GMimeObject *) object)
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimeObject">struct GMimeObject</title>
 <programlisting>struct GMimeObject {
@@ -76,7 +59,7 @@ Initializes a new object of type <parameter>type</parameter>, using the virtual 
 from <parameter>object_template</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -98,7 +81,7 @@ from <parameter>object_template</parameter>.</para>
 Ref's an object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -114,7 +97,7 @@ Ref's an object.</para>
 Unref's an object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

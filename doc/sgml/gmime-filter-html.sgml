@@ -45,12 +45,16 @@
 <programlisting>#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)
 </programlisting>
 <para>
+Wrap stream in &lt;pre&gt; tags.</para>
+<para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-NL-CAPS">GMIME_FILTER_HTML_CONVERT_NL</title>
 <programlisting>#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)
 </programlisting>
+<para>
+Convert new-lines ('\n') into &lt;br&gt; tags.</para>
 <para>
 
 </para></refsect2>
@@ -59,12 +63,17 @@
 <programlisting>#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)
 </programlisting>
 <para>
+Preserve whitespace by converting spaces into their appropriate
+html entities.</para>
+<para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-URLS-CAPS">GMIME_FILTER_HTML_CONVERT_URLS</title>
 <programlisting>#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)
 </programlisting>
+<para>
+Wrap detected URLs in &lt;a href=...&gt; tags.</para>
 <para>
 
 </para></refsect2>
@@ -73,12 +82,16 @@
 <programlisting>#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)
 </programlisting>
 <para>
+Change the colour of citation text.</para>
+<para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS">GMIME_FILTER_HTML_CONVERT_ADDRESSES</title>
 <programlisting>#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)
 </programlisting>
+<para>
+Wrap email addresses in "mailto:" href tags.</para>
 <para>
 
 </para></refsect2>
@@ -87,12 +100,16 @@
 <programlisting>#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)
 </programlisting>
 <para>
+Converts 8bit characters to '?'.</para>
+<para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CITE-CAPS">GMIME_FILTER_HTML_CITE</title>
 <programlisting>#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)
 </programlisting>
+<para>
+Cites text by prepending "&gt; " to each cited line.</para>
 <para>
 
 </para></refsect2>
@@ -104,7 +121,7 @@
 Creates a new GMimeFilterHTML filter.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

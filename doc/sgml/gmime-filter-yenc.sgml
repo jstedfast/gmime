@@ -79,7 +79,7 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
 </programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -111,7 +111,7 @@ combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
 (<parameter>crc</parameter>).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -159,7 +159,7 @@ Along the same lines, <parameter>pcrc</parameter> and <parameter>crc</parameter>
 GMIME_YENCODE_CRC_INIT before using.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -205,7 +205,7 @@ GMIME_YENCODE_CRC_FINAL (<parameter>crc</parameter>) to get the combined crc32 v
 all the parts.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -304,7 +304,7 @@ all the parts.</para>
 Creates a new yEnc filter.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -323,7 +323,7 @@ Creates a new yEnc filter.</para>
 Sets the current state of the yencoder/ydecoder</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -340,19 +340,19 @@ Sets the current state of the yencoder/ydecoder</para>
 <programlisting>void        g_mime_filter_yenc_set_crc      (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc,
                                              <link linkend="guint32">guint32</link> crc);</programlisting>
 <para>
+Sets the current crc32 value on the yEnc filter <parameter>yenc</parameter> to <parameter>crc</parameter>.</para>
+<para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>yenc</parameter>&nbsp;:</entry>
-<entry>
+<entry> yEnc filter
 </entry></row>
 <row><entry align="right"><parameter>crc</parameter>&nbsp;:</entry>
-<entry>
-
-
+<entry> crc32
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -362,7 +362,7 @@ Sets the current state of the yencoder/ydecoder</para>
 Get the computed crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -380,7 +380,7 @@ Get the computed crc or (guint32) -1 on fail.</para>
 Get the computed part crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

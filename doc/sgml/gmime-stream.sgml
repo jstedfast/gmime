@@ -17,7 +17,6 @@
 struct      <link linkend="GMimeStream">GMimeStream</link>;
 enum        <link linkend="GMimeSeekWhence">GMimeSeekWhence</link>;
 struct      <link linkend="IOVector">IOVector</link>;
-#define     <link linkend="GMIME-STREAM-CAPS">GMIME_STREAM</link>                    (stream)
 void        <link linkend="g-mime-stream-construct">g_mime_stream_construct</link>         (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream_template,
                                              unsigned int type,
@@ -53,9 +52,10 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
                                              ...);
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-write-to-stream">g_mime_stream_write_to_stream</link>   (<link linkend="GMimeStream">GMimeStream</link> *src,
                                              <link linkend="GMimeStream">GMimeStream</link> *dest);
-<link linkend="size-t">size_t</link>      <link linkend="g-mime-stream-writev">g_mime_stream_writev</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+<link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-writev">g_mime_stream_writev</link>            (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="IOVector">IOVector</link> *vector,
                                              <link linkend="size-t">size_t</link> count);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -124,23 +124,6 @@ void        <link linkend="g-mime-stream-set-bounds">g_mime_stream_set_bounds</l
 
 </para></refsect2>
 <refsect2>
-<title><anchor id="GMIME-STREAM-CAPS">GMIME_STREAM()</title>
-<programlisting>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)
-</programlisting>
-<para>
-
-</para><informaltable pgwide=1 frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="g-mime-stream-construct">g_mime_stream_construct ()</title>
 <programlisting>void        g_mime_stream_construct         (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream_template,
@@ -152,7 +135,7 @@ Initializes a new stream of type <parameter>type</parameter>, using the virtual 
 from <parameter>stream_template</parameter>, with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -180,7 +163,7 @@ from <parameter>stream_template</parameter>, with bounds <parameter>start</param
 Ref's a stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -196,7 +179,7 @@ Ref's a stream.</para>
 Unref's a stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -214,7 +197,7 @@ Unref's a stream.</para>
 Attempts to read up to <parameter>len</parameter> bytes from <parameter>stream</parameter> into <parameter>buf</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -240,7 +223,7 @@ Attempts to read up to <parameter>len</parameter> bytes from <parameter>stream</
 Attempts to write up to <parameter>len</parameter> bytes of <parameter>buf</parameter> to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -264,7 +247,7 @@ Attempts to write up to <parameter>len</parameter> bytes of <parameter>buf</para
 Sync's the stream to disk.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -286,18 +269,18 @@ the argument <parameter>offset</parameter> according to the
 directive <parameter>whence</parameter> as follows:
 </para>
 <para>
-GMIME_STREAM_SEEK_SET: The offset is set to <parameter>offset</parameter> bytes.
+    <link linkend="GMIME-STREAM-SEEK-SET-CAPS">GMIME_STREAM_SEEK_SET</link>: The offset is set to <parameter>offset</parameter> bytes.
 </para>
 <para>
-GMIME_STREAM_SEEK_CUR: The offset is set to its current
-location plus <parameter>offset</parameter> bytes.
+    <link linkend="GMIME-STREAM-SEEK-CUR-CAPS">GMIME_STREAM_SEEK_CUR</link>: The offset is set to its current
+    location plus <parameter>offset</parameter> bytes.
 </para>
 <para>
-GMIME_STREAM_SEEK_END: The offset is set to the size of the
-stream plus <parameter>offset</parameter> bytes.</para>
+    <link linkend="GMIME-STREAM-SEEK-END-CAPS">GMIME_STREAM_SEEK_END</link>: The offset is set to the size of the
+    stream plus <parameter>offset</parameter> bytes.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -321,7 +304,7 @@ stream plus <parameter>offset</parameter> bytes.</para>
 Gets the current offset within the stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -329,7 +312,7 @@ Gets the current offset within the stream.</para>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> stream
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the current position within the stream.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the current position within the stream or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -339,7 +322,7 @@ Gets the current offset within the stream.</para>
 Resets the stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -357,7 +340,7 @@ Resets the stream.</para>
 Tests the end-of-stream indicator for <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -365,7 +348,7 @@ Tests the end-of-stream indicator for <parameter>stream</parameter>.</para>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> stream
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE on EOS or FALSE otherwise.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry><literal>TRUE</literal> on EOS or <literal>FALSE</literal> otherwise.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -375,7 +358,7 @@ Tests the end-of-stream indicator for <parameter>stream</parameter>.</para>
 Closes the stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -393,7 +376,7 @@ Closes the stream.</para>
 Gets the length of the stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -413,7 +396,7 @@ Gets the length of the stream.</para>
 Creates a new substream of <parameter>stream</parameter> with bounds <parameter>start</parameter> and <parameter>end</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -436,10 +419,10 @@ Creates a new substream of <parameter>stream</parameter> with bounds <parameter>
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);</programlisting>
 <para>
-Set the bounds on a stream.</para>
+Sets the bounds on the stream <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -462,7 +445,7 @@ Set the bounds on a stream.</para>
 Writes <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -473,7 +456,7 @@ Writes <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 <row><entry align="right"><parameter>string</parameter>&nbsp;:</entry>
 <entry> string to write
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -485,7 +468,7 @@ Writes <parameter>string</parameter> to <parameter>stream</parameter>.</para>
 Write formatted output to a stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -499,7 +482,7 @@ Write formatted output to a stream.</para>
 <row><entry align="right"><parameter>...</parameter>&nbsp;:</entry>
 <entry> arguments
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -510,7 +493,7 @@ Write formatted output to a stream.</para>
 Attempts to write stream <parameter>src</parameter> to stream <parameter>dest</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -521,19 +504,19 @@ Attempts to write stream <parameter>src</parameter> to stream <parameter>dest</p
 <row><entry align="right"><parameter>dest</parameter>&nbsp;:</entry>
 <entry> destination stream
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-writev">g_mime_stream_writev ()</title>
-<programlisting><link linkend="size-t">size_t</link>      g_mime_stream_writev            (<link linkend="GMimeStream">GMimeStream</link> *stream,
+<programlisting><link linkend="ssize-t">ssize_t</link>     g_mime_stream_writev            (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="IOVector">IOVector</link> *vector,
                                              <link linkend="size-t">size_t</link> count);</programlisting>
 <para>
 Writes at most <parameter>count</parameter> blocks described by <parameter>vector</parameter> to <parameter>stream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -547,7 +530,7 @@ Writes at most <parameter>count</parameter> blocks described by <parameter>vecto
 <row><entry align="right"><parameter>count</parameter>&nbsp;:</entry>
 <entry> number of vector elements
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes written or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

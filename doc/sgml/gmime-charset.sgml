@@ -52,7 +52,7 @@ iso-8859-1 locales.</para>
 Gets the user's locale charset (or iso-8859-1 by default).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -67,7 +67,7 @@ Gets the user's locale charset (or iso-8859-1 by default).</para>
 Attempts to find an iconv-friendly charset name for <parameter>charset</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -86,7 +86,7 @@ Attempts to find an iconv-friendly charset name for <parameter>charset</paramete
 Computes the best charset to use to encode this text buffer.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

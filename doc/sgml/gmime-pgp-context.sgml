@@ -58,7 +58,7 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
 </programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -75,7 +75,7 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
 </programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -92,7 +92,7 @@ enum        <link linkend="GMimePgpType">GMimePgpType</link>;
                                              <link linkend="gpointer">gpointer</link> user_data);</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -132,7 +132,7 @@ This creates a new GMimePgpContext object which is used to sign,
 verify, encrypt and decrypt streams.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -157,7 +157,7 @@ verify, encrypt and decrypt streams.</para>
 <programlisting>#define     g_mime_pgp_sign(c, u, h, i, o, e)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -188,7 +188,7 @@ verify, encrypt and decrypt streams.</para>
 <programlisting>#define     g_mime_pgp_clearsign(c, u, h, i, o, e)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -219,7 +219,7 @@ verify, encrypt and decrypt streams.</para>
 <programlisting>#define     g_mime_pgp_verify(c, i, s, e)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -244,7 +244,7 @@ verify, encrypt and decrypt streams.</para>
 <programlisting>#define     g_mime_pgp_encrypt(c, s, u, r, i, o, e)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -278,7 +278,7 @@ verify, encrypt and decrypt streams.</para>
 <programlisting>#define     g_mime_pgp_decrypt(c, i, o, e)</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

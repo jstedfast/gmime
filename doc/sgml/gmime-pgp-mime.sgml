@@ -59,7 +59,7 @@ Examines the part to decide whether or not it is an rfc2015 signed
 part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -80,7 +80,7 @@ Examines the part to decide whether or not it is an rfc2015
 encrypted part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -105,7 +105,7 @@ replaces <parameter>mime_part</parameter> with the generated multipart/signed. O
 failure, <parameter>ex</parameter> will be set and <link linkend="part">part</link> will remain untouched.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -136,7 +136,7 @@ failure, <parameter>ex</parameter> will be set and <link linkend="part">part</li
 Attempts to verify the signature of the multipart/signed mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -165,7 +165,7 @@ replaces <parameter>mime_part</parameter> with the generated multipart/signed. O
 <parameter>ex</parameter> will be set and <parameter>mime_part</parameter> will remain untouched.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -192,7 +192,7 @@ replaces <parameter>mime_part</parameter> with the generated multipart/signed. O
 Attempts to decrypt the multipart/encrypted mime part.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
