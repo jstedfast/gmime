@@ -3,6 +3,14 @@ the GMime library. This list of tasks in no way indicates priority,
 that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
+
+- Fix multipart/signed support so that verifying signatures will feed
+the complete signed-part in raw format (ie, without reformatting
+Content-* headers) to gpg. Currently I only feed the raw content of
+the signed part to gpg but the headers have been processed by GMime
+and so *may* be folded differently from the original Content-*
+headers.
+
 - make thread-safe. some stuff already is, like the gmime-iconv code
 and some of the other charset stuff. Streams, however, are not.
 
@@ -20,7 +28,8 @@ and some of the other charset stuff. Streams, however, are not.
 <fejj> I was pondering how I could possibly parse that as a name :)
 <charles> No, I am asking about parsing
 <fejj> oh
-<charles> It would be nice for internet_address_parse_string() to return an InternetAddress with a name of "Joe Bob" and a NULL addr
+<charles> It would be nice for internet_address_parse_string() to return an 
+InternetAddress with a name of "Joe Bob" and a NULL addr
 <fejj> ah, okay
 <fejj> I guess I can do that
 <fejj> I'll have to modify my internet_address_to_string code to handle that too

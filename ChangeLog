@@ -1,3 +1,8 @@
+2002-12-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-message.c (g_mime_message_get_body): Reworked the
+	logic a bit to properly handle multipart/alternative.
+
 2002-12-10  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 1.90.7
