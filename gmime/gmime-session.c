@@ -90,8 +90,6 @@ g_mime_session_init (GMimeSession *session, GMimeSessionClass *klass)
 static void
 g_mime_session_finalize (GObject *object)
 {
-	GMimeSession *session = (GMimeSession *) object;
-	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 

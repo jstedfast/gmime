@@ -33,6 +33,7 @@
 #include "gmime-iconv-utils.h"
 
 
+#if 0
 static char *charsets[] = {
 	"iso-8859-1",
 	"iso-8859-2",
@@ -61,6 +62,7 @@ static char *charsets[] = {
 };
 
 static int num_charsets = sizeof (charsets) / sizeof (charsets[0]);
+#endif
 
 
 #if 0

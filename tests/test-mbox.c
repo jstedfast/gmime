@@ -25,7 +25,6 @@ void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
-	GMimeObject *object;
 	
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
@@ -50,7 +49,7 @@ print_mime_struct (GMimeObject *part, int depth)
 static void
 header_cb (GMimeParser *parser, const char *header, const char *value, off_t offset, gpointer user_data)
 {
-	fprintf (stderr, "found \"%s:\" header at %d with a value of \"%s\"\n", header, offset, value);
+	fprintf (stderr, "found \"%s:\" header at %ld with a value of \"%s\"\n", header, offset, value);
 }
 
 void
@@ -86,7 +85,7 @@ test_parser (GMimeStream *stream)
 int main (int argc, char **argv)
 {
 	char *filename = NULL;
-	GMimeStream *stream, *istream;
+	GMimeStream *stream;
 	int fd;
 	
 	g_mime_init (0);

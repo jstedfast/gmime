@@ -156,7 +156,7 @@ rfc2184_decode (const char *in, size_t len)
 			
 			if (!udecoded) {
 				d(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
-					     "corrupt: %s", len, decoded, g_strerror (errno)));
+					     "corrupt: %s", (int)len, decoded, g_strerror (errno)));
 			}
 			
 			decoded = udecoded;

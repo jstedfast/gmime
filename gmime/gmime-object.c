@@ -25,6 +25,7 @@
 #include <config.h>
 #endif
 
+#include <ctype.h>
 #include <string.h>
 
 #include "gmime-object.h"

@@ -43,7 +43,6 @@ void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
-	GMimeObject *object;
 	
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);

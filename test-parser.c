@@ -30,7 +30,6 @@ void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
-	GMimeObject *object;
 	
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
@@ -133,7 +132,7 @@ test_parser (GMimeStream *stream)
 int main (int argc, char **argv)
 {
 	char *filename = NULL;
-	GMimeStream *stream, *istream;
+	GMimeStream *stream;
 	int fd;
 	
 	g_mime_init (0);

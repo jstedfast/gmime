@@ -125,8 +125,6 @@ static void
 filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
-	char *outptr;
-	
 	if (len)
 		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
 }

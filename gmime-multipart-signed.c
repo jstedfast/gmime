@@ -411,7 +411,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	valid = g_mime_cipher_verify (ctx, hash, stream, sigstream, ex);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
-		  GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
+		  (int)GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
 	g_mime_stream_unref (sigstream);
 	g_mime_stream_unref (stream);

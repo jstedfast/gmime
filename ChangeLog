@@ -1,3 +1,16 @@
+2002-07-29  Charles Kerr  <charles@rebelbase.com>
+
+	* gmime-filter-strip: fix trivial compiler warning.
+	* gmime-message-part.c: same.
+	* gmime-multipart-signed.c: same.
+	* gmime-object.c: same.
+	* gmime-param.c: same.
+	* gmime-session.c: same.
+	* test-iconv.c: same.
+	* test-mbox.c: same.
+	* test-parser.c: same.
+	* test-partial.c: same.
+
 2002-07-29  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_step_headers): When refilling, make sure
