@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-FILTER-FROM"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1943"
+NAME="AEN1923"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN1943"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1946"
+NAME="AEN1926"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,6 +146,10 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
+struct      <A
+HREF="gmime-gmime-filter-from.html#GMIMEFILTERFROM"
+>GMimeFilterFrom</A
+>;
 enum        <A
 HREF="gmime-gmime-filter-from.html#GMIMEFILTERFROMMODE"
 >GMimeFilterFromMode</A
@@ -159,7 +163,8 @@ HREF="gmime-gmime-filter-from.html#G-MIME-FILTER-FROM-NEW"
 >         (<A
 HREF="gmime-gmime-filter-from.html#GMIMEFILTERFROMMODE"
 >GMimeFilterFromMode</A
-> mode);</PRE
+> mode);
+&#13;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -167,7 +172,7 @@ HREF="gmime-gmime-filter-from.html#GMIMEFILTERFROMMODE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1953"
+NAME="AEN1934"
 ></A
 ><H2
 >Description</H2
@@ -177,14 +182,45 @@ NAME="AEN1953"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1956"
+NAME="AEN1937"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1958"
+NAME="AEN1939"
+></A
+><H3
+><A
+NAME="GMIMEFILTERFROM"
+></A
+>struct GMimeFilterFrom</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>struct GMimeFilterFrom {
+	GMimeFilter parent_object;
+	
+	GMimeFilterFromMode mode;
+	gboolean midline;
+};</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1944"
 ></A
 ><H3
 ><A
@@ -214,7 +250,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1963"
+NAME="AEN1949"
 ></A
 ><H3
 ><A
@@ -263,9 +299,9 @@ HREF="GMIME-FILTER-FROM-MODE-ESCAPE-CAPS"
 will be escaped to "&gt;From ".</P
 ><P
 >Note: If you plan on using a from-filter in mode ARMOR, you should
-remember to also use a <GTKDOCLINK
-HREF="GMIMEFILTERBASIC"
->GMimeFilterBasic</GTKDOCLINK
+remember to also use a <A
+HREF="gmime-gmime-filter-basic.html#GMIMEFILTERBASIC"
+>GMimeFilterBasic</A
 > filter with mode
 <GTKDOCLINK
 HREF="GMIME-FILTER-BASIC-QP-ENC-CAPS"
@@ -276,7 +312,7 @@ HREF="GMIME-FILTER-BASIC-QP-ENC-CAPS"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1978"
+NAME="AEN1964"
 ></A
 ><P
 ></P

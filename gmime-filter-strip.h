@@ -52,7 +52,7 @@ struct _GMimeFilterStripClass {
 };
 
 
-GType g_mime_filter_strip_get_class (void);
+GType g_mime_filter_strip_get_type (void);
 
 GMimeFilter *g_mime_filter_strip_new (void);
 

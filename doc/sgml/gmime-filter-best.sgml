@@ -14,12 +14,15 @@
 
 
 
+struct      <link linkend="GMimeFilterBest">GMimeFilterBest</link>;
 enum        <link linkend="GMimeBestEncoding">GMimeBestEncoding</link>;
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-best-new">g_mime_filter_best_new</link>         (unsigned int flags);
 const char* <link linkend="g-mime-filter-best-charset">g_mime_filter_best_charset</link>      (<link linkend="GMimeFilterBest">GMimeFilterBest</link> *best);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-filter-best-encoding">g_mime_filter_best_encoding</link>
                                             (<link linkend="GMimeFilterBest">GMimeFilterBest</link> *best,
                                              <link linkend="GMimeBestEncoding">GMimeBestEncoding</link> required);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -36,6 +39,35 @@ const char* <link linkend="g-mime-filter-best-charset">g_mime_filter_best_charse
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterBest">struct GMimeFilterBest</title>
+<programlisting>struct GMimeFilterBest {
+	GMimeFilter parent_object;
+	
+	unsigned int flags;
+	
+	/* for best charset detection */
+	GMimeCharset charset;
+	
+	/* for best encoding detection */
+	unsigned int count0;      /* count of null bytes */
+	unsigned int count8;      /* count of 8bit bytes */
+	unsigned int total;       /* total octets */
+	
+	unsigned int maxline;     /* longest line length */
+	unsigned int linelen;     /* current line length */
+	
+	unsigned char frombuf[6];
+	unsigned int fromlen : 4;
+	unsigned int hadfrom : 1;
+	
+	unsigned int startline : 1;
+	unsigned int midline : 1;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="GMimeBestEncoding">enum GMimeBestEncoding</title>
 <programlisting>typedef enum {

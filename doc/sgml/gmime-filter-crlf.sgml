@@ -14,10 +14,13 @@
 
 
 
+struct      <link linkend="GMimeFilterCRLF">GMimeFilterCRLF</link>;
 enum        <link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link>;
 enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-crlf-new">g_mime_filter_crlf_new</link>         (<link linkend="GMimeFilterCRLFDirection">GMimeFilterCRLFDirection</link> direction,
                                              <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link> mode);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -34,6 +37,21 @@ enum        <link linkend="GMimeFilterCRLFMode">GMimeFilterCRLFMode</link>;
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterCRLF">struct GMimeFilterCRLF</title>
+<programlisting>struct GMimeFilterCRLF {
+	GMimeFilter parent_object;
+	
+	GMimeFilterCRLFDirection direction;
+	GMimeFilterCRLFMode mode;
+	gboolean saw_cr;
+	gboolean saw_lf;
+	gboolean saw_dot;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="GMimeFilterCRLFDirection">enum GMimeFilterCRLFDirection</title>
 <programlisting>typedef enum {

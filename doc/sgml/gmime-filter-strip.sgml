@@ -14,7 +14,10 @@
 
 
 
+struct      <link linkend="GMimeFilterStrip">GMimeFilterStrip</link>;
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-strip-new">g_mime_filter_strip_new</link>        (void);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -31,6 +34,16 @@
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterStrip">struct GMimeFilterStrip</title>
+<programlisting>struct GMimeFilterStrip {
+	GMimeFilter parent_object;
+	
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-strip-new">g_mime_filter_strip_new ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_strip_new        (void);</programlisting>

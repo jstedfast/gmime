@@ -34,6 +34,7 @@
                                              int *state,
                                              <link linkend="guint32">guint32</link> *pcrc,
                                              <link linkend="guint32">guint32</link> *crc);
+struct      <link linkend="GMimeFilterYenc">GMimeFilterYenc</link>;
 enum        <link linkend="GMimeFilterYencDirection">GMimeFilterYencDirection</link>;
 #define     <link linkend="GMIME-YENCODE-STATE-INIT-CAPS">GMIME_YENCODE_STATE_INIT</link>
 #define     <link linkend="GMIME-YDECODE-STATE-INIT-CAPS">GMIME_YDECODE_STATE_INIT</link>
@@ -50,6 +51,8 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
                                              <link linkend="guint32">guint32</link> crc);
 <link linkend="guint32">guint32</link>     <link linkend="g-mime-filter-yenc-get-crc">g_mime_filter_yenc_get_crc</link>      (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc);
 <link linkend="guint32">guint32</link>     <link linkend="g-mime-filter-yenc-get-pcrc">g_mime_filter_yenc_get_pcrc</link>     (<link linkend="GMimeFilterYenc">GMimeFilterYenc</link> *yenc);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -231,6 +234,23 @@ all the parts.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="GMimeFilterYenc">struct GMimeFilterYenc</title>
+<programlisting>struct GMimeFilterYenc {
+	GMimeFilter parent_object;
+	
+	GMimeFilterYencDirection direction;
+	
+	int part;
+	
+	int state;
+	guint32 pcrc;
+	guint32 crc;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="GMimeFilterYencDirection">enum GMimeFilterYencDirection</title>
 <programlisting>typedef enum {

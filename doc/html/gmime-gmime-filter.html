@@ -150,24 +150,6 @@ struct      <A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
 >;
-void        <A
-HREF="gmime-gmime-filter.html#G-MIME-FILTER-CONSTRUCT"
->g_mime_filter_construct</A
->         (<A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter,
-                                             <A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter_template);
-void        <A
-HREF="gmime-gmime-filter.html#G-MIME-FILTER-DESTROY"
->g_mime_filter_destroy</A
->           (<A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter);
 <A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
@@ -261,7 +243,8 @@ HREF="SIZE-T"
                                              <GTKDOCLINK
 HREF="GBOOLEAN"
 >gboolean</GTKDOCLINK
-> keep);&#13;</PRE
+> keep);
+&#13;</PRE
 ></TD
 ></TR
 ></TABLE
@@ -269,7 +252,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1455"
+NAME="AEN1450"
 ></A
 ><H2
 >Description</H2
@@ -279,14 +262,14 @@ NAME="AEN1455"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1458"
+NAME="AEN1453"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1460"
+NAME="AEN1455"
 ></A
 ><H3
 ><A
@@ -303,6 +286,8 @@ CELLPADDING="6"
 ><PRE
 CLASS="PROGRAMLISTING"
 >struct GMimeFilter {
+	GObject parent_object;
+	
 	struct _GMimeFilterPrivate *priv;
 	
 	char *outreal;		/* real malloc'd buffer */
@@ -314,21 +299,6 @@ CLASS="PROGRAMLISTING"
 	char *backbuf;
 	size_t backsize;
 	size_t backlen;		/* significant data there */
-	
-	/* virtual functions */
-	void (*destroy)  (GMimeFilter *filter);
-	
-	GMimeFilter *(*copy) (GMimeFilter *filter);
-	
-	void (*filter)   (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
-	
-	void (*complete) (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
-	
-	void (*reset)    (GMimeFilter *filter);
 };</PRE
 ></TD
 ></TR
@@ -339,174 +309,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1465"
-></A
-><H3
-><A
-NAME="G-MIME-FILTER-CONSTRUCT"
-></A
->g_mime_filter_construct ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_filter_construct         (<A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter,
-                                             <A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter_template);</PRE
-></TD
-></TR
-></TABLE
-><P
->Initializes a filter object using the virtual methods in <TT
-CLASS="PARAMETER"
-><I
->filter_template</I
-></TT
->.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1474"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->filter</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> filter</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->filter_template</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> filter template</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1487"
-></A
-><H3
-><A
-NAME="G-MIME-FILTER-DESTROY"
-></A
->g_mime_filter_destroy ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
->void        g_mime_filter_destroy           (<A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
-> *filter);</PRE
-></TD
-></TR
-></TABLE
-><P
->Destroys <TT
-CLASS="PARAMETER"
-><I
->filter</I
-></TT
-> and releases the memory to the system.</P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1495"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->filter</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> filter</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1504"
+NAME="AEN1460"
 ></A
 ><H3
 ><A
@@ -544,7 +347,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1513"
+NAME="AEN1469"
 ></A
 ><P
 ></P
@@ -602,7 +405,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1527"
+NAME="AEN1483"
 ></A
 ><H3
 ><A
@@ -655,7 +458,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1539"
+NAME="AEN1495"
 ></A
 ><P
 ></P
@@ -795,7 +598,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1572"
+NAME="AEN1528"
 ></A
 ><H3
 ><A
@@ -843,7 +646,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1583"
+NAME="AEN1539"
 ></A
 ><P
 ></P
@@ -983,7 +786,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1616"
+NAME="AEN1572"
 ></A
 ><H3
 ><A
@@ -1013,7 +816,7 @@ HREF="gmime-gmime-filter.html#GMIMEFILTER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1623"
+NAME="AEN1579"
 ></A
 ><P
 ></P
@@ -1051,7 +854,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1632"
+NAME="AEN1588"
 ></A
 ><H3
 ><A
@@ -1087,7 +890,7 @@ previous ones</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1640"
+NAME="AEN1596"
 ></A
 ><P
 ></P
@@ -1159,7 +962,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1657"
+NAME="AEN1613"
 ></A
 ><H3
 ><A
@@ -1197,7 +1000,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1666"
+NAME="AEN1622"
 ></A
 ><P
 ></P

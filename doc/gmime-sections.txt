@@ -221,8 +221,6 @@ GMIME_STREAM_FILTER_GET_CLASS
 <SECTION>
 <FILE>gmime-filter</FILE>
 GMimeFilter
-g_mime_filter_construct
-g_mime_filter_destroy
 g_mime_filter_copy
 g_mime_filter_filter
 g_mime_filter_complete
@@ -230,44 +228,119 @@ g_mime_filter_reset
 g_mime_filter_backup
 g_mime_filter_set_size
 
+<SUBSECTION Private>
+g_mime_filter_get_type
+
 <SUBSECTION Standard>
+GMimeFilterClass
+GMIME_TYPE_FILTER
 GMIME_FILTER
+GMIME_IS_FILTER
+GMIME_FILTER_CLASS
+GMIME_IS_FILTER_CLASS
+GMIME_FILTER_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-basic</FILE>
+GMimeFilterBasic
 GMimeFilterBasicType
 g_mime_filter_basic_new_type
+
+<SUBSECTION Private>
+g_mime_filter_basic_get_type
+
+<SUBSECTION Standard>
+GMimeFilterBasicClass
+GMIME_TYPE_FILTER_BASIC
+GMIME_FILTER_BASIC
+GMIME_IS_FILTER_BASIC
+GMIME_FILTER_BASIC_CLASS
+GMIME_IS_FILTER_BASIC_CLASS
+GMIME_FILTER_BASIC_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-best</FILE>
+GMimeFilterBest
 GMimeBestEncoding
 g_mime_filter_best_new
 g_mime_filter_best_charset
 g_mime_filter_best_encoding
+
+<SUBSECTION Private>
+g_mime_filter_best_get_type
+
+<SUBSECTION Standard>
+GMimeFilterBestClass
+GMIME_TYPE_FILTER_BEST
+GMIME_FILTER_BEST
+GMIME_IS_FILTER_BEST
+GMIME_FILTER_BEST_CLASS
+GMIME_IS_FILTER_BEST_CLASS
+GMIME_FILTER_BEST_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-charset</FILE>
+GMimeFilterCharset
 g_mime_filter_charset_new
+
+<SUBSECTION Private>
+g_mime_filter_charset_get_type
+
+<SUBSECTION Standard>
+GMimeFilterCharsetClass
+GMIME_TYPE_FILTER_CHARSET
+GMIME_FILTER_CHARSET
+GMIME_IS_FILTER_CHARSET
+GMIME_FILTER_CHARSET_CLASS
+GMIME_IS_FILTER_CHARSET_CLASS
+GMIME_FILTER_CHARSET_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-crlf</FILE>
+GMimeFilterCRLF
 GMimeFilterCRLFDirection
 GMimeFilterCRLFMode
 g_mime_filter_crlf_new
+
+<SUBSECTION Private>
+g_mime_filter_crlf_get_type
+
+<SUBSECTION Standard>
+GMimeFilterCRLFClass
+GMIME_TYPE_FILTER_CRLF
+GMIME_FILTER_CRLF
+GMIME_IS_FILTER_CRLF
+GMIME_FILTER_CRLF_CLASS
+GMIME_IS_FILTER_CRLF_CLASS
+GMIME_FILTER_CRLF_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-from</FILE>
+GMimeFilterFrom
 GMimeFilterFromMode
 g_mime_filter_from_new
+
+<SUBSECTION Private>
+g_mime_filter_from_get_type
+
+<SUBSECTION Standard>
+GMimeFilterFromClass
+GMIME_TYPE_FILTER_FROM
+GMIME_FILTER_FROM
+GMIME_IS_FILTER_FROM
+GMIME_FILTER_FROM_CLASS
+GMIME_IS_FILTER_FROM_CLASS
+GMIME_FILTER_FROM_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-html</FILE>
+GMimeFilterHTML
 GMIME_FILTER_HTML_PRE
 GMIME_FILTER_HTML_CONVERT_NL
 GMIME_FILTER_HTML_CONVERT_SPACES
@@ -277,12 +350,36 @@ GMIME_FILTER_HTML_CONVERT_ADDRESSES
 GMIME_FILTER_HTML_ESCAPE_8BIT
 GMIME_FILTER_HTML_CITE
 g_mime_filter_html_new
+
+<SUBSECTION Private>
+g_mime_filter_html_get_type
+
+<SUBSECTION Standard>
+GMimeFilterHTMLClass
+GMIME_TYPE_FILTER_HTML
+GMIME_FILTER_HTML
+GMIME_IS_FILTER_HTML
+GMIME_FILTER_HTML_CLASS
+GMIME_IS_FILTER_HTML_CLASS
+GMIME_FILTER_HTML_GET_CLASS
 </SECTION>
 
 <SECTION>
 <FILE>gmime-filter-strip</FILE>
 GMimeFilterStrip
 g_mime_filter_strip_new
+
+<SUBSECTION Private>
+g_mime_filter_strip_get_type
+
+<SUBSECTION Standard>
+GMimeFilterStripClass
+GMIME_TYPE_FILTER_STRIP
+GMIME_FILTER_STRIP
+GMIME_IS_FILTER_STRIP
+GMIME_FILTER_STRIP_CLASS
+GMIME_IS_FILTER_STRIP_CLASS
+GMIME_FILTER_STRIP_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -292,6 +389,7 @@ GMIME_YENCODE_CRC_FINAL
 g_mime_ydecode_step
 g_mime_yencode_step
 g_mime_yencode_close
+GMimeFilterYenc
 GMimeFilterYencDirection
 GMIME_YENCODE_STATE_INIT
 GMIME_YDECODE_STATE_INIT
@@ -307,6 +405,18 @@ g_mime_filter_yenc_get_part
 g_mime_filter_yenc_set_crc
 g_mime_filter_yenc_get_crc
 g_mime_filter_yenc_get_pcrc
+
+<SUBSECTION Private>
+g_mime_filter_yenc_get_type
+
+<SUBSECTION Standard>
+GMimeFilterYencClass
+GMIME_TYPE_FILTER_YENC
+GMIME_FILTER_YENC
+GMIME_IS_FILTER_YENC
+GMIME_FILTER_YENC_CLASS
+GMIME_IS_FILTER_YENC_CLASS
+GMIME_FILTER_YENC_GET_CLASS
 </SECTION>
 
 <SECTION>

@@ -14,8 +14,11 @@
 
 
 
+struct      <link linkend="GMimeFilterBasic">GMimeFilterBasic</link>;
 enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-basic-new-type">g_mime_filter_basic_new_type</link>   (<link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link> type);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -32,6 +35,21 @@ enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterBasic">struct GMimeFilterBasic</title>
+<programlisting>struct GMimeFilterBasic {
+	GMimeFilter parent_object;
+	
+	GMimeFilterBasicType type;
+	
+	unsigned char uubuf[60];
+	int state;
+	int save;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="GMimeFilterBasicType">enum GMimeFilterBasicType</title>
 <programlisting>typedef enum {

@@ -15,9 +15,6 @@
 
 
 struct      <link linkend="GMimeFilter">GMimeFilter</link>;
-void        <link linkend="g-mime-filter-construct">g_mime_filter_construct</link>         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
-                                             <link linkend="GMimeFilter">GMimeFilter</link> *filter_template);
-void        <link linkend="g-mime-filter-destroy">g_mime_filter_destroy</link>           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-copy">g_mime_filter_copy</link>             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
 void        <link linkend="g-mime-filter-filter">g_mime_filter_filter</link>            (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              char *in,
@@ -41,6 +38,7 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
                                              <link linkend="size-t">size_t</link> size,
                                              <link linkend="gboolean">gboolean</link> keep);
 
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -60,6 +58,8 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 <refsect2>
 <title><anchor id="GMimeFilter">struct GMimeFilter</title>
 <programlisting>struct GMimeFilter {
+	GObject parent_object;
+	
 	struct _GMimeFilterPrivate *priv;
 	
 	char *outreal;		/* real malloc'd buffer */
@@ -71,62 +71,11 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 	char *backbuf;
 	size_t backsize;
 	size_t backlen;		/* significant data there */
-	
-	/* virtual functions */
-	void (*destroy)  (GMimeFilter *filter);
-	
-	GMimeFilter *(*copy) (GMimeFilter *filter);
-	
-	void (*filter)   (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
-	
-	void (*complete) (GMimeFilter *filter,
-			  char *in, size_t len, size_t prespace,
-			  char **out, size_t *outlen, size_t *outprespace);
-	
-	void (*reset)    (GMimeFilter *filter);
 };
 </programlisting>
 <para>
 
 </para></refsect2>
-<refsect2>
-<title><anchor id="g-mime-filter-construct">g_mime_filter_construct ()</title>
-<programlisting>void        g_mime_filter_construct         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
-                                             <link linkend="GMimeFilter">GMimeFilter</link> *filter_template);</programlisting>
-<para>
-Initializes a filter object using the virtual methods in <parameter>filter_template</parameter>.</para>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
-<entry> filter
-</entry></row>
-<row><entry align="right"><parameter>filter_template</parameter>&nbsp;:</entry>
-<entry> filter template
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="g-mime-filter-destroy">g_mime_filter_destroy ()</title>
-<programlisting>void        g_mime_filter_destroy           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>
-<para>
-Destroys <parameter>filter</parameter> and releases the memory to the system.</para>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
-<entry> filter
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-copy">g_mime_filter_copy ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_copy             (<link linkend="GMimeFilter">GMimeFilter</link> *filter);</programlisting>

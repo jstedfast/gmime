@@ -14,8 +14,11 @@
 
 
 
+struct      <link linkend="GMimeFilterCharset">GMimeFilterCharset</link>;
 <link linkend="GMimeFilter">GMimeFilter</link>* <link linkend="g-mime-filter-charset-new">g_mime_filter_charset_new</link>      (const char *from_charset,
                                              const char *to_charset);
+
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -32,6 +35,19 @@
 
 <refsect1>
 <title>Details</title>
+<refsect2>
+<title><anchor id="GMimeFilterCharset">struct GMimeFilterCharset</title>
+<programlisting>struct GMimeFilterCharset {
+	GMimeFilter parent_object;
+	
+	char *from_charset;
+	char *to_charset;
+	iconv_t cd;
+};
+</programlisting>
+<para>
+
+</para></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-charset-new">g_mime_filter_charset_new ()</title>
 <programlisting><link linkend="GMimeFilter">GMimeFilter</link>* g_mime_filter_charset_new      (const char *from_charset,
