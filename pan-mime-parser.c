@@ -32,6 +32,9 @@
 #include "strlib.h"
 #include <ctype.h>
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
+
 #define d(x) x
 
 #ifndef HAVE_ISBLANK
@@ -135,11 +138,12 @@ enum {
 	FOUND_EOS,
 };
 
-static guint
+static size_t
 parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 			    const char *boundary, const char *end_boundary, int *found)
 {
-	guint offset, len, total = 0;
+	size_t boundary_len, end_boundary_len;
+	size_t offset, len, total = 0;
 	gboolean internal;
 	
 	*found = FOUND_EOS;
@@ -150,19 +154,24 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 	} else
 		internal = FALSE;
 	
+	ZenTimerStart ();
+	
+	boundary_len = strlen (boundary);
+	end_boundary_len = strlen (end_boundary);
+	
 	do {
 		offset = buffer->len;
 		g_mime_stream_buffer_readln (stream, buffer);
 		len = buffer->len - offset;
 		
-		if (boundary && len == strlen (boundary) &&
+		if (boundary && len == boundary_len &&
 		    !memcmp (buffer->data + offset, boundary, len)) {
 			g_byte_array_set_size (buffer, offset);
 			*found = FOUND_BOUNDARY;
 			break;
 		}
 		
-		if (end_boundary && len == strlen (end_boundary) &&
+		if (end_boundary && len == end_boundary_len &&
 		    !memcmp (buffer->data + offset, end_boundary, len)) {
 			g_byte_array_set_size (buffer, offset);
 			*found = FOUND_END_BOUNDARY;
@@ -175,6 +184,9 @@ parser_read_until_boundary (GMimeStream *stream, GByteArray *buffer,
 			g_byte_array_set_size (buffer, 0);
 		
 	} while (!g_mime_stream_eos (stream));
+	
+	ZenTimerStop ();
+	ZenTimerReport ("gmime::parser_read_until_boundary");
 	
 	if (internal)
 		g_byte_array_free (buffer, TRUE);
@@ -205,7 +217,7 @@ construct_content_headers (GMimePart *mime_part, GByteArray *headers, gboolean *
 	*end_boundary = NULL;
 	
 	while (inptr < inend) {
-		const gint type = content_header (inptr);
+		const int type = content_header (inptr);
 		const char *hvalptr;
 		const char *hvalend;
 		char *field, *value;

@@ -105,7 +105,7 @@ test_parser (GMimeStream *stream)
 int main (int argc, char *argv[])
 {
 	char *filename = NULL;
-	GMimeStream *stream;
+	GMimeStream *stream, *buffered;
 	int fd;
 	
 	if (argc > 1)
@@ -118,6 +118,13 @@ int main (int argc, char *argv[])
 		return 0;
 	
 	stream = g_mime_stream_fs_new (fd);
+	
+#define BUFFER_STREAM
+#ifdef BUFFER_STREAM
+	buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
+	g_mime_stream_unref (stream);
+	stream = buffered;
+#endif
 	
 	test_parser (stream);
 	

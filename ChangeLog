@@ -1,3 +1,10 @@
+2001-11-22  Jeffrey stedfast  <fejj@ximian.com>
+
+	* gmime-filter-from.[c,h]: New filter to escapre from-lines.
+
+	* pan-mime-parser.c (parser_read_until_boundary): Slight
+	optimization.
+
 2001-11-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (is_8bit_word_encoded): Make into a macro, we
