@@ -17,5 +17,15 @@ quotes (it is illegal to quote rfc2047 encoded atoms).
 - Write a broken date parser. (job for lex/bison?)
 
 
+FIXME's:
+
+- Parsing quoted strings needs to be smarter - need to check for
+escaped quotes and such.
+
+- InternetAddress needs to be smarter about quoting an address - what
+if the name component of the address has embedded quotes? They need to
+be escaped.
+
+
 All questions and comments should be directed toward the author,
 Jeffrey Stedfast <fejj@helixcode.com>

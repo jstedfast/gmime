@@ -1,3 +1,7 @@
+2000-11-09  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* TODO: Updated.
+
 2000-11-08  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-parser.c (construct_headers): Oops. Set the subject with
