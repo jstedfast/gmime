@@ -58,7 +58,7 @@ struct _GTrie {
 
 
 static __inline__ gunichar
-utf8_getc (const unsigned char **in, size_t inlen)
+trie_utf8_getc (const unsigned char **in, size_t inlen)
 {
 	register const unsigned char *inptr = *in;
 	const unsigned char *inend = inptr + inlen;
@@ -225,7 +225,7 @@ g_trie_add (GTrie *trie, const char *pattern)
 	
 	q = &trie->root;
 	
-	while ((c = utf8_getc (&inptr, -1))) {
+	while ((c = trie_utf8_getc (&inptr, -1))) {
 		if (trie->icase)
 			c = g_unichar_tolower (c);
 		
@@ -300,18 +300,18 @@ g_trie_add (GTrie *trie, const char *pattern)
 const char *
 g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **pattern)
 {
-	const unsigned char *inptr, *inend, *pat;
+	const unsigned char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
 	struct _trie_state *q;
 	struct _trie_match *m;
-	gunichar c, u;
+	gunichar c;
 	
 	inptr = (const unsigned char *) buffer;
 	inend = inptr + buflen;
 	
-	pat = inptr;
 	q = &trie->root;
-	while ((c = utf8_getc (&inptr, inlen))) {
+	pat = prev = inptr;
+	while ((c = trie_utf8_getc (&inptr, inlen))) {
 		inlen = (inend - inptr);
 		
 		if (trie->icase)
@@ -319,6 +319,9 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **patt
 		
 		while (q != NULL && (m = g (q, c)) == NULL)
 			q = q->fail;
+		
+		if (q == &trie->root)
+			pat = prev;
 		
 		if (q == NULL) {
 			q = &trie->root;
@@ -330,65 +333,14 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **patt
 				if (pattern)
 					*pattern = g_quark_to_string (q->quark);
 				
-				/* this segment is a hack... need to
-                                   figure out how to get by without
-                                   this */
-				buflen = strlen (*pattern);
-				if (trie->icase) {
-					while (strncasecmp (pat, *pattern, buflen))
-						pat++;
-				} else {
-					while (strncmp (pat, *pattern, buflen))
-						pat++;
-				}
-				
 				return (const char *) pat;
 			}
 		}
+		
+		prev = inptr;
 	}
 	
 	return NULL;
-}
-
-
-gboolean
-g_trie_matches (GTrie *trie, const char *buffer, size_t buflen, const char **pattern)
-{
-	const unsigned char *inptr, *inend;
-	register size_t inlen = buflen;
-	struct _trie_state *q;
-	struct _trie_match *m;
-	gunichar c;
-	
-	inptr = (const unsigned char *) buffer;
-	inend = inptr + buflen;
-	
-	q = &trie->root;
-	while ((c = utf8_getc (&inptr, inlen))) {
-		inlen = (inend - inptr);
-		
-		if (trie->icase)
-			c = g_unichar_tolower (c);
-		
-		while (q != NULL && (m = g (q, c)) == NULL)
-			q = q->fail;
-		
-		if (q == NULL) {
-			q = &trie->root;
-			break;
-		} else if (m != NULL) {
-			q = m->state;
-			
-			if (q->final) {
-				if (pattern)
-					*pattern = g_quark_to_string (q->quark);
-				
-				return TRUE;
-			}
-		}
-	}
-	
-	return FALSE;
 }
 
 

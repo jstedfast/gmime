@@ -1,5 +1,10 @@
 2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gtrie.c (g_trie_matches): Removed.
+	(g_trie_search): Fixed the FIXME.
+
+2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime-filter-html.c: Modified to use url-scanner.c instead
 	of using glibc's regex routines. This has improved performance by
 	~16.5x not to mention that it is also more accurate than the regex

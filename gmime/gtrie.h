@@ -40,8 +40,6 @@ void g_trie_add (GTrie *trie, const char *pattern);
 
 const char *g_trie_search (GTrie *trie, const char *buffer, size_t buflen, const char **pattern);
 
-gboolean g_trie_matches (GTrie *trie, const char *buffer, size_t buflen, const char **pattern);
-
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
