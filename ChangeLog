@@ -1,3 +1,9 @@
+2005-01-26  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/GMime.metdata: The gtk-sharp generator doesn't handle
+	"const unsigned char *" well, so override those methods in
+	metadata.
+
 2005-01-20  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-param.c (param_list_format): If folding mode is
