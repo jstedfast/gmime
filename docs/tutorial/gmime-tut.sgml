@@ -60,7 +60,7 @@ licenses or royalties.</para>
       </listitem>
     </itemizedlist>
     
-    <para>GMime is esentially an object-oriented application programmers
+    <para>GMime is essentially an object-oriented application programmers
 interface (API). Although written completely in C, it is implemented
 using the idea of classes and callback functions (pointers to
 functions).</para>
@@ -80,7 +80,7 @@ url="http://http://developer.gnome.org/doc/API/2.0/glib/index.html">http://devel
     
     <para>The first thing to do, of course, is download the GMime source
 and install it. You can always get the latest version from <ulink
-url="http://spruce.sourceforge.net/gmime/sources/">http://spruce.sourceforge.net/gmime/sources/building.sgml</ulink>. GMime
+url="http://spruce.sourceforge.net/gmime/sources/">http://spruce.sourceforge.net/gmime/sources</ulink>. GMime
 uses GNU autoconf for configuration. Once untar'd, type
 <literal>./configure --help</literal> to see a list of options.</para>
     
@@ -369,7 +369,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       
       <para>As you may or may not know, buffering reads and writes is
       a great way to improve I/O performance in applications. The time
-      it takes to do a lot of small reads and writes accululates
+      it takes to do a lot of small reads and writes accumulates
       fast.</para>
 
       <para>When using a GMimeStreamBuffer in
@@ -378,7 +378,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       buffer. Each time your application performs a read on this
       GMimeStreamBuffer stream, a chunk of that intermediate buffer
       will be copied to your read buffer until all 4K have been read,
-      at which point GMimeStremBuffer will pre-scan the next 4K and so
+      at which point GMimeStreamBuffer will pre-scan the next 4K and so
       on.</para>
       
       <para>Similarly, using mode
@@ -485,7 +485,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
 	g_object_unref (ostream);
       </programlisting>
       
-      <para>The above snippet of code will read the contents of input
+      <para>The above snippet of code will read the contents of the input
       stream (<literal>istream</literal>) and write it to our output
       stream (<literal>ostream</literal>), but only after it has
       passed through our filter-stream
@@ -519,7 +519,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       <para>If you are interested in converting between charsets for
       your users, you will likely want to become familiar with
       GMimeFilterCharset which provides a convenient way to convert
-      text of one charset into another charset.</para>
+      text streams of one charset into another charset.</para>
       
       <para>GMimeFilterCRLF will likely become very useful to you if
       you are implementing any internet standards or DOS/Unix
@@ -647,7 +647,7 @@ save_attachment (GMimePart *part)
       the content object to a stream, you can use
       <literal>g_mime_data_wrapper_write_to_stream()</literal>. On
       fail, this function will return <literal>-1</literal>, otherwise
-      it will return some positive value which will usually equate the
+      it will return some positive value which will usually equate to
       the number of bytes written (but not always); generally it's a
       good idea to not rely on the returned value for anything other
       than error-checking.</para>
