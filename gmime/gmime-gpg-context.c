@@ -41,7 +41,11 @@
 #include <ctype.h>
 
 #include "gmime-gpg-context.h"
+#include "gmime-filter-charset.h"
+#include "gmime-stream-filter.h"
+#include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
+#include "gmime-charset.h"
 #include "gmime-error.h"
 
 #define d(x) x
@@ -64,7 +68,7 @@ static int gpg_sign (GMimeCipherContext *ctx, const char *userid,
 static GMimeCipherValidity *gpg_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
 					GMimeStream *istream, GMimeStream *sigstream,
 					GError **err);
-	
+
 static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			const char *userid, GPtrArray *recipients,
 			GMimeStream *istream, GMimeStream *ostream,
@@ -243,7 +247,8 @@ struct _GpgCtx {
 	GMimeStream *istream;
 	GMimeStream *ostream;
 	
-	GByteArray *diagnostics;
+	GByteArray *diag;
+	GMimeStream *diagnostics;
 	
 	int exit_status;
 	
@@ -251,6 +256,7 @@ struct _GpgCtx {
 	unsigned int complete:1;
 	unsigned int seen_eof1:1;
 	unsigned int seen_eof2:1;
+	unsigned int flushed:1;      /* flushed the diagnostics stream (ie, what we read from stderr) */
 	unsigned int always_trust:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
@@ -261,13 +267,15 @@ struct _GpgCtx {
 	unsigned int validsig:1;
 	unsigned int trust:3;
 	
-	unsigned int padding:18;
+	unsigned int padding:17;
 };
 
 static struct _GpgCtx *
 gpg_ctx_new (GMimeSession *session, const char *path)
 {
 	struct _GpgCtx *gpg;
+	const char *charset;
+	GMimeStream *stream;
 	
 	gpg = g_new (struct _GpgCtx, 1);
 	gpg->mode = GPG_CTX_MODE_SIGN;
@@ -310,7 +318,24 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->istream = NULL;
 	gpg->ostream = NULL;
 	
-	gpg->diagnostics = g_byte_array_new ();
+	stream = g_mime_stream_mem_new ();
+	gpg->diag = GMIME_STREAM_MEM (stream)->buffer;
+	charset = g_mime_locale_charset ();
+	if (strcasecmp (charset, "UTF-8") != 0) {
+		GMimeStream *fstream;
+		GMimeFilter *filter;
+		
+		filter = g_mime_filter_charset_new (charset, "UTF-8");
+		fstream = g_mime_stream_filter_new_with_stream (stream);
+		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
+		g_mime_stream_unref (stream);
+		g_object_unref (filter);
+		
+		gpg->diagnostics = fstream;
+	} else {
+		/* system charset is UTF-8, shouldn't need any conversion */
+		gpg->diagnostics = stream;
+	}
 	
 	return gpg;
 }
@@ -384,10 +409,16 @@ gpg_ctx_set_ostream (struct _GpgCtx *gpg, GMimeStream *ostream)
 	gpg->ostream = ostream;
 }
 
-static char *
+static const char *
 gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 {
-	return g_strndup (gpg->diagnostics->data, gpg->diagnostics->len);
+	if (!gpg->flushed) {
+		g_mime_stream_flush (gpg->diagnostics);
+		g_byte_array_append (gpg->diag, "", 1);
+		gpg->flushed = TRUE;
+	}
+	
+	return gpg->diag->data;
 }
 
 static void
@@ -443,7 +474,7 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	if (gpg->ostream)
 		g_mime_stream_unref (gpg->ostream);
 	
-	g_byte_array_free (gpg->diagnostics, TRUE);
+	g_mime_stream_unref (gpg->diagnostics);
 	
 	g_free (gpg);
 }
@@ -726,6 +757,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	status += 9;
 	
 	if (!strncmp (status, "USERID_HINT ", 12)) {
+		size_t nread, nwritten;
 		char *hint, *user;
 		
 		status += 12;
@@ -742,7 +774,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			goto recycle;
 		}
 		
-		user = g_strdup (status);
+		if (!(user = g_locale_to_utf8 (status, -1, &nread, &nwritten, NULL)))
+			user = g_strdup (status);
+		
 		g_strstrip (user);
 		
 		g_hash_table_insert (gpg->userid_hint, hint, user);
@@ -804,9 +838,12 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		return -1;
 	} else if (!strncmp (status, "NODATA", 6)) {
 		/* this is an error */
-		if (gpg->diagnostics->len)
-			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL, "%.*s",
-				     gpg->diagnostics->len, gpg->diagnostics->data);
+		const char *diagnostics;
+		
+		diagnostics = gpg_ctx_get_diagnostics (gpg);
+		if (diagnostics && *diagnostics)
+			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL,
+				     diagnostics);
 		else
 			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_GENERAL,
 				     _("No data provided"));
@@ -916,10 +953,10 @@ static int
 gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 {
 	fd_set rdset, wrset, *wrsetp = NULL;
+	const char *diagnostics, *mode;
 	struct timeval timeout;
-	const char *mode;
+	int ready, save;
 	int maxfd = 0;
-	int ready;
 	
  retry:
 	FD_ZERO (&rdset);
@@ -1020,7 +1057,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 			goto exception;
 		
 		if (nread > 0) {
-			g_byte_array_append (gpg->diagnostics, buffer, nread);
+			g_mime_stream_write (gpg->diagnostics, buffer, nread);
 		} else {
 			gpg->seen_eof2 = TRUE;
 		}
@@ -1113,15 +1150,18 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		break;
 	}
 	
-	if (gpg->diagnostics->len) {
+	save = errno;
+	diagnostics = gpg_ctx_get_diagnostics (gpg);
+	errno = save;
+	
+	if (diagnostics && *diagnostics) {
 		g_set_error (err, GMIME_ERROR_QUARK, errno,
-			     _("Failed to GPG %s: %s\n\n%.*s"),
+			     _("Failed to %s via GnuPG: %s\n\n%s"),
 			     mode, g_strerror (errno),
-			     gpg->diagnostics->len,
-			     gpg->diagnostics->data);
+			     diagnostics);
 	} else {
 		g_set_error (err, GMIME_ERROR_QUARK, errno,
-			     _("Failed to GPG %s: %s\n"),
+			     _("Failed to %s vua GnuPG: %s\n"),
 			     mode, g_strerror (errno));
 	}
 	
@@ -1249,12 +1289,14 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		char *diagnostics;
+		const char *diagnostics;
+		int save;
 		
+		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
-		g_free (diagnostics);
+		errno = save;
 		
+		g_set_error (err, GMIME_ERROR_QUARK, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1305,7 +1347,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeCipherValidity *validity;
-	char *diagnostics = NULL;
+	const char *diagnostics;
 	struct _GpgCtx *gpg;
 	char *sigfile = NULL;
 	gboolean valid;
@@ -1333,26 +1375,22 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 		g_set_error (err, GMIME_ERROR_QUARK, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
-		gpg_ctx_free (gpg);
 		goto exception;
 	}
 	
-	while (!gpg_ctx_op_complete (gpg) && !gpg_ctx_op_exited (gpg)) {
+	while (!gpg_ctx_op_complete (gpg)) {
 		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
 			goto exception;
 		}
 	}
 	
-	diagnostics = gpg_ctx_get_diagnostics (gpg);
-	
 	valid = gpg_ctx_op_wait (gpg) == 0;
-	gpg_ctx_free (gpg);
-	
 	validity = g_mime_cipher_validity_new ();
+	diagnostics = gpg_ctx_get_diagnostics (gpg);
 	g_mime_cipher_validity_set_valid (validity, valid);
 	g_mime_cipher_validity_set_description (validity, diagnostics);
-	g_free (diagnostics);
+	gpg_ctx_free (gpg);
 	
 	if (sigfile) {
 		unlink (sigfile);
@@ -1362,8 +1400,6 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	return validity;
 	
  exception:
-	
-	diagnostics = gpg_ctx_get_diagnostics (gpg);
 	
 	gpg_ctx_free (gpg);
 	
@@ -1416,12 +1452,14 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		char *diagnostics;
+		const char *diagnostics;
+		int save;
 		
+		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
-		g_free (diagnostics);
+		errno = save;
 		
+		g_set_error (err, GMIME_ERROR_QUARK, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1464,12 +1502,14 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		char *diagnostics;
+		const char *diagnostics;
+		int save;
 		
+		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
-		g_free (diagnostics);
+		errno = save;
 		
+		g_set_error (err, GMIME_ERROR_QUARK, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1509,12 +1549,14 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		char *diagnostics;
+		const char *diagnostics;
+		int save;
 		
+		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
-		g_free (diagnostics);
+		errno = save;
 		
+		g_set_error (err, GMIME_ERROR_QUARK, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1560,12 +1602,14 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		char *diagnostics;
+		const char *diagnostics;
+		int save;
 		
+		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
-		g_set_error (err, GMIME_ERROR_QUARK, errno, "%s", diagnostics);
-		g_free (diagnostics);
+		errno = save;
 		
+		g_set_error (err, GMIME_ERROR_QUARK, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
