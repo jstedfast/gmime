@@ -106,7 +106,7 @@ void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const 
 const gchar *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const gchar *name);
 
 void g_mime_part_set_filename (GMimePart *mime_part, const gchar *filename);
-const gchar *g_mime_part_get_filename (GMimePart *mime_part);
+const gchar *g_mime_part_get_filename (const GMimePart *mime_part);
 
 void g_mime_part_set_boundary (GMimePart *mime_part, const gchar *boundary);
 const gchar *g_mime_part_get_boundary (GMimePart *mime_part);

@@ -597,7 +597,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const gchar *filename)
  * and if not then checks the "name" parameter in the Content-Type.
  **/
 const gchar *
-g_mime_part_get_filename (GMimePart *mime_part)
+g_mime_part_get_filename (const GMimePart *mime_part)
 {
 	GMimeParam *param;
 	
