@@ -1,3 +1,11 @@
+2002-04-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-charset.c (main): Instead of converting the multibyte
+	charset tables to UTF-8 and then using the unicode functions to
+	convert UTF-8 to UCS4, just convert directly to UCS4. Also fixed a
+	type-o in the Big5.dat filename (it should be Big5.dat not
+	Big5.data).
+
 2002-04-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-utils.c (g_mime_utils_base64_decode_step): Only backtrack
