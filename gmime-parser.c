@@ -29,18 +29,22 @@
 #define d(x)
 
 enum {
-	CONTENT_DESCRIPTION = 0,
-	CONTENT_TYPE,
+	CONTENT_TYPE = 0,
 	CONTENT_TRANSFER_ENCODING,
 	CONTENT_DISPOSITION,
+	CONTENT_DESCRIPTION,
+	CONTENT_LOCATION,
+	CONTENT_MD5,
 	CONTENT_ID
 };
 
 static gchar *content_headers[] = {
-	"Content-Description:",
 	"Content-Type:",
 	"Content-Transfer-Encoding:",
 	"Content-Disposition:",
+	"Content-Description:",
+	"Content-Location:",
+	"Content-Md5:",
 	"Content-Id:",
 	NULL
 };
@@ -74,7 +78,31 @@ content_header (const gchar *field)
 #ifndef HAVE_ISBLANK
 #define isblank(c) ((c) == ' ' || (c) == '\t')
 #endif /* HAVE_ISBLANK */
+
+static gchar *
+g_strstrbound (gchar *haystack, const gchar *needle, const gchar *end)
+{
+	gboolean matches = FALSE;
+	gchar *ptr;
+	guint nlen;
 	
+	nlen = strlen (needle);
+	ptr = haystack;
+	
+	while (ptr + nlen <= end) {
+		if (!strncmp (ptr, needle, nlen)) {
+			matches = TRUE;
+			break;
+		}
+		ptr++;
+	}
+	
+	if (matches)
+		return ptr;
+	else
+		return NULL;
+}
+
 /* we pass the length here so that we can avoid dup'ing in the caller
    as mime parts can be BIG (tm) */
 /**
@@ -103,7 +131,8 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 	/* parse out the headers */
 	while (inptr < inend) {
 		GMimeContentType *mime_type;
-		gchar *desc, *type, *encoding, *disp, *disposition, *id;
+		gchar *desc, *type, *encoding, *location;
+		gchar *disp, *disposition, *id, *md5;
 		gchar *ptr, *eptr, *text;
 		
 		eptr = strchr (inptr, '\n');
@@ -124,6 +153,34 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 			
 			g_mime_part_set_content_description (mime_part, desc);
 			g_free (desc);
+			
+			inptr = eptr;
+			break;
+		case CONTENT_LOCATION:
+			location = inptr + strlen ("Content-location:");			
+			for (eptr = location; eptr < inend; eptr++)
+				if (*eptr == '\n' && !isblank (*(eptr + 1)))
+					break;
+			
+			location = g_strndup (location, (gint) (eptr - location));
+			g_strstrip (location);
+			
+			g_mime_part_set_content_location (mime_part, location);
+			g_free (location);
+			
+			inptr = eptr;
+			break;
+		case CONTENT_MD5:
+			md5 = inptr + strlen ("Content-Md5:");
+			for (eptr = md5; eptr < inend; eptr++)
+				if (*eptr == '\n' && !isblank (*(eptr + 1)))
+					break;
+			
+			md5 = g_strndup (md5, (gint) (eptr - md5));
+			g_strstrip (md5);
+			
+			g_mime_part_set_content_md5 (mime_part, md5);
+			g_free (md5);
 			
 			inptr = eptr;
 			break;
@@ -270,16 +327,19 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 		GMimePart *subpart;
 		gchar *part_begin, *part_end;
 		
-		part_begin = strstr (inptr, boundary);
+		part_begin = g_strstrbound (inptr, boundary, inend);
 		while (part_begin < inend) {
 			/* make sure we're not looking at the end boundary */
 			if (!strncmp (part_begin, end_boundary, strlen (end_boundary)))
 				break;
 			
 			/* find the end of this part */
-			part_end = strstr (part_begin + strlen (boundary), boundary);
-			if (!part_end || part_end >= inend)
-				part_end = inend;
+			part_end = g_strstrbound (part_begin + strlen (boundary), boundary, inend);
+			if (!part_end || part_end >= inend) {
+				part_end = g_strstrbound (part_begin + strlen (boundary), end_boundary, inend);
+				if (!part_end || part_end >= inend)
+					part_end = inend;
+			}
 			
 			/* get the subpart */
 			subpart = g_mime_parser_construct_part (part_begin, (guint) (part_end - part_begin));
@@ -302,6 +362,13 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 			for (inptr++; inptr < inend && isspace (*inptr); inptr++);
 			len = inend - inptr;
 			content = inptr;
+			
+			/* trim off excess trailing \n's */
+			inend = content + len;
+			while (len > 2 && *inend == '\n' && *(inend - 1) == '\n') {
+				inend--;
+				len--;
+			}
 		}
 		
 		encoding = g_mime_part_get_encoding (mime_part);

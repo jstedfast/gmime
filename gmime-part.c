@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include "gmime-part.h"
 #include "gmime-utils.h"
+#include "md5-utils.h"
 
 
 /**
@@ -82,8 +83,12 @@ g_mime_part_new_with_type (const gchar *type, const gchar *subtype)
 void
 g_mime_part_destroy (GMimePart *mime_part)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	g_free (mime_part->description);
 	g_free (mime_part->content_id);
+	g_free (mime_part->content_md5);
+	g_free (mime_part->content_location);
 	
 	if (mime_part->mime_type)
 		g_mime_content_type_destroy (mime_part->mime_type);
@@ -141,6 +146,8 @@ g_mime_part_destroy (GMimePart *mime_part)
 void
 g_mime_part_set_content_description (GMimePart *mime_part, const gchar *description)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	if (mime_part->description)
 		g_free (mime_part->description);
 	
@@ -155,8 +162,10 @@ g_mime_part_set_content_description (GMimePart *mime_part, const gchar *descript
  * Returns the content description for the specified mime part.
  **/
 const gchar *
-g_mime_part_get_content_description (GMimePart *mime_part)
+g_mime_part_get_content_description (const GMimePart *mime_part)
 {
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
 	return mime_part->description;
 }
 
@@ -171,6 +180,8 @@ g_mime_part_get_content_description (GMimePart *mime_part)
 void
 g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	if (mime_part->content_id)
 		g_free (mime_part->content_id);
 	
@@ -187,7 +198,110 @@ g_mime_part_set_content_id (GMimePart *mime_part, const gchar *content_id)
 const gchar *
 g_mime_part_get_content_id (GMimePart *mime_part)
 {
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
 	return mime_part->content_id;
+}
+
+
+static void
+make_md5_safe (GString *string)
+{
+	gchar *ptr;
+	
+	ptr = string->str;
+	while ((ptr = strchr (ptr, '\n'))) {
+		g_string_insert_c (string, (ptr - string->str), '\r');
+		ptr += 2;
+	}
+}
+
+
+/**
+ * g_mime_part_set_content_md5: Set the content md5
+ * @mime_part: Mime part
+ * @content_md5: content md5 or NULL to generate the md5 digest.
+ *
+ * Set the content md5 for the specified mime part.
+ **/
+void
+g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5)
+{
+	g_return_if_fail (mime_part != NULL);
+	
+	if (mime_part->content_md5)
+		g_free (mime_part->content_md5);
+	
+	if (content_md5) {
+		mime_part->content_md5 = g_strdup (content_md5);
+	} else if (mime_part->content && mime_part->content->len) {
+		char *str, digest[16], b64digest[32];
+		int len, state, save;
+		GString *string;
+		
+		str = g_strndup (mime_part->content->data, mime_part->content->len);
+		string = g_string_new (str);
+		g_free (str);
+		
+		make_md5_safe (string);
+		md5_get_digest (string->str, string->len, digest);		
+		g_string_free (string, TRUE);
+		
+		state = save = 0;
+		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+		b64digest[len] = '\0';
+		
+		mime_part->content_md5 = g_strdup (b64digest);
+	}
+}
+
+
+/**
+ * g_mime_part_get_content_md5: Get the content md5
+ * @mime_part: Mime part
+ *
+ * Returns the content md5 for the specified mime part.
+ **/
+const gchar *
+g_mime_part_get_content_md5 (GMimePart *mime_part)
+{
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
+	return mime_part->content_md5;
+}
+
+
+/**
+ * g_mime_part_set_content_location: Set the content location
+ * @mime_part: Mime part
+ * @content_location: content location
+ *
+ * Set the content location for the specified mime part.
+ **/
+void
+g_mime_part_set_content_location (GMimePart *mime_part, const gchar *content_location)
+{
+	g_return_if_fail (mime_part != NULL);
+	
+	if (mime_part->content_location)
+		g_free (mime_part->content_location);
+	
+	mime_part->content_location = g_strdup (content_location);
+}
+
+
+/**
+ * g_mime_part_get_content_location: Get the content location
+ * @mime_part: Mime part
+ *
+ * Returns the content location for the specified mime part.
+ **/
+const gchar *
+g_mime_part_get_content_location (GMimePart *mime_part)
+{
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
+	return mime_part->content_location;
 }
 
 
@@ -201,6 +315,8 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 void
 g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	if (mime_part->mime_type)
 		g_mime_content_type_destroy (mime_part->mime_type);
 	
@@ -217,6 +333,8 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
 const GMimeContentType *
 g_mime_part_get_content_type (GMimePart *mime_part)
 {
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
 	return mime_part->mime_type;
 }
 
@@ -234,6 +352,8 @@ g_mime_part_get_content_type (GMimePart *mime_part)
 void
 g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	mime_part->encoding = encoding;
 }
 
@@ -251,6 +371,8 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
 {
+	g_return_val_if_fail (mime_part != NULL, GMIME_PART_ENCODING_DEFAULT);
+	
 	return mime_part->encoding;
 }
 
@@ -318,6 +440,8 @@ g_mime_part_encoding_from_string (const gchar *encoding)
 void
 g_mime_part_set_content_disposition (GMimePart *mime_part, const gchar *disposition)
 {
+	g_return_if_fail (mime_part != NULL);
+	
 	if (mime_part->disposition) {
 		g_free (mime_part->disposition->disposition);
 		mime_part->disposition->disposition = g_strdup (disposition);
@@ -340,6 +464,8 @@ g_mime_part_set_content_disposition (GMimePart *mime_part, const gchar *disposit
 const gchar *
 g_mime_part_get_content_disposition (GMimePart *mime_part)
 {
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	
 	if (mime_part->disposition)
 		return mime_part->disposition->disposition;
 	
@@ -359,6 +485,8 @@ void
 g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const gchar *name, const gchar *value)
 {
 	GMimeParam *param;
+	
+	g_return_if_fail (mime_part != NULL);
 	
 	if (!mime_part->disposition)
 		g_mime_part_set_content_disposition (mime_part, "");
@@ -417,6 +545,8 @@ void
 g_mime_part_set_filename (GMimePart *mime_part, const gchar *filename)
 {
 	GMimeParam *param;
+	
+	g_return_if_fail (mime_part != NULL);
 	
 	if (!mime_part->disposition)
 		g_mime_part_set_content_disposition (mime_part, "");
@@ -611,7 +741,7 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content, 
  * and sets %len to the length of the buffer.
  **/
 const gchar *
-g_mime_part_get_content (GMimePart *mime_part, guint *len)
+g_mime_part_get_content (const GMimePart *mime_part, guint *len)
 {
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	g_return_val_if_fail (mime_part->content != NULL, NULL);
@@ -721,13 +851,10 @@ get_content_type (GMimeContentType *mime_type)
 			break;
 	}
 	
-	/* FIXME: we should probably 'fold' this header as it's
-           possible that this one could get a bit long */
-	
 	str = string->str;
 	g_string_free (string, FALSE);
 	
-	type = g_mime_utils_header_printf ("Content-Type: %s", str);
+	type = g_mime_utils_header_printf ("Content-Type: %s\n", str);
 	g_free (str);
 	
 	return type;
@@ -774,7 +901,7 @@ get_content (GMimePart *part)
 gchar *
 g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 {
-	gchar *string;
+	gchar *str;
 	
 	g_return_val_if_fail (mime_part != NULL, NULL);
 	
@@ -813,19 +940,19 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		
 		if (toplevel) {
 			/* add message header stuff first */
-			string = g_strdup_printf ("MIME-Version: 1.0\n"
-						  "%s\n\n"  /* content-type */
-						  "This is a multi-part message in MIME format.\n\n"
-						  "%s\n--%s--\n",
-						  content_type,
-						  contents->str,
-						  boundary);
+			str = g_strdup_printf ("MIME-Version: 1.0\n"
+					       "%s\n"  /* content-type */
+					       "This is a multi-part message in MIME format.\n\n"
+					       "%s\n--%s--\n",
+					       content_type,
+					       contents->str,
+					       boundary);
 		} else {
-			string = g_strdup_printf ("%s\n\n"  /* content-type */
-						  "%s\n--%s--\n",
-						  content_type,
-						  contents->str,
-						  boundary);
+			str = g_strdup_printf ("%s\n"  /* content-type */
+					       "%s\n--%s--\n",
+					       content_type,
+					       contents->str,
+					       boundary);
 		}
 		
 		g_free (content_type);
@@ -835,67 +962,88 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel)
 		gchar *disposition;
 		gchar *description;
 		gchar *content_id;
+		gchar *content_md5;
+		gchar *content_location;
 		gchar *content;
-		gchar *extras;
 		gchar *text;
+		GString *string;
 		
+		string = g_string_new ("");
+		
+		if (toplevel)
+			g_string_append (string, "MIME-Version: 1.0\n");
+		
+		/* Content-Type: */
 		content_type = get_content_type (mime_part->mime_type);
-		disposition = get_content_disposition (mime_part);
+		g_string_append (string, content_type);
+		g_free (content_type);
 		
+		/* Content-Transfer-Encoding: */
+		if (mime_part->encoding != GMIME_PART_ENCODING_DEFAULT) {
+			gchar *content_encoding;
+			
+			content_encoding = g_strdup_printf ("Content-Transfer-Encoding: %s\n",
+							    g_mime_part_encoding_to_string (mime_part->encoding));
+			
+			g_string_append (string, content_encoding);
+			g_free (content_encoding);
+		}
+		
+		/* Content-Disposition: */
+		disposition = get_content_disposition (mime_part);
+		if (disposition) {
+			text = g_mime_utils_header_printf ("Content-Disposition: %s\n",
+							   disposition);
+			g_free (disposition);
+			g_string_append (string, text);
+			g_free (text);
+		}
+		
+		/* Content-Description: */
 		if (mime_part->description) {
 			text = g_mime_utils_8bit_header_encode (mime_part->description);
 			description = g_mime_utils_header_printf ("Content-Description: %s\n", text);
 			g_free (text);
-		} else {
-			description = g_strdup ("");
+			
+			g_string_append (string, description);
+			g_free (description);
 		}
 		
-		if (mime_part->content_id)
-			content_id = g_strdup_printf ("Content-Id: %s\n", mime_part->content_id);
-		else
-		        content_id = g_strdup ("");
+		/* Content-Location: */
+		if (mime_part->content_location) {
+			content_md5 = g_strdup_printf ("Content-Location: %s\n", mime_part->content_location);
+			g_string_append (string, content_location);
+			g_free (content_location);
+		}
 		
-		if (toplevel)
-			extras = "MIME-Version: 1.0\n";
-		else
-			extras = "";
+		/* Content-Md5: */
+		if (mime_part->content_md5) {
+			content_md5 = g_strdup_printf ("Content-Md5: %s\n", mime_part->content_md5);
+			g_string_append (string, content_md5);
+			g_free (content_md5);
+		}
+		
+		/* Content-Id: */
+		if (mime_part->content_id) {
+			content_id = g_strdup_printf ("Content-Id: %s\n", mime_part->content_id);
+			g_string_append (string, content_id);
+			g_free (content_id);
+		}
+		
+		g_string_append_c (string, '\n');
 		
 		content = get_content (mime_part);
 		
-		if (disposition && *disposition) {
-			string = g_strdup_printf ("%s%s\n"  /* mime-version, content-type */
-						  "Content-Transfer-Encoding: %s\n"
-						  "Content-Disposition: %s\n"
-						  "%s"      /* description */
-						  "%s\n"    /* content-id */
-						  "%s\n",   /* content */
-						  extras, content_type,
-						  g_mime_part_encoding_to_string (mime_part->encoding),
-						  disposition,
-						  description,
-						  content_id,
-						  content);
-		} else {
-			string = g_strdup_printf ("%s%s\n"  /* mime-version, content-type */
-						  "Content-Transfer-Encoding: %s\n"
-						  "%s"      /* description */
-						  "%s\n"    /* content-id */
-						  "%s\n",   /* content */
-						  extras, content_type,
-						  g_mime_part_encoding_to_string (mime_part->encoding),
-						  description,
-						  content_id,
-						  content);
-		}
+		g_string_append (string, content);
+		g_string_append_c (string, '\n');
 		
-		g_free (content_type);
-		g_free (disposition);
-		g_free (description);
-		g_free (content_id);
 		g_free (content);
+		
+		str = string->str;
+		g_string_free (string, FALSE);
 	}
 	
-	return string;
+	return str;
 }
 
 
