@@ -110,7 +110,7 @@ g_strstrbound (const char *haystack, const char *needle, const char *end)
 }
 
 static const char *
-find_header_part_end (const char* in, guint inlen)
+find_header_part_end (const char *in, guint inlen)
 {
 	const char *pch;
 	const char *hdr_end = NULL;
@@ -296,12 +296,9 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 	const char *inend;
 	const char *hdr_end;
 	const char *in;
-	off_t offset;
 	int inlen;
 	
-	offset = g_mime_stream_tell (stream);
-	
-	in = mem->buffer->data + GMIME_STREAM (mem)->bound_start;
+	in = mem->buffer->data + GMIME_STREAM (mem)->position;
 	inend = mem->buffer->data + GMIME_STREAM (mem)->bound_end;
 	inlen = inend - in;
 	
@@ -324,10 +321,11 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		GMimePart *subpart;
 		const char *part_begin;
 		const char *part_end;
-		off_t start, end;
+		off_t start, end, pos;
 		
-		start = stream->bound_start;
-		end = stream->bound_end;
+		pos = GMIME_STREAM (mem)->position;
+		start = GMIME_STREAM (mem)->bound_start;
+		end = GMIME_STREAM (mem)->bound_end;
 		
 		part_begin = g_strstrbound (inptr, boundary, inend);
 		while (part_begin && part_begin < inend) {
@@ -347,16 +345,17 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 			/* get the subpart */
 			part_begin += strlen (boundary);
 			
-			g_mime_stream_set_bounds (stream, part_begin - in, part_end - in);
-			subpart = g_mime_parser_construct_part (stream);
+			g_mime_stream_set_bounds (GMIME_STREAM (mem), pos + (part_begin - in),
+						  pos + (part_end - in));
+			subpart = g_mime_parser_construct_part_internal (stream, mem);
 			g_mime_part_add_subpart (mime_part, subpart);
-			g_mime_stream_set_bounds (stream, start, end);
 			
 			/* the next part begins where the last one left off */
 			part_begin = part_end;
 		}
 		
 		g_mime_stream_set_bounds (stream, start, end);
+		g_mime_stream_seek (GMIME_STREAM (mem), pos, GMIME_STREAM_SEEK_SET);
 		
 		/* free our temp boundary strings */
 		g_free (boundary);
@@ -385,12 +384,16 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		if (len > 0) {
 			if (GMIME_IS_STREAM_MEM (stream)) {
 				/* if we've already got it in memory, we use less memory if we
-				 * use individual streams per part */
+				 * use individual mem streams per part after parsing... */
 				g_mime_part_set_pre_encoded_content (mime_part, content, len, encoding);
 			} else {
 				GMimeDataWrapper *wrapper;
 				GMimeStream *substream;
-				off_t start, end;
+				off_t offset, start, end;
+				
+				offset = g_mime_stream_tell (stream);
+				if (stream != GMIME_STREAM (mem))
+					offset += GMIME_STREAM (mem)->position;
 				
 				start = offset + (content - in);
 				end = start + len;

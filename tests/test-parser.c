@@ -42,25 +42,20 @@ print_mime_struct (GMimePart *part, int depth)
 }
 
 void
-test_parser (char *data)
+test_parser (GMimeStream *stream)
 {
 	GMimeMessage *message;
-	GMimeStream *stream;
 	gboolean is_html;
 	char *text;
 	char *body;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
 	
-	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
-	
 	ZenTimerStart();
 	message = g_mime_parser_construct_message (stream, TRUE);
 	ZenTimerStop();
 	ZenTimerReport ("gmime::parser_construct_message");
 	ZenTimerStart();
-	
-	g_mime_stream_unref (stream);
 	
 	text = g_mime_message_to_string (message);
 	ZenTimerStop();
@@ -85,8 +80,7 @@ test_parser (char *data)
 int main (int argc, char *argv[])
 {
 	char *filename = NULL;
-	char *data;
-	struct stat st;
+	GMimeStream *stream;
 	int fd;
 	
 	if (argc > 1)
@@ -98,20 +92,11 @@ int main (int argc, char *argv[])
 	if (fd == -1)
 		return 0;
 	
-	if (fstat (fd, &st) == -1)
-		return 0;
+	stream = g_mime_stream_fs_new (fd);
 	
-	data = g_malloc0 (st.st_size + 1);
+	test_parser (stream);
 	
-	read (fd, data, st.st_size);
-	
-	close (fd);
-	
-	/*fprintf (stdout, "%s\n", data);*/
-	
-	test_parser (data);
-	
-	g_free (data);
+	g_mime_stream_unref (stream);
 	
 	return 0;
 }

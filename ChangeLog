@@ -1,5 +1,10 @@
 2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-parser.c (g_mime_parser_construct_part_internal): Fix
+	offset calculations.
+
+2001-09-18  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* test-parser.c (test_parser): Updated.
 
 	* test-mime.c (test_parser): Updated.

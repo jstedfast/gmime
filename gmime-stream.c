@@ -360,19 +360,21 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 	g_return_val_if_fail (dest != NULL, -1);
 	
 	while (!g_mime_stream_eos (src)) {
-		nwritten = 0;
 		nread = g_mime_stream_read (src, buf, sizeof (buf));
 		if (nread < 0)
 			return -1;
 		
-		while (nwritten < nread) {
-			ssize_t len;
-			
-			len = g_mime_stream_write (dest, buf + nwritten, nread - nwritten);
-			if (len < 0)
-				return -1;
-			
-			nwritten += len;
+		if (nread > 0) {
+			nwritten = 0;
+			while (nwritten < nread) {
+				ssize_t len;
+				
+				len = g_mime_stream_write (dest, buf + nwritten, nread - nwritten);
+				if (len < 0)
+					return -1;
+				
+				nwritten += len;
+			}
 		}
 		
 		total += nwritten;

@@ -64,7 +64,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	ssize_t nread;
 	
-	if (stream->bound_end == -1 && stream->position > stream->bound_end)
+	if (stream->bound_end != -1 && stream->position > stream->bound_end)
 		return -1;
 	
 	if (stream->bound_end != -1)
