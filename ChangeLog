@@ -1,3 +1,11 @@
+2000-10-28  Charles Kerr <charles@superpimp.org>
+
+	* gmime-message.c (g_mime_message_get_headers): New function
+	similar to g_mime_message_get_body.  Useful if you want a raw
+	display of headers separate from the body.
+
+	* gmime-message.[c,h] (g_mime_message_get_body): made const.
+
 2000-10-28  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* tests/Makefile.am: New automake file (when we make a release,

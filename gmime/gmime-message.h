@@ -95,7 +95,8 @@ void g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part);
 gchar *g_mime_message_to_string (GMimeMessage *message);
 
 /* utility functions */
-gchar *g_mime_message_get_body (GMimeMessage *message, gboolean want_plain, gboolean *is_html);
+gchar *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);
+gchar *g_mime_message_get_headers (GMimeMessage *message);
 
 #ifdef __cplusplus
 }

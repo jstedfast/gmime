@@ -620,7 +620,7 @@ handle_multipart_alternative (GMimePart *multipart, gboolean want_plain, gboolea
  * that you traverse the MIME structure yourself.
  **/
 gchar *
-g_mime_message_get_body (GMimeMessage *message, gboolean want_plain, gboolean *is_html)
+g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html)
 {
 	const GMimeContentType *type;
 	gchar *body = NULL;
@@ -658,4 +658,10 @@ g_mime_message_get_body (GMimeMessage *message, gboolean want_plain, gboolean *i
 	}
 	
 	return body;
+}
+
+gchar *
+g_mime_message_get_headers (GMimeMessage *message)
+{
+	return create_header (message);
 }
