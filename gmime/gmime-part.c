@@ -544,19 +544,26 @@ get_content_disposition (GMimePart *mime_part)
 	
 	params = mime_part->disposition->params;
 	
-	if (mime_part->disposition->disposition && *mime_part->disposition->disposition) {
+	if (mime_part->disposition->disposition && *mime_part->disposition->disposition)
 		string = g_string_new (mime_part->disposition->disposition);
-		if (params)
-			g_string_append (string, ";");
-	} else {
+	else
 		string = g_string_new ("");
-	}
 	
-	while (TRUE) {
+	if (params)
+		g_string_append (string, ";");
+	
+	fprintf (stderr, "here we are...\n");
+	
+	while (params) {
 		GMimeParam *param;
 		gchar *buf;
 		
 		param = params->data;
+		
+		fprintf (stderr, "param: name='%s' value='%s'\n",
+			 param->name ? param->name : "(null)",
+			 param->value ? param->value : "(null)");
+		
 		buf = g_mime_param_to_string (param);
 		g_string_append_c (string, ' ');
 		g_string_append (string, buf);
