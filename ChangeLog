@@ -13,6 +13,7 @@
 	* gmime/gtrie.c: New source file implementing Aho-Corasick's Trie
 	graph algorithm.
 
+
 2002-12-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	Fix for bug #91536
@@ -23,6 +24,13 @@
 	work.
 	(g_mime_object_new_type): Get the object_type from the subtype
 	bucket.
+
+2002-12-06  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-stream.c (g_mime_stream_writev): Pointer erithmetic
+	fixes.
+
+	* gmime/memchunk.c (memchunk_alloc): Pointer arithmetic fixes.
 
 2002-12-03  Jeffrey Stedfast  <fejj@ximian.com>
 
