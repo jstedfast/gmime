@@ -616,7 +616,6 @@ static void
 g_string_append_len_quoted (GString *out, const char *in, size_t len)
 {
 	const char *inptr;
-	char *qstring;
 	
 	g_string_append_c (out, '"');
 	
@@ -701,7 +700,6 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
 			
 			while (inptr < inend) {
 				char *ptr = inptr + MIN (inend - inptr, maxlen);
-				char *buf;
 				
 				if (encoded && ptr < inend) {
 					/* be careful not to break an encoded char (ie %20) */

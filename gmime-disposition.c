@@ -25,6 +25,8 @@
 #include <config.h>
 #endif
 
+#include <ctype.h>
+
 #include "gmime-disposition.h"
 #include "strlib.h"
 

@@ -27,6 +27,7 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string.h>
 #ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
 #endif

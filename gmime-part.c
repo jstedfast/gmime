@@ -429,7 +429,9 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 	return mime_part->content_location;
 }
 
-
+#if 0
+/* don't really need this anymore but keeping it just in case I find
+   it useful later... */
 static void
 unfold (char *str)
 {
@@ -446,6 +448,7 @@ unfold (char *str)
 	
 	*d = '\0';
 }
+#endif
 
 static void
 sync_content_type (GMimePart *mime_part)
@@ -618,7 +621,7 @@ g_mime_part_encoding_from_string (const char *encoding)
 static void
 sync_content_disposition (GMimePart *mime_part)
 {
-	char *str, *buf;
+	char *str;
 	
 	str = g_mime_disposition_header (mime_part->disposition, FALSE);
 	g_mime_header_set (mime_part->headers, "Content-Disposition", str);
@@ -699,8 +702,6 @@ g_mime_part_get_content_disposition (GMimePart *mime_part)
 void
 g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute, const char *value)
 {
-	GMimeParam *param = NULL;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	g_return_if_fail (attribute != NULL);
 	
@@ -727,8 +728,6 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
 const char *
 g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
 {
-	GMimeParam *param;
-	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	g_return_val_if_fail (attribute != NULL, NULL);
 	
@@ -750,8 +749,6 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
-	GMimeParam *param = NULL;
-	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	if (!mime_part->disposition)

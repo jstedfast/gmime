@@ -145,11 +145,12 @@ static unsigned short special_chars[256] = {
 #define is_url_char(c)  (isprint ((int) c) && !(special_chars[(unsigned char) c] & IS_NON_URL))
 #define is_trailing_garbage(c) (!isprint ((int) c) || (special_chars[(unsigned char) c] & IS_GARBAGE))
 
+#if 0
+/* this is for building the special_chars table... */
 static void
 table_init (void)
 {
 	char *c;
-	int i;
 	
 	memset (special_chars, 0, sizeof (special_chars));
 	for (c = NON_EMAIL_CHARS; *c; c++)
@@ -159,6 +160,7 @@ table_init (void)
 	for (c = TRAILING_URL_GARBAGE; *c; c++)
 		special_chars[(int) *c] |= IS_GARBAGE;
 }
+#endif
 
 static char *
 url_extract (char **in, int inlen, gboolean check, gboolean *backup)

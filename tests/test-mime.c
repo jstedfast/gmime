@@ -25,6 +25,9 @@
 
 #include "gmime.h"
 
+#define ENABLE_ZENTIMER
+#include "zentimer.h"
+
 void
 test_parser (char *data)
 {
@@ -370,6 +373,8 @@ test_addresses (void)
 	}
 }
 
+#include "date-strings.h"
+
 void
 test_date (void)
 {
@@ -390,6 +395,26 @@ test_date (void)
 	out = g_mime_utils_header_format_date (date, offset);
 	fprintf (stderr, "date out: [%s]\n", out);
 	g_free (out);
+	
+	{
+		char *string;
+		int i;
+		
+		ZenTimerStart ();
+		for (i = 0; i < num_date_strings; i++) {
+			in = date_strings[i];
+			printf ("date  in: [%s]\n", in);
+			date = g_mime_utils_header_decode_date (in, &offset);
+			out = g_mime_utils_header_format_date (date, offset);
+			printf ("date out: [%s]\n", out);
+			g_free (out);
+		}
+		ZenTimerStop ();
+		
+		string = g_strdup_printf ("date parser (%d dates parsed)", num_date_strings);
+		ZenTimerReport (string);
+		g_free (string);
+	}
 }
 
 
@@ -397,13 +422,13 @@ int main (int argc, char *argv[])
 {
 	test_date ();
 	
-	test_onepart ();
+	/*test_onepart ();
 	
 	test_multipart ();
 	
 	test_encodings ();
 	
-	test_addresses ();
+	test_addresses ();*/
 	
 	return 0;
 }

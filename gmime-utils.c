@@ -34,6 +34,8 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "memchunk.h"
+
 #define d(x)
 
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
@@ -157,6 +159,8 @@ struct _date_token {
 	unsigned int len;
 };
 
+static MemChunk *datetok_memchunk = NULL;
+
 static struct _date_token *
 datetok (const char *date)
 {
@@ -164,6 +168,9 @@ datetok (const char *date)
 	const unsigned char *start, *end;
 	
 	g_return_val_if_fail (date != NULL, NULL);
+	
+	if (datetok_memchunk == NULL)
+		datetok_memchunk = memchunk_new (sizeof (struct _date_token), 16, FALSE);
 	
 	start = date;
 	while (*start) {
@@ -174,7 +181,7 @@ datetok (const char *date)
 		for (end = start; *end && !isspace ((int) *end); end++);
 		
 		if (end != start) {
-			token = g_malloc (sizeof (struct _date_token));
+			token = memchunk_alloc (datetok_memchunk);
 			token->next = NULL;
 			token->start = start;
 			token->len = end - start;
@@ -501,7 +508,7 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 	while (tokens) {
 		token = tokens;
 		tokens = tokens->next;
-		g_free (token);
+		memchunk_free (datetok_memchunk, token);
 	}
 	
 	return date;
@@ -519,7 +526,7 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 char *
 g_mime_utils_header_fold (const char *in)
 {
-	const char *inptr, *space;
+	register const char *inptr;
 	size_t len, outlen, i;
 	GString *out;
 	char *ret;

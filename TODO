@@ -48,5 +48,32 @@ if the name component of the address has embedded quotes? They need to
 be escaped.
 ** I think this is fixed now.
 
+
+
+
+
+
+<charles> on usenet it's not uncommon to have header like "From: Joe Bob"
+<charles> where people use no address at all to avoid spammers
+<fejj> ok
+<charles> It would be nice if internet-address handled this
+<charles> have ->name == "Joe Bob" and ->value.addr == NULL
+<fejj> oh, so only support writing them? ah, that should be easy
+<charles> It looks like the else clause on line 582 is where a "Joe Bob" string fails
+<fejj> I was pondering how I could possibly parse that as a name :)
+<charles> No, I am asking about parsing
+<fejj> oh
+<charles> It would be nice for internet_address_parse_string() to return an InternetAddress with a name of "Joe Bob" and a NULL addr
+<fejj> ah, okay
+<fejj> I guess I can do that
+<fejj> I'll have to modify my internet_address_to_string code to handle that too
+<fejj> but that should be easy
+
+
+
+
+
+
+
 All questions and comments should be directed toward the author,
 Jeffrey Stedfast <fejj@helixcode.com>
