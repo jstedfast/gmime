@@ -15,6 +15,7 @@ config.cache
 config.guess
 config.status
 config.log
+config.h.in
 config.h
 gmime.h
 gmime-config
