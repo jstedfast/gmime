@@ -1,3 +1,7 @@
+2002-11-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-*.c: Moved to tests/
+
 2002-11-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* Makefile.am: Install headers to $(includedir)/gmime-2.0/gmime
