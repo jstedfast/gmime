@@ -16,6 +16,7 @@ config.guess
 config.status
 config.log
 config.h
+config.h.in
 gmime.h
 iconv-detect.h
 gmime-config
