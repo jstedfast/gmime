@@ -738,8 +738,6 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
-	callback (GMIME_OBJECT (multipart), user_data);
-	
 	if (multipart->subparts) {
 		GList *subpart;
 		
