@@ -341,8 +341,16 @@ parser_offset (GMimeParser *parser, unsigned char *cur)
 	                                                                    \
 	hlen = colon - parser->headerbuf;                                   \
 	                                                                    \
-	header->name = g_strstrip (g_strndup (parser->headerbuf, hlen));    \
-	header->value = g_strstrip (g_strdup (colon + 1));                  \
+	header->name = g_strndup (parser->headerbuf, hlen);                 \
+	g_strstrip (header->name);                                          \
+	if (*colon != ':') {                                                \
+		g_warning ("Invalid header: %s", header->name);             \
+		header->value = header->name;                               \
+		header->name = g_strdup ("X-Invalid-Header");               \
+	} else {                                                            \
+		header->value = g_strdup (colon + 1);                       \
+		g_strstrip (header->value);                                 \
+	}                                                                   \
 	header->offset = parser->header_start;                              \
 	                                                                    \
 	hend->next = header;                                                \
@@ -358,7 +366,7 @@ parser_step_headers (GMimeParser *parser)
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
 	struct _header_raw *hend;
-	size_t len;
+	size_t len = 0;
 	
 	parser->midline = FALSE;
 	hend = (struct _header_raw *) &parser->headers;
@@ -366,10 +374,11 @@ parser_step_headers (GMimeParser *parser)
 	parser->header_start = parser_offset (parser, NULL);
 	
 	inptr = parser->inptr;
+	inend = parser->inend;
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= 0)
+		if (parser_fill (parser) <= len)
 			break;
 		
 		inptr = parser->inptr;
@@ -389,6 +398,7 @@ parser_step_headers (GMimeParser *parser)
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
 				parser->inptr = start;
+				len = inend - start;
 				goto refill;
 			}
 			
@@ -415,6 +425,7 @@ parser_step_headers (GMimeParser *parser)
 		}
 		
 		parser->inptr = inptr;
+		len = inend - inptr;
 	} while (1);
 	
 	inptr = parser->inptr;
