@@ -24,6 +24,7 @@ libgmime_la_SOURCES = 		\
 	gmime-disposition.c	\
 	gmime-filter.c		\
 	gmime-filter-basic.c	\
+	gmime-filter-charset.c	\
 	gmime-filter-crlf.c	\
 	gmime-filter-from.c	\
 	gmime-filter-html.c	\
@@ -54,6 +55,7 @@ gmimeinclude_HEADERS = 		\
 	gmime-disposition.h	\
 	gmime-filter.h		\
 	gmime-filter-basic.h	\
+	gmime-filter-charset.h	\
 	gmime-filter-crlf.h	\
 	gmime-filter-from.h	\
 	gmime-filter-html.h	\
