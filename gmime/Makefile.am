@@ -121,8 +121,29 @@ noinst_HEADERS = 			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h
 
+install-data-local: install-libtool-import-lib
+
+uninstall-local: uninstall-libtool-import-lib
+
+if PLATFORM_WIN32
+no_undefined = -no-undefined
+endif
+
+if OS_WIN32
+install-libtool-import-lib:
+	$(INSTALL) .libs/libgmime-2.0.dll.a $(DESTDIR)$(libdir)
+
+uninstall-libtool-import-lib:
+	-rm $(DESTDIR)$(libdir)/libgmime-2.0.dll.a
+else
+install-libtool-import-lib:
+uninstall-libtool-import-lib:
+endif
+
 libgmime_2_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
-libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
+libgmime_2_0_la_LDFLAGS = \
+	-version-info $(GMIME_VERSION_INFO) \
+	-export-dynamic $(no_undefined)
 
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 

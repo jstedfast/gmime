@@ -25,8 +25,10 @@
 
 #include <gmime/gmime.h>
 
+#ifndef G_OS_WIN32
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
+#endif
 
 static iconv_t cd = (iconv_t) -1;
 

@@ -28,6 +28,38 @@ AM_INIT_AUTOMAKE(gmime, $VERSION)
 
 AC_CANONICAL_HOST
 
+dnl Check for win32 platforms
+AC_MSG_CHECKING([if building for Win32])
+case "$host" in
+  *-*-mingw*)
+    platform_win32="yes"
+    native_win32="yes"
+    ;;
+  *-*-cygwin*)
+    platform_win32="yes"
+    native_win32="no"
+    ;;
+  *)
+    platform_win32="no"
+    native_win32="no"
+    ;;
+esac
+AC_MSG_RESULT($platform_win32)
+AM_CONDITIONAL(PLATFORM_WIN32, test "x$platform_win32" == "xyes")
+AM_CONDITIONAL(OS_WIN32, test "$native_win32" == "xyes")
+AC_SUBST(GMIME_DEF)
+
+if test "$glib_native_win32" = "yes"; then
+  if test "X$enable_static" = "xyes" -o "x$enable_static" = "x"; then
+    AC_MSG_WARN([Disabling static library build, must build as DLL on Windows])
+    enable_static="no"
+  fi
+  if test "x$enable_shared" = "xno"; then
+    AC_MSG_WARN([Enabling shared library build, must build as DLL on Windows])
+    enable_shared="yes"
+  fi
+fi
+
 dnl Checks for programs.
 AC_ISC_POSIX
 AC_PROG_CC
@@ -43,7 +75,8 @@ AC_PATH_PROG(RM, rm, /bin/rm)
 AC_PATH_PROG(MV, mv, /bin/mv)
 AC_PATH_PROG(TAR, tar, /bin/tar)
 
-AM_PROG_LIBTOOL
+AC_EXEEXT
+AC_PROG_LIBTOOL
 
 AM_MAINTAINER_MODE
 
@@ -143,6 +176,38 @@ AC_TRY_RUN([
 
 CFLAGS="$CFLAGS_save"
 LIBS="$LIBS_save"
+
+dnl Check for regex
+AC_CHECK_HEADER(regex.h, have_regex="yes")
+AM_CONDITIONAL(HAVE_REGEX, test "x$have_regex" = "xyes")
+
+dnl Check for fsync (native win32 haven't this)
+AC_MSG_CHECKING(for fsync)
+AC_TRY_LINK([
+	#include <unistd.h>
+	], [
+	fsync(0);
+	]
+,
+	AC_MSG_RESULT(yes)
+	AC_DEFINE(HAVE_FSYNC)
+,
+	AC_MSG_RESULT(no)
+)
+
+dnl Check for MAXHOSTNAMELEN
+AC_MSG_CHECKING(for MAXHOSTNAMELEN)
+AC_TRY_COMPILE([
+	#include <sys/param.h>
+	], [
+	return MAXHOSTNAMELEN;
+	]
+,
+	AC_MSG_RESULT(yes)
+,
+	AC_DEFINE(MAXHOSTNAMELEN, 64)
+	AC_MSG_RESULT(no; defined as 64)
+)
 
 dnl Timezone checks
 AC_CACHE_CHECK(for tm_gmtoff in struct tm, ac_cv_struct_tm_gmtoff,

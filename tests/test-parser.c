@@ -31,8 +31,10 @@
 
 #include <gmime/gmime.h>
 
+#ifndef G_OS_WIN32
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
+#endif
 
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY

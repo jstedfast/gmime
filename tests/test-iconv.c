@@ -31,8 +31,10 @@
 
 #include <gmime/gmime.h>
 
+#ifndef G_OS_WIN32
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
+#endif
 
 #if 1
 static char *charsets[] = {

@@ -6,7 +6,13 @@ if ENABLE_MONO
 SUBDIRS += mono
 endif
 
-SUBDIRS += tests docs examples .
+SUBDIRS += tests docs
+
+if !PLATFORM_WIN32
+SUBDIRS += examples
+endif
+
+SUBDIRS += .
 
 bin_SCRIPTS = gmime-config
 
