@@ -111,7 +111,7 @@ memchunk_alloc (MemChunk *memchunk)
 		block = (char *) node = memchunk->free;
 		node->atoms--;
 		if (node->atoms > 0)
-			return (void *) block + (node->atoms * memchunk->atomsize);
+			return (void *) (block + (node->atoms * memchunk->atomsize));
 		
 		memchunk->free = node->next;
 		

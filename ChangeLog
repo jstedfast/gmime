@@ -1,5 +1,8 @@
 2004-05-13  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* util/memchunk.c (memchunk_alloc): Add parens to fix casting
+	warning on win32.
+
 	* gmime/gmime-message.c (write_received): Rewritten.
 
 2004-05-10  Jeffrey Stedfast  <fejj@ximian.com>
