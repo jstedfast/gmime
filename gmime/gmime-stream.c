@@ -241,13 +241,18 @@ g_mime_stream_length (GMimeStream *stream)
 GMimeStream *
 g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
-	GMimeStream *sub;
+	GMimeStream * sub;
+	GMimeStream * prev_super;
 	
 	g_return_val_if_fail (stream != NULL, NULL);
 	
 	sub = stream->substream (stream, start, end);
+	prev_super = sub->super_stream;
 	sub->super_stream = stream;
 	g_mime_stream_ref (stream);
+
+	if (prev_super != NULL)
+		g_mime_stream_unref (prev_super);
 	
 	return sub;
 }

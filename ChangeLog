@@ -1,3 +1,18 @@
+2001-10-04  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-stream.c (g_mime_stream_substream): fix refcount stealth bug.
+	Calling this on a buffered stream wound up reffing two streams
+	instead of one because of a nested call to g_mime_stream_substream().
+	This took a lot of scaffolding to find. :)
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): fix refcount
+	paranoia bug.  ref the new *before* unreffing the old just in case
+	new==old.
+	
+	* gmime-filter-basic.[ch]: fix some compiler warnings that I introduced
+	yesterday.  (Strange how the same version of gcc finds different
+	warnings on different platforms.)
+
 2001-10-03  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-part.c (g_mime_part_get_content): bugfix for when getting the
