@@ -51,7 +51,6 @@
 
 <!entity gmime-Building SYSTEM "building.sgml">
 <!entity gmime-Compiling SYSTEM "compiling.sgml">
-<!entity gmime-Running SYSTEM "running.sgml">
 <!entity gmime-Resources SYSTEM "resources.sgml">
 <!entity gmime-Questions SYSTEM "question_index.sgml">
 <!entity gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
@@ -129,7 +128,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
     </partintro>
     &gmime-Building;
     &gmime-Compiling;
-    &gmime-Running;
     &gmime-Changes-2-0;
     &gmime-Resources;
     &gmime-Questions;
