@@ -10,7 +10,7 @@
 2003-03-03  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-filter-charset.c (filter_filter): Use outbuf -
-	filter-outbuf to calculate how much data we've written - simpler
+	filter->outbuf to calculate how much data we've written - simpler
 	and less likely to be wrong.
 	(filter_complete): Same.
 
