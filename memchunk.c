@@ -35,10 +35,8 @@
 #include "memchunk.h"
 
 
-#ifdef HAVE_GLIB2
 /* in glib2, GSearchFunc was combined with GCompareFunc */
 typedef GCompareFunc GSearchFunc;
-#endif
 
 typedef struct _MemChunkFreeNode {
 	struct _MemChunkFreeNode *next;

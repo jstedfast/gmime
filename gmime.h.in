@@ -51,6 +51,7 @@
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-from.h"
 #include "gmime-filter-html.h"
+#include "gmime-filter-yenc.h"
 
 /* GMIME version */
 static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;
@@ -64,5 +65,9 @@ static const guint gmime_binary_age    = 0;
      (gmime_major_version == (major) && gmime_minor_version > (minor)) || \
      (gmime_major_version == (major) && gmime_minor_version == (minor) && \
       gmime_micro_version >= (micro)))
+
+#define GMIME_INIT_FLAG_UTF8  (1 << 0)  /* here for backward compatability */
+
+void g_mime_init (guint32 flags);
 
 #endif /* __GMIME_H__ */

@@ -27,10 +27,12 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <errno.h>
 
 #include "internet-address.h"
 #include "gmime-table-private.h"
 #include "gmime-utils.h"
+#include "gmime-iconv-utils.h"
 
 
 #define w(x) x
@@ -558,48 +560,6 @@ decode_quoted_string (const char **in)
 	return out;
 }
 
-#if 0
-static char *
-decode_quoted_string (const char **in)
-{
-	const char *inptr = *in;
-	char *out = NULL, *outptr;
-	int outlen;
-	int c;
-	
-	decode_lwsp (&inptr);
-	if (*inptr == '"') {
-		const char *intmp;
-		int skip = 0;
-		
-		/* first, calc length */
-		inptr++;
-		intmp = inptr + 1;
-		while ((c = *intmp++) && c != '"') {
-			if (c == '\\' && *intmp) {
-				intmp++;
-				skip++;
-			}
-		}
-		
-		outlen = intmp - inptr - skip;
-		out = outptr = g_malloc (outlen + 1);
-		
-		while ((c = *inptr++) && c != '"') {
-			if (c == '\\' && *inptr) {
-				c = *inptr++;
-			}
-			*outptr++ = c;
-		}
-		*outptr = '\0';
-	}
-	
-	*in = inptr;
-	
-	return out;
-}
-#endif
-
 static char *
 decode_atom (const char **in)
 {
@@ -867,8 +827,28 @@ decode_mailbox (const char **in)
 	
 	*in = inptr;
 	
-	if (addr->len)
+	if (addr->len) {
+		if (name && !g_utf8_validate (name->str, -1, NULL)) {
+			/* A (broken) mailer has sent us an unencoded
+			 * 8bit value (and it doesn't seem to be valid
+			 * UTF-8 either).  Attempt to save it by
+			 * assuming it's in the user's locale and
+			 * converting to UTF-8 */
+			char *buf;
+			
+			buf = g_mime_iconv_locale_to_utf8 (name->str);
+			if (buf) {
+				g_string_truncate (name, 0);
+				g_string_append (name, buf);
+				g_free (buf);
+			} else {
+				(g_warning ("Failed to convert \"%s\" to UTF-8: %s",
+					    name->str, g_strerror (errno)));
+			}
+		}
+		
 		mailbox = internet_address_new_name (name ? name->str : NULL, addr->str);
+	}
 	
 	g_string_free (addr, TRUE);
 	if (name)

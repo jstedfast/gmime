@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html test-iconv
+noinst_PROGRAMS = gen-table gen-multibyte test-mime test-parser test-streams test-html test-iconv
 
 bin_SCRIPTS = gmime-config
 
@@ -18,6 +18,7 @@ libgmime_la_SOURCES = 		\
 	alloca.c		\
 	strlib.c		\
 	memchunk.c		\
+	gmime.c			\
 	gmime-charset.c		\
 	gmime-content-type.c	\
 	gmime-data-wrapper.c	\
@@ -82,10 +83,11 @@ gmimeinclude_HEADERS = 		\
 	gmime-utils.h		\
 	internet-address.h
 
-noinst_HEADERS = 		\
-	strlib.h		\
-	memchunk.h		\
-	gmime-table-private.h	\
+noinst_HEADERS = 			\
+	strlib.h			\
+	memchunk.h			\
+	gmime-table-private.h		\
+	gmime-charset-map-private.h	\
 	md5-utils.h
 
 DEPS = $(top_builddir)/libgmime.la
@@ -120,6 +122,11 @@ gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
 gen_table_LDADD = 
+
+gen_multibyte_SOURCES = gen-multibyte.c
+gen_multibyte_LDFLAGS = 
+gen_multibyte_DEPENDENCIES = 
+gen_multibyte_LDADD = 
 
 check-local: tests
 

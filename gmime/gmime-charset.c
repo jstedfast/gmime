@@ -34,18 +34,22 @@
 #include <alloca.h>
 #endif
 
+#include "gmime-charset-map-private.h"
 #include "gmime-charset.h"
 #include "strlib.h"
 
 
 #if defined (__aix__) || defined (__irix__) || defined (__sun__)
-#define CANONICAL_ISO_FORMAT "ISO%d-%d"
+#define CANONICAL_ISO_D_FORMAT "ISO%d-%d"
+/* this one is for charsets like ISO-2022-JP, for which at least
+   Solaris wants a - after the ISO */
+#define CANONICAL_ISO_S_FORMAT "ISO-%d-%s"
+#elif defined (__hpux__)
+#define CANONICAL_ISO_D_FORMAT "iso%d%d"
+#define CANONICAL_ISO_S_FORMAT "iso%d%s"
 #else
-#ifdef __hpux__
-#define CANONICAL_ISO_FORMAT "iso%d%d"
-#else
-#define CANONICAL_ISO_FORMAT "ISO-%d-%d"
-#endif /* __hpux__ */
+#define CANONICAL_ISO_D_FORMAT "iso-%d-%d"
+#define CANONICAL_ISO_S_FORMAT "iso-%d-%s"
 #endif /* __aix__, __irix__, __sun__ */
 
 
@@ -195,7 +199,6 @@ const char *
 g_mime_charset_name (const char *charset)
 {
 	char *name, *iconv_name, *buf;
-	int codepage;
 	
 	if (charset == NULL)
 		return NULL;
@@ -212,26 +215,37 @@ g_mime_charset_name (const char *charset)
 		return iconv_name;
 	
 	if (!strncmp (name, "iso", 3)) {
+		int iso, codepage;
+		char *p;
+		
 		buf = name + 3;
 		if (*buf == '-' || *buf == '_')
 			buf++;
 		
-		g_assert (strncmp (buf, "8859", 4) == 0);
+		iso = strtoul (buf, &p, 10);
 		
-		buf += 4;
+		g_assert (p > buf);
+		
+		buf = p;
 		if (*buf == '-' || *buf == '_')
 			buf++;
 		
-		codepage = atoi (buf);
-		g_assert (codepage > 0);
+		codepage = strtoul (buf, &p, 10);
 		
+		if (p > buf) {
+			/* codepage is numeric */
 #ifdef __aix__
-		if (codepage == 13)
-			iconv_name = g_strdup ("IBM-921");
-		else
+			if (codepage == 13)
+				iconv_name = g_strdup ("IBM-921");
+			else
 #endif /* __aix__ */
-		iconv_name = g_strdup_printf (CANONICAL_ISO_FORMAT,
-					      8859, codepage);
+				iconv_name = g_strdup_printf (CANONICAL_ISO_D_FORMAT,
+							      iso, codepage);
+		} else {
+			/* codepage is a string - probably iso-2022-jp or something */
+			iconv_name = g_strdup_printf (CANONICAL_ISO_S_FORMAT,
+						      iso, p);
+		}
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
 		if (!strncmp (buf, "cp", 2))
@@ -253,3 +267,358 @@ g_mime_charset_name (const char *charset)
 	
 	return iconv_name;
 }
+
+
+typedef struct _Charset {
+	unsigned int mask;
+	unsigned int level;
+} Charset;
+
+static void
+charset_init (Charset *charset)
+{
+	charset->mask = ~0;
+	charset->level = 0;
+}
+
+static void
+charset_step (Charset *charset, const char *in, size_t len)
+{
+	register const char *inptr = in;
+	const char *inend = in + len;
+	register unsigned int mask;
+	register int level;
+	
+	mask = charset->mask;
+	level = charset->level;
+	
+	while (inptr < inend) {
+		const char *newinptr;
+		gunichar c;
+		
+		newinptr = g_utf8_next_char (inptr);
+		c = g_utf8_get_char (inptr);
+		if (newinptr == NULL || !g_unichar_validate (c)) {
+			inptr++;
+			continue;
+		}
+		
+		inptr = newinptr;
+		if (c <= 0xffff) {
+			mask &= charset_mask (c);
+			
+			if (c >= 128 && c < 256)
+				level = MAX (level, 1);
+			else if (c >= 256)
+				level = MAX (level, 2);
+		} else {
+			mask = 0;
+			level = MAX (level, 2);
+		}
+	}
+	
+	charset->mask = mask;
+	charset->level = level;
+}
+
+static const char *
+charset_best_mask (unsigned int mask)
+{
+	int i;
+	
+	for (i = 0; i < sizeof (charinfo) / sizeof (charinfo[0]); i++) {
+		if (charinfo[i].bit & mask)
+			return charinfo[i].name;
+	}
+	
+	return "UTF-8";
+}
+
+static const char *
+charset_best_name (Charset *charset)
+{
+	if (charset->level == 1)
+		return "iso-8859-1";
+	else if (charset->level == 2)
+		return charset_best_mask (charset->mask);
+	else
+		return NULL;
+}
+
+
+/**
+ * g_mime_charset_best:
+ * @in: a UTF-8 text buffer
+ * @inlen: length of @in
+ *
+ * Computes the best charset to use to encode this text buffer.
+ *
+ * Returns the charset name best suited for the input text or %NULL if
+ * it is US-ASCII safe.
+ **/
+const char *
+g_mime_charset_best (const char *in, size_t inlen)
+{
+	Charset charset;
+	
+	charset_init (&charset);
+	charset_step (&charset, in, inlen);
+	
+	return charset_best_name (&charset);
+}
+
+
+#ifdef BUILD_CHARSET_MAP
+
+#include <sys/stat.h>
+#include <errno.h>
+#include <iconv.h>
+
+static struct {
+	char *name;
+	unsigned int bit;	/* assigned bit */
+} tables[] = {
+	/* These are the 8bit character sets (other than iso-8859-1,
+	 * which is special-cased) which are supported by both other
+	 * mailers and the GNOME environment. Note that the order
+	 * they're listed in is the order they'll be tried in, so put
+	 * the more-popular ones first.
+	 */
+	{ "iso-8859-2", 0 },	/* Central/Eastern European */
+	{ "iso-8859-4", 0 },	/* Baltic */
+	{ "koi8-r", 0 },	/* Russian */
+	{ "koi8-u", 0 },	/* Ukranian */
+	{ "iso-8859-5", 0 },	/* Least-popular Russian encoding */
+	{ "iso-8859-7", 0 },	/* Greek */
+	{ "iso-8859-8", 0 },    /* Hebrew; Visual */
+	{ "iso-8859-9", 0 },	/* Turkish */
+	{ "iso-8859-13", 0 },	/* Baltic again */
+	{ "iso-8859-15", 0 },	/* New-and-improved iso-8859-1, but most
+				 * programs that support this support UTF8
+				 */
+	{ "windows-1251", 0 },	/* Russian */
+	{ 0, 0 }
+};
+
+/* Multibyte charsets - files are generated with gen-multibyte.c */
+static struct {
+	char *name;
+	char *filename;
+	unsigned int bit;
+} multibyte_tables[] = {
+	/* Japanese - in order of preference */
+	{ "iso-2022-jp", "iso-2022-jp.dat", 0 },
+	{ "Shift-JIS", "Shift-JIS.dat", 0 },
+	{ "euc-jp", "euc-jp.dat", 0 },
+	
+	/* Korean - in order of preference */
+	{ "euc-kr", "euc-kr.dat", 0 },
+	{ "iso-2022-kr", "iso-2022-kr.dat", 0 },
+	
+	/* Simplified Chinese */
+	{ "gb2312", "gb2312.dat", 0 },
+	
+	/* Traditional Chinese - in order of preference */
+	{ "Big5", "Big5.data", 0 },
+	{ "euc-tw", "euc-tw.dat", 0 },
+	{ NULL, NULL, 0 }
+};
+
+unsigned int encoding_map[256 * 256];
+
+#if G_BYTE_ORDER == G_BIG_ENDIAN
+#define UCS "UCS-4BE"
+#else
+#define UCS "UCS-4LE"
+#endif
+
+int main (int argc, char **argv)
+{
+	char *inptr, *outptr;
+	size_t inleft, outleft;
+	guint32 out[128];
+	char in[128];
+	int i, j, k;
+	int bit = 0x01;
+	int bytes;
+	iconv_t cd;
+	
+	/* dont count the terminator */
+	bytes = ((sizeof (tables) / sizeof (tables[0])) + 7 - 1) / 8;
+	
+	for (i = 0; i < 128; i++)
+		in[i] = i + 128;
+	
+	for (j = 0; tables[j].name; j++) {
+		cd = iconv_open (UCS, tables[j].name);
+		inptr = in;
+		outptr = (char *)(out);
+		inleft = sizeof (in);
+		outleft = sizeof (out);
+		while (iconv (cd, &inptr, &inleft, &outptr, &outleft) == -1) {
+			if (errno == EILSEQ) {
+				inptr++;
+				inleft--;
+			} else {
+				g_warning ("%s\n", g_strerror (errno));
+				exit (1);
+			}
+		}
+		iconv_close (cd);
+		
+		for (i = 0; i < 128 - outleft / 4; i++) {
+			encoding_map[i] |= bit;
+			encoding_map[out[i]] |= bit;
+		}
+		
+		tables[j].bit = bit;
+		bit <<= 1;
+	}
+	
+	/* Mutibyte tables */
+	for (j = 0; multibyte_tables[j].name; j++) {
+		char *inbuf, *outbuf;
+		struct stat st;
+		gunichar c;
+		FILE *fp;
+		
+		if (stat (multibyte_tables[j].filename, &st) == -1)
+			continue;
+		
+		fp = fopen (multibyte_tables[j].filename, "r");
+		if (fp == NULL)
+			continue;
+		
+		inleft = st.st_size;
+		inbuf = malloc (st.st_size);
+		outleft = st.st_size * 6 + 16;
+		outptr = outbuf = malloc (outleft);
+		
+		fread (inbuf, 1, st.st_size, fp);
+		fclose (fp);
+		
+		cd = iconv_open ("UTF-8", multibyte_tables[j].name);
+		
+		inptr = inbuf;
+		while (iconv (cd, &inptr, &inleft, &outptr, &outleft) == (size_t) -1) {
+			if (errno == EILSEQ || errno == EINVAL) {
+				inptr++;
+				inleft--;
+			} else {
+				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s\n",
+					   multibyte_tables[j].name, inleft, outleft,
+					   g_strerror (errno));
+				exit (1);
+			}
+		}
+		
+		iconv_close (cd);
+		
+		free (inbuf);
+		
+		/* now we have a UTF-8 string - convert to UCS-4 manually... */
+		i = 0;
+		inptr = outbuf;
+		while (inptr && *inptr) {
+			char *newinptr;
+			
+			newinptr = g_utf8_next_char (inptr);
+			c = g_utf8_get_char (inptr);
+			if (!g_unichar_validate (c)) {
+				g_warning ("Invalid UTF-8 sequence encountered");
+				inptr++;
+				continue;
+			} else if (i >= 65535 || c >= 65535) {
+				/* this'll overflow our table... */
+				break;
+			}
+			
+			inptr = newinptr;
+			
+			encoding_map[i++] |= bit;
+			encoding_map[c] |= bit;
+		}
+		
+		free (outbuf);
+		
+		multibyte_tables[j].bit = bit;
+		bit <<= 1;
+	}
+	
+	printf ("/* This file is automatically generated: DO NOT EDIT */\n\n");
+	
+	for (i = 0; i < 256; i++) {
+		/* first, do we need this block? */
+		for (k = 0; k < bytes; k++) {
+			for (j = 0; j < 256; j++) {
+				if ((encoding_map[i * 256 + j] & (0xff << (k * 8))) != 0)
+					break;
+			}
+			if (j < 256) {
+				/* yes, dump it */
+				printf ("static unsigned char m%02x%x[256] = {\n\t", i, k);
+				for (j = 0; j < 256; j++) {
+					printf ("0x%02x, ", (encoding_map[i * 256 + j] >> (k * 8)) & 0xff);
+					if (((j + 1) & 7) == 0 && j < 255)
+						printf ("\n\t");
+				}
+				printf ("\n};\n\n");
+			}
+		}
+	}
+	
+	printf ("struct {\n");
+	for (k = 0; k < bytes; k++) {
+		printf ("\tunsigned char *bits%d;\n", k);
+	}
+	
+	printf ("} charmap[256] = {\n\t");
+	for (i = 0; i < 256; i++) {
+		/* first, do we need this block? */
+		printf ("{ ");
+		for (k = 0; k < bytes; k++) {
+			for (j = 0; j < 256; j++) {
+				if ((encoding_map[i * 256 + j] & (0xff << (k * 8))) != 0)
+					break;
+			}
+			
+			if (j < 256) {
+				printf ("m%02x%x, ", i, k);
+			} else {
+				printf ("0, ");
+			}
+		}
+		
+		printf ("}, ");
+		if (((i + 1) & 7) == 0 && i < 255)
+			printf ("\n\t");
+	}
+	printf ("\n};\n\n");
+	
+	printf ("struct {\n\tconst char *name;\n\tunsigned int bit;\n} charinfo[] = {\n");
+	for (j = 0; tables[j].name; j++) {
+		printf ("\t{ \"%s\", 0x%04x },\n", tables[j].name, tables[j].bit);
+	}
+	for (j = 0; multibyte_tables[j].name; j++) {
+		printf ("\t{ \"%s\", 0x%04x },\n", multibyte_tables[j].name, multibyte_tables[j].bit);
+	}
+	printf ("};\n\n");
+	
+	printf("#define charset_mask(x) \\\n");
+	for (k = 0; k < bytes; k++) {
+		if (k != 0)
+			printf ("\t| ");
+		else
+			printf ("\t");
+		
+		printf ("(charmap[(x) >> 8].bits%d ? charmap[(x) >> 8].bits%d[(x) & 0xff] << %d : 0)",
+			k, k, k * 8);
+		
+		if (k < bytes - 1)
+			printf ("\t\\\n");
+	}
+	printf ("\n\n");
+	
+	return 0;
+}
+#endif /* BUILD_CHARSET_MAP */

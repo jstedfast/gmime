@@ -35,10 +35,6 @@
 
 static void g_mime_message_destroy (GMimeObject *object);
 
-static GMimeObject object_template = {
-	0, 0, g_mime_message_destroy
-};
-
 static char *rfc822_headers[] = {
 	"Return-Path",
 	"Received",
