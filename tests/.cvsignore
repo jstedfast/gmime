@@ -1,2 +1,12 @@
 Makefile.in
 Makefile
+test-best
+test-mime
+test-parser
+test-partial
+test-streams
+test-mbox
+test-html
+test-iconv
+test-pgp
+test-pgpmime

@@ -1,2 +1,9 @@
+*.o
+*.lo
+*.la
+.libs
+.deps
+Makefile
 Makefile.in
 gmime.h
+gen-table

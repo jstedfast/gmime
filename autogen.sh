@@ -36,7 +36,7 @@ if test "$DIE" -eq 1; then
 	exit 1
 fi
 
-test -f gmime.h.in || {
+test -f configure.in || {
 	echo "You must run this script in the top-level gmime directory"
 	exit 1
 }
