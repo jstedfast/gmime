@@ -1,0 +1,38 @@
+GMimeContentType
+GMimeDisposition
+GMimeHeader
+GMimeParam
+GObject
+  GMimeDataWrapper
+  GMimeObject
+    GMimeMessage
+    GMimeMessagePart
+    GMimeMessagePartial
+    GMimeMultipart
+      GMimeMultipartEncrypted
+      GMimeMultipartSigned
+    GMimePart
+  GMimeParser
+  GMimeStream
+    GMimeStreamBuffer
+    GMimeStreamCat
+    GMimeStreamFile
+    GMimeStreamFilter
+    GMimeStreamFs
+    GMimeStreamMem
+    GMimeStreamMmap
+    GMimeStreamNull
+  GMimeFilter
+    GMimeFilterBasic
+    GMimeFilterBest
+    GMimeFilterCharset
+    GMimeFilterCRLF
+    GMimeFilterFrom
+    GMimeFilterHTML
+    GMimeFilterMd5
+    GMimeFilterStrip
+    GMimeFilterYenc
+  GMimeCipherContext
+    GMimeGpgContext
+  GMimeSession
+InternetAddress

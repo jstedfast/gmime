@@ -1,0 +1,46 @@
+<refentry id="gmime-compiling" revision="1 Feb 2003">
+<refmeta>
+<refentrytitle>Compiling GMime Applications</refentrytitle>
+<manvolnum>3</manvolnum>
+<refmiscinfo>GMime Library</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>Compiling GMime Applications</refname>
+<refpurpose>
+How to compile your GMime application
+</refpurpose>
+</refnamediv>
+
+<refsect1>
+<title>Compiling GMime Applications on UNIX</title>
+
+<para>
+To compile a GMime application, you need to tell the compiler where to 
+find the GMime header files and libraries. This is done with the
+<literal>pkg-config</literal> utility.
+</para>
+<para>
+The following interactive shell session demonstrates how
+<literal>pkg-config</literal> is used:
+<programlisting>
+$ pkg-config --cflags gmime-2.0
+ -I/usr/include/gmime-2.0 -I/usr/include/glib-2.0 -I/usr/lib/glib-2.0/include 
+$ pkg-config --libs gmime-2.0
+ -L/opt/gnome2/lib -lgmime-2.0 -lnsl -lgobject-2.0 -lglib-2.0
+</programlisting>
+</para>
+<para>
+The simplest way to compile a program is to use the "backticks"
+feature of the shell. If you enclose a command in backticks
+(<emphasis>not single quotes</emphasis>), then its output will be
+substituted into the command line before execution. So to compile 
+a GTK+ Hello, World, you would type the following:
+<programlisting>
+$ cc `pkg-config --cflags --libs gmime-2.0` hello.c -o hello
+</programlisting>
+</para>
+
+</refsect1>
+
+</refentry>

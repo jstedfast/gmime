@@ -1,0 +1,95 @@
+<refentry id="gmime-question-index" revision="1 Feb 2003">
+  <refmeta>
+    <refentrytitle>Frequently Asked Questions</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Frequently Asked Questions</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Frequently Asked Questions</refname>
+    <refpurpose>
+Find answers to common questions in the GMime manual
+</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Questions and Answers</title>
+    <para>This is an "index" of the reference manual
+    organized by common "How do I..." questions. If you
+    aren't sure which documentation to read for the question you have,
+    this list is a good place to start.
+    </para>
+    <qandaset>
+      <qandadiv>
+        <title>General</title>
+        <qandaentry>
+          <question><para>Where can I get help with GMime, submit a bug report, or make a feature request?</para></question>
+          <answer>
+            <para>See the <link
+            linkend="gmime-resources">documentation on this
+            topic</link>.</para>
+          </answer>
+        </qandaentry>
+        <qandaentry>
+          <question><para>How do I port from one GMime version to another?</para></question>
+          <answer>
+            <para>See the <link linkend="gmime-changes-2-0">list of
+            incompatible changes from 1.0 to 2.0</link>.</para>
+            <para>If you have a question not covered in the manual,
+            feel free to ask me personally by emailing me at <ulink
+            url="mailto:fejj@ximian.com">fejj@ximian.com</ulink>.
+            </para>
+          </answer>
+        </qandaentry>
+        <qandaentry>
+          <question><para>How does memory management work in GMime? Should I free data returned from functions?</para></question>
+          <answer>
+            <para>See the documentation for <link
+            linkend="GObject">GObject</link>. For <link
+            linkend="GObject">GObject</link> note specifically <link
+            linkend="g-object-ref">g_object_ref()</link> and <link
+            linkend="g-object-unref">g_object_unref()</link>.
+            </para>
+            <para>For strings returned from functions, they will be
+            declared "const" if they should not be freed. Non-const
+            strings should be freed with <link
+            linkend="g-free">g_free()</link>. Arrays follow the same
+            rule.  (If you find an exception to the rules, please
+            report a bug to <ulink
+            url="http://bugzilla.gnome.org">http://bugzilla.gnome.org</ulink>.)
+            </para>
+          </answer>
+        </qandaentry>
+        <qandaentry>
+          <question><para>How do I use GMime with threads?</para></question>
+          <answer>
+            <para>First, read the <link
+            linkend="glib-Threads">GThread</link> documentation for
+            portable threading primitives.</para>
+            <para>Secondly, all functions in <link
+            linkend="gmime-charset">gmime-charset</link>, <link
+            linkend="gmime-iconv">gmime-iconv</link> and <link
+            linkend="gmime-utils">gmime-utils</link> should be
+            thread-safe. Objects subclassing <link
+            linkend="GObject">GObject</link> are not.
+            </para>
+          </answer>
+        </qandaentry>
+        <qandaentry>
+          <question><para>How do I use GMime with C++?</para></question>
+          <answer>
+            <para>There are two ways to approach this. The GMime
+            header files use the subset of C that's also valid C++, so you can
+            simply use the normal GMime API in a C++ program.</para>
+          </answer>
+        </qandaentry>
+        <qandaentry>
+          <question><para>How do I use GMime with other non-C languages?</para></question>
+          <answer>
+            <para>At one time there was a project to bind GMime to
+            both Perl and PHP. The Perl module was called MIME::Fast, although I
+            am unsure of the current status of these projects.</para>
+          </answer>
+        </qandaentry>
+      </qandadiv>
+    </qandaset>
+  </refsect1>
+</refentry>

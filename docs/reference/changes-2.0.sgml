@@ -1,0 +1,136 @@
+<refentry id="gmime-changes-2-0" revision="1 Feb 2003">
+  <refmeta>
+    <refentrytitle>Changes from 1.0 to 2.0</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Changes from 1.0 to 2.0</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Changes from 1.0 to 2.0</refname>
+    <refpurpose>
+Incompatible changes made between version 1.0 and version 2.0
+</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Incompatible changes from 1.0 to 2.0</title>
+    <para>
+See also the PORTING document in the toplevel GMime source directory.
+</para>
+    <para>
+The major change here is that I've dropped my own base object class
+and have replaced it with GObject from glib-2.0. This should be a
+pleasant change since you (the developer) will now be able to do many
+more things such as setting arbitrary data on all GMime objects. For
+additional information about GObject, please see the GObject Reference
+Manual at http://developer.gnome.org/doc/API/2.0/gobject/
+</para>
+    <itemizedlist>
+      <listitem>
+        <para>
+The first thing you need to know is that any function returning a
+non-const pointer to any object /must/ be unref'd when you are done
+with it. Since all objects in GMime now subclass GObject, you may
+safely use <function>g_object_unref()</function>
+(<structname>GMimeStream</structname>'s may also be unref'd using
+<function>g_mime_stream_unref()</function>, but either way is fine).
+
+Don't forget that
+<function>g_mime_part_get_content_object()</function> returns a
+ref-counted <structname>GMimeDataWrapper</structname> object now, and
+so you /must/ unref it when you have finished using it. You must also
+remember to unref any GMimeDataWrapper object that you /set/ on a
+GMimePart using <function>g_mime_part_set_content_object()</function>
+as the GMimePart will now ref the content object that you set on it.
+</para>
+      </listitem>
+      <listitem>
+        <para><structname>GMimeMultipart</structname> is a new class which is to be
+used for all multipart MIME parts rather than GMimePart (as in
+1.0). There are also some subclasses of GMimeMultipart for other
+things.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_part_[g,s]et_boundary()</function> have been removed
+(see above). You must now create a GMimeMultipart object and use
+<function>g_mime_multipart_[g,s]et_boundary()</function>.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_part_add_subpart()</function> has been replaced with
+<function>g_mime_multipart_add_part()</function>.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_part_foreach()</function> has been replaced with
+<function>g_mime_multipart_foreach()</function> and/or
+<function>g_mime_message_foreach_part()</function>.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_part_get_subpart_from_content_id()</function> has
+been replaced with
+<function>g_mime_multipart_get_subpart_from_content_id()</function>.
+</para>
+      </listitem>
+      <listitem>
+        <para>
+Another new class is <structname>GMimeMessagePart</structname> which
+is to be used for all MIME parts containing an rfc822 message. All 1.0
+GMimePart's representing message/rfc822 parts (as well as message/news
+parts?)  need to be migrated over to be GMimeMessagePart objects.
+</para>
+      </listitem>
+      <listitem>
+        <para><structname>GMimeMessagePartial</structname> is another class meant
+for handling the message/partial MIME type. All 1.0 GMimePart's
+holding data of this type should be replaced with GMimeMessagePartial
+objects.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_message_write_to_stream()</function> and
+<function>g_mime_part_write_to_stream()</function> functions have been
+consolidated into a virtual method. Replace calls to these functions
+with <function>g_mime_object_write_to_stream()</function>. Note: while
+<function>g_mime_part_write_to_stream()</function> and
+<function>g_mime_message_write_to_stream()</function> still exist, it
+is suggested you migrate to
+<function>g_mime_object_write_to_stream()</function>. Same goes for
+<function>g_mime_part_to_string()</function> and
+<function>g_mime_message_to_string()</function>.
+</para>
+      </listitem>
+      <listitem>
+        <para><structname>GMimeMessage</structname>'s structure has changed a
+bit. You will not be able to do <literal>message-&gt;header</literal>,
+instead you want to do <literal>((GMimeObject *)
+message)-&gt;header</literal>.
+</para>
+      </listitem>
+      <listitem>
+        <para><function>g_mime_message_set_message_id()</function> now takes a
+message_id argument without the encapsulating &lt; and &gt;'s (it now
+just takes the addr-spec portion of the msg-id).
+</para>
+      </listitem>
+      <listitem>
+        <para><structname>GMimeFilterFrom</structname> has changed slightly, you
+will want to replace all calls to
+<function>g_mime_filter_from_new()</function> with
+<function>g_mime_filter_from_new
+(GMIME_FILTER_FROM_MODE_DEFAULT)</function>
+(<literal>GMIME_FILTER_FROM_MODE_DEFAULT</literal> is equivalent to (<type>int</type>) 0).
+</para>
+      </listitem>
+      <listitem>
+        <para><structname>GMimeParser</structname> is a brand new class and
+<filename>gmime-parser.h</filename> has had a number of API additions.
+<function>g_mime_parser_construct_part()</function> and
+<function>g_mime_parser_construct_message()</function> still exist,
+however they no longer take a GMimeStream argument. Instead, they take
+a GMimeParser object.
+</para>
+      </listitem>
+    </itemizedlist>
+  </refsect1>
+</refentry>

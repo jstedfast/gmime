@@ -1,0 +1,234 @@
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!notation PNG system "PNG">
+<!entity % local.notation.class "| PNG">
+
+<!entity hash "#">
+<!entity percent "%">
+<!entity gmime-Init SYSTEM "sgml/gmime.sgml">
+<!entity GMimeSession SYSTEM "sgml/gmime-session.sgml">
+<!entity GMimeParam SYSTEM "sgml/gmime-param.sgml">
+<!entity GMimeHeader SYSTEM "sgml/gmime-header.sgml">
+<!entity GMimeContentType SYSTEM "sgml/gmime-content-type.sgml">
+<!entity GMimeDisposition SYSTEM "sgml/gmime-disposition.sgml">
+<!entity GMimeObject SYSTEM "sgml/gmime-object.sgml">
+<!entity GMimeDataWrapper SYSTEM "sgml/gmime-data-wrapper.sgml">
+<!entity GMimeMultipart SYSTEM "sgml/gmime-multipart.sgml">
+<!entity GMimeMultipartEncrypted SYSTEM "sgml/gmime-multipart-encrypted.sgml">
+<!entity GMimeMultipartSigned SYSTEM "sgml/gmime-multipart-signed.sgml">
+<!entity GMimePart SYSTEM "sgml/gmime-part.sgml">
+<!entity GMimeMessage SYSTEM "sgml/gmime-message.sgml">
+<!entity GMimeMessagePart SYSTEM "sgml/gmime-message-part.sgml">
+<!entity GMimeMessagePartial SYSTEM "sgml/gmime-message-partial.sgml">
+<!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
+<!entity InternetAddress SYSTEM "sgml/internet-address.sgml">
+<!entity GMimeParser SYSTEM "sgml/gmime-parser.sgml">
+<!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
+<!entity gmime-iconv SYSTEM "sgml/gmime-iconv.sgml">
+<!entity gmime-iconv-utils SYSTEM "sgml/gmime-iconv-utils.sgml">
+<!entity GMimeStream SYSTEM "sgml/gmime-stream.sgml">
+<!entity GMimeStreamBuffer SYSTEM "sgml/gmime-stream-buffer.sgml">
+<!entity GMimeStreamCat SYSTEM "sgml/gmime-stream-cat.sgml">
+<!entity GMimeStreamFile SYSTEM "sgml/gmime-stream-file.sgml">
+<!entity GMimeStreamFs SYSTEM "sgml/gmime-stream-fs.sgml">
+<!entity GMimeStreamMem SYSTEM "sgml/gmime-stream-mem.sgml">
+<!entity GMimeStreamMmap SYSTEM "sgml/gmime-stream-mmap.sgml">
+<!entity GMimeStreamNull SYSTEM "sgml/gmime-stream-null.sgml">
+<!entity GMimeStreamFilter SYSTEM "sgml/gmime-stream-filter.sgml">
+<!entity GMimeFilter SYSTEM "sgml/gmime-filter.sgml">
+<!entity GMimeFilterBasic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!entity GMimeFilterBest SYSTEM "sgml/gmime-filter-best.sgml">
+<!entity GMimeFilterCharset SYSTEM "sgml/gmime-filter-charset.sgml">
+<!entity GMimeFilterCRLF SYSTEM "sgml/gmime-filter-crlf.sgml">
+<!entity GMimeFilterFrom SYSTEM "sgml/gmime-filter-from.sgml">
+<!entity GMimeFilterHTML SYSTEM "sgml/gmime-filter-html.sgml">
+<!entity GMimeFilterMd5 SYSTEM "sgml/gmime-filter-md5.sgml">
+<!entity GMimeFilterStrip SYSTEM "sgml/gmime-filter-strip.sgml">
+<!entity GMimeFilterYenc SYSTEM "sgml/gmime-filter-yenc.sgml">
+<!entity GMimeCipherContext SYSTEM "sgml/gmime-cipher-context.sgml">
+<!entity GMimeGpgContext SYSTEM "sgml/gmime-gpg-context.sgml">
+
+<!entity index-Class-Tree SYSTEM "sgml/tree_index.sgml">
+
+<!entity gmime-Building SYSTEM "building.sgml">
+<!entity gmime-Compiling SYSTEM "compiling.sgml">
+<!entity gmime-Running SYSTEM "running.sgml">
+<!entity gmime-Resources SYSTEM "resources.sgml">
+<!entity gmime-Questions SYSTEM "question_index.sgml">
+<!entity gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
+
+<!entity gmime-Streams SYSTEM "streams.sgml">
+<!entity gmime-Filters SYSTEM "filters.sgml">
+<!entity gmime-DataWrappers SYSTEM "data-wrappers.sgml">
+]>
+
+<book id="index">
+  <bookinfo>
+    <title>GMime Reference Manual</title>
+    <authorgroup>
+      <author>
+      <firstname>Jeffrey</firstname>
+        <surname>Stedfast</surname>
+        <affiliation>
+          <address>
+            <email>fejj@helixcode.com</email>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2000-2003</year>
+      <holder>Jeffrey Stedfast</holder>
+    </copyright>
+
+    <legalnotice>
+      <para>Permission is granted to make and distribute verbatim
+      copies of this manual provided the copyright notice and this
+      permission notice are preserved on all copies.</para>
+      <para>Permission is granted to copy and distribute modified
+      versions of this manual under the conditions for verbatim
+      copying, provided also that the entire resulting derived work is
+      distributed under the terms of a permission notice identical to
+      this one.</para>
+      <para>Permission is granted to copy and distribute translations
+      of this manual into another language, under the above conditions
+      for modified versions.</para>
+    </legalnotice>
+
+    <abstract>
+      <para>This manual documents the interfaces of the gmime
+      library and has some short notes to help get you up to speed
+      with using the library.</para>
+    </abstract>
+  </bookinfo>
+
+  <part id="gmime">
+    <title>GMime Overview</title>
+    <partintro>
+      <para>
+GMime is a powerful MIME (Multipurpose Internet Mail Extension)
+utility library. It is meant for creating, editing, and parsing MIME
+messages and structures. GMime is released under the GNU General
+Public License. GMime is based on GLib 2.0's GObject system allowing
+for a lot of flexibility.
+      </para>
+      <para>
+GMime depends on the following libraries:
+        <variablelist>
+          <varlistentry>
+            <term>GLib</term>
+            <listitem>
+              <para>
+A general-purpose utility library, not specific to graphical user interfaces.
+GLib provides many useful data types, macros, type conversions,
+string utilities, file utilities, a main loop abstraction, and so on.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+      </para>
+    </partintro>
+    &gmime-Building;
+    &gmime-Compiling;
+    &gmime-Running;
+    &gmime-Changes-2-0;
+    &gmime-Resources;
+    &gmime-Questions;
+  </part>
+
+  <part id="fundamentals">
+    <title>GMime Fundamentals</title>
+    &gmime-Streams;
+    &gmime-Filters;
+    &gmime-DataWrappers;
+  </part>
+
+  <part id="core">
+    <title>GMime Core Reference</title>
+    &gmime-Init;
+    &gmime-charset;
+    &gmime-iconv;
+    &gmime-iconv-utils;
+    &gmime-utils;
+  </part>
+
+  <part id="classes">
+    <title>GMime Classes</title>
+    <chapter>
+      <title>Class hierarchy</title>
+      &index-Class-Tree;
+    </chapter>
+
+    <chapter id="Streams">
+      <title>Streams</title>
+      &GMimeStream;
+      &GMimeStreamFile;
+      &GMimeStreamFs;
+      &GMimeStreamMem;
+      &GMimeStreamMmap;
+      &GMimeStreamNull;
+      &GMimeStreamFilter;
+      &GMimeStreamBuffer;
+      &GMimeStreamCat;
+    </chapter>
+
+    <chapter id="Filters">
+      <title>Stream Filters</title>
+      &GMimeFilter;
+      &GMimeFilterBasic;
+      &GMimeFilterBest;
+      &GMimeFilterCharset;
+      &GMimeFilterCRLF;
+      &GMimeFilterFrom;
+      &GMimeFilterHTML;
+      &GMimeFilterMd5;
+      &GMimeFilterStrip;
+      &GMimeFilterYenc;
+    </chapter>
+
+    <chapter id="DataWrappers">
+      <title>Data Wrappers</title>
+      &GMimeDataWrapper;
+    </chapter>
+
+    <chapter id="Headers">
+      <title>Message and MIME Headers</title>
+      &GMimeHeader;
+      &GMimeContentType;
+      &GMimeDisposition;
+      &GMimeParam;
+    </chapter>
+
+    <chapter id="InternetAddresses">
+      <title>Internet Addresses</title>
+      &InternetAddress;
+    </chapter>
+
+    <chapter id="MimeParts">
+      <title>MIME Messages and Parts</title>
+      &GMimeObject;
+      &GMimeMessage;
+      &GMimePart;
+      &GMimeMultipart;
+      &GMimeMultipartEncrypted;
+      &GMimeMultipartSigned;
+      &GMimeMessagePart;
+      &GMimeMessagePartial;
+    </chapter>
+
+    <chapter id="Parsers">
+      <title>Parsing Messages and MIME Parts</title>
+      &GMimeParser;
+    </chapter>
+
+    <chapter id="CipherContexts">
+      <title>Cipher Contexts</title>
+      &GMimeCipherContext;
+      &GMimeGpgContext;
+    </chapter>
+
+    <chapter id="Sessions">
+      <title>Sessions</title>
+      &GMimeSession;
+    </chapter>
+  </part>
+</book>

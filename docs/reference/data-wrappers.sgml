@@ -1,0 +1,20 @@
+<refentry id="gmime-data-wrappers">
+  <refmeta>
+    <refentrytitle>GMime Data Wrappers</refentrytitle>
+    <refmiscinfo>GMime Library</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>GMime Data Wrappers</refname>
+    <refpurpose>How to use GMime Data Wrappers</refpurpose>
+  </refnamediv>
+  <refsect1 id="data-wrapper-overview">
+    <title>Overview of Data Wrappers</title>
+    <para>Data wrappers are a very simple concept. They wrap
+    data. Actually, they wrap around a source stream and contain
+    information about the format of the source stream. This makes
+    writing a data wrapper to a stream incredibly easy because it will
+    decode the data into its raw form before writing it to the output
+    stream for you.</para>
+  </refsect1>
+</refentry>
