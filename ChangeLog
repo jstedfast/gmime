@@ -1,3 +1,8 @@
+2002-07-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix for
+	nul-terminating some multibyte charsets.
+
 2002-06-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 1.0.2
