@@ -24,4 +24,6 @@ test-parser
 test-mime
 test-streams
 test-html
+test-pgp
+test-pgpmime
 gmime.spec
