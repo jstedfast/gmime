@@ -894,12 +894,6 @@ g_mime_utils_quoted_encode_close
 </SECTION>
 
 <SECTION>
-<FILE>gmime-host-utils</FILE>
-g_gethostbyname_r
-g_gethostbyaddr_r
-</SECTION>
-
-<SECTION>
 <FILE>internet-address</FILE>
 InternetAddressType
 InternetAddressList

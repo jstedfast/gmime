@@ -41,7 +41,6 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-filter-yenc.c		\
 	gmime-gpg-context.c		\
 	gmime-header.c			\
-	gmime-host-utils.c		\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
 	gmime-message.c			\
@@ -91,7 +90,6 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-yenc.h		\
 	gmime-gpg-context.h		\
 	gmime-header.h			\
-	gmime-host-utils.h		\
 	gmime-iconv.h			\
 	gmime-iconv-utils.h		\
 	gmime-message.h			\

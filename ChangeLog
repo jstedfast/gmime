@@ -1,3 +1,18 @@
+2004-10-22  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Removed the --enable-ipv6 option. getaddrinfo is
+	now the only way hostname resolution is done. Added checks to see
+	if getaddrinfo requires -lsocket for Solaris boxen.
+
+	* gmime/gmime-host-utils.[c,h]: Removed
+
+	* gmime/gmime.h.in: Removed gmime-host-utils.h
+
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Use
+	getaddrinfo to resolve hostnames, don't bother with the
+	gethostbyname() variants. Makes this code simpler and allows us to
+	get rid of gmime-host-utils.[c,h].
+
 2004-10-01  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated

@@ -114,12 +114,6 @@ dnl *****************************
 AC_CHECK_HEADERS(zlib.h)
 AC_CHECK_LIB(z, inflate, ZLIB="-lz")
 
-dnl *****************************
-dnl *** Checks for libnsl     ***
-dnl *****************************
-LIBNSL=""
-AC_CHECK_LIB(nsl, gethostbyname, LIBNSL="-lnsl")
-
 dnl Check for libiconv
 AM_ICONV()
 
@@ -184,116 +178,25 @@ else
 fi
 
 dnl Check for some network functions
-AC_CHECK_FUNCS(gethostname gethostbyname)
+AC_CHECK_FUNCS(gethostname getaddrinfo)
 
-dnl **************************************************
-dnl gethostbyname_r prototype
-dnl **************************************************
+dnl ****************************
+dnl *** Checks for libsocket ***
+dnl ****************************
+LIBSOCKET=""
+AC_CHECK_LIB(socket, getaddrinfo, LIBSOCKET="-lsocket -lnsl")
 
-AC_CHECK_FUNCS(gethostbyname_r,[
-AC_CACHE_CHECK([if gethostbyname_r wants five arguments], ac_cv_gethostbyname_r_five_args,
-[
-	AC_TRY_COMPILE([
-		#include "confdefs.h"
-		#include <sys/types.h>
-		#include <sys/socket.h>
-		#include <netinet/in.h>
-		#include <netdb.h>
-
-		#define BUFSIZE (sizeof(struct hostent)+10)
-	],[
-		struct hostent hent;
-		char buffer[BUFSIZE];
-		int bufsize=BUFSIZE;
-		int h_errno;
-
-		(void)gethostbyname_r ("www.ximian.com", &hent, buffer, bufsize, &h_errno);
-	],[
-		ac_cv_gethostbyname_r_five_args="yes"
-	],[
-		ac_cv_gethostbyname_r_five_args="no"
-	])
-])])
-	
-if test "x$ac_cv_gethostbyname_r_five_args" = "xyes" ; then
-	AC_DEFINE(GETHOSTBYNAME_R_FIVE_ARGS, 1, [Solaris-style gethostbyname_r])
-fi
-
-dnl **************************************************
-dnl gethostbyaddr_r prototype
-dnl **************************************************
-
-AC_CHECK_FUNCS(gethostbyaddr_r,[
-AC_CACHE_CHECK([if gethostbyaddr_r wants seven arguments], ac_cv_gethostbyaddr_r_seven_args,
-[
-	AC_TRY_COMPILE([
-		#include "confdefs.h"
-		#include <sys/types.h>
-		#include <sys/socket.h>
-		#include <netinet/in.h>
-		#include <netdb.h>
-
-		#define BUFSIZE (sizeof(struct hostent)+10)
-	],[
-		struct hostent hent;
-		char buffer[BUFSIZE];
-		int bufsize=BUFSIZE;
-		int h_errno;
-
-		(void)gethostbyaddr_r ("www.ximian.com", 14, AF_INET, &hent, buffer, bufsize, &h_errno);
-	],[
-		ac_cv_gethostbyaddr_r_seven_args="yes"
-	],[
-		ac_cv_gethostbyaddr_r_seven_args="no"
-	])
-])])
-	
-if test "x$ac_cv_gethostbyaddr_r_seven_args" = "xyes" ; then
-	AC_DEFINE(GETHOSTBYADDR_R_SEVEN_ARGS, 1, [Solaris-style gethostbyaddr_r])
-fi
-
-
-dnl **************************************************
-dnl * IPv6 support
-dnl **************************************************
-AC_ARG_ENABLE(ipv6, [  --enable-ipv6=[yes/no]      Enable support for resolving IPv6 addresses.],,enable_ipv6="auto")
-if test "x$enable_ipv6" != "xno"; then
-AC_CACHE_CHECK([if system has necessary structs and functions for IPv6 support], msg_ipv6,
-[
-	AC_TRY_COMPILE([
-		#include "confdefs.h"
-		#include <sys/types.h>
-		#include <sys/socket.h>
-		#include <netinet/in.h>
-		#include <netdb.h>
-
-	],[
-		struct addrinfo hints, *res;
-		struct sockaddr_in6 sin6;
-		int af = AF_INET6;
-		
-		getaddrinfo ("www.ximian.com", NULL, &hints, &res);
-		freeaddrinfo (res);
-	],[
-		enable_ipv6="yes"
-		msg_ipv6="yes"
-	],[
-		enable_ipv6="no"
-		msg_ipv6="no"
-	])
-])
-else
-	enable_ipv6="no"
-fi
-
-if test "x$enable_ipv6" = "xyes"; then
-	AC_DEFINE(ENABLE_IPv6,1,[Enable IPv6 support])
-fi
-AM_CONDITIONAL(ENABLE_IPv6, test "x$enable_ipv6" = "xyes")
-
+dnl *************************
+dnl *** Checks for libnsl ***
+dnl *************************
+LIBNSL=""
+AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
 
 dnl Extra libs
 EXTRA_LIBS="$ZLIB"
+if test "x$LIBSOCKET" != "x"; then
+	EXTRA_LIBS="$EXTRA_LIBS $LIBSOCKET"
+fi
 if test "x$LIBNSL" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $LIBNSL"
 fi
@@ -342,6 +245,5 @@ Configuration:
   Compiler:             ${CC}
 
   Profiling enabled:    ${enable_profile}
-  IPv6 support enabled: ${enable_ipv6}
   Warnings enabled:     ${enable_warnings}
 "

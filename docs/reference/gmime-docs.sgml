@@ -18,7 +18,6 @@
 <!ENTITY GMimeMessagePart SYSTEM "xml/gmime-message-part.xml">
 <!ENTITY GMimeMessagePartial SYSTEM "xml/gmime-message-partial.xml">
 <!ENTITY gmime-utils SYSTEM "xml/gmime-utils.xml">
-<!ENTITY gmime-host-utils SYSTEM "xml/gmime-host-utils.xml">
 <!ENTITY InternetAddress SYSTEM "xml/internet-address.xml">
 <!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
@@ -151,7 +150,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-iconv;
     &gmime-iconv-utils;
     &gmime-utils;
-    &gmime-host-utils;
   </part>
 
   <part id="classes">

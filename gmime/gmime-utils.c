@@ -50,7 +50,6 @@
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
-#include "gmime-host-utils.h"
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
@@ -776,29 +775,25 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #endif
 	static unsigned int count = 0;
 	char host[MAXHOSTNAMELEN + 1];
-#ifdef HAVE_GETHOSTBYNAME
-	struct hostent hostbuf;
-	char *buf = NULL;
+#ifdef HAVE_GETADDRINFO
+	struct addrinfo hints, *res;
+	char *name = NULL;
+	int ret;
 #endif
 	char *msgid;
 	
 	if (!fqdn) {
 #ifdef HAVE_GETHOSTNAME
 		if (gethostname (host, sizeof (host)) == 0) {
-#ifdef HAVE_GETHOSTBYNAME
-			size_t buflen = 1024;
-			int retval;
+#ifdef HAVE_GETADDRINFO
+			memset (&hints, 0, sizeof (hints));
+			hints.ai_flags = AI_CANONNAME;
 			
-			buf = g_malloc (buflen);
-			
-			while ((retval = g_gethostbyname_r (host, &hostbuf, buf, buflen, NULL)) == ERANGE && buflen < 8192)
-				buf = g_realloc (buf, (buflen += 1024));
-			
-			if (retval == -1) {
-				g_free (buf);
-				buf = NULL;
+			if (getaddrinfo (host, NULL, &hints, &res) == 0) {
+				name = g_strdup (res->ai_canonname);
+				freeaddrinfo (res);
 			}
-#endif /* HAVE_GETHOSTBYNAME */
+#endif /* HAVE_GETADDRINFO */
 		} else {
 			host[0] = '\0';
 		}
@@ -806,9 +801,9 @@ g_mime_utils_generate_message_id (const char *fqdn)
 		host[0] = '\0';
 #endif /* HAVE_GETHOSTNAME */
 		
-#ifdef HAVE_GETHOSTBYNAME
-		fqdn = buf != NULL ? hostbuf.h_name : (*host ? host : "localhost.localdomain");
-		g_free (buf);
+#ifdef HAVE_GETADDRINFO
+		fqdn = name != NULL ? name : (*host ? host : "localhost.localdomain");
+		g_free (name);
 #else
 		fqdn = *host ? host : "localhost.localdomain";
 #endif
