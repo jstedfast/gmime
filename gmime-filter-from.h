@@ -31,13 +31,20 @@ extern "C" {
 
 #include "gmime-filter.h"
 
+typedef enum _GMimeFilterFromMode {
+	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
+	GMIME_FILTER_FROM_MODE_ESCAPE   = 1,
+	GMIME_FILTER_FROM_MODE_ARMOR    = 2,
+} GMimeFilterFromMode;
+
 typedef struct _GMimeFilterFrom {
 	GMimeFilter parent;
 	
+	GMimeFilterFromMode mode;
 	gboolean midline;
 } GMimeFilterFrom;
 
-GMimeFilter *g_mime_filter_from_new (void);
+GMimeFilter *g_mime_filter_from_new (GMimeFilterFromMode mode);
 
 #ifdef __cplusplus
 }

@@ -61,13 +61,21 @@ static GMimeFilter filter_template = {
  * Returns a new from filter.
  **/
 GMimeFilter *
-g_mime_filter_from_new ()
+g_mime_filter_from_new (GMimeFilterFromMode mode)
 {
 	GMimeFilterFrom *new;
 	
 	new = g_new (GMimeFilterFrom, 1);
-	
 	new->midline = FALSE;
+	switch (mode) {
+	case GMIME_FILTER_FROM_MODE_ARMOR:
+		new->mode = mode;
+		break;
+	case GMIME_FILTER_FROM_MODE_ESCAPE:
+	default:
+		new->mode = GMIME_FILTER_FROM_MODE_ESCAPE;
+		break;
+	}
 	
 	g_mime_filter_construct (GMIME_FILTER (new), &filter_template);
 	
@@ -84,7 +92,9 @@ filter_destroy (GMimeFilter *filter)
 static GMimeFilter *
 filter_copy (GMimeFilter *filter)
 {
-	return g_mime_filter_from_new ();
+	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
+	
+	return g_mime_filter_from_new (from->mode);
 }
 
 struct fromnode {
@@ -145,7 +155,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	}
 	
 	if (fromcount > 0) {
-		g_mime_filter_set_size (filter, len + fromcount, FALSE);
+		g_mime_filter_set_size (filter, len + (fromcount * from->mode), FALSE);
 		
 		node = head;
 		inptr = in;
@@ -153,8 +163,16 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		while (node) {
 			memcpy (outptr, inptr, (unsigned) (node->pointer - inptr));
 			outptr += node->pointer - inptr;
-			*outptr++ = '>';
-			inptr = node->pointer;
+			if (from->mode == GMIME_FILTER_FROM_MODE_ARMOR) {
+				*outptr++ = '=';
+				*outptr++ = '4';
+				*outptr++ = '6';
+				inptr = node->pointer + 1;
+			} else {
+				*outptr++ = '>';
+				inptr = node->pointer;
+			}
+			
 			node = node->next;
 		}
 		

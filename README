@@ -13,6 +13,7 @@ following RFCs:
  * 1521: MIME (Multipurpose Internet Mail Extensions) Part One:
          Mechanisms for Specifying and Describing the Format of 
          Internet Message Bodies
+ * 1864: The Content-MD5 Header Field (Obsoletes rfc1544)
  * 2045: Multipurpose Internet Mail Extensions (MIME) Part One:
          Format of Internet Message Bodies
  * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two:
@@ -44,7 +45,13 @@ Other RFCs of interest:
  * 2632: S/MIME Version 3 Certificate Handling
  * 2633: S/MIME Version 3 Message Specification
  * 2634: Enhanced Security Services for S/MIME
+ * 3156: MIME Security with OpenPGP (Updates rfc2015)
 
+Cryptography related RFCs:
+
+ * 2313: PKCS #1: RSA Encryption
+ * 2314: PKCS #10: Certification Request Syntax
+ * 2315: PKCS #7: Cryptographic Message Syntax
 
 LICENSE INFORMATION
 -------------------

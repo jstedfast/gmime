@@ -1,3 +1,10 @@
+2002-06-02  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-from.c (g_mime_filter_from_new): Now takes a mode
+	argument to specify how "From "'s should be protected.
+	(filter_filter): If we are to armor the "From " then transform it
+	into "=46rom " otherwise transform it into the normal ">From ".
+
 2002-05-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream-cat.c (stream_read): Rewritten to work

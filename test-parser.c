@@ -104,7 +104,7 @@ test_parser (GMimeStream *stream)
 	
 #ifdef TEST_WRITE_TO_STREAM
 	stream = g_mime_stream_fs_new (2);
-	g_mime_object_write_to_stream (message, stream);
+	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
 	g_mime_stream_flush (stream);
 	GMIME_STREAM_FS (stream)->fd = -1;
 	g_mime_stream_unref (stream);
