@@ -30,6 +30,7 @@
 
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
+#include "memchunk.h"
 
 
 #define ICONV_CACHE_SIZE   (10)
@@ -62,7 +63,7 @@ static struct _iconv_cache_bucket *iconv_cache_tail;
 static unsigned int iconv_cache_size = 0;
 static GHashTable *iconv_cache;
 static GHashTable *iconv_open_hash;
-
+static MemChunk *node_chunk;
 
 
 static struct _iconv_node *
@@ -70,7 +71,7 @@ iconv_node_new (struct _iconv_cache_bucket *bucket)
 {
 	struct _iconv_node *node;
 	
-	node = g_new (struct _iconv_node, 1);
+	node = memchunk_alloc (node_chunk);
 	node->next = NULL;
 	node->prev = NULL;
 	node->bucket = bucket;
@@ -90,6 +91,9 @@ iconv_node_set_used (struct _iconv_node *node, gboolean used)
 		/* this should be a lone unused node, so prepend it to the used list */
 		node->next = node->bucket->used;
 		node->bucket->used = node;
+		
+		/* add to the open hash */
+		g_hash_table_insert (iconv_open_hash, node->cd, node);
 	} else {
 		/* this could be anywhere in the used node list... */
 		if (node->prev) {
@@ -101,6 +105,9 @@ iconv_node_set_used (struct _iconv_node *node, gboolean used)
 			if (node->next)
 				node->next->prev = NULL;
 		}
+		
+		/* remove from the iconv open hash */
+		g_hash_table_remove (iconv_open_hash, node->cd);
 	}
 }
 
@@ -111,7 +118,7 @@ iconv_node_destroy (struct _iconv_node *node)
 		if (node->cd != (iconv_t) -1)
 			iconv_close (node->cd);
 		
-		g_free (node);
+		memchunk_free (node_chunk, node);
 	}
 }
 
@@ -242,6 +249,8 @@ g_mime_iconv_shutdown (void)
 	
 	g_hash_table_destroy (iconv_cache);
 	g_hash_table_destroy (iconv_open_hash);
+	
+	memchunk_destroy (node_chunk);
 }
 
 
@@ -258,6 +267,11 @@ g_mime_iconv_init (void)
 	
 	if (initialized)
 		return;
+	
+	g_mime_charset_init ();
+	
+	node_chunk = memchunk_new (sizeof (struct _iconv_node),
+				   ICONV_CACHE_SIZE, FALSE);
 	
 	iconv_cache_buckets = NULL;
 	iconv_cache_tail = (struct _iconv_cache_bucket *) &iconv_cache_buckets;

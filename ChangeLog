@@ -1,3 +1,15 @@
+2002-01-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-iconv.c: test suite to make sure that the gmime-iconv cache
+	works.
+
+	* gmime-iconv.c (g_mime_iconv_init): Initialize the iconv_node
+	memchunk.
+	(g_mime_iconv_shutdown): Destroy the iconv_node memchunk.
+	(iconv_node_destroy): Use memchunk_free instead of g_free.
+	(iconv_node_new): Use memchunk_alloc.
+	(iconv_node_set_used): Add/Remove the node to the iconv_open_hash.
+
 2002-01-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 0.7.7

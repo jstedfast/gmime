@@ -6,7 +6,7 @@ INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@ -DG_LOG_DOMAIN=\"gmime\"
 
 VERSION_FLAGS = -DGMIME_VERSION=\"@GMIME_VERSION@\"
 
-noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html
+noinst_PROGRAMS = gen-table test-mime test-parser test-streams test-html test-iconv
 
 bin_SCRIPTS = gmime-config
 
@@ -107,6 +107,11 @@ test_html_LDFLAGS =
 test_html_DEPENDENCIES = $(DEPS)
 test_html_LDADD = $(LDADDS)
 
+test_iconv_SOURCES = test-iconv.c
+test_iconv_LDFLAGS = 
+test_iconv_DEPENDENCIES = $(DEPS)
+test_iconv_LDADD = $(LDADDS)
+
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
@@ -116,7 +121,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests STREAMtests FILTERtests
+tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -136,6 +141,11 @@ STREAMtests : test-streams
 FILTERtests : test-html
 	@echo "##"
 	@echo "## Filter regression tests"
+	@echo "##"
+
+ICONVtests : test-iconv
+	@echo "##"
+	@echo "## iconv cache regression tests"
 	@echo "##"
 
 dist-hook: gmime.spec
