@@ -54,6 +54,7 @@ dnl Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
+AC_CHECK_HEADERS(alloca.h)
 
 dnl Specific dir for HTML output ?
 if test "x$with_html_dir" = "x" ; then
@@ -105,7 +106,7 @@ AC_SUBST(glib_libs)
 
 dnl Checks for library functions.
 AC_FUNC_STRFTIME
-AC_CHECK_FUNCS(strftime localtime isblank)
+AC_CHECK_FUNCS(localtime isblank)
 
 dnl * Time zone stuff
 AC_CACHE_CHECK(for timezone variable, ac_cv_var_timezone,
