@@ -150,15 +150,18 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		return -1;
 	
 	do {
+		while (current && g_mime_stream_eos (current->stream))
+			current = current->next;
+		
+		if (!current)
+			break;
+		
 		n = g_mime_stream_read (current->stream, buf + nread, len - nread);
 		if (n < 0) {
 			if (nread == 0)
 				return -1;
 			break;
 		}
-		
-		if (g_mime_stream_eos (current->stream))
-			current = current->next;
 		
 		nread += n;
 	} while (nread < len && current);

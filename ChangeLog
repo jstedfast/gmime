@@ -3,6 +3,8 @@
 	* gmime-stream-cat.c (stream_seek): Return the absolute offset
 	into the cat stream rather than the relative offset of one of the
 	substreams on success. Fixed a few other things too.
+	(stream_read): Fix the logic here so that we never try reading
+	from a stream that is current at EOS.
 
 2002-05-16  Jeffrey Stedfast  <fejj@ximian.com>
 
