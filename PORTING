@@ -12,7 +12,7 @@ to the new release from the prior version.
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
 
-Note: GMime 2.2 is both API and ABI compatable with GMime 2.0 meaning
+Note: GMime 2.2 is both API and ABI compatible with GMime 2.0 meaning
 that any program written for GMime 2.0 will compile fine with GMime
 2.2 and any program linked against GMime 2.0's libraries will also
 work with GMime 2.2's libraries.
