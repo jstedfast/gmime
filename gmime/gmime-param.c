@@ -731,7 +731,7 @@ g_string_append_len (GString *out, const char *in, size_t len)
 	char *buf;
 	
 	buf = alloca (len + 1);
-	strlcpy (buf, in, len);
+	strlcpy (buf, in, len + 1);
 	
 	g_string_append (out, buf);
 }
