@@ -72,7 +72,7 @@ stream_destroy (GMimeStream *stream)
 			munmap (mstream->map, mstream->maplen);
 #endif
 		
-		if (mstream->fd)
+		if (mstream->fd != -1)
 			close (mstream->fd);
 	}
 	
