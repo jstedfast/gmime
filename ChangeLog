@@ -1,3 +1,7 @@
+2000-11-01  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* Makefile.am (INCLUDES): Add -DG_LOG_DOMAIN=\"gmime\"
+
 2000-10-31  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-parser.c (test_parser): Test g_mime_message_get_body() here
