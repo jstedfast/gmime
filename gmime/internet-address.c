@@ -211,7 +211,7 @@ internet_address_set_addr (InternetAddress *ia, const char *addr)
 void
 internet_address_set_group (InternetAddress *ia, InternetAddressList *group)
 {
-	InternetAddressList *members, *next;
+	/*InternetAddressList *members, *next; */
 	
 	g_return_if_fail (ia != NULL);
 	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
@@ -256,7 +256,7 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node;
 	
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia!=NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);
@@ -282,7 +282,7 @@ internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
 {
 	InternetAddressList *node, *n;
 	
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia!=NULL, NULL);
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);

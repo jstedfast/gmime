@@ -1,3 +1,13 @@
+2002-01-09  Charles Kerr <charles@rebelbase.com>
+
+	* internet-address.c (internet_address_list_prepend): replaced
+	"g_return_if_fail" with "g_return_val_if_fail".
+	* internet-address.c (internet_address_list_append): same.
+
+	* internet-address.c (internet_address_set_group): removed
+	unused variables to shut up compiler.
+	* gmime-param.c (rfc2184_decode): same.
+
 2002-01-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* config.h.in: Added a #include <alloca.h> if HAVE_ALLOCA_H is

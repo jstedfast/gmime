@@ -103,9 +103,9 @@ rfc2184_decode (const char *in, unsigned int len)
 {
 	const char *inptr = in;
 	const char *inend = in + len;
-	const char *charset;
+	/*const char *charset;*/
 	char *decoded = NULL;
-	char *encoding;
+	/*char *encoding;*/
 	
 	/* skips to the end of the charset / beginning of the locale */
 	inptr = memchr (inptr, '\'', len);
