@@ -17,6 +17,7 @@ config.status
 config.log
 config.h
 gmime.h
+iconv-detect.h
 gmime-config
 gmimeConf.sh
 gen-table
