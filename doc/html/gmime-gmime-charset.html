@@ -111,7 +111,7 @@ NAME="GMIME-GMIME-CHARSET"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN6188"
+NAME="AEN6234"
 ></A
 ><H2
 >Name</H2
@@ -119,7 +119,7 @@ NAME="AEN6188"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN6191"
+NAME="AEN6237"
 ></A
 ><H2
 >Synopsis</H2
@@ -141,7 +141,11 @@ HREF="gmime-gmime-charset.html#G-MIME-CHARSET-INIT"
 const char* <A
 HREF="gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME"
 >g_mime_charset_locale_name</A
->      (void);</PRE
+>      (void);
+const char* <A
+HREF="gmime-gmime-charset.html#G-MIME-CHARSET-NAME"
+>g_mime_charset_name</A
+>             (const char *charset);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -149,7 +153,7 @@ HREF="gmime-gmime-charset.html#G-MIME-CHARSET-LOCALE-NAME"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6196"
+NAME="AEN6243"
 ></A
 ><H2
 >Description</H2
@@ -159,14 +163,14 @@ NAME="AEN6196"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN6199"
+NAME="AEN6246"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6201"
+NAME="AEN6248"
 ></A
 ><H3
 ><A
@@ -196,7 +200,7 @@ iso-8859-1 locales.</P
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN6207"
+NAME="AEN6254"
 ></A
 ><H3
 ><A
@@ -223,7 +227,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN6213"
+NAME="AEN6260"
 ></A
 ><P
 ></P
@@ -249,6 +253,96 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >the user's locale charset (or iso-8859-1 by default).</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN6269"
+></A
+><H3
+><A
+NAME="G-MIME-CHARSET-NAME"
+></A
+>g_mime_charset_name ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>const char* g_mime_charset_name             (const char *charset);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Attempts to find an iconv-friendly charset name for <TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN6276"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> charset name</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an iconv-friendly charset name for <TT
+CLASS="PARAMETER"
+><I
+>charset</I
+></TT
+>.</TD
 ></TR
 ></TBODY
 ></TABLE

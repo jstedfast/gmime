@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter">
+<refentry id="gmime-gmime-filter" revision="14 Jan 2002">
 <refmeta>
 <refentrytitle>gmime-filter</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -104,7 +104,6 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 <tbody>
 <row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

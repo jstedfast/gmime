@@ -8,6 +8,7 @@
 <!entity gmime-gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
 <!entity gmime-gmime-filter SYSTEM "sgml/gmime-filter.sgml">
 <!entity gmime-gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
+<!entity gmime-gmime-filter-charset SYSTEM "sgml/gmime-filter-charset.sgml">
 <!entity gmime-gmime-filter-crlf SYSTEM "sgml/gmime-filter-crlf.sgml">
 <!entity gmime-gmime-filter-from SYSTEM "sgml/gmime-filter-from.sgml">
 <!entity gmime-gmime-filter-html SYSTEM "sgml/gmime-filter-html.sgml">

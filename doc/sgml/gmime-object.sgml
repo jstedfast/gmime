@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-object">
+<refentry id="gmime-gmime-object" revision="14 Jan 2002">
 <refmeta>
 <refentrytitle>gmime-object</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -50,7 +50,6 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 <tbody>
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

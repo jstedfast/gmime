@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part">
+<refentry id="gmime-gmime-part" revision="14 Jan 2002">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -143,7 +143,6 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -159,7 +158,6 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <tbody>
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -212,11 +210,9 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-filter-from</TITLE
+>gmime-filter-charset</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter-crlf"
-HREF="gmime-gmime-filter-crlf.html"><LINK
+TITLE="gmime-filter-basic"
+HREF="gmime-gmime-filter-basic.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-html"
-HREF="gmime-gmime-filter-html.html"></HEAD
+TITLE="gmime-filter-crlf"
+HREF="gmime-gmime-filter-crlf.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-html.html"
+HREF="gmime-gmime-filter-crlf.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-FILTER-FROM"
->gmime-filter-from</A
+NAME="GMIME-GMIME-FILTER-CHARSET"
+>gmime-filter-charset</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1945"
+NAME="AEN1845"
 ></A
 ><H2
 >Name</H2
->gmime-filter-from&nbsp;--&nbsp;</DIV
+>gmime-filter-charset&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1948"
+NAME="AEN1848"
 ></A
 ><H2
 >Synopsis</H2
@@ -150,9 +150,10 @@ CLASS="SYNOPSIS"
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
 >* <A
-HREF="gmime-gmime-filter-from.html#G-MIME-FILTER-FROM-NEW"
->g_mime_filter_from_new</A
->         (void);</PRE
+HREF="gmime-gmime-filter-charset.html#G-MIME-FILTER-CHARSET-NEW"
+>g_mime_filter_charset_new</A
+>      (const char *from_charset,
+                                             const char *to_charset);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -160,7 +161,7 @@ HREF="gmime-gmime-filter-from.html#G-MIME-FILTER-FROM-NEW"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1953"
+NAME="AEN1853"
 ></A
 ><H2
 >Description</H2
@@ -170,20 +171,20 @@ NAME="AEN1953"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1956"
+NAME="AEN1856"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1958"
+NAME="AEN1858"
 ></A
 ><H3
 ><A
-NAME="G-MIME-FILTER-FROM-NEW"
+NAME="G-MIME-FILTER-CHARSET-NEW"
 ></A
->g_mime_filter_from_new ()</H3
+>g_mime_filter_charset_new ()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -196,18 +197,19 @@ CLASS="PROGRAMLISTING"
 ><A
 HREF="gmime-gmime-filter.html#GMIMEFILTER"
 >GMimeFilter</A
->* g_mime_filter_from_new         (void);</PRE
+>* g_mime_filter_charset_new      (const char *from_charset,
+                                             const char *to_charset);</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
->Creates a new GMimeFilterFrom filter.</P
+>Creates a new GMimeFilterCharset filter.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1965"
+NAME="AEN1865"
 ></A
 ><P
 ></P
@@ -224,6 +226,40 @@ CLASS="CALSTABLE"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>from_charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>to_charset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
@@ -232,7 +268,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new from filter.</TD
+>a new charset filter.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -256,7 +292,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-filter-basic.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -310,7 +346,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-html.html"
+HREF="gmime-gmime-filter-crlf.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -328,7 +364,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-crlf</B
+>gmime-filter-basic</B
 ></FONT
 ></TD
 ><TD
@@ -338,7 +374,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-html</B
+>gmime-filter-crlf</B
 ></FONT
 ></TD
 ></TR

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils">
+<refentry id="gmime-gmime-utils" revision="14 Jan 2002">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -116,7 +116,6 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
 
-
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -132,7 +131,6 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <tbody>
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

@@ -112,6 +112,11 @@ g_mime_filter_basic_new_type
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-charset</FILE>
+g_mime_filter_charset_new
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-crlf</FILE>
 GMimeFilterCRLFDirection
 GMimeFilterCRLFMode
@@ -355,4 +360,5 @@ g_mime_parser_construct_message
 <FILE>gmime-charset</FILE>
 g_mime_charset_init
 g_mime_charset_locale_name
+g_mime_charset_name
 </SECTION>

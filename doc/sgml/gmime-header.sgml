@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-header">
+<refentry id="gmime-gmime-header" revision="14 Jan 2002">
 <refmeta>
 <refentrytitle>gmime-header</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -64,14 +64,11 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
-<entry>
-</entry></row>
+<entry></entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
 <entry>
-
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

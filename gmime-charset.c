@@ -30,12 +30,75 @@
 #include <string.h>
 #include <locale.h>
 
+
+struct {
+	char *charset;
+	char *iconv_name;
+} known_iconv_charsets[] = {
+#if 0
+	/* charset name, iconv-friendly charset name */
+	{ "iso-8859-1",      "iso-8859-1" },
+	{ "iso8859-1",       "iso-8859-1" },
+	/* the above mostly serves as an example for iso-style charsets,
+	   but we have code that will populate the iso-*'s if/when they
+	   show up in g_mime_charset_name() so I'm
+	   not going to bother putting them all in here... */
+	{ "windows-cp1251",  "cp1251"     },
+	{ "windows-1251",    "cp1251"     },
+	{ "cp1251",          "cp1251"     },
+	/* the above mostly serves as an example for windows-style
+	   charsets, but we have code that will parse and convert them
+	   to their cp#### equivalents if/when they show up in
+	   g_mime_charset_name() so I'm not going to bother
+	   putting them all in here either... */
+#endif
+	/* charset name, iconv-friendly name (sometimes case sensitive) */
+	{ "utf-8",           "UTF-8"      },
+
+	/* 10646 is a special case, its usually UCS-2 big endian */
+	/* This might need some checking but should be ok for solaris/linux */
+	{ "iso-10646-1",     "UCS-2BE"    },
+	{ "iso_10646-1",     "UCS-2BE"    },
+	{ "iso10646-1",      "UCS-2BE"    },
+	{ "iso-10646",       "UCS-2BE"    },
+	{ "iso_10646",       "UCS-2BE"    },
+	{ "iso10646",        "UCS-2BE"    },
+
+	{ "ks_c_5601-1987",  "EUC-KR"     },
+
+	/* FIXME: Japanese/Korean/Chinese stuff needs checking */
+	{ "euckr-0",         "EUC-KR"     },
+	{ "big5-0",          "BIG5"       },
+	{ "big5.eten-0",     "BIG5"       },
+	{ "big5hkscs-0",     "BIG5HKCS"   },
+	{ "gb2312-0",        "gb2312"     },
+	{ "gb2312.1980-0",   "gb2312"     },
+	{ "gb18030-0",       "gb18030"    },
+	{ "gbk-0",           "GBK"        },
+
+	{ "eucjp-0",         "eucJP"      },
+	{ "ujis-0",          "ujis"       },
+	{ "jisx0208.1983-0", "SJIS"       },
+	{ "jisx0212.1990-0", "SJIS"       },
+	{ NULL,              NULL         }
+};
+
+static GHashTable *iconv_charsets = NULL;
 static char *locale_charset = NULL;
 
 
 static void
+iconv_charset_free (gpointer key, gpointer value, gpointer user_data)
+{
+	g_free (key);
+	g_free (value);
+}
+
+static void
 g_mime_charset_shutdown (void)
 {
+	g_hash_table_foreach (iconv_charsets, iconv_charset_free, NULL);
+	g_hash_table_destroy (iconv_charsets);
 	g_free (locale_charset);
 }
 
@@ -50,9 +113,20 @@ g_mime_charset_shutdown (void)
 void
 g_mime_charset_init (void)
 {
-	char *locale;
+	char *charset, *iconv_name, *locale;
+	int i;
 	
-	g_free (locale_charset);
+	if (iconv_charsets)
+		return;
+	
+	iconv_charsets = g_hash_table_new (g_str_hash, g_str_equal);
+	
+	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
+		charset = g_strdup (known_iconv_charsets[i].charset);
+		iconv_name = g_strdup (known_iconv_charsets[i].iconv_name);
+		g_strdown (charset);
+		g_hash_table_insert (iconv_charsets, charset, iconv_name);
+	}
 	
 	locale = setlocale (LC_ALL, NULL);
 	
@@ -100,4 +174,60 @@ const char *
 g_mime_charset_locale_name (void)
 {
 	return locale_charset ? locale_charset : "iso-8859-1";
+}
+
+
+/**
+ * g_mime_charset_name:
+ * @charset: charset name
+ *
+ * Attempts to find an iconv-friendly charset name for @charset.
+ *
+ * Returns an iconv-friendly charset name for @charset.
+ **/
+const char *
+g_mime_charset_name (const char *charset)
+{
+	char *name, *iconv_name, *buf;
+	
+	if (charset == NULL)
+		return NULL;
+	
+	if (!iconv_charsets)
+		return charset;
+	
+	name = alloca (strlen (charset) + 1);
+	strcpy (name, charset);
+	g_strdown (name);
+	
+	iconv_name = g_hash_table_lookup (iconv_charsets, name);
+	if (iconv_name)
+		return iconv_name;
+	
+	if (!strncmp (name, "iso", 3)) {
+		buf = name + 3;
+		if (*buf == '-' || *buf == '_')
+			buf++;
+		
+		iconv_name = g_strdup_printf ("ISO-%s", buf);
+	} else if (!strncmp (name, "windows-", 8)) {
+		buf = name + 8;
+		if (!strncmp (buf, "cp", 2))
+			buf += 2;
+		
+		iconv_name = g_strdup_printf ("CP%s", buf);
+	} else if (!strncmp (name, "microsoft-", 10)) {
+		buf = name + 10;
+		if (!strncmp (buf, "cp", 2))
+			buf += 2;
+		
+		iconv_name = g_strdup_printf ("CP%s", buf);
+	} else {
+		/* assume charset name is ok as is? */
+		iconv_name = g_strdup (charset);
+	}
+	
+	g_hash_table_insert (iconv_charsets, g_strdup (name), iconv_name);
+	
+	return iconv_name;
 }
