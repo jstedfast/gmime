@@ -1,5 +1,12 @@
 2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gen-table.c: Updated.
+
+	* gmime-utils.c (quoted_decode): Oops. ESPECIALs are allowed
+	inside of the encoded-text section of the encoded-word.
+
+	* gmime-message.c (process_header): Add some NULL-protection.
+
 	* gmime-iconv.c (g_mime_iconv_open): If the from charset is
 	"x-unknown", replace it with the user's locale charset.
 

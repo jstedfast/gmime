@@ -144,6 +144,7 @@ test_onepart (void)
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mime_part));
+	g_mime_object_unref (GMIME_OBJECT (mime_part));
 	
 	text = g_mime_message_to_string (message);
 	
@@ -175,6 +176,15 @@ test_encodings (void)
 {
 	char *enc, *dec;
 	int pos, state = -1, save = 0;
+
+	enc = g_strdup ("Re: !!! =?windows-1250?Q?Nab=EDz=EDm_scanov=E1n=ED_negativ=F9?= "
+			"=?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= "
+			"=?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=");
+	fprintf (stderr, "encoded: %s\n", enc);
+	dec = g_mime_utils_8bit_header_decode (enc);
+	fprintf (stderr, "decoded: %s\n", dec);
+	g_free (enc);
+	g_free (dec);
 	
 	enc = g_strdup ("OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem");
 	fprintf (stderr, "encoded: %s\n", enc);

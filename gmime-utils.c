@@ -978,7 +978,6 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	unsigned char c, c1;
-	gboolean err = FALSE;
 	
 	inend = in + len;
 	outptr = out;
@@ -994,26 +993,17 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
 					| ((c1 >= 'A' ? c1 - 'A' + 10 : c1 - '0') & 0x0f);
 			} else {
 				/* data was truncated */
-				err = TRUE;
-				break;
+				return -1;
 			}
 		} else if (c == '_') {
 			/* _'s are an rfc2047 shortcut for encoding spaces */
 			*outptr++ = ' ';
-		} else if (isblank (c) || strchr (CHARS_ESPECIAL, c)) {
-			/* FIXME: this is an error! ignore for now ... */
-			err = TRUE;
-			break;
 		} else {
 			*outptr++ = c;
 		}
 	}
 	
-	if (!err) {
-		return (outptr - out);
-	}
-	
-	return -1;
+	return (outptr - out);
 }
 
 #define is_rfc2047_encoded_word(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))

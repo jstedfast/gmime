@@ -227,9 +227,11 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		message_set_subject (message, value);
 		break;
 	case HEADER_DATE:
-		date = g_mime_utils_header_decode_date (value, &offset);
-		message->date = date;
-		message->gmt_offset = offset;
+		if (value) {
+			date = g_mime_utils_header_decode_date (value, &offset);
+			message->date = date;
+			message->gmt_offset = offset;
+		}
 		break;
 	case HEADER_MESSAGE_ID:
 		message_set_message_id (message, value);
