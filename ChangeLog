@@ -1,3 +1,16 @@
+2004-08-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_encrypt): Don't set encrypted.asc as
+	the filename anymore.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_sign):
+	Added a hack for Balsa so it can support S/MIME. Also don't set
+	the filename to signature.asc. Balsa maintainers don't want this
+	*shrug*.
+	(g_mime_multipart_signed_verify): Same. These changes really
+	require a design change to CipherContext but that'll have to wait.
+
 2004-08-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Changed the iconv-detect logic to not error-out on

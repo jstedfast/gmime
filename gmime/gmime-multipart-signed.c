@@ -341,7 +341,14 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* set the content-type of the signature part */
 	content_type = g_mime_content_type_new_from_string (mps->protocol);
 	g_mime_object_set_content_type (signature, content_type);
-	g_mime_part_set_filename (GMIME_PART (signature), "signature.asc");
+	
+	/* FIXME: temporary hack, this info should probably be set in
+	 * the CipherContext class - maybe ::sign can take/output a
+	 * GMimePart instead. */
+	if (!g_ascii_strcasecmp (mps->protocol, "application/pkcs7-signature")) {
+		g_mime_part_set_filename (GMIME_PART (signature), "smime.p7m");
+		g_mime_part_set_encoding (GMIME_PART (signature), GMIME_PART_ENCODING_BASE64);
+	}
 	
 	/* save the content and signature parts */
 	/* FIXME: make sure there aren't any other parts?? */
@@ -434,7 +441,18 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
-	sigstream = g_mime_data_wrapper_get_stream (wrapper);
+	
+	/* FIXME: temporary hack for Balsa to support S/MIME,
+	 * ::verify() should probably take a mime part so it can
+	 * decode this itself if it needs to. */
+	if (!g_ascii_strcasecmp (protocol, "application/pkcs7-signature") ||
+	    !g_ascii_strcasecmp (protocol, "application/x-pkcs7-signature")) {
+		sigstream = g_mime_stream_mem_new ();
+		g_mime_data_wrapper_write_to_stream (wrapper, sigstream);
+	} else {
+		sigstream = g_mime_data_wrapper_get_stream (wrapper);
+	}
+	
 	g_mime_stream_reset (sigstream);
 	g_object_unref (signature);
 	g_object_unref (wrapper);

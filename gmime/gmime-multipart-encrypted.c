@@ -283,7 +283,6 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_data_wrapper_set_stream (wrapper, ciphertext);
 	g_object_unref (ciphertext);
 	g_mime_part_set_content_object (encrypted_part, wrapper);
-	g_mime_part_set_filename (encrypted_part, "encrypted.asc");
 	g_mime_part_set_encoding (encrypted_part, GMIME_PART_ENCODING_7BIT);
 	g_object_unref (wrapper);
 	
