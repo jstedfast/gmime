@@ -1,0 +1,80 @@
+<refentry id="gmime-changes-2-2" revision="6 June 2004">
+  <refmeta>
+    <refentrytitle>Changes from 2.0 to 2.2</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Changes from 2.0 to 2.2</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Changes from 2.0 to 2.2</refname>
+    <refpurpose>Incompatible changes made between version 2.0 and version 2.2</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Incompatible changes from 2.0 to 2.2</title>
+    <para>See also the PORTING document in the toplevel GMime source directory.</para>
+    <para>There are no incompatible changes between 2.0 and 2.2.</para>
+    <para>GMime 2.2 is both API and ABI compatible with GMime 2.0 meaning
+that any program written for GMime 2.0 will compile fine with GMime
+2.2 and any program linked against GMime 2.0's libraries will also
+work with GMime 2.2's libraries.</para>
+    <para>Most of the changes made between 2.0 and 2.2 were internal but there
+are a few API changes you should be aware of (as these interfaces will
+be deprecated in some future version, probably 3.0).</para>
+  </refsect1>
+  <refsect1>
+    <title>Replacement interfaces from 2.0 to 2.2</title>
+    <itemizedlist>
+      <listitem>
+        <para>
+<function>g_mime_utils_8bit_header_decode()</function> has been split
+into 2 functions. We now have
+<function>g_mime_utils_header_decode_text()</function> and
+<function>g_mime_utils_header_decode_phrase()</function>.
+<function>g_mime_utils_header_decode_text()</function> no longer
+requires encoded-words to be rfc822 atoms. 
+<function>g_mime_utils_header_decode_phrase()</function> is
+still strict in that encoded-words MUST be valid rfc822 atoms.</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_utils_8bit_header_encode()</function> has been
+renamed to <function>g_mime_utils_header_encode_text()</function> to
+be more clear as to what type of header this is supposed to encode. If
+you haven't guessed, this function is for encoding rfc822 'text'
+headers (such as Subject).</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_utils_8bit_header_encode_phrase()</function> has been
+renamed to <function>g_mime_utils_header_encode_phrase()</function>
+mostly for consistancy with the previous 2 changes.</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_charset_name()</function> has been renamed to
+<function>g_mime_charset_iconv_name()</function> for clarity.</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_charset_locale_name()</function> has been renamed to
+<function>g_mime_locale_charset()</function>.</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_cipher_context_verify()</function> no longer returns
+a <structname>GMimeCipherValidity</structname>, instead it returns a
+<structname>GMimeSignatureValidity</structname> which is far more
+useful. Never fear, you may still use the
+<structname>GMimeCipherValidity</structname> APIs for the time being -
+they work fine given a <structname>GMimeSignatureValidity</structname>
+structure.</para>
+      </listitem>
+      <listitem>
+        <para>
+<function>g_mime_multipart_signed_verify()</function> also now returns
+a <structname>GMimeSignatureValidity</structname> structure rather than
+a <structname>GMimeCipherValidity</structname> structure. See changes to
+<function>g_mime_cipher_context_verify()</function> for details.</para>
+      </listitem>
+    </itemizedlist>
+  </refsect1>
+</refentry>
