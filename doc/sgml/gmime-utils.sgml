@@ -22,6 +22,8 @@ struct      <link linkend="GMimeReferences">GMimeReferences</link>;
                                              int *saveoffset);
 char*       <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
                                              int offset);
+char*       <link linkend="g-mime-utils-generate-message-id">g_mime_utils_generate_message_id</link>
+                                            (const char *fqdn);
 char*       <link linkend="g-mime-utils-decode-message-id">g_mime_utils_decode_message_id</link>  (const char *message_id);
 <link linkend="GMimeReferences">GMimeReferences</link>* <link linkend="g-mime-references-decode">g_mime_references_decode</link>   (const char *text);
 void        <link linkend="g-mime-references-append">g_mime_references_append</link>        (<link linkend="GMimeReferences">GMimeReferences</link> **refs,
@@ -216,6 +218,26 @@ string represented by <parameter>time</parameter> and <parameter>offset</paramet
 <entry> Timezone offset
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a valid string representation of the date.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-generate-message-id">g_mime_utils_generate_message_id ()</title>
+<programlisting>char*       g_mime_utils_generate_message_id
+                                            (const char *fqdn);</programlisting>
+<para>
+Generates a unique Message-Id.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>fqdn</parameter>&nbsp;:</entry>
+<entry> Fully qualified domain name
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a unique string in an addr-spec format suitable for use as
+a Message-Id.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

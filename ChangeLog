@@ -1,3 +1,14 @@
+2002-10-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-gpg-context.c (gpg_ctx_get_argv): Setup the import/export
+	command-line.
+	(gpg_ctx_op_step): Handle import/export errors.
+	(gpg_import_keys): Implemented.
+	(gpg_export_keys): Implemented.
+	(gpg_ctx_op_step): Don't do anything with gpg's stdin unless we
+	have something to write to it (exporting keys doesn't require
+	writing to gpg's stdin).
+
 2002-10-13  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* doc/*: Updated.

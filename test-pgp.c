@@ -202,10 +202,57 @@ test_decrypt (GMimeCipherContext *ctx, const char *ciphertext)
 	return 1;
 }
 
+static int
+test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
+{
+	GMimeException *ex;
+	GPtrArray *keys;
+	
+	keys = g_ptr_array_new ();
+	g_ptr_array_add (keys, userid);
+	
+	ex = g_mime_exception_new ();
+	
+	g_mime_cipher_export_keys (ctx, keys, ostream, ex);
+	g_ptr_array_free (keys, TRUE);
+	if (g_mime_exception_is_set (ex)) {
+		fprintf (stderr, "pgp_export failed: %s\n",
+			 g_mime_exception_get_description (ex));
+		g_mime_exception_free (ex);
+		return 0;
+	}
+	
+	g_mime_exception_free (ex);
+	
+	return 1;
+}
+
+static int
+test_import (GMimeCipherContext *ctx, GMimeStream *istream)
+{
+	GMimeException *ex;
+	
+	ex = g_mime_exception_new ();
+	
+	g_mime_cipher_import_keys (ctx, istream, ex);
+	if (g_mime_exception_is_set (ex)) {
+		fprintf (stderr, "pgp_import failed: %s\n",
+			 g_mime_exception_get_description (ex));
+		g_mime_exception_free (ex);
+		return 0;
+	}
+	
+	g_mime_exception_free (ex);
+	
+	return 1;
+}
+
+
 int main (int argc, char **argv)
 {
 	GMimeSession *session;
 	GMimeCipherContext *ctx;
+	GMimeStream *stream;
 	int i;
 	
 	g_mime_init (0);
@@ -215,9 +262,9 @@ int main (int argc, char **argv)
 	ctx = g_mime_gpg_context_new (session, path);
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
-	if (!test_sign (ctx, "This is a test of pgp sign using md5\r\n",
-			GMIME_CIPHER_HASH_MD5))
-		return 1;
+	/*if (!test_sign (ctx, "This is a test of pgp sign using md5\r\n",
+	  GMIME_CIPHER_HASH_MD5))
+	  return 1;*/
 	
 	if (!test_sign (ctx, "This is a test of pgp sign using sha1\r\n",
 			GMIME_CIPHER_HASH_SHA1))
@@ -225,6 +272,16 @@ int main (int argc, char **argv)
 	
 	if (!test_encrypt (ctx, "Hello, this is a test\n", strlen ("Hello, this is a test\n")))
 		return 1;
+	
+	stream = g_mime_stream_mem_new ();
+	if (!test_export (ctx, stream))
+		return 1;
+	
+	g_mime_stream_reset (stream);
+	if (!test_import (ctx, stream))
+		return 1;
+	
+	g_mime_stream_unref (stream);
 	
 	g_object_unref (ctx);
 	

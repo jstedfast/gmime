@@ -750,6 +750,7 @@ GMimePartEncodingType
 GMimeReferences
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
+g_mime_utils_generate_message_id
 g_mime_utils_decode_message_id
 g_mime_references_decode
 g_mime_references_append
@@ -887,8 +888,8 @@ g_mime_cipher_sign
 g_mime_cipher_verify
 g_mime_cipher_encrypt
 g_mime_cipher_decrypt
-g_mime_cipher_import
-g_mime_cipher_export
+g_mime_cipher_import_keys
+g_mime_cipher_export_keys
 
 g_mime_cipher_validity_init
 g_mime_cipher_validity_new

@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-CIPHER-CONTEXT"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN8952"
+NAME="AEN8972"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN8952"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN8955"
+NAME="AEN8975"
 ></A
 ><H2
 >Synopsis</H2
@@ -277,6 +277,40 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 >GMimeException</A
 > *ex);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-IMPORT-KEYS"
+>g_mime_cipher_import_keys</A
+>       (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
+int         <A
+HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-EXPORT-KEYS"
+>g_mime_cipher_export_keys</A
+>       (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *keys,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);
 void        <A
 HREF="gmime-gmime-cipher-context.html#G-MIME-CIPHER-VALIDITY-INIT"
 >g_mime_cipher_validity_init</A
@@ -354,7 +388,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9010"
+NAME="AEN9039"
 ></A
 ><H2
 >Description</H2
@@ -364,14 +398,14 @@ NAME="AEN9010"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN9013"
+NAME="AEN9042"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9015"
+NAME="AEN9044"
 ></A
 ><H3
 ><A
@@ -405,7 +439,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9020"
+NAME="AEN9049"
 ></A
 ><H3
 ><A
@@ -440,7 +474,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9025"
+NAME="AEN9054"
 ></A
 ><H3
 ><A
@@ -466,7 +500,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9030"
+NAME="AEN9059"
 ></A
 ><H3
 ><A
@@ -505,7 +539,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9039"
+NAME="AEN9068"
 ></A
 ><P
 ></P
@@ -578,7 +612,7 @@ HREF="GMIME-CIPHER-HASH-DEFAULT-CAPS"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9057"
+NAME="AEN9086"
 ></A
 ><H3
 ><A
@@ -617,7 +651,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9066"
+NAME="AEN9095"
 ></A
 ><P
 ></P
@@ -690,7 +724,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9084"
+NAME="AEN9113"
 ></A
 ><H3
 ><A
@@ -737,7 +771,7 @@ HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9095"
+NAME="AEN9124"
 ></A
 ><P
 ></P
@@ -875,7 +909,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9128"
+NAME="AEN9157"
 ></A
 ><H3
 ><A
@@ -945,7 +979,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9144"
+NAME="AEN9173"
 ></A
 ><P
 ></P
@@ -1071,7 +1105,7 @@ execute at all.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9174"
+NAME="AEN9203"
 ></A
 ><H3
 ><A
@@ -1123,7 +1157,7 @@ writes the resulting ciphertext to the output stream.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9186"
+NAME="AEN9215"
 ></A
 ><P
 ></P
@@ -1286,7 +1320,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9225"
+NAME="AEN9254"
 ></A
 ><H3
 ><A
@@ -1329,7 +1363,7 @@ cleartext to the output stream.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9235"
+NAME="AEN9264"
 ></A
 ><P
 ></P
@@ -1433,7 +1467,305 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9260"
+NAME="AEN9289"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-IMPORT-KEYS"
+></A
+>g_mime_cipher_import_keys ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_import_keys       (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *istream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Imports a stream of keys/certificates contained within <TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>
+into the key/certificate database controlled by <TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN9300"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>istream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream (containing keys)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>0 on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN9321"
+></A
+><H3
+><A
+NAME="G-MIME-CIPHER-EXPORT-KEYS"
+></A
+>g_mime_cipher_export_keys ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>int         g_mime_cipher_export_keys       (<A
+HREF="gmime-gmime-cipher-context.html#GMIMECIPHERCONTEXT"
+>GMimeCipherContext</A
+> *ctx,
+                                             <GTKDOCLINK
+HREF="GPTRARRAY"
+>GPtrArray</GTKDOCLINK
+> *keys,
+                                             <A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *ostream,
+                                             <A
+HREF="gmime-gmime-exception.html#GMIMEEXCEPTION"
+>GMimeException</A
+> *ex);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Exports the keys/certificates in <TT
+CLASS="PARAMETER"
+><I
+>keys</I
+></TT
+> to the stream <TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+> from
+the key/certificate database controlled by <TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN9334"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ctx</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Cipher Context</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>keys</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> an array of key ids</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ostream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>ex</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> exception</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>0 on success or -1 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN9359"
 ></A
 ><H3
 ><A
@@ -1463,7 +1795,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9267"
+NAME="AEN9366"
 ></A
 ><P
 ></P
@@ -1501,7 +1833,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9276"
+NAME="AEN9375"
 ></A
 ><H3
 ><A
@@ -1532,7 +1864,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9283"
+NAME="AEN9382"
 ></A
 ><P
 ></P
@@ -1568,7 +1900,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9292"
+NAME="AEN9391"
 ></A
 ><H3
 ><A
@@ -1598,7 +1930,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9299"
+NAME="AEN9398"
 ></A
 ><P
 ></P
@@ -1636,7 +1968,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9308"
+NAME="AEN9407"
 ></A
 ><H3
 ><A
@@ -1671,7 +2003,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9316"
+NAME="AEN9415"
 ></A
 ><P
 ></P
@@ -1709,7 +2041,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9325"
+NAME="AEN9424"
 ></A
 ><H3
 ><A
@@ -1748,7 +2080,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9334"
+NAME="AEN9433"
 ></A
 ><P
 ></P
@@ -1812,7 +2144,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9350"
+NAME="AEN9449"
 ></A
 ><H3
 ><A
@@ -1847,7 +2179,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9358"
+NAME="AEN9457"
 ></A
 ><P
 ></P
@@ -1908,7 +2240,7 @@ CLASS="LITERAL"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9373"
+NAME="AEN9472"
 ></A
 ><H3
 ><A
@@ -1944,7 +2276,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9381"
+NAME="AEN9480"
 ></A
 ><P
 ></P
@@ -1997,7 +2329,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN9394"
+NAME="AEN9493"
 ></A
 ><H3
 ><A
@@ -2029,7 +2361,7 @@ HREF="gmime-gmime-cipher-context.html#GMIMECIPHERVALIDITY"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN9401"
+NAME="AEN9500"
 ></A
 ><P
 ></P

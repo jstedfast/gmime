@@ -43,6 +43,13 @@ int         <link linkend="g-mime-cipher-decrypt">g_mime_cipher_decrypt</link>  
                                              <link linkend="GMimeStream">GMimeStream</link> *istream,
                                              <link linkend="GMimeStream">GMimeStream</link> *ostream,
                                              <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-import-keys">g_mime_cipher_import_keys</link>       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
+int         <link linkend="g-mime-cipher-export-keys">g_mime_cipher_export_keys</link>       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GPtrArray">GPtrArray</link> *keys,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);
 void        <link linkend="g-mime-cipher-validity-init">g_mime_cipher_validity_init</link>     (<link linkend="GMimeCipherValidity">GMimeCipherValidity</link> *validity);
 <link linkend="GMimeCipherValidity">GMimeCipherValidity</link>* <link linkend="g-mime-cipher-validity-new">g_mime_cipher_validity_new</link>
                                             (void);
@@ -306,6 +313,64 @@ cleartext to the output stream.</para>
 <entry> exception
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 for fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-import-keys">g_mime_cipher_import_keys ()</title>
+<programlisting>int         g_mime_cipher_import_keys       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GMimeStream">GMimeStream</link> *istream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Imports a stream of keys/certificates contained within <parameter>istream</parameter>
+into the key/certificate database controlled by <parameter>ctx</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>istream</parameter>&nbsp;:</entry>
+<entry> input stream (containing keys)
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-cipher-export-keys">g_mime_cipher_export_keys ()</title>
+<programlisting>int         g_mime_cipher_export_keys       (<link linkend="GMimeCipherContext">GMimeCipherContext</link> *ctx,
+                                             <link linkend="GPtrArray">GPtrArray</link> *keys,
+                                             <link linkend="GMimeStream">GMimeStream</link> *ostream,
+                                             <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
+<para>
+Exports the keys/certificates in <parameter>keys</parameter> to the stream <parameter>ostream</parameter> from
+the key/certificate database controlled by <parameter>ctx</parameter>.</para>
+<para>
+
+</para><informaltable pgwide="1" frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>ctx</parameter>&nbsp;:</entry>
+<entry> Cipher Context
+</entry></row>
+<row><entry align="right"><parameter>keys</parameter>&nbsp;:</entry>
+<entry> an array of key ids
+</entry></row>
+<row><entry align="right"><parameter>ostream</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>ex</parameter>&nbsp;:</entry>
+<entry> exception
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>0 on success or -1 on fail.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

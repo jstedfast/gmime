@@ -340,7 +340,7 @@ gpg_ctx_set_userid (struct _GpgCtx *gpg, const char *userid)
 static void
 gpg_ctx_add_recipient (struct _GpgCtx *gpg, const char *keyid)
 {
-	if (gpg->mode != GPG_CTX_MODE_ENCRYPT)
+	if (gpg->mode != GPG_CTX_MODE_ENCRYPT && gpg->mode != GPG_CTX_MODE_EXPORT)
 		return;
 	
 	if (!gpg->recipients)
@@ -544,6 +544,17 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		g_ptr_array_add (argv, "--decrypt");
 		g_ptr_array_add (argv, "--output");
 		g_ptr_array_add (argv, "-");
+		break;
+	case GPG_CTX_MODE_IMPORT:
+		g_ptr_array_add (argv, "--import");
+		g_ptr_array_add (argv, "-");
+		break;
+	case GPG_CTX_MODE_EXPORT:
+		if (gpg->armor)
+			g_ptr_array_add (argv, "--armor");
+		g_ptr_array_add (argv, "--export");
+		for (i = 0; i < gpg->recipients->len; i++)
+			g_ptr_array_add (argv, gpg->recipients->pdata[i]);
 		break;
 	}
 	
@@ -803,7 +814,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 		switch (gpg->mode) {
 		case GPG_CTX_MODE_SIGN:
 			if (!strncmp (status, "SIG_CREATED ", 12)) {
-				gpg->complete = TRUE;
+				/* FIXME: save this state? */
 			}
 			break;
 		case GPG_CTX_MODE_VERIFY:
@@ -818,8 +829,6 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 				} else if (!strncmp (status, "ULTIMATE", 8)) {
 					gpg->trust = GPG_TRUST_ULTIMATE;
 				} 
-				
-				gpg->complete = TRUE;
 				
 				/* Since verifying a signature will never produce output
 				   on gpg's stdout descriptor, we use this EOF bit for
@@ -838,7 +847,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 			if (!strncmp (status, "BEGIN_ENCRYPTION", 16)) {
 				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_ENCRYPTION", 14)) {
-				gpg->complete = TRUE;
+				/* nothing to do, but we know the end is near? */
 			} else if (!strncmp (status, "NO_RECP", 7)) {
 				g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 						      _("Failed to encrypt: No valid recipients specified."));
@@ -849,13 +858,17 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
 			if (!strncmp (status, "BEGIN_DECRYPTION", 16)) {
 				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
-				gpg->complete = TRUE;
+				/* nothing to do, but we know the end is near? */
 			}
 			break;
+		case GPG_CTX_MODE_IMPORT:
+			/* hack to work around the fact that gpg
+                           doesn't write anything to stdout when
+                           importing keys */
+			if (!strncmp (status, "IMPORT_RES", 10))
+				gpg->seen_eof1 = TRUE;
+			break;
 		}
-		
-		if (gpg->complete)
-			d(printf ("okay, that's all folks...\n"));
 	}
 	
  recycle:
@@ -915,7 +928,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 	
 	if (gpg->stdin != -1 || gpg->passwd_fd != -1) {
 		FD_ZERO (&wrset);
-		if (gpg->stdin != -1) {
+		if (gpg->istream && gpg->stdin != -1) {
 			FD_SET (gpg->stdin, &wrset);
 			maxfd = MAX (maxfd, gpg->stdin);
 		}
@@ -963,7 +976,6 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		
 		if (nread > 0) {
 			status_backup (gpg, buffer, nread);
-			
 			if (gpg_ctx_parse_status (gpg, ex) == -1)
 				return -1;
 		} else {
@@ -1038,7 +1050,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 		gpg->send_passwd = FALSE;
 	}
 	
-	if (wrsetp && gpg->stdin != -1 && FD_ISSET (gpg->stdin, &wrset)) {
+	if (gpg->istream && wrsetp && gpg->stdin != -1 && FD_ISSET (gpg->stdin, &wrset)) {
 		char buffer[4096];
 		ssize_t nread;
 		
@@ -1085,6 +1097,12 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 	case GPG_CTX_MODE_DECRYPT:
 		mode = "decrypt";
 		break;
+	case GPG_CTX_MODE_IMPORT:
+		mode = "import keys";
+		break;
+	case GPG_CTX_MODE_EXPORT:
+		mode = "export keys";
+		break;
 	default:
 		g_assert_not_reached ();
 		mode = NULL;
@@ -1093,13 +1111,13 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GMimeException *ex)
 	
 	if (gpg->diagnostics->len) {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to GPG %s message: %s\n\n%.*s"),
+				       _("Failed to GPG %s: %s\n\n%.*s"),
 				       mode, g_strerror (errno),
 				       gpg->diagnostics->len,
 				       gpg->diagnostics->data);
 	} else {
 		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-				       _("Failed to GPG %s message: %s\n"),
+				       _("Failed to GPG %s: %s\n"),
 				       mode, g_strerror (errno));
 	}
 	
@@ -1454,15 +1472,99 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 }
 
 static int
-gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GMimeException *ex)
+gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GMimeException *ex)
 {
-	return -1;
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	struct _GpgCtx *gpg;
+	
+	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_IMPORT);
+	gpg_ctx_set_istream (gpg, istream);
+	
+	if (gpg_ctx_op_start (gpg) == -1) {
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
+		gpg_ctx_free (gpg);
+		
+		return -1;
+	}
+	
+	while (!gpg_ctx_op_complete (gpg)) {
+		if (gpg_ctx_op_step (gpg, ex) == -1) {
+			gpg_ctx_op_cancel (gpg);
+			gpg_ctx_free (gpg);
+			
+			return -1;
+		}
+	}
+	
+	if (gpg_ctx_op_wait (gpg) != 0) {
+		char *diagnostics;
+		
+		diagnostics = gpg_ctx_get_diagnostics (gpg);
+		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_free (diagnostics);
+		
+		gpg_ctx_free (gpg);
+		
+		return -1;
+	}
+	
+	gpg_ctx_free (gpg);
+	
+	return 0;
 }
 
 static int
-gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys, GMimeStream *ostream, GMimeException *ex)
+gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostream, GMimeException *ex)
 {
-	return -1;
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	struct _GpgCtx *gpg;
+	int i;
+	
+	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_EXPORT);
+	gpg_ctx_set_armor (gpg, TRUE);
+	gpg_ctx_set_ostream (gpg, ostream);
+	
+	for (i = 0; i < keys->len; i++) {
+		gpg_ctx_add_recipient (gpg, keys->pdata[i]);
+	}
+	
+	if (gpg_ctx_op_start (gpg) == -1) {
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
+		gpg_ctx_free (gpg);
+		
+		return -1;
+	}
+	
+	while (!gpg_ctx_op_complete (gpg)) {
+		if (gpg_ctx_op_step (gpg, ex) == -1) {
+			gpg_ctx_op_cancel (gpg);
+			gpg_ctx_free (gpg);
+			
+			return -1;
+		}
+	}
+	
+	if (gpg_ctx_op_wait (gpg) != 0) {
+		char *diagnostics;
+		
+		diagnostics = gpg_ctx_get_diagnostics (gpg);
+		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM, diagnostics);
+		g_free (diagnostics);
+		
+		gpg_ctx_free (gpg);
+		
+		return -1;
+	}
+	
+	gpg_ctx_free (gpg);
+	
+	return 0;
 }
 
 
