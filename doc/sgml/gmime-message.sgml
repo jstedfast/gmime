@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-message" revision="30 Nov 2000">
+<refentry id="gmime-gmime-message" revision="2 Dec 2000">
 <refmeta>
 <refentrytitle>gmime-message</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -48,6 +48,9 @@ void        <link linkend="g-mime-message-get-date">g_mime_message_get_date</lin
                                              <link linkend="time-t">time_t</link> *date,
                                              int *gmt_offset);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-message-get-date-string">g_mime_message_get_date_string</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
+void        <link linkend="g-mime-message-set-message-id">g_mime_message_set_message_id</link>   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const <link linkend="gchar">gchar</link> *id);
+const <link linkend="gchar">gchar</link>* <link linkend="g-mime-message-get-message-id">g_mime_message_get_message_id</link>  (<link linkend="GMimeMessage">GMimeMessage</link> *message);
 void        <link linkend="g-mime-message-add-arbitrary-header">g_mime_message_add_arbitrary_header</link>
                                             (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              const <link linkend="gchar">gchar</link> *field,
@@ -119,7 +122,9 @@ void        <link linkend="g-mime-message-set-mime-part">g_mime_message_set_mime
 	gchar *subject;
 	
 	time_t date;
-	int gmt_offset;        /* GMT offset */
+	int gmt_offset;     /* GMT offset */
+	
+	gchar *message_id;
 	
 	GPtrArray *arbitrary_headers;    /* of type GMimeHeader */
 };
@@ -435,6 +440,44 @@ Stores the date in time_t format in <link linkend="date">date</link> and the GMT
 <entry> MIME Message
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the sent-date of the MIME Message in string format.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-set-message-id">g_mime_message_set_message_id ()</title>
+<programlisting>void        g_mime_message_set_message_id   (<link linkend="GMimeMessage">GMimeMessage</link> *message,
+                                             const <link linkend="gchar">gchar</link> *id);</programlisting>
+<para>
+Set the Message-Id on a message.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
+<entry> MIME Message
+</entry></row>
+<row><entry align="right"><parameter>id</parameter>&nbsp;:</entry>
+<entry> message-id
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-message-get-message-id">g_mime_message_get_message_id ()</title>
+<programlisting>const <link linkend="gchar">gchar</link>* g_mime_message_get_message_id  (<link linkend="GMimeMessage">GMimeMessage</link> *message);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>message</parameter>&nbsp;:</entry>
+<entry> MIME Message
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the Message-Id of a message.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

@@ -69,6 +69,7 @@ struct _GMimePart {
 
 typedef struct _GMimePart GMimePart;
 
+typedef void (*GMimePartFunc) (GMimePart *part, gpointer data);
 
 /* constructors / destructors */
 
@@ -113,6 +114,8 @@ const gchar *g_mime_part_get_content (GMimePart *mime_part, guint *len);
 void g_mime_part_add_child (GMimePart *mime_part, GMimePart *child);
 
 gchar *g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel);
+
+void g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data);
 
 #ifdef __cplusplus
 }

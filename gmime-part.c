@@ -567,6 +567,26 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content, 
 
 
 /**
+ * g_mime_part_get_content: 
+ * @mime_part: the GMimePart to be decoded.
+ * @len: decoded length (to be set after processing)
+ * 
+ * Returns a gchar * pointer to the raw contents of the MIME Part
+ * and sets %len to the length of the buffer.
+ **/
+const gchar *
+g_mime_part_get_content (GMimePart *mime_part, guint *len)
+{
+	g_return_val_if_fail (mime_part != NULL, NULL);
+	g_return_val_if_fail (mime_part->content != NULL, NULL);
+	
+	*len = mime_part->content->len;
+	
+	return mime_part->content->data;
+}
+
+
+/**
  * g_mime_part_add_child: Add a child mime part to a multipart
  * @mime_part: Parent Mime part
  * @child: Child Mime part
@@ -823,20 +843,28 @@ g_mime_part_to_string (GMimePart *mime_part, gboolean toplevel) {
 
 
 /**
- * g_mime_part_get_content: 
- * @mime_part: the GMimePart to be decoded.
- * @len: decoded length (to be set after processing)
+ * g_mime_part_foreach: 
+ * @mime_part: the MIME part
+ * @callback: function to call for #mime_part and all it's subparts
+ * @data: extra data to pass to the callback
  * 
- * Returns a gchar * pointer to the raw contents of the MIME Part
- * and sets %len to the length of the buffer.
+ * Calls #callback on #mime_part and each of it's subparts.
  **/
-const gchar *
-g_mime_part_get_content (GMimePart *mime_part, guint *len)
+void
+g_mime_part_foreach (GMimePart *mime_part, GMimePartFunc callback, gpointer data)
 {
-	g_return_val_if_fail (mime_part != NULL, NULL);
-	g_return_val_if_fail (mime_part->content != NULL, NULL);
+	g_return_if_fail (mime_part != NULL);
+	g_return_if_fail (callback != NULL);
 	
-	*len = mime_part->content->len;
+	callback (mime_part, data);
 	
-	return mime_part->content->data;
+	if (mime_part->children) {
+		GList *child;
+		
+		child = mime_part->children;
+		while (child) {
+			g_mime_part_foreach ((GMimePart *) child->data, callback, data);
+			child = child->next;
+		}
+	}
 }

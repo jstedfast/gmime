@@ -1,3 +1,29 @@
+2000-12-02  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_foreach): New convenience function for
+	manipulating each subpart of a mime part.
+
+	* gmime-message.c (g_mime_message_foreach_part): New convenience
+	function for manipulating all mime parts of a message.
+
+2000-12-02  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* doc/sgml/*:
+	* doc/html/*: Updated.
+
+	* doc/gmime-sections.txt: Add g_mime_message_[g,s]et_message_id.
+
+	* gmime-parser.c (construct_headers): Parse out Message-Id
+	headers.
+
+	* gmime-message.c (g_mime_message_destroy): Free the message id.
+	(g_mime_message_set_message_id): New function to set the message
+	id on a message.
+	(g_mime_message_set_message_id): New accessor function for
+	message-ids.
+	(create_header): Write out the Message-Id if and only if it
+	exists.
+
 2000-11-29  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* README: Updated.

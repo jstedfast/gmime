@@ -54,7 +54,9 @@ struct _GMimeMessageHeader {
 	gchar *subject;
 	
 	time_t date;
-	int gmt_offset;        /* GMT offset */
+	int gmt_offset;     /* GMT offset */
+	
+	gchar *message_id;
 	
 	GPtrArray *arbitrary_headers;    /* of type GMimeHeader */
 };
@@ -89,6 +91,9 @@ void g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset
 void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset);
 gchar *g_mime_message_get_date_string (GMimeMessage *message);
 
+void g_mime_message_set_message_id (GMimeMessage *message, const gchar *id);
+const gchar *g_mime_message_get_message_id (GMimeMessage *message);
+
 void g_mime_message_add_arbitrary_header (GMimeMessage *message, const gchar *field, const gchar *value);
 
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimePart *mime_part);
@@ -99,6 +104,8 @@ gchar *g_mime_message_to_string (GMimeMessage *message);
 
 gchar *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);
 gchar *g_mime_message_get_headers (GMimeMessage *message);
+
+void g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data);
 
 #ifdef __cplusplus
 }

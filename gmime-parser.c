@@ -309,6 +309,7 @@ enum {
 	HEADER_BCC,
 	HEADER_SUBJECT,
 	HEADER_DATE,
+	HEADER_MESSAGE_ID,
 	HEADER_UNKNOWN
 };
 
@@ -320,6 +321,7 @@ static char *fields[] = {
 	"Bcc:",
 	"Subject:",
 	"Date:",
+	"Message-Id:",
 	NULL
 };
 
@@ -388,6 +390,11 @@ construct_headers (GMimeMessage *message, const gchar *headers, gboolean save_ex
 		case HEADER_DATE:
 			date = g_mime_utils_header_decode_date (value, &offset);
 			g_mime_message_set_date (message, date, offset);
+			break;
+		case HEADER_MESSAGE_ID:
+			raw = g_mime_utils_8bit_header_decode (value);
+			g_mime_message_set_message_id (message, raw);
+			g_free (raw);
 			break;
 		case HEADER_UNKNOWN:
 		default:

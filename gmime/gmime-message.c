@@ -96,6 +96,8 @@ g_mime_message_destroy (GMimeMessage *message)
 	
 	g_free (message->header->subject);
 	
+	g_free (message->header->message_id);
+	
 	/* destroy arbitrary headers */
 	for (i = 0; i < message->header->arbitrary_headers->len; i++) {
 		GMimeHeader *header = message->header->arbitrary_headers->pdata[i];
@@ -393,6 +395,39 @@ g_mime_message_get_date_string (GMimeMessage *message)
 
 
 /**
+ * g_mime_message_set_message_id: 
+ * @message: MIME Message
+ * @id: message-id
+ *
+ * Set the Message-Id on a message.
+ **/
+void
+g_mime_message_set_message_id (GMimeMessage *message, const gchar *id)
+{
+	g_return_if_fail (message != NULL);
+	
+	if (message->header->message_id)
+		g_free (message->header->message_id);
+	message->header->message_id = g_strdup (id);
+}
+
+
+/**
+ * g_mime_message_get_message_id: 
+ * @message: MIME Message
+ *
+ * Returns the Message-Id of a message.
+ **/
+const gchar *
+g_mime_message_get_message_id (GMimeMessage *message)
+{
+	g_return_if_fail (message != NULL);
+	
+	return message->header->message_id;
+}
+
+
+/**
  * g_mime_message_add_arbitrary_header: Add an arbitrary message header
  * @message: MIME Message
  * @field: rfc822 header field
@@ -621,6 +656,16 @@ create_header (GMimeMessage *message)
 	g_free (subject);
 	g_free (buf);
 	
+	if (message->header->message_id) {
+		gchar *message_id;
+		
+		message_id = g_mime_utils_8bit_header_encode (message->header->message_id);
+		buf = g_mime_header_printf ("Message-Id: %s\n", message_id ? message_id : "");
+		g_string_append (string, buf);
+		g_free (message_id);
+		g_free (buf);
+	}
+	
 	str = string->str;
 	g_string_free (string, FALSE);
 	
@@ -773,4 +818,22 @@ gchar *
 g_mime_message_get_headers (GMimeMessage *message)
 {
 	return create_header (message);
+}
+
+
+/**
+ * g_mime_message_foreach_part:
+ * @message: MIME message
+ * @callback: function to call on each of the mime parts contained by the mime message
+ * @data: extra data to pass to the callback
+ *
+ * Calls #callback on each of the mime parts in the mime message.
+ **/
+void
+g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data)
+{
+	g_return_if_fail (message != NULL);
+	g_return_if_fail (callback != NULL);
+	
+	g_mime_part_foreach (message->mime_part, callback, data);
 }

@@ -75,6 +75,8 @@ g_mime_message_get_subject
 g_mime_message_set_date
 g_mime_message_get_date
 g_mime_message_get_date_string
+g_mime_message_set_message_id
+g_mime_message_get_message_id
 g_mime_message_add_arbitrary_header
 g_mime_message_set_mime_part
 g_mime_header_printf
