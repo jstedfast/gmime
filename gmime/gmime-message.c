@@ -809,7 +809,7 @@ sync_recipient_header (GMimeMessage *message, const char *type)
 	InternetAddressList *recipients;
 	
 	/* sync the specified recipient header */
-	recipients = g_mime_message_get_recipients (message, type);
+	recipients = (InternetAddressList *) g_mime_message_get_recipients (message, type);
 	if (recipients) {
 		char *string;
 		
