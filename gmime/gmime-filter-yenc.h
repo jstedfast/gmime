@@ -24,12 +24,12 @@
 #ifndef __G_MIME_FILTER_YENC_H__
 #define __G_MIME_FILTER_YENC_H__
 
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_FILTER_YENC            (g_mime_filter_yenc_get_type ())
 #define GMIME_FILTER_YENC(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYenc))

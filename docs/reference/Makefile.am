@@ -27,11 +27,7 @@ content_files = 			\
 ignore_headers = 			\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
-	gmime-type-utils.h		\
-	gtrie.h				\
-	md5-utils.h			\
-	memchunk.h			\
-	url-scanner.h
+	gmime-type-utils.h
 
 EXTRA_DIST = 				\
 	$(content_files)		\

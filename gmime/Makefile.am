@@ -4,7 +4,9 @@ SUBDIRS = .
 
 gmimeincludedir = $(includedir)/gmime-2.0/gmime
 
-INCLUDES = -I$(top_srcdir) 		\
+INCLUDES = 				\
+	-I$(top_srcdir) 		\
+	-I$(top_srcdir)/util		\
 	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
 	-DG_DISABLE_DEPRECATED		\
@@ -63,13 +65,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-stream-mmap.c		\
 	gmime-stream-null.c		\
 	gmime-utils.c			\
-	internet-address.c		\
-	cache.c				\
-	gtrie.c				\
-	list.c				\
-	md5-utils.c			\
-	memchunk.c			\
-	url-scanner.c
+	internet-address.c
 
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
@@ -119,23 +115,15 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-null.h		\
 	gmime-type-utils.h		\
 	gmime-utils.h			\
-	internet-address.h		\
-	md5-utils.h
+	internet-address.h
 
 noinst_HEADERS = 			\
-	cache.h				\
-	gtrie.h				\
-	list.h				\
-	memchunk.h			\
-	url-scanner.h			\
 	gmime-common.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h
 
+libgmime_2_0_la_LIBADD = $(top_builddir)/util/libutil.la
 libgmime_2_0_la_LDFLAGS = -version-info $(GMIME_VERSION_INFO)
-
-DEPS = $(top_builddir)/libgmime-2.0.la
-LDADDS = $(top_builddir)/libgmime-2.0.la $(GLIB_LIBS)
 
 gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 

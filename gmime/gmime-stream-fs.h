@@ -24,13 +24,13 @@
 #ifndef __GMIME_STREAM_FS_H__
 #define __GMIME_STREAM_FS_H__
 
+#include <unistd.h>
+#include <gmime/gmime-stream.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <unistd.h>
-#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())
 #define GMIME_STREAM_FS(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))

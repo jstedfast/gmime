@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2003-2004 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2002-2004 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,53 +21,27 @@
  */
 
 
-#ifndef __CACHE_H__
-#define __CACHE_H__
+#ifndef __G_TRIE_H__
+#define __G_TRIE_H__
 
 #include <glib.h>
-#include <gmime/list.h>
-#include <gmime/memchunk.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-typedef struct _Cache Cache;
+typedef struct _GTrie GTrie;
 
-typedef struct {
-	ListNode node;
-	Cache *cache;
-	char *key;
-} CacheNode;
+GTrie *g_trie_new (gboolean icase);
+void g_trie_free (GTrie *trie);
 
-typedef gboolean (*CacheNodeExpireFunc) (Cache *cache, CacheNode *node);
-typedef void (*CacheNodeFreeFunc) (CacheNode *node);
+void g_trie_add (GTrie *trie, const char *pattern, int pattern_id);
 
-struct _Cache {
-	List list;
-	unsigned int size;
-	unsigned int max_size;
-	MemChunk *node_chunks;
-	GHashTable *node_hash;
-	CacheNodeExpireFunc expire;
-	CacheNodeFreeFunc free_node;
-};
-
-
-Cache *cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node,
-		  unsigned int bucket_size, unsigned int max_cache_size);
-
-void cache_free (Cache *cache);
-
-CacheNode *cache_node_insert (Cache *cache, const char *key);
-CacheNode *cache_node_lookup (Cache *cache, const char *key, gboolean use);
-
-void cache_expire_unused (Cache *cache);
-void cache_node_expire (CacheNode *node);
+const char *g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __CACHE_H__ */
+#endif /* __G_TRIE_H__ */

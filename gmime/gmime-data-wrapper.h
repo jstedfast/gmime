@@ -24,11 +24,6 @@
 #ifndef __GMIME_DATA_WRAPPER_H__
 #define __GMIME_DATA_WRAPPER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 
@@ -36,6 +31,11 @@ extern "C" {
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-utils.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_DATA_WRAPPER            (g_mime_data_wrapper_get_type ())
 #define GMIME_DATA_WRAPPER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))

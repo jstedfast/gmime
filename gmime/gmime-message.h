@@ -24,11 +24,6 @@
 #ifndef __GMIME_MESSAGE_H__
 #define __GMIME_MESSAGE_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <stdarg.h>
 #include <time.h>
 
@@ -36,6 +31,11 @@ extern "C" {
 #include <gmime/gmime-header.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/internet-address.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
 #define GMIME_MESSAGE(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))

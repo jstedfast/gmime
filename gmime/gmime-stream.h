@@ -24,11 +24,6 @@
 #ifndef __GMIME_STREAM_H__
 #define __GMIME_STREAM_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 #include <sys/types.h>
@@ -36,6 +31,11 @@ extern "C" {
 #include <stdarg.h>
 
 #include <gmime/gmime-type-utils.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
 #define GMIME_STREAM(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))

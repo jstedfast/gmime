@@ -24,12 +24,12 @@
 #ifndef __GMIME_FILTER_ENRICHED_H__
 #define __GMIME_FILTER_ENRICHED_H__
 
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_FILTER_ENRICHED            (g_mime_filter_enriched_get_type ())
 #define GMIME_FILTER_ENRICHED(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_ENRICHED, GMimeFilterEnriched))

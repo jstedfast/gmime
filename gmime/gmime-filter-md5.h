@@ -24,13 +24,12 @@
 #ifndef __GMIME_FILTER_MD5_H__
 #define __GMIME_FILTER_MD5_H__
 
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/md5-utils.h>
-#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_FILTER_MD5            (g_mime_filter_md5_get_type ())
 #define GMIME_FILTER_MD5(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5))
@@ -45,7 +44,7 @@ typedef struct _GMimeFilterMd5Class GMimeFilterMd5Class;
 struct _GMimeFilterMd5 {
 	GMimeFilter parent_object;
 	
-	MD5Context md5;
+	struct _GMimeFilterMd5Private *priv;
 };
 
 struct _GMimeFilterMd5Class {

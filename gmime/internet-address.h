@@ -20,15 +20,16 @@
  *
  */
 
+
 #ifndef __INTERNET_ADDRESS_H__
 #define __INTERNET_ADDRESS_H__
+
+#include <glib.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
 
 typedef enum {
 	INTERNET_ADDRESS_NONE,

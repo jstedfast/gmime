@@ -24,11 +24,6 @@
 #ifndef __GMIME_PART_H__
 #define __GMIME_PART_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <stdio.h>
 
@@ -36,6 +31,11 @@ extern "C" {
 #include <gmime/gmime-param.h>
 #include <gmime/gmime-disposition.h>
 #include <gmime/gmime-data-wrapper.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_PART            (g_mime_part_get_type ())
 #define GMIME_PART(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_PART, GMimePart))

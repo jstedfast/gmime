@@ -513,9 +513,9 @@ g_mime_parser_get_respect_content_length (GMimeParser *parser)
 
 
 /**
- * g_mime_parser_get_respect_content_length:
+ * g_mime_parser_set_respect_content_length:
  * @parser: MIME parser object
- * @use_content_length: %TRUE if the parser should use Content-Length headers or %FALSE otherwise.
+ * @respect_content_length: %TRUE if the parser should use Content-Length headers or %FALSE otherwise.
  *
  * Sets whether or not @parser should respect Content-Length headers
  * when deciding where to look for the start of the next message. Only
@@ -1149,7 +1149,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		g_mime_object_add_header (GMIME_OBJECT (message), header->name, header->value);
+		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1400,7 +1400,7 @@ parser_construct_message (GMimeParser *parser)
 		if (priv->respect_content_length && !strcasecmp (header->name, "Content-Length"))
 			content_length = strtoul (header->value, NULL, 10);
 		
-		g_mime_object_add_header (GMIME_OBJECT (message), header->name, header->value);
+		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	

@@ -24,13 +24,13 @@
 #ifndef __GMIME_DISPOSITION_H__
 #define __GMIME_DISPOSITION_H__
 
+#include <glib.h>
+#include <gmime/gmime-param.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <gmime/gmime-param.h>
 
 
 /**

@@ -24,12 +24,12 @@
 #ifndef __G_MIME_FILTER_HTML_H__
 #define __G_MIME_FILTER_HTML_H__
 
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
 #define GMIME_FILTER_HTML(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))

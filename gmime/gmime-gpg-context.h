@@ -24,12 +24,12 @@
 #ifndef __GMIME_GPG_CONTEXT_H__
 #define __GMIME_GPG_CONTEXT_H__
 
+#include <gmime/gmime-cipher-context.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-cipher-context.h>
 
 #define GMIME_TYPE_GPG_CONTEXT            (g_mime_gpg_context_get_type ())
 #define GMIME_GPG_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))

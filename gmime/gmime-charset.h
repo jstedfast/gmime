@@ -24,13 +24,13 @@
 #ifndef __GMIME_CHARSET_H__
 #define __GMIME_CHARSET_H__
 
+#include <glib.h>
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <sys/types.h>
 
 void        g_mime_charset_map_init (void);
 void        g_mime_charset_map_shutdown (void);

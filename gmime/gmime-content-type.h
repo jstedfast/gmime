@@ -20,16 +20,17 @@
  *
  */
 
+
 #ifndef __GMIME_CONTENT_TYPE_H__
 #define __GMIME_CONTENT_TYPE_H__
+
+#include <glib.h>
+#include <gmime/gmime-param.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <gmime/gmime-param.h>
 
 struct _GMimeContentType {
 	char *type;

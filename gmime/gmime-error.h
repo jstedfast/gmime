@@ -24,12 +24,12 @@
 #ifndef __GMIME_ERROR_H__
 #define __GMIME_ERROR_H__
 
+#include <glib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
 
 extern GQuark gmime_error_quark;
 #define GMIME_ERROR_QUARK gmime_error_quark

@@ -24,12 +24,12 @@
 #ifndef __GMIME_ICONV_H__
 #define __GMIME_ICONV_H__
 
+#include <iconv.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <iconv.h>
 
 void g_mime_iconv_init (void);
 void g_mime_iconv_shutdown (void);

@@ -24,15 +24,15 @@
 #ifndef __GMIME_SESSION_H__
 #define __GMIME_SESSION_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 
 #include <gmime/gmime-type-utils.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_SESSION            (g_mime_session_get_type ())
 #define GMIME_SESSION(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))

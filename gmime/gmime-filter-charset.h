@@ -24,13 +24,13 @@
 #ifndef __GMIME_FILTER_CHARSET_H__
 #define __GMIME_FILTER_CHARSET_H__
 
+#include <iconv.h>
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-filter.h>
-#include <iconv.h>
 
 #define GMIME_TYPE_FILTER_CHARSET            (g_mime_filter_charset_get_type ())
 #define GMIME_FILTER_CHARSET(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER_CHARSET, GMimeFilterCharset))

@@ -24,13 +24,13 @@
 #ifndef __GMIME_STREAM_NULL_H__
 #define __GMIME_STREAM_NULL_H__
 
+#include <glib.h>
+#include <gmime/gmime-stream.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
 #define GMIME_STREAM_NULL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))

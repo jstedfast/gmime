@@ -21,17 +21,18 @@
  *
  */
 
+
 #ifndef __GMIME_UTILS_H__
 #define __GMIME_UTILS_H__
+
+#include <glib.h>
+#include <time.h>
+#include <stdarg.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <time.h>
-#include <stdarg.h>
 
 typedef enum {
 	GMIME_PART_ENCODING_DEFAULT,

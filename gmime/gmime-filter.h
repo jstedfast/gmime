@@ -24,16 +24,16 @@
 #ifndef __GMIME_FILTER_H__
 #define __GMIME_FILTER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 #include <sys/types.h>
 
 #include <gmime/gmime-type-utils.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
 #define GMIME_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))

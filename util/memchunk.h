@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2002-2004 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2001-2004 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,27 +21,35 @@
  */
 
 
-#ifndef __G_TRIE_H__
-#define __G_TRIE_H__
+#ifndef __MEMCHUNK_H__
+#define __MEMCHUNK_H__
+
+#include <glib.h>
+#include <sys/types.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <glib.h>
+typedef struct _MemChunk MemChunk;
 
-typedef struct _GTrie GTrie;
+MemChunk *memchunk_new (size_t atomsize, size_t atomcount, gboolean autoclean);
 
-GTrie *g_trie_new (gboolean icase);
-void g_trie_free (GTrie *trie);
+void     *memchunk_alloc (MemChunk *memchunk);
 
-void g_trie_add (GTrie *trie, const char *pattern, int pattern_id);
+void     *memchunk_alloc0 (MemChunk *memchunk);
 
-const char *g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id);
+void      memchunk_free (MemChunk *memchunk, void *mem);
+
+void      memchunk_reset (MemChunk *memchunk);
+
+void      memchunk_clean (MemChunk *memchunk);
+
+void      memchunk_destroy (MemChunk *memchunk);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __G_TRIE_H__ */
+#endif /* __MEMCHUNK_H__ */

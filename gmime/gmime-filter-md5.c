@@ -25,7 +25,13 @@
 #include <config.h>
 #endif
 
+#include "md5-utils.h"
+
 #include "gmime-filter-md5.h"
+
+struct _GMimeFilterMd5Private {
+	MD5Context md5;
+};
 
 static void g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass);
 static void g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass);
@@ -86,12 +92,17 @@ g_mime_filter_md5_class_init (GMimeFilterMd5Class *klass)
 static void
 g_mime_filter_md5_init (GMimeFilterMd5 *filter, GMimeFilterMd5Class *klass)
 {
-	md5_init (&filter->md5);
+	filter->priv = g_new (struct _GMimeFilterMd5Private, 1);
+	md5_init (&filter->priv->md5);
 }
 
 static void
 g_mime_filter_md5_finalize (GObject *object)
 {
+	GMimeFilterMd5 *filter = (GMimeFilterMd5 *) object;
+	
+	g_free (filter->priv);
+	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -109,7 +120,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterMd5 *md5 = (GMimeFilterMd5 *) filter;
 	
-	md5_update (&md5->md5, in, len);
+	md5_update (&md5->priv->md5, in, len);
 	
 	*out = in;
 	*outlen = len;
@@ -128,7 +139,7 @@ filter_reset (GMimeFilter *filter)
 {
 	GMimeFilterMd5 *md5 = (GMimeFilterMd5 *) filter;
 	
-	md5_init (&md5->md5);
+	md5_init (&md5->priv->md5);
 }
 
 
@@ -142,7 +153,7 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_md5_new (void)
 {
-	return (GMimeFilter *) g_object_new (GMIME_TYPE_FILTER_MD5, NULL, NULL);
+	return (GMimeFilter *) g_object_new (GMIME_TYPE_FILTER_MD5, NULL);
 }
 
 
@@ -158,5 +169,5 @@ g_mime_filter_md5_get_digest (GMimeFilterMd5 *md5, unsigned char digest[16])
 {
 	g_return_if_fail (GMIME_IS_FILTER_MD5 (md5));
 	
-	md5_final (&md5->md5, digest);
+	md5_final (&md5->priv->md5, digest);
 }

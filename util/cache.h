@@ -2,7 +2,7 @@
 /*
  *  Authors: Jeffrey Stedfast <fejj@ximian.com>
  *
- *  Copyright 2000-2004 Ximian, Inc. (www.ximian.com)
+ *  Copyright 2003-2004 Ximian, Inc. (www.ximian.com)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -21,35 +21,54 @@
  */
 
 
-#ifndef __GMIME_PARAM_H__
-#define __GMIME_PARAM_H__
+#ifndef __CACHE_H__
+#define __CACHE_H__
 
 #include <glib.h>
+
+#include <util/list.h>
+#include <util/memchunk.h>
 
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-struct _GMimeParam {
-	struct _GMimeParam *next;
-	char *name;
-	char *value;
+typedef struct _Cache Cache;
+
+typedef struct {
+	ListNode node;
+	Cache *cache;
+	char *key;
+} CacheNode;
+
+typedef gboolean (*CacheNodeExpireFunc) (Cache *cache, CacheNode *node);
+typedef void (*CacheNodeFreeFunc) (CacheNode *node);
+
+struct _Cache {
+	List list;
+	unsigned int size;
+	unsigned int max_size;
+	MemChunk *node_chunks;
+	GHashTable *node_hash;
+	CacheNodeExpireFunc expire;
+	CacheNodeFreeFunc free_node;
 };
 
-typedef struct _GMimeParam GMimeParam;
 
-GMimeParam *g_mime_param_new (const char *name, const char *value);
-GMimeParam *g_mime_param_new_from_string (const char *string);
-void g_mime_param_destroy (GMimeParam *param);
+Cache *cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node,
+		  unsigned int bucket_size, unsigned int max_cache_size);
 
-GMimeParam *g_mime_param_append (GMimeParam *params, const char *name, const char *value);
-GMimeParam *g_mime_param_append_param (GMimeParam *params, GMimeParam *param);
+void cache_free (Cache *cache);
 
-void g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *string);
+CacheNode *cache_node_insert (Cache *cache, const char *key);
+CacheNode *cache_node_lookup (Cache *cache, const char *key, gboolean use);
+
+void cache_expire_unused (Cache *cache);
+void cache_node_expire (CacheNode *node);
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
 
-#endif /* __GMIME_PARAM_H__ */
+#endif /* __CACHE_H__ */

@@ -24,13 +24,13 @@
 #ifndef __GMIME_STREAM_FILTER_H__
 #define __GMIME_STREAM_FILTER_H__
 
+#include <gmime/gmime-stream.h>
+#include <gmime/gmime-filter.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-stream.h>
-#include <gmime/gmime-filter.h>
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
 #define GMIME_STREAM_FILTER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))

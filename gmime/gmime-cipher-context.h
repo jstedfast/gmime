@@ -24,16 +24,16 @@
 #ifndef __GMIME_CIPHER_CONTEXT_H__
 #define __GMIME_CIPHER_CONTEXT_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-session.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
 #define GMIME_CIPHER_CONTEXT(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))

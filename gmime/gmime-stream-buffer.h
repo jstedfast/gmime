@@ -24,12 +24,12 @@
 #ifndef __GMIME_STREAM_BUFFER_H__
 #define __GMIME_STREAM_BUFFER_H__
 
+#include <gmime/gmime-stream.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
 #define GMIME_STREAM_BUFFER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))

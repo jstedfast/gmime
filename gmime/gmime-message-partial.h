@@ -24,15 +24,15 @@
 #ifndef __GMIME_MESSAGE_PARTIAL_H__
 #define __GMIME_MESSAGE_PARTIAL_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 
 #include <gmime/gmime-part.h>
 #include <gmime/gmime-message.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
 #define GMIME_MESSAGE_PARTIAL(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))

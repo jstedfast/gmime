@@ -8,8 +8,14 @@ INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
 
 noinst_PROGRAMS = basic-example imap-example
 
-DEPS = $(top_builddir)/gmime/libgmime-2.0.la
-LDADDS = $(top_builddir)/gmime/libgmime-2.0.la $(GLIB_LIBS)
+DEPS = 						\
+	$(top_builddir)/util/libutil.la		\
+	$(top_builddir)/gmime/libgmime-2.0.la
+
+LDADDS = 					\
+	$(top_builddir)/util/libutil.la		\
+	$(top_builddir)/gmime/libgmime-2.0.la 	\
+	$(GLIB_LIBS)
 
 basic_example_SOURCES = basic-example.c
 basic_example_LDFLAGS = 

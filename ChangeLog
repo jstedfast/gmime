@@ -1,3 +1,26 @@
+2004-02-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* util/*.[c,h]: Moved here from gmime/
+
+	* gmime/*.h: Fixed #includes
+
+	* gmime/cache.[c,h]: Moved to util/
+
+	* gmime/gtrie.[c,h]: Moved to util/
+
+	* gmime/list.[c,h]: Moved to util/
+
+	* gmime/md5-utils.[c,h]: Moved to util/
+
+	* gmime/memchunk.[c,h]: Moved to util/
+
+	* gmime/url-scanner.[c,h]: Moved to util/
+
+	* gmime/gmime-parser.c: Don't use gobject macro casts.
+
+	* gmime/gmime-filter-md5.c: Move the MD5Context into a private
+	structure so that we don't need to install md5-utils.h
+
 2004-02-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-utils.c (rfc2047_encode): Return a duplicate of the

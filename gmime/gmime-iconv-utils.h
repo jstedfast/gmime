@@ -24,13 +24,13 @@
 #ifndef __GMIME_ICONV_UTILS_H__
 #define __GMIME_ICONV_UTILS_H__
 
+#include <sys/types.h>
+#include <iconv.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <sys/types.h>
-#include <iconv.h>
 
 char *g_mime_iconv_strdup (iconv_t cd, const char *string);
 char *g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n);

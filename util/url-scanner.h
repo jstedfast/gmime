@@ -24,14 +24,13 @@
 #ifndef __URL_SCANNER_H__
 #define __URL_SCANNER_H__
 
+#include <glib.h>
+#include <sys/types.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <sys/types.h>
-
 
 typedef struct {
 	const char *pattern;

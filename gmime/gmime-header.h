@@ -23,13 +23,13 @@
 #ifndef __GMIME_HEADER_H__
 #define __GMIME_HEADER_H__
 
+#include <glib.h>
+#include <gmime/gmime-stream.h>
+
 #ifdef __cplusplus
 extern "C" {
 #pragma }
 #endif /* __cplusplus */
-
-#include <glib.h>
-#include <gmime/gmime-stream.h>
 
 typedef struct _GMimeHeader GMimeHeader;
 
