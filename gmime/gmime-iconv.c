@@ -339,7 +339,7 @@ g_mime_iconv_close (iconv_t cd)
 	} else {
 		ICONV_CACHE_UNLOCK ();
 		
-		g_warning ("This iconv context wasn't opened using g_mime_iconv_open()!");
+		g_warning ("This iconv context wasn't opened using g_mime_iconv_open()");
 		
 		return iconv_close (cd);
 	}
