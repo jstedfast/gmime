@@ -1,3 +1,8 @@
+2002-03-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-part.c (g_mime_part_write_to_stream): Get rid of some
+	extra line feeds.
+
 2002-03-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-pgp-mime.c (g_mime_pgp_mime_part_sign): Add support for

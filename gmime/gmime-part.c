@@ -1185,13 +1185,11 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 		
 		/* write the mime headers */
 		g_mime_header_write_to_stream (mime_part->headers, stream);
-		g_mime_stream_write (stream, "\n", 1);
 		
 		child = mime_part->children;
 		while (child) {
-			g_mime_stream_printf (stream, "--%s\n", boundary);
+			g_mime_stream_printf (stream, "\n--%s\n", boundary);
 			g_mime_part_write_to_stream (child->data, stream);
-			g_mime_stream_write (stream, "\n", 1);
 			
 			child = child->next;
 		}
@@ -1203,7 +1201,6 @@ g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
 		
 		g_mime_stream_write (stream, "\n", 1);
 		write_content (mime_part, stream);
-		g_mime_stream_write (stream, "\n", 1);
 	}
 }
 
