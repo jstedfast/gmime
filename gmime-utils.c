@@ -800,7 +800,7 @@ quoted_decode (const guchar *in, gint len, guchar *out)
 	while (inptr < inend) {
 		c = *inptr++;
 		if (c == '=') {
-			if (inend - in >= 2) {
+			if (inend - inptr >= 2) {
 				c = toupper (*inptr++);
 				c1 = toupper (*inptr++);
 				*outptr++ = (((c >= 'A' ? c - 'A' + 10 : c - '0') & 0x0f) << 4)
