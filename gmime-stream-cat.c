@@ -131,12 +131,6 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	struct _cat_node *current;
 	ssize_t n, nread = 0;
 	
-	current = cat->current;
-	if (!current) {
-		/* we are at the end of the cat-stream */
-		return -1;
-	}
-	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return -1;
@@ -149,22 +143,28 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
 		return -1;
 	
+	if (!(current = cat->current))
+		return -1;
+	
 	do {
-		while (current && g_mime_stream_eos (current->stream))
-			current = current->next;
-		
-		if (!current)
-			break;
-		
-		n = g_mime_stream_read (current->stream, buf + nread, len - nread);
-		if (n < 0) {
-			if (nread == 0)
-				return -1;
-			break;
+		while (!g_mime_stream_eos (current->stream) && nread < len) {
+			n = g_mime_stream_read (current->stream, buf + nread, len - nread);
+			if (n > 0)
+				nread += n;
 		}
 		
-		nread += n;
-	} while (nread < len && current);
+		if (nread < len) {
+			current = current->next;
+			if (current) {
+				g_mime_stream_reset (current->stream);
+			} else {
+				if (n == -1 && nread == 0)
+					return -1;
+				
+				break;
+			}
+		}
+	} while (nread < len);
 	
 	stream->position += nread;
 	
@@ -180,12 +180,6 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	struct _cat_node *current;
 	ssize_t n, nwritten = 0;
 	
-	current = cat->current;
-	if (!current) {
-		/* eos */
-		return -1;
-	}
-	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return -1;
@@ -198,21 +192,32 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
 		return -1;
 	
-	while (nwritten < len && current) {
-		n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten);
-		if (n > 0) {
-			nwritten += n;
-		} else if (g_mime_stream_eos (current->stream)) {
-			g_mime_stream_flush (current->stream);
-			current = current->next;
-		} else {
-			return -1;
-		}
-	}
+	if (!(current = cat->current))
+		return -1;
 	
-	cat->current = current;
+	do {
+		while (!g_mime_stream_eos (current->stream) && nwritten < len) {
+			n = g_mime_stream_read (current->stream, buf + nwritten, len - nwritten);
+			if (n > 0)
+				nwritten += n;
+		}
+		
+		if (nwritten < len) {
+			current = current->next;
+			if (current) {
+				g_mime_stream_reset (current->stream);
+			} else {
+				if (n == -1 && nwritten == 0)
+					return -1;
+				
+				break;
+			}
+		}
+	} while (nwritten < len);
 	
 	stream->position += nwritten;
+	
+	cat->current = current;
 	
 	return nwritten;
 }
