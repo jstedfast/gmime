@@ -1,5 +1,11 @@
 2002-03-03  Jeffrey Stedfast  <fejj@ximian.com>
 
+	Thanks to Carlos Morgado <chbm@chbm.nu>
+
+	* gmime.spec.in: Fix.
+
+2002-03-03  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-part.c (g_mime_part_write_to_stream): Get rid of some
 	extra line feeds.
 

@@ -24,17 +24,10 @@ the Multipurpose Internet Mail Extension (MIME)
 
 %build
 if [ ! -f configure ]; then
-  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh --prefix=%prefix
-%else
-  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh --prefix=%prefix
-%endif
-
-if [ "$SMP" != "" ]; then
-  (make "MAKE=make -k -j $SMP"; exit 0)
-  make
-else
-  make
+  CFLAGS="$RPM_OPT_FLAGS" ./autogen.sh $ARCHFLAG %{config_opts}
 fi
+CFLAGS="$RPM_OPT_FLAGS" ./configure --prefix=%prefix
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
