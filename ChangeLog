@@ -1,3 +1,7 @@
+2001-11-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-cipher-context.[c,h]: New base class for cipher contexts.
+
 2001-11-18  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version to 0.7.3
