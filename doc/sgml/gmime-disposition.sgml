@@ -60,13 +60,15 @@ char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header<
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-DISPOSITION-ATTACHMENT-CAPS">GMIME_DISPOSITION_ATTACHMENT</title>
-<programlisting>#define     GMIME_DISPOSITION_ATTACHMENT</programlisting>
+<programlisting>#define GMIME_DISPOSITION_ATTACHMENT "attachment"
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-DISPOSITION-INLINE-CAPS">GMIME_DISPOSITION_INLINE</title>
-<programlisting>#define     GMIME_DISPOSITION_INLINE</programlisting>
+<programlisting>#define GMIME_DISPOSITION_INLINE     "inline"
+</programlisting>
 <para>
 
 </para></refsect2>
@@ -77,7 +79,7 @@ char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header<
 Creates a new GMimeDisposition object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -95,7 +97,7 @@ Creates a new GMimeDisposition object.</para>
 Destroy the disposition object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -115,7 +117,7 @@ choice, any other string which would indicate how the MIME part
 should be displayed by the MUA.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -134,7 +136,7 @@ should be displayed by the MUA.</para>
 Gets the disposition or <literal>NULL</literal> on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -157,7 +159,7 @@ Adds a new parameter of name <parameter>name</parameter> and value <parameter>va
 disposition.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -181,7 +183,7 @@ disposition.</para>
 Gets the value of the parameter <parameter>attribute</parameter>, or <literal>NULL</literal> on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -204,7 +206,7 @@ Allocates a string buffer containing the Content-Disposition header
 represented by the disposition object <parameter>disposition</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

@@ -39,10 +39,11 @@ void        <link linkend="g-mime-object-unref">g_mime_object_unref</link>      
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-OBJECT-CAPS">GMIME_OBJECT()</title>
-<programlisting>#define     GMIME_OBJECT(object)</programlisting>
+<programlisting>#define GMIME_OBJECT(object) ((GMimeObject *) object)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -75,7 +76,7 @@ Initializes a new object of type <parameter>type</parameter>, using the virtual 
 from <parameter>object_template</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -97,7 +98,7 @@ from <parameter>object_template</parameter>.</para>
 Ref's an object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -113,7 +114,7 @@ Ref's an object.</para>
 Unref's an object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

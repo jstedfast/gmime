@@ -41,16 +41,18 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-STREAM-FILTER-TYPE-CAPS">GMIME_STREAM_FILTER_TYPE</title>
-<programlisting>#define     GMIME_STREAM_FILTER_TYPE</programlisting>
+<programlisting>#define GMIME_STREAM_FILTER_TYPE g_str_hash ("GMimeStreamFilter")
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-FILTER-CAPS">GMIME_IS_STREAM_FILTER()</title>
-<programlisting>#define     GMIME_IS_STREAM_FILTER(stream)</programlisting>
+<programlisting>#define GMIME_IS_STREAM_FILTER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILTER_TYPE)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -63,10 +65,11 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-FILTER-CAPS">GMIME_STREAM_FILTER()</title>
-<programlisting>#define     GMIME_STREAM_FILTER(stream)</programlisting>
+<programlisting>#define GMIME_STREAM_FILTER(stream) ((GMimeStreamFilter *) stream)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -86,7 +89,7 @@ Creates a new GMimeStreamFilter object using <parameter>stream</parameter> as th
 stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -105,7 +108,7 @@ stream.</para>
 Adds a <parameter>filter</parameter> to <parameter>fstream</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -128,7 +131,7 @@ Removed a filter from the stream based on the id (as returned from
 filter_add).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

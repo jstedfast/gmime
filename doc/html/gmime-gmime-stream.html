@@ -531,7 +531,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->#define     GMIME_STREAM(stream)</PRE
+>#define GMIME_STREAM(stream)  ((GMimeStream *) stream)</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1301,23 +1301,32 @@ CLASS="PARAMETER"
 ></TT
 > as follows:</P
 ><P
->GMIME_STREAM_SEEK_SET: The offset is set to <TT
+>    <GTKDOCLINK
+HREF="GMIME-STREAM-SEEK-SET-CAPS"
+>GMIME_STREAM_SEEK_SET</GTKDOCLINK
+>: The offset is set to <TT
 CLASS="PARAMETER"
 ><I
 >offset</I
 ></TT
 > bytes.</P
 ><P
->GMIME_STREAM_SEEK_CUR: The offset is set to its current
-location plus <TT
+>    <GTKDOCLINK
+HREF="GMIME-STREAM-SEEK-CUR-CAPS"
+>GMIME_STREAM_SEEK_CUR</GTKDOCLINK
+>: The offset is set to its current
+    location plus <TT
 CLASS="PARAMETER"
 ><I
 >offset</I
 ></TT
 > bytes.</P
 ><P
->GMIME_STREAM_SEEK_END: The offset is set to the size of the
-stream plus <TT
+>    <GTKDOCLINK
+HREF="GMIME-STREAM-SEEK-END-CAPS"
+>GMIME_STREAM_SEEK_END</GTKDOCLINK
+>: The offset is set to the size of the
+    stream plus <TT
 CLASS="PARAMETER"
 ><I
 >offset</I
@@ -1328,7 +1337,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN399"
+NAME="AEN402"
 ></A
 ><P
 ></P
@@ -1415,7 +1424,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN420"
+NAME="AEN423"
 ></A
 ><H3
 ><A
@@ -1448,7 +1457,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN428"
+NAME="AEN431"
 ></A
 ><P
 ></P
@@ -1501,7 +1510,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN441"
+NAME="AEN444"
 ></A
 ><H3
 ><A
@@ -1531,7 +1540,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN448"
+NAME="AEN451"
 ></A
 ><P
 ></P
@@ -1584,7 +1593,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN461"
+NAME="AEN464"
 ></A
 ><H3
 ><A
@@ -1622,7 +1631,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN470"
+NAME="AEN473"
 ></A
 ><P
 ></P
@@ -1664,7 +1673,13 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->TRUE on EOS or FALSE otherwise.</TD
+><TT
+CLASS="LITERAL"
+>TRUE</TT
+> on EOS or <TT
+CLASS="LITERAL"
+>FALSE</TT
+> otherwise.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -1675,7 +1690,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN483"
+NAME="AEN488"
 ></A
 ><H3
 ><A
@@ -1705,7 +1720,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN490"
+NAME="AEN495"
 ></A
 ><P
 ></P
@@ -1758,7 +1773,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN503"
+NAME="AEN508"
 ></A
 ><H3
 ><A
@@ -1791,7 +1806,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN511"
+NAME="AEN516"
 ></A
 ><P
 ></P
@@ -1844,7 +1859,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN524"
+NAME="AEN529"
 ></A
 ><H3
 ><A
@@ -1900,7 +1915,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN537"
+NAME="AEN542"
 ></A
 ><P
 ></P
@@ -2002,7 +2017,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN561"
+NAME="AEN566"
 ></A
 ><H3
 ><A
@@ -2034,13 +2049,18 @@ HREF="OFF-T"
 ></TR
 ></TABLE
 ><P
->Set the bounds on a stream.</P
+>Sets the bounds on the stream <TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>.</P
 ><P
 ></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN570"
+NAME="AEN576"
 ></A
 ><P
 ></P
@@ -2112,7 +2132,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN587"
+NAME="AEN593"
 ></A
 ><H3
 ><A
@@ -2156,7 +2176,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN597"
+NAME="AEN603"
 ></A
 ><P
 ></P
@@ -2215,7 +2235,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes written.</TD
+>the number of bytes written or -1 on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2226,7 +2246,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN614"
+NAME="AEN620"
 ></A
 ><H3
 ><A
@@ -2261,7 +2281,7 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN622"
+NAME="AEN628"
 ></A
 ><P
 ></P
@@ -2337,7 +2357,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes written.</TD
+>the number of bytes written or -1 on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2348,7 +2368,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN643"
+NAME="AEN649"
 ></A
 ><H3
 ><A
@@ -2395,7 +2415,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN654"
+NAME="AEN660"
 ></A
 ><P
 ></P
@@ -2454,7 +2474,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes written.</TD
+>the number of bytes written or -1 on fail.</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -2465,7 +2485,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN671"
+NAME="AEN677"
 ></A
 ><H3
 ><A
@@ -2521,7 +2541,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN684"
+NAME="AEN690"
 ></A
 ><P
 ></P

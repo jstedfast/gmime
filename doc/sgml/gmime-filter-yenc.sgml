@@ -68,16 +68,18 @@ void        <link linkend="g-mime-filter-yenc-set-crc">g_mime_filter_yenc_set_cr
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-CRC-INIT-CAPS">GMIME_YENCODE_CRC_INIT</title>
-<programlisting>#define     GMIME_YENCODE_CRC_INIT</programlisting>
+<programlisting>#define GMIME_YENCODE_CRC_INIT       (~0)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-CRC-FINAL-CAPS">GMIME_YENCODE_CRC_FINAL()</title>
-<programlisting>#define     GMIME_YENCODE_CRC_FINAL(crc)</programlisting>
+<programlisting>#define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -109,7 +111,7 @@ combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
 (<parameter>crc</parameter>).</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -157,7 +159,7 @@ Along the same lines, <parameter>pcrc</parameter> and <parameter>crc</parameter>
 GMIME_YENCODE_CRC_INIT before using.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -203,7 +205,7 @@ GMIME_YENCODE_CRC_FINAL (<parameter>crc</parameter>) to get the combined crc32 v
 all the parts.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -241,49 +243,57 @@ all the parts.</para>
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YENCODE-STATE-INIT-CAPS">GMIME_YENCODE_STATE_INIT</title>
-<programlisting>#define     GMIME_YENCODE_STATE_INIT</programlisting>
+<programlisting>#define GMIME_YENCODE_STATE_INIT     (0)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-INIT-CAPS">GMIME_YDECODE_STATE_INIT</title>
-<programlisting>#define     GMIME_YDECODE_STATE_INIT</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_INIT     (0)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-EOLN-CAPS">GMIME_YDECODE_STATE_EOLN</title>
-<programlisting>#define     GMIME_YDECODE_STATE_EOLN</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_EOLN     (1 &lt;&lt; 8)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-ESCAPE-CAPS">GMIME_YDECODE_STATE_ESCAPE</title>
-<programlisting>#define     GMIME_YDECODE_STATE_ESCAPE</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_ESCAPE   (1 &lt;&lt; 9)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-BEGIN-CAPS">GMIME_YDECODE_STATE_BEGIN</title>
-<programlisting>#define     GMIME_YDECODE_STATE_BEGIN</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_BEGIN    (1 &lt;&lt; 12)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-PART-CAPS">GMIME_YDECODE_STATE_PART</title>
-<programlisting>#define     GMIME_YDECODE_STATE_PART</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_PART     (1 &lt;&lt; 13)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-DECODE-CAPS">GMIME_YDECODE_STATE_DECODE</title>
-<programlisting>#define     GMIME_YDECODE_STATE_DECODE</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_DECODE   (1 &lt;&lt; 14)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-YDECODE-STATE-END-CAPS">GMIME_YDECODE_STATE_END</title>
-<programlisting>#define     GMIME_YDECODE_STATE_END</programlisting>
+<programlisting>#define GMIME_YDECODE_STATE_END      (1 &lt;&lt; 15)
+</programlisting>
 <para>
 
 </para></refsect2>
@@ -294,7 +304,7 @@ all the parts.</para>
 Creates a new yEnc filter.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -313,7 +323,7 @@ Creates a new yEnc filter.</para>
 Sets the current state of the yencoder/ydecoder</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -331,7 +341,7 @@ Sets the current state of the yencoder/ydecoder</para>
                                              <link linkend="guint32">guint32</link> crc);</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -352,7 +362,7 @@ Sets the current state of the yencoder/ydecoder</para>
 Get the computed crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -370,7 +380,7 @@ Get the computed crc or (guint32) -1 on fail.</para>
 Get the computed part crc or (guint32) -1 on fail.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

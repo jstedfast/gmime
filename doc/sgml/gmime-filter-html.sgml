@@ -42,49 +42,57 @@
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-PRE-CAPS">GMIME_FILTER_HTML_PRE</title>
-<programlisting>#define     GMIME_FILTER_HTML_PRE</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_PRE               (1 &lt;&lt; 0)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-NL-CAPS">GMIME_FILTER_HTML_CONVERT_NL</title>
-<programlisting>#define     GMIME_FILTER_HTML_CONVERT_NL</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_NL        (1 &lt;&lt; 1)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-SPACES-CAPS">GMIME_FILTER_HTML_CONVERT_SPACES</title>
-<programlisting>#define     GMIME_FILTER_HTML_CONVERT_SPACES</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 &lt;&lt; 2)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-URLS-CAPS">GMIME_FILTER_HTML_CONVERT_URLS</title>
-<programlisting>#define     GMIME_FILTER_HTML_CONVERT_URLS</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_URLS      (1 &lt;&lt; 3)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-MARK-CITATION-CAPS">GMIME_FILTER_HTML_MARK_CITATION</title>
-<programlisting>#define     GMIME_FILTER_HTML_MARK_CITATION</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_MARK_CITATION     (1 &lt;&lt; 4)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CONVERT-ADDRESSES-CAPS">GMIME_FILTER_HTML_CONVERT_ADDRESSES</title>
-<programlisting>#define     GMIME_FILTER_HTML_CONVERT_ADDRESSES</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 &lt;&lt; 5)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-ESCAPE-8BIT-CAPS">GMIME_FILTER_HTML_ESCAPE_8BIT</title>
-<programlisting>#define     GMIME_FILTER_HTML_ESCAPE_8BIT</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 &lt;&lt; 6)
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-FILTER-HTML-CITE-CAPS">GMIME_FILTER_HTML_CITE</title>
-<programlisting>#define     GMIME_FILTER_HTML_CITE</programlisting>
+<programlisting>#define GMIME_FILTER_HTML_CITE              (1 &lt;&lt; 7)
+</programlisting>
 <para>
 
 </para></refsect2>
@@ -96,7 +104,7 @@
 Creates a new GMimeFilterHTML filter.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

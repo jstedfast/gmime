@@ -44,16 +44,18 @@
 <title>Details</title>
 <refsect2>
 <title><anchor id="GMIME-STREAM-MMAP-TYPE-CAPS">GMIME_STREAM_MMAP_TYPE</title>
-<programlisting>#define     GMIME_STREAM_MMAP_TYPE</programlisting>
+<programlisting>#define GMIME_STREAM_MMAP_TYPE g_str_hash ("GMimeStreamMmap")
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-MMAP-CAPS">GMIME_IS_STREAM_MMAP()</title>
-<programlisting>#define     GMIME_IS_STREAM_MMAP(stream)</programlisting>
+<programlisting>#define GMIME_IS_STREAM_MMAP(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_MMAP_TYPE)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -66,10 +68,11 @@
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-MMAP-CAPS">GMIME_STREAM_MMAP()</title>
-<programlisting>#define     GMIME_STREAM_MMAP(stream)</programlisting>
+<programlisting>#define GMIME_STREAM_MMAP(stream) ((GMimeStreamMmap *) stream)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -89,7 +92,7 @@
 Creates a new GMimeStreamMmap object around <parameter>fd</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -119,7 +122,7 @@ Creates a new GMimeStreamMmap object around <parameter>fd</parameter> with bound
 and <parameter>end</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

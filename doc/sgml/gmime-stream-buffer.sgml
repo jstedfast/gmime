@@ -54,16 +54,18 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-BUFFER-TYPE-CAPS">GMIME_STREAM_BUFFER_TYPE</title>
-<programlisting>#define     GMIME_STREAM_BUFFER_TYPE</programlisting>
+<programlisting>#define GMIME_STREAM_BUFFER_TYPE g_str_hash ("GMimeStreamBuffer")
+</programlisting>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-IS-STREAM-BUFFER-CAPS">GMIME_IS_STREAM_BUFFER()</title>
-<programlisting>#define     GMIME_IS_STREAM_BUFFER(stream)</programlisting>
+<programlisting>#define GMIME_IS_STREAM_BUFFER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_BUFFER_TYPE)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -76,10 +78,11 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMIME-STREAM-BUFFER-CAPS">GMIME_STREAM_BUFFER()</title>
-<programlisting>#define     GMIME_STREAM_BUFFER(stream)</programlisting>
+<programlisting>#define GMIME_STREAM_BUFFER(stream) ((GMimeStreamBuffer *) stream)
+</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -98,7 +101,7 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 Creates a new GMimeStreamBuffer object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -125,7 +128,7 @@ the buffer. A #'\0' is stored after the last character in the
 buffer.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -151,7 +154,7 @@ on fail.
 Reads a single line into <parameter>buffer</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">

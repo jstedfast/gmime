@@ -58,7 +58,7 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
                                              <link linkend="gpointer">gpointer</link> data);</programlisting>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -82,7 +82,7 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 Creates a new GMimeHeader object.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -97,7 +97,7 @@ Creates a new GMimeHeader object.</para>
 Destroy the header object</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -117,7 +117,7 @@ Adds a header. If <parameter>value</parameter> is <literal>NULL</literal>, a spa
 obtained for them) otherwise the header will be unset.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -144,7 +144,7 @@ aside for it (useful for setting the order of headers before values
 can be obtained for them) otherwise the header will be unset.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -167,7 +167,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 Gets the value of the header requested.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -189,7 +189,7 @@ Gets the value of the header requested.</para>
 Remove the specified header.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -209,7 +209,7 @@ Remove the specified header.</para>
 Write the headers to a stream.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -229,7 +229,7 @@ Allocates a string buffer containing the raw rfc822 headers
 contained in <parameter>header</parameter>.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
@@ -249,7 +249,7 @@ contained in <parameter>header</parameter>.</para>
 Calls <parameter>func</parameter> for each header name/value pair.</para>
 <para>
 
-</para><informaltable pgwide=1 frame="none" role="params">
+</para><informaltable pgwide="1" frame="none" role="params">
 <tgroup cols="2">
 <colspec colwidth="2*">
 <colspec colwidth="8*">
