@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <alloca.h>
 
 #define d(x)
 
@@ -554,7 +555,7 @@ need_quotes (const char *string)
 			inptr++;
 		else if (*inptr == '"')
 			quoted = !quoted;
-		else if (!quoted && is_tspecial (*inptr))
+		else if (!quoted && (is_tspecial (*inptr) || *inptr == '.'))
 			return TRUE;
 		
 		if (*inptr)

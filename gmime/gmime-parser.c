@@ -214,6 +214,9 @@ parse_content_headers (const gchar *headers, gint headers_len,
 	const gchar *headers_ptr = headers;
 	const gchar *headers_end = headers + headers_len;
 	
+	*boundary = NULL;
+	*end_boundary = NULL;
+	
 	while (headers_ptr < headers_end) {
 		const gint type = content_header (headers_ptr);
 		
@@ -374,7 +377,8 @@ parse_content_headers (const gchar *headers, gint headers_len,
 			headers_ptr = end + 1;
 			break;
 		}
-		default: { /* ignore this header */
+		default: {
+			/* ignore this header */
 			const gchar *pch = headers_ptr;
 			const gchar *end = find_header_end (pch, headers_end);
 			
@@ -539,8 +543,6 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 	headers = get_header_block (in);
 	mime_part = g_mime_part_new ();
 	is_multipart = FALSE;
-	boundary = NULL;
-	end_boundary = NULL;
 	parse_content_headers (headers->data, headers->len, mime_part,
 			       &is_multipart, &boundary, &end_boundary);
 	
@@ -592,7 +594,7 @@ g_mime_parser_construct_part (const gchar *in, guint inlen)
 			
 			/* trim off excess trailing \n's */
 			inend = content + len;
-			while (len > 2 && *inend == '\n' && *(inend - 1) == '\n') {
+			while (len > 2 && *(inend - 1) == '\n' && *(inend - 2) == '\n') {
 				inend--;
 				len--;
 			}

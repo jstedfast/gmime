@@ -31,6 +31,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#define w(x) x
 
 /**
  * internet_address_new: Create a new Internet Address object
@@ -453,8 +454,8 @@ decode_domain_literal (const char **in, GString *domain)
 			g_string_append_c (domain, *inptr);
 			inptr++;
 		} else if (*inptr != ']') {
-			g_warning ("Malformed domain-literal, "
-				   "unexpected char (%c): %s", *inptr, *in);
+			w(g_warning ("Malformed domain-literal, unexpected char '%c': %s",
+				     *inptr, *in));
 			
 			/* try and skip to the next char ?? */
 			inptr++;
@@ -487,10 +488,10 @@ decode_domain (const char **in)
 				g_string_append_c (domain, ']');
 				inptr++;
 			} else
-				g_warning ("Missing ']' in domain-literal: %s", *in);
+				w(g_warning ("Missing ']' in domain-literal: %s", *in));
 		} else {
 			if (!(atom = decode_atom (&inptr))) {
-				g_warning ("Unexpeced char '%c' in domain: %s", *inptr, *in);
+				w(g_warning ("Unexpeced char '%c' in domain: %s", *inptr, *in));
 				/* remove the last '.' */
 				if (domain->str[domain->len - 1] == '.')
 					g_string_truncate (domain, domain->len - 1);
@@ -542,11 +543,15 @@ decode_mailbox (const char **in)
 	pre = decode_word (&inptr);
 	decode_lwsp (&inptr);
 	if (*inptr && !strchr (",.@", *inptr)) {
+		gboolean retried = FALSE;
+		
 		/* this mailbox has a name part, so get the name */
 		name = g_string_new ("");
 		while (pre) {
+			retried = FALSE;
 			g_string_append (name, pre);
 			g_free (pre);
+		retry:
 			pre = decode_word (&inptr);
 			if (pre)
 				g_string_append_c (name, ' ');
@@ -557,6 +562,13 @@ decode_mailbox (const char **in)
 			inptr++;
 			bracket = TRUE;
 			pre = decode_word (&inptr);
+		} else if (!retried) {
+			w(g_warning ("Unexpected char '%c' in address: %s: attempting recovery.",
+				     *inptr, *in));
+			/* chew up this bad char and then attempt 1 more pass at parsing */
+			g_string_append_c (name, *inptr++);
+			retried = TRUE;
+			goto retry;
 		} else {
 			g_string_free (name, TRUE);
 			g_string_free (addr, TRUE);
@@ -569,7 +581,7 @@ decode_mailbox (const char **in)
 	if (pre) {
 		g_string_append (addr, pre);
 	} else {
-		g_warning ("No local part for email address: %s", *in);
+		w(g_warning ("No local part for email address: %s", *in));
 		if (name)
 			g_string_free (name, TRUE);
 		g_string_free (addr, TRUE);
@@ -602,7 +614,7 @@ decode_mailbox (const char **in)
 			g_free (domain);
 		}
 	} else {
-		g_warning ("No domain in email address: %s", *in);
+		w(g_warning ("No domain in email address: %s", *in));
 	}
 	
 	if (bracket) {
@@ -610,7 +622,7 @@ decode_mailbox (const char **in)
 		if (*inptr == '>')
 			inptr++;
 		else
-			g_warning ("Missing closing '>' bracket for email address: %s", *in);
+			w(g_warning ("Missing closing '>' bracket for email address: %s", *in));
 	}
 	
 	if (!name || !name->len) {
@@ -705,8 +717,8 @@ decode_address (const char **in)
 		if (*inptr == ';')
 			inptr++;
 		else
-			g_warning ("Invalid group spec, missing closing ';': %.*s",
-				   inptr - start, start);
+			w(g_warning ("Invalid group spec, missing closing ';': %.*s",
+				     inptr - start, start));
 		
 		*in = inptr;
 	} else {
@@ -747,13 +759,14 @@ internet_address_parse_string (const char *string)
 		if (addr)
 			addrlist = g_list_append (addrlist, addr);
 		else
-			g_warning ("Invalid or incomplete address: %.*s", inptr - start, start);
+			w(g_warning ("Invalid or incomplete address: %.*s",
+				     inptr - start, start));
 		
 		decode_lwsp (&inptr);
 		if (*inptr == ',')
 			inptr++;
 		else if (*inptr) {
-			g_warning ("Parse error at '%s': expected ','", inptr);
+			w(g_warning ("Parse error at '%s': expected ','", inptr));
 			/* try skipping to the next address */
 			inptr = strchr (inptr, ',');
 			if (inptr)

@@ -12,9 +12,7 @@ quotes (it is illegal to quote rfc2047 encoded atoms).
 
 - Should only quote parameter values when required (ie when they
 contain whitespace, semicolons, or other illegal chars).
-
-- Expand InternetAddress to correctly handle rfc0822 address 'groups'
-(Are these even in use still?).
+** I think this is fixed too?
 
 - Possibly make the GMime parser async.
 

@@ -1,3 +1,28 @@
+2001-05-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (need_quotes): Include '.' as a char to quote.
+
+	* gen-table.c (main): Fixed a type-o.
+
+	* internet-address.c (decode_mailbox): Be a little more forgiving
+	about unexpected chars while parsing the name part of the email
+	address. Skip the bad char and then retry. If we fail again,
+	*then* we abort.
+
+	* gmime-content-type.c: #include <alloca.h>
+
+	* gmime-message.c: Same.
+
+	* gmime-param.c: Here too.
+
+	* gmime-part.c: And here...
+
+	* gmime-utils.c: And finally here.
+
+	* gmime-parser.c (g_mime_parser_construct_part): Oops, inend
+	points to the end of the string, not the last char of the string
+	(ie, '\0' not the char before it).
+
 2001-05-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-table-private.h: Oops, take out the check for isblank().

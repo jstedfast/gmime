@@ -248,11 +248,12 @@ static gchar *addresses[] = {
 	"Local recipients: phil, joe, alex, bob",
 	"@develop:sblab!att!thumper.bellcore.com!nsb",
 	"\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA",
-	"Charles S. Kerr <charles@foo.com>",
+	"Charles S. Kerr <charles@foo.com>", /* the '.' in the name part is illegal */
 	"Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>",
-	"Charles Kerr, Pan Programmer <charles@superpimp.org>",
+	"Charles Kerr, Pan Programmer <charles@superpimp.org>", /* bad placement of a comma ;-) */
 	"Charles Kerr <charles@[127.0.0.1]>",
-	"Charles <charles@[127..0.1]>",
+	"Charles <charles@[127..0.1]>",  /* where'd it go? Hollywood said, "where did *who* go!?" */
+	"Charles Kerr,, likes illegal commas <charles@superpimp.org>", /* ouch this is bad... */
 	"<charles@>",
 	"<charles@broken.host.com.> (Charles Kerr)",
 	NULL
@@ -306,8 +307,7 @@ test_addresses (void)
 	int i;
 	
 	for (i = 0; addresses[i]; i++) {
-		InternetAddress *ia;
-		GList *addrlist, *l;
+		GList *addrlist;
 		
 		addrlist = internet_address_parse_string (addresses[i]);
 		if (!addrlist) {

@@ -60,7 +60,7 @@ enum {
 #define is_dtext(x) ((gmime_special_table[(unsigned char)(x)] & IS_DSPECIAL) == 0)
 #define is_fieldname(x) ((gmime_special_table[(unsigned char)(x)] & (IS_CTRL|IS_SPACE)) == 0)
 #define is_qpsafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_QPSAFE) != 0)
-#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESPECIAL) != 0)
+#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
 
 #define CHARS_LWSP " \t\n\r"               /* linear whitespace chars */
