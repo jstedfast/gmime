@@ -30,16 +30,38 @@ extern "C" {
 #endif /* __cplusplus */
 
 #include <glib.h>
+#include <glib-object.h>
+
+#include "gmime-type-utils.h"
 #include "gmime-content-type.h"
-#include "gmime-utils.h"
 #include "gmime-stream.h"
+#include "gmime-utils.h"
+
+#define GMIME_TYPE_DATA_WRAPPER            (g_mime_data_wrapper_get_type ())
+#define GMIME_DATA_WRAPPER(obj)            (GMIME_CHECK_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))
+#define GMIME_DATA_WRAPPER_CLASS(klass)    (GMIME_CHECK_CLASS_CAST ((klass), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
+#define GMIME_IS_DATA_WRAPPER(obj)         (GMIME_CHECK_TYPE ((obj), GMIME_TYPE_DATA_WRAPPER))
+#define GMIME_IS_DATA_WRAPPER_CLASS(klass) (GMIME_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_DATA_WRAPPER))
+#define GMIME_DATA_WRAPPER_GET_CLASS(obj)  (GMIME_CHECK_GET_CLASS ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapperClass))
 
 typedef struct _GMimeDataWrapper GMimeDataWrapper;
+typedef struct _GMimeDataWrapperClass GMimeDataWrapperClass;
 
 struct _GMimeDataWrapper {
+	GObject parent_object;
+	
 	GMimePartEncodingType encoding;
 	GMimeStream *stream;
 };
+
+struct _GMimeDataWrapperClass {
+	GObjectClass parent_class;
+	
+	ssize_t (*write_to_stream) (GMimeDataWrapper *wrapper, GMimeStream *stream);
+};
+
+
+GType g_mime_data_wrapper_get_type (void);
 
 GMimeDataWrapper *g_mime_data_wrapper_new (void);
 GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding);

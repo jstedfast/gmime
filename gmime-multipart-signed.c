@@ -329,6 +329,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_mime_data_wrapper_set_stream (wrapper, sigstream);
 	g_mime_part_set_content_object (GMIME_PART (signature), wrapper);
 	g_mime_stream_unref (sigstream);
+	g_object_unref (wrapper);
 	
 	mps->protocol = g_strdup (ctx->sign_protocol);
 	mps->micalg = g_strdup (g_mime_cipher_hash_name (ctx, hash));
@@ -372,7 +373,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 				GMimeException *ex)
 {
 	GMimeObject *content, *signature;
-	const GMimeDataWrapper *wrapper;
+	GMimeDataWrapper *wrapper;
 	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter, *strip_filter;
 	GMimeStream *stream, *sigstream;
@@ -432,16 +433,17 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
-	sigstream = g_mime_data_wrapper_get_stream ((GMimeDataWrapper *) wrapper);
+	sigstream = g_mime_data_wrapper_get_stream (wrapper);
 	g_mime_stream_reset (sigstream);
 	g_mime_object_unref (signature);
+	g_object_unref (wrapper);
 	
 	/* verify the signature */
 	hash = g_mime_cipher_hash_id (ctx, mps->micalg);
 	valid = g_mime_cipher_verify (ctx, hash, stream, sigstream, ex);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
-		  (int)GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
+		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
 	g_mime_stream_unref (sigstream);
 	g_mime_stream_unref (stream);

@@ -1,3 +1,38 @@
+2002-08-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* test-pgpmime.c (test_multipart_signed): Unref the content object
+	after setting it on the MIME part.
+
+	* gmime-multipart-signed.c (g_mime_multipart_signed_sign): Unref
+	the content object after setting it on the MIME part.
+	(g_mime_multipart_signed_verify): Unref the content object after
+	we're done with it.
+
+	* gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_encrypt): Unref the content object
+	after setting it on the MIME part.
+	(g_mime_multipart_encrypted_decrypt): Unref the content object
+	after we're done with it.
+
+	* gmime-message-partial.c
+	(g_mime_message_partial_reconstruct_message): Unref the content
+	object when we're done with it.
+	(g_mime_message_partial_split_message): Unref the content object
+	after setting it on the MIME part.
+
+	* gmime-parser.c (parser_scan_mime_part_content): Unref the
+	content object after setting it on the MIME part.
+
+	* gmime-part.c (g_mime_part_set_content_object): Ref the new
+	content object and unref the old.
+	(g_mime_part_get_content_object): Ref the content object before
+	returning it to our caller.
+	(g_mime_part_finalize): Unref the content object.
+
+	* gmime-data-wrapper.c: Rewritten to subclass GObject.
+	(g_mime_data_wrapper_destroy): Removed.
+	(g_mime_data_wrapper_write_to_stream): Virtualize.
+
 2002-08-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv.c: Implemented an all new iconv cache. Also has the

@@ -139,6 +139,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	g_mime_stream_unref (stream);
 	
 	g_mime_part_set_content_object (text_part, content);
+	g_object_unref (content);
 	
 	/* create the multipart/signed container part */
 	mps = g_mime_multipart_signed_new ();

@@ -130,7 +130,7 @@ g_mime_part_finalize (GObject *object)
 	g_free (mime_part->content_md5);
 	
 	if (mime_part->content)
-		g_mime_data_wrapper_destroy (mime_part->content);
+		g_object_unref (mime_part->content);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -1131,8 +1131,11 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
+	if (content)
+		g_object_ref (content);
+	
 	if (mime_part->content)
-		g_mime_data_wrapper_destroy (mime_part->content);
+		g_object_unref (mime_part->content);
 	
 	mime_part->content = content;
 }
@@ -1151,6 +1154,9 @@ GMimeDataWrapper *
 g_mime_part_get_content_object (const GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+	
+	if (mime_part->content)
+		g_object_ref (mime_part->content);
 	
 	return mime_part->content;
 }

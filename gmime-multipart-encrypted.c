@@ -281,6 +281,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_part_set_content_object (encrypted_part, wrapper);
 	g_mime_part_set_filename (encrypted_part, "encrypted.asc");
 	g_mime_part_set_encoding (encrypted_part, GMIME_PART_ENCODING_7BIT);
+	g_object_unref (wrapper);
 	
 	/* save the version and encrypted parts */
 	/* FIXME: make sure there aren't any other parts?? */
@@ -315,8 +316,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 				    GMimeException *ex)
 {
 	GMimeObject *decrypted, *version, *encrypted;
-	const GMimeDataWrapper *wrapper;
 	const GMimeContentType *mime_type;
+	GMimeDataWrapper *wrapper;
 	GMimeStream *stream, *ciphertext;
 	GMimeStream *filtered_stream;
 	GMimeFilter *crlf_filter;
@@ -375,8 +376,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	/* get the ciphertext stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (encrypted));
-	ciphertext = g_mime_data_wrapper_get_stream ((GMimeDataWrapper *) wrapper);
+	ciphertext = g_mime_data_wrapper_get_stream (wrapper);
 	g_mime_stream_reset (ciphertext);
+	g_object_unref (wrapper);
 	
 	stream = g_mime_stream_mem_new ();
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);

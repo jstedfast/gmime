@@ -29,6 +29,71 @@
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 
+static void g_mime_data_wrapper_class_init (GMimeDataWrapperClass *klass);
+static void g_mime_data_wrapper_init (GMimeDataWrapper *wrapper, GMimeDataWrapperClass *klass);
+static void g_mime_data_wrapper_finalize (GObject *object);
+
+static ssize_t write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
+
+
+static GObject *parent_class = NULL;
+
+
+GType
+g_mime_data_wrapper_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeDataWrapperClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_data_wrapper_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeDataWrapper),
+			16,   /* n_preallocs */
+			(GInstanceInitFunc) g_mime_data_wrapper_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeDataWrapper", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_data_wrapper_class_init (GMimeDataWrapperClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_data_wrapper_finalize;
+	
+	klass->write_to_stream = write_to_stream;
+}
+
+static void
+g_mime_data_wrapper_init (GMimeDataWrapper *wrapper, GMimeDataWrapperClass *klass)
+{
+	wrapper->encoding = GMIME_PART_ENCODING_DEFAULT;
+	wrapper->stream = NULL;
+}
+
+static void
+g_mime_data_wrapper_finalize (GObject *object)
+{
+	GMimeDataWrapper *wrapper = (GMimeDataWrapper *) object;
+	
+	if (wrapper->stream)
+		g_mime_stream_unref (wrapper->stream);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
 
 /**
  * g_mime_data_wrapper_new:
@@ -40,7 +105,7 @@
 GMimeDataWrapper *
 g_mime_data_wrapper_new (void)
 {
-	return g_new0 (GMimeDataWrapper, 1);
+	return (GMimeDataWrapper *) g_object_new (GMIME_TYPE_DATA_WRAPPER, NULL, NULL);
 }
 
 
@@ -60,30 +125,15 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
 {
 	GMimeDataWrapper *wrapper;
 	
-	wrapper = g_new (GMimeDataWrapper, 1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
+	
+	wrapper = g_mime_data_wrapper_new ();
 	wrapper->encoding = encoding;
 	wrapper->stream = stream;
 	if (stream)
 		g_mime_stream_ref (stream);
 	
 	return wrapper;
-}
-
-
-/**
- * g_mime_data_wrapper_destroy:
- * @wrapper: data wrapper
- *
- * Destroys the data wrapper and unref's its internal stream.
- **/
-void
-g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
-{
-	if (wrapper) {
-		if (wrapper->stream)
-			g_mime_stream_unref (wrapper->stream);
-		g_free (wrapper);
-	}
 }
 
 
@@ -99,8 +149,9 @@ g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
 void
 g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
-	g_return_if_fail (wrapper != NULL);
-
+	g_return_if_fail (GMIME_IS_DATA_WRAPPER (wrapper));
+	g_return_if_fail (GMIME_IS_STREAM (stream));
+	
 	if (stream)
 		g_mime_stream_ref (stream);
 	
@@ -123,7 +174,7 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 GMimeStream *
 g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 {
-	g_return_val_if_fail (wrapper != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), NULL);
 	
 	if (wrapper->stream == NULL)
 		return NULL;
@@ -144,7 +195,7 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 void
 g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding)
 {
-	g_return_if_fail (wrapper != NULL);
+	g_return_if_fail (GMIME_IS_DATA_WRAPPER (wrapper));
 	
 	wrapper->encoding = encoding;
 }
@@ -161,31 +212,18 @@ g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingTy
 GMimePartEncodingType
 g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
 {
-	g_return_val_if_fail (wrapper != NULL, GMIME_PART_ENCODING_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), GMIME_PART_ENCODING_DEFAULT);
 	
 	return wrapper->encoding;
 }
 
 
-/**
- * g_mime_data_wrapper_write_to_stream:
- * @wrapper: data wrapper
- * @stream: output stream
- *
- * Write's the raw (decoded) data to the output stream.
- *
- * Returns the number of bytes written or -1 on failure.
- **/
-ssize_t
-g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
+static ssize_t
+write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
 	GMimeStream *filtered_stream;
 	GMimeFilter *filter;
 	ssize_t written;
-	
-	g_return_val_if_fail (wrapper != NULL, -1);
-	g_return_val_if_fail (stream != NULL, -1);
-	g_return_val_if_fail (wrapper->stream != NULL, -1);
 	
 	g_mime_stream_reset (wrapper->stream);
 	
@@ -213,4 +251,24 @@ g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *str
 	g_mime_stream_reset (wrapper->stream);
 	
 	return written;
+}
+
+
+/**
+ * g_mime_data_wrapper_write_to_stream:
+ * @wrapper: data wrapper
+ * @stream: output stream
+ *
+ * Write's the raw (decoded) data to the output stream.
+ *
+ * Returns the number of bytes written or -1 on failure.
+ **/
+ssize_t
+g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
+{
+	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
+	g_return_val_if_fail (wrapper->stream != NULL, -1);
+	
+	return GMIME_DATA_WRAPPER_GET_CLASS (wrapper)->write_to_stream (wrapper, stream);
 }
