@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = 
+SUBDIRS = .
 
 INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
 

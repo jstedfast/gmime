@@ -1,12 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = gmime src tests doc .
+SUBDIRS = gmime src tests docs .
 
 bin_SCRIPTS = gmime-config
-
-dist-hook: gmime.spec
-	-cp gmime.spec $(distdir)
-	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)
 
 ## We create gmimeConf.sh here and not from configure because we want
 ## to get the paths expanded correctly.  Macros like srcdir are given
@@ -45,3 +41,7 @@ gmimeConf.sh: gmimeConf.sh.in Makefile
 	  && mv gmimeConf.tmp gmimeConf.sh
 
 $(libgmime_2_0_la_SOURCES): $(srcdir)/gmime
+
+dist-hook: gmime.spec
+	-cp gmime.spec $(distdir)
+	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)

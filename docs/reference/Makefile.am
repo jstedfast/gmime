@@ -37,7 +37,8 @@ ignore_headers = 			\
 EXTRA_DIST = 				\
 	$(content_files)		\
 	$(DOC_MODULE)-docs.sgml		\
-	$(DOC_MODULE)-sections.txt
+	$(DOC_MODULE)-sections.txt	\
+	gmime.hierarchy
 
 SCANOBJ_FILES = $(DOC_MODULE).hierarchy
 
@@ -49,7 +50,7 @@ all-local: html-build.stamp
 scan-build.stamp:
 	@echo '*** Scanning header files ***'
 	cd $(srcdir) && \
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers=$(ignore_headers)
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="$(ignore_headers)"
 	touch scan-build.stamp
 
 #### templates ####

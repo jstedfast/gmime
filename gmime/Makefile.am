@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = 
+SUBDIRS = .
 
 gmimeincludedir = $(includedir)/gmime-2.0/gmime
 
