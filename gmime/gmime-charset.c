@@ -437,7 +437,7 @@ static struct {
 	{ "gb2312", "gb2312.dat", 0 },
 	
 	/* Traditional Chinese - in order of preference */
-	{ "Big5", "Big5.data", 0 },
+	{ "Big5", "Big5.dat", 0 },
 	{ "euc-tw", "euc-tw.dat", 0 },
 	{ NULL, NULL, 0 }
 };
@@ -478,7 +478,9 @@ int main (int argc, char **argv)
 				inptr++;
 				inleft--;
 			} else {
-				g_warning ("%s\n", g_strerror (errno));
+				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d):%s",
+					   tables[j].name, inleft, outleft,
+					   g_strerror (errno));
 				exit (1);
 			}
 		}
@@ -497,7 +499,7 @@ int main (int argc, char **argv)
 	for (j = 0; multibyte_tables[j].name; j++) {
 		char *inbuf, *outbuf;
 		struct stat st;
-		gunichar c;
+		gunichar *c;
 		FILE *fp;
 		
 		if (stat (multibyte_tables[j].filename, &st) == -1)
@@ -508,14 +510,14 @@ int main (int argc, char **argv)
 			continue;
 		
 		inleft = st.st_size;
-		inbuf = malloc (st.st_size);
-		outleft = st.st_size * 6 + 16;
-		outptr = outbuf = malloc (outleft);
+		inbuf = g_malloc (st.st_size);
+		outleft = st.st_size * 6 + 20;
+		outptr = outbuf = g_malloc (outleft);
 		
 		fread (inbuf, 1, st.st_size, fp);
 		fclose (fp);
 		
-		cd = iconv_open ("UTF-8", multibyte_tables[j].name);
+		cd = iconv_open (UCS, multibyte_tables[j].name);
 		
 		inptr = inbuf;
 		while (iconv (cd, &inptr, &inleft, &outptr, &outleft) == (size_t) -1) {
@@ -523,7 +525,7 @@ int main (int argc, char **argv)
 				inptr++;
 				inleft--;
 			} else {
-				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s\n",
+				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s",
 					   multibyte_tables[j].name, inleft, outleft,
 					   g_strerror (errno));
 				exit (1);
@@ -532,32 +534,14 @@ int main (int argc, char **argv)
 		
 		iconv_close (cd);
 		
-		free (inbuf);
+		g_free (inbuf);
 		
-		/* now we have a UTF-8 string - convert to UCS-4 manually... */
-		i = 0;
-		inptr = outbuf;
-		while (inptr && *inptr) {
-			char *newinptr;
-			
-			newinptr = g_utf8_next_char (inptr);
-			c = g_utf8_get_char (inptr);
-			if (!g_unichar_validate (c)) {
-				g_warning ("Invalid UTF-8 sequence encountered");
-				inptr++;
-				continue;
-			} else if (i >= 65535 || c >= 65535) {
-				/* this'll overflow our table... */
-				break;
-			}
-			
-			inptr = newinptr;
-			
+		for (i = 0, c = (gunichar *) outbuf; (char *) c < outptr && *c < 65535 && i < 65535; c++) {
 			encoding_map[i++] |= bit;
-			encoding_map[c] |= bit;
+			encoding_map[*c] |= bit;
 		}
 		
-		free (outbuf);
+		g_free (outbuf);
 		
 		multibyte_tables[j].bit = bit;
 		bit <<= 1;
