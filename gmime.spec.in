@@ -13,7 +13,7 @@ URL: http://www.xtorshun.org/gmime/
 Source: http://www.xtorshun.org/gmime/sources/gmime-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
-Requires: glib >= 1.2.0
+Requires: glib2 >= 2.0.0
 
 %description
 GMime is a set of utilities for parsing and creating messages using
@@ -33,6 +33,12 @@ make
 rm -rf $RPM_BUILD_ROOT
 make prefix=$RPM_BUILD_ROOT%{prefix} install
 
+
+# rename to prevent conflict with uu* utils from sharutils
+
+mv $RPM_BUILD_ROOT%{prefix}/bin/uuencode $RPM_BUILD_ROOT%{prefix}/bin/gmime-uuencode
+mv $RPM_BUILD_ROOT%{prefix}/bin/uudecode $RPM_BUILD_ROOT%{prefix}/bin/gmime-uudecode
+
 %clean
 rm -rf $RPM_BUILD_ROOT
 
@@ -40,14 +46,20 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-, root, root)
 
 %doc doc/html/* AUTHORS ChangeLog NEWS README COPYING TODO
-%{prefix}/lib/lib*.so.*
-
-%{prefix}/bin/gmime-config
+%{prefix}/bin/*
 %{prefix}/lib/*.sh
 %{prefix}/lib/libgmime*
-%{prefix}/share/aclocal/gmime.m4
-%{prefix}/include/gmime/*.h
+%{prefix}/lib/pkgconfig/*
+%{prefix}/include/gmime-2.0/gmime/*.h
+%{_datadir}/gtk-doc/html/*/*
 
 %changelog
+* Wed Dec  9 2002 Benjamin Lee <benjamin.lee@aspectdata.com>
+- fixed sharutils conflict with uudecode and uuencode.
+- removed duplicate libgmime inclusion in %files.
+
+* Wed Dec  4 2002 Benjamin Lee <benjamin.lee@aspectdata.com>
+- fixed files for gtk-doc, pkconfig, and includes.
+
 * Sat Mar 24 2001 Leland Elie <lelie@airmail.net>
 - created spec file.
