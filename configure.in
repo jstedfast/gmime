@@ -47,8 +47,6 @@ AM_PROG_LIBTOOL
 
 AM_MAINTAINER_MODE
 
-LDFLAGS=${_ldflags}
-
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/param.h)
