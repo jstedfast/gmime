@@ -1800,7 +1800,7 @@ rfc2047_encode_get_rfc822_words (const unsigned char *in, gboolean phrase)
 		
 		inptr = newinptr;
 		
-		if (g_unichar_isspace (c)) {
+		if (c < 256 && is_lwsp (c)) {
 			if (count > 0) {
 				word = g_new (struct _rfc822_word, 1);
 				word->next = NULL;

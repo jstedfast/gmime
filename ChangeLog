@@ -1,3 +1,9 @@
+2004-07-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Don't use
+	g_unichar_isspace() here, we only want to break 'words' on ascii
+	lwsp.
+
 2004-07-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime.c (g_mime_init): Make intialisation ref-counted.
