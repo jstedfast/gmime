@@ -1,3 +1,9 @@
+2003-12-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.1.1
+
 2003-12-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_op_start): Modified the code
