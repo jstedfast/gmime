@@ -52,7 +52,8 @@ static GMimeObject object_template = {
 };
 
 
-#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||  \
+#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
+				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
 
 
@@ -574,7 +575,8 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  * Returns the encoding type as a string. Available
  * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
  * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
+ * and GMIME_PART_ENCODING_UUENCODE.
  **/
 const char *
 g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
@@ -588,6 +590,8 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 		return "base64";
         case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		return "quoted-printable";
+	case GMIME_PART_ENCODING_UUENCODE:
+		return "x-uuencode";
 	default:
 		/* I guess this is a good default... */
 		return NULL;
@@ -602,11 +606,11 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * Gets the content encoding enumeration value based on the input
  * string.
  *
- * Returns the encoding string as a GMimePartEncodingType.
- * Available values for the encoding are:
- * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
- * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 and
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+ * Returns the encoding string as a GMimePartEncodingType.  Available
+ * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
+ * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
+ * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_encoding_from_string (const char *encoding)
@@ -619,6 +623,8 @@ g_mime_part_encoding_from_string (const char *encoding)
 		return GMIME_PART_ENCODING_BASE64;
 	else if (!g_strcasecmp (encoding, "quoted-printable"))
 		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+	else if (!g_strcasecmp (encoding, "x-uuencode"))
+		return GMIME_PART_ENCODING_UUENCODE;
 	else return GMIME_PART_ENCODING_DEFAULT;
 }
 
@@ -950,6 +956,10 @@ g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
 		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		break;
+	case GMIME_PART_ENCODING_UUENCODE:
+		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
+		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+		break;
 	default:
 		break;
 	}
@@ -1104,6 +1114,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 	
 	if (part->encoding != g_mime_data_wrapper_get_encoding (part->content)) {
 		GMimeStream *filtered_stream;
+		const char *filename;
 		GMimeFilter *filter;
 		
 		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
@@ -1116,6 +1127,12 @@ write_content (GMimePart *part, GMimeStream *stream)
 			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 			break;
+		case GMIME_PART_ENCODING_UUENCODE:
+			filename = g_mime_part_get_filename (part);
+			g_mime_stream_printf (stream, "begin 0644 %s\n", filename ? filename : "unknown");
+			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
+			break;
 		default:
 			break;
 		}
@@ -1123,6 +1140,11 @@ write_content (GMimePart *part, GMimeStream *stream)
 		written = g_mime_data_wrapper_write_to_stream (part->content, filtered_stream);
 		g_mime_stream_flush (filtered_stream);
 		g_mime_stream_unref (filtered_stream);
+		
+		if (part->encoding == GMIME_PART_ENCODING_UUENCODE) {
+			/* FIXME: get rid of this special-case x-uuencode crap */
+			g_mime_stream_write (stream, "end\n", 4);
+		}
 	} else {
 		GMimeStream *content_stream;
 		

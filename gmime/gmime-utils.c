@@ -1583,8 +1583,6 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * @uubuf: temporary buffer of 60 bytes
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
- * @uulen: holds the value of the length-char which is used to calculate
- *         how many more chars need to be decoded for that 'line'
  *
  * Uuencodes a chunk of data. Call this when finished encoding data
  * with g_mime_utils_uuencode_step to flush off the last little bit.
@@ -1592,20 +1590,22 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save, char *uulen)
+g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save)
 {
 	register unsigned char *outptr, *bufptr;
 	register guint32 saved;
-	int i;
+	int uulen, i;
 	
 	outptr = out;
 	
 	if (inlen > 0)
-		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save, uulen);
+		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save);
 	
-	bufptr = uubuf + ((*uulen / 3) * 4);
 	saved = *save;
-	i = *state;
+	i = *state & 0xff;
+	uulen = (*state >> 8) & 0xff;
+	
+	bufptr = uubuf + ((uulen / 3) * 4);
 	
 	if (i > 0) {
 		while (i < 3) {
@@ -1625,20 +1625,24 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 			*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
 			*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
 			*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+			
+			i = 0;
+			saved = 0;
+			uulen += 3;
 		}
 	}
 	
-	if (*uulen || *state) {
-		int cplen = (((*uulen + (*state ? 3 : 0)) / 3) * 4);
+	if (uulen > 0) {
+		int cplen = ((uulen / 3) * 4);
 		
-		*outptr++ = GMIME_UUENCODE_CHAR (*uulen + *state);
+		*outptr++ = GMIME_UUENCODE_CHAR (uulen & 0xff);
 		memcpy (outptr, uubuf, cplen);
 		outptr += cplen;
 		*outptr++ = '\n';
-		*uulen = 0;
+		uulen = 0;
 	}
 	
-	*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
+	*outptr++ = GMIME_UUENCODE_CHAR (uulen & 0xff);
 	*outptr++ = '\n';
 	
 	*save = 0;
@@ -1656,8 +1660,6 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
  * @uubuf: temporary buffer of 60 bytes
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
- * @uulen: holds the value of the length-char which is used to calculate
- *         how many more chars need to be decoded for that 'line'
  *
  * Uuencodes a chunk of data. Performs an 'encode step', only encodes
  * blocks of 45 characters to the output at a time, saves left-over
@@ -1667,29 +1669,27 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save, char *uulen)
+g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save)
 {
 	register unsigned char *outptr, *bufptr;
 	const register unsigned char *inptr;
 	const unsigned char *inend;
 	register guint32 saved;
-	int i;
+	int uulen, i;
 	
-	if (*uulen <= 0)
-		*uulen = 0;
+	saved = *save;
+	i = *state & 0xff;
+	uulen = (*state >> 8) & 0xff;
 	
 	inptr = in;
 	inend = in + inlen;
 	
 	outptr = out;
 	
-	bufptr = uubuf + ((*uulen / 3) * 4);
-	
-	saved = *save;
-	i = *state;
+	bufptr = uubuf + ((uulen / 3) * 4);
 	
 	while (inptr < inend) {
-		while (*uulen < 45 && inptr < inend) {
+		while (uulen < 45 && inptr < inend) {
 			while (i < 3 && inptr < inend) {
 				saved = (saved << 8) | *inptr++;
 				i++;
@@ -1710,22 +1710,22 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
 				
 				i = 0;
 				saved = 0;
-				*uulen += 3;
+				uulen += 3;
 			}
 		}
 		
-		if (*uulen >= 45) {
-			*outptr++ = GMIME_UUENCODE_CHAR (*uulen);
-			memcpy (outptr, uubuf, ((*uulen / 3) * 4));
-			outptr += ((*uulen / 3) * 4);
+		if (uulen >= 45) {
+			*outptr++ = GMIME_UUENCODE_CHAR (uulen & 0xff);
+			memcpy (outptr, uubuf, ((uulen / 3) * 4));
+			outptr += ((uulen / 3) * 4);
 			*outptr++ = '\n';
-			*uulen = 0;
+			uulen = 0;
 			bufptr = uubuf;
 		}
 	}
 	
 	*save = saved;
-	*state = i;
+	*state = ((uulen & 0xff) << 8) | (i & 0xff);
 	
 	return (outptr - out);
 }
@@ -1738,8 +1738,6 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
  * @out: output stream
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
- * @uulen: holds the value of the length-char which is used to calculate
- *         how many more chars need to be decoded for that 'line'
  *
  * Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
  * uuencoded data. Assumes the "begin <mode> <file name>" line has
@@ -1748,7 +1746,7 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
  * Returns the number of bytes decoded.
  **/
 size_t
-g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save, char *uulen)
+g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -1756,23 +1754,32 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 	unsigned char ch;
 	register guint32 saved;
 	gboolean last_was_eoln;
-	int i;
+	int uulen, i;
 	
-	if (*uulen <= 0)
+	if (*state & GMIME_UUDECODE_STATE_END)
+		return 0;
+	
+	saved = *save;
+	i = *state & 0xff;
+	uulen = (*state >> 8) & 0xff;
+	if (uulen == 0)
 		last_was_eoln = TRUE;
 	else
 		last_was_eoln = FALSE;
 	
 	inend = in + inlen;
 	outptr = out;
-	saved = *save;
-	i = *state;
+	
 	inptr = in;
 	while (inptr < inend && *inptr) {
 		if (*inptr == '\n' || last_was_eoln) {
 			if (last_was_eoln) {
-				*uulen = gmime_uu_rank[*inptr];
+				uulen = gmime_uu_rank[*inptr];
 				last_was_eoln = FALSE;
+				if (uulen == 0) {
+					*state |= GMIME_UUDECODE_STATE_END;
+					break;
+				}
 			} else {
 				last_was_eoln = TRUE;
 			}
@@ -1783,7 +1790,7 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 		
 		ch = *inptr++;
 		
-		if (*uulen > 0) {
+		if (uulen > 0) {
 			/* save the byte */
 			saved = (saved << 8) | ch;
 			i++;
@@ -1796,22 +1803,22 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 				b2 = saved >> 8 & 0xff;
 				b3 = saved & 0xff;
 				
-				if (*uulen >= 3) {
+				if (uulen >= 3) {
 					*outptr++ = gmime_uu_rank[b0] << 2 | gmime_uu_rank[b1] >> 4;
 					*outptr++ = gmime_uu_rank[b1] << 4 | gmime_uu_rank[b2] >> 2;
 				        *outptr++ = gmime_uu_rank[b2] << 6 | gmime_uu_rank[b3];
 				} else {
-					if (*uulen >= 1) {
+					if (uulen >= 1) {
 						*outptr++ = gmime_uu_rank[b0] << 2 | gmime_uu_rank[b1] >> 4;
 					}
-					if (*uulen >= 2) {
+					if (uulen >= 2) {
 						*outptr++ = gmime_uu_rank[b1] << 4 | gmime_uu_rank[b2] >> 2;
 					}
 				}
 				
 				i = 0;
 				saved = 0;
-				*uulen -= 3;
+				uulen -= 3;
 			}
 		} else {
 			break;
@@ -1819,7 +1826,7 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 	}
 	
 	*save = saved;
-	*state = i;
+	*state = (*state & GMIME_UUDECODE_STATE_MASK) | ((uulen & 0xff) << 8) | (i & 0xff);
 	
 	return (outptr - out);
 }

@@ -39,11 +39,18 @@ typedef enum {
         GMIME_PART_ENCODING_8BIT,
         GMIME_PART_ENCODING_BASE64,
         GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+	GMIME_PART_ENCODING_UUENCODE,
         GMIME_PART_NUM_ENCODINGS
 } GMimePartEncodingType;
 
 #define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
+
+#define GMIME_UUDECODE_STATE_INIT   (0)
+#define GMIME_UUDECODE_STATE_BEGIN  (1 << 16)
+#define GMIME_UUDECODE_STATE_END    (1 << 17)
+#define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
+
 
 time_t g_mime_utils_header_decode_date (const char *in, int *saveoffset);
 char  *g_mime_utils_header_format_date (time_t time, int offset);
@@ -69,9 +76,9 @@ size_t g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, u
 size_t g_mime_utils_base64_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
 
 /* do incremental uu (de/en)coding */
-size_t g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save, char *uulen);
-size_t g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save, char *uulen);
-size_t g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save, char *uulen);
+size_t g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+size_t g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save);
+size_t g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save);
 
 /* do incremental quoted-printable (de/en)coding */
 size_t g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *savestate, int *saved);

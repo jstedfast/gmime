@@ -48,7 +48,6 @@ typedef struct _GMimeFilterBasic {
 	unsigned char uubuf[60];
 	int state;
 	int save;
-	char uulen;
 } GMimeFilterBasic;
 
 GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);

@@ -1,3 +1,21 @@
+2002-01-20  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_write_to_stream):
+	Handle the x-uuencode encoding type.
+
+	* gmime-utils.c (g_mime_utils_uuencode_close): No longer needs a
+	uulen argument since it is now compacted into the state argument.
+	(g_mime_utils_uuencode_step): Same here.
+
+	* gmime-filter-basic.c (filter_filter): Ignore data until we have
+	found the "begin" line. Also, we no longer need uulen.
+	(filter_complete): Same.
+
+	* gmime-part.c (g_mime_part_encoding_to_string): Handle x-uuencode.
+	(g_mime_part_encoding_from_string): Same.
+	(g_mime_part_set_pre_encoded_content): Here too.
+	(write_content): And again here.
+
 2002-01-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv.c (iconv_node_new): Return the node - how did I miss
