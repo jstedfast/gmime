@@ -196,6 +196,7 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 		} else {
 			priv->filtered = priv->buffer;
 			priv->filteredlen = nread;
+			priv->flushed = FALSE;
 			f = priv->filters;
 			
 			while (f != NULL) {
@@ -226,6 +227,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t n)
 	size_t presize;
 	
 	priv->last_was_read = FALSE;
+	priv->flushed = FALSE;
 	
 	f = priv->filters;
 	presize = 0;
