@@ -122,7 +122,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1683"
+NAME="AEN1790"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +130,7 @@ NAME="AEN1683"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1686"
+NAME="AEN1793"
 ></A
 ><H2
 >Synopsis</H2
@@ -181,6 +181,27 @@ HREF="TIME-T"
 HREF="GINT"
 >gint</GTKDOCLINK
 > offset);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FOLD"
+>g_mime_utils_header_fold</A
+>        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-PRINTF"
+>g_mime_utils_header_printf</A
+>      (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *format,
+                                             ...);
 <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
@@ -445,7 +466,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1769"
+NAME="AEN1882"
 ></A
 ><H2
 >Description</H2
@@ -455,14 +476,14 @@ NAME="AEN1769"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1772"
+NAME="AEN1885"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1774"
+NAME="AEN1887"
 ></A
 ><H3
 ><A
@@ -487,7 +508,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1779"
+NAME="AEN1892"
 ></A
 ><P
 ></P
@@ -525,7 +546,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1788"
+NAME="AEN1901"
 ></A
 ><H3
 ><A
@@ -550,7 +571,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1793"
+NAME="AEN1906"
 ></A
 ><P
 ></P
@@ -588,7 +609,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1802"
+NAME="AEN1915"
 ></A
 ><H3
 ><A
@@ -625,7 +646,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1811"
+NAME="AEN1924"
 ></A
 ><P
 ></P
@@ -700,7 +721,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1829"
+NAME="AEN1942"
 ></A
 ><H3
 ><A
@@ -737,7 +758,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1838"
+NAME="AEN1951"
 ></A
 ><P
 ></P
@@ -807,7 +828,201 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1855"
+NAME="AEN1968"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-HEADER-FOLD"
+></A
+>g_mime_utils_header_fold ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_header_fold        (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1976"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input header string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated string containing the folded header.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1989"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-HEADER-PRINTF"
+></A
+>g_mime_utils_header_printf ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_header_printf      (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *format,
+                                             ...);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1997"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>format</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> string format</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>...</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> arguments</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>an allocated string containing the folded header specified
+by <GTKDOCLINK
+HREF="FORMAT"
+>format</GTKDOCLINK
+> and the following arguments.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2015"
 ></A
 ><H3
 ><A
@@ -840,7 +1055,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1863"
+NAME="AEN2023"
 ></A
 ><P
 ></P
@@ -896,7 +1111,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1876"
+NAME="AEN2036"
 ></A
 ><H3
 ><A
@@ -926,7 +1141,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1883"
+NAME="AEN2043"
 ></A
 ><P
 ></P
@@ -964,7 +1179,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1892"
+NAME="AEN2052"
 ></A
 ><H3
 ><A
@@ -997,7 +1212,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1900"
+NAME="AEN2060"
 ></A
 ><P
 ></P
@@ -1051,7 +1266,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1913"
+NAME="AEN2073"
 ></A
 ><H3
 ><A
@@ -1085,7 +1300,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1921"
+NAME="AEN2081"
 ></A
 ><P
 ></P
@@ -1140,7 +1355,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1934"
+NAME="AEN2094"
 ></A
 ><H3
 ><A
@@ -1173,7 +1388,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1942"
+NAME="AEN2102"
 ></A
 ><P
 ></P
@@ -1226,7 +1441,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1955"
+NAME="AEN2115"
 ></A
 ><H3
 ><A
@@ -1259,7 +1474,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1963"
+NAME="AEN2123"
 ></A
 ><P
 ></P
@@ -1313,7 +1528,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1976"
+NAME="AEN2136"
 ></A
 ><H3
 ><A
@@ -1347,7 +1562,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1984"
+NAME="AEN2144"
 ></A
 ><P
 ></P
@@ -1401,7 +1616,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1997"
+NAME="AEN2157"
 ></A
 ><H3
 ><A
@@ -1450,7 +1665,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2009"
+NAME="AEN2169"
 ></A
 ><P
 ></P
@@ -1579,7 +1794,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2040"
+NAME="AEN2200"
 ></A
 ><H3
 ><A
@@ -1628,7 +1843,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2052"
+NAME="AEN2212"
 ></A
 ><P
 ></P
@@ -1757,7 +1972,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2082"
+NAME="AEN2242"
 ></A
 ><H3
 ><A
@@ -1807,7 +2022,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2094"
+NAME="AEN2254"
 ></A
 ><P
 ></P
@@ -1935,7 +2150,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2124"
+NAME="AEN2284"
 ></A
 ><H3
 ><A
@@ -1988,7 +2203,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2137"
+NAME="AEN2297"
 ></A
 ><P
 ></P
@@ -2134,7 +2349,7 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2171"
+NAME="AEN2331"
 ></A
 ><H3
 ><A
@@ -2183,7 +2398,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2183"
+NAME="AEN2343"
 ></A
 ><P
 ></P
@@ -2310,7 +2525,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2213"
+NAME="AEN2373"
 ></A
 ><H3
 ><A
@@ -2359,7 +2574,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2225"
+NAME="AEN2385"
 ></A
 ><P
 ></P
@@ -2487,7 +2702,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2255"
+NAME="AEN2415"
 ></A
 ><H3
 ><A
@@ -2537,7 +2752,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN2267"
+NAME="AEN2427"
 ></A
 ><P
 ></P

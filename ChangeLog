@@ -1,3 +1,11 @@
+2000-12-13  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* doc/sgml/*:
+	* doc/html/*:
+	* doc/gmime-sections.txt: Updated.
+
+	* README: Updated version line to 0.3.0
+
 2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_to_string): Wrap some content-*
@@ -8,7 +16,7 @@
 
 	* gmime-utils.c (g_mime_utils_header_printf): Moved here from
 	gmime-message.c and slightly renamed ;-)
-	(g_mime_utils_header_fold): Moved from being provate to being
+	(g_mime_utils_header_fold): Moved from being private to being
 	public.
 
 2000-12-12  Jeffrey Stedfast  <fejj@helixcode.com>

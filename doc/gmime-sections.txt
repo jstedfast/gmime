@@ -25,6 +25,7 @@ GMimePartEncodingType
 GMimePartDispositionParam
 GMimePartDisposition
 GMimePart
+GMimePartFunc
 g_mime_part_new
 g_mime_part_new_with_type
 g_mime_part_destroy
@@ -49,8 +50,11 @@ g_mime_part_get_boundary
 g_mime_part_set_content
 g_mime_part_set_pre_encoded_content
 g_mime_part_get_content
+g_mime_part_add_subpart
 g_mime_part_add_child
 g_mime_part_to_string
+g_mime_part_foreach
+g_mime_part_get_subpart_from_content_id
 </SECTION>
 
 <SECTION>
@@ -79,10 +83,10 @@ g_mime_message_set_message_id
 g_mime_message_get_message_id
 g_mime_message_add_arbitrary_header
 g_mime_message_set_mime_part
-g_mime_header_printf
 g_mime_message_to_string
 g_mime_message_get_body
 g_mime_message_get_headers
+g_mime_message_foreach_part
 </SECTION>
 
 <SECTION>
@@ -91,6 +95,8 @@ BASE64_ENCODE_LEN
 QP_ENCODE_LEN
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
+g_mime_utils_header_fold
+g_mime_utils_header_printf
 g_mime_utils_quote_string
 g_mime_utils_unquote_string
 g_mime_utils_text_is_8bit

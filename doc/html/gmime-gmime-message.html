@@ -122,7 +122,7 @@ NAME="GMIME-GMIME-MESSAGE"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1056"
+NAME="AEN1161"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +130,7 @@ NAME="AEN1056"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1059"
+NAME="AEN1164"
 ></A
 ><H2
 >Synopsis</H2
@@ -381,17 +381,6 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 HREF="GCHAR"
 >gchar</GTKDOCLINK
 >*      <A
-HREF="gmime-gmime-message.html#G-MIME-HEADER-PRINTF"
->g_mime_header_printf</A
->            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
-                                             ...);
-<GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      <A
 HREF="gmime-gmime-message.html#G-MIME-MESSAGE-TO-STRING"
 >g_mime_message_to_string</A
 >        (<A
@@ -425,7 +414,22 @@ HREF="gmime-gmime-message.html#G-MIME-MESSAGE-GET-HEADERS"
 >      (<A
 HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 >GMimeMessage</A
-> *message);</PRE
+> *message);
+void        <A
+HREF="gmime-gmime-message.html#G-MIME-MESSAGE-FOREACH-PART"
+>g_mime_message_foreach_part</A
+>     (<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTFUNC"
+>GMimePartFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -433,7 +437,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1139"
+NAME="AEN1245"
 ></A
 ><H2
 >Description</H2
@@ -443,14 +447,14 @@ NAME="AEN1139"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1142"
+NAME="AEN1248"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1144"
+NAME="AEN1250"
 ></A
 ><H3
 ><A
@@ -476,7 +480,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1149"
+NAME="AEN1255"
 ></A
 ><H3
 ><A
@@ -502,7 +506,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1154"
+NAME="AEN1260"
 ></A
 ><H3
 ><A
@@ -528,7 +532,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1159"
+NAME="AEN1265"
 ></A
 ><H3
 ><A
@@ -557,7 +561,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1164"
+NAME="AEN1270"
 ></A
 ><H3
 ><A
@@ -597,7 +601,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1169"
+NAME="AEN1275"
 ></A
 ><H3
 ><A
@@ -627,7 +631,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1174"
+NAME="AEN1280"
 ></A
 ><H3
 ><A
@@ -657,7 +661,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1181"
+NAME="AEN1287"
 ></A
 ><P
 ></P
@@ -694,7 +698,7 @@ set by default.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1190"
+NAME="AEN1296"
 ></A
 ><H3
 ><A
@@ -725,7 +729,7 @@ Parts back to the Operating System for reuse.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1197"
+NAME="AEN1303"
 ></A
 ><P
 ></P
@@ -763,7 +767,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1206"
+NAME="AEN1312"
 ></A
 ><H3
 ><A
@@ -803,7 +807,7 @@ CLASS="PARAMETER"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1215"
+NAME="AEN1321"
 ></A
 ><P
 ></P
@@ -858,7 +862,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1228"
+NAME="AEN1334"
 ></A
 ><H3
 ><A
@@ -891,7 +895,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1236"
+NAME="AEN1342"
 ></A
 ><P
 ></P
@@ -944,7 +948,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1249"
+NAME="AEN1355"
 ></A
 ><H3
 ><A
@@ -978,7 +982,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1257"
+NAME="AEN1363"
 ></A
 ><P
 ></P
@@ -1033,7 +1037,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1270"
+NAME="AEN1376"
 ></A
 ><H3
 ><A
@@ -1066,7 +1070,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1278"
+NAME="AEN1384"
 ></A
 ><P
 ></P
@@ -1119,7 +1123,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1291"
+NAME="AEN1397"
 ></A
 ><H3
 ><A
@@ -1163,7 +1167,7 @@ GMIME_RECIPIENT_TYPE_CC and GMIME_RECIPIENT_TYPE_BCC.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1301"
+NAME="AEN1407"
 ></A
 ><P
 ></P
@@ -1252,7 +1256,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1322"
+NAME="AEN1428"
 ></A
 ><H3
 ><A
@@ -1295,7 +1299,7 @@ specified in rfc822.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1331"
+NAME="AEN1437"
 ></A
 ><P
 ></P
@@ -1367,7 +1371,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1348"
+NAME="AEN1454"
 ></A
 ><H3
 ><A
@@ -1404,7 +1408,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1357"
+NAME="AEN1463"
 ></A
 ><P
 ></P
@@ -1477,7 +1481,7 @@ GMIME_RECIPIENT_TYPE_BCC.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1374"
+NAME="AEN1480"
 ></A
 ><H3
 ><A
@@ -1511,7 +1515,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1382"
+NAME="AEN1488"
 ></A
 ><P
 ></P
@@ -1566,7 +1570,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1395"
+NAME="AEN1501"
 ></A
 ><H3
 ><A
@@ -1599,7 +1603,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1403"
+NAME="AEN1509"
 ></A
 ><P
 ></P
@@ -1652,7 +1656,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1416"
+NAME="AEN1522"
 ></A
 ><H3
 ><A
@@ -1687,7 +1691,7 @@ HREF="TIME-T"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1424"
+NAME="AEN1530"
 ></A
 ><P
 ></P
@@ -1759,7 +1763,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1441"
+NAME="AEN1547"
 ></A
 ><H3
 ><A
@@ -1801,7 +1805,7 @@ HREF="GMT-OFFSET"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1451"
+NAME="AEN1557"
 ></A
 ><P
 ></P
@@ -1873,7 +1877,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1468"
+NAME="AEN1574"
 ></A
 ><H3
 ><A
@@ -1906,7 +1910,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1476"
+NAME="AEN1582"
 ></A
 ><P
 ></P
@@ -1959,7 +1963,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1489"
+NAME="AEN1595"
 ></A
 ><H3
 ><A
@@ -1993,7 +1997,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1497"
+NAME="AEN1603"
 ></A
 ><P
 ></P
@@ -2048,7 +2052,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1510"
+NAME="AEN1616"
 ></A
 ><H3
 ><A
@@ -2081,7 +2085,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1518"
+NAME="AEN1624"
 ></A
 ><P
 ></P
@@ -2134,7 +2138,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1531"
+NAME="AEN1637"
 ></A
 ><H3
 ><A
@@ -2174,7 +2178,7 @@ X-Priority, or In-Reply-To.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1540"
+NAME="AEN1646"
 ></A
 ><P
 ></P
@@ -2246,7 +2250,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1557"
+NAME="AEN1663"
 ></A
 ><H3
 ><A
@@ -2280,7 +2284,7 @@ HREF="gmime-gmime-part.html#GMIMEPART"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1565"
+NAME="AEN1671"
 ></A
 ><P
 ></P
@@ -2335,115 +2339,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1578"
-></A
-><H3
-><A
-NAME="G-MIME-HEADER-PRINTF"
-></A
->g_mime_header_printf ()</H3
-><TABLE
-BORDER="0"
-BGCOLOR="#D6E8FF"
-WIDTH="100%"
-CELLPADDING="6"
-><TR
-><TD
-><PRE
-CLASS="PROGRAMLISTING"
-><GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
->*      g_mime_header_printf            (const <GTKDOCLINK
-HREF="GCHAR"
->gchar</GTKDOCLINK
-> *format,
-                                             ...);</PRE
-></TD
-></TR
-></TABLE
-><P
-></P
-><P
-></P
-><DIV
-CLASS="INFORMALTABLE"
-><A
-NAME="AEN1586"
-></A
-><P
-></P
-><TABLE
-BORDER="0"
-WIDTH="100%"
-BGCOLOR="#FFD0D0"
-CELLSPACING="0"
-CELLPADDING="4"
-CLASS="CALSTABLE"
-><TBODY
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->format</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> string format</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><TT
-CLASS="PARAMETER"
-><I
->...</I
-></TT
->&nbsp;:</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
-> arguments</TD
-></TR
-><TR
-><TD
-WIDTH="20%"
-ALIGN="RIGHT"
-VALIGN="TOP"
-><I
-CLASS="EMPHASIS"
->Returns</I
-> :</TD
-><TD
-WIDTH="80%"
-ALIGN="LEFT"
-VALIGN="TOP"
->an allocated string containing the folded header specified
-by <TT
-CLASS="LITERAL"
->format</TT
-> and the following arguments.</TD
-></TR
-></TBODY
-></TABLE
-><P
-></P
-></DIV
-></DIV
-><HR><DIV
-CLASS="REFSECT2"
-><A
-NAME="AEN1604"
+NAME="AEN1684"
 ></A
 ><H3
 ><A
@@ -2476,7 +2372,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1612"
+NAME="AEN1692"
 ></A
 ><P
 ></P
@@ -2529,7 +2425,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1625"
+NAME="AEN1705"
 ></A
 ><H3
 ><A
@@ -2570,7 +2466,7 @@ HREF="GBOOLEAN"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1635"
+NAME="AEN1715"
 ></A
 ><P
 ></P
@@ -2665,7 +2561,7 @@ recommended that you traverse the MIME structure yourself.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1657"
+NAME="AEN1737"
 ></A
 ><H3
 ><A
@@ -2698,7 +2594,7 @@ HREF="gmime-gmime-message.html#GMIMEMESSAGE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1665"
+NAME="AEN1745"
 ></A
 ><P
 ></P
@@ -2741,6 +2637,119 @@ WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
 >an allocated string containing the raw message headers.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1758"
+></A
+><H3
+><A
+NAME="G-MIME-MESSAGE-FOREACH-PART"
+></A
+>g_mime_message_foreach_part ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_message_foreach_part     (<A
+HREF="gmime-gmime-message.html#GMIMEMESSAGE"
+>GMimeMessage</A
+> *message,
+                                             <A
+HREF="gmime-gmime-part.html#GMIMEPARTFUNC"
+>GMimePartFunc</A
+> callback,
+                                             <GTKDOCLINK
+HREF="GPOINTER"
+>gpointer</GTKDOCLINK
+> data);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Calls <GTKDOCLINK
+HREF="CALLBACK"
+>callback</GTKDOCLINK
+> on each of the mime parts in the mime message.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1768"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>message</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> MIME message</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>callback</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> function to call on each of the mime parts contained by the mime message</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>data</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> extra data to pass to the callback</TD
 ></TR
 ></TBODY
 ></TABLE

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="2 Dec 2000">
+<refentry id="gmime-gmime-utils" revision="13 Dec 2000">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -20,6 +20,9 @@
                                              <link linkend="gint">gint</link> *saveoffset);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
                                              <link linkend="gint">gint</link> offset);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-fold">g_mime_utils_header_fold</link>        (const <link linkend="gchar">gchar</link> *in);
+<link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-printf">g_mime_utils_header_printf</link>      (const <link linkend="gchar">gchar</link> *format,
+                                             ...);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string);
 void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
 <link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text);
@@ -159,6 +162,47 @@ will be stored.
 <entry> Timezone offset
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a valid string representation of the date.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-header-fold">g_mime_utils_header_fold ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_fold        (const <link linkend="gchar">gchar</link> *in);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input header string
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the folded header.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-header-printf">g_mime_utils_header_printf ()</title>
+<programlisting><link linkend="gchar">gchar</link>*      g_mime_utils_header_printf      (const <link linkend="gchar">gchar</link> *format,
+                                             ...);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>format</parameter>&nbsp;:</entry>
+<entry> string format
+</entry></row>
+<row><entry align="right"><parameter>...</parameter>&nbsp;:</entry>
+<entry> arguments
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the folded header specified
+by <link linkend="format">format</link> and the following arguments.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
