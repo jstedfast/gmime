@@ -1,3 +1,10 @@
+2002-07-11  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* strlib.c (strlcpy): Changed to behave the same as the Solaris
+	strlcpy function.
+	(strlcat): Changed to behave the same as the Solaris strlcat
+	function.
+
 2002-07-04  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv-utils.c (g_mime_iconv_strndup): Fix for

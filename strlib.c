@@ -292,10 +292,10 @@ strncpy (char *dest, const char *src, size_t n)
  * @src: source string
  * @n: number of bytes to copy
  *
- * Copies the first @n characters of the string pointed to by @src to
- * the character array pointed to by @dest and null-terminates
- * @dest. The strings may not overlap and the destination string @dest
- * must be large enough to receive the copy.
+ * Copies at most @n-1 characters (@n being the size of the string
+ * buffer @dest) of the string pointed to by @src to the string
+ * pointed to by @dest and null-terminates @dest. The strings may not
+ * overlap.
  *
  * Returns the size of the resultant string, @dest.
  **/
@@ -305,7 +305,7 @@ strlcpy (char *dest, const char *src, size_t n)
 	register const char *s = src;
 	register char *d = dest;
 	
-	while (*s && n)
+	while (*s && n > 1)
 		*d++ = *s++, n--;
 	
 	*d = '\0';
@@ -415,11 +415,10 @@ strncat (char *dest, const char *src, size_t n)
  * @src: source string
  * @n: number of bytes to append
  *
- * Appends at most the first @n characters of the @src string to the
- * @dest string overwriting the '\0' character at the end of @dest and
- * null-terminates the resulting @dest. The strings may not overlap,
- * and the destination string dest must have enough space for the
- * result.
+ * Appends at most (@n - strlen (dest) - 1) characters (@n being the
+ * size of the string @dest) of the @src string to the @dest string
+ * overwriting the null character at the end of @dest and
+ * null-terminates the resulting @dest. The strings may not overlap.
  *
  * Returns the size of the resultant string, @dest.
  **/
@@ -432,7 +431,7 @@ strlcat (char *dest, const char *src, size_t n)
 	while (*d)
 		d++;
 	
-	while (*s && n)
+	while (*s && n > 1)
 		*d++ = *s++, n--;
 	
 	*d = '\0';
