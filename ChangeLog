@@ -1,3 +1,17 @@
+2000-12-11  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* test-pgp.c (test_encrypt): Updated to reflect argument changes
+	to pgp_encrypt.
+
+	* pgp-mime.c (pgp_mime_part_encrypt): And here too.
+
+	* pgp-utils.c (pgp_encrypt): Always initialize the passwd_fds even
+	if we won't use them (ie if 'sign' is FALSE). Now also takes a
+	userid argument for cases when 'sign' is set to TRUE (so we may
+	specify which userid to use when signing).
+	(crypto_exec_with_passwd): Only strlen (passphrase) if passphrase
+	is non-NULL, otherwise just pretend it's length is 0.
+
 2000-12-10  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* test-pgp.c: Added test program for pgp-utils.

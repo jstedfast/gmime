@@ -46,7 +46,7 @@
 #include <unistd.h>
 #include <signal.h>
 
-#define d(x) x
+#define d(x)
 #define _(x) x
 
 static const gchar *pgp_path = NULL;
@@ -71,7 +71,7 @@ pgp_get_passphrase (const gchar *userid)
 		type = "PGP2.x";
 		break;
 	}
-	prompt = g_strdup_printf ("Please enter your %s passphrase%s%s.",
+	prompt = g_strdup_printf ("Please enter your %s passphrase%s%s",
 				  type, userid ? " for " : "",
 				  userid ? userid : "");
 	
@@ -196,13 +196,13 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 	fd_set fdset, write_fdset;
 	int ip_fds[2], op_fds[2], diag_fds[2];
 	int select_result, read_len, write_len;
-        size_t tmp_len;
+	size_t tmp_len;
 	pid_t child;
 	char *buf, *diag_buf;
 	const char *passwd_next, *input_next;
 	size_t size, alloc_size, diag_size, diag_alloc_size;
-        gboolean eof_seen, diag_eof_seen, passwd_eof_seen, input_eof_seen;
-        size_t passwd_remaining, passwd_incr, input_remaining, input_incr;
+	gboolean eof_seen, diag_eof_seen, passwd_eof_seen, input_eof_seen;
+	size_t passwd_remaining, passwd_incr, input_remaining, input_incr;
 	struct timeval timeout;
 	
 	
@@ -218,7 +218,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 	if (!(child = fork ())) {
 		/* In child */
 		
-                if ((dup2 (ip_fds[0], STDIN_FILENO) < 0 ) ||
+		if ((dup2 (ip_fds[0], STDIN_FILENO) < 0 ) ||
 		    (dup2 (op_fds[1], STDOUT_FILENO) < 0 ) ||
 		    (dup2 (diag_fds[1], STDERR_FILENO) < 0 )) {
 			_exit (255);
@@ -233,7 +233,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 		setsid ();
 		
 		/* Close excess fds */
-                cleanup_before_exec (passwd_fds[0]);
+		cleanup_before_exec (passwd_fds[0]);
 		
 		execvp (path, argv);
 		fprintf (stderr, "Could not execute %s: %s\n", argv[0],
@@ -257,37 +257,37 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 	size = diag_size = 0;
 	alloc_size = 4096;
 	diag_alloc_size = 1024;
-        eof_seen = diag_eof_seen = FALSE;
+	eof_seen = diag_eof_seen = FALSE;
 	
 	buf = g_malloc (alloc_size);
 	diag_buf = g_malloc (diag_alloc_size);
 	
-        passwd_next = passphrase;
-        passwd_remaining = strlen (passphrase);
-        passwd_incr = fpathconf (passwd_fds[1], _PC_PIPE_BUF);
+	passwd_next = passphrase;
+	passwd_remaining = passphrase ? strlen (passphrase) : 0;
+	passwd_incr = fpathconf (passwd_fds[1], _PC_PIPE_BUF);
 	/* Use a reasonable default value on error. */
-        if (passwd_incr <= 0)
+	if (passwd_incr <= 0)
 		passwd_incr = 1024;
-        passwd_eof_seen = FALSE;
+	passwd_eof_seen = FALSE;
 	
 	input_next = input;
 	input_remaining = inlen;
 	input_incr = fpathconf (ip_fds[1], _PC_PIPE_BUF);
 	if (input_incr <= 0)
-                input_incr = 1024;
+		input_incr = 1024;
 	input_eof_seen = FALSE;
 	
 	while (!(eof_seen && diag_eof_seen)) {
 		FD_ZERO (&fdset);
-                if (!eof_seen)
+		if (!eof_seen)
 			FD_SET (op_fds[0], &fdset);
-                if (!diag_eof_seen)
+		if (!diag_eof_seen)
 			FD_SET (diag_fds[0], &fdset);
 		
 		FD_ZERO (&write_fdset);
-                if (!passwd_eof_seen)
+		if (!passwd_eof_seen)
 			FD_SET (passwd_fds[1], &write_fdset);
-                if (!input_eof_seen)
+		if (!input_eof_seen)
 			FD_SET (ip_fds[1], &write_fdset);
 		
 		select_result = select (FD_SETSIZE, &fdset, &write_fdset,
@@ -302,7 +302,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 			break;
 		}
 		
-                if (FD_ISSET (op_fds[0], &fdset)) {
+		if (FD_ISSET (op_fds[0], &fdset)) {
 			/* More output is available. */
 			
 			if (size + 4096 > alloc_size) {
@@ -319,9 +319,9 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 			if (read_len == 0)
 				eof_seen = TRUE;
 			size += read_len;
-                }
+		}
 		
-                if (FD_ISSET(diag_fds[0], &fdset) ) {
+		if (FD_ISSET(diag_fds[0], &fdset) ) {
 			/* More stderr is available. */
 			
 			if (diag_size + 1024 > diag_alloc_size) {
@@ -340,9 +340,9 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 			if (read_len == 0)
 				diag_eof_seen = TRUE;
 			diag_size += read_len;
-                }
+		}
 		
-                if (FD_ISSET(passwd_fds[1], &write_fdset)) {
+		if (FD_ISSET(passwd_fds[1], &write_fdset)) {
 			/* Ready for more password input. */
 			
 			tmp_len = passwd_incr;
@@ -361,9 +361,9 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 				close (passwd_fds[1]);
 				passwd_eof_seen = TRUE;
 			}
-                }
+		}
 		
-                if (FD_ISSET(ip_fds[1], &write_fdset)) {
+		if (FD_ISSET(ip_fds[1], &write_fdset)) {
 			/* Ready for more ciphertext input. */
 			
 			tmp_len = input_incr;
@@ -381,7 +381,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 				close (ip_fds[1]);
 				input_eof_seen = TRUE;
 			}
-                }
+		}
 	}
 	
 	buf[size] = 0;
@@ -394,7 +394,7 @@ crypto_exec_with_passwd (const char *path, char *argv[], const char *input, int 
 		*outlen = size;
 	*diagnostics = diag_buf;
 	
-        return cleanup_child (child);
+	return cleanup_child (child);
 }
 
 /*----------------------------------------------------------------------*
@@ -504,13 +504,16 @@ pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex)
  * pgp_encrypt:
  * @cleartext: data to encrypt
  * @inlen: input length of the cleartext (which may be a binary stream)
+ * @recipients: An array of recipient ids
+ * @sign: TRUE if you want to sign as well as encrypt
+ * @userid: userid to use when signing (assuming #sign is TRUE)
  * @ex: exception
  *
  * Returns an allocated string containing the ciphertext.
  **/
 gchar *
 pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
-	     gboolean sign, GMimeException *ex)
+	     gboolean sign, const gchar *userid, GMimeException *ex)
 {
 	GPtrArray *recipient_list = NULL;
 	GPtrArray *argv = NULL;
@@ -529,21 +532,21 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 	}
 	
 	if (sign) {
-		/* we only need the passphrase if we plan to sign */
+		/* we only need a passphrase if we intend on signing */
 		passphrase = pgp_get_passphrase (NULL);
 		if (!passphrase) {
 			g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
 					      _("No password provided."));
 			return NULL;
 		}
-		
-		if (pipe (passwd_fds) < 0) {
-			g_free (passphrase);
-			g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
-					       _("Couldn't create pipe to GPG/PGP: %s"),
-					      g_strerror (errno));
-			return NULL;
-		}
+	}
+	
+	if (pipe (passwd_fds) < 0) {
+		g_free (passphrase);
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Couldn't create pipe to GPG/PGP: %s"),
+				       g_strerror (errno));
+		return NULL;
 	}
 	
 	argv = g_ptr_array_new ();
@@ -585,6 +588,9 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 		if (sign) {
 			g_ptr_array_add (argv, "--sign");
 			
+			g_ptr_array_add (argv, "-u");
+			g_ptr_array_add (argv, (gchar *) userid);
+			
 			g_ptr_array_add (argv, "--passphrase-fd");
 			sprintf (passwd_fd, "%d", passwd_fds[0]);
 			g_ptr_array_add (argv, passwd_fd);
@@ -622,6 +628,9 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 		if (sign) {
 			g_ptr_array_add (argv, "-s");
 			
+			g_ptr_array_add (argv, "-u");
+			g_ptr_array_add (argv, (gchar *) userid);
+			
 			sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 			putenv (passwd_fd);
 		}
@@ -656,6 +665,9 @@ pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
 		
 		if (sign) {
 			g_ptr_array_add (argv, "-s");
+			
+			g_ptr_array_add (argv, "-u");
+			g_ptr_array_add (argv, (gchar *) userid);
 			
 			sprintf (passwd_fd, "PGPPASSFD=%d", passwd_fds[0]);
 			putenv (passwd_fd);

@@ -100,7 +100,7 @@ test_encrypt (const gchar *in, gint inlen)
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, userid);
 	
-	ciphertext = pgp_encrypt (in, inlen, recipients, FALSE, ex);
+	ciphertext = pgp_encrypt (in, inlen, recipients, FALSE, NULL, ex);
 	g_ptr_array_free (recipients, TRUE);
 	
 	if (g_mime_exception_is_set (ex)) {

@@ -56,7 +56,7 @@ gboolean pgp_sign_detect (const gchar *text);
 gchar *pgp_decrypt (const gchar *ciphertext, gint *outlen, GMimeException *ex);
 
 gchar *pgp_encrypt (const gchar *plaintext, gint inlen, const GPtrArray *recipients,
-		    gboolean sign, GMimeException *ex);
+		    gboolean sign, const gchar *userid, GMimeException *ex);
 
 gchar *pgp_clearsign (const gchar *plaintext, const gchar *userid,
 		      GMimeException *ex);

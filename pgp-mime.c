@@ -163,7 +163,7 @@ pgp_mime_part_encrypt (GMimePart **mime_part, const GPtrArray *recipients, GMime
 	part = *mime_part;
 	
 	/* pgp encrypt */
-	ciphertext = pgp_encrypt (part->content->data, part->content->len, recipients, FALSE, ex);
+	ciphertext = pgp_encrypt (part->content->data, part->content->len, recipients, FALSE, NULL, ex);
 	if (g_mime_exception_is_set (ex))
 		return;
 	
