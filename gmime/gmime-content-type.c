@@ -49,10 +49,15 @@ g_mime_content_type_new (const gchar *type, const gchar *subtype)
 	} else {
 		if (type && *type) {
 			mime_type->type = g_strdup (type);
-			if (!g_strcasecmp (type, "text"))
+			if (!g_strcasecmp (type, "text")) {
 				mime_type->subtype = g_strdup ("plain");
-			else
+			} else if (!g_strcasecmp (type, "multipart")) {
+				mime_type->subtype = g_strdup ("mixed");
+			} else {
+				g_free (mime_type->type);
+				mime_type->type = g_strdup ("application");
 				mime_type->subtype = g_strdup ("octet-stream");
+			}
 		} else {
 			mime_type->type = g_strdup ("application");
 			mime_type->subtype = g_strdup ("octet-stream");

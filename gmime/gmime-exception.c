@@ -26,7 +26,6 @@
 #include <config.h>
 #include "gmime-exception.h"
 
-
 /**
  * g_mime_exception_new: allocate a new exception object. 
  * 

@@ -21,3 +21,4 @@ gmime-config
 gmimeConf.sh
 test-parser
 test-mime
+gen-table

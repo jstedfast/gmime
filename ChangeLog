@@ -1,3 +1,98 @@
+2001-05-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (need_quotes): Include '.' as a char to quote.
+
+	* gen-table.c (main): Fixed a type-o.
+
+	* internet-address.c (decode_mailbox): Be a little more forgiving
+	about unexpected chars while parsing the name part of the email
+	address. Skip the bad char and then retry. If we fail again,
+	*then* we abort.
+
+	* gmime-utils.c: #include <alloca.h>
+
+	* gmime-parser.c (g_mime_parser_construct_part): Oops, inend
+	points to the end of the string, not the last char of the string
+	(ie, '\0' not the char before it).
+
+2001-05-08  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-table-private.h: Oops, take out the check for isblank().
+
+	* internet-address.c (decode_quoted_string): Get rid of unused
+	variable.
+	(decode_address): Same.
+
+2001-04-03  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (decode_domain): Try to only get
+	"fully-qualified" domain names, or ones that "look" like they are
+	at least ;-)
+	(decode_mailbox): If decode_domain() returns NULL, don't append
+	the '@' char. Also make sure that the name is non-empty.
+
+2001-04-01  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (g_mime_utils_quote_string): Made smarter.
+
+2001-03-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* Makefile.am: Added rules to build gen-table.c and added
+	gmime-table-private.h to the build.
+
+	* gen-table.c: New file to generate gmime-table-private.h if need
+	be.
+
+	* gmime-table-private.h: New file that contains
+	gmime_special_table.
+
+	* gmime-utils.c: Remove the gmime_special_table from here and
+	instead #include gmime-table-private.h.
+
+	* internet-address.c: #include gmime-table-private.h
+
+2001-03-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-message.c (create_header): Simplified a tad.
+	(g_mime_message_add_recipient): Updated for the new
+	InternetAddress API.
+	(g_mime_message_add_recipients_from_string): Simplified greatly
+	using the new InternetAddress API.
+
+	* internet-address.[c,h]: Completely rewritten to be a lot more
+	rfc0822 compliant.
+
+2001-03-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README, configure.in: Updated version to 0.5.0
+
+2001-03-29  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-parser.c (g_mime_parser_construct_message_from_file): new
+	function to read a message from a FILE* instead of a character
+	array.  This can be used to reduce the memory requirements of very
+	large messages.
+
+	* gmime-parser.c (get_next_line): new internal function.
+	* gmime-parser.c (g_mime_parser_construct_part_from_file): same.
+	* gmime-parser.c (parse_content_headers): same.
+	* gmime-parser.c (find_header_end): same.
+	* gmime-parser.c (get_header_block): same.
+	* gmime-parser.c (get_header_block_from_file): same.
+
+2001-03-28  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (get_time): Fix a compile warning.
+
+2001-03-20  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-utils.c (get_year): constify the argument list.
+	* gmime-utils.c (get_time): same.
+
+	* gmime-utils.c (get_days_in_month): if #0'ed out unused code.
+	* gmime-utils.c (parse_broken_date): same.
+
+
 2001-03-16  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pgp-mime.c (pgp_mime_part_sign): Correctly handle the case where
