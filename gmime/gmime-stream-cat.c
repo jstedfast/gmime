@@ -137,7 +137,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	/* don't allow our caller to read past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, len);
+		len = MIN (stream->bound_end - stream->position, (off_t) len);
 	
 	/* make sure our stream position is where it should be */
 	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
@@ -187,7 +187,7 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	
 	/* don't allow our caller to write past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, len);
+		len = MIN (stream->bound_end - stream->position, (off_t) len);
 	
 	/* make sure our stream position is where it should be */
 	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)

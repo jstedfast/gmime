@@ -735,20 +735,18 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 void
 g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data)
 {
+	GList *subpart;
+	
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
-	if (multipart->subparts) {
-		GList *subpart;
+	subpart = multipart->subparts;
+	while (subpart) {
+		GMimeObject *part = subpart->data;
 		
-		subpart = multipart->subparts;
-		while (subpart) {
-			GMimeObject *part = subpart->data;
-			
-			callback (part, user_data);
-			
-			subpart = subpart->next;
-		}
+		callback (part, user_data);
+		
+		subpart = subpart->next;
 	}
 }
 

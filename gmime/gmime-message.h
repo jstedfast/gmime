@@ -108,7 +108,7 @@ const char *g_mime_message_get_reply_to (GMimeMessage *message);
 
 void g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *name, const char *address);
 void g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
-InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, const char *type);
+const InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, const char *type);
 
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject);
 const char *g_mime_message_get_subject (GMimeMessage *message);
