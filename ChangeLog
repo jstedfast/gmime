@@ -1,3 +1,9 @@
+2002-10-18  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-stream-filter.c (stream_read): Change presize from an int
+	to a size_t to fix a 64bit cleanliness bug.
+	(stream_write): Same.
+
 2002-10-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-gpg-context.c (gpg_ctx_get_argv): Setup the import/export

@@ -168,7 +168,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	p->last_was_read = TRUE;
 	
 	if (p->filteredlen <= 0) {
-		int presize = READ_SIZE;
+		size_t presize = READ_SIZE;
 		
 		size = g_mime_stream_read (filter->source, p->buffer, READ_SIZE);
 		if (size <= 0) {
@@ -215,8 +215,8 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *p = filter->priv;
 	struct _filter *f;
+	size_t presize;
 	char *buffer;
-	int presize;
 	size_t n;
 	
 	p->last_was_read = FALSE;
@@ -244,8 +244,8 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	struct _GMimeStreamFilterPrivate *p = filter->priv;
+	size_t presize, len;
 	struct _filter *f;
-	size_t len, presize;
 	char *buffer;
 	
 	if (p->last_was_read) {
