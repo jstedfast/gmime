@@ -1,3 +1,12 @@
+2000-12-07  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-message.c (multipart_get_body): Traverses a MIME Part and
+	'always' extracts the body assuming it exists. Extracts the
+	preffered text type if it exists, otherwise returns the type less
+	preferred.
+	(g_mime_message_get_body): Use multipart_get_body if the toplevel
+	part is a multipart.
+
 2000-12-05  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* README: Updated with more RFCs, etc.
