@@ -108,11 +108,13 @@ test_parser (GMimeStream *stream)
 /*#define STREAM_BUFFER*/
 /*#define STREAM_MEM*/
 /*#define STREAM_MMAP*/
+#define CRLF_FILTER
 
 int main (int argc, char **argv)
 {
 	char *filename = NULL;
 	GMimeStream *stream, *istream;
+	GMimeFilter *filter;
 	int fd;
 	
 	if (argc > 1)
@@ -144,6 +146,14 @@ int main (int argc, char **argv)
 #ifdef STREAM_BUFFER
 	istream = g_mime_stream_buffer_new (stream,
 					    GMIME_STREAM_BUFFER_BLOCK_READ);
+	g_mime_stream_unref (stream);
+	stream = istream;
+#endif
+	
+#ifdef CRLF_FILTER
+	istream = g_mime_stream_filter_new_with_stream (stream);
+	filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_DECODE, GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (istream), filter);
 	g_mime_stream_unref (stream);
 	stream = istream;
 #endif

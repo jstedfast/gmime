@@ -11,7 +11,7 @@ DOC_SOURCE_DIR=..
 
 EXTRA_DIST=gmime-docs.sgml gmime-sections.txt
 
-HTML_DIR=$(datadir)/gmime/html
+HTML_DIR=$(datadir)/gtk-doc/html
 
 TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
 
