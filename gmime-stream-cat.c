@@ -316,9 +316,9 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		if (ret != -1) {
 			stream->position = offset;
 			cat->current = current;
+			return stream->position;
 		}
 		
-		return ret;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
 		if (offset == 0)
