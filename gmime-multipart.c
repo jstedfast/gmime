@@ -300,14 +300,6 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 }
 
 
-static void
-multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
-{
-	g_mime_object_ref (part);
-	multipart->subparts = g_list_append (multipart->subparts, part);
-}
-
-
 /**
  * g_mime_multipart_new:
  *
@@ -422,6 +414,14 @@ g_mime_multipart_get_postface (GMimeMultipart *multipart)
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
 	return multipart->postface;
+}
+
+
+static void
+multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
+{
+	g_mime_object_ref (part);
+	multipart->subparts = g_list_append (multipart->subparts, part);
 }
 
 
