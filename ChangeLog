@@ -1,5 +1,10 @@
 2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-utils.c (g_mime_utils_uuencode_close): Fixed a bug that
+	crept in during my simplification.
+
+2002-04-07  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-part.c (g_mime_part_set_content_id): Wrap the object
 	set_content_id.
 	(g_mime_part_get_content_id): Same.
