@@ -38,41 +38,40 @@
 #include "strlib.h"
 
 
+#if defined (__aix__) || defined (__irix__) || defined (__sun__)
+#define CANONICAL_ISO_FORMAT "ISO%d-%d"
+#else
+#ifdef __hpux__
+#define CANONICAL_ISO_FORMAT "iso%d%d"
+#else
+#define CANONICAL_ISO_FORMAT "ISO-%d-%d"
+#endif /* __hpux__ */
+#endif /* __aix__, __irix__, __sun__ */
+
+
 struct {
 	char *charset;
 	char *iconv_name;
 } known_iconv_charsets[] = {
-#if 0
-	/* charset name, iconv-friendly charset name */
-	{ "iso-8859-1",      "iso-8859-1" },
-	{ "iso8859-1",       "iso-8859-1" },
-	/* the above mostly serves as an example for iso-style charsets,
-	   but we have code that will populate the iso-*'s if/when they
-	   show up in g_mime_charset_name() so I'm
-	   not going to bother putting them all in here... */
-	{ "windows-cp1251",  "cp1251"     },
-	{ "windows-1251",    "cp1251"     },
-	{ "cp1251",          "cp1251"     },
-	/* the above mostly serves as an example for windows-style
-	   charsets, but we have code that will parse and convert them
-	   to their cp#### equivalents if/when they show up in
-	   g_mime_charset_name() so I'm not going to bother
-	   putting them all in here either... */
-#endif
 	/* charset name, iconv-friendly name (sometimes case sensitive) */
 	{ "utf-8",           "UTF-8"      },
-
+	
+	/* ANSI_X3.4-1968 is used on some systems and should be
+           treated the same as US-ASCII */
+	{ "ANSI_X3.4-1968",  NULL         },
+	
 	/* 10646 is a special case, its usually UCS-2 big endian */
-	/* This might need some checking but should be ok for solaris/linux */
+	/* This might need some checking but should be ok for
+           solaris/linux */
 	{ "iso-10646-1",     "UCS-2BE"    },
 	{ "iso_10646-1",     "UCS-2BE"    },
 	{ "iso10646-1",      "UCS-2BE"    },
 	{ "iso-10646",       "UCS-2BE"    },
 	{ "iso_10646",       "UCS-2BE"    },
 	{ "iso10646",        "UCS-2BE"    },
-
+	
 	{ "ks_c_5601-1987",  "EUC-KR"     },
-
+	
 	/* FIXME: Japanese/Korean/Chinese stuff needs checking */
 	{ "euckr-0",         "EUC-KR"     },
 	{ "big5-0",          "BIG5"       },
@@ -82,7 +81,7 @@ struct {
 	{ "gb2312.1980-0",   "gb2312"     },
 	{ "gb18030-0",       "gb18030"    },
 	{ "gbk-0",           "GBK"        },
-
+	
 	{ "eucjp-0",         "eucJP"      },
 	{ "ujis-0",          "ujis"       },
 	{ "jisx0208.1983-0", "SJIS"       },
@@ -196,6 +195,7 @@ const char *
 g_mime_charset_name (const char *charset)
 {
 	char *name, *iconv_name, *buf;
+	int codepage;
 	
 	if (charset == NULL)
 		return NULL;
@@ -216,7 +216,22 @@ g_mime_charset_name (const char *charset)
 		if (*buf == '-' || *buf == '_')
 			buf++;
 		
-		iconv_name = g_strdup_printf ("ISO-%s", buf);
+		g_assert (strncmp (buf, "8859", 4) == 0);
+		
+		buf += 4;
+		if (*buf == '-' || *buf == '_')
+			buf++;
+		
+		codepage = atoi (buf);
+		g_assert (codepage > 0);
+		
+#ifdef __aix__
+		if (codepage == 13)
+			iconv_name = g_strdup ("IBM-921");
+		else
+#endif /* __aix__ */
+		iconv_name = g_strdup_printf (CANONICAL_ISO_FORMAT,
+					      8859, codepage);
 	} else if (!strncmp (name, "windows-", 8)) {
 		buf = name + 8;
 		if (!strncmp (buf, "cp", 2))
