@@ -294,6 +294,7 @@ datetok (const gchar *date)
 	return tokens;
 }
 
+#if 0
 static gint
 get_days_in_month (gint month, gint year)
 {
@@ -320,6 +321,7 @@ get_days_in_month (gint month, gint year)
 	        return 0;
 	}
 }
+#endif
 
 static gint
 get_wday (gchar *str)
@@ -370,10 +372,10 @@ get_month (gchar *str)
 }
 
 static gint
-get_year (gchar *str)
+get_year (const gchar *str)
 {
 	gint year;
-	gchar *p;
+	const gchar * p;
 	
 	for (p = str; *p; p++)
 		if (!isdigit (*p))
@@ -391,7 +393,7 @@ get_year (gchar *str)
 }
 
 static gboolean
-get_time (gchar *in, gint *hour, gint *min, gint *sec)
+get_time (const gchar *in, gint *hour, gint *min, gint *sec)
 {
 	gchar *p;
 	gint colons = 0;
@@ -527,13 +529,14 @@ parse_rfc822_date (GList *tokens, int *tzone)
 static time_t
 parse_broken_date (GList *tokens, int *tzone)
 {
+#if 0
 	GList *token;
 	struct tm tm;
 	gint hour, min, sec, n;
 	
 	if (tzone)
 		*tzone = 0;
-	
+#endif	
 	return (time_t) 0;
 }
 

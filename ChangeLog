@@ -1,3 +1,11 @@
+2001-03-20  Charles Kerr <charles@rebelbase.com>
+
+	* gmime-utils.c (get_year): constify the argument list.
+	* gmime-utils.c (get_time): same.
+
+	* gmime-utils.c (get_days_in_month): if #0'ed out unused code.
+	* gmime-utils.c (parse_broken_date): same.
+
 2001-03-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* internet-address.c (internet_address_new_from_string): Try to be
