@@ -1,3 +1,10 @@
+2002-04-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-utils.c (datetok): Treat ',' as a token delimeter. Also
+	updated the datetok lookup table.
+
+	* configure.in: Check for off_t, size_t, and ssize_t.
+
 2002-04-15  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.[c,h]: Brand spankin' new parser. Seems to work for

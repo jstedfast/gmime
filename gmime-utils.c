@@ -57,8 +57,8 @@
 
 /* date parser macros */
 #define NUMERIC_CHARS          "1234567890"
-#define WEEKDAY_CHARS          "Sun,Mon,Tue,Wed,Thu,Fri,Sat,"
-#define MONTH_CHARS            "JanFebMarAprMayJunJulAugSepOctNovDec"
+#define WEEKDAY_CHARS          "SundayMondayTuesdayWednesdayThursdayFridaySaturday"
+#define MONTH_CHARS            "JanuaryFebruaryMarchAprilMayJuneJulyAugustSeptemberOctoberNovemberDecember"
 #define TIMEZONE_ALPHA_CHARS   "UTCGMTESTEDTCSTCDTMSTPSTPDTZAMNY()"
 #define TIMEZONE_NUMERIC_CHARS "-+1234567890"
 #define TIME_CHARS             "1234567890:"
@@ -122,12 +122,12 @@ static unsigned char gmime_uu_rank[256] = {
 static unsigned char gmime_datetok_table[256] = {
 	128,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
-	111,111,111,111,111,111,111,111, 79, 79,111,175,109,175,111,111,
+	111,111,111,111,111,111,111,111, 79, 79,111,175,111,175,111,111,
 	 38, 38, 38, 38, 38, 38, 38, 38, 38, 38,119,111,111,111,111,111,
 	111, 75,111, 79, 75, 79,105, 79,111,111,107,111,111, 73, 75,107,
 	 79,111,111, 73, 77, 79,111,109,111, 79, 79,111,111,111,111,111,
-	111,105,107,107,109,105,111,107,109,109,111,111,107,111,105,105,
-	107,111,105,111,105,105,107,111,111,107,111,111,111,111,111,111,
+	111,105,107,107,109,105,111,107,105,105,111,111,107,107,105,105,
+	107,111,105,105,105,105,107,111,111,105,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
@@ -221,7 +221,7 @@ datetok (const char *date)
 		mask = 0;
 		
 		/* find the end of this token */
-		for (end = start; *end && !isspace ((int) *end) && (end > start ? !strchr ("-/", *end) : TRUE); end++) {
+		for (end = start; *end && !strchr ("-/,\t\r\n ", *end); end++) {
 			mask |= gmime_datetok_table[*end];
 		}
 		
