@@ -110,13 +110,18 @@ stream_write (GMimeStream *stream, char *buf, size_t len)
 	lseek (fstream->fd, stream->position, SEEK_SET);
 	
 	do {
-		n = write (fstream->fd, buf + nwritten, len - nwritten);
+		do {
+			n = write (fstream->fd, buf + nwritten, len - nwritten);
+		} while (n == -1 && (errno == EINTR || errno == EAGAIN));
+		
 		if (n > 0)
 			nwritten += n;
-	} while (n == -1 && errno == EINTR);
+	} while (n != -1 && nwritten < len);
 	
 	if (nwritten > 0)
 		stream->position += nwritten;
+	else if (n == -1)
+		return -1;
 	
 	return nwritten;
 }
