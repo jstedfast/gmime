@@ -214,7 +214,15 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const gchar *content_md5)
 {
+	const GMimeContentType *type;
+	
 	g_return_if_fail (mime_part != NULL);
+	
+	/* RFC 1864 states that you cannot set a Content-MD5 for these types */
+	type = g_mime_part_get_content_type (mime_part);
+	if (g_mime_content_type_is_type (type, "multipart", "*") ||
+	    g_mime_content_type_is_type (type, "message", "rfc822"))
+		return;
 	
 	if (mime_part->content_md5)
 		g_free (mime_part->content_md5);

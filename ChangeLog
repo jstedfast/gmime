@@ -1,3 +1,11 @@
+2001-01-07  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* gmime-part.c (g_mime_part_set_content_md5): Don't allow the
+	setting of Content-MD5 headers for multipart/* and message/rfc822
+	types.
+
+	* rfc/rfc1864.txt: Added (Content-MD5 RFC).
+
 2001-01-05  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-part.c (g_mime_part_set_content_md5): Oops, didn't quite
