@@ -22,6 +22,7 @@ libgmime_la_SOURCES = 		\
 	gmime-part.c		\
 	gmime-utils.c		\
 	internet-address.c	\
+	md5-utils.c		\
 	gmime-exception.c	\
 	pgp-utils.c		\
 	pgp-mime.c
@@ -36,6 +37,7 @@ gmimeinc_HEADERS = 		\
 	gmime-part.h		\
 	gmime-utils.h		\
 	internet-address.h	\
+	md5-utils.h		\
 	gmime-exception.h	\
 	pgp-utils.h		\
 	pgp-mime.h
