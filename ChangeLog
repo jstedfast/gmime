@@ -1,3 +1,8 @@
+2002-11-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-basic.c (g_mime_filter_basic_new_type): Set the
+	new->type to type.
+
 2002-11-01  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime.h.in: Wrap in #ifdef __cplusplus

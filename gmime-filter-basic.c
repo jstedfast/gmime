@@ -289,6 +289,8 @@ g_mime_filter_basic_new_type (GMimeFilterBasicType type)
 	
 	new = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL, NULL);
 	
+	new->type = type;
+	
 	filter_reset ((GMimeFilter *) new);
 	
 	return (GMimeFilter *) new;
