@@ -1,3 +1,37 @@
+2004-09-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): Save the entire raw
+	part header as well.
+	(parser_init): Init the rawbuf (will be used for holding the raw
+	part header).
+	(parser_close): Free the rawbuf.
+	(parser_construct_leaf_part): Set the raw header on the mime part.
+	(parser_construct_multipart): Set the raw header on the multipart.
+	(parser_construct_message): Don't use g_mime_message_set_mime_part
+	or we'll end up clearing the raw header that we worked so hard to
+	preserve.
+	(parser_scan_message_part): Same.
+	(parser_scan_multipart_face): Change comparison to >= so that we
+	actually get rid of the last crlf sequence like we meant to.
+	(parser_fill): Get rid of the atleast check (it isn't really
+	needed and can cause breakage).
+
+	* gmime/gmime-message.c (message_get_headers): Modified to only
+	write part headers if the toplevel mime part contains the raw
+	header.
+	(message_write_to_stream): Same.
+	(g_mime_message_set_mime_part): Clear the raw message headers
+	since it obviously won't contain the raw message headers.
+	(message_add_header): If any message headers change, clear the raw
+	header from the toplebel mime part.
+	(message_set_header): Same.
+
+	* gmime/gmime-header.c (g_mime_header_set_raw): New function to
+	set the raw part header (to be used in place of our own folding if
+	available).
+	(g_mime_header_has_raw): New function to check if the raw header
+	is available.
+
 2004-09-28  Peter Bloomfield  <PeterBloomfield@bellsouth.net>
 
 	* gmime/gmime-multipart-signed.c (sign_prepare): Must treat

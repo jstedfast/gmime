@@ -657,6 +657,9 @@ message_add_header (GMimeObject *object, const char *header, const char *value)
 		else
 			GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
 	}
+	
+	if (((GMimeMessage *) object)->mime_part)
+		g_mime_header_set_raw (((GMimeMessage *) object)->mime_part->headers, NULL);
 }
 
 static void
@@ -674,6 +677,9 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
 		else
 			GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 	}
+	
+	if (((GMimeMessage *) object)->mime_part)
+		g_mime_header_set_raw (((GMimeMessage *) object)->mime_part->headers, NULL);
 }
 
 static const char *
@@ -753,6 +759,9 @@ message_remove_header (GMimeObject *object, const char *header)
 	}
 	
 	GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	
+	if (((GMimeMessage *) object)->mime_part)
+		g_mime_header_set_raw (((GMimeMessage *) object)->mime_part->headers, NULL);
 }
 
 
@@ -768,10 +777,15 @@ message_get_headers (GMimeObject *object)
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), ba);
 	
-	g_mime_header_write_to_stream (object->headers, stream);
-	if (message->mime_part) {
-		g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+	if (message->mime_part && g_mime_header_has_raw (message->mime_part->headers)) {
+		/* if the mime part has raw headers, then it contains the message headers as well */
 		g_mime_header_write_to_stream (message->mime_part->headers, stream);
+	} else {
+		g_mime_header_write_to_stream (object->headers, stream);
+		if (message->mime_part) {
+			g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+			g_mime_header_write_to_stream (message->mime_part->headers, stream);
+		}
 	}
 	
 	g_object_unref (stream);
@@ -788,18 +802,22 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimeMessage *message = (GMimeMessage *) object;
 	ssize_t nwritten, total = 0;
 	
-	/* write the content headers */
-	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	if (message->mime_part) {
-		if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
+	if (!(message->mime_part && g_mime_header_has_raw (message->mime_part->headers))) {
+		/* write the content headers */
+		if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
 		
+		if (message->mime_part) {
+			if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
+				return -1;
+			
+			total += nwritten;
+		}
+	}
+	
+	if (message->mime_part) {
 		nwritten = g_mime_object_write_to_stream (message->mime_part, stream);
 	} else {
 		if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
@@ -1315,6 +1333,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	g_object_ref (mime_part);
+	g_mime_header_set_raw (mime_part->headers, NULL);
 	
 	if (message->mime_part)
 		g_object_unref (message->mime_part);

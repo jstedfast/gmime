@@ -100,6 +100,11 @@ struct _GMimeParserPrivate {
 	unsigned char *headerptr;
 	unsigned int headerleft;
 	
+	/* raw header buffer */
+	unsigned char *rawbuf;
+	unsigned char *rawptr;
+	unsigned int rawleft;
+	
 	off_t headers_start;
 	off_t header_start;
 	
@@ -125,6 +130,7 @@ struct _boundary_stack {
 	size_t boundarylenmax;
 	off_t content_end;
 };
+
 
 static void
 parser_push_boundary (GMimeParser *parser, const char *boundary)
@@ -306,6 +312,10 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->headerptr = priv->headerbuf;
 	priv->headerleft = SCAN_HEAD;
 	
+	priv->rawbuf = g_malloc (SCAN_HEAD + 1);
+	priv->rawptr = priv->rawbuf;
+	priv->rawleft = SCAN_HEAD;
+	
 	priv->headers_start = -1;
 	priv->header_start = -1;
 	
@@ -328,8 +338,8 @@ parser_close (GMimeParser *parser)
 	
 	g_byte_array_free (priv->from_line, TRUE);
 	
-	if (priv->headerbuf)
-		g_free (priv->headerbuf);
+	g_free (priv->headerbuf);
+	g_free (priv->rawbuf);
 	
 	header_raw_clear (&priv->headers);
 	
@@ -576,8 +586,8 @@ parser_fill (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	unsigned char *inbuf, *inptr, *inend;
-	size_t inlen, atleast = SCAN_HEAD;
 	ssize_t nread;
+	size_t inlen;
 	
 	inbuf = priv->inbuf;
 	inptr = priv->inptr;
@@ -585,11 +595,6 @@ parser_fill (GMimeParser *parser)
 	inlen = inend - inptr;
 	
 	g_assert (inptr <= inend);
-	
-	atleast = MAX (atleast, priv->bounds ? priv->bounds->boundarylenmax : 0);
-	
-	if (inlen > atleast)
-		return inlen;
 	
 	/* attempt to align 'inend' with realbuf + SCAN_HEAD */
 	if (inptr >= inbuf) {
@@ -729,7 +734,7 @@ parser_step_from (GMimeParser *parser)
 	return 0;
 }
 
-#define header_backup(priv, start, len) G_STMT_START {                    \
+#define header_append(priv, start, len) G_STMT_START {                    \
 	if (priv->headerleft <= len) {                                    \
 		size_t hlen, hoff;                                        \
 		                                                          \
@@ -747,6 +752,31 @@ parser_step_from (GMimeParser *parser)
 	memcpy (priv->headerptr, start, len);                             \
 	priv->headerptr += len;                                           \
 	priv->headerleft -= len;                                          \
+} G_STMT_END
+
+#define raw_header_append(priv, start, len) G_STMT_START {                \
+	if (priv->rawleft <= len) {                                       \
+		size_t hlen, hoff;                                        \
+		                                                          \
+		hlen = hoff = priv->rawptr - priv->rawbuf;                \
+		hlen = hlen ? hlen : 1;                                   \
+		                                                          \
+		while (hlen < hoff + len)                                 \
+			hlen <<= 1;                                       \
+		                                                          \
+		priv->rawbuf = g_realloc (priv->rawbuf, hlen + 1);        \
+		priv->rawptr = priv->rawbuf + hoff;                       \
+		priv->rawleft = hlen - hoff;                              \
+	}                                                                 \
+	                                                                  \
+	memcpy (priv->rawptr, start, len);                                \
+	priv->rawptr += len;                                              \
+	priv->rawleft -= len;                                             \
+} G_STMT_END
+
+#define raw_header_reset(priv) G_STMT_START {                             \
+	priv->rawleft += priv->rawptr - priv->rawbuf;                     \
+	priv->rawptr = priv->rawbuf;                                      \
 } G_STMT_END
 
 #define header_parse(parser, priv, hend) G_STMT_START {                   \
@@ -823,6 +853,8 @@ parser_step_headers (GMimeParser *parser)
 			while (*inptr != '\n')
 				inptr++;
 			
+			raw_header_append (priv, start, inptr - start);
+			
 			if (inptr == inend) {
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
@@ -839,10 +871,11 @@ parser_step_headers (GMimeParser *parser)
 			if (inptr[-1] == '\r')
 				len--;
 			
-			header_backup (priv, start, len);
+			header_append (priv, start, len);
 			
 			if (inptr < inend) {
 				/* inptr has to be less than inend - 1 */
+				raw_header_append (priv, inptr, 1);
 				inptr++;
 				if (*inptr == ' ' || *inptr == '\t') {
 					priv->midline = TRUE;
@@ -863,12 +896,14 @@ parser_step_headers (GMimeParser *parser)
 	inptr = priv->inptr;
 	inend = priv->inend;
 	
-	header_backup (priv, inptr, inend - inptr);
+	header_append (priv, inptr, inend - inptr);
 	
  headers_end:
 	
 	if (priv->headerptr > priv->headerbuf)
 		header_parse (parser, priv, hend);
+	
+	*priv->rawptr = '\0';
 	
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
 	
@@ -1183,8 +1218,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 		object = parser_construct_leaf_part (parser, content_type, found);
 	}
 	
-	g_mime_message_set_mime_part (message, object);
-	g_object_unref (object);
+	message->mime_part = object;
 	
 	g_mime_message_part_set_message (mpart, message);
 	g_object_unref (message);
@@ -1213,6 +1247,9 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	if (object->content_type)
 		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
+	
+	g_mime_header_set_raw (object->headers, priv->rawbuf);
+	raw_header_reset (priv);
 	
 	/* skip empty line after headers */
 	parser_skip_line (parser);
@@ -1261,7 +1298,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer, &crlf);
 	
-	if (buffer->len > crlf) {
+	if (buffer->len >= crlf) {
 		/* last '\n' belongs to the boundary */
 		g_byte_array_set_size (buffer, buffer->len + 1);
 		buffer->data[buffer->len - crlf - 1] = '\0';
@@ -1346,6 +1383,9 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	if (object->content_type)
 		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
+	
+	g_mime_header_set_raw (object->headers, priv->rawbuf);
+	raw_header_reset (priv);
 	
 	multipart = (GMimeMultipart *) object;
 	
@@ -1461,8 +1501,7 @@ parser_construct_message (GMimeParser *parser)
 		object = parser_construct_leaf_part (parser, content_type, &found);
 	}
 	
-	g_mime_message_set_mime_part (message, object);
-	g_object_unref (object);
+	message->mime_part = object;
 	
 	if (priv->scan_from) {
 		priv->state = GMIME_PARSER_STATE_FROM;

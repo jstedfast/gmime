@@ -56,6 +56,11 @@ void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc fu
 
 void g_mime_header_register_writer (GMimeHeader *header, const char *name, GMimeHeaderWriter writer);
 
+
+/* for internal use only */
+void g_mime_header_set_raw (GMimeHeader *header, const char *raw);
+gboolean g_mime_header_has_raw (GMimeHeader *header);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

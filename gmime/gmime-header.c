@@ -42,6 +42,7 @@ struct _GMimeHeader {
 	GHashTable *hash;
 	GHashTable *writers;
 	struct raw_header *headers;
+	char *raw;
 };
 
 
@@ -81,6 +82,7 @@ g_mime_header_new ()
 	new->hash = g_hash_table_new (header_hash, header_equal);
 	new->writers = g_hash_table_new (header_hash, header_equal);
 	new->headers = NULL;
+	new->raw = NULL;
 	
 	return new;
 }
@@ -117,6 +119,7 @@ g_mime_header_destroy (GMimeHeader *header)
 		g_hash_table_destroy (header->hash);
 		g_hash_table_foreach (header->writers, writer_free, NULL);
 		g_hash_table_destroy (header->writers);
+		g_free (header->raw);
 		g_free (header);
 	}
 }
@@ -161,6 +164,9 @@ g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
 		
 		g_hash_table_insert (header->hash, n->name, n);
 	}
+	
+	g_free (header->raw);
+	header->raw = NULL;
 }
 
 
@@ -196,6 +202,9 @@ g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
 	
 	if (!g_hash_table_lookup (header->hash, name))
 		g_hash_table_insert (header->hash, n->name, n);
+	
+	g_free (header->raw);
+	header->raw = NULL;
 }
 
 
@@ -255,6 +264,9 @@ g_mime_header_remove (GMimeHeader *header, const char *name)
 		g_free (h->value);
 		g_free (h);
 	}
+	
+	g_free (header->raw);
+	header->raw = NULL;
 }
 
 
@@ -290,6 +302,9 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 	
 	g_return_val_if_fail (header != NULL, -1);
 	g_return_val_if_fail (stream != NULL, -1);
+	
+	if (header->raw)
+		return g_mime_stream_write_string (stream, header->raw);
 	
 	h = header->headers;
 	while (h) {
@@ -393,4 +408,39 @@ g_mime_header_register_writer (GMimeHeader *header, const char *name, GMimeHeade
 	
 	if (writer)
 		g_hash_table_insert (header->writers, g_strdup (name), writer);
+}
+
+
+
+/**
+ * g_mime_header_set_raw:
+ * @header: header object
+ * @raw: raw mime part header
+ *
+ * Set the raw header.
+ **/
+void
+g_mime_header_set_raw (GMimeHeader *header, const char *raw)
+{
+	g_return_if_fail (header != NULL);
+	
+	g_free (header->raw);
+	header->raw = raw ? g_strdup (raw) : NULL;
+}
+
+
+/**
+ * g_mime_header_has_raw:
+ * @header: ehader object
+ *
+ * Gets whether or not a raw header has been set on @header.
+ *
+ * Returns %TRUE if a raw header is set or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_has_raw (GMimeHeader *header)
+{
+	g_return_val_if_fail (header != NULL, FALSE);
+	
+	return header->raw;
 }
