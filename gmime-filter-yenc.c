@@ -103,11 +103,11 @@ g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state)
 
 
 /**
- * g_mime_filter_set_crc:
+ * g_mime_filter_yenc_set_crc:
  * @yenc: yEnc filter
  * @crc: crc32
  *
- * Sets the current crc32 value on the yEnc filter.
+ * Sets the current crc32 value on the yEnc filter @yenc to @crc.
  **/
 void
 g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
@@ -231,6 +231,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 							in = inptr;
 							len = inend - in;
 						} else {
+							/* we don't have enough... */
 							g_mime_filter_backup (filter, in, left);
 						}
 						break;
@@ -421,7 +422,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 		if ((ystate & YENC_NEWLINE_ESCAPE) == YENC_NEWLINE_ESCAPE) {
 			ystate &= ~GMIME_YDECODE_STATE_EOLN;
 			
-			if (*inptr == 'y') {
+			if (ch == 'y') {
 				/* we probably have a =yend here */
 				ystate |= GMIME_YDECODE_STATE_END;
 				break;
