@@ -87,6 +87,8 @@ gboolean g_mime_parser_eos (GMimeParser *parser);
 
 char *g_mime_parser_get_from (GMimeParser *parser);
 
+off_t g_mime_parser_get_from_offset (GMimeParser *parser);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

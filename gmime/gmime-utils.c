@@ -187,7 +187,11 @@ g_mime_utils_header_format_date (time_t time, int offset)
 	
 	time += ((offset / 100) * (60 * 60)) + (offset % 100) * 60;
 	
+#ifdef HAVE_GMTIME_R
+	gmtime_r (&time, &tm);
+#else
 	memcpy (&tm, gmtime (&time), sizeof (tm));
+#endif
 	
 	return g_strdup_printf ("%s, %02d %s %04d %02d:%02d:%02d %+05d",
 				tm_days[tm.tm_wday], tm.tm_mday,

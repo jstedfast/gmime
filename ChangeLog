@@ -1,3 +1,15 @@
+2002-07-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: check for gmtime_r
+
+	* gmime-utils.c (g_mime_utils_header_format_date): Use gmtime_r() if
+	we have this function available to us.
+
+	* gmime-parser.c (parser_step_from): Save the From-line offset.
+	(g_mime_parser_get_from_offset): Newly implemented function used
+	for retrieving the offset of the From-line (for use when parsing
+	mbox files).
+
 2002-07-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* strlib.c (strlcpy): Changed to behave the same as the Solaris

@@ -82,6 +82,7 @@ struct _GMimeParserPrivate {
 	unsigned char *inptr;
 	unsigned char *inend;
 	
+	off_t from_offset;
 	GByteArray *from_line;
 	
 	regex_t header_regex;
@@ -282,6 +283,7 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->inptr = priv->inbuf;
 	priv->inend = priv->inbuf;
 	
+	priv->from_offset = -1;
 	priv->from_line = g_byte_array_new ();
 	
 	priv->headerbuf = g_malloc (SCAN_HEAD + 1);
@@ -591,6 +593,7 @@ parser_step_from (GMimeParser *parser)
 			inptr++;
 			
 			if (len >= 5 && !strncmp (start, "From ", 5)) {
+				priv->from_offset = parser_offset (parser, start);
 				g_byte_array_append (priv->from_line, start, len);
 				goto got_from;
 			}
@@ -1308,4 +1311,29 @@ g_mime_parser_get_from (GMimeParser *parser)
 		return g_strndup (priv->from_line->data, priv->from_line->len);
 	
 	return NULL;
+}
+
+
+/**
+ * g_mime_parser_get_from_offset:
+ * @parser: MIME parser object
+ *
+ * Gets the offset of the most recently parsed mbox-style From-line
+ * (gotten from #g_mime_parser_construct_message).
+ *
+ * Returns the offset of the most recently parsed mbox-style From-line
+ * or -1 on error.
+ **/
+off_t
+g_mime_parser_get_from_offset (GMimeParser *parser)
+{
+	struct _GMimeParserPrivate *priv;
+	
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
+	
+	priv = parser->priv;
+	if (!priv->scan_from)
+		return -1;
+	
+	return priv->from_offset;
 }
