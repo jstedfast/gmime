@@ -35,6 +35,10 @@
 
 static void g_mime_message_destroy (GMimeObject *object);
 
+static GMimeObject object_template = {
+	0, 0, g_mime_message_destroy
+};
+
 static char *rfc822_headers[] = {
 	"Return-Path",
 	"Received",
@@ -282,8 +286,10 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
 	g_hash_table_remove (message->header->recipients, type);
 	
 	addrlist = internet_address_parse_string (string);
-	if (addrlist)
+	if (addrlist) {
 		recipients = internet_address_list_concat (recipients, addrlist);
+		internet_address_list_destroy (addrlist);
+	}
 	
 	g_hash_table_insert (message->header->recipients, type, recipients);
 	
