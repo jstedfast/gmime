@@ -1,8 +1,20 @@
+2003-03-27  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-utils.c (rfc2047_encode_word): Add 1 to enclen so as
+	to protect against buffer overruns.
+	(rfc2047_encode_phrase_get_words): if c > 127 && c < 256, then set
+	encoding to MAX (encoding, 1), not 2.
+
 2003-03-11  Charles Kerr <charles@rebelbase.com>
 
 	* gmime/md5-utils.c (md5_get_digest_from_file): fix
 	dangling file pointer.
 
+2003-03-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c (g_url_addrspec_end): Make sure inptr != pos
+	+ 1, if it does, then return FALSE.
+	
 2003-03-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Check that the compiler supports the inline

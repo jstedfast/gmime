@@ -1470,7 +1470,6 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	int save = 0;
 	char encoding;
 	
-	
 	if (g_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
@@ -1489,7 +1488,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	switch (g_mime_utils_best_encoding (word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
 		enclen = BASE64_ENCODE_LEN (len);
-		encoded = g_alloca (enclen);
+		encoded = g_alloca (enclen + 1);
 		
 		encoding = 'b';
 		
@@ -1504,7 +1503,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
 		enclen = QP_ENCODE_LEN (len);
-		encoded = g_alloca (enclen);
+		encoded = g_alloca (enclen + 1);
 		
 		encoding = 'q';
 		
@@ -1632,7 +1631,7 @@ rfc2047_encode_phrase_get_words (const unsigned char *in)
 			count++;
 			if (c > 127 && c < 256) {
 				type = WORD_2047;
-				encoding = MAX (encoding, 2);
+				encoding = MAX (encoding, 1);
 			} else if (c >= 256) {
 				type = WORD_2047;
 				encoding = 2;
