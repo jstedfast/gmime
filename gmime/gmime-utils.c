@@ -30,8 +30,14 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/param.h> /* for MAXHOSTNAMELEN */
 #include <string.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h> /* for MAXHOSTNAMELEN */
+#else
+#define MAXHOSTNAMELEN 64
+#endif
+#include <sys/types.h>
+#include <unistd.h>
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif

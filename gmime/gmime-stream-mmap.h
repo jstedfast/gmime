@@ -29,8 +29,6 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <sys/mman.h>
-#include <unistd.h>
 #include <gmime/gmime-stream.h>
 
 #define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())
