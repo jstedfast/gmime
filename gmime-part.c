@@ -1147,7 +1147,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  *
  * Returns the data-wrapper for the mime part's contents.
  **/
-const GMimeDataWrapper *
+GMimeDataWrapper *
 g_mime_part_get_content_object (const GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);

@@ -719,8 +719,11 @@ message_set_message_id (GMimeMessage *message, const char *message_id)
 {
 	if (message->message_id)
 		g_free (message->message_id);
-	
-	message->message_id = g_strstrip (g_strdup (message_id));
+
+	if (message_id)
+		message->message_id = g_strstrip (g_strdup (message_id));
+	else
+		message->message_id = NULL;
 }
 
 

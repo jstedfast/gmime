@@ -4,6 +4,12 @@
 	isn't a multipart message, just invoke the callback directly,
 	passing in the single part.
 
+	* gmime-message.c (gmime_message_set_message_id): work around
+	a g_strstrip() warning if message_id is NULL.
+
+	* gmime-part.c (g_mime_part_get_content_object): remove "const"
+	from the retval; otherwise it's impossible to add a new filter.
+
 2002-07-31  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-filter-html.c (is_addr_char): Don't use "isprint(c)" to
