@@ -192,7 +192,8 @@ locale_parse_lang (const char *locale)
 	if (strlen (lang) >= 2) {
 		if (lang[2] == '-' || lang[2] == '_') {
 			/* canonicalise the lang */
-			g_ascii_strdown (lang, 2);
+			lang[0] = g_ascii_tolower (lang[0]);
+			lang[1] = g_ascii_tolower (lang[1]);
 			
 			/* validate the country code */
 			if (strlen (lang + 3) > 2) {
@@ -200,7 +201,8 @@ locale_parse_lang (const char *locale)
 				lang[2] = '\0';
 			} else {
 				lang[2] = '-';
-				g_ascii_strup (lang + 3, 2);
+				lang[3] = g_ascii_toupper (lang[3]);
+				lang[4] = g_ascii_toupper (lang[4]);
 			}
 		} else if (lang[2] != '\0') {
 			/* invalid language */
@@ -236,16 +238,18 @@ g_mime_charset_map_init (void)
 	iconv_charsets = g_hash_table_new (g_str_hash, g_str_equal);
 	
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
-		charset = g_strdup (known_iconv_charsets[i].charset);
+		charset = g_ascii_strdown (known_iconv_charsets[i].charset, -1);
 		iconv_name = g_strdup (known_iconv_charsets[i].iconv_name);
-		g_ascii_strdown (charset, -1);
 		g_hash_table_insert (iconv_charsets, charset, iconv_name);
 	}
 	
 #ifdef HAVE_CODESET
-	locale_charset = g_strdup (nl_langinfo (CODESET));
-	g_ascii_strdown (locale_charset, -1);
-#else
+	if ((locale_charset = nl_langinfo (CODESET)) && locale_charset[0])
+		locale_charset = g_ascii_strdown (locale_charset, -1);
+	else
+		locale_charset = NULL;
+#endif
+	
 	locale = setlocale (LC_ALL, NULL);
 	
 	if (!locale || !strcmp (locale, "C") || !strcmp (locale, "POSIX")) {
@@ -264,22 +268,25 @@ g_mime_charset_map_init (void)
 		 */
 		char *codeset, *p;
 		
-		codeset = strchr (locale, '.');
-		if (codeset) {
-			codeset++;
-			
-			/* ; is a hack for debian systems and / is a hack for Solaris systems */
-			for (p = codeset; *p && !strchr ("@;/", *p); p++);
-			locale_charset = g_strndup (codeset, (unsigned) (p - codeset));
-			g_ascii_strdown (locale_charset, -1);
-		} else {
-			/* charset unknown */
-			locale_charset = NULL;
+		if (!locale_charset) {
+			codeset = strchr (locale, '.');
+			if (codeset) {
+				codeset++;
+				
+				/* ; is a hack for debian systems and / is a hack for Solaris systems */
+				p = codeset;
+				while (*p && !strchr ("@;/", *p))
+					p++;
+				
+				locale_charset = g_ascii_strdown (codeset, p - codeset);
+			} else {
+				/* charset unknown */
+				locale_charset = NULL;
+			}
 		}
 		
 		locale_parse_lang (locale);
 	}
-#endif
 }
 
 

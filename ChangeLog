@@ -1,3 +1,17 @@
+2004-03-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	Thanks to Peter Bloomfield for reminding me about
+	g_ascii_strdown() and g_ascii_strup() and for providing the
+	original patch.
+
+	* gmime/gmime-charset.c (locale_parse_lang): Don't use
+	g_ascii_strdown() and g_ascii_strup() as these functions strdup
+	the result rather than working on the input string.
+	(g_mime_charset_map_init): Instead of strdup()ing the charset name
+	and then using g_ascii_strdown(), just use g_ascii_strdown() since
+	it malloc's. Also, even if we have nl_langinfo(), we want to parse
+	LC_ALL to get the locale lang.
+
 2004-03-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated
