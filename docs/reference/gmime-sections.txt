@@ -8,8 +8,8 @@ g_mime_shutdown
 
 <SECTION>
 <FILE>gmime-error</FILE>
-GMimeError
-GMIME_ERROR_QUARK
+GMIME_ERROR
+GMIME_ERROR_IS_SYSTEM
 </SECTION>
 
 <SECTION>

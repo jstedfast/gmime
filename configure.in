@@ -359,4 +359,5 @@ Configuration:
 
   Profiling enabled:    ${enable_gprof}
   IPv6 support enabled: ${enable_ipv6}
+  Warnings enabled:     ${enable_warnings}
 "

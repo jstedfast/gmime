@@ -28,7 +28,7 @@
 #include "gmime.h"
 
 
-GQuark gmime_error_quark = g_quark_from_static_string ("gmime");
+GQuark gmime_error_quark;
 
 
 static int initialized = FALSE;
@@ -56,6 +56,8 @@ g_mime_init (guint32 flags)
 	g_mime_charset_map_init ();
 	
 	g_mime_iconv_init ();
+	
+	gmime_error_quark = g_quark_from_static_string ("gmime");
 	
 	/* register our default mime object types */
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());

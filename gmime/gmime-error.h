@@ -33,11 +33,26 @@ extern "C" {
 
 extern GQuark gmime_error_quark;
 #define GMIME_ERROR_QUARK gmime_error_quark
+
+/**
+ * GMIME_ERROR:
+ *
+ * The GMime error domain GQuark value.
+ **/
 #define GMIME_ERROR GMIME_ERROR_QUARK
 
-/* errno is a positive value, so negative values should be safe to use */
+/**
+ * GMIME_ERROR_IS_SYSTEM:
+ * @error: integer error value
+ *
+ * Decides if an error is a system error (aka errno value) vs. a GMime
+ * error.
+ *
+ * Meant to be used with GError::code
+ **/
 #define GMIME_ERROR_IS_SYSTEM(error) ((error) > 0)
 
+/* errno is a positive value, so negative values should be safe to use */
 enum {
 	GMIME_ERROR_GENERAL             =  0,
 	GMIME_ERROR_NOT_SUPPORTED       = -1,
