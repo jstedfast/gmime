@@ -115,7 +115,7 @@ g_mime_part_destroy (GMimePart *mime_part)
 			
 			g_list_free (mime_part->disposition->params);
 		}
-		
+
 		g_free (mime_part->disposition);
 	}
 	
@@ -702,6 +702,28 @@ g_mime_part_set_content (GMimePart *mime_part, const gchar *content, guint len)
 	
 	mime_part->content = g_byte_array_new ();
 	g_byte_array_append (mime_part->content, content, len);
+}
+
+
+/**
+ * g_mime_part_set_content: Set the content of the mime part
+ * @mime_part: Mime part
+ * @content: raw mime part content.  GMimePart keeps this array and will g_free() it when no longer needed.
+ * @len: raw content length
+ *
+ * Sets the content of the Mime Part (only non-multiparts)
+ **/
+void
+g_mime_part_set_content_array (GMimePart *mime_part, gchar *content, guint len)
+{
+	g_return_if_fail (mime_part != NULL);
+	
+	if (mime_part->content)
+		g_byte_array_free (mime_part->content, TRUE);
+	
+	mime_part->content = g_byte_array_new ();
+	mime_part->content->data = (guint8*) content;
+	mime_part->content->len = len;
 }
 
 
