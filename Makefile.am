@@ -234,6 +234,7 @@ EXTRA_DIST = 			\
 	gmime-2.0.pc.in		\
 	gmime.spec.in 		\
 	gmime.m4 		\
+	iconv-detect.c		\
 	zentimer.h 		\
 	zenprofiler.h
 
