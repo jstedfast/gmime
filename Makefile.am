@@ -15,6 +15,7 @@ lib_LTLIBRARIES = libgmime.la
 libgmime_la_LDFLAGS = -version-info @GMIME_VERSION_INFO@
 
 libgmime_la_SOURCES = 		\
+	alloca.c		\
 	gmime-content-type.c	\
 	gmime-message.c		\
 	gmime-param.c		\

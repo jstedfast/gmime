@@ -1,3 +1,16 @@
+2001-05-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* alloca.c: New file for systems that do not have alloca().
+
+	* Makefile.am: build alloca.c
+
+	* gmime-utils.c: Don't #include <alloca.h> - this is now handled
+	by config.h.
+
+	* config.h.in: Added alloca define checks.
+
+	* acconfig.h: Remove some extra defines that we don't care about.
+
 2001-05-20  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parse_content_headers): Simplified and also
