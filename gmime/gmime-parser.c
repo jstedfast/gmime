@@ -674,6 +674,16 @@ enum {
                          ((scan_from && len > 5 && !strncmp (start, "From ", len)) || \
 			  (len >= 3 && (start[0] == '-' && start[1] == '-')))
 
+/* Optimization Notes:
+ *
+ * 1. By making the priv->realbuf char array 1 extra char longer, we
+ * can safely set '*inend' to '\n' and not fear an ABW. Setting *inend
+ * to '\n' means that we can eliminate having to check that inptr <
+ * inend every trip through our inner while-loop. This cuts the number
+ * of instructions down from ~7 to ~4, assuming the compiler does its
+ * job correctly ;-)
+ **/
+
 static int
 parser_scan_content (GMimeParser *parser, GByteArray *content)
 {
@@ -702,13 +712,16 @@ parser_scan_content (GMimeParser *parser, GByteArray *content)
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
+		/* Note: see optimization comment [1] */
+		*inend = '\n';
 		
 		if (inend - inptr == nleft)
 			found_eos = TRUE;
 		
 		while (inptr < inend) {
 			start = inptr;
-			while (inptr < inend && *inptr != '\n')
+			/* Note: see optimization comment [1] */
+			while (*inptr != '\n')
 				inptr++;
 			
 			len = inptr - start;
