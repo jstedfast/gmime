@@ -48,7 +48,8 @@ libgmime_la_SOURCES = 		\
 	gmime-stream-null.c	\
 	gmime-utils.c		\
 	internet-address.c	\
-	md5-utils.c
+	md5-utils.c		\
+	unicode.c
 
 gmimeincludedir = $(includedir)/gmime
 gmimeinclude_HEADERS = 		\
@@ -88,7 +89,8 @@ noinst_HEADERS = 			\
 	memchunk.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h	\
-	md5-utils.h
+	md5-utils.h			\
+	unicode.h
 
 DEPS = $(top_builddir)/libgmime.la
 LDADDS = $(top_builddir)/libgmime.la @GLIB_LIBS@

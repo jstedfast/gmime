@@ -42,8 +42,10 @@
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
+#include "unicode.h"
 
-#define d(x) x
+#define d(x)
+#define w(x) x
 
 #ifndef HAVE_ISBLANK
 #define isblank(c) (c == ' ' || c == '\t')
@@ -51,6 +53,8 @@
 
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
+
+#define GMIME_FOLD_PREENCODED  (GMIME_FOLD_LEN / 2)
 
 /* date parser macros */
 #define NUMERIC_CHARS          "1234567890"
@@ -710,6 +714,17 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 }
 
 
+static void
+g_string_append_len (GString *out, const char *in, size_t len)
+{
+	char *buf;
+	
+	buf = alloca (len + 1);
+	strlcpy (buf, in, len);
+	
+	g_string_append (out, buf);
+}
+
 /**
  * g_mime_utils_header_fold:
  * @in: input header string
@@ -751,9 +766,7 @@ g_mime_utils_header_fold (const char *in)
 			}
 		} else if (len > 0) {
 			outlen += len;
-			for (i = 0; i < len; i++) {
-				g_string_append_c (out, inptr[i]);
-			}
+			g_string_append_len (out, inptr, len);
 			inptr += len;
 		} else {
 			g_string_append_c (out, *inptr++);
@@ -1010,8 +1023,6 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 	inptr = in + 2;
 	inend = in + inlen - 2;
 	
-	d(fprintf (stderr, "decoding %.*s\n", inlen, in));
-	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
 		unsigned char *decoded;
@@ -1075,7 +1086,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			charset = g_mime_charset_name (charenc);
 			cd = g_mime_iconv_open ("UTF-8", charset);
 			if (cd == (iconv_t) -1) {
-				d(g_warning ("Cannot convert from %s to UTF-8, header display may "
+				w(g_warning ("Cannot convert from %s to UTF-8, header display may "
 					     "be corrupt: %s", charset, g_strerror (errno)));
 				charset = g_mime_charset_locale_name ();
 				cd = g_mime_iconv_open ("UTF-8", charset);
@@ -1087,7 +1098,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			g_mime_iconv_close (cd);
 			
 			if (!buf) {
-				d(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
+				w(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
 					     "corrupt: %s", declen, decoded, g_strerror (errno)));
 			}
 			
@@ -1246,27 +1257,17 @@ quoted_encode (const unsigned char *in, size_t len, unsigned char *out, gushort 
 	return (outptr - out);
 }
 
-static char *
-rfc2047_encode_word (const unsigned char *word, gushort safemask)
+static void
+rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
+		     const char *charset, gushort safemask)
 {
 	unsigned char *encoded, *ptr;
 	unsigned char *uword = NULL;
 	iconv_t cd = (iconv_t) -1;
-	size_t enclen, pos, len;
-	const char *charset;
+	size_t enclen, pos;
 	int state = 0;
 	int save = 0;
 	char encoding;
-	
-	len = strlen (word);
-	
-	if (gmime_interfaces_utf8) {
-		charset = g_mime_charset_best (word, len);
-		if (!charset)
-			charset = "iso-8859-1";
-	} else {
-		charset = g_mime_charset_locale_name ();
-	}
 	
 	if (gmime_interfaces_utf8) {
 		if (strcasecmp (charset, "UTF-8") != 0) {
@@ -1319,11 +1320,7 @@ rfc2047_encode_word (const unsigned char *word, gushort safemask)
 	
 	g_free (uword);
 	
-	uword = g_strdup_printf ("=?%s?%c?%s?=", charset, encoding, encoded);
-	
-	fprintf (stderr, "resultant encoded word: %s\n", uword);
-	
-	return uword;
+	g_string_sprintfa (string, "=?%s?%c?%s?=", charset, encoding, encoded);
 }
 
 
@@ -1339,7 +1336,254 @@ rfc2047_encode_word (const unsigned char *word, gushort safemask)
 char *
 g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
 {
-	return rfc2047_encode_word (in, IS_PSAFE);
+	const char *charset;
+	GString *string;
+	size_t len;
+	char *str;
+	
+	if (in == NULL)
+		return NULL;
+	
+	len = strlen (in);
+	
+	if (gmime_interfaces_utf8) {
+		charset = g_mime_charset_best (in, len);
+		charset = charset ? charset : "iso-8859-1";
+	} else {
+		charset = g_mime_charset_locale_name ();
+	}
+	
+	string = g_string_new ("");
+	
+	rfc2047_encode_word (string, in, strlen (in), charset, IS_ESAFE);
+	
+	str = string->str;
+	g_string_free (string, FALSE);
+	
+	return str;
+}
+
+
+enum _phrase_word_t {
+	WORD_ATOM,
+	WORD_2047
+};
+
+struct _phrase_word {
+	struct _phrase_word *next;
+	const unsigned char *start, *end;
+	enum _phrase_word_t type;
+	int encoding;
+};
+
+static gboolean
+word_types_compatable (enum _phrase_word_t type1, enum _phrase_word_t type2)
+{
+	switch (type1) {
+	case WORD_ATOM:
+		return FALSE;
+	case WORD_2047:
+		return type2 == WORD_2047;
+	default:
+		return FALSE;
+	}
+}
+
+static struct _phrase_word *
+rfc2047_encode_phrase_get_words (const unsigned char *in)
+{
+	const unsigned char *inptr, *start, *last;
+	struct _phrase_word *words, *tail, *word;
+	enum _phrase_word_t type = WORD_ATOM;
+	int count = 0, encoding = 0;
+	
+	words = NULL;
+	tail = (struct _phrase_word *) &words;
+	
+	last = start = inptr = in;
+	while (inptr && *inptr) {
+		gboolean is_space;
+		unichar c;
+		
+		if (gmime_interfaces_utf8) {
+			const char *newinptr;
+			
+			newinptr = unicode_next_char (inptr);
+			c = unicode_get_char (inptr);
+			if (newinptr == NULL || !unichar_validate (c)) {
+				w(g_warning ("Invalid UTF-8 sequence encountered"));
+				inptr++;
+				continue;
+			}
+			
+			inptr = newinptr;
+			
+			is_space = unichar_isspace (c);
+		} else {
+			is_space = isspace ((int) *inptr);
+			c = *inptr++;
+		}
+		
+		if (is_space) {
+			if (count > 0) {
+				word = g_new (struct _phrase_word, 1);
+				word->next = NULL;
+				word->start = start;
+				word->end = last;
+				word->type = type;
+				word->encoding = encoding;
+				
+				tail->next = word;
+				tail = word;
+				count = 0;
+			}
+			
+			start = inptr;
+			type = WORD_ATOM;
+			encoding = 0;
+		} else {
+			count++;
+			if (c > 127 && c < 256) {
+				type = WORD_2047;
+				encoding = MAX (encoding, 2);
+			} else if (c >= 256) {
+				type = WORD_2047;
+				encoding = 2;
+			}
+		}
+		
+		last = inptr;
+	}
+	
+	if (count > 0) {
+		word = g_new (struct _phrase_word, 1);
+		word->next = NULL;
+		word->start = start;
+		word->end = last;
+		word->type = type;
+		word->encoding = encoding;
+		
+		tail->next = word;
+		tail = word;
+	}
+	
+	return words;
+}
+
+static gboolean
+rfc2047_encode_phrase_merge_words (struct _phrase_word **wordsp)
+{
+	struct _phrase_word *word, *next, *words = *wordsp;
+	gboolean merged = FALSE;
+	
+	/* scan the list, checking for words of similar types that can be merged */
+	word = words;
+	while (word) {
+		next = word->next;
+		
+		while (next) {
+			/* merge nodes of the same type AND we are not creating too long a string */
+			if (word_types_compatable (word->type, next->type)) {
+				if (next->end - word->start < GMIME_FOLD_PREENCODED) {
+					/* the resulting word type is the MAX of the 2 types */
+					word->type = MAX (word->type, next->type);
+					
+					word->end = next->end;
+					word->next = next->next;
+					
+					g_free (next);
+					
+					next = word->next;
+					
+					merged = TRUE;
+				} else {
+					/* if it is going to be too long, make sure we include the
+					   separating whitespace */
+					word->end = next->start;
+					break;
+				}
+			} else {
+				break;
+			}
+		}
+		
+		word = word->next;
+	}
+	
+	*wordsp = words;
+	
+	return merged;
+}
+
+static char *
+rfc2047_encode_phrase (const unsigned char *in)
+{
+	struct _phrase_word *words, *word, *prev = NULL;
+	GString *out;
+	char *outstr;
+	
+	if (in == NULL)
+		return NULL;
+	
+	words = rfc2047_encode_phrase_get_words (in);
+	if (!words)
+		return NULL;
+	
+	while (rfc2047_encode_phrase_merge_words (&words))
+		;
+	
+	out = g_string_new ("");
+	
+	/* output words now with spaces between them */
+	word = words;
+	while (word) {
+		const char *start;
+		size_t len;
+		
+		/* append correct number of spaces between words */
+		if (prev && !(prev->type == WORD_2047 && word->type == WORD_2047)) {
+			/* one or both of the words are not encoded so we write the spaces out untouched */
+			len = word->start - prev->end;
+			g_string_append_len (out, prev->end, len);
+		}
+		
+		switch (word->type) {
+		case WORD_ATOM:
+			g_string_append_len (out, word->start, word->end - word->start);
+			break;
+		case WORD_2047:
+			if (prev && prev->type == WORD_2047) {
+				/* include the whitespace chars between these 2 words in the
+                                   resulting rfc2047 encoded word. */
+				len = word->end - prev->end;
+				start = prev->end;
+				
+				/* encoded words need to be separated by linear whitespace */
+				g_string_append_c (out, ' ');
+			} else {
+				len = word->end - word->start;
+				start = word->start;
+			}
+			
+			if (word->encoding == 1 || !gmime_interfaces_utf8)
+				rfc2047_encode_word (out, start, len, "iso-8859-1", IS_PSAFE);
+			else
+				rfc2047_encode_word (out, start, len,
+						     g_mime_charset_best (start, len), IS_PSAFE);
+			break;
+		}
+		
+		g_free (prev);
+		prev = word;
+		word = word->next;
+	}
+	
+	g_free (word);
+	
+	outstr = out->str;
+	g_string_free (out, FALSE);
+	
+	return outstr;
 }
 
 
@@ -1355,107 +1599,7 @@ g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
 char *
 g_mime_utils_8bit_header_encode (const unsigned char *in)
 {
-	register const unsigned char *inptr;
-	GString *out, *word, *lwsp;
-	unsigned char *encoded;
-	gboolean encode_word = FALSE;
-	gboolean last_was_encoded = FALSE;
-	gboolean last_was_space = FALSE;
-	
-	out = g_string_new ("");
-	word = g_string_new ("");
-	lwsp = g_string_new ("");
-	
-	inptr = in;
-	
-	while (inptr && *inptr) {
-		unsigned char c = *inptr++;
-		
-		if (isspace (c) && !last_was_space) {
-			char *eword;
-			
-			if (encode_word)
-				eword = rfc2047_encode_word (word->str, IS_ESAFE);
-			else
-				eword = word->str;
-			
-			/* append any whitespace */
-			if (last_was_encoded && encode_word) {
-				/* we need to encode the whitespace */
-				unsigned char *elwsp;
-				size_t len;
-				
-				elwsp = alloca (lwsp->len * 3 + 4);
-				len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
-				elwsp[len] = '\0';
-				
-				g_string_sprintfa (out, " =?iso-8859-1?q?%s?= ", elwsp);
-			} else {
-				g_string_append (out, lwsp->str);
-			}
-			
-			/* append the (encoded) word */
-			g_string_append (out, eword);
-			
-			if (encode_word)
-				g_free (eword);
-			
-			g_string_truncate (lwsp, 0);
-			g_string_truncate (word, 0);
-			
-			last_was_encoded = encode_word;
-			encode_word = FALSE;
-		}
-		
-		if (isspace (c)) {
-			g_string_append_c (lwsp, c);
-			last_was_space = TRUE;
-		} else {
-			if (c > 127)
-				encode_word = TRUE;
-			
-			g_string_append_c (word, c);
-			last_was_space = FALSE;
-		}
-	}
-	
-	if (word->len || lwsp->len) {
-		char *eword;
-		
-		if (encode_word)
-			eword = rfc2047_encode_word (word->str, IS_ESAFE);
-		else
-			eword = word->str;
-		
-		/* append any whitespace */
-		if (last_was_encoded && encode_word) {
-			/* we need to encode the whitespace */
-			unsigned char *elwsp;
-			size_t len;
-			
-			elwsp = alloca (lwsp->len * 3 + 4);
-			len = quoted_encode (lwsp->str, lwsp->len, elwsp, IS_SPACE);
-			elwsp[len] = '\0';
-			
-			g_string_sprintfa (out, " =?iso-8859-1?q?%s?= ", elwsp);
-		} else {
-			g_string_append (out, lwsp->str);
-		}
-		
-		/* append the encoded word */
-		g_string_append (out, eword);
-		
-		if (encode_word)
-			g_free (eword);
-	}
-	
-	g_string_free (lwsp, TRUE);
-	g_string_free (word, TRUE);
-	
-	encoded = out->str;
-	g_string_free (out, FALSE);
-	
-	return encoded;
+	return rfc2047_encode_phrase (in);
 }
 
 
@@ -1534,8 +1678,6 @@ g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned
 	
 	inptr = in;
 	outptr = out;
-	
-	d(printf("we have %d chars, and %d saved chars\n", inlen, ((gchar *)save)[0]));
 	
 	if (inlen + ((unsigned char *)save)[0] > 2) {
 		const unsigned char *inend = in + inlen - 2;

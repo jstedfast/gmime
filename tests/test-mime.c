@@ -422,7 +422,7 @@ test_date (void)
 
 int main (int argc, char *argv[])
 {
-	g_mime_init (GMIME_INIT_FLAG_UTF8);
+	g_mime_init (0 /*GMIME_INIT_FLAG_UTF8*/);
 	
 	test_date ();
 	

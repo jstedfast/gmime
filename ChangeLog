@@ -1,3 +1,21 @@
+2002-03-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* unicode.[c,h]: New private source files to do some unicode
+	shiz. Ripped out of gmime-charset.c
+
+	* gmime-charset.c: Removed unicode stuff.
+
+	* gmime-utils.c (g_mime_utils_8bit_header_encode): Rewritten to be
+	smarter about grouping like-words.
+	(rfc2047_encode_phrase_get_words): Splits out words.
+	(rfc2047_encode_phrase_merge_words): Merges like-words.
+	(rfc2047_encode_phrase): This is the muscle behind
+	8bit_header_encode.
+	(rfc2047_encode_word): Modified to write data to a GString instead
+	of returning a buffer. Also now takes a charset parameter.
+	(g_mime_utils_8bit_header_encode_phrase): Updated to use the new
+	rfc2047_encode_word API and also to pick an appropriate charset.
+
 2002-03-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-charset.c: Moved tables[] into the #ifdef
