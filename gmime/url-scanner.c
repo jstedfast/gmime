@@ -227,6 +227,33 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 	return TRUE;
 }
 
+
+static struct {
+	char open;
+	char close;
+} url_braces[] = {
+	{ '(', ')' },
+	{ '{', '}' },
+	{ '[', ']' },
+	{ '<', '>' },
+};
+
+static char
+url_stop_at_brace (const char *in, size_t so)
+{
+	int i;
+	
+	if (so > 0) {
+		for (i = 0; i < 4; i++) {
+			if (in[so - 1] == url_braces[i].open)
+				return url_braces[i].close;
+		}
+	}
+	
+	return '\0';
+}
+
+
 gboolean
 g_url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
@@ -239,13 +266,16 @@ gboolean
 g_url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	register const char *inptr = pos;
+	char close_brace;
 	
 	inptr += strlen (match->pattern);
 	
 	if (*inptr == '/')
 		inptr++;
 	
-	while (inptr < inend && is_urlsafe (*inptr))
+	close_brace = url_stop_at_brace (in, match->um_so);
+	
+	while (inptr < inend && is_urlsafe (*inptr) && *inptr != close_brace)
 		inptr++;
 	
 	if (inptr == pos)
@@ -269,8 +299,11 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 {
 	register const char *inptr = pos;
 	int parts = 0, digits, port;
+	char close_brace;
 	
 	inptr += strlen (match->pattern);
+	
+	close_brace = url_stop_at_brace (in, match->um_so);
 	
 	/* find the end of the domain */
 	if (is_digit (*inptr)) {
@@ -326,7 +359,7 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 		case '/': /* we've detected a path component to our url */
 			inptr++;
 			
-			while (inptr < inend && is_urlsafe (*inptr))
+			while (inptr < inend && is_urlsafe (*inptr) && *inptr != close_brace)
 				inptr++;
 			
 			break;
