@@ -1,3 +1,10 @@
+2003-02-07  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-multipart.c (multipart_remove_part): When the part
+	being removed is not the first part in the list, make sure to set
+	node->prev->next = node->next -- oops :-)
+	(multipart_remove_part_at): Same.
+
 2003-01-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped the version to 2.0.0

@@ -495,6 +495,7 @@ multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 	} else {
 		if (node->next)
 			node->next->prev = node->prev;
+		node->prev->next = node->next;
 	}
 	
 	g_list_free_1 (node);
@@ -526,8 +527,7 @@ multipart_remove_part_at (GMimeMultipart *multipart, int index)
 	GMimeObject *part;
 	GList *node;
 	
-	node = g_list_nth (multipart->subparts, index);
-	if (!node) {
+	if (!(node = g_list_nth (multipart->subparts, index))) {
 		d(g_warning ("multipart_remove_part_at: no part at index %d within %p", index, multipart));
 		return NULL;
 	}
@@ -541,6 +541,7 @@ multipart_remove_part_at (GMimeMultipart *multipart, int index)
 	} else {
 		if (node->next)
 			node->next->prev = node->prev;
+		node->prev->next = node->next;
 	}
 	
 	g_list_free_1 (node);
@@ -574,8 +575,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 	GMimeObject *part;
 	GList *node;
 	
-	node = g_list_nth (multipart->subparts, index);
-	if (!node) {
+	if (!(node = g_list_nth (multipart->subparts, index))) {
 		d(g_warning ("multipart_get_part: no part at index %d within %p", index, multipart));
 		return NULL;
 	}
