@@ -22,10 +22,13 @@ following RFCs:
          Conformance Criteria and Examples
  * 2183: Communicating Presentation Information in Internet Messages:
          The Content-Disposition Header Field
+ * 2184: MIME Parameter Value and Encoded Word Extensions: Character
+         Sets, Languages, and Continuations
+ * 2231: MIME Parameter Value and Encoded Word Extensions: Character
+         Sets, Languages, and Continuations (Obsoletes rfc2184)
 
 Other RFCs of interest:
 
- * 2387: The Multipart/Related Content-Type.
  * 1847: Security Multiparts for MIME: Multipart/Signed and 
          Multipart/Encrypted
  * 1872: The MIME Multipart/Related Content-type
@@ -33,6 +36,7 @@ Other RFCs of interest:
  * 2015: MIME Security with Pretty Good Privacy (PGP)
  * 2311: S/MIME Version 2 Message Specification
  * 2312: S/MIME Version 2 Certificate Handling
+ * 2387: The Multipart/Related Content-Type.
  * 2424: Content Duration MIME Header Definition
  * 2632: S/MIME Version 3 Certificate Handling
  * 2633: S/MIME Version 3 Message Specification
