@@ -238,7 +238,6 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 					} else {
 						g_mime_filter_backup (filter, in, left);
 					}
-					break;
 				}
 			}
 		}
