@@ -8,9 +8,10 @@
   <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
 
   <!-- Certain things return ssize_t and off_t, which the generator doesn't deal with nicely. -->
   <!-- FIXME: These would likely need to be changed for 64-bit -->
@@ -26,6 +27,7 @@
 
   <!-- Hide some problematic elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeObject']/method[@name='GetData']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="hidden">1</attr>

@@ -1,3 +1,15 @@
+2004-11-17  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/GMime.metadata: More metadata goodness.
+
+	* mono/Makefile.am: Added Object.custom and Stream.custom.
+
+	* mono/Object.custom: Add a GetData() method which returns a byte
+	array of the object's data.
+
+	* mono/Stream.custom: Add a wrapper around Seek() so that you
+	don't need to specify whence.
+
 2004-11-16  Joe Shaw  <joeshaw@novell.com>
 
 	* configure.in: Generate mono/gmime-sharp.pc.

@@ -1,0 +1,21 @@
+		[DllImport ("libc")]
+		static extern int strlen (IntPtr raw_string);
+
+		[DllImport ("libglib-2.0.so.0")]
+		static extern void g_free (IntPtr mem);
+
+                public byte[] GetData () {
+			IntPtr raw_data;
+			int len;
+
+			raw_data = g_mime_object_to_string (Handle);
+			len = strlen (raw_data);
+
+			byte[] data = new byte[len];
+
+			Marshal.Copy (raw_data, data, 0, len);
+
+			g_free (raw_data);
+
+			return data;
+                }

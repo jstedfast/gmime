@@ -1,0 +1,4 @@
+public int Seek (int offset)
+{
+	return this.Seek (offset, GMime.SeekWhence.Set);
+}
