@@ -1,5 +1,9 @@
 2004-03-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-charset.c (charset_best_mask): Don't use the charset
+	if it is lang specific and the lang doesn't match the
+	locale. Fixes bug #138218.
+
 	* gmime/gmime-utils.c (mktime_utc): New function to mktime() into
 	UTC.
 	(parse_rfc822_date): Use mktime_utc() instead of doing it

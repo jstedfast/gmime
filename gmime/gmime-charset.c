@@ -121,6 +121,7 @@ static struct {
 	{ "gbk",         "zh" },
 	{ "euc-tw",      "zh" },
 	{ "iso-2022-jp", "ja" },
+	{ "Shift-JIS",   "ja" },
 	{ "sjis",        "ja" },
 	{ "ujis",        "ja" },
 	{ "eucJP",       "ja" },
@@ -129,9 +130,6 @@ static struct {
 	{ "koi8-r",      "ru" },
 	{ "koi8-u",      "uk" }
 };
-
-#define NUM_CJKR_LANGS (sizeof (cjkr_lang_map) / sizeof (cjkr_lang_map[0]))
-
 
 static GHashTable *iconv_charsets = NULL;
 static char *locale_charset = NULL;
@@ -347,7 +345,7 @@ g_mime_charset_language (const char *charset)
 	if (!charset)
 		return NULL;
 	
-	for (i = 0; i < NUM_CJKR_LANGS; i++) {
+	for (i = 0; i < G_N_ELEMENTS (cjkr_lang_map); i++) {
 		if (!strcasecmp (cjkr_lang_map[i].charset, charset))
 			return cjkr_lang_map[i].lang;
 	}
@@ -484,8 +482,6 @@ static const char *iso_charsets[] = {
 	"iso-8859-16"
 };
 
-#define NUM_ISO_CHARSETS (sizeof (iso_charsets) / sizeof (iso_charsets[0]))
-
 static const char *windows_charsets[] = {
 	"windows-cp1250",
 	"windows-cp1251",
@@ -540,7 +536,7 @@ g_mime_charset_canon_name (const char *charset)
 		if (endptr == ptr || *endptr != '\0')
 			return charset;
 		
-		if (iso >= NUM_ISO_CHARSETS)
+		if (iso > G_N_ELEMENTS (iso_charsets))
 			return charset;
 		
 		return iso_charsets[iso];
@@ -718,11 +714,16 @@ g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len)
 static const char *
 charset_best_mask (unsigned int mask)
 {
+	const char *lang;
 	int i;
 	
-	for (i = 0; i < sizeof (charinfo) / sizeof (charinfo[0]); i++) {
-		if (charinfo[i].bit & mask)
-			return charinfo[i].name;
+	for (i = 0; i < G_N_ELEMENTS (charinfo); i++) {
+		if (charinfo[i].bit & mask) {
+			lang = g_mime_charset_language (charinfo[i].name);
+			
+			if (!lang || (locale_lang && !strncmp (locale_lang, lang, 2)))
+				return charinfo[i].name;
+		}
 	}
 	
 	return "UTF-8";
