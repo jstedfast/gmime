@@ -124,5 +124,6 @@ internet_address_to_string
 
 <SECTION>
 <FILE>gmime-parser</FILE>
+g_mime_parser_construct_part
 g_mime_parser_construct_message
 </SECTION>

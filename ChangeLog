@@ -1,3 +1,11 @@
+2001-01-01  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* doc/gmime-sections.txt: Updated.
+
+	* doc/sgml/*: Updated.
+
+	* doc/html/*: Updated.
+
 2000-12-24  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* gmime-parser.c (g_mime_parser_construct_part): Don't set the
