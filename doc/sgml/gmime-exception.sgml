@@ -52,7 +52,7 @@ void        <link linkend="g-mime-exception-free">g_mime_exception_free</link>  
 <refsect2>
 <title><anchor id="ExceptionId">enum ExceptionId</title>
 <programlisting>typedef enum {
-#include "gmime-exception-list.def"
+#include &lt;gmime/gmime-exception-list.def&gt;
 } ExceptionId;
 </programlisting>
 <para>

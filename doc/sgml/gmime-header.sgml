@@ -78,6 +78,8 @@ void        <link linkend="g-mime-header-foreach">g_mime_header_foreach</link>  
 </entry></row>
 <row><entry align="right"><parameter>user_data</parameter>&nbsp;:</entry>
 <entry>
+
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

@@ -1,12 +1,12 @@
 <refentry id="gmime-gmime-multipart-encrypted">
 <refmeta>
-<refentrytitle>GMimeMultipartEncrypted</refentrytitle>
+<refentrytitle>gmime-multipart-encrypted</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>GMIME Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>GMimeMultipartEncrypted</refname><refpurpose></refpurpose>
+<refname>gmime-multipart-encrypted</refname><refpurpose></refpurpose>
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>

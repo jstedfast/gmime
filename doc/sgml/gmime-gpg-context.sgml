@@ -1,12 +1,12 @@
 <refentry id="gmime-gmime-gpg-context">
 <refmeta>
-<refentrytitle>GMimeGpgContext</refentrytitle>
+<refentrytitle>gmime-gpg-context</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>GMIME Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>GMimeGpgContext</refname><refpurpose></refpurpose>
+<refname>gmime-gpg-context</refname><refpurpose></refpurpose>
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>

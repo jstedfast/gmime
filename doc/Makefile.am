@@ -17,7 +17,7 @@ HTML_DIR = $(datadir)/gtk-doc/html
 TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE_VERSIONED)
 
 scan:
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h memchunk.h"
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h $(DOC_SOURCE_DIR)/gmime-table-private.h memchunk.h"
 
 templates: scan
 	gtkdoc-mktmpl --module=$(DOC_MODULE)

@@ -1,12 +1,12 @@
 <refentry id="gmime-gmime-cipher-context">
 <refmeta>
-<refentrytitle>GMimeCipherContext</refentrytitle>
+<refentrytitle>gmime-cipher-context</refentrytitle>
 <manvolnum>3</manvolnum>
 <refmiscinfo>GMIME Library</refmiscinfo>
 </refmeta>
 
 <refnamediv>
-<refname>GMimeCipherContext</refname><refpurpose></refpurpose>
+<refname>gmime-cipher-context</refname><refpurpose></refpurpose>
 </refnamediv>
 
 <refsynopsisdiv><title>Synopsis</title>

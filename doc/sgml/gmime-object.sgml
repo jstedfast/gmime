@@ -142,7 +142,7 @@ Performs a lookup of registered <link linkend="GMimeObject">GMimeObject</link> s
 using <link linkend="g-mime-object-register-type">g_mime_object_register_type</link>, to find an appropriate class
 capable of handling MIME parts of type <parameter>type</parameter>/<parameter>subtype</parameter>. If no class
 has been registered to handle that type, it looks for a registered
-class that can handle <parameter>type</parameter>/*. If that also fails, then it will use
+class that can handle <parameter>type</parameter>. If that also fails, then it will use
 the generic part class, <link linkend="GMimePart">GMimePart</link>.</para>
 <para>
 
