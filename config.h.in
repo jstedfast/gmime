@@ -9,6 +9,21 @@
 /* Define if you have the ANSI C header files.  */
 #undef STDC_HEADERS
 
+#undef PACKAGE
+#undef VERSION
+#undef HAVE_LIBZ
+#undef HAVE_LIBM
+#undef HAVE_ISINF
+#undef HAVE_ISNAN
+#undef HAVE_LIBHISTORY
+#undef HAVE_LIBREADLINE
+#undef HAVE_TIMEZONE
+#undef HAVE_TM_GMTOFF
+#undef HAVE_ISBLANK
+
+/* Define if you have the isblank function.  */
+#undef HAVE_ISBLANK
+
 /* Define if you have the localtime function.  */
 #undef HAVE_LOCALTIME
 
@@ -20,15 +35,6 @@
 
 /* Define if you have the <time.h> header file.  */
 #undef HAVE_TIME_H
-
-/* Define if 'timezone' is in the <time.h> header file. */
-#undef HAVE_TIMEZONE
-
-/* Define if tm_gmtoff is a member of struct tm. */
-#undef HAVE_TM_GMTOFF
-
-/* Define if you have the isblank function (GNU systems). */
-#undef HAVE_ISBLANK
 
 /* Name of package */
 #undef PACKAGE

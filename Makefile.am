@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = #doc
+SUBDIRS = . #doc
 
 INCLUDES = -I@srcdir@ $(VERSION_FLAGS) @GLIB_CFLAGS@
 
