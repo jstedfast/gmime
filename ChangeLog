@@ -1,3 +1,8 @@
+2003-03-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/url-scanner.c (g_url_addrspec_end): Check inptr == pos +
+	1, if true then return FALSE.
+
 2003-03-06  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Check that the compiler supports the inline

@@ -219,7 +219,7 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 		}
 	}
 	
-	if (inptr == pos)
+	if (inptr == pos + 1)
 		return FALSE;
 	
 	match->um_eo = (inptr - in);
