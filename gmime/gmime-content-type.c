@@ -38,7 +38,7 @@
 static int
 param_equal (gconstpointer v, gconstpointer v2)
 {
-	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
+	return strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 static guint
@@ -76,9 +76,9 @@ g_mime_content_type_new (const char *type, const char *subtype)
 	} else {
 		if (type && *type) {
 			mime_type->type = g_strdup (type);
-			if (!g_strcasecmp (type, "text")) {
+			if (!strcasecmp (type, "text")) {
 				mime_type->subtype = g_strdup ("plain");
-			} else if (!g_strcasecmp (type, "multipart")) {
+			} else if (!strcasecmp (type, "multipart")) {
 				mime_type->subtype = g_strdup ("mixed");
 			} else {
 				g_free (mime_type->type);
@@ -231,12 +231,12 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!g_strcasecmp (mime_type->type, type)) {
+	if (!strcasecmp (mime_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;
 		} else {
-			if (!g_strcasecmp (mime_type->subtype, subtype))
+			if (!strcasecmp (mime_type->subtype, subtype))
 				return TRUE;
 			else
 				return FALSE;

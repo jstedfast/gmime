@@ -174,7 +174,7 @@ header_raw_find (struct _header_raw *headers, const char *name, off_t *offset)
 	
 	h = headers;
 	while (h) {
-		if (!g_strcasecmp (h->name, name)) {
+		if (!strcasecmp (h->name, name)) {
 			if (offset)
 				*offset = h->offset;
 			return h->value;

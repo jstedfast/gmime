@@ -1,5 +1,20 @@
 2003-03-31  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/*.c: s/g_str[n]casecmp/str[n]casecmp/g
+
+	* configure.in: Change the check for mmap so that we know we not
+	only have mmap defined, but also that it "works". Also added
+	checks for strcasecmp and strncasecmp and define them to the glib
+	versions if appropriate (g_ascii_str[n]casecmp since
+	g_str[n]casecmp is apparently deprecated *sigh*). Doing this
+	because I don't want to type g_ascii_str[n]casecmp. Call me a lazy
+	bastard, but this is rediculous.
+
+	* gmime/gmime-filter-enriched.[c,h]: New source files that can be
+	used to convert text/enriched and text/rtf to text/html.
+
+2003-03-31  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* PORTING: Began writing a porting guide for developers porting
 	their applications from GMime 2.0 to GMime 2.2.
 

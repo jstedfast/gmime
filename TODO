@@ -4,6 +4,55 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
+- Implement a g_mime_language_from_charset() type function? Only
+really useful for CJKR probably. The way I did it in GAL was:
+
+const char *e_iconv_charset_language (const char *charset);
+
+/* map CJKR charsets to their language code */
+/* NOTE: only support charset names that will be returned by
+ * e_iconv_charset_name() so that we don't have to keep track of all
+ * the aliases too. */
+static struct {
+	char *charset;
+	char *lang;
+} cjkr_lang_map[] = {
+	{ "Big5",        "zh" },
+	{ "BIG5HKCS",    "zh" },
+	{ "gb2312",      "zh" },
+	{ "gb18030",     "zh" },
+	{ "gbk",         "zh" },
+	{ "euc-tw",      "zh" },
+	{ "iso-2022-jp", "ja" },
+	{ "sjis",        "ja" },
+	{ "ujis",        "ja" },
+	{ "eucJP",       "ja" },
+	{ "euc-jp",      "ja" },
+	{ "euc-kr",      "ko" },
+	{ "koi8-r",      "ru" },
+	{ "koi8-u",      "uk" }
+};
+
+#define NUM_CJKR_LANGS (sizeof (cjkr_lang_map) / sizeof (cjkr_lang_map[0]))
+
+const char *
+e_iconv_charset_language (const char *charset)
+{
+	int i;
+	
+	if (!charset)
+		return NULL;
+	
+	charset = e_iconv_charset_name (charset);
+	for (i = 0; i < NUM_CJKR_LANGS; i++) {
+		if (!strcasecmp (cjkr_lang_map[i].charset, charset))
+			return cjkr_lang_map[i].lang;
+	}
+	
+	return NULL;
+}
+
+
 - better handling of invalid raw 8bit headers. need to somehow provide
 a way for the app to tell gmime how to handle these. perhaps a
 callback set on the parser object that gets called if gmime fails to

@@ -124,7 +124,7 @@ message_part_add_header (GMimeObject *object, const char *header, const char *va
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
 }
 
@@ -132,13 +132,13 @@ static void
 message_part_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_strcasecmp ("Content-MD5", header))
+	if (!strcasecmp ("Content-MD5", header))
 		return;
 	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 }
 
@@ -148,7 +148,7 @@ message_part_get_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else
 		return NULL;
@@ -160,7 +160,7 @@ message_part_remove_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 

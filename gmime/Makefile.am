@@ -28,6 +28,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-filter-best.c		\
 	gmime-filter-charset.c		\
 	gmime-filter-crlf.c		\
+	gmime-filter-enriched.c		\
 	gmime-filter-from.c		\
 	gmime-filter-html.c		\
 	gmime-filter-md5.c		\
@@ -79,6 +80,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-best.h		\
 	gmime-filter-charset.h		\
 	gmime-filter-crlf.h		\
+	gmime-filter-enriched.h		\
 	gmime-filter-from.h		\
 	gmime-filter-html.h		\
 	gmime-filter-md5.h		\

@@ -447,7 +447,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	int i;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!g_strcasecmp (headers[i], header))
+		if (!strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -660,7 +660,7 @@ g_mime_object_to_string (GMimeObject *object)
 static int
 strcase_equal (gconstpointer v, gconstpointer v2)
 {
-	return g_strcasecmp ((const char *) v, (const char *) v2) == 0;
+	return strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 static guint

@@ -157,20 +157,20 @@ gpg_hash_id (GMimeCipherContext *ctx, const char *hash)
 	if (hash == NULL)
 		return GMIME_CIPHER_HASH_DEFAULT;
 	
-	if (!g_strcasecmp (hash, "pgp-"))
+	if (!strcasecmp (hash, "pgp-"))
 		hash += 4;
 	
-	if (!g_strcasecmp (hash, "md2"))
+	if (!strcasecmp (hash, "md2"))
 		return GMIME_CIPHER_HASH_MD2;
-	else if (!g_strcasecmp (hash, "md5"))
+	else if (!strcasecmp (hash, "md5"))
 		return GMIME_CIPHER_HASH_MD5;
-	else if (!g_strcasecmp (hash, "sha1"))
+	else if (!strcasecmp (hash, "sha1"))
 		return GMIME_CIPHER_HASH_SHA1;
-	else if (!g_strcasecmp (hash, "ripemd160"))
+	else if (!strcasecmp (hash, "ripemd160"))
 		return GMIME_CIPHER_HASH_RIPEMD160;
-	else if (!g_strcasecmp (hash, "tiger192"))
+	else if (!strcasecmp (hash, "tiger192"))
 		return GMIME_CIPHER_HASH_TIGER192;
-	else if (!g_strcasecmp (hash, "haval-5-160"))
+	else if (!strcasecmp (hash, "haval-5-160"))
 		return GMIME_CIPHER_HASH_HAVAL5160;
 	
 	return GMIME_CIPHER_HASH_DEFAULT;

@@ -326,6 +326,24 @@ GMIME_FILTER_CRLF_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-filter-enriched</FILE>
+GMimeFilterEnriched
+g_mime_filter_enriched_new
+
+<SUBSECTION Private>
+g_mime_filter_enriched_get_type
+
+<SUBSECTION Standard>
+GMimeFilterEnrichedClass
+GMIME_TYPE_FILTER_ENRICHED
+GMIME_FILTER_ENRICHED
+GMIME_IS_FILTER_ENRICHED
+GMIME_FILTER_ENRICHED_CLASS
+GMIME_IS_FILTER_ENRICHED_CLASS
+GMIME_FILTER_ENRICHED_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-filter-from</FILE>
 GMimeFilterFrom
 GMimeFilterFromMode

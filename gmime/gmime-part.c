@@ -180,7 +180,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	int i;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!g_strcasecmp (headers[i], header))
+		if (!strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -221,7 +221,7 @@ mime_part_add_header (GMimeObject *object, const char *header, const char *value
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!g_strncasecmp ("Content-", header, 8)) {
+	if (!strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_add (object->headers, header, value);
 		else
@@ -235,7 +235,7 @@ mime_part_set_header (GMimeObject *object, const char *header, const char *value
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!g_strncasecmp ("Content-", header, 8)) {
+	if (!strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_set (object->headers, header, value);
 		else
@@ -249,7 +249,7 @@ mime_part_get_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a mime part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else
 		return NULL;
@@ -261,7 +261,7 @@ mime_part_remove_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is a Content-* header, else it
 	   doesn't belong on a mime part */
 	
-	if (!g_strncasecmp ("Content-", header, 8))
+	if (!strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
@@ -855,17 +855,17 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
 GMimePartEncodingType
 g_mime_part_encoding_from_string (const char *encoding)
 {
-	if (!g_strcasecmp (encoding, "7bit"))
+	if (!strcasecmp (encoding, "7bit"))
 		return GMIME_PART_ENCODING_7BIT;
-	else if (!g_strcasecmp (encoding, "8bit"))
+	else if (!strcasecmp (encoding, "8bit"))
 		return GMIME_PART_ENCODING_8BIT;
-	else if (!g_strcasecmp (encoding, "binary"))
+	else if (!strcasecmp (encoding, "binary"))
 		return GMIME_PART_ENCODING_BINARY;
-	else if (!g_strcasecmp (encoding, "base64"))
+	else if (!strcasecmp (encoding, "base64"))
 		return GMIME_PART_ENCODING_BASE64;
-	else if (!g_strcasecmp (encoding, "quoted-printable"))
+	else if (!strcasecmp (encoding, "quoted-printable"))
 		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-	else if (!g_strcasecmp (encoding, "x-uuencode"))
+	else if (!strcasecmp (encoding, "x-uuencode"))
 		return GMIME_PART_ENCODING_UUENCODE;
 	else return GMIME_PART_ENCODING_DEFAULT;
 }
