@@ -166,7 +166,7 @@ CLEANFILES = gmimeConf.sh
 
 confexecdir = $(libdir)
 confexec_DATA = gmimeConf.sh
-EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4
+EXTRA_DIST = gmimeConf.sh.in gmime.spec.in gmime.spec gmime.m4 zentimer.h zenprofiler.h
 
 gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.

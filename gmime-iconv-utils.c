@@ -53,6 +53,21 @@ iconv_utils_init (void)
 	initialized = TRUE;
 }
 
+
+/**
+ * g_mime_iconv_strndup:
+ * @cd: conversion descriptor
+ * @string: string in source charset
+ * @n: number of bytes to convert
+ *
+ * Allocates a new string buffer containing the first @n bytes of
+ * @string converted to the destination charset as described by the
+ * conversion descriptor @cd.
+ *
+ * Returns a new string buffer containing the first @n bytes of
+ * @string converted to the destination charset as described by the
+ * conversion descriptor @cd.
+ **/
 char *
 g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 {
@@ -123,6 +138,17 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 }
 
 
+/**
+ * g_mime_iconv_strdup:
+ * @cd: conversion descriptor
+ * @string: string in source charset
+ *
+ * Allocates a new string buffer containing @string converted to
+ * the destination charset described in @cd.
+ *
+ * Returns a new string buffer containing the original string
+ * converted to the new charset.
+ **/
 char *
 g_mime_iconv_strdup (iconv_t cd, const char *string)
 {
@@ -130,6 +156,14 @@ g_mime_iconv_strdup (iconv_t cd, const char *string)
 }
 
 
+/**
+ * g_mime_iconv_locale_to_utf8:
+ * @string: string in locale charset
+ *
+ * Allocates a new string buffer containing @string in UTF-8.
+ *
+ * Returns a new string buffer containing @string converted to UTF-8.
+ **/
 char *
 g_mime_iconv_locale_to_utf8 (const char *string)
 {
@@ -140,6 +174,17 @@ g_mime_iconv_locale_to_utf8 (const char *string)
 }
 
 
+/**
+ * g_mime_iconv_locale_to_utf8_length:
+ * @string: string in locale charset
+ * @n: number of bytes to convert
+ *
+ * Allocates a new string buffer containing the first @n bytes of
+ * @string converted to UTF-8.
+ *
+ * Returns a new string buffer containing the first @n bytes of
+ * @string converted to UTF-8.
+ **/
 char *
 g_mime_iconv_locale_to_utf8_length (const char *string, size_t n)
 {
@@ -150,6 +195,16 @@ g_mime_iconv_locale_to_utf8_length (const char *string, size_t n)
 }
 
 
+/**
+ * g_mime_iconv_utf8_to_locale:
+ * @string: string in UTF-8 charset
+ *
+ * Allocates a new string buffer containing @string converted to the
+ * user's locale charset.
+ *
+ * Returns a new string buffer containing @string converted to the
+ * user's locale charset.
+ **/
 char *
 g_mime_iconv_utf8_to_locale (const char *string)
 {
@@ -160,6 +215,17 @@ g_mime_iconv_utf8_to_locale (const char *string)
 }
 
 
+/**
+ * g_mime_iconv_utf8_to_locale_length:
+ * @string: string in UTF-8 charset
+ * @n: number of bytes to convert
+ *
+ * Allocates a new string buffer containing the first @n bytes of
+ * @string converted to the user's locale charset.
+ *
+ * Returns a new string buffer containing the first @n bytes of
+ * @string converted to the user's locale charset.
+ **/
 char *
 g_mime_iconv_utf8_to_locale_length (const char *string, size_t n)
 {

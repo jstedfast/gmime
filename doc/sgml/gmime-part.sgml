@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="15 Jan 2002">
+<refentry id="gmime-gmime-part">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -143,6 +143,7 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -159,6 +160,7 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -169,6 +171,7 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
         GMIME_PART_ENCODING_8BIT,
         GMIME_PART_ENCODING_BASE64,
         GMIME_PART_ENCODING_QUOTEDPRINTABLE,
+	GMIME_PART_ENCODING_UUENCODE,
         GMIME_PART_NUM_ENCODINGS
 } GMimePartEncodingType;
 </programlisting>
@@ -210,9 +213,11 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 <colspec colwidth="8*">
 <tbody>
 <row><entry align="right"><parameter>part</parameter>&nbsp;:</entry>
-<entry></entry></row>
+<entry>
+</entry></row>
 <row><entry align="right"><parameter>data</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -585,7 +590,8 @@ Gets the string value of the content encoding.</para>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding type as a string. Available
 values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
 GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
-GMIME_PART_ENCODING_BASE64 and GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
+and GMIME_PART_ENCODING_UUENCODE.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -605,11 +611,11 @@ string.</para>
 <row><entry align="right"><parameter>encoding</parameter>&nbsp;:</entry>
 <entry> Mime encoding in string format
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding string as a GMimePartEncodingType.
-Available values for the encoding are:
-GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
-GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BASE64 and
-GMIME_PART_ENCODING_QUOTEDPRINTABLE.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the encoding string as a GMimePartEncodingType.  Available
+values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
+GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
+GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+GMIME_PART_ENCODING_UUENCODE.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="15 Jan 2002">
+<refentry id="gmime-gmime-utils">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -54,22 +54,19 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link>      (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
                                              unsigned char *uubuf,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close</link>     (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
                                              unsigned char *uubuf,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="size-t">size_t</link>      <link linkend="g-mime-utils-quoted-decode-step">g_mime_utils_quoted_decode_step</link> (unsigned char *in,
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
@@ -116,6 +113,7 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -131,6 +129,7 @@ char*       <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_
 <tbody>
 <row><entry align="right"><parameter>x</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -482,8 +481,7 @@ flush off the last little bit.</para>
                                              <link linkend="size-t">size_t</link> inlen,
                                              unsigned char *out,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 Uudecodes a chunk of data. Performs a 'decode step' on a chunk of
 uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line has
@@ -510,10 +508,6 @@ been stripped off.</para>
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been decoded
 </entry></row>
-<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
-<entry> holds the value of the length-char which is used to calculate
-how many more chars need to be decoded for that 'line'
-</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -524,8 +518,7 @@ how many more chars need to be decoded for that 'line'
                                              unsigned char *out,
                                              unsigned char *uubuf,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 Uuencodes a chunk of data. Performs an 'encode step', only encodes
 blocks of 45 characters to the output at a time, saves left-over
@@ -556,10 +549,6 @@ invocation).</para>
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
 </entry></row>
-<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
-<entry> holds the value of the length-char which is used to calculate
-how many more chars need to be decoded for that 'line'
-</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
@@ -570,8 +559,7 @@ how many more chars need to be decoded for that 'line'
                                              unsigned char *out,
                                              unsigned char *uubuf,
                                              int *state,
-                                             <link linkend="guint32">guint32</link> *save,
-                                             char *uulen);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 Uuencodes a chunk of data. Call this when finished encoding data
 with g_mime_utils_uuencode_step to flush off the last little bit.</para>
@@ -599,10 +587,6 @@ with g_mime_utils_uuencode_step to flush off the last little bit.</para>
 </entry></row>
 <row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
 <entry> leftover bits that have not yet been encoded
-</entry></row>
-<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
-<entry> holds the value of the length-char which is used to calculate
-how many more chars need to be decoded for that 'line'
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded.
 </entry></row>

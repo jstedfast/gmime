@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-parser" revision="15 Jan 2002">
+<refentry id="gmime-gmime-parser">
 <refmeta>
 <refentrytitle>gmime-parser</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -38,7 +38,7 @@
 <title><anchor id="g-mime-parser-construct-part">g_mime_parser_construct_part ()</title>
 <programlisting><link linkend="GMimePart">GMimePart</link>*  g_mime_parser_construct_part    (<link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-</para>
+Constructs a GMimePart object based on <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -58,7 +58,7 @@
                                             (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="gboolean">gboolean</link> preserve_headers);</programlisting>
 <para>
-</para>
+Constructs a GMimeMessage object based on <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -70,9 +70,9 @@
 <entry> an rfc0822 message stream
 </entry></row>
 <row><entry align="right"><parameter>preserve_headers</parameter>&nbsp;:</entry>
-<entry> if TRUE, then store the arbitrary headers
+<entry> if <literal>TRUE</literal>, then store the arbitrary headers
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 data.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimeMessage object based on the rfc0822 message stream.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

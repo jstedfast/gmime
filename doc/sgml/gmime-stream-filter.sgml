@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-filter" revision="15 Jan 2002">
+<refentry id="gmime-gmime-stream-filter">
 <refmeta>
 <refentrytitle>gmime-stream-filter</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -60,6 +60,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
 
+
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
@@ -75,6 +76,7 @@ void        <link linkend="g-mime-stream-filter-remove">g_mime_stream_filter_rem
 <tbody>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry>
+
 
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>

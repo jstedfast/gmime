@@ -370,3 +370,13 @@ g_mime_iconv_open
 g_mime_iconv
 g_mime_iconv_close
 </SECTION>
+
+<SECTION>
+<FILE>gmime-iconv-utils</FILE>
+g_mime_iconv_strdup
+g_mime_iconv_strndup
+g_mime_iconv_utf8_to_locale
+g_mime_iconv_utf8_to_locale_length
+g_mime_iconv_locale_to_utf8
+g_mime_iconv_locale_to_utf8_length
+</SECTION>

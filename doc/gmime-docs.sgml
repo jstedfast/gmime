@@ -12,6 +12,7 @@
 <!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
 <!entity gmime-charset SYSTEM "sgml/gmime-charset.sgml">
 <!entity gmime-iconv SYSTEM "sgml/gmime-iconv.sgml">
+<!entity gmime-iconv-utils SYSTEM "sgml/gmime-iconv-utils.sgml">
 <!entity gmime-stream SYSTEM "sgml/gmime-stream.sgml">
 <!entity gmime-stream-buffer SYSTEM "sgml/gmime-stream-buffer.sgml">
 <!entity gmime-stream-file SYSTEM "sgml/gmime-stream-file.sgml">
@@ -43,7 +44,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000, 2001</year>
+      <year>2000-2002</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
   </bookinfo>
@@ -214,5 +215,6 @@
     &gmime-parser;
     &gmime-charset;
     &gmime-iconv;
+    &gmime-iconv-utils;
   </chapter>
 </book>

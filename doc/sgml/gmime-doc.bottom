@@ -25,3 +25,4 @@
     &gmime-gmime-parser;
     &gmime-gmime-charset;
     &gmime-gmime-iconv;
+    &gmime-gmime-iconv-utils;
