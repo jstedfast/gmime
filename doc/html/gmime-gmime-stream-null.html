@@ -1,7 +1,7 @@
 <HTML
 ><HEAD
 ><TITLE
->gmime-filter-basic</TITLE
+>gmime-stream-null</TITLE
 ><META
 NAME="GENERATOR"
 CONTENT="Modular DocBook HTML Stylesheet Version 1.64
@@ -13,11 +13,11 @@ REL="UP"
 TITLE="GMime Library Reference"
 HREF="libgmime.html"><LINK
 REL="PREVIOUS"
-TITLE="gmime-filter"
-HREF="gmime-gmime-filter.html"><LINK
+TITLE="gmime-stream-mem"
+HREF="gmime-gmime-stream-mem.html"><LINK
 REL="NEXT"
-TITLE="gmime-filter-crlf"
-HREF="gmime-gmime-filter-crlf.html"></HEAD
+TITLE="gmime-stream-filter"
+HREF="gmime-gmime-stream-filter.html"></HEAD
 ><BODY
 CLASS="REFENTRY"
 BGCOLOR="#FFFFFF"
@@ -49,7 +49,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -103,7 +103,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -117,21 +117,21 @@ SIZE="3"
 ></DIV
 ><H1
 ><A
-NAME="GMIME-GMIME-FILTER-BASIC"
->gmime-filter-basic</A
+NAME="GMIME-GMIME-STREAM-NULL"
+>gmime-stream-null</A
 ></H1
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1631"
+NAME="AEN1151"
 ></A
 ><H2
 >Name</H2
->gmime-filter-basic&nbsp;--&nbsp;</DIV
+>gmime-stream-null&nbsp;--&nbsp;</DIV
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1634"
+NAME="AEN1154"
 ></A
 ><H2
 >Synopsis</H2
@@ -146,20 +146,25 @@ CELLPADDING="6"
 CLASS="SYNOPSIS"
 >&#13;
 
-enum        <A
-HREF="gmime-gmime-filter-basic.html#GMIMEFILTERBASICTYPE"
->GMimeFilterBasicType</A
->;
+#define     <A
+HREF="gmime-gmime-stream-null.html#GMIME-STREAM-NULL-TYPE-CAPS"
+>GMIME_STREAM_NULL_TYPE</A
+>
+#define     <A
+HREF="gmime-gmime-stream-null.html#GMIME-IS-STREAM-NULL-CAPS"
+>GMIME_IS_STREAM_NULL</A
+>            (stream)
+#define     <A
+HREF="gmime-gmime-stream-null.html#GMIME-STREAM-NULL-CAPS"
+>GMIME_STREAM_NULL</A
+>               (stream)
 <A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
 >* <A
-HREF="gmime-gmime-filter-basic.html#G-MIME-FILTER-BASIC-NEW-TYPE"
->g_mime_filter_basic_new_type</A
->   (<A
-HREF="gmime-gmime-filter-basic.html#GMIMEFILTERBASICTYPE"
->GMimeFilterBasicType</A
-> type);</PRE
+HREF="gmime-gmime-stream-null.html#G-MIME-STREAM-NULL-NEW"
+>g_mime_stream_null_new</A
+>         (void);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -167,7 +172,7 @@ HREF="gmime-gmime-filter-basic.html#GMIMEFILTERBASICTYPE"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1641"
+NAME="AEN1162"
 ></A
 ><H2
 >Description</H2
@@ -177,20 +182,20 @@ NAME="AEN1641"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN1644"
+NAME="AEN1165"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1646"
+NAME="AEN1167"
 ></A
 ><H3
 ><A
-NAME="GMIMEFILTERBASICTYPE"
+NAME="GMIME-STREAM-NULL-TYPE-CAPS"
 ></A
->enum GMimeFilterBasicType</H3
+>GMIME_STREAM_NULL_TYPE</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -200,14 +205,7 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
->typedef enum {
-	GMIME_FILTER_BASIC_BASE64_ENC = 1,
-	GMIME_FILTER_BASIC_BASE64_DEC,
-	GMIME_FILTER_BASIC_QP_ENC,
-	GMIME_FILTER_BASIC_QP_DEC,
-	GMIME_FILTER_BASIC_UU_ENC,
-	GMIME_FILTER_BASIC_UU_DEC,
-} GMimeFilterBasicType;</PRE
+>#define GMIME_STREAM_NULL_TYPE g_str_hash ("GMimeStreamNull")</PRE
 ></TD
 ></TR
 ></TABLE
@@ -217,13 +215,13 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN1651"
+NAME="AEN1172"
 ></A
 ><H3
 ><A
-NAME="G-MIME-FILTER-BASIC-NEW-TYPE"
+NAME="GMIME-IS-STREAM-NULL-CAPS"
 ></A
->g_mime_filter_basic_new_type ()</H3
+>GMIME_IS_STREAM_NULL()</H3
 ><TABLE
 BORDER="0"
 BGCOLOR="#D6E8FF"
@@ -233,24 +231,16 @@ CELLPADDING="6"
 ><TD
 ><PRE
 CLASS="PROGRAMLISTING"
-><A
-HREF="gmime-gmime-filter.html#GMIMEFILTER"
->GMimeFilter</A
->* g_mime_filter_basic_new_type   (<A
-HREF="gmime-gmime-filter-basic.html#GMIMEFILTERBASICTYPE"
->GMimeFilterBasicType</A
-> type);</PRE
+>#define GMIME_IS_STREAM_NULL(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_NULL_TYPE)</PRE
 ></TD
 ></TR
 ></TABLE
 ><P
 ></P
-><P
-></P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN1659"
+NAME="AEN1177"
 ></A
 ><P
 ></P
@@ -270,7 +260,7 @@ VALIGN="TOP"
 ><TT
 CLASS="PARAMETER"
 ><I
->type</I
+>stream</I
 ></TT
 >&nbsp;:</TD
 ><TD
@@ -279,6 +269,120 @@ ALIGN="LEFT"
 VALIGN="TOP"
 >&nbsp;</TD
 ></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1186"
+></A
+><H3
+><A
+NAME="GMIME-STREAM-NULL-CAPS"
+></A
+>GMIME_STREAM_NULL()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>#define GMIME_STREAM_NULL(stream) ((GMimeStreamNull *) stream)</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1191"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1200"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-NULL-NEW"
+></A
+>g_mime_stream_null_new ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+>* g_mime_stream_null_new         (void);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1207"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
 ><TR
 ><TD
 WIDTH="20%"
@@ -292,12 +396,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->a new basic filter of type <TT
-CLASS="PARAMETER"
-><I
->type</I
-></TT
->.</TD
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE
@@ -321,7 +420,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="left"
 ><A
-HREF="gmime-gmime-filter.html"
+HREF="gmime-gmime-stream-mem.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -375,7 +474,7 @@ WIDTH="25%"
 BGCOLOR="#C00000"
 ALIGN="right"
 ><A
-HREF="gmime-gmime-filter-crlf.html"
+HREF="gmime-gmime-stream-filter.html"
 ><FONT
 COLOR="#FFFFFF"
 SIZE="3"
@@ -393,7 +492,7 @@ ALIGN="left"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter</B
+>gmime-stream-mem</B
 ></FONT
 ></TD
 ><TD
@@ -403,7 +502,7 @@ ALIGN="right"
 COLOR="#FFFFFF"
 SIZE="3"
 ><B
->gmime-filter-crlf</B
+>gmime-stream-filter</B
 ></FONT
 ></TD
 ></TR

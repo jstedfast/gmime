@@ -4,6 +4,7 @@
     &gmime-gmime-stream-fs;
     &gmime-gmime-stream-mem;
     &gmime-gmime-stream-null;
+    &gmime-gmime-stream-null;
     &gmime-gmime-stream-filter;
     &gmime-gmime-filter;
     &gmime-gmime-filter-basic;

@@ -72,6 +72,14 @@ g_mime_stream_null_new
 </SECTION>
 
 <SECTION>
+<FILE>gmime-stream-null</FILE>
+GMIME_STREAM_NULL_TYPE
+GMIME_IS_STREAM_NULL
+GMIME_STREAM_NULL
+g_mime_stream_null_new
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream-filter</FILE>
 GMIME_STREAM_FILTER_TYPE
 GMIME_IS_STREAM_FILTER

@@ -4,6 +4,7 @@
 <!entity gmime-gmime-stream-fs SYSTEM "sgml/gmime-stream-fs.sgml">
 <!entity gmime-gmime-stream-mem SYSTEM "sgml/gmime-stream-mem.sgml">
 <!entity gmime-gmime-stream-null SYSTEM "sgml/gmime-stream-null.sgml">
+<!entity gmime-gmime-stream-null SYSTEM "sgml/gmime-stream-null.sgml">
 <!entity gmime-gmime-stream-filter SYSTEM "sgml/gmime-stream-filter.sgml">
 <!entity gmime-gmime-filter SYSTEM "sgml/gmime-filter.sgml">
 <!entity gmime-gmime-filter-basic SYSTEM "sgml/gmime-filter-basic.sgml">
