@@ -1,5 +1,7 @@
 2002-04-30  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Change version info to 0.9.0
+
 	* gmime-charset.c (main): Instead of converting the multibyte
 	charset tables to UTF-8 and then using the unicode functions to
 	convert UTF-8 to UCS4, just convert directly to UCS4. Also fixed a
