@@ -17,8 +17,9 @@ the signed part to gpg but the headers have been processed by GMime
 and so *may* be folded differently from the original Content-*
 headers.
 
-- make thread-safe. some stuff already is, like the gmime-iconv code
-and some of the other charset stuff. Streams, however, are not.
+- make thread-safe? some stuff already is, like the gmime-iconv code
+and some of the other charset stuff. Streams, however, are not. How
+can I do this...?
 
 - Possibly make the GMime parser incremental.
 
