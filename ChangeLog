@@ -1,3 +1,16 @@
+2003-07-29  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.0.10
+
+	* gmime/gmime-message.c (g_mime_message_get_recipients): Make
+	return const. Thanks to 
+
+	* gmime/gmime-message-part.c (g_mime_message_part_get_message):
+	Ref the content message before returning it. Thanks to Nigel
+	Kukard <nkukard@lbsd.net> for helping me catch this.
+
 2003-07-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.
