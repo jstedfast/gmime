@@ -378,7 +378,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	GMimeObject *content, *signature;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter, *strip_filter;
+	GMimeFilter *crlf_filter;
 	GMimeStream *stream, *sigstream;
 	const char *protocol, *micalg;
 	GMimeCipherValidity *valid;
@@ -418,11 +418,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	/* get the content stream */
 	stream = g_mime_stream_mem_new ();
 	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	
-	/* Note: see rfc3156, section 5.4 (this is the main difference between rfc2015 and rfc3156) */
-	strip_filter = g_mime_filter_strip_new ();
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), strip_filter);
-	g_object_unref (strip_filter);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,

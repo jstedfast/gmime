@@ -1,3 +1,27 @@
+2003-07-25  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Updated.
+
+	* configure.in: Bumped version to 2.0.9
+
+	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Don't
+	descend recursively... make the user descend into sub-multiparts
+	him/herself. This makes more sense since the callback will be
+	called on the multipart too...
+	(g_mime_multipart_get_subpart_from_content_id): Be more efficient
+	about checking if the subpart is a multipart.
+
+2003-06-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gtrie.c (g_trie_free): Free the fail_states array.
+
+2003-05-26  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Do not strip trailing whitespace when verifying, this should allow
+	us to verify both rfc2015 and rfc3156 signed messages (as well as
+	this being the correct way of doing it anyway).
+
 2003-05-25  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Updated.

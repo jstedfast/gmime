@@ -738,8 +738,6 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
-	callback (GMIME_OBJECT (multipart), user_data);
-	
 	if (multipart->subparts) {
 		GList *subpart;
 		
@@ -747,10 +745,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
 		while (subpart) {
 			GMimeObject *part = subpart->data;
 			
-			if (GMIME_IS_MULTIPART (part))
-				g_mime_multipart_foreach (GMIME_MULTIPART (part), callback, user_data);
-			else
-				callback (part, user_data);
+			callback (part, user_data);
 			
 			subpart = subpart->next;
 		}
@@ -784,13 +779,11 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	subparts = multipart->subparts;
 	while (subparts) {
 		const GMimeObject *part = NULL;
-		const GMimeContentType *type;
 		GMimeObject *subpart;
 		
 		subpart = subparts->data;
-		type = g_mime_object_get_content_type (GMIME_OBJECT (subpart));
 		
-		if (g_mime_content_type_is_type (type, "multipart", "*")) {
+		if (GMIME_IS_MULTIPART (subpart)) {
 			part = g_mime_multipart_get_subpart_from_content_id (GMIME_MULTIPART (subpart),
 									     content_id);
 		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
