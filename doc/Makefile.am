@@ -2,6 +2,7 @@
 
 # The name of the module.
 DOC_MODULE=gmime
+DOC_MODULE_VERSIONED=$(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE=gmime-docs.sgml
@@ -13,7 +14,7 @@ EXTRA_DIST=gmime-docs.sgml gmime-sections.txt
 
 HTML_DIR=$(datadir)/gtk-doc/html
 
-TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
+TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE_VERSIONED)
 
 scan:
 	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime-type-utils.h gmime-charset-map-private.h gmime-table-private.h acconfig.h config.h strlib.h memchunk.h iconv-detect.h zentimer.h zenprofiler.h"
@@ -38,7 +39,7 @@ install-data-local:
 	$(INSTALL) -d -m 0755 $(TARGET_DIR)
 	$(INSTALL_DATA) $(srcdir)/html/*.html $(TARGET_DIR)
 	$(INSTALL_DATA) $(srcdir)/html/index.sgml $(TARGET_DIR)
-	gtkdoc-fixxref --module=$(DOC_MODULE) --html-dir=$(HTML_DIR)
+	gtkdoc-fixxref --module=$(DOC_MODULE_VERSIONED) --html-dir=$(HTML_DIR)
 
 dist-hook:
 	(cd $(srcdir) ; tar cvf - html) | (cd $(distdir); tar xf -)
