@@ -89,6 +89,7 @@ gchar *g_mime_message_get_date_string (GMimeMessage *message);
 void g_mime_message_set_message_id (GMimeMessage *message, const gchar *id);
 const gchar *g_mime_message_get_message_id (GMimeMessage *message);
 
+void g_mime_message_add_header (GMimeMessage *message, const gchar *field, const gchar *value);
 void g_mime_message_set_header (GMimeMessage *message, const gchar *field, const gchar *value);
 const gchar *g_mime_message_get_header (GMimeMessage *message, const gchar *field);
 

@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="5 Oct 2001">
+<refentry id="gmime-gmime-utils" revision="24 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -38,21 +38,35 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="guint">guint</link> *save);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-step">g_mime_utils_base64_encode_step</link> (const <link linkend="guchar">guchar</link> *in,
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="gint">gint</link>        <link linkend="g-mime-utils-base64-encode-close">g_mime_utils_base64_encode_close</link>
                                             (const <link linkend="guchar">guchar</link> *in,
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);
+                                             <link linkend="guint32">guint32</link> *save);
 <link linkend="gint">gint</link>        <link linkend="g-mime-utils-uudecode-step">g_mime_utils_uudecode_step</link>      (const <link linkend="guchar">guchar</link> *in,
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step</link>      (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="guchar">guchar</link> *uubuf,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);
+<link linkend="gint">gint</link>        <link linkend="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close</link>     (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="guchar">guchar</link> *uubuf,
                                              <link linkend="gint">gint</link> *state,
                                              <link linkend="guint32">guint32</link> *save,
                                              <link linkend="gchar">gchar</link> *uulen);
@@ -355,7 +369,7 @@ internet addresses.
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="guint">guint</link> *save);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 </para>
 <para>
@@ -389,7 +403,7 @@ internet addresses.
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 </para>
 <para>
@@ -427,7 +441,7 @@ invocation).
                                              <link linkend="gint">gint</link> inlen,
                                              <link linkend="guchar">guchar</link> *out,
                                              <link linkend="gint">gint</link> *state,
-                                             <link linkend="gint">gint</link> *save);</programlisting>
+                                             <link linkend="guint32">guint32</link> *save);</programlisting>
 <para>
 </para>
 <para>
@@ -493,9 +507,100 @@ bit.
 <entry> holds the value of the length-char which is used to calculate
 how many more chars need to be decoded for that 'line'
 </entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'uudecode step' on
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes decoded. Performs a 'decode step' on
 a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
 line has been stripped off.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-uuencode-step">g_mime_utils_uuencode_step ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_uuencode_step      (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="guchar">guchar</link> *uubuf,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> input stream length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>uubuf</parameter>&nbsp;:</entry>
+<entry> temporary buffer of 60 bytes
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
+<entry> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Performs an 'encode step',
+only encodes blocks of 45 characters to the output at a time, saves
+left-over state in <parameter>uubuf</parameter>, <parameter>state</parameter> and <parameter>save</parameter> (initialize to 0 on first
+invocation).
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-utils-uuencode-close">g_mime_utils_uuencode_close ()</title>
+<programlisting><link linkend="gint">gint</link>        g_mime_utils_uuencode_close     (const <link linkend="guchar">guchar</link> *in,
+                                             <link linkend="gint">gint</link> inlen,
+                                             <link linkend="guchar">guchar</link> *out,
+                                             <link linkend="guchar">guchar</link> *uubuf,
+                                             <link linkend="gint">gint</link> *state,
+                                             <link linkend="guint32">guint32</link> *save,
+                                             <link linkend="gchar">gchar</link> *uulen);</programlisting>
+<para>
+</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>in</parameter>&nbsp;:</entry>
+<entry> input stream
+</entry></row>
+<row><entry align="right"><parameter>inlen</parameter>&nbsp;:</entry>
+<entry> input stream length
+</entry></row>
+<row><entry align="right"><parameter>out</parameter>&nbsp;:</entry>
+<entry> output stream
+</entry></row>
+<row><entry align="right"><parameter>uubuf</parameter>&nbsp;:</entry>
+<entry> temporary buffer of 60 bytes
+</entry></row>
+<row><entry align="right"><parameter>state</parameter>&nbsp;:</entry>
+<entry> holds the number of bits that are stored in <parameter>save</parameter>
+</entry></row>
+<row><entry align="right"><parameter>save</parameter>&nbsp;:</entry>
+<entry> leftover bits that have not yet been encoded
+</entry></row>
+<row><entry align="right"><parameter>uulen</parameter>&nbsp;:</entry>
+<entry> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'
+</entry></row>
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of bytes encoded. Call this when finished
+encoding data with uuencode_step to flush off the last little
+bit.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

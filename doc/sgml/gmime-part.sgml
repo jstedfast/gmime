@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="5 Oct 2001">
+<refentry id="gmime-gmime-part" revision="24 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -93,10 +93,8 @@ void        <link linkend="g-mime-part-add-subpart">g_mime_part_add_subpart</lin
                                              <link linkend="GMimePart">GMimePart</link> *subpart);
 #define     <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (mime_part, child)
 void        <link linkend="g-mime-part-write-to-stream">g_mime_part_write_to_stream</link>     (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="gboolean">gboolean</link> toplevel,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
-char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="gboolean">gboolean</link> toplevel);
+char*       <link linkend="g-mime-part-to-string">g_mime_part_to_string</link>           (<link linkend="GMimePart">GMimePart</link> *mime_part);
 void        <link linkend="g-mime-part-foreach">g_mime_part_foreach</link>             (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
                                              <link linkend="gpointer">gpointer</link> data);
@@ -911,12 +909,9 @@ multipart.</para>
 <refsect2>
 <title><anchor id="g-mime-part-write-to-stream">g_mime_part_write_to_stream ()</title>
 <programlisting>void        g_mime_part_write_to_stream     (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="gboolean">gboolean</link> toplevel,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);</programlisting>
 <para>
-Writes the contents of the MIME Part to <parameter>stream</parameter>. If toplevel is set
-to TRUE, then the MIME Part header will contain needed MIME headers
-for rfc822 messages.</para>
+Writes the contents of the MIME Part to <parameter>stream</parameter>.</para>
 <para>
 
 </para><informaltable pgwide=1 frame="none" role="params">
@@ -927,17 +922,13 @@ for rfc822 messages.</para>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> MIME Part
 </entry></row>
-<row><entry align="right"><parameter>toplevel</parameter>&nbsp;:</entry>
-<entry> mime part is the root mime part
-</entry></row>
 <row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
 <entry> output stream
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-part-to-string">g_mime_part_to_string ()</title>
-<programlisting>char*       g_mime_part_to_string           (<link linkend="GMimePart">GMimePart</link> *mime_part,
-                                             <link linkend="gboolean">gboolean</link> toplevel);</programlisting>
+<programlisting>char*       g_mime_part_to_string           (<link linkend="GMimePart">GMimePart</link> *mime_part);</programlisting>
 <para>
 </para>
 <para>
@@ -950,12 +941,7 @@ for rfc822 messages.</para>
 <row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
 <entry> MIME Part
 </entry></row>
-<row><entry align="right"><parameter>toplevel</parameter>&nbsp;:</entry>
-<entry> mime part is the root mime part
-</entry></row>
-<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Part. If toplevel
-is set to TRUE, then the MIME Part header will contain needed MIME
-headers for rfc822 messages.
+<row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>an allocated string containing the MIME Part.
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

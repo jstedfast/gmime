@@ -20,6 +20,7 @@ g_mime_stream_set_bounds
 g_mime_stream_write_string
 g_mime_stream_printf
 g_mime_stream_write_to_stream
+g_mime_stream_writev
 </SECTION>
 
 <SECTION>
@@ -30,6 +31,7 @@ GMIME_IS_STREAM_BUFFER
 GMIME_STREAM_BUFFER
 g_mime_stream_buffer_new
 g_mime_stream_buffer_gets
+g_mime_stream_buffer_readln
 </SECTION>
 
 <SECTION>
@@ -125,6 +127,7 @@ g_mime_param_to_string
 GMimeHeaderFunc
 g_mime_header_new
 g_mime_header_destroy
+g_mime_header_add
 g_mime_header_set
 g_mime_header_get
 g_mime_header_remove
@@ -217,6 +220,7 @@ g_mime_message_get_date
 g_mime_message_get_date_string
 g_mime_message_set_message_id
 g_mime_message_get_message_id
+g_mime_message_add_header
 g_mime_message_set_header
 g_mime_message_get_header
 g_mime_message_set_mime_part
@@ -246,6 +250,8 @@ g_mime_utils_base64_decode_step
 g_mime_utils_base64_encode_step
 g_mime_utils_base64_encode_close
 g_mime_utils_uudecode_step
+g_mime_utils_uuencode_step
+g_mime_utils_uuencode_close
 g_mime_utils_quoted_decode_step
 g_mime_utils_quoted_encode_step
 g_mime_utils_quoted_encode_close

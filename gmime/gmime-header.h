@@ -41,11 +41,13 @@ void g_mime_header_destroy (GMimeHeader *header);
 
 void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer data);
 
-void g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value);
+void g_mime_header_set (GMimeHeader *header, const char *name, const char *value);
 
-const gchar *g_mime_header_get (const GMimeHeader *header, const gchar *name);
+void g_mime_header_add (GMimeHeader *header, const char *name, const char *value);
 
-void g_mime_header_remove (GMimeHeader *header, const gchar *name);
+const gchar *g_mime_header_get (const GMimeHeader *header, const char *name);
+
+void g_mime_header_remove (GMimeHeader *header, const char *name);
 
 void g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
 

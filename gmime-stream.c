@@ -407,3 +407,35 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 	
 	return total;
 }
+
+
+/**
+ * g_mime_stream_writev:
+ * @stream: stream
+ * @vector: i/o vector
+ * @count: number of vector elements
+ *
+ * Writes at most @count blocks described by @vector to @stream.
+ *
+ * Returns the number of bytes written.
+ **/
+size_t
+g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count)
+{
+	size_t i, total = 0;
+	
+	for (i = 0; i < count; i++) {
+		ssize_t n, nwritten = 0;
+		
+		while (nwritten < vector[i].len) {
+			n = g_mime_stream_write (stream, vector[i].data + nwritten,
+						 vector[i].len - nwritten);
+			if (n > 0)
+				nwritten += n;
+		}
+		
+		total += nwritten;
+	}
+	
+	return total;
+}

@@ -1,3 +1,23 @@
+2001-10-24  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* pan-mime-parser.c (construct_message_headers): Use
+	g_mime_header_add instead of g_mime_header_set so we can get
+	multiple of the same header (such as "Received:").
+
+	* gmime-parser.c (construct_headers): Use g_mime_header_add
+	instead of g_mime_header_set so we can get multiple of the same
+	header (such as "Received:") and also move it into the switch
+	statement into the default case.
+
+	* gmime-message.c (g_mime_message_set_header): New function to add
+	a header to a message.
+
+	* gmime-header.c (g_mime_header_add): New function to add a
+	header.
+
+	* gmime-stream.c (g_mime_stream_writev): New function to write a
+	vector to a stream.
+
 2001-10-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* pan-mime-parser.c: Updated to use g_mime_stream_buffer_readln.

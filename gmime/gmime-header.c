@@ -141,7 +141,7 @@ g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderFunc func, gpointer
  * can be obtained for them) otherwise the header will be unset.
  **/
 void
-g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
+g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
 {
 	struct raw_header *h, *n;
 	
@@ -172,6 +172,41 @@ g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
 
 
 /**
+ * g_mime_header_add:
+ * @header: header object
+ * @name: header name
+ * @value: header value
+ *
+ * Adds a header. If @value is %NULL, a space will be set aside for it
+ * (useful for setting the order of headers before values can be
+ * obtained for them) otherwise the header will be unset.
+ **/
+void
+g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
+{
+	struct raw_header *h, *n;
+	
+	g_return_if_fail (header != NULL);
+	g_return_if_fail (name != NULL);
+	
+	n = g_new (struct raw_header, 1);
+	n->next = NULL;
+	n->name = g_strdup (name);
+	n->value = value ? g_mime_utils_8bit_header_encode (value) : NULL;
+	
+	for (h = header->headers; h && h->next; h = h->next);
+	
+	if (h)
+		h->next = n;
+	else
+		header->headers = n;
+	
+	if (!g_hash_table_lookup (header->hash, name))
+		g_hash_table_insert (header->hash, n->name, n);
+}
+
+
+/**
  * g_mime_header_get:
  * @header: header object
  * @name: header name
@@ -179,7 +214,7 @@ g_mime_header_set (GMimeHeader *header, const gchar *name, const gchar *value)
  * Returns the value of the header requested
  **/
 const gchar *
-g_mime_header_get (const GMimeHeader *header, const gchar *name)
+g_mime_header_get (const GMimeHeader *header, const char *name)
 {
 	const struct raw_header *h;
 	
@@ -200,7 +235,7 @@ g_mime_header_get (const GMimeHeader *header, const gchar *name)
  * Remove the specified header
  **/
 void
-g_mime_header_remove (GMimeHeader *header, const gchar *name)
+g_mime_header_remove (GMimeHeader *header, const char *name)
 {
 	struct raw_header *h, *n;
 	

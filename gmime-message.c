@@ -472,12 +472,30 @@ g_mime_message_get_message_id (GMimeMessage *message)
 
 
 /**
- * g_mime_message_set_header: Add an arbitrary message header
+ * g_mime_message_add_header: Add an arbitrary message header
  * @message: MIME Message
  * @field: rfc822 header field
  * @value: the contents of the header field
  *
  * Add an arbitrary message header to the MIME Message such as X-Mailer,
+ * X-Priority, or In-Reply-To.
+ **/
+void
+g_mime_message_add_header (GMimeMessage *message, const gchar *field, const gchar *value)
+{
+	g_return_if_fail (message != NULL);
+	
+	g_mime_header_add (message->header->headers, field, value);
+}
+
+
+/**
+ * g_mime_message_set_header: Add an arbitrary message header
+ * @message: MIME Message
+ * @field: rfc822 header field
+ * @value: the contents of the header field
+ *
+ * Set an arbitrary message header to the MIME Message such as X-Mailer,
  * X-Priority, or In-Reply-To.
  **/
 void

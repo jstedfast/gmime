@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-STREAM-BUFFER"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN583"
+NAME="AEN622"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN583"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN586"
+NAME="AEN625"
 ></A
 ><H2
 >Synopsis</H2
@@ -190,7 +190,18 @@ HREF="gmime-gmime-stream.html#GMIMESTREAM"
                                              <GTKDOCLINK
 HREF="SIZE-T"
 >size_t</GTKDOCLINK
-> max);</PRE
+> max);
+void        <A
+HREF="gmime-gmime-stream-buffer.html#G-MIME-STREAM-BUFFER-READLN"
+>g_mime_stream_buffer_readln</A
+>     (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *buffer);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -198,7 +209,7 @@ HREF="SIZE-T"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN601"
+NAME="AEN643"
 ></A
 ><H2
 >Description</H2
@@ -208,14 +219,14 @@ NAME="AEN601"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN604"
+NAME="AEN646"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN606"
+NAME="AEN648"
 ></A
 ><H3
 ><A
@@ -245,7 +256,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN611"
+NAME="AEN653"
 ></A
 ><H3
 ><A
@@ -271,7 +282,7 @@ CLASS="PROGRAMLISTING"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN616"
+NAME="AEN658"
 ></A
 ><H3
 ><A
@@ -296,7 +307,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN621"
+NAME="AEN663"
 ></A
 ><P
 ></P
@@ -334,7 +345,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN630"
+NAME="AEN672"
 ></A
 ><H3
 ><A
@@ -359,7 +370,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN635"
+NAME="AEN677"
 ></A
 ><P
 ></P
@@ -397,7 +408,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN644"
+NAME="AEN686"
 ></A
 ><H3
 ><A
@@ -434,7 +445,7 @@ HREF="gmime-gmime-stream-buffer.html#GMIMESTREAMBUFFERMODE"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN653"
+NAME="AEN695"
 ></A
 ><P
 ></P
@@ -514,7 +525,7 @@ CLASS="PARAMETER"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN672"
+NAME="AEN714"
 ></A
 ><H3
 ><A
@@ -571,7 +582,7 @@ buffer.</P
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN684"
+NAME="AEN726"
 ></A
 ><P
 ></P
@@ -654,6 +665,100 @@ CLASS="PARAMETER"
 ></TT
 > on success and -1
 on fail.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN748"
+></A
+><H3
+><A
+NAME="G-MIME-STREAM-BUFFER-READLN"
+></A
+>g_mime_stream_buffer_readln ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_stream_buffer_readln     (<A
+HREF="gmime-gmime-stream.html#GMIMESTREAM"
+>GMimeStream</A
+> *stream,
+                                             <GTKDOCLINK
+HREF="GBYTEARRAY"
+>GByteArray</GTKDOCLINK
+> *buffer);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Reads a single line into <TT
+CLASS="PARAMETER"
+><I
+>buffer</I
+></TT
+>.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN757"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>stream</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>buffer</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
 ></TR
 ></TBODY
 ></TABLE

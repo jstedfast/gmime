@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-header" revision="5 Oct 2001">
+<refentry id="gmime-gmime-header" revision="24 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-header</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -19,13 +19,16 @@ void        (<link linkend="GMimeHeaderFunc">*GMimeHeaderFunc</link>)           
                                              <link linkend="gpointer">gpointer</link> data);
 <link linkend="GMimeHeader">GMimeHeader</link>* <link linkend="g-mime-header-new">g_mime_header_new</link>              (void);
 void        <link linkend="g-mime-header-destroy">g_mime_header_destroy</link>           (<link linkend="GMimeHeader">GMimeHeader</link> *header);
+void        <link linkend="g-mime-header-add">g_mime_header_add</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name,
+                                             const char *value);
 void        <link linkend="g-mime-header-set">g_mime_header_set</link>               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *value);
+                                             const char *name,
+                                             const char *value);
 const <link linkend="gchar">gchar</link>* <link linkend="g-mime-header-get">g_mime_header_get</link>              (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name);
+                                             const char *name);
 void        <link linkend="g-mime-header-remove">g_mime_header_remove</link>            (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name);
+                                             const char *name);
 void        <link linkend="g-mime-header-write-to-stream">g_mime_header_write_to_stream</link>   (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
                                              <link linkend="GMimeStream">GMimeStream</link> *stream);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-header-to-string">g_mime_header_to_string</link>         (const <link linkend="GMimeHeader">GMimeHeader</link> *header);
@@ -101,10 +104,36 @@ Destroy the header object</para>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
+<title><anchor id="g-mime-header-add">g_mime_header_add ()</title>
+<programlisting>void        g_mime_header_add               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
+                                             const char *name,
+                                             const char *value);</programlisting>
+<para>
+Adds a header. If <parameter>value</parameter> is <literal>NULL</literal>, a space will be set aside for it
+(useful for setting the order of headers before values can be
+obtained for them) otherwise the header will be unset.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>header</parameter>&nbsp;:</entry>
+<entry> header object
+</entry></row>
+<row><entry align="right"><parameter>name</parameter>&nbsp;:</entry>
+<entry> header name
+</entry></row>
+<row><entry align="right"><parameter>value</parameter>&nbsp;:</entry>
+<entry> header value
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
 <title><anchor id="g-mime-header-set">g_mime_header_set ()</title>
 <programlisting>void        g_mime_header_set               (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name,
-                                             const <link linkend="gchar">gchar</link> *value);</programlisting>
+                                             const char *name,
+                                             const char *value);</programlisting>
 <para>
 Set the value of the specified header. If <parameter>value</parameter> is <literal>NULL</literal> and the
 header, <parameter>name</parameter>, had not been previously set, a space will be set
@@ -130,7 +159,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 <refsect2>
 <title><anchor id="g-mime-header-get">g_mime_header_get ()</title>
 <programlisting>const <link linkend="gchar">gchar</link>* g_mime_header_get              (const <link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
+                                             const char *name);</programlisting>
 <para>
 </para>
 <para>
@@ -152,7 +181,7 @@ can be obtained for them) otherwise the header will be unset.</para>
 <refsect2>
 <title><anchor id="g-mime-header-remove">g_mime_header_remove ()</title>
 <programlisting>void        g_mime_header_remove            (<link linkend="GMimeHeader">GMimeHeader</link> *header,
-                                             const <link linkend="gchar">gchar</link> *name);</programlisting>
+                                             const char *name);</programlisting>
 <para>
 Remove the specified header</para>
 <para>

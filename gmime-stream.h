@@ -40,6 +40,11 @@ typedef enum {
 	GMIME_STREAM_SEEK_END = SEEK_END,
 } GMimeSeekWhence;
 
+typedef struct _IOVector {
+	gpointer data;
+	size_t len;
+} IOVector;
+
 typedef struct _GMimeStream GMimeStream;
 
 struct _GMimeStream {
@@ -94,6 +99,9 @@ ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *string);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);
 
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
+
+
+size_t    g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count);
 
 #ifdef __cplusplus
 }

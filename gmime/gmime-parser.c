@@ -474,7 +474,7 @@ special_header (const char *field)
 }
 
 static void
-construct_headers (GMimeMessage *message, const char *headers, gint inlen, gboolean save_extra_headers)
+construct_message_headers (GMimeMessage *message, const char *headers, gint inlen, gboolean preserve_headers)
 {
 	char *field, *value, *raw, *q;
 	char *inptr, *inend;
@@ -544,14 +544,13 @@ construct_headers (GMimeMessage *message, const char *headers, gint inlen, gbool
 			break;
 		case HEADER_UNKNOWN:
 		default:
+			/* possibly save the raw header */
+			if ((preserve_headers || fields[i]) && !special_header (field)) {
+				field[strlen (field) - 1] = '\0'; /* kill the ';' */
+				g_strstrip (field);
+				g_mime_header_add (message->header->headers, field, value);
+			}
 			break;
-		}
-		
-		/* possibly save the raw header */
-		if ((save_extra_headers || fields[i]) && !special_header (field)) {
-			field[strlen (field) - 1] = '\0'; /* kill the ';' */
-			g_strstrip (field);
-			g_mime_header_set (message->header->headers, field, value);
 		}
 		
 		g_free (field);
@@ -568,12 +567,12 @@ construct_headers (GMimeMessage *message, const char *headers, gint inlen, gbool
 /**
  * g_mime_parser_construct_message: Construct a GMimeMessage object
  * @stream: an rfc0822 message stream
- * @save_extra_headers: if TRUE, then store the arbitrary headers
+ * @preserve_headers: if TRUE, then store the arbitrary headers
  *
  * Returns a GMimeMessage object based on the rfc0822 data.
  **/
 GMimeMessage *
-g_mime_parser_construct_message (GMimeStream *stream, gboolean save_extra_headers)
+g_mime_parser_construct_message (GMimeStream *stream, gboolean preserve_headers)
 {
 	GMimeMessage *message = NULL;
 	GMimeStreamMem *mem;
@@ -605,7 +604,7 @@ g_mime_parser_construct_message (GMimeStream *stream, gboolean save_extra_header
 		GMimePart *part;
 		
 		message = g_mime_message_new ();
-		construct_headers (message, in, hdr_end - in, save_extra_headers);
+		construct_message_headers (message, in, hdr_end - in, preserve_headers);
 		part = g_mime_parser_construct_part_internal (stream, mem);
 		g_mime_message_set_mime_part (message, part);
 	}

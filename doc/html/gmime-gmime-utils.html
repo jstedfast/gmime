@@ -123,7 +123,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN4081"
+NAME="AEN4183"
 ></A
 ><H2
 >Name</H2
@@ -131,7 +131,7 @@ NAME="AEN4081"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN4084"
+NAME="AEN4186"
 ></A
 ><H2
 >Synopsis</H2
@@ -303,8 +303,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
 HREF="GINT"
@@ -329,8 +329,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
 HREF="GINT"
@@ -356,8 +356,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);
 <GTKDOCLINK
 HREF="GINT"
@@ -377,6 +377,74 @@ HREF="GINT"
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
 > *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUENCODE-STEP"
+>g_mime_utils_uuencode_step</A
+>      (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *uubuf,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUENCODE-CLOSE"
+>g_mime_utils_uuencode_close</A
+>     (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *uubuf,
                                              <GTKDOCLINK
 HREF="GINT"
 >gint</GTKDOCLINK
@@ -475,7 +543,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4175"
+NAME="AEN4295"
 ></A
 ><H2
 >Description</H2
@@ -485,14 +553,14 @@ NAME="AEN4175"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN4178"
+NAME="AEN4298"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4180"
+NAME="AEN4300"
 ></A
 ><H3
 ><A
@@ -517,7 +585,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4185"
+NAME="AEN4305"
 ></A
 ><P
 ></P
@@ -555,7 +623,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4194"
+NAME="AEN4314"
 ></A
 ><H3
 ><A
@@ -580,7 +648,7 @@ CLASS="PROGRAMLISTING"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4199"
+NAME="AEN4319"
 ></A
 ><P
 ></P
@@ -618,7 +686,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4208"
+NAME="AEN4328"
 ></A
 ><H3
 ><A
@@ -655,7 +723,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4217"
+NAME="AEN4337"
 ></A
 ><P
 ></P
@@ -730,7 +798,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4235"
+NAME="AEN4355"
 ></A
 ><H3
 ><A
@@ -767,7 +835,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4244"
+NAME="AEN4364"
 ></A
 ><P
 ></P
@@ -837,7 +905,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4261"
+NAME="AEN4381"
 ></A
 ><H3
 ><A
@@ -870,7 +938,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4269"
+NAME="AEN4389"
 ></A
 ><P
 ></P
@@ -923,7 +991,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4282"
+NAME="AEN4402"
 ></A
 ><H3
 ><A
@@ -957,7 +1025,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4290"
+NAME="AEN4410"
 ></A
 ><P
 ></P
@@ -1031,7 +1099,7 @@ HREF="FORMAT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4308"
+NAME="AEN4428"
 ></A
 ><H3
 ><A
@@ -1064,7 +1132,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4316"
+NAME="AEN4436"
 ></A
 ><P
 ></P
@@ -1120,7 +1188,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4329"
+NAME="AEN4449"
 ></A
 ><H3
 ><A
@@ -1150,7 +1218,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4336"
+NAME="AEN4456"
 ></A
 ><P
 ></P
@@ -1188,7 +1256,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4345"
+NAME="AEN4465"
 ></A
 ><H3
 ><A
@@ -1225,7 +1293,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4354"
+NAME="AEN4474"
 ></A
 ><P
 ></P
@@ -1296,7 +1364,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4371"
+NAME="AEN4491"
 ></A
 ><H3
 ><A
@@ -1334,7 +1402,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4380"
+NAME="AEN4500"
 ></A
 ><P
 ></P
@@ -1406,7 +1474,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4397"
+NAME="AEN4517"
 ></A
 ><H3
 ><A
@@ -1439,7 +1507,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4405"
+NAME="AEN4525"
 ></A
 ><P
 ></P
@@ -1492,7 +1560,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4418"
+NAME="AEN4538"
 ></A
 ><H3
 ><A
@@ -1525,7 +1593,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4426"
+NAME="AEN4546"
 ></A
 ><P
 ></P
@@ -1579,7 +1647,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4439"
+NAME="AEN4559"
 ></A
 ><H3
 ><A
@@ -1613,7 +1681,7 @@ HREF="GUCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4447"
+NAME="AEN4567"
 ></A
 ><P
 ></P
@@ -1667,7 +1735,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4460"
+NAME="AEN4580"
 ></A
 ><H3
 ><A
@@ -1703,8 +1771,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GUINT"
->guint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
@@ -1716,7 +1784,7 @@ HREF="GUINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4472"
+NAME="AEN4592"
 ></A
 ><P
 ></P
@@ -1845,7 +1913,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4503"
+NAME="AEN4623"
 ></A
 ><H3
 ><A
@@ -1881,8 +1949,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
@@ -1894,7 +1962,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4515"
+NAME="AEN4635"
 ></A
 ><P
 ></P
@@ -2023,7 +2091,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4545"
+NAME="AEN4665"
 ></A
 ><H3
 ><A
@@ -2060,8 +2128,8 @@ HREF="GINT"
 >gint</GTKDOCLINK
 > *state,
                                              <GTKDOCLINK
-HREF="GINT"
->gint</GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
 > *save);</PRE
 ></TD
 ></TR
@@ -2073,7 +2141,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4557"
+NAME="AEN4677"
 ></A
 ><P
 ></P
@@ -2201,7 +2269,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4587"
+NAME="AEN4707"
 ></A
 ><H3
 ><A
@@ -2254,7 +2322,7 @@ HREF="GCHAR"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4600"
+NAME="AEN4720"
 ></A
 ><P
 ></P
@@ -2387,7 +2455,7 @@ CLASS="EMPHASIS"
 WIDTH="80%"
 ALIGN="LEFT"
 VALIGN="TOP"
->the number of bytes decoded. Performs a 'uudecode step' on
+>the number of bytes decoded. Performs a 'decode step' on
 a chunk of uuencoded data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;"
 line has been stripped off.</TD
 ></TR
@@ -2400,7 +2468,463 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4634"
+NAME="AEN4754"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUENCODE-STEP"
+></A
+>g_mime_utils_uuencode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_uuencode_step      (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *uubuf,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN4768"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> temporary buffer of 60 bytes</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uulen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded. Performs an 'encode step',
+only encodes blocks of 45 characters to the output at a time, saves
+left-over state in <TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>, <TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+> and <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+> (initialize to 0 on first
+invocation).</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN4809"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUENCODE-CLOSE"
+></A
+>g_mime_utils_uuencode_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_uuencode_close     (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *uubuf,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+></P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN4823"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uubuf</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> temporary buffer of 60 bytes</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uulen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>the number of bytes encoded. Call this when finished
+encoding data with uuencode_step to flush off the last little
+bit.</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN4861"
 ></A
 ><H3
 ><A
@@ -2449,7 +2973,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4646"
+NAME="AEN4873"
 ></A
 ><P
 ></P
@@ -2576,7 +3100,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4676"
+NAME="AEN4903"
 ></A
 ><H3
 ><A
@@ -2625,7 +3149,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4688"
+NAME="AEN4915"
 ></A
 ><P
 ></P
@@ -2753,7 +3277,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN4718"
+NAME="AEN4945"
 ></A
 ><H3
 ><A
@@ -2803,7 +3327,7 @@ HREF="GINT"
 ><DIV
 CLASS="INFORMALTABLE"
 ><A
-NAME="AEN4730"
+NAME="AEN4957"
 ></A
 ><P
 ></P

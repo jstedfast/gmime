@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-stream-buffer" revision="5 Oct 2001">
+<refentry id="gmime-gmime-stream-buffer" revision="24 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-stream-buffer</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -23,6 +23,8 @@ enum        <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link>;
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-buffer-gets">g_mime_stream_buffer_gets</link>       (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              char *buf,
                                              <link linkend="size-t">size_t</link> max);
+void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_readln</link>     (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GByteArray">GByteArray</link> *buffer);
 </synopsis>
 </refsynopsisdiv>
 
@@ -140,6 +142,26 @@ buffer.</para>
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the number of characters read into <parameter>buf</parameter> on success and -1
 on fail.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-stream-buffer-readln">g_mime_stream_buffer_readln ()</title>
+<programlisting>void        g_mime_stream_buffer_readln     (<link linkend="GMimeStream">GMimeStream</link> *stream,
+                                             <link linkend="GByteArray">GByteArray</link> *buffer);</programlisting>
+<para>
+Reads a single line into <parameter>buffer</parameter>.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
+<entry>
+</entry></row>
+<row><entry align="right"><parameter>buffer</parameter>&nbsp;:</entry>
+<entry>
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 

@@ -1386,7 +1386,7 @@ g_mime_utils_uuencode_close (const guchar *in, gint inlen, guchar *out, guchar *
 /**
  * g_mime_utils_uuencode_step: uuencode a chunk of data
  * @in: input stream
- * @len: input stream length
+ * @inlen: input stream length
  * @out: output stream
  * @uubuf: temporary buffer of 60 bytes
  * @state: holds the number of bits that are stored in @save
