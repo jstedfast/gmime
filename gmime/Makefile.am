@@ -16,7 +16,6 @@ noinst_PROGRAMS = gen-table
 lib_LTLIBRARIES = libgmime-2.0.la
 
 libgmime_2_0_la_SOURCES = 		\
-	memchunk.c			\
 	gmime.c				\
 	gmime-charset.c			\
 	gmime-cipher-context.c		\
@@ -58,7 +57,10 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-stream-null.c		\
 	gmime-utils.c			\
 	internet-address.c		\
-	md5-utils.c
+	md5-utils.c			\
+	memchunk.c			\
+	gtrie.c				\
+	url-scanner.c
 
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
@@ -106,7 +108,9 @@ gmimeinclude_HEADERS = 			\
 	internet-address.h
 
 noinst_HEADERS = 			\
+	gtrie.h				\
 	memchunk.h			\
+	url-scanner.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h	\
 	md5-utils.h

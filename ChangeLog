@@ -1,3 +1,18 @@
+2002-12-09  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-filter-html.c: Modified to use url-scanner.c instead
+	of using glibc's regex routines. This has improved performance by
+	~16.5x not to mention that it is also more accurate than the regex
+	patterns had been (the url scanner can be setup to be much
+	stricter in the matching).
+
+	* gmime/url-scanner.c: New source file implementing a simple
+	expression scanner meant (currently designed for url matching)
+	which uses gtrie.
+
+	* gmime/gtrie.c: New source file implementing Aho-Corasick's Trie
+	graph algorithm.
+
 2002-12-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	Fix for bug #91536

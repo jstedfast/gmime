@@ -27,29 +27,32 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
-#include <regex.h>
 
+#include "url-scanner.h"
 #include "gmime-filter-html.h"
 
 #define d(x)
 
-struct _UrlRegexPattern {
+#define CONVERT_WEB_URLS  GMIME_FILTER_HTML_CONVERT_URLS
+#define CONVERT_ADDRSPEC  GMIME_FILTER_HTML_CONVERT_ADDRESSES
+
+static struct {
 	unsigned int mask;
-	char *pattern;
-	char *prefix;
-	regex_t *preg;
-	regmatch_t matches;
+	urlpattern_t pattern;
+} patterns[] = {
+	{ CONVERT_WEB_URLS, { "file://",   "",        g_url_file_start,     g_url_file_end     } },
+	{ CONVERT_WEB_URLS, { "ftp://",    "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "http://",   "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "https://",  "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "news://",   "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "nntp://",   "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "telnet://", "",        g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "www.",      "http://", g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_WEB_URLS, { "ftp.",      "ftp://",  g_url_web_start,      g_url_web_end      } },
+	{ CONVERT_ADDRSPEC, { "@",         "mailto:", g_url_addrspec_start, g_url_addrspec_end } },
 };
 
-static struct _UrlRegexPattern patterns[] = {
-	{ GMIME_FILTER_HTML_CONVERT_URLS, "(news|nntp|telnet|file|ftp|http|https)://([-a-z0-9]+(:[-a-z0-9]+)?@)?[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-a-z0-9_$.+!*(),;:@%&=?/~#]*[^]'.}>\\) ,?!;:\"]?)?", "", NULL, { 0, 0 } },
-	{ GMIME_FILTER_HTML_CONVERT_URLS, "www\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]'.}>\\) ,?!;:\"]?)?", "http://", NULL, { 0, 0 } },
-	{ GMIME_FILTER_HTML_CONVERT_URLS, "ftp\\.[-a-z0-9.]+[-a-z0-9](:[0-9]*)?(/[-A-Za-z0-9_$.+!*(),;:@%&=?/~#]*[^]'.}>\\) ,?!;:\"]?)?", "ftp://", NULL, { 0, 0 } },
-	{ GMIME_FILTER_HTML_CONVERT_ADDRESSES, "([-_a-z0-9.\\+]+@[-_a-z0-9.]+)", "mailto:", NULL, { 0, 0 } }
-};
-
-#define NUM_URL_REGEX_PATTERNS (sizeof (patterns) / sizeof (patterns[0]))
+#define NUM_URL_PATTERNS (sizeof (patterns) / sizeof (patterns[0]))
 
 static void g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass);
 static void g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass);
@@ -110,20 +113,7 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 static void
 g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 {
-	struct _UrlRegexPattern *urls;
-	int i;
-	
-	urls = filter->patterns = g_malloc (sizeof (patterns));
-	memcpy (filter->patterns, patterns, sizeof (patterns));
-	
-	for (i = 0; i < NUM_URL_REGEX_PATTERNS; i++) {
-		urls[i].preg = g_malloc (sizeof (regex_t));
-		if (regcomp (urls[i].preg, urls[i].pattern, REG_EXTENDED | REG_ICASE) == -1) {
-			/* error building the regex_t so we can't use this pattern */
-			filter->patterns[i].preg = NULL;
-			filter->patterns[i].mask = 0;
-		}
-	}
+	filter->scanner = g_url_scanner_new ();
 	
 	filter->flags = 0;
 	filter->colour = 0;
@@ -135,16 +125,8 @@ static void
 g_mime_filter_html_finalize (GObject *object)
 {
 	GMimeFilterHTML *html = (GMimeFilterHTML *) object;
-	int i;
 	
-	for (i = 0; i < NUM_URL_REGEX_PATTERNS; i++) {
-		if (html->patterns[i].preg) {
-			regfree (html->patterns[i].preg);
-			g_free (html->patterns[i].preg);
-		}
-	}
-	
-	g_free (html->patterns);
+	g_url_scanner_free (html->scanner);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -317,67 +299,28 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		
 #define CONVERT_URLS_OR_ADDRESSES (GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES)
 		if (html->flags & CONVERT_URLS_OR_ADDRESSES) {
-			struct _UrlRegexPattern *fmatch, *pat;
-			size_t matchlen, len;
-			regoff_t offset;
-			char *linebuf;
-			char save;
-			int i;
+			size_t matchlen, buflen, len;
+			urlmatch_t match;
 			
-			/* we have to dup the line here because our input buffer
-			   may be static and so setting *inptr = '\0' temporarily
-			   is out of the question :-( */
 			len = inptr - start;
-			linebuf = g_malloc (len + 1);
-			memcpy (linebuf, start, len);
-			linebuf[len] = '\0';
-			
-			start = linebuf;
-			save = '\0';
 			
 			do {
-				/* search for all of our patterns */
-				offset = 0;
-				fmatch = NULL;
-				for (i = 0; i < NUM_URL_REGEX_PATTERNS; i++) {
-					pat = html->patterns + i;
-					if ((html->flags & pat->mask) &&
-					    !regexec (pat->preg, start, 1, &pat->matches, 0)) {
-						if (pat->matches.rm_so < offset) {
-							*(start + offset) = save;
-							fmatch = NULL;
-						}
-						
-						if (!fmatch) {
-							fmatch = pat;
-							offset = pat->matches.rm_so;
-							
-							/* optimisation so we don't have to search the
-							   entire line buffer for the next pattern */
-							save = *(start + offset);
-							*(start + offset) = '\0';
-						}
-					}
-				}
-				
-				if (fmatch) {
-					/* restore our char */
-					*(start + offset) = save;
-					
+				if (g_url_scanner_scan (html->scanner, start, len, &match)) {
 					/* write out anything before the first regex match */
-					outptr = writeln (filter, start, start + offset, outptr, &outend);
-					start += offset;
-					len -= offset;
+					outptr = writeln (filter, start, start + match.um_so,
+							  outptr, &outend);
 					
-#define MATCHLEN(matches) (matches.rm_eo - matches.rm_so)
-					matchlen = MATCHLEN (fmatch->matches);
+					start += match.um_so;
+					len -= match.um_so;
 					
-					i = 20 + strlen (fmatch->prefix) + matchlen + matchlen;
-					outptr = check_size (filter, outptr, &outend, i);
+					matchlen = match.um_eo - match.um_so;
+					
+					buflen = 20 + strlen (match.prefix) + matchlen + matchlen;
+					outptr = check_size (filter, outptr, &outend, buflen);
 					
 					/* write out the href tag */
 					outptr = g_stpcpy (outptr, "<a href=\"");
-					outptr = g_stpcpy (outptr, fmatch->prefix);
+					outptr = g_stpcpy (outptr, match.prefix);
 					memcpy (outptr, start, matchlen);
 					outptr += matchlen;
 					outptr = g_stpcpy (outptr, "\">");
@@ -397,8 +340,6 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 					break;
 				}
 			} while (len > 0);
-			
-			g_free (linebuf);
 		} else {
 			outptr = writeln (filter, start, inptr, outptr, &outend);
 		}
@@ -477,10 +418,16 @@ GMimeFilter *
 g_mime_filter_html_new (guint32 flags, guint32 colour)
 {
 	GMimeFilterHTML *new;
+	int i;
 	
 	new = g_object_new (GMIME_TYPE_FILTER_HTML, NULL, NULL);
 	new->flags = flags;
 	new->colour = colour;
+	
+	for (i = 0; i < NUM_URL_PATTERNS; i++) {
+		if (patterns[i].mask & flags)
+			g_url_scanner_add (new->scanner, &patterns[i].pattern);
+	}
 	
 	return (GMimeFilter *) new;
 }
