@@ -95,7 +95,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
 	struct fromnode *head = NULL, *tail = (struct fromnode *) &head, *node;
 	register char *inptr, *inend;
-	int fromcount, left;
+	int fromcount = 0, left;
 	char *outptr;
 	
 	inptr = in;
