@@ -1,3 +1,14 @@
+2001-01-17  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* internet-address.c (encoded_name): Updated.
+
+	* gmime-part.c (g_mime_part_set_pre_encoded_content): Updated to
+	reflect changes to gmime-utils.
+
+	* gmime-utils.c (g_mime_utils_text_is_8bit): Take a len argument.
+	(g_mime_utils_best_encoding): Same.
+	(encode_8bit_word): Updated.
+
 2001-01-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (g_mime_parser_construct_part): Check for NULL

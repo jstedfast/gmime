@@ -1,4 +1,4 @@
-<refentry id="gmime-pgp-utils" revision="5 Jan 2001">
+<refentry id="gmime-pgp-utils" revision="18 Jan 2001">
 <refmeta>
 <refentrytitle>pgp-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -31,6 +31,7 @@ void        <link linkend="pgp-init">pgp_init</link>                        (con
                                              const <link linkend="gchar">gchar</link> *userid,
                                              <link linkend="GMimeException">GMimeException</link> *ex);
 <link linkend="gchar">gchar</link>*      <link linkend="pgp-decrypt">pgp_decrypt</link>                     (const <link linkend="gchar">gchar</link> *ciphertext,
+                                             <link linkend="gint">gint</link> cipherlen,
                                              <link linkend="gint">gint</link> *outlen,
                                              <link linkend="GMimeException">GMimeException</link> *ex);
 <link linkend="gchar">gchar</link>*      <link linkend="pgp-clearsign">pgp_clearsign</link>                   (const <link linkend="gchar">gchar</link> *plaintext,
@@ -215,6 +216,7 @@ block otherwise returns FALSE.
 <refsect2>
 <title><anchor id="pgp-decrypt">pgp_decrypt ()</title>
 <programlisting><link linkend="gchar">gchar</link>*      pgp_decrypt                     (const <link linkend="gchar">gchar</link> *ciphertext,
+                                             <link linkend="gint">gint</link> cipherlen,
                                              <link linkend="gint">gint</link> *outlen,
                                              <link linkend="GMimeException">GMimeException</link> *ex);</programlisting>
 <para>
@@ -228,6 +230,9 @@ block otherwise returns FALSE.
 <tbody>
 <row><entry align="right"><parameter>ciphertext</parameter>&nbsp;:</entry>
 <entry> ciphertext to decrypt
+</entry></row>
+<row><entry align="right"><parameter>cipherlen</parameter>&nbsp;:</entry>
+<entry> ciphertext length
 </entry></row>
 <row><entry align="right"><parameter>outlen</parameter>&nbsp;:</entry>
 <entry> output length of the decrypted data (to be set by <link linkend="pgp-decrypt">pgp_decrypt</link>)

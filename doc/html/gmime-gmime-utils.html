@@ -122,7 +122,7 @@ NAME="GMIME-GMIME-UTILS"
 ><DIV
 CLASS="REFNAMEDIV"
 ><A
-NAME="AEN1910"
+NAME="AEN1914"
 ></A
 ><H2
 >Name</H2
@@ -130,7 +130,7 @@ NAME="AEN1910"
 ><DIV
 CLASS="REFSYNOPSISDIV"
 ><A
-NAME="AEN1913"
+NAME="AEN1917"
 ></A
 ><H2
 >Synopsis</H2
@@ -228,7 +228,11 @@ HREF="gmime-gmime-utils.html#G-MIME-UTILS-TEXT-IS-8BIT"
 >       (const <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
-> *text);
+> *text,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> len);
 <A
 HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
 >GMimePartEncodingType</A
@@ -239,7 +243,11 @@ HREF="gmime-gmime-utils.html#G-MIME-UTILS-BEST-ENCODING"
                                             (const <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
-> *text);
+> *text,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> len);
 <GTKDOCLINK
 HREF="GCHAR"
 >gchar</GTKDOCLINK
@@ -466,7 +474,7 @@ HREF="GINT"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2002"
+NAME="AEN2008"
 ></A
 ><H2
 >Description</H2
@@ -476,14 +484,14 @@ NAME="AEN2002"
 ><DIV
 CLASS="REFSECT1"
 ><A
-NAME="AEN2005"
+NAME="AEN2011"
 ></A
 ><H2
 >Details</H2
 ><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2007"
+NAME="AEN2013"
 ></A
 ><H3
 ><A
@@ -543,7 +551,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2021"
+NAME="AEN2027"
 ></A
 ><H3
 ><A
@@ -603,7 +611,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2035"
+NAME="AEN2041"
 ></A
 ><H3
 ><A
@@ -712,7 +720,7 @@ will be stored.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2062"
+NAME="AEN2068"
 ></A
 ><H3
 ><A
@@ -816,7 +824,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2088"
+NAME="AEN2094"
 ></A
 ><H3
 ><A
@@ -899,7 +907,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2109"
+NAME="AEN2115"
 ></A
 ><H3
 ><A
@@ -1004,7 +1012,7 @@ HREF="FORMAT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2135"
+NAME="AEN2141"
 ></A
 ><H3
 ><A
@@ -1090,7 +1098,7 @@ as defined by rfc2045.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2156"
+NAME="AEN2162"
 ></A
 ><H3
 ><A
@@ -1155,7 +1163,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2172"
+NAME="AEN2178"
 ></A
 ><H3
 ><A
@@ -1177,7 +1185,11 @@ HREF="GBOOLEAN"
 >    g_mime_utils_text_is_8bit       (const <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
-> *text);</PRE
+> *text,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> len);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1219,6 +1231,23 @@ VALIGN="TOP"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> text length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
@@ -1239,7 +1268,7 @@ otherwise.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2193"
+NAME="AEN2204"
 ></A
 ><H3
 ><A
@@ -1262,7 +1291,11 @@ HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
                                             (const <GTKDOCLINK
 HREF="GUCHAR"
 >guchar</GTKDOCLINK
-> *text);</PRE
+> *text,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> len);</PRE
 ></TD
 ></TR
 ></TABLE
@@ -1304,6 +1337,23 @@ VALIGN="TOP"
 WIDTH="20%"
 ALIGN="RIGHT"
 VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> text length</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
 ><I
 CLASS="EMPHASIS"
 >Returns</I
@@ -1325,7 +1375,7 @@ particular case means best compression)</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2214"
+NAME="AEN2230"
 ></A
 ><H3
 ><A
@@ -1408,7 +1458,7 @@ VALIGN="TOP"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2235"
+NAME="AEN2251"
 ></A
 ><H3
 ><A
@@ -1492,7 +1542,7 @@ headers like "Subject".</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2256"
+NAME="AEN2272"
 ></A
 ><H3
 ><A
@@ -1577,7 +1627,7 @@ internet addresses.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2277"
+NAME="AEN2293"
 ></A
 ><H3
 ><A
@@ -1752,7 +1802,7 @@ HREF="OUT"
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2320"
+NAME="AEN2336"
 ></A
 ><H3
 ><A
@@ -1927,7 +1977,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2362"
+NAME="AEN2378"
 ></A
 ><H3
 ><A
@@ -2102,7 +2152,7 @@ bit.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2404"
+NAME="AEN2420"
 ></A
 ><H3
 ><A
@@ -2298,7 +2348,7 @@ line has been stripped off.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2451"
+NAME="AEN2467"
 ></A
 ><H3
 ><A
@@ -2471,7 +2521,7 @@ chunk of QP encoded data.</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2493"
+NAME="AEN2509"
 ></A
 ><H3
 ><A
@@ -2645,7 +2695,7 @@ invocation).</TD
 ><HR><DIV
 CLASS="REFSECT2"
 ><A
-NAME="AEN2535"
+NAME="AEN2551"
 ></A
 ><H3
 ><A

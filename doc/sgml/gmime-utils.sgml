@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="5 Jan 2001">
+<refentry id="gmime-gmime-utils" revision="18 Jan 2001">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -25,9 +25,11 @@
                                              ...);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-quote-string">g_mime_utils_quote_string</link>       (const <link linkend="gchar">gchar</link> *string);
 void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_string</link>     (<link linkend="gchar">gchar</link> *string);
-<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text);
+<link linkend="gboolean">gboolean</link>    <link linkend="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit</link>       (const <link linkend="guchar">guchar</link> *text,
+                                             <link linkend="guint">guint</link> len);
 <link linkend="GMimePartEncodingType">GMimePartEncodingType</link> <link linkend="g-mime-utils-best-encoding">g_mime_utils_best_encoding</link>
-                                            (const <link linkend="guchar">guchar</link> *text);
+                                            (const <link linkend="guchar">guchar</link> *text,
+                                             <link linkend="guint">guint</link> len);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-decode">g_mime_utils_8bit_header_decode</link> (const <link linkend="guchar">guchar</link> *in);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode">g_mime_utils_8bit_header_encode</link> (const <link linkend="guchar">guchar</link> *in);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-8bit-header-encode-phrase">g_mime_utils_8bit_header_encode_phrase</link>
@@ -246,7 +248,8 @@ Unquotes and unescapes a string.</para>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-utils-text-is-8bit">g_mime_utils_text_is_8bit ()</title>
-<programlisting><link linkend="gboolean">gboolean</link>    g_mime_utils_text_is_8bit       (const <link linkend="guchar">guchar</link> *text);</programlisting>
+<programlisting><link linkend="gboolean">gboolean</link>    g_mime_utils_text_is_8bit       (const <link linkend="guchar">guchar</link> *text,
+                                             <link linkend="guint">guint</link> len);</programlisting>
 <para>
 </para>
 <para>
@@ -259,6 +262,9 @@ Unquotes and unescapes a string.</para>
 <row><entry align="right"><parameter>text</parameter>&nbsp;:</entry>
 <entry> text to check for 8bit chars
 </entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> text length
+</entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>TRUE if the text contains 8bit characters or FALSE
 otherwise.
 </entry></row>
@@ -266,7 +272,8 @@ otherwise.
 <refsect2>
 <title><anchor id="g-mime-utils-best-encoding">g_mime_utils_best_encoding ()</title>
 <programlisting><link linkend="GMimePartEncodingType">GMimePartEncodingType</link> g_mime_utils_best_encoding
-                                            (const <link linkend="guchar">guchar</link> *text);</programlisting>
+                                            (const <link linkend="guchar">guchar</link> *text,
+                                             <link linkend="guint">guint</link> len);</programlisting>
 <para>
 </para>
 <para>
@@ -278,6 +285,9 @@ otherwise.
 <tbody>
 <row><entry align="right"><parameter>text</parameter>&nbsp;:</entry>
 <entry> text to encode
+</entry></row>
+<row><entry align="right"><parameter>len</parameter>&nbsp;:</entry>
+<entry> text length
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>a GMimePartEncodingType that is determined to be the best
 encoding type for the specified block of text. ("best" in this
