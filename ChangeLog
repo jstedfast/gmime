@@ -1,3 +1,8 @@
+2001-12-31  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* strlib.c (strncasecmp): Convert the chars to lowercase before
+	diffing.
+
 2001-12-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* configure.in: Bumped version number to 0.7.5 since the
