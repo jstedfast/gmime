@@ -1,3 +1,8 @@
+2003-07-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-charset.c (g_mime_charset_canon_name): Updated to
+	return canonical charset names for windows-cp125x charsets.
+
 2003-06-19  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* README: Added a section for links to language bindings starting

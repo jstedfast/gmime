@@ -86,13 +86,12 @@ struct {
 	{ "ksc-5601",        "EUC-KR"     },
 	{ "ksc-5601-1987",   "EUC-KR"     },
 	{ "ksc-5601_1987",   "EUC-KR"     },
+	{ "euckr-0",         "EUC-KR"     },
 	
 	/* FIXME: Japanese/Korean/Chinese stuff needs checking */
-	{ "euckr-0",         "EUC-KR"     },
-	{ "5601",            "EUC-KR"     },
 	{ "big5-0",          "BIG5"       },
 	{ "big5.eten-0",     "BIG5"       },
-	{ "big5hkscs-0",     "BIG5HKCS"   },
+	{ "big5hkscs-0",     "BIG5HKSCS"  },
 	{ "gb2312-0",        "gb2312"     },
 	{ "gb2312.1980-0",   "gb2312"     },
 	{ "euc-cn",          "gb2312"     },
@@ -116,7 +115,7 @@ static struct {
 	char *lang;
 } cjkr_lang_map[] = {
 	{ "Big5",        "zh" },
-	{ "BIG5HKCS",    "zh" },
+	{ "BIG5HKSCS",   "zh" },
 	{ "gb2312",      "zh" },
 	{ "gb18030",     "zh" },
 	{ "gbk",         "zh" },
@@ -468,6 +467,19 @@ static const char *iso_charsets[] = {
 
 #define NUM_ISO_CHARSETS (sizeof (iso_charsets) / sizeof (iso_charsets[0]))
 
+static const char *windows_charsets[] = {
+	"windows-cp1250",
+	"windows-cp1251",
+	"windows-cp1252",
+	"windows-cp1253",
+	"windows-cp1254",
+	"windows-cp1255",
+	"windows-cp1256",
+	"windows-cp1257",
+	"windows-cp1258",
+	"windows-cp1259"
+};
+
 
 /**
  * g_mime_charset_canon_name:
@@ -493,28 +505,33 @@ g_mime_charset_canon_name (const char *charset)
 		return NULL;
 	
 	charset = g_mime_charset_iconv_name (charset);
-	if (strncasecmp (charset, "iso", 3) != 0)
-		return charset;
+	if (strncasecmp (charset, "iso", 3) == 0) {
+		ptr = charset + 3;
+		if (*ptr == '-' || *ptr == '_')
+			ptr++;
+		
+		if (strncmp (ptr, "8859", 4) != 0)
+			return charset;
+		
+		ptr += 4;
+		if (*ptr == '-' || *ptr == '_')
+			ptr++;
+		
+		iso = strtoul (ptr, &endptr, 10);
+		if (endptr == ptr || *endptr != '\0')
+			return charset;
+		
+		if (iso >= NUM_ISO_CHARSETS)
+			return charset;
+		
+		return iso_charsets[iso];
+	} else if (!strncmp (charset, "CP125", 5)) {
+		ptr = charset + 5;
+		if (*ptr >= '0' && *ptr <= '9')
+			return windows_charsets[*ptr - '0'];
+	}
 	
-	ptr = charset + 3;
-	if (*ptr == '-' || *ptr == '_')
-		ptr++;
-	
-	if (strncmp (ptr, "8859", 4) != 0)
-		return charset;
-	
-	ptr += 4;
-	if (*ptr == '-' || *ptr == '_')
-		ptr++;
-	
-	iso = strtoul (ptr, &endptr, 10);
-	if (endptr == ptr || *endptr != '\0')
-		return charset;
-	
-	if (iso >= NUM_ISO_CHARSETS)
-		return charset;
-	
-	return iso_charsets[iso];
+	return charset;
 }
 
 
