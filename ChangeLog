@@ -1,3 +1,17 @@
+2004-06-15  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* configure.in: Added --enable-profile option and removed
+	--enable-gprof. --enable-profile enables gprof and gcov.
+
+	* gmime/gmime-parser.c: #include <stdlib.h> for strtoul()
+	(parser_construct_leaf_part): Got rid of an unused variable.
+
+	* gmime/gmime-param.c (rfc2184_param_new): Got rid of an unused
+	variable.
+	(rfc2184_decode): Got rid of an unused variable.
+
+	* util/gtrie.c (trie_utf8_getc): Get rid of the unused labels.
+
 2004-06-09  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-stream-filter.c (stream_write): Set flushed to

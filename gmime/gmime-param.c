@@ -442,7 +442,6 @@ rfc2184_decode (const char *value)
 {
 	const char *inptr = value;
 	const char *charset;
-	char *udecoded;
 	char *decoded;
 	size_t len;
 	
@@ -479,7 +478,6 @@ static struct _rfc2184_param *
 rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
 {
 	struct _rfc2184_param *rfc2184;
-	struct _rfc2184_part *part;
 	const char *inptr = value;
 	
 	rfc2184 = g_new (struct _rfc2184_param, 1);

@@ -25,6 +25,7 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <regex.h>
@@ -1179,7 +1180,6 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _header_raw *header;
 	GMimeObject *object;
-	const char *ctype;
 	
 	/* get the headers */
 	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)

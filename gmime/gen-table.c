@@ -185,7 +185,7 @@ int main (int argc, char **argv)
 	printf ("#define CHARS_DSPECIAL \"[]\\\\\\r \\t\"         /* not in domains */\n");
 	printf ("#define CHARS_ESPECIAL \"()<>@,;:\\\"/[]?.=_\" /* encoded word specials (rfc2047 5.1) */\n");
 	printf ("#define CHARS_PSPECIAL \"!*+-/=_\"           /* encoded phrase specials (rfc2047 5.3) */\n");
-	printf ("#define CHARS_ATTRCHAR \"*'% \"              /* attribute-char from rfc2184 */\n");
+	printf ("#define CHARS_ATTRCHAR \"*'%% \"              /* attribute-char from rfc2184 */\n");
 	printf ("\n");
 	
 	printf ("#define GMIME_FOLD_LEN 76\n");
