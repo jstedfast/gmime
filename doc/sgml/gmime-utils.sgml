@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-utils" revision="2 Jan 2001">
+<refentry id="gmime-gmime-utils" revision="4 Jan 2001">
 <refmeta>
 <refentrytitle>gmime-utils</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -14,8 +14,8 @@
 
 
 
-#define     <link linkend="BASE64-ENCODE-LEN">BASE64_ENCODE_LEN</link>               (x)
-#define     <link linkend="QP-ENCODE-LEN">QP_ENCODE_LEN</link>                   (x)
+#define     <link linkend="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN</link>               (x)
+#define     <link linkend="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN</link>                   (x)
 <link linkend="time-t">time_t</link>      <link linkend="g-mime-utils-header-decode-date">g_mime_utils_header_decode_date</link> (const <link linkend="gchar">gchar</link> *in,
                                              <link linkend="gint">gint</link> *saveoffset);
 <link linkend="gchar">gchar</link>*      <link linkend="g-mime-utils-header-format-date">g_mime_utils_header_format_date</link> (<link linkend="time-t">time_t</link> time,
@@ -87,7 +87,7 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="BASE64-ENCODE-LEN">BASE64_ENCODE_LEN()</title>
+<title><anchor id="BASE64-ENCODE-LEN-CAPS">BASE64_ENCODE_LEN()</title>
 <programlisting>#define BASE64_ENCODE_LEN(x) ((guint) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 </programlisting>
 <para>
@@ -103,7 +103,7 @@ void        <link linkend="g-mime-utils-unquote-string">g_mime_utils_unquote_str
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>
-<title><anchor id="QP-ENCODE-LEN">QP_ENCODE_LEN()</title>
+<title><anchor id="QP-ENCODE-LEN-CAPS">QP_ENCODE_LEN()</title>
 <programlisting>#define QP_ENCODE_LEN(x)     ((guint) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 </programlisting>
 <para>
