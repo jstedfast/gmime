@@ -47,6 +47,35 @@ basename (char *path)
 	return path;
 }
 
+static char *
+escape_string (const char *string)
+{
+	const char *start, *inptr;
+	GString *str;
+	char *buf;
+	
+	str = g_string_new ("");
+	
+	inptr = string;
+	
+	while (*inptr) {
+		start = inptr;
+		while (*inptr && *inptr != '"')
+			inptr++;
+		
+		g_string_append_len (str, start, inptr - start);
+		if (*inptr == '"') {
+			g_string_append (str, "\\\"");
+			inptr++;
+		}
+	}
+	
+	buf = str->str;
+	g_string_free (str, FALSE);
+	
+	return buf;
+}
+
 static void
 write_part_bodystructure (GMimeObject *part, FILE *fp)
 {
@@ -80,6 +109,87 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 			write_part_bodystructure (l->data, fp);
 			l = l->next;
 		}
+	} else if (GMIME_IS_MESSAGE_PART (part)) {
+		GMimeMessage *message;
+		const char *str;
+		char *nstring;
+		
+		message = GMIME_MESSAGE_PART (part)->message;
+		
+		/* print envelope */
+		fputc ('(', fp);
+		
+		nstring = g_mime_message_get_date_string (message);
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "Subject")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "From")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "Sender")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "Reply-To")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "To")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "Cc")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "Bcc")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_header (message, "In-Reply-To")))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\" ", nstring);
+		g_free (nstring);
+		
+		if ((str = g_mime_message_get_message_id (message)))
+			nstring = escape_string (str);
+		else
+			nstring = g_strdup ("");
+		fprintf (fp, "\"%s\"", nstring);
+		g_free (nstring);
+		
+		fputs (") ", fp);
+		
+		/* print body */
+		write_part_bodystructure ((GMimeObject *) message->mime_part, fp);
 	} else if (GMIME_IS_PART (part)) {
 		if (GMIME_PART (part)->disposition) {
 			fprintf (fp, "\"%s\" ", GMIME_PART (part)->disposition->disposition);
@@ -189,6 +299,18 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 			l = l->next;
 			i++;
 		}
+	} else if (GMIME_IS_MESSAGE_PART (part)) {
+		GMimeMessage *message;
+		
+		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
+		fp = fopen (buf, "wt");
+		g_free (buf);
+		
+		message = GMIME_MESSAGE_PART (part)->message;
+		
+		ostream = g_mime_stream_file_new (fp);
+		g_mime_object_write_to_stream (GMIME_OBJECT (message), ostream);
+		g_mime_stream_unref (ostream);
 	} else if (GMIME_IS_PART (part)) {
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
 		fp = fopen (buf, "wt");
@@ -211,6 +333,18 @@ write_message (GMimeMessage *message, const char *uid)
 	write_part (message->mime_part, uid, "1");
 }
 
+struct _envelope {
+	char *date;
+	char *subject;
+	char *from;
+	char *sender;
+	char *reply_to;
+	char *to;
+	char *cc;
+	char *bcc;
+	char *in_reply_to;
+	char *message_id;
+};
 
 struct _bodystruct {
 	struct _bodystruct *next;
@@ -225,6 +359,7 @@ struct _bodystruct {
 		GMimeParam *params;
 	} disposition;
 	char *encoding;
+	struct _envelope *envelope;
 	struct _bodystruct *subparts;
 };
 
@@ -270,7 +405,6 @@ decode_qstring (unsigned char **in, unsigned char *inend)
 		
 		qstring = g_strndup (start, inptr - start);
 		unescape_qstring (qstring);
-		
 		g_assert (*inptr == '"');
 		inptr++;
 	} else {
@@ -345,7 +479,50 @@ decode_params (unsigned char **in, unsigned char *inend)
 	return params;
 }
 
-struct _bodystruct *
+static struct _envelope *
+decode_envelope (unsigned char **in, unsigned char *inend)
+{
+	struct _envelope *envelope;
+	unsigned char *inptr;
+	
+	inptr = *in;
+	
+	while (inptr < inend && *inptr == ' ')
+		inptr++;
+	
+	if (inptr == inend || *inptr != '(') {
+		g_assert_not_reached ();
+		*in = inptr;
+		return NULL;
+	}
+	
+	inptr++;
+	
+	envelope = g_new (struct _envelope, 1);
+	
+	envelope->date = decode_qstring (&inptr, inend);
+	envelope->subject = decode_qstring (&inptr, inend);
+	envelope->from = decode_qstring (&inptr, inend);
+	envelope->sender = decode_qstring (&inptr, inend);
+	envelope->reply_to = decode_qstring (&inptr, inend);
+	envelope->to = decode_qstring (&inptr, inend);
+	envelope->cc = decode_qstring (&inptr, inend);
+	envelope->bcc = decode_qstring (&inptr, inend);
+	envelope->in_reply_to = decode_qstring (&inptr, inend);
+	envelope->message_id = decode_qstring (&inptr, inend);
+	
+	while (inptr < inend && *inptr == ' ')
+		inptr++;
+	
+	g_assert (*inptr == ')');
+	inptr++;
+	
+	*in = inptr;
+	
+	return envelope;
+}
+
+static struct _bodystruct *
 bodystruct_part_decode (unsigned char **in, unsigned char *inend)
 {
 	struct _bodystruct *part, *list, *tail, *n;
@@ -370,11 +547,13 @@ bodystruct_part_decode (unsigned char **in, unsigned char *inend)
 	part->content.type = decode_qstring (&inptr, inend);
 	part->content.subtype = decode_qstring (&inptr, inend);
 	part->content.params = decode_params (&inptr, inend);
+	part->disposition.type = NULL;
+	part->disposition.params = NULL;
+	part->encoding = NULL;
+	part->envelope = NULL;
+	part->subparts = NULL;
 	
 	if (!strcasecmp (part->content.type, "multipart")) {
-		part->disposition.type = NULL;
-		part->disposition.params = NULL;
-		
 		list = NULL;
 		tail = (struct _bodystruct *) &list;
 		
@@ -390,11 +569,13 @@ bodystruct_part_decode (unsigned char **in, unsigned char *inend)
 		}
 		
 		part->subparts = list;
+	} else if (!strcasecmp (part->content.type, "message") && !strcasecmp (part->content.subtype, "rfc822")) {
+		part->envelope = decode_envelope (&inptr, inend);
+		part->subparts = bodystruct_part_decode (&inptr, inend);
 	} else {
 		part->disposition.type = decode_qstring (&inptr, inend);
 		part->disposition.params = decode_params (&inptr, inend);
 		part->encoding = decode_qstring (&inptr, inend);
-		part->subparts = NULL;
 	}
 	
 	while (inptr < inend && *inptr == ' ')
@@ -442,6 +623,41 @@ bodystruct_dump (struct _bodystruct *part, int depth)
 			bodystruct_dump (part, depth + 1);
 			part = part->next;
 		}
+	} else if (!strcasecmp (part->content.type, "message") && !strcasecmp (part->content.subtype, "rfc822")) {
+		depth++;
+		
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Date: %s\n", part->envelope->date);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Subject: %s\n", part->envelope->subject);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "From: %s\n", part->envelope->from);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Sender: %s\n", part->envelope->sender);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Reply-To: %s\n", part->envelope->reply_to);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "To: %s\n", part->envelope->to);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Cc: %s\n", part->envelope->cc);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Bcc: %s\n", part->envelope->bcc);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "In-Reply-To: %s\n", part->envelope->in_reply_to);
+		for (i = 0; i < depth; i++)
+			fputs ("  ", stderr);
+		fprintf (stderr, "Message-Id: %s\n", part->envelope->message_id);
+		bodystruct_dump (part->subparts, depth);
+		depth--;
 	} else {
 		if (part->disposition.type) {
 			for (i = 0; i < depth; i++)
@@ -483,6 +699,22 @@ bodystruct_free (struct _bodystruct *node)
 		if (node->disposition.params)
 			g_mime_param_destroy (node->disposition.params);
 		
+		g_free (node->encoding);
+		
+		if (node->envelope) {
+			g_free (node->envelope->date);
+			g_free (node->envelope->subject);
+			g_free (node->envelope->from);
+			g_free (node->envelope->sender);
+			g_free (node->envelope->reply_to);
+			g_free (node->envelope->to);
+			g_free (node->envelope->cc);
+			g_free (node->envelope->bcc);
+			g_free (node->envelope->in_reply_to);
+			g_free (node->envelope->message_id);
+			g_free (node->envelope);
+		}
+		
 		if (node->subparts)
 			bodystruct_free (node->subparts);
 		
@@ -513,6 +745,30 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 }
 
 static void
+reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char *spec)
+{
+	GMimeParser *parser;
+	GMimeStream *stream;
+	char *filename;
+	int fd;
+	
+	if (msgpart->message)
+		g_object_unref (msgpart->message);
+	
+	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
+	fd = open (filename, O_RDONLY);
+	g_free (filename);
+	
+	stream = g_mime_stream_fs_new (fd);
+	parser = g_mime_parser_new_with_stream (stream);
+	g_mime_parser_set_scan_from (parser, FALSE);
+	g_object_unref (stream);
+	
+	msgpart->message = g_mime_parser_construct_message (parser);
+	g_object_unref (parser);
+}
+
+static void
 reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		       const char *uid, const char *spec)
 {
@@ -537,15 +793,15 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 			 part->content.subtype, subspec);
 		
 		/* NOTE: if we didn't want to necessarily construct
-                   the full part, we could use the BODYSTRUCTURE info
-                   to create a 'fake' MIME part of the correct
-                   type/subtype and even fill in some other useful
-                   Content-* headers (like Content-Disposition and
-                   Content-Transfer-Encoding) so that our UI could
-                   actually use that info. We could then go out and
-                   fetch the content "on demand"... but this example
-                   is just to show you *how* to construct MIME parts
-                   manually rather than to do uber-fancy stuff */
+		   the full part, we could use the BODYSTRUCTURE info
+		   to create a 'fake' MIME part of the correct
+		   type/subtype and even fill in some other useful
+		   Content-* headers (like Content-Disposition and
+		   Content-Transfer-Encoding) so that our UI could
+		   actually use that info. We could then go out and
+		   fetch the content "on demand"... but this example
+		   is just to show you *how* to construct MIME parts
+		   manually rather than to do uber-fancy stuff */
 		
 		filename = g_strdup_printf ("%s/%s.HEADER", uid, subspec);
 		fd = open (filename, O_RDONLY);
@@ -561,6 +817,8 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		
 		if (GMIME_IS_MULTIPART (subpart)) {
 			reconstruct_multipart ((GMimeMultipart *) subpart, part, uid, subspec);
+		} else if (GMIME_IS_MESSAGE_PART (subpart)) {
+			reconstruct_message_part ((GMimeMessagePart *) subpart, uid, subspec);
 		} else if (GMIME_IS_PART (subpart)) {
 			reconstruct_part_content ((GMimePart *) subpart, uid, subspec);
 		}
@@ -614,7 +872,7 @@ reconstruct_message (const char *uid)
 		body = bodystruct_parse (buffer->data, buffer->len);
 		g_object_unref (mem);
 		
-		/*bodystruct_dump (body, 0);*/
+		bodystruct_dump (body, 0);
 		
 		reconstruct_multipart ((GMimeMultipart *) message->mime_part, body, uid, "1");
 		bodystruct_free (body);
