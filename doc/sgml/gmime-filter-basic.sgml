@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-filter-basic" revision="28 Sep 2001">
+<refentry id="gmime-gmime-filter-basic" revision="5 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-filter-basic</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -39,6 +39,8 @@ enum        <link linkend="GMimeFilterBasicType">GMimeFilterBasicType</link>;
 	GMIME_FILTER_BASIC_BASE64_DEC,
 	GMIME_FILTER_BASIC_QP_ENC,
 	GMIME_FILTER_BASIC_QP_DEC,
+	GMIME_FILTER_BASIC_UU_ENC,
+	GMIME_FILTER_BASIC_UU_DEC,
 } GMimeFilterBasicType;
 </programlisting>
 <para>

@@ -27,11 +27,7 @@
 #include <string.h>
 #include "md5-utils.h"
 
-#if 0
-#define d(x) x
-#else
 #define d(x)
-#endif
 
 static void md5_transform (guint32 buf[4], const guint32 in[16]);
 

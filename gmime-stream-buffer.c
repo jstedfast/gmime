@@ -280,7 +280,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
            the reason this stream is setup to do cached reads is
            because the source streem is unseekable. */
 	
-	return g_mime_stream_substream (buffer->source, start, end);
+	return buffer->source->substream (buffer->source, start, end);
 }
 
 

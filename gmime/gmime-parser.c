@@ -367,7 +367,7 @@ g_mime_parser_construct_part_internal (GMimeStream *stream, GMimeStreamMem *mem)
 		
 		/* from here to the end is the content */
 		if (inptr < inend) {
-			for (inptr++; inptr < inend && isspace ((unsigned) *inptr); inptr++);
+			for (inptr++; inptr < inend && isspace ((int) *inptr); inptr++);
 			len = inend - inptr;
 			content = inptr;
 			

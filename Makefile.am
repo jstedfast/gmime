@@ -55,7 +55,7 @@ gmimeinc_HEADERS = 		\
 	gmime-stream.h		\
 	gmime-stream-buffer.h	\
 	gmime-stream-file.h	\
-	gmime-stream-filter.c	\
+	gmime-stream-filter.h	\
 	gmime-stream-fs.h	\
 	gmime-stream-mem.h	\
 	gmime-utils.h		\

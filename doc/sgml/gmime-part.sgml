@@ -1,4 +1,4 @@
-<refentry id="gmime-gmime-part" revision="28 Sep 2001">
+<refentry id="gmime-gmime-part" revision="5 Oct 2001">
 <refmeta>
 <refentrytitle>gmime-part</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -87,6 +87,8 @@ const char* <link linkend="g-mime-part-get-content">g_mime_part_get_content</lin
                                              <link linkend="guint">guint</link> *len);
 const <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>* <link linkend="g-mime-part-get-content-object">g_mime_part_get_content_object</link>
                                             (const <link linkend="GMimePart">GMimePart</link> *mime_part);
+void        <link linkend="g-mime-part-set-content-object">g_mime_part_set_content_object</link>  (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *content);
 void        <link linkend="g-mime-part-add-subpart">g_mime_part_add_subpart</link>         (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              <link linkend="GMimePart">GMimePart</link> *subpart);
 #define     <link linkend="g-mime-part-add-child">g_mime_part_add_child</link>           (mime_part, child)
@@ -846,6 +848,26 @@ and sets <literal>len</literal> to the length of the buffer.
 <entry> MIME part object
 </entry></row>
 <row><entry align="right"><emphasis>Returns</emphasis> :</entry><entry>the data-wrapper for the mime part's contents.
+</entry></row>
+</tbody></tgroup></informaltable></refsect2>
+<refsect2>
+<title><anchor id="g-mime-part-set-content-object">g_mime_part_set_content_object ()</title>
+<programlisting>void        g_mime_part_set_content_object  (<link linkend="GMimePart">GMimePart</link> *mime_part,
+                                             <link linkend="GMimeDataWrapper">GMimeDataWrapper</link> *content);</programlisting>
+<para>
+Sets the content object on the mime part.</para>
+<para>
+
+</para><informaltable pgwide=1 frame="none" role="params">
+<tgroup cols="2">
+<colspec colwidth="2*">
+<colspec colwidth="8*">
+<tbody>
+<row><entry align="right"><parameter>mime_part</parameter>&nbsp;:</entry>
+<entry> MIME Part
+</entry></row>
+<row><entry align="right"><parameter>content</parameter>&nbsp;:</entry>
+<entry> content object
 </entry></row>
 </tbody></tgroup></informaltable></refsect2>
 <refsect2>

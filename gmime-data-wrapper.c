@@ -90,16 +90,14 @@ g_mime_data_wrapper_destroy (GMimeDataWrapper *wrapper)
 void
 g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 {
-	GMimeStream * prev_stream;
 	g_return_if_fail (wrapper != NULL);
 	
-	prev_stream = wrapper->stream;
+	g_mime_stream_ref (stream);
+	
+	if (wrapper->stream)
+		g_mime_stream_unref (wrapper->stream);
+	
 	wrapper->stream = stream;
-
-	if (stream)
-		g_mime_stream_ref (stream);
-	if (prev_stream)
-		g_mime_stream_unref (prev_stream);
 }
 
 

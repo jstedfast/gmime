@@ -1,23 +1,38 @@
+2001-10-04  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): If we
+	just change the order of operations, we can get away without a
+	second stream pointer.
+
+	* gmime-stream.c (g_mime_stream_substream): Revert.
+
+	* gmime-stream-buffer.c (stream_substream): Instead of calling
+	g_mime_stream_substream(), call the source stream's substream
+	method directly. I think this is the better fix for the bug
+	Charles just fixed.
+
 2001-10-04  Charles Kerr <charles@rebelbase.com>
 
-	* gmime-stream.c (g_mime_stream_substream): fix refcount stealth bug.
-	Calling this on a buffered stream wound up reffing two streams
-	instead of one because of a nested call to g_mime_stream_substream().
-	This took a lot of scaffolding to find. :)
+	* gmime-stream.c (g_mime_stream_substream): fix refcount stealth
+	bug.  Calling this on a buffered stream wound up reffing two
+	streams instead of one because of a nested call to
+	g_mime_stream_substream().  This took a lot of scaffolding to
+	find. :)
 
-	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): fix refcount
-	paranoia bug.  ref the new *before* unreffing the old just in case
-	new==old.
+	* gmime-data-wrapper.c (g_mime_data_wrapper_set_stream): fix
+	refcount paranoia bug.  ref the new *before* unreffing the old
+	just in case new==old.
 	
-	* gmime-filter-basic.[ch]: fix some compiler warnings that I introduced
-	yesterday.  (Strange how the same version of gcc finds different
-	warnings on different platforms.)
+	* gmime-filter-basic.[ch]: fix some compiler warnings that I
+	introduced yesterday.  (Strange how the same version of gcc finds
+	different warnings on different platforms.)
 
 2001-10-03  Charles Kerr <charles@rebelbase.com>
 
-	* gmime-part.c (g_mime_part_get_content): bugfix for when getting the
-	content from a stream-mem.  We were just returning the stream-mem's
-	gbytearray buffer, but we need to check against the stream's bounds.
+	* gmime-part.c (g_mime_part_get_content): bugfix for when getting
+	the content from a stream-mem.  We were just returning the
+	stream-mem's gbytearray buffer, but we need to check against the
+	stream's bounds.
 
 	* gmime-filter-basic.[ch]: added support for decoding a uuencoded
 	stream; added a placeholder for uuencoding a stream.
@@ -27,7 +42,7 @@
 2001-10-02  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-stream-buffer.h: buflen should be an ssize_t not a
-	size_t. Thanks to Chanrles for catching this.
+	size_t. Thanks to Charles for catching this.
 
 2001-10-01  Charles Kerr <charles@rebelbase.com>
 
@@ -43,14 +58,15 @@
 
 	* gmime-part.h: added g_mime_part_set_content_object() prototype.
 
-	* gmime-content-type.h: Replaced <> with "" in #include <gmime-param.h>
+	* gmime-content-type.h: Replaced <> with "" in #include
+	<gmime-param.h>
 
-	* pan-mime-parser.c: added #include gmime-stream-buffer.h to
-	pick up prototype for g_mime_stream_buffer_gets.
-	* pan-mime-parser.c (g_strstrbound): removed unused func.
+	* pan-mime-parser.c: added #include gmime-stream-buffer.h to pick
+	up prototype for g_mime_stream_buffer_gets.
+	(g_strstrbound): removed unused func.
 
-	* gmime-utils.c: on calls to ctype functions, explicitly upcast the
-	char arguments as ints to shut up gcc warnings on Solaris.
+	* gmime-utils.c: on calls to ctype functions, explicitly upcast
+	the char arguments as ints to shut up gcc warnings on Solaris.
 	* gmime-param.c: same.
 
 2001-09-29  Jeffrey Stedfast  <fejj@ximian.com>
