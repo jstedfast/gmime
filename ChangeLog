@@ -1,3 +1,10 @@
+2002-04-23  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c: Oops, fix the patch from HEAD to compile.
+
+	* gmime-utils.c (rfc2047_encode_phrase): Fixed a small memory
+	leak. Thanks to the Pan guys for findings this.
+
 2002-04-21  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c: Pull some fixes back from HEAD.
