@@ -171,7 +171,7 @@ ai_to_herr (int error)
  * @buflen: the size of @buf
  * @herr: a pointer to a variable to store an error code in
  *
- * Resolves the hostname @name, in a hopefully-reentrant fashion.
+ * A reentrant implementation of gethostbyname()
  *
  * Return value: 0 on success, ERANGE if @buflen is too small,
  * "something else" otherwise (in which case *@herr will be set to
@@ -284,7 +284,7 @@ g_gethostbyname_r (const char *name, struct hostent *host,
  * @buflen: the size of @buf
  * @herr: a pointer to a variable to store an error code in
  *
- * Resolves the address @addr, in a hopefully-reentrant fashion.
+ * A reentrant implementation of gethostbyaddr()
  *
  * Return value: 0 on success, ERANGE if @buflen is too small,
  * "something else" otherwise (in which case *@herr will be set to

@@ -777,7 +777,7 @@ g_mime_utils_generate_message_id (const char *fqdn)
 				else
 					buf = g_malloc (buflen);
 				
-				if ((ret = g_gethostbyname_r (host, &hostbuf, buf, buflen, &herr)) != 0)
+				if ((ret = g_gethostbyname_r (host, &hostbuf, buf, buflen, &herr)) == ERANGE)
 					buflen += 256;
 			} while (ret != 0 && buflen < 8192);
 			

@@ -1,5 +1,10 @@
 2003-08-09  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Slight
+	fix for growing the buffer used by g_gethostbyname_r().
+
+2003-08-09  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime/gmime.h.in: Added new headers.
 
 	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Use the
