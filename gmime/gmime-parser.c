@@ -858,8 +858,8 @@ parser_step_headers (GMimeParser *parser)
 			if (inptr == inend) {
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
-				priv->inptr = start;
-				len = inend - start;
+				priv->inptr = inptr;
+				len = inend - inptr;
 				goto refill;
 			}
 			

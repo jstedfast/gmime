@@ -1,3 +1,11 @@
+2005-03-29  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): If we didn't find
+	EOL for a header, set state based on 'inptr' rather than
+	'start'. Fixes a bug parsing headers that cross read boundaries
+	(and where headers are longer than the internal read-ahead buffer
+	size).
+
 2005-03-23  Joe Shaw  <joeshaw@novell.com>
 
 	* configure.in: Require gtk-sharp >= 1.0.6 for important
