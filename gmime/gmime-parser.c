@@ -735,6 +735,7 @@ parser_step_headers (GMimeParser *parser)
 		}
 		
 		priv->inptr = inptr;
+		len = inend - inptr;
 	} while (1);
 	
 	inptr = priv->inptr;

@@ -1,3 +1,9 @@
+2002-07-30  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (parser_step_headers): Finish the fix from
+	yesterday, the last statement of the while-loop needs to
+	re-calculate `len' for parser_fill().
+
 2002-07-30  Charles Kerr <charles@rebelbase.com>
 
 	* gmime-message.c (message_remove_header): Fix April 3 2002 bug
