@@ -33,6 +33,8 @@
 
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 
+#define GMIME_FOLD_LEN  76
+
 static char *base64_alphabet =
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
@@ -549,6 +551,88 @@ g_mime_utils_header_decode_date (const gchar *in, gint *saveoffset)
 	g_list_free (tokens);
 	
 	return date;
+}
+
+
+/**
+ * g_mime_utils_header_fold: Fold a header.
+ * @in: input header string
+ *
+ * Returns an allocated string containing the folded header.
+ **/
+gchar *
+g_mime_utils_header_fold (const gchar *in)
+{
+	const gchar *inptr, *space;
+	gint len, outlen, i;
+	GString *out;
+	gchar *ret;
+	
+	inptr = in;
+	len = strlen (in);
+	if (len <= GMIME_FOLD_LEN)
+		return g_strdup (in);
+	
+	out = g_string_new ("");
+	outlen = 0;
+	while (*inptr) {
+		space = strchr (inptr, ' ');
+		if (space)
+			len = space - inptr + 1;
+		else
+			len = strlen (inptr);
+		
+		if (outlen + len > GMIME_FOLD_LEN) {
+			g_string_append (out, "\n\t");
+			outlen = 1;
+			
+			/* check for very long words, just cut them up */
+			while (outlen + len > GMIME_FOLD_LEN) {
+				for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)
+					g_string_append_c (out, inptr[i]);
+				inptr += GMIME_FOLD_LEN - outlen;
+				len -= GMIME_FOLD_LEN - outlen;
+				g_string_append (out, "\n\t");
+				outlen = 1;
+			}
+		}
+		
+		outlen += len;
+		for (i = 0; i < len; i++) {
+			g_string_append_c (out, inptr[i]);
+		}
+		inptr += len;
+	}
+	
+	ret = out->str;
+	g_string_free (out, FALSE);
+	
+	return ret;	
+}
+
+
+/**
+ * g_mime_utils_header_printf: Format a header.
+ * @format: string format
+ * @Varargs: arguments
+ *
+ * Returns an allocated string containing the folded header specified
+ * by #format and the following arguments.
+ **/
+gchar *
+g_mime_utils_header_printf (const gchar *format, ...)
+{
+	gchar *buf, *ret;
+	va_list ap;
+	
+	va_start (ap, format);
+	buf = g_strdup_vprintf (format, ap);
+	va_end (ap);
+	
+	ret = g_mime_utils_header_fold (buf);
+	g_free (buf);
+	
+	return ret;
 }
 
 
