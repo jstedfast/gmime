@@ -1,5 +1,10 @@
 2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* memchunk.[c,h]: A memchunk library similar to g_mem_chunk's but
+	faster.
+
+2001-12-16  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* configure.in: Added a --enable-warnings to turn on compiler
 	warnings.
 
