@@ -1,3 +1,8 @@
+2004-12-10  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/internet-address.c (internet_address_to_string): rfc2047
+	encode the group name too.
+
 2004-12-08  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-content-type.c (g_mime_content_type_is_type): Fixed

@@ -485,12 +485,10 @@ internet_address_list_to_string_internal (const InternetAddressList *list, gbool
 char *
 internet_address_to_string (const InternetAddress *ia, gboolean encode)
 {
-	char *str = NULL;
+	char *name, *str = NULL;
 	
 	if (ia->type == INTERNET_ADDRESS_NAME) {
 		if (ia->name && *ia->name) {
-			char *name;
-			
 			name = encoded_name (ia->name, encode);
 			str = g_strdup_printf ("%s <%s>", name, ia->value.addr);
 			g_free (name);
@@ -501,8 +499,10 @@ internet_address_to_string (const InternetAddress *ia, gboolean encode)
 		InternetAddressList *members;
 		GString *string;
 		
-		string = g_string_new (ia->name);
+		name = encoded_name (ia->name, encode);
+		string = g_string_new (name);
 		g_string_append (string, ": ");
+		g_free (name);
 		
 		members = ia->value.members;
 		internet_address_list_to_string_internal (members, encode, string);
