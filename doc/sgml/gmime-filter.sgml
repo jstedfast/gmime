@@ -15,7 +15,6 @@
 
 
 struct      <link linkend="GMimeFilter">GMimeFilter</link>;
-#define     <link linkend="GMIME-FILTER-CAPS">GMIME_FILTER</link>                    (filter)
 void        <link linkend="g-mime-filter-construct">g_mime_filter_construct</link>         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="GMimeFilter">GMimeFilter</link> *filter_template);
 void        <link linkend="g-mime-filter-destroy">g_mime_filter_destroy</link>           (<link linkend="GMimeFilter">GMimeFilter</link> *filter);
@@ -41,6 +40,7 @@ void        <link linkend="g-mime-filter-backup">g_mime_filter_backup</link>    
 void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>          (<link linkend="GMimeFilter">GMimeFilter</link> *filter,
                                              <link linkend="size-t">size_t</link> size,
                                              <link linkend="gboolean">gboolean</link> keep);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -91,23 +91,6 @@ void        <link linkend="g-mime-filter-set-size">g_mime_filter_set_size</link>
 <para>
 
 </para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-FILTER-CAPS">GMIME_FILTER()</title>
-<programlisting>#define GMIME_FILTER(filter) ((GMimeFilter *) filter)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>filter</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-filter-construct">g_mime_filter_construct ()</title>
 <programlisting>void        g_mime_filter_construct         (<link linkend="GMimeFilter">GMimeFilter</link> *filter,

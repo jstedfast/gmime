@@ -14,14 +14,12 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-FS-TYPE-CAPS">GMIME_STREAM_FS_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-FS-CAPS">GMIME_IS_STREAM_FS</link>              (stream)
-#define     <link linkend="GMIME-STREAM-FS-CAPS">GMIME_STREAM_FS</link>                 (stream)
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-fs-new">g_mime_stream_fs_new</link>           (int fd);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-fs-new-with-bounds">g_mime_stream_fs_new_with_bounds</link>
                                             (int fd,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -38,47 +36,6 @@
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-STREAM-FS-TYPE-CAPS">GMIME_STREAM_FS_TYPE</title>
-<programlisting>#define GMIME_STREAM_FS_TYPE g_str_hash ("GMimeStreamFs")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-FS-CAPS">GMIME_IS_STREAM_FS()</title>
-<programlisting>#define GMIME_IS_STREAM_FS(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FS_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-FS-CAPS">GMIME_STREAM_FS()</title>
-<programlisting>#define GMIME_STREAM_FS(stream) ((GMimeStreamFs *) stream)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-fs-new">g_mime_stream_fs_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_fs_new           (int fd);</programlisting>

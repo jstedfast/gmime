@@ -15,9 +15,6 @@
 
 
 enum        <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link>;
-#define     <link linkend="GMIME-STREAM-BUFFER-TYPE-CAPS">GMIME_STREAM_BUFFER_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-BUFFER-CAPS">GMIME_IS_STREAM_BUFFER</link>          (stream)
-#define     <link linkend="GMIME-STREAM-BUFFER-CAPS">GMIME_STREAM_BUFFER</link>             (stream)
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-buffer-new">g_mime_stream_buffer_new</link>       (<link linkend="GMimeStream">GMimeStream</link> *source,
                                              <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link> mode);
 <link linkend="ssize-t">ssize_t</link>     <link linkend="g-mime-stream-buffer-gets">g_mime_stream_buffer_gets</link>       (<link linkend="GMimeStream">GMimeStream</link> *stream,
@@ -25,6 +22,7 @@ enum        <link linkend="GMimeStreamBufferMode">GMimeStreamBufferMode</link>;
                                              <link linkend="size-t">size_t</link> max);
 void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_readln</link>     (<link linkend="GMimeStream">GMimeStream</link> *stream,
                                              <link linkend="GByteArray">GByteArray</link> *buffer);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -52,47 +50,6 @@ void        <link linkend="g-mime-stream-buffer-readln">g_mime_stream_buffer_rea
 <para>
 
 </para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-BUFFER-TYPE-CAPS">GMIME_STREAM_BUFFER_TYPE</title>
-<programlisting>#define GMIME_STREAM_BUFFER_TYPE g_str_hash ("GMimeStreamBuffer")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-BUFFER-CAPS">GMIME_IS_STREAM_BUFFER()</title>
-<programlisting>#define GMIME_IS_STREAM_BUFFER(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_BUFFER_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-BUFFER-CAPS">GMIME_STREAM_BUFFER()</title>
-<programlisting>#define GMIME_STREAM_BUFFER(stream) ((GMimeStreamBuffer *) stream)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-buffer-new">g_mime_stream_buffer_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_buffer_new       (<link linkend="GMimeStream">GMimeStream</link> *source,

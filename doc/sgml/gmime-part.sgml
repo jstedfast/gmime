@@ -14,9 +14,6 @@
 
 
 
-#define     <link linkend="GMIME-PART-TYPE-CAPS">GMIME_PART_TYPE</link>
-#define     <link linkend="GMIME-IS-PART-CAPS">GMIME_IS_PART</link>                   (object)
-#define     <link linkend="GMIME-PART-CAPS">GMIME_PART</link>                      (object)
 enum        <link linkend="GMimePartEncodingType">GMimePartEncodingType</link>;
 struct      <link linkend="GMimePart">GMimePart</link>;
 void        (<link linkend="GMimePartFunc">*GMimePartFunc</link>)                (<link linkend="GMimePart">GMimePart</link> *part,
@@ -106,6 +103,7 @@ void        <link linkend="g-mime-part-foreach">g_mime_part_foreach</link>      
 const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get-subpart-from-content-id">g_mime_part_get_subpart_from_content_id</link>
                                             (<link linkend="GMimePart">GMimePart</link> *mime_part,
                                              const char *content_id);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -122,47 +120,6 @@ const <link linkend="GMimePart">GMimePart</link>* <link linkend="g-mime-part-get
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-PART-TYPE-CAPS">GMIME_PART_TYPE</title>
-<programlisting>#define GMIME_PART_TYPE       g_str_hash ("GMimePart")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-PART-CAPS">GMIME_IS_PART()</title>
-<programlisting>#define GMIME_IS_PART(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_PART_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-PART-CAPS">GMIME_PART()</title>
-<programlisting>#define GMIME_PART(object)    ((GMimePart *) object)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="GMimePartEncodingType">enum GMimePartEncodingType</title>
 <programlisting>typedef enum {

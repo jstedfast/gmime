@@ -14,14 +14,12 @@
 
 
 
-#define     <link linkend="GMIME-STREAM-FILE-TYPE-CAPS">GMIME_STREAM_FILE_TYPE</link>
-#define     <link linkend="GMIME-IS-STREAM-FILE-CAPS">GMIME_IS_STREAM_FILE</link>            (stream)
-#define     <link linkend="GMIME-STREAM-FILE-CAPS">GMIME_STREAM_FILE</link>               (stream)
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-file-new">g_mime_stream_file_new</link>         (<link linkend="FILE-CAPS">FILE</link> *fp);
 <link linkend="GMimeStream">GMimeStream</link>* <link linkend="g-mime-stream-file-new-with-bounds">g_mime_stream_file_new_with_bounds</link>
                                             (<link linkend="FILE-CAPS">FILE</link> *fp,
                                              <link linkend="off-t">off_t</link> start,
                                              <link linkend="off-t">off_t</link> end);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -38,47 +36,6 @@
 
 <refsect1>
 <title>Details</title>
-<refsect2>
-<title><anchor id="GMIME-STREAM-FILE-TYPE-CAPS">GMIME_STREAM_FILE_TYPE</title>
-<programlisting>#define GMIME_STREAM_FILE_TYPE g_str_hash ("GMimeStreamFile")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-STREAM-FILE-CAPS">GMIME_IS_STREAM_FILE()</title>
-<programlisting>#define GMIME_IS_STREAM_FILE(stream) (((GMimeStream *) stream)-&gt;type == GMIME_STREAM_FILE_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-STREAM-FILE-CAPS">GMIME_STREAM_FILE()</title>
-<programlisting>#define GMIME_STREAM_FILE(stream) ((GMimeStreamFile *) stream)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>stream</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
 <refsect2>
 <title><anchor id="g-mime-stream-file-new">g_mime_stream_file_new ()</title>
 <programlisting><link linkend="GMimeStream">GMimeStream</link>* g_mime_stream_file_new         (<link linkend="FILE-CAPS">FILE</link> *fp);</programlisting>

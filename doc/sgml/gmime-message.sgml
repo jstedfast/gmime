@@ -14,13 +14,9 @@
 
 
 
-#define     <link linkend="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</link>
-#define     <link linkend="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE</link>                (object)
-#define     <link linkend="GMIME-MESSAGE-CAPS">GMIME_MESSAGE</link>                   (object)
 #define     <link linkend="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</link>
 #define     <link linkend="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</link>
 #define     <link linkend="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</link>
-struct      <link linkend="GMimeHeader">GMimeHeader</link>;
 struct      <link linkend="GMimeMessageHeader">GMimeMessageHeader</link>;
 struct      <link linkend="GMimeMessage">GMimeMessage</link>;
 <link linkend="GMimeMessage">GMimeMessage</link>* <link linkend="g-mime-message-new">g_mime_message_new</link>            (<link linkend="gboolean">gboolean</link> pretty_headers);
@@ -74,6 +70,7 @@ char*       <link linkend="g-mime-message-get-headers">g_mime_message_get_header
 void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_part</link>     (<link linkend="GMimeMessage">GMimeMessage</link> *message,
                                              <link linkend="GMimePartFunc">GMimePartFunc</link> callback,
                                              <link linkend="gpointer">gpointer</link> data);
+
 </synopsis>
 </refsynopsisdiv>
 
@@ -91,70 +88,26 @@ void        <link linkend="g-mime-message-foreach-part">g_mime_message_foreach_p
 <refsect1>
 <title>Details</title>
 <refsect2>
-<title><anchor id="GMIME-MESSAGE-TYPE-CAPS">GMIME_MESSAGE_TYPE</title>
-<programlisting>#define GMIME_MESSAGE_TYPE       g_str_hash ("GMimeMessage")
-</programlisting>
-<para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMIME-IS-MESSAGE-CAPS">GMIME_IS_MESSAGE()</title>
-<programlisting>#define GMIME_IS_MESSAGE(object) (object &amp;&amp; ((GMimeObject *) object)-&gt;type == GMIME_MESSAGE_TYPE)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
-<title><anchor id="GMIME-MESSAGE-CAPS">GMIME_MESSAGE()</title>
-<programlisting>#define GMIME_MESSAGE(object)    ((GMimeMessage *) object)
-</programlisting>
-<para>
-
-</para><informaltable pgwide="1" frame="none" role="params">
-<tgroup cols="2">
-<colspec colwidth="2*">
-<colspec colwidth="8*">
-<tbody>
-<row><entry align="right"><parameter>object</parameter>&nbsp;:</entry>
-<entry>
-
-
-</entry></row>
-</tbody></tgroup></informaltable></refsect2>
-<refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-TO-CAPS">GMIME_RECIPIENT_TYPE_TO</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_TO  "To"
-</programlisting>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_TO</programlisting>
+<para>
+Recipients in the To: header.</para>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-CC-CAPS">GMIME_RECIPIENT_TYPE_CC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
-</programlisting>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_CC</programlisting>
+<para>
+Recipients in the Cc: header.</para>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-RECIPIENT-TYPE-BCC-CAPS">GMIME_RECIPIENT_TYPE_BCC</title>
-<programlisting>#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
-</programlisting>
+<programlisting>#define     GMIME_RECIPIENT_TYPE_BCC</programlisting>
 <para>
-
-</para></refsect2>
-<refsect2>
-<title><anchor id="GMimeHeader">struct GMimeHeader</title>
-<programlisting>struct GMimeHeader;</programlisting>
+Recipients in the Bcc: header.</para>
 <para>
 
 </para></refsect2>

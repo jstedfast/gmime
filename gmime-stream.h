@@ -103,7 +103,7 @@ ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...)
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
 
 
-size_t    g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count);
+ssize_t    g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count);
 
 #ifdef __cplusplus
 }

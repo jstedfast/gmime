@@ -60,15 +60,17 @@ char*       <link linkend="g-mime-disposition-header">g_mime_disposition_header<
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-DISPOSITION-ATTACHMENT-CAPS">GMIME_DISPOSITION_ATTACHMENT</title>
-<programlisting>#define GMIME_DISPOSITION_ATTACHMENT "attachment"
-</programlisting>
+<programlisting>#define     GMIME_DISPOSITION_ATTACHMENT</programlisting>
+<para>
+Standard attachment disposition.</para>
 <para>
 
 </para></refsect2>
 <refsect2>
 <title><anchor id="GMIME-DISPOSITION-INLINE-CAPS">GMIME_DISPOSITION_INLINE</title>
-<programlisting>#define GMIME_DISPOSITION_INLINE     "inline"
-</programlisting>
+<programlisting>#define     GMIME_DISPOSITION_INLINE</programlisting>
+<para>
+Standard inline disposition.</para>
 <para>
 
 </para></refsect2>

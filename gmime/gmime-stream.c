@@ -211,7 +211,7 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
  *
  * Gets the current offset within the stream.
  *
- * Returns the current position within the stream.
+ * Returns the current position within the stream or -1 on fail.
  **/
 off_t
 g_mime_stream_tell (GMimeStream *stream)
@@ -428,12 +428,13 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
  *
  * Writes at most @count blocks described by @vector to @stream.
  *
- * Returns the number of bytes written.
+ * Returns the number of bytes written or -1 on fail.
  **/
-size_t
+ssize_t
 g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count)
 {
-	size_t i, total = 0;
+	ssize_t total = 0;
+	size_t i;
 	
 	for (i = 0; i < count; i++) {
 		ssize_t n, nwritten = 0;
@@ -441,8 +442,11 @@ g_mime_stream_writev (GMimeStream *stream, IOVector *vector, size_t count)
 		while (nwritten < vector[i].len) {
 			n = g_mime_stream_write (stream, vector[i].data + nwritten,
 						 vector[i].len - nwritten);
-			if (n > 0)
-				nwritten += n;
+			
+			if (n == -1)
+				return -1;
+			
+			nwritten += n;
 		}
 		
 		total += nwritten;
