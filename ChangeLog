@@ -1,3 +1,15 @@
+2001-01-14  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-parser.c (g_mime_parser_construct_part): Check for NULL
+	returns from g_strstrbound.
+
+2001-01-11  Charles Kerr <charles@superpimp.org>
+
+	* gmime-utils.c (get_year): small patch to handle 2-digit year
+	representation a little better -- "71" now translates to 1971,
+	but "01" now translates to 2001.  Thanks to Ihar Viarheichyk for
+	suggesting this change.
+
 2001-01-09  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* pgp-utils.c (pgp_decrypt): Take a cipherlen argument.

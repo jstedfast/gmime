@@ -372,7 +372,7 @@ get_year (gchar *str)
 	year = atoi (str);
 	
 	if (year < 100)
-		year += 1900;
+		year += (year < 70) ? 2000 : 1900;
 	
 	if (year < 1969)
 		return -1;
