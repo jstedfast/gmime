@@ -137,7 +137,7 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 	} else {
 		s->boundary = g_strdup_printf ("--%s--", boundary);
 		s->boundarylen = strlen (boundary) + 2;
-		s->boundarylenfinal = s->boundarylen + 4;
+		s->boundarylenfinal = s->boundarylen + 2;
 	}
 	
 	s->boundarylenmax = MAX (s->boundarylenfinal, max);

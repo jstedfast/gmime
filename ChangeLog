@@ -1,3 +1,9 @@
+2003-09-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime/gmime-parser.c (parser_push_boundary): Fix the
+	boundarylenfinal calculation. Thanks to Bart Visscher for catching
+	this mistake.
+
 2003-08-30  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/md5-utils.c (md5_get_digest_from_file): Open in binary
