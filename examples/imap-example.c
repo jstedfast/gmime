@@ -453,7 +453,7 @@ decode_params (unsigned char **in, unsigned char *inend)
 		return NULL;
 	}
 	
-	if (strncmp (inptr, "NIL", 3) != 0) {
+	if (strncmp ((const char *) inptr, "NIL", 3) != 0) {
 		g_assert (*inptr == '(');
 		inptr++;
 		
