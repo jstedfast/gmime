@@ -1,14 +1,14 @@
 2004-02-28  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime/gmime-stream-buffer.c (stream_write): Shrink buflen down
+	by the number of bytes flushed or we'll loop forever writing the
+	same block over and over.
+
 	* gmime/gmime-strea.[c,h]: Make stream_write() take a const char
 	*buf argument instead of char *buf.
 
 	* gmime/gmime-stream-*.c (stream_write): constify the buf
 	argument.
-
-	* gmime/gmime-stream-buffer.c (stream_write): When we flush our
-	buffer, reset our buflen to 0 (we no longer have anything
-	buffered).
 
 	* gmime/gmime-stream-null.c (stream_write): Count newlines as
 	well.

@@ -211,11 +211,12 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		len -= n;
 		if (len) {
 			/* flush our buffer... */
-			if ((n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN))) {
+			if ((n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) != -1) {
 				memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
-				buffer->buflen = 0;
+				buffer->buflen -= n;
 				goto again;
-			}
+			} else
+				return -1;
 		}
 		break;
 	default:
