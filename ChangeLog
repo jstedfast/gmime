@@ -1,3 +1,13 @@
+2003-06-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* README: Added a section for links to language bindings starting
+	with the Perl MIME::Fast modules.
+
+	* docs/reference/question_index.sgml: Updated docs about the Perl
+	bindings.
+
+	* docs/tutorial/gmime-tut.sgml: Updated slightly.
+
 2003-06-14  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime/gmime-parser.c (g_mime_parser_get_persist_stream): New

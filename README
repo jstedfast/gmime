@@ -154,6 +154,16 @@ You can find online developer documentation at
 http://spruce.sourceforge.net/gmime/doc
 
 
+BINDINGS
+--------
+
+Other developers have been working to make GMime available to
+programmers in other languages. The current list of known bindings
+are:
+
+- Perl: http://search.cpan.org/dist/MIME-Fast/
+
+
 REPORTING BUGS
 --------------
 

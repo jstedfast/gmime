@@ -250,6 +250,20 @@ int main (int argc, char **argv)
       using <literal>man</literal> on your local Unix system or by
       reading the Reference Manual for your libc.</para>
       
+      <note>
+	<para>New in GMime 2.2 are some functions to tell
+	GMimeStreamFile, GMimeStreamFs and GMimeStreamMem that they
+	are not the owners of the backend storage and so when they are
+	destroyed, they should not close the file or free the memory
+	buffer (respectively). These functions are:</para>
+	
+	<programlisting role="C">
+void g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner);
+void g_mime_stream_fs_set_owner (GMimeStreamFs *stream, gboolean owner);
+void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
+        </programlisting>
+      </note>
+      
       <para>Next, lets examine some of the other stream
       functions.</para>
       
@@ -559,6 +573,84 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
 	base64 encoded and then the end-of-line formatting will be
 	canonicalised to CRLF.</para>
       </note>
+      
+    </sect1>
+    
+  </chapter>
+  
+  <!-- ***************************************************************** -->
+  <chapter id="ch-getting-started">
+    <title>MIME, MIME, and more MIME</title>
+    
+    <!-- ----------------------------------------------------------------- -->
+    <sect1 id="sec-mime-part">
+      <title>GMimePart</title>
+      
+      <para>Since most people seem to want to know how to "save an
+      attachment", lets start there.</para>
+      
+      <para>Given a GMimePart object, the first step to saving an
+      attachment is probably going to be figuring out what the
+      filename is. To do that, you'lllikely want to do something
+      like:</para>
+      
+      <programlisting role="C">
+static void
+save_attachment (GMimePart *part)
+{
+	GMimeDataWrapper *content;
+	const char *filename;
+	GMimeStream *stream;
+	int fd;
+	
+	filename = g_mime_part_get_filename (part);
+	...
+      </programlisting>
+      
+      <para>The <literl>g_mime_part_get_filename()</literal> function
+      will first check for a <literal>filename</literal> parameter in
+      the Content-Disposition header</para>. If that parameter exists,
+      it will return the value as the filename. However, if that does
+      not exist, it will fall back to checking for the
+      <literal>name</literal> parameter sometimes found in the
+      Content-Type header and return that value if it exists
+      (Microsoft Outlook, for example, will set the name parameter,
+      but will not set the filename parameter). If neither of these
+      param values are found, it will simply return
+      <literal>NULL</literal>.</para>
+      
+      <para>Now that you've got a filename for the MIME part (well,
+      assuming that it isn't NULL - in which case you'll have to
+      prompt the user or make up your own filename or something), the
+      next step is to open an output stream and write the MIME part's
+      content to disk:</para>
+      
+      <programlisting role="C">
+	...
+	if ((fd = open (filename, O_CREAT | O_WRONLY, 0666)) == -1)
+		return;
+	
+	stream = g_mime_stream_fs_new (fd);
+	
+	content = g_mime_part_get_content_object (part);
+	g_mime_data_wrapper_write_to_stream (content, stream);
+	g_mime_stream_flush (stream);
+	
+	g_object_unref (content);
+	g_object_unref (stream);
+}
+      </programlisting>
+      
+      <para>In order to get the content of a MIME part (eg. the body
+      of a part, not including the headers), you'll want to use
+      <literal>g_mime_part_get_content_object()</literal>.</para> To
+      wrote the content object to a stream, you can use
+      <literal>g_mime_data_wrapper_write_to_stream()</literal>. On
+      fail, this function will return <literal>-1</literal>, otherwise
+      it will return some positive value which will usually equate the
+      the number of bytes written (but not always); generally it's a
+      good idea to not rely on the returned value for anything other
+      than error-checking.</para>
       
     </sect1>
     
