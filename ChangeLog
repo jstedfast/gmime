@@ -1,3 +1,10 @@
+2002-06-12  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gen-table.c: Updated.
+
+	* gmime-utils.c (quoted_decode): Oops. ESPECIALs are allowed
+	inside of the encoded-text section of the encoded-word.
+
 2002-06-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-parser.c (parser_scan_mime_part_content): If the parser
