@@ -129,8 +129,6 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	klass->get_number = multipart_get_number;
 	klass->set_boundary = multipart_set_boundary;
 	klass->get_boundary = multipart_get_boundary;
-	
-	g_mime_object_register_type ("multipart", "*", GMIME_TYPE_MULTIPART);
 }
 
 static void

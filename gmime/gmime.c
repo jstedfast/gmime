@@ -48,4 +48,8 @@ g_mime_init (guint32 flags)
 	g_mime_charset_init ();
 	
 	g_mime_iconv_init ();
+	
+	/* register our default mime object types */
+	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
+	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
 }

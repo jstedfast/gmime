@@ -119,8 +119,6 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->remove_header = mime_part_remove_header;
 	object_class->get_headers = mime_part_get_headers;
 	object_class->write_to_stream = mime_part_write_to_stream;
-	
-	g_mime_object_register_type ("*", "*", GMIME_TYPE_PART);
 }
 
 static void

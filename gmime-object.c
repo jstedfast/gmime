@@ -51,6 +51,7 @@ static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 static int strcase_equal (gconstpointer v, gconstpointer v2);
 static guint strcase_hash (gconstpointer key);
+static void type_registry_init (void);
 
 static GHashTable *type_hash = NULL;
 
@@ -112,35 +113,13 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	klass->get_headers = get_headers;
 	klass->write_to_stream = write_to_stream;
 	
-	type_hash = g_hash_table_new (strcase_hash, strcase_equal);
-}
-
-static void
-subtype_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
-{
-	g_free (key);
-}
-
-static void
-type_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
-{
-	struct _type_bucket *bucket = value;
-	
-	g_free (bucket->type);
-	
-	if (bucket->subtype_hash) {
-		g_hash_table_foreach (bucket->subtype_hash, subtype_bucket_foreach, NULL);
-		g_hash_table_destroy (bucket->subtype_hash);
-	}
-	
-	g_free (bucket);
+	type_registry_init ();
 }
 
 static void
 g_mime_object_class_finalize (GMimeObjectClass *klass)
 {
-	g_hash_table_foreach (type_hash, type_bucket_foreach, NULL);
-	g_hash_table_destroy (type_hash);
+
 }
 
 static void
@@ -221,6 +200,8 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 	g_return_if_fail (subtype != NULL);
 	g_return_if_fail (type != NULL);
 	
+	type_registry_init ();
+	
 	bucket = g_hash_table_lookup (type_hash, type);
 	if (!bucket) {
 		bucket = g_new (struct _type_bucket, 1);
@@ -255,6 +236,8 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	GType obj_type;
 	
 	g_return_val_if_fail (type != NULL, NULL);
+	
+	type_registry_init ();
 	
 	bucket = g_hash_table_lookup (type_hash, type);
 	if (!bucket) {
@@ -634,4 +617,43 @@ strcase_hash (gconstpointer key)
 			h = (h << 5) - h + tolower (*p);
 	
 	return h;
+}
+
+static void
+subtype_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
+{
+	g_free (key);
+}
+
+static void
+type_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
+{
+	struct _type_bucket *bucket = value;
+	
+	g_free (bucket->type);
+	
+	if (bucket->subtype_hash) {
+		g_hash_table_foreach (bucket->subtype_hash, subtype_bucket_foreach, NULL);
+		g_hash_table_destroy (bucket->subtype_hash);
+	}
+	
+	g_free (bucket);
+}
+
+static void
+type_registry_shutdown (void)
+{
+	g_hash_table_foreach (type_hash, type_bucket_foreach, NULL);
+	g_hash_table_destroy (type_hash);
+}
+
+static void
+type_registry_init (void)
+{
+	if (type_hash)
+		return;
+	
+	type_hash = g_hash_table_new (strcase_hash, strcase_equal);
+	
+	g_atexit (type_registry_shutdown);
 }
