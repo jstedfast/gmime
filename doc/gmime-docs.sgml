@@ -1,0 +1,55 @@
+<!doctype book PUBLIC "-//Davenport//DTD DocBook V3.0//EN" [
+<!entity gmime-param SYSTEM "sgml/gmime-param.sgml">
+<!entity gmime-content-type SYSTEM "sgml/gmime-content-type.sgml">
+<!entity gmime-part SYSTEM "sgml/gmime-part.sgml">
+<!entity gmime-message SYSTEM "sgml/gmime-message.sgml">
+<!entity gmime-utils SYSTEM "sgml/gmime-utils.sgml">
+<!entity internet-address SYSTEM "sgml/internet-address.sgml">
+<!entity gmime-parser SYSTEM "sgml/gmime-parser.sgml">
+]>
+
+<book>
+  <bookinfo>
+    <title>GMime Library Reference Manual</title>
+    <authorgroup>
+      <author>
+      <firstname>Jeffrey</firstname>
+        <surname>Stedfast</surname>
+        <affiliation>
+          <address>
+            <email>fejj@helixcode.com</email>
+          </address>
+        </affiliation>
+      </author>
+    </authorgroup>
+    <copyright>
+      <year>2000</year>
+      <holder>Jeffrey Stedfast</holder>
+    </copyright>
+  </bookinfo>
+
+  <chapter id="gmime-notes">
+    <title>GMime Programming Notes</title>
+
+    <para>GMime is a MIME (Multipurpose Internet Mail Extension)
+    utility library. It is meant for creating, editing, and parsing
+    MIME messages.</para>
+  </chapter>
+
+  <chapter id="libgmime">
+    <title>GMime Library Reference</title>
+
+    <para>This section contains the complete API reference for
+    libgmime. All the public interfaces are documented here. This
+    reference guide is built by extracting Gtk-Doc comments from the
+    source code.</para>
+
+    &gmime-param;
+    &gmime-content-type;
+    &gmime-part;
+    &gmime-message;
+    &gmime-utils;
+    &internet-address;
+    &gmime-parser;
+  </chapter>
+</book>

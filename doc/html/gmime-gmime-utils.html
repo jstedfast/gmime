@@ -1,0 +1,2643 @@
+<HTML
+><HEAD
+><TITLE
+>gmime-utils</TITLE
+><META
+NAME="GENERATOR"
+CONTENT="Modular DocBook HTML Stylesheet Version 1.57"><LINK
+REL="HOME"
+TITLE="GMime Library Reference Manual"
+HREF="book1.html"><LINK
+REL="UP"
+TITLE="GMime Library Reference"
+HREF="libgmime.html"><LINK
+REL="PREVIOUS"
+TITLE="gmime-message"
+HREF="gmime-gmime-message.html"><LINK
+REL="NEXT"
+TITLE="internet-address"
+HREF="gmime-internet-address.html"></HEAD
+><BODY
+CLASS="REFENTRY"
+BGCOLOR="#FFFFFF"
+TEXT="#000000"
+LINK="#0000FF"
+VLINK="#840084"
+ALINK="#0000FF"
+><DIV
+CLASS="NAVHEADER"
+><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TH
+COLSPAN="4"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="5"
+>GMime Library Reference Manual</FONT
+></TH
+></TR
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-message.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-internet-address.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+></TABLE
+></DIV
+><H1
+><A
+NAME="GMIME-GMIME-UTILS"
+>gmime-utils</A
+></H1
+><DIV
+CLASS="REFNAMEDIV"
+><A
+NAME="AEN1546"
+></A
+><H2
+>Name</H2
+>gmime-utils&nbsp;--&nbsp;</DIV
+><DIV
+CLASS="REFSYNOPSISDIV"
+><A
+NAME="AEN1549"
+></A
+><H2
+>Synopsis</H2
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="SYNOPSIS"
+>&#13;
+
+<GTKDOCLINK
+HREF="TIME-T"
+>time_t</GTKDOCLINK
+>      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-DECODE-DATE"
+>g_mime_utils_header_decode_date</A
+> (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *saveoffset);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-HEADER-FORMAT-DATE"
+>g_mime_utils_header_format_date</A
+> (<GTKDOCLINK
+HREF="TIME-T"
+>time_t</GTKDOCLINK
+> time,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> offset);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTE-STRING"
+>g_mime_utils_quote_string</A
+>       (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> do_quotes);
+void        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UNQUOTE-STRING"
+>g_mime_utils_unquote_string</A
+>     (<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string);
+<GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-TEXT-IS-8BIT"
+>g_mime_utils_text_is_8bit</A
+>       (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *text);
+<A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-BEST-ENCODING"
+>g_mime_utils_best_encoding</A
+>
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *text);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-DECODE"
+>g_mime_utils_8bit_header_decode</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-ENCODE"
+>g_mime_utils_8bit_header_encode</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);
+<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-8BIT-HEADER-ENCODE-PHRASE"
+>g_mime_utils_8bit_header_encode_phrase</A
+>
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-DECODE-STEP"
+>g_mime_utils_base64_decode_step</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> *save);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-ENCODE-STEP"
+>g_mime_utils_base64_encode_step</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-BASE64-ENCODE-CLOSE"
+>g_mime_utils_base64_encode_close</A
+>
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-UUDECODE-STEP"
+>g_mime_utils_uudecode_step</A
+>      (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-DECODE-STEP"
+>g_mime_utils_quoted_decode_step</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *savestate,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *saved);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-ENCODE-STEP"
+>g_mime_utils_quoted_encode_step</A
+> (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);
+<GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        <A
+HREF="gmime-gmime-utils.html#G-MIME-UTILS-QUOTED-ENCODE-CLOSE"
+>g_mime_utils_quoted_encode_close</A
+>
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN1631"
+></A
+><H2
+>Description</H2
+><P
+></P
+></DIV
+><DIV
+CLASS="REFSECT1"
+><A
+NAME="AEN1634"
+></A
+><H2
+>Details</H2
+><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1636"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-HEADER-DECODE-DATE"
+></A
+>g_mime_utils_header_decode_date ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="TIME-T"
+>time_t</GTKDOCLINK
+>      g_mime_utils_header_decode_date (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *saveoffset);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Convert a date string to time_t representation. If 'saveoffset' is
+non-NULL, the value of the timezone offset will be stored.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1645"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input date string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>saveoffset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1662"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-HEADER-FORMAT-DATE"
+></A
+>g_mime_utils_header_format_date ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_header_format_date (<GTKDOCLINK
+HREF="TIME-T"
+>time_t</GTKDOCLINK
+> time,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> offset);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Creates a valid string representation of the date.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1671"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>time</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> time_t date representation</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>offset</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> Timezone offset</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1688"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-QUOTE-STRING"
+></A
+>g_mime_utils_quote_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_quote_string       (const <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string,
+                                             <GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+> do_quotes);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Escapes and optionally quotes the given string.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1697"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>do_quotes</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> wrap string in quotes.</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1714"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UNQUOTE-STRING"
+></A
+>g_mime_utils_unquote_string ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+>void        g_mime_utils_unquote_string     (<GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *string);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Unquotes and unescapes a string.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1721"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>string</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1730"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-TEXT-IS-8BIT"
+></A
+>g_mime_utils_text_is_8bit ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GBOOLEAN"
+>gboolean</GTKDOCLINK
+>    g_mime_utils_text_is_8bit       (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *text);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Determine if a string contains 8bit characters.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1738"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1751"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-BEST-ENCODING"
+></A
+>g_mime_utils_best_encoding ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><A
+HREF="gmime-gmime-part.html#GMIMEPARTENCODINGTYPE"
+>GMimePartEncodingType</A
+> g_mime_utils_best_encoding
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *text);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Determine the best encoding for the specified block of
+text. Returns a GMimePartEncodingType.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1759"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>text</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1772"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-8BIT-HEADER-DECODE"
+></A
+>g_mime_utils_8bit_header_decode ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_8bit_header_decode (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Decode the mime encoded header into it's original 8bit text.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1780"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header to decode</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1793"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-8BIT-HEADER-ENCODE"
+></A
+>g_mime_utils_8bit_header_encode ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_8bit_header_encode (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Encodes a string as several atoms. Useful for encoding headers like
+"Subject".</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1801"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header to encode</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1814"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-8BIT-HEADER-ENCODE-PHRASE"
+></A
+>g_mime_utils_8bit_header_encode_phrase ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+>*      g_mime_utils_8bit_header_encode_phrase
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Encodes an entire header phrase as 1 atom. Useful for encoding
+internet addresses.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1822"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> header to encode</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1835"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-BASE64-DECODE-STEP"
+></A
+>g_mime_utils_base64_decode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_base64_decode_step (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT"
+>guint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Decodes a chunk of base64 encoded data.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1847"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> max length of data to decode</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been decoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1877"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-BASE64-ENCODE-STEP"
+></A
+>g_mime_utils_base64_encode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_base64_encode_step (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Performs an 'encode step', only encodes blocks of 3 characters to
+the output at a time, saves left-over state in state and save
+(initialise to 0 on first invocation).</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1889"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1919"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-BASE64-ENCODE-CLOSE"
+></A
+>g_mime_utils_base64_encode_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_base64_encode_close
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> inlen,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Call this when finished encoding data with base64_encode_step to
+flush off the last little bit.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1931"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>inlen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> length of the input</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN1961"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-UUDECODE-STEP"
+></A
+>g_mime_utils_uudecode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_uudecode_step      (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GUINT32"
+>guint32</GTKDOCLINK
+> *save,
+                                             <GTKDOCLINK
+HREF="GCHAR"
+>gchar</GTKDOCLINK
+> *uulen);</PRE
+></TD
+></TR
+></TABLE
+><P
+>uudecodes a chunk of data. Assumes the "begin &lt;mode&gt; &lt;file name&gt;" line
+has been stripped off.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN1974"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> max length of data to decode ( normally strlen(in) ??)</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been decoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>uulen</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the value of the length-char which is used to calculate
+how many more chars need to be decoded for that 'line'</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2008"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-QUOTED-DECODE-STEP"
+></A
+>g_mime_utils_quoted_decode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_quoted_decode_step (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *savestate,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *saved);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Decodes a chunk of QP encoded data.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2020"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> max length of data to decode</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>savestate</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>saved</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been decoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2050"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-QUOTED-ENCODE-STEP"
+></A
+>g_mime_utils_quoted_encode_step ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_quoted_encode_step (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Performs an 'encode step', saves left-over state in state and save
+(initialise to -1 on first invocation).</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2062"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+><HR><DIV
+CLASS="REFSECT2"
+><A
+NAME="AEN2092"
+></A
+><H3
+><A
+NAME="G-MIME-UTILS-QUOTED-ENCODE-CLOSE"
+></A
+>g_mime_utils_quoted_encode_close ()</H3
+><TABLE
+BORDER="0"
+BGCOLOR="#D6E8FF"
+WIDTH="100%"
+CELLPADDING="6"
+><TR
+><TD
+><PRE
+CLASS="PROGRAMLISTING"
+><GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+>        g_mime_utils_quoted_encode_close
+                                            (const <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *in,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> len,
+                                             <GTKDOCLINK
+HREF="GUCHAR"
+>guchar</GTKDOCLINK
+> *out,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *state,
+                                             <GTKDOCLINK
+HREF="GINT"
+>gint</GTKDOCLINK
+> *save);</PRE
+></TD
+></TR
+></TABLE
+><P
+>Call this when finished encoding data with quoted_encode_step to
+flush off the last little bit.</P
+><P
+></P
+><DIV
+CLASS="INFORMALTABLE"
+><A
+NAME="AEN2104"
+></A
+><P
+></P
+><TABLE
+BORDER="0"
+WIDTH="100%"
+BGCOLOR="#FFD0D0"
+CELLSPACING="0"
+CELLPADDING="4"
+CLASS="CALSTABLE"
+><TBODY
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>in</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> input stream</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>len</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>out</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> output string</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>state</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> holds the number of bits that are stored in <TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+></TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><TT
+CLASS="PARAMETER"
+><I
+>save</I
+></TT
+>&nbsp;:</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+> leftover bits that have not yet been encoded</TD
+></TR
+><TR
+><TD
+WIDTH="20%"
+ALIGN="RIGHT"
+VALIGN="TOP"
+><I
+CLASS="EMPHASIS"
+>Returns</I
+> :</TD
+><TD
+WIDTH="80%"
+ALIGN="LEFT"
+VALIGN="TOP"
+>&nbsp;</TD
+></TR
+></TBODY
+></TABLE
+><P
+></P
+></DIV
+></DIV
+></DIV
+><DIV
+CLASS="NAVFOOTER"
+><BR><BR><TABLE
+WIDTH="100%"
+BORDER="0"
+BGCOLOR="#000000"
+CELLPADDING="1"
+CELLSPACING="0"
+><TR
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="left"
+><A
+HREF="gmime-gmime-message.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>&#60;&#60;&#60; Previous Page</B
+></FONT
+></A
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#0000C0"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="book1.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Home</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#00C000"
+ALIGN="center"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+><A
+HREF="libgmime.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Up</B
+></FONT
+></A
+></B
+></FONT
+></TD
+><TD
+WIDTH="25%"
+BGCOLOR="#C00000"
+ALIGN="right"
+><A
+HREF="gmime-internet-address.html"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>Next Page &#62;&#62;&#62;</B
+></FONT
+></A
+></TD
+></TR
+><TR
+><TD
+COLSPAN="2"
+ALIGN="left"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>gmime-message</B
+></FONT
+></TD
+><TD
+COLSPAN="2"
+ALIGN="right"
+><FONT
+COLOR="#FFFFFF"
+SIZE="3"
+><B
+>internet-address</B
+></FONT
+></TD
+></TR
+></TABLE
+></DIV
+></BODY
+></HTML
+>

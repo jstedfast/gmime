@@ -145,7 +145,7 @@ AC_SUBST(HTML_DIR)
 AC_OUTPUT(
   Makefile
   tests/Makefile
-dnl  doc/Makefile
+  doc/Makefile
   gmime-config
   libgmime.spec
   gmime.h

@@ -1,3 +1,17 @@
+2000-11-10  Jeffrey Stedfast  <fejj@helixcode.com>
+
+	* Makefile.am (SUBDIRS): Added doc
+
+	* configure.in: Generate doc/Makefile
+
+	* doc/Makefile.am: Ignore more headers when performaing
+	gtkdoc-scan.
+
+	* doc/gmime-docs.sgml:
+	* doc/gmime-sections.txt: Added.
+
+	* doc/html/*.html: Generated library reference.
+
 2000-11-09  Jeffrey Stedfast  <fejj@helixcode.com>
 
 	* TODO: Updated.
@@ -347,4 +361,4 @@
 
 	* gmime.h: add variables for major/minor/micro release
 
-	* Makefile.am: switch to GMIME_ instead og LIBGMIME_ stuff
+	* Makefile.am: switch to GMIME_ instead of LIBGMIME_ stuff

@@ -13,7 +13,7 @@ DOC_SOURCE_DIR=$(srcdir)
 TARGET_DIR=$(HTML_DIR)/$(DOC_MODULE)
 
 scan:
-	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime.h"
+	gtkdoc-scan --module=$(DOC_MODULE) --source-dir=$(DOC_SOURCE_DIR) --ignore-headers="gmime.h acconfig.h config.h"
 
 templates: scan
 	gtkdoc-mktmpl --module=$(DOC_MODULE)
