@@ -213,7 +213,7 @@ init (GMimeObject *object)
  * using #g_mime_object_register_type, to find an appropriate class
  * capable of handling MIME parts of type @type/@subtype. If no class
  * has been registered to handle that type, it looks for a registered
- * class that can handle @type/*. If that also fails, then it will use
+ * class that can handle @type. If that also fails, then it will use
  * the generic part class, #GMimePart.
  *
  * Returns an appropriate #GMimeObject registered to handle mime-types

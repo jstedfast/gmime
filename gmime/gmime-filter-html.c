@@ -292,6 +292,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	
 	while (inptr < inend) {
 		html->column = 0;
+		depth = 0;
 		
 		if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
 			if ((depth = citation_depth (start)) > 0) {
@@ -316,9 +317,9 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 #define CONVERT_URLS_OR_ADDRESSES (GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES)
 		if (html->flags & CONVERT_URLS_OR_ADDRESSES) {
 			struct _UrlRegexPattern *fmatch, *pat;
-			char *linebuf, *refurl, *dispurl;
 			size_t matchlen, len;
 			regoff_t offset;
+			char *linebuf;
 			char save;
 			int i;
 			
@@ -328,6 +329,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			linebuf[len] = '\0';
 			
 			start = linebuf;
+			save = '\0';
 			
 			do {
 				/* search for all of our patterns */

@@ -1,5 +1,20 @@
 2002-11-07  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* iconv-detect.c: Removd unused variables and #include <stdlib.h>
+
+	* gmime/gmime-multipart.c
+	(g_mime_multipart_get_subpart_from_content_id): Init part to NULL.
+
+	* gmime/gmime-stream-cat.c (stream_write): Init n to -1 each time
+	through the outer loop.
+
+	* gmime/gmime-filter-strip.c: #include <string.h> for memcpy.
+
+	* gmime/gmime-filter-html.c (html_convert): Make sure to
+	initialise depth to 0 each loop so we don't use it uninitialised.
+
+2002-11-07  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime*.[c,h]: Moved to gmime/ subdirectory. Also updated to
 	#include <gmime/some-header.h> instead of #include "some-header.h"
 

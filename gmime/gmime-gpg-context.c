@@ -559,9 +559,11 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		break;
 	}
 	
+#if d(!)0
 	for (i = 0; i < argv->len; i++)
-		printf ("%s ", argv->pdata[i]);
+		printf ("%s ", (char *) argv->pdata[i]);
 	printf ("\n");
+#endif
 	
 	g_ptr_array_add (argv, NULL);
 	
@@ -868,6 +870,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GMimeException *ex)
                            importing keys */
 			if (!strncmp (status, "IMPORT_RES", 10))
 				gpg->seen_eof1 = TRUE;
+			break;
+		case GPG_CTX_MODE_EXPORT:
 			break;
 		}
 	}

@@ -22,6 +22,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <iconv.h>
 
 enum {
@@ -92,7 +93,7 @@ static int num_iso10646_tests = sizeof (iso10646_tests) / sizeof (CharInfo);
 
 int main (int argc, char **argv)
 {
-	unsigned int bits, iso8859, iso2022, iso10646;
+	unsigned int iso8859, iso2022, iso10646;
 	CharInfo *info;
 	iconv_t cd;
 	FILE *fp;

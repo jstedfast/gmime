@@ -311,7 +311,7 @@ g_mime_charset_name (const char *charset)
 void
 g_mime_charset_init (GMimeCharset *charset)
 {
-	charset->mask = ~0;
+	charset->mask = (unsigned int) ~0;
 	charset->level = 0;
 }
 

@@ -783,8 +783,8 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	
 	subparts = multipart->subparts;
 	while (subparts) {
+		const GMimeObject *part = NULL;
 		const GMimeContentType *type;
-		const GMimeObject *part;
 		GMimeObject *subpart;
 		
 		subpart = subparts->data;

@@ -26,6 +26,7 @@
 #endif
 
 #include <stdio.h>
+#include <string.h>
 
 #include "gmime-filter-strip.h"
 
