@@ -113,6 +113,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-mem.h		\
 	gmime-stream-mmap.h		\
 	gmime-stream-null.h		\
+	gmime-type-utils.h		\
 	gmime-utils.h			\
 	internet-address.h
 
