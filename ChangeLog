@@ -1,5 +1,13 @@
 2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* gmime-stream-fs.c (stream_seek): Improve.
+
+	* gmime-stream-file.c (stream_reset): Oops, reset the position
+	pointer on a successful reset.
+	(stream_seek): Fixed.
+
+2001-09-19  Jeffrey Stedfast  <fejj@ximian.com>
+
 	* gmime-stream-fs.c (stream_reset): Reset the position offset. Doh!
 
 	* gmime-stream.c (g_mime_stream_write_to_stream): Don't increment

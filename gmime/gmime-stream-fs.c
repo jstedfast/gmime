@@ -155,10 +155,10 @@ stream_reset (GMimeStream *stream)
 	g_return_val_if_fail (fstream->fd != -1, -1);
 	
 	ret = lseek (fstream->fd, stream->bound_start, SEEK_SET);
-	if (ret != -1)
+	if (ret != -1) {
 		fstream->eos = FALSE;
-	
-	stream->position = stream->bound_start;
+		stream->position = stream->bound_start;
+	}
 	
 	return ret;
 }
@@ -167,36 +167,45 @@ static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
-	off_t ret;
+	off_t real = stream->position;
 	
 	g_return_val_if_fail (fstream->fd != -1, -1);
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
-		ret = lseek (fstream->fd, offset + stream->bound_start, SEEK_SET);
-		break;
-	case GMIME_STREAM_SEEK_END:
-		if (offset < 0) {
-			offset += stream->bound_end;
-			ret = lseek (fstream->fd, offset, SEEK_SET);
-		} else {
-			ret = lseek (fstream->fd, stream->bound_end, SEEK_SET);
-		}
+		real = offset;
 		break;
 	case GMIME_STREAM_SEEK_CUR:
-		offset += stream->position;
-		if (offset < stream->bound_start) {
-			ret = lseek (fstream->fd, stream->bound_start, SEEK_SET);
-		} else if (offset > stream->bound_end) {
-			ret = lseek (fstream->fd, stream->bound_end, SEEK_SET);
-		} else {
-			ret = lseek (fstream->fd, offset, SEEK_CUR);
+		real = stream->position + offset;
+		break;
+	case GMIME_STREAM_SEEK_END:
+		if (stream->bound_end == -1) {
+			real = lseek (fstream->fd, offset, SEEK_END);
+			if (real != -1) {
+				if (real < stream->bound_start)
+					real = stream->bound_start;
+				stream->position = real;
+			}
+			return real;
 		}
+		real = stream->bound_end + offset;
+		break;
 	}
 	
-	stream->position = lseek (fstream->fd, 0, SEEK_CUR);
+	if (stream->bound_end != -1)
+		real = MIN (real, stream->bound_end);
+	real = MAX (real, stream->bound_start);
 	
-	return ret;
+	real = lseek (fstream->fd, real, SEEK_SET);
+	if (real == -1)
+		return -1;
+	
+	if (real != stream->position && fstream->eos)
+		fstream->eos = FALSE;
+	
+	stream->position = real;
+	
+	return real;
 }
 
 static off_t
