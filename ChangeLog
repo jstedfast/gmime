@@ -1,5 +1,10 @@
 2002-11-17  Jeffrey Stedfast  <fejj@ximian.com>
 
+	* configure.in: Check for gethostbyname in -lnsl and also bump the
+	version to 1.90.6.
+
+	* src/getopt*.[c,h]: Added for portability to non-GNU systems.
+
 	* gmime/gmime-parser.c (g_mime_parser_init): Initialize scan_from
 	and have_regex here instead of in parser_init() since we don't
 	want these flags to be reset when a new stream gets set.

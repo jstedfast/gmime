@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=1
 GMIME_MINOR_VERSION=90
-GMIME_MICRO_VERSION=5
+GMIME_MICRO_VERSION=6
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -118,6 +118,11 @@ glib_cflags="$GLIB_CFLAGS"
 glib_libs="$GLIB_LIBS"
 AC_SUBST(glib_cflags)
 AC_SUBST(glib_libs)
+
+dnl *****************************
+dnl *** Checks for libnsl     ***
+dnl *****************************
+AC_CHECK_LIB(nsl, gethostbyname, LIBS="$LIBS -lnsl")
 
 dnl Check for libiconv
 AM_ICONV()

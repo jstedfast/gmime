@@ -33,8 +33,7 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#define _GNU_SOURCE
-#include <getopt.h>
+#include "getopt.h"
 
 #include <gmime/gmime.h>
 
