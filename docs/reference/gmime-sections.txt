@@ -938,9 +938,11 @@ GMimeParserClass
 <FILE>gmime-charset</FILE>
 g_mime_charset_map_init
 g_mime_locale_charset
+g_mime_charset_locale_name
 g_mime_locale_language
 g_mime_charset_canon_name
 g_mime_charset_iconv_name
+g_mime_charset_name
 g_mime_charset_iso_to_windows
 g_mime_charset_init
 g_mime_charset_step

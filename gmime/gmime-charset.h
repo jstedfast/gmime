@@ -42,6 +42,11 @@ const char *g_mime_charset_language (const char *charset);
 const char *g_mime_charset_canon_name (const char *charset);
 const char *g_mime_charset_iconv_name (const char *charset);
 
+#ifndef GMIME_DISABLE_DEPRECATED
+const char *g_mime_charset_name (const char *charset);
+const char *g_mime_charset_locale_name (void);
+#endif
+
 const char *g_mime_charset_iso_to_windows (const char *isocharset);
 
 

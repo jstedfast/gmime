@@ -536,6 +536,41 @@ g_mime_charset_canon_name (const char *charset)
 
 
 /**
+ * g_mime_charset_name:
+ * @charset: charset name
+ *
+ * Attempts to find an iconv-friendly charset name for @charset.
+ *
+ * Note: This function is deprecated. Use #g_mime_charset_iconv_name
+ * instead.
+ *
+ * Returns an iconv-friendly charset name for @charset.
+ **/
+const char *
+g_mime_charset_name (const char *charset)
+{
+	return g_mime_charset_iconv_name (charset);
+}
+
+
+/**
+ * g_mime_charset_locale_name:
+ *
+ * Gets the user's locale charset (or iso-8859-1 by default).
+ *
+ * Note: This function is deprecated. Use #g_mime_locale_charset
+ * instead.
+ *
+ * Returns the user's locale charset (or iso-8859-1 by default).
+ **/
+const char *
+g_mime_charset_locale_name (void)
+{
+	return g_mime_locale_charset ();
+}
+
+
+/**
  * g_mime_charset_iso_to_windows:
  * @isocharset: ISO-8859-# charset
  *
