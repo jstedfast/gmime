@@ -28,7 +28,6 @@
 #include "gmime.h"
 
 
-
 /**
  * g_mime_init:
  * @flags: initialization flags
@@ -47,7 +46,7 @@ g_mime_init (guint32 flags)
 	
 	g_type_init ();
 	
-	g_mime_charset_init ();
+	g_mime_charset_map_init ();
 	
 	g_mime_iconv_init ();
 	

@@ -195,7 +195,7 @@ g_mime_iconv_init (void)
 	if (initialized)
 		return;
 	
-	g_mime_charset_init ();
+	g_mime_charset_map_init ();
 	
 	iconv_cache_buckets = NULL;
 	iconv_cache = g_hash_table_new (g_str_hash, g_str_equal);

@@ -125,14 +125,14 @@ g_mime_charset_shutdown (void)
 
 
 /**
- * g_mime_charset_init:
+ * g_mime_charset_map_init:
  *
  * Initializes the locale charset variable for later calls to
  * gmime_charset_locale_name. Only really needs to be called for non-
  * iso-8859-1 locales.
  **/
 void
-g_mime_charset_init (void)
+g_mime_charset_map_init (void)
 {
 	char *charset, *iconv_name, *locale;
 	int i;
@@ -199,6 +199,11 @@ g_mime_charset_init (void)
 const char *
 g_mime_charset_locale_name (void)
 {
+	CHARSET_LOCK ();
+	if (!iconv_charsets)
+		g_mime_charset_map_init ();
+	CHARSET_UNLOCK ();
+	
 	return locale_charset ? locale_charset : "iso-8859-1";
 }
 
@@ -225,7 +230,7 @@ g_mime_charset_name (const char *charset)
 	
 	CHARSET_LOCK ();
 	if (!iconv_charsets)
-		g_mime_charset_init ();
+		g_mime_charset_map_init ();
 	
 	iconv_name = g_hash_table_lookup (iconv_charsets, name);
 	if (iconv_name) {
@@ -295,13 +300,14 @@ g_mime_charset_name (const char *charset)
 }
 
 
-typedef struct _Charset {
-	unsigned int mask;
-	unsigned int level;
-} Charset;
-
-static void
-charset_init (Charset *charset)
+/**
+ * g_mime_charset_init:
+ * @charset: charset mask
+ *
+ * Initializes a charset mask structure.
+ **/
+void
+g_mime_charset_init (GMimeCharset *charset)
 {
 	charset->mask = ~0;
 	charset->level = 0;
@@ -309,7 +315,7 @@ charset_init (Charset *charset)
 
 
 /**
- * charset_step:
+ * g_mime_charset_step:
  * @charset:
  * @in: input text buffer (must be in UTF-8)
  * @len: input buffer length
@@ -319,8 +325,8 @@ charset_init (Charset *charset)
  * @charset->mask with the mask for each glyph. This has the effect of
  * limiting what charsets our @charset->mask can match.
  **/
-static void
-charset_step (Charset *charset, const char *in, size_t len)
+void
+g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len)
 {
 	register const char *inptr = in;
 	const char *inend = in + len;
@@ -372,8 +378,18 @@ charset_best_mask (unsigned int mask)
 	return "UTF-8";
 }
 
-static const char *
-charset_best_name (Charset *charset)
+
+/**
+ * g_mime_charset_best_name:
+ * @charset: charset mask
+ *
+ * Gets the best charset name based on the charset mask @charset.
+ *
+ * Returns a pointer to a string containing the best charset name that
+ * can represent the charset mask @charset.
+ **/
+const char *
+g_mime_charset_best_name (GMimeCharset *charset)
 {
 	if (charset->level == 1)
 		return "iso-8859-1";
@@ -397,12 +413,12 @@ charset_best_name (Charset *charset)
 const char *
 g_mime_charset_best (const char *in, size_t inlen)
 {
-	Charset charset;
+	GMimeCharset charset;
 	
-	charset_init (&charset);
-	charset_step (&charset, in, inlen);
+	g_mime_charset_init (&charset);
+	g_mime_charset_step (&charset, in, inlen);
 	
-	return charset_best_name (&charset);
+	return g_mime_charset_best_name (&charset);
 }
 
 

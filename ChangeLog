@@ -1,3 +1,37 @@
+2002-08-21  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-filter-best.c: New filter for calculating the best charset
+	and encoding for a stream.
+
+	* gmime-iconv-utils.c (g_mime_iconv_locale_to_utf8): Make
+	threadsafe.
+	(g_mime_iconv_locale_to_utf8_length): Same.
+	(g_mime_iconv_utf8_to_locale): Here too.
+	(g_mime_iconv_utf8_to_locale_length): And here.
+
+	* gmime.c (g_mime_init): Updated to call
+	g_mime_charset_map_init().
+
+	* gmime-charset.c (g_mime_charset_locale_name): Initialize the
+	charset map if it hasn't already been initialized.
+	(g_mime_charset_map_init): Renamed from g_mime_charset_init().
+	(g_mime_charset_init): Renamed from charset_init() and also made
+	it globally accessable.
+	(g_mime_charset_step): New external function (was an internal
+	function before).
+	(g_mime_charset_best_name): Now an external function also.
+
+2002-08-19  Jeffrey Stedfast  <fejj@ximian.com>
+
+	* gmime-gpg-context.c (gpg_decrypt): Report better errors for when
+	gpg fails to be executed.
+	(gpg_encrypt): Same.
+	(gpg_verify): Here too.
+	(gpg_sign): And here.
+	(gpg_ctx_op_start): Try stat()ing the gpg binary to make sure it
+	exists and when handling an exception, save errno so we can re-set
+	it after cleanup.
+
 2002-08-11  Jeffrey Stedfast  <fejj@ximian.com>
 
 	* gmime-iconv.c: Instead of checking for #ifdef _REENTRANT, just

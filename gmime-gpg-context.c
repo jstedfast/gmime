@@ -560,11 +560,17 @@ static int
 gpg_ctx_op_start (struct _GpgCtx *gpg)
 {
 	char *status_fd = NULL, *passwd_fd = NULL;
-	int i, maxfd, fds[10];
+	int i, maxfd, errnosave, fds[10];
 	GPtrArray *argv;
+	struct stat st;
 	
 	for (i = 0; i < 10; i++)
 		fds[i] = -1;
+	
+	if (stat (gpg->path, &st) == -1)
+		goto exception;
+	
+	/* FIXME: check permissions on st.st_mode ? */
 	
 	maxfd = gpg->need_passwd ? 10 : 8;
 	for (i = 0; i < maxfd; i += 2) {
@@ -639,10 +645,14 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	
  exception:
 	
+	errnosave = errno;
+	
 	for (i = 0; i < 10; i++) {
 		if (fds[i] != -1)
 			close (fds[i]);
 	}
+	
+	errno = errnosave;
 	
 	return -1;
 }
@@ -1194,8 +1204,9 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 	gpg_ctx_set_ostream (gpg, ostream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Failed to execute gpg."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1292,8 +1303,9 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	gpg_ctx_set_istream (gpg, istream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Failed to execute gpg."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		goto exception;
 	}
@@ -1359,8 +1371,9 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	}
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Failed to execute gpg."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1406,8 +1419,9 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	gpg_ctx_set_ostream (gpg, ostream);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
-		g_mime_exception_set (ex, GMIME_EXCEPTION_SYSTEM,
-				      _("Failed to execute gpg."));
+		g_mime_exception_setv (ex, GMIME_EXCEPTION_SYSTEM,
+				       _("Failed to execute gpg: %s"),
+				       errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
 		return -1;

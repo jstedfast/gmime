@@ -35,6 +35,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-exception.c		\
 	gmime-filter.c			\
 	gmime-filter-basic.c		\
+	gmime-filter-best.c		\
 	gmime-filter-charset.c		\
 	gmime-filter-crlf.c		\
 	gmime-filter-from.c		\
@@ -81,6 +82,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-exception-list.def	\
 	gmime-filter.h			\
 	gmime-filter-basic.h		\
+	gmime-filter-best.h		\
 	gmime-filter-charset.h		\
 	gmime-filter-crlf.h		\
 	gmime-filter-from.h		\

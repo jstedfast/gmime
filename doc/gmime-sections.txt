@@ -699,9 +699,12 @@ GMimeParserClass
 
 <SECTION>
 <FILE>gmime-charset</FILE>
-g_mime_charset_init
+g_mime_charset_map_init
 g_mime_charset_locale_name
 g_mime_charset_name
+g_mime_charset_init
+g_mime_charset_step
+g_mime_charset_best_name
 g_mime_charset_best
 </SECTION>
 

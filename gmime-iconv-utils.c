@@ -33,8 +33,14 @@
 #include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 
-
-static gboolean initialized = FALSE;
+#ifdef G_THREADS_ENABLED
+static GStaticMutex lock = G_STATIC_MUTEX_INIT;
+#define LOCK()   g_static_mutex_lock (&lock)
+#define UNLOCK() g_static_mutex_unlock (&lock)
+#else
+#define LOCK()
+#define UNLOCK()
+#endif /* G_THREADS_ENABLED */
 
 static iconv_t utf8_to_locale;
 static iconv_t locale_to_utf8;
@@ -43,9 +49,13 @@ static iconv_t locale_to_utf8;
 static void
 iconv_utils_init (void)
 {
+	static gboolean initialized = FALSE;
 	const char *utf8, *locale;
 	
-	g_mime_charset_init ();
+	if (initialized)
+		return;
+	
+	g_mime_charset_map_init ();
 	
 	utf8 = g_mime_charset_name ("utf-8");
 	locale = g_mime_charset_name (g_mime_charset_locale_name ());
@@ -177,10 +187,15 @@ g_mime_iconv_strdup (iconv_t cd, const char *string)
 char *
 g_mime_iconv_locale_to_utf8 (const char *string)
 {
-	if (!initialized)
-		iconv_utils_init ();
+	char *buf;
 	
-	return g_mime_iconv_strdup (locale_to_utf8, string);
+	LOCK ();
+	iconv_utils_init ();
+	
+	buf = g_mime_iconv_strdup (locale_to_utf8, string);
+	UNLOCK ();
+	
+	return buf;
 }
 
 
@@ -198,10 +213,15 @@ g_mime_iconv_locale_to_utf8 (const char *string)
 char *
 g_mime_iconv_locale_to_utf8_length (const char *string, size_t n)
 {
-	if (!initialized)
-		iconv_utils_init ();
+	char *buf;
 	
-	return g_mime_iconv_strndup (locale_to_utf8, string, n);
+	LOCK ();
+	iconv_utils_init ();
+	
+	buf = g_mime_iconv_strndup (locale_to_utf8, string, n);
+	UNLOCK ();
+	
+	return buf;
 }
 
 
@@ -218,10 +238,15 @@ g_mime_iconv_locale_to_utf8_length (const char *string, size_t n)
 char *
 g_mime_iconv_utf8_to_locale (const char *string)
 {
-	if (!initialized)
-		iconv_utils_init ();
+	char *buf;
 	
-	return g_mime_iconv_strdup (utf8_to_locale, string);
+	LOCK ();
+	iconv_utils_init ();
+	
+	buf = g_mime_iconv_strdup (utf8_to_locale, string);
+	UNLOCK ();
+	
+	return buf;
 }
 
 
@@ -239,8 +264,13 @@ g_mime_iconv_utf8_to_locale (const char *string)
 char *
 g_mime_iconv_utf8_to_locale_length (const char *string, size_t n)
 {
-	if (!initialized)
-		iconv_utils_init ();
+	char *buf;
 	
-	return g_mime_iconv_strndup (utf8_to_locale, string, n);
+	LOCK ();
+	iconv_utils_init ();
+	
+	buf = g_mime_iconv_strndup (utf8_to_locale, string, n);
+	UNLOCK ();
+	
+	return buf;
 }

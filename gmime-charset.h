@@ -32,11 +32,22 @@ extern "C" {
 #include <glib.h>
 #include <sys/types.h>
 
-void        g_mime_charset_init (void);
+void        g_mime_charset_map_init (void);
 
 const char *g_mime_charset_locale_name (void);
 
 const char *g_mime_charset_name (const char *charset);
+
+typedef struct _GMimeCharset {
+	unsigned int mask;
+	unsigned int level;
+} GMimeCharset;
+
+void g_mime_charset_init (GMimeCharset *charset);
+
+void g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len);
+
+const char *g_mime_charset_best_name (GMimeCharset *charset);
 
 const char *g_mime_charset_best (const char *in, size_t inlen);
 
