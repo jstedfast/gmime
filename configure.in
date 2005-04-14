@@ -263,6 +263,19 @@ dnl ****************************
 AC_ARG_ENABLE(mono, [  --enable-mono       Enable Mono bindings [default=auto]], enable_mono="$enableval", enable_mono="auto")
 if test ! "x$enable_mono" = "xno"; then
 	AC_PATH_PROG(CSC, mcs, no)
+	# if we found mcs, make sure it's mono and not something else named
+	# mcs, such as Tru64's /usr/bin/mcs, for manipulating object file
+	# comment sections of eCOFF object files.
+	if test "x$CSC" != "xno" ; then
+		AC_MSG_CHECKING([whether $CSC is GNU Mono])
+		$CSC --version > /dev/null 2>&1
+		if test $? -ne 0 ; then
+			CSC=no
+			AC_MSG_RESULT([no])
+		else
+			AC_MSG_RESULT([yes])
+		fi
+	fi
 else
 	CSC="no"
 fi

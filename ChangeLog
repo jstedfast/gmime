@@ -1,3 +1,9 @@
+2005-04-14  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Applied patch from
+	mooney@dogbert.cc.ndsu.nodak.edu to not assume that mcs was GNU
+	Mono and to instead verify that it was. Fixes bug #172175.
+
 2005-03-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Updated.
