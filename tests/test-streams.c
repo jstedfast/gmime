@@ -20,6 +20,11 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
+#include <glib.h>
 
 #include <stdio.h>
 #include <string.h>
@@ -62,7 +67,7 @@ test_assert_real (gboolean result, const char *file, const char *function, int l
 	}
 }
 
-#define test_assert(assertion) test_assert_real (assertion, __FILE__, __FUNCTION__, __LINE__, #assertion)
+#define test_assert(assertion) test_assert_real (assertion, __FILE__, G_GNUC_FUNCTION, __LINE__, #assertion)
 
 static void
 test_push (char *subtest)
