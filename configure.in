@@ -45,8 +45,8 @@ case "$host" in
     ;;
 esac
 AC_MSG_RESULT($platform_win32)
-AM_CONDITIONAL(PLATFORM_WIN32, test "x$platform_win32" == "xyes")
-AM_CONDITIONAL(OS_WIN32, test "$native_win32" == "xyes")
+AM_CONDITIONAL(PLATFORM_WIN32, test "x$platform_win32" = "xyes")
+AM_CONDITIONAL(OS_WIN32, test "$native_win32" = "xyes")
 AC_SUBST(GMIME_DEF)
 
 if test "$glib_native_win32" = "yes"; then
