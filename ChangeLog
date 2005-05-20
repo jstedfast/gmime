@@ -1,3 +1,8 @@
+2005-05-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (header_fold): Eat up extraneous whitespace
+	after forcing a fold.
+
 2005-03-30  Tim Mooney <Tim.Mooney@ndsu.edu>
 
 	* tests/test-stream.c: include <glib.h>, so we can use G_GNUC_FUNCTION
