@@ -1,5 +1,25 @@
 2005-05-25  Joe Shaw  <joeshaw@novell.com>
 
+	* mono/GMime.metdata: Add a few extra rules since the
+	parser/generator changed how certain types are represented.
+
+	* mono/InternetAddress.custom: Remove this file, move the code to...
+
+	* mono/InternetAddressList.cs: ... this file, making it a
+	first-order object.  Since it implements IDisposable and people
+	might want to explicitly dispose it.
+
+	* mono/Message.custom (GetRecipients): Return an
+	InternetAddressList rather than an ICollection, so people can
+	dispose when finished.  Also have it always return a valid
+	InternetAddressList, so you don't have to do a null check before a
+	foreach.
+
+	* mono/Makefile.am: Remove InternetAddress.custom from customs and
+	add InternetAddressList.cs to sources.
+
+2005-05-25  Joe Shaw  <joeshaw@novell.com>
+
 	* gmime/internet-address.c: Add accessor functions
 	internet_address_get_type(), internet_address_get_name(),
 	internet_address_get_addr() and internet_address_get_members() for

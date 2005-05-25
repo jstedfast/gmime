@@ -18,6 +18,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gmime-sharp.pc
 
 sources = 				\
+	InternetAddressList.cs		\
 	ObjectStream.cs			\
 	#
 
@@ -25,7 +26,6 @@ build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
 
 customs = 				\
 	Global.custom			\
-	InternetAddress.custom		\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom			\

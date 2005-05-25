@@ -7,14 +7,11 @@ public enum RecipientType {
 [DllImport ("gmime")]
 static extern IntPtr g_mime_message_get_recipients (IntPtr raw, string type);
 
-public ICollection GetRecipients (RecipientType type)
+public InternetAddressList GetRecipients (RecipientType type)
 {
 	IntPtr raw_ret = g_mime_message_get_recipients (Handle, type.ToString ());
 
-	if (raw_ret == IntPtr.Zero)
-		return null;
-
-	return new InternetAddress.InternetAddressList (raw_ret);
+	return new InternetAddressList (raw_ret);
 }
 
 [DllImport("gmime")]

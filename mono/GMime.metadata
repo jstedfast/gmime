@@ -28,6 +28,8 @@
   <!-- Certain things take const unsigned char *, which the generator doesn't deal with nicely. -->
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned']" name="name">str</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned']" name="type">const-char*</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="name">str</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="type">const-char*</attr>
 
   <!-- Make some structures opaque -->
   <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="opaque">1</attr>
