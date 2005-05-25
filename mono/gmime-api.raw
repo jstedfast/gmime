@@ -366,7 +366,7 @@
       </method>
       <constructor cname="g_mime_filter_best_new">
         <parameters>
-          <parameter type="unsigned int" name="flags"/>
+          <parameter type="unsigned-int" name="flags"/>
         </parameters>
       </constructor>
     </object>
@@ -459,7 +459,7 @@
       <method name="GetDigest" cname="g_mime_filter_md5_get_digest">
         <return-type type="void"/>
         <parameters>
-          <parameter type="unsigned char" array="true" name="digest"/>
+          <parameter type="unsigned-char" array="true" name="digest"/>
         </parameters>
       </method>
       <method name="GetType" cname="g_mime_filter_md5_get_type" shared="true">
@@ -1377,9 +1377,8 @@
       <method name="Printf" cname="g_mime_stream_printf">
         <return-type type="ssize_t"/>
         <parameters>
-          <parameter type="const-char*" name="fmt"/>
-          <parameter ellipsis="true"/>
-          <parameter type="3" name="arg3"/>
+          <parameter type="const-char*" name="fmt" printf_format="true"/>
+          <parameter ellipsis="true" printf_format_args="true"/>
         </parameters>
       </method>
       <method name="Read" cname="g_mime_stream_read">
@@ -1802,6 +1801,13 @@
         <return-type type="gboolean"/>
       </method>
       <constructor cname="g_mime_header_new"/>
+      <method name="Prepend" cname="g_mime_header_prepend">
+        <return-type type="void"/>
+        <parameters>
+          <parameter type="const-char*" name="name"/>
+          <parameter type="const-char*" name="value"/>
+        </parameters>
+      </method>
       <method name="RegisterWriter" cname="g_mime_header_register_writer">
         <return-type type="void"/>
         <parameters>
@@ -1962,6 +1968,18 @@
         <parameters>
           <parameter type="InternetAddress*" name="member"/>
         </parameters>
+      </method>
+      <method name="GetAddr" cname="internet_address_get_addr">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetMembers" cname="internet_address_get_members">
+        <return-type type="const-InternetAddressList*"/>
+      </method>
+      <method name="GetName" cname="internet_address_get_name">
+        <return-type type="const-char*"/>
+      </method>
+      <method name="GetType" cname="internet_address_get_type">
+        <return-type type="InternetAddressType"/>
       </method>
       <constructor cname="internet_address_new"/>
       <constructor cname="internet_address_new_group">
@@ -2216,9 +2234,9 @@
       <method name="Base64DecodeStep" cname="g_mime_utils_base64_decode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2226,9 +2244,9 @@
       <method name="Base64EncodeClose" cname="g_mime_utils_base64_encode_close" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2236,9 +2254,9 @@
       <method name="Base64EncodeStep" cname="g_mime_utils_base64_encode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2246,7 +2264,7 @@
       <method name="BestEncoding" cname="g_mime_utils_best_encoding" shared="true">
         <return-type type="GMimePartEncodingType"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="text"/>
           <parameter type="size_t" name="len"/>
         </parameters>
       </method>
@@ -2272,25 +2290,25 @@
       <method name="HeaderDecodePhrase" cname="g_mime_utils_header_decode_phrase" shared="true">
         <return-type type="char*"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
         </parameters>
       </method>
       <method name="HeaderDecodeText" cname="g_mime_utils_header_decode_text" shared="true">
         <return-type type="char*"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
         </parameters>
       </method>
       <method name="HeaderEncodePhrase" cname="g_mime_utils_header_encode_phrase" shared="true">
         <return-type type="char*"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
         </parameters>
       </method>
       <method name="HeaderEncodeText" cname="g_mime_utils_header_encode_text" shared="true">
         <return-type type="char*"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
         </parameters>
       </method>
       <method name="HeaderFold" cname="g_mime_utils_header_fold" shared="true">
@@ -2322,9 +2340,9 @@
       <method name="QuotedDecodeStep" cname="g_mime_utils_quoted_decode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="savestate"/>
           <parameter type="int*" name="saved"/>
         </parameters>
@@ -2332,9 +2350,9 @@
       <method name="QuotedEncodeClose" cname="g_mime_utils_quoted_encode_close" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="int*" name="save"/>
         </parameters>
@@ -2342,9 +2360,9 @@
       <method name="QuotedEncodeStep" cname="g_mime_utils_quoted_encode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="int*" name="save"/>
         </parameters>
@@ -2358,7 +2376,7 @@
       <method name="TextIs8bit" cname="g_mime_utils_text_is_8bit" shared="true">
         <return-type type="gboolean"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="text"/>
           <parameter type="size_t" name="len"/>
         </parameters>
       </method>
@@ -2377,9 +2395,9 @@
       <method name="UudecodeStep" cname="g_mime_utils_uudecode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2387,10 +2405,10 @@
       <method name="UuencodeClose" cname="g_mime_utils_uuencode_close" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
-          <parameter type="unsigned char*" name="uubuf"/>
+          <parameter type="unsigned-char*" name="out"/>
+          <parameter type="unsigned-char*" name="uubuf"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2398,10 +2416,10 @@
       <method name="UuencodeStep" cname="g_mime_utils_uuencode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
-          <parameter type="unsigned char*" name="uubuf"/>
+          <parameter type="unsigned-char*" name="out"/>
+          <parameter type="unsigned-char*" name="uubuf"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="save"/>
         </parameters>
@@ -2411,9 +2429,9 @@
       <method name="YdecodeStep" cname="g_mime_ydecode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="pcrc"/>
           <parameter type="guint32*" name="crc"/>
@@ -2424,9 +2442,9 @@
       <method name="Close" cname="g_mime_yencode_close" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="pcrc"/>
           <parameter type="guint32*" name="crc"/>
@@ -2435,9 +2453,9 @@
       <method name="Step" cname="g_mime_yencode_step" shared="true">
         <return-type type="size_t"/>
         <parameters>
-          <parameter type="const-unsigned" name="char*"/>
+          <parameter type="const-unsigned-char*" name="in"/>
           <parameter type="size_t" name="inlen"/>
-          <parameter type="unsigned char*" name="out"/>
+          <parameter type="unsigned-char*" name="out"/>
           <parameter type="int*" name="state"/>
           <parameter type="guint32*" name="pcrc"/>
           <parameter type="guint32*" name="crc"/>

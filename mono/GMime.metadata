@@ -13,6 +13,11 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
 
+  <!-- The generator irritating always converts a method named GetType to a
+       GType property regardless of whether or not it's actually a glib type
+       So rename this one -->
+  <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
+
   <!-- Certain things return ssize_t and off_t, which the generator doesn't deal with nicely. -->
   <!-- FIXME: These would likely need to be changed for 64-bit -->
   <attr path="/api/namespace/callback/return-type[@type='ssize_t']" name="type">int</attr>

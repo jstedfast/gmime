@@ -67,6 +67,11 @@ void internet_address_set_addr (InternetAddress *ia, const char *addr);
 void internet_address_set_group (InternetAddress *ia, InternetAddressList *group);
 void internet_address_add_member (InternetAddress *ia, InternetAddress *member);
 
+InternetAddressType internet_address_get_type (InternetAddress *ia);
+const char *internet_address_get_name (InternetAddress *ia);
+const char *internet_address_get_addr (InternetAddress *ia);
+const InternetAddressList *internet_address_get_members (InternetAddress *ia);
+
 InternetAddressList *internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_append (InternetAddressList *list, InternetAddress *ia);
 InternetAddressList *internet_address_list_concat (InternetAddressList *a, InternetAddressList *b);

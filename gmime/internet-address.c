@@ -258,6 +258,67 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 
 
 /**
+ * internet_address_get_type:
+ * @ia: internet address
+ *
+ * Returns the type of the internet address.
+ **/
+InternetAddressType
+internet_address_get_type (InternetAddress *ia)
+{
+	g_return_if_fail (ia != NULL);
+
+	return ia->type;
+}
+
+/**
+ * internet_address_get_name:
+ * @ia: internet address
+ *
+ * Returns the name of the internet address.
+ **/
+const char *
+internet_address_get_name (InternetAddress *ia)
+{
+	g_return_if_fail (ia != NULL);
+
+	return ia->name;
+}
+
+
+/**
+ * internet_address_get_addr:
+ * @ia: internet address
+ *
+ * Returns the address of the internet address.
+ **/
+const char *
+internet_address_get_addr (InternetAddress *ia)
+{
+	g_return_if_fail (ia != NULL);
+	g_return_if_fail (ia->type != INTERNET_ADDRESS_GROUP);
+
+	return ia->value.addr;
+}
+
+
+/**
+ * internet_address_get_members:
+ * @ia: internet address
+ *
+ * Returns the list of internet addresses
+ **/
+const InternetAddressList *
+internet_address_get_members (InternetAddress *ia)
+{
+	g_return_if_fail (ia != NULL);
+	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
+
+	return ia->value.members;
+}
+
+
+/**
  * internet_address_list_prepend:
  * @list: a list of internet addresses
  * @ia: internet address to prepend

@@ -1,3 +1,18 @@
+2005-05-25  Joe Shaw  <joeshaw@novell.com>
+
+	* gmime/internet-address.c: Add accessor functions
+	internet_address_get_type(), internet_address_get_name(),
+	internet_address_get_addr() and internet_address_get_members() for
+	binding into the Mono bindings.
+
+	* mono/GMime.metadata: Work around an automatic rename of the
+	gtk-sharp generator of a method named "GetType" to a property
+	named "GType," since this method doesn't return a GType.  Rename
+	it to "GetAddressType" which is mapped to an "AddressType"
+	property.
+
+	* mono/gmime-api.raw: Regenerated.
+
 2005-05-20  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (header_fold): Eat up extraneous whitespace
