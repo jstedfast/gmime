@@ -32,6 +32,13 @@
 #include "gmime-content-type.h"
 #include "gmime-table-private.h"
 
+
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #define d(x)
 
 
@@ -90,9 +97,9 @@ g_mime_content_type_new (const char *type, const char *subtype)
 			mime_type->subtype = g_strdup ("octet-stream");
 		}
 		
-		g_warning ("Invalid or incomplete type: %s%s%s: defaulting to %s/%s",
-			   type ? type : "", subtype ? "/" : "", subtype ? subtype : "",
-			   mime_type->type, mime_type->subtype);
+		w(g_warning ("Invalid or incomplete type: %s%s%s: defaulting to %s/%s",
+			     type ? type : "", subtype ? "/" : "", subtype ? subtype : "",
+			     mime_type->type, mime_type->subtype));
 	}
 	
 	return mime_type;
