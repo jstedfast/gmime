@@ -25,7 +25,9 @@ sources = 				\
 build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
 
 customs = 				\
+	DataWrapper.custom		\
 	Global.custom			\
+	Header.custom			\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom			\

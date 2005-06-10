@@ -1,3 +1,22 @@
+2005-06-10  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/DataWrapper.custom: Added.  Adds a WriteToStream() overload
+	which takes a System.IO.Stream.
+
+	* mono/Header.custom: Ditto.
+
+	* mono/Makefile.am: Add DataWrapper.custom and Header.custom to
+	customs.
+
+	* mono/Object.custom: Remove the GetData() method... it was rather
+	flawed.  WriteToStream() is the right way to go about it now.  Add
+	a WriteToStream() overload like DataWrapper and Header.
+
+	* mono/Stream.custom: Add an internal CopyToStream() method which
+	instantiates a GMime.StreamMem, calls WriteToStream() on it, and
+	then copies the data from the GByteArray into a System.IO.Stream.
+	Also add a WriteToStream() overload like the others.
+
 2005-05-25  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/GMime.metdata: Add a few extra rules since the
