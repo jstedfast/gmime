@@ -1,5 +1,10 @@
 2005-06-10  Joe Shaw  <joeshaw@novell.com>
 
+	* mono/Stream.custom (CopyToStream): Check to see if
+	byte_array.data is IntPtr.Zero and don't try to copy if it is.
+
+2005-06-10  Joe Shaw  <joeshaw@novell.com>
+
 	* mono/DataWrapper.custom: Added.  Adds a WriteToStream() overload
 	which takes a System.IO.Stream.
 

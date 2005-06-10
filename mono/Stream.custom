@@ -27,6 +27,10 @@ internal static int CopyToStream (System.IO.Stream io_stream, WriteToStreamDeleg
 		write_delegate (gmime_stream);
 
 		GByteArray byte_array = (GByteArray) Marshal.PtrToStructure (raw_byte_array, typeof (GByteArray));
+
+		if (byte_array.data == IntPtr.Zero)
+			return 0;
+
 		byte[] data = new byte [byte_array.len];
 		Marshal.Copy (byte_array.data, data, 0, (int) byte_array.len);
 		io_stream.Write (data, 0, data.Length);
