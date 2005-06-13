@@ -868,7 +868,7 @@ parser_step_headers (GMimeParser *parser)
 				goto headers_end;
 			
 			len = inptr - start;
-			if (inptr[-1] == '\r')
+			if (inptr > start && inptr[-1] == '\r')
 				len--;
 			
 			header_append (priv, start, len);

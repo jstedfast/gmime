@@ -1,3 +1,12 @@
+2005-06-13  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Updated
+
+	* configure.in: Bumped version to 2.1.5
+
+	* gmime/gmime-parser.c (parser_step_headers): Don't check
+	inptr[-1] unless inptr > start
+
 2005-06-10  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Stream.custom (CopyToStream): Check to see if
