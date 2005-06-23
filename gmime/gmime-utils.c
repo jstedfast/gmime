@@ -659,7 +659,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 	}
 	
 	d(printf ("\n"));
-		
+	
 	t = mktime_utc (&tm);
 	
 	/* t is now GMT of the time we want, but not offset by the timezone ... */
@@ -736,7 +736,12 @@ g_mime_utils_header_decode_date (const char *in, int *saveoffset)
 	struct _date_token *token, *tokens;
 	time_t date;
 	
-	tokens = datetok (in);
+	if (!(tokens = datetok (in))) {
+		if (saveoffset)
+			*saveoffset = 0;
+		
+		return (time_t) 0;
+	}
 	
 	date = parse_rfc822_date (tokens, saveoffset);
 	if (!date)

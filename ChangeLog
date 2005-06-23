@@ -1,3 +1,9 @@
+2005-06-23  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_date): Handle
+	the case where the number of tokens returned from datetok is 0
+	which can happen if broken software sends an empty Date: header.
+
 2005-06-13  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Updated
