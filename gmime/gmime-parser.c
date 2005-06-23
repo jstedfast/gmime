@@ -430,7 +430,7 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
  * g_mime_parser_get_persist_stream:
  * @parser: MIME parser object
  *
- * Gets whether or not the underlying stream is persistant.
+ * Gets whether or not the underlying stream is persistent.
  *
  * Returns %TRUE if the @parser will leave the content on disk or
  * %FALSE if it will load the content into memory.
@@ -449,10 +449,10 @@ g_mime_parser_get_persist_stream (GMimeParser *parser)
  * @parser: MIME parser object
  * @persist: persist attribute
  *
- * Sets whether or not the @parser's underlying stream is persistant.
+ * Sets whether or not the @parser's underlying stream is persistent.
  *
  * If @persist is %TRUE, the @parser will attempt to construct
- * messages/parts whos content will remain on disk rather than being
+ * messages/parts whose content will remain on disk rather than being
  * loaded into memory so as to reduce memory usage. This is the default.
  *
  * If @persist is %FALSE, the @parser will always load message content

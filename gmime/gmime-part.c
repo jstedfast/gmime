@@ -1236,7 +1236,7 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
  * of the raw data buffer.
  *
  * WARNING: This interface is deprecated. Use
- * g_mime_get_content_object() instead.
+ * g_mime_part_get_content_object() instead.
  * 
  * Returns a const char * pointer to the raw contents of the MIME Part
  * and sets @len to the length of the buffer. Note: textual content

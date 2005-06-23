@@ -1501,7 +1501,7 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
 	
 	type = g_mime_object_get_content_type (message->mime_part);
 	if (GMIME_IS_MULTIPART (message->mime_part)) {
-		/* lets see if we can find a body in the multipart */
+		/* let's see if we can find a body in the multipart */
 		multipart = GMIME_MULTIPART (message->mime_part);
 		if (g_mime_content_type_is_type (type, "multipart", "alternative"))
 			mime_part = handle_multipart_alternative (multipart, want_plain, is_html);

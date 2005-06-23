@@ -127,7 +127,7 @@ url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.
       use file descriptors) but with a few extras taken from the
       higher-level Standard C I/O API.</para>
       
-      <para>Lets take a moment to regres back to our early days of
+      <para>Let's take a moment to regres back to our early days of
       programming where we learned how to write "Hello World!" on the
       console:</para>
       
@@ -264,7 +264,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
         </programlisting>
       </note>
       
-      <para>Next, lets examine some of the other stream
+      <para>Next, let's examine some of the other stream
       functions.</para>
       
       <programlisting role="C">
@@ -321,7 +321,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       own.</para>
       
       <para>We've already seen GMimeStreamFile and GMimeStreamFs in
-      action in the prevous chapter, so lets skip them and start with
+      action in the prevous chapter, so let's skip them and start with
       GMimeStreamMem.</para>
       
       <para>GMimeStremMem is a stream abstraction that reads and
@@ -508,7 +508,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       
       <para>GMime comes pre-bundled with a number of stream filters
       for your convenience and more may be added in the future. For
-      now, lets breeze through a summary of some of the more important
+      now, let's breeze through a summary of some of the more important
       ones:</para>
       
       <para>GMimeFilterBasic is used quite a lot internally in GMime
@@ -587,11 +587,11 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       <title>GMimePart</title>
       
       <para>Since most people seem to want to know how to "save an
-      attachment", lets start there.</para>
+      attachment", let's start there.</para>
       
       <para>Given a GMimePart object, the first step to saving an
       attachment is probably going to be figuring out what the
-      filename is. To do that, you'lllikely want to do something
+      filename is. To do that, you'll likely want to do something
       like:</para>
       
       <programlisting role="C">
