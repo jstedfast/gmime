@@ -570,6 +570,7 @@ GMimeHeaderForeachFunc
 g_mime_header_new
 g_mime_header_destroy
 g_mime_header_add
+g_mime_header_prepend
 g_mime_header_set
 g_mime_header_get
 g_mime_header_remove

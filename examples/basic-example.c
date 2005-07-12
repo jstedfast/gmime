@@ -105,7 +105,7 @@ request_passwd (GMimeSession *session, const char *prompt, gboolean secret, cons
 	
 	fprintf (stdout, "%s\nPassphrase: %s\n", prompt, passphrase);
 	fgets (buffer, 255, stdin);
-	buffer[strlen (buffer)] = '\0'; /* chop off \n */
+	buffer[strlen (buffer) - 1] = '\0'; /* chop off \n */
 #endif
 	return g_strdup (/*buffer*/passphrase);
 }

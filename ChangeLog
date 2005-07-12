@@ -1,3 +1,10 @@
+2005-07-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* mono/Makefile.am: libexecdir fixes by Stanislav
+
+	* gmime/internet-address.c: Fixes to various functions that used
+	incorrect g_return*_if_fail variants. Thanks to sbrabec@suse.cz
+
 2005-06-23  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_utils_header_decode_date): Handle

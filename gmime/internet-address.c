@@ -266,7 +266,7 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
 InternetAddressType
 internet_address_get_type (InternetAddress *ia)
 {
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia != NULL, INTERNET_ADDRESS_NONE);
 
 	return ia->type;
 }
@@ -280,7 +280,7 @@ internet_address_get_type (InternetAddress *ia)
 const char *
 internet_address_get_name (InternetAddress *ia)
 {
-	g_return_if_fail (ia != NULL);
+	g_return_val_if_fail (ia != NULL, NULL);
 
 	return ia->name;
 }
@@ -295,8 +295,8 @@ internet_address_get_name (InternetAddress *ia)
 const char *
 internet_address_get_addr (InternetAddress *ia)
 {
-	g_return_if_fail (ia != NULL);
-	g_return_if_fail (ia->type != INTERNET_ADDRESS_GROUP);
+	g_return_val_if_fail (ia != NULL, NULL);
+	g_return_val_if_fail (ia->type != INTERNET_ADDRESS_GROUP, NULL);
 
 	return ia->value.addr;
 }
@@ -311,8 +311,8 @@ internet_address_get_addr (InternetAddress *ia)
 const InternetAddressList *
 internet_address_get_members (InternetAddress *ia)
 {
-	g_return_if_fail (ia != NULL);
-	g_return_if_fail (ia->type != INTERNET_ADDRESS_NAME);
+	g_return_val_if_fail (ia != NULL, NULL);
+	g_return_val_if_fail (ia->type != INTERNET_ADDRESS_NAME, NULL);
 
 	return ia->value.members;
 }
