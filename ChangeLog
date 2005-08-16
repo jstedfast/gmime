@@ -1,3 +1,8 @@
+2005-08-16  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/Makefile.am: libexecdir isn't right; we should be using
+	$prefix/lib instead.
+
 2005-07-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	* mono/Makefile.am: libexecdir fixes by Stanislav
