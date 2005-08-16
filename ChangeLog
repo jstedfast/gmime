@@ -1,3 +1,13 @@
+2005-08-17  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Require gtk-sharp 2 for the mono bindings.
+
+	* mono/GMime.metadata: Rename a few items that the gtk-sharp 2
+	parser added.
+
+	* mono/gmime-api.raw: Regengerate this using the gtk-sharp 2
+	parser.
+
 2005-08-16  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Makefile.am: libexecdir isn't right; we should be using

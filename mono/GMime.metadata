@@ -3,6 +3,9 @@
   <!-- Rename some items -->
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']" name="name">EightBitHeaderDecode</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']" name="name">EightBitHeaderEncode</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']" name="name">EightBitHeaderEncodePhrase</attr>
 
   <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
   <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
