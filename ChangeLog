@@ -1,3 +1,7 @@
+2005-08-18  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/Makefile.am: Install gmime-api.xml into gapi-2.0
+
 2005-08-17  Joe Shaw  <joeshaw@novell.com>
 
 	* configure.in: Require gtk-sharp 2 for the mono bindings.
