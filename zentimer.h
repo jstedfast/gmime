@@ -118,7 +118,7 @@ static ztimer_t zen_ztimer = ZTIMER_INITIALIZER;
 #define ZenTimerReport(oper) G_STMT_START {                            \
 	if (zen_ztimer.stop.msec < zen_ztimer.start.msec) {            \
 		zen_ztimer.stop.msec += 1000;                          \
-		zen_ztimer.stop.sec -= 1;                              \
+		zen_ztimer.stop.sec--;                                 \
 	}                                                              \
 	                                                               \
 	fprintf (stderr, "ZenTimer: %s took %lu.%03d seconds\n", oper, \
