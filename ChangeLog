@@ -1,3 +1,8 @@
+2005-09-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message-partial.c (header_copy): Only set the value
+	if the value is non-NULL. Thanks to Peter Bloomfield for this fix.
+
 2005-08-18  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Updated version

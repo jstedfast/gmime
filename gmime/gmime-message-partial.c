@@ -354,7 +354,8 @@ header_copy (const char *name, const char *value, gpointer user_data)
 {
 	GMimeMessage *message = (GMimeMessage *) user_data;
 	
-	g_mime_object_add_header (GMIME_OBJECT (message), name, value);
+	if (value)
+		g_mime_object_add_header (GMIME_OBJECT (message), name, value);
 }
 
 static GMimeMessage *
