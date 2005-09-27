@@ -403,6 +403,11 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (ctx->sign_protocol != NULL, NULL);
 	
+	if (g_mime_multipart_get_number ((GMimeMultipart *) mps) != 2) {
+		/* FIXME: set an exception */
+		return NULL;
+	}
+	
 	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "protocol");
 	micalg = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "micalg");
 	

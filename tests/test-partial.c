@@ -78,16 +78,14 @@ int main (int argc, char **argv)
 	
 	partials = g_ptr_array_new ();
 	for (i = 1; i < argc; i++) {
-		fd = open (argv[i], O_RDONLY);
-		if (fd == -1)
+		if ((fd = open (argv[i], O_RDONLY)) == -1)
 			return -1;
 		
 		stream = g_mime_stream_fs_new (fd);
 		g_mime_parser_init_with_stream (parser, stream);
 		g_mime_stream_unref (stream);
 		
-		message = g_mime_parser_construct_message (parser);
-		if (message == NULL)
+		if (!(message = g_mime_parser_construct_message (parser)))
 			return -2;
 		
 		if (!GMIME_IS_MESSAGE_PARTIAL (message->mime_part))

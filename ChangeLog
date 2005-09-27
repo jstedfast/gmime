@@ -1,3 +1,12 @@
+2005-09-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message-partial.c
+	(g_mime_message_partial_split_message): Reworked the splitting
+	logic to try and split on whole-lines.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Return NULL if the number of parts is incorrect.
+
 2005-09-20  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message-partial.c (header_copy): Only set the value

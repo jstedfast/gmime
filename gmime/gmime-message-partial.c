@@ -391,10 +391,11 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeMessagePartial *partial;
 	GMimeStream *stream, *substream;
 	GMimeDataWrapper *wrapper;
+	const unsigned char *buf;
 	GPtrArray *parts;
+	size_t len, end;
 	const char *id;
 	off_t start;
-	size_t len;
 	int i;
 	
 	*nparts = 0;
@@ -402,6 +403,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	stream = g_mime_stream_mem_new ();
+	buf = ((GMimeStreamMem *) stream)->buffer->data;
 	
 	if (g_mime_object_write_to_stream (GMIME_OBJECT (message), stream) == -1) {
 		g_object_unref (stream);
@@ -417,18 +419,32 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 		g_object_unref (stream);
 		g_object_ref (message);
 		
-		messages = g_malloc (sizeof (void *) * 2);
+		messages = g_malloc (sizeof (void *));
 		messages[0] = message;
 		*nparts = 1;
 		
 		return messages;
 	}
 	
+	start = 0;
 	parts = g_ptr_array_new ();
-	for (i = 0, start = 0; start < len; i++) {
-		substream = g_mime_stream_substream (stream, start, MIN (len, start + max_size));
+	while (start < len) {
+		/* Preferably, we'd split on whole-lines if we can,
+		 * but if that's not possible, split on max size */
+		if ((end = MIN (len, start + max_size)) < len) {
+			register size_t ebx; /* end boundary */
+			
+			ebx = end;
+			while (ebx > (start + 1) && ebx[buf] != '\n')
+				ebx--;
+			
+			if (ebx[buf] == '\n')
+				end = ebx + 1;
+		}
+		
+		substream = g_mime_stream_substream (stream, start, end);
 		g_ptr_array_add (parts, substream);
-		start += max_size;
+		start = end;
 	}
 	
 	id = g_mime_message_get_message_id (message);
