@@ -859,6 +859,7 @@ parser_step_headers (GMimeParser *parser)
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
 				header_append (priv, start, inptr - start);
+				priv->midline = TRUE;
 				priv->inptr = inptr;
 				len = inend - inptr;
 				goto refill;
@@ -874,19 +875,16 @@ parser_step_headers (GMimeParser *parser)
 			
 			header_append (priv, start, len);
 			
-			if (inptr < inend) {
-				/* inptr has to be less than inend - 1 */
-				raw_header_append (priv, inptr, 1);
-				inptr++;
-				if (*inptr == ' ' || *inptr == '\t') {
-					priv->midline = TRUE;
-				} else {
-					priv->midline = FALSE;
-					header_parse (parser, priv, hend);
-					priv->header_start = parser_offset (priv, inptr);
-				}
-			} else {
+			/* inptr has to be less than inend - 1 */
+			raw_header_append (priv, inptr, 1);
+			inptr++;
+			
+			if (*inptr == ' ' || *inptr == '\t') {
 				priv->midline = TRUE;
+			} else {
+				priv->midline = FALSE;
+				header_parse (parser, priv, hend);
+				priv->header_start = parser_offset (priv, inptr);
 			}
 		}
 		

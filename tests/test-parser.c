@@ -36,6 +36,7 @@
 #include "zentimer.h"
 #endif
 
+/*#define TEST_RAW_HEADER*/
 #define TEST_PRESERVE_HEADERS
 #define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
@@ -110,6 +111,16 @@ test_parser (GMimeStream *stream)
 	ZenTimerReport ("gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
+	
+#ifdef TEST_RAW_HEADER
+	{
+		char *raw;
+		
+		raw = g_mime_message_get_headers (message);
+		fprintf (stdout, "\nTesting raw headers...\n\n%s\n", raw);
+		g_free (raw);
+	}
+#endif
 	
 #ifdef TEST_PRESERVE_HEADERS
 	{

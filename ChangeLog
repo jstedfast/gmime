@@ -1,5 +1,9 @@
 2005-10-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Updated version
+
+	* configure.in: Bumped version to 2.1.17
+
 	* gmime/gmime-message.c (message_get_header): For added
 	convenience, if the requested header is a Content-* header and a
 	top-level MIME part exists, query for the requested header on the
@@ -7,7 +11,8 @@
 
 	* gmime/gmime-parser.c (parser_step_headers): If we weren't able
 	to find the end of the header, save it to our tmp buff before
-	refilling our input buffer.
+	refilling our input buffer and set midline to TRUE. No need to
+	check inptr < inend later because we know it to be true.
 	(parser_step_headers): Append the raw header leftovers in the
 	parser_fill() failure case.
 
