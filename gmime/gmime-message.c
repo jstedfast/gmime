@@ -691,8 +691,10 @@ message_get_header (GMimeObject *object, const char *header)
 	if (!strcasecmp ("MIME-Version", header))
 		return "1.0";
 	
-	if (strncasecmp ("Content-", header, 8))
+	if (strncasecmp ("Content-", header, 8) != 0)
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
+	else if (((GMimeMessage *) object)->mime_part)
+		return g_mime_object_get_header (((GMimeMessage *) object)->mime_part, header);
 	else
 		return NULL;
 }

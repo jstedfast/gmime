@@ -1,5 +1,10 @@
 2005-10-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c (message_get_header): For added
+	convenience, if the requested header is a Content-* header and a
+	top-level MIME part exists, query for the requested header on the
+	top-level MIME part and return the value.
+
 	* gmime/gmime-parser.c (parser_step_headers): If we weren't able
 	to find the end of the header, save it to our tmp buff before
 	refilling our input buffer.
