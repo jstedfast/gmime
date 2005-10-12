@@ -898,6 +898,7 @@ parser_step_headers (GMimeParser *parser)
 	inend = priv->inend;
 	
 	header_append (priv, inptr, inend - inptr);
+	raw_header_append (priv, inptr, inend - inptr);
 	
  headers_end:
 	

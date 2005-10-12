@@ -3,6 +3,8 @@
 	* gmime/gmime-parser.c (parser_step_headers): If we weren't able
 	to find the end of the header, save it to our tmp buff before
 	refilling our input buffer.
+	(parser_step_headers): Append the raw header leftovers in the
+	parser_fill() failure case.
 
 2005-09-27  Jeffrey Stedfast  <fejj@novell.com>
 
