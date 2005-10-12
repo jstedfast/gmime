@@ -1,3 +1,9 @@
+2005-10-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): If we weren't able
+	to find the end of the header, save it to our tmp buff before
+	refilling our input buffer.
+
 2005-09-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message-partial.c
