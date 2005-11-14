@@ -981,6 +981,21 @@ g_mime_references_clear (GMimeReferences **refs)
 }
 
 
+/**
+ * g_mime_references_next:
+ * @ref: a GMimeReferences list
+ *
+ * Advances to the next reference node in the GMimeReferences list.
+ *
+ * Returns the next reference node in the GMimeReferences list.
+ **/
+GMimeReferences *
+g_mime_references_next (const GMimeReferences *ref)
+{
+	return ref ? ref->next : NULL;
+}
+
+
 static gboolean
 is_rfc2047_token (const char *inptr, size_t len)
 {

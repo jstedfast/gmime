@@ -426,16 +426,16 @@ internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
  * internet_address_list_next:
  * @list: list of internet addresses
  *
- * Returns the following node in @list.
+ * Advances to the next address node in the InternetAddessList.
+ *
+ * Returns the next address node in the InternetAddessList.
  **/
 InternetAddressList *
 internet_address_list_next (const InternetAddressList *list)
 {
-	if (!list)
-		return NULL;
-
-	return list->next;
+	return list ? list->next : NULL;
 }
+
 
 /**
  * internet_address_list_get_address:
