@@ -14,6 +14,30 @@ public InternetAddressList GetRecipients (RecipientType type)
 	return new InternetAddressList (raw_ret);
 }
 
+
+public System.Collections.IEnumerable References {
+	get {
+		string header = GetHeader ("References");
+	
+		if (header == null)
+			yield break;
+
+		GMime.References gmime_reference = GMime.References.Decode (header);
+	
+		// keep gmime_reference for cleanup later
+		GMime.References iterator = gmime_reference;
+	
+		while (! iterator.Equals (GMime.References.Zero)) {
+			yield return iterator;
+			iterator = iterator.Next ();
+		}
+		
+		gmime_reference.Clear ();
+		yield break;
+	}
+}
+
+
 [DllImport("gmime")]
 static extern IntPtr internet_address_list_get_address (IntPtr raw);
 
