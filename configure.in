@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=2
 GMIME_MINOR_VERSION=1
-GMIME_MICRO_VERSION=17
+GMIME_MICRO_VERSION=18
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -302,7 +302,7 @@ if test "x$enable_mono" = "xyes"; then
 	AC_SUBST(CSC)
 	AC_SUBST(GACUTIL)
 	
-	PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp-2.0 >= 1.9.5)
+	PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp-2.0 >= 2.4.0)
 	AC_SUBST(GTK_SHARP_LIBS)
 	
 	AC_PATH_PROG(GAPI_CODEGEN, gapi2-codegen, no)
@@ -315,7 +315,13 @@ if test "x$enable_mono" = "xyes"; then
         	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
 	fi
 	
-	API_VERSION=2.0.0.0
+	dnl The version should be along the lines of
+	dnl "<major>.<minor>.0.<interface count>", where major and minor are
+	dnl the current major and minor gmime versions, and interface count is
+	dnl incremented any time the mono API changes, which should really
+	dnl only happen within development series.
+	MONO_INTERFACE_VERSION=0
+	API_VERSION="$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.0.$MONO_INTERFACE_VERSION"
 	AC_SUBST(API_VERSION)
 fi
 

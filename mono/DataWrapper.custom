@@ -1,4 +1,5 @@
-public int WriteToStream (System.IO.Stream dest)
-{
-	return GMime.Stream.CopyToStream (dest, new GMime.Stream.WriteToStreamDelegate (WriteToStream));
+public StreamWrapper Stream {
+	get {
+		return new StreamWrapper (GMimeStream);
+	}
 }

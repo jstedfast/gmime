@@ -61,9 +61,9 @@
       <member cname="GMIME_PART_NUM_ENCODINGS" name="NumEncodings" />
     </enum>
     <enum name="SeekWhence" cname="GMimeSeekWhence" type="enum">
-      <member cname="GMIME_STREAM_SEEK_SET" name="Set" />
-      <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" />
-      <member cname="GMIME_STREAM_SEEK_END" name="End" />
+      <member cname="GMIME_STREAM_SEEK_SET" name="Set" value="SEEK_SET" />
+      <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" value="SEEK_CUR" />
+      <member cname="GMIME_STREAM_SEEK_END" name="End" value="SEEK_END" />
     </enum>
     <enum name="SignatureStatus" cname="GMimeSignatureStatus" type="enum">
       <member cname="GMIME_SIGNATURE_STATUS_NONE" name="None" />
@@ -71,12 +71,12 @@
       <member cname="GMIME_SIGNATURE_STATUS_BAD" name="Bad" />
       <member cname="GMIME_SIGNATURE_STATUS_UNKNOWN" name="Unknown" />
     </enum>
-    <enum name="SignerError" cname="GMimeSignerError" type="enum">
+    <enum name="SignerError" cname="GMimeSignerError" type="flags">
       <member cname="GMIME_SIGNER_ERROR_NONE" name="None" />
-      <member cname="GMIME_SIGNER_ERROR_EXPSIG" name="Expsig" />
-      <member cname="GMIME_SIGNER_ERROR_NO_PUBKEY" name="NoPubkey" />
-      <member cname="GMIME_SIGNER_ERROR_EXPKEYSIG" name="Expkeysig" />
-      <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig" />
+      <member cname="GMIME_SIGNER_ERROR_EXPSIG" name="Expsig" value="1 &lt;&lt; 0" />
+      <member cname="GMIME_SIGNER_ERROR_NO_PUBKEY" name="NoPubkey" value="1 &lt;&lt; 1" />
+      <member cname="GMIME_SIGNER_ERROR_EXPKEYSIG" name="Expkeysig" value="1 &lt;&lt; 2" />
+      <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig" value="1 &lt;&lt; 3" />
     </enum>
     <enum name="SignerStatus" cname="GMimeSignerStatus" type="enum">
       <member cname="GMIME_SIGNER_STATUS_NONE" name="None" />
@@ -290,7 +290,7 @@
       <field name="Backsize" cname="backsize" type="size_t" />
       <field name="Backlen" cname="backlen" type="size_t" />
       <virtual_method name="Copy" cname="copy">
-        <return-type type="GMimeFilter*" />
+        <return-type type="GMimeFilter*" owned="true" />
         <parameters>
           <parameter type="GMimeFilter*" name="filter" />
         </parameters>
@@ -344,7 +344,7 @@
         </parameters>
       </method>
       <method name="Copy" cname="g_mime_filter_copy">
-        <return-type type="GMimeFilter*" />
+        <return-type type="GMimeFilter*" owned="true" />
       </method>
       <method name="Filter" cname="g_mime_filter_filter">
         <return-type type="void" />
@@ -1762,6 +1762,9 @@
     <object name="StreamMem" cname="GMimeStreamMem" parent="GMimeStream">
       <field name="Owner" cname="owner" type="gboolean" />
       <field name="Buffer" cname="buffer" type="GByteArray*" />
+      <method name="GetByteArray" cname="g_mime_stream_mem_get_byte_array">
+        <return-type type="GByteArray*" />
+      </method>
       <method name="GetOwner" cname="g_mime_stream_mem_get_owner">
         <return-type type="gboolean" />
       </method>
@@ -1888,10 +1891,10 @@
         </parameters>
       </method>
     </struct>
-    <struct name="CipherValidity" cname="GMimeCipherValidity">
-      <field name="Status" cname="status" type="GMimeSignatureStatus" />
-      <field name="Signers" cname="signers" type="GMimeSigner*" />
-      <field name="Details" cname="details" type="char*" />
+    <struct name="CipherValidity" cname="GMimeCipherValidity" opaque="true">
+      <field name="Status" cname="status" type="GMimeSignatureStatus" access="public" writeable="true" />
+      <field name="Signers" cname="signers" type="GMimeSigner*" access="public" writeable="true" />
+      <field name="Details" cname="details" type="char*" access="public" writeable="true" />
       <method name="Clear" cname="g_mime_cipher_validity_clear" deprecated="1">
         <return-type type="void" />
       </method>
@@ -1921,11 +1924,11 @@
         </parameters>
       </method>
     </struct>
-    <struct name="ContentType" cname="GMimeContentType">
-      <field name="Type" cname="type" type="char*" />
-      <field name="Subtype" cname="subtype" type="char*" />
-      <field name="Params" cname="params" type="GMimeParam*" />
-      <field name="ParamHash" cname="param_hash" type="GHashTable*" />
+    <struct name="ContentType" cname="GMimeContentType" opaque="true">
+      <field name="Type" cname="type" type="char*" access="public" writeable="true" />
+      <field name="Subtype" cname="subtype" type="char*" access="public" writeable="true" />
+      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
+      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_type_destroy">
         <return-type type="void" />
       </method>
@@ -1964,10 +1967,10 @@
         <return-type type="char*" />
       </method>
     </struct>
-    <struct name="Disposition" cname="GMimeDisposition">
-      <field name="Disposition" cname="disposition" type="char*" />
-      <field name="Params" cname="params" type="GMimeParam*" />
-      <field name="ParamHash" cname="param_hash" type="GHashTable*" />
+    <struct name="Disposition" cname="GMimeDisposition" opaque="true">
+      <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
+      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
+      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <method name="AddParameter" cname="g_mime_disposition_add_parameter">
         <return-type type="void" />
         <parameters>
@@ -2076,10 +2079,10 @@
         </parameters>
       </method>
     </struct>
-    <struct name="Param" cname="GMimeParam">
-      <field name="Next" cname="next" type="struct-_GMimeParam*" />
-      <field name="Name" cname="name" type="char*" />
-      <field name="Value" cname="value" type="char*" />
+    <struct name="Param" cname="GMimeParam" opaque="true">
+      <field name="Next" cname="next" type="struct-_GMimeParam*" access="public" writeable="true" />
+      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
+      <field name="Value" cname="value" type="char*" access="public" writeable="true" />
       <method name="Append" cname="g_mime_param_append">
         <return-type type="GMimeParam*" />
         <parameters>
@@ -2133,11 +2136,14 @@
           <parameter type="const-char*" name="text" />
         </parameters>
       </method>
+      <method name="Next" cname="g_mime_references_next">
+        <return-type type="GMimeReferences*" />
+      </method>
     </struct>
-    <struct name="SignatureValidity" cname="GMimeSignatureValidity">
-      <field name="Status" cname="status" type="GMimeSignatureStatus" />
-      <field name="Signers" cname="signers" type="GMimeSigner*" />
-      <field name="Details" cname="details" type="char*" />
+    <struct name="SignatureValidity" cname="GMimeSignatureValidity" opaque="true">
+      <field name="Status" cname="status" type="GMimeSignatureStatus" access="public" writeable="true" />
+      <field name="Signers" cname="signers" type="GMimeSigner*" access="public" writeable="true" />
+      <field name="Details" cname="details" type="char*" access="public" writeable="true" />
       <method name="AddSigner" cname="g_mime_signature_validity_add_signer">
         <return-type type="void" />
         <parameters>
@@ -2170,17 +2176,17 @@
         </parameters>
       </method>
     </struct>
-    <struct name="Signer" cname="GMimeSigner">
-      <field name="Next" cname="next" type="struct-_GMimeSigner*" />
-      <field name="Status" cname="status" bits="2" type="unsigned int" />
-      <field name="Errors" cname="errors" bits="4" type="unsigned int" />
-      <field name="Trust" cname="trust" bits="3" type="unsigned int" />
-      <field name="Unused" cname="unused" bits="23" type="unsigned int" />
-      <field name="SigCreated" cname="sig_created" type="time_t" />
-      <field name="SigExpire" cname="sig_expire" type="time_t" />
-      <field name="Fingerprint" cname="fingerprint" type="char*" />
-      <field name="Keyid" cname="keyid" type="char*" />
-      <field name="Name" cname="name" type="char*" />
+    <struct name="Signer" cname="GMimeSigner" opaque="true">
+      <field name="Next" cname="next" type="struct-_GMimeSigner*" access="public" writeable="true" />
+      <field name="Status" cname="status" bits="2" type="unsigned int" access="public" writeable="true" />
+      <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
+      <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
+      <field name="Unused" cname="unused" bits="23" type="unsigned int" access="public" writeable="true" />
+      <field name="SigCreated" cname="sig_created" type="time_t" access="public" writeable="true" />
+      <field name="SigExpire" cname="sig_expire" type="time_t" access="public" writeable="true" />
+      <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
+      <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
+      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
       <method name="Free" cname="g_mime_signer_free">
         <return-type type="void" />
       </method>
@@ -2190,11 +2196,11 @@
       <field name="Data" cname="data" type="gpointer" />
       <field name="Len" cname="len" type="size_t" />
     </struct>
-    <struct name="InternetAddress" cname="InternetAddress">
-      <field name="Type" cname="type" type="InternetAddressType" />
-      <field name="Refcount" cname="refcount" type="unsigned int" />
-      <field name="Name" cname="name" type="char*" />
-      <field name="Addr" cname="addr" type="char*" />
+    <struct name="InternetAddress" cname="InternetAddress" opaque="true">
+      <field name="Type" cname="type" type="InternetAddressType" access="public" writeable="true" />
+      <field name="Refcount" cname="refcount" type="unsigned int" access="public" writeable="true" />
+      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
+      <field name="Addr" cname="addr" type="char*" access="public" writeable="true" />
       <method name="AddMember" cname="internet_address_add_member">
         <return-type type="void" />
         <parameters>
@@ -2262,9 +2268,9 @@
         <return-type type="void" />
       </method>
     </struct>
-    <struct name="InternetAddressList" cname="InternetAddressList">
-      <field name="Next" cname="next" type="struct-_InternetAddressList*" />
-      <field name="Address" cname="address" type="InternetAddress*" />
+    <struct name="InternetAddressList" cname="InternetAddressList" opaque="true">
+      <field name="Next" cname="next" type="struct-_InternetAddressList*" access="public" writeable="true" />
+      <field name="Address" cname="address" type="InternetAddress*" access="public" writeable="true" />
       <method name="Append" cname="internet_address_list_append">
         <return-type type="InternetAddressList*" />
         <parameters>

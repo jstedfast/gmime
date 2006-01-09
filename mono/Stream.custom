@@ -1,46 +1,14 @@
-public int Seek (int offset)
+public long Seek (long offset)
 {
 	return this.Seek (offset, GMime.SeekWhence.Set);
 }
 
-internal delegate int WriteToStreamDelegate (GMime.Stream dest);
-
-[StructLayout (LayoutKind.Sequential)]
-private struct GByteArray {
-	public IntPtr data;
-	public uint len;
-}
-
-[DllImport ("libglib-2.0.so.0")]
-static extern IntPtr g_byte_array_new ();
-
 [DllImport ("gmime")]
-static extern IntPtr g_mime_stream_mem_new_with_byte_array (IntPtr byte_array);
+static extern IntPtr g_mime_stream_read (IntPtr raw, [Out] byte[] buf, UIntPtr count);
 
-internal static int CopyToStream (System.IO.Stream io_stream, WriteToStreamDelegate write_delegate)
+public long Read (byte[] buf, ulong count)
 {
-	int ret;
-	IntPtr raw_byte_array = g_byte_array_new ();
-	IntPtr raw_gmime_stream = g_mime_stream_mem_new_with_byte_array (raw_byte_array);
-
-	using (GMime.StreamMem gmime_stream = new GMime.StreamMem (raw_gmime_stream)) {
-		write_delegate (gmime_stream);
-
-		GByteArray byte_array = (GByteArray) Marshal.PtrToStructure (raw_byte_array, typeof (GByteArray));
-
-		if (byte_array.data == IntPtr.Zero)
-			return 0;
-
-		byte[] data = new byte [byte_array.len];
-		Marshal.Copy (byte_array.data, data, 0, (int) byte_array.len);
-		io_stream.Write (data, 0, data.Length);
-		ret = data.Length;
-	}
-
+	IntPtr raw_ret = g_mime_stream_read (Handle, buf, new UIntPtr (count));
+	long ret = (long) raw_ret;
 	return ret;
-}
-
-public int WriteToStream (System.IO.Stream dest)
-{
-	return CopyToStream (dest, new WriteToStreamDelegate (WriteToStream));
 }

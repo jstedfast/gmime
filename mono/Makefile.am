@@ -19,7 +19,7 @@ pkgconfig_DATA = gmime-sharp.pc
 
 sources = 				\
 	InternetAddressList.cs		\
-	ObjectStream.cs			\
+	StreamWrapper.cs		\
 	#
 
 build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs

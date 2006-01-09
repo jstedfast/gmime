@@ -3,30 +3,42 @@
   <!-- Rename some items -->
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
+
+  <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_SET']" name="value">0</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
+
   <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']" name="name">EightBitHeaderDecode</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']" name="name">EightBitHeaderEncode</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']" name="name">EightBitHeaderEncodePhrase</attr>
 
   <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
   <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
+
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
+
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
+
+  <!-- gtk-sharp incorrectly aliases off_t to size_t, when it's really
+       a long -->
+  <attr path="/api/namespace/*/method/return-type[@type='off_t']" name="type">long</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='off_t']" name="type">long</attr>
+
+  <!-- We want to be able to get at the type and subtype fields of this
+       structure, so don't mark it as opaque. -->
+  <attr path="/api/namespace/struct[@cname='GMimeContentType']" name="opaque">false</attr>
 
   <!-- The generator irritating always converts a method named GetType to a
        GType property regardless of whether or not it's actually a glib type
        So rename this one -->
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
-
-  <!-- Certain things return ssize_t and off_t, which the generator doesn't deal with nicely. -->
-  <!-- FIXME: These would likely need to be changed for 64-bit -->
-  <attr path="/api/namespace/callback/return-type[@type='ssize_t']" name="type">int</attr>
-  <attr path="/api/namespace/*/method/return-type[@type='ssize_t']" name="type">int</attr>
-  <attr path="/api/namespace/*/method/return-type[@type='off_t']" name="type">int</attr>
-  <attr path="/api/namespace/*/*/*/parameter[@type='off_t']" name="type">int</attr>
 
   <!-- Certain things take const unsigned char *, which the generator doesn't deal with nicely. -->
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned']" name="name">str</attr>
@@ -34,20 +46,15 @@
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="name">str</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="type">const-char*</attr>
 
-  <!-- Make some structures opaque -->
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="opaque">1</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeSignatureValidity']" name="opaque">1</attr>
-  <attr path="/api/namespace/struct[@cname='InternetAddress']" name="opaque">1</attr>
-
-  <!-- Hide some problematic elements -->
+  <!-- Hide some problematic and nonsensical elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetDate']/*/*[@name='date']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeObject']/method[@name='GetData']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='WriteToStream']" name="hidden">1</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>
+
+  <!-- We implement this class by hand, hide it. -->
   <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
 
   <!-- Some functions return new objects with owned refs -->

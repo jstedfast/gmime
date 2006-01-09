@@ -61,6 +61,7 @@ GMimeStream *g_mime_stream_mem_new (void);
 GMimeStream *g_mime_stream_mem_new_with_byte_array (GByteArray *array);
 GMimeStream *g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len);
 
+GByteArray *g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem);
 void g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array);
 
 gboolean g_mime_stream_mem_get_owner (GMimeStreamMem *mem);

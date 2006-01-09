@@ -1,3 +1,39 @@
+2006-01-05  Joe Shaw  <joeshaw@novell.com>
+
+	* configure.in: Require gtk-sharp 2.4.0.  Set the mono API version
+	to <major>.<minor>.0.<interface>, which initially is set to
+	2.1.0.0, so that version numbers are handled better with gmime
+	upgrades (and hopefully RPM deps on most distros).  Bump version
+	to 2.1.18.
+
+	* README: Updated version
+
+	* gmime/gmime-stream-mem.[ch]: Add a
+	g_mime_stream_mem_get_byte_array() method for the mono bindings.
+
+	* mono/DataWrapper.custom:
+	* mono/Header.custom:
+	* mono/Object.custom: Remove WriteToStream() and replace with a
+	new Stream property which returns a wrapped gmime memory stream.
+
+	* mono/GMime.metadata: A bunch of metadata fixes, mainly for
+	64-bit compatibility.  gtk-sharp incorrectly maps off_t to size_t,
+	which is an int; it's actually a long, so map it manually
+	ourselves.
+
+	* mono/ObjectStream.cs: Remove this; it's been replaced by
+	StreamWrapper, which is much more memory efficient.
+
+	* mono/Stream.custom: Seek() returns a long.  Remove the
+	CopyToStream() and WriteToStream() methods, since streams can now
+	just be wrapped with a StreamWrapper.  Implement the Read()
+	method, and return a long.
+
+	* mono/StreamWrapper.cs: Added.  Wraps a GMime.Stream in a
+	System.IO.Stream.
+
+	* mono/gmime-api.raw: Regenerated.
+
 2005-11-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_references_next): Added for the C#
