@@ -358,14 +358,15 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
  *
  * Gets the byte array from the memory stream.
  *
+ * Returns the byte array from the memory stream.
  **/
 GByteArray *
 g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
 {
 	GMimeStream *stream;
 	
-	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
-
+	g_return_val_if_fail (GMIME_IS_STREAM_MEM (mem), NULL);
+	
 	return mem->buffer;
 }
 

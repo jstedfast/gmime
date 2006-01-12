@@ -1,3 +1,11 @@
+2006-01-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	** made a release of 2.1.18 **
+
+	* gmime/gmime-stream-mem.c (g_mime_stream_mem_get_byte_array): Use
+	g_return_val_if_fail() rather than g_return_if_fail() since we
+	need to return NULL on error.
+
 2006-01-09  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Message.custom: Add a References property.  Based on a
