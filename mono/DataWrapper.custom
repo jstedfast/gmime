@@ -1,5 +1,32 @@
 public StreamWrapper Stream {
 	get {
-		return new StreamWrapper (GMimeStream);
+		GMime.StreamFilter filtered_stream = new GMime.StreamFilter (GMimeStream);
+		FilterBasic filter;
+
+		switch (Encoding) {
+
+		case PartEncodingType.Base64:
+			filter = new FilterBasic (FilterBasicType.Base64Decode);
+			break;
+
+		case PartEncodingType.QuotedPrintable:
+			filter = new FilterBasic (FilterBasicType.QpDecode);
+			break;
+
+		case PartEncodingType.Uuencode:
+			filter = new FilterBasic (FilterBasicType.Uudecode);
+			break;
+
+		default:
+			filter = null;
+			break;
+		}
+
+		if (filter != null) {
+			filtered_stream.Add (filter);
+			filter.Dispose ();
+		}
+
+		return new StreamWrapper (filtered_stream);
 	}
 }

@@ -4,6 +4,22 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
 
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_DEFAULT']" name="name">Default</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_7BIT']" name="name">SevenBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_8BIT']" name="name">EightBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BINARY']" name="name">Binary</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BASE64']" name="name">Base64</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_QUOTEDPRINTABLE']" name="name">QuotedPrintable</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_UUENCODE']" name="name">Uuencode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_NUM_ENCODINGS']" name="hidden">1</attr>
+
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_ENC']" name="name">Base64Encode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_DEC']" name="name">Base64Decode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_ENC']" name="name">QpEncode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_DEC']" name="name">QpDecode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_ENC']" name="name">Uuencode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_DEC']" name="name">Uudecode</attr>
+
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_SET']" name="value">0</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
@@ -58,10 +74,12 @@
   <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
 
   <!-- Some functions return new objects with owned refs -->
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetGMimeStream']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeMessagePart']/method[@name='GetMessage']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetSubpartFromContentId']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
 </metadata>

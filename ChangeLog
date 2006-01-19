@@ -1,3 +1,13 @@
+2006-01-19  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/DataWrapper.custom: We need to manually create a decoding
+	filtering stream and wrap that in a StreamWrapper rather than the
+	DataWrapper's GMimeStream directly, which contains undecoded data.
+
+	* mono/GMime.metadata: Rename some enum members, add DataWrapper's
+	GMimeStream property and MimePart's ContentObject properties as
+	items which return an owned ref.
+
 2006-01-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	** made a release of 2.1.18 **
