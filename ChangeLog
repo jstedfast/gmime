@@ -1,3 +1,7 @@
+2006-01-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Bumped version to 2.1.19
+
 2006-01-19  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/DataWrapper.custom: We need to manually create a decoding
