@@ -38,7 +38,7 @@
 #include "gmime-parser.h"
 #include "gmime-part.h"
 
-#define d(x) x
+#define d(x)
 
 /* GObject class methods */
 static void g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass);
