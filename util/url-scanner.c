@@ -186,7 +186,8 @@ g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmat
 	
 	g_assert (*inptr == '@');
 	
-	inptr--;
+	if (inptr == in)
+		return FALSE;
 	
 	while (inptr > in) {
 		if (is_atom (*inptr))
@@ -360,7 +361,7 @@ g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *m
 			while (inptr < inend && is_domain (*inptr))
 				inptr++;
 			
-			if ((inptr + 1) < inend && *inptr == '.' && is_domain (inptr[1]))
+			if ((inptr + 1) < inend && *inptr == '.' && (is_domain (inptr[1]) || inptr[1] == '/'))
 				inptr++;
 		}
 	} else {

@@ -1,3 +1,11 @@
+2006-03-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* util/url-scanner.c (g_url_web_end): Allow urls such as
+	"http://www.novell.com./path" (note the '.' before the path
+	component).
+	(g_url_addrspec_start): If the '@' is the first character in the
+	match, then it isn't a valid email address.
+
 2006-01-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.in: Bumped version to 2.1.19

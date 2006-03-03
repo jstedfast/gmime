@@ -181,7 +181,7 @@ dnl Check for regex
 AC_CHECK_HEADER(regex.h, have_regex="yes")
 AM_CONDITIONAL(HAVE_REGEX, test "x$have_regex" = "xyes")
 
-dnl Check for fsync (native win32 haven't this)
+dnl Check for fsync (native win32 doesn't have this)
 AC_MSG_CHECKING(for fsync)
 AC_TRY_LINK([
 	#include <unistd.h>
