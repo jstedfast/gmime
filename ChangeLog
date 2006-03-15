@@ -1,3 +1,12 @@
+2006-03-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_step_from): If we fail to find a
+	From line, set an error state. Also fixed the End-Of-Data check to
+	prevent an infinite loop if the stream ends with \n\n.
+	(parser_construct_message): Make sure our state starts off at
+	INIT. Also check for the ERROR state in our parser_step() loop and
+	return NULL if we encounter an error.
+
 2006-03-03  Jeffrey Stedfast  <fejj@novell.com>
 
 	* util/url-scanner.c (g_url_web_end): Allow urls such as

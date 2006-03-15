@@ -68,6 +68,7 @@ static GObjectClass *parent_class = NULL;
 #define SCAN_HEAD 128		/* headroom guaranteed to be before each read buffer */
 
 enum {
+	GMIME_PARSER_STATE_ERROR = -1,
 	GMIME_PARSER_STATE_INIT,
 	GMIME_PARSER_STATE_FROM,
 	GMIME_PARSER_STATE_HEADERS,
@@ -694,8 +695,11 @@ parser_step_from (GMimeParser *parser)
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= 0)
-			break;
+		if (parser_fill (parser) <= 0) {
+			/* failed to find a From line; EOF reached */
+			priv->state = GMIME_PARSER_STATE_ERROR;
+			return -1;
+		}
 		
 		inptr = priv->inptr;
 		inend = priv->inend;
@@ -706,7 +710,7 @@ parser_step_from (GMimeParser *parser)
 			while (*inptr != '\n')
 				inptr++;
 			
-			if (inptr + 1 >= inend) {
+			if (inptr == inend) {
 				/* we don't have enough data */
 				priv->inptr = start;
 				goto refill;
@@ -1469,11 +1473,17 @@ parser_construct_message (GMimeParser *parser)
 	int content_length = -1;
 	GMimeMessage *message;
 	GMimeObject *object;
-	int found;
+	int state, found;
+	
+	if (priv->state != GMIME_PARSER_STATE_INIT)
+		return NULL;
 	
 	/* get the headers (and, optionally, the from-line) */
-	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
+	while ((state = parser_step (parser)) != GMIME_PARSER_STATE_ERROR && state != GMIME_PARSER_STATE_HEADERS_END)
 		;
+	
+	if (state == GMIME_PARSER_STATE_ERROR)
+		return NULL;
 	
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;

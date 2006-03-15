@@ -68,7 +68,8 @@ test_parser (GMimeStream *stream)
 	g_mime_parser_set_header_regex (parser, "^X-Evolution$", header_cb, NULL);
 	
 	while (!g_mime_parser_eos (parser)) {
-		message = g_mime_parser_construct_message (parser);
+		if (!(message = g_mime_parser_construct_message (parser)))
+			break;
 		
 		from = g_mime_parser_get_from (parser);
 		fprintf (stdout, "%s\n", from);
