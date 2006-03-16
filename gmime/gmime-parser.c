@@ -698,6 +698,7 @@ parser_step_from (GMimeParser *parser)
 		if (parser_fill (parser) <= 0) {
 			/* failed to find a From line; EOF reached */
 			priv->state = GMIME_PARSER_STATE_ERROR;
+			priv->inptr = priv->inend;
 			return -1;
 		}
 		
