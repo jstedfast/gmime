@@ -69,7 +69,7 @@ test_parser (GMimeStream *stream)
 	
 	while (!g_mime_parser_eos (parser)) {
 		if (!(message = g_mime_parser_construct_message (parser)))
-			break;
+			continue;
 		
 		from = g_mime_parser_get_from (parser);
 		fprintf (stdout, "%s\n", from);
@@ -121,8 +121,7 @@ int main (int argc, char **argv)
 #endif
 	
 #ifdef STREAM_BUFFER
-	istream = g_mime_stream_buffer_new (stream,
-					    GMIME_STREAM_BUFFER_BLOCK_READ);
+	istream = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
 	g_object_unref (stream);
 	stream = istream;
 #endif

@@ -685,7 +685,7 @@ parser_step_from (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
-	size_t len;
+	size_t len, left = 0;
 	
 	g_byte_array_set_size (priv->from_line, 0);
 	
@@ -695,7 +695,7 @@ parser_step_from (GMimeParser *parser)
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= 0) {
+		if (parser_fill (parser) <= left) {
 			/* failed to find a From line; EOF reached */
 			priv->state = GMIME_PARSER_STATE_ERROR;
 			priv->inptr = priv->inend;
@@ -711,8 +711,9 @@ parser_step_from (GMimeParser *parser)
 			while (*inptr != '\n')
 				inptr++;
 			
-			if (inptr == inend) {
-				/* we don't have enough data */
+			if (inptr + 1 >= inend) {
+				/* we don't have enough data; if we can't get more we have to bail */
+				left = inend - start;
 				priv->inptr = start;
 				goto refill;
 			}
@@ -728,6 +729,7 @@ parser_step_from (GMimeParser *parser)
 		}
 		
 		priv->inptr = inptr;
+		left = 0;
 	} while (1);
 	
  got_from:
@@ -830,7 +832,7 @@ parser_step_headers (GMimeParser *parser)
 	register unsigned char *inptr;
 	unsigned char *start, *inend;
 	struct _header_raw *hend;
-	size_t len = 0;
+	size_t len, left = 0;
 	
 	priv->midline = FALSE;
 	hend = (struct _header_raw *) &priv->headers;
@@ -842,7 +844,7 @@ parser_step_headers (GMimeParser *parser)
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= len)
+		if (parser_fill (parser) <= left)
 			break;
 		
 		inptr = priv->inptr;
@@ -865,8 +867,8 @@ parser_step_headers (GMimeParser *parser)
 				   got all of the header or not... */
 				header_append (priv, start, inptr - start);
 				priv->midline = TRUE;
+				left = inend - inptr;
 				priv->inptr = inptr;
-				len = inend - inptr;
 				goto refill;
 			}
 			
@@ -893,8 +895,8 @@ parser_step_headers (GMimeParser *parser)
 			}
 		}
 		
+		left = inend - inptr;
 		priv->inptr = inptr;
-		len = inend - inptr;
 	} while (1);
 	
 	inptr = priv->inptr;
@@ -951,6 +953,8 @@ parser_step (GMimeParser *parser)
 			break;
 		case GMIME_PARSER_STATE_HEADERS:
 			parser_step_headers (parser);
+			break;
+		case GMIME_PARSER_STATE_ERROR:
 			break;
 		default:
 			g_assert_not_reached ();
@@ -1475,9 +1479,6 @@ parser_construct_message (GMimeParser *parser)
 	GMimeMessage *message;
 	GMimeObject *object;
 	int state, found;
-	
-	if (priv->state != GMIME_PARSER_STATE_INIT)
-		return NULL;
 	
 	/* get the headers (and, optionally, the from-line) */
 	while ((state = parser_step (parser)) != GMIME_PARSER_STATE_ERROR && state != GMIME_PARSER_STATE_HEADERS_END)

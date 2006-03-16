@@ -1,5 +1,15 @@
 2006-03-16  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-parser.c (parser_step): No-op if we are in an ERROR
+	state.
+	(parser_construct_message): Don't bail if we don't start in state
+	INIT, this is valid.
+	(parser_step_from): We need to bail even if parser_fill() returns
+	> 0 if the line is incomplete (e.g. a forced refill was needed but
+	no additional data could be read).
+
+2006-03-16  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.2.0, it's about time I made a
