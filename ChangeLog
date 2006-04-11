@@ -1,5 +1,9 @@
 2006-03-16  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.1
+
 	* gmime/gmime-parser.c (parser_step): No-op if we are in an ERROR
 	state.
 	(parser_construct_message): Don't bail if we don't start in state

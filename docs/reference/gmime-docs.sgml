@@ -71,7 +71,7 @@
         <surname>Stedfast</surname>
         <affiliation>
           <address>
-            <email>fejj@ximian.com</email>
+            <email>fejj@novell.com</email>
           </address>
         </affiliation>
       </author>
@@ -82,17 +82,20 @@
     </copyright>
 
     <legalnotice>
-      <para>Permission is granted to make and distribute verbatim
-      copies of this manual provided the copyright notice and this
-      permission notice are preserved on all copies.</para>
-      <para>Permission is granted to copy and distribute modified
-      versions of this manual under the conditions for verbatim
-      copying, provided also that the entire resulting derived work is
-      distributed under the terms of a permission notice identical to
-      this one.</para>
-      <para>Permission is granted to copy and distribute translations
-      of this manual into another language, under the above conditions
-      for modified versions.</para>
+      <para>
+      This documentation is free software; you can redistribute it and/or modify
+      it under the terms of the GNU General Public License as published by
+      the Free Software Foundation; either version 2 of the License, or
+      (at your option) any later version.
+      <para>
+      This documentation is distributed in the hope that it will be useful,
+      but WITHOUT ANY WARRANTY; without even the implied warranty of
+      MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+      GNU General Public License for more details.
+      <para> 
+      You should have received a copy of the GNU General Public License
+      along with this program; if not, write to the Free Software
+      Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
     </legalnotice>
 
     <abstract>
