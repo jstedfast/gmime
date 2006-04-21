@@ -26,6 +26,8 @@
 
 #include <glib.h>
 #include <glib-object.h>
+
+#include <stdio.h>
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdarg.h>
