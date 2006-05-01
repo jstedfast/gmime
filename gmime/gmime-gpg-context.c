@@ -796,6 +796,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		char *hint, *user;
 		
 		status += 12;
+		
 		status = next_token (status, &hint);
 		if (!hint) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
@@ -829,39 +830,65 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		g_free (gpg->need_id);
 		gpg->need_id = userid;
-	} else if (!strncmp (status, "GET_HIDDEN passphrase.enter", 27)) {
-		char *prompt, *passwd;
+	} else if (!strncmp (status, "NEED_PASSPHRASE_PIN ", 20)) {
+		char *userid;
+		
+		status += 20;
+		
+		status = next_token (status, &userid);
+		if (!userid) {
+			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Failed to parse gpg passphrase request."));
+			return -1;
+		}
+		
+		g_free (gpg->need_id);
+		gpg->need_id = userid;
+	} else if (!strncmp (status, "GET_HIDDEN ", 11)) {
+		char *prompt = NULL;
+		char *passwd = NULL;
 		const char *name;
+		
+		status += 11;
 		
 		if (!(name = g_hash_table_lookup (gpg->userid_hint, gpg->need_id)))
 			name = gpg->userid;
 		
-		prompt = g_strdup_printf (_("You need a passphrase to unlock the key for\n"
-					    "user: \"%s\""), name);
-		
-		passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, gpg->need_id, err);
-		g_free (prompt);
-		
-		if (passwd == NULL) {
-			if (err && *err == NULL)
-				g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
-			
+		if (!strncmp (status, "passphrase.pin.ask", 18)) {
+			prompt = g_strdup_printf (_("You need a PIN to unlock the key for your\n"
+						    "SmartCard: \"%s\""), name);
+		} else if (!strncmp (status, "passphrase.enter", 16)) {
+			prompt = g_strdup_printf (_("You need a passphrase to unlock the key for\n"
+						    "user: \"%s\""), name);
+		} else {
+			next_token (status, &prompt);
+			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
+				     _("Unexpected request from GnuPG for `%s'"), prompt);
+			g_free (prompt);
 			return -1;
-		} else if (!gpg->utf8) {
-			char *locale_passwd;
-			
-			if ((locale_passwd = g_locale_from_utf8 (passwd, -1, &nread, &nwritten, NULL))) {
-				memset (passwd, 0, strlen (passwd));
-				g_free (passwd);
-				passwd = locale_passwd;
-			}
 		}
 		
-		gpg->passwd = g_strdup_printf ("%s\n", passwd);
-		memset (passwd, 0, strlen (passwd));
-		g_free (passwd);
+		if ((passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, gpg->need_id, err))) {
+			if (!gpg->utf8) {
+				char *locale_passwd;
+				
+				if ((locale_passwd = g_locale_from_utf8 (passwd, -1, &nread, &nwritten, NULL))) {
+					memset (passwd, 0, strlen (passwd));
+					g_free (passwd);
+					passwd = locale_passwd;
+				}
+			}
+			
+			gpg->passwd = g_strdup_printf ("%s\n", passwd);
+			memset (passwd, 0, strlen (passwd));
+			g_free (passwd);
+			
+			gpg->send_passwd = TRUE;
+		} else if (err && *err == NULL) {
+			g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
+		}
 		
-		gpg->send_passwd = TRUE;
+		g_free (prompt);
 	} else if (!strncmp (status, "GOOD_PASSPHRASE", 15)) {
 		gpg->bad_passwds = 0;
 	} else if (!strncmp (status, "BAD_PASSPHRASE", 14)) {
