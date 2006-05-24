@@ -733,7 +733,11 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	int fd;
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	fd = open (filename, O_RDONLY);
+	if ((fd = open (filename, O_RDONLY))) {
+		g_free (filename);
+		return;
+	}
+	
 	g_free (filename);
 	
 	stream = g_mime_stream_fs_new (fd);
@@ -756,7 +760,11 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 		g_object_unref (msgpart->message);
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	fd = open (filename, O_RDONLY);
+	if ((fd = open (filename, O_RDONLY))) {
+		g_free (filename);
+		return;
+	}
+	
 	g_free (filename);
 	
 	stream = g_mime_stream_fs_new (fd);
@@ -804,7 +812,11 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		   manually rather than to do uber-fancy stuff */
 		
 		filename = g_strdup_printf ("%s/%s.HEADER", uid, subspec);
-		fd = open (filename, O_RDONLY);
+		if ((fd = open (filename, O_RDONLY)) == -1) {
+			g_free (filename);
+			return;
+		}
+		
 		g_free (filename);
 		
 		stream = g_mime_stream_fs_new (fd);
@@ -840,7 +852,11 @@ reconstruct_message (const char *uid)
 	int fd;
 	
 	filename = g_strdup_printf ("%s/HEADER", uid);
-	fd = open (filename, O_RDONLY);
+	if ((fd = open (filename, O_RDONLY)) == -1) {
+		g_free (filename);
+		return;
+	}
+	
 	g_free (filename);
 	
 	stream = g_mime_stream_fs_new (fd);
@@ -859,7 +875,11 @@ reconstruct_message (const char *uid)
 		GMimeStream *mem;
 		
 		filename = g_strdup_printf ("%s/BODYSTRUCTURE", uid);
-		fd = open (filename, O_RDONLY);
+		if ((fd = open (filename, O_RDONLY)) == -1) {
+			g_free (filename);
+			return;
+		}
+		
 		g_free (filename);
 		
 		stream = g_mime_stream_fs_new (fd);
@@ -881,9 +901,12 @@ reconstruct_message (const char *uid)
 	}
 	
 	filename = g_strdup_printf ("%s/MESSAGE", uid);
-	fd = open (filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
-	g_free (filename);
+	if ((fd = open (filename, O_WRONLY | O_CREAT | O_TRUNC, 0666)) == -1) {
+		g_free (filename);
+		return;
+	}
 	
+	g_free (filename);
 	stream = g_mime_stream_fs_new (fd);
 	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
 	g_object_unref (message);
@@ -910,7 +933,9 @@ int main (int argc, char **argv)
 		i++;
 	}
 	
-	fd = open (argv[i], O_RDONLY);
+	if ((fd = open (argv[i], O_RDONLY)) == -1)
+		return 0;
+	
 	stream = g_mime_stream_fs_new (fd);
 	
 	parser = g_mime_parser_new_with_stream (stream);
@@ -922,7 +947,7 @@ int main (int argc, char **argv)
 	
 	if (message) {
 		uid = g_strdup (message->message_id ? message->message_id : basename (argv[i]));
-		mkdir (uid, 0755);
+		g_mkdir (uid, 0755);
 		write_message (message, uid);
 		g_object_unref (message);
 		

@@ -1,3 +1,8 @@
+2006-05-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* examples/imap-example.c (main): Use g_mkdir() to make this
+	example portable to Win32.
+
 2006-05-01  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Handle prompts
