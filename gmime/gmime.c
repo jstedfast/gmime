@@ -30,8 +30,40 @@
 
 GQuark gmime_error_quark;
 
+const guint gmime_major_version = GMIME_MAJOR_VERSION;
+const guint gmime_minor_version = GMIME_MINOR_VERSION;
+const guint gmime_micro_version = GMIME_MICRO_VERSION;
+const guint gmime_interface_age = 0;
+const guint gmime_binary_age = 0;
 
 static unsigned int initialized = 0;
+
+
+/**
+ * g_mime_check_version:
+ * @major: Minimum major version
+ * @minor: Minimum minor version
+ * @micro: Minimum micro version
+ *
+ * Checks that the GMime library version meets the requirements of the
+ * required version.
+ *
+ * Returns %TRUE if the requirement is met or %FALSE otherwise.
+ **/
+gboolean
+g_mime_check_version (guint major, guint minor, guint micro)
+{
+	if (GMIME_MAJOR_VERSION > major)
+		return TRUE;
+	
+	if (GMIME_MAJOR_VERSION == major && GMIME_MINOR_VERSION > minor)
+		return TRUE;
+	
+	if (GMIME_MAJOR_VERSION == major && GMIME_MINOR_VERSION == minor && GMIME_MICRO_VERSION >= micro)
+		return TRUE;
+	
+	return FALSE;
+}
 
 
 /**

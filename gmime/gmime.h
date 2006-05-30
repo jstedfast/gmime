@@ -77,17 +77,15 @@ extern "C" {
 #include <gmime/gmime-gpg-context.h>
 
 /* GMIME version */
-static const guint gmime_major_version = @GMIME_MAJOR_VERSION@;
-static const guint gmime_minor_version = @GMIME_MINOR_VERSION@;
-static const guint gmime_micro_version = @GMIME_MICRO_VERSION@;
-static const guint gmime_interface_age = 0;
-static const guint gmime_binary_age    = 0;
+extern const guint gmime_major_version;
+extern const guint gmime_minor_version;
+extern const guint gmime_micro_version;
+extern const guint gmime_interface_age;
+extern const guint gmime_binary_age;
 
-#define GMIME_CHECK_VERSION(major,minor,micro)    \
-    (@GMIME_MAJOR_VERSION@ > (major) || \
-     (@GMIME_MAJOR_VERSION@ == (major) && @GMIME_MINOR_VERSION@ > (minor)) || \
-     (@GMIME_MAJOR_VERSION@ == (major) && @GMIME_MINOR_VERSION@ == (minor) && \
-      @GMIME_MICRO_VERSION@ >= (micro)))
+#define GMIME_CHECK_VERSION(major,minor,micro) g_mime_check_version (major, minor, micro)
+
+gboolean g_mime_check_version (guint major, guint minor, guint micro);
 
 
 /**

@@ -32,6 +32,11 @@
 
 #include "gmime-stream-fs.h"
 
+
+#ifndef HAVE_FSYNC
+int fsync (int fd) { return 0; }
+#endif
+
 static void g_mime_stream_fs_class_init (GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_finalize (GObject *object);

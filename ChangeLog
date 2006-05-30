@@ -1,3 +1,17 @@
+2006-05-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime.h.in: Removed.
+
+	* gmime.h: Now static, no longer auto-generated.
+
+	* gmime/gmime.c: Set the gmime_[major,minor,micro]_version
+	variables.
+	(g_mime_check_version): New function to check the required
+	version.
+
+	* gmime/gmime-stream-fs.c: Implement our own no-op version of
+	fsync() for systems that don't have fsync().
+
 2006-05-24  Jeffrey Stedfast  <fejj@novell.com>
 
 	* examples/imap-example.c (main): Use g_mkdir() to make this

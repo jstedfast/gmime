@@ -362,7 +362,6 @@ docs/tutorial/Makefile
 examples/Makefile
 util/Makefile
 gmime/Makefile
-gmime/gmime.h
 mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config
