@@ -218,33 +218,33 @@ g_mime_utils_header_format_date (time_t time, int offset)
 
 struct _date_token {
 	struct _date_token *next;
-	const unsigned char *start;
-	unsigned int len;
-	unsigned int mask;
+	unsigned char mask;
+	const char *start;
+	size_t len;
 };
 
 static struct _date_token *
 datetok (const char *date)
 {
 	struct _date_token *tokens = NULL, *token, *tail = (struct _date_token *) &tokens;
-	const unsigned char *start, *end;
-	unsigned int mask;
+	const char *start, *end;
+        unsigned char mask;
 	
 	start = date;
 	while (*start) {
 		/* kill leading whitespace */
-		while (*start && isspace ((int) *start))
+		while (*start == ' ' || *start == '\t')
 			start++;
 		
 		if (*start == '\0')
 			break;
 		
-		mask = gmime_datetok_table[*start];
+		mask = gmime_datetok_table[(unsigned char) *start];
 		
 		/* find the end of this token */
 		end = start + 1;
 		while (*end && !strchr ("-/,\t\r\n ", *end))
-			mask |= gmime_datetok_table[*end++];
+			mask |= gmime_datetok_table[(unsigned char) *end++];
 		
 		if (end != start) {
 			token = g_malloc (sizeof (struct _date_token));
@@ -267,11 +267,11 @@ datetok (const char *date)
 }
 
 static int
-decode_int (const unsigned char *in, unsigned int inlen)
+decode_int (const char *in, size_t inlen)
 {
-	register const unsigned char *inptr;
-	const unsigned char *inend;
+	register const char *inptr;
 	int sign = 1, val = 0;
+	const char *inend;
 	
 	inptr = in;
 	inend = in + inlen;
@@ -283,7 +283,7 @@ decode_int (const unsigned char *in, unsigned int inlen)
 		inptr++;
 	
 	for ( ; inptr < inend; inptr++) {
-		if (!isdigit ((int) *inptr))
+		if (!(*inptr >= '0' && *inptr <= '9'))
 			return  -1;
 		else
 			val = (val * 10) + (*inptr - '0');
@@ -324,7 +324,7 @@ get_days_in_month (int month, int year)
 #endif
 
 static int
-get_wday (const unsigned char *in, unsigned int inlen)
+get_wday (const char *in, size_t inlen)
 {
 	int wday;
 	
@@ -333,15 +333,16 @@ get_wday (const unsigned char *in, unsigned int inlen)
 	if (inlen < 3)
 		return -1;
 	
-	for (wday = 0; wday < 7; wday++)
-		if (!strncasecmp (in, tm_days[wday], 3))
+	for (wday = 0; wday < 7; wday++) {
+		if (!g_ascii_strncasecmp (in, tm_days[wday], 3))
 			return wday;
+	}
 	
 	return -1;  /* unknown week day */
 }
 
 static int
-get_mday (const unsigned char *in, unsigned int inlen)
+get_mday (const char *in, size_t inlen)
 {
 	int mday;
 	
@@ -356,7 +357,7 @@ get_mday (const unsigned char *in, unsigned int inlen)
 }
 
 static int
-get_month (const unsigned char *in, unsigned int inlen)
+get_month (const char *in, size_t inlen)
 {
 	int i;
 	
@@ -365,22 +366,22 @@ get_month (const unsigned char *in, unsigned int inlen)
 	if (inlen < 3)
 		return -1;
 	
-	for (i = 0; i < 12; i++)
-		if (!strncasecmp (in, tm_months[i], 3))
+	for (i = 0; i < 12; i++) {
+		if (!g_ascii_strncasecmp (in, tm_months[i], 3))
 			return i;
+	}
 	
 	return -1;  /* unknown month */
 }
 
 static int
-get_year (const unsigned char *in, unsigned int inlen)
+get_year (const char *in, size_t inlen)
 {
 	int year;
 	
 	g_return_val_if_fail (in != NULL, -1);
 	
-	year = decode_int (in, inlen);
-	if (year == -1)
+	if ((year = decode_int (in, inlen)) == -1)
 		return -1;
 	
 	if (year < 100)
@@ -393,11 +394,11 @@ get_year (const unsigned char *in, unsigned int inlen)
 }
 
 static gboolean
-get_time (const unsigned char *in, unsigned int inlen, int *hour, int *min, int *sec)
+get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 {
-	register const unsigned char *inptr;
-	const unsigned char *inend;
+	register const char *inptr;
 	int *val, colons = 0;
+	const char *inend;
 	
 	*hour = *min = *sec = 0;
 	
@@ -416,7 +417,7 @@ get_time (const unsigned char *in, unsigned int inlen, int *hour, int *min, int 
 			default:
 				return FALSE;
 			}
-		} else if (!isdigit ((int) *inptr))
+		} else if (!(*inptr >= '0' && *inptr <= '9'))
 			return FALSE;
 		else
 			*val = (*val * 10) + (*inptr - '0');
@@ -428,8 +429,8 @@ get_time (const unsigned char *in, unsigned int inlen, int *hour, int *min, int 
 static int
 get_tzone (struct _date_token **token)
 {
-	const unsigned char *inptr, *inend;
-	unsigned int inlen;
+	const char *inptr, *inend;
+	size_t inlen;
 	int i, t;
 	
 	for (i = 0; *token && i < 2; *token = (*token)->next, i++) {
@@ -449,7 +450,7 @@ get_tzone (struct _date_token **token)
 			}
 			
 			for (t = 0; t < 15; t++) {
-				unsigned int len = strlen (tz_offsets[t].name);
+				size_t len = strlen (tz_offsets[t].name);
 				
 				if (len != inlen)
 					continue;
@@ -590,7 +591,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 				d(printf ("weekday; "));
 				got_wday = TRUE;
 				tm.tm_wday = n;
-				goto next_token;
+				goto next;
 			}
 		}
 		
@@ -599,7 +600,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 				d(printf ("month; "));
 				got_month = TRUE;
 				tm.tm_mon = n;
-				goto next_token;
+				goto next;
 			}
 		}
 		
@@ -609,7 +610,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 				tm.tm_hour = hour;
 				tm.tm_min = min;
 				tm.tm_sec = sec;
-				goto next_token;
+				goto next;
 			}
 		}
 		
@@ -620,7 +621,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 				d(printf ("tzone; "));
 				got_tzone = TRUE;
 				offset = n;
-				goto next_token;
+				goto next;
 			}
 		}
 		
@@ -629,31 +630,37 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 				if ((n = get_year (token->start, token->len)) != -1) {
 					d(printf ("year; "));
 					tm.tm_year = n - 1900;
-					goto next_token;
+					goto next;
 				}
 			} else {
-				if (!got_month && !got_wday && token->next && is_numeric (token->next)) {
-					d(printf ("mon; "));
-					n = decode_int (token->start, token->len);
-					got_month = TRUE;
-					tm.tm_mon = n - 1;
-					goto next_token;
+				/* Note: assumes MM-DD-YY ordering if '0 < MM < 12' holds true */
+				if (!got_month && token->next && is_numeric (token->next)) {
+					if ((n = decode_int (token->start, token->len)) > 12) {
+						goto mday;
+					} else if (n > 0) {
+						d(printf ("mon; "));
+						got_month = TRUE;
+						tm.tm_mon = n - 1;
+					}
+					goto next;
 				} else if (!tm.tm_mday && (n = get_mday (token->start, token->len)) != -1) {
+				mday:
 					d(printf ("mday; "));
 					tm.tm_mday = n;
-					goto next_token;
+					goto next;
 				} else if (!tm.tm_year) {
-					d(printf ("2-digit year; "));
-					n = get_year (token->start, token->len);
-					tm.tm_year = n - 1900;
-					goto next_token;
+					if ((n = get_year (token->start, token->len)) != -1) {
+						printf ("2-digit year; ");
+						tm.tm_year = n - 1900;
+					}
+					goto next;
 				}
 			}
 		}
 		
 		d(printf ("???; "));
 		
-	next_token:
+	next:
 		
 		token = token->next;
 	}
@@ -675,7 +682,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 
 #if 0
 static void
-gmime_datetok_table_init ()
+gmime_datetok_table_init (void)
 {
 	int i;
 	
@@ -1444,7 +1451,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			*p = '\0';
 		
 		/* slight optimization */
-		if (!strcasecmp (charset, "UTF-8"))
+		if (!g_ascii_strcasecmp (charset, "UTF-8"))
 			return g_strndup (decoded, declen);
 		
 		cd = g_mime_iconv_open ("UTF-8", charset);
@@ -1748,7 +1755,7 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 	int save = 0;
 	char encoding;
 	
-	if (strcasecmp (charset, "UTF-8") != 0)
+	if (g_ascii_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
 	if (cd != (iconv_t) -1) {

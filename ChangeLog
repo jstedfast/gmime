@@ -1,3 +1,9 @@
+2006-06-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (parse_broken_date): Fixed to handle
+	MM-DD-YY properly and also to fallback to DD-MM-YY if the first
+	pair of digits isn't within range for a proper month.
+
 2006-05-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime.h.in: Removed.
