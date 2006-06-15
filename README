@@ -1,4 +1,4 @@
-                            GMime, version 2.2.1
+                            GMime, version 2.2.2
                    by Jeffrey Stedfast <fejj@novell.com>
 
 
@@ -163,10 +163,11 @@ are:
 
 - Perl: http://search.cpan.org/dist/MIME-Fast/
 
+- .NET (Mono): Included in this distribution.
+
 
 REPORTING BUGS
 --------------
 
-Bugs may be reported to the GMime development team by sending email to
-fejj@ximian.com and/or by submitting a bug report for the gmime
-module at http://bugzilla.gnome.org/
+Bugs may be reported to the GMime development team by submitting a bug
+report for the gmime module at http://bugzilla.gnome.org/

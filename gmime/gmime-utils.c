@@ -284,7 +284,7 @@ decode_int (const char *in, size_t inlen)
 	
 	for ( ; inptr < inend; inptr++) {
 		if (!(*inptr >= '0' && *inptr <= '9'))
-			return  -1;
+			return -1;
 		else
 			val = (val * 10) + (*inptr - '0');
 	}
