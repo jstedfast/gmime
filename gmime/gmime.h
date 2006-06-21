@@ -21,11 +21,6 @@
 #ifndef __GMIME_H__
 #define __GMIME_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <gmime/gmime-error.h>
 #include <gmime/gmime-charset.h>
@@ -72,6 +67,11 @@ extern "C" {
 #include <gmime/gmime-session-simple.h>
 #include <gmime/gmime-cipher-context.h>
 #include <gmime/gmime-gpg-context.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 /* GMIME version */
 extern const guint gmime_major_version;
