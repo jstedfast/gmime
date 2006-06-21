@@ -21,11 +21,6 @@
 #ifndef __GMIME_PARSER_H__
 #define __GMIME_PARSER_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <glib.h>
 #include <glib-object.h>
 #include <errno.h>
@@ -34,6 +29,8 @@ extern "C" {
 #include <gmime/gmime-message.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-stream.h>
+
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_PARSER            (g_mime_parser_get_type ())
 #define GMIME_PARSER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PARSER, GMimeParser))
@@ -93,9 +90,7 @@ char *g_mime_parser_get_from (GMimeParser *parser);
 
 off_t g_mime_parser_get_from_offset (GMimeParser *parser);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_PARSER_H__ */
 

@@ -25,10 +25,7 @@
 #include <stdio.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FILE            (g_mime_stream_file_get_type ())
 #define GMIME_STREAM_FILE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILE, GMimeStreamFile))
@@ -61,8 +58,6 @@ GMimeStream *g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t en
 gboolean g_mime_stream_file_get_owner (GMimeStreamFile *stream);
 void g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_FILE_H__ */

@@ -25,10 +25,7 @@
 #include <glib-object.h>
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER            (g_mime_filter_get_type ())
 #define GMIME_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER, GMimeFilter))
@@ -94,8 +91,6 @@ void g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 /* ensure this much size available for filter output */
 void g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_H__ */

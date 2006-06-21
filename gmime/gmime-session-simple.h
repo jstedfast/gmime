@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-session.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_SESSION_SIMPLE            (g_mime_session_simple_get_type ())
 #define GMIME_SESSION_SIMPLE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SESSION_SIMPLE, GMimeSessionSimple))
@@ -67,8 +64,6 @@ void g_mime_session_simple_set_request_passwd (GMimeSessionSimple *session, GMim
 void g_mime_session_simple_set_forget_passwd (GMimeSessionSimple *session, GMimeSimpleForgetPasswdFunc forget_passwd);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_SESSION_SIMPLE_H__ */

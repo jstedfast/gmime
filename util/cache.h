@@ -26,10 +26,7 @@
 #include <util/list.h>
 #include <util/memchunk.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct _Cache Cache;
 
@@ -64,8 +61,6 @@ CacheNode *cache_node_lookup (Cache *cache, const char *key, gboolean use);
 void cache_expire_unused (Cache *cache);
 void cache_node_expire (CacheNode *node);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __CACHE_H__ */

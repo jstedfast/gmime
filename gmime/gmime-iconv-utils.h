@@ -24,10 +24,7 @@
 #include <sys/types.h>
 #include <iconv.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 char *g_mime_iconv_strdup (iconv_t cd, const char *string);
 char *g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n);
@@ -38,8 +35,6 @@ char *g_mime_iconv_locale_to_utf8_length (const char *string, size_t n);
 char *g_mime_iconv_utf8_to_locale (const char *string);
 char *g_mime_iconv_utf8_to_locale_length (const char *string, size_t n);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_ICONV_UTILS_H__ */

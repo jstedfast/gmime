@@ -68,10 +68,7 @@
 #include <gmime/gmime-cipher-context.h>
 #include <gmime/gmime-gpg-context.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 /* GMIME version */
 extern const guint gmime_major_version;
@@ -99,8 +96,6 @@ gboolean g_mime_check_version (guint major, guint minor, guint micro);
 void g_mime_init (guint32 flags);
 void g_mime_shutdown (void);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_H__ */

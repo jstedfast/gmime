@@ -29,10 +29,7 @@
 #include <gmime/gmime-stream.h>
 #include <gmime/internet-address.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE            (g_mime_message_get_type ())
 #define GMIME_MESSAGE(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE, GMimeMessage))
@@ -134,8 +131,6 @@ char *g_mime_message_get_headers (GMimeMessage *message);
 
 void g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MESSAGE_H__ */

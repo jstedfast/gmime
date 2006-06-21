@@ -23,10 +23,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 extern GQuark gmime_error_quark;
 #define GMIME_ERROR_QUARK gmime_error_quark
@@ -59,8 +56,6 @@ enum {
 	GMIME_ERROR_NO_VALID_RECIPIENTS = -5
 };
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_ERROR_H__ */

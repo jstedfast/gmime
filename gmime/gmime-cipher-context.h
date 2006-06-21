@@ -29,10 +29,7 @@
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-session.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
 #define GMIME_CIPHER_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
@@ -227,8 +224,6 @@ void                 g_mime_cipher_validity_free (GMimeCipherValidity *validity)
 
 #endif /* GMIME_DISABLE_DEPRECATED */
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_CIPHER_CONTEXT_H__ */

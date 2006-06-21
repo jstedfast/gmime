@@ -26,10 +26,7 @@
 #include <gmime/gmime-part.h>
 #include <gmime/gmime-message.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PARTIAL            (g_mime_message_partial_get_type ())
 #define GMIME_MESSAGE_PARTIAL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PARTIAL, GMimeMessagePartial))
@@ -69,8 +66,6 @@ GMimeMessage *g_mime_message_partial_reconstruct_message (GMimeMessagePartial **
 
 GMimeMessage **g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, size_t *nparts);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MESSAGE_PARTIAL_H__ */

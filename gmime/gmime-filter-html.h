@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_HTML            (g_mime_filter_html_get_type ())
 #define GMIME_FILTER_HTML(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_HTML, GMimeFilterHTML))
@@ -126,8 +123,6 @@ GType g_mime_filter_html_get_type (void);
 
 GMimeFilter *g_mime_filter_html_new (guint32 flags, guint32 colour);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_HTML_H__ */

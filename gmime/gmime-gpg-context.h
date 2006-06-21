@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-cipher-context.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_GPG_CONTEXT            (g_mime_gpg_context_get_type ())
 #define GMIME_GPG_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_GPG_CONTEXT, GMimeGpgContext))
@@ -60,8 +57,6 @@ GMimeCipherContext *g_mime_gpg_context_new (GMimeSession *session, const char *p
 gboolean g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_GPG_CONTEXT_H__ */

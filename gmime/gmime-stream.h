@@ -29,10 +29,7 @@
 #include <unistd.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM            (g_mime_stream_get_type ())
 #define GMIME_STREAM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM, GMimeStream))
@@ -115,8 +112,6 @@ ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
 
 ssize_t    g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_H__ */

@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_CAT            (g_mime_stream_cat_get_type ())
 #define GMIME_STREAM_CAT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_CAT, GMimeStreamCat))
@@ -58,8 +55,6 @@ GMimeStream *g_mime_stream_cat_new (void);
 
 int g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_CAT_H__ */

@@ -28,10 +28,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct {
 	guint32 buf[4];
@@ -52,8 +49,6 @@ void md5_init (MD5Context *ctx);
 void md5_update (MD5Context *ctx, const unsigned char *buf, guint32 len);
 void md5_final (MD5Context *ctx, unsigned char digest[16]);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif	/* MD5_UTILS_H */

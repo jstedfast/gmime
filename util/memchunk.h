@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct _MemChunk MemChunk;
 
@@ -45,8 +42,6 @@ void      memchunk_clean (MemChunk *memchunk);
 
 void      memchunk_destroy (MemChunk *memchunk);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __MEMCHUNK_H__ */

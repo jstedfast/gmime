@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_YENC            (g_mime_filter_yenc_get_type ())
 #define GMIME_FILTER_YENC(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_YENC, GMimeFilterYenc))
@@ -99,8 +96,6 @@ size_t g_mime_yencode_step  (const unsigned char *in, size_t inlen, unsigned cha
 size_t g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
 			     int *state, guint32 *pcrc, guint32 *crc);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_YENC_H__ */

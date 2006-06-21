@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_NULL            (g_mime_stream_null_get_type ())
 #define GMIME_STREAM_NULL(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_NULL, GMimeStreamNull))
@@ -56,8 +53,6 @@ GType g_mime_stream_null_get_type (void);
 
 GMimeStream *g_mime_stream_null_new (void);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_NULL_H__ */

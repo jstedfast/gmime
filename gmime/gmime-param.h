@@ -23,10 +23,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 struct _GMimeParam {
 	struct _GMimeParam *next;
@@ -45,8 +42,6 @@ GMimeParam *g_mime_param_append_param (GMimeParam *params, GMimeParam *param);
 
 void g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *string);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_PARAM_H__ */

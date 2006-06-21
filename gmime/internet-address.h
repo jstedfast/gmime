@@ -23,10 +23,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef enum {
 	INTERNET_ADDRESS_NONE,
@@ -82,8 +79,6 @@ InternetAddressList *internet_address_parse_string (const char *string);
 char *internet_address_to_string (const InternetAddress *ia, gboolean encode);
 char *internet_address_list_to_string (const InternetAddressList *list, gboolean encode);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __INTERNET_ADDRESS_H__ */

@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_GZIP            (g_mime_filter_gzip_get_type ())
 #define GMIME_FILTER_GZIP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_GZIP, GMimeFilterGZip))
@@ -62,8 +59,6 @@ GType g_mime_filter_gzip_get_type (void);
 
 GMimeFilter *g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_GZIP_H__ */

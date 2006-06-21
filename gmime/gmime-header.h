@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct _GMimeHeader GMimeHeader;
 
@@ -61,8 +58,6 @@ void g_mime_header_register_writer (GMimeHeader *header, const char *name, GMime
 void g_mime_header_set_raw (GMimeHeader *header, const char *raw);
 gboolean g_mime_header_has_raw (GMimeHeader *header);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_HEADER_H__ */

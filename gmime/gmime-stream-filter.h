@@ -24,10 +24,7 @@
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FILTER            (g_mime_stream_filter_get_type ())
 #define GMIME_STREAM_FILTER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FILTER, GMimeStreamFilter))
@@ -60,8 +57,6 @@ GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
 int g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter);
 void g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_FILTER_H__ */

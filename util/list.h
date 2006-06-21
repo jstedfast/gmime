@@ -21,12 +21,11 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
+#include <glib/gmacros.h>
+
 #include <string.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct _ListNode {
 	struct _ListNode *next;
@@ -55,8 +54,6 @@ ListNode *list_append_node  (List *list, ListNode *node);
 
 ListNode *list_node_unlink (ListNode *node);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __LIST_H__ */

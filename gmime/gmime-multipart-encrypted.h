@@ -21,13 +21,10 @@
 #ifndef __GMIME_MULTIPART_ENCRYPTED_H__
 #define __GMIME_MULTIPART_ENCRYPTED_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <gmime/gmime-multipart.h>
 #include <gmime/gmime-cipher-context.h>
+
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_ENCRYPTED            (g_mime_multipart_encrypted_get_type ())
 #define GMIME_MULTIPART_ENCRYPTED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_ENCRYPTED, GMimeMultipartEncrypted))
@@ -70,8 +67,6 @@ GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeCipherContext *ctx,
 						 GError **err);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MULTIPART_ENCRYPTED_H__ */

@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_ENRICHED            (g_mime_filter_enriched_get_type ())
 #define GMIME_FILTER_ENRICHED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_ENRICHED, GMimeFilterEnriched))
@@ -57,8 +54,6 @@ GType g_mime_filter_enriched_get_type (void);
 
 GMimeFilter *g_mime_filter_enriched_new (guint32 flags);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_ENRICHED_H__ */

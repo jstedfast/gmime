@@ -25,10 +25,7 @@
 #include <time.h>
 #include <stdarg.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef enum {
 	GMIME_PART_ENCODING_DEFAULT,
@@ -111,8 +108,6 @@ size_t g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, u
 size_t g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, int *save);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_UTILS_H__ */

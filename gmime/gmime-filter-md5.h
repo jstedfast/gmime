@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_MD5            (g_mime_filter_md5_get_type ())
 #define GMIME_FILTER_MD5(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_MD5, GMimeFilterMd5))
@@ -56,8 +53,6 @@ GMimeFilter *g_mime_filter_md5_new (void);
 
 void g_mime_filter_md5_get_digest (GMimeFilterMd5 *md5, unsigned char digest[16]);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_MD5_H__ */

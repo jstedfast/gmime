@@ -23,10 +23,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
 
@@ -40,8 +37,6 @@ int strncasecmp (const char *s1, const char *s2, size_t n);
 int strcasecmp (const char *s1, const char *s2);
 #endif
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_COMMON_H__ */

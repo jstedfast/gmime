@@ -29,10 +29,7 @@
 #include <gmime/gmime-disposition.h>
 #include <gmime/gmime-data-wrapper.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_PART            (g_mime_part_get_type ())
 #define GMIME_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_PART, GMimePart))
@@ -120,8 +117,6 @@ ssize_t g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
 char *g_mime_part_to_string (GMimePart *mime_part);
 #endif /* GMIME_DISABLE_DEPRECATED */
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_PART_H__ */

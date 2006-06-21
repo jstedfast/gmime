@@ -24,10 +24,7 @@
 #include <iconv.h>
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_CHARSET            (g_mime_filter_charset_get_type ())
 #define GMIME_FILTER_CHARSET(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_CHARSET, GMimeFilterCharset))
@@ -57,8 +54,6 @@ GType g_mime_filter_charset_get_type (void);
 
 GMimeFilter *g_mime_filter_charset_new (const char *from_charset, const char *to_charset);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_CHARSET_H__ */

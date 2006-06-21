@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_STRIP            (g_mime_filter_strip_get_type ())
 #define GMIME_FILTER_STRIP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_STRIP, GMimeFilterStrip))
@@ -53,8 +50,6 @@ GType g_mime_filter_strip_get_type (void);
 
 GMimeFilter *g_mime_filter_strip_new (void);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_STRIP_H__ */

@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_SESSION            (g_mime_session_get_type ())
 #define GMIME_SESSION(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_SESSION, GMimeSession))
@@ -71,8 +68,6 @@ void g_mime_session_forget_passwd (GMimeSession *session, const char *item,
 				   GError **err);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_SESSION_H__ */

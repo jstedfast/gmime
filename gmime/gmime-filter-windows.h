@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-filter.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_WINDOWS            (g_mime_filter_windows_get_type ())
 #define GMIME_FILTER_WINDOWS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_WINDOWS, GMimeFilterWindows))
@@ -60,8 +57,6 @@ gboolean g_mime_filter_windows_is_windows_charset (GMimeFilterWindows *filter);
 
 const char *g_mime_filter_windows_real_charset (GMimeFilterWindows *filter);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_WINDOWS_H__ */

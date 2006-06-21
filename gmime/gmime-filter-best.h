@@ -25,10 +25,7 @@
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_FILTER_BEST            (g_mime_filter_best_get_type ())
 #define GMIME_FILTER_BEST(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_FILTER_BEST, GMimeFilterBest))
@@ -89,8 +86,6 @@ const char *g_mime_filter_best_charset (GMimeFilterBest *best);
 
 GMimePartEncodingType g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_FILTER_BEST_H__ */

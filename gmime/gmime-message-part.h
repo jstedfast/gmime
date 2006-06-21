@@ -24,10 +24,7 @@
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-message.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MESSAGE_PART            (g_mime_message_part_get_type ())
 #define GMIME_MESSAGE_PART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MESSAGE_PART, GMimeMessagePart))
@@ -61,8 +58,6 @@ void g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *mess
 
 GMimeMessage *g_mime_message_part_get_message (GMimeMessagePart *part);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MESSAGE_PART_H__ */

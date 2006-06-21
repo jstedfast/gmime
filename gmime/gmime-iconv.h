@@ -23,10 +23,7 @@
 
 #include <iconv.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 void g_mime_iconv_init (void);
 void g_mime_iconv_shutdown (void);
@@ -101,8 +98,6 @@ iconv_t g_mime_iconv_open (const char *to, const char *from);
 
 int g_mime_iconv_close (iconv_t cd);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_ICONV_H__ */

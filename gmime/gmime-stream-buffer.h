@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_BUFFER            (g_mime_stream_buffer_get_type ())
 #define GMIME_STREAM_BUFFER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBuffer))
@@ -72,8 +69,6 @@ ssize_t g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max);
 
 void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_BUFFER_H__ */

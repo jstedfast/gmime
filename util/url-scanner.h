@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <sys/types.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct {
 	const char *pattern;
@@ -62,8 +59,6 @@ void g_url_scanner_add (GUrlScanner *scanner, urlpattern_t *pattern);
 
 gboolean g_url_scanner_scan (GUrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __URL_SCANNER_H__ */

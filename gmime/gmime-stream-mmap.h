@@ -23,10 +23,7 @@
 
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_MMAP            (g_mime_stream_mmap_get_type ())
 #define GMIME_STREAM_MMAP(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_MMAP, GMimeStreamMmap))
@@ -60,8 +57,6 @@ GType g_mime_stream_mmap_get_type (void);
 GMimeStream *g_mime_stream_mmap_new (int fd, int prot, int flags);
 GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, off_t end);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_MMAP_H__ */

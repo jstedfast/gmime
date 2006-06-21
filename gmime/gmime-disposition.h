@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-param.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 
 /**
@@ -67,8 +64,6 @@ const char *g_mime_disposition_get_parameter (GMimeDisposition *disposition, con
 
 char *g_mime_disposition_header (GMimeDisposition *disposition, gboolean fold);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_DISPOSITION_H__ */

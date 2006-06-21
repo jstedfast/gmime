@@ -28,10 +28,7 @@
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-utils.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_DATA_WRAPPER            (g_mime_data_wrapper_get_type ())
 #define GMIME_DATA_WRAPPER(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_DATA_WRAPPER, GMimeDataWrapper))
@@ -70,8 +67,6 @@ GMimePartEncodingType g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrappe
 
 ssize_t g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_DATA_WRAPPER_H__ */

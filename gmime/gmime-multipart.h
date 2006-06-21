@@ -25,10 +25,7 @@
 
 #include <gmime/gmime-object.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART            (g_mime_multipart_get_type ())
 #define GMIME_MULTIPART(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART, GMimeMultipart))
@@ -97,8 +94,6 @@ void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback
 GMimeObject *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
 							   const char *content_id);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MULTIPART_H__ */

@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_MEM            (g_mime_stream_mem_get_type ())
 #define GMIME_STREAM_MEM(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_MEM, GMimeStreamMem))
@@ -64,8 +61,6 @@ void g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array);
 gboolean g_mime_stream_mem_get_owner (GMimeStreamMem *mem);
 void g_mime_stream_mem_set_owner (GMimeStreamMem *mem, gboolean owner);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_MEM_H__ */

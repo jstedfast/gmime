@@ -24,10 +24,7 @@
 #include <glib.h>
 #include <gmime/gmime-param.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 struct _GMimeContentType {
 	char *type;
@@ -52,8 +49,6 @@ void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char 
 const char *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute);
 
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_PART_H__ */

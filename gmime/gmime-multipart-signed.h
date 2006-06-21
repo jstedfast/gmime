@@ -21,13 +21,10 @@
 #ifndef __GMIME_MULTIPART_SIGNED_H__
 #define __GMIME_MULTIPART_SIGNED_H__
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
-
 #include <gmime/gmime-multipart.h>
 #include <gmime/gmime-cipher-context.h>
+
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_MULTIPART_SIGNED            (g_mime_multipart_signed_get_type ())
 #define GMIME_MULTIPART_SIGNED(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_MULTIPART_SIGNED, GMimeMultipartSigned))
@@ -69,8 +66,6 @@ GMimeSignatureValidity *g_mime_multipart_signed_verify (GMimeMultipartSigned *mp
 							GMimeCipherContext *ctx,
 							GError **err);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_MULTIPART_SIGNED_H__ */

@@ -28,10 +28,7 @@
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-header.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_OBJECT            (g_mime_object_get_type ())
 #define GMIME_OBJECT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_OBJECT, GMimeObject))
@@ -102,8 +99,6 @@ char *g_mime_object_get_headers (GMimeObject *object);
 ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
 char *g_mime_object_to_string (GMimeObject *object);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_OBJECT_H__ */

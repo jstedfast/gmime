@@ -23,10 +23,7 @@
 
 #include <glib.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 typedef struct _GTrie GTrie;
 
@@ -37,8 +34,6 @@ void g_trie_add (GTrie *trie, const char *pattern, int pattern_id);
 
 const char *g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __G_TRIE_H__ */

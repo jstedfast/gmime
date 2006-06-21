@@ -24,10 +24,7 @@
 #include <unistd.h>
 #include <gmime/gmime-stream.h>
 
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
+G_BEGIN_DECLS
 
 #define GMIME_TYPE_STREAM_FS            (g_mime_stream_fs_get_type ())
 #define GMIME_STREAM_FS(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_STREAM_FS, GMimeStreamFs))
@@ -61,8 +58,6 @@ GMimeStream *g_mime_stream_fs_new_with_bounds (int fd, off_t start, off_t end);
 gboolean g_mime_stream_fs_get_owner (GMimeStreamFs *stream);
 void g_mime_stream_fs_set_owner (GMimeStreamFs *stream, gboolean owner);
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+G_END_DECLS
 
 #endif /* __GMIME_STREAM_FS_H__ */
