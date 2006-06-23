@@ -323,7 +323,23 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			real += current->length;
 		
 		real += current->stream->bound_start;
-		ret = g_mime_stream_seek (current->stream, real, GMIME_STREAM_SEEK_SET);
+		
+		if (current->stream->position != real) {
+			if (real > current->stream->bound_start) {
+				/* no choice but to seek */
+				ret = g_mime_stream_seek (current->stream, real, GMIME_STREAM_SEEK_SET);
+			} else if (real == current->stream->bound_start) {
+				/* special-case: reset() allows all streams (seekable or not) to reset
+				 * their state and positions to bound_start */
+				ret = g_mime_stream_reset (current->stream);
+			} else {
+				ret = -1;
+			}
+		} else {
+			/* no seek required */
+			ret = 0;
+		}
+		
 		if (ret != -1) {
 			stream->position = offset;
 			cat->current = current;

@@ -364,6 +364,11 @@ static char *addresses[] = {
 	"Tõivo Leedjärv <leedjarv@interest.ee>",
 	"fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
 	"\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
+	"undisclosed-recipients: ;",
+	"undisclosed-recipients:;",
+	"undisclosed-recipients:",
+	"undisclosed-recipients;",
+	"undisclosed-recipients",
 	NULL
 };
 
@@ -386,8 +391,7 @@ dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean de
 		}
 		
 		if (ia->type == INTERNET_ADDRESS_GROUP) {
-			fprintf (stderr, "Address is a group:\n");
-			fprintf (stderr, "Name: %s\n", ia->name ? ia->name : "");
+			fprintf (stderr, "Group Name: %s\n", ia->name ? ia->name : "");
 			dump_addrlist (ia->value.members, -1, TRUE, FALSE);
 			fprintf (stderr, "End of group.\n");
 		} else if (ia->type == INTERNET_ADDRESS_NAME) {

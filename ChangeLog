@@ -1,3 +1,15 @@
+2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-cat.c (stream_seek): Fixed to only seek if
+	necessary and also to use ::reset() if seeking back to the
+	beginning of the stream so that it works for non-seekable streams
+	too. Fixes bug #345503 - again thanks to Charles for reporting
+	this bug.
+
+	* gmime/gmime-object.c (subtype_bucket_foreach): Fixed to also
+	free the bucket memory. Fixes bug #345768, thanks to Charles Kerr
+	for pointing this out.
+
 2006-06-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-gpg-context.c: Removed #define _POSIX_SOURCE to fix

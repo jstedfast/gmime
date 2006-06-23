@@ -222,8 +222,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 	
 	type_registry_init ();
 	
-	bucket = g_hash_table_lookup (type_hash, type);
-	if (!bucket) {
+	if (!(bucket = g_hash_table_lookup (type_hash, type))) {
 		bucket = g_new (struct _type_bucket, 1);
 		bucket->type = g_strdup (type);
 		bucket->object_type = *type == '*' ? object_type : 0;
@@ -272,21 +271,19 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	
 	type_registry_init ();
 	
-	bucket = g_hash_table_lookup (type_hash, type);
-	if (!bucket) {
-		bucket = g_hash_table_lookup (type_hash, "*");
-		obj_type = bucket ? bucket->object_type : 0;
-	} else {
+	if ((bucket = g_hash_table_lookup (type_hash, type))) {
 		if (!(sub = g_hash_table_lookup (bucket->subtype_hash, subtype)))
 			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
 		
 		obj_type = sub ? sub->object_type : 0;
+	} else {
+		bucket = g_hash_table_lookup (type_hash, "*");
+		obj_type = bucket ? bucket->object_type : 0;
 	}
 	
 	if (!obj_type) {
 		/* use the default mime object */
-		bucket = g_hash_table_lookup (type_hash, "*");
-		if (bucket) {
+		if ((bucket = g_hash_table_lookup (type_hash, "*"))) {
 			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
 			obj_type = sub ? sub->object_type : 0;
 		}
@@ -319,8 +316,7 @@ sync_content_type (GMimeObject *object)
 	g_string_append (string, type);
 	g_free (type);
 	
-	params = content_type->params;
-	if (params)
+	if ((params = content_type->params))
 		g_mime_param_write_to_string (params, FALSE, string);
 	
 	p = string->str;
@@ -479,7 +475,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	int i;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_ascii_strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -694,7 +690,10 @@ g_mime_object_to_string (GMimeObject *object)
 static void
 subtype_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
 {
-	g_free (key);
+	struct _subtype_bucket *bucket = value;
+	
+	g_free (bucket->subtype);
+	g_free (bucket);
 }
 
 static void
