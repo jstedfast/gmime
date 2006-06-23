@@ -410,7 +410,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	if (protocol) {
 		/* make sure the protocol matches the cipher sign protocol */
-		if (strcasecmp (ctx->sign_protocol, protocol) != 0)
+		if (g_ascii_strcasecmp (ctx->sign_protocol, protocol) != 0)
 			return NULL;
 	} else {
 		/* *shrug* - I guess just go on as if they match? */
@@ -421,7 +421,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	/* make sure the protocol matches the signature content-type */
 	content_type = g_mime_content_type_to_string (signature->content_type);
-	if (strcasecmp (content_type, protocol) != 0) {
+	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
 		g_object_unref (signature);
 		g_free (content_type);
 		

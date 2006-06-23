@@ -1,5 +1,61 @@
 2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-part.c: Use g_ascii_* versions of str[n]casecmp.
+
+	* gmime/gmime-parser.c: Use g_ascii_* versions of str[n]casecmp.
+
+	* gmime/gmime-param.c: Use g_ascii_* versions of str[n]casecmp.
+
+	* gmime/gmime-multipart-signed.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-multipart-encrypted.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-multipart.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-message-partial.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-message-part.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-message.c: Use g_ascii_* versions of str[n]casecmp.
+
+	* gmime/gmime-iconv.c (g_mime_iconv_open): Use g_ascii_* versions
+	of str[n]casecmp.
+
+	* gmime/gmime-header.c (g_mime_header_new): Use
+	g_mime_strcase_[hash,equal] rather than param_[hash,equal] to
+	reuse code.
+
+	* gmime/gmime-gpg-context.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-filter-enriched.c: Use g_ascii_* versions of
+	str[n]casecmp.
+
+	* gmime/gmime-disposition.c (g_mime_disposition_add_parameter):
+	Use g_mime_strcase_[hash,equal] rather than param_[hash,equal] to
+	reuse code.
+	(g_mime_disposition_new): Same.
+	(param_equal): Removed.
+	(param_hash): Removed.
+
+	* gmime/gmime-content-type.c: Use g_ascii_* versions of
+	str[n]casecmp.
+	(g_mime_content_type_new_from_string): Use
+	g_mime_strcase_[hash,equal] rather than param_[hash,equal] to
+	reuse code.
+	(g_mime_content_type_set_parameter): Same.
+	(param_equal): Removed.
+	(param_hash): Removed.
+
+	* gmime/gmime-charset.c: Use g_ascii_* versions of str[n]casecmp.
+
+2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-stream-cat.c (stream_seek): Fixed to only seek if
 	necessary and also to use ::reset() if seeking back to the
 	beginning of the stream so that it works for non-seekable streams

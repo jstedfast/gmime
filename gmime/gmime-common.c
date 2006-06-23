@@ -36,7 +36,7 @@
 int
 g_mime_strcase_equal (gconstpointer v, gconstpointer v2)
 {
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
+	return g_ascii_strcasecmp ((const char *) v, (const char *) v2) == 0;
 }
 
 
@@ -59,7 +59,7 @@ g_mime_strcase_hash (gconstpointer key)
  * strncasecmp:
  * @s1: string 1
  * @s2: string 2
- * @n:
+ * @n: len to compare
  *
  * Compares the first @n characters of the 2 strings, @s1 and @s2,
  * ignoring the case of the characters.
@@ -84,7 +84,7 @@ strncasecmp (const char *s1, const char *s2, size_t n)
 
 #ifndef HAVE_STRCASECMP
 /**
- * strncasecmp:
+ * strcasecmp:
  * @s1: string 1
  * @s2: string 2
  *

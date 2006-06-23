@@ -26,6 +26,7 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "gmime-common.h"
 #include "gmime-content-type.h"
 #include "gmime-table-private.h"
 
@@ -38,25 +39,6 @@
 
 #define d(x)
 
-
-static int
-param_equal (gconstpointer v, gconstpointer v2)
-{
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
-}
-
-static guint
-param_hash (gconstpointer key)
-{
-	const char *p = key;
-	guint h = tolower (*p);
-	
-	if (h)
-		for (p += 1; *p != '\0'; p++)
-			h = (h << 5) - h + tolower (*p);
-	
-	return h;
-}
 
 /**
  * g_mime_content_type_new:
@@ -80,9 +62,9 @@ g_mime_content_type_new (const char *type, const char *subtype)
 	} else {
 		if (type && *type) {
 			mime_type->type = g_strdup (type);
-			if (!strcasecmp (type, "text")) {
+			if (!g_ascii_strcasecmp (type, "text")) {
 				mime_type->subtype = g_strdup ("plain");
-			} else if (!strcasecmp (type, "multipart")) {
+			} else if (!g_ascii_strcasecmp (type, "multipart")) {
 				mime_type->subtype = g_strdup ("mixed");
 			} else {
 				g_free (mime_type->type);
@@ -159,7 +141,7 @@ g_mime_content_type_new_from_string (const char *string)
 		mime_type->params = g_mime_param_new_from_string (inptr);
 		p = mime_type->params;
 		if (p != NULL) {
-			mime_type->param_hash = g_hash_table_new (param_hash, param_equal);
+			mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 			
 			while (p) {
 				g_hash_table_insert (mime_type->param_hash, p->name, p);
@@ -241,16 +223,14 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	g_return_val_if_fail (type != NULL, FALSE);
 	g_return_val_if_fail (subtype != NULL, FALSE);
 	
-	if (!strcmp (type, "*") || !strcasecmp (mime_type->type, type)) {
+	if (!strcmp (type, "*") || !g_ascii_strcasecmp (mime_type->type, type)) {
 		if (!strcmp (subtype, "*")) {
 			/* special case */
 			return TRUE;
-		} else {
-			if (!strcasecmp (mime_type->subtype, subtype))
-				return TRUE;
-			else
-				return FALSE;
 		}
+		
+		if (!g_ascii_strcasecmp (mime_type->subtype, subtype))
+			return TRUE;
 	}
 	
 	return FALSE;
@@ -275,15 +255,15 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 	g_return_if_fail (value != NULL);
 	
 	if (mime_type->params) {
-		param = g_hash_table_lookup (mime_type->param_hash, attribute);
-		if (param) {
+		if ((param = g_hash_table_lookup (mime_type->param_hash, attribute))) {
 			g_free (param->value);
 			param->value = g_strdup (value);
+			return;
 		}
 	} else {
 		/* hash table may not be initialized */
 		if (!mime_type->param_hash)
-			mime_type->param_hash = g_hash_table_new (param_hash, param_equal);
+			mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	}
 	
 	if (param == NULL) {
@@ -315,10 +295,8 @@ g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char
 	if (!mime_type->param_hash)
 		return NULL;
 	
-	param = g_hash_table_lookup (mime_type->param_hash, attribute);
-	
-	if (param)
-		return param->value;
-	else
+	if (!(param = g_hash_table_lookup (mime_type->param_hash, attribute)))
 		return NULL;
+	
+	return param->value;
 }

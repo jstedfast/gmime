@@ -161,20 +161,20 @@ gpg_hash_id (GMimeCipherContext *ctx, const char *hash)
 	if (hash == NULL)
 		return GMIME_CIPHER_HASH_DEFAULT;
 	
-	if (!strcasecmp (hash, "pgp-"))
+	if (!g_ascii_strcasecmp (hash, "pgp-"))
 		hash += 4;
 	
-	if (!strcasecmp (hash, "md2"))
+	if (!g_ascii_strcasecmp (hash, "md2"))
 		return GMIME_CIPHER_HASH_MD2;
-	else if (!strcasecmp (hash, "md5"))
+	else if (!g_ascii_strcasecmp (hash, "md5"))
 		return GMIME_CIPHER_HASH_MD5;
-	else if (!strcasecmp (hash, "sha1"))
+	else if (!g_ascii_strcasecmp (hash, "sha1"))
 		return GMIME_CIPHER_HASH_SHA1;
-	else if (!strcasecmp (hash, "ripemd160"))
+	else if (!g_ascii_strcasecmp (hash, "ripemd160"))
 		return GMIME_CIPHER_HASH_RIPEMD160;
-	else if (!strcasecmp (hash, "tiger192"))
+	else if (!g_ascii_strcasecmp (hash, "tiger192"))
 		return GMIME_CIPHER_HASH_TIGER192;
-	else if (!strcasecmp (hash, "haval-5-160"))
+	else if (!g_ascii_strcasecmp (hash, "haval-5-160"))
 		return GMIME_CIPHER_HASH_HAVAL5160;
 	
 	return GMIME_CIPHER_HASH_DEFAULT;
@@ -329,7 +329,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	stream = g_mime_stream_mem_new ();
 	gpg->diag = GMIME_STREAM_MEM (stream)->buffer;
 	charset = g_mime_locale_charset ();
-	if (strcasecmp (charset, "UTF-8") != 0) {
+	if (g_ascii_strcasecmp (charset, "UTF-8") != 0) {
 		GMimeStream *fstream;
 		GMimeFilter *filter;
 		

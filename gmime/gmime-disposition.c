@@ -25,27 +25,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "gmime-common.h"
 #include "gmime-disposition.h"
-
-
-static int
-param_equal (gconstpointer v, gconstpointer v2)
-{
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
-}
-
-static guint
-param_hash (gconstpointer key)
-{
-	const char *p = key;
-	guint h = tolower (*p);
-	
-	if (h)
-		for (p += 1; *p != '\0'; p++)
-			h = (h << 5) - h + tolower (*p);
-	
-	return h;
-}
 
 
 /**
@@ -80,7 +61,7 @@ g_mime_disposition_new (const char *disposition)
 	while (*inptr && *inptr != ';')
 		inptr++;
 	
-	value = g_strndup (disposition, (unsigned) (inptr - disposition));
+	value = g_strndup (disposition, (size_t) (inptr - disposition));
 	g_strstrip (value);
 	
 	new->disposition = value;
@@ -88,7 +69,7 @@ g_mime_disposition_new (const char *disposition)
 	/* parse the parameters, if any */
 	if (*inptr++ == ';' && *inptr) {
 		param = new->params = g_mime_param_new_from_string (inptr);
-		new->param_hash = g_hash_table_new (param_hash, param_equal);
+		new->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 		while (param) {
 			g_hash_table_insert (new->param_hash, param->name, param);
 			param = param->next;
@@ -188,7 +169,7 @@ g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *att
 	} else {
 		/* hash table may not be initialized */
 		if (!disposition->param_hash)
-			disposition->param_hash = g_hash_table_new (param_hash, param_equal);
+			disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	}
 	
 	if (param == NULL) {

@@ -205,7 +205,7 @@ g_mime_iconv_open (const char *to, const char *from)
 		return (iconv_t) -1;
 	}
 	
-	if (!strcasecmp (from, "x-unknown"))
+	if (!g_ascii_strcasecmp (from, "x-unknown"))
 		from = g_mime_locale_charset ();
 	
 	from = g_mime_charset_iconv_name (from);
@@ -215,11 +215,9 @@ g_mime_iconv_open (const char *to, const char *from)
 	
 	ICONV_CACHE_LOCK ();
 	
-	node = (IconvCacheNode *) cache_node_lookup (iconv_cache, key, TRUE);
-	if (node) {
+	if ((node = (IconvCacheNode *) cache_node_lookup (iconv_cache, key, TRUE))) {
 		if (node->used) {
-			cd = iconv_open (to, from);
-			if (cd == (iconv_t) -1)
+			if ((cd = iconv_open (to, from)) == (iconv_t) -1)
 				goto exception;
 		} else {
 			/* Apparently iconv on Solaris <= 7 segfaults if you pass in
@@ -238,8 +236,7 @@ g_mime_iconv_open (const char *to, const char *from)
 		
 		node->refcount++;
 	} else {
-		cd = iconv_open (to, from);
-		if (cd == (iconv_t) -1)
+		if ((cd = iconv_open (to, from)) == (iconv_t) -1)
 			goto exception;
 		
 		node = iconv_cache_node_new (key, cd);
@@ -287,8 +284,7 @@ g_mime_iconv_close (iconv_t cd)
 	
 	ICONV_CACHE_LOCK ();
 	
-	key = g_hash_table_lookup (iconv_open_hash, cd);
-	if (key) {
+	if ((key = g_hash_table_lookup (iconv_open_hash, cd))) {
 		g_hash_table_remove (iconv_open_hash, cd);
 		
 		node = (IconvCacheNode *) cache_node_lookup (iconv_cache, key, FALSE);

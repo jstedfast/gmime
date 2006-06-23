@@ -339,7 +339,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	if (protocol) {
 		/* make sure the protocol matches the cipher encrypt protocol */
-		if (strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
+		if (g_ascii_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
 			g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PROTOCOL_ERROR,
 				     "Failed to decrypt MIME part: protocol error");
 			
@@ -354,7 +354,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
-	if (strcasecmp (content_type, protocol) != 0) {
+	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
 		g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_PROTOCOL_ERROR,
 			     "Failed to decrypt MIME part: protocol error");
 		

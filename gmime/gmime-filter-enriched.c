@@ -184,7 +184,7 @@ enriched_tag_needs_param (const char *tag)
 	int i;
 	
 	for (i = 0; i < NUM_ENRICHED_TAGS; i++)
-		if (!strcasecmp (tag, enriched_tags[i].enriched))
+		if (!g_ascii_strcasecmp (tag, enriched_tags[i].enriched))
 			return enriched_tags[i].needs_param;
 	
 	return FALSE;
@@ -212,7 +212,7 @@ param_parse_colour (const char *inptr, int inlen)
 	int i;
 	
 	for (i = 0; i < NUM_VALID_COLOURS; i++) {
-		if (!strncasecmp (inptr, valid_colours[i], inlen))
+		if (!g_ascii_strncasecmp (inptr, valid_colours[i], inlen))
 			return g_strdup (valid_colours[i]);
 	}
 	
@@ -280,7 +280,7 @@ param_parse (const char *enriched, const char *inptr, int inlen)
 	int i;
 	
 	for (i = 0; i < NUM_ENRICHED_TAGS; i++) {
-		if (!strcasecmp (enriched, enriched_tags[i].enriched))
+		if (!g_ascii_strcasecmp (enriched, enriched_tags[i].enriched))
 			return enriched_tags[i].parse_param (inptr, inlen);
 	}
 	
@@ -421,14 +421,14 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 				goto need_input;
 			}
 			
-			if (!strncasecmp (tag, "nofill>", 7)) {
+			if (!g_ascii_strncasecmp (tag, "nofill>", 7)) {
 				if ((outptr + 5) < outend) {
 					enriched->nofill++;
 				} else {
 					inptr = tag - 1;
 					goto backup;
 				}
-			} else if (!strncasecmp (tag, "/nofill>", 8)) {
+			} else if (!g_ascii_strncasecmp (tag, "/nofill>", 8)) {
 				if ((outptr + 6) < outend) {
 					enriched->nofill--;
 				} else {
@@ -461,7 +461,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 							goto need_input;
 						}
 						
-						if (strncasecmp (inptr, "<param>", 7) != 0) {
+						if (g_ascii_strncasecmp (inptr, "<param>", 7) != 0) {
 							/* ignore the enriched command tag... */
 							inptr -= 1;
 							goto loop;
@@ -478,7 +478,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 							goto need_input;
 						}
 						
-						if (strncasecmp (inptr, "</param>", 8) != 0) {
+						if (g_ascii_strncasecmp (inptr, "</param>", 8) != 0) {
 							/* ignore the enriched command tag... */
 							inptr += 7;
 							goto loop;

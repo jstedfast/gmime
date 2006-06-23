@@ -597,7 +597,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	time_t date;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_ascii_strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -642,13 +642,13 @@ process_header (GMimeObject *object, const char *header, const char *value)
 static void
 message_add_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_ascii_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (strncasecmp ("Content-", header, 8)) {
+	if (g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_add (object->headers, header, value);
 		else
@@ -662,13 +662,13 @@ message_add_header (GMimeObject *object, const char *header, const char *value)
 static void
 message_set_header (GMimeObject *object, const char *header, const char *value)
 {
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_ascii_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (strncasecmp ("Content-", header, 8)) {
+	if (g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (process_header (object, header, value))
 			g_mime_header_set (object->headers, header, value);
 		else
@@ -685,10 +685,10 @@ message_get_header (GMimeObject *object, const char *header)
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_ascii_strcasecmp ("MIME-Version", header))
 		return "1.0";
 	
-	if (strncasecmp ("Content-", header, 8) != 0)
+	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else if (((GMimeMessage *) object)->mime_part)
 		return g_mime_object_get_header (((GMimeMessage *) object)->mime_part, header);
@@ -703,17 +703,17 @@ message_remove_header (GMimeObject *object, const char *header)
 	InternetAddressList *addrlist;
 	int i;
 	
-	if (!strcasecmp ("MIME-Version", header))
+	if (!g_ascii_strcasecmp ("MIME-Version", header))
 		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	
-	if (!strncasecmp ("Content-", header, 8))
+	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		return;
 	
 	for (i = 0; headers[i]; i++) {
-		if (!strcasecmp (headers[i], header))
+		if (!g_ascii_strcasecmp (headers[i], header))
 			break;
 	}
 	
@@ -1408,8 +1408,8 @@ handle_multipart_alternative (GMimeMultipart *multipart, gboolean want_plain, gb
 		
 		type = g_mime_object_get_content_type (mime_part);
 		if (g_mime_content_type_is_type (type, "text", "*")) {
-			if (!text_part || !strcasecmp (type->subtype, want_plain ? "plain" : "html")) {
-				*is_html = !strcasecmp (type->subtype, "html");
+			if (!text_part || !g_ascii_strcasecmp (type->subtype, want_plain ? "plain" : "html")) {
+				*is_html = !g_ascii_strcasecmp (type->subtype, "html");
 				text_part = mime_part;
 			}
 		}
@@ -1444,18 +1444,17 @@ handle_multipart_mixed (GMimeMultipart *multipart, gboolean want_plain, gboolean
 					text_part = mime_part;
 			}
 		} else if (g_mime_content_type_is_type (type, "text", "*")) {
-			if (!strcasecmp (type->subtype, want_plain ? "plain" : "html")) {
+			if (!g_ascii_strcasecmp (type->subtype, want_plain ? "plain" : "html")) {
 				/* we got what we came for */
-				*is_html = !strcasecmp (type->subtype, "html");
+				*is_html = !g_ascii_strcasecmp (type->subtype, "html");
 				return mime_part;
 			}
 			
-			/* if we haven't yet found a text part or if
-                           it is a type we can understand and it is
-                           the first of that type, save it */
-			if (!text_part || (!strcasecmp (type->subtype, "plain") && (first_type &&
-					   strcasecmp (type->subtype, first_type->subtype) != 0))) {
-				*is_html = !strcasecmp (type->subtype, "html");
+			/* if we haven't yet found a text part or if it is a type we can
+			 * understand and it is the first of that type, save it */
+			if (!text_part || (!g_ascii_strcasecmp (type->subtype, "plain") && (first_type &&
+					   g_ascii_strcasecmp (type->subtype, first_type->subtype) != 0))) {
+				*is_html = !g_ascii_strcasecmp (type->subtype, "html");
 				text_part = mime_part;
 				first_type = type;
 			}

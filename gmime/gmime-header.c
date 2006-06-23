@@ -25,9 +25,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "gmime-common.h"
 #include "gmime-header.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
+
 
 struct raw_header {
 	struct raw_header *next;
@@ -43,26 +45,6 @@ struct _GMimeHeader {
 };
 
 
-static int
-header_equal (gconstpointer v, gconstpointer v2)
-{
-	return strcasecmp ((const char *) v, (const char *) v2) == 0;
-}
-
-static guint
-header_hash (gconstpointer key)
-{
-	const char *p = key;
-	guint h = tolower (*p);
-	
-	if (h)
-		for (p += 1; *p != '\0'; p++)
-			h = (h << 5) - h + tolower (*p);
-	
-	return h;
-}
-
-
 /**
  * g_mime_header_new:
  *
@@ -76,8 +58,8 @@ g_mime_header_new ()
 	GMimeHeader *new;
 	
 	new = g_new (GMimeHeader, 1);
-	new->hash = g_hash_table_new (header_hash, header_equal);
-	new->writers = g_hash_table_new (header_hash, header_equal);
+	new->hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	new->writers = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	new->headers = NULL;
 	new->raw = NULL;
 	
@@ -474,5 +456,5 @@ g_mime_header_has_raw (GMimeHeader *header)
 {
 	g_return_val_if_fail (header != NULL, FALSE);
 	
-	return header->raw;
+	return header->raw ? TRUE : FALSE;
 }

@@ -405,7 +405,7 @@ charset_convert (const char *charset, char *in, size_t inlen)
 	char *result = NULL;
 	iconv_t cd;
 	
-	if (!charset || !strcasecmp (charset, "UTF-8") || !strcasecmp (charset, "us-ascii")) {
+	if (!charset || !g_ascii_strcasecmp (charset, "UTF-8") || !g_ascii_strcasecmp (charset, "us-ascii")) {
 		/* we shouldn't need any charset conversion here... */
 		if (g_utf8_validate (in, inlen, NULL))
 			return in;
@@ -726,7 +726,7 @@ encode_param (const unsigned char *in, gboolean *encoded)
 	if (!charset)
 		charset = "iso-8859-1";
 	
-	if (strcasecmp (charset, "UTF-8") != 0)
+	if (g_ascii_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
 	if (cd != (iconv_t) -1) {

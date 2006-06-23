@@ -190,7 +190,7 @@ header_raw_find (struct _header_raw *headers, const char *name, off_t *offset)
 	
 	h = headers;
 	while (h) {
-		if (!strcasecmp (h->name, name)) {
+		if (!g_ascii_strcasecmp (h->name, name)) {
 			if (offset)
 				*offset = h->offset;
 			return h->value;
@@ -1487,7 +1487,7 @@ parser_construct_message (GMimeParser *parser)
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		if (priv->respect_content_length && !strcasecmp (header->name, "Content-Length"))
+		if (priv->respect_content_length && !g_ascii_strcasecmp (header->name, "Content-Length"))
 			content_length = strtoul (header->value, NULL, 10);
 		
 		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
