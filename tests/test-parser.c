@@ -98,17 +98,17 @@ test_parser (GMimeStream *stream)
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
 	
-	ZenTimerStart();
+	ZenTimerStart (NULL);
 	message = g_mime_parser_construct_message (parser);
-	ZenTimerStop();
-	ZenTimerReport ("gmime::parser_construct_message");
+	ZenTimerStop (NULL);
+	ZenTimerReport (NULL, "gmime::parser_construct_message");
 	
 	g_object_unref (parser);
 	
-	ZenTimerStart();
+	ZenTimerStart (NULL);
 	text = g_mime_message_to_string (message);
-	ZenTimerStop();
-	ZenTimerReport ("gmime::message_to_string");
+	ZenTimerStop (NULL);
+	ZenTimerReport (NULL, "gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
 	g_free (text);
 	

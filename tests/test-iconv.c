@@ -199,10 +199,10 @@ int main (int argc, char **argv)
 {
 	g_mime_iconv_init ();
 	
-	ZenTimerStart();
+	ZenTimerStart (NULL);
 	test_cache ();
-	ZenTimerStop();
-	ZenTimerReport("test_cache()");
+	ZenTimerStop (NULL);
+	ZenTimerReport (NULL, "test_cache()");
 	
 	test_utils ();
 	

@@ -1,8 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/*
- *  Authors: Jeffrey Stedfast <fejj@ximian.com>
- *
- *  Copyright 2001-2004 Ximian, Inc. (www.ximian.com)
+/*  ZenTimer
+ *  Copyright 2001-2006 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
- *
  */
 
 #ifndef __ZENTINER_H__
@@ -28,27 +25,10 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#include <stdio.h>
-#ifdef USE_FTIME
-/* ftime() has been obsoleted by gettimeofday() */
-#include <sys/timeb.h>
-#else
-#include <sys/time.h>
-#endif /* USE_FTIME */
-
-typedef struct {
-	time_t sec;
-	unsigned short msec;
-} ztime_t;
-
-typedef struct _ztimer_t {
-	ztime_t start;
-	ztime_t stop;
-} ztimer_t;
-
-#define ZTIMER_INITIALIZER { { 0, 0 }, { 0, 0 } }
-
 #ifdef ENABLE_ZENTIMER
+
+#include <stdio.h>
+#include <stdint.h>
 
 /* G_STMT_START and G_STMT_END stolen from glib.h */
 /* Provide simple macro statement wrappers (adapted from Perl):
@@ -75,83 +55,161 @@ typedef struct _ztimer_t {
 #  endif
 #endif
 
-#ifdef USE_FTIME
-static void
-ztime (ztime_t *ztimep)
-{
-	struct timeb tb;
-	
-	ftime (&tb);
-	ztimep->sec = tb.time;
-	ztimep->msec = tb.millitm;
-}
-#else /* use gettimeofday instead */
-static void
-ztime (ztime_t *ztimep)
-{
-	struct timezone tz;
-	struct timeval tv;
-	
-	gettimeofday (&tv, &tz);
-	ztimep->sec = (time_t) tv.tv_sec;
-	ztimep->msec = (unsigned short) (tv.tv_usec > 1000 ? tv.tv_usec / 1000 : 0);
-}
-#endif /* USE_FTIME */
+#define ZTIME_USEC_PER_SEC 1000000
+
+typedef struct {
+	uint32_t sec;
+	uint32_t usec;
+} ztime_t;
+
+#ifdef G_OS_WIN32
+#include <windows.h>
 
 static void
-ztime_diff (ztime_t start, ztime_t stop, ztime_t *diff)
+ztime (ztime_t *ztimep)
 {
-	if (stop.msec < start.msec) {
-		stop.msec += 1000;
-		stop.sec -= 1;
+	uint64_t systime;
+	
+	/* systime represents the number of 100-nanoseconds since Jan 1, 1601 */
+	GetSystemTimeAsFileTime ((FILETIME *) &systime);
+	
+	/* convert to microseconds */
+	systime /= 10;
+	
+	ztimep->sec = systime / ZTIME_USEC_PER_SEC;
+	ztimep->usec = systime % ZTIME_USEC_PER_SEC;
+}
+
+#else /* POSIX OS */
+#include <sys/time.h>
+
+static void
+ztime (ztime_t *ztimep)
+{
+	struct timeval tv;
+	ztime_t ztime;
+	
+	gettimeofday (&tv, NULL);
+	ztimep->sec = tv.tv_sec;
+	ztimep->usec = tv.tv_usec;
+	
+	if (ztimep->usec >= ZTIME_USEC_PER_SEC) {
+		/* this is probably unneccessary */
+		ztimep->sec += ztimep->usec / ZTIME_USEC_PER_SEC;
+		ztimep->usec = ztimep->usec % ZTIME_USEC_PER_SEC;
+	}
+}
+
+#endif /* OS */
+
+static void
+ztime_add (ztime_t *ztime, ztime_t *adj)
+{
+	ztime->sec += adj->sec;
+	ztime->usec += adj->usec;
+	ztime->sec += ztime->usec / ZTIME_USEC_PER_SEC;
+	ztime->usec = ztime->usec % ZTIME_USEC_PER_SEC;
+}
+
+static void
+ztime_delta (ztime_t *start, ztime_t *stop, ztime_t *delta)
+{
+	delta->sec = stop->sec - start->sec;
+	if (stop->usec < start->usec) {
+		delta->usec = (stop->usec + ZTIME_USEC_PER_SEC) - start->usec;
+		delta->sec--;
+	} else {
+		delta->usec = stop->usec - start->usec;
+	}
+}
+
+enum {
+	ZTIMER_INACTIVE = 0,
+	ZTIMER_ACTIVE   = (1 << 0),
+	ZTIMER_PAUSED   = (1 << 1),
+};
+
+typedef uint8_t zstate_t;
+
+typedef struct _ztimer_t {
+	zstate_t state;
+	ztime_t start;
+	ztime_t stop;
+} ztimer_t;
+
+#define ZTIMER_INITIALIZER { ZTIMER_INACTIVE, { 0, 0 }, { 0, 0 } }
+
+/* default timer */
+static ztimer_t __ztimer = ZTIMER_INITIALIZER;
+
+static void
+ZenTimerStart (ztimer_t *ztimer)
+{
+	ztimer = ztimer ? ztimer : &__ztimer;
+	
+	ztimer->state = ZTIMER_ACTIVE;
+	ztime (&ztimer->start);
+}
+
+static void
+ZenTimerStop (ztimer_t *ztimer)
+{
+	ztimer = ztimer ? ztimer : &__ztimer;
+	
+	ztime (&ztimer->stop);
+	ztimer->state = ZTIMER_INACTIVE;
+}
+
+static void
+ZenTimerPause (ztimer_t *ztimer)
+{
+	ztimer = ztimer ? ztimer : &__ztimer;
+	
+	ztime (&ztimer->stop);
+	ztimer->state |= ZTIMER_PAUSED;
+}
+
+static void
+ZenTimerResume (ztimer_t *ztimer)
+{
+	ztime_t now, delta;
+	
+	ztimer = ztimer ? ztimer : &__ztimer;
+	
+	/* calculate time since paused */
+	ztime (&now);
+	ztime_delta (&ztimer->stop, &now, &delta);
+	
+	/* unpause and adjust start time to account for time elapsed since paused */
+	ztimer->state &= ~ZTIMER_PAUSED;
+	ztime_add (&ztimer->start, &delta);
+}
+
+static void
+ZenTimerReport (ztimer_t *ztimer, const char *oper)
+{
+	ztime_t delta, now, *start, *stop;
+	
+	ztimer = ztimer ? ztimer : &__ztimer;
+	start = &ztimer->start;
+	
+	if (ztimer->state == ZTIMER_ACTIVE) {
+		ztime (&now);
+		stop = &now;
+	} else {
+		stop = &ztimer->stop;
 	}
 	
-	diff->sec = stop.sec - start.sec;
-	diff->msec = stop.msec - start.msec;
+	ztime_delta (start, stop, &delta);
+	
+	fprintf (stderr, "ZenTimer: %s took %lu.%06lu seconds\n", oper, delta.sec, delta.usec);
 }
 
-static ztimer_t zen_ztimer = ZTIMER_INITIALIZER;
+#else /* ENABLE_ZENTIMER */
 
-#define ZenTimerStart() ztime(&zen_ztimer.start)
-#define ZenTimerStop()  ztime(&zen_ztimer.stop)
-
-#define ZenTimerReport(oper) G_STMT_START {                            \
-	if (zen_ztimer.stop.msec < zen_ztimer.start.msec) {            \
-		zen_ztimer.stop.msec += 1000;                          \
-		zen_ztimer.stop.sec--;                                 \
-	}                                                              \
-	                                                               \
-	fprintf (stderr, "ZenTimer: %s took %lu.%03d seconds\n", oper, \
-		 zen_ztimer.stop.sec - zen_ztimer.start.sec,           \
-		 zen_ztimer.stop.msec - zen_ztimer.start.msec);        \
-} G_STMT_END
-
-/* Thread-safe version */
-
-#define ZenTimerMTStart(ztimer) (ztime (&ztimer.start))
-#define ZenTimerMTStop(ztimer)  (ztime (&ztimer.stop))
-
-#define ZenTimerMTReport(oper, ztimer) G_STMT_START {                  \
-	if (ztimer.stop.msec < ztimer.start.msec) {                    \
-		ztimer.stop.msec += 1000;                              \
-		ztimer.stop.sec--;                                     \
-	}                                                              \
-	                                                               \
-	fprintf (stderr, "ZenTimer: %s took %lu.%03d seconds\n", oper, \
-		 ztimer.stop.sec - ztimer.start.sec,                   \
-		 ztimer.stop.msec - ztimer.start.msec);                \
-} G_STMT_END
-
-#else
-
-#define ztime(x)
-#define ztime_diff(start, stop, diff)
-#define ZenTimerStart()
-#define ZenTimerStop()
-#define ZenTimerReport(oper)
-#define ZenTimerMTStart(ztimer)
-#define ZenTimerMTStop(ztimer)
-#define ZenTimerMTReport(oper, ztimer)
+#define ZenTimerStart(ztimerp)
+#define ZenTimerStop(ztimerp)
+#define ZenTimerReport(ztimerp, oper)
 
 #endif /* ENABLE_ZENTIMER */
 
