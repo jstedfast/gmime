@@ -1,5 +1,10 @@
 2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c (swrite): Use g_build_filename() and
+	g_get_tmp_dir() rather than hard-coding the tmpfile to be in /tmp.
+
+2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-part.c: Use g_ascii_* versions of str[n]casecmp.
 
 	* gmime/gmime-parser.c: Use g_ascii_* versions of str[n]casecmp.

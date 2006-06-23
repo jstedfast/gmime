@@ -1339,11 +1339,9 @@ gpg_ctx_op_complete (struct _GpgCtx *gpg)
 static gboolean
 gpg_ctx_op_exited (struct _GpgCtx *gpg)
 {
-	pid_t retval;
 	int status;
 	
-	retval = waitpid (gpg->pid, &status, WNOHANG);
-	if (retval == gpg->pid) {
+	if (waitpid (gpg->pid, &status, WNOHANG) == gpg->pid) {
 		gpg->exit_status = status;
 		gpg->exited = TRUE;
 		return TRUE;
@@ -1356,7 +1354,6 @@ gpg_ctx_op_exited (struct _GpgCtx *gpg)
 static void
 gpg_ctx_op_cancel (struct _GpgCtx *gpg)
 {
-	pid_t retval;
 	int status;
 	
 	if (gpg->exited)
@@ -1364,8 +1361,7 @@ gpg_ctx_op_cancel (struct _GpgCtx *gpg)
 	
 	kill (gpg->pid, SIGTERM);
 	sleep (1);
-	retval = waitpid (gpg->pid, &status, WNOHANG);
-	if (retval == (pid_t) 0) {
+	if (waitpid (gpg->pid, &status, WNOHANG) == 0) {
 		/* no more mr nice guy... */
 		kill (gpg->pid, SIGKILL);
 		sleep (1);
@@ -1478,18 +1474,15 @@ swrite (GMimeStream *istream)
 	char *template;
 	int fd, ret;
 	
-	template = g_strdup ("/tmp/gmime-pgp.XXXXXX");
-	fd = mkstemp (template);
-	if (fd == -1) {
+	template = g_build_filename (g_get_tmp_dir (), "gmime-pgp.XXXXXX", NULL);
+	if ((fd = mkstemp (template)) == -1) {
 		g_free (template);
 		return NULL;
 	}
 	
 	ostream = g_mime_stream_fs_new (fd);
-	ret = g_mime_stream_write_to_stream (istream, ostream);
-	if (ret != -1) {
-		ret = g_mime_stream_flush (ostream);
-		if (ret != -1)
+	if ((ret = g_mime_stream_write_to_stream (istream, ostream)) != -1) {
+		if ((ret = g_mime_stream_flush (ostream)) != -1)
 			ret = g_mime_stream_close (ostream);
 	}
 	g_object_unref (ostream);
@@ -1518,8 +1511,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	if (sigstream != NULL) {
 		/* We are going to verify a detached signature so save
 		   the signature to a temp file. */
-		sigfile = swrite (sigstream);
-		if (sigfile == NULL) {
+		if (!(sigfile = swrite (sigstream))) {
 			g_set_error (err, GMIME_ERROR, errno,
 				     _("Cannot verify message signature: "
 				       "could not create temp file: %s"),
