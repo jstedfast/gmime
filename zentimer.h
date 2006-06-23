@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  ZenTimer
- *  Copyright 2001-2006 Jeffrey Stedfast
+ *  Copyright (C) 2001-2006 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -176,12 +176,14 @@ ZenTimerResume (ztimer_t *ztimer)
 	
 	ztimer = ztimer ? ztimer : &__ztimer;
 	
+	/* unpause */
+	ztimer->state &= ~ZTIMER_PAUSED;
+	
 	/* calculate time since paused */
 	ztime (&now);
 	ztime_delta (&ztimer->stop, &now, &delta);
 	
-	/* unpause and adjust start time to account for time elapsed since paused */
-	ztimer->state &= ~ZTIMER_PAUSED;
+	/* adjust start time to account for time elapsed since paused */
 	ztime_add (&ztimer->start, &delta);
 }
 
