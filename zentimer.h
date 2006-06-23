@@ -188,21 +188,24 @@ ZenTimerResume (ztimer_t *ztimer)
 static void
 ZenTimerReport (ztimer_t *ztimer, const char *oper)
 {
-	ztime_t delta, now, *start, *stop;
+	ztime_t delta;
+	int paused;
 	
 	ztimer = ztimer ? ztimer : &__ztimer;
-	start = &ztimer->start;
 	
 	if (ztimer->state == ZTIMER_ACTIVE) {
-		ztime (&now);
-		stop = &now;
+		ZenTimerPause (ztimer);
+		paused = 1;
 	} else {
-		stop = &ztimer->stop;
+		paused = 0;
 	}
 	
-	ztime_delta (start, stop, &delta);
+	ztime_delta (&ztimer->start, &ztimer->stop, &delta);
 	
 	fprintf (stderr, "ZenTimer: %s took %lu.%06lu seconds\n", oper, delta.sec, delta.usec);
+	
+	if (paused)
+		ZenTimerResume (ztimer);
 }
 
 #else /* ENABLE_ZENTIMER */
