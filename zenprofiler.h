@@ -1,8 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/*
- *  Authors: Jeffrey Stedfast <fejj@ximian.com>
- *
- *  Copyright 2001-2004 Ximian, Inc. (www.ximian.com)
+/*  ZenProfiler
+ *  Copyright (C) 2001-2006 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,15 +15,17 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
- *
  */
 
 
 #ifndef __ZENPROFILER_H__
 #define __ZENPROFILER_H__
 
+#ifdef ENABLE_ZENPROFILER
+
 #include <glib.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <ctype.h>
 #ifdef ENABLE_THREADS
 #include <pthread.h>
@@ -44,39 +44,45 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-#ifdef ENABLE_ZENPROFILER
-
-struct zenfunc_t {
-	char *name;
-	unsigned num;
+typedef struct _zfunc_t {
+	struct _zfunc_t *next;
+	uint32_t ncalls;
 	ztime_t total;
-};
+	char *name;
+} zfunc_t;
 
 static struct {
-	FILE *log;
-	ztimer_t ztimer;
-	ztime_t total;
 	GHashTable *hash;
-	GSList *list;
-} zenprof = { NULL, ZTIMER_INITIALIZER, { 0, 0 }, NULL, NULL };
+	zfunc_t *functions, *tail;
+	uint32_t nfuncs;
+	ztimer_t ztimer;
+	FILE *log;
+} zprof = { NULL, NULL, (zfunc_t *) &zprof.functions, 0, ZTIMER_INITIALIZER, NULL };
 
 #ifdef ENABLE_THREADS
-static pthread_mutex_t zen_lock = PTHREAD_MUTEX_INITIALIZER;
-#define ZENPROFILER_LOCK()   pthread_mutex_lock (&zen_lock)
-#define ZENPROFILER_UNLOCK() pthread_mutex_unlock (&zen_lock)
+static pthread_mutex_t zlock = PTHREAD_MUTEX_INITIALIZER;
+#define ZENPROFILER_LOCK()   pthread_mutex_lock (&zlock)
+#define ZENPROFILER_UNLOCK() pthread_mutex_unlock (&zlock)
 #else
 #define ZENPROFILER_LOCK()
 #define ZENPROFILER_UNLOCK()
 #endif /* ENABLE_THREADS */
 
 static char *
-zengetname (char *func)
+zfuncname (const char *func)
 {
-	char *ptr;
+	register const const char *inptr = func;
+	const char *name;
 	
-	for (ptr = func; *ptr && *ptr != '('; ptr++);
+	while (*inptr == ' ' || *inptr == '\t')
+		inptr++;
 	
-	return g_strstrip (g_strndup (func, ptr - func));
+	name = inptr;
+	
+	while (*inptr && *inptr != ' ' && *inptr != '(')
+		inptr++;
+	
+	return g_strndup (name, inptr - name);
 }
 
 
@@ -89,44 +95,43 @@ zengetname (char *func)
 static void
 ZenProfilerInit (const char *logfile)
 {
-	zenprof.hash = g_hash_table_new (g_str_hash, g_str_equal);
-	
-	ZenTimerMTStart (zenprof.ztimer);
+	zprof.hash = g_hash_table_new (g_str_hash, g_str_equal);
 	
 	if (logfile)
-		zenprof.log = fopen (logfile, "w+");
+		zprof.log = fopen (logfile, "wt");
+	
+	ZenTimerStart (&zprof.ztimer);
 }
 
 
 static void
-zen_report_internal (char *name, ztimer_t ztimer)
+zprofile (char *name, ztimer_t *ztimer)
 {
-	struct zenfunc_t *zenfunc;
-	ztime_t diff;
+	zfunc_t *zfunc;
+	ztime_t delta;
 	char *key;
 	
 	ZENPROFILER_LOCK();
 	
-	if (!g_hash_table_lookup_extended (zenprof.hash, name, (gpointer *) &key, (gpointer *) &zenfunc)) {
-		zenfunc = g_new0 (struct zenfunc_t, 1);
-		zenfunc->name = name;
-		zenfunc->total.sec = 0;
-		zenfunc->total.msec = 0;
-		zenfunc->num = 0;
-		g_hash_table_insert (zenprof.hash, zenfunc->name, zenfunc);
-		zenprof.list = g_slist_prepend (zenprof.list, zenfunc);
+	if (!g_hash_table_lookup_extended (zprof.hash, name, (gpointer *) &key, (gpointer *) &zfunc)) {
+		zfunc = g_new (zfunc_t, 1);
+		zfunc->next = NULL;
+		zfunc->name = name;
+		zfunc->ncalls = 0;
+		zfunc->total.sec = 0;
+		zfunc->total.usec = 0;
+		
+		zprof.tail->next = zfunc;
+		zprof.tail = zfunc;
+		
+		g_hash_table_insert (zprof.hash, zfunc->name, zfunc);
+		zprof.nfuncs++;
 	} else
 		g_free (name);
 	
-	ztime_diff (ztimer.start, ztimer.stop, &diff);
-	
-	zenfunc->total.sec += diff.sec;
-	zenfunc->total.msec += diff.msec;
-	while (zenfunc->total.msec >= 1000) {
-		zenfunc->total.msec -= 1000;
-		zenfunc->total.sec += 1;
-	}
-	zenfunc->num++;
+	ztime_delta (&ztimer->start, &ztimer->stop, &delta);
+	ztime_add (&zfunc->total, &delta);
+	zfunc->ncalls++;
 	
 	ZENPROFILER_UNLOCK();
 }
@@ -141,53 +146,41 @@ zen_report_internal (char *name, ztimer_t ztimer)
  * Sample usage:  ZenProfilerLazy(printf ("how long does this take??\n"));
  **/
 #define ZenProfilerLazy(func) G_STMT_START {                  \
-	{                                                     \
-		ztimer_t ztimer;                              \
-		char *name;                                   \
-		                                              \
-		ZenTimerMTStart (ztimer);                     \
-		func;                                         \
-		ZenTimerMTStop (ztimer);                      \
-		                                              \
-		name = zengetname (#func);                    \
-		                                              \
-		zen_report_internal (name, ztimer);           \
-	}                                                     \
+	ztimer_t ztimer;                                      \
+	                                                      \
+	ZenTimerStart (&ztimer);                              \
+	func;                                                 \
+	ZenTimerStop (&ztimer);                               \
+	                                                      \
+	zprofile (zfuncname (#func), &ztimer);                \
 } G_STMT_END
+
 
 /**
  * ZenProfilerStart:
- * @ztimer: a ztimer_t
+ * @ztimerp: pointer to a ztimer_t
  *
  * Initializes @zstart.
  **/
-#define ZenProfilerStart(ztimer) ZenTimerMTStart (ztimer)
+#define ZenProfilerStart(ztimerp) ZenTimerStart (ztimerp)
 
 
 /**
  * ZenProfilerStop:
- * @ztimer: a ztimer_t
+ * @ztimerp: pointer to a ztimer_t
  *
  * Initializes @zstop.
  **/
-#define ZenProfilerStop(ztimer) ZenTimerMTStop (ztimer)
+#define ZenProfilerStop(ztimerp) ZenTimerStop (ztimerp)
 
 
 /**
  * ZenProfilerReport:
- * @ztimer: a ztimer_t
+ * @ztimerp: pointer to a ztimer_t
  *
  * Cache the results for later reporting.
  **/
-#define ZenProfilerReport(ztimer) G_STMT_START {              \
-	{                                                     \
-		char *name;                                   \
-		                                              \
-		name = g_strdup (__FUNCTION__);               \
-		                                              \
-		zen_report_internal (name, ztimer);           \
-	}                                                     \
-} G_STMT_END
+#define ZenProfilerReport(ztimerp) zprofile (g_strdup (G_GNUC_PRETTY_FUNCTION), ztimerp)
 
 
 /**
@@ -198,10 +191,10 @@ zen_report_internal (char *name, ztimer_t ztimer)
  *
  * Note: equivalent to: ZenProfilerStop(@ztimer); ZenProfilerReport(@ztimer); return;
  **/
-#define ZenProfiler_return(ztimer) G_STMT_START {             \
-	ZenProfilerStop (ztimer);                             \
-	ZenProfilerReport (ztimer);                           \
-	return;                                               \
+#define ZenProfiler_return(ztimerp) G_STMT_START {             \
+	ZenProfilerStop (ztimerp);                             \
+	ZenProfilerReport (ztimerp);                           \
+	return;                                                \
 } G_STMT_END
 
 
@@ -211,59 +204,45 @@ zen_report_internal (char *name, ztimer_t ztimer)
  *
  * Same as ZenProfiler_return() but returns the specified value.
  **/
-#define ZenProfiler_return_val(ztimer, retval) G_STMT_START { \
-	ZenProfilerStop (ztimer);                             \
-	ZenProfilerReport (ztimer);                           \
-	return retval;                                        \
+#define ZenProfiler_return_val(ztimerp, retval) G_STMT_START { \
+	ZenProfilerStop (ztimerp);                             \
+	ZenProfilerReport (ztimerp);                           \
+	return retval;                                         \
 } G_STMT_END
 
 
-#define ZENLOG (zenprof.log ? zenprof.log : stderr)
-
 static void
-zen_log (gpointer key, gpointer value, gpointer user_data)
+zen_log (FILE *log, zfunc_t *zfunc, uint32_t usec)
 {
-	struct zenfunc_t *zenfunc = (struct zenfunc_t *) value;
 	char percent[7], total[20], calls[20], average[20];
-	unsigned long secs, millisecs;
+	uint32_t us, avgus;
 	double pcnt = 0.0;
 	
-	if (zenfunc) {
-		millisecs = zenfunc->total.sec * 1000 + zenfunc->total.msec;
-		pcnt = ((double) millisecs) / ((double) zenprof.total.sec * 1000 + zenprof.total.msec) * 100;
-		millisecs = (unsigned long) (millisecs / zenfunc->num);
-		
-		secs = 0;
-		while (millisecs >= 1000) {
-			millisecs -= 1000;
-			secs++;
-		}
-		
-		sprintf (percent, "%2.2f", pcnt);
-		sprintf (calls, "%d", zenfunc->num);
-		sprintf (total, "%lu.%03d", zenfunc->total.sec, zenfunc->total.msec);
-		sprintf (average, "%lu.%03d", secs, millisecs);
-		
-		fprintf (ZENLOG, "%6s %9s  %7s  %7s %7s %7s  %s\n",
-			 percent, total, "n/a", calls, "n/a", average, zenfunc->name);
-		
-		g_free (zenfunc->name);
-		g_free (zenfunc);
-	}
+	us = (zfunc->total.sec * ZTIME_USEC_PER_SEC) + zfunc->total.usec;
+	pcnt = ((double) us) / ((double) usec) * 100.0;
+	avgus = us / zfunc->ncalls;
+	
+	sprintf (percent, "%2.2f", pcnt);
+	sprintf (calls, "%u", zfunc->ncalls);
+	sprintf (total, "%u.%03u", zfunc->total.sec, zfunc->total.usec / 1000);
+	sprintf (average, "%u.%03u", avgus / ZTIME_USEC_PER_SEC, (avgus % ZTIME_USEC_PER_SEC) / 1000);
+	
+	fprintf (log, "%6s %9s  %7s  %7s %7s %7s  %s\n",
+		 percent, total, "n/a", calls, "n/a", average, zfunc->name);
 }
 
 
 static int
-zenfunccmp (gconstpointer a, gconstpointer b)
+zfunccmp (const void *v1, const void *v2)
 {
-	const struct zenfunc_t *afunc = (const struct zenfunc_t *) a;
-	const struct zenfunc_t *bfunc = (const struct zenfunc_t *) b;
-	unsigned long amsec, bmsec;
+	const zfunc_t *func1 = (const zfunc_t *) v1;
+	const zfunc_t *func2 = (const zfunc_t *) v2;
+	uint32_t usec1, usec2;
 	
-	amsec = afunc->total.sec * 1000 + afunc->total.msec;
-	bmsec = bfunc->total.sec * 1000 + bfunc->total.msec;
+	usec1 = (func1->total.sec * ZTIME_USEC_PER_SEC) + func1->total.usec;
+	usec2 = (func2->total.sec * ZTIME_USEC_PER_SEC) + func2->total.usec;
 	
-	return bmsec - amsec;
+	return usec2 - usec1;
 }
 
 
@@ -275,60 +254,75 @@ zenfunccmp (gconstpointer a, gconstpointer b)
 static void
 ZenProfilerShutdown (void)
 {
-	GSList *slist;
+	FILE *log = zprof.log ? zprof.log : stderr;
+	uint32_t usec, i;
+	zfunc_t *zfunc;
+	ztime_t delta;
+	void **pdata;
 	
-	ZenTimerMTStop (zenprof.ztimer);
+	ZenTimerStop (&zprof.ztimer);
 	
-	ztime_diff (zenprof.ztimer.start, zenprof.ztimer.stop, &zenprof.total);
+	ztime_delta (&zprof.ztimer.start, &zprof.ztimer.stop, &delta);
 	
-	fprintf (ZENLOG, "ZenProfiler\n\n");
-	fprintf (ZENLOG, "Flat profile:\n\n");
-	fprintf (ZENLOG, "  %%   cumulative   self              self   total\n");
-	fprintf (ZENLOG, " time   seconds   seconds    calls  s/call  s/call  name\n");
-	fprintf (ZENLOG, "------ ---------  -------  ------- ------- -------  ----\n");
-	zenprof.list = g_slist_sort (zenprof.list, zenfunccmp);
-	for (slist = zenprof.list; slist; slist = slist->next)
-		zen_log (NULL, slist->data, NULL);
-	g_hash_table_destroy (zenprof.hash);
-	g_slist_free (zenprof.list);
-	fprintf (ZENLOG, "\n %%         the percentage of the total running time of the\n");
-	fprintf (ZENLOG, "time       program used by this function.\n\n");
-	fprintf (ZENLOG, "cumulative a running sum of the number of seconds accounted\n");
-	fprintf (ZENLOG, " seconds   for by this function and those listed above it.\n\n");
-	fprintf (ZENLOG, " self      the number of seconds accounted for by this\n");
-	fprintf (ZENLOG, "seconds    function alone.  This is the major sort for this\n");
-	fprintf (ZENLOG, "           listing.\n\n");
-	fprintf (ZENLOG, "calls      the number of times this function was invoked, if\n");
-	fprintf (ZENLOG, "           this function is profiled, else blank.\n\n");
-	fprintf (ZENLOG, " self      the average number of seconds spent in this\n");
-	fprintf (ZENLOG, "s/call     function per call, if this function is profiled,\n");
-	fprintf (ZENLOG, "           else blank.\n\n");
-	fprintf (ZENLOG, " total     the average number of seconds spent in this\n");
-	fprintf (ZENLOG, " s/call    function and its descendents per call, if this \n");
-	fprintf (ZENLOG, "           function is profiled, else blank.\n\n");
-	fprintf (ZENLOG, "name       the name of the function.\n\n");
+	fprintf (log, "ZenProfiler\n\n");
+	fprintf (log, "Flat profile:\n\n");
+	fprintf (log, "  %%   cumulative   self                self       total\n");
+	fprintf (log, " time   seconds   seconds    calls    s/call      s/call    name\n");
+	fprintf (log, "------ ---------  -------  ------- ----------- -----------  ----\n");
 	
-	if (zenprof.log)
-		fclose (zenprof.log);
+	pdata = g_malloc (sizeof (void *) * zprof.nfuncs);
+	for (i = 0, zfunc = zprof.functions; i < zprof.nfuncs; i++, zfunc = zfunc->next)
+		pdata[i] = zfunc;
+	qsort (pdata, zprof.nfuncs, sizeof (void *), zfunccmp);
+	
+	usec = (delta.sec * ZTIME_USEC_PER_SEC) + delta.usec;
+	for (i = 0; i < zprof.nfuncs; i++) {
+		zfunc = pdata[i];
+		zen_log (log, zfunc, usec);
+		g_free (zfunc->name);
+		g_free (zfunc);
+	}
+	g_hash_table_destroy (zprof.hash);
+	g_free (pdata);
+	
+	fprintf (log, "\n %%         the percentage of the total running time of the\n");
+	fprintf (log, "time       program used by this function.\n\n");
+	fprintf (log, "cumulative a running sum of the number of seconds accounted\n");
+	fprintf (log, " seconds   for by this function and those listed above it.\n\n");
+	fprintf (log, " self      the number of seconds accounted for by this\n");
+	fprintf (log, "seconds    function alone.  This is the major sort for this\n");
+	fprintf (log, "           listing.\n\n");
+	fprintf (log, "calls      the number of times this function was invoked, if\n");
+	fprintf (log, "           this function is profiled, else blank.\n\n");
+	fprintf (log, " self      the average number of seconds spent in this\n");
+	fprintf (log, "s/call     function per call, if this function is profiled,\n");
+	fprintf (log, "           else blank.\n\n");
+	fprintf (log, " total     the average number of seconds spent in this\n");
+	fprintf (log, " s/call    function and its descendents per call, if this \n");
+	fprintf (log, "           function is profiled, else blank.\n\n");
+	fprintf (log, "name       the name of the function.\n\n");
+	
+	if (zprof.log)
+		fclose (zprof.log);
 }
+
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
 
 #else /* ENABLE_ZENPROFILER */
 
 #define ZenProfilerInit(logfile)
 #define ZenProfilerLazy(func) func
-#define ZenProfilerStart(zstart)
-#define ZenProfilerStop(zstop)
-#define ZenProfilerReport(ztimer)
-#define ZenProfiler_return(ztimer) return
-#define ZenProfiler_return_val(ztimer, retval) return (retval)
-#define ZenShutdown()
+#define ZenProfilerStart(ztimerp)
+#define ZenProfilerStop(ztimerp)
+#define ZenProfilerReport(ztimerp)
+#define ZenProfiler_return(ztimerp) return
+#define ZenProfiler_return_val(ztimerp, retval) return (retval)
+#define ZenProfilerShutdown()
 
 #endif /* ENABLE_ZENPROFILER */
 
-#define zen(func) ZenProfilerLazy(func)
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
+#define Z(func) ZenProfilerLazy(func)
 
 #endif /* __ZENPROFILER_H__ */

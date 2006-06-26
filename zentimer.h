@@ -17,18 +17,19 @@
  *  Foundation, Inc., 59 Temple Street #330, Boston, MA 02111-1307, USA.
  */
 
+
 #ifndef __ZENTINER_H__
 #define __ZENTIMER_H__
-
-#ifdef __cplusplus
-extern "C" {
-#pragma }
-#endif /* __cplusplus */
 
 #ifdef ENABLE_ZENTIMER
 
 #include <stdio.h>
 #include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#pragma }
+#endif /* __cplusplus */
 
 /* G_STMT_START and G_STMT_END stolen from glib.h */
 /* Provide simple macro statement wrappers (adapted from Perl):
@@ -87,7 +88,6 @@ static void
 ztime (ztime_t *ztimep)
 {
 	struct timeval tv;
-	ztime_t ztime;
 	
 	gettimeofday (&tv, NULL);
 	ztimep->sec = tv.tv_sec;
@@ -131,7 +131,7 @@ enum {
 
 typedef uint8_t zstate_t;
 
-typedef struct _ztimer_t {
+typedef struct {
 	zstate_t state;
 	ztime_t start;
 	ztime_t stop;
@@ -204,22 +204,22 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 	
 	ztime_delta (&ztimer->start, &ztimer->stop, &delta);
 	
-	fprintf (stderr, "ZenTimer: %s took %lu.%06lu seconds\n", oper, delta.sec, delta.usec);
+	fprintf (stderr, "ZenTimer: %s took %u.%06u seconds\n", oper, delta.sec, delta.usec);
 	
 	if (paused)
 		ZenTimerResume (ztimer);
 }
 
-#else /* ENABLE_ZENTIMER */
+#ifdef __cplusplus
+}
+#endif /* __cplusplus */
+
+#else /* ! ENABLE_ZENTIMER */
 
 #define ZenTimerStart(ztimerp)
 #define ZenTimerStop(ztimerp)
 #define ZenTimerReport(ztimerp, oper)
 
 #endif /* ENABLE_ZENTIMER */
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
 
 #endif /* __ZENTIMER_H__ */
