@@ -593,6 +593,7 @@ static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;	
+	InternetAddressList *addrlist;
 	int offset, i;
 	time_t date;
 	
@@ -603,10 +604,16 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	
 	switch (i) {
 	case HEADER_FROM:
-		message_set_sender (message, value);
+		g_free (message->from);
+		addrlist = internet_address_parse_string (value);
+		message->from = internet_address_list_to_string (addrlist, FALSE);
+		internet_address_list_destroy (addrlist);
 		break;
 	case HEADER_REPLY_TO:
-		message_set_reply_to (message, value);
+		g_free (message->reply_to);
+		addrlist = internet_address_parse_string (value);
+		message->reply_to = internet_address_list_to_string (addrlist, FALSE);
+		internet_address_list_destroy (addrlist);
 		break;
 	case HEADER_TO:
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_TO, value);
@@ -618,7 +625,8 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_BCC, value);
 		break;
 	case HEADER_SUBJECT:
-		message_set_subject (message, value);
+		g_free (message->subject);
+		message->subject = g_mime_utils_header_decode_text (value);
 		break;
 	case HEADER_DATE:
 		if (value) {
@@ -858,16 +866,6 @@ g_mime_message_new (gboolean pretty_headers)
 }
 
 
-static void
-message_set_sender (GMimeMessage *message, const char *sender)
-{
-	if (message->from)
-		g_free (message->from);
-	
-	message->from = g_strstrip (g_strdup (sender));
-}
-
-
 /**
  * g_mime_message_set_sender:
  * @message: MIME Message to change
@@ -885,9 +883,10 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (sender != NULL);
 	
-	message_set_sender (message, sender);
+	g_free (message->from);
 	
 	addrlist = internet_address_parse_string (sender);
+	message->from = internet_address_list_to_string (addrlist, FALSE);
 	encoded = internet_address_list_to_string (addrlist, TRUE);
 	internet_address_list_destroy (addrlist);
 	
@@ -913,16 +912,6 @@ g_mime_message_get_sender (GMimeMessage *message)
 }
 
 
-static void
-message_set_reply_to (GMimeMessage *message, const char *reply_to)
-{
-	if (message->reply_to)
-		g_free (message->reply_to);
-	
-	message->reply_to = g_strstrip (g_strdup (reply_to));
-}
-
-
 /**
  * g_mime_message_set_reply_to:
  * @message: MIME Message to change
@@ -936,7 +925,9 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (reply_to != NULL);
 	
-	message_set_reply_to (message, reply_to);
+	g_free (message->reply_to);
+	message->reply_to = g_strstrip (g_strdup (reply_to));
+	
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "Reply-To", message->reply_to);
 }
 
@@ -1076,16 +1067,6 @@ g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 }
 
 
-static void
-message_set_subject (GMimeMessage *message, const char *subject)
-{
-	if (message->subject)
-		g_free (message->subject);
-	
-	message->subject = g_strstrip (g_strdup (subject));
-}
-
-
 /**
  * g_mime_message_set_subject:
  * @message: MIME Message
@@ -1101,7 +1082,8 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (subject != NULL);
 	
-	message_set_subject (message, subject);
+	g_free (message->subject);
+	message->subject = g_strstrip (g_strdup (subject));
 	
 	encoded = g_mime_utils_header_encode_text (message->subject);
 	g_mime_header_set (GMIME_OBJECT (message)->headers, "Subject", encoded);
@@ -1209,9 +1191,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (message_id != NULL);
 	
-	if (message->message_id)
-		g_free (message->message_id);
-	
+	g_free (message->message_id);
 	message->message_id = g_strstrip (g_strdup (message_id));
 	
 	msgid = g_strdup_printf ("<%s>", message_id);

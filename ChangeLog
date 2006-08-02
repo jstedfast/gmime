@@ -1,3 +1,9 @@
+2006-08-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (process_header): Decode the values for
+	Subject, From, Reply-To so that g_mime_message_get_subject/etc all
+	return decoded strings like they were meant to.
+
 2006-06-23  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-gpg-context.c (swrite): Use g_build_filename() and
