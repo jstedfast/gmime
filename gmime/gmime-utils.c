@@ -1258,32 +1258,24 @@ void
 g_mime_utils_unquote_string (char *string)
 {
 	/* if the string is quoted, unquote it */
-	char *inptr, *inend;
+	register char *inptr = string;
+	int quoted = 0;
 	
 	if (!string)
 		return;
 	
-	inptr = string;
-	inend = string + strlen (string);
-	
-	/* get rid of the wrapping quotes */
-	if (*inptr == '"' && *(inend - 1) == '"') {
-		inend--;
-		*inend = '\0';
-		if (*inptr)
-			memmove (inptr, inptr + 1, inend - inptr);
-	}
-	
-	/* un-escape the string */
-	inend--;
-	while (inptr < inend) {
-		if (*inptr == '\\') {
-			memmove (inptr, inptr + 1, inend - inptr);
-			inend--;
+	while (*inptr) {
+		if (*inptr == '"') {
+			quoted = !quoted;
+			inptr++;
+		} else if (quoted && *inptr == '\\') {
+			inptr++;
+		} else {
+			*string++ = *inptr++;
 		}
-		
-		inptr++;
 	}
+	
+	*string = '\0';
 }
 
 
