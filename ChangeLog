@@ -1,5 +1,8 @@
 2006-08-29  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-param.c (decode_quoted_string): Unescape escape
+	sequences. Fixes bug #352771.
+
 	* gmime/gmime-message.c (g_mime_message_set_subject): Updated the
 	docs.
 	(g_mime_message_get_subject): Same.

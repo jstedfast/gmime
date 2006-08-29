@@ -125,28 +125,46 @@ static char *
 decode_quoted_string (const char **in)
 {
 	const char *start, *inptr = *in;
-	char *out = NULL;
+	char *outptr, *out = NULL;
+	gboolean unescape = FALSE;
 	
 	decode_lwsp (&inptr);
-	if (*inptr == '"') {
-		start = inptr++;
-		
-		while (*inptr && *inptr != '"') {
-			if (*inptr++ == '\\')
-				inptr++;
-		}
-		
-		if (*inptr == '"') {
-			start++;
-			out = g_strndup (start, (unsigned int) (inptr - start));
+	
+	if (*inptr != '"') {
+		*in = inptr;
+		return NULL;
+	}
+	
+	start = inptr++;
+	
+	while (*inptr && *inptr != '"') {
+		if (*inptr++ == '\\') {
+			unescape = TRUE;
 			inptr++;
-		} else {
-			/* string wasn't properly quoted */
-			out = g_strndup (start, (unsigned int) (inptr - start));
 		}
 	}
 	
+	if (*inptr == '"') {
+		start++;
+		out = g_strndup (start, (unsigned int) (inptr - start));
+		inptr++;
+	} else {
+		/* string wasn't properly quoted */
+		out = g_strndup (start, (unsigned int) (inptr - start));
+	}
+	
 	*in = inptr;
+	
+	if (unescape) {
+		inptr = outptr = out;
+		while (*inptr) {
+			if (*inptr == '\\')
+				inptr++;
+			*outptr++ = *inptr++;
+		}
+		
+		*outptr = '\0';
+	}
 	
 	return out;
 }
