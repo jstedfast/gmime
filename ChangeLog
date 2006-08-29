@@ -1,3 +1,9 @@
+2006-08-29  Pawel Salek  <pawsa@theochem.kth.se>
+
+	* gmime/gmime-message-partial.c: set buf just before use - since
+	the mem stream buffer may get reallocated in the meantime leading
+	to segfaults.
+
 2006-08-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-param.c (decode_quoted_string): Unescape escape

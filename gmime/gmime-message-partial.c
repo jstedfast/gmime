@@ -400,8 +400,6 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	stream = g_mime_stream_mem_new ();
-	buf = ((GMimeStreamMem *) stream)->buffer->data;
-	
 	if (g_mime_object_write_to_stream (GMIME_OBJECT (message), stream) == -1) {
 		g_object_unref (stream);
 		return NULL;
@@ -425,6 +423,8 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	
 	start = 0;
 	parts = g_ptr_array_new ();
+	buf = ((GMimeStreamMem *) stream)->buffer->data;
+	
 	while (start < len) {
 		/* Preferably, we'd split on whole-lines if we can,
 		 * but if that's not possible, split on max size */
