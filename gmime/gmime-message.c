@@ -1072,7 +1072,7 @@ g_mime_message_get_recipients (GMimeMessage *message, const char *type)
  * @message: MIME Message
  * @subject: Subject string
  *
- * Set the Subject field on a MIME Message.
+ * Set the unencoded UTF-8 Subject field on a MIME Message.
  **/
 void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject)
@@ -1097,7 +1097,7 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
  *
  * Gets the message's subject.
  *
- * Returns the Subject field on a MIME Message.
+ * Returns the unencoded UTF-8 Subject field on a MIME Message.
  **/
 const char *
 g_mime_message_get_subject (GMimeMessage *message)

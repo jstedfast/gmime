@@ -178,7 +178,7 @@ static void
 test_encodings (void)
 {
 	int pos, state = -1, save = 0;
-	char *enc, *dec, *koi8r;
+	unsigned char *enc, *dec, *koi8r;
 	iconv_t ic;
 	
 	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";

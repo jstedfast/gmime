@@ -1,3 +1,9 @@
+2006-08-29  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_set_subject): Updated the
+	docs.
+	(g_mime_message_get_subject): Same.
+
 2006-08-21  Peter Bloomfield  <peterbloomfield@bellsouth.net>
 
 	* gmime/gmime-utils.c (g_mime_utils_unquote_string): handle an
