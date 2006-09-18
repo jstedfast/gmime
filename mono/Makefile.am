@@ -3,7 +3,7 @@ RAW_API = gmime-api.raw
 METADATA = GMime.metadata
 ASSEMBLY_NAME = gmime-sharp
 references = $(GTK_SHARP_LIBS)
-XML_SOURCES = sources.xml
+SOURCES_XML = sources.xml
 
 PACKAGE_SHARP = $(PACKAGE)-sharp
 TARGET = $(ASSEMBLY)
@@ -43,7 +43,7 @@ EXTRA_DIST =			\
 	$(METADATA)		\
 	$(customs)		\
 	$(sources)		\
-	$(XML_SOURCES)		\
+	$(SOURCES_XML)		\
 	gmime-sharp.pc.in
 
 $(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
@@ -82,4 +82,4 @@ uninstall-local:
 	fi
 
 parse:
-	gapi-parser $(XML_SOURCES)
+	gapi-parser $(SOURCES_XML)

@@ -1,3 +1,9 @@
+2006-09-18  Joe Shaw  <joeshaw@novell.com>
+
+	* mono/Makefile.am: Use SOURCES_XML instead of XML_SOURCES to
+	specify the sources.xml file.  XML_SOURCES breaks with newer
+	automakes.
+
 2006-08-29  Pawel Salek  <pawsa@theochem.kth.se>
 
 	* gmime/gmime-message-partial.c: set buf just before use - since
