@@ -159,7 +159,8 @@ filter_reset (GMimeFilter *filter)
 /**
  * g_mime_filter_strip_new:
  *
- * Creates a new GMimeFilterStrip filter.
+ * Creates a new #GMimeFilterStrip filter which will strip trailing
+ * whitespace from every line of input passed through the filter.
  *
  * Returns a new strip filter.
  **/
