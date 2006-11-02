@@ -181,8 +181,8 @@ static char *tm_days[] = {
 
 /**
  * g_mime_utils_header_format_date:
- * @time: time_t date representation
- * @offset: Timezone offset
+ * @date: time_t date representation
+ * @tz_offset: Timezone offset
  *
  * Allocates a string buffer containing the rfc822 formatted date
  * string represented by @time and @offset.
@@ -190,16 +190,16 @@ static char *tm_days[] = {
  * Returns a valid string representation of the date.
  **/
 char *
-g_mime_utils_header_format_date (time_t time, int offset)
+g_mime_utils_header_format_date (time_t date, int tz_offset)
 {
 	struct tm tm;
 	
-	time += ((offset / 100) * (60 * 60)) + (offset % 100) * 60;
+	date += ((tz_offset / 100) * (60 * 60)) + (tz_offset % 100) * 60;
 	
 #ifdef HAVE_GMTIME_R
-	gmtime_r (&time, &tm);
+	gmtime_r (&date, &tm);
 #else
-	memcpy (&tm, gmtime (&time), sizeof (tm));
+	memcpy (&tm, gmtime (&date), sizeof (tm));
 #endif
 	
 	return g_strdup_printf ("%s, %02d %s %04d %02d:%02d:%02d %+05d",
@@ -207,7 +207,7 @@ g_mime_utils_header_format_date (time_t time, int offset)
 				tm_months[tm.tm_mon],
 				tm.tm_year + 1900,
 				tm.tm_hour, tm.tm_min, tm.tm_sec,
-				offset);
+				tz_offset);
 }
 
 /* This is where it gets ugly... */
@@ -724,7 +724,7 @@ gmime_datetok_table_init (void)
 /**
  * g_mime_utils_header_decode_date:
  * @in: input date string
- * @saveoffset:
+ * @tz_offset: timezone offset
  *
  * Decodes the rfc822 date string and saves the GMT offset into
  * @saveoffset if non-NULL.
@@ -734,21 +734,20 @@ gmime_datetok_table_init (void)
  * will be stored.
  **/
 time_t
-g_mime_utils_header_decode_date (const char *in, int *saveoffset)
+g_mime_utils_header_decode_date (const char *in, int *tz_offset)
 {
 	struct _date_token *token, *tokens;
 	time_t date;
 	
 	if (!(tokens = datetok (in))) {
-		if (saveoffset)
-			*saveoffset = 0;
+		if (tz_offset)
+			*tz_offset = 0;
 		
 		return (time_t) 0;
 	}
 	
-	date = parse_rfc822_date (tokens, saveoffset);
-	if (!date)
-		date = parse_broken_date (tokens, saveoffset);
+	if (!(date = parse_rfc822_date (tokens, tz_offset)))
+		date = parse_broken_date (tokens, tz_offset);
 	
 	/* cleanup */
 	while (tokens) {

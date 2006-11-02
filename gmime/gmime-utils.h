@@ -53,8 +53,8 @@ typedef struct _GMimeReferences GMimeReferences;
 #define GMIME_UUDECODE_STATE_END    (1 << 17)
 #define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
 
-time_t g_mime_utils_header_decode_date (const char *in, int *saveoffset);
-char  *g_mime_utils_header_format_date (time_t time, int offset);
+time_t g_mime_utils_header_decode_date (const char *in, int *tz_offset);
+char  *g_mime_utils_header_format_date (time_t date, int tz_offset);
 
 char *g_mime_utils_generate_message_id (const char *fqdn);
 

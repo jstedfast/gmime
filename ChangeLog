@@ -1,3 +1,18 @@
+2006-11-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (g_mime_utils_header_format_date): Changed
+	the names of the parameters to date and tz_offset to prevent
+	warnings from -Wshadow.
+
+	* gmime/gmime-filter-html.c (writeln): Fixed another possible
+	buffer overflow condition pointed out by hpj.
+
+	* gmime/gmime-filter-crlf.c (filter_filter): Fixed a possible
+	buffer overflow condition pointed out by hpj.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_op_step): Modified to use
+	poll() rather than select()
+
 2006-09-18  Joe Shaw  <joeshaw@novell.com>
 
 	* mono/Makefile.am: Use SOURCES_XML instead of XML_SOURCES to

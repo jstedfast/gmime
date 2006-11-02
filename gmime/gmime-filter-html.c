@@ -270,7 +270,7 @@ writeln (GMimeFilter *filter, const unsigned char *in, const unsigned char *inen
 			/* otherwise, FALL THROUGH */
 		case ' ':
 			if (html->flags & GMIME_FILTER_HTML_CONVERT_SPACES) {
-				if (inptr == (in + 1) || *inptr == ' ' || *inptr == '\t') {
+				if (inptr == (in + 1) || (inptr < inend && (*inptr == ' ' || *inptr == '\t'))) {
 					outptr = g_stpcpy (outptr, "&nbsp;");
 					html->column++;
 					break;

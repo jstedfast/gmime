@@ -36,6 +36,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
+#include <poll.h>
 
 #include "gmime-gpg-context.h"
 #include "gmime-filter-charset.h"
@@ -1099,62 +1100,61 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	gpg->statusleft -= len;                                           \
 } G_STMT_END
 
+enum {
+	GPG_STDIN_FD,
+	GPG_STDOUT_FD,
+	GPG_STDERR_FD,
+	GPG_STATUS_FD,
+	GPG_PASSWD_FD,
+	GPG_N_FDS
+};
+
 static int
 gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 {
-	fd_set rdset, wrset, *wrsetp = NULL;
 	const char *diagnostics, *mode;
-	struct timeval timeout;
+	struct pollfd pfds[GPG_N_FDS];
 	int ready, save;
-	int maxfd = 0;
+	nfds_t n;
 	
- retry:
-	FD_ZERO (&rdset);
+	for (n = 0; n < GPG_N_FDS; n++) {
+		pfds[n].events = 0;
+		pfds[n].fd = -1;
+	}
 	
 	if (!gpg->seen_eof1) {
-		FD_SET (gpg->stdout_fd, &rdset);
-		maxfd = MAX (maxfd, gpg->stdout_fd);
+		pfds[GPG_STDOUT_FD].fd = gpg->stdout_fd;
+		pfds[GPG_STDOUT_FD].events = POLLIN;
 	}
 	
 	if (!gpg->seen_eof2) {
-		FD_SET (gpg->stderr_fd, &rdset);
-		maxfd = MAX (maxfd, gpg->stderr_fd);
+		pfds[GPG_STDERR_FD].fd = gpg->stderr_fd;
+		pfds[GPG_STDERR_FD].events = POLLIN;
 	}
 	
 	if (!gpg->complete) {
-		FD_SET (gpg->status_fd, &rdset);
-		maxfd = MAX (maxfd, gpg->status_fd);
+		pfds[GPG_STATUS_FD].fd = gpg->status_fd;
+		pfds[GPG_STATUS_FD].events = POLLIN;
 	}
 	
-	if (gpg->stdin_fd != -1 || gpg->passwd_fd != -1) {
-		FD_ZERO (&wrset);
-		if (gpg->istream && gpg->stdin_fd != -1) {
-			FD_SET (gpg->stdin_fd, &wrset);
-			maxfd = MAX (maxfd, gpg->stdin_fd);
-		}
-		if (gpg->passwd_fd != -1) {
-			FD_SET (gpg->passwd_fd, &wrset);
-			maxfd = MAX (maxfd, gpg->passwd_fd);
-		}
-		
-		wrsetp = &wrset;
-	}
+	pfds[GPG_STDIN_FD].fd = gpg->stdin_fd;
+	pfds[GPG_STDIN_FD].events = POLLOUT;
 	
-	g_assert (maxfd > 0);
+	pfds[GPG_PASSWD_FD].fd = gpg->passwd_fd;
+	pfds[GPG_PASSWD_FD].events = POLLOUT;
 	
-	timeout.tv_sec = 10; /* timeout in seconds */
-	timeout.tv_usec = 0;
+	do {
+		for (n = 0; n < GPG_N_FDS; n++)
+			pfds[n].revents = 0;
+		ready = poll (pfds, GPG_N_FDS, 10 * 1000);
+	} while (ready == -1 && errno == EINTR);
 	
-	if ((ready = select (maxfd + 1, &rdset, wrsetp, NULL, &timeout)) == 0)
+	if (ready == -1) {
+		d(printf ("poll() failed: %s\n", g_strerror (errno)));
+		goto exception;
+	} else if (ready == 0) {
+		/* timed out */
 		return 0;
-	
-	if (ready < 0) {
-		if (errno == EINTR)
-			goto retry;
-		
-		d(printf ("select() failed: %s\n", g_strerror (errno)));
-		
-		return -1;
 	}
 	
 	/* Test each and every file descriptor to see if it's 'ready',
@@ -1163,7 +1163,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	   can to all of them. If one fails along the way, return
 	   -1. */
 	
-	if (FD_ISSET (gpg->status_fd, &rdset)) {
+	if (pfds[GPG_STATUS_FD].revents & (POLLIN | POLLHUP)) {
 		/* read the status message and decide what to do... */
 		char buffer[4096];
 		ssize_t nread;
@@ -1173,6 +1173,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		do {
 			nread = read (gpg->status_fd, buffer, sizeof (buffer));
 		} while (nread == -1 && (errno == EINTR || errno == EAGAIN));
+		
 		if (nread == -1)
 			goto exception;
 		
@@ -1185,7 +1186,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		}
 	}
 	
-	if (FD_ISSET (gpg->stdout_fd, &rdset) && gpg->ostream) {
+	if ((pfds[GPG_STDOUT_FD].revents & (POLLIN | POLLHUP)) && gpg->ostream) {
 		char buffer[4096];
 		ssize_t nread;
 		
@@ -1205,7 +1206,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		}
 	}
 	
-	if (FD_ISSET (gpg->stderr_fd, &rdset)) {
+	if (pfds[GPG_STDERR_FD].revents & (POLLIN | POLLHUP)) {
 		char buffer[4096];
 		ssize_t nread;
 		
@@ -1224,7 +1225,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		}
 	}
 	
-	if (wrsetp && gpg->passwd_fd != -1 && FD_ISSET (gpg->passwd_fd, &wrset) && gpg->need_passwd && gpg->send_passwd) {
+	if ((pfds[GPG_PASSWD_FD].revents & (POLLOUT | POLLHUP)) && gpg->need_passwd && gpg->send_passwd) {
 		ssize_t w, nwritten = 0;
 		size_t n;
 		
@@ -1252,7 +1253,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		gpg->send_passwd = FALSE;
 	}
 	
-	if (gpg->istream && wrsetp && gpg->stdin_fd != -1 && FD_ISSET (gpg->stdin_fd, &wrset)) {
+	if ((pfds[GPG_STDIN_FD].revents & (POLLOUT | POLLHUP)) && gpg->istream) {
 		char buffer[4096];
 		ssize_t nread;
 		
@@ -1322,7 +1323,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 			     diagnostics);
 	} else {
 		g_set_error (err, GMIME_ERROR, errno,
-			     _("Failed to %s vua GnuPG: %s\n"),
+			     _("Failed to %s via GnuPG: %s\n"),
 			     mode, g_strerror (errno));
 	}
 	

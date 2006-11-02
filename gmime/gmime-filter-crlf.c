@@ -141,7 +141,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			*outptr++ = *inptr++;
 		}
 	} else {
-		g_mime_filter_set_size (filter, len, FALSE);
+		g_mime_filter_set_size (filter, len + 1, FALSE);
 		
 		outptr = filter->outbuf;
 		while (inptr < inend) {
