@@ -305,7 +305,7 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 	const unsigned char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
 	struct _trie_state *q;
-	struct _trie_match *m;
+	struct _trie_match *m = NULL;
 	gunichar c;
 	
 	inptr = (const unsigned char *) buffer;

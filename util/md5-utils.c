@@ -307,7 +307,7 @@ md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char dige
 	MD5Context ctx;
 
 	md5_init (&ctx);
-	md5_update (&ctx, buffer, buffer_size);
+	md5_update (&ctx, (unsigned char *) buffer, buffer_size);
 	md5_final (&ctx, digest);
 	
 }

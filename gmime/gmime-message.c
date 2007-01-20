@@ -47,10 +47,7 @@ static void message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static void message_set_sender (GMimeMessage *message, const char *sender);
-static void message_set_reply_to (GMimeMessage *message, const char *reply_to);
 static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
-static void message_set_subject (GMimeMessage *message, const char *subject);
 
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);

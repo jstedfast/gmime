@@ -33,7 +33,7 @@
 #include <gmime/gmime.h>
 
 static char *path = "/usr/bin/gpg";
-static char *userid = "pgp-mime@xtorshun.org";
+/*static char *userid = "pgp-mime@xtorshun.org";*/
 static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
 
 typedef struct _ExampleSession ExampleSession;
@@ -50,8 +50,6 @@ struct _ExampleSessionClass {
 };
 
 static void example_session_class_init (ExampleSessionClass *klass);
-static void example_session_init (ExampleSession *session, ExampleSessionClass *klass);
-static void example_session_finalize (GObject *object);
 
 static char *request_passwd (GMimeSession *session, const char *prompt,
 			     gboolean secret, const char *item,
@@ -89,7 +87,6 @@ example_session_get_type (void)
 static void
 example_session_class_init (ExampleSessionClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeSessionClass *session_class = GMIME_SESSION_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_SESSION);
@@ -139,7 +136,6 @@ parse_message (int fd)
 static void
 count_foreach_callback (GMimeObject *part, gpointer user_data)
 {
-	GMimeContentType *content_type;
 	int *count = user_data;
 	
 	(*count)++;

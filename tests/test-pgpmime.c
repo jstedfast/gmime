@@ -45,8 +45,6 @@ struct _TestSessionClass {
 };
 
 static void test_session_class_init (TestSessionClass *klass);
-static void test_session_init (TestSession *session, TestSessionClass *klass);
-static void test_session_finalize (GObject *object);
 
 static char *request_passwd (GMimeSession *session, const char *prompt,
 			     gboolean secret, const char *item,
