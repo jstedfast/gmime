@@ -1,3 +1,11 @@
+2007-01-20  Jeffrey Stedfast  <jeff.stedfast@gmail.com>
+
+	Fixes bug #394419
+
+	* gmime/gmime-filter-charset.c (filter_filter): Do iconv const
+	casting.
+	(filter_complete): Same.
+
 2006-11-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_utils_header_format_date): Changed

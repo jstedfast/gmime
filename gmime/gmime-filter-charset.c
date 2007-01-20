@@ -135,7 +135,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	inleft = len;
 	
 	do {
-		converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
+		converted = iconv (charset->cd, (ICONV_CONST char **) &inbuf, &inleft, (ICONV_CONST char **) &outbuf, &outleft);
 		if (converted == (size_t) -1) {
 			if (errno == E2BIG || errno == EINVAL)
 				break;
@@ -198,7 +198,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	if (inleft > 0) {
 		do {
-			converted = iconv (charset->cd, &inbuf, &inleft, &outbuf, &outleft);
+			converted = iconv (charset->cd, (ICONV_CONST char **) &inbuf, &inleft, (ICONV_CONST char **) &outbuf, &outleft);
 			if (converted != (size_t) -1)
 				continue;
 			
