@@ -785,7 +785,6 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #ifdef HAVE_GETADDRINFO
 	struct addrinfo hints, *res;
 	char *name = NULL;
-	int ret;
 #endif
 	char *msgid;
 	
