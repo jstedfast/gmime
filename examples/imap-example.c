@@ -33,6 +33,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#include <glib.h>
+
 #include <gmime/gmime.h>
 
 
