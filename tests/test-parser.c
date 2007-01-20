@@ -42,7 +42,7 @@
 #define PRINT_MIME_STRUCT
 /*#define TEST_WRITE_TO_STREAM*/
 
-void
+static void
 print_depth (int depth)
 {
 	int i;
@@ -51,7 +51,7 @@ print_depth (int depth)
 		fprintf (stdout, "   ");
 }
 
-void
+static void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
@@ -85,7 +85,7 @@ print_mime_struct (GMimeObject *part, int depth)
 	}
 }
 
-void
+static void
 test_parser (GMimeStream *stream)
 {
 	GMimeParser *parser;

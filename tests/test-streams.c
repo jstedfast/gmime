@@ -152,8 +152,8 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	fclose (fp);
 	
 	if (strcmp (sbuf, rbuf)) {
-		fprintf (stderr, "\tstream: \"%s\" (%d)\n", sbuf, strlen (sbuf));
-		fprintf (stderr, "\treal:   \"%s\" (%d)\n", rbuf, strlen (rbuf));
+		fprintf (stderr, "\tstream: \"%s\" (%ul)\n", sbuf, strlen (sbuf));
+		fprintf (stderr, "\treal:   \"%s\" (%ul)\n", rbuf, strlen (rbuf));
 		test_abort ();
 	}
 	

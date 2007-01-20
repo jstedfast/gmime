@@ -107,7 +107,7 @@ request_passwd (GMimeSession *session, const char *prompt, gboolean secret, cons
 
 
 
-void
+static void
 test_multipart_signed (GMimeCipherContext *ctx)
 {
 	GMimeMessage *message;
