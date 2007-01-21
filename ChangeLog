@@ -1,10 +1,10 @@
-2007-01-20  Jeffrey Stedfast  <jeff.stedfast@gmail.com>
+2007-01-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* tests/test-streams.c (test_stream_gets): printf formatter fixes.
 
 	* examples/imap-example.c: #include <glib.h>, fixes bug #394434.
 
-2007-01-20  Jeffrey Stedfast  <jeff.stedfast@gmail.com>
+2007-01-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	Fixes bug #394419
 
