@@ -301,7 +301,7 @@ internet_address_get_addr (InternetAddress *ia)
  * internet_address_get_members:
  * @ia: internet address
  *
- * Returns the list of internet addresses
+ * Returns the list of internet addresses.
  **/
 const InternetAddressList *
 internet_address_get_members (InternetAddress *ia)
@@ -421,9 +421,9 @@ internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
  * internet_address_list_next:
  * @list: list of internet addresses
  *
- * Advances to the next address node in the InternetAddessList.
+ * Advances to the next address node in the #InternetAddessList.
  *
- * Returns the next address node in the InternetAddessList.
+ * Returns the next address node in the #InternetAddessList.
  **/
 InternetAddressList *
 internet_address_list_next (const InternetAddressList *list)
