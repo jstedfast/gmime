@@ -580,7 +580,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 /**
  * g_mime_part_set_content_md5:
  * @mime_part: Mime part
- * @content_md5: content md5 or NULL to generate the md5 digest.
+ * @content_md5: content md5 or %NULL to generate the md5 digest.
  *
  * Set the content md5 for the specified mime part.
  **/
@@ -647,8 +647,8 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
  *
  * Verify the content md5 for the specified mime part.
  *
- * Returns TRUE if the md5 is valid or FALSE otherwise. Note: will
- * return FALSE if the mime part does not contain a Content-MD5.
+ * Returns %TRUE if the md5 is valid or %FALSE otherwise. Note: will
+ * return %FALSE if the mime part does not contain a Content-MD5.
  **/
 gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
@@ -823,10 +823,10 @@ g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
  *
  * Returns the content encoding for the specified mime part. The
  * return value will be one of the following:
- * GMIME_PART_ENCODING_DEFAULT, GMIME_PART_ENCODING_7BIT,
- * GMIME_PART_ENCODING_8BIT, GMIME_PART_ENCODING_BINARY,
- * GMIME_PART_ENCODING_BASE64, GMIME_PART_ENCODING_QUOTEDPRINTABLE
- * or GMIME_PART_ENCODING_UUENCODE.
+ * #GMIME_PART_ENCODING_DEFAULT, #GMIME_PART_ENCODING_7BIT,
+ * #GMIME_PART_ENCODING_8BIT, #GMIME_PART_ENCODING_BINARY,
+ * #GMIME_PART_ENCODING_BASE64, #GMIME_PART_ENCODING_QUOTEDPRINTABLE
+ * or #GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_get_encoding (GMimePart *mime_part)
@@ -844,11 +844,11 @@ g_mime_part_get_encoding (GMimePart *mime_part)
  * Gets the string value of the content encoding.
  *
  * Returns the encoding type as a string. Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE and
- * GMIME_PART_ENCODING_UUENCODE.
+ * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
+ * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
+ * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
+ * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * #GMIME_PART_ENCODING_UUENCODE.
  **/
 const char *
 g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
@@ -880,12 +880,12 @@ g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
  * Gets the content encoding enumeration value based on the input
  * string.
  *
- * Returns the encoding string as a GMimePartEncodingType.  Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64,
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE and
- * GMIME_PART_ENCODING_UUENCODE.
+ * Returns the encoding string as a #GMimePartEncodingType.  Available
+ * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
+ * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
+ * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
+ * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
+ * #GMIME_PART_ENCODING_UUENCODE.
  **/
 GMimePartEncodingType
 g_mime_part_encoding_from_string (const char *encoding)
@@ -997,7 +997,7 @@ g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char 
  * @attribute, or %NULL if the parameter does not exist.
  *
  * Returns the value of a previously defined content-disposition
- * parameter specified by #name.
+ * parameter specified by @attribute.
  **/
 const char *
 g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
@@ -1304,7 +1304,7 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
  * WARNING: This interface is deprecated. Use
  * g_mime_object_write_to_stream() instead.
  *
- * Returns the number of bytes written or -1 on fail.
+ * Returns the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream)
