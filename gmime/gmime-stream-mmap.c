@@ -210,8 +210,7 @@ stream_close (GMimeStream *stream)
 	}
 	
 	if (mstream->owner && mstream->fd != -1) {
-		ret = close (mstream->fd);
-		if (ret != -1)
+		if ((ret = close (mstream->fd)) != -1)
 			mstream->fd = -1;
 	}
 	
