@@ -148,9 +148,10 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	do {
 		n = 0;
 		while (!g_mime_stream_eos (current->stream) && nread < len) {
-			n = g_mime_stream_read (current->stream, buf + nread, len - nread);
-			if (n > 0)
-				nread += n;
+			if ((n = g_mime_stream_read (current->stream, buf + nread, len - nread)) <= 0)
+				break;
+			
+			nread += n;
 		}
 		
 		if (nread < len) {
@@ -198,10 +199,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	do {
 		n = -1;
 		while (!g_mime_stream_eos (current->stream) && nwritten < len) {
-			if ((n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten)) > 0)
-				nwritten += n;
-			else
+			if ((n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten)) <= 0)
 				break;
+			
+			nwritten += n;
 		}
 		
 		if (nwritten < len) {
