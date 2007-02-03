@@ -1,3 +1,17 @@
+2007-02-03  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-cat.c (stream_flush): Flush all streams up to
+	and including the current stream, not just the current stream.
+	(stream_write): break if we don't write any data to
+	current->stream or get an error so we can try the next stream.
+
+	* gmime/gmime-stream-file.c (stream_close): Same as below.
+
+	* gmime/gmime-stream-fs.c (stream_close): Allow closing multiple
+	times... makes this consistant with the other streams.
+	(stream_write): If a system write fails with EFBIG or ENOSPC, set
+	eos to TRUE.
+
 2007-01-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* tests/test-streams.c (test_stream_gets): printf formatter fixes.

@@ -170,6 +170,9 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 			nwritten += n;
 	} while (n != -1 && nwritten < len);
 	
+	if (n == -1 && (errno == EFBIG || errno == ENOSPC))
+		fstream->eos = TRUE;
+	
 	if (nwritten > 0)
 		stream->position += nwritten;
 	else if (n == -1)
@@ -194,10 +197,10 @@ stream_close (GMimeStream *stream)
 	GMimeStreamFs *fstream = (GMimeStreamFs *) stream;
 	int ret;
 	
-	g_return_val_if_fail (fstream->fd != -1, -1);
+	if (fstream->fd == -1)
+		return 0;
 	
-	ret = close (fstream->fd);
-	if (ret != -1)
+	if ((ret = close (fstream->fd)) != -1)
 		fstream->fd = -1;
 	
 	return ret;

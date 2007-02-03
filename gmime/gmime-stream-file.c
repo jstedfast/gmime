@@ -171,10 +171,10 @@ stream_close (GMimeStream *stream)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	int ret;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	if (fstream->fp == NULL)
+		return 0;
 	
-	ret = fclose (fstream->fp);
-	if (ret != -1)
+	if ((ret = fclose (fstream->fp)) != NULL)
 		fstream->fp = NULL;
 	
 	return ret;
@@ -204,8 +204,7 @@ stream_reset (GMimeStream *stream)
 	if (stream->position == stream->bound_start)
 		return 0;
 	
-	ret = fseek (fstream->fp, stream->bound_start, SEEK_SET);
-	if (ret != -1)
+	if ((ret = fseek (fstream->fp, stream->bound_start, SEEK_SET)) != -1)
 		stream->position = stream->bound_start;
 	
 	return ret;

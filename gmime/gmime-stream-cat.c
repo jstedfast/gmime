@@ -22,6 +22,8 @@
 #include <config.h>
 #endif
 
+#include <errno.h>
+
 #include "gmime-stream-cat.h"
 
 static void g_mime_stream_cat_class_init (GMimeStreamCatClass *klass);
@@ -196,12 +198,14 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	do {
 		n = -1;
 		while (!g_mime_stream_eos (current->stream) && nwritten < len) {
-			n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten);
-			if (n > 0)
+			if ((n = g_mime_stream_write (current->stream, buf + nwritten, len - nwritten)) > 0)
 				nwritten += n;
+			else
+				break;
 		}
 		
 		if (nwritten < len) {
+			/* try spilling over into the next stream */
 			current = current->next;
 			if (current) {
 				g_mime_stream_reset (current->stream);
@@ -225,11 +229,27 @@ static int
 stream_flush (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
+	struct _cat_node *node;
+	int errnosav = 0;
+	int rv = 0;
 	
-	if (cat->current)
-		return g_mime_stream_flush (cat->current->stream);
-	else
-		return 0;
+	/* flush all streams up to and including the current stream */
+	
+	node = cat->sources;
+	while (node) {
+		if (g_mime_stream_flush (node->stream) == -1) {
+			if (errnosav == 0)
+				errnosav = errno;
+			rv = -1;
+		}
+		
+		if (node == cat->current)
+			break;
+		
+		node = node->next;
+	}
+	
+	return rv;
 }
 
 static int
@@ -451,7 +471,7 @@ g_mime_stream_cat_new (void)
  *
  * Adds the @source stream to the cat stream @cat.
  *
- * Returns 0 on success or -1 on fail.
+ * Returns %0 on success or %-1 on fail.
  **/
 int
 g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source)
