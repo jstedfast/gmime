@@ -195,7 +195,7 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
- * Returns 0 on success or -1 on fail.
+ * Returns %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
@@ -272,7 +272,7 @@ cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtr
  * Encrypts (and optionally signs) the cleartext input stream and
  * writes the resulting ciphertext to the output stream.
  *
- * Returns 0 on success or -1 on fail.
+ * Returns %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
@@ -307,7 +307,7 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
  * Decrypts the ciphertext input stream and writes the resulting
  * cleartext to the output stream.
  *
- * Returns 0 on success or -1 for fail.
+ * Returns %0 on success or %-1 for fail.
  **/
 int
 g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
@@ -340,7 +340,7 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
  * Imports a stream of keys/certificates contained within @istream
  * into the key/certificate database controlled by @ctx.
  *
- * Returns 0 on success or -1 on fail.
+ * Returns %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
@@ -373,7 +373,7 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  * Exports the keys/certificates in @keys to the stream @ostream from
  * the key/certificate database controlled by @ctx.
  *
- * Returns 0 on success or -1 on fail.
+ * Returns %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,

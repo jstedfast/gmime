@@ -190,7 +190,7 @@ g_mime_iconv_init (void)
  * number of times until closed using g_mime_iconv_close().
  *
  * Returns a new conversion descriptor for use with g_mime_iconv() on
- * success or (iconv_t) -1 on fail as well as setting an appropriate
+ * success or (iconv_t) %-1 on fail as well as setting an appropriate
  * errno value.
  **/
 iconv_t
@@ -270,7 +270,7 @@ g_mime_iconv_open (const char *to, const char *from)
  *
  * Closes the iconv descriptor @cd.
  *
- * Returns 0 on success or -1 on fail as well as setting an
+ * Returns %0 on success or %-1 on fail as well as setting an
  * appropriate errno value.
  **/
 int

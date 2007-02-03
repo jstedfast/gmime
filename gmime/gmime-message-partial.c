@@ -222,7 +222,7 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
  *
  * Gets the message/partial part number.
  *
- * Returns the message/partial part number or -1 on fail.
+ * Returns the message/partial part number or %-1 on fail.
  **/
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)

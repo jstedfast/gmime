@@ -215,7 +215,7 @@ g_mime_multipart_encrypted_new ()
  * encrypted #GMimeObject is set as the encrypted part of the
  * multipart/encrypted object @mpe.
  *
- * Returns 0 on success or -1 on fail. If the encryption fails, an
+ * Returns %0 on success or %-1 on fail. If the encryption fails, an
  * exception will be set on @err to provide information as to why the
  * failure occured.
  **/

@@ -264,7 +264,7 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
  *
  * Writes the raw (decoded) data to the output stream.
  *
- * Returns the number of bytes written or -1 on failure.
+ * Returns the number of bytes written or %-1 on failure.
  **/
 ssize_t
 g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)

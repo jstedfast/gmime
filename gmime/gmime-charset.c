@@ -331,7 +331,7 @@ g_mime_locale_language (void)
  * @charset. Currently only handles CJK and Russian/Ukranian
  * charset->lang mapping. Everything else will return %NULL.
  *
- * Returns a language code that is specific to @charset, or NULL on
+ * Returns a language code that is specific to @charset, or %NULL on
  * fail.
  **/
 const char *

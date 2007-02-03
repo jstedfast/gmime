@@ -305,7 +305,7 @@ write_default (GMimeStream *stream, const char *name, const char *value)
  *
  * Write the headers to a stream.
  *
- * Returns the number of bytes written or -1 on fail.
+ * Returns the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)

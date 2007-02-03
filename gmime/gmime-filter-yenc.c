@@ -322,9 +322,9 @@ g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc)
  * g_mime_filter_yenc_get_part:
  * @yenc: yEnc filter
  *
- * Gets the part id of the current decoded yEnc stream or -1 on fail.
+ * Gets the part id of the current decoded yEnc stream or %-1 on fail.
  *
- * Returns the part id of the current decoded yEnc stream or -1 on
+ * Returns the part id of the current decoded yEnc stream or %-1 on
  * fail.
  **/
 int

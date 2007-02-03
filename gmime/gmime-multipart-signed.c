@@ -258,7 +258,7 @@ sign_prepare (GMimeObject *mime_part)
  * successful, the signed #GMimeObject is set as the signed part of
  * the multipart/signed object @mps.
  *
- * Returns 0 on success or -1 on fail. If the signing fails, an
+ * Returns %0 on success or %-1 on fail. If the signing fails, an
  * exception will be set on @err to provide information as to why the
  * failure occured.
  **/
