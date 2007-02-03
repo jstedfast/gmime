@@ -426,7 +426,7 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
  *
  * Ref's a stream.
  *
- * WARNING: This method is deprecated. Use #g_object_ref instead.
+ * WARNING: This method is deprecated. Use g_object_ref() instead.
  **/
 void
 g_mime_stream_ref (GMimeStream *stream)
@@ -443,7 +443,7 @@ g_mime_stream_ref (GMimeStream *stream)
  *
  * Unref's a stream.
  *
- * WARNING: This method is deprecated. Use #g_object_unref instead.
+ * WARNING: This method is deprecated. Use g_object_unref() instead.
  **/
 void
 g_mime_stream_unref (GMimeStream *stream)
