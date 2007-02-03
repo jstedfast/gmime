@@ -410,8 +410,7 @@ g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
-	sub = GMIME_STREAM_GET_CLASS (stream)->substream (stream, start, end);
-	if (sub) {
+	if ((sub = GMIME_STREAM_GET_CLASS (stream)->substream (stream, start, end))) {
 		sub->super_stream = stream;
 		g_object_ref (stream);
 	}
@@ -549,8 +548,7 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 	g_return_val_if_fail (GMIME_IS_STREAM (dest), -1);
 	
 	while (!g_mime_stream_eos (src)) {
-		nread = g_mime_stream_read (src, buf, sizeof (buf));
-		if (nread < 0)
+		if ((nread = g_mime_stream_read (src, buf, sizeof (buf))) < 0)
 			return -1;
 		
 		if (nread > 0) {
@@ -558,8 +556,7 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 			while (nwritten < nread) {
 				ssize_t len;
 				
-				len = g_mime_stream_write (dest, buf + nwritten, nread - nwritten);
-				if (len < 0)
+				if ((len = g_mime_stream_write (dest, buf + nwritten, nread - nwritten)) < 0)
 					return -1;
 				
 				nwritten += len;
