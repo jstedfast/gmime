@@ -343,7 +343,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	GMimeStreamFilter *sub;
 	
-	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
+	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL);
 	sub->source = filter->source;
 	g_object_ref (sub->source);
 	
@@ -371,9 +371,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 		sub->priv->filterid = filter->priv->filterid;
 	}
 	
-	g_mime_stream_construct (GMIME_STREAM (filter),
-				 sub->source->bound_start,
-				 sub->source->bound_end);
+	g_mime_stream_construct (GMIME_STREAM (filter), start, end);
 	
 	return GMIME_STREAM (sub);
 }

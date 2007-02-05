@@ -130,8 +130,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
  again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
-		n = MIN (buffer->buflen, len);
-		if (n > 0) {
+		if ((n = MIN (buffer->buflen, len)) > 0) {
 			memcpy (buf + nread, buffer->buffer, n);
 			buffer->buflen -= n;
 			memmove (buffer->buffer, buffer->buffer + n, buffer->buflen);
@@ -141,22 +140,18 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		
 		if (buffer->buflen == 0) {
 			/* buffer more data */
-			buffer->buflen = g_mime_stream_read (buffer->source, buffer->buffer,
-							     BLOCK_BUFFER_LEN);
+			if ((n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) >= 0)
+				buffer->buflen = n;
+			
+			if (n == -1 && nread == 0)
+				return -1;
+			
 			if (len && buffer->buflen > 0)
 				goto again;
-			
-			if (buffer->buflen == -1) {
-				if (nread == 0)
-					return -1;
-				else
-					buffer->buflen = 0;
-			}
 		}
 		break;
 	case GMIME_STREAM_BUFFER_CACHE_READ:
-		n = MIN (buffer->bufend - buffer->bufptr, len);
-		if (n > 0) {
+		if ((n = MIN (buffer->bufend - buffer->bufptr, len)) > 0) {
 			memcpy (buf + nread, buffer->bufptr, n);
 			buffer->bufptr += n;
 			nread += n;
@@ -253,45 +248,51 @@ stream_close (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	
+	if (buffer->source == NULL)
+		return 0;
+	
+	g_mime_stream_close (buffer->source);
+	g_object_unref (buffer->source);
+	buffer->source = NULL;
+	
 	g_free (buffer->buffer);
 	buffer->buffer = NULL;
+	buffer->bufptr = NULL;
+	buffer->bufend = NULL;
+	buffer->buflen = 0;
 	
-	return g_mime_stream_close (buffer->source);
+	return 0;
 }
 
 static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	gboolean eos;
 	
-	eos = g_mime_stream_eos (buffer->source);
+	if (!g_mime_stream_eos (buffer->source))
+		return FALSE;
 	
-	if (eos) {
-		switch (buffer->mode) {
-		case GMIME_STREAM_BUFFER_BLOCK_READ:
-			return buffer->buflen == 0;
-		case GMIME_STREAM_BUFFER_CACHE_READ:
-			return buffer->bufptr == buffer->bufend;
-		default:
-			break;
-		}
+	switch (buffer->mode) {
+	case GMIME_STREAM_BUFFER_BLOCK_READ:
+		return buffer->buflen == 0;
+	case GMIME_STREAM_BUFFER_CACHE_READ:
+		return buffer->bufptr == buffer->bufend;
+	default:
+		break;
 	}
 	
-	return eos;
+	return TRUE;
 }
 
 static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	int reset;
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
-		reset = g_mime_stream_reset (buffer->source);
-		if (reset == -1)
+		if (g_mime_stream_reset (buffer->source) == -1)
 			return -1;
 		
 		buffer->buflen = 0;
@@ -300,14 +301,11 @@ stream_reset (GMimeStream *stream)
 		buffer->bufptr = buffer->buffer;
 		break;
 	default:
-		reset = g_mime_stream_reset (buffer->source);
-		if (reset == -1)
+		if (g_mime_stream_reset (buffer->source) == -1)
 			return -1;
 		
 		break;
 	}
-	
-	stream->position = stream->bound_start;
 	
 	return 0;
 }
@@ -325,10 +323,9 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			return -1;
 		/* fall through... */
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
-		real = g_mime_stream_seek (buffer->source, offset, whence);
-		if (real != -1) {
-			buffer->buflen = 0;
+		if ((real = g_mime_stream_seek (buffer->source, offset, whence)) != -1) {
 			stream->position = buffer->source->position;
+			buffer->buflen = 0;
 		}
 		
 		return real;
@@ -390,6 +387,8 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 				buffer->bufptr = buffer->buffer + pos;
 				return -1;
 			}
+		} else if (real < stream->bound_start) {
+			return -1;
 		} else {
 			/* seek our cache pointer backwards */
 			buffer->bufptr = buffer->buffer + (real - stream->bound_start);
@@ -425,7 +424,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	/* FIXME: for cached reads we want to substream ourself rather
            than substreaming our source because we have to assume that
            the reason this stream is setup to do cached reads is
-           because the source streem is unseekable. */
+           because the source stream is unseekable. */
 	
 	return GMIME_STREAM_GET_CLASS (buffer->source)->substream (buffer->source, start, end);
 }

@@ -200,11 +200,7 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
-	
-	stream->position = stream->bound_start;
-	
-	return 0;
+	return mem->buffer ? 0 : -1;
 }
 
 static off_t

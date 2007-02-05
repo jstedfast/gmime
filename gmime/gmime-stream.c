@@ -276,7 +276,6 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	d(g_warning ("Invoked default stream_reset implementation."));
-	stream->position = stream->bound_start;
 	return 0;
 }
 
@@ -292,9 +291,14 @@ stream_reset (GMimeStream *stream)
 int
 g_mime_stream_reset (GMimeStream *stream)
 {
+	int rv;
+	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return GMIME_STREAM_GET_CLASS (stream)->reset (stream);
+	if ((rv = GMIME_STREAM_GET_CLASS (stream)->reset (stream)) == 0)
+		stream->position = stream->bound_start;
+	
+	return rv;
 }
 
 
@@ -316,13 +320,14 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
  * the argument @offset according to the
  * directive @whence as follows:
  *
- *     #GMIME_STREAM_SEEK_SET: The offset is set to @offset bytes.
+ *     #GMIME_STREAM_SEEK_SET: Seek @offset bytes relative to
+ *     the beginning (bound_start) of the stream.
  *
- *     #GMIME_STREAM_SEEK_CUR: The offset is set to its current
- *     location plus @offset bytes.
+ *     #GMIME_STREAM_SEEK_CUR: Seek @offset bytes relative to the
+ *     current offset of the stream.
  *
- *     #GMIME_STREAM_SEEK_END: The offset is set to the size of the
- *     stream plus @offset bytes.
+ *     #GMIME_STREAM_SEEK_END: Seek @offset bytes relative to the
+ *     end of the stream (bound_end if non-negative).
  *
  * Returns the resultant position on success or %-1 on fail.
  **/
@@ -374,7 +379,7 @@ stream_length (GMimeStream *stream)
  *
  * Gets the length of the stream.
  *
- * Returns the length of the stream or %-1 on fail.
+ * Returns the length of the stream or %-1 if unknown.
  **/
 ssize_t
 g_mime_stream_length (GMimeStream *stream)

@@ -232,9 +232,9 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
 	
-	g_return_val_if_fail (mstream->fd != -1, -1);
+	if (mstream->fd == -1)
+		return -1;
 	
-	stream->position = stream->bound_start;
 	mstream->eos = FALSE;
 	
 	return 0;
@@ -270,11 +270,16 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		break;
 	}
 	
-	if (stream->bound_end != -1)
-		real = MIN (real, stream->bound_end);
-	real = MAX (real, stream->bound_start);
+	/* sanity check the resultant offset */
+	if (real < stream->bound_start)
+		return -1;
 	
-	if (real != stream->position && mstream->eos)
+	if (stream->bound_end != -1 && real > stream->bound_end)
+		return -1;
+	
+	/* reset eos if appropriate */
+	if ((stream->bound_end != -1 && real < stream->bound_end) ||
+	    (mstream->eos && real < stream->position))
 		mstream->eos = FALSE;
 	
 	stream->position = real;

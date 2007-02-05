@@ -1,3 +1,61 @@
+2007-02-04  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-mem.c (stream_reset): No longer need to
+	update stream->position.
+
+	* gmime/gmime-stream-mmap.c (stream_reset): Same g_return_if_fail
+	change. Also don't update stream->position.
+	(stream_seek): Added similar sanity checking/eos resetting as
+	StreamFs code.
+
+	* gmime/gmime-stream-file.c (stream_read): Style changes.
+	(stream_write): Style changes.
+	(stream_close): Fixed compiler warning.
+	(stream_reset): Changed g_return_if_fail to a true if-then.
+	(stream_seek): Changed to mimic the StreamFs changes.
+	(g_mime_stream_file_new): Similar to fs_new() change.
+
+	* gmime/gmime-stream-fs.c (stream_close): Loop the close()
+	ourselves.
+	(stream_reset): Changed g_return_if_fail to a true if-then. Also
+	be better about resetting eos.
+	(stream_seek): Rewritten to be more correct/robust (at least I
+	hope). Also properly reset eos when appropriate.
+	(g_mime_stream_fs_new): If lseek() fails, pretend start offset is
+	0.
+
+	* gmime/gmime-stream.c (stream_reset): No longer needs to update
+	stream->position.
+	(g_mime_stream_reset): Update stream->position if everything reset
+	smoothly. This is just a convenience change to subclass
+	implementations.
+
+	* gmime/gmime-stream-cat.c (stream_read): Rewritten. Hopefully
+	correct now? Ugh. We can hope...
+	(stream_write): Fixed to work better.
+	(stream_close): Rewritten.
+	(stream_reset): Rewritten to reset the streams, don't seek.
+	(stream_seek): Rewritten... still not correct, but should be ok
+	assuming our bound_start is 0.
+	(stream_length): Rewritten to not depend on a pre-calculated
+	length value... this Does Not Work (tm) if the source streams are
+	unbound and we've written to them.
+	(stream_substream): Rewritten... because ::seek() is so complex
+	for this type of stream, I've tried to eliminate a lot of the
+	headaches by making substreams only slurp up the streams within
+	the bounds of the start/end requested. If the entire contents
+	within the requested bounds are contained within a single source
+	stream, we return a substream of said source stream instead.
+	(g_mime_stream_cat_add_source): Don't precalculate the length here
+	anymore.
+
+	* gmime/gmime-stream-buffer.c (stream_read): Fixed to never allow
+	buflen to be negative if the read() of our source stream fails.
+	(stream_close): Handle the case where we've already been closed.
+	(stream_eos): Simplified.
+	(stream_reset): Stylistic changes.
+	(stream_seek): Don't allow seeks under our bound_start.
+
 2007-02-03  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-stream-cat.c (stream_flush): Flush all streams up to
