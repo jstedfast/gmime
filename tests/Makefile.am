@@ -2,7 +2,18 @@
 
 SUBDIRS = .
 
-INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
+INCLUDES = 				\
+	-I$(top_srcdir) 		\
+	-I$(top_srcdir)/util		\
+	$(VERSION_FLAGS) 		\
+	-DG_LOG_DOMAIN=\"gmime-tests\"	\
+	-DG_DISABLE_DEPRECATED		\
+	$(GLIB_CFLAGS)
+
+VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\" 		\
+		-DGMIME_MAJOR_VERSION=$(GMIME_MAJOR_VERSION)	\
+		-DGMIME_MINOR_VERSION=$(GMIME_MINOR_VERSION)	\
+		-DGMIME_MICRO_VERSION=$(GMIME_MICRO_VERSION)
 
 noinst_PROGRAMS = 	\
 	test-best	\
@@ -10,6 +21,7 @@ noinst_PROGRAMS = 	\
 	test-parser 	\
 	test-mbox 	\
 	test-streams 	\
+	test-cat	\
 	test-html 	\
 	test-iconv 	\
 	test-partial	\
@@ -44,6 +56,11 @@ test_streams_LDFLAGS =
 test_streams_DEPENDENCIES = $(DEPS)
 test_streams_LDADD = $(LDADDS)
 
+test_cat_SOURCES = test-cat.c
+test_cat_LDFLAGS = 
+test_cat_DEPENDENCIES = $(DEPS)
+test_cat_LDADD = $(LDADDS)
+
 test_html_SOURCES = test-html.c
 test_html_LDFLAGS = 
 test_html_DEPENDENCIES = $(DEPS)
@@ -75,7 +92,7 @@ check-local: tests
 
 testall : tests
 
-tests: MIMEtests PARSERtests STREAMtests FILTERtests ICONVtests PGPtests
+tests: MIMEtests PARSERtests STREAMtests CATtests FILTERtests ICONVtests PGPtests
 
 MIMEtests : test-mime
 	@echo "##"
@@ -90,6 +107,11 @@ PARSERtests : test-parser test-mbox test-partial
 STREAMtests : test-streams
 	@echo "##"
 	@echo "## Stream regression tests"
+	@echo "##"
+
+CATtests : test-cat
+	@echo "##"
+	@echo "## StreamCat regression tests"
 	@echo "##"
 
 FILTERtests : test-html

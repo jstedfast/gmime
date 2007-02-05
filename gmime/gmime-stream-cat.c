@@ -139,9 +139,6 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (off_t) len);
 	
-	if (len == 0)
-		return 0;
-	
 	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
 		return -1;
 	
@@ -154,13 +151,14 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		if (g_mime_stream_seek (current->stream, offset, GMIME_STREAM_SEEK_SET) == -1)
 			return -1;
 		
-		if ((nread = g_mime_stream_read (current->stream, buf, len)) == 0) {
+		if ((nread = g_mime_stream_read (current->stream, buf, len)) <= 0) {
 			cat->current = current = current->next;
 			if (current != NULL) {
 				if (g_mime_stream_reset (current->stream) == -1)
 					return -1;
 				current->position = 0;
 			}
+			nread = 0;
 		} else if (nread > 0) {
 			current->position += nread;
 		}

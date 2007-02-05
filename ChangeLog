@@ -1,3 +1,11 @@
+2007-02-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* tests/test-cat.c: The beginnings of a test suite for
+	GMimeStreamCat.
+
+	* gmime/gmime-stream-cat.c (stream_read): Go to the next stream if
+	nread <= 0, not just nread == 0.
+
 2007-02-04  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-stream-mem.c (stream_reset): No longer need to
