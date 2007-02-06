@@ -47,7 +47,6 @@ esac
 AC_MSG_RESULT($platform_win32)
 AM_CONDITIONAL(PLATFORM_WIN32, test "x$platform_win32" = "xyes")
 AM_CONDITIONAL(OS_WIN32, test "$native_win32" = "xyes")
-AC_SUBST(GMIME_DEF)
 
 if test "$glib_native_win32" = "yes"; then
   if test "X$enable_static" = "xyes" -o "x$enable_static" = "x"; then
@@ -117,9 +116,9 @@ dnl       to make this work with the tarballs.
 AM_CONDITIONAL(ENABLE_GTK_DOC, test "x$enable_gtk_doc" = "xyes")
 
 dnl Check for profiling options
-AC_ARG_ENABLE(gprof, [  --enable-profile          Enable profiling compile flags [default=no]], enable_profile="$enableval", enable_profile="no")
+AC_ARG_ENABLE(gprof, [  --enable-gprof          Enable profiling compile flags [default=no]], enable_profile="$enableval", enable_profile="no")
 if test "x$enable_profile" = "xyes"; then
-  CFLAGS="$CFLAGS -O0 -g -pg -fprofile-arcs -ftest-coverage"
+  CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
 fi
 
 dnl Enable warning spewage on the console
@@ -180,6 +179,27 @@ LIBS="$LIBS_save"
 dnl Check for regex
 AC_CHECK_HEADER(regex.h, have_regex="yes")
 AM_CONDITIONAL(HAVE_REGEX, test "x$have_regex" = "xyes")
+
+dnl Check for GNU getopt
+AC_CHECK_HEADER(getopt.h)
+AC_MSG_CHECKING(for GNU getopt_long)
+AC_TRY_LINK([
+	#include <string.h>
+	#include <unistd.h>
+	#define _GNU_SOURCE
+	#include <getopt.h>
+	], [
+	return getopt_long (0, NULL, NULL, NULL, NULL);
+	]
+,
+	AC_MSG_RESULT([yes])
+	AC_DEFINE(HAVE_GETOPT_H, 1, [Define to 1 if you have the <getopt.h> header with the GNU `getopt_long' function.])
+	have_getopt="yes"
+,
+	AC_MSG_RESULT([no])
+	have_getopt="no"
+)
+AM_CONDITIONAL(SYSTEM_GETOPT, test "x$have_getopt" = "xyes")
 
 dnl Check for fsync (native win32 doesn't have this)
 AC_MSG_CHECKING(for fsync)

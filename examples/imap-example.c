@@ -949,7 +949,7 @@ int main (int argc, char **argv)
 	
 	if (message) {
 		uid = g_strdup (message->message_id ? message->message_id : basename (argv[i]));
-		g_mkdir (uid, 0755);
+		g_mkdir (uid, 0777);
 		write_message (message, uid);
 		g_object_unref (message);
 		

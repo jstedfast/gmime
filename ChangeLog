@@ -1,5 +1,21 @@
 2007-02-06  Jeffrey Stedfast  <fejj@gnome.org>
 
+	Fix for bug #394433
+
+	* configure.in: Detect if the system has GNU's getopt
+	implementation available for us to use.
+
+	* Makefile.am: Don't build our own copy of the GNU getopt library
+	if the system has it available.
+
+	* src/uuencode.c: If the system has getopt.h, use it instead of
+	our own getopt.h.
+
+	* src/uudecode.c: If the system has getopt.h, use it instead of
+	our own getopt.h.
+
+2007-02-06  Jeffrey Stedfast  <fejj@gnome.org>
+
 	More fixes on account of my test suite...
 
 	* tests/test-cat.c (test_cat_substream): end = start + random

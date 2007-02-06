@@ -61,7 +61,12 @@
 #include <fcntl.h>
 #include <errno.h>
 
+#ifdef HAVE_GETOPT_H
+#define _GNU_SOURCE
+#include <getopt.h>
+#else
 #include "getopt.h"
+#endif
 
 #include <gmime/gmime.h>
 
