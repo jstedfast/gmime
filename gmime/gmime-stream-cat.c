@@ -130,8 +130,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;
-	off_t offset, real;
 	ssize_t nread = 0;
+	off_t offset;
 	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
