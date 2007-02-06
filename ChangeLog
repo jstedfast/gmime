@@ -1,6 +1,23 @@
+2007-02-06  Jeffrey Stedfast  <fejj@gnome.org>
+
+	More fixes on account of my test suite...
+
+	* tests/test-cat.c (test_cat_substream): end = start + random
+	amount... duh. Fixes a bug where sometimes the end bound was < the
+	start bound.
+
+	* gmime/gmime-stream-cat.c (stream_substream): Calculate the
+	length of each of the source streams correctly. D'oh.
+	(stream_substream): Fixed the calculation for s->start.
+	(stream_substream): Fixed the s->end calculation for when end
+	within the source stream's bounds.
+	(stream_substream): Keep track of how long our substream is going
+	to be for use with setting absolute bound_end on a multi-stream
+	substream.
+
 2007-02-05  Jeffrey Stedfast  <fejj@gnome.org>
 
-	Fixes on accord of the awesome test suite I wrote earlier... still
+	Fixes on account of the awesome test suite I wrote earlier... still
 	need to fix ::substream() tho (or maybe it's just the test that's
 	broke?).
 

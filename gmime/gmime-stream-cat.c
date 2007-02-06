@@ -549,21 +549,24 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _sub_node *streams, *tail, *s;
+	off_t offset = 0, subend = 0;
 	GMimeStream *substream;
 	struct _cat_node *n;
-	off_t offset = 0;
 	ssize_t len;
 	
+	d(fprintf (stderr, "GMimeStreamCat::substream (%p, %ld, %ld)\n", stream, start, end));
+	
+	/* find the first source stream that contains data we're interested in... */
 	n = cat->sources;
 	while (offset < start && n != NULL) {
 		if (n->stream->bound_end == -1) {
 			if ((len = g_mime_stream_length (n->stream)) == -1)
 				return NULL;
 		} else {
-			len = stream->bound_end - stream->bound_start;
+			len = n->stream->bound_end - n->stream->bound_start;
 		}
 		
-		if (offset + len > start)
+		if ((offset + len) > start)
 			break;
 		
 		offset += len;
@@ -574,6 +577,8 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	if (n == NULL)
 		return NULL;
 	
+	d(fprintf (stderr, "stream[%d] is the first stream containing data we want\n", n->id));
+	
 	streams = NULL;
 	tail = (struct _sub_node *) &streams;
 	
@@ -581,33 +586,49 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 		s = g_new (struct _sub_node, 1);
 		s->next = NULL;
 		s->stream = n->stream;
-		s->start = n->stream->bound_start + (streams == NULL ? start : 0);
 		tail->next = s;
 		tail = s;
+		
+		s->start = n->stream->bound_start;
+		if (n == cat->sources)
+			s->start += start;
+		else if (offset < start)
+			s->start += (start - offset);
+		
+		d(fprintf (stderr, "added stream[%d] to our list\n", n->id));
 		
 		if (n->stream->bound_end == -1) {
 			if ((len = g_mime_stream_length (n->stream)) == -1)
 				goto error;
 		} else {
-			len = stream->bound_end - stream->bound_start;
+			len = n->stream->bound_end - n->stream->bound_start;
 		}
 		
-		if (end != -1 && ((offset + len) >= end)) {
-			if (s == streams)
-				s->end = end - offset;
-			else
-				s->end = end - offset - s->start;
+		d(fprintf (stderr, "stream[%d]: len = %ld, offset of beginning of stream is %ld\n",
+			   n->id, len, offset));
+		
+		if (end != -1 && (end <= (offset + len))) {
+			d(fprintf (stderr, "stream[%d]: requested end <= offset + len\n", n->id));
+			s->end = n->stream->bound_start + (end - offset);
+			d(fprintf (stderr, "stream[%d]: s->start = %ld, s->end = %ld; break\n",
+				   n->id, s->start, s->end));
+			subend += (end - offset);
 			break;
 		} else {
 			s->end = n->stream->bound_start + len;
+			d(fprintf (stderr, "stream[%d]: s->start = %ld, s->end = %ld\n",
+				   n->id, s->start, s->end));
 		}
 		
+		subend += (s->end - s->start);
 		offset += len;
 		
 		n = n->next;
 	} while (n != NULL);
 	
 	if (s == streams) {
+		d(fprintf (stderr, "returning stream[%d]::substream (%ld, %ld)\n",
+			   n->id, s->start, s->end));
 		substream = g_mime_stream_substream (s->stream, s->start, s->end);
 		while (streams != NULL) {
 			s = streams->next;
@@ -615,8 +636,12 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 			streams = s;
 		}
 	} else {
+		d(fprintf (stderr, "returning a substream containing multiple source streams\n"));
 		cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
-		g_mime_stream_construct (GMIME_STREAM (cat), 0, offset - start);
+		/* Note: we could pass -1 as bound_end, it should Just
+		 * Work(tm) but setting absolute bounds is kinda
+		 * nice... */
+		g_mime_stream_construct (GMIME_STREAM (cat), 0, subend);
 		
 		while (streams != NULL) {
 			s = streams->next;

@@ -407,7 +407,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	/* calculate a random start/end offsets */
 	start = (off_t) (size * (rand () / (RAND_MAX + 1.0)));
 	if (rand () % 2)
-		end = (off_t) ((size - start) * (rand () / (RAND_MAX + 1.0)));
+		end = start + (off_t) ((size - start) * (rand () / (RAND_MAX + 1.0)));
 	else
 		end = -1;
 	
