@@ -254,7 +254,7 @@ filter_reset (GMimeFilter *filter)
 
 /**
  * g_mime_filter_reset:
- * @filter:
+ * @filter: a #GMimeFilter object
  *
  * Resets the filter.
  **/
@@ -273,8 +273,8 @@ g_mime_filter_reset (GMimeFilter *filter)
 /**
  * g_mime_filter_backup:
  * @filter: filter
- * @data: 
- * @length: 
+ * @data: data to backup
+ * @length: length of @data
  *
  * Sets number of bytes backed up on the input, new calls replace
  * previous ones
@@ -299,10 +299,10 @@ g_mime_filter_backup (GMimeFilter *filter, const char *data, size_t length)
 /**
  * g_mime_filter_set_size:
  * @filter: filter
- * @size: 
- * @keep: 
+ * @size: requested size for the output buffer
+ * @keep: %TRUE if existing data in the output buffer should be kept
  *
- * Ensure this much size available for filter output (if required)
+ * Ensure this much size is available for filter output (if required)
  **/
 void
 g_mime_filter_set_size (GMimeFilter *filter, size_t size, gboolean keep)

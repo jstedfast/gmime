@@ -48,8 +48,30 @@ typedef struct _GMimeReferences GMimeReferences;
 #define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 
+
+/**
+ * GMIME_UUEDECODE_STATE_INIT:
+ *
+ * Initial state for the g_mime_utils_uudecode_step() function.
+ **/
 #define GMIME_UUDECODE_STATE_INIT   (0)
+
+
+/**
+ * GMIME_UUEDECODE_STATE_BEGIN:
+ *
+ * State for the g_mime_utils_uudecode_step() function, denoting that
+ * the 'begin' line has been found.
+ **/
 #define GMIME_UUDECODE_STATE_BEGIN  (1 << 16)
+
+
+/**
+ * GMIME_UUEDECODE_STATE_END:
+ *
+ * State for the g_mime_utils_uudecode_step() function, denoting that
+ * the end of the UU encoded block has been found.
+ **/
 #define GMIME_UUDECODE_STATE_END    (1 << 17)
 #define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
 

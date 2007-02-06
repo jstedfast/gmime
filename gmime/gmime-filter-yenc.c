@@ -426,10 +426,10 @@ static const int yenc_crc_table[256] = {
  * @inlen pointed to by @in and writes to @out. Assumes the =ybegin
  * and =ypart lines have already been stripped off.
  *
- * To get the crc32 value of the part, use GMIME_YENCODE_CRC_FINAL
+ * To get the crc32 value of the part, use #GMIME_YENCODE_CRC_FINAL
  * (@pcrc). If there are more parts, you should reuse @crc without
  * re-initializing. Once all parts have been decoded, you may get the
- * combined crc32 value of all the parts using GMIME_YENCODE_CRC_FINAL
+ * combined crc32 value of all the parts using #GMIME_YENCODE_CRC_FINAL
  * (@crc).
  *
  * Returns the number of bytes decoded.

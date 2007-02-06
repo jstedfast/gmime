@@ -495,19 +495,16 @@ GMIME_FILTER_WINDOWS_GET_CLASS
 <FILE>gmime-filter-yenc</FILE>
 GMIME_YENCODE_CRC_INIT
 GMIME_YENCODE_CRC_FINAL
+GMIME_YENCODE_STATE_INIT
+GMIME_YDECODE_STATE_INIT
+GMIME_YDECODE_STATE_EOLN
+GMIME_YDECODE_STATE_ESCAPE
+GMIME_YDECODE_STATE_END
 g_mime_ydecode_step
 g_mime_yencode_step
 g_mime_yencode_close
 GMimeFilterYenc
 GMimeFilterYencDirection
-GMIME_YENCODE_STATE_INIT
-GMIME_YDECODE_STATE_INIT
-GMIME_YDECODE_STATE_EOLN
-GMIME_YDECODE_STATE_ESCAPE
-GMIME_YDECODE_STATE_BEGIN
-GMIME_YDECODE_STATE_PART
-GMIME_YDECODE_STATE_DECODE
-GMIME_YDECODE_STATE_END
 g_mime_filter_yenc_new
 g_mime_filter_yenc_set_state
 g_mime_filter_yenc_get_part
@@ -855,8 +852,6 @@ GMimeMessagePartialClass
 
 <SECTION>
 <FILE>gmime-utils</FILE>
-BASE64_ENCODE_LEN
-QP_ENCODE_LEN
 GMimePartEncodingType
 GMimeReferences
 g_mime_utils_header_decode_date
@@ -885,7 +880,6 @@ g_mime_utils_base64_encode_close
 GMIME_UUDECODE_STATE_INIT
 GMIME_UUDECODE_STATE_BEGIN
 GMIME_UUDECODE_STATE_END
-GMIME_UUDECODE_STATE_MASK
 g_mime_utils_uudecode_step
 g_mime_utils_uuencode_step
 g_mime_utils_uuencode_close

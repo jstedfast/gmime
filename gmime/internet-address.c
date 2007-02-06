@@ -436,15 +436,14 @@ internet_address_list_next (const InternetAddressList *list)
  * internet_address_list_get_address:
  * @list: list of internet addresses
  *
+ * Gets the #InternetAddress currently pointed to in @list.
+ *
  * Returns the #InternetAddress currently pointed to in @list.
  **/
 InternetAddress *
 internet_address_list_get_address (const InternetAddressList *list)
 {
-	if (!list)
-		return NULL;
-
-	return list->address;
+	return list ? list->address : NULL;
 }
 
 /**

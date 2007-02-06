@@ -267,10 +267,10 @@ filter_reset (GMimeFilter *filter)
 
 /**
  * g_mime_filter_charset_new:
- * @from_charset:
- * @to_charset:
+ * @from_charset: charset to convert from
+ * @to_charset: charset to convert to
  *
- * Creates a new GMimeFilterCharset filter.
+ * Creates a new #GMimeFilterCharset filter.
  *
  * Returns a new charset filter.
  **/

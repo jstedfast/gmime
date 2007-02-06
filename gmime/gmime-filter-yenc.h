@@ -40,7 +40,19 @@ typedef enum {
 	GMIME_FILTER_YENC_DIRECTION_DECODE
 } GMimeFilterYencDirection;
 
+
+/**
+ * GMIME_YDECODE_STATE_INIT:
+ *
+ * Initial state for the g_mime_ydecode_step() function.
+ **/
 #define GMIME_YDECODE_STATE_INIT     (0)
+
+/**
+ * GMIME_YENCODE_STATE_INIT:
+ *
+ * Initial state for the g_mime_ydecode_step() function.
+ **/
 #define GMIME_YENCODE_STATE_INIT     (0)
 
 /* first 8 bits are reserved for saving a byte */
@@ -51,9 +63,36 @@ typedef enum {
 
 /* bits 10 and 11 reserved for later uses? */
 
+/**
+ * GMIME_YDECODE_STATE_BEGIN:
+ *
+ * State bit that denotes the yEnc filter has found the =ybegin line.
+ **/
 #define GMIME_YDECODE_STATE_BEGIN    (1 << 12)
+
+/**
+ * GMIME_YDECODE_STATE_PART:
+ *
+ * State bit that denotes the yEnc filter has found the =ypart
+ * line. (Note: not all yencoded blocks have one)
+ **/
 #define GMIME_YDECODE_STATE_PART     (1 << 13)
+
+/**
+ * GMIME_YDECODE_STATE_DECODE:
+ *
+ * State bit that denotes yEnc filter has begun decoding the actual
+ * yencoded content and will continue to do so until an =yend line is
+ * found (or until there is nothing left to decode).
+ **/
 #define GMIME_YDECODE_STATE_DECODE   (1 << 14)
+
+/**
+ * GMIME_YDECODE_STATE_END:
+ *
+ * State bit that denoates that g_mime_ydecode_step() has finished
+ * decoding.
+ **/
 #define GMIME_YDECODE_STATE_END      (1 << 15)
 
 #define GMIME_YENCODE_CRC_INIT       (~0)
