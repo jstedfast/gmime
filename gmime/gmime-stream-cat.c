@@ -26,6 +26,8 @@
 
 #include "gmime-stream-cat.h"
 
+#define d(x)
+
 static void g_mime_stream_cat_class_init (GMimeStreamCatClass *klass);
 static void g_mime_stream_cat_init (GMimeStreamCat *stream, GMimeStreamCatClass *klass);
 static void g_mime_stream_cat_finalize (GObject *object);
@@ -49,6 +51,7 @@ struct _cat_node {
 	struct _cat_node *next;
 	GMimeStream *stream;
 	off_t position;
+	int id; /* for debugging */
 };
 
 GType
@@ -122,7 +125,6 @@ g_mime_stream_cat_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
@@ -139,10 +141,12 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (off_t) len);
 	
-	if (stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET) == -1)
+	if (!(current = cat->current))
 		return -1;
 	
-	if (!(current = cat->current))
+	/* make sure our stream position is where it should be */
+	offset = current->stream->bound_start + current->position;
+	if (g_mime_stream_seek (current->stream, offset, GMIME_STREAM_SEEK_SET) == -1)
 		return -1;
 	
 	do {
@@ -317,6 +321,9 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	off_t real, off;
 	ssize_t len;
 	
+	d(fprintf (stderr, "GMimeStreamCat::stream_seek (%p, %ld, %d)\n",
+		   stream, offset, whence));
+	
 	if (cat->sources == NULL)
 		return -1;
 	
@@ -324,21 +331,29 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	case GMIME_STREAM_SEEK_SET:
 	seek_set:
 		/* sanity check our seek - make sure we don't under/over-seek our bounds */
-		if (offset < 0)
+		if (offset < 0) {
+			d(fprintf (stderr, "offset %ld < 0, fail\n", offset));
 			return -1;
+		}
 		
 		/* sanity check our seek */
-		if (stream->bound_end != -1 && offset > stream->bound_end)
+		if (stream->bound_end != -1 && offset > stream->bound_end) {
+			d(fprintf (stderr, "offset %ld > bound_end %ld, fail\n",
+				   offset, stream->bound_end));
 			return -1;
+		}
 		
 		/* short-cut if we are seeking to our current position */
-		if (offset == stream->position)
-			return 0;
+		if (offset == stream->position) {
+			d(fprintf (stderr, "offset %ld == stream->position %ld, no need to seek\n",
+				   offset, stream->position));
+			return offset;
+		}
 		
 		real = 0;
 		n = cat->sources;
 		current = cat->current;
-		/*real = stream->bound_start;*/
+		
 		while (n != current) {
 			if (real + n->position > offset)
 				break;
@@ -346,16 +361,22 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			n = n->next;
 		}
 		
-		if (n == NULL)
+		if (n == NULL) {
+			/* offset not within our grasp... */
 			return -1;
+		}
 		
 		if (n != current) {
 			/* seeking to a previous stream (n->stream) */
 			if ((offset - real) != n->position) {
+				/* FIXME: could probably skip these seek checks... */
 				off = n->stream->bound_start + (offset - real);
 				if (g_mime_stream_seek (n->stream, off, GMIME_STREAM_SEEK_SET) == -1)
 					return -1;
 			}
+			
+			d(fprintf (stderr, "setting current stream to %i and updating cur->position to %ld\n",
+				   n->id, offset - real));
 			
 			current = n;
 			current->position = offset - real;
@@ -363,24 +384,35 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			break;
 		} else {
 			/* seeking to someplace in our current (or next) stream */
+			d(fprintf (stderr, "seek offset %ld in current stream[%d] or after\n",
+				   offset, current->id));
 			if ((offset - real) == current->position) {
+				/* exactly at our current position */
+				d(fprintf (stderr, "seek offset at cur position of stream[%d]\n",
+					   current->id));
 				stream->position = offset;
 				return offset;
 			}
 			
 			if ((offset - real) < current->position) {
 				/* in current stream, but before current position */
+				d(fprintf (stderr, "seeking backwards in cur stream[%d]\n",
+					   current->id));
+				/* FIXME: again, could probably skip seek checks... */
 				off = current->stream->bound_start + (offset - real);
 				if (g_mime_stream_seek (current->stream, off, GMIME_STREAM_SEEK_SET) == -1)
 					return -1;
 				
+				d(fprintf (stderr, "setting cur stream[%d] position to %ld\n",
+					   current->id, offset - real));
 				current->position = offset - real;
 				
 				break;
 			}
 			
+			/* after our current position */
+			d(fprintf (stderr, "after cur position in stream[%d] or in a later stream\n"));
 			do {
-				/* after our current position */
 				if (current->stream->bound_end != -1) {
 					len = current->stream->bound_end - current->stream->bound_start;
 				} else {
@@ -388,14 +420,27 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 						return -1;
 				}
 				
-				if ((real + len) < offset) {
+				d(fprintf (stderr, "real = %ld, stream[%d] len = %ld\n",
+					   real, current->id, len));
+				
+				if ((real + len) > offset) {
 					/* within the bounds of the current stream */
+					d(fprintf (stderr, "offset within bounds of stream[%d]\n",
+						   current->id));
 					break;
 				} else {
+					d(fprintf (stderr, "not within bounds of stream[%d]\n",
+						   current->id, len));
+					current->position = len;
 					real += len;
+					
 					current = current->next;
-					if (current == NULL)
+					if (current == NULL) {
+						d(fprintf (stderr, "ran out of streams, failed\n"));
 						return -1;
+					}
+					
+					d(fprintf (stderr, "advanced to stream[%d]...\n", current->id));
 					
 					if (g_mime_stream_reset (current->stream) == -1)
 						return -1;
@@ -404,10 +449,13 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 				}
 			} while (1);
 			
+			/* FIXME: another seek check... probably can skip this */
 			off = current->stream->bound_start + (offset - real);
 			if (g_mime_stream_seek (current->stream, off, GMIME_STREAM_SEEK_SET) == -1)
 				return -1;
 			
+			d(fprintf (stderr, "setting cur position of stream[%d] to %ld\n",
+				   current->id, offset - real));
 			current->position = offset - real;
 		}
 		
@@ -444,11 +492,14 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		return -1;
 	}
 	
+	d(fprintf (stderr, "setting stream->offset to %ld and current stream to %d\n",
+		   offset, current->id));
+	
 	stream->position = offset;
 	cat->current = current;
 	
 	/* reset all following streams */
-	n = n->next;
+	n = current->next;
 	while (n != NULL) {
 		if (g_mime_stream_reset (n->stream) == -1)
 			return -1;
@@ -640,10 +691,13 @@ g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source)
 	while (n && n->next)
 		n = n->next;
 	
-	if (n == NULL)
+	if (n == NULL) {
 		cat->sources = node;
-	else
+		node->id = 0;
+	} else {
+		node->id = n->id + 1;
 		n->next = node;
+	}
 	
 	if (!cat->current)
 		cat->current = node;

@@ -1,5 +1,24 @@
 2007-02-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	Fixes on accord of the awesome test suite I wrote earlier... still
+	need to fix ::substream() tho (or maybe it's just the test that's
+	broke?).
+
+	* gmime/gmime-stream-cat.c: Added an id member to struct
+	_cat_node, for use with debugging...
+	(stream_read): Seek in the source stream, don't call
+	Cat::stream_seek() to do it.
+	(stream_seek): Swapped the logic of the "within bounds" check, had
+	it backwards. When seeking past a stream, set the node->position
+	to the length of the stream (technically, it's like we read() thru
+	all that data, right?). Instead of resetting all streams starting
+	at n->next, reset them all starting at current->next... since 'n'
+	technically might be before 'current'.
+	(g_mime_stream_cat_add_source): Assign each node an id for easier
+	debugging...
+
+2007-02-05  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* tests/test-cat.c: The beginnings of a test suite for
 	GMimeStreamCat.
 
