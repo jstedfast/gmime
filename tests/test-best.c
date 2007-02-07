@@ -38,8 +38,7 @@ int main (int argc, char **argv)
 	GMimeFilterBest *best;
 	int fd;
 	
-	fd = open (argv[1], O_RDONLY);
-	if (fd == -1)
+	if ((fd = open (argv[1], O_RDONLY)) == -1)
 		return 0;
 	
 	g_mime_init (0);

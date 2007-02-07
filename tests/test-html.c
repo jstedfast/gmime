@@ -51,8 +51,7 @@ int main (int argc, char **argv)
 	for (i = 1; i < argc; i++) {
 		FILE *fp;
 		
-		fp = fopen (argv[i], "r");
-		if (!fp) {
+		if (!(fp = fopen (argv[i], "r"))) {
 			fprintf (stderr, "failed to open %s\n", argv[i]);
 			continue;
 		}

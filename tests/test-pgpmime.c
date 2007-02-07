@@ -108,19 +108,20 @@ request_passwd (GMimeSession *session, const char *prompt, gboolean secret, cons
 static void
 test_multipart_signed (GMimeCipherContext *ctx)
 {
-	GMimeMessage *message;
-	GMimeContentType *mime_type;
+	GMimeSignatureValidity *validity;
+	GMimeContentType *content_type;
 	GMimeMultipartSigned *mps;
-	GMimePart *text_part;
-	GMimeCipherValidity *validity;
 	GMimeDataWrapper *content;
+	GMimeMessage *message;
+	GMimePart *text_part;
 	GMimeStream *stream;
 	GMimeParser *parser;
+	GMimeSigner *signer;
 	GError *err = NULL;
 	
 	text_part = g_mime_part_new ();
-	mime_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (text_part, mime_type);
+	content_type = g_mime_content_type_new ("text", "plain");
+	g_mime_part_set_content_type (text_part, content_type);
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_write_string (
@@ -145,10 +146,10 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	/* sign the part */
 	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (text_part), ctx, userid,
 				      GMIME_CIPHER_HASH_SHA1, &err);
-	g_mime_object_unref (GMIME_OBJECT (text_part));
+	g_object_unref (text_part);
 	
 	if (err != NULL) {
-		g_mime_object_unref (GMIME_OBJECT (mps));
+		g_object_unref (mps);
 		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
 		g_error_free (err);
 		return;
@@ -163,7 +164,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
-	g_mime_object_unref (GMIME_OBJECT (mps));
+	g_object_unref (mps);
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
@@ -172,7 +173,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	fprintf (stdout, "%.*s\n", GMIME_STREAM_MEM (stream)->buffer->len,
 		 GMIME_STREAM_MEM (stream)->buffer->data);
 	
-	g_mime_object_unref (GMIME_OBJECT (message));
+	g_object_unref (message);
 	
 #if 0
 	/* Note: the use of get_body() destroys the ability to verify MIME parts, so DON'T USE IT!! */
@@ -198,25 +199,106 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
 		fprintf (stdout, "*** error: toplevel mime part is not a multipart/signed object\n");
-		g_mime_object_unref (GMIME_OBJECT (message));
+		g_object_unref (message);
 		return;
 	}
 	
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
+	fputs ("Trying to verify signature... ", stdout);
 	validity = g_mime_multipart_signed_verify (mps, ctx, &err);
-	fprintf (stdout, "Trying to verify signature...%s\n",
-		 g_mime_cipher_validity_get_valid (validity) ? "valid" : "invalid");
-	fprintf (stdout, "Validity diagnostics: \n%s\n",
-		 g_mime_cipher_validity_get_description (validity));
-	g_mime_cipher_validity_free (validity);
+	switch (validity->status) {
+	case GMIME_SIGNATURE_STATUS_NONE:
+		fputs ("Unset\n", stdout);
+	case GMIME_SIGNATURE_STATUS_GOOD:
+		fputs ("GOOD\n", stdout);
+		break;
+	case GMIME_SIGNATURE_STATUS_BAD:
+		fputs ("BAD\n", stdout);
+		break;
+	case GMIME_SIGNATURE_STATUS_UNKNOWN:
+		fputs ("Unknown status\n", stdout);
+		break;
+	default:
+		fputs ("Unknown enum value\n", stdout);
+		break;
+	}
+	
+	fputs ("\nSigners:\n", stdout);
+	signer = validity->signers;
+	while (signer != NULL) {
+		fprintf (stdout, "\tName: %s\n", signer->name ? signer->name : "(null)");
+		fprintf (stdout, "\tKeyId: %s\n", signer->keyid ? signer->keyid : "(null)");
+		fprintf (stdout, "\tFingerprint: %s\n", signer->fingerprint ? signer->fingerprint : "(null)");
+		fprintf (stdout, "\tTrust: ");
+		switch (signer->trust) {
+		case GMIME_SIGNER_TRUST_NONE:
+			fputs ("None\n", stdout);
+			break;
+		case GMIME_SIGNER_TRUST_NEVER:
+			fputs ("Never\n", stdout);
+		case GMIME_SIGNER_TRUST_UNDEFINED:
+			fputs ("Undefined\n", stdout);
+			break;
+		case GMIME_SIGNER_TRUST_MARGINAL:
+			fputs ("Marginal\n", stdout);
+			break;
+		case GMIME_SIGNER_TRUST_FULLY:
+			fputs ("Fully\n", stdout);
+			break;
+		case GMIME_SIGNER_TRUST_ULTIMATE:
+			fputs ("Ultimate\n", stdout);
+			break;
+		}
+		fprintf (stdout, "\tStatus: ");
+		switch (signer->status) {
+		case GMIME_SIGNER_STATUS_NONE:
+			fputs ("None\n", stdout);
+			break;
+		case GMIME_SIGNER_STATUS_GOOD:
+			fputs ("GOOD\n", stdout);
+			break;
+		case GMIME_SIGNER_STATUS_BAD:
+			fputs ("BAD\n", stdout);
+			break;
+		case GMIME_SIGNER_STATUS_ERROR:
+			fputs ("ERROR\n", stdout);
+			break;
+		}
+		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
+		if (signer->sig_expire != (time_t) 0)
+			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expire));
+		else
+			fprintf (stdout, "\tSignature never expires\n");
+		if (signer->errors) {
+			fprintf (stdout, "\tErrors: ");
+			if (signer->errors & GMIME_SIGNER_ERROR_EXPSIG)
+				fputs ("Expired, ", stdout);
+			if (signer->errors & GMIME_SIGNER_ERROR_NO_PUBKEY)
+				fputs ("No Pub Key, ", stdout);
+			if (signer->errors & GMIME_SIGNER_ERROR_EXPKEYSIG)
+				fputs ("Key Expired, ", stdout);
+			if (signer->errors & GMIME_SIGNER_ERROR_REVKEYSIG)
+				fputs ("Key Revoked", stdout);
+			fputc ('\n', stdout);
+		} else {
+			fprintf (stdout, "\tNo errors for this signer\n");
+		}
+		
+		if ((signer = signer->next))
+			fputc ('\n', stdout);
+	}
+	
+	fprintf (stdout, "\nValidity diagnostics: \n%s\n",
+		 g_mime_signature_validity_get_details (validity));
+	g_mime_signature_validity_free (validity);
 	
 	if (err != NULL) {
 		fprintf (stdout, "error: %s\n", err->message);
 		g_error_free (err);
 	}
 	
-	g_mime_object_unref (GMIME_OBJECT (message));
+	g_object_unref (message);
 }
 
 void
@@ -226,14 +308,14 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	GMimeMultipartEncrypted *mpe;
 	GMimeObject *decrypted_part;
 	GMimePart *text_part;
-	GMimeContentType *mime_type;
+	GMimeContentType *content_type;
 	GPtrArray *recipients;
 	GError *err = NULL;
 	char *text;
 	
 	text_part = g_mime_part_new ();
-	mime_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (text_part, mime_type);
+	content_type = g_mime_content_type_new ("text", "plain");
+	g_mime_part_set_content_type (text_part, content_type);
 	g_mime_part_set_content (text_part, "This is a test of multipart/encrypted.\n",
 				 strlen ("This is a test of multipart/encrypted.\n"));
 	
@@ -245,11 +327,11 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	g_ptr_array_add (recipients, userid);
 	
 	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (text_part), ctx, recipients, &err);
-	g_mime_object_unref (GMIME_OBJECT (text_part));
+	g_object_unref (text_part);
 	g_ptr_array_free (recipients, TRUE);
 	
 	if (err != NULL) {
-		g_mime_object_unref (GMIME_OBJECT (text_part));
+		g_object_unref (text_part);
 		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
 		g_error_free (err);
 		return;
@@ -277,11 +359,11 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 		text = g_mime_object_to_string (decrypted_part);
 		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
 		g_free (text);
-		g_mime_object_unref (GMIME_OBJECT (decrypted_part));
+		g_object_unref (decrypted_part);
 	}
 	
-	g_mime_object_unref (GMIME_OBJECT (mpe));
-	g_mime_object_unref (GMIME_OBJECT (message));
+	g_object_unref (mpe);
+	g_object_unref (message);
 }
 
 int main (int argc, char *argv[])

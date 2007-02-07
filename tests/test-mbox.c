@@ -99,8 +99,7 @@ int main (int argc, char **argv)
 	else
 		return 0;
 	
-	fd = open (filename, O_RDONLY);
-	if (fd == -1)
+	if ((fd = open (filename, O_RDONLY)) == -1)
 		return 0;
 	
 	g_mime_init (0);
