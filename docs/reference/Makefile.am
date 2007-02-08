@@ -76,8 +76,6 @@ EXTRA_DIST += 				\
 	$(DOC_MODULE)-sections.txt	\
 	gmime.hierarchy
 
-########################################################################
-
 BUILT_EXTRA_DIST = 
 
 dist-hook-local: $(BUILT_EXTRA_DIST)

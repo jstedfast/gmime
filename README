@@ -1,5 +1,5 @@
-                            GMime, version 2.2.3
-                   by Jeffrey Stedfast <fejj@novell.com>
+                            GMime, version 2.2.4
+                   by Jeffrey Stedfast <fejj@gnome.org>
 
 
 WHAT IS GMIME
@@ -33,6 +33,7 @@ following RFCs:
          Sets, Languages, and Continuations
  * 2231: MIME Parameter Value and Encoded Word Extensions: Character
          Sets, Languages, and Continuations (Obsoletes rfc2184)
+ * 2822: Internet Message Format (Obsoletes rfc822)
  * 3156: MIME Security with OpenPGP (Updates rfc2015)
 
 Other RFCs of interest:
@@ -62,7 +63,7 @@ Cryptography related RFCs:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2004 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2007 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -115,11 +116,11 @@ REQUIREMENTS
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version 2.0.x
+  - Glib version 2.x
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
     distributions.  Glib sources may be obtained from:
-      ftp://ftp.gtk.org/pub/gtk/v2.0
+      ftp://ftp.gtk.org/pub/glib
 
 
 DOCUMENTATION

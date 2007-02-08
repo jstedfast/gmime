@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=2
 GMIME_MINOR_VERSION=2
-GMIME_MICRO_VERSION=3
+GMIME_MICRO_VERSION=4
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -66,7 +66,7 @@ AM_PROG_CC_STDC
 AC_C_INLINE
 dnl AC_HEADER_STDC
 AC_STDC_HEADERS
-AC_ARG_PROGRAM
+dnl AC_ARG_PROGRAM
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
@@ -105,11 +105,14 @@ dnl Check for working mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(munmap msync)
 
-dnl ******************************
-dnl gtk-doc
-dnl ******************************
+dnl ************************************
+dnl Checks for gtk-doc and docbook-tools
+dnl ************************************
 
-GTK_DOC_CHECK([1.0])
+GTK_DOC_CHECK([1.4])
+
+AC_CHECK_PROG(DB2HTML, db2html, true, false)
+AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.
@@ -160,7 +163,7 @@ AC_TRY_RUN([
 #include "iconv-detect.c"
 ],[
 	AC_MSG_RESULT(found)
-	AC_DEFINE(HAVE_ICONV_DETECT_H)
+	AC_DEFINE(HAVE_ICONV_DETECT_H, 1, [Define to 1 to use auto-detected iconv-friendly charset names.])
 ],[
 	AC_MSG_RESULT([not found
 	*** The iconv-detect program was unable to determine the
@@ -210,7 +213,7 @@ AC_TRY_LINK([
 	]
 ,
 	AC_MSG_RESULT(yes)
-	AC_DEFINE(HAVE_FSYNC)
+	AC_DEFINE(HAVE_FSYNC, 1, [Define to 1 if you have the `fsync' function.])
 ,
 	AC_MSG_RESULT(no)
 )
@@ -225,7 +228,7 @@ AC_TRY_COMPILE([
 ,
 	AC_MSG_RESULT(yes)
 ,
-	AC_DEFINE(MAXHOSTNAMELEN, 64)
+	AC_DEFINE(MAXHOSTNAMELEN, 64, [Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN])
 	AC_MSG_RESULT(no; defined as 64)
 )
 

@@ -1,13 +1,17 @@
+.PHONY: html pdf
+
 EXTRA_DIST = gmime-tut.sgml
 
-all: html
-
-html: 
-if ENABLE_GTK_DOC
-	(cd $(srcdir); \
-	 db2html gmime-tut.sgml; \
-	 test -d html && rm -r html; \
-	 mv gmime-tut html)
+html:
+if HAVE_DOCBOOK
+	if test -w $(srcdir); then \
+	  (cd $(srcdir); \
+	   db2html gmime-tut.sgml; \
+	   test -d html && rm -r html; \
+	   mv gmime-tut html; \
+	   mkdir html/images; \
+	   cp images/*.png html/images); \
+	fi
 else
 	echo "***"
 	echo "*** Warning: Tutorial not built"
@@ -15,8 +19,10 @@ else
 endif
 
 pdf:
-if ENABLE_GTK_DOC
-	(cd $(srcdir); db2pdf gmime-tut.sgml)
+if HAVE_DOCBOOK
+	if test -w $(srcdir); then \
+	  (cd $(srcdir); db2pdf gmime-tut.sgml); \
+	fi
 else
 	echo "***"
 	echo "*** Warning: Tutorial not built"
@@ -24,11 +30,10 @@ else
 endif
 
 dist-hook: html
-if ENABLE_GTK_DOC
+if HAVE_DOCBOOK
 	cp -Rp $(srcdir)/html $(distdir)
 else
-	echo "***"
-	echo "*** Warning: Tutorial not built"
 	echo "*** DISTRIBUTION IS INCOMPLETE"
 	echo "***"
 endif
+
