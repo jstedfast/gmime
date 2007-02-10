@@ -414,10 +414,11 @@ static ssize_t
 write_received (GMimeStream *stream, const char *name, const char *value)
 {
 	struct _received_part *parts, *part, *tail;
-	const char *lwsp, *inptr;
+	const char *inptr, *lwsp = NULL;
 	ssize_t nwritten;
 	GString *str;
-	int len, i;
+	size_t len;
+	guint i;
 	
 	while (is_lwsp (*value))
 		value++;
@@ -437,6 +438,7 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 		for (i = 0; i < G_N_ELEMENTS (received_tokens); i++) {
 			if (!strncmp (inptr, received_tokens[i].token, received_tokens[i].len)) {
 				if (inptr > part->start) {
+					g_assert (lwsp != NULL);
 					part->len = lwsp - part->start;
 					
 					part = g_alloca (sizeof (struct _received_part));
@@ -793,8 +795,8 @@ message_get_headers (GMimeObject *object)
 	}
 	
 	g_object_unref (stream);
-	g_byte_array_append (ba, "", 1);
-	str = ba->data;
+	g_byte_array_append (ba, (unsigned char *) "", 1);
+	str = (char *) ba->data;
 	g_byte_array_free (ba, FALSE);
 	
 	return str;
