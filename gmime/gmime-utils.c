@@ -1372,26 +1372,24 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
 
 #define is_rfc2047_encoded_word(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
 
-static unsigned char *
-rfc2047_decode_word (const unsigned char *in, size_t inlen)
+static char *
+rfc2047_decode_word (const char *in, size_t inlen)
 {
-	const register unsigned char *inptr;
-	const unsigned char *inend;
+	const unsigned char *instart = (const unsigned char *) in;
+	const register unsigned char *inptr = instart + 2;
+	const unsigned char *inend = instart + inlen - 2;
 	const char *charset;
-	unsigned char *buf;
 	char *charenc, *p;
 	size_t len;
 	iconv_t cd;
-	
-	inptr = in + 2;
-	inend = in + inlen - 2;
+	char *buf;
 	
 	inptr = memchr (inptr, '?', inend - inptr);
 	if (inptr && inptr[2] == '?') {
 		unsigned char *decoded;
+		guint32 save = 0;
 		ssize_t declen;
 		int state = 0;
-		int save = 0;
 		
 		inptr++;
 		
@@ -1418,7 +1416,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 			return NULL;
 		}
 		
-		len = (inptr - 3) - (in + 2);
+		len = (inptr - 3) - (instart + 2);
 		charenc = g_alloca (len + 1);
 		memcpy (charenc, in + 2, len);
 		charenc[len] = '\0';
@@ -1432,13 +1430,12 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 		 */
 		
 		/* trim off the 'language' part if it's there... */
-		p = strchr (charset, '*');
-		if (p)
+		if ((p = strchr (charset, '*')))
 			*p = '\0';
 		
 		/* slight optimization */
 		if (!g_ascii_strcasecmp (charset, "UTF-8"))
-			return g_strndup (decoded, declen);
+			return g_strndup ((char *) decoded, declen);
 		
 		cd = g_mime_iconv_open ("UTF-8", charset);
 		if (cd == (iconv_t) -1) {
@@ -1450,7 +1447,7 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
 				return NULL;
 		}
 		
-		buf = g_mime_iconv_strndup (cd, decoded, declen);
+		buf = g_mime_iconv_strndup (cd, (char *) decoded, declen);
 		g_mime_iconv_close (cd);
 		
 		if (!buf) {
@@ -1475,27 +1472,27 @@ rfc2047_decode_word (const unsigned char *in, size_t inlen)
  * possible).
  **/
 char *
-g_mime_utils_header_decode_text (const unsigned char *in)
+g_mime_utils_header_decode_text (const char *in)
 {
-	GString *out, *lwsp, *text;
-	const unsigned char *inptr;
-	unsigned char *decoded;
+	register const unsigned char *inptr;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
+	GString *out, *lwsp, *text;
+	char *decoded;
 	
+	inptr = (const unsigned char *) in;
 	out = g_string_sized_new (256);
 	lwsp = g_string_sized_new (256);
 	text = g_string_sized_new (256);
-	inptr = in;
 	
 	while (inptr && *inptr) {
 		unsigned char c = *inptr++;
 		
 		if (is_lwsp ((int) c) && !last_was_space) {
 			/* we reached the end of an atom */
-			unsigned char *dword = NULL;
-			const unsigned char *word;
 			gboolean was_encoded;
+			char *dword = NULL;
+			const char *word;
 			
 			if ((was_encoded = is_rfc2047_encoded_word (text->str, text->len)))
 				word = dword = rfc2047_decode_word (text->str, text->len);
@@ -1548,9 +1545,9 @@ g_mime_utils_header_decode_text (const unsigned char *in)
 	}
 	
 	if (text->len || lwsp->len) {
-		unsigned char *dword = NULL;
-		const unsigned char *word;
 		gboolean was_encoded;
+		char *dword = NULL;
+		const char *word;
 		
 		if ((was_encoded = is_rfc2047_encoded_word (text->str, text->len)))
 			word = dword = rfc2047_decode_word (text->str, text->len);
@@ -1579,7 +1576,7 @@ g_mime_utils_header_decode_text (const unsigned char *in)
 	decoded = out->str;
 	g_string_free (out, FALSE);
 	
-	return (char *) decoded;
+	return decoded;
 }
 
 
@@ -1593,27 +1590,27 @@ g_mime_utils_header_decode_text (const unsigned char *in)
  * possible).
  **/
 char *
-g_mime_utils_header_decode_phrase (const unsigned char *in)
+g_mime_utils_header_decode_phrase (const char *in)
 {
-	GString *out, *lwsp, *atom;
-	const unsigned char *inptr;
-	unsigned char *decoded;
+	register const unsigned char *inptr;
 	gboolean last_was_encoded = FALSE;
 	gboolean last_was_space = FALSE;
+	GString *out, *lwsp, *atom;
+	char *decoded;
 	
+	inptr = (const unsigned char *) in;
 	out = g_string_sized_new (256);
 	lwsp = g_string_sized_new (256);
 	atom = g_string_sized_new (256);
-	inptr = in;
 	
 	while (inptr && *inptr) {
 		unsigned char c = *inptr++;
 		
 		if (!is_atom (c) && !last_was_space) {
 			/* we reached the end of an atom */
-			unsigned char *dword = NULL;
-			const unsigned char *word;
 			gboolean was_encoded;
+			char *dword = NULL;
+			const char *word;
 			
 			if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
 				word = dword = rfc2047_decode_word (atom->str, atom->len);
@@ -1666,9 +1663,9 @@ g_mime_utils_header_decode_phrase (const unsigned char *in)
 	}
 	
 	if (atom->len || lwsp->len) {
-		unsigned char *dword = NULL;
-		const unsigned char *word;
 		gboolean was_encoded;
+		char *dword = NULL;
+		const char *word;
 		
 		if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
 			word = dword = rfc2047_decode_word (atom->str, atom->len);
@@ -1697,21 +1694,17 @@ g_mime_utils_header_decode_phrase (const unsigned char *in)
 	decoded = out->str;
 	g_string_free (out, FALSE);
 	
-	return (char *) decoded;
+	return decoded;
 }
 
 /* rfc2047 version of quoted-printable */
 static size_t
-quoted_encode (const unsigned char *in, size_t len, unsigned char *out, gushort safemask)
+quoted_encode (const char *in, size_t len, unsigned char *out, gushort safemask)
 {
-	register const unsigned char *inptr;
-	register unsigned char *outptr;
-	const unsigned char *inend;
+	register const unsigned char *inptr = (const unsigned char *) in;
+	const unsigned char *inend = inptr + len;
+	register unsigned char *outptr = out;
 	unsigned char c;
-	
-	inptr = in;
-	inend = in + len;
-	outptr = out;
 	
 	while (inptr < inend) {
 		c = *inptr++;
@@ -1730,22 +1723,22 @@ quoted_encode (const unsigned char *in, size_t len, unsigned char *out, gushort 
 }
 
 static void
-rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
+rfc2047_encode_word (GString *string, const char *word, size_t len,
 		     const char *charset, gushort safemask)
 {
-	unsigned char *encoded, *ptr;
-	unsigned char *uword = NULL;
 	iconv_t cd = (iconv_t) -1;
+	char *ptr, *uword = NULL;
+	unsigned char *encoded;
 	size_t enclen, pos;
+	guint32 save = 0;
 	int state = 0;
-	int save = 0;
 	char encoding;
 	
 	if (g_ascii_strcasecmp (charset, "UTF-8") != 0)
 		cd = g_mime_iconv_open (charset, "UTF-8");
 	
 	if (cd != (iconv_t) -1) {
-		uword = g_mime_iconv_strndup (cd, word, len);
+		uword = g_mime_iconv_strndup (cd, (char *) word, len);
 		g_mime_iconv_close (cd);
 	}
 	
@@ -1756,18 +1749,18 @@ rfc2047_encode_word (GString *string, const unsigned char *word, size_t len,
 		charset = "UTF-8";
 	}
 	
-	switch (g_mime_utils_best_encoding (word, len)) {
+	switch (g_mime_utils_best_encoding ((const unsigned char *) word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
 		enclen = BASE64_ENCODE_LEN (len);
 		encoded = g_alloca (enclen + 1);
 		
 		encoding = 'b';
 		
-		pos = g_mime_utils_base64_encode_close (word, len, encoded, &state, &save);
+		pos = g_mime_utils_base64_encode_close ((const unsigned char *) word, len, encoded, &state, &save);
 		encoded[pos] = '\0';
 		
 		/* remove \n chars as headers need to be wrapped differently */
-		ptr = encoded;
+		ptr = (char *) encoded;
 		while ((ptr = memchr (ptr, '\n', strlen (ptr))))
 			memmove (ptr, ptr + 1, strlen (ptr));
 		
@@ -1802,8 +1795,8 @@ enum _rfc822_word_t {
 
 struct _rfc822_word {
 	struct _rfc822_word *next;
-	const unsigned char *start, *end;
 	enum _rfc822_word_t type;
+	const char *start, *end;
 	int encoding;
 };
 
@@ -1824,11 +1817,11 @@ word_types_compatable (enum _rfc822_word_t type1, enum _rfc822_word_t type2)
 
 /* okay, so 'text' fields don't actually contain 'word's, but we can group stuff similarly */
 static struct _rfc822_word *
-rfc2047_encode_get_rfc822_words (const unsigned char *in, gboolean phrase)
+rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 {
-	const unsigned char *inptr, *start, *last;
 	struct _rfc822_word *words, *tail, *word;
 	enum _rfc822_word_t type = WORD_ATOM;
+	const char *inptr, *start, *last;
 	int count = 0, encoding = 0;
 	
 	words = NULL;
@@ -1987,7 +1980,7 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static char *
-rfc2047_encode (const unsigned char *in, gushort safemask)
+rfc2047_encode (const char *in, gushort safemask)
 {
 	struct _rfc822_word *words, *word, *prev = NULL;
 	GString *out;
@@ -2067,7 +2060,7 @@ rfc2047_encode (const unsigned char *in, gushort safemask)
  * addresses.
  **/
 char *
-g_mime_utils_header_encode_phrase (const unsigned char *in)
+g_mime_utils_header_encode_phrase (const char *in)
 {
 	if (in == NULL)
 		return NULL;
@@ -2086,7 +2079,7 @@ g_mime_utils_header_encode_phrase (const unsigned char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_header_encode_text (const unsigned char *in)
+g_mime_utils_header_encode_text (const char *in)
 {
 	if (in == NULL)
 		return NULL;
@@ -2108,7 +2101,7 @@ g_mime_utils_header_encode_text (const unsigned char *in)
  * possible).
  **/
 char *
-g_mime_utils_8bit_header_decode (const unsigned char *in)
+g_mime_utils_8bit_header_decode (const char *in)
 {
 	return g_mime_utils_header_decode_text (in);
 }
@@ -2127,7 +2120,7 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_8bit_header_encode (const unsigned char *in)
+g_mime_utils_8bit_header_encode (const char *in)
 {
 	return g_mime_utils_header_encode_text (in);
 }
@@ -2146,7 +2139,7 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
  * addresses.
  **/
 char *
-g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
+g_mime_utils_8bit_header_encode_phrase (const char *in)
 {
 	return g_mime_utils_header_encode_phrase (in);
 }
@@ -2629,7 +2622,7 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, int *save)
+g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
 {
 	register unsigned char *outptr = out;
 	int last;
@@ -2674,13 +2667,13 @@ g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigne
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, int *save)
+g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
 {
 	const register unsigned char *inptr, *inend;
 	register unsigned char *outptr;
-	unsigned char c;
-	register int sofar = *save;  /* keeps track of how many chars on a line */
+	register guint32 sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
+	unsigned char c;
 	
 	inptr = in;
 	inend = in + inlen;
@@ -2747,6 +2740,7 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
 			}
 		}
 	}
+	
 	*save = sofar;
 	*state = last;
 	
@@ -2759,8 +2753,8 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
  * @in: input stream
  * @inlen: max length of data to decode
  * @out: output stream
- * @savestate: holds the number of bits that are stored in @save
- * @saved: leftover bits that have not yet been decoded
+ * @state: holds the number of bits that are stored in @save
+ * @save: leftover bits that have not yet been decoded
  *
  * Decodes a block of quoted-printable encoded data. Performs a
  * 'decode step' on a chunk of QP encoded data.
@@ -2768,7 +2762,7 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
  * Returns the number of bytes decoded.
  **/
 size_t
-g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *savestate, int *saved)
+g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
 {
 	/* FIXME: this does not strip trailing spaces from lines (as
 	 * it should, rfc 2045, section 6.7) Should it also
@@ -2781,24 +2775,25 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	unsigned char c;
-	int state, save;
+	guint32 isave;
+	int istate;
 	
 	inend = in + inlen;
 	outptr = out;
 	
 	d(printf ("quoted-printable, decoding text '%.*s'\n", inlen, in));
 	
-	state = *savestate;
-	save = *saved;
+	istate = *state;
+	isave = *save;
 	inptr = in;
 	while (inptr < inend) {
-		switch (state) {
+		switch (istate) {
 		case 0:
 			while (inptr < inend) {
 				c = *inptr++;
 				/* FIXME: use a specials table to avoid 3 comparisons for the common case */
 				if (c == '=') { 
-					state = 1;
+					istate = 1;
 					break;
 				}
 #ifdef CANONICALISE_EOL
@@ -2818,28 +2813,28 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 			c = *inptr++;
 			if (c == '\n') {
 				/* soft break ... unix end of line */
-				state = 0;
+				istate = 0;
 			} else {
-				save = c;
-				state = 2;
+				isave = c;
+				istate = 2;
 			}
 			break;
 		case 2:
 			c = *inptr++;
-			if (isxdigit (c) && isxdigit (save)) {
-				c = toupper (c);
-				save = toupper (save);
-				*outptr++ = (((save >= 'A' ? save - 'A' + 10 : save - '0') & 0x0f) << 4)
+			if (isxdigit (c) && isxdigit (isave)) {
+				c = toupper ((int) c);
+				isave = toupper ((int) isave);
+				*outptr++ = (((isave >= 'A' ? isave - 'A' + 10 : isave - '0') & 0x0f) << 4)
 					| ((c >= 'A' ? c - 'A' + 10 : c - '0') & 0x0f);
-			} else if (c == '\n' && save == '\r') {
+			} else if (c == '\n' && isave == '\r') {
 				/* soft break ... canonical end of line */
 			} else {
 				/* just output the data */
 				*outptr++ = '=';
-				*outptr++ = save;
+				*outptr++ = isave;
 				*outptr++ = c;
 			}
-			state = 0;
+			istate = 0;
 			break;
 #ifdef CANONICALISE_EOL
 		case 3:
@@ -2853,14 +2848,14 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 				*outptr++ = '\n';
 				*outptr++ = c;
 			}
-			state = 0;
+			istate = 0;
 			break;
 #endif
 		}
 	}
 	
-	*savestate = state;
-	*saved = save;
+	*state = istate;
+	*save = isave;
 	
 	return (outptr - out);
 }

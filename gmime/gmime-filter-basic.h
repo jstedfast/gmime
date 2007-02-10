@@ -50,8 +50,8 @@ struct _GMimeFilterBasic {
 	GMimeFilterBasicType type;
 	
 	unsigned char uubuf[60];
+	guint32 save;
 	int state;
-	int save;
 };
 
 struct _GMimeFilterBasicClass {

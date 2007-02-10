@@ -102,16 +102,16 @@ gboolean g_mime_utils_text_is_8bit (const unsigned char *text, size_t len);
 GMimePartEncodingType g_mime_utils_best_encoding (const unsigned char *text, size_t len);
 
 /* utilities to (de/en)code headers */
-char *g_mime_utils_header_decode_text (const unsigned char *in);
-char *g_mime_utils_header_encode_text (const unsigned char *in);
+char *g_mime_utils_header_decode_text (const char *in);
+char *g_mime_utils_header_encode_text (const char *in);
 
-char *g_mime_utils_header_decode_phrase (const unsigned char *in);
-char *g_mime_utils_header_encode_phrase (const unsigned char *in);
+char *g_mime_utils_header_decode_phrase (const char *in);
+char *g_mime_utils_header_encode_phrase (const char *in);
 
 #ifndef GMIME_DISABLE_DEPRECATED
-char *g_mime_utils_8bit_header_decode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *in);
+char *g_mime_utils_8bit_header_decode (const char *in);
+char *g_mime_utils_8bit_header_encode (const char *in);
+char *g_mime_utils_8bit_header_encode_phrase (const char *in);
 #endif
 
 /* do incremental base64 (de/en)coding */
@@ -125,9 +125,9 @@ size_t g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsign
 size_t g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save);
 
 /* do incremental quoted-printable (de/en)coding */
-size_t g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *savestate, int *saved);
-size_t g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, int *save);
-size_t g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, int *save);
+size_t g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+size_t g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+size_t g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
 
 
 G_END_DECLS

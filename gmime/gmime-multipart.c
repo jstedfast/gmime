@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <errno.h>
 
 #include "gmime-multipart.h"
 #include "gmime-utils.h"
@@ -626,8 +627,10 @@ g_mime_multipart_get_number (GMimeMultipart *multipart)
 
 
 static void
-read_random_pool (char *buffer, size_t bytes)
+read_random_pool (unsigned char *buffer, size_t bytes)
 {
+	size_t nread = 0;
+	ssize_t n;
 	int fd;
 	
 	if ((fd = open ("/dev/urandom", O_RDONLY)) == -1) {
@@ -635,7 +638,17 @@ read_random_pool (char *buffer, size_t bytes)
 			return;
 	}
 	
-	read (fd, buffer, bytes);
+	do {
+		do {
+			n = read (fd, (char *) buffer + nread, bytes - nread);
+		} while (n == -1 && errno == EINTR);
+		
+		if (n == -1 || n == 0)
+			break;
+		
+		nread += n;
+	} while (nread < bytes);
+	
 	close (fd);
 }
 
@@ -646,14 +659,14 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 	
 	if (!boundary) {
 		/* Generate a fairly random boundary string. */
-		char digest[16], *p;
-		int state, save;
+		unsigned char digest[16], *p;
+		guint32 save = 0;
+		int state = 0;
 		
 		read_random_pool (digest, 16);
 		
 		strcpy (bbuf, "=-");
-		p = bbuf + 2;
-		state = save = 0;
+		p = (unsigned char *) bbuf + 2;
 		p += g_mime_utils_base64_encode_step (digest, 16, p, &state, &save);
 		*p = '\0';
 		

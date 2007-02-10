@@ -592,7 +592,8 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	GMimeStreamFilter *filtered_stream;
 	GMimeFilter *md5_filter;
 	GMimeStream *stream;
-	int state, save;
+	guint32 save = 0;
+	int state = 0;
 	size_t len;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
@@ -628,10 +629,9 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
 		g_object_unref (md5_filter);
 		
-		state = save = 0;
 		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
 		b64digest[len] = '\0';
-		g_strstrip (b64digest);
+		g_strstrip ((char *) b64digest);
 		
 		content_md5 = (const char *) b64digest;
 	}
@@ -658,7 +658,8 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	GMimeStreamFilter *filtered_stream;
 	GMimeFilter *md5_filter;
 	GMimeStream *stream;
-	int state, save;
+	guint32 save = 0;
+	int state = 0;
 	size_t len;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
@@ -693,12 +694,11 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
 	g_object_unref (md5_filter);
 	
-	state = save = 0;
 	len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
 	b64digest[len] = '\0';
-	g_strstrip (b64digest);
+	g_strstrip ((char *) b64digest);
 	
-	return !strcmp (b64digest, mime_part->content_md5);
+	return !strcmp ((char *) b64digest, mime_part->content_md5);
 }
 
 
@@ -1272,22 +1272,22 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 		g_object_unref (cache);
 		
 		*len = buf->len;
-		retval = buf->data;
+		retval = (char *) buf->data;
 	} else {
 		GByteArray *buf = GMIME_STREAM_MEM (stream)->buffer;
-		int start_index = 0;
-		int end_index = buf->len;
+		off_t end_index = (off_t) buf->len;
+		off_t start_index = 0;
 		
 		/* check boundaries */
 		if (stream->bound_start >= 0)
-			start_index = CLAMP (stream->bound_start, 0, buf->len);
+			start_index = CLAMP (stream->bound_start, 0, (off_t) buf->len);
 		if (stream->bound_end >= 0)
-			end_index = CLAMP (stream->bound_end, 0, buf->len);
+			end_index = CLAMP (stream->bound_end, 0, (off_t) buf->len);
 		if (end_index < start_index)
 			end_index = start_index;
 		
 		*len = end_index - start_index;
-		retval = buf->data + start_index;
+		retval = (char *) buf->data + start_index;
 	}
 	
 	return retval;

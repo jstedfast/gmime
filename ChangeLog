@@ -1,3 +1,29 @@
+2007-02-09  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-filter.c (stream_write): Instead of the
+	return value of the source stream write() to our input length to
+	write, compare to -1. We can't assume the the value the source
+	stream will return will be what we expected, all we can do is
+	check for error.
+
+	* gmime/gmime-part.c: Same as below.
+
+	* gmime/gmime-filter-basic.c: Fixes to signedness compile warnings
+	and updated to reflect gmime-utils.h changes.
+
+	* gmime/gmime-multipart.c (multipart_set_boundary): Updated to
+	reflect gmime-utils.h changes.
+
+	* gmime/gmime-stream.c (g_mime_stream_writev): If any of the
+	writes fail, return -1.
+
+	* gmime/gmime-utils.c: header_encode_*() and header_decode_*() now
+	take const char * rather than const unsigned char *
+	arguments. This has been done in an effort to fix compile warnings
+	about signed vs unsigned char * pointers. The 'save' argument to
+	all of the stream encoders/decoders have been changed to a
+	guint32, again for signed vs unsigned warning fixes.
+
 2007-02-08  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

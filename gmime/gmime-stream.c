@@ -589,19 +589,21 @@ ssize_t
 g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count)
 {
 	ssize_t total = 0;
-	int i;
+	size_t i;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	for (i = 0; i < count; i++) {
 		char *buffer = vector[i].data;
-		ssize_t n, nwritten = 0;
+		size_t nwritten = 0;
+		ssize_t n;
 		
 		while (nwritten < vector[i].len) {
-			n = g_mime_stream_write (stream, buffer + nwritten,
-						 vector[i].len - nwritten);
-			if (n > 0)
-				nwritten += n;
+			if ((n = g_mime_stream_write (stream, buffer + nwritten,
+						      vector[i].len - nwritten)) < 0)
+				return -1;
+			
+			nwritten += n;
 		}
 		
 		total += nwritten;

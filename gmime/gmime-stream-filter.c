@@ -234,7 +234,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t n)
 		f = f->next;
 	}
 	
-	if (g_mime_stream_write (filter->source, buffer, n) != n)
+	if (g_mime_stream_write (filter->source, buffer, n) == -1)
 		return -1;
 	
 	/* return original input len because that's what our caller expects */

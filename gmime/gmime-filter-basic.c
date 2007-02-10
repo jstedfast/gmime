@@ -112,38 +112,50 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
+	const unsigned char *inbuf;
+	unsigned char *outbuf;
 	size_t newlen = 0;
 	
 	switch (basic->type) {
 	case GMIME_FILTER_BASIC_BASE64_ENC:
 		/* wont go to more than 2x size (overly conservative) */
 		g_mime_filter_set_size (filter, len * 2 + 6, FALSE);
-		newlen = g_mime_utils_base64_encode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_base64_encode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 2 + 6);
 		break;
 	case GMIME_FILTER_BASIC_QP_ENC:
 		/* *4 is overly conservative, but will do */
 		g_mime_filter_set_size (filter, len * 4 + 4, FALSE);
-		newlen = g_mime_utils_quoted_encode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_quoted_encode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 4 + 4);
 		break;
 	case GMIME_FILTER_BASIC_UU_ENC:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_utils_uuencode_step (in, len, filter->outbuf, basic->uubuf, &basic->state,
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_uuencode_step (inbuf, len, outbuf, basic->uubuf, &basic->state,
 						     &basic->save);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
 	case GMIME_FILTER_BASIC_BASE64_DEC:
 		/* output can't possibly exceed the input size */
 		g_mime_filter_set_size (filter, len + 3, FALSE);
-		newlen = g_mime_utils_base64_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_base64_decode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len + 3);
 		break;
 	case GMIME_FILTER_BASIC_QP_DEC:
 		/* output can't possibly exceed the input size */
 		g_mime_filter_set_size (filter, len + 2, FALSE);
-		newlen = g_mime_utils_quoted_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_quoted_decode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len + 2);
 		break;
 	case GMIME_FILTER_BASIC_UU_DEC:
@@ -175,7 +187,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				}
 				
 				/* go to the next line */
-				for ( ; inptr < inend && *inptr != '\n'; inptr++);
+				while (inptr < inend && *inptr != '\n')
+					inptr++;
 				
 				if (inptr < inend)
 					inptr++;
@@ -185,7 +198,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		if ((basic->state & GMIME_UUDECODE_STATE_BEGIN) && !(basic->state & GMIME_UUDECODE_STATE_END)) {
 			/* "begin <mode> <filename>\n" has been found, so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
-			newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+			outbuf = (unsigned char *) filter->outbuf;
+			inbuf = (const unsigned char *) in;
+			newlen = g_mime_utils_uudecode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 			g_assert (newlen <= len + 3);
 		} else {
 			newlen = 0;
@@ -203,45 +218,59 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBasic *basic = (GMimeFilterBasic *) filter;
+	const unsigned char *inbuf;
+	unsigned char *outbuf;
 	size_t newlen = 0;
 	
 	switch (basic->type) {
 	case GMIME_FILTER_BASIC_BASE64_ENC:
 		/* wont go to more than 2x size (overly conservative) */
 		g_mime_filter_set_size (filter, len * 2 + 6, FALSE);
-		newlen = g_mime_utils_base64_encode_close (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_base64_encode_close (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 2 + 6);
 		break;
 	case GMIME_FILTER_BASIC_QP_ENC:
-		/* *4 is definetly more than needed ... */
+		/* len * 4 is definetly more than needed ... */
 		g_mime_filter_set_size (filter, len * 4 + 4, FALSE);
-		newlen = g_mime_utils_quoted_encode_close (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_quoted_encode_close (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len * 4 + 4);
 		break;
 	case GMIME_FILTER_BASIC_UU_ENC:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_utils_uuencode_close (in, len, filter->outbuf, basic->uubuf, &basic->state,
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_uuencode_close (inbuf, len, outbuf, basic->uubuf, &basic->state,
 						      &basic->save);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
 	case GMIME_FILTER_BASIC_BASE64_DEC:
 		/* output can't possibly exceed the input size */
  		g_mime_filter_set_size (filter, len, FALSE);
-		newlen = g_mime_utils_base64_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_base64_decode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len);
 		break;
 	case GMIME_FILTER_BASIC_QP_DEC:
 		/* output can't possibly exceed the input size */
 		g_mime_filter_set_size (filter, len + 2, FALSE);
-		newlen = g_mime_utils_quoted_decode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_utils_quoted_decode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 		g_assert (newlen <= len + 2);
 		break;
 	case GMIME_FILTER_BASIC_UU_DEC:
 		if ((basic->state & GMIME_UUDECODE_STATE_BEGIN) && !(basic->state & GMIME_UUDECODE_STATE_END)) {
 			/* "begin <mode> <filename>\n" has been found, so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
-			newlen = g_mime_utils_uudecode_step (in, len, filter->outbuf, &basic->state, &basic->save);
+			outbuf = (unsigned char *) filter->outbuf;
+			inbuf = (const unsigned char *) in;
+			newlen = g_mime_utils_uudecode_step (inbuf, len, outbuf, &basic->state, &basic->save);
 			g_assert (newlen <= len + 3);
 		} else {
 			newlen = 0;
