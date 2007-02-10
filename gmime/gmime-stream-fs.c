@@ -150,7 +150,8 @@ static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
-	ssize_t nwritten = 0, n;
+	size_t nwritten = 0;
+	ssize_t n;
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return -1;
