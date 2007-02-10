@@ -84,19 +84,18 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 	return fdopen (fd, rw);
 }
 
-static void
+static int
 uudecode (const char *progname, int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
-	register const unsigned char *p;
 	GMimeFilterBasicType encoding;
 	int fd, opt, longindex = 0;
-	unsigned char inbuf[4096];
-	const unsigned char *q;
+	register const char *p;
+	char inbuf[4096], *q;
 	GMimeFilter *filter;
+	GString *str = NULL;
 	const char *infile;
 	char *outfile;
-	GString *str;
 	mode_t mode;
 	FILE *fp;
 	
@@ -105,21 +104,21 @@ uudecode (const char *progname, int argc, char **argv)
 		switch (opt) {
 		case 'h':
 			usage (progname);
-			exit (0);
+			return 0;
 			break;
 		case 'v':
 			version (progname);
-			exit (0);
+			return 0;
 			break;
 		case 'o':
 			if (!(outfile = optarg)) {
 				usage (progname);
-				exit (1);
+				return -1;
 			}
 			break;
 		default:
 			printf ("Try `%s --help' for more information.\n", progname);
-			exit (1);
+			return -1;
 		}
 	}
 	
@@ -130,7 +129,7 @@ uudecode (const char *progname, int argc, char **argv)
 		if ((fp = uufopen (infile, "r", O_RDONLY, 0)) == NULL) {
 			fprintf (stderr, "%s: %s: uufopen %s\n", progname,
 				 infile, strerror (errno));
-			exit (1);
+			return -1;
 		}
 		
 		p = NULL;
@@ -155,12 +154,11 @@ uudecode (const char *progname, int argc, char **argv)
 			fprintf (stderr, "%s: %s: No `begin' line\n", progname,
 				 infile == DEFAULT_FILENAME ? "stdin" : infile);
 			fclose (fp);
-			str = NULL;
 			goto nexti;
 		}
 		
 		/* decode the mode */
-		if ((mode = strtoul (p, (char **) &q, 8) & 0777) && *q != ' ')
+		if ((mode = strtoul (p, &q, 8) & 0777) && *q != ' ')
 			goto nexti;
 		
 		while (*q == ' ')
@@ -197,7 +195,8 @@ uudecode (const char *progname, int argc, char **argv)
 				 outfile, strerror (errno));
 			g_string_free (str, TRUE);
 			fclose (fp);
-			exit (1);
+			
+			return -1;
 		}
 		
 		istream = g_mime_stream_file_new (fp);
@@ -217,7 +216,7 @@ uudecode (const char *progname, int argc, char **argv)
 			fprintf (stderr, "%s: %s: %s\n", progname, outfile, strerror (errno));
 			g_object_unref (fstream);
 			g_object_unref (istream);
-			exit (1);
+			return -1;
 		}
 		
 		g_mime_stream_flush (fstream);
@@ -225,11 +224,15 @@ uudecode (const char *progname, int argc, char **argv)
 		g_object_unref (istream);
 		
 	nexti:
-		if (str)
+		if (str) {
 			g_string_free (str, TRUE);
+			str = NULL;
+		}
 		
 		infile = argv[++optind];
 	} while (optind < argc);
+	
+	return 0;
 }
 
 int main (int argc, char **argv)
@@ -243,7 +246,8 @@ int main (int argc, char **argv)
 	else
 		progname++;
 	
-	uudecode (progname, argc, argv);
+	if (uudecode (progname, argc, argv) == -1)
+		return EXIT_FAILURE;
 	
-	return 0;
+	return EXIT_SUCCESS;
 }

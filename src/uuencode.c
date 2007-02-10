@@ -95,7 +95,7 @@ version (const char *progname)
 	printf ("%s - GMime %s\n", progname, VERSION);
 }
 
-static void
+static int
 uuencode (const char *progname, int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
@@ -112,31 +112,29 @@ uuencode (const char *progname, int argc, char **argv)
 		switch (opt) {
 		case 'h':
 			usage (progname);
-			exit (0);
-			break;
+			return 0;
 		case 'v':
 			version (progname);
-			exit (0);
-			break;
+			return 0;
 		case 'm':
 			base64 = TRUE;
 			encoding = GMIME_FILTER_BASIC_BASE64_ENC;
 			break;
 		default:
 			printf ("Try `%s --help' for more information.\n", progname);
-			exit (1);
+			return -1;
 		}
 	}
 	
 	if (optind >= argc) {
 		printf ("Try `%s --help' for more information.\n", progname);
-		exit (1);
+		return -1;
 	}
 	
 	if ((fd = dup (1)) == -1) {
 		fprintf (stderr, "%s: cannot open stdout: %s\n",
 			 progname, strerror (errno));
-		exit (1);
+		return -1;
 	}
 	
 	ostream = g_mime_stream_fs_new (fd);
@@ -153,7 +151,7 @@ uuencode (const char *progname, int argc, char **argv)
 			 filename ? filename : "stdin",
 			 strerror (errno));
 		g_object_unref (ostream);
-		exit (1);
+		return -1;
 	}
 	
 	if (fstat (fd, &st) == -1) {
@@ -161,14 +159,14 @@ uuencode (const char *progname, int argc, char **argv)
 			 filename ? filename : "stdin",
 			 strerror (errno));
 		g_object_unref (ostream);
-		exit (1);
+		return -1;
 	}
 	
 	if (g_mime_stream_printf (ostream, "begin%s %.3o %s\n",
 				  base64 ? "-base64" : "", st.st_mode & 0777, name) == -1) {
 		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
 		g_object_unref (ostream);
-		exit (1);
+		return -1;
 	}
 	
 	istream = g_mime_stream_fs_new (fd);
@@ -184,7 +182,7 @@ uuencode (const char *progname, int argc, char **argv)
 		g_object_unref (fstream);
 		g_object_unref (istream);
 		g_object_unref (ostream);
-		exit (1);
+		return -1;
 	}
 	
 	g_mime_stream_flush (fstream);
@@ -194,10 +192,12 @@ uuencode (const char *progname, int argc, char **argv)
 	if (g_mime_stream_write_string (ostream, base64 ? "====\n" : "end\n") == -1) {
 		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
 		g_object_unref (ostream);
-		exit (1);
+		return -1;
 	}
 	
 	g_object_unref (ostream);
+	
+	return 0;
 }
 
 int main (int argc, char **argv)
@@ -211,7 +211,8 @@ int main (int argc, char **argv)
 	else
 		progname++;
 	
-	uuencode (progname, argc, argv);
+	if (uuencode (progname, argc, argv) == -1)
+		return EXIT_FAILURE;
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
