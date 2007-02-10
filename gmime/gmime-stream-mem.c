@@ -120,7 +120,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
 	
 	n = MIN (bound_end - stream->position, (off_t) len);
 	if (n > 0) {
@@ -190,7 +190,7 @@ stream_eos (GMimeStream *stream)
 	
 	g_return_val_if_fail (mem->buffer != NULL, TRUE);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
 	
 	return stream->position >= bound_end;
 }
@@ -211,7 +211,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
@@ -253,7 +253,7 @@ stream_length (GMimeStream *stream)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
 	
 	return bound_end - stream->bound_start;
 }
