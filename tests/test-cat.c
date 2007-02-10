@@ -56,7 +56,7 @@ random_whole_stream (void)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating %lld bytes of random data... ", size));
+	v(fprintf (stdout, "Generating %lu bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	if ((fd = open ("stream.whole", O_CREAT | O_TRUNC | O_RDWR, 0666)) == -1) {
@@ -130,14 +130,14 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %u bytes from original stream\n", size));
+		d(fprintf (stderr, "read %ul bytes from original stream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (dup, dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "dup read() returned %d, EOF\n", n);
+				fprintf (stderr, "dup read() returned %ld, EOF\n", n);
 				break;
 			}
-			d(fprintf (stderr, "read %d bytes from dup stream\n", n));
+			d(fprintf (stderr, "read %ld bytes from dup stream\n", n));
 			nread += n;
 		} while (nread < size);
 		
@@ -341,13 +341,13 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	offset = (off_t) (size * (rand () / (RAND_MAX + 1.0)));
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		fprintf (stderr, "Error: failed to seek to %d in original stream: %s\n",
+		fprintf (stderr, "Error: failed to seek to %ld in original stream: %s\n",
 			 offset, strerror (errno));
 		return -1;
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		fprintf (stderr, "Error: failed to seek to %d in cat stream: %s\n",
+		fprintf (stderr, "Error: failed to seek to %ld in cat stream: %s\n",
 			 offset, strerror (errno));
 		return -1;
 	}

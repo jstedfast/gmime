@@ -82,7 +82,6 @@ test_session_get_type (void)
 static void
 test_session_class_init (TestSessionClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeSessionClass *session_class = GMIME_SESSION_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_SESSION);
@@ -169,7 +168,6 @@ test_decrypt (GMimeCipherContext *ctx, const char *ciphertext)
 	GMimeStream *stream, *cleartext;
 	GByteArray *buffer;
 	GError *err = NULL;
-	int len;
 	
 	stream = g_mime_stream_mem_new_with_buffer (ciphertext, strlen (ciphertext));
 	cleartext = g_mime_stream_mem_new ();
@@ -230,7 +228,6 @@ int main (int argc, char **argv)
 	GMimeSession *session;
 	GMimeCipherContext *ctx;
 	GMimeStream *stream;
-	int i;
 	
 	g_mime_init (0);
 	
@@ -241,22 +238,22 @@ int main (int argc, char **argv)
 	
 	/*if (!test_sign (ctx, "This is a test of pgp sign using md5\r\n",
 	  GMIME_CIPHER_HASH_MD5))
-	  return 1;*/
+	  return EXIT_FAILURE;*/
 	
 	if (!test_sign (ctx, "This is a test of pgp sign using sha1\r\n",
 			GMIME_CIPHER_HASH_SHA1))
-		return 1;
+		return EXIT_FAILURE;
 	
 	if (!test_encrypt (ctx, "Hello, this is a test\n", strlen ("Hello, this is a test\n")))
-		return 1;
+		return EXIT_FAILURE;
 	
 	stream = g_mime_stream_mem_new ();
 	if (!test_export (ctx, stream))
-		return 1;
+		return EXIT_FAILURE;
 	
 	g_mime_stream_reset (stream);
 	if (!test_import (ctx, stream))
-		return 1;
+		return EXIT_FAILURE;
 	
 	g_mime_stream_unref (stream);
 	
@@ -266,5 +263,5 @@ int main (int argc, char **argv)
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return EXIT_SUCCESS;
 }

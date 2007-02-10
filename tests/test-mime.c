@@ -18,15 +18,16 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <gmime/gmime.h>
 
-#ifndef G_OS_WIN32
-#define ENABLE_ZENTIMER
-#include "zentimer.h"
-#endif
 
 static iconv_t cd = (iconv_t) -1;
 
@@ -175,9 +176,10 @@ static char *string = "I have no idea what to test here so I'll just test a "
 static void
 test_encodings (void)
 {
-	int pos, state = -1, save = 0;
-	unsigned char *enc, *dec, *koi8r;
-	iconv_t ic;
+	char *enc, *dec, *koi8r;
+	guint32 save = 0;
+	int state = -1;
+	ssize_t pos;
 	
 	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";
 	fprintf (stderr, "encoded: %s\n", enc);
@@ -329,7 +331,8 @@ test_encodings (void)
 	g_free (dec);
 	
 	enc = g_malloc (strlen (string) * 3);
-	pos = g_mime_utils_quoted_encode_close (string, strlen (string), enc, &state, &save);
+	pos = g_mime_utils_quoted_encode_close ((unsigned char *) string, strlen (string),
+						(unsigned char *) enc, &state, &save);
 	enc[pos] = '\0';
 	
 	fprintf (stderr, "\nencoded:\n-------\n%s\n-------\n", enc);

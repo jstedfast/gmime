@@ -28,10 +28,6 @@
 
 #include <gmime/gmime.h>
 
-#ifndef G_OS_WIN32
-#define ENABLE_ZENTIMER
-#include "zentimer.h"
-#endif
 
 void
 print_depth (int depth)
@@ -151,5 +147,5 @@ int main (int argc, char **argv)
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return EXIT_SUCCESS;
 }

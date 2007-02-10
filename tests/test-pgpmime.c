@@ -21,7 +21,12 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <glib.h>
 
@@ -82,7 +87,6 @@ test_session_get_type (void)
 static void
 test_session_class_init (TestSessionClass *klass)
 {
-	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeSessionClass *session_class = GMIME_SESSION_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_SESSION);
@@ -386,5 +390,5 @@ int main (int argc, char *argv[])
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return EXIT_SUCCESS;
 }
