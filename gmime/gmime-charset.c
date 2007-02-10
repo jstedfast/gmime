@@ -38,16 +38,16 @@
 #include "iconv-detect.h"
 #else /* use old-style detection */
 #if defined (__aix__) || defined (__irix__) || defined (__sun__)
-#define ICONV_ISO_D_FORMAT "ISO%d-%d"
+#define ICONV_ISO_INT_FORMAT "ISO%u-%u"
 /* this one is for charsets like ISO-2022-JP, for which at least
    Solaris wants a - after the ISO */
-#define ICONV_ISO_S_FORMAT "ISO-%d-%s"
+#define ICONV_ISO_STR_FORMAT "ISO-%u-%s"
 #elif defined (__hpux__)
-#define ICONV_ISO_D_FORMAT "iso%d%d"
-#define ICONV_ISO_S_FORMAT "iso%d%s"
+#define ICONV_ISO_INT_FORMAT "iso%u%u"
+#define ICONV_ISO_STR_FORMAT "iso%u%s"
 #else
-#define ICONV_ISO_D_FORMAT "iso-%d-%d"
-#define ICONV_ISO_S_FORMAT "iso-%d-%s"
+#define ICONV_ISO_INT_FORMAT "iso-%u-%u"
+#define ICONV_ISO_STR_FORMAT "iso-%u-%s"
 #endif /* __aix__, __irix__, __sun__ */
 #define ICONV_10646 "iso-10646"
 #endif /* USE_ICONV_DETECT */
@@ -422,11 +422,11 @@ g_mime_charset_iconv_name (const char *charset)
 					iconv_name = g_strdup ("IBM-921");
 				else
 #endif /* __aix__ */
-					iconv_name = g_strdup_printf (ICONV_ISO_D_FORMAT,
+					iconv_name = g_strdup_printf (ICONV_ISO_INT_FORMAT,
 								      iso, codepage);
 			} else {
 				/* codepage is a string - probably iso-2022-jp or something */
-				iconv_name = g_strdup_printf (ICONV_ISO_S_FORMAT,
+				iconv_name = g_strdup_printf (ICONV_ISO_STR_FORMAT,
 							      iso, p);
 			}
 		} else {

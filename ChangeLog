@@ -1,5 +1,12 @@
 2007-02-10  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-charset.c: Changed the names of the charset format
+	macros to coincide with the new names output by iconv-charset.c.
+	(g_mime_charset_iconv_name): Use the new macro names.
+
+	* iconv-detect.c: Use %u instead of %d, also changed the names of
+	the format #defines that we print out.
+
 	* gmime/gmime-utils.c (g_mime_utils_quote_string): Optimise a
 	smidgen.
 	(g_mime_utils_unquote_string): Fixed, this wasn't working right...

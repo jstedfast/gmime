@@ -26,26 +26,26 @@ enum {
 	ISO_UNSUPPORTED          = 0,
 	
 	/* iso-8859-1 */
-	ISO_DASH_D_DASH_D_LOWER  = (1 << 0),
-	ISO_DASH_D_DASH_D        = (1 << 1),
-	ISO_D_DASH_D             = (1 << 2),
-	ISO_D_D                  = (1 << 3),
-	ISO_UNDER_D_DASH_D       = (1 << 4),
-	NO_ISO_D_DASH_D          = (1 << 5),
+	ISO_DASH_UINT_DASH_UINT_LOWER  = (1 << 0),
+	ISO_DASH_UINT_DASH_UINT        = (1 << 1),
+	ISO_UINT_DASH_UINT             = (1 << 2),
+	ISO_UINT_UINT                  = (1 << 3),
+	ISO_UNDER_UINT_DASH_UINT       = (1 << 4),
+	NO_ISO_UINT_DASH_UINT          = (1 << 5),
 	
 	/* iso-10646-1 */
-	/*ISO_DASH_D_DASH_D_LOWER  = (1 << 0),*/
-	/*ISO_DASH_D_DASH_D        = (1 << 1),*/
-	/*ISO_D_DASH_D             = (1 << 2),*/
-	ISO_DASH_D_LOWER           = (1 << 3),
-	ISO_DASH_D                 = (1 << 4),
-	ISO_D                      = (1 << 5),
-	UCS4                       = (1 << 6),
+	/*ISO_DASH_UINT_DASH_UINT_LOWER  = (1 << 0),*/
+	/*ISO_DASH_UINT_DASH_UINT        = (1 << 1),*/
+	/*ISO_UINT_DASH_UINT             = (1 << 2),*/
+	ISO_DASH_UINT_LOWER            = (1 << 3),
+	ISO_DASH_UINT                  = (1 << 4),
+	ISO_UINT                       = (1 << 5),
+	UCS4                           = (1 << 6),
 	
 	/* iso-2022-jp */
-	ISO_DASH_D_DASH_S_LOWER  = (1 << 0),
-	ISO_DASH_D_DASH_S        = (1 << 1),
-	ISO_D_DASH_S             = (1 << 2),
+	ISO_DASH_UINT_DASH_STR_LOWER   = (1 << 0),
+	ISO_DASH_UINT_DASH_STR         = (1 << 1),
+	ISO_UINT_DASH_STR              = (1 << 2),
 };
 
 
@@ -57,31 +57,31 @@ typedef struct {
 
 
 static CharInfo iso8859_tests[] = {
-	{ "iso-8859-1",  "iso-%d-%d", ISO_DASH_D_DASH_D_LOWER },
-	{ "ISO-8859-1",  "ISO-%d-%d", ISO_DASH_D_DASH_D },
-	{ "ISO8859-1",   "ISO%d-%d",  ISO_D_DASH_D },
-	{ "ISO88591",    "ISO%d%d",   ISO_D_D },
-	{ "ISO_8859-1",  "ISO_%d-%d", ISO_UNDER_D_DASH_D },
-	{ "8859-1",      "%d-%d",     NO_ISO_D_DASH_D },
+	{ "iso-8859-1",  "iso-%u-%u", ISO_DASH_UINT_DASH_UINT_LOWER },
+	{ "ISO-8859-1",  "ISO-%u-%u", ISO_DASH_UINT_DASH_UINT },
+	{ "ISO8859-1",   "ISO%u-%u",  ISO_UINT_DASH_UINT },
+	{ "ISO88591",    "ISO%u%u",   ISO_UINT_UINT },
+	{ "ISO_8859-1",  "ISO_%u-%u", ISO_UNDER_UINT_DASH_UINT },
+	{ "8859-1",      "%u-%u",     NO_ISO_UINT_DASH_UINT },
 };
 
 static int num_iso8859_tests = sizeof (iso8859_tests) / sizeof (CharInfo);
 
 static CharInfo iso2022_tests[] = {
-	{ "iso-2022-jp", "iso-%d-%s", ISO_DASH_D_DASH_S_LOWER },
-	{ "ISO-2022-JP", "ISO-%d-%s", ISO_DASH_D_DASH_S },
-	{ "ISO2022-JP",  "ISO%d-%s",  ISO_D_DASH_S },
+	{ "iso-2022-jp", "iso-%u-%s", ISO_DASH_UINT_DASH_STR_LOWER },
+	{ "ISO-2022-JP", "ISO-%u-%s", ISO_DASH_UINT_DASH_STR },
+	{ "ISO2022-JP",  "ISO%u-%s",  ISO_UINT_DASH_STR },
 };
 
 static int num_iso2022_tests = sizeof (iso2022_tests) / sizeof (CharInfo);
 
 static CharInfo iso10646_tests[] = {
-	{ "iso-10646-1", "iso-%d-%d",  ISO_DASH_D_DASH_D_LOWER },
-	{ "ISO-10646-1", "ISO-%d-%d",  ISO_DASH_D_DASH_D },
-	{ "ISO10646-1",  "ISO%d-%d",   ISO_D_DASH_D },
-	{ "iso-10646",   "iso-%d",     ISO_DASH_D_LOWER },
-	{ "ISO-10646",   "ISO-%d",     ISO_DASH_D },
-	{ "ISO10646",    "ISO%d",      ISO_D },
+	{ "iso-10646-1", "iso-%u-%u",  ISO_DASH_UINT_DASH_UINT_LOWER },
+	{ "ISO-10646-1", "ISO-%u-%u",  ISO_DASH_UINT_DASH_UINT },
+	{ "ISO10646-1",  "ISO%u-%u",   ISO_UINT_DASH_UINT },
+	{ "iso-10646",   "iso-%u",     ISO_DASH_UINT_LOWER },
+	{ "ISO-10646",   "ISO-%u",     ISO_DASH_UINT },
+	{ "ISO10646",    "ISO%u",      ISO_UINT },
 	{ "UCS-4BE",     "UCS-4BE",    UCS4 },
 };
 
@@ -96,9 +96,8 @@ int main (int argc, char **argv)
 	FILE *fp;
 	int i;
 	
-	fp = fopen ("iconv-detect.h", "w");
-	if (fp == NULL)
-		exit (255);
+	if (!(fp = fopen ("iconv-detect.h", "w")))
+		return EXIT_FAILURE;
 	
 	fprintf (fp, "/* This is an auto-generated header, DO NOT EDIT! */\n\n");
 	
@@ -118,12 +117,12 @@ int main (int argc, char **argv)
 	
 	if (iso8859 == ISO_UNSUPPORTED) {
 		fprintf (stderr, "System doesn't support any ISO-8859-1 formats\n");
-		fprintf (fp, "#define ICONV_ISO_D_FORMAT \"%s\"\n", info[0].format);
+		fprintf (fp, "#define ICONV_ISO_INT_FORMAT \"%s\"\n", info[0].format);
 #ifdef CONFIGURE_IN
-		exit (1);
+		return EXIT_FAILURE;
 #endif
 	} else {
-		fprintf (fp, "#define ICONV_ISO_D_FORMAT \"%s\"\n", info[i].format);
+		fprintf (fp, "#define ICONV_ISO_INT_FORMAT \"%s\"\n", info[i].format);
 	}
 	
 	iso2022 = ISO_UNSUPPORTED;
@@ -142,12 +141,12 @@ int main (int argc, char **argv)
 	
 	if (iso2022 == ISO_UNSUPPORTED) {
 		fprintf (stderr, "System doesn't support any ISO-2022 formats\n");
-		fprintf (fp, "#define ICONV_ISO_S_FORMAT \"%s\"\n", info[0].format);
+		fprintf (fp, "#define ICONV_ISO_STR_FORMAT \"%s\"\n", info[0].format);
 #ifdef CONFIGURE_IN
-		exit (3);
+		return EXIT_FAILURE;
 #endif
 	} else {
-		fprintf (fp, "#define ICONV_ISO_S_FORMAT \"%s\"\n", info[i].format);
+		fprintf (fp, "#define ICONV_ISO_STR_FORMAT \"%s\"\n", info[i].format);
 	}
 	
 	iso10646 = ISO_UNSUPPORTED;
@@ -157,7 +156,7 @@ int main (int argc, char **argv)
 		cd = iconv_open (info[i].charset, "UTF-8");
 		if (cd != (iconv_t) -1) {
 			iconv_close (cd);
-			/*if (info[i].id < ISO_DASH_D_LOWER)
+			/*if (info[i].id < ISO_DASH_UINT_LOWER)
 				printf ("(\"%s\", (iso), (codepage))\n", info[i].format);
 			else
 			printf ("(\"%s\", (iso))\n", info[i].format);*/
@@ -172,7 +171,7 @@ int main (int argc, char **argv)
 		fprintf (stderr, "System doesn't support any ISO-10646-1 formats\n");
 		fprintf (fp, "#define ICONV_10646 \"%s\"\n", info[0].charset);
 #ifdef CONFIGURE_IN
-		exit (2);
+		return EXIT_FAILURE;
 #endif
 	} else {
 		fprintf (fp, "#define ICONV_10646 \"%s\"\n", info[i].charset);
@@ -180,5 +179,5 @@ int main (int argc, char **argv)
 	
 	fclose (fp);
 	
-	exit (0);
+	return EXIT_SUCCESS;
 }
