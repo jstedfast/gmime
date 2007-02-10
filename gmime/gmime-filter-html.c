@@ -142,7 +142,7 @@ check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 {
 	size_t offset;
 	
-	if (*outend - outptr >= len)
+	if ((*outend - outptr) >= len)
 		return outptr;
 	
 	offset = outptr - filter->outbuf;
@@ -468,7 +468,7 @@ GMimeFilter *
 g_mime_filter_html_new (guint32 flags, guint32 colour)
 {
 	GMimeFilterHTML *new;
-	int i;
+	guint i;
 	
 	new = g_object_new (GMIME_TYPE_FILTER_HTML, NULL, NULL);
 	new->flags = flags;
