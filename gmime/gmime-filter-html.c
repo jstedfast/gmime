@@ -226,10 +226,12 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 }
 
 static char *
-writeln (GMimeFilter *filter, const unsigned char *in, const unsigned char *inend, char *outptr, char **outend)
+writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, char **outend)
 {
 	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
-	const unsigned char *inptr = in;
+	const unsigned char *instart = (const unsigned char *) in;
+	const unsigned char *inend = (const unsigned char *) end;
+	const unsigned char *inptr = instart;
 	
 	while (inptr < inend) {
 		gunichar u;
@@ -270,7 +272,7 @@ writeln (GMimeFilter *filter, const unsigned char *in, const unsigned char *inen
 			/* otherwise, FALL THROUGH */
 		case ' ':
 			if (html->flags & GMIME_FILTER_HTML_CONVERT_SPACES) {
-				if (inptr == (in + 1) || (inptr < inend && (*inptr == ' ' || *inptr == '\t'))) {
+				if (inptr == (instart + 1) || (inptr < inend && (*inptr == ' ' || *inptr == '\t'))) {
 					outptr = g_stpcpy (outptr, "&nbsp;");
 					html->column++;
 					break;
