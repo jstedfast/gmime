@@ -109,7 +109,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterBest *best = (GMimeFilterBest *) filter;
 	register unsigned char *inptr, *inend;
-	unsigned int left;
+	size_t left;
 	
 	if (best->flags & GMIME_FILTER_BEST_CHARSET)
 		g_mime_charset_step (&best->charset, in, len);
@@ -121,13 +121,13 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		inend = inptr + len;
 		
 		while (inptr < inend) {
-			register int c = -1;
+			register unsigned char c = '\0';
 			
 			if (best->midline) {
 				while (inptr < inend && (c = *inptr++) != '\n') {
 					if (c == 0)
 						best->count0++;
-					else if (c > 127)
+					else if (c & 0x80)
 						best->count8++;
 					
 					if (best->fromlen > 0 && best->fromlen < 5)
@@ -144,7 +144,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			}
 			
 			/* check our from-save buffer for "From " */
-			if (best->fromlen == 5 && !strcmp (best->frombuf, "From "))
+			if (best->fromlen == 5 && !strcmp ((char *) best->frombuf, "From "))
 				best->hadfrom = TRUE;
 			
 			best->fromlen = 0;
@@ -154,14 +154,14 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			/* if we have not yet found a from-line, check for one */
 			if (best->startline && !best->hadfrom && left > 0) {
 				if (left < 5) {
-					if (!strncmp (inptr, "From ", left)) {
+					if (!strncmp ((char *) inptr, "From ", left)) {
 						memcpy (best->frombuf, inptr, left);
 						best->frombuf[left] = '\0';
 						best->fromlen = left;
 						break;
 					}
 				} else {
-					if (!strncmp (inptr, "From ", 5)) {
+					if (!strncmp ((char *) inptr, "From ", 5)) {
 						best->hadfrom = TRUE;
 						
 						inptr += 5;
