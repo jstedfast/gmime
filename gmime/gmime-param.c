@@ -352,16 +352,11 @@ rfc2184_sort_cb (const void *v0, const void *v1)
 #define HEXVAL(c) (isdigit (c) ? (c) - '0' : tolower (c) - 'a' + 10)
 
 static size_t
-hex_decode (const unsigned char *in, size_t len, unsigned char *out)
+hex_decode (const char *in, size_t len, char *out)
 {
-	register const unsigned char *inptr;
-	register unsigned char *outptr;
-	const unsigned char *inend;
-	
-	inptr = in;
-	inend = in + len;
-	
-	outptr = out;
+	register const unsigned char *inptr = (const unsigned char *) in;
+	register unsigned char *outptr = (unsigned char *) out;
+	const unsigned char *inend = inptr + len;
 	
 	while (inptr < inend) {
 		if (*inptr == '%') {
@@ -376,7 +371,7 @@ hex_decode (const unsigned char *in, size_t len, unsigned char *out)
 	
 	*outptr = '\0';
 	
-	return outptr - out;
+	return ((char *) outptr) - out;
 }
 
 static const char *
@@ -719,21 +714,24 @@ g_mime_param_append_param (GMimeParam *params, GMimeParam *param)
 
 /* FIXME: I wrote this in a quick & dirty fasion - it may not be 100% correct */
 static char *
-encode_param (const unsigned char *in, gboolean *encoded)
+encode_param (const char *in, gboolean *encoded)
 {
-	register const unsigned char *inptr;
-	unsigned char *outbuf = NULL;
+	register const unsigned char *inptr = (const unsigned char *) in;
+	const unsigned char *instart = inptr;
 	iconv_t cd = (iconv_t) -1;
 	const char *charset = NULL;
+	char *outbuf = NULL;
 	unsigned char c;
 	char *outstr;
 	GString *out;
 	
 	*encoded = FALSE;
 	
-	for (inptr = in; *inptr && inptr - in < GMIME_FOLD_LEN; inptr++)
+	while (*inptr && ((inptr - instart) < GMIME_FOLD_LEN)) {
 		if (*inptr > 127)
 			break;
+		inptr++;
+	}
 	
 	if (*inptr == '\0')
 		return g_strdup (in);
@@ -752,13 +750,13 @@ encode_param (const unsigned char *in, gboolean *encoded)
 		g_mime_iconv_close (cd);
 		if (outbuf == NULL) {
 			charset = "UTF-8";
-			inptr = in;
+			inptr = instart;
 		} else {
-			inptr = outbuf;
+			inptr = (const unsigned char *) outbuf;
 		}
 	} else {
 		charset = "UTF-8";
-		inptr = in;
+		inptr = instart;
 	}
 	
 	/* FIXME: set the 'language' as well, assuming we can get that info...? */
