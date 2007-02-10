@@ -1225,7 +1225,9 @@ g_mime_utils_quote_string (const char *string)
 	GString *out;
 	
 	out = g_string_new ("");
-	quote = need_quotes (string);
+	
+	if ((quote = need_quotes (string)))
+		g_string_append_c (out, '"');
 	
 	for (c = string; *c; c++) {
 		if ((*c == '"' && quote) || *c == '\\')
@@ -1234,10 +1236,8 @@ g_mime_utils_quote_string (const char *string)
 		g_string_append_c (out, *c);
 	}
 	
-	if (quote) {
-		g_string_prepend_c (out, '"');
+	if (quote)
 		g_string_append_c (out, '"');
-	}
 	
 	qstring = out->str;
 	g_string_free (out, FALSE);
@@ -1257,19 +1257,30 @@ g_mime_utils_unquote_string (char *string)
 {
 	/* if the string is quoted, unquote it */
 	register char *inptr = string;
-	int quoted = 0;
+	int escaped = FALSE;
+	int quoted = FALSE;
 	
 	if (!string)
 		return;
 	
 	while (*inptr) {
-		if (*inptr == '"') {
-			quoted = !quoted;
-			inptr++;
-		} else if (quoted && *inptr == '\\') {
-			inptr++;
+		if (*inptr == '\\') {
+			if (escaped)
+				*string++ = *inptr++;
+			else
+				inptr++;
+			escaped = !escaped;
+		} else if (*inptr == '"') {
+			if (escaped) {
+				*string++ = *inptr++;
+				escaped = FALSE;
+			} else {
+				quoted = !quoted;
+				inptr++;
+			}
 		} else {
 			*string++ = *inptr++;
+			escaped = FALSE;
 		}
 	}
 	

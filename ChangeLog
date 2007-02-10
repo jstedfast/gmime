@@ -1,3 +1,9 @@
+2007-02-10  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (g_mime_utils_quote_string): Optimise a
+	smidgen.
+	(g_mime_utils_unquote_string): Fixed, this wasn't working right...
+
 2007-02-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-stream-filter.c (stream_write): Instead of the
