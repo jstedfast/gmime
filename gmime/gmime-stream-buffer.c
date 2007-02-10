@@ -616,12 +616,11 @@ g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer)
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	
 	while (!g_mime_stream_eos (stream)) {
-		len = g_mime_stream_buffer_gets (stream, linebuf, sizeof (linebuf));
-		if (len <= 0)
+		if ((len = g_mime_stream_buffer_gets (stream, linebuf, sizeof (linebuf))) <= 0)
 			break;
 		
 		if (buffer)
-			g_byte_array_append (buffer, linebuf, len);
+			g_byte_array_append (buffer, (unsigned char *) linebuf, len);
 		
 		if (linebuf[len - 1] == '\n')
 			break;
