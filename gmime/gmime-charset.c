@@ -337,7 +337,7 @@ g_mime_locale_language (void)
 const char *
 g_mime_charset_language (const char *charset)
 {
-	int i;
+	guint i;
 	
 	if (!charset)
 		return NULL;
@@ -511,7 +511,7 @@ g_mime_charset_canon_name (const char *charset)
 {
 	const char *ptr;
 	char *endptr;
-	int iso;
+	guint iso;
 	
 	if (!charset)
 		return NULL;
@@ -712,7 +712,7 @@ static const char *
 charset_best_mask (unsigned int mask)
 {
 	const char *lang;
-	int i;
+	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (charinfo); i++) {
 		if (charinfo[i].bit & mask) {
