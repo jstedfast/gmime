@@ -31,11 +31,11 @@
 
 /* text/enriched is rfc1896 */
 
-typedef char * (*EnrichedParamParser) (const char *inptr, int inlen);
+typedef char * (*EnrichedParamParser) (const char *inptr, size_t inlen);
 
-static char *param_parse_colour (const char *inptr, int inlen);
-static char *param_parse_font (const char *inptr, int inlen);
-static char *param_parse_lang (const char *inptr, int inlen);
+static char *param_parse_colour (const char *inptr, size_t inlen);
+static char *param_parse_font (const char *inptr, size_t inlen);
+static char *param_parse_lang (const char *inptr, size_t inlen);
 
 static struct {
 	char *enriched;
@@ -136,7 +136,7 @@ g_mime_filter_enriched_class_init (GMimeFilterEnrichedClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
-	int i;
+	guint i;
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
 	
@@ -204,12 +204,11 @@ static const char *valid_colours[] = {
 #define NUM_VALID_COLOURS  (sizeof (valid_colours) / sizeof (valid_colours[0]))
 
 static char *
-param_parse_colour (const char *inptr, int inlen)
+param_parse_colour (const char *inptr, size_t inlen)
 {
 	const char *inend, *end;
 	guint32 rgb = 0;
-	guint v;
-	int i;
+	guint v, i;
 	
 	for (i = 0; i < NUM_VALID_COLOURS; i++) {
 		if (!g_ascii_strncasecmp (inptr, valid_colours[i], inlen))
@@ -249,7 +248,7 @@ param_parse_colour (const char *inptr, int inlen)
 }
 
 static char *
-param_parse_font (const char *fontfamily, int inlen)
+param_parse_font (const char *fontfamily, size_t inlen)
 {
 	register const char *inptr = fontfamily;
 	const char *inend = inptr + inlen;
@@ -262,7 +261,7 @@ param_parse_font (const char *fontfamily, int inlen)
 }
 
 static char *
-param_parse_lang (const char *lang, int inlen)
+param_parse_lang (const char *lang, size_t inlen)
 {
 	register const char *inptr = lang;
 	const char *inend = inptr + inlen;
@@ -275,9 +274,9 @@ param_parse_lang (const char *lang, int inlen)
 }
 
 static char *
-param_parse (const char *enriched, const char *inptr, int inlen)
+param_parse (const char *enriched, const char *inptr, size_t inlen)
 {
-	int i;
+	guint i;
 	
 	for (i = 0; i < NUM_ENRICHED_TAGS; i++) {
 		if (!g_ascii_strcasecmp (enriched, enriched_tags[i].enriched))
@@ -438,7 +437,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			} else {
 				const char *html_tag;
 				char *enriched_tag;
-				int len;
+				size_t len;
 				
 				len = inptr - tag;
 				enriched_tag = g_alloca (len + 1);
