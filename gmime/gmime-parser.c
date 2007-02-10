@@ -81,10 +81,10 @@ struct _GMimeParserPrivate {
 	off_t offset;
 	
 	/* i/o buffers */
-	unsigned char realbuf[SCAN_HEAD + SCAN_BUF + 1];
-	unsigned char *inbuf;
-	unsigned char *inptr;
-	unsigned char *inend;
+	char realbuf[SCAN_HEAD + SCAN_BUF + 1];
+	char *inbuf;
+	char *inptr;
+	char *inend;
 	
 	off_t from_offset;
 	GByteArray *from_line;
@@ -94,14 +94,14 @@ struct _GMimeParserPrivate {
 	gpointer user_data;
 	
 	/* header buffer */
-	unsigned char *headerbuf;
-	unsigned char *headerptr;
-	unsigned int headerleft;
+	char *headerbuf;
+	char *headerptr;
+	guint headerleft;
 	
 	/* raw header buffer */
-	unsigned char *rawbuf;
-	unsigned char *rawptr;
-	unsigned int rawleft;
+	char *rawbuf;
+	char *rawptr;
+	guint rawleft;
 	
 	off_t headers_start;
 	off_t header_start;
@@ -122,7 +122,7 @@ struct _GMimeParserPrivate {
 
 struct _boundary_stack {
 	struct _boundary_stack *parent;
-	unsigned char *boundary;
+	char *boundary;
 	size_t boundarylen;
 	size_t boundarylenfinal;
 	size_t boundarylenmax;
@@ -583,7 +583,7 @@ static ssize_t
 parser_fill (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	unsigned char *inbuf, *inptr, *inend;
+	char *inbuf, *inptr, *inend;
 	ssize_t nread;
 	size_t inlen;
 	
@@ -626,7 +626,7 @@ parser_fill (GMimeParser *parser)
 
 
 static off_t
-parser_offset (struct _GMimeParserPrivate *priv, unsigned char *inptr)
+parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
 {
 	if (priv->offset == -1)
 		return -1;
@@ -680,9 +680,10 @@ static int
 parser_step_from (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register unsigned char *inptr;
-	unsigned char *start, *inend;
-	size_t len, left = 0;
+	register char *inptr;
+	char *start, *inend;
+	ssize_t left = 0;
+	size_t len;
 	
 	g_byte_array_set_size (priv->from_line, 0);
 	
@@ -720,7 +721,7 @@ parser_step_from (GMimeParser *parser)
 			
 			if (len >= 5 && !strncmp (start, "From ", 5)) {
 				priv->from_offset = parser_offset (priv, start);
-				g_byte_array_append (priv->from_line, start, len);
+				g_byte_array_append (priv->from_line, (unsigned char *) start, len);
 				goto got_from;
 			}
 		}
@@ -784,8 +785,8 @@ parser_step_from (GMimeParser *parser)
 } G_STMT_END
 
 #define header_parse(parser, priv, hend) G_STMT_START {                   \
-	register unsigned char *colon;                                    \
 	struct _header_raw *header;                                       \
+	register char *colon;                                             \
 	size_t hlen;                                                      \
 	                                                                  \
 	header = g_new (struct _header_raw, 1);                           \
@@ -826,10 +827,11 @@ static int
 parser_step_headers (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register unsigned char *inptr;
-	unsigned char *start, *inend;
 	struct _header_raw *hend;
-	size_t len, left = 0;
+	register char *inptr;
+	char *start, *inend;
+	ssize_t left = 0;
+	size_t len;
 	
 	priv->midline = FALSE;
 	hend = (struct _header_raw *) &priv->headers;
@@ -857,12 +859,13 @@ parser_step_headers (GMimeParser *parser)
 			while (*inptr != '\n')
 				inptr++;
 			
-			raw_header_append (priv, start, inptr - start);
+			len = (size_t) (inptr - start);
+			raw_header_append (priv, start, len);
 			
 			if (inptr == inend) {
 				/* we don't have enough data to tell if we
 				   got all of the header or not... */
-				header_append (priv, start, inptr - start);
+				header_append (priv, start, len);
 				priv->midline = TRUE;
 				left = inend - inptr;
 				priv->inptr = inptr;
@@ -870,10 +873,9 @@ parser_step_headers (GMimeParser *parser)
 			}
 			
 			/* check to see if we've reached the end of the headers */
-			if (!priv->midline && (inptr == start || (inptr - start == 1 && *start == '\r')))
+			if (!priv->midline && (inptr == start || (len == 1 && *start == '\r')))
 				goto headers_end;
 			
-			len = inptr - start;
 			if (inptr > start && inptr[-1] == '\r')
 				len--;
 			
@@ -899,8 +901,9 @@ parser_step_headers (GMimeParser *parser)
 	inptr = priv->inptr;
 	inend = priv->inend;
 	
-	header_append (priv, inptr, inend - inptr);
-	raw_header_append (priv, inptr, inend - inptr);
+	len = (size_t) (inend - inptr);
+	header_append (priv, inptr, len);
+	raw_header_append (priv, inptr, len);
 	
  headers_end:
 	
@@ -968,8 +971,8 @@ static void
 parser_skip_line (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register unsigned char *inptr;
-	unsigned char *inend;
+	register char *inptr;
+	char *inend;
 	
 	inptr = priv->inptr;
 	
@@ -1003,9 +1006,9 @@ enum {
 	FOUND_END_BOUNDARY
 };
 
-#define content_save(content, start, len) G_STMT_START {   \
-	if (content)                                       \
-		g_byte_array_append (content, start, len); \
+#define content_save(content, start, len) G_STMT_START {                     \
+	if (content)                                                         \
+		g_byte_array_append (content, (unsigned char *) start, len); \
 } G_STMT_END
 
 #define possible_boundary(scan_from, start, len)                                      \
@@ -1013,9 +1016,9 @@ enum {
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
 static int
-check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, size_t len)
+check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
-	off_t offset = parser_offset (priv, (unsigned char *) start);
+	off_t offset = parser_offset (priv, start);
 	
 	if (start[len - 1] == '\r')
 		len--;
@@ -1064,11 +1067,11 @@ check_boundary (struct _GMimeParserPrivate *priv, const unsigned char *start, si
  **/
 
 static int
-parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
+parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register unsigned char *inptr;
-	unsigned char *start, *inend;
+	register char *inptr;
+	char *start, *inend;
 	size_t nleft, len;
 	int found = 0;
 	
@@ -1094,7 +1097,8 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 		/* Note: see optimization comment [1] */
 		*inend = '\n';
 		
-		if (priv->midline && inend - inptr == nleft)
+		len = (size_t) (inend - inptr);
+		if (priv->midline && len == nleft)
 			found = FOUND_EOS;
 		
 		priv->midline = FALSE;
@@ -1105,7 +1109,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 			while (*inptr != '\n')
 				inptr++;
 			
-			len = inptr - start;
+			len = (size_t) (inptr - start);
 			
 			if (inptr < inend) {
 				if ((found = check_boundary (priv, start, len)))
@@ -1161,7 +1165,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
 	off_t start, end;
-	int crlf;
+	guint crlf;
 	
 	if (priv->persist_stream && priv->seekable)
 		start = parser_offset (priv, NULL);
@@ -1270,10 +1274,10 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 }
 
 static void
-crlf2lf (unsigned char *in)
+crlf2lf (char *in)
 {
-	register unsigned char *inptr = in;
-	register unsigned char *outptr;
+	register char *inptr = in;
+	register char *outptr;
 	
 	while (*inptr != '\0' && !(inptr[0] == '\r' && inptr[1] == '\n'))
 		inptr++;
@@ -1298,8 +1302,9 @@ static int
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
 	GByteArray *buffer;
-	const char *face;
-	int crlf, found;
+	guint crlf;
+	char *face;
+	int found;
 	
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer, &crlf);
@@ -1308,8 +1313,8 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 		/* last '\n' belongs to the boundary */
 		g_byte_array_set_size (buffer, buffer->len + 1);
 		buffer->data[buffer->len - crlf - 1] = '\0';
-		crlf2lf (buffer->data);
-		face = buffer->data;
+		face = (char *) buffer->data;
+		crlf2lf (face);
 		
 		if (preface)
 			g_mime_multipart_set_preface (multipart, face);
@@ -1560,7 +1565,7 @@ g_mime_parser_get_from (GMimeParser *parser)
 		return NULL;
 	
 	if (priv->from_line->len)
-		return g_strndup (priv->from_line->data, priv->from_line->len);
+		return g_strndup ((char *) priv->from_line->data, priv->from_line->len);
 	
 	return NULL;
 }
