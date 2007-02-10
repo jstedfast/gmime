@@ -117,7 +117,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 {
 	GMimeFilterMd5 *md5 = (GMimeFilterMd5 *) filter;
 	
-	md5_update (&md5->priv->md5, in, len);
+	md5_update (&md5->priv->md5, (unsigned char *) in, len);
 	
 	*out = in;
 	*outlen = len;
