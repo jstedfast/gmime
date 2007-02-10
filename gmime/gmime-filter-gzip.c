@@ -202,18 +202,18 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		
 		memcpy (filter->outbuf, priv->hdr.buf, 10);
 		
-		priv->stream->next_out = filter->outbuf + 10;
+		priv->stream->next_out = (unsigned char *) filter->outbuf + 10;
 		priv->stream->avail_out = filter->outsize - 10;
 		
 		priv->state.zip.wrote_hdr = TRUE;
 	} else {
 		g_mime_filter_set_size (filter, (len * 2) + 12, FALSE);
 		
-		priv->stream->next_out = filter->outbuf;
+		priv->stream->next_out = (unsigned char *) filter->outbuf;
 		priv->stream->avail_out = filter->outsize;
 	}
 	
-	priv->stream->next_in = in;
+	priv->stream->next_in = (unsigned char *) in;
 	priv->stream->avail_in = len;
 	
 	do {
@@ -226,8 +226,8 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			outlen = filter->outsize - priv->stream->avail_out;
 			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
+			priv->stream->next_out = (unsigned char *) filter->outbuf + outlen;
 			priv->stream->avail_out = filter->outsize - outlen;
-			priv->stream->next_out = filter->outbuf + outlen;
 			
 			if (priv->stream->avail_in == 0) {
 				guint32 val;
@@ -246,13 +246,14 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			}
 		} else {
 			if (priv->stream->avail_in > 0)
-				g_mime_filter_backup (filter, priv->stream->next_in, priv->stream->avail_in);
+				g_mime_filter_backup (filter, (char *) priv->stream->next_in,
+						      priv->stream->avail_in);
 			
 			break;
 		}
 	} while (1);
 	
-	priv->crc32 = crc32 (priv->crc32, in, len - priv->stream->avail_in);
+	priv->crc32 = crc32 (priv->crc32, (unsigned char *) in, len - priv->stream->avail_in);
 	priv->isize += len - priv->stream->avail_in;
 	
 	*out = filter->outbuf;
@@ -363,10 +364,10 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	g_mime_filter_set_size (filter, (len * 2) + 12, FALSE);
 	
-	priv->stream->next_in = in;
+	priv->stream->next_in = (unsigned char *) in;
 	priv->stream->avail_in = len - 8;
 	
-	priv->stream->next_out = filter->outbuf;
+	priv->stream->next_out = (unsigned char *) filter->outbuf;
 	priv->stream->avail_out = filter->outsize;
 	
 	do {
@@ -384,13 +385,14 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			
 			outlen = filter->outsize - priv->stream->avail_out;
 			g_mime_filter_set_size (filter, outlen + (priv->stream->avail_in * 2) + 12, TRUE);
+			priv->stream->next_out = (unsigned char *) filter->outbuf + outlen;
 			priv->stream->avail_out = filter->outsize - outlen;
-			priv->stream->next_out = filter->outbuf + outlen;
 		} else {
 			priv->stream->avail_in += 8;
 			
 			if (priv->stream->avail_in > 0)
-				g_mime_filter_backup (filter, priv->stream->next_in, priv->stream->avail_in);
+				g_mime_filter_backup (filter, (char *) priv->stream->next_in,
+						      priv->stream->avail_in);
 			
 			break;
 		}
