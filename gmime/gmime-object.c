@@ -679,8 +679,8 @@ g_mime_object_to_string (GMimeObject *object)
 	g_mime_object_write_to_stream (object, stream);
 	
 	g_object_unref (stream);
-	g_byte_array_append (array, "", 1);
-	str = array->data;
+	g_byte_array_append (array, (unsigned char *) "", 1);
+	str = (char *) array->data;
 	g_byte_array_free (array, FALSE);
 	
 	return str;
