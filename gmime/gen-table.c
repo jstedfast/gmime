@@ -66,22 +66,23 @@ enum {
 
 /* code to rebuild the gmime_special_table */
 static void
-header_remove_bits (unsigned short bit, unsigned char *vals)
+header_remove_bits (unsigned short bit, char *vals)
 {
-	int i;
+	register unsigned char *inptr = (unsigned char *) vals;
 	
-	for (i = 0; vals[i]; i++)
-		gmime_special_table[vals[i]] &= ~bit;
+	while (*inptr != '\0')
+		gmime_special_table[*inptr++] &= ~bit;
 }
 
 static void
-header_init_bits (unsigned short bit, unsigned short bitcopy, int remove, unsigned char *vals)
+header_init_bits (unsigned short bit, unsigned short bitcopy, int remove, char *vals)
 {
-	int i, len = strlen (vals);
+	register unsigned char *inptr = (unsigned char *) vals;
+	int i;
 	
 	if (!remove) {
-		for (i = 0; i < len; i++)
-			gmime_special_table[vals[i]] |= bit;
+		while (*inptr != '\0')
+			gmime_special_table[*inptr++] |= bit;
 		if (bitcopy) {
 			for (i = 0; i < 256; i++) {
 				if (gmime_special_table[i] & bitcopy)
@@ -91,8 +92,8 @@ header_init_bits (unsigned short bit, unsigned short bitcopy, int remove, unsign
 	} else {
 		for (i = 0; i < 256; i++)
 			gmime_special_table[i] |= bit;
-		for (i = 0; i < len; i++)
-			gmime_special_table[vals[i]] &= ~bit;
+		while (*inptr != '\0')
+			gmime_special_table[*inptr++] &= ~bit;
 		if (bitcopy) {
 			for (i = 0; i < 256; i++) {
 				if (gmime_special_table[i] & bitcopy)
