@@ -111,13 +111,17 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	       char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterYenc *yenc = (GMimeFilterYenc *) filter;
+	const unsigned char *inbuf;
+	unsigned char *outbuf;
 	size_t newlen = 0;
 	
 	switch (yenc->direction) {
 	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_yencode_step (in, len, filter->outbuf, &yenc->state,
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_yencode_step (inbuf, len, outbuf, &yenc->state,
 					      &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
@@ -188,7 +192,10 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		if ((yenc->state & GMIME_YDECODE_STATE_DECODE) && !(yenc->state & GMIME_YDECODE_STATE_END)) {
 			/* all yEnc headers have been found so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
-			newlen = g_mime_ydecode_step (in, len, filter->outbuf, &yenc->state, &yenc->pcrc, &yenc->crc);
+			outbuf = (unsigned char *) filter->outbuf;
+			inbuf = (const unsigned char *) in;
+			newlen = g_mime_ydecode_step (inbuf, len, outbuf, &yenc->state,
+						      &yenc->pcrc, &yenc->crc);
 			g_assert (newlen <= len + 3);
 		} else {
 			newlen = 0;
@@ -206,13 +213,17 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		 char **out, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterYenc *yenc = (GMimeFilterYenc *) filter;
+	const unsigned char *inbuf;
+	unsigned char *outbuf;
 	size_t newlen = 0;
 	
 	switch (yenc->direction) {
 	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
-		newlen = g_mime_yencode_close (in, len, filter->outbuf, &yenc->state,
+		outbuf = (unsigned char *) filter->outbuf;
+		inbuf = (const unsigned char *) in;
+		newlen = g_mime_yencode_close (inbuf, len, outbuf, &yenc->state,
 					       &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
 		break;
@@ -220,7 +231,9 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		if ((yenc->state & GMIME_YDECODE_STATE_DECODE) && !(yenc->state & GMIME_YDECODE_STATE_END)) {
 			/* all yEnc headers have been found so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
-			newlen = g_mime_ydecode_step (in, len, filter->outbuf, &yenc->state,
+			outbuf = (unsigned char *) filter->outbuf;
+			inbuf = (const unsigned char *) in;
+			newlen = g_mime_ydecode_step (inbuf, len, outbuf, &yenc->state,
 						      &yenc->pcrc, &yenc->crc);
 			g_assert (newlen <= len + 3);
 		} else {
@@ -441,7 +454,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
 	const unsigned char *inend;
-	unsigned char ch;
+	unsigned char c;
 	int ystate;
 	
 	if (*state & GMIME_YDECODE_STATE_END)
@@ -454,37 +467,37 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	inptr = in;
 	while (inptr < inend) {
-		ch = *inptr++;
+		c = *inptr++;
 		
 		if ((ystate & YENC_NEWLINE_ESCAPE) == YENC_NEWLINE_ESCAPE) {
 			ystate &= ~GMIME_YDECODE_STATE_EOLN;
 			
-			if (ch == 'y') {
+			if (c == 'y') {
 				/* we probably have a =yend here */
 				ystate |= GMIME_YDECODE_STATE_END;
 				break;
 			}
 		}
 		
-		if (ch == '\n') {
+		if (c == '\n') {
 			ystate |= GMIME_YDECODE_STATE_EOLN;
 			continue;
 		}
 		
 		if (ystate & GMIME_YDECODE_STATE_ESCAPE) {
 			ystate &= ~GMIME_YDECODE_STATE_ESCAPE;
-			ch -= 64;
-		} else if (ch == '=') {
+			c -= 64;
+		} else if (c == '=') {
 			ystate |= GMIME_YDECODE_STATE_ESCAPE;
 			continue;
 		}
 		
 		ystate &= ~GMIME_YDECODE_STATE_EOLN;
 		
-		*outptr++ = ch -= 42;
+		*outptr++ = c -= 42;
 		
-		*pcrc = yenc_crc_add (*pcrc, ch);
-		*crc = yenc_crc_add (*crc, ch);
+		*pcrc = yenc_crc_add (*pcrc, c);
+		*crc = yenc_crc_add (*crc, c);
 	}
 	
 	*state = ystate;
@@ -522,7 +535,7 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	register int already;
-	unsigned char ch;
+	unsigned char c;
 	
 	inend = in + inlen;
 	outptr = out;
@@ -531,19 +544,19 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	inptr = in;
 	while (inptr < inend) {
-		ch = (*inptr++);
+		c = *inptr++;
 		
-		*pcrc = yenc_crc_add (*pcrc, ch);
-		*crc = yenc_crc_add (*crc, ch);
+		*pcrc = yenc_crc_add (*pcrc, c);
+		*crc = yenc_crc_add (*crc, c);
 		
-		ch += 42;
+		c += 42;
 		
-		if (ch == '\0' || ch == '\t' || ch == '\r' || ch == '\n' || ch == '=') {
+		if (c == '\0' || c == '\t' || c == '\r' || c == '\n' || c == '=') {
 			*outptr++ = '=';
-			*outptr++ = ch + 64;
+			*outptr++ = c + 64;
 			already += 2;
 		} else {
-			*outptr++ = ch;
+			*outptr++ = c;
 			already++;
 		}
 		
