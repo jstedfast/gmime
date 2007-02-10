@@ -366,8 +366,8 @@ g_mime_header_to_string (const GMimeHeader *header)
 	g_mime_header_write_to_stream (header, stream);
 	g_object_unref (stream);
 	
-	g_byte_array_append (array, "", 1);
-	str = array->data;
+	g_byte_array_append (array, (unsigned char *) "", 1);
+	str = (char *) array->data;
 	g_byte_array_free (array, FALSE);
 	
 	return str;
