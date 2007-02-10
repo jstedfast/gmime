@@ -231,9 +231,9 @@ struct _GpgCtx {
 	int passwd_fd;  /* only needed for sign/decrypt */
 	
 	/* status-fd buffer */
-	unsigned char *statusbuf;
-	unsigned char *statusptr;
-	unsigned int statusleft;
+	char *statusbuf;
+	char *statusptr;
+	guint statusleft;
 	
 	char *need_id;
 	char *passwd;
@@ -428,11 +428,11 @@ gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 {
 	if (!gpg->flushed) {
 		g_mime_stream_flush (gpg->diagnostics);
-		g_byte_array_append (gpg->diag, "", 1);
+		g_byte_array_append (gpg->diag, (unsigned char *) "", 1);
 		gpg->flushed = TRUE;
 	}
 	
-	return gpg->diag->data;
+	return (const char *) gpg->diag->data;
 }
 
 static void
@@ -729,10 +729,10 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	return -1;
 }
 
-static const char *
-next_token (const char *in, char **token)
+static char *
+next_token (char *in, char **token)
 {
-	const char *start, *inptr = in;
+	char *start, *inptr = in;
 	
 	while (*inptr == ' ')
 		inptr++;
@@ -756,10 +756,10 @@ next_token (const char *in, char **token)
 static int
 gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 {
-	register unsigned char *inptr;
-	const unsigned char *status;
 	size_t nread, nwritten;
+	register char *inptr;
 	GMimeSigner *signer;
+	char *status;
 	int len;
 	
  parse:
@@ -995,7 +995,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			} else if (!strncmp (status, "REVKEYSIG", 9)) {
 				gpg->signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
 			} else if (!strncmp (status, "VALIDSIG ", 9)) {
-				unsigned char *inend;
+				char *inend;
 				
 				gpg->validsig = TRUE;
 				status += 9;
@@ -1009,7 +1009,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status = next_token (status, NULL);
 				
 				/* the third token is the signature creation date (or 0 for unknown?) */
-				signer->sig_created = strtoul (status, (char **) &inend, 10);
+				signer->sig_created = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ')
 					break;
 				
