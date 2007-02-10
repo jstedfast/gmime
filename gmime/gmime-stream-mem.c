@@ -337,7 +337,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
-	g_byte_array_append (mem->buffer, buffer, len);
+	g_byte_array_append (mem->buffer, (unsigned char *) buffer, len);
 	
 	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
 	
