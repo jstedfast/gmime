@@ -134,7 +134,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 	}
 	
-	g_mime_filter_backup (filter, last, inptr - last);
+	g_mime_filter_backup (filter, (char *) last, inptr - last);
 	
 	*out = filter->outbuf;
 	*outlen = outptr - filter->outbuf;
