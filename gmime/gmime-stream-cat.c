@@ -179,7 +179,8 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;
-	ssize_t nwritten = 0, n = -1;
+	size_t nwritten = 0;
+	ssize_t n = -1;
 	off_t offset;
 	
 	/* check for end-of-stream */
@@ -226,7 +227,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	
 	cat->current = current;
 	
-	return n == -1 && nwritten == 0 ? -1 : nwritten;
+	if (n == -1 && nwritten == 0)
+		return -1;
+	
+	return nwritten;
 }
 
 static int
