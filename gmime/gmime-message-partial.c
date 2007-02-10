@@ -150,10 +150,10 @@ message_partial_set_content_type (GMimeObject *object, GMimeContentType *content
 	partial->id = g_strdup (value);
 	
 	value = g_mime_content_type_get_parameter (content_type, "number");
-	partial->number = value ? atoi (value) : -1;
+	partial->number = value ? strtol (value, NULL, 10) : -1;
 	
 	value = g_mime_content_type_get_parameter (content_type, "total");
-	partial->total = value ? atoi (value) : -1;
+	partial->total = value ? strtol (value, NULL, 10) : -1;
 	
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
@@ -290,13 +290,11 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	
 	g_return_val_if_fail (num > 0, NULL);
 	
-	id = g_mime_message_partial_get_id (partials[0]);
-	if (!id)
+	if (!(id = g_mime_message_partial_get_id (partials[0])))
 		return NULL;
 	
 	/* get them into the correct order... */
-	qsort ((void *) partials, num, sizeof (gpointer),
-	       partial_compare);
+	qsort ((void *) partials, num, sizeof (gpointer), partial_compare);
 	
 	/* only the last message/partial part is REQUIRED to have the total parameter */
 	total = g_mime_message_partial_get_total (partials[num - 1]);
