@@ -47,10 +47,6 @@
 #include "gmime-iconv.h"
 #include "gmime-iconv-utils.h"
 
-#ifndef HAVE_ISBLANK
-#define isblank(c) (c == ' ' || c == '\t')
-#endif
-
 #ifdef ENABLE_WARNINGS
 #define w(x) x
 #else
@@ -82,8 +78,7 @@
 #define DATE_TOKEN_HAS_SIGN             (1 << 7)
 
 
-static char *base64_alphabet =
-"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+static char base64_alphabet[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static unsigned char tohex[16] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
@@ -1091,7 +1086,7 @@ header_fold (const char *in, gboolean structured)
 				   mailer folded it */
 				g_string_append (out, "\n\t");
 				outlen = 1;
-				while (isblank (*inptr))
+				while (is_blank (*inptr))
 					inptr++;
 			} else {
 				g_string_append_c (out, *inptr++);
@@ -2645,7 +2640,7 @@ g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigne
 	if (last != -1) {
 		/* space/tab must be encoded if its the last character on
 		   the line */
-		if (is_qpsafe (last) && !isblank (last)) {
+		if (is_qpsafe (last) && !is_blank (last)) {
 			*outptr++ = last;
 		} else {
 			*outptr++ = '=';
@@ -2680,15 +2675,13 @@ g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigne
 size_t
 g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
 {
-	const register unsigned char *inptr, *inend;
-	register unsigned char *outptr;
+	const register unsigned char *inptr = in;
+	const unsigned char *inend = in + inlen;
+	register unsigned char *outptr = out;
 	register guint32 sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
 	unsigned char c;
 	
-	inptr = in;
-	inend = in + inlen;
-	outptr = out;
 	while (inptr < inend) {
 		c = *inptr++;
 		if (c == '\r') {
@@ -2729,7 +2722,7 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
 				}
 				
 				/* delay output of space char */
-				if (isblank (c)) {
+				if (is_blank (c)) {
 					last = c;
 				} else {
 					*outptr++ = c;
@@ -2782,21 +2775,15 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 	 * Note: Trailing rubbish (at the end of input), like = or =x
 	 * or =\r will be lost.
 	 */
-	const register unsigned char *inptr;
-	register unsigned char *outptr;
-	const unsigned char *inend;
+	const register unsigned char *inptr = in;
+	const unsigned char *inend = in + inlen;
+	register unsigned char *outptr = out;
+	guint32 isave = *save;
+	int istate = *state;
 	unsigned char c;
-	guint32 isave;
-	int istate;
-	
-	inend = in + inlen;
-	outptr = out;
 	
 	d(printf ("quoted-printable, decoding text '%.*s'\n", inlen, in));
 	
-	istate = *state;
-	isave = *save;
-	inptr = in;
 	while (inptr < inend) {
 		switch (istate) {
 		case 0:

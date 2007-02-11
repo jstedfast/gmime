@@ -23,6 +23,7 @@
 #endif
 
 #include <string.h>
+#include <limits.h>
 #include <ctype.h>
 #include <errno.h>
 
@@ -103,20 +104,31 @@ decode_lwsp (const char **in)
 	*in = inptr;
 }
 
+#define INT_OVERFLOW(x,d) (((x) > (INT_MAX / 10)) || ((x) == (INT_MAX / 10) && (d) > (INT_MAX % 10)))
+
 static int
 decode_int (const char **in)
 {
-	const char *inptr = *in;
-	int n = 0;
+	const unsigned char *inptr;
+	int digit, n = 0;
 	
-	decode_lwsp (&inptr);
+	decode_lwsp (in);
 	
+	inptr = (const unsigned char *) *in;
 	while (isdigit ((int) *inptr)) {
-		n = n * 10 + (*inptr - '0');
+		digit = (*inptr - '0');
+		if (INT_OVERFLOW (n, digit)) {
+			while (isdigit ((int) *inptr))
+				inptr++;
+			break;
+		}
+		
+		n = (n * 10) + digit;
+		
 		inptr++;
 	}
 	
-	*in = inptr;
+	*in = (const char *) inptr;
 	
 	return n;
 }

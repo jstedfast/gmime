@@ -92,9 +92,6 @@ AC_CHECK_TYPE(off_t, long)
 AC_CHECK_TYPE(size_t, unsigned int)
 AC_CHECK_TYPE(ssize_t, int)
 
-dnl Check for the isblank GNUism
-AC_CHECK_FUNCS(isblank)
-
 dnl Check for some time functions
 AC_CHECK_FUNCS(strftime localtime gmtime_r)
 

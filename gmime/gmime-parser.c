@@ -26,7 +26,6 @@
 #include <string.h>
 #include <sys/types.h>
 #include <regex.h>
-#include <ctype.h>
 
 #include "gmime-parser.h"
 
@@ -34,10 +33,6 @@
 #include "gmime-message-part.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
-
-#ifndef HAVE_ISBLANK
-#define isblank(c) ((c) == ' ' || (c) == '\t')
-#endif /* HAVE_ISBLANK */
 
 #ifdef ENABLE_WARNINGS
 #define w(x) x

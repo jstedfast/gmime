@@ -48,7 +48,10 @@ enum {
 	IS_QPSAFE	= (1 << 6),
 	IS_ESAFE	= (1 << 7),  /* encoded word safe */
 	IS_PSAFE	= (1 << 8),  /* encoded word in phrase safe */
-	IS_ATTRCHAR     = (1 << 9)   /* attribute-char from rfc2184 */
+	IS_ATTRCHAR     = (1 << 9),  /* attribute-char from rfc2184 */
+	
+	/* ctype replacements */
+	IS_BLANK        = (1 << 10), /* space or tab */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -63,6 +66,9 @@ enum {
 #define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)
 #define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)
 #define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)
+
+/* ctype replacements */
+#define is_blank(x) ((gmime_special_table[(unsigned char)(x)] & IS_BLANK) != 0)
 
 /* code to rebuild the gmime_special_table */
 static void
@@ -120,8 +126,8 @@ header_decode_init (void)
 			gmime_special_table[i] |= IS_PSAFE;
 	}
 	
-	gmime_special_table[' '] |= IS_SPACE;
-	gmime_special_table['\t'] |= IS_QPSAFE;
+	gmime_special_table[' '] |= IS_SPACE | IS_BLANK;
+	gmime_special_table['\t'] |= IS_QPSAFE | IS_BLANK;
 	header_init_bits (IS_LWSP, 0, FALSE, CHARS_LWSP);
 	header_init_bits (IS_TSPECIAL, IS_CTRL, FALSE, CHARS_TSPECIAL);
 	header_init_bits (IS_SPECIAL, 0, FALSE, CHARS_SPECIAL);
@@ -144,7 +150,7 @@ int main (int argc, char **argv)
 	/* print out the table */
 	printf ("static unsigned short gmime_special_table[256] = {");
 	for (i = 0; i < 256; i++) {
-		printf ("%s%3d%s", (i % 16) ? "" : "\n\t",
+		printf ("%s%4d%s", (i % 16) ? "" : "\n\t",
 			gmime_special_table[i], i != 255 ? "," : "\n");
 	}
 	printf ("};\n\n");
@@ -158,9 +164,12 @@ int main (int argc, char **argv)
 	printf ("\tIS_SPACE    = (1 << 4),\n");
 	printf ("\tIS_DSPECIAL = (1 << 5),\n");
 	printf ("\tIS_QPSAFE   = (1 << 6),\n");
-	printf ("\tIS_ESAFE    = (1 << 7), /* encoded word safe */\n");
-	printf ("\tIS_PSAFE    = (1 << 8), /* encode word in phrase safe */\n");
-	printf ("\tIS_ATTRCHAR = (1 << 9)  /* attribute-char from rfc2184 */\n");
+	printf ("\tIS_ESAFE    = (1 << 7),  /* encoded word safe */\n");
+	printf ("\tIS_PSAFE    = (1 << 8),  /* encode word in phrase safe */\n");
+	printf ("\tIS_ATTRCHAR = (1 << 9),  /* attribute-char from rfc2184 */\n");
+	printf ("\t\n");
+	printf ("\t/* ctype replacements */\n");
+	printf ("\tIS_BLANK    = (1 << 10), /* space or tab */\n");
 	printf ("};\n\n");
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
@@ -175,6 +184,9 @@ int main (int argc, char **argv)
 	printf ("#define is_especial(x) ((gmime_special_table[(unsigned char)(x)] & IS_ESAFE) != 0)\n");
 	printf ("#define is_psafe(x) ((gmime_special_table[(unsigned char)(x)] & IS_PSAFE) != 0)\n");
 	printf ("#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)\n");
+	printf ("\n");
+	printf ("/* ctype replacements */\n");
+	printf ("#define is_blank(x) ((gmime_special_table[(unsigned char)(x)] & IS_BLANK) != 0)\n");
 	printf ("\n");
 	
 	printf ("#define CHARS_LWSP \" \\t\\n\\r\"               /* linear whitespace chars */\n");

@@ -396,7 +396,7 @@ decode_qstring (unsigned char **in, unsigned char *inend)
 	if (inptr == inend)
 		return NULL;
 	
-	if (strncmp (inptr, "NIL", 3) != 0) {
+	if (strncmp ((const char *) inptr, "NIL", 3) != 0) {
 		g_assert (*inptr == '"');
 		inptr++;
 		start = inptr;
@@ -406,7 +406,7 @@ decode_qstring (unsigned char **in, unsigned char *inend)
 			inptr++;
 		}
 		
-		qstring = g_strndup (start, inptr - start);
+		qstring = g_strndup ((const char *) start, inptr - start);
 		unescape_qstring (qstring);
 		g_assert (*inptr == '"');
 		inptr++;
@@ -442,7 +442,6 @@ decode_params (unsigned char **in, unsigned char *inend)
 {
 	GMimeParam *params, *tail, *n;
 	unsigned char *inptr;
-	char *buf;
 	
 	inptr = *in;
 	params = NULL;

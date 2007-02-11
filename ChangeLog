@@ -1,3 +1,11 @@
+2007-02-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c: Removed the need for the ctype isblank()
+	function.
+
+	* gmime/gmime-param.c (decode_int): Need to use (unsigned char *)
+	when passing indexes to ctype functions.
+
 2007-02-10  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-charset.c: Changed the names of the charset format
