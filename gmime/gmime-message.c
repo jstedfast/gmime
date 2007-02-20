@@ -1330,7 +1330,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
  * WARNING: This interface is deprecated. Use
  * g_mime_object_write_to_stream() instead.
  *
- * Returns -1 on fail.
+ * Returns %-1 on fail.
  **/
 ssize_t
 g_mime_message_write_to_stream (GMimeMessage *message, GMimeStream *stream)
@@ -1454,6 +1454,8 @@ handle_multipart_mixed (GMimeMultipart *multipart, gboolean want_plain, gboolean
  *
  * Attempts to get the body of the message in the preferred format
  * specified by @want_plain.
+ *
+ * WARNING: This interface is deprecated.
  *
  * Returns the prefered form of the message body. Sets the value of
  * @is_html to %TRUE if the part returned is in HTML format, otherwise
