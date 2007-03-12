@@ -1,5 +1,9 @@
 2007-03-12  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-param.c (decode_param): Instead of only checking
+	that the param value begins with "=?", check if that sequence
+	exists anywhere in the value. Fixes bug #407522.
+
 	* src/uudecode.c (uudecode): Use a strcmp instead of comparing
 	against a string literal (which was technically correct in this
 	case, but the prettyification would be nice if "-" was specified

@@ -298,10 +298,10 @@ decode_param (const char **in, char **paramp, char **valuep, int *id, gboolean *
 		value = decode_value (&inptr);
 		
 		if (!is_rfc2184 && value) {
-			if (!strncmp (value, "=?", 2)) {
-				/* We have a broken param value that is rfc2047 encoded.
-				 * Since both Outlook and Netscape/Mozilla do this, we
-				 * should handle this case.
+			if (strstr (value, "=?") != NULL) {
+				/* We (may) have a broken param value that is rfc2047
+				 * encoded. Since both Outlook and Netscape/Mozilla do
+				 * this, we should handle this case.
 				 */
 				
 				if ((val = g_mime_utils_header_decode_text (value))) {
