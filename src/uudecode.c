@@ -152,7 +152,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		if (p == NULL) {
 			fprintf (stderr, "%s: %s: No `begin' line\n", progname,
-				 infile == DEFAULT_FILENAME ? "stdin" : infile);
+				 (!strcmp (infile, DEFAULT_FILENAME)) ? "stdin" : infile);
 			fclose (fp);
 			goto nexti;
 		}

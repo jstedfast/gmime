@@ -952,12 +952,10 @@ static void
 sync_recipient_header (GMimeMessage *message, const char *type)
 {
 	const InternetAddressList *recipients;
+	char *string;
 	
 	/* sync the specified recipient header */
-	recipients = g_mime_message_get_recipients (message, type);
-	if (recipients) {
-		char *string;
-		
+	if ((recipients = g_mime_message_get_recipients (message, type))) {
 		string = internet_address_list_to_string (recipients, TRUE);
 		g_mime_header_set (GMIME_OBJECT (message)->headers, type, string);
 		g_free (string);
@@ -1009,8 +1007,7 @@ message_add_recipients_from_string (GMimeMessage *message, char *type, const cha
 	recipients = g_hash_table_lookup (message->recipients, type);
 	g_hash_table_remove (message->recipients, type);
 	
-	addrlist = internet_address_parse_string (string);
-	if (addrlist) {
+	if ((addrlist = internet_address_parse_string (string))) {
 		recipients = internet_address_list_concat (recipients, addrlist);
 		internet_address_list_destroy (addrlist);
 	}
@@ -1063,6 +1060,50 @@ g_mime_message_get_recipients (GMimeMessage *message, const char *type)
 	g_return_val_if_fail (type != NULL, NULL);
 	
 	return g_hash_table_lookup (message->recipients, type);
+}
+
+
+static const char *recipient_types[] = {
+	GMIME_RECIPIENT_TYPE_TO,
+	GMIME_RECIPIENT_TYPE_CC,
+	GMIME_RECIPIENT_TYPE_BCC
+};
+
+/**
+ * g_mime_message_get_all_recipients:
+ * @message: MIME Message
+ *
+ * Gets the complete list of recipients for @message.
+ *
+ * Returns a newly allocated #InternetAddressList containing all
+ * recipients of the message.
+ **/
+InternetAddressList *
+g_mime_message_get_all_recipients (GMimeMessage *message)
+{
+	InternetAddressList *list, *tail, *node, *recipients;
+	guint i;
+	
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	list = NULL;
+	tail = (InternetAddressList *) &list;
+	
+	for (i = 0; i < G_N_ELEMENTS (recipient_types); i++) {
+		recipients = g_hash_table_lookup (message->recipients, recipient_types[i]);
+		while (recipients != NULL) {
+			internet_address_ref (recipients->address);
+			node = g_new (InternetAddressList, 1);
+			node->address = recipients->address;
+			node->next = NULL;
+			tail->next = node;
+			tail = node;
+			
+			recipients = recipients->next;
+		}
+	}
+	
+	return list;
 }
 
 

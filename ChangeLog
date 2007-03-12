@@ -1,3 +1,16 @@
+2007-03-12  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* src/uudecode.c (uudecode): Use a strcmp instead of comparing
+	against a string literal (which was technically correct in this
+	case, but the prettyification would be nice if "-" was specified
+	in argv too). Fixes bug #408613.
+
+2007-03-10  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-message.c (g_mime_message_get_all_recipients): New
+	convenience function to get To, Cc, and Bcc recipients all in a
+	single list.
+
 2007-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-message.h: Moved g_mime_message_get_body() into the
@@ -26,9 +39,9 @@
 
 2007-02-09  Jeffrey Stedfast  <fejj@gnome.org>
 
-	* gmime/gmime-stream-filter.c (stream_write): Instead of the
-	return value of the source stream write() to our input length to
-	write, compare to -1. We can't assume the the value the source
+	* gmime/gmime-stream-filter.c (stream_write): Instead of comparing
+	the return value of the source stream write() to our input length
+	to write, compare to -1. We can't assume the the value the source
 	stream will return will be what we expected, all we can do is
 	check for error.
 
