@@ -22,6 +22,8 @@
 #include <config.h>
 #endif
 
+#include <time.h>
+
 #include "gmime.h"
 
 
@@ -77,6 +79,11 @@ g_mime_init (guint32 flags)
 {
 	if (initialized++)
 		return;
+	
+#if defined (HAVE_TIMEZONE) || defined (HAVE__TIMEZONE)
+	/* initialize timezone */
+	tzset ();
+#endif
 	
 	g_type_init ();
 	

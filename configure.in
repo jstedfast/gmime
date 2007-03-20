@@ -255,7 +255,17 @@ else
 			AC_DEFINE(HAVE_ALTZONE, 1, [Define if libc defines an altzone variable])
 		fi
 	else
-		AC_ERROR(unable to find a way to determine timezone)
+		AC_CACHE_CHECK(for _timezone variable, ac_cv_var__timezone,
+			AC_TRY_COMPILE([
+				#include <time.h>
+			], [
+				_timezone = 1;
+			], ac_cv_var__timezone="yes", ac_cv_var__timezone="no"))
+		if test "$ac_cv_var__timezone" = "yes"; then
+			AC_DEFINE(HAVE__TIMEZONE, 1, [Define if libc defines a _timezone variable])
+		else
+			AC_ERROR(unable to find a way to determine timezone)
+		fi
 	fi
 fi
 

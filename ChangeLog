@@ -1,3 +1,13 @@
+2007-03-20  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* configure.in: Check for the existance of _timezone.
+
+	* gmime/gmime-utils.c (mktime_utc): Use _timezone if
+	HAVE__TIMEZONE is set.
+
+	* gmime/gmime.c (g_mime_init): If HAVE_TIMEZONE or HAVE__TIMEZONE
+	is set, call tzset() to initialise the timezone variable.
+
 2007-03-12  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-param.c (decode_param): Instead of only checking

@@ -474,6 +474,8 @@ mktime_utc (struct tm *tm)
 #endif
 	} else
 		tt -= timezone;
+#elif defined (HAVE__TIMEZONE)
+	tt -= _timezone;
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
 #endif
