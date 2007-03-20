@@ -217,7 +217,8 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 	
 	ztime_delta (&ztimer->start, &ztimer->stop, &delta);
 	
-	fprintf (stderr, "ZenTimer: %s took %u.%06u seconds\n", oper, delta.sec, delta.usec);
+	fprintf (stderr, "ZenTimer: %s took %u.%06u seconds\n", oper,
+		 (unsigned int) delta.sec, (unsigned int) delta.usec);
 	
 	if (paused)
 		ZenTimerResume (ztimer);
