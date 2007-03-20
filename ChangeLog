@@ -1,6 +1,6 @@
 2007-03-20  Jeffrey Stedfast  <fejj@gnome.org>
 
-	* configure.in: Check for the existance of _timezone.
+	* configure.in: Check for the existance of _timezone and nfds_t.
 
 	* gmime/gmime-utils.c (mktime_utc): Use _timezone if
 	HAVE__TIMEZONE is set.

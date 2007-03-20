@@ -92,6 +92,21 @@ AC_CHECK_TYPE(off_t, long)
 AC_CHECK_TYPE(size_t, unsigned int)
 AC_CHECK_TYPE(ssize_t, int)
 
+dnl Check for nfds_t - used by poll()
+AC_MSG_CHECKING(for nfds_t)
+AC_TRY_COMPILE([
+	#include <sys/types.h>
+	#include <poll.h>
+	], [
+	nfds_t nfds = 1;
+	]
+,
+	AC_MSG_RESULT(yes)
+,
+	AC_DEFINE(nfds_t, unsigned int, [Define to `unsigned int' if <poll.h> does not define.])
+	AC_MSG_RESULT(no)
+)
+
 dnl Check for some time functions
 AC_CHECK_FUNCS(strftime localtime gmtime_r)
 
