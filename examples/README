@@ -1,5 +1,5 @@
                                GMime Examples
-                   by Jeffrey Stedfast <fejj@ximian.com>
+                   by Jeffrey Stedfast <fejj@gnome.org>
 
 
 Example: basic-example.c
@@ -31,4 +31,4 @@ with this distribution (they will be in tests/), as they will also
 provide you with samples that you may find useful.
 
 Questions and/or Comments on these examples should be sent to
-<fejj@ximian.com>
+<fejj@gnome.org>
