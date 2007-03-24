@@ -1,3 +1,22 @@
+2007-03-24  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* Makefile.am (check-local): Rewritten to actually run the
+	automated tests.
+
+	* tests/test-mbox.c: Rewritten to use testsuite library.
+
+	* tests/test-pgp.c: Rewritten to use testsuite library.
+
+	* tests/test-pgpmime.c: Rewritten to use testsuite library.
+
+	* tests/test-cat.c: Rewritten to use testsuite library.
+
+	* tests/test-streams.c: Rewritten to use testsuite library.
+
+	* tests/test-iconv.c: Rewritten to use testsuite library.
+
+	* tests/testsuite.[c,h]: New automated test-suite helper library.
+
 2007-03-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* configure.in: Check for the existance of _timezone and nfds_t.

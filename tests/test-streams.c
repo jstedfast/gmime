@@ -25,102 +25,103 @@
 #include <glib.h>
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/mman.h>
 #include <unistd.h>
+#include <dirent.h>
 #include <fcntl.h>
-#include <stdarg.h>
-#include <stdlib.h>
+#include <errno.h>
 
 #include <gmime/gmime.h>
 
+#include "testsuite.h"
 
-static GSList *test = NULL;
+extern int verbose;
 
-static void
-test_abort (void)
+#define d(x) 
+#define v(x) if (verbose > 3) x;
+
+
+static gboolean
+streams_match (GMimeStream **streams, const char *filename)
 {
-	GSList *n;
+	char buf[4096], dbuf[4096], errstr[1024];
+	size_t totalsize, totalread = 0;
+	size_t nread, size;
+	ssize_t n;
 	
-	fprintf (stderr, "stream tests failed while in:\n\t");
-	n = test;
-	while (n) {
-		fprintf (stderr, "%s", (char*)n->data);
-		if (n->next)
-			fprintf (stderr, ": ");
-		n = n->next;
-	}
-	fprintf (stderr, "\n");
+	v(fprintf (stdout, "Matching original stream (%ld -> %ld) with %s (%ld, %ld)... ",
+		   streams[0]->position, streams[0]->bound_end, filename,
+		   streams[1]->position, streams[1]->bound_end));
 	
-	abort ();
-}
-
-static void
-test_assert_real (gboolean result, const char *file, const char *function, int line, const char *assertion)
-{
-	if (!result) {
-		fprintf (stderr, "\nfile %s: line %d (%s): assertion failed: (%s)\n",
-			 file, line, function, assertion);
-		test_abort ();
-	}
-}
-
-#define test_assert(assertion) test_assert_real (assertion, __FILE__, G_GNUC_FUNCTION, __LINE__, #assertion)
-
-static void
-test_push (char *subtest)
-{
-	test = g_slist_append (test, subtest);
-}
-
-static void
-test_pop (void)
-{
-	GSList *n;
-	
-	n = test;
-	while (n && n->next)
-		n = n->next;
-	
-	if (n) {
-		test = g_slist_remove_link (test, n);
-		g_slist_free_1 (n);
-	} else
-		g_warning ("nothing to pop");
-}
-
-static void
-test_stream_read (GMimeStream *stream, const char *filename)
-{
-	char sbuf[1024], rbuf[1024];
-	ssize_t slen, rlen;
-	int fd;
-	
-	test_push ("stream_read");
-	
-	if ((fd = open (filename, O_RDONLY)) == -1) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
-		return;
+	if (streams[0]->bound_end != -1) {
+		totalsize = streams[0]->bound_end - streams[0]->position;
+	} else if ((n = g_mime_stream_length (streams[0])) == -1) {
+		sprintf (errstr, "Error: Unable to get length of original stream\n");
+		goto fail;
+	} else if (n < (streams[0]->position - streams[0]->bound_start)) {
+		sprintf (errstr, "Error: Overflow on original stream?\n");
+		goto fail;
+	} else {
+		totalsize = n - (streams[0]->position - streams[0]->bound_start);
 	}
 	
-	slen = rlen = 0;
-	while (!g_mime_stream_eos (stream)) {
-		slen = g_mime_stream_read (stream, sbuf, sizeof (sbuf));
-		rlen = read (fd, rbuf, slen);
-		if (slen != rlen || memcmp (sbuf, rbuf, slen))
+	while (totalread < totalsize) {
+		if ((n = g_mime_stream_read (streams[0], buf, sizeof (buf))) <= 0)
 			break;
+		
+		size = n;
+		nread = 0;
+		totalread += n;
+		
+		d(fprintf (stderr, "read %ul bytes from original stream\n", size));
+		
+		do {
+			if ((n = g_mime_stream_read (streams[1], dbuf + nread, size - nread)) <= 0) {
+				fprintf (stderr, "stream[1] read() returned %ld, EOF\n", n);
+				break;
+			}
+			d(fprintf (stderr, "read %ld bytes from stream[1]\n", n));
+			nread += n;
+		} while (nread < size);
+		
+		if (nread < size) {
+			sprintf (errstr, "Error: `%s' appears to be truncated, short %u+ bytes\n",
+				 filename, size - nread);
+			goto fail;
+		}
+		
+		if (memcmp (buf, dbuf, size) != 0) {
+			sprintf (errstr, "Error: `%s': content does not match\n", filename);
+			goto fail;
+		} else {
+			d(fprintf (stderr, "%u bytes identical\n", size));
+		}
 	}
 	
-	close (fd);
-	
-	if (slen != rlen || memcmp (sbuf, rbuf, slen)) {
-		fprintf (stderr, "\tstream: \"%.*s\" (%d)\n", slen, sbuf, slen);
-		fprintf (stderr, "\treal:   \"%.*s\" (%d)\n", rlen, rbuf, rlen);
-		test_abort ();
+	if (totalread < totalsize) {
+		sprintf (errstr, "Error: expected more data from stream[0]\n");
+		goto fail;
 	}
 	
-	test_pop ();
+	if ((n = g_mime_stream_read (streams[1], buf, sizeof (buf))) > 0) {
+		sprintf (errstr, "Error: `%s' appears to contain extra content\n", filename);
+		goto fail;
+	}
+	
+	v(fputs ("passed\n", stdout));
+	
+	return TRUE;
+	
+ fail:
+	
+	v(fputs ("failed\n", stdout));
+	fputs (errstr, stderr);
+	
+	return FALSE;
 }
 
 static void
@@ -130,81 +131,71 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	ssize_t slen;
 	FILE *fp;
 	
-	test_push ("stream_gets");
-	
-	if (!(fp = fopen (filename, "r+"))) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
-		return;
-	}
+	if (!(fp = fopen (filename, "r+")))
+		throw (exception_new ("could not open `%s': %s", filename, strerror (errno)));
 	
 	while (!g_mime_stream_eos (stream)) {
 		rbuf[0] = '\0';
 		slen = g_mime_stream_buffer_gets (stream, sbuf, sizeof (sbuf));
 		fgets (rbuf, sizeof (rbuf), fp);
 		
-		if (strcmp (sbuf, rbuf))
+		if (strcmp (sbuf, rbuf) != 0)
 			break;
 	}
 	
 	fclose (fp);
 	
-	if (strcmp (sbuf, rbuf)) {
-		fprintf (stderr, "\tstream: \"%s\" (%ul)\n", sbuf, strlen (sbuf));
-		fprintf (stderr, "\treal:   \"%s\" (%ul)\n", rbuf, strlen (rbuf));
-		test_abort ();
+	if (strcmp (sbuf, rbuf) != 0) {
+		v(fprintf (stderr, "\tstream: \"%s\" (%ul)\n", sbuf, strlen (sbuf)));
+		v(fprintf (stderr, "\treal:   \"%s\" (%ul)\n", rbuf, strlen (rbuf)));
+		throw (exception_new ("streams did not match"));
 	}
-	
-	test_pop ();
 }
 
 static void
-test_stream_buffer (const char *filename)
+test_stream_buffer_gets (const char *filename)
 {
 	GMimeStream *stream, *buffered;
 	int fd;
 	
-	test_push ("GMimeStreamBuffer");
-	
 	if ((fd = open (filename, O_RDONLY)) == -1) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
+		v(fprintf (stderr, "failed to open %s", filename));
 		return;
 	}
 	
-	test_push ("block read");
 	stream = g_mime_stream_fs_new (fd);
-	buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
-	test_stream_read (buffered, filename);
-	g_mime_stream_unref (buffered);
-	test_pop ();
 	
-	test_push ("cache read");
-	g_mime_stream_reset (stream);
-	buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_CACHE_READ);
-	test_stream_read (buffered, filename);
-	g_mime_stream_unref (buffered);
-	test_pop ();
+	testsuite_check ("GMimeStreamBuffer::block gets");
+	try {
+		g_mime_stream_reset (stream);
+		buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
+		test_stream_gets (buffered, filename);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
+					ex->message);
+	} finally {
+		g_mime_stream_unref (buffered);
+	}
 	
-	test_push ("block read");
-	g_mime_stream_reset (stream);
-	buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_BLOCK_READ);
-	test_stream_gets (buffered, filename);
-	g_mime_stream_unref (buffered);
-	test_pop ();
-	
-	test_push ("cache read");
-	g_mime_stream_reset (stream);
-	buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_CACHE_READ);
-	test_stream_gets (buffered, filename);
-	g_mime_stream_unref (buffered);
-	test_pop ();
+	testsuite_check ("GMimeStreamBuffer::cache gets");
+	try {
+		g_mime_stream_reset (stream);
+		buffered = g_mime_stream_buffer_new (stream, GMIME_STREAM_BUFFER_CACHE_READ);
+		test_stream_gets (buffered, filename);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
+					ex->message);
+	} finally {
+		g_mime_stream_unref (buffered);
+	}
 	
 	g_mime_stream_unref (stream);
-	
-	test_pop ();
 }
 
+
+#if 0
 static void
 test_stream_mem (const char *filename)
 {
@@ -212,109 +203,336 @@ test_stream_mem (const char *filename)
 	GMimeStream *stream, *fstream;
 	int fd;
 	
-	test_push ("GMimeStreamMem");
-	
 	if ((fd = open (filename, O_RDONLY)) == -1) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
+		v(fprintf (stderr, "failed to open %s", filename));
 		return;
 	}
+	
+	testsuite_start ("GMimeStreamMem");
 	
 	fstream = g_mime_stream_fs_new (fd);
 	stream = g_mime_stream_mem_new ();
 	
-	g_mime_stream_write_to_stream (fstream, stream);
-	test_assert (g_mime_stream_length (stream) == g_mime_stream_length (fstream));
+	testsuite_check ("GMimeStreamMem::read()");
+	try {
+		if (g_mime_stream_write_to_stream (fstream, stream) == -1)
+			throw (exception_new ("g_mime_stream_write_to_stream() failed"));
+		
+		if (g_mime_stream_length (stream) != g_mime_stream_length (fstream))
+			throw (exception_new ("stream lengths didn't match"));
+		
+		test_stream_read (stream, filename);
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeStreamMem::read() failed: %s",
+					ex->message);
+	} finally;
+	
 	g_mime_stream_unref (fstream);
-	
-	test_stream_read (stream, filename);
 	g_mime_stream_unref (stream);
 	
-	test_pop ();
+	testsuite_end ();
 }
+#endif
 
-static void
-test_stream_fs (const char *filename)
+
+
+
+static gboolean
+check_stream_fs (const char *input, const char *output, const char *filename, off_t start, off_t end)
 {
-	GMimeStream *stream;
-	int fd;
+	GMimeStream *streams[2], *stream;
+	Exception *ex = NULL;
+	int fd[2];
 	
-	test_push ("GMimeStreamFs");
+	if ((fd[0] = open (input, O_RDONLY)) == -1)
+		return FALSE;
 	
-	if ((fd = open (filename, O_RDONLY)) == -1) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
-		return;
+	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+		close (fd[0]);
+		return FALSE;
 	}
 	
-	stream = g_mime_stream_fs_new (fd);
-	test_stream_read (stream, filename);
-	g_mime_stream_unref (stream);
+	stream = g_mime_stream_fs_new (fd[0]);
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
 	
-	test_pop ();
+	streams[1] = g_mime_stream_fs_new (fd[1]);
+	
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamFs streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
 }
 
-static void
-test_stream_file (const char *filename)
+static gboolean
+check_stream_file (const char *input, const char *output, const char *filename, off_t start, off_t end)
 {
-	GMimeStream *stream;
-	FILE *fp;
+	GMimeStream *streams[2], *stream;
+	Exception *ex = NULL;
+	FILE *fp[2];
 	
-	test_push ("GMimeStreamFile");
+	if (!(fp[0] = fopen (input, "r")))
+		return FALSE;
 	
-	if (!(fp = fopen (filename, "r+"))) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
-		return;
+	if (!(fp[1] = fopen (output, "r"))) {
+		fclose (fp[0]);
+		return FALSE;
 	}
 	
-	stream = g_mime_stream_file_new (fp);
-	test_stream_read (stream, filename);
-	g_mime_stream_unref (stream);
+	stream = g_mime_stream_file_new (fp[0]);
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
 	
-	test_pop ();
+	streams[1] = g_mime_stream_file_new (fp[1]);
+	
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamFile streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
 }
 
-static void
-test_stream_filter (const char *filename)
+static gboolean
+check_stream_mmap (const char *input, const char *output, const char *filename, off_t start, off_t end)
 {
-	GMimeStream *stream, *istream;
-	int fd;
+	GMimeStream *streams[2], *stream;
+	Exception *ex = NULL;
+	int fd[2];
 	
-	test_push ("GMimeStreamFilter");
+	if ((fd[0] = open (input, O_RDONLY)) == -1)
+		return FALSE;
 	
-	if ((fd = open (filename, O_RDONLY)) == -1) {
-		g_warning ("failed to open %s", filename);
-		test_pop ();
-		return;
+	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+		close (fd[0]);
+		return FALSE;
 	}
 	
-	istream = g_mime_stream_fs_new (fd);
-	stream = g_mime_stream_filter_new_with_stream (istream);
-	g_object_unref (istream);
+	stream = g_mime_stream_mmap_new (fd[0], PROT_NONE, MAP_PRIVATE);
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
 	
-	test_stream_read (stream, filename);
-	g_mime_stream_unref (stream);
+	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_NONE, MAP_PRIVATE);
 	
-	test_pop ();
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamMmap streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
 }
 
+static gboolean
+check_stream_buffer_block (const char *input, const char *output, const char *filename, off_t start, off_t end)
+{
+	GMimeStream *streams[2], *stream;
+	Exception *ex = NULL;
+	int fd[2];
+	
+	if ((fd[0] = open (input, O_RDONLY)) == -1)
+		return FALSE;
+	
+	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+		close (fd[0]);
+		return FALSE;
+	}
+	
+	streams[0] = g_mime_stream_fs_new (fd[0]);
+	stream = g_mime_stream_buffer_new (streams[0], GMIME_STREAM_BUFFER_BLOCK_READ);
+	g_object_unref (streams[0]);
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
+	
+	streams[1] = g_mime_stream_fs_new (fd[1]);
+	
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamBuffer (Block Mode) streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
+}
+
+static gboolean
+check_stream_buffer_cache (const char *input, const char *output, const char *filename, off_t start, off_t end)
+{
+	GMimeStream *streams[2], *stream;
+	Exception *ex = NULL;
+	int fd[2];
+	
+	if ((fd[0] = open (input, O_RDONLY)) == -1)
+		return FALSE;
+	
+	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+		close (fd[0]);
+		return FALSE;
+	}
+	
+	streams[0] = g_mime_stream_fs_new (fd[0]);
+	stream = g_mime_stream_buffer_new (streams[0], GMIME_STREAM_BUFFER_CACHE_READ);
+	g_object_unref (streams[0]);
+	streams[0] = g_mime_stream_substream (stream, start, end);
+	g_object_unref (stream);
+	
+	streams[1] = g_mime_stream_fs_new (fd[1]);
+	
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamBuffer (Cache Mode) streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
+}
+
+
+typedef gboolean (* checkFunc) (const char *, const char *, const char *, off_t, off_t);
+
+static struct {
+	const char *what;
+	checkFunc check;
+} checks[] = {
+	{ "GMimeStreamFs",                  check_stream_fs           },
+	{ "GMimeStreamFile",                check_stream_file         },
+	{ "GMimeStreamMmap",                check_stream_mmap         },
+	{ "GMimeStreamBuffer (block mode)", check_stream_buffer_block },
+	{ "GMimeStreamBuffer (cache mode)", check_stream_buffer_cache },
+};
+
+static void
+test_streams (DIR *dir, const char *datadir, const char *filename)
+{
+	char inpath[256], outpath[256], *p, *q, *o;
+	struct dirent *dent;
+	off_t start, end;
+	size_t n;
+	guint i;
+	
+	p = g_stpcpy (inpath, datadir);
+	*p++ = G_DIR_SEPARATOR;
+	p = g_stpcpy (p, "input");
+	*p++ = G_DIR_SEPARATOR;
+	strcpy (p, filename);
+	
+	p = g_stpcpy (outpath, datadir);
+	*p++ = G_DIR_SEPARATOR;
+	p = g_stpcpy (p, "output");
+	*p++ = G_DIR_SEPARATOR;
+	
+	n = strlen (filename);
+	
+	while ((dent = readdir (dir))) {
+		if (strncmp (dent->d_name, filename, n) != 0 || dent->d_name[n] != ':')
+			continue;
+		
+		p = dent->d_name + n + 1;
+		if ((start = strtol (p, &o, 10)) < 0 || *o != ',')
+			continue;
+		
+		p = o + 1;
+		
+		if ((((end = strtol (p, &o, 10)) < start) && end != -1) || *o != '\0')
+			continue;
+		
+		strcpy (q, dent->d_name);
+		
+		for (i = 0; i < G_N_ELEMENTS (checks); i++) {
+			testsuite_check ("%s on `%s'", checks[i].what, dent->d_name);
+			try {
+				if (!checks[i].check (inpath, outpath, dent->d_name, start, end)) {
+					testsuite_check_warn ("%s could not open `%s'",
+							      checks[i].what, dent->d_name);
+				} else {
+					testsuite_check_passed ();
+				}
+			} catch (ex) {
+				testsuite_check_failed ("%s on `%s' failed: %s", checks[i].what,
+							dent->d_name, ex->message);
+			} finally;
+		}
+	}
+	
+	rewinddir (dir);
+}
 
 int main (int argc, char **argv)
 {
+	const char *datadir = "data/streams";
+	struct dirent *dent;
+	char path[256], *p;
+	DIR *dir, *outdir;
+	struct stat st;
 	int i;
 	
 	g_mime_init (0);
 	
+	testsuite_init (argc, argv);
+	
 	for (i = 1; i < argc; i++) {
-		test_stream_file (argv[i]);
-		test_stream_fs (argv[i]);
-		test_stream_mem (argv[i]);
-		test_stream_buffer (argv[i]);
-		test_stream_filter (argv[i]);
+		if (argv[i][0] != '-')
+			break;
 	}
+	
+	if (i < argc)
+		datadir = argv[i];
+	
+	p = g_stpcpy (path, datadir);
+	*p++ = G_DIR_SEPARATOR;
+	strcpy (p, "output");
+	
+	if (!(outdir = opendir (path)))
+		return EXIT_FAILURE;
+	
+	p = g_stpcpy (p, "input");
+	
+	if (!(dir = opendir (path))) {
+		closedir (outdir);
+		return EXIT_FAILURE;
+	}
+	
+	*p++ = G_DIR_SEPARATOR;
+	
+	testsuite_start ("Stream tests");
+	
+	while ((dent = readdir (dir))) {
+		if (dent->d_name[0] == '.' || !strcmp (dent->d_name, "README"))
+			continue;
+		
+		test_streams (outdir, datadir, dent->d_name);
+		
+		strcpy (p, dent->d_name);
+		test_stream_buffer_gets (path);
+	}
+	
+	closedir (outdir);
+	closedir (dir);
+	
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return testsuite_exit ();
 }

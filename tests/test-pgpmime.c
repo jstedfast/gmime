@@ -1,8 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
- *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+/*  GMime
+ *  Copyright (C) 2007 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,7 +15,6 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
  */
 
 
@@ -28,13 +25,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <glib.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <gmime/gmime.h>
 
-static char *path = "/usr/bin/gpg";
-static char *userid = "pgp-mime@xtorshun.org";
-static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+#include "testsuite.h"
+
+extern int verbose;
+
+#define v(x) if (verbose > 3) x
+
 
 typedef struct _TestSession TestSession;
 typedef struct _TestSessionClass TestSessionClass;
@@ -97,120 +101,16 @@ test_session_class_init (TestSessionClass *klass)
 static char *
 request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
 {
-#if 0
-	char buffer[256];
-	
-	fprintf (stdout, "%s\nPassphrase: %s\n", prompt, passphrase);
-	fgets (buffer, 255, stdin);
-	buffer[strlen (buffer)] = '\0'; /* chop off \n */
-#endif
-	return g_strdup (/*buffer*/passphrase);
+	return g_strdup ("no.secret");
 }
 
 
 
 static void
-test_multipart_signed (GMimeCipherContext *ctx)
+print_verify_results (GMimeSignatureValidity *validity)
 {
-	GMimeSignatureValidity *validity;
-	GMimeContentType *content_type;
-	GMimeMultipartSigned *mps;
-	GMimeDataWrapper *content;
-	GMimeMessage *message;
-	GMimePart *text_part;
-	GMimeStream *stream;
-	GMimeParser *parser;
 	GMimeSigner *signer;
-	GError *err = NULL;
 	
-	text_part = g_mime_part_new ();
-	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (text_part, content_type);
-	
-	stream = g_mime_stream_mem_new ();
-	g_mime_stream_write_string (
-		stream,
-		"This is a test of the emergency broadcast system with an sha1 detach-sign.\n\n"
-		"From now on, there will be text to try and break     \t  \n"
-		"various things. For example, the F in \"From\" in the previous line...\n"
-		"...and the first dot of this line have been pre-encoded in the QP encoding "
-		"in order to test that GMime properly treats MIME part content as opaque.\n"
-		"If this still verifies okay, then we have ourselves a winner I guess...\n");
-	
-	g_mime_stream_reset (stream);
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_DEFAULT);
-	g_mime_stream_unref (stream);
-	
-	g_mime_part_set_content_object (text_part, content);
-	g_object_unref (content);
-	
-	/* create the multipart/signed container part */
-	mps = g_mime_multipart_signed_new ();
-	
-	/* sign the part */
-	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (text_part), ctx, userid,
-				      GMIME_CIPHER_HASH_SHA1, &err);
-	g_object_unref (text_part);
-	
-	if (err != NULL) {
-		g_object_unref (mps);
-		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
-		g_error_free (err);
-		return;
-	}
-	
-	message = g_mime_message_new (TRUE);
-	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
-	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				      "Federico Mena-Quintero",
-				      "federico@helixcode.com");
-	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_set_header (message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
-	g_object_unref (mps);
-	
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
-	g_mime_stream_reset (stream);
-	
-	fprintf (stdout, "%.*s\n", GMIME_STREAM_MEM (stream)->buffer->len,
-		 GMIME_STREAM_MEM (stream)->buffer->data);
-	
-	g_object_unref (message);
-	
-#if 0
-	/* Note: the use of get_body() destroys the ability to verify MIME parts, so DON'T USE IT!! */
-	/* get the body in text/plain */
-	body = g_mime_message_get_body (message, TRUE, &is_html);
-	fprintf (stdout, "Trying to get message body in plain text format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	
-	/* get the body in text/html */
-	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stdout, "Trying to get message body in html format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	if (is_html)
-		fprintf (stdout, "yep...got it in html format\n");
-#endif
-	
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
-	g_mime_stream_unref (stream);
-	
-	message = g_mime_parser_construct_message (parser);
-	g_object_unref (parser);
-	
-	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
-		fprintf (stdout, "*** error: toplevel mime part is not a multipart/signed object\n");
-		g_object_unref (message);
-		return;
-	}
-	
-	mps = (GMimeMultipartSigned *) message->mime_part;
-	
-	fputs ("Trying to verify signature... ", stdout);
-	validity = g_mime_multipart_signed_verify (mps, ctx, &err);
 	switch (validity->status) {
 	case GMIME_SIGNATURE_STATUS_NONE:
 		fputs ("Unset\n", stdout);
@@ -235,6 +135,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 		fprintf (stdout, "\tKeyId: %s\n", signer->keyid ? signer->keyid : "(null)");
 		fprintf (stdout, "\tFingerprint: %s\n", signer->fingerprint ? signer->fingerprint : "(null)");
 		fprintf (stdout, "\tTrust: ");
+		
 		switch (signer->trust) {
 		case GMIME_SIGNER_TRUST_NONE:
 			fputs ("None\n", stdout);
@@ -254,6 +155,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 			fputs ("Ultimate\n", stdout);
 			break;
 		}
+		
 		fprintf (stdout, "\tStatus: ");
 		switch (signer->status) {
 		case GMIME_SIGNER_STATUS_NONE:
@@ -269,11 +171,13 @@ test_multipart_signed (GMimeCipherContext *ctx)
 			fputs ("ERROR\n", stdout);
 			break;
 		}
+		
 		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
 		if (signer->sig_expire != (time_t) 0)
 			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expire));
 		else
 			fprintf (stdout, "\tSignature never expires\n");
+		
 		if (signer->errors) {
 			fprintf (stdout, "\tErrors: ");
 			if (signer->errors & GMIME_SIGNER_ERROR_EXPSIG)
@@ -295,100 +199,303 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	fprintf (stdout, "\nValidity diagnostics: \n%s\n",
 		 g_mime_signature_validity_get_details (validity));
-	g_mime_signature_validity_free (validity);
-	
-	if (err != NULL) {
-		fprintf (stdout, "error: %s\n", err->message);
-		g_error_free (err);
-	}
-	
-	g_object_unref (message);
 }
 
-void
-test_multipart_encrypted (GMimeCipherContext *ctx)
+#define MULTIPART_SIGNED_CONTENT "This is a test of the emergency broadcast system \
+with an sha1 detach-sign.\n\nFrom now on, there will be text to try and break     \t\
+  \nvarious things. For example, the F in \"From\" in the previous line...\n...and \
+the first dot of this line have been pre-encoded in the QP encoding in order to test \
+that GMime properly treats MIME part content as opaque.\nIf this still verifies okay, \
+then we have ourselves a winner I guess...\n"
+
+static void
+test_multipart_signed (GMimeCipherContext *ctx)
 {
-	GMimeMessage *message;
-	GMimeMultipartEncrypted *mpe;
-	GMimeObject *decrypted_part;
-	GMimePart *text_part;
+	GMimeSignatureValidity *validity;
 	GMimeContentType *content_type;
-	GPtrArray *recipients;
+	GMimeMultipartSigned *mps;
+	GMimeDataWrapper *content;
+	GMimeMessage *message;
+	GMimeStream *stream;
+	GMimeParser *parser;
 	GError *err = NULL;
-	char *text;
+	GMimePart *part;
+	Exception *ex;
 	
-	text_part = g_mime_part_new ();
+	part = g_mime_part_new ();
 	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (text_part, content_type);
-	g_mime_part_set_content (text_part, "This is a test of multipart/encrypted.\n",
-				 strlen ("This is a test of multipart/encrypted.\n"));
+	g_mime_part_set_content_type (part, content_type);
 	
-	/* create the multipart/encrypted container part */
-	mpe = g_mime_multipart_encrypted_new ();
+	stream = g_mime_stream_mem_new ();
+	g_mime_stream_write_string (stream, MULTIPART_SIGNED_CONTENT);
+#if 0
+	"This is a test of the emergency broadcast system with an sha1 detach-sign.\n\n"
+		"From now on, there will be text to try and break     \t  \n"
+		"various things. For example, the F in \"From\" in the previous line...\n"
+		"...and the first dot of this line have been pre-encoded in the QP encoding "
+		"in order to test that GMime properly treats MIME part content as opaque.\n"
+		"If this still verifies okay, then we have ourselves a winner I guess...\n";
+#endif
 	
-	/* encrypt the part */
-	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, userid);
+	g_mime_stream_reset (stream);
+	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_DEFAULT);
+	g_mime_stream_unref (stream);
 	
-	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (text_part), ctx, recipients, &err);
-	g_object_unref (text_part);
-	g_ptr_array_free (recipients, TRUE);
+	g_mime_part_set_content_object (part, content);
+	g_object_unref (content);
+	
+	/* create the multipart/signed container part */
+	mps = g_mime_multipart_signed_new ();
+	
+	/* sign the part */
+	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "no.user@no.domain",
+				      GMIME_CIPHER_HASH_SHA1, &err);
+	g_object_unref (part);
 	
 	if (err != NULL) {
-		g_object_unref (text_part);
-		fprintf (stdout, "pgp_mime_part_sign failed: %s\n", err->message);
+		ex = exception_new ("signing failed: %s", err->message);
+		g_object_unref (mps);
 		g_error_free (err);
-		return;
+		throw (ex);
 	}
 	
 	message = g_mime_message_new (TRUE);
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				    "Federico Mena-Quintero", "federico@helixcode.com");
+				      "Federico Mena-Quintero",
+				      "federico@helixcode.com");
+	g_mime_message_set_subject (message, "This is a test message");
+	g_mime_message_set_header (message, "X-Mailer", "main.c");
+	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
+	g_object_unref (mps);
+	
+	stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
+	g_mime_stream_reset (stream);
+	
+	g_object_unref (message);
+	
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	g_mime_stream_unref (stream);
+	
+	message = g_mime_parser_construct_message (parser);
+	g_object_unref (parser);
+	
+	if (!GMIME_IS_MULTIPART_SIGNED (message->mime_part)) {
+		ex = exception_new ("resultant top-level mime part not a multipart/signed?");
+		g_object_unref (message);
+		throw (ex);
+	}
+	
+	mps = (GMimeMultipartSigned *) message->mime_part;
+	
+	v(fputs ("Trying to verify signature... ", stdout));
+	if (!(validity = g_mime_multipart_signed_verify (mps, ctx, &err))) {
+		ex = exception_new ("%s", err->message);
+		v(fputs ("failed.\n", stdout));
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	v(print_verify_results (validity));
+	g_mime_signature_validity_free (validity);
+	
+	g_object_unref (message);
+}
+
+#define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
+
+static void
+test_multipart_encrypted (GMimeCipherContext *ctx)
+{
+	GMimeStream *cleartext, *stream;
+	GMimeContentType *content_type;
+	GMimeMultipartEncrypted *mpe;
+	GMimeDataWrapper *content;
+	GMimeObject *decrypted;
+	GMimeMessage *message;
+	GPtrArray *recipients;
+	Exception *ex = NULL;
+	GByteArray *buf[2];
+	GError *err = NULL;
+	GMimePart *part;
+	
+	cleartext = g_mime_stream_mem_new ();
+	g_mime_stream_write_string (cleartext, MULTIPART_ENCRYPTED_CONTENT);
+	g_mime_stream_reset (cleartext);
+	
+	content = g_mime_data_wrapper_new ();
+	g_mime_data_wrapper_set_stream (content, cleartext);
+	g_object_unref (cleartext);
+	
+	part = g_mime_part_new ();
+	content_type = g_mime_content_type_new ("text", "plain");
+	g_mime_part_set_content_type (part, content_type);
+	g_mime_part_set_content_object (part, content);
+	g_object_unref (content);
+	
+	/* hold onto this for comparison later */
+	cleartext = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream ((GMimeObject *) part, cleartext);
+	g_mime_stream_reset (cleartext);
+	
+	/* create the multipart/encrypted container part */
+	mpe = g_mime_multipart_encrypted_new ();
+	
+	/* encrypt the part */
+	recipients = g_ptr_array_new ();
+	g_ptr_array_add (recipients, "no.user@no.domain");
+	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, recipients, &err);
+	g_ptr_array_free (recipients, TRUE);
+	g_object_unref (part);
+	
+	if (err != NULL) {
+		ex = exception_new ("encryption failed: %s", err->message);
+		g_object_unref (cleartext);
+		g_object_unref (mpe);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	message = g_mime_message_new (TRUE);
+	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
+	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
+	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
+				      "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_message_set_header (message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
 	
-	text = g_mime_message_to_string (message);
-	fprintf (stdout, "%s\n", text ? text : "(null)");
-	g_free (text);
-	
 	/* okay, now to test our decrypt function... */
-	decrypted_part = g_mime_multipart_encrypted_decrypt (mpe, ctx, &err);
-	if (!decrypted_part || err != NULL) {
-		fprintf (stdout, "failed to decrypt part: %s\n", err->message);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &err);
+	if (!decrypted || err != NULL) {
+		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);
-	} else {
-		text = g_mime_object_to_string (decrypted_part);
-		fprintf (stdout, "decrypted:\n%s\n", text ? text : "NULL");
-		g_free (text);
-		g_object_unref (decrypted_part);
+		throw (ex);
 	}
 	
-	g_object_unref (mpe);
+	stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream (decrypted, stream);
+	g_object_unref (decrypted);
+	
 	g_object_unref (message);
+	g_object_unref (mpe);
+	
+	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
+	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("decrypted data does not match original cleartext");
+	
+	g_object_unref (cleartext);
+	g_object_unref (stream);
+	
+	if (ex != NULL)
+		throw (ex);
+}
+
+static void
+import_key (GMimeCipherContext *ctx, const char *path)
+{
+	GMimeStream *stream;
+	GError *err = NULL;
+	Exception *ex;
+	int fd;
+	
+	if ((fd = open (path, O_RDONLY)) == -1)
+		throw (exception_new ("open() failed: %s", strerror (errno)));
+	
+	stream = g_mime_stream_fs_new (fd);
+	g_mime_cipher_import_keys (ctx, stream, &err);
+	g_object_unref (stream);
+	
+	if (err != NULL) {
+		ex = exception_new ("%s", err->message);
+		g_error_free (err);
+		throw (ex);
+	}
 }
 
 int main (int argc, char *argv[])
 {
-	GMimeSession *session;
 	GMimeCipherContext *ctx;
+	GMimeSession *session;
+	const char *dirname;
+	struct stat st;
+	char *key;
+	int i;
 	
 	g_mime_init (0);
 	
-	session = g_object_new (test_session_get_type (), NULL, NULL);
-	ctx = g_mime_gpg_context_new (session, path);
+	testsuite_init (argc, argv);
+	
+	/* reset .gnupg config directory */
+	system ("/bin/rm -rf ./tmp");
+	system ("/bin/mkdir ./tmp");
+	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] != '-')
+			break;
+	}
+	
+	if (i < argc && (stat (argv[i], &st) == -1 || !S_ISDIR (st.st_mode)))
+		return EXIT_FAILURE;
+	
+	if (i < argc)
+		dirname = argv[i];
+	else
+		dirname = ".";
+	
+	testsuite_start ("PGP/MIME implementation");
+	
+	session = g_object_new (test_session_get_type (), NULL);
+	
+	ctx = g_mime_gpg_context_new (session, "/usr/bin/gpg");
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
-	test_multipart_signed (ctx);
+	testsuite_check ("GMimeGpgContext::import");
+	try {
+		key = g_build_filename (dirname, "gmime.gpg.pub", NULL);
+		import_key (ctx, key);
+		g_free (key);
+		
+		key = g_build_filename (dirname, "gmime.gpg.sec", NULL);
+		import_key (ctx, key);
+		g_free (key);
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeGpgContext::import failed: %s", ex->message);
+		return EXIT_FAILURE;
+	} finally;
 	
-	test_multipart_encrypted (ctx);
+	testsuite_check ("multipart/signed");
+	try {
+		test_multipart_signed (ctx);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("multipart/signed failed: %s", ex->message);
+	} finally;
 	
-	g_object_unref (ctx);
+	testsuite_check ("multipart/encrypted");
+	try {
+		test_multipart_encrypted (ctx);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
+	} finally;
+	
 	g_object_unref (session);
+	g_object_unref (ctx);
+	
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	
-	return EXIT_SUCCESS;
+	system ("/bin/rm -rf ./tmp");
+	
+	return testsuite_exit ();
 }

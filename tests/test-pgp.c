@@ -1,8 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/*
- *  Authors: Jeffrey Stedfast <fejj@helixcode.com>
- *
- *  Copyright 2000 Helix Code, Inc. (www.helixcode.com)
+/*  GMime
+ *  Copyright (C) 2000-2007 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -17,19 +15,26 @@
  *  You should have received a copy of the GNU General Public License
  *  along with this program; if not, write to the Free Software
  *  Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
- *
  */
 
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include <gmime/gmime.h>
 
-static char *path = "/usr/bin/gpg";
-static char *userid = "pgp-mime@xtorshun.org";
-static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+#include "testsuite.h"
+
+extern int verbose;
+
+#define v(x) if (verbose > 3) x
+
 
 typedef struct _TestSession TestSession;
 typedef struct _TestSessionClass TestSessionClass;
@@ -93,98 +98,113 @@ test_session_class_init (TestSessionClass *klass)
 static char *
 request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
 {
-#if 0
-	char buffer[256];
-	
-	fprintf (stderr, "%s\nPassphrase: %s\n", prompt, passphrase);
-	fgets (buffer, 255, stdin);
-	buffer[strlen (buffer)] = '\0'; /* chop off \n */
-#endif
-	return g_strdup (/*buffer*/passphrase);
+	return g_strdup ("no.secret");
 }
 
 
 
-static int
-test_sign (GMimeCipherContext *ctx, const char *cleartext, GMimeCipherHash hash)
+static void
+test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeStream *stream, *ciphertext;
-	GByteArray *buffer;
 	GError *err = NULL;
+	Exception *ex;
 	
-	stream = g_mime_stream_mem_new ();
-	g_mime_stream_write_string (stream, cleartext);
-	g_mime_stream_reset (stream);
-	ciphertext = g_mime_stream_mem_new ();
+	g_mime_cipher_sign (ctx, "no.user@no.domain",
+			    GMIME_CIPHER_HASH_DEFAULT,
+			    cleartext, ciphertext, &err);
 	
-	g_mime_cipher_sign (ctx, userid, hash, stream, ciphertext, &err);
-	g_mime_stream_unref (stream);
 	if (err != NULL) {
-		fprintf (stderr, "pgp_sign failed: %s\n", err->message);
+		ex = exception_new ("%s", err->message);
 		g_error_free (err);
-		return 0;
+		throw (ex);
 	}
 	
-	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
-	fprintf (stderr, "signature:\n%.*s\n", buffer->len, buffer->data);
-	g_mime_stream_unref (ciphertext);
-	
-	return 1;
+	v(fprintf (stderr, "signature:\n%.*s\n",
+		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
+		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
 
-static int
-test_encrypt (GMimeCipherContext *ctx, const char *in, int inlen)
+static void
+test_verify (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeStream *stream, *ciphertext;
+	GMimeSignatureValidity *validity;
+	GError *err = NULL;
+	Exception *ex;
+	
+	validity = g_mime_cipher_verify (ctx, GMIME_CIPHER_HASH_DEFAULT,
+					 cleartext, ciphertext, &err);
+	
+	if (validity == NULL) {
+		ex = exception_new ("%s", err->message);
+		g_error_free (err);
+		throw (ex);
+	}
+	
+	if (validity->status != GMIME_SIGNATURE_STATUS_GOOD) {
+		g_mime_signature_validity_free (validity);
+		throw (exception_new ("signature BAD"));
+	}
+	
+	g_mime_signature_validity_free (validity);
+}
+
+static void
+test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+{
 	GPtrArray *recipients;
 	GByteArray *buffer;
 	GError *err = NULL;
-	
-	stream = g_mime_stream_mem_new_with_buffer (in, inlen);
-	ciphertext = g_mime_stream_mem_new ();
+	Exception *ex;
 	
 	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, userid);
+	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_cipher_encrypt (ctx, FALSE, userid, recipients, stream, ciphertext, &err);
+	g_mime_cipher_encrypt (ctx, FALSE, "no.user@no.domain", recipients,
+			       cleartext, ciphertext, &err);
+	
 	g_ptr_array_free (recipients, TRUE);
-	g_mime_stream_unref (stream);
+	
 	if (err != NULL) {
-		fprintf (stderr, "pgp_encrypt failed: %s\n", err->message);
+		ex = exception_new ("%s", err->message);
 		g_error_free (err);
-		return 0;
+		throw (ex);
 	}
 	
-	buffer = GMIME_STREAM_MEM (ciphertext)->buffer;
-	fprintf (stderr, "ciphertext:\n%.*s\n", buffer->len, buffer->data);
-	g_mime_stream_unref (ciphertext);
-	
-	return 1;
+	v(fprintf (stderr, "ciphertext:\n%.*s\n",
+		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
+		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
 
-static int
-test_decrypt (GMimeCipherContext *ctx, const char *ciphertext)
+static void
+test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeStream *stream, *cleartext;
+	Exception *ex = NULL;
+	GMimeStream *stream;
 	GByteArray *buffer;
 	GError *err = NULL;
+	GByteArray *buf[2];
 	
-	stream = g_mime_stream_mem_new_with_buffer (ciphertext, strlen (ciphertext));
-	cleartext = g_mime_stream_mem_new ();
+	stream = g_mime_stream_mem_new ();
 	
-	g_mime_cipher_decrypt (ctx, stream, cleartext, &err);
-	g_mime_stream_unref (stream);
+	g_mime_cipher_decrypt (ctx, ciphertext, stream, &err);
+	
 	if (err != NULL) {
-		fprintf (stderr, "pgp_encrypt failed: %s\n", err->message);
+		g_object_unref (stream);
+		ex = exception_new ("%s", err->message);
 		g_error_free (err);
-		return 0;
+		throw (ex);
 	}
 	
-	buffer = GMIME_STREAM_MEM (cleartext)->buffer;
-	fprintf (stderr, "cleartext:\n%*.s\n", buffer->len, buffer->data);
-	g_mime_stream_unref (cleartext);
+	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
+	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
 	
-	return 1;
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("decrypted data does not match original cleartext");
+	
+	g_object_unref (stream);
+	
+	if (ex != NULL)
+		throw (ex);
 }
 
 static int
@@ -194,7 +214,7 @@ test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
 	GError *err = NULL;
 	
 	keys = g_ptr_array_new ();
-	g_ptr_array_add (keys, userid);
+	g_ptr_array_add (keys, "no.user@no.domain");
 	
 	g_mime_cipher_export_keys (ctx, keys, ostream, &err);
 	g_ptr_array_free (keys, TRUE);
@@ -207,61 +227,137 @@ test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
 	return 1;
 }
 
-static int
-test_import (GMimeCipherContext *ctx, GMimeStream *istream)
+static void
+import_key (GMimeCipherContext *ctx, const char *path)
 {
+	GMimeStream *stream;
 	GError *err = NULL;
+	Exception *ex;
+	int fd;
 	
-	g_mime_cipher_import_keys (ctx, istream, &err);
+	if ((fd = open (path, O_RDONLY)) == -1)
+		throw (exception_new ("open() failed: %s", strerror (errno)));
+	
+	stream = g_mime_stream_fs_new (fd);
+	g_mime_cipher_import_keys (ctx, stream, &err);
+	g_object_unref (stream);
+	
 	if (err != NULL) {
-		fprintf (stderr, "pgp_import failed: %s\n", err->message);
+		ex = exception_new ("%s", err->message);
 		g_error_free (err);
-		return 0;
+		throw (ex);
 	}
-	
-	return 1;
 }
 
 
 int main (int argc, char **argv)
 {
-	GMimeSession *session;
+	GMimeStream *istream, *ostream;
 	GMimeCipherContext *ctx;
-	GMimeStream *stream;
+	GMimeSession *session;
+	const char *dirname;
+	const char *what;
+	struct stat st;
+	char *key;
+	int i;
 	
 	g_mime_init (0);
 	
-	session = g_object_new (test_session_get_type (), NULL, NULL);
+	testsuite_init (argc, argv);
 	
-	ctx = g_mime_gpg_context_new (session, path);
+	/* reset .gnupg config directory */
+	system ("/bin/rm -rf ./tmp");
+	system ("/bin/mkdir ./tmp");
+	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	
+	for (i = 1; i < argc; i++) {
+		if (argv[i][0] != '-')
+			break;
+	}
+	
+	if (i < argc && (stat (argv[i], &st) == -1 || !S_ISDIR (st.st_mode)))
+		return EXIT_FAILURE;
+	
+	if (i < argc)
+		dirname = argv[i];
+	else
+		dirname = ".";
+	
+	testsuite_start ("GnuPG cipher context");
+	
+	session = g_object_new (test_session_get_type (), NULL);
+	
+	ctx = g_mime_gpg_context_new (session, "/usr/bin/gpg");
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
-	/*if (!test_sign (ctx, "This is a test of pgp sign using md5\r\n",
-	  GMIME_CIPHER_HASH_MD5))
-	  return EXIT_FAILURE;*/
-	
-	if (!test_sign (ctx, "This is a test of pgp sign using sha1\r\n",
-			GMIME_CIPHER_HASH_SHA1))
+	testsuite_check ("GMimeGpgContext::import");
+	try {
+		key = g_build_filename (dirname, "gmime.gpg.pub", NULL);
+		import_key (ctx, key);
+		g_free (key);
+		
+		key = g_build_filename (dirname, "gmime.gpg.sec", NULL);
+		import_key (ctx, key);
+		g_free (key);
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeGpgContext::import failed: %s", ex->message);
 		return EXIT_FAILURE;
+	} finally;
 	
-	if (!test_encrypt (ctx, "Hello, this is a test\n", strlen ("Hello, this is a test\n")))
-		return EXIT_FAILURE;
+	istream = g_mime_stream_mem_new ();
+	ostream = g_mime_stream_mem_new ();
 	
-	stream = g_mime_stream_mem_new ();
-	if (!test_export (ctx, stream))
-		return EXIT_FAILURE;
+	g_mime_stream_write_string (istream, "this is some cleartext\r\n");
+	g_mime_stream_reset (istream);
 	
-	g_mime_stream_reset (stream);
-	if (!test_import (ctx, stream))
-		return EXIT_FAILURE;
+	what = "GMimeGpgContext::sign";
+	testsuite_check (what);
+	try {
+		test_sign (ctx, istream, ostream);
+		testsuite_check_passed ();
+		
+		what = "GMimeGpgContext::verify";
+		testsuite_check (what);
+		g_mime_stream_reset (istream);
+		g_mime_stream_reset (ostream);
+		test_verify (ctx, istream, ostream);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (ostream);
+	g_mime_stream_reset (istream);
+	ostream = g_mime_stream_mem_new ();
 	
-	g_object_unref (ctx);
+	what = "GMimeGpgContext::encrypt";
+	testsuite_check (what);
+	try {
+		test_encrypt (ctx, istream, ostream);
+		testsuite_check_passed ();
+		
+		what = "GMimeGpgContext::decrypt";
+		testsuite_check (what);
+		g_mime_stream_reset (istream);
+		g_mime_stream_reset (ostream);
+		test_decrypt (ctx, istream, ostream);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
 	
 	g_object_unref (session);
+	g_object_unref (istream);
+	g_object_unref (ostream);
+	g_object_unref (ctx);
+	
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	
-	return EXIT_SUCCESS;
+	system ("/bin/rm -rf ./tmp");
+	
+	return testsuite_exit ();
 }

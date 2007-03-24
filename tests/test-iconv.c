@@ -28,12 +28,14 @@
 
 #include <gmime/gmime.h>
 
+#include "testsuite.h"
+
 #ifndef G_OS_WIN32
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 #endif
 
-#if 1
+#ifdef TEST_CACHE
 static char *charsets[] = {
 	"iso-8859-1",
 	"iso-8859-2",
@@ -61,11 +63,6 @@ static char *charsets[] = {
 	"utf-8",
 };
 
-static int num_charsets = sizeof (charsets) / sizeof (charsets[0]);
-#endif
-
-
-#if 1
 static void
 test_cache (void)
 {
@@ -79,9 +76,9 @@ test_cache (void)
 		const char *from, *to;
 		int which;
 		
-		which = rand () % num_charsets;
+		which = rand () % G_N_ELEMENTS (charsets);
 		from = charsets[which];
-		which = rand () % num_charsets;
+		which = rand () % G_N_ELEMENTS (charsets);
 		to = charsets[which];
 		
 		cd = g_mime_iconv_open (from, to);
@@ -108,7 +105,7 @@ test_cache (void)
 		node = next;
 	}
 }
-#endif
+#endif /* TEST_CACHE */
 
 
 struct {
@@ -142,8 +139,11 @@ struct {
 	{ "den ändå?", "iso-8859-1" },              /* sv */
 	{ "Geli-Mþmiþ-A Arama", "iso-8859-9" },         /* tr */
 	{ "õÄÏÓËÏÎÁÌÅÎÉÊ ÐÏÛÕË", "koi8-u" },        /* uk */
+	
+#if 0
+	/* this is expected to fail */
 	{ "é’ÉšŽå°‹æ(I>(B", "utf-8" },         /* zh_TW */
-	{ NULL, NULL }
+#endif
 };
 
 
@@ -154,56 +154,74 @@ test_utils (void)
 	iconv_t cd;
 	int i;
 	
-	for (i = 0; tests[i].text; i++) {
-		cd = g_mime_iconv_open ("UTF-8", tests[i].charset);
-		if (cd != (iconv_t) -1) {
+	testsuite_start ("charset conversion utils");
+	
+	for (i = 0; i < G_N_ELEMENTS (tests); i++) {
+		testsuite_check ("test #%d: %s to UTF-8", i, tests[i].charset);
+		
+		try {
+			utf8 = native = NULL;
+			
+			if ((cd = g_mime_iconv_open ("UTF-8", tests[i].charset)) == (iconv_t) -1) {
+				throw (exception_new ("could not open conversion for %s to UTF-8",
+						      tests[i].charset));
+			}
+			
 			utf8 = g_mime_iconv_strdup (cd, tests[i].text);
 			g_mime_iconv_close (cd);
+			
 			if (utf8 == NULL) {
-				g_warning ("tests[%d]: failed to convert \"%s\" to UTF-8 from %s",
-					   i, tests[i].text, tests[i].charset);
-				continue;
+				throw (exception_new ("could not convert \"%s\" from %s to UTF-8",
+						      tests[i].text, tests[i].charset));
 			}
 			
-			cd = g_mime_iconv_open (tests[i].charset, "UTF-8");
-			if (cd != (iconv_t) -1) {
-				native = g_mime_iconv_strdup (cd, utf8);
-				g_mime_iconv_close (cd);
-				if (!native) {
-					g_warning ("tests[%d]: failed to convert \"%s\" to %s from UTF-8",
-						   i, tests[i].text, tests[i].charset);
-				} else if (strcmp (tests[i].text, native)) {
-					g_warning ("tests[%d]: there seems to have been some lossage\n"
-						   "in the conversion back to the native charset:\n"
-						   "\"%s\" != \"%s\"", i, tests[i].text, native);
-				}
+			if ((cd = g_mime_iconv_open (tests[i].charset, "UTF-8")) == (iconv_t) -1) {
+				g_free (utf8);
 				
-				g_free (native);
-			} else {
-				g_warning ("tests[%d]: failed to open conversion descriptor for UTF-8 to %s",
-					   i, tests[i].charset);
+				throw (exception_new ("could not open conversion for UTF-8 back to %s",
+						      tests[i].charset));
 			}
 			
+			native = g_mime_iconv_strdup (cd, utf8);
+			g_mime_iconv_close (cd);
 			g_free (utf8);
-		} else {
-			g_warning ("tests[%d]: failed to open conversion descriptor for %s to UTF-8",
-				   i, tests[i].charset);
-		}
+			
+			if (native == NULL) {
+				throw (exception_new ("could not convert \"%s\" from UTF-8 back to %s",
+						      tests[i].text, tests[i].charset));
+			} else if (strcmp (tests[i].text, native) != 0) {
+				g_free (native);
+				
+				throw (exception_new ("strings did not match after conversion"));
+			}
+			
+			testsuite_check_passed ();
+			
+			g_free (native);
+		} catch (ex) {
+			testsuite_check_failed ("test #%d failed: %s", i, ex->message);
+		} finally;
 	}
+	
+	testsuite_end ();
 }
 
 int main (int argc, char **argv)
 {
 	g_mime_iconv_init ();
 	
+	testsuite_init (argc, argv);
+	
+#ifdef TEST_CACHE
 	ZenTimerStart (NULL);
 	test_cache ();
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "test_cache()");
+#endif
 	
 	test_utils ();
 	
 	g_mime_iconv_shutdown ();
 	
-	return 0;
+	return testsuite_exit ();
 }
