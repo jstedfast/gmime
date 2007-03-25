@@ -301,7 +301,7 @@ stream_length (GMimeStream *stream)
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	return mstream->maplen;
+	return mstream->maplen - stream->bound_start;
 }
 
 static GMimeStream *
@@ -310,7 +310,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 	/* FIXME: maybe we should return a GMimeStreamFs? */
 	GMimeStreamMmap *mstream;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL, NULL);
+	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
 	mstream->owner = FALSE;
 	mstream->fd = GMIME_STREAM_MMAP (stream)->fd;
 	

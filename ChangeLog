@@ -1,8 +1,19 @@
 2007-03-25  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* Makefile.am (local-check): Simplified.
+
+	* tests/test-streams.c: Generate our own test data if we aren't
+	given any.
+
+	* tests/test-cat.c: Updated for the new Makefile.am rule.
+
+	* gmime/gmime-stream-mmap.c (stream_length): Fixed to return the
+	correct length when bound_end == -1 but bound_start != 0.
+	Discovered this thanks to my new testsuite.
+
 	* gmime/internet-address.c (decode_mailbox): If we can't find a
 	local-part and inptr is ',', set *in = inptr; rather than *in =
-	inptr + 1;
+	inptr + 1; Discovered this bug thanks to my new testsuite.
 
 	* tests/test-mime.c: Rewritten to use testsuite library.
 

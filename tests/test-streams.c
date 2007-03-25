@@ -77,7 +77,7 @@ streams_match (GMimeStream **streams, const char *filename)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %ul bytes from original stream\n", size));
+		d(fprintf (stderr, "read %lu bytes from stream[0]\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (streams[1], dbuf + nread, size - nread)) <= 0) {
@@ -320,14 +320,14 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 		return FALSE;
 	}
 	
-	stream = g_mime_stream_mmap_new (fd[0], PROT_NONE, MAP_PRIVATE);
+	stream = g_mime_stream_mmap_new (fd[0], PROT_READ, MAP_PRIVATE);
 	streams[0] = g_mime_stream_substream (stream, start, end);
 	g_object_unref (stream);
 	
-	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_NONE, MAP_PRIVATE);
+	streams[1] = g_mime_stream_mmap_new (fd[1], PROT_READ, MAP_PRIVATE);
 	
 	if (!streams_match (streams, filename))
-		ex = exception_new ("GMimeStreamMmap streams did not match for `%s'", filename);
+		ex = exception_new ("streams did not match");
 	
 	g_object_unref (streams[0]);
 	g_object_unref (streams[1]);
@@ -479,9 +479,118 @@ test_streams (DIR *dir, const char *datadir, const char *filename)
 	rewinddir (dir);
 }
 
+
+static void
+gen_random_stream (GMimeStream *stream)
+{
+	size_t nwritten, buflen, total = 0, size, i;
+	char buf[4096], *p;
+	ssize_t n;
+	int fd;
+	
+	/* read between 4k and 14k bytes */
+	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
+	v(fprintf (stdout, "Generating %lu bytes of random data... ", size));
+	v(fflush (stdout));
+	
+	while (total < size) {
+		buflen = size - total > sizeof (buf) ? sizeof (buf) : size - total;
+		for (i = 0; i < buflen; i++)
+			buf[i] = (char) (255 * (rand () / (RAND_MAX + 1.0)));
+		
+		nwritten = 0;
+		do {
+			if ((n = g_mime_stream_write (stream, buf + nwritten, buflen - nwritten)) <= 0)
+				break;
+			nwritten += n;
+			total += n;
+		} while (nwritten < buflen);
+		
+		if (nwritten < buflen)
+			break;
+	}
+	
+	g_mime_stream_flush (stream);
+	g_mime_stream_reset (stream);
+	
+	v(fputs ("done\n", stdout));
+}
+
+static int
+gen_test_data (const char *datadir)
+{
+	GMimeStream *istream, *ostream, *stream;
+	char input[256], output[256], *name, *p;
+	size_t left, len;
+	off_t start, end;
+	struct stat st;
+	int fd, i;
+	
+	printf ("generating test data in `%s'\n", datadir);
+	
+	srand (time (NULL));
+	
+	name = g_stpcpy (input, datadir);
+	*name++ = G_DIR_SEPARATOR;
+	name = g_stpcpy (name, "input");
+	
+	p = g_stpcpy (output, datadir);
+	*p++ = G_DIR_SEPARATOR;
+	p = g_stpcpy (p, "output");
+	
+	g_mkdir_with_parents (input, 0755);
+	g_mkdir_with_parents (output, 0755);
+	
+	*name++ = G_DIR_SEPARATOR;
+	strcpy (name, "streamXXXXXX");
+	
+	if ((fd = mkstemp (input)) == -1)
+		return -1;
+	
+	*p++ = G_DIR_SEPARATOR;
+	p = g_stpcpy (p, name);
+	*p++ = ':';
+	
+	istream = g_mime_stream_fs_new (fd);
+	gen_random_stream (istream);
+	
+	if (stat (input, &st) == -1 || !S_ISREG (st.st_mode)) {
+		g_object_unref (istream);
+		unlink (input);
+		return -1;
+	}
+	
+	for (i = 0; i < 64; i++) {
+	retry:
+		start = (off_t) (st.st_size * (rand () / (RAND_MAX + 1.0)));
+		len = (size_t) (st.st_size * (rand () / (RAND_MAX + 1.0)));
+		if (start + len > st.st_size) {
+			len = st.st_size - start;
+			end = -1;
+		} else {
+			end = start + len;
+		}
+		
+		sprintf (p, "%ld,%ld", start, end);
+		
+		if ((fd = open (output, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, 0666)) == -1)
+			goto retry;
+		
+		ostream = g_mime_stream_fs_new (fd);
+		stream = g_mime_stream_substream (istream, start, end);
+		g_mime_stream_write_to_stream (stream, ostream);
+		g_mime_stream_flush (ostream);
+		g_object_unref (ostream);
+		g_object_unref (stream);
+	}
+	
+	return 0;
+}
+
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/streams";
+	gboolean gen_data = TRUE;
 	struct dirent *dent;
 	char path[256], *p;
 	DIR *dir, *outdir;
@@ -505,14 +614,39 @@ int main (int argc, char **argv)
 	*p++ = G_DIR_SEPARATOR;
 	strcpy (p, "output");
 	
-	if (!(outdir = opendir (path)))
-		goto exit;
+	if (!(outdir = opendir (path))) {
+		if (gen_test_data (datadir) == -1 ||
+		    !(outdir = opendir (path)))
+			goto exit;
+		
+		gen_data = FALSE;
+	}
 	
 	p = g_stpcpy (p, "input");
 	
 	if (!(dir = opendir (path))) {
-		closedir (outdir);
-		goto exit;
+		if (!gen_data || gen_test_data (datadir) == -1 ||
+		    !(dir = opendir (path))) {
+			closedir (outdir);
+			goto exit;
+		}
+		
+		gen_data = FALSE;
+	}
+	
+	if (gen_data) {
+		while ((dent = readdir (dir))) {
+			if (dent->d_name[0] == '.' || !strcmp (dent->d_name, "README"))
+				continue;
+			
+			gen_data = FALSE;
+			break;
+		}
+		
+		rewinddir (dir);
+		
+		if (gen_data && gen_test_data (datadir) == -1)
+			goto exit;
 	}
 	
 	*p++ = G_DIR_SEPARATOR;

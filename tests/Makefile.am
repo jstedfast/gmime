@@ -100,24 +100,18 @@ check-local: $(AUTOMATED_TESTS)
 	passed=0; \
  \
 	for test in $(AUTOMATED_TESTS); do \
-		testdir="$(srcdir)/data/`echo $${test} | sed -e 's/test-//'`"; \
-		if [ -d "$${testdir}" ]; then \
-			./$${test} $(VERBOSITY) $${testdir}; \
-			if [ $$? -ne 0 ]; then \
-				failed_tests="$${failed_tests}\n $${test}"; \
-				failed=`expr $${failed} + 1`; \
-			else \
-				passed=`expr $${passed} + 1`; \
-			fi; \
+		testdatadir="data/`echo $${test} | sed -e 's/test-//'`"; \
+		testdir="$(srcdir)/$${testdatadir}"; \
+		if [ ! -d "$${testdir}" ]; then \
+			testdir="$${testdatadir}"; \
+		fi; \
+		./$${test} $(VERBOSITY) $${testdir}; \
+		if [ $$? -ne 0 ]; then \
+			failed_tests="$${failed_tests}\n $${test}"; \
+			failed=`expr $${failed} + 1`; \
 		else \
-			./$${test} $(VERBOSITY) $(srcdir); \
-			if [ $$? -ne 0 ]; then \
-				failed_tests="$${failed_tests}\n $${test}"; \
-				failed=`expr $${failed} + 1`; \
-			else \
-				passed=`expr $${passed} + 1`; \
-			fi; \
-		fi \
+			passed=`expr $${passed} + 1`; \
+		fi; \
 	done; \
  \
 	echo "Results: $${passed} tests passed; $${failed} tests failed."; \

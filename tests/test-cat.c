@@ -138,7 +138,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %ul bytes from original stream\n", size));
+		d(fprintf (stderr, "read %lu bytes from original stream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (dup, dbuf + nread, size - nread)) <= 0) {
@@ -445,7 +445,7 @@ struct {
 
 int main (int argc, char **argv)
 {
-	const char *datadir = "data/concat";
+	const char *datadir = "data/cat";
 	struct _StreamPart *list, *tail, *n;
 	gboolean failed = FALSE;
 	ssize_t wholelen, left;
@@ -464,13 +464,21 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] != '-')
+		if (argv[i][0] != '-') {
+			datadir = argv[i];
 			break;
+		}
 	}
 	
 	if (i < argc) {
-		if (stat (argv[i], &st) == -1)
-			return EXIT_FAILURE;
+		if (stat (datadir, &st) == -1) {
+			if (errno == ENOENT) {
+				g_mkdir_with_parents (datadir, 0755);
+				if (stat (datadir, &st) == -1)
+					return EXIT_FAILURE;
+			} else
+				return EXIT_FAILURE;
+		}
 		
 		if (S_ISREG (st.st_mode)) {
 			/* test a particular input file */
