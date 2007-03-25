@@ -1,6 +1,14 @@
+2007-03-25  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/internet-address.c (decode_mailbox): If we can't find a
+	local-part and inptr is ',', set *in = inptr; rather than *in =
+	inptr + 1;
+
+	* tests/test-mime.c: Rewritten to use testsuite library.
+
 2007-03-24  Jeffrey Stedfast  <fejj@gnome.org>
 
-	* Makefile.am (check-local): Rewritten to actually run the
+	* tests/Makefile.am (check-local): Rewritten to actually run the
 	automated tests.
 
 	* tests/test-mbox.c: Rewritten to use testsuite library.

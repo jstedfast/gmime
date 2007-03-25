@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
-/*  GMime
+/*
  *  Copyright (C) 2000-2007 Jeffrey Stedfast
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -18,495 +18,452 @@
  */
 
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <gmime/gmime.h>
 
+#include "testsuite.h"
 
-static iconv_t cd = (iconv_t) -1;
+extern int verbose;
 
-static void
-test_parser (char *data)
-{
-	GMimeParser *parser;
-	GMimeMessage *message;
-	GMimeStream *stream;
-	char *text;
-	
-	fprintf (stdout, "\nTesting MIME parser...\n\n");
-	
-	stream = g_mime_stream_mem_new_with_buffer (data, strlen (data));
-	parser = g_mime_parser_new ();
-	g_mime_parser_init_with_stream (parser, stream);
-	message = g_mime_parser_construct_message (parser);
-	g_object_unref (parser);
-	g_mime_stream_unref (stream);
-	
-	fprintf (stdout, "Test of GMimeHeader:\nTo: %s\n\n",
-		 g_mime_message_get_header (message, "To"));
-	text = g_mime_message_to_string (message);
-	fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);
-	g_free (text);
-	g_mime_object_unref (GMIME_OBJECT (message));
-}
+#define v(x) if (verbose > 3) x
+
 
 static void
-test_multipart (void)
+uputs (const char *str, FILE *out)
 {
-	GMimeMessage *message;
-	GMimeContentType *mime_type;
-	GMimeMultipart *multipart;
-	GMimePart *text_part, *html_part;
-	char *body, *text;
-	gboolean is_html;
+	unsigned char buf[4096], *d, *s;
 	
-	multipart = g_mime_multipart_new_with_subtype ("alternative");
-	/*g_mime_multipart_set_boundary (multipart, "spruce1234567890ABCDEFGHIJK");*/
+	s = (unsigned char *) str;
+	d = buf;
 	
-	text_part = g_mime_part_new ();
-	mime_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (text_part, mime_type);
-	g_mime_part_set_content_id (text_part, "1");
-	g_mime_part_set_content_header (text_part, "Content-Test", "test-mime");
-	g_mime_part_set_content_description (text_part, "this is a text part");
-	g_mime_part_set_content (text_part, "This is the body of my message.\n",
-				 strlen ("This is the body of my message.\n"));
+	while (*s != '\0') {
+		if (!isascii ((int) *s)) {
+			d += sprintf (d, "\\x%.2x", *s);
+			if (isxdigit ((int) s[1])) {
+				*d++ = '"';
+				*d++ = ' ';
+				*d++ = '"';
+			}
+		} else
+			*d++ = *s;
+		s++;
+	}
 	
-	g_mime_multipart_add_part (multipart, GMIME_OBJECT (text_part));
+	*d = '\0';
 	
-	html_part = g_mime_part_new ();
-	mime_type = g_mime_content_type_new ("text", "html");
-	g_mime_part_set_content_type (html_part, mime_type);
-	g_mime_part_set_filename (html_part, "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html");
-	g_mime_part_set_content_description (html_part, "this is an html part and stuff");
-	g_mime_part_set_content (html_part, "<html>\n\t<pre>This is the body of my message.</pre>\n</html>",
-				 strlen ("<html>\n\t<pre>This is the body of my message.</pre>\n</html>"));
-	g_mime_part_set_encoding (html_part, GMIME_PART_ENCODING_BASE64);
-	g_mime_part_set_content_id (html_part, "2");
-	
-	g_mime_multipart_add_part (multipart, GMIME_OBJECT (html_part));
-	
-	message = g_mime_message_new (TRUE);
-	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
-	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				    "Federico Mena-Quintero", "federico@helixcode.com");
-	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_set_header (message, "X-Mailer", "main.c");
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (multipart));
-	
-	text = g_mime_message_to_string (message);
-	
-	fprintf (stdout, "%s\n", text ? text : "(null)");
-	
-	/* get the body in text/plain */
-	body = g_mime_message_get_body (message, TRUE, &is_html);
-	fprintf (stdout, "Trying to get message body in plain text format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	
-	/* get the body in text/html */
-	body = g_mime_message_get_body (message, FALSE, &is_html);
-	fprintf (stdout, "Trying to get message body in html format:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	if (is_html)
-		fprintf (stdout, "yep...got it in html format\n");
-	
-	g_mime_object_unref (GMIME_OBJECT (message));
-	
-	test_parser (text);
-	
-	g_free (text);
+	fputs (buf, out);
 }
 
-static void
-test_onepart (void)
-{
-	GMimeMessage *message;
-	GMimePart *mime_part;
-	char *body, *text;
-	gboolean is_html;
-	
-	mime_part = g_mime_part_new_with_type ("text", "plain");
-	
-	g_mime_part_set_content (mime_part, "This is the body of my message.\n",
-				 strlen ("This is the body of my message.\n"));
-	
-	message = g_mime_message_new (TRUE);
-	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
-	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				    "Federico Mena-Quintero", "federico@helixcode.com");
-	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_set_header (message, "X-Mailer", "main.c");
-	
-	g_mime_message_set_mime_part (message, GMIME_OBJECT (mime_part));
-	g_mime_object_unref (GMIME_OBJECT (mime_part));
-	
-	text = g_mime_message_to_string (message);
-	
-	fprintf (stdout, "%s\n", text ? text : "(null)");
-	
-	body = g_mime_message_get_body (message, TRUE, &is_html);
-	fprintf (stdout, "Trying to get message body:\n%s\n\n", body ? body : "(null)");
-	g_free (body);
-	
-	g_mime_object_unref (GMIME_OBJECT (message));
-	
-	test_parser (text);
-	
-	g_free (text);
-}
-
-static char *string = "I have no idea what to test here so I'll just test a "
-"bunch of crap like this and see what it encodes it as.\r\n"
-"I'm thinking this line should be really really really long "
-"so as to test the line wrapping at 76 chars, dontcha think? "
-"I most certainly do. Lets get some weird chars in here too. "
-"Lets try: = ååååaa\nOkay, now on a side note...uhm, ?= =? and stuff.\n"
-"danw wanted me to try this next line...so lets give it a shot:\n"
-"foo   \n"
-"Lets also try some tabs in here like this:\t\tis that 2 tabs? I hope so.";
-
-static void
-test_encodings (void)
-{
-	char *enc, *dec, *koi8r;
-	guint32 save = 0;
-	int state = -1;
-	ssize_t pos;
-	
-	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklagdoc?=";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "=?iso-8859-1?B?dGVzdOb45S50eHQ=?=";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "Re: !!! =?windows-1250?Q?Nab=EDz=EDm_scanov=E1n=ED_negativ=F9?= "
-		"=?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= "
-		"=?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "OT - ich =?ISO-8859-1?Q?wei=DF?=, trotzdem";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	enc = "OT - ich =?ISO-8859-1?Q?wei=DF,?= trotzdem";
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (dec);
-	
-	dec = g_mime_iconv_strdup (cd, "OT - ich weiß, trotzdem");
-	fprintf (stderr, "pre-encoded: %s\n", dec);
-	enc = g_mime_utils_header_encode_text (dec);
-	g_free (dec);
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_strdup ("=?iso-8859-1?Q?=DE?=:\t=?iso-8859-1?Q?=AD=BE=EF?= spells 0xdeadbeef");
-	fprintf (stderr, "incorrect: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	enc = g_mime_utils_header_encode_text (dec);
-	g_free (dec);
-	fprintf (stderr, "correct: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_strdup ("=?iso-8859-1?q?blablah?=");
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_strdup ("=?iso-8859-1?Q?blablah?=");
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	dec = g_mime_iconv_strdup (cd, "Kristoffer Brånemyr");
-	fprintf (stderr, "pre-encoded: %s\n", dec);
-	enc = g_mime_utils_header_encode_phrase (dec);
-	g_free (dec);
-	fprintf (stderr, "encoded: %s\n", enc);
-	dec = g_mime_utils_header_decode_phrase (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
-	enc = g_mime_utils_header_encode_text (dec);
-	fprintf (stderr, "encoded: %s\n", enc);
-	g_free (dec);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	dec = g_mime_iconv_strdup (cd, "åaåååaåå aaaa ååååaa");
-	enc = g_mime_utils_header_encode_phrase (dec);
-	fprintf (stderr, "encoded: %s\n", enc);
-	g_free (dec);
-	dec = g_mime_utils_header_decode_phrase (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	fprintf (stderr, "test that white space between 8bit words is preserved\n");
-	dec = g_mime_iconv_strdup (cd, "åaåååaåå  \t  ååååaa");
-	enc = g_mime_utils_header_encode_text (dec);
-	fprintf (stderr, "encoded: %s\n", enc);
-	g_free (dec);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded: %s\n", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_mime_utils_quote_string ("this is an \"embedded\" quoted string.");
-	fprintf (stderr, "quoted: %s\n", enc);
-	g_mime_utils_unquote_string (enc);
-	fprintf (stderr, "unquoted: %s\n", enc);
-	g_free (enc);
-	
-	enc = g_mime_utils_quote_string ("Jeffrey \"The Fejjinator\" Stedfast");
-	fprintf (stderr, "quoted: %s\n", enc);
-	g_mime_utils_unquote_string (enc);
-	fprintf (stderr, "unquoted: %s\n", enc);
-	g_free (enc);
-	
-	enc = "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?=";
-	koi8r = g_mime_utils_header_decode_text (enc);
-	
-	
-	enc = g_mime_utils_header_encode_text (koi8r);
-	fprintf (stderr, "encode_text: %s\n", enc);
-	dec = g_mime_utils_header_decode_text (enc);
-	fprintf (stderr, "decoded (%s): %s\n", !strcmp (koi8r, dec) ? "GOOD" : "BAD", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_mime_utils_header_encode_phrase (koi8r);
-	fprintf (stderr, "encode_phrase: %s\n", enc);
-	dec = g_mime_utils_header_decode_phrase (enc);
-	fprintf (stderr, "decoded (%s): %s\n", !strcmp (koi8r, dec) ? "GOOD" : "BAD", dec);
-	g_free (enc);
-	g_free (dec);
-	
-	enc = g_malloc (strlen (string) * 3);
-	pos = g_mime_utils_quoted_encode_close ((unsigned char *) string, strlen (string),
-						(unsigned char *) enc, &state, &save);
-	enc[pos] = '\0';
-	
-	fprintf (stderr, "\nencoded:\n-------\n%s\n-------\n", enc);
-	
-	g_free (enc);
-}
-
-static char *addresses[] = {
-	"fejj@helixcode.com",
-	"Jeffrey Stedfast <fejj@helixcode.com>",
-	"Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
-	"\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
-	"fejj@helixcode.com (Jeffrey Stedfast)",
-	"Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
-	"=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>",
-	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
-	"GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
-	"Local recipients: phil, joe, alex, bob",
-	"@develop:sblab!att!thumper.bellcore.com!nsb",
-	"\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA",
-	"Charles S. Kerr <charles@foo.com>", /* the '.' in the name part is illegal */
-	"Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>",
-	"Charles Kerr, Pan Programmer <charles@superpimp.org>", /* bad placement of a comma ;-) */
-	"Charles Kerr <charles@[127.0.0.1]>",
-	"Charles <charles@[127..0.1]>",  /* where'd it go? Hollywood said, "where did *who* go!?" */
-	"Charles Kerr,, likes illegal commas <charles@superpimp.org>", /* ouch this is bad... */
-	"<charles@>",
-	"<charles@broken.host.com.> (Charles Kerr)",
-	"fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and \t's too)",
-	"Tõivo Leedjärv <leedjarv@interest.ee>",
-	"fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
-	"\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
-	"undisclosed-recipients: ;",
-	"undisclosed-recipients:;",
-	"undisclosed-recipients:",
-	"undisclosed-recipients;",
-	"undisclosed-recipients",
-	NULL
+static struct {
+	const char *input;
+	const char *display;
+	const char *encoded;
+} addrspec[] = {
+	{ "fejj@helixcode.com",
+	  "fejj@helixcode.com",
+	  "fejj@helixcode.com" },
+	{ "Jeffrey Stedfast <fejj@helixcode.com>",
+	  "Jeffrey Stedfast <fejj@helixcode.com>",
+	  "Jeffrey Stedfast <fejj@helixcode.com>" },
+	{ "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
+	  "Jeffrey fejj Stedfast <fejj@helixcode.com>",
+	  "Jeffrey fejj Stedfast <fejj@helixcode.com>" },
+	{ "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
+	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
+	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>" },
+	{ "fejj@helixcode.com (Jeffrey Stedfast)",
+	  "Jeffrey Stedfast <fejj@helixcode.com>",
+	  "Jeffrey Stedfast <fejj@helixcode.com>" },
+	{ "Jeff <fejj(recursive (comment) block)@helixcode.(and a comment here)com>",
+	  "Jeff <fejj@helixcode.com>",
+	  "Jeff <fejj@helixcode.com>" },
+	{ "=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>",
+	  "Kristoffer Br\xc3\xa5nemyr <ztion@swipenet.se>",
+	  "=?iso-8859-1?q?Kristoffer_Br=E5nemyr?= <ztion@swipenet.se>" },
+	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons)",
+	  "Fran\xc3\xa7ois Pons <fpons@mandrakesoft.com>",
+	  "=?iso-8859-1?q?Fran=E7ois?= Pons <fpons@mandrakesoft.com>" },
+	{ "GNOME Hackers: miguel@gnome.org (Miguel de Icaza), Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
+	  "GNOME Hackers: Miguel de Icaza <miguel@gnome.org>, Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com",
+	  "GNOME Hackers: Miguel de Icaza <miguel@gnome.org>, Havoc Pennington <hp@redhat.com>;, fejj@helixcode.com" },
+	{ "Local recipients: phil, joe, alex, bob",
+	  "Local recipients: phil, joe, alex, bob;",
+	  "Local recipients: phil, joe, alex, bob;" },
+	{ "\":sysmail\"@  Some-Group. Some-Org,\n Muhammed.(I am  the greatest) Ali @(the)Vegas.WBA",
+	  "\":sysmail\"@Some-Group.Some-Org, Muhammed.Ali@Vegas.WBA",
+	  "\":sysmail\"@Some-Group.Some-Org, Muhammed.Ali@Vegas.WBA" },
+	{ "Charles S. Kerr <charles@foo.com>",
+	  "\"Charles S. Kerr\" <charles@foo.com>",
+	  "\"Charles S. Kerr\" <charles@foo.com>" },
+	{ "Charles \"Likes, to, put, commas, in, quoted, strings\" Kerr <charles@foo.com>",
+	  "\"Charles Likes, to, put, commas, in, quoted, strings Kerr\" <charles@foo.com>",
+	  "\"Charles Likes, to, put, commas, in, quoted, strings Kerr\" <charles@foo.com>" },
+	{ "Charles Kerr, Pan Programmer <charles@superpimp.org>",
+	  "\"Charles Kerr, Pan Programmer\" <charles@superpimp.org>",
+	  "\"Charles Kerr, Pan Programmer\" <charles@superpimp.org>" },
+	{ "Charles Kerr <charles@[127.0.0.1]>",
+	  "Charles Kerr <charles@[127.0.0.1]>",
+	  "Charles Kerr <charles@[127.0.0.1]>" },
+	{ "Charles <charles@[127..0.1]>",
+	  "Charles <charles@[127.0.1]>",
+	  "Charles <charles@[127.0.1]>" },
+	{ "Charles,, likes illegal commas <charles@superpimp.org>",
+	  "Charles, likes illegal commas <charles@superpimp.org>",
+	  "Charles, likes illegal commas <charles@superpimp.org>" },
+	{ "<charles@>",
+	  "charles",
+	  "charles" },
+	{ "<charles@broken.host.com.> (Charles Kerr)",
+	  "Charles Kerr <charles@broken.host.com>",
+	  "Charles Kerr <charles@broken.host.com>" },
+	{ "fpons@mandrakesoft.com (=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too)",
+	  "\"Fran\xc3\xa7ois Pons likes _'s and 	's too\" <fpons@mandrakesoft.com>",
+	  "=?iso-8859-1?q?Fran=E7ois?= Pons likes _'s and 	's too <fpons@mandrakesoft.com>" },
+	{ "T\x81\xf5ivo Leedj\x81\xe4rv <leedjarv@interest.ee>",
+	  "T\xc2\x81\xc3\xb5ivo Leedj\xc2\x81\xc3\xa4rv <leedjarv@interest.ee>",
+	  "=?iso-8859-1?b?VIH1aXZvIExlZWRqgeRydg==?= <leedjarv@interest.ee>" },
+	{ "fbosi@mokabyte.it;, rspazzoli@mokabyte.it",
+	  "fbosi@mokabyte.it, rspazzoli@mokabyte.it",
+	  "fbosi@mokabyte.it, rspazzoli@mokabyte.it" },
+	{ "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
+	  "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>",
+	  "\"Miles (Star Trekkin) O'Brian\" <mobrian@starfleet.org>" },
+	{ "undisclosed-recipients: ;",
+	  "undisclosed-recipients: ;",
+	  "undisclosed-recipients: ;" },
+	{ "undisclosed-recipients:;",
+	  "undisclosed-recipients: ;",
+	  "undisclosed-recipients: ;" },
+	{ "undisclosed-recipients:",
+	  "undisclosed-recipients: ;",
+	  "undisclosed-recipients: ;" },
+	{ "undisclosed-recipients",
+	  "undisclosed-recipients",
+	  "undisclosed-recipients" },
 };
 
 static void
-dump_addrlist (InternetAddressList *addrlist, int i, gboolean group, gboolean destroy)
+test_addrspec (void)
 {
-	InternetAddressList *addr;
-	InternetAddress *ia;
+	InternetAddressList *addrlist;
 	char *str;
+	guint i;
 	
-	addr = addrlist;
-	while (addr) {
-		ia = addr->address;
-		addr = addr->next;
+	for (i = 0; i < G_N_ELEMENTS (addrspec); i++) {
+		addrlist = NULL;
+		str = NULL;
 		
-		if (i != -1) {
-			str = g_mime_iconv_strdup (cd, addresses[i]);
-			fprintf (stderr, "Original: %s\n", str);
+		testsuite_check ("addrspec[%u]", i);
+		try {
+			if (!(addrlist = internet_address_parse_string (addrspec[i].input)))
+				throw (exception_new ("could not parse addr-spec", i));
+			
+			str = internet_address_list_to_string (addrlist, FALSE);
+			if (strcmp (addrspec[i].display, str) != 0)
+				throw (exception_new ("display addr-spec does not match"));
 			g_free (str);
-		}
+			
+			str = internet_address_list_to_string (addrlist, TRUE);
+			if (strcmp (addrspec[i].encoded, str) != 0)
+				throw (exception_new ("encoded addr-spec does not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("addrspec[%u]: %s", i, ex->message);
+		} finally;
 		
-		if (ia->type == INTERNET_ADDRESS_GROUP) {
-			fprintf (stderr, "Group Name: %s\n", ia->name ? ia->name : "");
-			dump_addrlist (ia->value.members, -1, TRUE, FALSE);
-			fprintf (stderr, "End of group.\n");
-		} else if (ia->type == INTERNET_ADDRESS_NAME) {
-			fprintf (stderr, "%sName: %s\n", group ? "\t" : "",
-				 ia->name ? ia->name : "");
-			fprintf (stderr, "%sEMail: %s\n", group ? "\t" : "",
-				 ia->value.addr ? ia->value.addr : "");
-		}
-		
-		str = internet_address_to_string (ia, FALSE);
-		fprintf (stderr, "%sRewritten (display): %s\n", group ? "\t" : "",
-			 str ? str : "");
 		g_free (str);
-		
-		str = internet_address_to_string (ia, TRUE);
-		fprintf (stderr, "%sRewritten (encoded): %s\n\n", group ? "\t" : "",
-			 str ? str : "");
-		g_free (str);
+		if (addrlist)
+			internet_address_list_destroy (addrlist);
 	}
 }
 
-static void
-test_addresses (void)
-{
-	int i;
-	
-	for (i = 0; addresses[i]; i++) {
-		InternetAddressList *addrlist;
-		
-		addrlist = internet_address_parse_string (addresses[i]);
-		if (!addrlist) {
-			fprintf (stderr, "failed to parse '%s'.\n", addresses[i]);
-			continue;
-		}
-		
-		dump_addrlist (addrlist, i, FALSE, TRUE);
-		
-		internet_address_list_destroy (addrlist);
-	}
-}
 
-/*#include "date-strings.h"*/
-
-static void
-test_date (void)
-{
-	int offset = 0;
-	char *in, *out;
+static struct {
+	const char *in;
+	const char *out;
 	time_t date;
+	int tzone;
+} dates[] = {
+	{ "Mon, 17 Jan 1994 11:14:55 -0500",
+	  "Mon, 17 Jan 1994 11:14:55 -0500",
+	  758823295, -500 },
+	{ "Mon, 17 Jan 01 11:14:55 -0500",
+	  "Wed, 17 Jan 2001 11:14:55 -0500",
+	  979748095, -500 },
+	{ "Tue, 30 Mar 2004 13:01:38 +0000",
+	  "Tue, 30 Mar 2004 13:01:38 +0000",
+	  1080651698, 0 },
+	{ "Sat Mar 24 21:23:03 EDT 2007",
+	  "Sat, 24 Mar 2007 21:23:03 -0400",
+	  1174785783, -400 },
+	{ "Sat, 24 Mar 2007 21:23:03 EDT",
+	  "Sat, 24 Mar 2007 21:23:03 -0400",
+	  1174785783, -400 },
+	{ "Sat, 24 Mar 2007 21:23:03 GMT",
+	  "Sat, 24 Mar 2007 21:23:03 +0000",
+	  1174771383, 0 },
+};
+
+static void
+test_date_parser (void)
+{
+	time_t date;
+	int tzone;
+	char *buf;
+	guint i;
 	
-	in = "Mon, 17 Jan 1994 11:14:55 -0500";
-	fprintf (stderr, "date  in: [%s]\n", in);
-	date = g_mime_utils_header_decode_date (in, &offset);
-	out = g_mime_utils_header_format_date (date, offset);
-	fprintf (stderr, "date out: [%s]\n", out);
-	g_free (out);
+	for (i = 0; i < G_N_ELEMENTS (dates); i++) {
+		buf = NULL;
+		testsuite_check ("Date: '%s'", dates[i].in);
+		try {
+			date = g_mime_utils_header_decode_date (dates[i].in, &tzone);
+			
+			if (date != dates[i].date)
+				throw (exception_new ("time_t's do not match"));
+			
+			if (tzone != dates[i].tzone)
+				throw (exception_new ("timezones do not match"));
+			
+			buf = g_mime_utils_header_format_date (date, tzone);
+			if (strcmp (dates[i].out, buf) != 0)
+				throw (exception_new ("date strings do not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("Date: '%s': %s", dates[i].in,
+						ex->message);
+		} finally;
+		
+		g_free (buf);
+	}
+}
+
+static struct {
+	const char *input;
+	const char *decoded;
+	const char *encoded;
+} rfc2047_text[] = {
+	{ "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag=2Edoc?=",
+	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
+	  "Copy =?iso-8859-1?q?of_Rapport_fra_Norges_R=E5fisklag=2Edoc?=" },
+	{ "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag.doc?=",
+	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
+	  "Copy =?iso-8859-1?q?of_Rapport_fra_Norges_R=E5fisklag=2Edoc?=" },
+	{ "=?iso-8859-1?B?dGVzdOb45S50eHQ=?=",
+	  "test\xc3\xa6\xc3\xb8\xc3\xa5.txt",
+	  "=?iso-8859-1?b?dGVzdOb45S50eHQ=?=" },
+	{ "Re: !!! =?windows-1250?Q?Nab=EDz=EDm_scanov=E1n=ED_negativ=F9?= =?windows-1250?Q?=2C_p=F8edloh_do_A4=2C_=E8/b_lasertov=FD_ti?= =?windows-1250?Q?sk_a_=E8/b_inkoutov=FD_tisk_do_A2!!!?=",
+	  "Re: !!! Nab\xc3\xadz\xc3\xadm scanov\xc3\xa1n\xc3\xad negativ\xc5\xaf, p\xc5\x99" "edloh do A4, \xc4\x8d/b lasertov\xc3\xbd tisk a \xc4\x8d/b inkoutov\xc3\xbd tisk do A2!!!",
+	  "Re: =?iso-8859-2?q?!!!_Nab=EDz=EDm_scanov=E1n=ED_negativ=F9=2C_?= =?iso-8859-2?q?p=F8edloh_do_A4=2C_=E8=2Fb_lasertov=FD_?= =?iso-8859-2?q?tisk_a_=E8=2Fb_inkoutov=FD?= tisk do A2!!!" },
+	{ "Re: =?iso-8859-2?q?!!!_Nab=EDz=EDm_scanov=E1n=ED_negativ=F9=2C_?= =?iso-8859-2?q?p=F8edloh_do_A4=2C_=E8=2Fb_lasertov=FD_?= =?iso-8859-2?q?tisk_a_=E8=2Fb_inkoutov=FD?= tisk do A2!!!",
+	  "Re: !!! Nab\xc3\xadz\xc3\xadm scanov\xc3\xa1n\xc3\xad negativ\xc5\xaf, p\xc5\x99" "edloh do A4, \xc4\x8d/b lasertov\xc3\xbd tisk a \xc4\x8d/b inkoutov\xc3\xbd tisk do A2!!!",
+	  "Re: =?iso-8859-2?q?!!!_Nab=EDz=EDm_scanov=E1n=ED_negativ=F9=2C_?= =?iso-8859-2?q?p=F8edloh_do_A4=2C_=E8=2Fb_lasertov=FD_?= =?iso-8859-2?q?tisk_a_=E8=2Fb_inkoutov=FD?= tisk do A2!!!" },
+	{ "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem",
+	  "OT - ich wei\xc3\x9f, trotzdem",
+	  "=?iso-8859-1?q?OT_-_ich_wei=DF=2C?= trotzdem" },
+	{ "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?=",
+	  "\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96",
+	  "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tg==?=" },
+};
+
+static struct {
+	const char *input;
+	const char *decoded;
+	const char *encoded;
+} rfc2047_phrase[] = {
+	/* FIXME: add some phrase tests */
+};
+
+static void
+test_rfc2047 (void)
+{
+	char *enc, *dec;
+	guint i;
 	
-	in = "Mon, 17 Jan 01 11:14:55 -0500";
-	fprintf (stderr, "date  in: [%s]\n", in);
-	date = g_mime_utils_header_decode_date (in, &offset);
-	out = g_mime_utils_header_format_date (date, offset);
-	fprintf (stderr, "date out: [%s]\n", out);
-	g_free (out);
-	
-	in = "Tue, 30 Mar 2004 13:01:38 +0000";
-	fprintf (stderr, "date  in: [%s]\n", in);
-	date = g_mime_utils_header_decode_date (in, &offset);
-	out = g_mime_utils_header_format_date (date, offset);
-	fprintf (stderr, "date out: [%s]\n", out);
-	g_free (out);
+	for (i = 0; i < G_N_ELEMENTS (rfc2047_text); i++) {
+		dec = enc = NULL;
+		testsuite_check ("rfc2047_text[%u]", i);
+		try {
+			dec = g_mime_utils_header_decode_text (rfc2047_text[i].input);
+			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
+				throw (exception_new ("decoded text does not match"));
+			
+			enc = g_mime_utils_header_encode_text (dec);
+			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
+				throw (exception_new ("encoded text does not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("rfc2047_text[%u]: %s", i, ex->message);
+		} finally;
+		
+		g_free (dec);
+		g_free (enc);
+	}
 	
 #if 0
-	{
-		char *string;
-		int i;
+	for (i = 0; i < G_N_ELEMENTS (rfc2047_phrase); i++) {
+		dec = enc = NULL;
+		testsuite_check ("rfc2047_phrase[%u]", i);
+		try {
+			dec = g_mime_utils_header_decode_phrase (rfc2047_phrase[i].input);
+			if (strcmp (rfc2047_phrase[i].decoded, dec) != 0)
+				throw (exception_new ("decoded phrase does not match"));
+			
+			enc = g_mime_utils_header_encode_phrase (dec);
+			if (strcmp (rfc2047_phrase[i].encoded, enc) != 0)
+				throw (exception_new ("encoded phrase does not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("rfc2047_phrase[%u]: %s", i, ex->message);
+		} finally;
 		
-		ZenTimerStart ();
-		for (i = 0; i < num_date_strings; i++) {
-			in = date_strings[i];
-			printf ("date  in: [%s]\n", in);
-			date = g_mime_utils_header_decode_date (in, &offset);
-			out = g_mime_utils_header_format_date (date, offset);
-			printf ("date out: [%s]\n", out);
-			g_free (out);
-		}
-		ZenTimerStop ();
-		
-		string = g_strdup_printf ("date parser (%d dates parsed)", num_date_strings);
-		ZenTimerReport (string);
-		g_free (string);
+		g_free (dec);
+		g_free (enc);
 	}
 #endif
 }
 
 
-int main (int argc, char *argv[])
+static struct {
+	const char *input;
+	const char *encoded;
+} rfc2184[] = {
+	{ "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html",
+	  "Content-Disposition: attachment;\n\t"
+	  "filename*0*=iso-8859-1''this%20is%20a%20really%20really%20long%20filename;\n\t"
+	  "filename*1*=%20that%20should%20force%20gmime%20to%20rfc2184%20encode%20it;\n\t"
+	  "filename*2*=%20-%20yay!.html\n" },
+};
+
+static void
+test_rfc2184 (void)
+{
+	GMimeParam param, *params;
+	GString *str;
+	size_t n;
+	guint i;
+	
+	param.next = NULL;
+	param.name = "filename";
+	
+	str = g_string_new ("Content-Disposition: attachment");
+	n = str->len;
+	
+	for (i = 0; i < G_N_ELEMENTS (rfc2184); i++) {
+		params = NULL;
+		
+		param.value = (char *) rfc2184[i].input;
+		
+		testsuite_check ("rfc2184[%u]", i);
+		try {
+			g_mime_param_write_to_string (&param, TRUE, str);
+			if (strcmp (rfc2184[i].encoded, str->str) != 0)
+				throw (exception_new ("encoded param does not match"));
+			
+			if (!(params = g_mime_param_new_from_string (str->str + n + 2)))
+				throw (exception_new ("could not parse encoded param list"));
+			
+			if (params->next != NULL)
+				throw (exception_new ("parsed more than a single param?"));
+			
+			if (strcmp (rfc2184[i].input, params->value) != 0)
+				throw (exception_new ("parsed param value does not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("rfc2184[%u]: %s", i, ex->message);
+		} finally;
+		
+		if (params != NULL)
+			g_mime_param_destroy (params);
+		
+		g_string_truncate (str, n);
+	}
+	
+	g_string_free (str, TRUE);
+}
+
+
+static struct {
+	const char *input;
+	const char *unquoted;
+	const char *quoted;
+} qstrings[] = {
+	{ "this is a \\\"quoted\\\" string",
+	  "this is a \"quoted\" string",
+	  "this is a \"quoted\" string" },
+	{ "\\\"this\\\" and \\\"that\\\"",
+	  "\"this\" and \"that\"",
+	  "\"this\" and \"that\"" },
+	{ "\"Dr. A. Cula\"",
+	  "Dr. A. Cula",
+	  "\"Dr. A. Cula\"" },
+};
+
+static void
+test_qstring (void)
+{
+	char *str;
+	guint i;
+	
+	for (i = 0; i < G_N_ELEMENTS (qstrings); i++) {
+		str = NULL;
+		
+		testsuite_check ("qstrings[%u]", i);
+		try {
+			str = g_strdup (qstrings[i].input);
+			g_mime_utils_unquote_string (str);
+			if (strcmp (qstrings[i].unquoted, str) != 0)
+				throw (exception_new ("unquoted string does not match"));
+			
+			g_free (str);
+			str = g_mime_utils_quote_string (qstrings[i].unquoted);
+			if (strcmp (qstrings[i].quoted, str) != 0)
+				throw (exception_new ("quoted string does not match"));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("qstrings[%u]: %s", i, ex->message);
+		} finally;
+		
+		g_free (str);
+	}
+}
+
+
+int main (int argc, char **argv)
 {
 	g_mime_init (0);
 	
-	cd = g_mime_iconv_open ("UTF-8", "iso-8859-1");
+	testsuite_init (argc, argv);
 	
-	test_date ();
+	testsuite_start ("addr-spec parser");
+	test_addrspec ();
+	testsuite_end ();
 	
-	test_onepart ();
+	testsuite_start ("date parser");
+	test_date_parser ();
+	testsuite_end ();
 	
-	test_multipart ();
+	testsuite_start ("rfc2047 encoding/decoding");
+	test_rfc2047 ();
+	testsuite_end ();
 	
-	test_encodings ();
+	testsuite_start ("rfc2184 encoding/decoding");
+	test_rfc2184 ();
+	testsuite_end ();
 	
-	test_addresses ();
-	
-	g_mime_iconv_close (cd);
+	testsuite_start ("quoted-strings");
+	test_qstring ();
+	testsuite_end ();
 	
 	g_mime_shutdown ();
 	
-	return 0;
+	return testsuite_exit ();
 }

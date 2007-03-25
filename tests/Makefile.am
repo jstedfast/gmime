@@ -20,12 +20,12 @@ AUTOMATED_TESTS =	\
 	test-streams	\
 	test-cat	\
 	test-mbox	\
+	test-mime	\
 	test-pgp	\
 	test-pgpmime
 
 MANUAL_TESTS =		\
 	test-best	\
-	test-mime 	\
 	test-parser 	\
 	test-html 	\
 	test-partial
@@ -40,7 +40,7 @@ test_best_LDFLAGS =
 test_best_DEPENDENCIES = $(DEPS)
 test_best_LDADD = $(LDADDS)
 
-test_mime_SOURCES = test-mime.c
+test_mime_SOURCES = test-mime.c testsuite.c testsuite.h
 test_mime_LDFLAGS = 
 test_mime_DEPENDENCIES = $(DEPS)
 test_mime_LDADD = $(LDADDS)

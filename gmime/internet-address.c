@@ -913,7 +913,12 @@ decode_mailbox (const char **in)
 		if (name)
 			g_string_free (name, TRUE);
 		g_string_free (addr, TRUE);
-		*in = inptr + 1;
+		
+		/* comma will be eaten by our caller */
+		if (*inptr != ',')
+			*in = inptr + 1;
+		else
+			*in = inptr;
 		
 		return NULL;
 	}
@@ -923,8 +928,7 @@ decode_mailbox (const char **in)
 	while (*inptr == '.' && pre) {
 		inptr++;
 		g_free (pre);
-		pre = decode_word (&inptr);
-		if (pre) {
+		if ((pre = decode_word (&inptr))) {
 			g_string_append_c (addr, '.');
 			g_string_append (addr, pre);
 		}
@@ -937,8 +941,7 @@ decode_mailbox (const char **in)
 		char *domain;
 		
 		inptr++;
-		domain = decode_domain (&inptr);
-		if (domain) {
+		if ((domain = decode_domain (&inptr))) {
 			g_string_append_c (addr, '@');
 			g_string_append (addr, domain);
 			g_free (domain);
@@ -967,8 +970,7 @@ decode_mailbox (const char **in)
 		comment = (char *) inptr;
 		decode_lwsp (&inptr);
 		if (inptr > comment) {
-			comment = memchr (comment, '(', inptr - comment);
-			if (comment) {
+			if ((comment = memchr (comment, '(', inptr - comment))) {
 				const char *cend;
 				
 				/* find the end of the comment */
@@ -999,8 +1001,7 @@ decode_mailbox (const char **in)
 			 * converting to UTF-8 */
 			char *buf;
 			
-			buf = g_mime_iconv_locale_to_utf8 (name->str);
-			if (buf) {
+			if ((buf = g_mime_iconv_locale_to_utf8 (name->str))) {
 				g_string_truncate (name, 0);
 				g_string_append (name, buf);
 				g_free (buf);
@@ -1057,8 +1058,7 @@ decode_address (const char **in)
 		while (*inptr && *inptr != ';') {
 			InternetAddress *member;
 			
-			member = decode_mailbox (&inptr);
-			if (member) {
+			if ((member = decode_mailbox (&inptr))) {
 				tail->next = g_new (InternetAddressList, 1);
 				tail = tail->next;
 				tail->next = NULL;
@@ -1069,8 +1069,7 @@ decode_address (const char **in)
 			while (*inptr == ',') {
 				inptr++;
 				decode_lwsp (&inptr);
-				member = decode_mailbox (&inptr);
-				if (member) {
+				if ((member = decode_mailbox (&inptr))) {
 					tail->next = g_new (InternetAddressList, 1);
 					tail = tail->next;
 					tail->next = NULL;
@@ -1145,8 +1144,7 @@ internet_address_parse_string (const char *string)
 		else if (*inptr) {
 			w(g_warning ("Parse error at '%s': expected ','", inptr));
 			/* try skipping to the next address */
-			inptr = strchr (inptr, ',');
-			if (inptr)
+			if ((inptr = strchr (inptr, ',')))
 				inptr++;
 		}
 	}

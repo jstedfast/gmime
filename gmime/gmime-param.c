@@ -630,7 +630,7 @@ decode_param_list (const char *in)
  *
  * Creates a parameter list based on the input string.
  *
- * Returns a GMimeParam structure based on @string.
+ * Returns a #GMimeParam structure based on @string.
  **/
 GMimeParam *
 g_mime_param_new_from_string (const char *string)
