@@ -437,10 +437,11 @@ test_streams (DIR *dir, const char *datadir, const char *filename)
 	*p++ = G_DIR_SEPARATOR;
 	strcpy (p, filename);
 	
-	p = g_stpcpy (outpath, datadir);
-	*p++ = G_DIR_SEPARATOR;
-	p = g_stpcpy (p, "output");
-	*p++ = G_DIR_SEPARATOR;
+	q = g_stpcpy (outpath, datadir);
+	*q++ = G_DIR_SEPARATOR;
+	q = g_stpcpy (q, "output");
+	*q++ = G_DIR_SEPARATOR;
+	*q = '\0';
 	
 	n = strlen (filename);
 	

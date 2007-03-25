@@ -195,7 +195,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 
 int main (int argc, char **argv)
 {
-	const char *datadir = "data/parser";
+	const char *datadir = "data/mbox";
 	char input[256], output[256], *p, *q;
 	GMimeStream *istream, *ostream;
 	const char *path, *what;
@@ -227,22 +227,25 @@ int main (int argc, char **argv)
 		p = g_stpcpy (input, path);
 		*p++ = G_DIR_SEPARATOR;
 		p = g_stpcpy (p, "input");
+		
+		if (!(dir = opendir (input)))
+			goto exit;
+		
 		*p++ = G_DIR_SEPARATOR;
+		*p = '\0';
 		
 		q = g_stpcpy (output, path);
 		*q++ = G_DIR_SEPARATOR;
 		q = g_stpcpy (q, "output");
 		*q++ = G_DIR_SEPARATOR;
-		
-		if (!(dir = opendir (input)))
-			goto exit;
+		*q = '\0';
 		
 		while ((dent = readdir (dir))) {
 			if (!g_str_has_suffix (dent->d_name, ".mbox"))
 				continue;
 			
-			strcpy (input, dent->d_name);
-			strcpy (output, dent->d_name);
+			strcpy (p, dent->d_name);
+			strcpy (q, dent->d_name);
 			
 			parser = NULL;
 			istream = NULL;
