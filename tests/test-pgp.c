@@ -252,10 +252,10 @@ import_key (GMimeCipherContext *ctx, const char *path)
 
 int main (int argc, char **argv)
 {
+	const char *datadir = "data/pgp";
 	GMimeStream *istream, *ostream;
 	GMimeCipherContext *ctx;
 	GMimeSession *session;
-	const char *dirname;
 	const char *what;
 	struct stat st;
 	char *key;
@@ -271,17 +271,14 @@ int main (int argc, char **argv)
 	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
 	
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] != '-')
+		if (argv[i][0] != '-') {
+			datadir = argv[i];
 			break;
+		}
 	}
 	
-	if (i < argc && (stat (argv[i], &st) == -1 || !S_ISDIR (st.st_mode)))
+	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
 		return EXIT_FAILURE;
-	
-	if (i < argc)
-		dirname = argv[i];
-	else
-		dirname = ".";
 	
 	testsuite_start ("GnuPG cipher context");
 	
@@ -292,11 +289,11 @@ int main (int argc, char **argv)
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {
-		key = g_build_filename (dirname, "gmime.gpg.pub", NULL);
+		key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
 		import_key (ctx, key);
 		g_free (key);
 		
-		key = g_build_filename (dirname, "gmime.gpg.sec", NULL);
+		key = g_build_filename (datadir, "gmime.gpg.sec", NULL);
 		import_key (ctx, key);
 		g_free (key);
 		
