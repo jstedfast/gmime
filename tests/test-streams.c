@@ -493,30 +493,30 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	for (i = 1; i < argc; i++) {
-		if (argv[i][0] != '-')
+		if (argv[i][0] != '-') {
+			datadir = argv[i];
 			break;
+		}
 	}
 	
-	if (i < argc)
-		datadir = argv[i];
+	testsuite_start ("Stream tests");
 	
 	p = g_stpcpy (path, datadir);
 	*p++ = G_DIR_SEPARATOR;
 	strcpy (p, "output");
 	
 	if (!(outdir = opendir (path)))
-		return EXIT_FAILURE;
+		goto exit;
 	
 	p = g_stpcpy (p, "input");
 	
 	if (!(dir = opendir (path))) {
 		closedir (outdir);
-		return EXIT_FAILURE;
+		goto exit;
 	}
 	
 	*p++ = G_DIR_SEPARATOR;
-	
-	testsuite_start ("Stream tests");
+	*p = '\0';
 	
 	while ((dent = readdir (dir))) {
 		if (dent->d_name[0] == '.' || !strcmp (dent->d_name, "README"))
@@ -530,6 +530,8 @@ int main (int argc, char **argv)
 	
 	closedir (outdir);
 	closedir (dir);
+	
+exit:
 	
 	testsuite_end ();
 	
