@@ -5,7 +5,7 @@
 	g_strstrip() the type, is_ttoken() won't match against lwsp
 	chars. Also, instead of simply scanning past lwsp between some
 	tokens, use decode_lwsp() between *all* tokens so that we handle
-	comments as well.
+	comments as well (not that there should be any...).
 
 	* gmime-2.0.pc.in: Got rid of the redundant @LIBS@ which contained
 	the same value as @GMIME_LIBS@.
