@@ -29,6 +29,7 @@
 #include "gmime-common.h"
 #include "gmime-content-type.h"
 #include "gmime-table-private.h"
+#include "gmime-parse-utils.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -98,7 +99,8 @@ g_mime_content_type_new_from_string (const char *string)
 {
 	GMimeContentType *mime_type;
 	char *type = NULL, *subtype;
-	register const char *inptr;
+	const char *inptr;
+	size_t n;
 	
 	g_return_val_if_fail (string != NULL, NULL);
 	
@@ -110,20 +112,25 @@ g_mime_content_type_new_from_string (const char *string)
 		inptr++;
 	
 	type = g_strndup (type, (unsigned) (inptr - type));
-	g_strstrip (type);
+	
+	decode_lwsp (&inptr);
 	
 	/* get the subtype */
 	if (*inptr == '/') {
 		inptr++;
 		
-		while (is_lwsp (*inptr))
-			inptr++;
+		decode_lwsp (&inptr);
 		
 		subtype = (char *) inptr;
 		while (*inptr && is_ttoken (*inptr))
 			inptr++;
 		
-		subtype = g_strndup (subtype, (unsigned) (inptr - subtype));
+		if ((n = (size_t) (inptr - subtype)) > 0)
+			subtype = g_strndup (subtype, n);
+		else
+			subtype = NULL;
+		
+		decode_lwsp (&inptr);
 	} else {
 		subtype = NULL;
 	}
@@ -132,18 +139,18 @@ g_mime_content_type_new_from_string (const char *string)
 	g_free (type);
 	g_free (subtype);
 	
-	while (is_lwsp (*inptr))
+	/* skip past any remaining junk that shouldn't be here... */
+	while (*inptr && *inptr != ';')
 		inptr++;
 	
 	if (*inptr++ == ';' && *inptr) {
 		GMimeParam *p;
 		
 		mime_type->params = g_mime_param_new_from_string (inptr);
-		p = mime_type->params;
-		if (p != NULL) {
+		if ((p = mime_type->params) != NULL) {
 			mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 			
-			while (p) {
+			while (p != NULL) {
 				g_hash_table_insert (mime_type->param_hash, p->name, p);
 				p = p->next;
 			}
