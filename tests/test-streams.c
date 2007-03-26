@@ -526,8 +526,6 @@ gen_test_data (const char *datadir)
 	struct stat st;
 	int fd, i;
 	
-	printf ("generating test data in `%s'\n", datadir);
-	
 	srand (time (NULL));
 	
 	name = g_stpcpy (input, datadir);

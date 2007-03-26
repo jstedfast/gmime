@@ -1,6 +1,12 @@
 2007-03-25  Jeffrey Stedfast  <fejj@gnome.org>
 
-	* Makefile.am (local-check): Simplified.
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.5
+
+2007-03-25  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* tests/Makefile.am (local-check): Simplified.
 
 	* tests/test-streams.c: Generate our own test data if we aren't
 	given any.
