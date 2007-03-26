@@ -289,6 +289,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->seen_eof2 = FALSE;
 	gpg->pid = (pid_t) -1;
 	gpg->exit_status = 0;
+	gpg->flushed = FALSE;
 	gpg->exited = FALSE;
 	
 	gpg->path = g_strdup (path);
@@ -320,6 +321,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->goodsig = FALSE;
 	gpg->validsig = FALSE;
 	gpg->nopubkey = FALSE;
+	gpg->nodata = FALSE;
 	
 	gpg->signers = NULL;
 	gpg->signer = (GMimeSigner *) &gpg->signers;

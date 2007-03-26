@@ -100,7 +100,6 @@ g_mime_content_type_new_from_string (const char *string)
 	GMimeContentType *mime_type;
 	char *type = NULL, *subtype;
 	const char *inptr;
-	size_t n;
 	
 	g_return_val_if_fail (string != NULL, NULL);
 	
@@ -125,8 +124,8 @@ g_mime_content_type_new_from_string (const char *string)
 		while (*inptr && is_ttoken (*inptr))
 			inptr++;
 		
-		if ((n = (size_t) (inptr - subtype)) > 0)
-			subtype = g_strndup (subtype, n);
+		if (inptr > subtype)
+			subtype = g_strndup (subtype, (size_t) (inptr - subtype));
 		else
 			subtype = NULL;
 		
@@ -136,8 +135,8 @@ g_mime_content_type_new_from_string (const char *string)
 	}
 	
 	mime_type = g_mime_content_type_new (type, subtype);
-	g_free (type);
 	g_free (subtype);
+	g_free (type);
 	
 	/* skip past any remaining junk that shouldn't be here... */
 	while (*inptr && *inptr != ';')
