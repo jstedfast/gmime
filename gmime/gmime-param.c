@@ -30,10 +30,11 @@
 #include "gmime-param.h"
 #include "gmime-common.h"
 #include "gmime-table-private.h"
+#include "gmime-parse-utils.h"
+#include "gmime-iconv-utils.h"
 #include "gmime-charset.h"
 #include "gmime-utils.h"
 #include "gmime-iconv.h"
-#include "gmime-iconv-utils.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -72,36 +73,6 @@ g_mime_param_new (const char *name, const char *value)
 	param->value = g_strdup (value);
 	
 	return param;
-}
-
-static void
-decode_lwsp (const char **in)
-{
-	const char *inptr = *in;
-	
-	while (*inptr && (*inptr == '(' || is_lwsp (*inptr))) {
-		while (*inptr && is_lwsp (*inptr))
-			inptr++;
-		
-		/* skip over any comments */
-		if (*inptr == '(') {
-			int depth = 1;
-			
-			inptr++;
-			while (*inptr && depth) {
-				if (*inptr == '\\' && *(inptr + 1))
-					inptr++;
-				else if (*inptr == '(')
-					depth++;
-				else if (*inptr == ')')
-					depth--;
-				
-				inptr++;
-			}
-		}
-	}
-	
-	*in = inptr;
 }
 
 #define INT_OVERFLOW(x,d) (((x) > (INT_MAX / 10)) || ((x) == (INT_MAX / 10) && (d) > (INT_MAX % 10)))

@@ -32,6 +32,7 @@
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
 #include "gmime-table-private.h"
+#include "gmime-parse-utils.h"
 
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
@@ -195,8 +196,6 @@ struct _received_token {
 	size_t len;
 	token_skip_t skip;
 };
-
-extern void decode_lwsp   (const char **in);
 
 static void skip_atom     (const char **in);
 static void skip_domain   (const char **in);

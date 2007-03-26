@@ -54,6 +54,7 @@ libgmime_2_0_la_SOURCES = 		\
 	gmime-multipart-signed.c	\
 	gmime-object.c			\
 	gmime-param.c			\
+	gmime-parse-utils.c		\
 	gmime-parser.c			\
 	gmime-part.c			\
 	gmime-session.c			\
@@ -103,6 +104,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-multipart-signed.h	\
 	gmime-object.h			\
 	gmime-param.h			\
+	gmime-parse-utils.h		\
 	gmime-parser.h			\
 	gmime-part.h			\
 	gmime-session.h			\

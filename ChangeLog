@@ -1,3 +1,25 @@
+2007-03-26  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime-param.c: #include "gmime-parse-utils.h" and got rid of
+	this file's own decode_lwsp() implementation.
+
+	* internet-address.c: #include "gmime-parse-utils.h" which is
+	where a bunch of the parser functions have been moved from here.
+
+	* gmime-utils.c: #include "gmime-parse-utils.h" for decode_lwsp()
+	and decode_domain()
+	(decode_addrspec): Moved here from internet-address.c which had
+	been exporting the symbol previously (so that decode_domain didn't
+	have to be copy/pasted). Now this function can be made static -
+	yay! No more exporting un-namespaced symbols!
+
+	* gmime/gmime-message.c: #include "gmime-parse-utils.h" for
+	decode_lwsp()
+
+	* gmime/gmime-parse-utils.[c,h]: New source files containing some
+	parse utility functions that had been copy/pasted between several
+	source files previously.
+
 2007-03-25  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

@@ -42,6 +42,7 @@
 
 #include "gmime-utils.h"
 #include "gmime-table-private.h"
+#include "gmime-parse-utils.h"
 #include "gmime-part.h"
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
@@ -819,11 +820,66 @@ g_mime_utils_generate_message_id (const char *fqdn)
 	return msgid;
 }
 
-/* external symbols from internet-address.c */
-extern void decode_lwsp (const char **in);
-extern char *decode_word (const char **in);
-extern char *decode_addrspec (const char **in);
-
+static char *
+decode_addrspec (const char **in)
+{
+	char *domain, *word, *str = NULL;
+	const char *inptr;
+	GString *addrspec;
+	
+	decode_lwsp (in);
+	inptr = *in;
+	
+	if (!(word = decode_word (&inptr))) {
+		w(g_warning ("No local-part in addr-spec: %s", *in));
+		return NULL;
+	}
+	
+	addrspec = g_string_new (word);
+	g_free (word);
+	
+	/* get the rest of the local-part */
+	decode_lwsp (&inptr);
+	while (*inptr == '.') {
+		g_string_append_c (addrspec, *inptr++);
+		if ((word = decode_word (&inptr))) {
+			g_string_append (addrspec, word);
+			decode_lwsp (&inptr);
+			g_free (word);
+		} else {
+			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
+			goto exception;
+		}
+	}
+	
+	/* we should be at the '@' now... */
+	if (*inptr++ != '@') {
+		w(g_warning ("Invalid addr-spec; missing '@': %s", *in));
+		goto exception;
+	}
+	
+	if (!(domain = decode_domain (&inptr))) {
+		w(g_warning ("No domain in addr-spec: %s", *in));
+		goto exception;
+	}
+	
+	g_string_append_c (addrspec, '@');
+	g_string_append (addrspec, domain);
+	g_free (domain);
+	
+	str = addrspec->str;
+	g_string_free (addrspec, FALSE);
+	
+	*in = inptr;
+	
+	return str;
+	
+ exception:
+	
+	g_string_free (addrspec, TRUE);
+	
+	return NULL;
+}
 
 static char *
 decode_msgid (const char **in)
