@@ -4,7 +4,7 @@ SUBDIRS = .
 
 extra_DIST = README
 
-INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
+INCLUDES = -I$(top_srcdir) $(GMIME_CFLAGS) $(GLIB_CFLAGS)
 
 noinst_PROGRAMS = basic-example imap-example
 

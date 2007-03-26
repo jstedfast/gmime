@@ -2,7 +2,7 @@
 
 SUBDIRS = .
 
-INCLUDES = -I$(top_srcdir) $(GLIB_CFLAGS)
+INCLUDES = -I$(top_srcdir) $(GMIME_CFLAGS) $(GLIB_CFLAGS)
 
 bin_PROGRAMS = uuencode uudecode
 

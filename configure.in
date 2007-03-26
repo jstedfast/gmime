@@ -284,6 +284,37 @@ else
 	fi
 fi
 
+dnl *************************************
+dnl *** Checks for large file support ***
+dnl *************************************
+AC_SYS_LARGEFILE
+AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile64_source,
+[
+	AC_TRY_COMPILE([
+		#define _LARGEFILE64_SOURCE
+		#include <sys/types.h>
+		#include <sys/stat.h>
+		#include <fcntl.h>
+	],[
+		int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
+	],[
+		largefile64_source="yes"
+	],[
+		largefile64_source="no"
+	])
+])
+
+if test "x$largefile64_source" = "xyes"; then
+	GMIME_CFLAGS="-D_LARGEFILE64_SOURCE"
+	if test -n "$ac_cv_sys_file_offset_bits"; then
+		GMIME_CFLAGS="$GMIME_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
+	fi
+else
+	GMIME_CFLAGS=""
+	AC_DEFINE(O_LARGEFILE, 0, [Define to 0 if your system does not have the O_LARGEFILE flag])
+fi
+
+
 dnl Check for some network functions
 AC_CHECK_FUNCS(gethostname getaddrinfo)
 
@@ -387,13 +418,11 @@ AC_SUBST(LIBS)
 GMIME_LIBDIR="-L${libdir}"
 GMIME_INCLUDEDIR="-I${includedir}/gmime-2.0"
 GMIME_LIBS="-lgmime-2.0 $EXTRA_LIBS"
-GMIME_CFLAGS=""
 
 AC_SUBST(GMIME_LIBS)
 AC_SUBST(GMIME_LIBDIR)
 AC_SUBST(GMIME_INCLUDEDIR)
 AC_SUBST(GMIME_CFLAGS)
-AC_SUBST(HTML_DIR)
 
 
 AC_OUTPUT(

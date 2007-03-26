@@ -1,5 +1,12 @@
 2007-03-26  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime-2.0.pc.in: Got rid of the redundant @LIBS@ which contained
+	the same value as @GMIME_LIBS@.
+
+	* configure.in: Added configure checks for large file support.
+
+2007-03-26  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime-param.c: #include "gmime-parse-utils.h" and got rid of
 	this file's own decode_lwsp() implementation.
 
