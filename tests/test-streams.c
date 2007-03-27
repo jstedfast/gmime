@@ -53,7 +53,7 @@ streams_match (GMimeStream **streams, const char *filename)
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (%ld -> %ld) with %s (%ld, %ld)... ",
+	v(fprintf (stdout, "Matching original stream (" OFF_T " -> " OFF_T ") with %s (" OFF_T ", " OFF_T ")... ",
 		   streams[0]->position, streams[0]->bound_end, filename,
 		   streams[1]->position, streams[1]->bound_end));
 	
@@ -77,14 +77,14 @@ streams_match (GMimeStream **streams, const char *filename)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %lu bytes from stream[0]\n", size));
+		d(fprintf (stderr, "read " SIZE_T " bytes from stream[0]\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (streams[1], dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "stream[1] read() returned %ld, EOF\n", n);
+				d(fprintf (stderr, "stream[1] read() returned " SSIZE_T ", EOF\n", n));
 				break;
 			}
-			d(fprintf (stderr, "read %ld bytes from stream[1]\n", n));
+			d(fprintf (stderr, "read " SSIZE_T " bytes from stream[1]\n", n));
 			nread += n;
 		} while (nread < size);
 		
@@ -119,7 +119,7 @@ streams_match (GMimeStream **streams, const char *filename)
  fail:
 	
 	v(fputs ("failed\n", stdout));
-	fputs (errstr, stderr);
+	v(fputs (errstr, stderr));
 	
 	return FALSE;
 }
@@ -146,8 +146,8 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	fclose (fp);
 	
 	if (strcmp (sbuf, rbuf) != 0) {
-		v(fprintf (stderr, "\tstream: \"%s\" (%ul)\n", sbuf, strlen (sbuf)));
-		v(fprintf (stderr, "\treal:   \"%s\" (%ul)\n", rbuf, strlen (rbuf)));
+		v(fprintf (stderr, "\tstream: \"%s\" (" SIZE_T ")\n", sbuf, strlen (sbuf)));
+		v(fprintf (stderr, "\treal:   \"%s\" (" SIZE_T ")\n", rbuf, strlen (rbuf)));
 		throw (exception_new ("streams did not match"));
 	}
 }
@@ -490,7 +490,7 @@ gen_random_stream (GMimeStream *stream)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating %lu bytes of random data... ", size));
+	v(fprintf (stdout, "Generating " SIZE_T " bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	while (total < size) {
@@ -569,7 +569,7 @@ gen_test_data (const char *datadir)
 			end = start + len;
 		}
 		
-		sprintf (p, "%ld,%ld", start, end);
+		sprintf (p, OFF_T "," OFF_T, start, end);
 		
 		if ((fd = open (output, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, 0666)) == -1)
 			goto retry;

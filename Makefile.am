@@ -49,6 +49,7 @@ gmimeConf.sh: gmimeConf.sh.in Makefile
 ## Use sed and then mv to avoid problems if the user interrupts.
 	sed -e 's?\@GMIME_LIBDIR\@?$(GMIME_LIBDIR)?g' \
 	    -e 's?\@GMIME_INCLUDEDIR\@?$(GMIME_INCLUDEDIR)?g' \
+	    -e 's?\@GMIME_CFLAGS\@?$(GMIME_CFLAGS)?g' \
 	    -e 's?\@GMIME_LIBS\@?$(GMIME_LIBS)?g' \
 	    -e 's?\@VERSION\@?$(VERSION)?g' \
 	      < $(srcdir)/gmimeConf.sh.in > gmimeConf.tmp \

@@ -180,7 +180,6 @@ test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 {
 	Exception *ex = NULL;
 	GMimeStream *stream;
-	GByteArray *buffer;
 	GError *err = NULL;
 	GByteArray *buf[2];
 	

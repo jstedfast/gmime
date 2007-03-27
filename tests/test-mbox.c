@@ -41,6 +41,7 @@ extern int verbose;
 #define d(x)
 #define v(x) if (verbose > 3) x
 
+
 #define INDENT "   "
 
 static void
@@ -85,7 +86,7 @@ header_cb (GMimeParser *parser, const char *header, const char *value, off_t off
 {
 	GMimeStream *stream = user_data;
 	
-	g_mime_stream_printf (stream, "%ld: %s: %s\n", offset, header, value);
+	g_mime_stream_printf (stream, OFF_T ": %s: %s\n", offset, header, value);
 }
 
 static void
@@ -103,7 +104,7 @@ test_parser (GMimeParser *parser, GMimeStream *stream)
 		
 		end = g_mime_parser_tell (parser);
 		
-		g_mime_stream_printf (stream, "message offsets: %ld, %ld\n", start, end);
+		g_mime_stream_printf (stream, "message offsets: " OFF_T ", " OFF_T "\n", start, end);
 		
 		from = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (stream, "%s\n", from);
@@ -146,14 +147,14 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %ul bytes from istream\n", size));
+		d(fprintf (stderr, "read " SIZE_T " bytes from istream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (ostream, dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "ostream's read() returned %ld, EOF\n", n);
+				fprintf (stderr, "ostream's read() returned " SSIZE_T ", EOF\n", n);
 				break;
 			}
-			d(fprintf (stderr, "read %ld bytes from ostream\n", n));
+			d(fprintf (stderr, "read " SSIZE_T " bytes from ostream\n", n));
 			nread += n;
 		} while (nread < size);
 		
@@ -167,7 +168,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 			strcpy (errstr, "Error: content does not match\n");
 			goto fail;
 		} else {
-			d(fprintf (stderr, "%u bytes identical\n", size));
+			d(fprintf (stderr, SIZE_T " bytes identical\n", size));
 		}
 	}
 	

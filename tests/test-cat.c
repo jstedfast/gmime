@@ -59,7 +59,7 @@ random_whole_stream (const char *datadir, char **filename)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating %lu bytes of random data... ", size));
+	v(fprintf (stdout, "Generating " SIZE_T " bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	g_mkdir_with_parents (datadir, 0755);
@@ -115,7 +115,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (%ld -> %ld) with %s (%ld, %ld)... ",
+	v(fprintf (stdout, "Matching original stream (" OFF_T " -> " OFF_T ") with %s (" OFF_T ", " OFF_T ")... ",
 		   orig->position, orig->bound_end, filename, dup->position, dup->bound_end));
 	
 	if (orig->bound_end != -1) {
@@ -138,14 +138,14 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %lu bytes from original stream\n", size));
+		d(fprintf (stderr, "read " SIZE_T " bytes from original stream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (dup, dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "dup read() returned %ld, EOF\n", n);
+				d(fprintf (stderr, "dup read() returned " SSIZE_T ", EOF\n", n));
 				break;
 			}
-			d(fprintf (stderr, "read %ld bytes from dup stream\n", n));
+			d(fprintf (stderr, "read " SSIZE_T " bytes from dup stream\n", n));
 			nread += n;
 		} while (nread < size);
 		
@@ -159,7 +159,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 			sprintf (errstr, "Error: `%s': content does not match\n", filename);
 			goto fail;
 		} else {
-			d(fprintf (stderr, "%u bytes identical\n", size));
+			d(fprintf (stderr, SIZE_T " bytes identical\n", size));
 		}
 	}
 	
@@ -180,7 +180,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
  fail:
 	
 	v(fputs ("failed\n", stdout));
-	fputs (errstr, stderr);
+	v(fputs (errstr, stderr));
 	
 	return -1;
 }
@@ -196,7 +196,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=%ld, end=%ld...\n",
+		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_CREAT | O_TRUNC | O_WRONLY, 0666)) == -1) {
@@ -268,7 +268,7 @@ test_cat_read (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=%ld, end=%ld...\n",
+		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
@@ -315,7 +315,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=%ld, end=%ld...\n",
+		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
@@ -335,13 +335,13 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	offset = (off_t) (size * (rand () / (RAND_MAX + 1.0)));
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		ex = exception_new ("could not seek to %ld in original stream: %s",
+		ex = exception_new ("could not seek to " OFF_T " in original stream: %s",
 				    offset, strerror (errno));
 		throw (ex);
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		ex = exception_new ("could not seek to %ld: %s",
+		ex = exception_new ("could not seek to " OFF_T ": %s",
 				    offset, strerror (errno));
 		throw (ex);
 	}
@@ -376,7 +376,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=%ld, end=%ld...\n",
+		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {

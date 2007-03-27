@@ -88,9 +88,9 @@ AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
 
-AC_CHECK_TYPE(off_t, long)
-AC_CHECK_TYPE(size_t, unsigned int)
-AC_CHECK_TYPE(ssize_t, int)
+AC_TYPE_OFF_T
+AC_TYPE_SIZE_T
+AC_TYPE_SSIZE_T
 
 dnl Check for nfds_t - used by poll()
 AC_MSG_CHECKING(for nfds_t)
@@ -287,9 +287,11 @@ fi
 dnl *************************************
 dnl *** Checks for large file support ***
 dnl *************************************
-AC_SYS_LARGEFILE
-AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile64_source,
-[
+AC_ARG_ENABLE(largefile, [  --enable-largefile      Enable support for large files [default=no]], enable_largefile="$enableval", enable_largefile="no")
+if test "x$enable_largefile" != "xno"; then
+    AC_SYS_LARGEFILE
+    AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile64_source,
+    [
 	AC_TRY_COMPILE([
 		#define _LARGEFILE64_SOURCE
 		#include <sys/types.h>
@@ -302,16 +304,41 @@ AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile
 	],[
 		largefile64_source="no"
 	])
-])
+    ])
 
-if test "x$largefile64_source" = "xyes"; then
+    if test "x$largefile64_source" = "xyes"; then
 	GMIME_CFLAGS="-D_LARGEFILE64_SOURCE"
 	if test -n "$ac_cv_sys_file_offset_bits"; then
 		GMIME_CFLAGS="$GMIME_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
 	fi
-else
+    else
 	GMIME_CFLAGS=""
 	AC_DEFINE(O_LARGEFILE, 0, [Define to 0 if your system does not have the O_LARGEFILE flag])
+    fi
+else
+    GMIME_CFLAGS=""
+fi
+
+dnl Check type sizes
+CFLAGS_save="$CFLAGS"
+CFLAGS="$CFLAGS $GMIME_CFLAGS"
+AC_CHECK_SIZEOF(ssize_t)
+AC_CHECK_SIZEOF(size_t)
+AC_CHECK_SIZEOF(off_t)
+CFLAGS="$CFLAGS_save"
+
+dnl convenience printf formatting macros for ssize_t/size_t/off_t
+if test $ac_cv_sizeof_size_t -eq 8; then
+   AC_DEFINE(SSIZE_T, "%lld", [Define to the `ssize_t' printf formatter.])
+   AC_DEFINE(SIZE_T, "%llu", [Define to the `size_t' printf formatter.])
+else
+   AC_DEFINE(SSIZE_T, "%ld", [Define to the `ssize_t' printf formatter.])
+   AC_DEFINE(SIZE_T, "%lu", [Define to the `size_t' printf formatter.])
+fi
+if test $ac_cv_sizeof_off_t -eq 8; then
+   AC_DEFINE(OFF_T, "%lld", [Define to the `off_t' printf formatter.])
+else
+   AC_DEFINE(OFF_T, "%ld", [Define to the `off_t' printf formatter.])
 fi
 
 
@@ -451,6 +478,8 @@ Configuration:
   Source code location: ${srcdir}
   Install prefix:       ${prefix}
   Compiler:             ${CC}
+
+  Large file support:   ${enable_largefile}
 
   Profiling enabled:    ${enable_profile}
   Warnings enabled:     ${enable_warnings}
