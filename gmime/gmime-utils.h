@@ -109,9 +109,9 @@ char *g_mime_utils_header_decode_phrase (const char *in);
 char *g_mime_utils_header_encode_phrase (const char *in);
 
 #ifndef GMIME_DISABLE_DEPRECATED
-char *g_mime_utils_8bit_header_decode (const char *in);
-char *g_mime_utils_8bit_header_encode (const char *in);
-char *g_mime_utils_8bit_header_encode_phrase (const char *in);
+char *g_mime_utils_8bit_header_decode (const unsigned char *in);
+char *g_mime_utils_8bit_header_encode (const unsigned char *in);
+char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *in);
 #endif
 
 /* do incremental base64 (de/en)coding */

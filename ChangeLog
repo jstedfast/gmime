@@ -1,5 +1,11 @@
 2007-03-26  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-utils.c (g_mime_utils_8bit_header_decode)
+	(g_mime_utils_8bit_header_encode)
+	(g_mime_utils_8bit_header_encode_phrase): Changed all of these
+	functions to take `const unsigned char *' like they used to. Fixes
+	bug #423147.
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_new): Initialize flushed and
 	nodata state variables.
 

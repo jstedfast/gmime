@@ -2165,9 +2165,9 @@ g_mime_utils_header_encode_text (const char *in)
  * possible).
  **/
 char *
-g_mime_utils_8bit_header_decode (const char *in)
+g_mime_utils_8bit_header_decode (const unsigned char *in)
 {
-	return g_mime_utils_header_decode_text (in);
+	return g_mime_utils_header_decode_text ((const char *) in);
 }
 
 
@@ -2184,9 +2184,9 @@ g_mime_utils_8bit_header_decode (const char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_8bit_header_encode (const char *in)
+g_mime_utils_8bit_header_encode (const unsigned char *in)
 {
-	return g_mime_utils_header_encode_text (in);
+	return g_mime_utils_header_encode_text ((const char *) in);
 }
 
 
@@ -2203,9 +2203,9 @@ g_mime_utils_8bit_header_encode (const char *in)
  * addresses.
  **/
 char *
-g_mime_utils_8bit_header_encode_phrase (const char *in)
+g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
 {
-	return g_mime_utils_header_encode_phrase (in);
+	return g_mime_utils_header_encode_phrase ((const char *) in);
 }
 
 
