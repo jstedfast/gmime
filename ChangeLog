@@ -7,7 +7,7 @@
 	bug #423147.
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_new): Initialize flushed and
-	nodata state variables.
+	nodata state variables. Thanks to valgrind for finding these...
 
 	* gmime/gmime-content-type.c
 	(g_mime_content_type_new_from_string): Shouldn't need to
