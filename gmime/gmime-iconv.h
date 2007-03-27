@@ -21,6 +21,7 @@
 #ifndef __GMIME_ICONV_H__
 #define __GMIME_ICONV_H__
 
+#include <glib.h>
 #include <iconv.h>
 
 G_BEGIN_DECLS

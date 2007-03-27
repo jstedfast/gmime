@@ -21,6 +21,8 @@
 #ifndef __GMIME_ICONV_UTILS_H__
 #define __GMIME_ICONV_UTILS_H__
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <iconv.h>
 
