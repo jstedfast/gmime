@@ -316,12 +316,12 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->need_id = NULL;
 	gpg->passwd = NULL;
 	
+	gpg->nodata = FALSE;
 	gpg->badsig = FALSE;
 	gpg->errsig = FALSE;
 	gpg->goodsig = FALSE;
 	gpg->validsig = FALSE;
 	gpg->nopubkey = FALSE;
-	gpg->nodata = FALSE;
 	
 	gpg->signers = NULL;
 	gpg->signer = (GMimeSigner *) &gpg->signers;
@@ -761,7 +761,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	size_t nread, nwritten;
 	register char *inptr;
 	GMimeSigner *signer;
-	char *status;
+	char *status, *tmp;
 	int len;
 	
  parse:
@@ -781,9 +781,18 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	d(printf ("status: %s\n", status));
 	
 	if (strncmp (status, "[GNUPG:] ", 9) != 0) {
+		if (!gpg->utf8)
+			tmp = g_locale_to_utf8 (status, -1, &nread, &nwritten, NULL);
+		else
+			tmp = status;
+		
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 			     _("Unexpected GnuPG status message encountered:\n\n%s"),
-			     status);
+			     tmp);
+		
+		if (!gpg->utf8)
+			g_free (tmp);
+		
 		return -1;
 	}
 	
@@ -901,9 +910,18 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		}
 	} else if (!strncmp (status, "UNEXPECTED ", 11)) {
 		/* this is an error */
+		if (!gpg->utf8)
+			tmp = g_locale_to_utf8 (status + 11, -1, &nread, &nwritten, NULL);
+		else
+			tmp = status + 11;
+		
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
 			     _("Unexpected response from GnuPG: %s"),
-			     status + 11);
+			     tmp);
+		
+		if (!gpg->utf8)
+			g_free (tmp);
+		
 		return -1;
 	} else if (!strncmp (status, "NODATA", 6)) {
 		/* this is an error */
@@ -912,7 +930,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		if (diagnostics && *diagnostics)
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
-				     diagnostics);
+				     "%s", diagnostics);
 		else
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
 				     _("No data provided"));
