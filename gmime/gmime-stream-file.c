@@ -193,6 +193,7 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
+	int rv;
 	
 	if (fstream->fp == NULL)
 		return -1;
@@ -200,7 +201,10 @@ stream_reset (GMimeStream *stream)
 	if (stream->position == stream->bound_start)
 		return 0;
 	
-	return fseek (fstream->fp, stream->bound_start, SEEK_SET);
+	if (fseek (fstream->fp, stream->bound_start, SEEK_SET) == -1)
+		return -1;
+	
+	return 0;
 }
 
 static off_t

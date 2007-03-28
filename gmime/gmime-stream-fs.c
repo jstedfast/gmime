@@ -223,7 +223,6 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
-	off_t rv;
 	
 	if (fs->fd == -1)
 		return -1;
@@ -236,10 +235,12 @@ stream_reset (GMimeStream *stream)
 	/* FIXME: if stream_read/write is always going to lseek to
 	 * make sure fd's seek position matches our own, we could just
 	 * set stream->position = stream->bound_start and be done. */
-	if ((rv = lseek (fs->fd, stream->bound_start, SEEK_SET)) != -1)
-		fs->eos = FALSE;
+	if (lseek (fs->fd, stream->bound_start, SEEK_SET) == -1)
+		return -1;
 	
-	return rv;
+	fs->eos = FALSE;
+	
+	return 0;
 }
 
 static off_t
@@ -316,7 +317,7 @@ stream_length (GMimeStream *stream)
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	off_t bound_end;
 	
-	if (stream->bound_start != -1 && stream->bound_end != -1)
+	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
 	bound_end = lseek (fs->fd, 0, SEEK_END);

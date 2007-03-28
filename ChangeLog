@@ -1,3 +1,15 @@
+2007-03-28  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-filter.c (stream_reset): Try resetting source
+	stream first, this way if that fails we don't reset our state
+	either.
+
+	* gmime/gmime-stream-fs.c (stream_reset): Same as below.
+
+	* gmime/gmime-stream-file.c (stream_reset): Make sure to always
+	return 0 or -1, not the value from fseek()ing back to the
+	beginning of the stream (which might not be position 0).
+
 2007-03-27  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): If we aren't

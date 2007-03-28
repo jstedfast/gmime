@@ -306,6 +306,9 @@ stream_reset (GMimeStream *stream)
 	struct _GMimeStreamFilterPrivate *priv = filter->priv;
 	struct _filter *f;
 	
+	if (g_mime_stream_reset (filter->source) == -1)
+		return -1;
+	
 	priv->filteredlen = 0;
 	priv->flushed = FALSE;
 	
@@ -316,7 +319,7 @@ stream_reset (GMimeStream *stream)
 		f = f->next;
 	}
 	
-	return g_mime_stream_reset (filter->source);
+	return 0;
 }
 
 static off_t
@@ -393,7 +396,7 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
-	filter = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL, NULL);
+	filter = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL);
 	filter->source = stream;
 	g_object_ref (stream);
 	
