@@ -1,5 +1,10 @@
 2007-03-28  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.6 - critical release for the
+	gmime-stream-fs and gmime-stream-file fixes below.
+
 	* gmime/gmime-stream-filter.c (stream_reset): Try resetting source
 	stream first, this way if that fails we don't reset our state
 	either.
