@@ -1,5 +1,10 @@
 2007-03-28  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-stream-mem.c (g_mime_stream_mem_set_byte_array):
+	Only free the previous memory buffer if we were the owner.
+
+2007-03-28  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.2.6 - critical release for the

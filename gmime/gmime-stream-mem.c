@@ -380,7 +380,7 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 	g_return_if_fail (GMIME_IS_STREAM_MEM (mem));
 	g_return_if_fail (array != NULL);
 	
-	if (mem->buffer)
+	if (mem->owner && mem->buffer)
 		g_byte_array_free (mem->buffer, TRUE);
 	
 	mem->buffer = array;
