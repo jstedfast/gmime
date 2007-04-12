@@ -987,7 +987,7 @@ g_mime_references_decode (const char *text)
 
 /**
  * g_mime_references_append:
- * @refs: the address of a GMimeReferences list
+ * @refs: the address of a #GMimeReferences list
  * @msgid: a message-id string
  *
  * Appends a reference to msgid to the list of references.
@@ -1012,9 +1012,9 @@ g_mime_references_append (GMimeReferences **refs, const char *msgid)
 
 /**
  * g_mime_references_clear:
- * @refs: address of a GMimeReferences list
+ * @refs: address of a #GMimeReferences list
  *
- * Clears the GMimeReferences list and resets it to %NULL.
+ * Clears the #GMimeReferences list and resets it to %NULL.
  **/
 void
 g_mime_references_clear (GMimeReferences **refs)
@@ -1037,11 +1037,11 @@ g_mime_references_clear (GMimeReferences **refs)
 
 /**
  * g_mime_references_next:
- * @ref: a GMimeReferences list
+ * @ref: a #GMimeReferences list
  *
- * Advances to the next reference node in the GMimeReferences list.
+ * Advances to the next reference node in the #GMimeReferences list.
  *
- * Returns the next reference node in the GMimeReferences list.
+ * Returns the next reference node in the #GMimeReferences list.
  **/
 GMimeReferences *
 g_mime_references_next (const GMimeReferences *ref)
@@ -1484,7 +1484,7 @@ decode_8bit (const char *text, size_t len)
 		outbuf = out;
 		
 		while (inptr < inend) {
-			if (isascii ((int) *inptr))
+			if (is_ascii (*inptr))
 				*outbuf++ = (char) *inptr++;
 			else
 				*outbuf++ = 'x';
@@ -1701,7 +1701,7 @@ g_mime_utils_header_decode_text (const char *in)
 			ascii = TRUE;
 			
 			while (*inptr && !is_lwsp (*inptr)) {
-				ascii = ascii && isascii ((int) *inptr);
+				ascii = ascii && is_ascii (*inptr);
 				inptr++;
 			}
 			
@@ -1820,7 +1820,7 @@ g_mime_utils_header_decode_phrase (const char *in)
 			
 			ascii = TRUE;
 			while (*inptr && !is_lwsp (*inptr)) {
-				ascii = ascii && isascii ((int) *inptr);
+				ascii = ascii && is_ascii (*inptr);
 				inptr++;
 			}
 			
@@ -2332,7 +2332,7 @@ g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
  * @save: leftover bits that have not yet been encoded
  *
  * Base64 encodes the input stream to the output stream. Call this
- * when finished encoding data with #g_mime_utils_base64_encode_step
+ * when finished encoding data with g_mime_utils_base64_encode_step()
  * to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
@@ -2533,7 +2533,7 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * @save: leftover bits that have not yet been encoded
  *
  * Uuencodes a chunk of data. Call this when finished encoding data
- * with #g_mime_utils_uuencode_step to flush off the last little bit.
+ * with g_mime_utils_uuencode_step() to flush off the last little bit.
  *
  * Returns the number of bytes encoded.
  **/
@@ -2794,7 +2794,7 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
  * @save: leftover bits that have not yet been encoded
  *
  * Quoted-printable encodes a block of text. Call this when finished
- * encoding data with #g_mime_utils_quoted_encode_step to flush off
+ * encoding data with g_mime_utils_quoted_encode_step() to flush off
  * the last little bit.
  *
  * Returns the number of bytes encoded.

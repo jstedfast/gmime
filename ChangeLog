@@ -1,3 +1,12 @@
+2007-04-12  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (decode_8bit): Use is_ascii().
+	(g_mime_utils_header_decode_text): Same.
+	(g_mime_utils_header_decode_phrase): Here too.
+
+	* gmime/gen-table.c: Added a is_ascii() macro for use instead of
+	the ctype isascii() so that I don't have to worry about casting.
+
 2007-04-11  Jeffrey Stedfast  <fejj@gnome.org>
 
 	Revision 1119 (previous commit) made the following 2 functions

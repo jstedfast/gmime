@@ -51,7 +51,8 @@ enum {
 	IS_ATTRCHAR     = (1 << 9),  /* attribute-char from rfc2184 */
 	
 	/* ctype replacements */
-	IS_BLANK        = (1 << 10), /* space or tab */
+	IS_ASCII        = (1 << 10), /* ascii */
+	IS_BLANK        = (1 << 11), /* space or tab */
 };
 
 #define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)
@@ -68,6 +69,7 @@ enum {
 #define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)
 
 /* ctype replacements */
+#define is_ascii(x) ((gmime_special_table[(unsigned char)(x)] & IS_ASCII) != 0)
 #define is_blank(x) ((gmime_special_table[(unsigned char)(x)] & IS_BLANK) != 0)
 
 /* code to rebuild the gmime_special_table */
@@ -124,6 +126,8 @@ header_decode_init (void)
 			gmime_special_table[i] |= (IS_QPSAFE | IS_ESAFE);
 		if ((i >= '0' && i <= '9') || (i >= 'a' && i <= 'z') || (i >= 'A' && i <= 'Z'))
 			gmime_special_table[i] |= IS_PSAFE;
+		if (isascii (i))
+			gmime_special_table[i] |= IS_ASCII;
 	}
 	
 	gmime_special_table[' '] |= IS_SPACE | IS_BLANK;
@@ -169,7 +173,8 @@ int main (int argc, char **argv)
 	printf ("\tIS_ATTRCHAR = (1 << 9),  /* attribute-char from rfc2184 */\n");
 	printf ("\t\n");
 	printf ("\t/* ctype replacements */\n");
-	printf ("\tIS_BLANK    = (1 << 10), /* space or tab */\n");
+	printf ("\tIS_ASCII    = (1 << 10), /* ascii */\n");
+	printf ("\tIS_BLANK    = (1 << 11), /* space or tab */\n");
 	printf ("};\n\n");
 	
 	printf ("#define is_ctrl(x) ((gmime_special_table[(unsigned char)(x)] & IS_CTRL) != 0)\n");
@@ -186,6 +191,7 @@ int main (int argc, char **argv)
 	printf ("#define is_attrchar(x) ((gmime_special_table[(unsigned char)(x)] & IS_ATTRCHAR) != 0)\n");
 	printf ("\n");
 	printf ("/* ctype replacements */\n");
+	printf ("#define is_ascii(x) ((gmime_special_table[(unsigned char)(x)] & IS_ASCII) != 0)\n");
 	printf ("#define is_blank(x) ((gmime_special_table[(unsigned char)(x)] & IS_BLANK) != 0)\n");
 	printf ("\n");
 	

@@ -35,6 +35,7 @@
 #endif
 
 #include "gmime-charset-map-private.h"
+#include "gmime-table-private.h"
 #include "gmime-charset.h"
 #include "gmime-iconv.h"
 
@@ -805,7 +806,7 @@ g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *
 	
 	if (mask->level == 0 && (!charset || !g_ascii_strcasecmp (charset, "us-ascii"))) {
 		/* simple US-ASCII case - is this scan even necessary? */
-		while (inptr < inend && isascii ((int) *inptr))
+		while (inptr < inend && is_ascii (*inptr))
 			inptr++;
 		
 		if (inptr == inend)
