@@ -247,6 +247,11 @@ static struct {
 	const char *decoded;
 	const char *encoded;
 } rfc2047_text[] = {
+#if 0
+	{ "=?iso-8859-1?Q?blah?=:\t=?iso-8859-1?Q?I_am_broken?=",
+	  "blah:\tI am broken",
+	  "blah:\tI am broken" },
+#endif
 	{ "=?iso-8859-1?Q?Copy_of_Rapport_fra_Norges_R=E5fisklag=2Edoc?=",
 	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
 	  "Copy =?iso-8859-1?q?of_Rapport_fra_Norges_R=E5fisklag=2Edoc?=" },

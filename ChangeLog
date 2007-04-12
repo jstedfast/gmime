@@ -1,3 +1,35 @@
+2007-04-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	Fixes for bug #423760 and bug #342196
+
+	* gmime/gmime-charset.c (g_mime_charset_can_encode): New
+	convenience function to check whether a length of UTF-8 text can
+	be converted into the specified charset.
+	(g_mime_set_user_charsets): New function allowing an application
+	to provide GMime with a list of user-preferred charsets to use for
+	encoding and decoding headers.
+	(g_mime_user_charsets): New function to get the list of
+	user-preferred charsets.
+
+	* gmime/gmime-utils.c (decode_8bit): New function to convert
+	arbitrary 8bit text into UTF-8 using the charset list provided by
+	g_mime_user_charsets().
+	(rfc2047_decode_word): Don't assume that just because the declared
+	charset is UTF-8 that it actually is in UTF-8.
+	(rfc2047_decode_word): If we can't open a converter for the
+	declared charset to UTF-8 or if we can't convert from the declared
+	charset into UTF-8, fall back to using decode_8bit().
+	(g_mime_utils_header_decode_text): Convert 8bit word tokens into
+	UTF-8 using decode_8bit().
+	(g_mime_utils_header_decode_phrase): Same.
+	(rfc2047_encode_word): Be a little more efficient about removing
+	'\n' chars...
+	(rfc2047_encode): When encoding a level-2 word cluster, attempt to
+	fit the cluster within a charset provided by
+	g_mime_user_charsets() rather than using GMime's best-fit charset
+	table (unless, of course, it doesn't fit within any of the
+	user-specified charsets).
+
 2007-03-28  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-iconv-utils.c (g_mime_iconv_strndup): No need to

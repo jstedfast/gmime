@@ -25,7 +25,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <locale.h>
+#include <errno.h>
 
 #ifdef HAVE_CODESET
 #include <langinfo.h>
@@ -33,6 +36,7 @@
 
 #include "gmime-charset-map-private.h"
 #include "gmime-charset.h"
+#include "gmime-iconv.h"
 
 #ifdef HAVE_ICONV_DETECT_H
 #include "iconv-detect.h"
@@ -129,6 +133,7 @@ static struct {
 };
 
 static GHashTable *iconv_charsets = NULL;
+static char **user_charsets = NULL;
 static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 
@@ -770,11 +775,149 @@ g_mime_charset_best (const char *in, size_t inlen)
 }
 
 
-#ifdef BUILD_CHARSET_MAP
+/**
+ * g_mime_charset_can_encode:
+ * @mask: a #GMimeCharset mask
+ * @charset: a charset
+ * @text: utf-8 text to check
+ * @len: length of @text
+ *
+ * Check to see if the UTF-8 @text will fit safely within @charset.
+ *
+ * Returns %TRUE if it is safe to encode @text into @charset or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *text, size_t len)
+{
+	const unsigned char *inptr = (const unsigned char *) text;
+	const unsigned char *inend = inptr + len;
+	size_t inleft, outleft, rc;
+	const char *inbuf = text;
+	char out[256], *outbuf;
+	const char *iconv_name;
+	GMimeCharset set;
+	iconv_t cd;
+	guint i;
+	
+	if (len == 0)
+		return TRUE;
+	
+	if (mask->level == 0 && (!charset || !g_ascii_strcasecmp (charset, "us-ascii"))) {
+		/* simple US-ASCII case - is this scan even necessary? */
+		while (inptr < inend && isascii ((int) *inptr))
+			inptr++;
+		
+		if (inptr == inend)
+			return TRUE;
+		
+		return FALSE;
+	}
+	
+	if (!g_ascii_strcasecmp (charset, "utf-8")) {
+		/* we can encode anything in utf-8 */
+		return TRUE;
+	}
+	
+	charset = g_mime_charset_iconv_name (charset);
+	
+	if (mask->level = 1)
+		return !g_ascii_strcasecmp (charset, "iso-8859-1");
+	
+	/* check if this is a charset that we have precalculated masking for */
+	for (i = 0; i < G_N_ELEMENTS (charinfo); i++) {
+		iconv_name = g_mime_charset_iconv_name (charinfo[i].name);
+		if (charset == iconv_name)
+			break;
+	}
+	
+	if (i < G_N_ELEMENTS (charinfo)) {
+		/* indeed we do... */
+		return (charinfo[i].bit & mask->mask);
+	}
+	
+	/* down to the nitty gritty slow and painful way... */
+	if ((cd = g_mime_iconv_open (charset, "UTF-8")) == (iconv_t) -1)
+		return FALSE;
+	
+	inleft = len;
+	
+	do {
+		outleft = sizeof (out);
+		outbuf = out;
+		errno = 0;
+		
+		rc = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
+		if (rc == (size_t) -1 && errno != E2BIG)
+			break;
+	} while (inleft > 0);
+	
+	if (inleft == 0) {
+		outleft = sizeof (out);
+		outbuf = out;
+		errno = 0;
+		
+		rc = iconv (cd, NULL, NULL, &outbuf, &outleft);
+	}
+	
+	g_mime_iconv_close (cd);
+	
+	return rc != (size_t) -1;
+}
 
-#include <sys/stat.h>
-#include <errno.h>
-#include <iconv.h>
+
+/**
+ * g_mime_set_user_charsets:
+ * @charsets: an array of user-preferred charsets
+ *
+ * Set a list of charsets for GMime to use as a hint for encoding and
+ * decoding headers. The charset list should be in order of preference
+ * (e.g. most preferred first, least preferred last).
+ **/
+void
+g_mime_set_user_charsets (const char **charsets)
+{
+	int i, n = 0;
+	
+	if (user_charsets)
+		g_strfreev (user_charsets);
+	
+	if (charsets == NULL) {
+		user_charsets = NULL;
+		return;
+	}
+	
+	while (charsets[n] != NULL)
+		n++;
+	
+	if (n == 0) {
+		user_charsets = NULL;
+		return;
+	}
+	
+	user_charsets = g_malloc (sizeof (char *) * (n + 1));
+	for (i = 0; i <= n; i++)
+		user_charsets[i] = (char *) charsets[i];
+}
+
+
+/**
+ * g_mime_user_charsets:
+ *
+ * Get the list of user-preferred charsets set with
+ * g_mime_set_user_charsets().
+ *
+ * Returns an array of user-set charsets or %NULL if none set.
+ **/
+const char **
+g_mime_user_charsets (void)
+{
+	return (const char **) user_charsets;
+}
+
+
+
+#ifdef BUILD_CHARSET_MAP
 
 static struct {
 	char *name;        /* charset name */
