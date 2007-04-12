@@ -1,5 +1,16 @@
 2007-04-11  Jeffrey Stedfast  <fejj@gnome.org>
 
+	Revision 1119 (previous commit) made the following 2 functions
+	even less attractive than they already were, so I decided to
+	rewrite them especially since it wasn't hard to find a far cleaner
+	approach.
+
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_text): Rewritten
+	to be cleaner, faster, and more elegant.
+	(g_mime_utils_header_decode_phrase): Same.
+
+2007-04-11  Jeffrey Stedfast  <fejj@gnome.org>
+
 	Fixes for bug #423760 and bug #342196
 
 	* gmime/gmime-charset.c (g_mime_charset_can_encode): New

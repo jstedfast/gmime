@@ -1676,104 +1676,74 @@ rfc2047_decode_word (const char *in, size_t inlen)
 char *
 g_mime_utils_header_decode_text (const char *in)
 {
-	register const unsigned char *inptr;
-	gboolean last_was_encoded = FALSE;
-	gboolean last_was_space = FALSE;
-	GString *out, *lwsp, *text;
-	gboolean all_ascii = TRUE;
+	register const char *inptr = in;
+	gboolean encoded = FALSE;
+	const char *lwsp, *text;
+	size_t nlwsp, n;
+	gboolean ascii;
 	char *decoded;
+	GString *out;
 	
-	inptr = (const unsigned char *) in;
-	lwsp = g_string_sized_new (256);
-	text = g_string_sized_new (256);
-	out = g_string_sized_new (256);
+	if (in == NULL)
+		return g_strdup ("");
 	
-	while (inptr && *inptr) {
-		unsigned char c = *inptr++;
+	out = g_string_sized_new (strlen (in) + 1);
+	
+	while (*inptr != '\0') {
+		lwsp = inptr;
+		while (is_lwsp (*inptr))
+			inptr++;
 		
-		if (is_lwsp (c) && !last_was_space) {
-			/* we reached the end of an atom */
-			gboolean was_encoded;
-			char *dword = NULL;
-			const char *word;
+		nlwsp = (size_t) (inptr - lwsp);
+		
+		if (*inptr != '\0') {
+			text = inptr;
+			ascii = TRUE;
 			
-			if (!(was_encoded = is_rfc2047_encoded_word (text->str, text->len))) {
-				if (!all_ascii) {
-					/* *sigh*, I hate broken mailers... */
-					word = dword = decode_8bit (text->str, text->len);
-				} else
-					word = text->str;
-			} else {
-				word = dword = rfc2047_decode_word (text->str, text->len);
+			while (*inptr && !is_lwsp (*inptr)) {
+				ascii = ascii && isascii ((int) *inptr);
+				inptr++;
 			}
 			
-			if (word) {
-				/* rfc2047 states that you must ignore all
-				 * whitespace between encoded words */
-				if (!(last_was_encoded && was_encoded))
-					g_string_append_len (out, lwsp->str, lwsp->len);
+			n = (size_t) (inptr - text);
+			if (is_rfc2047_encoded_word (text, n)) {
+				if ((decoded = rfc2047_decode_word (text, n))) {
+					/* rfc2047 states that you must ignore all
+					 * whitespace between encoded words */
+					if (!encoded)
+						g_string_append_len (out, lwsp, nlwsp);
+					
+					g_string_append (out, decoded);
+					g_free (decoded);
+					
+					encoded = TRUE;
+				} else {
+					/* append lwsp and invalid rfc2047 encoded-word token */
+					g_string_append_len (out, lwsp, nlwsp + n);
+					encoded = FALSE;
+				}
+			} else {
+				/* append lwsp */
+				g_string_append_len (out, lwsp, nlwsp);
 				
-				g_string_append (out, word);
-				g_free (dword);
-			} else {
-				was_encoded = FALSE;
-				g_string_append_len (out, lwsp->str, lwsp->len);
-				g_string_append_len (out, text->str, text->len);
+				/* append word token */
+				if (!ascii) {
+					/* *sigh* I hate broken mailers... */
+					decoded = decode_8bit (text, n);
+					g_string_append (out, decoded);
+					g_free (decoded);
+				} else {
+					g_string_append_len (out, text, n);
+				}
+				
+				encoded = FALSE;
 			}
-			
-			last_was_encoded = was_encoded;
-			
-			g_string_truncate (lwsp, 0);
-			g_string_truncate (text, 0);
-			all_ascii = TRUE;
-			
-			g_string_append_c (lwsp, c);
-			last_was_space = TRUE;
-			
-			continue;
-		}
-		
-		if (!is_lwsp (c)) {
-			all_ascii = all_ascii && isascii ((int) c);
-			g_string_append_c (text, c);
-			last_was_space = FALSE;
 		} else {
-			g_string_append_c (lwsp, c);
-			last_was_space = TRUE;
+			/* appending trailing lwsp */
+			g_string_append_len (out, lwsp, nlwsp);
+			break;
 		}
 	}
-	
-	if (text->len || lwsp->len) {
-		gboolean was_encoded;
-		char *dword = NULL;
-		const char *word;
-		
-		if (!(was_encoded = is_rfc2047_encoded_word (text->str, text->len))) {
-			if (!all_ascii) {
-				/* bloody broken mailers... */
-				word = dword = decode_8bit (text->str, text->len);
-			} else
-				word = text->str;
-		} else {
-			word = dword = rfc2047_decode_word (text->str, text->len);
-		}
-		
-		if (word) {
-			/* rfc2047 states that you must ignore all
-			 * whitespace between encoded words */
-			if (!(last_was_encoded && was_encoded))
-				g_string_append_len (out, lwsp->str, lwsp->len);
-			
-			g_string_append (out, word);
-			g_free (dword);
-		} else {
-			g_string_append_len (out, lwsp->str, lwsp->len);
-			g_string_append_len (out, text->str, text->len);
-		}
-	}
-	
-	g_string_free (lwsp, TRUE);
-	g_string_free (text, TRUE);
 	
 	decoded = out->str;
 	g_string_free (out, FALSE);
@@ -1798,148 +1768,76 @@ g_mime_utils_header_decode_text (const char *in)
 char *
 g_mime_utils_header_decode_phrase (const char *in)
 {
-	register const unsigned char *inptr;
-	gboolean last_was_encoded = FALSE;
-	gboolean last_was_space = FALSE;
-	GString *out, *lwsp, *atom;
-	gboolean all_ascii = TRUE;
-	gboolean all_lwsp = TRUE;
+	register const char *inptr = in;
+	gboolean encoded = FALSE;
+	const char *lwsp, *text;
+	size_t nlwsp, n;
+	gboolean ascii;
 	char *decoded;
+	GString *out;
 	
-	inptr = (const unsigned char *) in;
-	lwsp = g_string_sized_new (256);
-	atom = g_string_sized_new (256);
-	out = g_string_sized_new (256);
+	if (in == NULL)
+		return g_strdup ("");
 	
-	/**
-	 * Note: the lwsp variable /may/ sometimes contain non-lwsp
-	 * text if the formatting is broken so... if all_ascii is
-	 * %FALSE, we will need to convert it from 8bit.
-	 **/
+	out = g_string_sized_new (strlen (in) + 1);
 	
-	while (inptr && *inptr) {
-		unsigned char c = *inptr++;
+	while (*inptr != '\0') {
+		lwsp = inptr;
+		while (is_lwsp (*inptr))
+			inptr++;
 		
-		if (!is_atom (c) && !last_was_space) {
-			/* we reached the end of an atom */
-			gboolean was_encoded;
-			char *dword = NULL;
-			const char *word;
-			
-			if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
-				word = dword = rfc2047_decode_word (atom->str, atom->len);
-			else
-				word = atom->str;
-			
-			if (word) {
-				/* rfc2047 states that you must ignore all
-				 * whitespace between encoded words */
-				if (!(last_was_encoded && was_encoded && all_lwsp)) {
-					if (all_ascii) {
-						g_string_append_len (out, lwsp->str, lwsp->len);
-					} else {
-						decoded = decode_8bit (lwsp->str, lwsp->len);
-						g_string_append (out, decoded);
-						g_free (decoded);
-					}
-				}
-				
-				g_string_append (out, word);
-				g_free (dword);
-			} else {
-				was_encoded = FALSE;
-				if (!all_ascii) {
-					dword = decode_8bit (lwsp->str, lwsp->len);
-					g_string_append (out, dword);
-					g_free (dword);
-				} else {
-					g_string_append_len (out, lwsp->str, lwsp->len);
-				}
-				
-				g_string_append_len (out, atom->str, atom->len);
-			}
-			
-			last_was_encoded = was_encoded;
-			
-			g_string_truncate (lwsp, 0);
-			g_string_truncate (atom, 0);
-			
-			if (is_lwsp (c)) {
-				g_string_append_c (lwsp, c);
-				last_was_space = TRUE;
-				all_ascii = TRUE;
-				all_lwsp = TRUE;
-			} else {
-				/* This is mostly here for interoperability with broken
-				 * mailers that might do something stupid like:
-				 * =?iso-8859-1?Q?blah?=:\t=?iso-8859-1?Q?I_am_broken?= */
-				if (isascii ((int) c)) {
-					g_string_append_c (out, c);
-					all_ascii = TRUE;
-				} else {
-					g_string_append_c (lwsp, c);
-					all_ascii = FALSE;
-				}
-				
-				last_was_encoded = FALSE;
-				last_was_space = FALSE;
-				all_lwsp = FALSE;
-			}
-			
-			continue;
-		}
+		nlwsp = (size_t) (inptr - lwsp);
 		
-		if (is_atom (c)) {
-			g_string_append_c (atom, c);
-			last_was_space = FALSE;
-		} else {
-			all_ascii = all_ascii && isascii ((int) c);
-			all_lwsp = all_lwsp && is_lwsp (c);
-			g_string_append_c (lwsp, c);
-			last_was_space = TRUE;
-		}
-	}
-	
-	if (atom->len || lwsp->len) {
-		gboolean was_encoded;
-		char *dword = NULL;
-		const char *word;
-		
-		if ((was_encoded = is_rfc2047_encoded_word (atom->str, atom->len)))
-			word = dword = rfc2047_decode_word (atom->str, atom->len);
-		else
-			word = atom->str;
-		
-		if (word) {
-			/* rfc2047 states that you must ignore all
-			 * whitespace between encoded words */
-			if (!(last_was_encoded && was_encoded && all_lwsp)) {
-				if (all_ascii) {
-					g_string_append_len (out, lwsp->str, lwsp->len);
-				} else {
-					decoded = decode_8bit (lwsp->str, lwsp->len);
+		text = inptr;
+		if (is_atom (*inptr)) {
+			while (is_atom (*inptr))
+				inptr++;
+			
+			n = (size_t) (inptr - text);
+			if (is_rfc2047_encoded_word (text, n)) {
+				if ((decoded = rfc2047_decode_word (text, n))) {
+					/* rfc2047 states that you must ignore all
+					 * whitespace between encoded words */
+					if (!encoded)
+						g_string_append_len (out, lwsp, nlwsp);
+					
 					g_string_append (out, decoded);
 					g_free (decoded);
+					
+					encoded = TRUE;
+				} else {
+					/* append lwsp and invalid rfc2047 encoded-word token */
+					g_string_append_len (out, lwsp, nlwsp + n);
+					encoded = FALSE;
 				}
-			}
-			
-			g_string_append (out, word);
-			g_free (dword);
-		} else {
-			if (!all_ascii) {
-				dword = decode_8bit (lwsp->str, lwsp->len);
-				g_string_append (out, dword);
-				g_free (dword);
 			} else {
-				g_string_append_len (out, lwsp->str, lwsp->len);
+				/* append lwsp and atom token */
+				g_string_append_len (out, lwsp, nlwsp + n);
+				encoded = FALSE;
+			}
+		} else {
+			g_string_append_len (out, lwsp, nlwsp);
+			
+			ascii = TRUE;
+			while (*inptr && !is_lwsp (*inptr)) {
+				ascii = ascii && isascii ((int) *inptr);
+				inptr++;
 			}
 			
-			g_string_append_len (out, atom->str, atom->len);
+			n = (size_t) (inptr - text);
+			
+			if (!ascii) {
+				/* *sigh* I hate broken mailers... */
+				decoded = decode_8bit (text, n);
+				g_string_append (out, decoded);
+				g_free (decoded);
+			} else {
+				g_string_append_len (out, text, n);
+			}
+			
+			encoded = FALSE;
 		}
 	}
-	
-	g_string_free (lwsp, TRUE);
-	g_string_free (atom, TRUE);
 	
 	decoded = out->str;
 	g_string_free (out, FALSE);
