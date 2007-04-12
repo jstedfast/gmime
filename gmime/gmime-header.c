@@ -48,12 +48,12 @@ struct _GMimeHeader {
 /**
  * g_mime_header_new:
  *
- * Creates a new GMimeHeader object.
+ * Creates a new #GMimeHeader object.
  *
  * Returns a new header object.
  **/
 GMimeHeader *
-g_mime_header_new ()
+g_mime_header_new (void)
 {
 	GMimeHeader *new;
 	
