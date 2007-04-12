@@ -1,5 +1,18 @@
 2007-04-12  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* util/cache.c (cache_new): Change max_size and node_size to be of
+	type size_t.
+
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_new): g_object_new() doesn't need a
+	second NULL argument.
+
+	* gmime/gmime-utils.c (decode_8bit): Close the iconv descriptor
+	and since we are using is_ascii() now, we don't need to use
+	unsigned char *'s.
+
+2007-04-12  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-utils.c (decode_8bit): Use is_ascii().
 	(g_mime_utils_header_decode_text): Same.
 	(g_mime_utils_header_decode_phrase): Here too.

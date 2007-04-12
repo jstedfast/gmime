@@ -23,6 +23,8 @@
 
 #include <glib.h>
 
+#include <sys/types.h>
+
 #include <util/list.h>
 #include <util/memchunk.h>
 
@@ -41,8 +43,8 @@ typedef void (*CacheNodeFreeFunc) (CacheNode *node);
 
 struct _Cache {
 	List list;
-	unsigned int size;
-	unsigned int max_size;
+	size_t size;
+	size_t max_size;
 	MemChunk *node_chunks;
 	GHashTable *node_hash;
 	CacheNodeExpireFunc expire;
@@ -51,7 +53,7 @@ struct _Cache {
 
 
 Cache *cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node,
-		  unsigned int bucket_size, unsigned int max_cache_size);
+		  size_t bucket_size, size_t max_cache_size);
 
 void cache_free (Cache *cache);
 

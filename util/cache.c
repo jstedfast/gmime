@@ -26,7 +26,7 @@
 
 
 Cache *
-cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node, unsigned int node_size, unsigned int max_size)
+cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node, size_t node_size, size_t max_size)
 {
 	Cache *cache;
 	

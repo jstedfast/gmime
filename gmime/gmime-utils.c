@@ -1472,22 +1472,22 @@ decode_8bit (const char *text, size_t len)
 	
 	/* if we get here, then none of the charsets fit the 8bit text flawlessly...
 	 * try to find the one that fit the best and use that to convert what we can,
-	 * replacing any byte we can't convert with an 'x' */
+	 * replacing any byte we can't convert with a '?' */
 	
 	if ((cd = g_mime_iconv_open ("UTF-8", best)) == (iconv_t) -1) {
 		/* this shouldn't happen... but if we are here, then
 		 * it did...  the only thing we can do at this point
 		 * is replace the 8bit garbage and pray */
-		register const unsigned char *inptr = text;
-		const unsigned char *inend = inptr + len;
+		register const char *inptr = text;
+		const char *inend = inptr + len;
 		
 		outbuf = out;
 		
 		while (inptr < inend) {
 			if (is_ascii (*inptr))
-				*outbuf++ = (char) *inptr++;
+				*outbuf++ = *inptr++;
 			else
-				*outbuf++ = 'x';
+				*outbuf++ = '?';
 		}
 		
 		*outbuf = '\0';
@@ -1514,7 +1514,7 @@ decode_8bit (const char *text, size_t len)
 				out = g_realloc (out, outlen + 1);
 				outbuf = out + rc;
 			} else {
-				*outbuf++ = 'x';
+				*outbuf++ = '?';
 				outleft--;
 				inleft--;
 				inbuf++;
@@ -1524,6 +1524,8 @@ decode_8bit (const char *text, size_t len)
 	
 	iconv (cd, NULL, NULL, &outbuf, &outleft);
 	*outbuf = '\0';
+	
+	g_mime_iconv_close (cd);
 	
 	return out;
 }
@@ -1634,7 +1636,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		
 		while (!g_utf8_validate (p, len, (const char **) &p)) {
 			len = declen - (p - (char *) decoded);
-			*p = 'x';
+			*p = '?';
 		}
 		
 		return g_strndup ((char *) decoded, declen);

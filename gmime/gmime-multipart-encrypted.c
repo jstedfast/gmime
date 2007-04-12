@@ -188,12 +188,12 @@ multipart_encrypted_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * Returns an empty MIME multipart/encrypted object.
  **/
 GMimeMultipartEncrypted *
-g_mime_multipart_encrypted_new ()
+g_mime_multipart_encrypted_new (void)
 {
 	GMimeMultipartEncrypted *multipart;
 	GMimeContentType *type;
 	
-	multipart = g_object_new (GMIME_TYPE_MULTIPART_ENCRYPTED, NULL, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART_ENCRYPTED, NULL);
 	
 	type = g_mime_content_type_new ("multipart", "encrypted");
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
