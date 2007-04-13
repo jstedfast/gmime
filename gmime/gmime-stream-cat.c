@@ -685,7 +685,7 @@ g_mime_stream_cat_new (void)
 {
 	GMimeStreamCat *cat;
 	
-	cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL, NULL);
+	cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
 	
 	g_mime_stream_construct (GMIME_STREAM (cat), 0, -1);
 	

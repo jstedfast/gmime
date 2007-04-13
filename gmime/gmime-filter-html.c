@@ -470,7 +470,7 @@ g_mime_filter_html_new (guint32 flags, guint32 colour)
 	GMimeFilterHTML *new;
 	guint i;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_HTML, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_HTML, NULL);
 	new->flags = flags;
 	new->colour = colour;
 	

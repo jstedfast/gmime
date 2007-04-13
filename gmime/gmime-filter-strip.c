@@ -169,7 +169,7 @@ g_mime_filter_strip_new ()
 {
 	GMimeFilterStrip *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_STRIP, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_STRIP, NULL);
 	
 	return (GMimeFilter *) new;
 }

@@ -279,7 +279,7 @@ g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
 {
 	GMimeFilterYenc *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_YENC, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_YENC, NULL);
 	new->direction = direction;
 	
 	switch (direction) {

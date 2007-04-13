@@ -306,7 +306,7 @@ g_mime_multipart_new ()
 	GMimeMultipart *multipart;
 	GMimeContentType *type;
 	
-	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
 	type = g_mime_content_type_new ("multipart", "mixed");
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
@@ -331,7 +331,7 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 	GMimeMultipart *multipart;
 	GMimeContentType *type;
 	
-	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL, NULL);
+	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
 	type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);

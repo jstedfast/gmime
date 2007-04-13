@@ -292,7 +292,7 @@ g_mime_object_new_type (const char *type, const char *subtype)
 			return NULL;
 	}
 	
-	object = g_object_new (obj_type, NULL, NULL);
+	object = g_object_new (obj_type, NULL);
 	
 	GMIME_OBJECT_GET_CLASS (object)->init (object);
 	

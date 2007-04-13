@@ -239,7 +239,7 @@ g_mime_filter_from_new (GMimeFilterFromMode mode)
 {
 	GMimeFilterFrom *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_FROM, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_FROM, NULL);
 	new->midline = FALSE;
 	switch (mode) {
 	case GMIME_FILTER_FROM_MODE_ARMOR:

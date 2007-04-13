@@ -222,7 +222,7 @@ g_mime_message_part_new (const char *subtype)
 	GMimeMessagePart *part;
 	GMimeContentType *type;
 	
-	part = g_object_new (GMIME_TYPE_MESSAGE_PART, NULL, NULL);
+	part = g_object_new (GMIME_TYPE_MESSAGE_PART, NULL);
 	
 	type = g_mime_content_type_new ("message", subtype ? subtype : "rfc822");
 	g_mime_object_set_content_type (GMIME_OBJECT (part), type);

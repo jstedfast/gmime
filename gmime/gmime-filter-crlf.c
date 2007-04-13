@@ -216,7 +216,7 @@ g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode 
 {
 	GMimeFilterCRLF *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_CRLF, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_CRLF, NULL);
 	new->direction = direction;
 	new->mode = mode;
 	

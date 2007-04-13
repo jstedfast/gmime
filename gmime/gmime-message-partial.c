@@ -176,7 +176,7 @@ g_mime_message_partial_new (const char *id, int number, int total)
 	GMimeContentType *type;
 	char *num;
 	
-	partial = g_object_new (GMIME_TYPE_MESSAGE_PARTIAL, NULL, NULL);
+	partial = g_object_new (GMIME_TYPE_MESSAGE_PARTIAL, NULL);
 	
 	type = g_mime_content_type_new ("message", "partial");
 	

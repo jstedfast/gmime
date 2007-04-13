@@ -1,5 +1,7 @@
 2007-04-12  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/*.c: no need for a second NULL argument to g_object_new()
+
 	* util/cache.c (cache_new): Change max_size and node_size to be of
 	type size_t.
 

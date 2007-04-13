@@ -446,7 +446,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (source), NULL);
 	
-	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL, NULL);
+	buffer = g_object_new (GMIME_TYPE_STREAM_BUFFER, NULL);
 	
 	buffer->source = source;
 	g_object_ref (source);

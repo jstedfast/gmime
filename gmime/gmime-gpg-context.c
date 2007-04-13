@@ -1830,7 +1830,7 @@ g_mime_gpg_context_new (GMimeSession *session, const char *path)
 	g_return_val_if_fail (GMIME_IS_SESSION (session), NULL);
 	g_return_val_if_fail (path != NULL, NULL);
 	
-	ctx = g_object_new (GMIME_TYPE_GPG_CONTEXT, NULL, NULL);
+	ctx = g_object_new (GMIME_TYPE_GPG_CONTEXT, NULL);
 	ctx->path = g_strdup (path);
 	
 	cipher = (GMimeCipherContext *) ctx;

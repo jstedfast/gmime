@@ -467,7 +467,7 @@ g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level)
 	GMimeFilterGZip *new;
 	int retval;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_GZIP, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_GZIP, NULL);
 	new->mode = mode;
 	new->level = level;
 	

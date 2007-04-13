@@ -263,7 +263,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	mem->owner = FALSE;
 	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
 	
@@ -285,7 +285,7 @@ g_mime_stream_mem_new (void)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	
@@ -308,7 +308,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	mem->owner = TRUE;
 	mem->buffer = array;
 	
@@ -333,7 +333,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL, NULL);
+	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
 	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
 	

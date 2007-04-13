@@ -353,7 +353,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	if (map == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL, NULL);
+	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
 	mstream->owner = TRUE;
 	mstream->eos = FALSE;
 	mstream->fd = fd;
@@ -400,7 +400,7 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, of
 	if (map == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL, NULL);
+	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
 	mstream->owner = TRUE;
 	mstream->eos = FALSE;
 	mstream->fd = fd;

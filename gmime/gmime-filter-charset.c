@@ -284,7 +284,7 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 	if (cd == (iconv_t) -1)
 		return NULL;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL);
 	new->from_charset = g_strdup (from_charset);
 	new->to_charset = g_strdup (to_charset);
 	new->cd = cd;

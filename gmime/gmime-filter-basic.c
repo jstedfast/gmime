@@ -313,7 +313,7 @@ g_mime_filter_basic_new_type (GMimeFilterBasicType type)
 {
 	GMimeFilterBasic *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL, NULL);
+	new = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL);
 	
 	new->type = type;
 	
