@@ -78,7 +78,7 @@ g_mime_multipart_get_type (void)
 			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeMultipart),
-			16,   /* n_preallocs */
+			0,    /* n_preallocs */
 			(GInstanceInitFunc) g_mime_multipart_init,
 		};
 		

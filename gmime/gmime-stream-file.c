@@ -57,7 +57,7 @@ g_mime_stream_file_get_type (void)
 			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeStreamFile),
-			16,   /* n_preallocs */
+			0,    /* n_preallocs */
 			(GInstanceInitFunc) g_mime_stream_file_init,
 		};
 		

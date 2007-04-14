@@ -1,3 +1,7 @@
+2007-04-14  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/*.c (g_mime_*_get_type): Set n_preallocs to 0.
+
 2007-04-12  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/*.c: no need for a second NULL argument to g_object_new()

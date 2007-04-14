@@ -67,7 +67,7 @@ g_mime_stream_mmap_get_type (void)
 			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeStreamMmap),
-			16,   /* n_preallocs */
+			0,    /* n_preallocs */
 			(GInstanceInitFunc) g_mime_stream_mmap_init,
 		};
 		

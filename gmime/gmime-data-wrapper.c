@@ -50,7 +50,7 @@ g_mime_data_wrapper_get_type (void)
 			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeDataWrapper),
-			16,   /* n_preallocs */
+			0,    /* n_preallocs */
 			(GInstanceInitFunc) g_mime_data_wrapper_init,
 		};
 		

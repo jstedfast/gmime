@@ -61,7 +61,7 @@ g_mime_message_part_get_type (void)
 			NULL, /* class_finalize */
 			NULL, /* class_data */
 			sizeof (GMimeMessagePart),
-			16,   /* n_preallocs */
+			0,    /* n_preallocs */
 			(GInstanceInitFunc) g_mime_message_part_init,
 		};
 		
