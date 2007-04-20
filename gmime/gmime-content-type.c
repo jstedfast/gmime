@@ -266,10 +266,9 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 			param->value = g_strdup (value);
 			return;
 		}
-	} else {
-		/* hash table may not be initialized */
-		if (!mime_type->param_hash)
-			mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	} else if (!mime_type->param_hash) {
+		/* hash table not initialized */
+		mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	}
 	
 	if (param == NULL) {
