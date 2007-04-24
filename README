@@ -1,4 +1,4 @@
-                            GMime, version 2.2.6
+                            GMime, version 2.2.7
                    by Jeffrey Stedfast <fejj@gnome.org>
 
 
@@ -102,11 +102,10 @@ Sources to GMime may be obtained from:
 Information regarding GMime may be obtained from the Spruce home page:
   http://spruce.sourceforge.net/gmime/
 
-Experimental CVS versions of GMime may be obtained by following the
-directions at cvs.gnome.org, module gmime.
+Experimental versions of GMime may be obtained by following the
+directions at http://developer.gnome.org/tools/svn.html
 
-  cvs -d:pserver:anonymous@anoncvs.gnome.org:/cvs/gnome login
-  cvs -z3 -d:pserver:anonymous@anoncvs.gnome.org:/cvs/gnome co gmime
+  svn co http://svn.gnome.org/svn/gmime/trunk gmime
 
 
 REQUIREMENTS

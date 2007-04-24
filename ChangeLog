@@ -1,3 +1,9 @@
+2007-04-23  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.7
+
 2007-04-14  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/*.c (g_mime_*_get_type): Set n_preallocs to 0.
