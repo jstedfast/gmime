@@ -484,9 +484,8 @@ static void
 gen_random_stream (GMimeStream *stream)
 {
 	size_t nwritten, buflen, total = 0, size, i;
-	char buf[4096], *p;
+	char buf[4096];
 	ssize_t n;
-	int fd;
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
@@ -521,9 +520,9 @@ gen_test_data (const char *datadir)
 {
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
-	size_t left, len;
 	off_t start, end;
 	struct stat st;
+	size_t len;
 	int fd, i;
 	
 	srand (time (NULL));
@@ -592,7 +591,6 @@ int main (int argc, char **argv)
 	struct dirent *dent;
 	char path[256], *p;
 	DIR *dir, *outdir;
-	struct stat st;
 	int i;
 	
 	g_mime_init (0);

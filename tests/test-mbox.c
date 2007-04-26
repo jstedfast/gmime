@@ -199,9 +199,9 @@ int main (int argc, char **argv)
 	const char *datadir = "data/mbox";
 	char input[256], output[256], *p, *q;
 	GMimeStream *istream, *ostream;
-	const char *path, *what;
 	GMimeParser *parser;
 	struct dirent *dent;
+	const char *path;
 	struct stat st;
 	int fd, i;
 	DIR *dir;

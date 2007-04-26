@@ -53,7 +53,7 @@ random_whole_stream (const char *datadir, char **filename)
 {
 	size_t nwritten, buflen, total = 0, size, i;
 	GMimeStream *stream;
-	char buf[4096], *p;
+	char buf[4096];
 	ssize_t n;
 	int fd;
 	
@@ -454,8 +454,8 @@ int main (int argc, char **argv)
 	off_t start = 0;
 	char *filename;
 	struct stat st;
-	int fd, i, j;
 	size_t len;
+	int fd, i;
 	
 	srand (time (NULL));
 	

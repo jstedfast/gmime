@@ -130,7 +130,8 @@ AM_CONDITIONAL(ENABLE_GTK_DOC, test "x$enable_gtk_doc" = "xyes")
 dnl Check for profiling options
 AC_ARG_ENABLE(gprof, [  --enable-gprof          Enable profiling compile flags [default=no]], enable_profile="$enableval", enable_profile="no")
 if test "x$enable_profile" = "xyes"; then
-  CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
+#  CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
+  CFLAGS="-O0 -g -pg"
 fi
 
 dnl Enable warning spewage on the console

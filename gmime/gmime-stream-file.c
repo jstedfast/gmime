@@ -193,7 +193,6 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	int rv;
 	
 	if (fstream->fp == NULL)
 		return -1;

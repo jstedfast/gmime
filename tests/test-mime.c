@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
 #include <gmime/gmime.h>
 
@@ -30,14 +31,12 @@ extern int verbose;
 
 #define v(x) if (verbose > 3) x
 
-
+#if 0
 static void
 uputs (const char *str, FILE *out)
 {
-	unsigned char buf[4096], *d, *s;
-	
-	s = (unsigned char *) str;
-	d = buf;
+	register const unsigned char *s = (const unsigned char *) str;
+	char buf[4096], *d = buf;
 	
 	while (*s != '\0') {
 		if (!isascii ((int) *s)) {
@@ -48,7 +47,7 @@ uputs (const char *str, FILE *out)
 				*d++ = '"';
 			}
 		} else
-			*d++ = *s;
+			*d++ = (char) *s;
 		s++;
 	}
 	
@@ -56,6 +55,7 @@ uputs (const char *str, FILE *out)
 	
 	fputs (buf, out);
 }
+#endif
 
 static struct {
 	const char *input;

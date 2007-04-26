@@ -1646,7 +1646,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		w(g_warning ("Cannot convert from %s to UTF-8, header display may "
 			     "be corrupt: %s", charset, g_strerror (errno)));
 		
-		return decode_8bit (decoded, declen);
+		return decode_8bit ((char *) decoded, declen);
 	}
 	
 	buf = g_mime_iconv_strndup (cd, (char *) decoded, declen);
@@ -1658,7 +1658,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	w(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
 		     "corrupt: %s", declen, decoded, g_strerror (errno)));
 	
-	return decode_8bit (decoded, declen);
+	return decode_8bit ((char *) decoded, declen);
 }
 
 

@@ -152,7 +152,6 @@ static void
 test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GPtrArray *recipients;
-	GByteArray *buffer;
 	GError *err = NULL;
 	Exception *ex;
 	
@@ -206,24 +205,51 @@ test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 		throw (ex);
 }
 
-static int
-test_export (GMimeCipherContext *ctx, GMimeStream *ostream)
+static void
+test_export (GMimeCipherContext *ctx, const char *path)
 {
-	GPtrArray *keys;
+	GMimeStream *istream, *ostream;
+	Exception *ex = NULL;
+	GByteArray *buf[2];
 	GError *err = NULL;
+	GPtrArray *keys;
+	int fd;
+	
+	if ((fd = open (path, O_RDONLY)) == -1)
+		throw (exception_new ("open() failed: %s", strerror (errno)));
+	
+	ostream = g_mime_stream_fs_new (fd);
+	istream = g_mime_stream_mem_new ();
+	g_mime_stream_write_to_stream (ostream, istream);
+	g_mime_stream_reset (istream);
+	g_object_unref (ostream);
 	
 	keys = g_ptr_array_new ();
 	g_ptr_array_add (keys, "no.user@no.domain");
 	
+	ostream = g_mime_stream_mem_new ();
+	
 	g_mime_cipher_export_keys (ctx, keys, ostream, &err);
 	g_ptr_array_free (keys, TRUE);
 	if (err != NULL) {
-		fprintf (stderr, "pgp_export failed: %s\n", err->message);
+		ex = exception_new ("%s", err->message);
+		g_object_unref (istream);
+		g_object_unref (ostream);
 		g_error_free (err);
-		return 0;
+		throw (ex);
 	}
 	
-	return 1;
+	buf[0] = GMIME_STREAM_MEM (istream)->buffer;
+	buf[1] = GMIME_STREAM_MEM (ostream)->buffer;
+	
+	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+		ex = exception_new ("exported key does not match original key");
+	
+	g_object_unref (istream);
+	g_object_unref (ostream);
+	
+	if (ex != NULL)
+		throw (ex);
 }
 
 static void
@@ -301,6 +327,17 @@ int main (int argc, char **argv)
 		testsuite_check_failed ("GMimeGpgContext::import failed: %s", ex->message);
 		return EXIT_FAILURE;
 	} finally;
+	
+	key = g_build_filename (datadir, "gmime.gpg.pub", NULL);
+	testsuite_check ("GMimeGpgContext::export");
+	try {
+		test_export (ctx, key);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("GMimeGpgContext::export failed: %s", ex->message);
+	} finally;
+	
+	g_free (key);
 	
 	istream = g_mime_stream_mem_new ();
 	ostream = g_mime_stream_mem_new ();

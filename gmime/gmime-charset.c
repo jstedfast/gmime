@@ -797,7 +797,6 @@ g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *
 	const char *inbuf = text;
 	char out[256], *outbuf;
 	const char *iconv_name;
-	GMimeCharset set;
 	iconv_t cd;
 	guint i;
 	
@@ -822,7 +821,7 @@ g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *
 	
 	charset = g_mime_charset_iconv_name (charset);
 	
-	if (mask->level = 1)
+	if (mask->level == 1)
 		return !g_ascii_strcasecmp (charset, "iso-8859-1");
 	
 	/* check if this is a charset that we have precalculated masking for */
