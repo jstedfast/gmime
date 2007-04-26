@@ -1,5 +1,9 @@
 2007-04-25  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.8
+
 	* tests/test-pgp.c: Test exporting of keys.
 
 	* gmime/gmime-utils.c (rfc2047_decode_word): Fixed compile
