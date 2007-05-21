@@ -415,7 +415,8 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 			}
 			
 			/* after our current position */
-			d(fprintf (stderr, "after cur position in stream[%d] or in a later stream\n"));
+			d(fprintf (stderr, "after cur position in stream[%d] or in a later stream\n",
+				   current->id));
 			do {
 				if (current->stream->bound_end != -1) {
 					len = current->stream->bound_end - current->stream->bound_start;
@@ -434,7 +435,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 					break;
 				} else {
 					d(fprintf (stderr, "not within bounds of stream[%d]\n",
-						   current->id, len));
+						   current->id));
 					current->position = len;
 					real += len;
 					
@@ -630,34 +631,23 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
 		n = n->next;
 	} while (n != NULL);
 	
-	if (s == streams) {
-		d(fprintf (stderr, "returning stream[%d]::substream (%ld, %ld)\n",
-			   n->id, s->start, s->end));
-		substream = g_mime_stream_substream (s->stream, s->start, s->end);
-		while (streams != NULL) {
-			s = streams->next;
-			g_free (streams);
-			streams = s;
-		}
-	} else {
-		d(fprintf (stderr, "returning a substream containing multiple source streams\n"));
-		cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
-		/* Note: we could pass -1 as bound_end, it should Just
-		 * Work(tm) but setting absolute bounds is kinda
-		 * nice... */
-		g_mime_stream_construct (GMIME_STREAM (cat), 0, subend);
-		
-		while (streams != NULL) {
-			s = streams->next;
-			substream = g_mime_stream_substream (streams->stream, streams->start, streams->end);
-			g_mime_stream_cat_add_source (cat, substream);
-			g_object_unref (substream);
-			g_free (streams);
-			streams = s;
-		}
-		
-		substream = (GMimeStream *) cat;
+	d(fprintf (stderr, "returning a substream containing multiple source streams\n"));
+	cat = g_object_new (GMIME_TYPE_STREAM_CAT, NULL);
+	/* Note: we could pass -1 as bound_end, it should Just
+	 * Work(tm) but setting absolute bounds is kinda
+	 * nice... */
+	g_mime_stream_construct (GMIME_STREAM (cat), 0, subend);
+	
+	while (streams != NULL) {
+		s = streams->next;
+		substream = g_mime_stream_substream (streams->stream, streams->start, streams->end);
+		g_mime_stream_cat_add_source (cat, substream);
+		g_object_unref (substream);
+		g_free (streams);
+		streams = s;
 	}
+	
+	substream = (GMimeStream *) cat;
 	
 	return substream;
 	

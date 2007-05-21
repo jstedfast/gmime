@@ -1,3 +1,15 @@
+2007-05-21  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-cat.c (stream_substream): Fixed a memory leak
+	by always returning a GMimeStreamCat, even if the source list
+	contains only a single stream (probably better that it work this
+	way anyway for consistency), thanks again to Charles Kerr for
+	finding and presenting a fix for this. Fixes bug #440054.
+
+	* gmime/gmime-stream-file.c (stream_seek): Oops, fseek() should
+	have been using SEEK_SET, not SEEK_END. Thanks to Charles Kerr for
+	the report and the fix. Fixes bug #439841.
+
 2007-04-25  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

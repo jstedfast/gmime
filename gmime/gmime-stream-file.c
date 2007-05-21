@@ -248,7 +248,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	if (stream->bound_end != -1 && real > stream->bound_end)
 		return -1;
 	
-	if (fseek (fp, real, SEEK_END) == -1 || (real = ftell (fp)) == -1)
+	if (fseek (fp, real, SEEK_SET) == -1 || (real = ftell (fp)) == -1)
 		return -1;
 	
 	stream->position = real;
