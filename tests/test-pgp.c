@@ -294,6 +294,7 @@ int main (int argc, char **argv)
 	system ("/bin/rm -rf ./tmp");
 	system ("/bin/mkdir ./tmp");
 	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	system ("/usr/bin/gpg --list-keys > /dev/null 2>&1");
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
