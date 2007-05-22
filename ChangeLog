@@ -1,5 +1,9 @@
 2007-05-21  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.9
+
 	* gmime/gmime-stream-cat.c (stream_substream): Fixed a memory leak
 	by always returning a GMimeStreamCat, even if the source list
 	contains only a single stream (probably better that it work this
