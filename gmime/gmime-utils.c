@@ -1702,10 +1702,46 @@ g_mime_utils_header_decode_text (const char *in)
 			text = inptr;
 			ascii = TRUE;
 			
+#ifdef ENABLE_RFC2047_WORKAROUNDS
+			if (!strncmp (inptr, "=?", 2) && inptr[2] != '?') {
+				inptr += 2;
+				
+				/* skip past the charset */
+				while (*inptr && *inptr != '?') {
+					ascii = ascii && is_ascii (*inptr);
+					inptr++;
+				}
+				
+				/* sanity check encoding type */
+				if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
+					goto non_rfc2047;
+				
+				inptr += 3;
+				
+				/* find the end of the rfc2047 encoded word token */
+				while (*inptr && strncmp (inptr, "?=", 2) != 0) {
+					ascii = ascii && is_ascii (*inptr);
+					inptr++;
+				}
+				
+				if (!strncmp (inptr, "?=", 2))
+					inptr += 2;
+			} else {
+			non_rfc2047:
+				/* stop if we encounter a possible rfc2047 encoded
+				 * token even if it's inside another word, sigh. */
+				while (*inptr && !is_lwsp (*inptr) &&
+				       strncmp (inptr, "=?", 2) != 0) {
+					ascii = ascii && is_ascii (*inptr);
+					inptr++;
+				}
+			}
+#else
 			while (*inptr && !is_lwsp (*inptr)) {
 				ascii = ascii && is_ascii (*inptr);
 				inptr++;
 			}
+#endif /* ENABLE_RFC2047_WORKAROUNDS */
 			
 			n = (size_t) (inptr - text);
 			if (is_rfc2047_encoded_word (text, n)) {
