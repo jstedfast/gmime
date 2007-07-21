@@ -90,6 +90,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	char *out, *outbuf;
 	const char *inbuf;
 	size_t outlen;
+	int errnosav;
 	
 	if (cd == (iconv_t) -1)
 		return g_strndup (string, n);
@@ -150,12 +151,16 @@ g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n)
 	
  fail:
 	
-	w(g_warning ("g_mime_iconv_strndup: %s", strerror (errno)));
+	errnosav = errno;
+	
+	w(g_warning ("g_mime_iconv_strndup: %s at byte %lu", strerror (errno), n - inleft));
 	
 	g_free (out);
 	
 	/* reset the cd */
 	iconv (cd, NULL, NULL, NULL, NULL);
+	
+	errno = errnosav;
 	
 	return NULL;
 }
