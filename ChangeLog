@@ -1,3 +1,10 @@
+2007-08-15  Joe Shaw  <joe@ximian.com>
+
+	* mono/DataWrapper.custom: We want to dispose of the GMime
+	stream immediately, since we don't use its managed wrapper
+	except to immediately pass it into the GMime.StreamFilter
+	constructor.
+
 2007-07-21  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-iconv-utils.c (g_mime_iconv_strndup): Save errno

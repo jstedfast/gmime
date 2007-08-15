@@ -1,6 +1,9 @@
 public StreamWrapper Stream {
 	get {
-		GMime.StreamFilter filtered_stream = new GMime.StreamFilter (GMimeStream);
+		GMime.Stream gmime_stream = GMimeStream;
+		GMime.StreamFilter filtered_stream = new GMime.StreamFilter (gmime_stream);
+		gmime_stream.Dispose ();
+
 		FilterBasic filter;
 
 		switch (Encoding) {
