@@ -644,7 +644,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 					goto next;
 				} else if (!tm.tm_year) {
 					if ((n = get_year (token->start, token->len)) != -1) {
-						printf ("2-digit year; ");
+						d(printf ("2-digit year; "));
 						tm.tm_year = n - 1900;
 					}
 					goto next;
