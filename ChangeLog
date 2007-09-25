@@ -1,3 +1,21 @@
+2007-09-25  Joe Shaw  <joe@joeshaw.org>
+
+	* configure.in: Set an AM_CONDITIONAL for whether we are
+	building with large file support.
+
+	* mono/GMime.metadata.in: Move GMime.metadata to this and
+	change any references of off_t to @off_t_type@, which is
+	substituted with the correct type.  This is needed because
+	off_t is converted to an IntPtr by the gtk-sharp binding
+	generator, which is good for 64-bit systems and 32-bit
+	systems without large file support but breaks on 32-bit
+	systems with large file support.
+
+	* mono/Makefile.am: Generate GMime.metadata from
+	GMime.metadata.in by using sed to replace @off_t_type@
+	with gint64 on 32-bit systems with large file support
+	and long otherwise.
+
 2007-09-03  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-utils.c: Disabled a debug printf.

@@ -332,6 +332,7 @@ if test "x$enable_largefile" != "xno"; then
 else
     GMIME_CFLAGS=""
 fi
+AM_CONDITIONAL(ENABLE_LARGEFILE, test "x$largefile64_source" = "xyes")
 
 dnl Check type sizes
 CFLAGS_save="$CFLAGS"

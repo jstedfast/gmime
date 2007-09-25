@@ -42,10 +42,17 @@
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
 
-  <!-- gtk-sharp incorrectly aliases off_t to size_t, when it's really
-       a long -->
-  <attr path="/api/namespace/*/method/return-type[@type='off_t']" name="type">long</attr>
-  <attr path="/api/namespace/*/*/*/parameter[@type='off_t']" name="type">long</attr>
+  <!-- We need to remap off_t conditionally.  For 64-bit systems or 32-bit
+       systems without large file support, "long" is the right thing here, and
+       the generator will map it to an IntPtr for marshaling.  However, if
+       large file support is enabled on 32-bit systems, off_t must be mapped to
+       "gint64" and marshaled as a C# "long".  See Makefile.am for the actual
+       replacement. -->
+
+  <attr path="/api/namespace/*/field[@type='off_t']" name="type">@off_t_type@</attr>
+  <attr path="/api/namespace/*/*/return-type[@type='off_t']" name="type">@off_t_type@</attr>
+  <attr path="/api/namespace/*/*/parameter[@type='off_t']" name="type">@off_t_type@</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='off_t']" name="type">@off_t_type@</attr>
 
   <!-- We want to be able to get at the type and subtype fields of this
        structure, so don't mark it as opaque. -->
