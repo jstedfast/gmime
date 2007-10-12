@@ -523,7 +523,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
  * should reuse @state.
  *
  * Along the same lines, @pcrc and @crc should be initialized to
- * GMIME_YENCODE_CRC_INIT before using.
+ * #GMIME_YENCODE_CRC_INIT before using.
  *
  * Returns the number of bytes encoded.
  **/
