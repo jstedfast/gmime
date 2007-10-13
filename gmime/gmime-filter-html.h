@@ -104,7 +104,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 struct _GMimeFilterHTML {
 	GMimeFilter parent_object;
 	
-	struct _GUrlScanner *scanner;
+	struct _UrlScanner *scanner;
 	
 	guint32 flags;
 	guint32 colour;

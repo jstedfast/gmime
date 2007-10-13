@@ -38,16 +38,16 @@ typedef struct {
 } MD5Context;
 
 
-void md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16]);
+G_GNUC_INTERNAL void md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16]);
 
 /* use this one when speed is needed */
 /* for use in provider code only */
-void md5_get_digest_from_file (const char *filename, unsigned char digest[16]);
+G_GNUC_INTERNAL void md5_get_digest_from_file (const char *filename, unsigned char digest[16]);
 
 /* raw routines */
-void md5_init (MD5Context *ctx);
-void md5_update (MD5Context *ctx, const unsigned char *buf, guint32 len);
-void md5_final (MD5Context *ctx, unsigned char digest[16]);
+G_GNUC_INTERNAL void md5_init (MD5Context *ctx);
+G_GNUC_INTERNAL void md5_update (MD5Context *ctx, const unsigned char *buf, guint32 len);
+G_GNUC_INTERNAL void md5_final (MD5Context *ctx, unsigned char digest[16]);
 
 G_END_DECLS
 

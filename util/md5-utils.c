@@ -23,6 +23,10 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
@@ -176,6 +180,7 @@ md5_final (MD5Context *ctx, unsigned char digest[16])
 		/* Pad block to 56 bytes */
 		memset (p, 0, count - 8);
 	}
+	
 	if (ctx->doByteReverse)
 		_byte_reverse (ctx->in, 14);
 	
@@ -305,11 +310,10 @@ void
 md5_get_digest (const char *buffer, unsigned int buffer_size, unsigned char digest[16])
 {	
 	MD5Context ctx;
-
+	
 	md5_init (&ctx);
 	md5_update (&ctx, (unsigned char *) buffer, buffer_size);
 	md5_final (&ctx, digest);
-	
 }
 
 
@@ -331,10 +335,10 @@ md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 	
 	d(fprintf (stderr, "generating checksum\n"));
 	
-	md5_init (&ctx);
-	fp = fopen (filename, "rb");
-	if (!fp)
+	if (!(fp = fopen (filename, "rb")))
 		return;
+	
+	md5_init (&ctx);
 	
 	while ((nread = fread (buf, 1, 1024, fp)) > 0)
 		md5_update (&ctx, buf, nread);
@@ -345,7 +349,7 @@ md5_get_digest_from_file (const char *filename, unsigned char digest[16])
 	}
 	
 	md5_final (&ctx, digest);
-
+	
 	fclose (fp);	
 	d(fprintf (stderr, "checksum done\n"));
 }

@@ -21,8 +21,7 @@
 #ifndef __LIST_H__
 #define __LIST_H__
 
-#include <glib/gmacros.h>
-
+#include <glib.h>
 #include <string.h>
 
 G_BEGIN_DECLS
@@ -40,19 +39,19 @@ typedef struct {
 
 #define LIST_INITIALIZER(l) { (ListNode *) &l.tail, NULL, (ListNode *) &l.head }
 
-void list_init (List *list);
+G_GNUC_INTERNAL void list_init (List *list);
 
-int list_is_empty (List *list);
+G_GNUC_INTERNAL int list_is_empty (List *list);
 
-int list_length (List *list);
+G_GNUC_INTERNAL int list_length (List *list);
 
-ListNode *list_unlink_head (List *list);
-ListNode *list_unlink_tail (List *list);
+G_GNUC_INTERNAL ListNode *list_unlink_head (List *list);
+G_GNUC_INTERNAL ListNode *list_unlink_tail (List *list);
 
-ListNode *list_prepend_node (List *list, ListNode *node);
-ListNode *list_append_node  (List *list, ListNode *node);
+G_GNUC_INTERNAL ListNode *list_prepend_node (List *list, ListNode *node);
+G_GNUC_INTERNAL ListNode *list_append_node  (List *list, ListNode *node);
 
-ListNode *list_node_unlink (ListNode *node);
+G_GNUC_INTERNAL ListNode *list_node_unlink (ListNode *node);
 
 G_END_DECLS
 

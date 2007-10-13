@@ -37,16 +37,16 @@ static struct {
 	unsigned int mask;
 	urlpattern_t pattern;
 } patterns[] = {
-	{ CONVERT_WEB_URLS, { "file://",   "",        g_url_file_start,     g_url_file_end     } },
-	{ CONVERT_WEB_URLS, { "ftp://",    "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "http://",   "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "https://",  "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "news://",   "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "nntp://",   "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "telnet://", "",        g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "www.",      "http://", g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_WEB_URLS, { "ftp.",      "ftp://",  g_url_web_start,      g_url_web_end      } },
-	{ CONVERT_ADDRSPEC, { "@",         "mailto:", g_url_addrspec_start, g_url_addrspec_end } },
+	{ CONVERT_WEB_URLS, { "file://",   "",        url_file_start,     url_file_end     } },
+	{ CONVERT_WEB_URLS, { "ftp://",    "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "http://",   "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "https://",  "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "news://",   "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "nntp://",   "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "telnet://", "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "www.",      "http://", url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "ftp.",      "ftp://",  url_web_start,      url_web_end      } },
+	{ CONVERT_ADDRSPEC, { "@",         "mailto:", url_addrspec_start, url_addrspec_end } },
 };
 
 #define NUM_URL_PATTERNS (sizeof (patterns) / sizeof (patterns[0]))
@@ -110,7 +110,7 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 static void
 g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 {
-	filter->scanner = g_url_scanner_new ();
+	filter->scanner = url_scanner_new ();
 	
 	filter->flags = 0;
 	filter->colour = 0;
@@ -123,7 +123,7 @@ g_mime_filter_html_finalize (GObject *object)
 {
 	GMimeFilterHTML *html = (GMimeFilterHTML *) object;
 	
-	g_url_scanner_free (html->scanner);
+	url_scanner_free (html->scanner);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -354,7 +354,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			len = inptr - start;
 			
 			do {
-				if (g_url_scanner_scan (html->scanner, start, len, &match)) {
+				if (url_scanner_scan (html->scanner, start, len, &match)) {
 					/* write out anything before the first regex match */
 					outptr = writeln (filter, start, start + match.um_so,
 							  outptr, &outend);
@@ -476,7 +476,7 @@ g_mime_filter_html_new (guint32 flags, guint32 colour)
 	
 	for (i = 0; i < NUM_URL_PATTERNS; i++) {
 		if (patterns[i].mask & flags)
-			g_url_scanner_add (new->scanner, &patterns[i].pattern);
+			url_scanner_add (new->scanner, &patterns[i].pattern);
 	}
 	
 	return (GMimeFilter *) new;

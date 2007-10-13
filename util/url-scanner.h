@@ -33,31 +33,31 @@ typedef struct {
 	off_t um_eo;
 } urlmatch_t;
 
-typedef gboolean (*GUrlScanFunc) (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+typedef gboolean (*UrlScanFunc) (const char *in, const char *pos, const char *inend, urlmatch_t *match);
 
 /* some default GUrlScanFunc's */
-gboolean g_url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
-gboolean g_url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
-gboolean g_url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
-gboolean g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
-gboolean g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
-gboolean g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch_t *match);
 
 typedef struct {
 	char *pattern;
 	char *prefix;
-	GUrlScanFunc start;
-	GUrlScanFunc end;
+	UrlScanFunc start;
+	UrlScanFunc end;
 } urlpattern_t;
 
-typedef struct _GUrlScanner GUrlScanner;
+typedef struct _UrlScanner UrlScanner;
 
-GUrlScanner *g_url_scanner_new (void);
-void g_url_scanner_free (GUrlScanner *scanner);
+G_GNUC_INTERNAL UrlScanner *url_scanner_new (void);
+G_GNUC_INTERNAL void url_scanner_free (UrlScanner *scanner);
 
-void g_url_scanner_add (GUrlScanner *scanner, urlpattern_t *pattern);
+G_GNUC_INTERNAL void url_scanner_add (UrlScanner *scanner, urlpattern_t *pattern);
 
-gboolean g_url_scanner_scan (GUrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match);
+G_GNUC_INTERNAL gboolean url_scanner_scan (UrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match);
 
 G_END_DECLS
 

@@ -52,16 +52,16 @@ struct _Cache {
 };
 
 
-Cache *cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node,
-		  size_t bucket_size, size_t max_cache_size);
+G_GNUC_INTERNAL Cache *cache_new (CacheNodeExpireFunc expire, CacheNodeFreeFunc free_node,
+				  size_t bucket_size, size_t max_cache_size);
 
-void cache_free (Cache *cache);
+G_GNUC_INTERNAL void cache_free (Cache *cache);
 
-CacheNode *cache_node_insert (Cache *cache, const char *key);
-CacheNode *cache_node_lookup (Cache *cache, const char *key, gboolean use);
+G_GNUC_INTERNAL CacheNode *cache_node_insert (Cache *cache, const char *key);
+G_GNUC_INTERNAL CacheNode *cache_node_lookup (Cache *cache, const char *key, gboolean use);
 
-void cache_expire_unused (Cache *cache);
-void cache_node_expire (CacheNode *node);
+G_GNUC_INTERNAL void cache_expire_unused (Cache *cache);
+G_GNUC_INTERNAL void cache_node_expire (CacheNode *node);
 
 G_END_DECLS
 

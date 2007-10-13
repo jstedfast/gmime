@@ -29,18 +29,18 @@
 #include "url-scanner.h"
 
 
-struct _GUrlScanner {
+struct _UrlScanner {
 	GPtrArray *patterns;
 	GTrie *trie;
 };
 
 
-GUrlScanner *
-g_url_scanner_new (void)
+UrlScanner *
+url_scanner_new (void)
 {
-	GUrlScanner *scanner;
+	UrlScanner *scanner;
 	
-	scanner = g_new (GUrlScanner, 1);
+	scanner = g_new (UrlScanner, 1);
 	scanner->patterns = g_ptr_array_new ();
 	scanner->trie = g_trie_new (TRUE);
 	
@@ -49,7 +49,7 @@ g_url_scanner_new (void)
 
 
 void
-g_url_scanner_free (GUrlScanner *scanner)
+url_scanner_free (UrlScanner *scanner)
 {
 	g_return_if_fail (scanner != NULL);
 	
@@ -60,7 +60,7 @@ g_url_scanner_free (GUrlScanner *scanner)
 
 
 void
-g_url_scanner_add (GUrlScanner *scanner, urlpattern_t *pattern)
+url_scanner_add (UrlScanner *scanner, urlpattern_t *pattern)
 {
 	g_return_if_fail (scanner != NULL);
 	
@@ -70,7 +70,7 @@ g_url_scanner_add (GUrlScanner *scanner, urlpattern_t *pattern)
 
 
 gboolean
-g_url_scanner_scan (GUrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match)
+url_scanner_scan (UrlScanner *scanner, const char *in, size_t inlen, urlmatch_t *match)
 {
 	const char *pos, *inend;
 	urlpattern_t *pat;
@@ -177,7 +177,7 @@ url_stop_at_brace (const char *in, size_t so)
 
 
 gboolean
-g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	register const char *inptr = pos;
 	
@@ -211,7 +211,7 @@ g_url_addrspec_start (const char *in, const char *pos, const char *inend, urlmat
 }
 
 gboolean
-g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	const char *inptr = pos;
 	int parts = 0, digits;
@@ -272,7 +272,7 @@ g_url_addrspec_end (const char *in, const char *pos, const char *inend, urlmatch
 
 
 gboolean
-g_url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	match->um_so = (pos - in);
 	
@@ -280,7 +280,7 @@ g_url_file_start (const char *in, const char *pos, const char *inend, urlmatch_t
 }
 
 gboolean
-g_url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	register const char *inptr = pos;
 	char close_brace;
@@ -304,7 +304,7 @@ g_url_file_end (const char *in, const char *pos, const char *inend, urlmatch_t *
 }
 
 gboolean
-g_url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	match->um_so = (pos - in);
 	
@@ -312,7 +312,7 @@ g_url_web_start (const char *in, const char *pos, const char *inend, urlmatch_t 
 }
 
 gboolean
-g_url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
+url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	register const char *inptr = pos;
 	gboolean passwd = FALSE;

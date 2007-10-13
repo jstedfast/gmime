@@ -28,19 +28,19 @@ G_BEGIN_DECLS
 
 typedef struct _MemChunk MemChunk;
 
-MemChunk *memchunk_new (size_t atomsize, size_t atomcount, gboolean autoclean);
+G_GNUC_INTERNAL MemChunk *memchunk_new (size_t atomsize, size_t atomcount, gboolean autoclean);
 
-void     *memchunk_alloc (MemChunk *memchunk);
+G_GNUC_INTERNAL void     *memchunk_alloc (MemChunk *memchunk);
 
-void     *memchunk_alloc0 (MemChunk *memchunk);
+G_GNUC_INTERNAL void     *memchunk_alloc0 (MemChunk *memchunk);
 
-void      memchunk_free (MemChunk *memchunk, void *mem);
+G_GNUC_INTERNAL void      memchunk_free (MemChunk *memchunk, void *mem);
 
-void      memchunk_reset (MemChunk *memchunk);
+G_GNUC_INTERNAL void      memchunk_reset (MemChunk *memchunk);
 
-void      memchunk_clean (MemChunk *memchunk);
+G_GNUC_INTERNAL void      memchunk_clean (MemChunk *memchunk);
 
-void      memchunk_destroy (MemChunk *memchunk);
+G_GNUC_INTERNAL void      memchunk_destroy (MemChunk *memchunk);
 
 G_END_DECLS
 
