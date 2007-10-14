@@ -1,5 +1,11 @@
 2007-10-13  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* tests/test-pgp.c (test_export): Skip past the PGP headers so as
+	to avoid comparing the "Version: " headers which might fail if a
+	newer gnupg is used than what created the pgp key originally.
+
+2007-10-13  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-filter-html.c: Updated for url-scanner.c symbol
 	changes.
 

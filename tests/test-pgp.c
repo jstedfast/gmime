@@ -209,8 +209,10 @@ static void
 test_export (GMimeCipherContext *ctx, const char *path)
 {
 	GMimeStream *istream, *ostream;
+	register const char *inptr;
+	const char *inbuf, *outbuf;
+	size_t inlen, outlen;
 	Exception *ex = NULL;
-	GByteArray *buf[2];
 	GError *err = NULL;
 	GPtrArray *keys;
 	int fd;
@@ -239,10 +241,25 @@ test_export (GMimeCipherContext *ctx, const char *path)
 		throw (ex);
 	}
 	
-	buf[0] = GMIME_STREAM_MEM (istream)->buffer;
-	buf[1] = GMIME_STREAM_MEM (ostream)->buffer;
+	inbuf = GMIME_STREAM_MEM (istream)->buffer->data;
+	inlen = GMIME_STREAM_MEM (istream)->buffer->len;
+	if ((inptr = strstr (inbuf, "\n\n"))) {
+		/* skip past the headers which may have different version numbers */
+		inptr += 2;
+		inlen -= (inptr - inbuf);
+		inbuf = inptr;
+	}
 	
-	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
+	outbuf = GMIME_STREAM_MEM (ostream)->buffer->data;
+	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
+	if ((inptr = strstr (outbuf, "\n\n"))) {
+		/* skip past the headers which may have different version numbers */
+		inptr += 2;
+		outlen -= (inptr - outbuf);
+		outbuf = inptr;
+	}
+	
+	if (outlen != inlen || memcmp (outbuf, inbuf, inlen) != 0)
 		ex = exception_new ("exported key does not match original key");
 	
 	g_object_unref (istream);
