@@ -108,9 +108,9 @@
       <para>
 GMime is a powerful MIME (Multipurpose Internet Mail Extension)
 utility library. It is meant for creating, editing, and parsing MIME
-messages and structures. GMime is released under the GNU General
-Public License. GMime is based on GLib 2.0's GObject system allowing
-for a lot of flexibility.
+messages and structures. GMime is released under the 2.1 version of
+the GNU Lesser General Public License. GMime is based on GLib 2.0's
+GObject system allowing for a lot of flexibility.
       </para>
       <para>
 GMime depends on the following libraries:
