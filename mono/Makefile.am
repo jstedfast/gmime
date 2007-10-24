@@ -20,10 +20,12 @@ pkgconfig_DATA = gmime-sharp.pc
 
 sources = 				\
 	InternetAddressList.cs		\
-	StreamWrapper.cs		\
-	#
+	StreamWrapper.cs
 
-build_sources = $(addprefix $(srcdir)/, $(sources)) AssemblyInfo.cs
+build_sources =  			\
+	$(srcdir)/InternetAddressList.cs\
+	$(srcdir)/StreamWrapper.cs	\
+	AssemblyInfo.cs
 
 customs = 				\
 	DataWrapper.custom		\
@@ -31,10 +33,15 @@ customs = 				\
 	Header.custom			\
 	Message.custom			\
 	Object.custom			\
-	Stream.custom			\
-	#
+	Stream.custom
 
-build_customs = $(addprefix $(srcdir)/, $(customs))
+build_customs = 			\
+	$(srcdir)/DataWrapper.custom	\
+	$(srcdir)/Global.custom		\
+	$(srcdir)/Header.custom		\
+	$(srcdir)/Message.custom	\
+	$(srcdir)/Object.custom		\
+	$(srcdir)/Stream.custom
 
 EXTRA_DIST =			\
 	$(ASSEMBLY).config.in	\

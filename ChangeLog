@@ -1,3 +1,8 @@
+2007-10-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-part.c (g_mime_part_encoding_from_string): Handle
+	the value "uuencode" the same as we were handling "x-uuencode".
+
 2007-10-14  Jeffrey Stedfast  <fejj@gnome.org>
 
 	Changed the license to LGPLv2

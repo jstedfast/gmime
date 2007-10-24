@@ -901,6 +901,8 @@ g_mime_part_encoding_from_string (const char *encoding)
 		return GMIME_PART_ENCODING_BASE64;
 	else if (!g_ascii_strcasecmp (encoding, "quoted-printable"))
 		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+	else if (!g_ascii_strcasecmp (encoding, "uuencode"))
+		return GMIME_PART_ENCODING_UUENCODE;
 	else if (!g_ascii_strcasecmp (encoding, "x-uuencode"))
 		return GMIME_PART_ENCODING_UUENCODE;
 	else
