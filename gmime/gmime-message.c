@@ -1354,8 +1354,10 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 	g_object_ref (mime_part);
 	g_mime_header_set_raw (mime_part->headers, NULL);
 	
-	if (message->mime_part)
+	if (message->mime_part) {
+		g_mime_header_set_raw (message->mime_part->headers, NULL);
 		g_object_unref (message->mime_part);
+	}
 	
 	message->mime_part = mime_part;
 }

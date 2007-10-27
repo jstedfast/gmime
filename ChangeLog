@@ -1,3 +1,10 @@
+2007-10-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_set_mime_part): Reset the
+	raw headers of the current top-level MIME part so that if it is
+	being used elsewhere, it won't carry along all the message headers
+	from this message.
+
 2007-10-24  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-part.c (g_mime_part_encoding_from_string): Handle
