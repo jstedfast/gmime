@@ -1,3 +1,9 @@
+2007-11-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Clear any
+	error we may have (bad passwd?) each pass so that we don't try to
+	set an error when one is already set.
+
 2007-10-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (g_mime_message_set_mime_part): Reset the

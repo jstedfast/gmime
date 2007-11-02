@@ -4,19 +4,6 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
-- better handling of invalid raw 8bit headers. need to somehow provide
-a way for the app to tell gmime how to handle these. perhaps a
-callback set on the parser object that gets called if gmime fails to
-be able to convert it to UTF-8 (after trying locale charset of
-course). Or... maybe some form of auto-charset-detection black magic?
-
-- Fix multipart/signed support so that verifying signatures will feed
-the complete signed-part in raw format (ie, without reformatting
-Content-* headers) to gpg. Currently I only feed the raw content of
-the signed part to gpg but the headers have been processed by GMime
-and so *may* be folded differently from the original Content-*
-headers.
-
 - make thread-safe? some stuff already is, like the gmime-iconv code
 and some of the other charset stuff. Streams and other objects,
 however, are not. How can I do this...? And is it really needed?

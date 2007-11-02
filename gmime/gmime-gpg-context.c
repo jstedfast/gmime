@@ -767,6 +767,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	
  parse:
 	
+	g_clear_error (err);
+	
 	inptr = gpg->statusbuf;
 	while (inptr < gpg->statusptr && *inptr != '\n')
 		inptr++;
@@ -877,6 +879,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		}
 		
 		if ((passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, gpg->need_id, err))) {
+			g_free (prompt);
+			
 			if (!gpg->utf8) {
 				char *locale_passwd;
 				
@@ -892,17 +896,20 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			g_free (passwd);
 			
 			gpg->send_passwd = TRUE;
-		} else if (err && *err == NULL) {
-			g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
+		} else {
+			if (err && *err == NULL)
+				g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
+			
+			g_free (prompt);
+			
+			return -1;
 		}
-		
-		g_free (prompt);
 	} else if (!strncmp (status, "GOOD_PASSPHRASE", 15)) {
 		gpg->bad_passwds = 0;
 	} else if (!strncmp (status, "BAD_PASSPHRASE", 14)) {
 		gpg->bad_passwds++;
 		
-		g_mime_session_forget_passwd (gpg->session, gpg->userid, err);
+		g_mime_session_forget_passwd (gpg->session, gpg->userid, NULL);
 		
 		if (gpg->bad_passwds == 3) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_BAD_PASSWORD,
