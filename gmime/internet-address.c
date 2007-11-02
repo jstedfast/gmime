@@ -51,7 +51,7 @@
  * Returns a new #InternetAddress object.
  **/
 InternetAddress *
-internet_address_new ()
+internet_address_new (void)
 {
 	InternetAddress *ia;
 	

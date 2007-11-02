@@ -430,7 +430,7 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * text/plain.
  **/
 GMimePart *
-g_mime_part_new ()
+g_mime_part_new (void)
 {
 	GMimePart *mime_part;
 	GMimeContentType *type;

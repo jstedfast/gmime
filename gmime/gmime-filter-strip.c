@@ -166,7 +166,7 @@ filter_reset (GMimeFilter *filter)
  * Returns a new strip filter.
  **/
 GMimeFilter *
-g_mime_filter_strip_new ()
+g_mime_filter_strip_new (void)
 {
 	GMimeFilterStrip *new;
 	

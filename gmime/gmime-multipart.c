@@ -302,7 +302,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * multipart/mixed.
  **/
 GMimeMultipart *
-g_mime_multipart_new ()
+g_mime_multipart_new (void)
 {
 	GMimeMultipart *multipart;
 	GMimeContentType *type;

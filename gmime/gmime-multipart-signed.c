@@ -190,7 +190,7 @@ multipart_signed_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * Returns an empty MIME multipart/signed object.
  **/
 GMimeMultipartSigned *
-g_mime_multipart_signed_new ()
+g_mime_multipart_signed_new (void)
 {
 	GMimeMultipartSigned *multipart;
 	GMimeContentType *type;
