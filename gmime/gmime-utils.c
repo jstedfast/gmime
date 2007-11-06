@@ -1057,9 +1057,10 @@ is_rfc2047_token (const char *inptr, size_t len)
 	if (len < 8 || strncmp (inptr, "=?", 2) != 0 || strncmp (inptr + len - 2, "?=", 2) != 0)
 		return FALSE;
 	
-	inptr += 3;
-	len -= 3;
+	inptr += 2;
+	len -= 2;
 	
+	/* skip past the charset */
 	while (*inptr != '?' && len > 0) {
 		inptr++;
 		len--;
