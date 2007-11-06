@@ -1,5 +1,11 @@
 2007-11-06  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (rfc2047_decode_word): If the charset string
+	is empty, default to decode_8bit() and don't try to iconv_open()
+	it.
+
+2007-11-06  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-utils.c (is_rfc2047_token): Don't assume the charset
 	component of the token is >= 1 char, start checking for a '?' at
 	string index 2.

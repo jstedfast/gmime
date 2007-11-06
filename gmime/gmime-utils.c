@@ -1586,6 +1586,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	iconv_t cd;
 	char *buf;
 	
+	/* skip over the charset */
 	if (!(inptr = memchr (inptr, '?', inend - inptr)) || inptr[2] != '?')
 		return NULL;
 	
@@ -1644,9 +1645,10 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		return g_strndup ((char *) decoded, declen);
 	}
 	
-	if ((cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
+	if (!charset[0] || (cd = g_mime_iconv_open ("UTF-8", charset)) == (iconv_t) -1) {
 		w(g_warning ("Cannot convert from %s to UTF-8, header display may "
-			     "be corrupt: %s", charset, g_strerror (errno)));
+			     "be corrupt: %s", charset[0] ? charset : "unspecified charset",
+			     g_strerror (errno)));
 		
 		return decode_8bit ((char *) decoded, declen);
 	}
