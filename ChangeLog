@@ -1,5 +1,9 @@
 2007-11-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.11
+
 	* gmime/gmime-utils.c (g_mime_utils_header_decode_text): Fix for
 	bug #485005.
 
