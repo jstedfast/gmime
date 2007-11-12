@@ -1,3 +1,8 @@
+2007-11-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_text): Fix for
+	bug #485005.
+
 2007-11-06  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (rfc2047_decode_word): If the charset string

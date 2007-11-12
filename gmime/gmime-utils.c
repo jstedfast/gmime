@@ -1707,10 +1707,10 @@ g_mime_utils_header_decode_text (const char *in)
 			ascii = TRUE;
 			
 #ifdef ENABLE_RFC2047_WORKAROUNDS
-			if (!strncmp (inptr, "=?", 2) && inptr[2] != '?') {
+			if (!strncmp (inptr, "=?", 2)) {
 				inptr += 2;
 				
-				/* skip past the charset */
+				/* skip past the charset (if one is even declared, sigh) */
 				while (*inptr && *inptr != '?') {
 					ascii = ascii && is_ascii (*inptr);
 					inptr++;
