@@ -1,5 +1,10 @@
 2007-11-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/internet-address.c (internet_address_destroy): No need to
+	check if ia !=NULL, we know this is true already.
+
+2007-11-12  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.2.11

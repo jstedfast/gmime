@@ -74,17 +74,15 @@ internet_address_new (void)
 static void
 internet_address_destroy (InternetAddress *ia)
 {
-	if (ia) {
-		g_free (ia->name);
-		
-		if (ia->type == INTERNET_ADDRESS_GROUP) {
-			internet_address_list_destroy (ia->value.members);
-		} else {
-			g_free (ia->value.addr);
-		}
-		
-		g_free (ia);
+	g_free (ia->name);
+	
+	if (ia->type == INTERNET_ADDRESS_GROUP) {
+		internet_address_list_destroy (ia->value.members);
+	} else {
+		g_free (ia->value.addr);
 	}
+	
+	g_free (ia);
 }
 
 
