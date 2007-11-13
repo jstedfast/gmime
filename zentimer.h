@@ -24,12 +24,8 @@
 
 #ifdef ENABLE_ZENTIMER
 
-#ifdef HAVE_CONFIG_H
-#include <config.h>
-#endif
-
 #include <stdio.h>
-
+#include <sys/time.h>
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #elif HAVE_INTTYPES_H
@@ -45,58 +41,10 @@ extern "C" {
 #pragma }
 #endif /* __cplusplus */
 
-/* G_STMT_START and G_STMT_END stolen from glib.h */
-/* Provide simple macro statement wrappers (adapted from Perl):
- *  G_STMT_START { statements; } G_STMT_END;
- *  can be used as a single statement, as in
- *  if (x) G_STMT_START { ... } G_STMT_END; else ...
- *
- *  For gcc we will wrap the statements within `({' and `})' braces.
- *  For SunOS they will be wrapped within `if (1)' and `else (void) 0',
- *  and otherwise within `do' and `while (0)'.
- */
-#if !(defined (G_STMT_START) && defined (G_STMT_END))
-#  if defined (__GNUC__) && !defined (__STRICT_ANSI__) && !defined (__cplusplus)
-#    define G_STMT_START	(void)(
-#    define G_STMT_END		)
-#  else
-#    if (defined (sun) || defined (__sun__))
-#      define G_STMT_START	if (1)
-#      define G_STMT_END	else (void)0
-#    else
-#      define G_STMT_START	do
-#      define G_STMT_END	while (0)
-#    endif
-#  endif
-#endif
-
 #define ZTIME_USEC_PER_SEC 1000000
 
-typedef struct {
-	uint32_t sec;
-	uint32_t usec;
-} ztime_t;
-
-#ifdef G_OS_WIN32
-#include <windows.h>
-
-static void
-ztime (ztime_t *ztimep)
-{
-	uint64_t systime;
-	
-	/* systime represents the number of 100-nanoseconds since Jan 1, 1601 */
-	GetSystemTimeAsFileTime ((FILETIME *) &systime);
-	
-	/* convert to microseconds */
-	systime /= 10;
-	
-	ztimep->sec = systime / ZTIME_USEC_PER_SEC;
-	ztimep->usec = systime % ZTIME_USEC_PER_SEC;
-}
-
-#else /* POSIX OS */
-#include <sys/time.h>
+/* ztime_t represents usec */
+typedef uint64_t ztime_t;
 
 static void
 ztime (ztime_t *ztimep)
@@ -104,37 +52,8 @@ ztime (ztime_t *ztimep)
 	struct timeval tv;
 	
 	gettimeofday (&tv, NULL);
-	ztimep->sec = tv.tv_sec;
-	ztimep->usec = tv.tv_usec;
 	
-	if (ztimep->usec >= ZTIME_USEC_PER_SEC) {
-		/* this is probably unneccessary */
-		ztimep->sec += ztimep->usec / ZTIME_USEC_PER_SEC;
-		ztimep->usec = ztimep->usec % ZTIME_USEC_PER_SEC;
-	}
-}
-
-#endif /* OS */
-
-static void
-ztime_add (ztime_t *ztime, ztime_t *adj)
-{
-	ztime->sec += adj->sec;
-	ztime->usec += adj->usec;
-	ztime->sec += ztime->usec / ZTIME_USEC_PER_SEC;
-	ztime->usec = ztime->usec % ZTIME_USEC_PER_SEC;
-}
-
-static void
-ztime_delta (ztime_t *start, ztime_t *stop, ztime_t *delta)
-{
-	delta->sec = stop->sec - start->sec;
-	if (stop->usec < start->usec) {
-		delta->usec = (stop->usec + ZTIME_USEC_PER_SEC) - start->usec;
-		delta->sec--;
-	} else {
-		delta->usec = stop->usec - start->usec;
-	}
+	*ztimep = ((uint64_t) tv.tv_sec * ZTIME_USEC_PER_SEC) + tv.tv_usec;
 }
 
 enum {
@@ -143,15 +62,15 @@ enum {
 	ZTIMER_PAUSED   = (1 << 1),
 };
 
-typedef uint8_t zstate_t;
+typedef uint32_t zstate_t;
 
 typedef struct {
-	zstate_t state;
+	zstate_t state; /* 32bit for alignment reasons */
 	ztime_t start;
 	ztime_t stop;
 } ztimer_t;
 
-#define ZTIMER_INITIALIZER { ZTIMER_INACTIVE, { 0, 0 }, { 0, 0 } }
+#define ZTIMER_INITIALIZER { ZTIMER_INACTIVE, 0, 0 }
 
 /* default timer */
 static ztimer_t __ztimer = ZTIMER_INITIALIZER;
@@ -193,12 +112,13 @@ ZenTimerResume (ztimer_t *ztimer)
 	/* unpause */
 	ztimer->state &= ~ZTIMER_PAUSED;
 	
-	/* calculate time since paused */
 	ztime (&now);
-	ztime_delta (&ztimer->stop, &now, &delta);
+	
+	/* calculate time since paused */
+	delta = now - ztimer->stop;
 	
 	/* adjust start time to account for time elapsed since paused */
-	ztime_add (&ztimer->start, &delta);
+	ztimer->start += delta;
 }
 
 static void
@@ -216,10 +136,10 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 		paused = 0;
 	}
 	
-	ztime_delta (&ztimer->start, &ztimer->stop, &delta);
+	delta = ztimer->stop - ztimer->start;
 	
-	fprintf (stderr, "ZenTimer: %s took %u.%06u seconds\n", oper,
-		 (unsigned int) delta.sec, (unsigned int) delta.usec);
+	fprintf (stderr, "ZenTimer: %s took %.6f seconds\n", oper,
+		 (double) delta / (double) ZTIME_USEC_PER_SEC);
 	
 	if (paused)
 		ZenTimerResume (ztimer);
@@ -233,6 +153,8 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 
 #define ZenTimerStart(ztimerp)
 #define ZenTimerStop(ztimerp)
+#define ZenTimerPause(ztimerp)
+#define ZenTimerResume(ztimerp)
 #define ZenTimerReport(ztimerp, oper)
 
 #endif /* ENABLE_ZENTIMER */
