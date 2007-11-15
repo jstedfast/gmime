@@ -20,11 +20,11 @@ Summary: MIME library
 Name: gmime
 Version: %ver
 Release: 1
-Copyright: GPL
+Copyright: LGPL
 Group: Development/Libraries
-URL: http://www.xtorshun.org/gmime/
+URL: http://spruce.sourceforge.net/gmime/
 
-Source: http://www.xtorshun.org/gmime/sources/gmime-%{version}.tar.gz
+Source: http://spruce.sourceforge.net/gmime/sources/v2.2/gmime-%{version}.tar.gz
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
 Requires: glib2 >= 2.0.0
@@ -75,7 +75,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 
-%doc doc/html/* AUTHORS ChangeLog NEWS README COPYING TODO
+%doc doc/html/* AUTHORS ChangeLog NEWS README LICENSE COPYING TODO
 %{prefix}/bin/*
 %{prefix}/lib/*.sh
 %{prefix}/lib/libgmime*
