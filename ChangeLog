@@ -1,3 +1,17 @@
+2007-11-23  Jeffrey Stedfast  <fejj@novell.com>
+
+	Attempt at solving bug #498720 for address fields, altho it should
+	probably be made to handle folding single addresses in the case
+	where they are too long to fit within a single line.
+
+	* gmime/internet-address.c (internet_address_list_fold): New
+	function.
+
+	* gmime/gmime-message.c (write_structured): Renamed from
+	write_addrspec().
+	(write_addrspec): New header writer that writes
+	InternetAddressLists in a nicely folded manner.
+
 2007-11-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (internet_address_destroy): No need to

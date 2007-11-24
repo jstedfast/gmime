@@ -503,13 +503,26 @@ encoded_name (const char *raw, gboolean rfc2047_encode)
 }
 
 static void
-internet_address_list_to_string_internal (const InternetAddressList *list, gboolean encode, GString *string)
+internet_address_list_to_string_internal (const InternetAddressList *list, gboolean encode, gboolean fold, GString *string)
 {
+	size_t llen = string->len;
+	size_t len;
+	
 	while (list) {
 		char *addr;
 		
 		addr = internet_address_to_string (list->address, encode);
 		if (addr) {
+			if (fold) {
+				len = strlen (addr);
+				if (llen + len > GMIME_FOLD_LEN) {
+					g_string_append (string, "\n\t");
+					llen = 1;
+				}
+				
+				llen += len;
+			}
+			
 			g_string_append (string, addr);
 			g_free (addr);
 			if (list->next)
@@ -555,8 +568,8 @@ internet_address_to_string (const InternetAddress *ia, gboolean encode)
 		g_free (name);
 		
 		members = ia->value.members;
-		internet_address_list_to_string_internal (members, encode, string);
-		g_string_append (string, ";");
+		internet_address_list_to_string_internal (members, encode, FALSE, string);
+		g_string_append_c (string, ';');
 		
 		str = string->str;
 		g_string_free (string, FALSE);
@@ -583,11 +596,26 @@ internet_address_list_to_string (const InternetAddressList *list, gboolean encod
 	char *str;
 	
 	string = g_string_new ("");
-	internet_address_list_to_string_internal (list, encode, string);
+	internet_address_list_to_string_internal (list, encode, FALSE, string);
 	str = string->str;
 	g_string_free (string, FALSE);
 	
 	return str;
+}
+
+
+/**
+ * internet_address_list_fold:
+ * @list: list of internet addresses
+ * @str: string to write to
+ *
+ * Writes the rfc822 formatted addresses in @list to @string, folding
+ * appropriately.
+ **/
+void
+internet_address_list_fold (const InternetAddressList *list, GString *str)
+{
+	internet_address_list_to_string_internal (list, TRUE, TRUE, str);
 }
 
 static InternetAddress *

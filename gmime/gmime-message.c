@@ -51,6 +51,7 @@ static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream
 
 static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
 
+static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
@@ -145,7 +146,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Subject", write_subject);
 	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Received", write_received);
 	g_mime_header_register_writer (((GMimeObject *) message)->headers, "Message-Id", write_msgid);
-	g_mime_header_register_writer (((GMimeObject *) message)->headers, "References", write_addrspec);
+	g_mime_header_register_writer (((GMimeObject *) message)->headers, "References", write_structured);
 }
 
 static gboolean
@@ -548,7 +549,7 @@ write_msgid (GMimeStream *stream, const char *name, const char *value)
 }
 
 static ssize_t
-write_addrspec (GMimeStream *stream, const char *name, const char *value)
+write_structured (GMimeStream *stream, const char *name, const char *value)
 {
 	char *unfolded, *folded;
 	ssize_t n;
@@ -559,6 +560,29 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
+	
+	return n;
+}
+
+static ssize_t
+write_addrspec (GMimeStream *stream, const char *name, const char *value)
+{
+	InternetAddressList *addrlist;
+	GString *str;
+	ssize_t n;
+	
+	str = g_string_new (name);
+	g_string_append (str, ": ");
+	
+	if (value && (addrlist = internet_address_parse_string (value))) {
+		internet_address_list_fold (addrlist, str);
+		internet_address_list_destroy (addrlist);
+	}
+	
+	g_string_append_c (str, '\n');
+	
+	n = g_mime_stream_write (stream, str->str, str->len);
+	g_string_free (str, TRUE);
 	
 	return n;
 }
