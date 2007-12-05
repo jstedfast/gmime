@@ -1,3 +1,10 @@
+2007-12-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Fixed a bug where explicitly disabling largefile
+	support would add -D_FILE_OFFSET_BITS=no to the compiler
+	CFLAGS. Also added a blaring WARNING when -enable-largefile is
+	passed.
+
 2007-11-23  Jeffrey Stedfast  <fejj@novell.com>
 
 	Attempt at solving bug #498720 for address fields, altho it should

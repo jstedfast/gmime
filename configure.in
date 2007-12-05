@@ -301,38 +301,57 @@ dnl *************************************
 AC_ARG_ENABLE(largefile,
 	      AC_HELP_STRING([--enable-largefile],
 	      [enable support for large files [[default=no]]]),,
-	      enable_largefile=no)
+	      enable_largefile="no")
 if test "x$enable_largefile" != "xno"; then
     AC_SYS_LARGEFILE
     AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile64_source,
     [
 	AC_TRY_COMPILE([
-		#define _LARGEFILE64_SOURCE
 		#include <sys/types.h>
 		#include <sys/stat.h>
 		#include <fcntl.h>
 	],[
 		int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
 	],[
-		largefile64_source="yes"
-	],[
 		largefile64_source="no"
+	],[
+		AC_TRY_COMPILE([
+			#define _LARGEFILE64_SOURCE
+			#include <sys/types.h>
+			#include <sys/stat.h>
+			#include <fcntl.h>
+		],[
+			int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
+		],[
+			largefile64_source="yes"
+		],[
+			largefile64_source="unknown"
+		])
 	])
     ])
-
+    
+    enable_largefile="no"
+    
     if test "x$largefile64_source" = "xyes"; then
-	GMIME_CFLAGS="-D_LARGEFILE64_SOURCE"
-	if test -n "$ac_cv_sys_file_offset_bits"; then
-		GMIME_CFLAGS="$GMIME_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
-	fi
-    else
-	GMIME_CFLAGS=""
-	AC_DEFINE(O_LARGEFILE, 0, [Define to 0 if your system does not have the O_LARGEFILE flag])
+        GMIME_CFLAGS="-D_LARGEFILE64_SOURCE"
+        enable_largefile="yes"
+    elif test "x$largefile64_source" = "xunknown"; then
+        AC_DEFINE(O_LARGEFILE, 0, [Define to 0 if your system does not have the O_LARGEFILE flag])
+    fi
+    
+    if test -n "$ac_cv_sys_large_files" -a "x$ac_cv_sys_large_files" != "xno"; then
+        GMIME_CFLAGS="$GMIME_CFLAGS_CFLAGS -D_LARGE_FILES"
+        enable_largefile="yes"
+    fi
+    
+    if test "x$ac_cv_sys_file_offset_bits" != "xno"; then
+        GMIME_CFLAGS="$GMIME_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
+        enable_largefile="yes"
     fi
 else
     GMIME_CFLAGS=""
 fi
-AM_CONDITIONAL(ENABLE_LARGEFILE, test "x$largefile64_source" = "xyes")
+AM_CONDITIONAL(ENABLE_LARGEFILE, test "x$enable_largefile" = "xyes")
 
 dnl Check type sizes
 CFLAGS_save="$CFLAGS"
@@ -505,3 +524,14 @@ Configuration:
 
   Mono bindings:        ${enable_mono}
 "
+
+if test "$enable_largefile" = "yes"; then
+   echo "
+WARNING: You have elected to enable large file support (>2GB).
+This may break API/ABI compatability with previous installations
+of GMime which could cause applications using GMime on your
+system to break in mysterious ways. It is not recommended that
+you enable this feature unless you really know what you are
+doing.
+"
+fi
