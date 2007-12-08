@@ -575,7 +575,7 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	g_string_append (str, ": ");
 	
 	if (value && (addrlist = internet_address_parse_string (value))) {
-		internet_address_list_fold (addrlist, str);
+		internet_address_list_writer (addrlist, str);
 		internet_address_list_destroy (addrlist);
 	}
 	

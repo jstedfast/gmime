@@ -80,7 +80,7 @@ InternetAddressList *internet_address_parse_string (const char *string);
 char *internet_address_to_string (const InternetAddress *ia, gboolean encode);
 char *internet_address_list_to_string (const InternetAddressList *list, gboolean encode);
 
-void internet_address_list_fold (const InternetAddressList *list, GString *str);
+void internet_address_list_writer (const InternetAddressList *list, GString *str);
 
 G_END_DECLS
 
