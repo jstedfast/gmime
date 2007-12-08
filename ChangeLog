@@ -1,3 +1,8 @@
+2007-12-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-mime.c: Added another addrspec test and fixed up some
+	exception strings to be a little more helpful.
+
 2007-12-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.in: Fixed a bug where explicitly disabling largefile

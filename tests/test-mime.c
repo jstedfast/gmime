@@ -65,6 +65,9 @@ static struct {
 	{ "fejj@helixcode.com",
 	  "fejj@helixcode.com",
 	  "fejj@helixcode.com" },
+	{ "this is\n\ta folded name <folded@name.com>",
+	  "this is a folded name <folded@name.com>",
+	  "this is a folded name <folded@name.com>" },
 	{ "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>" },
@@ -159,16 +162,16 @@ test_addrspec (void)
 		testsuite_check ("addrspec[%u]", i);
 		try {
 			if (!(addrlist = internet_address_parse_string (addrspec[i].input)))
-				throw (exception_new ("could not parse addr-spec", i));
+				throw (exception_new ("could not parse addr-spec"));
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)
-				throw (exception_new ("display addr-spec does not match"));
+				throw (exception_new ("display addr-spec does not match: %s", str));
 			g_free (str);
 			
 			str = internet_address_list_to_string (addrlist, TRUE);
 			if (strcmp (addrspec[i].encoded, str) != 0)
-				throw (exception_new ("encoded addr-spec does not match"));
+				throw (exception_new ("encoded addr-spec does not match: %s", str));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
@@ -303,11 +306,11 @@ test_rfc2047 (void)
 		try {
 			dec = g_mime_utils_header_decode_text (rfc2047_text[i].input);
 			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
-				throw (exception_new ("decoded text does not match"));
+				throw (exception_new ("decoded text does not match: %s", dec));
 			
 			enc = g_mime_utils_header_encode_text (dec);
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
-				throw (exception_new ("encoded text does not match"));
+				throw (exception_new ("encoded text does not match: %s", enc));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
