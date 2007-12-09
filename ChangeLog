@@ -1,5 +1,11 @@
 2007-12-08  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (rfc2047_encode_merge_rfc822_words):
+	Completely rewritten with new logic which will hopefully group
+	words more logically.
+
+2007-12-08  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #498720
 
 	* gmime/internet-address.c (internet_address_list_writer): Renamed

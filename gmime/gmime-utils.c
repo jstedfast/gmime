@@ -1901,7 +1901,7 @@ quoted_encode (const char *in, size_t len, unsigned char *out, gushort safemask)
 		c = *inptr++;
 		if (c == ' ') {
 			*outptr++ = '_';
-		} else if (gmime_special_table[c] & safemask) {
+		} else if (c != '_' && gmime_special_table[c] & safemask) {
 			*outptr++ = c;
 		} else {
 			*outptr++ = '=';
@@ -1999,21 +1999,6 @@ struct _rfc822_word {
 	const char *start, *end;
 	int encoding;
 };
-
-static gboolean
-word_types_compatable (enum _rfc822_word_t type1, enum _rfc822_word_t type2)
-{
-	switch (type1) {
-	case WORD_ATOM:
-		return type2 != WORD_ATOM;
-	case WORD_QSTRING:
-		return type2 != WORD_2047;
-	case WORD_2047:
-		return type2 == WORD_2047;
-	default:
-		return FALSE;
-	}
-}
 
 /* okay, so 'unstructured text' fields don't actually contain 'word'
  * tokens, but we can group stuff similarly... */
@@ -2113,48 +2098,98 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 #define MERGED_WORD_LT_FOLDLEN(wlen, type) ((type) == WORD_2047 ? (wlen) < GMIME_FOLD_PREENCODED : (wlen) < (GMIME_FOLD_LEN - 8))
 
 static gboolean
+should_merge_words (struct _rfc822_word *word, struct _rfc822_word *next)
+{
+	switch (word->type) {
+	case WORD_ATOM:
+		if (next->type == WORD_2047)
+			return FALSE;
+		
+		return (MERGED_WORD_LT_FOLDLEN (next->end - word->start, next->type));
+	case WORD_QSTRING:
+		/* avoid merging with words that need to be rfc2047 encoded */
+		if (next->type == WORD_2047)
+			return FALSE;
+		
+		return (MERGED_WORD_LT_FOLDLEN (next->end - word->start, WORD_QSTRING));
+	case WORD_2047:
+		if (next->type == WORD_ATOM) {
+			/* whether we merge or not is dependent upon:
+			 * 1. the number of atoms in a row after 'word'
+			 * 2. if there is another encword after the string of atoms.
+			 */
+			int natoms = 0;
+			
+			while (next && next->type == WORD_ATOM) {
+				next = next->next;
+				natoms++;
+			}
+			
+			/* if all the words after the encword are atoms, don't merge */
+			if (!next || natoms > 3)
+				return FALSE;
+		}
+		
+		/* avoid merging with qstrings */
+		if (next->type == WORD_QSTRING)
+			return FALSE;
+		
+		return (MERGED_WORD_LT_FOLDLEN (next->end - word->start, WORD_2047));
+	default:
+		return FALSE;
+	}
+}
+
+static void
 rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
 {
 	struct _rfc822_word *word, *next, *words = *wordsp;
-	gboolean merged = FALSE;
+	gboolean rfc2047_words = FALSE;
 	
-	/* scan the list, checking for words of similar types that can be merged */
+	/* first pass: merge qstrings with adjacent qstrings and encwords with adjacent encwords */
 	word = words;
-	while (word) {
+	while (word && word->next) {
 		next = word->next;
 		
-		while (next) {
-			/* merge nodes of the same type AND we are not creating too long a string */
-			if (word_types_compatable (word->type, next->type)) {
-				if (MERGED_WORD_LT_FOLDLEN (next->end - word->start, MAX (word->type, next->type))) {
-					/* the resulting word type is the MAX of the 2 types */
-					word->type = MAX (word->type, next->type);
-					
-					word->end = next->end;
-					word->next = next->next;
-					
-					g_free (next);
-					
-					next = word->next;
-					
-					merged = TRUE;
-				} else {
-					/* if it is going to be too long, make sure we include the
-					   separating whitespace */
-					word->end = next->start;
-					break;
-				}
-			} else {
-				break;
-			}
+		if (word->type != WORD_ATOM && word->type == next->type &&
+		    MERGED_WORD_LT_FOLDLEN (next->end - word->start, word->type)) {
+			/* merge the words */
+			word->encoding = MAX (word->encoding, next->encoding);
+			
+			word->end = next->end;
+			word->next = next->next;
+			
+			g_free (next);
+			
+			next = word;
 		}
 		
-		word = word->next;
+		word = next;
+	}
+	
+	/* second pass: now merge atoms with the other words */
+	word = words;
+	while (word && word->next) {
+		next = word->next;
+		
+		if (should_merge_words (word, next)) {
+			/* the resulting word type is the MAX of the 2 types */
+			word->type = MAX (word->type, next->type);
+			
+			word->encoding = MAX (word->encoding, next->encoding);
+			
+			word->end = next->end;
+			word->next = next->next;
+			
+			g_free (next);
+			
+			continue;
+		}
+		
+		word = next;
 	}
 	
 	*wordsp = words;
-	
-	return merged;
 }
 
 static void
@@ -2195,8 +2230,7 @@ rfc2047_encode (const char *in, gushort safemask)
 	if (!(words = rfc2047_encode_get_rfc822_words (in, safemask & IS_PSAFE)))
 		return g_strdup (in);
 	
-	while (rfc2047_encode_merge_rfc822_words (&words))
-		;
+	rfc2047_encode_merge_rfc822_words (&words);
 	
 	charsets = g_mime_user_charsets ();
 	
