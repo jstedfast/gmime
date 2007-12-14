@@ -340,7 +340,7 @@ if test "x$enable_largefile" != "xno"; then
     fi
     
     if test -n "$ac_cv_sys_large_files" -a "x$ac_cv_sys_large_files" != "xno"; then
-        GMIME_CFLAGS="$GMIME_CFLAGS_CFLAGS -D_LARGE_FILES"
+        GMIME_CFLAGS="$GMIME_CFLAGS -D_LARGE_FILES"
         enable_largefile="yes"
     fi
     
