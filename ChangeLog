@@ -1,3 +1,9 @@
+2007-12-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.12
+
 2007-12-08  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (rfc2047_encode_merge_rfc822_words):

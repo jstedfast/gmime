@@ -127,6 +127,8 @@ test_parser (GMimeStream *stream)
 	{
 		GMimeStream *stream;
 		
+		g_mime_header_set_raw (GMIME_OBJECT (message)->headers, NULL);
+		
 		fprintf (stdout, "\nTesting preservation of headers...\n\n");
 		stream = g_mime_stream_file_new (stdout);
 		/*g_mime_header_set_raw (GMIME_OBJECT (message)->headers, NULL);*/
