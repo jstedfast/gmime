@@ -287,8 +287,8 @@ g_mime_stream_mem_new (void)
 	GMimeStreamMem *mem;
 	
 	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
-	mem->owner = TRUE;
 	mem->buffer = g_byte_array_new ();
+	mem->owner = TRUE;
 	
 	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
 	
