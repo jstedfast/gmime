@@ -1,3 +1,8 @@
+2007-12-16  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (decode_8bit): When reallocing our output
+	buffer, we need to update outleft as well.
+
 2007-12-15  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

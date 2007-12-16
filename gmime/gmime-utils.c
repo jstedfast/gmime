@@ -1449,6 +1449,7 @@ decode_8bit (const char *text, size_t len)
 					outlen += (inleft * 2) + 16;
 					rc = (size_t) (outbuf - out);
 					out = g_realloc (out, outlen + 1);
+					outleft = outlen - rc;
 					outbuf = out + rc;
 				} else {
 					inleft--;
@@ -1514,6 +1515,7 @@ decode_8bit (const char *text, size_t len)
 				rc = outbuf - out;
 				outlen += inleft * 2 + 16;
 				out = g_realloc (out, outlen + 1);
+				outleft = outlen - rc;
 				outbuf = out + rc;
 			} else {
 				*outbuf++ = '?';
