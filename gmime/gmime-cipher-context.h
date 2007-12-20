@@ -153,7 +153,7 @@ typedef enum {
 	GMIME_SIGNER_ERROR_EXPSIG     = (1 << 0),  /* expire signature */
 	GMIME_SIGNER_ERROR_NO_PUBKEY  = (1 << 1),  /* no public key */
 	GMIME_SIGNER_ERROR_EXPKEYSIG  = (1 << 2),  /* expired key */
-	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 << 3),  /* revoked key */
+	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 << 3)   /* revoked key */
 } GMimeSignerError;
 
 struct _GMimeSigner {
