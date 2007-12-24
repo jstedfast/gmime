@@ -84,6 +84,7 @@ struct {
 	{ "iso_10646",       "UCS-2BE"    },
 	{ "iso10646",        "UCS-2BE"    },
 	
+	/* Korean charsets */
 	{ "ks_c_5601-1987",  "EUC-KR"     },
 	{ "5601",            "EUC-KR"     },
 	{ "ksc-5601",        "EUC-KR"     },
@@ -91,16 +92,22 @@ struct {
 	{ "ksc-5601_1987",   "EUC-KR"     },
 	{ "euckr-0",         "EUC-KR"     },
 	
-	/* FIXME: Japanese/Korean/Chinese stuff needs checking */
+	/* Chinese charsets */
 	{ "big5-0",          "BIG5"       },
 	{ "big5.eten-0",     "BIG5"       },
 	{ "big5hkscs-0",     "BIG5HKSCS"  },
-	{ "gb2312-0",        "gb2312"     },
-	{ "gb2312.1980-0",   "gb2312"     },
-	{ "euc-cn",          "gb2312"     },
+	/* Note: GBK is a superset of gb2312, see
+	 * http://en.wikipedia.org/wiki/GBK for details */
+	{ "gb2312",          "GBK"        },
+	{ "gb-2312",         "GBK"        },
+	{ "gb2312-0",        "GBK"        },
+	{ "gb2312.1980-0",   "GBK"        },
+	/* euc-cn is an alias for gb2312 */
+	{ "euc-cn",          "GBK"        },
 	{ "gb18030-0",       "gb18030"    },
 	{ "gbk-0",           "GBK"        },
 	
+	/* Japanese charsets */
 	{ "eucjp-0",         "eucJP"  	  },  /* should this map to "EUC-JP" instead? */
 	{ "ujis-0",          "ujis"  	  },  /* we might want to map this to EUC-JP */
 	{ "jisx0208.1983-0", "SJIS"       },

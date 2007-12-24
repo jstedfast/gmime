@@ -1,3 +1,10 @@
+2007-12-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-charset.c (known_iconv_charsets): Map all of the
+	gb2312 aliases to GBK as GBK is a superset of gb2312 (apparently
+	some clients are tagging GBK as gb2312 which is missing some
+	glyphs contained within GBK).
+
 2007-12-16  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (decode_8bit): When reallocing our output
