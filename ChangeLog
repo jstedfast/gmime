@@ -1,9 +1,12 @@
 2007-12-24  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-charset-map-private.h: Regenerated.
+
 	* gmime/gmime-charset.c (known_iconv_charsets): Map all of the
 	gb2312 aliases to GBK as GBK is a superset of gb2312 (apparently
 	some clients are tagging GBK as gb2312 which is missing some
 	glyphs contained within GBK).
+	(main): Added iso-8859-6 to the table for Arabic support.
 
 2007-12-16  Jeffrey Stedfast  <fejj@novell.com>
 

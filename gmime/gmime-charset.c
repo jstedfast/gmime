@@ -85,11 +85,16 @@ struct {
 	{ "iso10646",        "UCS-2BE"    },
 	
 	/* Korean charsets */
+	/* Note: according to http://www.iana.org/assignments/character-sets,
+	 * ks_c_5601-1987 should really map to ISO-2022-KR, but the EUC-KR
+	 * mapping was given to me via a native Korean user, so I'm not sure
+	 * if I should change this... perhaps they are compatable? */
 	{ "ks_c_5601-1987",  "EUC-KR"     },
 	{ "5601",            "EUC-KR"     },
 	{ "ksc-5601",        "EUC-KR"     },
 	{ "ksc-5601-1987",   "EUC-KR"     },
 	{ "ksc-5601_1987",   "EUC-KR"     },
+	{ "ks_c_5861-1992",  "EUC-KR"     },
 	{ "euckr-0",         "EUC-KR"     },
 	
 	/* Chinese charsets */
@@ -101,6 +106,7 @@ struct {
 	{ "gb2312",          "GBK"        },
 	{ "gb-2312",         "GBK"        },
 	{ "gb2312-0",        "GBK"        },
+	{ "gb2312-80",       "GBK"        },
 	{ "gb2312.1980-0",   "GBK"        },
 	/* euc-cn is an alias for gb2312 */
 	{ "euc-cn",          "GBK"        },
@@ -943,6 +949,7 @@ static struct {
 	{ "koi8-r",       0, 0 },  /* Russian */
 	{ "koi8-u",       0, 0 },  /* Ukranian */
 	{ "iso-8859-5",   0, 0 },  /* Least-popular Russian encoding */
+	{ "iso-8859-6",   0, 0 },  /* Arabic */
 	{ "iso-8859-7",   0, 0 },  /* Greek */
 	{ "iso-8859-8",   0, 0 },  /* Hebrew; Visual */
 	{ "iso-8859-9",   0, 0 },  /* Turkish */
@@ -990,6 +997,7 @@ int main (int argc, char **argv)
 	
 	/* dont count the terminator */
 	bytes = ((sizeof (tables) / sizeof (tables[0])) + 7 - 1) / 8;
+	g_assert (bytes <= 4);
 	
 	for (i = 0; i < 128; i++)
 		in[i] = i + 128;
@@ -997,8 +1005,8 @@ int main (int argc, char **argv)
 	for (j = 0; tables[j].name && !tables[j].multibyte; j++) {
 		cd = iconv_open (UCS, tables[j].name);
 		inbuf = in;
-		outbuf = (char *)(out);
 		inleft = sizeof (in);
+		outbuf = (char *) out;
 		outleft = sizeof (out);
 		while (iconv (cd, &inbuf, &inleft, &outbuf, &outleft) == -1) {
 			if (errno == EILSEQ) {
@@ -1104,9 +1112,8 @@ int main (int argc, char **argv)
 	}
 	
 	printf ("struct {\n");
-	for (k = 0; k < bytes; k++) {
+	for (k = 0; k < bytes; k++)
 		printf ("\tunsigned char *bits%d;\n", k);
-	}
 	
 	printf ("} charmap[256] = {\n\t");
 	for (i = 0; i < 256; i++) {
@@ -1118,11 +1125,10 @@ int main (int argc, char **argv)
 					break;
 			}
 			
-			if (j < 256) {
+			if (j < 256)
 				printf ("m%02x%x, ", i, k);
-			} else {
+			else
 				printf ("0, ");
-			}
 		}
 		
 		printf ("}, ");
@@ -1132,12 +1138,11 @@ int main (int argc, char **argv)
 	printf ("\n};\n\n");
 	
 	printf ("struct {\n\tconst char *name;\n\tunsigned int bit;\n} charinfo[] = {\n");
-	for (j = 0; tables[j].name; j++) {
-		printf ("\t{ \"%s\", 0x%04x },\n", tables[j].name, tables[j].bit);
-	}
+	for (j = 0; tables[j].name; j++)
+		printf ("\t{ \"%s\", 0x%08x },\n", tables[j].name, tables[j].bit);
 	printf ("};\n\n");
 	
-	printf("#define charset_mask(x) \\\n");
+	printf ("#define charset_mask(x) \\\n");
 	for (k = 0; k < bytes; k++) {
 		if (k != 0)
 			printf ("\t| ");
