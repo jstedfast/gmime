@@ -18,7 +18,7 @@ VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\" 		\
 		-DGMIME_MINOR_VERSION=$(GMIME_MINOR_VERSION)	\
 		-DGMIME_MICRO_VERSION=$(GMIME_MICRO_VERSION)
 
-noinst_PROGRAMS = gen-table
+noinst_PROGRAMS = gen-table charset-map
 
 lib_LTLIBRARIES = libgmime-2.0.la
 
@@ -155,3 +155,8 @@ gen_table_SOURCES = gen-table.c
 gen_table_LDFLAGS = 
 gen_table_DEPENDENCIES = 
 gen_table_LDADD = 
+
+charset_map_SOURCES = charset-map.c
+charset_map_LDFLAGS = 
+charset_map_DEPENDENCIES = 
+charset_map_LDADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)

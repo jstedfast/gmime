@@ -1,3 +1,18 @@
+2007-12-25  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/charset-map.c: New source file to generate the charset
+	map (moved out of gmime-charset.c)
+
+	* gmime/gmime-charset.c (main): Removed.
+
+2007-12-25  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-charset.c (main): Cleaned up the logic and made it
+	so that we can alias a block to a previous block if the blocks are
+	identical rather than just aliasing when all values in the block
+	are identical. Happens to make no difference in the output, but
+	the logic is now there if that ever changes.
+
 2007-12-24  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-charset-map-private.h: Regenerated.
