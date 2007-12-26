@@ -38,6 +38,12 @@
 #define d(x)
 
 
+/**
+ * g_mime_decode_lwsp:
+ * @in: address of input text string
+ *
+ * Skips past any LWSP or rfc822 comments in *@in and updates @in.
+ **/
 void
 g_mime_decode_lwsp (const char **in)
 {
@@ -114,6 +120,15 @@ decode_atom (const char **in)
 		return NULL;
 }
 
+
+/**
+ * g_mime_decode_word:
+ * @in: address of input text string
+ *
+ * Extracts the next rfc822 'word' token.
+ *
+ * Returns the next rfc822 'word' token or %NULL if non exist.
+ **/
 char *
 g_mime_decode_word (const char **in)
 {
@@ -173,6 +188,15 @@ decode_domain_literal (const char **in, GString *domain)
 	*in = inptr;
 }
 
+
+/**
+ * g_mime_decode_domain:
+ * @in: address of input text string
+ *
+ * Extracts the next rfc822 'domain' token.
+ *
+ * Returns the next rfc822 'domain' token or %NULL if non exist.
+ **/
 char *
 g_mime_decode_domain (const char **in)
 {
