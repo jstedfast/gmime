@@ -18,6 +18,10 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -288,6 +292,9 @@ static struct {
 	{ "=?iso-8859-1?q?Copy of Rapport fra Norges R=E5fisklag=2Edoc?=",
 	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
 	  "Copy of Rapport fra Norges =?iso-8859-1?q?R=E5fisklag=2Edoc?=" },
+	{ "=?utf-8?q?OT_-_ich_?==?iso-8859-1?b?d2Vp3yw=?= trotzdem",
+	  "OT - ich wei\xc3\x9f, trotzdem",
+	  "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem" },
 #endif /* ENABLE_RFC2047_WORKAROUNDS */
 };
 
