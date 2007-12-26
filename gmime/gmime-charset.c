@@ -101,8 +101,10 @@ struct {
 	{ "big5-0",          "BIG5"       },
 	{ "big5.eten-0",     "BIG5"       },
 	{ "big5hkscs-0",     "BIG5HKSCS"  },
-	/* Note: GBK is a superset of gb2312, see
-	 * http://en.wikipedia.org/wiki/GBK for details */
+	/* Note: GBK is a superset of gb2312 (see
+	 * http://en.wikipedia.org/wiki/GBK for details), so 'upgrade'
+	 * gb2312 to GBK so that we can completely convert GBK text
+	 * that is incorrectly tagged as gb2312 to UTF-8. */
 	{ "gb2312",          "GBK"        },
 	{ "gb-2312",         "GBK"        },
 	{ "gb2312-0",        "GBK"        },

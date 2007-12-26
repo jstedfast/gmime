@@ -11038,7 +11038,7 @@ static unsigned char mff2[256] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 
 };
 
-struct {
+static const struct {
 	unsigned char *bits0;
 	unsigned char *bits1;
 	unsigned char *bits2;
@@ -11109,7 +11109,7 @@ struct {
 	{ NULL, NULL, NULL, }, { NULL, NULL, NULL, }, { NULL, NULL, mfe2, }, { NULL, mff1, mff2, }, 
 };
 
-struct {
+static const struct {
 	const char *name;
 	unsigned int bit;
 } charinfo[] = {

@@ -234,7 +234,7 @@ int main (int argc, char **argv)
 	g_hash_table_destroy (table_hash);
 	g_free (block);
 	
-	printf ("struct {\n");
+	printf ("static const struct {\n");
 	for (k = 0; k < bytes; k++)
 		printf ("\tunsigned char *bits%d;\n", k);
 	
@@ -259,7 +259,7 @@ int main (int argc, char **argv)
 	}
 	printf ("\n};\n\n");
 	
-	printf ("struct {\n\tconst char *name;\n\tunsigned int bit;\n} charinfo[] = {\n");
+	printf ("static const struct {\n\tconst char *name;\n\tunsigned int bit;\n} charinfo[] = {\n");
 	for (j = 0; tables[j].name; j++)
 		printf ("\t{ \"%s\", 0x%08x },\n", tables[j].name, tables[j].bit);
 	printf ("};\n\n");
