@@ -771,8 +771,7 @@ decode_mailbox (const char **in)
 			g_string_append (name, pre);
 			g_free (pre);
 		retry:
-			pre = decode_word (&inptr);
-			if (pre)
+			if ((pre = decode_word (&inptr)))
 				g_string_append_c (name, ' ');
 		}
 		
@@ -782,7 +781,7 @@ decode_mailbox (const char **in)
 			bracket = TRUE;
 			pre = decode_word (&inptr);
 		} else if (!retried && *inptr) {
-			w(g_warning ("Unexpected char '%c' in address: %s: attempting recovery.",
+			w(g_warning ("Unexpected char '%c' in mailbox: %s: attempting recovery.",
 				     *inptr, *in));
 			/* chew up this bad char and then attempt 1 more pass at parsing */
 			g_string_append_c (name, *inptr++);
@@ -885,21 +884,12 @@ decode_mailbox (const char **in)
 	
 	if (addr->len) {
 		if (name && !g_utf8_validate (name->str, -1, NULL)) {
-			/* A (broken) mailer has sent us an unencoded
-			 * 8bit value (and it doesn't seem to be valid
-			 * UTF-8 either).  Attempt to save it by
-			 * assuming it's in the user's locale and
-			 * converting to UTF-8 */
-			char *buf;
+			/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
+			char *utf8 = g_mime_utils_decode_8bit (name->str, name->len);
 			
-			if ((buf = g_mime_iconv_locale_to_utf8 (name->str))) {
-				g_string_truncate (name, 0);
-				g_string_append (name, buf);
-				g_free (buf);
-			} else {
-				d(g_warning ("Failed to convert \"%s\" to UTF-8: %s",
-					     name->str, g_strerror (errno)));
-			}
+			g_string_truncate (name, 0);
+			g_string_append (name, utf8);
+			g_free (utf8);
 		}
 		
 		mailbox = internet_address_new_name (name ? name->str : NULL, addr->str);
@@ -930,8 +920,7 @@ decode_address (const char **in)
 		g_string_append (name, pre);
 		g_free (pre);
 		
-		pre = decode_word (&inptr);
-		if (pre)
+		if ((pre = decode_word (&inptr)))
 			g_string_append_c (name, ' ');
 	}
 	

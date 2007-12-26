@@ -102,6 +102,9 @@ void   g_mime_utils_unquote_string (char *string);
 gboolean g_mime_utils_text_is_8bit (const unsigned char *text, size_t len);
 GMimePartEncodingType g_mime_utils_best_encoding (const unsigned char *text, size_t len);
 
+/* utility function to convert text in an unknown 8bit/multibyte charset to UTF-8 */
+char *g_mime_utils_decode_8bit (const char *text, size_t len);
+
 /* utilities to (de/en)code headers */
 char *g_mime_utils_header_decode_text (const char *in);
 char *g_mime_utils_header_encode_text (const char *in);

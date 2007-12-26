@@ -1401,8 +1401,21 @@ g_mime_utils_best_encoding (const unsigned char *text, size_t len)
 }
 
 
-static char *
-decode_8bit (const char *text, size_t len)
+/**
+ * g_mime_utils_decode_8bit:
+ * @text: input text in unknown 8bit/multibyte character set
+ * @len: input text length
+ *
+ * Attempts to convert text in an unknown 8bit/multibyte charset into
+ * UTF-8 by finding the charset which will convert the most bytes into
+ * valid UTF-8 characters as possible. If no exact match can be found,
+ * it will choose the best match and convert invalid byte sequences
+ * into question-marks (?) in the returned string buffer.
+ *
+ * Returns a UTF-8 string representation of @text.
+ **/
+char *
+g_mime_utils_decode_8bit (const char *text, size_t len)
 {
 	const char *fallback_charsets[3] = { "UTF-8", NULL, NULL };
 	size_t inleft, outleft, outlen, rc, min, n;
@@ -1534,6 +1547,7 @@ decode_8bit (const char *text, size_t len)
 	return out;
 }
 
+
 /* this decodes rfc2047's version of quoted-printable */
 static ssize_t
 quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
@@ -1652,7 +1666,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 			     "be corrupt: %s", charset[0] ? charset : "unspecified charset",
 			     g_strerror (errno)));
 		
-		return decode_8bit ((char *) decoded, declen);
+		return g_mime_utils_decode_8bit ((char *) decoded, declen);
 	}
 	
 	buf = g_mime_iconv_strndup (cd, (char *) decoded, declen);
@@ -1664,7 +1678,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	w(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
 		     "corrupt: %s", declen, decoded, g_strerror (errno)));
 	
-	return decode_8bit ((char *) decoded, declen);
+	return g_mime_utils_decode_8bit ((char *) decoded, declen);
 }
 
 
@@ -1773,7 +1787,7 @@ g_mime_utils_header_decode_text (const char *in)
 				/* append word token */
 				if (!ascii) {
 					/* *sigh* I hate broken mailers... */
-					decoded = decode_8bit (text, n);
+					decoded = g_mime_utils_decode_8bit (text, n);
 					g_string_append (out, decoded);
 					g_free (decoded);
 				} else {
@@ -1872,7 +1886,7 @@ g_mime_utils_header_decode_phrase (const char *in)
 			
 			if (!ascii) {
 				/* *sigh* I hate broken mailers... */
-				decoded = decode_8bit (text, n);
+				decoded = g_mime_utils_decode_8bit (text, n);
 				g_string_append (out, decoded);
 				g_free (decoded);
 			} else {
