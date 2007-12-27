@@ -34,11 +34,11 @@ G_BEGIN_DECLS
  * @GMIME_PART_ENCODING_DEFAULT: Default transfer encoding.
  * @GMIME_PART_ENCODING_7BIT: 7bit text transfer encoding.
  * @GMIME_PART_ENCODING_8BIT: 8bit text transfer encoding.
- * @GMIME_PART_ENCODING_BINARY: binary transfer encoding.
- * @GMIME_PART_ENCODING_BASE64: base64 transfer encoding.
- * @GMIME_PART_ENCODING_QUOTEDPRINTABLE: quoted-printable transfer encoding.
- * @GMIME_PART_ENCODING_UUENCODE: uuencode transfer encoding.
- * @GMIME_PART_NUM_ENCODINGS: the number of available transfer encoding enum values.
+ * @GMIME_PART_ENCODING_BINARY: Binary transfer encoding.
+ * @GMIME_PART_ENCODING_BASE64: Base64 transfer encoding.
+ * @GMIME_PART_ENCODING_QUOTEDPRINTABLE: Quoted-printable transfer encoding.
+ * @GMIME_PART_ENCODING_UUENCODE: Uuencode transfer encoding.
+ * @GMIME_PART_NUM_ENCODINGS: The number of available transfer encoding enum values.
  *
  * A Content-Transfer-Encoding type.
  **/
@@ -54,6 +54,8 @@ typedef enum {
 } GMimePartEncodingType;
 
 
+typedef struct _GMimeReferences GMimeReferences;
+
 /**
  * GMimeReferences:
  * @next: Pointer to the next reference.
@@ -62,10 +64,10 @@ typedef enum {
  * A List of references, as per the References or In-Reply-To header
  * fields.
  **/
-typedef struct _GMimeReferences {
-	struct _GMimeReferences *next;
+struct _GMimeReferences {
+	GMimeReferences *next;
 	char *msgid;
-} GMimeReferences;
+};
 
 
 #define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */

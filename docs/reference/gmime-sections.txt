@@ -518,7 +518,6 @@ GMimeFilterYenc
 GMimeFilterYencDirection
 g_mime_filter_yenc_new
 g_mime_filter_yenc_set_state
-g_mime_filter_yenc_get_part
 g_mime_filter_yenc_set_crc
 g_mime_filter_yenc_get_crc
 g_mime_filter_yenc_get_pcrc
