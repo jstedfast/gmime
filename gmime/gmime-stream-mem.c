@@ -27,6 +27,18 @@
 
 #include "gmime-stream-mem.h"
 
+
+/**
+ * SECTION: gmime-stream-mem
+ * @title: GMimeStreamMem
+ * @short_description: A memory-backed stream
+ * @see_also: #GMimeStream
+ *
+ * A simple #GMimeStream implementation that uses a memory buffer for
+ * storage.
+ **/
+
+
 static void g_mime_stream_mem_class_init (GMimeStreamMemClass *klass);
 static void g_mime_stream_mem_init (GMimeStreamMem *stream, GMimeStreamMemClass *klass);
 static void g_mime_stream_mem_finalize (GObject *object);

@@ -57,6 +57,16 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-utils
+ * @title: gmime-utils
+ * @short_description: MIME utility functions
+ * @see_also:
+ *
+ **/
+
+
 #define GMIME_UUENCODE_CHAR(c) ((c) ? (c) + ' ' : '`')
 #define	GMIME_UUDECODE_CHAR(c) (((c) - ' ') & 077)
 

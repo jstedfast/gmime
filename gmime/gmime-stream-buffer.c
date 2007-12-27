@@ -27,6 +27,22 @@
 
 #include "gmime-stream-buffer.h"
 
+/**
+ * SECTION: gmime-stream-buffer
+ * @title: GMimeStreamBuffer
+ * @short_description: A buffered stream
+ * @see_also: #GMimeStream
+ *
+ * A #GMimeStreamBuffer can be used on top of any other type of stream
+ * and has 3 modes: block reads, block writes, and cached reads. Block
+ * reads are especially useful if you will be making a lot of small
+ * reads from a stream that accesses the file system. Block writes are
+ * useful for very much the same reason. The final mode, cached reads,
+ * can become memory intensive but can be very helpful when inheriting
+ * from a stream that does not support seeking (Note: this mode is the
+ * least tested so be careful using it).
+ **/
+
 #define BLOCK_BUFFER_LEN   4096
 #define BUFFER_GROW_SIZE   1024  /* should this also be 4k? */
 

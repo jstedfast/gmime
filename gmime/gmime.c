@@ -28,6 +28,15 @@
 #include "gmime.h"
 
 
+/**
+ * SECTION: gmime
+ * @title: gmime
+ * @short_description: Initialization, shutdown and version-check routines
+ * @see_also:
+ *
+ **/
+
+
 GQuark gmime_error_quark;
 
 const guint gmime_major_version = GMIME_MAJOR_VERSION;

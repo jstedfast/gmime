@@ -35,6 +35,18 @@
 int fsync (int fd) { return 0; }
 #endif
 
+
+/**
+ * SECTION: gmime-stream-fs
+ * @title: GMimeStreamFs
+ * @short_description: A low-level FileSystem stream
+ * @see_also: #GMimeStream
+ *
+ * A simple #GMimeStream implementation that sits on top of the
+ * low-level UNIX file descriptor based I/O layer.
+ **/
+
+
 static void g_mime_stream_fs_class_init (GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_init (GMimeStreamFs *stream, GMimeStreamFsClass *klass);
 static void g_mime_stream_fs_finalize (GObject *object);

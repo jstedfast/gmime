@@ -27,6 +27,21 @@
 
 #include "gmime-stream-null.h"
 
+
+/**
+ * SECTION: gmime-stream-null
+ * @title: GMimeStreamNull
+ * @short_description: A null stream
+ * @see_also: #GMimeStream
+ *
+ * A #GMimeStream which has no real backing storage at all. This
+ * stream is useful for dry-runs and can also be useful for
+ * determining statistics on source data which can be written to
+ * streams but cannot be read as a stream itself (e.g. a #GMimeObject
+ * via g_mime_object_write_to_stream()).
+ **/
+
+
 static void g_mime_stream_null_class_init (GMimeStreamNullClass *klass);
 static void g_mime_stream_null_init (GMimeStreamNull *stream, GMimeStreamNullClass *klass);
 static void g_mime_stream_null_finalize (GObject *object);

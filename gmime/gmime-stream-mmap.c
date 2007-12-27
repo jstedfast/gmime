@@ -35,6 +35,20 @@
 
 #include "gmime-stream-mmap.h"
 
+
+/**
+ * SECTION: gmime-stream-mmap
+ * @title: GMimeStreamMmap
+ * @short_description: A memory-mapped file stream
+ * @see_also: #GMimeStream
+ *
+ * A #GMimeStream implementation using a memory-mapped file backing
+ * store. This may be faster than #GMimeStreamFs or #GMimeStreamFile
+ * but you'll have to do your own performance checking to be sure for
+ * your particular application/platform.
+ **/
+
+
 static void g_mime_stream_mmap_class_init (GMimeStreamMmapClass *klass);
 static void g_mime_stream_mmap_init (GMimeStreamMmap *stream, GMimeStreamMmapClass *klass);
 static void g_mime_stream_mmap_finalize (GObject *object);

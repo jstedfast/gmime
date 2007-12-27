@@ -39,6 +39,25 @@
 #endif /* ENABLE_WARNINGS */
 
 
+/**
+ * SECTION: gmime-iconv
+ * @title: gmime-iconv
+ * @short_description: Low-level routines for converting text from one charset to another
+ * @see_also:
+ *
+ * These functions are wrappers around the system iconv(3)
+ * routines. The purpose of these wrappers are two-fold:
+ *
+ * 1. Cache iconv_t descriptors for you in order to optimize
+ * opening/closing many descriptors frequently
+ *
+ * and
+ *
+ * 2. To use the appropriate system charset alias for the MIME charset
+ * names given as arguments.
+ **/
+
+
 #define ICONV_CACHE_SIZE   (16)
 
 typedef struct {
@@ -140,6 +159,8 @@ iconv_cache_node_expire (Cache *cache, CacheNode *node)
  * g_mime_iconv_shutdown:
  *
  * Frees internal iconv caches created in g_mime_iconv_init().
+ *
+ * Note: this function is called for you by g_mime_shutdown().
  **/
 void
 g_mime_iconv_shutdown (void)
@@ -165,6 +186,8 @@ g_mime_iconv_shutdown (void)
  *
  * Initialize GMime's iconv cache. This *MUST* be called before any
  * gmime-iconv interfaces will work correctly.
+ *
+ * Note: this function is called for you by g_mime_init().
  **/
 void
 g_mime_iconv_init (void)
@@ -189,6 +212,8 @@ g_mime_iconv_init (void)
  * sequences from charset @from to charset @to. The resulting
  * descriptor can be used with iconv() (or the g_mime_iconv() wrapper) any
  * number of times until closed using g_mime_iconv_close().
+ *
+ * See the manual page for iconv_open(3) for further details.
  *
  * Returns a new conversion descriptor for use with g_mime_iconv() on
  * success or (iconv_t) %-1 on fail as well as setting an appropriate
@@ -270,6 +295,8 @@ g_mime_iconv_open (const char *to, const char *from)
  * @cd: iconv conversion descriptor
  *
  * Closes the iconv descriptor @cd.
+ *
+ * See the manual page for iconv_close(3) for further details.
  *
  * Returns %0 on success or %-1 on fail as well as setting an
  * appropriate errno value.

@@ -36,6 +36,16 @@
 #define w(x)
 #endif /* ENABLE_WARNINGS */
 
+
+/**
+ * SECTION: gmime-iconv-utils
+ * @title: gmime-iconv-utils
+ * @short_description: High-level routines for converting text from one charset to another
+ * @see_also:
+ *
+ **/
+
+
 #ifdef G_THREADS_ENABLED
 static GStaticMutex lock = G_STATIC_MUTEX_INIT;
 #define LOCK()   g_static_mutex_lock (&lock)

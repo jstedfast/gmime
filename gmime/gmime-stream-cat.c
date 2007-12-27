@@ -29,6 +29,17 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-stream-cat
+ * @title: GMimeStreamCat
+ * @short_description: A concatenated stream
+ * @see_also: #GMimeStream
+ *
+ * A #GMimeStream which chains together any number of other streams.
+ **/
+
+
 static void g_mime_stream_cat_class_init (GMimeStreamCatClass *klass);
 static void g_mime_stream_cat_init (GMimeStreamCat *stream, GMimeStreamCatClass *klass);
 static void g_mime_stream_cat_finalize (GObject *object);

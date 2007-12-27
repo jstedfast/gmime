@@ -27,6 +27,23 @@
 
 #include "gmime-stream-filter.h"
 
+
+/**
+ * SECTION: gmime-stream-filter
+ * @title: GMimeStreamFilter
+ * @short_description: A filtering stream
+ * @see_also: #Filters
+ *
+ * A #GMimeStream meant for filtering data passing through it.
+ *
+ * This stream class is useful for converting data of one type to
+ * another using #GMimeFilter objects.
+ *
+ * When data passes through a #GMimeStreamFilter, it will pass through
+ * #GMimeFilter filters in the order they were added.
+ **/
+
+
 #define READ_PAD (64)		/* bytes padded before buffer */
 #define READ_SIZE (4096)
 

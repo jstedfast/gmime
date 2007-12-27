@@ -25,6 +25,21 @@
 
 #include "gmime-stream-file.h"
 
+
+/**
+ * SECTION: gmime-stream-file
+ * @title: GMimeStreamFile
+ * @short_description: A Standard-C FILE-based stream
+ * @see_also: #GMimeStream
+ *
+ * A simple #GMimeStream implementation that sits on top of the
+ * Standard C FILE pointer based I/O layer. Unlike #GMimeStreamFs, a
+ * #GMimeStreamFile will typically buffer read and write operations at
+ * the FILE level and so it may be wasteful to wrap one in a
+ * #GMimeStreamBuffer stream.
+ **/
+
+
 static void g_mime_stream_file_class_init (GMimeStreamFileClass *klass);
 static void g_mime_stream_file_init (GMimeStreamFile *stream, GMimeStreamFileClass *klass);
 static void g_mime_stream_file_finalize (GObject *object);

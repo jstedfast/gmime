@@ -29,6 +29,20 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-stream
+ * @title: GMimeStream
+ * @short_description: Abstract stream class
+ * @see_also:
+ *
+ * Streams are the fundamental method for reading and writing data
+ * used by GMime. You'll probably notice that the basic API is similar
+ * to that of the low-level Unix I/O layer (read(), write(), lseek(),
+ * etc) with some additional nicities such as a printf-like function.
+ **/
+
+
 static void g_mime_stream_class_init (GMimeStreamClass *klass);
 static void g_mime_stream_init (GMimeStream *stream, GMimeStreamClass *klass);
 static void g_mime_stream_finalize (GObject *object);

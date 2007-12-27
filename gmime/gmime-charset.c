@@ -59,6 +59,15 @@
 #endif /* USE_ICONV_DETECT */
 
 
+/**
+ * SECTION: gmime-charset
+ * @title: gmime-charset
+ * @short_description: Charset helper functions
+ * @see_also:
+ *
+ **/
+
+
 /* a useful website on charset alaises:
  * http://www.li18nux.org/subgroups/sa/locnameguide/v1.1draft/CodesetAliasTable-V11.html */
 
@@ -242,6 +251,8 @@ locale_parse_lang (const char *locale)
  * Initializes the locale charset variable for later calls to
  * g_mime_locale_charset(). Only really needs to be called for non-
  * iso-8859-1 locales.
+ *
+ * Note: g_mime_init() calls this routine for you.
  **/
 void
 g_mime_charset_map_init (void)
