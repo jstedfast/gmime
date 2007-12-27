@@ -54,9 +54,21 @@ struct _GMimeParserClass {
 	
 };
 
-typedef void (*GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *header,
-					    const char *value, off_t offset,
-					    gpointer user_data);
+
+/**
+ * GMimeParserHeaderRegexFunc:
+ * @parser: The #GMimeParser object.
+ * @header: The header field matched.
+ * @value: The header field value.
+ * @offset: The header field offset.
+ * @user_data: The user-supplied callback data.
+ *
+ * Function signature for the callback to
+ * g_mime_parser_set_header_regex().
+ **/
+typedef void (* GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *header,
+					     const char *value, off_t offset,
+					     gpointer user_data);
 
 
 GType g_mime_parser_get_type (void);
@@ -94,4 +106,3 @@ off_t g_mime_parser_get_from_offset (GMimeParser *parser);
 G_END_DECLS
 
 #endif /* __GMIME_PARSER_H__ */
-

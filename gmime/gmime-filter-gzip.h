@@ -36,10 +36,19 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterGZip GMimeFilterGZip;
 typedef struct _GMimeFilterGZipClass GMimeFilterGZipClass;
 
+
+/**
+ * GMimeFilterGZipMode:
+ * @GMIME_FILTER_GZIP_MODE_ZIP: Compress (zip) mode.
+ * @GMIME_FILTER_GZIP_MODE_UNZIP: Uncompress (unzip) mode.
+ *
+ * The mode for the #GMimeFilterGZip filter.
+ **/
 typedef enum {
 	GMIME_FILTER_GZIP_MODE_ZIP,
 	GMIME_FILTER_GZIP_MODE_UNZIP
 } GMimeFilterGZipMode;
+
 
 struct _GMimeFilterGZip {
 	GMimeFilter parent_object;

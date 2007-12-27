@@ -251,7 +251,10 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
  * internet_address_get_type:
  * @ia: internet address
  *
- * Returns the type of the internet address.
+ * Gets the type of the internet address, which will either be
+ * #INTERNET_ADDRESS_NAME or #INTERNET_ADDRESS_GROUP.
+ *
+ * Returns the type of @ia.
  **/
 InternetAddressType
 internet_address_get_type (InternetAddress *ia)
@@ -265,7 +268,10 @@ internet_address_get_type (InternetAddress *ia)
  * internet_address_get_name:
  * @ia: internet address
  *
- * Returns the name of the internet address.
+ * Gets the name component of the internet address. If the internet
+ * address is a group, it will get the group name.
+ *
+ * Returns the name of @ia.
  **/
 const char *
 internet_address_get_name (InternetAddress *ia)
@@ -280,7 +286,9 @@ internet_address_get_name (InternetAddress *ia)
  * internet_address_get_addr:
  * @ia: internet address
  *
- * Returns the address of the internet address.
+ * Gets the addr-spec of the internet address.
+ *
+ * Returns the address of @ia.
  **/
 const char *
 internet_address_get_addr (InternetAddress *ia)
@@ -296,7 +304,10 @@ internet_address_get_addr (InternetAddress *ia)
  * internet_address_get_members:
  * @ia: internet address
  *
- * Returns the list of internet addresses.
+ * Gets the #InternetAddressList containing the group members of an
+ * rfc822 group address.
+ *
+ * Returns the members of @ia.
  **/
 const InternetAddressList *
 internet_address_get_members (InternetAddress *ia)
@@ -313,7 +324,7 @@ internet_address_get_members (InternetAddress *ia)
  * @list: a list of internet addresses
  * @ia: internet address to prepend
  *
- * Prepends the internet address to the list of internet addresses
+ * Prepends the internet address @ia to the list of internet addresses
  * pointed to by @list.
  *
  * Returns the resultant list.
@@ -327,8 +338,8 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
 	
 	internet_address_ref (ia);
 	node = g_new (InternetAddressList, 1);
-	node->next = list;
 	node->address = ia;
+	node->next = list;
 	
 	return node;
 }

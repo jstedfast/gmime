@@ -36,6 +36,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterYenc GMimeFilterYenc;
 typedef struct _GMimeFilterYencClass GMimeFilterYencClass;
 
+
+/**
+ * GMimeFilterYencDirection:
+ * @GMIME_FILTER_YENC_DIRECTION_ENCODE: yEncode.
+ * @GMIME_FILTER_YENC_DIRECTION_DECODE: yDecode.
+ *
+ * The direction the #GMimeFilterYenc should convert.
+ **/
 typedef enum {
 	GMIME_FILTER_YENC_DIRECTION_ENCODE,
 	GMIME_FILTER_YENC_DIRECTION_DECODE
@@ -58,8 +66,23 @@ typedef enum {
 
 /* first 8 bits are reserved for saving a byte */
 
-/* reserved for use only within g_mime_ydecode_step */
+/**
+ * GMIME_YDECODE_STATE_EOLN:
+ *
+ * State bit that denotes the yEnc filter has reached an end-of-line.
+ *
+ * This state is for internal use only.
+ **/
 #define GMIME_YDECODE_STATE_EOLN     (1 << 8)
+
+/**
+ * GMIME_YDECODE_STATE_ESCAPE:
+ *
+ * State bit that denotes the yEnc filter has reached an escape
+ * sequence.
+ *
+ * This state is for internal use only.
+ **/
 #define GMIME_YDECODE_STATE_ESCAPE   (1 << 9)
 
 /* bits 10 and 11 reserved for later uses? */
@@ -96,7 +119,19 @@ typedef enum {
  **/
 #define GMIME_YDECODE_STATE_END      (1 << 15)
 
+/**
+ * GMIME_YENCODE_CRC_INIT:
+ *
+ * Initial state for the crc and pcrc state variables.
+ **/
 #define GMIME_YENCODE_CRC_INIT       (~0)
+
+/**
+ * GMIME_YENCODE_CRC_FINAL:
+ * @crc: crc or pcrc state variable
+ *
+ * Gets the final crc value from @crc.
+ **/
 #define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
 
 struct _GMimeFilterYenc {

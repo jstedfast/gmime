@@ -36,15 +36,32 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterCRLF GMimeFilterCRLF;
 typedef struct _GMimeFilterCRLFClass GMimeFilterCRLFClass;
 
+
+/**
+ * GMimeFilterCRLFDirection:
+ * @GMIME_FILTER_CRLF_ENCODE: Convert from Unix line endings to CRLF.
+ * @GMIME_FILTER_CRLF_DECODE: Convert from CRLF to Unix line endings.
+ *
+ * The direction in which the CRLF filter should convert.
+ **/
 typedef enum {
 	GMIME_FILTER_CRLF_ENCODE,
 	GMIME_FILTER_CRLF_DECODE
 } GMimeFilterCRLFDirection;
 
+
+/**
+ * GMimeFilterCRLFMode:
+ * @GMIME_FILTER_CRLF_MODE_CRLF_DOTS: Escape lines beginning with a '.'
+ * @GMIME_FILTER_CRLF_MODE_CRLF_ONLY: Do only LF->CRLF conversion
+ *
+ * The mode for the #GMimeFilterCRLF filter.
+ **/
 typedef enum {
 	GMIME_FILTER_CRLF_MODE_CRLF_DOTS,
 	GMIME_FILTER_CRLF_MODE_CRLF_ONLY
 } GMimeFilterCRLFMode;
+
 
 struct _GMimeFilterCRLF {
 	GMimeFilter parent_object;

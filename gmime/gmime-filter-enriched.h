@@ -36,6 +36,13 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterEnriched GMimeFilterEnriched;
 typedef struct _GMimeFilterEnrichedClass GMimeFilterEnrichedClass;
 
+
+/**
+ * GMIME_FILTER_ENRICHED_IS_RICHTEXT:
+ *
+ * A bit flag for g_mime_filter_enriched_new() which signifies that
+ * the filter should expect Rich Text (aka RTF).
+ **/
 #define GMIME_FILTER_ENRICHED_IS_RICHTEXT  (1 << 0)
 
 struct _GMimeFilterEnriched {

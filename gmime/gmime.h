@@ -72,12 +72,51 @@
 G_BEGIN_DECLS
 
 /* GMIME version */
+
+/**
+ * gmime_major_version:
+ *
+ * GMime's major version.
+ **/
 extern const guint gmime_major_version;
+
+/**
+ * gmime_minor_version:
+ *
+ * GMime's minor version.
+ **/
 extern const guint gmime_minor_version;
+
+/**
+ * gmime_micro_version:
+ *
+ * GMime's micro version.
+ **/
 extern const guint gmime_micro_version;
+
+/**
+ * gmime_interface_age:
+ *
+ * GMime's interface age.
+ **/
 extern const guint gmime_interface_age;
+
+/**
+ * gmime_binary_age:
+ *
+ * GMime's binary age.
+ **/
 extern const guint gmime_binary_age;
 
+
+/**
+ * GMIME_CHECK_VERSION:
+ * @major: Minimum major version
+ * @minor: Minimum minor version
+ * @micro: Minimum micro version
+ *
+ * Macro that just calls g_mime_check_version()
+ **/
 #define GMIME_CHECK_VERSION(major,minor,micro) g_mime_check_version (major, minor, micro)
 
 gboolean g_mime_check_version (guint major, guint minor, guint micro);

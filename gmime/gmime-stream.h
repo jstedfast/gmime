@@ -39,19 +39,37 @@ G_BEGIN_DECLS
 #define GMIME_IS_STREAM_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM))
 #define GMIME_STREAM_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM, GMimeStreamClass))
 
+typedef struct _GMimeStream GMimeStream;
+typedef struct _GMimeStreamClass GMimeStreamClass;
+
+
+/**
+ * GMimeSeekWhence:
+ * @GMIME_STREAM_SEEK_SET: Seek relative to the beginning of the stream.
+ * @GMIME_STREAM_SEEK_CUR: Seek relative to the current position in the stream.
+ * @GMIME_STREAM_SEEK_END: Seek relative to the end of the stream.
+ *
+ * Relative seek position.
+ **/
 typedef enum {
 	GMIME_STREAM_SEEK_SET = SEEK_SET,
 	GMIME_STREAM_SEEK_CUR = SEEK_CUR,
 	GMIME_STREAM_SEEK_END = SEEK_END
 } GMimeSeekWhence;
 
+
+/**
+ * GMimeStreamIOVector:
+ * @data: data to pass to the I/O function.
+ * @len: length of the data, in bytes.
+ *
+ * An I/O vector for use with g_mime_stream_writev().
+ **/
 typedef struct {
-	gpointer data;
+	void *data;
 	size_t len;
 } GMimeStreamIOVector;
 
-typedef struct _GMimeStream GMimeStream;
-typedef struct _GMimeStreamClass GMimeStreamClass;
 
 struct _GMimeStream {
 	GObject parent_object;

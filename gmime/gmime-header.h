@@ -27,10 +27,37 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GMimeHeader:
+ *
+ * A message or mime-part header.
+ **/
 typedef struct _GMimeHeader GMimeHeader;
 
-typedef void (*GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
-typedef ssize_t (*GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
+/**
+ * GMimeHeaderForeachFunc:
+ * @name: The field name.
+ * @value: The field value.
+ * @user_data: The user-supplied callback data.
+ *
+ * Function signature for the callback to g_mime_header_foreach().
+ **/
+typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
+
+
+/**
+ * GMimeHeaderWriter:
+ * @stream: The output stream.
+ * @name: The field name.
+ * @value: The field value.
+ *
+ * Function signature for the callback to
+ * g_mime_header_register_writer().
+ *
+ * Returns the number of bytes written or %-1 on error.
+ **/
+typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
+
 
 GMimeHeader *g_mime_header_new (void);
 

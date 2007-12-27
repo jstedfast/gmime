@@ -26,13 +26,23 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GMimeParam GMimeParam;
+
+
+/**
+ * GMimeParam:
+ * @next: Pointer to the next param.
+ * @name: Parameter name.
+ * @value: Parameter value.
+ *
+ * A parameter name/value pair as used for some Content header fields.
+ **/
 struct _GMimeParam {
-	struct _GMimeParam *next;
+	GMimeParam *next;
 	char *name;
 	char *value;
 };
 
-typedef struct _GMimeParam GMimeParam;
 
 GMimeParam *g_mime_param_new (const char *name, const char *value);
 GMimeParam *g_mime_param_new_from_string (const char *string);

@@ -36,11 +36,21 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterFrom GMimeFilterFrom;
 typedef struct _GMimeFilterFromClass GMimeFilterFromClass;
 
+
+/**
+ * GMimeFilterFromMode:
+ * @GMIME_FILTER_FROM_MODE_DEFAULT: Default mode.
+ * @GMIME_FILTER_FROM_MODE_ESCAPE: Escape 'From ' lines with a '>'
+ * @GMIME_FILTER_FROM_MODE_ARMOR: QP-Encode 'From ' lines
+ *
+ * The mode for a #GMimeFilterFrom filter.
+ **/
 typedef enum {
 	GMIME_FILTER_FROM_MODE_DEFAULT  = 0,
 	GMIME_FILTER_FROM_MODE_ESCAPE   = 0,
 	GMIME_FILTER_FROM_MODE_ARMOR    = 1
 } GMimeFilterFromMode;
+
 
 struct _GMimeFilterFrom {
 	GMimeFilter parent_object;

@@ -46,6 +46,13 @@ const char *g_mime_charset_locale_name (void);
 const char *g_mime_charset_iso_to_windows (const char *isocharset);
 
 
+/**
+ * GMimeCharset:
+ * @mask: charset mask
+ * @level: charset level
+ *
+ * State used by g_mime_charset_best() and g_mime_charset_best_name().
+ **/
 typedef struct _GMimeCharset {
 	unsigned int mask;
 	unsigned int level;

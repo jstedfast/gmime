@@ -45,6 +45,19 @@ typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
 typedef struct _GMimeSigner GMimeSigner;
 typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
 
+
+/**
+ * GMimeCipherHash:
+ * @GMIME_CIPHER_HASH_DEFAULT: The default hash algorithm.
+ * @GMIME_CIPHER_HASH_MD2: The MD2 hash algorithm.
+ * @GMIME_CIPHER_HASH_MD5: The MD5 hash algorithm.
+ * @GMIME_CIPHER_HASH_SHA1: The SHA-1 hash algorithm.
+ * @GMIME_CIPHER_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
+ * @GMIME_CIPHER_HASH_TIGER192: The TIGER-192 hash algorithm.
+ * @GMIME_CIPHER_HASH_HAVAL5160: The HAVAL-5160 hash algorithm.
+ *
+ * A hash algorithm.
+ **/
 typedef enum {
 	GMIME_CIPHER_HASH_DEFAULT,
 	GMIME_CIPHER_HASH_MD2,
@@ -132,6 +145,18 @@ int                  g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArr
 
 
 /* signature status structures and functions */
+
+/**
+ * GMimeSignerTrust:
+ * @GMIME_SIGNER_TRUST_NONE: No trust assigned.
+ * @GMIME_SIGNER_TRUST_NEVER: Never trust this signer.
+ * @GMIME_SIGNER_TRUST_UNDEFINED: Undefined trust for this signer.
+ * @GMIME_SIGNER_TRUST_MARGINAL: Trust this signer maginally.
+ * @GMIME_SIGNER_TRUST_FULLY: Trust this signer fully.
+ * @GMIME_SIGNER_TRUST_ULTIMATE: Trust this signer ultimately.
+ *
+ * The trust value of a signer.
+ **/
 typedef enum {
 	GMIME_SIGNER_TRUST_NONE,
 	GMIME_SIGNER_TRUST_NEVER,
@@ -141,6 +166,17 @@ typedef enum {
 	GMIME_SIGNER_TRUST_ULTIMATE
 } GMimeSignerTrust;
 
+
+/**
+ * GMimeSignerStatus:
+ * @GMIME_SIGNER_STATUS_NONE: No status.
+ * @GMIME_SIGNER_STATUS_GOOD: Good signature.
+ * @GMIME_SIGNER_STATUS_BAD: Bad signature.
+ * @GMIME_SIGNER_STATUS_ERROR: An error occurred.
+ *
+ * A value representing the signature status for a particular
+ * #GMimeSigner.
+ **/
 typedef enum {
 	GMIME_SIGNER_STATUS_NONE,
 	GMIME_SIGNER_STATUS_GOOD,
@@ -148,6 +184,17 @@ typedef enum {
 	GMIME_SIGNER_STATUS_ERROR
 } GMimeSignerStatus;
 
+
+/**
+ * GMimeSignerError:
+ * @GMIME_SIGNER_ERROR_NONE: No error.
+ * @GMIME_SIGNER_ERROR_EXPSIG: Expired signature.
+ * @GMIME_SIGNER_ERROR_NO_PUBKEY: No public key found.
+ * @GMIME_SIGNER_ERROR_EXPKEYSIG: Expired signature key.
+ * @GMIME_SIGNER_ERROR_REVKEYSIG: Revoked signature key.
+ *
+ * Possible errors that a #GMimeSigner could have.
+ **/
 typedef enum {
 	GMIME_SIGNER_ERROR_NONE,
 	GMIME_SIGNER_ERROR_EXPSIG     = (1 << 0),  /* expire signature */
@@ -156,8 +203,24 @@ typedef enum {
 	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 << 3)   /* revoked key */
 } GMimeSignerError;
 
+
+/**
+ * GMimeSigner:
+ * @next: Pointer to the next #GMimeSigner.
+ * @status: A #GMimeSignerStatus.
+ * @errors: A bitfield of #GMimeSignerError values.
+ * @trust: A #GMimeSignerTrust.
+ * @unused: Unused expansion bits for future use; ignore this.
+ * @sig_created: The creation date of the signature.
+ * @sig_expire: The expiration date of the signature.
+ * @fingerprint: A hex string representing the signer's fingerprint.
+ * @keyid: The signer's key id.
+ * @name: The name of the person or entity.
+ *
+ * A structure containing useful information about a signer.
+ **/
 struct _GMimeSigner {
-	struct _GMimeSigner *next;
+	GMimeSigner *next;
 	unsigned int status:2;    /* GMimeSignerStatus */
 	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
@@ -174,6 +237,15 @@ GMimeSigner *g_mime_signer_new (void);
 void         g_mime_signer_free (GMimeSigner *signer);
 
 
+/**
+ * GMimeSignatureStatus:
+ * @GMIME_SIGNATURE_STATUS_NONE: No status.
+ * @GMIME_SIGNATURE_STATUS_GOOD: Good signature.
+ * @GMIME_SIGNATURE_STATUS_BAD: Bad signature.
+ * @GMIME_SIGNATURE_STATUS_UNKNOWN: Unknown signature status.
+ *
+ * The status of a message signature.
+ **/
 typedef enum {
 	GMIME_SIGNATURE_STATUS_NONE,
 	GMIME_SIGNATURE_STATUS_GOOD,
@@ -181,6 +253,16 @@ typedef enum {
 	GMIME_SIGNATURE_STATUS_UNKNOWN
 } GMimeSignatureStatus;
 
+
+/**
+ * GMimeSignatureValidity:
+ * @status: The overall signature status.
+ * @signers: A list of #GMimeSigner structures.
+ * @details: A string containing more user-readable details.
+ *
+ * A structure containing information about the signature validity of
+ * a signed stream.
+ **/
 struct _GMimeSignatureValidity {
 	GMimeSignatureStatus status;
 	GMimeSigner *signers;

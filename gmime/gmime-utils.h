@@ -28,6 +28,20 @@
 
 G_BEGIN_DECLS
 
+
+/**
+ * GMimePartEncodingType:
+ * @GMIME_PART_ENCODING_DEFAULT: Default transfer encoding.
+ * @GMIME_PART_ENCODING_7BIT: 7bit text transfer encoding.
+ * @GMIME_PART_ENCODING_8BIT: 8bit text transfer encoding.
+ * @GMIME_PART_ENCODING_BINARY: binary transfer encoding.
+ * @GMIME_PART_ENCODING_BASE64: base64 transfer encoding.
+ * @GMIME_PART_ENCODING_QUOTEDPRINTABLE: quoted-printable transfer encoding.
+ * @GMIME_PART_ENCODING_UUENCODE: uuencode transfer encoding.
+ * @GMIME_PART_NUM_ENCODINGS: the number of available transfer encoding enum values.
+ *
+ * A Content-Transfer-Encoding type.
+ **/
 typedef enum {
 	GMIME_PART_ENCODING_DEFAULT,
 	GMIME_PART_ENCODING_7BIT,
@@ -39,19 +53,27 @@ typedef enum {
 	GMIME_PART_NUM_ENCODINGS
 } GMimePartEncodingType;
 
-struct _GMimeReferences {
+
+/**
+ * GMimeReferences:
+ * @next: Pointer to the next reference.
+ * @msgid: Reference message-id.
+ *
+ * A List of references, as per the References or In-Reply-To header
+ * fields.
+ **/
+typedef struct _GMimeReferences {
 	struct _GMimeReferences *next;
 	char *msgid;
-};
+} GMimeReferences;
 
-typedef struct _GMimeReferences GMimeReferences;
 
 #define BASE64_ENCODE_LEN(x) ((size_t) ((x) * 5 / 3) + 4)  /* conservative would be ((x * 4 / 3) + 4) */
 #define QP_ENCODE_LEN(x)     ((size_t) ((x) * 7 / 2) + 4)  /* conservative would be ((x * 3) + 4) */
 
 
 /**
- * GMIME_UUEDECODE_STATE_INIT:
+ * GMIME_UUDECODE_STATE_INIT:
  *
  * Initial state for the g_mime_utils_uudecode_step() function.
  **/
@@ -59,7 +81,7 @@ typedef struct _GMimeReferences GMimeReferences;
 
 
 /**
- * GMIME_UUEDECODE_STATE_BEGIN:
+ * GMIME_UUDECODE_STATE_BEGIN:
  *
  * State for the g_mime_utils_uudecode_step() function, denoting that
  * the 'begin' line has been found.
@@ -68,7 +90,7 @@ typedef struct _GMimeReferences GMimeReferences;
 
 
 /**
- * GMIME_UUEDECODE_STATE_END:
+ * GMIME_UUDECODE_STATE_END:
  *
  * State for the g_mime_utils_uudecode_step() function, denoting that
  * the end of the UU encoded block has been found.

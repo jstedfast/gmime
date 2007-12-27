@@ -26,6 +26,15 @@
 
 G_BEGIN_DECLS
 
+
+/**
+ * InternetAddressType:
+ * @INTERNET_ADDRESS_NONE: No type.
+ * @INTERNET_ADDRESS_NAME: A typical internet address type.
+ * @INTERNET_ADDRESS_GROUP: An rfc822 group type address.
+ *
+ * The type of #InternetAddress.
+ **/
 typedef enum {
 	INTERNET_ADDRESS_NONE,
 	INTERNET_ADDRESS_NAME,
@@ -35,6 +44,15 @@ typedef enum {
 typedef struct _InternetAddress InternetAddress;
 typedef struct _InternetAddressList InternetAddressList;
 
+
+/**
+ * InternetAddress:
+ * @type: The type of internet address.
+ * @refcount: The reference count.
+ * @name: The name component of the internet address.
+ *
+ * A structure representing an rfc822 address.
+ **/
 struct _InternetAddress {
 	InternetAddressType type;
 	unsigned int refcount;
@@ -45,10 +63,19 @@ struct _InternetAddress {
 	} value;
 };
 
+
+/**
+ * InternetAddressList:
+ * @next: Pointer to the next item in the list.
+ * @address: The #InternetAddress.
+ *
+ * A list of #InternetAddress structures.
+ **/
 struct _InternetAddressList {
 	struct _InternetAddressList *next;
 	InternetAddress *address;
 };
+
 
 InternetAddress *internet_address_new (void);
 InternetAddress *internet_address_new_name (const char *name, const char *addr);

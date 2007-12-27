@@ -33,15 +33,24 @@ G_BEGIN_DECLS
 #define GMIME_IS_STREAM_BUFFER_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_STREAM_BUFFER))
 #define GMIME_STREAM_BUFFER_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_STREAM_BUFFER, GMimeStreamBufferClass))
 
+typedef struct _GMimeStreamBuffer GMimeStreamBuffer;
+typedef struct _GMimeStreamBufferClass GMimeStreamBufferClass;
 
+
+/**
+ * GMimeStreamBufferMode:
+ * @GMIME_STREAM_BUFFER_CACHE_READ: Cache all reads.
+ * @GMIME_STREAM_BUFFER_BLOCK_READ: Read in 4k blocks.
+ * @GMIME_STREAM_BUFFER_BLOCK_WRITE: Write in 4k blocks.
+ *
+ * The buffering mode for a #GMimeStreamBuffer stream.
+ **/
 typedef enum {
 	GMIME_STREAM_BUFFER_CACHE_READ,
 	GMIME_STREAM_BUFFER_BLOCK_READ,
 	GMIME_STREAM_BUFFER_BLOCK_WRITE
 } GMimeStreamBufferMode;
 
-typedef struct _GMimeStreamBuffer GMimeStreamBuffer;
-typedef struct _GMimeStreamBufferClass GMimeStreamBufferClass;
 
 struct _GMimeStreamBuffer {
 	GMimeStream parent_object;
