@@ -6,6 +6,11 @@
 	charsets to check for a best-match (obviously this charset is
 	unlikely to be an exact fit if this function is getting called, so
 	we place it at the end of the list).
+	(rfc2047_decode_word): If given a valid charset in the
+	encoded-word token, always ue that for charset conversion to UTF-8
+	even if it doesn't convert fully. We don't want to fall back to
+	the user's supplied charset list because it may contain iso-8859-1
+	which will likely always be a 'best-match' charset.
 
 2007-12-26  Jeffrey Stedfast  <fejj@novell.com>
 

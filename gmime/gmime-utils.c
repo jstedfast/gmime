@@ -1411,25 +1411,115 @@ g_mime_utils_best_encoding (const unsigned char *text, size_t len)
 }
 
 
-#define USER_CHARSETS_INCLUDE_UTF8    (1 << 0)
-#define USER_CHARSETS_INCLUDE_DEFAULT (1 << 1)
-
-static char *
-decode_8bit (const char *text, size_t len, const char *default_charset)
+/**
+ * charset_convert:
+ * @cd: iconv converter
+ * @inbuf: input text buffer to convert
+ * @inleft: length of the input buffer
+ * @outp: pointer to output buffer
+ * @outlenp: pointer to output buffer length
+ * @ninval: the number of invalid bytes in @inbuf
+ *
+ * Converts the input buffer from one charset to another using the
+ * @cd. On completion, @outp will point to the output buffer
+ * containing the converted text (nul-terminated), @outlenp will be
+ * the size of the @outp buffer (note: not the strlen() of @outp) and
+ * @ninval will contain the number of bytes which could not be
+ * converted.
+ *
+ * Bytes which cannot be converted from @inbuf will appear as '?'
+ * characters in the output buffer.
+ *
+ * If *@outp is non-NULL, then it is assumed that it points to a
+ * pre-allocated buffer of length *@outlenp. This is done so that the
+ * same output buffer can be reused multiple times.
+ *
+ * Returns the string length of the output buffer.
+ **/
+static size_t
+charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size_t *outlenp, size_t *ninval)
 {
-	const char **charsets, **user_charsets, *best;
-	size_t inleft, outleft, outlen, rc, min, n;
+	size_t outlen, outleft, rc, n = 0;
+	char *outbuf, *out;
+	
+	if (*outp == NULL) {
+		outleft = outlen = (inleft * 2) + 16;
+		outbuf = out = g_malloc (outlen + 1);
+	} else {
+		outleft = outlen = *outlenp;
+		outbuf = out = *outp;
+	}
+	
+	do {
+		rc = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
+		if (rc == (size_t) -1) {
+			if (errno == EINVAL) {
+				/* incomplete sequence at the end of the input buffer */
+				n += inleft;
+				break;
+			}
+			
+			if (errno == E2BIG) {
+				/* need to grow the output buffer */
+				outlen += (inleft * 2) + 16;
+				rc = (size_t) (outbuf - out);
+				out = g_realloc (out, outlen + 1);
+				outleft = outlen - rc;
+				outbuf = out + rc;
+			} else {
+				/* invalid byte(-sequence) in the input buffer */
+				*outbuf++ = '?';
+				outleft--;
+				inleft--;
+				inbuf++;
+				n++;
+			}
+		}
+	} while (inleft > 0);
+	
+	iconv (cd, NULL, NULL, &outbuf, &outleft);
+	*outbuf++ = '\0';
+	
+	*outlenp = outlen;
+	*outp = out;
+	*ninval = n;
+	
+	return (outbuf - out);
+}
+
+
+#define USER_CHARSETS_INCLUDE_UTF8    (1 << 0)
+#define USER_CHARSETS_INCLUDE_LOCALE  (1 << 1)
+
+
+/**
+ * g_mime_utils_decode_8bit:
+ * @text: input text in unknown 8bit/multibyte character set
+ * @len: input text length
+ *
+ * Attempts to convert text in an unknown 8bit/multibyte charset into
+ * UTF-8 by finding the charset which will convert the most bytes into
+ * valid UTF-8 characters as possible. If no exact match can be found,
+ * it will choose the best match and convert invalid byte sequences
+ * into question-marks (?) in the returned string buffer.
+ *
+ * Returns a UTF-8 string representation of @text.
+ **/
+char *
+g_mime_utils_decode_8bit (const char *text, size_t len)
+{
+	const char **charsets, **user_charsets, *locale, *best;
+	size_t outleft, outlen, min, ninval;
 	unsigned int included = 0;
 	char *out, *outbuf;
-	const char *inbuf;
 	iconv_t cd;
 	int i = 0;
 	
-	if (!default_charset)
-		default_charset = g_mime_locale_charset ();
+	g_return_val_if_fail (text != NULL, NULL);
 	
-	if (default_charset && !g_ascii_strcasecmp (default_charset, "UTF-8"))
-		included |= USER_CHARSETS_INCLUDE_DEFAULT;
+	locale = g_mime_locale_charset ();
+	if (locale && !g_ascii_strcasecmp (locale, "UTF-8"))
+		included |= USER_CHARSETS_INCLUDE_LOCALE;
 	
 	if ((user_charsets = g_mime_user_charsets ())) {
 		while (user_charsets[i])
@@ -1451,8 +1541,8 @@ decode_8bit (const char *text, size_t len, const char *default_charset)
 			if (!g_ascii_strcasecmp (user_charsets[i], "UTF-8"))
 				included |= USER_CHARSETS_INCLUDE_UTF8;
 			
-			if (default_charset && !g_ascii_strcasecmp (user_charsets[i], default_charset))
-				included |= USER_CHARSETS_INCLUDE_DEFAULT;
+			if (locale && !g_ascii_strcasecmp (user_charsets[i], locale))
+				included |= USER_CHARSETS_INCLUDE_LOCALE;
 			
 			charsets[i] = user_charsets[i];
 			i++;
@@ -1462,61 +1552,31 @@ decode_8bit (const char *text, size_t len, const char *default_charset)
 	if (!(included & USER_CHARSETS_INCLUDE_UTF8))
 		charsets[i++] = "UTF-8";
 	
-	if (!(included & USER_CHARSETS_INCLUDE_DEFAULT))
-		charsets[i++] = default_charset;
+	if (!(included & USER_CHARSETS_INCLUDE_LOCALE))
+		charsets[i++] = locale;
 	
 	charsets[i] = NULL;
 	
 	min = len;
 	best = charsets[0];
 	
-	outlen = (len * 2) + 16; 
-	out = g_malloc (outlen + 1);
+	outleft = (len * 2) + 16;
+	out = g_malloc (outleft + 1);
 	
 	for (i = 0; charsets[i]; i++) {
 		if ((cd = g_mime_iconv_open ("UTF-8", charsets[i])) == (iconv_t) -1)
 			continue;
 		
-		outleft = outlen;
-		outbuf = out;
-		inleft = len;
-		inbuf = text;
-		n = 0;
-		
-		do {
-			rc = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
-			if (rc == (size_t) -1) {
-				if (errno == EINVAL) {
-					/* incomplete sequence at the end of the input buffer */
-					n += inleft;
-					break;
-				}
-				
-				if (errno == E2BIG) {
-					outlen += (inleft * 2) + 16;
-					rc = (size_t) (outbuf - out);
-					out = g_realloc (out, outlen + 1);
-					outleft = outlen - rc;
-					outbuf = out + rc;
-				} else {
-					inleft--;
-					inbuf++;
-					n++;
-				}
-			}
-		} while (inleft > 0);
-		
-		rc = iconv (cd, NULL, NULL, &outbuf, &outleft);
-		*outbuf = '\0';
+		outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
 		
 		g_mime_iconv_close (cd);
 		
-		if (rc != (size_t) -1 && n == 0)
-			return out;
+		if (ninval == 0)
+			return g_realloc (out, outlen + 1);
 		
-		if (n < min) {
+		if (ninval < min) {
 			best = charsets[i];
-			min = n;
+			min = ninval;
 		}
 	}
 	
@@ -1530,8 +1590,7 @@ decode_8bit (const char *text, size_t len, const char *default_charset)
 		 * is replace the 8bit garbage and pray */
 		register const char *inptr = text;
 		const char *inend = inptr + len;
-		
-		outbuf = out;
+		char *outbuf = out;
 		
 		while (inptr < inend) {
 			if (is_ascii (*inptr))
@@ -1540,67 +1599,16 @@ decode_8bit (const char *text, size_t len, const char *default_charset)
 				*outbuf++ = '?';
 		}
 		
-		*outbuf = '\0';
+		*outbuf++ = '\0';
 		
-		return out;
+		return g_realloc (out, outbuf - out);
 	}
 	
-	outleft = outlen;
-	outbuf = out;
-	inleft = len;
-	inbuf = text;
-	
-	do {
-		rc = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
-		if (rc == (size_t) -1) {
-			if (errno == EINVAL) {
-				/* incomplete sequence at the end of the input buffer */
-				break;
-			}
-			
-			if (errno == E2BIG) {
-				rc = outbuf - out;
-				outlen += inleft * 2 + 16;
-				out = g_realloc (out, outlen + 1);
-				outleft = outlen - rc;
-				outbuf = out + rc;
-			} else {
-				*outbuf++ = '?';
-				outleft--;
-				inleft--;
-				inbuf++;
-			}
-		}
-	} while (inleft > 0);
-	
-	iconv (cd, NULL, NULL, &outbuf, &outleft);
-	*outbuf = '\0';
+	outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
 	
 	g_mime_iconv_close (cd);
 	
-	return out;
-}
-
-
-/**
- * g_mime_utils_decode_8bit:
- * @text: input text in unknown 8bit/multibyte character set
- * @len: input text length
- *
- * Attempts to convert text in an unknown 8bit/multibyte charset into
- * UTF-8 by finding the charset which will convert the most bytes into
- * valid UTF-8 characters as possible. If no exact match can be found,
- * it will choose the best match and convert invalid byte sequences
- * into question-marks (?) in the returned string buffer.
- *
- * Returns a UTF-8 string representation of @text.
- **/
-char *
-g_mime_utils_decode_8bit (const char *text, size_t len)
-{
-	g_return_val_if_fail (text != NULL, NULL);
-	
-	return decode_8bit (text, len, NULL);
+	return g_realloc (out, outlen + 1);
 }
 
 
@@ -1650,11 +1658,11 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	const unsigned char *inend = instart + inlen - 2;
 	unsigned char *decoded;
 	const char *charset;
+	size_t len, ninval;
 	char *charenc, *p;
 	guint32 save = 0;
 	ssize_t declen;
 	int state = 0;
-	size_t len;
 	iconv_t cd;
 	char *buf;
 	
@@ -1725,16 +1733,21 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		return g_mime_utils_decode_8bit ((char *) decoded, declen);
 	}
 	
-	buf = g_mime_iconv_strndup (cd, (char *) decoded, declen);
+	len = declen;
+	buf = g_malloc (len + 1);
+	
+	charset_convert (cd, decoded, declen, &buf, &len, &ninval);
+	
 	g_mime_iconv_close (cd);
 	
-	if (buf != NULL)
-		return buf;
+#if w(!)0
+	if (ninval > 0) {
+		g_warning ("Failed to completely convert \"%.*s\" to UTF-8, display may be "
+			   "corrupt: %s", declen, decoded, g_strerror (errno));
+	}
+#endif
 	
-	w(g_warning ("Failed to convert \"%.*s\" to UTF-8, display may be "
-		     "corrupt: %s", declen, decoded, g_strerror (errno)));
-	
-	return g_mime_utils_decode_8bit ((char *) decoded, declen);
+	return buf;
 }
 
 
