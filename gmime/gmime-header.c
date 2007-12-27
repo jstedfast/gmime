@@ -32,6 +32,16 @@
 #include "gmime-stream-mem.h"
 
 
+/**
+ * SECTION: gmime-header
+ * @title: GMimeHeader
+ * @short_description: Message and MIME part headers
+ * @see_also: #GMimeObject
+ *
+ * A #GMimeHeader is a collection of rfc822 header fields and their
+ * values.
+ **/
+
 struct raw_header {
 	struct raw_header *next;
 	char *name;

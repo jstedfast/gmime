@@ -43,6 +43,17 @@
 
 
 /**
+ * SECTION: gmime-content-type
+ * @title: GMimeContentType
+ * @short_description: Content-Type fields
+ * @see_also:
+ *
+ * A #GMimeContentType represents the pre-parsed contents of a
+ * Content-Type header field.
+ **/
+
+
+/**
  * g_mime_content_type_new:
  * @type: MIME type (or NULL for "text")
  * @subtype: MIME subtype (or NULL for "plain")

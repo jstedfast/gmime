@@ -31,6 +31,17 @@
 
 
 /**
+ * SECTION: gmime-disposition
+ * @title: GMimeDisposition
+ * @short_description: Content-Disposition fields
+ * @see_also:
+ *
+ * A #GMimeDisposition represents the pre-parsed contents of a
+ * Content-Disposition header field.
+ **/
+
+
+/**
  * g_mime_disposition_new:
  * @disposition: disposition header (and params)
  *

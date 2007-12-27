@@ -1,4 +1,4 @@
-<refentry id="gmime-building" revision="1 Feb 2003">
+<refentry id="gmime-building" revision="27 Dec 2007">
   <refmeta>
     <refentrytitle>Compiling the GMime libraries</refentrytitle>
     <manvolnum>3</manvolnum>
@@ -44,7 +44,7 @@
       directory full of the source files as follows:
     </para>
     <programlisting>
-      tar -zxvf gmime-2.0.0.tar.gz
+      tar -zxvf gmime-2.2.x.tar.gz
     </programlisting>
     <para>
       In the toplevel of the directory that is created, there will be
@@ -210,7 +210,7 @@
       ran into, is found in the file <filename>config.log</filename>.
       Looking at the last couple of hundred lines in this file will
       frequently make clear what went wrong. If all else fails, you
-      can ask for help by emailing me, fejj@ximian.com.
+      can ask for help by emailing me, fejj@gnome.org
     </para>
   </refsect1>
   <refsect1 id="extra-configuration-options">
@@ -222,30 +222,73 @@
 	arguments for the other GMime libraries are described in
 	the documentation distributed with the those libraries.)
 
-	<cmdsynopsis><command>configure</command><group><arg>--enable-gprof</arg></group><group><arg>--enable-warnings</arg></group></cmdsynopsis>
-      </para>
+	<cmdsynopsis><command>configure</command><group><arg>--enable-profiling</arg><arg>--enable-warnings</arg><arg>--enable-mono</arg><arg>--enable-gtk-doc</arg><arg>--enable-rfc2047-workarounds</arg><arg>--enable-largfile</arg></group></cmdsynopsis>
+    </para>
     <formalpara>
       <title>
-        <systemitem>--enable-gprof</systemitem>
+        <systemitem>--enable-profiling</systemitem>
       </title>
       <para>
-	  Normally GMime will not pass the <literal>-pg</literal> flag to 
-          <command>gcc</command> when building. This option will enable
-          the use of that flag thus building profiling information into 
-          the GMime libraries. Odds are you do not care about this option
-          unless you are either me or desire to profile GMime and/or your 
-          program.
-	</para>
+        Normally GMime will not pass the <literal>-pg</literal> flag to 
+        <command>gcc</command> when building. This option will enable
+        the use of that flag thus building profiling information into 
+        the GMime libraries for use with the GNU Profiler, gprof. Odds
+        are you do not care about this option unless you are either me
+        or desire to profile GMime and/or your program.
+      </para>
     </formalpara>
     <formalpara>
       <title>
         <systemitem>--enable-warnings</systemitem>
       </title>
       <para>
-         This option enabled more verbose warnings to be used during
-         compilation of the libraries. Again, it is unlikely you will
-         care to use this option.
-	</para>
+        This option enables more verbose warnings to be used during
+        compilation of the libraries. Again, it is unlikely you will
+        care to use this option.
+      </para>
+    </formalpara>
+    <formalpara>
+      <title>
+        <systemitem>--enable-mono</systemitem>
+      </title>
+      <para>
+        This option will include the Mono .NET bindings as part of
+        the build.
+      </para>
+    </formalpara>
+    <formalpara>
+      <title>
+        <systemitem>--enable-gtk-doc</systemitem>
+      </title>
+      <para>
+        This option will enable the building of the reference
+        documentation for GMime (e.g. the html pages you are
+        reading now).
+      </para>
+    </formalpara>
+    <formalpara>
+      <title>
+        <systemitem>--enable-rfc2047-workarounds</systemitem>
+      </title>
+      <para>
+        This option will enable work-arounds for common bugs in
+        other E-Mail software's rfc2047 encoders.
+      </para>
+    </formalpara>
+    <formalpara>
+      <title>
+        <systemitem>--enable-largefile</systemitem>
+      </title>
+      <para>
+        This option will enable large file support (e.g. files
+        larger than 2GB) on 32bit systems.
+      </para>
+      <para>
+        Note that enabling this feature will change GMime's ABI.
+        It is strongly advised that you not enable this feature
+        unless you (re)build all software depending on GMime
+        with large file support as well.
+      </para>
     </formalpara>
   </refsect1>
 <!-- Local Variables: -->

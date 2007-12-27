@@ -27,6 +27,20 @@
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
 
+
+/**
+ * SECTION: gmime-data-wrapper
+ * @title: GMimeDataWrapper
+ * @short_description: Content objects
+ * @see_also: #GMimePart
+ *
+ * A #GMimeDataWrapper is a wrapper object for a #GMimePart's body,
+ * allowing clients to read the content from the backing stream
+ * without having to know whether it is encoded/compressed/etc and not
+ * neding to know how to undo said encoding(s).
+ **/
+
+
 static void g_mime_data_wrapper_class_init (GMimeDataWrapperClass *klass);
 static void g_mime_data_wrapper_init (GMimeDataWrapper *wrapper, GMimeDataWrapperClass *klass);
 static void g_mime_data_wrapper_finalize (GObject *object);

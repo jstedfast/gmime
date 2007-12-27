@@ -47,6 +47,17 @@
 #define d(x)
 
 
+/**
+ * SECTION: gmime-param
+ * @title: GMimeParam
+ * @short_description: Content-Type and Content-Disposition parameters
+ * @see_also: #GMimeContentType
+ *
+ * A #GMimeParam is a parameter name/value pair as found on MIME
+ * header fields such as Content-Type and Content-Disposition.
+ **/
+
+
 static unsigned char tohex[16] = {
 	'0', '1', '2', '3', '4', '5', '6', '7',
 	'8', '9', 'A', 'B', 'C', 'D', 'E', 'F'
@@ -58,7 +69,7 @@ static unsigned char tohex[16] = {
  * @name: parameter name
  * @value: parameter value
  *
- * Creates a new GMimeParam node with name @name and value @value.
+ * Creates a new #GMimeParam node with name @name and value @value.
  *
  * Returns a new paramter structure.
  **/
