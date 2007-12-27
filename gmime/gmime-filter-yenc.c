@@ -27,6 +27,17 @@
 
 #include "gmime-filter-yenc.h"
 
+
+/**
+ * SECTION: gmime-filter-yenc
+ * @title: GMimeFilterYenc
+ * @short_description: yEncode or yDecode
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used to encode or decode the Usenet yEncoding.
+ **/
+
+
 static void g_mime_filter_yenc_class_init (GMimeFilterYencClass *klass);
 static void g_mime_filter_yenc_init (GMimeFilterYenc *filter, GMimeFilterYencClass *klass);
 static void g_mime_filter_yenc_finalize (GObject *object);

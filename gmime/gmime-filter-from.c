@@ -27,6 +27,18 @@
 
 #include "gmime-filter-from.h"
 
+
+/**
+ * SECTION: gmime-filter-from
+ * @title: GMimeFilterFrom
+ * @short_description: Escape MBox From_ lines
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for escaping MBox From_ lines using either the
+ * traditional ">From " or quoted-printable encoding.
+ **/
+
+
 static void g_mime_filter_from_class_init (GMimeFilterFromClass *klass);
 static void g_mime_filter_from_init (GMimeFilterFrom *filter, GMimeFilterFromClass *klass);
 static void g_mime_filter_from_finalize (GObject *object);

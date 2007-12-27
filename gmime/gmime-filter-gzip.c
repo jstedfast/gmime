@@ -31,6 +31,17 @@
 #include "gmime-filter-gzip.h"
 
 
+/**
+ * SECTION: gmime-filter-gzip
+ * @title: GMimeFilterGZip
+ * @short_description: GNU Zip compression/decompression
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for compressing or decompressing a stream using
+ * GNU Zip.
+ **/
+
+
 /* rfc1952 */
 
 enum {

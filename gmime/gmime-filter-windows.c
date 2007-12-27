@@ -29,6 +29,17 @@
 #define d(x)
 
 
+/**
+ * SECTION: gmime-filter-windows
+ * @title: GMimeFilterWindows
+ * @short_description: Determine if text is in a Microsoft Windows codepage
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for determining if text marked as iso-8859-##
+ * is actually encoded in one of the Windows-CP125# charsets.
+ **/
+
+
 static void g_mime_filter_windows_class_init (GMimeFilterWindowsClass *klass);
 static void g_mime_filter_windows_init (GMimeFilterWindows *filter, GMimeFilterWindowsClass *klass);
 static void g_mime_filter_windows_finalize (GObject *object);

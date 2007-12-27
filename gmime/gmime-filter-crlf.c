@@ -25,6 +25,16 @@
 
 #include "gmime-filter-crlf.h"
 
+
+/**
+ * SECTION: gmime-filter-crlf
+ * @title: GMimeFilterCRLF
+ * @short_description: Convert line-endings from LF to CRLF or vise versa
+ *
+ * A #GMimeFilter for converting between DOS and UNIX line-endings.
+ **/
+
+
 static void g_mime_filter_crlf_class_init (GMimeFilterCRLFClass *klass);
 static void g_mime_filter_crlf_init (GMimeFilterCRLF *filter, GMimeFilterCRLFClass *klass);
 static void g_mime_filter_crlf_finalize (GObject *object);

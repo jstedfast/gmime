@@ -27,6 +27,19 @@
 
 #include "gmime-filter-best.h"
 
+
+/**
+ * SECTION: gmime-filter-best
+ * @title: GMimeFilterBest
+ * @short_description: Determine the best charset/encoding to use for a stream
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter which is meant to determine the best charset and/or
+ * transfer encoding suitable for the stream which is filtered through
+ * it.
+ **/
+
+
 static void g_mime_filter_best_class_init (GMimeFilterBestClass *klass);
 static void g_mime_filter_best_init (GMimeFilterBest *filter, GMimeFilterBestClass *klass);
 static void g_mime_filter_best_finalize (GObject *object);

@@ -28,6 +28,18 @@
 
 #include "gmime-filter-strip.h"
 
+
+/**
+ * SECTION: gmime-filter-strip
+ * @title: GMimeFilterStrip
+ * @short_description: Strip trailing whitespace from the end of lines
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for stripping trailing whitespace from the end
+ * of lines.
+ **/
+
+
 static void g_mime_filter_strip_class_init (GMimeFilterStripClass *klass);
 static void g_mime_filter_strip_init (GMimeFilterStrip *filter, GMimeFilterStripClass *klass);
 static void g_mime_filter_strip_finalize (GObject *object);

@@ -32,6 +32,17 @@
 
 /* text/enriched is rfc1896 */
 
+
+/**
+ * SECTION: gmime-filter-enriched
+ * @title: GMimeFilterEnriched
+ * @short_description: Convert text/enriched or text/rtf to HTML
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for converting text/enriched or text/rtf to HTML.
+ **/
+
+
 typedef char * (*EnrichedParamParser) (const char *inptr, size_t inlen);
 
 static char *param_parse_colour (const char *inptr, size_t inlen);

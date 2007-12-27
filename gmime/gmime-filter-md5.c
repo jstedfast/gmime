@@ -27,6 +27,17 @@
 
 #include "gmime-filter-md5.h"
 
+
+/**
+ * SECTION: gmime-filter-md5
+ * @title: GMimeFilterMd5
+ * @short_description: Calculate an md5sum
+ * @see_also: #GMimeFilter
+ *
+ * Calculate an md5sum for a stream.
+ **/
+
+
 struct _GMimeFilterMd5Private {
 	MD5Context md5;
 };

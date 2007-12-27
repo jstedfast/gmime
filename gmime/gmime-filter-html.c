@@ -31,6 +31,17 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-filter-html
+ * @title: GMimeFilterHTML
+ * @short_description: Convert plain text into HTML
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter used for converting plain text into HTML.
+ **/
+
+
 #define CONVERT_WEB_URLS  GMIME_FILTER_HTML_CONVERT_URLS
 #define CONVERT_ADDRSPEC  GMIME_FILTER_HTML_CONVERT_ADDRESSES
 

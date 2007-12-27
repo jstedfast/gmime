@@ -28,6 +28,17 @@
 #include "gmime-filter.h"
 
 
+/**
+ * SECTION: gmime-filter
+ * @title: GMimeFilter
+ * @short_description: Abstract filter class
+ * @see_also: #GMimeStreamFilter
+ *
+ * Stream filters are an efficient way of converting data from one
+ * format to another.
+ **/
+
+
 struct _GMimeFilterPrivate {
 	char *inbuf;
 	size_t inlen;

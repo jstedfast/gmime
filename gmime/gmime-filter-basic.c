@@ -28,6 +28,18 @@
 #include "gmime-filter-basic.h"
 #include "gmime-utils.h"
 
+
+/**
+ * SECTION: gmime-filter-basic
+ * @title: GMimeFilterBasic
+ * @short_description: Basic transfer encoding filter
+ * @see_also: #GMimeFilter
+ *
+ * A #GMimeFilter which can encode or decode basic MIME encodings such
+ * as Quoted-Printable, Base64 and UUEncode.
+ **/
+
+
 static void g_mime_filter_basic_class_init (GMimeFilterBasicClass *klass);
 static void g_mime_filter_basic_init (GMimeFilterBasic *filter, GMimeFilterBasicClass *klass);
 static void g_mime_filter_basic_finalize (GObject *object);

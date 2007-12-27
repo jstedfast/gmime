@@ -30,6 +30,17 @@
 #include "gmime-iconv.h"
 
 
+/**
+ * SECTION: gmime-filter-charset
+ * @title: GMimeFilterCharset
+ * @short_description: Charset-conversion filter
+ * @see_also:
+ *
+ * A #GMimeFilter which is used for converting text from one charset
+ * to another.
+ **/
+
+
 static void g_mime_filter_charset_class_init (GMimeFilterCharsetClass *klass);
 static void g_mime_filter_charset_init (GMimeFilterCharset *filter, GMimeFilterCharsetClass *klass);
 static void g_mime_filter_charset_finalize (GObject *object);
