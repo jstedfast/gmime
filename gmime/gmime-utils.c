@@ -1411,37 +1411,61 @@ g_mime_utils_best_encoding (const unsigned char *text, size_t len)
 }
 
 
-/**
- * g_mime_utils_decode_8bit:
- * @text: input text in unknown 8bit/multibyte character set
- * @len: input text length
- *
- * Attempts to convert text in an unknown 8bit/multibyte charset into
- * UTF-8 by finding the charset which will convert the most bytes into
- * valid UTF-8 characters as possible. If no exact match can be found,
- * it will choose the best match and convert invalid byte sequences
- * into question-marks (?) in the returned string buffer.
- *
- * Returns a UTF-8 string representation of @text.
- **/
-char *
-g_mime_utils_decode_8bit (const char *text, size_t len)
+#define USER_CHARSETS_INCLUDE_UTF8    (1 << 0)
+#define USER_CHARSETS_INCLUDE_DEFAULT (1 << 1)
+
+static char *
+decode_8bit (const char *text, size_t len, const char *default_charset)
 {
-	const char *fallback_charsets[3] = { "UTF-8", NULL, NULL };
+	const char **charsets, **user_charsets, *best;
 	size_t inleft, outleft, outlen, rc, min, n;
-	const char **charsets, *best;
+	unsigned int included = 0;
 	char *out, *outbuf;
 	const char *inbuf;
 	iconv_t cd;
-	int i;
+	int i = 0;
 	
-	if (!(charsets = g_mime_user_charsets ())) {
-		inbuf = g_mime_locale_charset ();
-		if (g_ascii_strcasecmp (inbuf, "UTF-8") != 0)
-			fallback_charsets[1] = inbuf;
-		
-		charsets = fallback_charsets;
+	if (!default_charset)
+		default_charset = g_mime_locale_charset ();
+	
+	if (default_charset && !g_ascii_strcasecmp (default_charset, "UTF-8"))
+		included |= USER_CHARSETS_INCLUDE_DEFAULT;
+	
+	if ((user_charsets = g_mime_user_charsets ())) {
+		while (user_charsets[i])
+			i++;
 	}
+	
+	charsets = g_alloca (sizeof (char *) * (i + 3));
+	i = 0;
+	
+	if (user_charsets) {
+		while (user_charsets[i]) {
+			/* keep a record of whether or not the user-supplied
+			 * charsets include UTF-8 and/or the default fallback
+			 * charset so that we avoid doubling our efforts for
+			 * these 2 charsets. We could have used a hash table
+			 * to keep track of unique charsets, but we can
+			 * (hopefully) assume that user_charsets is a unique
+			 * list of charsets with no duplicates. */
+			if (!g_ascii_strcasecmp (user_charsets[i], "UTF-8"))
+				included |= USER_CHARSETS_INCLUDE_UTF8;
+			
+			if (default_charset && !g_ascii_strcasecmp (user_charsets[i], default_charset))
+				included |= USER_CHARSETS_INCLUDE_DEFAULT;
+			
+			charsets[i] = user_charsets[i];
+			i++;
+		}
+	}
+	
+	if (!(included & USER_CHARSETS_INCLUDE_UTF8))
+		charsets[i++] = "UTF-8";
+	
+	if (!(included & USER_CHARSETS_INCLUDE_DEFAULT))
+		charsets[i++] = default_charset;
+	
+	charsets[i] = NULL;
 	
 	min = len;
 	best = charsets[0];
@@ -1555,6 +1579,28 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 	g_mime_iconv_close (cd);
 	
 	return out;
+}
+
+
+/**
+ * g_mime_utils_decode_8bit:
+ * @text: input text in unknown 8bit/multibyte character set
+ * @len: input text length
+ *
+ * Attempts to convert text in an unknown 8bit/multibyte charset into
+ * UTF-8 by finding the charset which will convert the most bytes into
+ * valid UTF-8 characters as possible. If no exact match can be found,
+ * it will choose the best match and convert invalid byte sequences
+ * into question-marks (?) in the returned string buffer.
+ *
+ * Returns a UTF-8 string representation of @text.
+ **/
+char *
+g_mime_utils_decode_8bit (const char *text, size_t len)
+{
+	g_return_val_if_fail (text != NULL, NULL);
+	
+	return decode_8bit (text, len, NULL);
 }
 
 

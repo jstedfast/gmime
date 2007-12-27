@@ -1,3 +1,12 @@
+2007-12-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (decode_8bit): Now takes a default_charset
+	argument which we use in place of the locale charet if
+	non-NULL. We also now always include this charset in our list of
+	charsets to check for a best-match (obviously this charset is
+	unlikely to be an exact fit if this function is getting called, so
+	we place it at the end of the list).
+
 2007-12-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_utils_decode_8bit): Made public.
