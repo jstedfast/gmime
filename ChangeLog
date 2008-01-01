@@ -1,5 +1,7 @@
 2008-01-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fixes bug #506701
+
 	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Don't
 	reset the word-type variable as it needs to be preserved when
 	breaking long words.

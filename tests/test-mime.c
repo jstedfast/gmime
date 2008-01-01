@@ -282,7 +282,13 @@ static struct {
 	{ "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?=",
 	  "\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96",
 	  "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tg==?=" },
+	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=",
+	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
+	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
 #ifdef ENABLE_RFC2047_WORKAROUNDS
+	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?=alytiker",
+	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
+	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
 	{ "Copy of Rapport fra Norges R=?iso-8859-1?Q?=E5?=fisklag.doc",
 	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
 	  "Copy of Rapport fra Norges =?iso-8859-1?q?R=E5fisklag=2Edoc?=" },
