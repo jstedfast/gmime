@@ -33,6 +33,7 @@
 #else
 #define MAXHOSTNAMELEN 64
 #endif
+#include <sys/utsname.h>
 #include <sys/types.h>
 #include <unistd.h>
 #ifdef HAVE_NETDB_H
@@ -791,44 +792,79 @@ g_mime_utils_generate_message_id (const char *fqdn)
 #define MUTEX_LOCK()
 #define MUTEX_UNLOCK()
 #endif
-	static unsigned int count = 0;
-	char host[MAXHOSTNAMELEN + 1];
-#ifdef HAVE_GETADDRINFO
-	struct addrinfo hints, *res;
+	static unsigned long int count = 0;
+	const char *hostname = NULL;
 	char *name = NULL;
-#endif
 	char *msgid;
 	
 	if (!fqdn) {
+#ifdef HAVE_UTSNAME_DOMAINNAME
+		struct utsname unam;
+		
+		uname (&unam);
+		
+		hostname = unam.nodename;
+		
+		if (unam.domainname[0])
+			name = g_strdup_printf ("%s.%s", hostname, unam.domainname);
+#else /* ! HAVE_UTSNAME_DOMAINNAME */
+		char host[MAXHOSTNAMELEN + 1];
+		
 #ifdef HAVE_GETHOSTNAME
-		if (gethostname (host, sizeof (host)) == 0) {
-#ifdef HAVE_GETADDRINFO
-			memset (&hints, 0, sizeof (hints));
-			hints.ai_flags = AI_CANONNAME;
+		host[MAXHOSTNAMELEN] = '\0';
+		if (gethostname (host, MAXHOSTNAMELEN) == 0) {
+#ifdef HAVE_GETDOMAINNAME
+			size_t domainlen = MAXHOSTNAMELEN;
+			char *domain;
+			int rv;
 			
-			if (getaddrinfo (host, NULL, &hints, &res) == 0) {
-				name = g_strdup (res->ai_canonname);
-				freeaddrinfo (res);
+			domain = g_malloc (domainlen);
+			
+			while ((rv = getdomainname (domain, domainlen)) == -1 && errno == EINVAL) {
+				domainlen += MAXHOSTNAMELEN;
+				domain = g_realloc (domain, domainlen);
 			}
-#endif /* HAVE_GETADDRINFO */
+			
+			if (rv == 0 && domain[0]) {
+				if (host[0]) {
+					name = g_strdup_printf ("%s.%s", host, domain);
+					g_free (domain);
+				} else {
+					name = domain;
+				}
+			}
+#endif /* HAVE_GETDOMAINNAME */
 		} else {
 			host[0] = '\0';
 		}
-#else
-		host[0] = '\0';
 #endif /* HAVE_GETHOSTNAME */
+		hostname = host;
+#endif /* HAVE_UTSNAME_DOMAINNAME */
 		
 #ifdef HAVE_GETADDRINFO
-		fqdn = name != NULL ? name : (*host ? host : "localhost.localdomain");
-		g_free (name);
-#else
-		fqdn = *host ? host : "localhost.localdomain";
-#endif
+		if (!name && hostname[0]) {
+			/* we weren't able to get a domain name */
+			struct addrinfo hints, *res;
+			
+			memset (&hints, 0, sizeof (hints));
+			hints.ai_flags = AI_CANONNAME;
+			
+			if (getaddrinfo (hostname, NULL, &hints, &res) == 0) {
+				name = g_strdup (res->ai_canonname);
+				freeaddrinfo (res);
+			}
+		}
+#endif /* HAVE_GETADDRINFO */
+		
+		fqdn = name != NULL ? name : (hostname[0] ? hostname : "localhost.localdomain");
 	}
 	
 	MUTEX_LOCK ();
-	msgid = g_strdup_printf ("%ul.%ul.%ul@%s", (unsigned int) time (NULL), getpid (), count++, fqdn);
+	msgid = g_strdup_printf ("%lu.%lu.%lu@%s", (unsigned long int) time (NULL),
+				 (unsigned long int) getpid (), count++, fqdn);
 	MUTEX_UNLOCK ();
+	
+	g_free (name);
 	
 	return msgid;
 }

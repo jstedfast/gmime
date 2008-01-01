@@ -252,6 +252,23 @@ AC_TRY_COMPILE([
 	AC_MSG_RESULT(no; defined as 64)
 )
 
+dnl Check for domainname member in struct utsname from uname(2)
+AC_MSG_CHECKING(for domainname in struct utsname)
+AC_TRY_COMPILE([
+	#define _GNU_SOURCE
+	#include <sys/utsname.h>
+	], [
+	struct utsname unam;
+		
+	unam.domainname[0] = '\0';
+	],
+	AC_MSG_RESULT(yes)
+   	AC_DEFINE(HAVE_UTSNAME_DOMAINNAME, 1, [Define if struct utsname has a domainname member])
+,
+	AC_MSG_RESULT(no)
+)
+
+
 dnl Timezone checks
 AC_CACHE_CHECK(for tm_gmtoff in struct tm, ac_cv_struct_tm_gmtoff,
 	AC_TRY_COMPILE([
@@ -377,7 +394,7 @@ fi
 
 
 dnl Check for some network functions
-AC_CHECK_FUNCS(gethostname getaddrinfo)
+AC_CHECK_FUNCS(gethostname getdomainname getaddrinfo)
 
 dnl ****************************
 dnl *** Checks for libsocket ***
