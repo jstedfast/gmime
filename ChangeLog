@@ -1,5 +1,9 @@
 2008-01-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.14
+
 	* gmime/gmime-utils.c (g_mime_utils_generate_message_id): Fixed a
 	Free Memory Read access (FMR) by not freeing 'name' before using
 	it's value. Also reworked to take advantage of uname(2) or
