@@ -1,3 +1,11 @@
+2008-01-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Don't
+	reset the word-type variable as it needs to be preserved when
+	breaking long words.
+	(rfc2047_encode): Switch on word->encoding - if 0, rfc2047 encode
+	as us-ascii.
+
 2007-12-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (decode_8bit): Now takes a default_charset

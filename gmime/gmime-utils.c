@@ -2158,8 +2158,10 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 				tail = word;
 				count = 0;
 				
+				/* Note: don't reset 'type' as it
+				 * needs to be preserved when breaking
+				 * long words */
 				start = inptr;
-				type = WORD_ATOM;
 				encoding = 0;
 			}
 		}
@@ -2178,6 +2180,18 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 		tail->next = word;
 		tail = word;
 	}
+	
+#if d(!)0
+	printf ("rfc822 word tokens:\n");
+	word = words;
+	while (word) {
+		printf ("\t'%.*s'; type=%d, encoding=%d\n",
+			word->end - word->start, word->start,
+			word->type, word->encoding);
+		
+		word = word->next;
+	}
+#endif
 	
 	return words;
 }
@@ -2355,9 +2369,14 @@ rfc2047_encode (const char *in, gushort safemask)
 				start = word->start;
 			}
 			
-			if (word->encoding == 1) {
+			switch (word->encoding) {
+			case 0: /* us-ascii */
+				rfc2047_encode_word (out, start, len, "us-ascii", safemask);
+				break;
+			case 1: /* iso-8859-1 */
 				rfc2047_encode_word (out, start, len, "iso-8859-1", safemask);
-			} else {
+				break;
+			default:
 				charset = NULL;
 				g_mime_charset_init (&mask);
 				g_mime_charset_step (&mask, start, len);
@@ -2373,7 +2392,9 @@ rfc2047_encode (const char *in, gushort safemask)
 					charset = g_mime_charset_best_name (&mask);
 				
 				rfc2047_encode_word (out, start, len, charset, safemask);
+				break;
 			}
+			
 			break;
 		}
 		
