@@ -64,6 +64,8 @@
  * @short_description: MIME utility functions
  * @see_also:
  *
+ * Utility functions to parse, encode and decode various MIME tokens
+ * and encodings.
  **/
 
 
