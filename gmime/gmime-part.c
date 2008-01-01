@@ -42,6 +42,17 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-part
+ * @title: GMimePart
+ * @short_description: MIME parts
+ * @see_also:
+ *
+ * A #GMimePart represents any MIME leaf part (meaning it has no
+ * sub-parts).
+ **/
+
 /* GObject class methods */
 static void g_mime_part_class_init (GMimePartClass *klass);
 static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);

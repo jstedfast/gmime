@@ -36,6 +36,15 @@
 #include "gmime-parse-utils.h"
 
 
+/**
+ * SECTION: gmime-message
+ * @title: GMimeMessage
+ * @short_description: Messages
+ * @see_also:
+ *
+ * A #GMimeMessage represents an rfc822 message.
+ **/
+
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
 static void g_mime_message_finalize (GObject *object);

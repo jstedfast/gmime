@@ -39,6 +39,18 @@
 #define d(x)
 
 
+/**
+ * SECTION: gmime-multipart-encrypted
+ * @title: GMimeMultpartEncrypted
+ * @short_description: Encrypted MIME multiparts
+ * @see_also: #GMimeMultipart
+ *
+ * A #GMimeMultipartEncrypted part is a special subclass of
+ * #GMimeMultipart to make it easier to manipulate the
+ * multipart/encrypted MIME type.
+ **/
+
+
 /* GObject class methods */
 static void g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass);
 static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps, GMimeMultipartEncryptedClass *klass);

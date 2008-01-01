@@ -27,6 +27,17 @@
 #include "gmime-error.h"
 
 
+/**
+ * SECTION: gmime-cipher-context
+ * @title: GMimeCipherContext
+ * @short_description: Encryption/signing contexts
+ * @see_also:
+ *
+ * A #GMimeCipherContext is used for encrypting, decrypting, signing
+ * and verifying cryptographic signatures.
+ **/
+
+
 static void g_mime_cipher_context_class_init (GMimeCipherContextClass *klass);
 static void g_mime_cipher_context_init (GMimeCipherContext *ctx, GMimeCipherContextClass *klass);
 static void g_mime_cipher_context_finalize (GObject *object);

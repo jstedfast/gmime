@@ -43,6 +43,19 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-parser
+ * @title: GMimeParser
+ * @short_description: Message and MIME part parser
+ * @see_also:
+ *
+ * A #GMimeParser parses a stream into a #GMimeMessage or other
+ * #GMimeObject and can also handle parsing MBox formatted streams
+ * into multiple #GMimeMessage objects.
+ **/
+
+
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);
 static void g_mime_parser_finalize (GObject *object);

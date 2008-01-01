@@ -55,6 +55,18 @@
 
 #define _(x) x
 
+
+/**
+ * SECTION: gmime-gpg-context
+ * @title: GMimeGpgContext
+ * @short_description: GnuPG cipher contexts
+ * @see_also: #GMimeCipherContext
+ *
+ * A #GMimeGpgContext is a #GMimeCipherContext that uses GnuPG to do
+ * all of the encryption and digital signatures.
+ **/
+
+
 static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_finalize (GObject *object);

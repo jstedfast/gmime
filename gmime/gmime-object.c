@@ -31,6 +31,18 @@
 #include "gmime-stream-mem.h"
 #include "gmime-utils.h"
 
+
+/**
+ * SECTION: gmime-object
+ * @title: GMimeObject
+ * @short_description: Abstract MIME objects
+ * @see_also:
+ *
+ * #GMimeObject is an abstract class from which all Message and MIME
+ * parts are derived.
+ **/
+
+
 struct _type_bucket {
 	char *type;
 	GType object_type;

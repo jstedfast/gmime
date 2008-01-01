@@ -44,6 +44,17 @@
 
 
 /**
+ * SECTION: internet-address
+ * @title: InternetAddress
+ * @short_description: Internet addresses
+ * @see_also:
+ *
+ * An #InternetAddress represents what is commonly referred to as an
+ * E-Mail address.
+ **/
+
+
+/**
  * internet_address_new:
  *
  * Creates a new #InternetAddress object

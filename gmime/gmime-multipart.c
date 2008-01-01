@@ -36,6 +36,17 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-multipart
+ * @title: GMimeMultipart
+ * @short_description: MIME multiparts
+ * @see_also:
+ *
+ * A #GMimeMultipart represents all multipart/* MIME container parts.
+ **/
+
+
 /* GObject class methods */
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
 static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass);

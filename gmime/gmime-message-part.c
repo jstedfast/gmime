@@ -29,6 +29,18 @@
 
 #define d(x) x
 
+
+/**
+ * SECTION: gmime-message-part
+ * @title: GMimeMessagePart
+ * @short_description: Message parts
+ * @see_also:
+ *
+ * A #GMimeMessagePart represents message/rfc822 and message/news MIME
+ * parts.
+ **/
+
+
 /* GObject class methods */
 static void g_mime_message_part_class_init (GMimeMessagePartClass *klass);
 static void g_mime_message_part_init (GMimeMessagePart *message_part, GMimeMessagePartClass *klass);

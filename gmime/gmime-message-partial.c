@@ -31,6 +31,17 @@
 #include "gmime-stream-mem.h"
 #include "gmime-parser.h"
 
+
+/**
+ * SECTION: gmime-message-partial
+ * @title: GMimeMessagePartial
+ * @short_description: Partial MIME parts
+ * @se_also:
+ *
+ * A #GMimeMessagePartial represents the message/partial MIME part.
+ **/
+
+
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
 static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMessagePartialClass *klass);

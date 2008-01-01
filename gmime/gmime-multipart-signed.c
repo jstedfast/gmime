@@ -38,6 +38,19 @@
 
 #define d(x)
 
+
+/**
+ * SECTION: gmime-multipart-signed
+ * @title: GMimeMultpartSigned
+ * @short_description: Signed MIME multiparts
+ * @see_also: #GMimeMultipart
+ *
+ * A #GMimeMultipartSigned part is a special subclass of
+ * #GMimeMultipart to make it easier to manipulate the
+ * multipart/signed MIME type.
+ **/
+
+
 /* GObject class methods */
 static void g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass);
 static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass);
