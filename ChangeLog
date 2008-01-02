@@ -1,5 +1,8 @@
 2008-01-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c (message_write_to_stream): Reworked the
+	logic to be easier to understand what is going on.
+
 	* gmime/gmime-multipart.c (multipart_write_to_stream): In the case
 	where multipart->boundary is NULL /and/ we have a raw
 	header (suggesting a parsed message), do not set a boundary as it
