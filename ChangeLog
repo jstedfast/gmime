@@ -1,3 +1,9 @@
+2008-01-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.15
+
 2008-01-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (message_write_to_stream): Reworked the
