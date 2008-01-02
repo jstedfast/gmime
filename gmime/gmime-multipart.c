@@ -243,8 +243,11 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimeObject *part;
 	GList *node;
 	
-	/* make sure a boundary is set */
-	if (!multipart->boundary)
+	/* make sure a boundary is set unless we are writing out a raw
+	 * header (in which case it should already be set... or if
+	 * not, then it's a broken multipart/* and so we don't want to
+	 * alter it or we'll completely break the output) */
+	if (!multipart->boundary && !g_mime_header_has_raw (object->headers))
 		g_mime_multipart_set_boundary (multipart, NULL);
 	
 	/* write the content headers */
@@ -286,10 +289,13 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		node = node->next;
 	}
 	
-	if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary)) == -1)
-		return -1;
-	
-	total += nwritten;
+	/* write the end-boundary (but only if a boundary is set) */
+	if (multipart->boundary) {
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary)) == -1)
+			return -1;
+		
+		total += nwritten;
+	}
 	
 	/* write the postface */
 	if (multipart->postface) {

@@ -1,3 +1,13 @@
+2008-01-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-multipart.c (multipart_write_to_stream): In the case
+	where multipart->boundary is NULL /and/ we have a raw
+	header (suggesting a parsed message), do not set a boundary as it
+	will break the output because it will clobber the saved raw header
+	and GMimeMessage's write_to_stream() method will have skipped
+	writing its own headers if its toplevel part (us) have a raw
+	header set. In this case, also skip writing the end boundary.
+
 2008-01-01  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
