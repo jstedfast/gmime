@@ -34,6 +34,29 @@ InternetAddress with a name of "Joe Bob" and a NULL addr
 
 
 
+Ideas for GMime "3.0"
+=====================
+
+- Make g_mime_stream_*_new() functions more consistent (maybe add
+  fs/FILE "from filename" functions too)
+
+- Add internet_address_new_name_static() which would take static
+  strings (e.g. strings which should not be free'd on destroy) so that
+  apps can save string memory by reusing strings.
+
+- GMimeStream's should take GError args so apps don't have to rely on
+  errno (really needed for apps that implement ssl streams or other
+  stream types which might not map well to libc's errno values)
+
+- GMimeParser should also take a GError arg and/or return int error
+  codes.
+
+- GMimeMultipartEncrypted::decrypt() needs to return a
+  GMimeSignatureStatus for signed/encrypted parts.
+
+- Get rid of deprecated functions.
+
+
 
 All questions and comments should be directed toward the author,
 Jeffrey Stedfast <fejj@gnome.org>
