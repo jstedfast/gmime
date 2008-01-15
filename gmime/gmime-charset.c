@@ -909,22 +909,12 @@ g_mime_set_user_charsets (const char **charsets)
 	if (user_charsets)
 		g_strfreev (user_charsets);
 	
-	if (charsets == NULL) {
+	if (charsets == NULL || charsets[0] == NULL) {
 		user_charsets = NULL;
 		return;
 	}
 	
-	while (charsets[n] != NULL)
-		n++;
-	
-	if (n == 0) {
-		user_charsets = NULL;
-		return;
-	}
-	
-	user_charsets = g_malloc (sizeof (char *) * (n + 1));
-	for (i = 0; i <= n; i++)
-		user_charsets[i] = (char *) charsets[i];
+	user_charsets = g_strdupv ((char **) charsets);
 }
 
 
