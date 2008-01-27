@@ -516,7 +516,7 @@ gen_random_stream (GMimeStream *stream)
 }
 
 static int
-gen_test_data (const char *datadir)
+gen_test_data (const char *datadir, char **stream_name)
 {
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
@@ -543,6 +543,8 @@ gen_test_data (const char *datadir)
 	
 	if ((fd = mkstemp (input)) == -1)
 		return -1;
+	
+	*stream_name = g_strdup (name);
 	
 	*p++ = G_DIR_SEPARATOR;
 	p = g_stpcpy (p, name);
@@ -588,6 +590,7 @@ int main (int argc, char **argv)
 {
 	const char *datadir = "data/streams";
 	gboolean gen_data = TRUE;
+	char *stream_name = NULL;
 	struct dirent *dent;
 	char path[256], *p;
 	DIR *dir, *outdir;
@@ -611,7 +614,7 @@ int main (int argc, char **argv)
 	strcpy (p, "output");
 	
 	if (!(outdir = opendir (path))) {
-		if (gen_test_data (datadir) == -1 ||
+		if (gen_test_data (datadir, &stream_name) == -1 ||
 		    !(outdir = opendir (path)))
 			goto exit;
 		
@@ -621,7 +624,7 @@ int main (int argc, char **argv)
 	p = g_stpcpy (p, "input");
 	
 	if (!(dir = opendir (path))) {
-		if (!gen_data || gen_test_data (datadir) == -1 ||
+		if (!gen_data || gen_test_data (datadir, &stream_name) == -1 ||
 		    !(dir = opendir (path))) {
 			closedir (outdir);
 			goto exit;
@@ -641,7 +644,7 @@ int main (int argc, char **argv)
 		
 		rewinddir (dir);
 		
-		if (gen_data && gen_test_data (datadir) == -1)
+		if (gen_data && gen_test_data (datadir, &stream_name) == -1)
 			goto exit;
 	}
 	
@@ -656,6 +659,27 @@ int main (int argc, char **argv)
 		
 		strcpy (p, dent->d_name);
 		test_stream_buffer_gets (path);
+	}
+	
+	if (gen_data && stream_name && testsuite_total_errors () == 0) {
+		/* since all tests were successful, unlink the generated test data */
+		strcpy (p, stream_name);
+		unlink (path);
+		
+		p = g_stpcpy (path, datadir);
+		*p++ = G_DIR_SEPARATOR;
+		p = g_stpcpy (p, "output");
+		*p++ = G_DIR_SEPARATOR;
+		
+		rewinddir (outdir);
+		while ((dent = readdir (outdir))) {
+			if (!strncmp (dent->d_name, stream_name, strlen (stream_name))) {
+				strcpy (p, dent->d_name);
+				unlink (path);
+			}
+		}
+		
+		g_free (stream_name);
 	}
 	
 	closedir (outdir);

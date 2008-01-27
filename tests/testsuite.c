@@ -280,6 +280,12 @@ testsuite_check_passed (void)
 	total_tests++;
 }
 
+int
+testsuite_total_errors (void)
+{
+	return total_errors;
+}
+
 
 Exception *
 exception_new (const char *fmt, ...)
