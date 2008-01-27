@@ -140,65 +140,87 @@ g_mime_stream_buffer_finalize (GObject *object)
 static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
-	/* FIXME: this could be better optimized in the case where @len > the block size */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t n, nread = 0;
+	size_t offset;
 	
- again:
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
-		if ((n = MIN (buffer->buflen, len)) > 0) {
-			memcpy (buf + nread, buffer->buffer, n);
-			buffer->buflen -= n;
-			memmove (buffer->buffer, buffer->buffer + n, buffer->buflen);
-			nread += n;
-			len -= n;
-		}
-		
-		if (buffer->buflen == 0) {
-			/* buffer more data */
-			if ((n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) >= 0)
-				buffer->buflen = n;
+		while (len > 0) {
+			/* consume what we can from any pre-buffered data we have left */
+			if ((n = MIN (buffer->buflen, len)) > 0) {
+				memcpy (buf + nread, buffer->bufptr, n);
+				buffer->bufptr += n;
+				buffer->buflen -= n;
+				nread += n;
+				len -= n;
+			}
 			
-			if (n == -1 && nread == 0)
-				return -1;
+			if (len >= BLOCK_BUFFER_LEN) {
+				/* bypass intermediate buffer, read straight from disk */
+				buffer->bufptr = buffer->buffer;
+				if ((n = g_mime_stream_read (buffer->source, buf + nread, len)) > 0) {
+					nread += n;
+					len -= n;
+				}
+				
+				break;
+			} else if (len > 0) {
+				/* buffer more data */
+				if ((n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) > 0)
+					buffer->buflen = n;
+				
+				buffer->bufptr = buffer->buffer;
+			}
 			
-			if (len && buffer->buflen > 0)
-				goto again;
+			if (n == -1) {
+				if (nread == 0)
+					return -1;
+				
+				break;
+			}
 		}
 		break;
 	case GMIME_STREAM_BUFFER_CACHE_READ:
-		if ((n = MIN (buffer->bufend - buffer->bufptr, len)) > 0) {
-			memcpy (buf + nread, buffer->bufptr, n);
-			buffer->bufptr += n;
-			nread += n;
-			len -= n;
-		}
-		
-		if (len) {
-			/* we need to read more data... */
-			size_t offset = buffer->bufptr - buffer->buffer;
+		while (len > 0) {
+			if ((n = MIN (buffer->bufend - buffer->bufptr, len)) > 0) {
+				memcpy (buf + nread, buffer->bufptr, n);
+				buffer->bufptr += n;
+				nread += n;
+				len -= n;
+			}
 			
-			buffer->buflen = buffer->bufend - buffer->buffer + MAX (BUFFER_GROW_SIZE, len);
-			buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
-			buffer->bufend = buffer->buffer + buffer->buflen;
-			buffer->bufptr = buffer->buffer + offset;
-			
-			n = g_mime_stream_read (buffer->source, buffer->bufptr,
-						buffer->bufend - buffer->bufptr);
-			
-			buffer->bufend = n > 0 ? buffer->bufptr + n : buffer->bufptr;
-			
-			if (n > 0)
-				goto again;
+			if (len > 0) {
+				/* we need to read more data... */
+				offset = buffer->bufptr - buffer->buffer;
+				
+				buffer->buflen = buffer->bufend - buffer->buffer + MAX (BUFFER_GROW_SIZE, len);
+				buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
+				buffer->bufend = buffer->buffer + buffer->buflen;
+				buffer->bufptr = buffer->buffer + offset;
+				
+				n = g_mime_stream_read (buffer->source, buffer->bufptr,
+							buffer->bufend - buffer->bufptr);
+				
+				buffer->bufend = n > 0 ? buffer->bufptr + n : buffer->bufptr;
+				
+				if (n == -1) {
+					if (nread == 0)
+						return -1;
+					
+					break;
+				}
+			}
 		}
 		break;
 	default:
-		nread = g_mime_stream_read (buffer->source, buf, len);
+		if ((nread = g_mime_stream_read (buffer->source, buf, len)) == -1)
+			return -1;
+		
+		break;
 	}
 	
-	if (nread != -1)
-		stream->position += nread;
+	stream->position += nread;
 	
 	return nread;
 }
@@ -206,35 +228,70 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
-	/* FIXME: this could be better optimized for the case where @len > block size */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	ssize_t written = 0, n;
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
-	again:
-		n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, len);
-		memcpy (buffer->buffer + buffer->buflen, buf, n);
-		buffer->buflen += n;
-		written += n;
-		buf += n;
-		len -= n;
-		if (len) {
-			/* flush our buffer... */
-			if ((n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN)) != -1) {
-				memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
-				buffer->buflen -= n;
-				goto again;
-			} else
-				return -1;
+		while (len > 0) {
+			n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, len);
+			if (buffer->buflen > 0 || n < BLOCK_BUFFER_LEN) {
+				/* add the data to our pending write buffer */
+				memcpy (buffer->bufptr, buf, n);
+				buffer->bufptr += n;
+				buffer->buflen += n;
+				written += n;
+				buf += n;
+				len -= n;
+			}
+			
+			if (buffer->buflen == BLOCK_BUFFER_LEN) {
+				/* flush our buffer... */
+				n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
+				if (n == BLOCK_BUFFER_LEN) {
+					/* wrote everything... */
+					buffer->bufptr = buffer->buffer;
+					buffer->buflen = 0;
+				} else if (n > 0) {
+					/* still have buffered data left... */
+					memmove (buffer->buffer, buffer->buffer + n, BLOCK_BUFFER_LEN - n);
+					buffer->bufptr -= n;
+					buffer->buflen -= n;
+				} else if (n == -1) {
+					if (written == 0)
+						return -1;
+					
+					break;
+				}
+			}
+			
+			if (buffer->buflen == 0 && len >= BLOCK_BUFFER_LEN) {
+				while (len >= BLOCK_BUFFER_LEN) {
+					if ((n = g_mime_stream_write (buffer->source, buf, BLOCK_BUFFER_LEN)) == -1) {
+						if (written == 0)
+							return -1;
+						
+						break;
+					}
+					
+					written += n;
+					buf += n;
+					len -= n;
+				}
+				
+				if (len >= BLOCK_BUFFER_LEN)
+					break;
+			}
 		}
 		break;
 	default:
-		written = g_mime_stream_write (buffer->source, buf, len);
+		if ((written = g_mime_stream_write (buffer->source, buf, len)) == -1)
+			return -1;
+		
+		break;
 	}
 	
-	if (written != -1)
-		stream->position += written;
+	stream->position += written;
 	
 	return written;
 }
@@ -250,6 +307,7 @@ stream_flush (GMimeStream *stream)
 		written = g_mime_stream_write (buffer->source, buffer->buffer, buffer->buflen);
 		if (written > 0) {
 			memmove (buffer->buffer, buffer->buffer + written, buffer->buflen - written);
+			buffer->bufptr -= written;
 			buffer->buflen -= written;
 		}
 		
@@ -312,6 +370,7 @@ stream_reset (GMimeStream *stream)
 		if (g_mime_stream_reset (buffer->source) == -1)
 			return -1;
 		
+		buffer->bufptr = buffer->buffer;
 		buffer->buflen = 0;
 		break;
 	case GMIME_STREAM_BUFFER_CACHE_READ:
@@ -328,96 +387,172 @@ stream_reset (GMimeStream *stream)
 }
 
 static off_t
+stream_seek_block_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+{
+	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	off_t real;
+	
+	/* convert all seeks into a relative seek (aka SEEK_CUR) */
+	switch (whence) {
+	case GMIME_STREAM_SEEK_CUR:
+		/* no-op for now */
+		break;
+	case GMIME_STREAM_SEEK_SET:
+		if (stream->position == offset)
+			return stream->position;
+		
+		if (offset < 0)
+			return -1;
+		
+		offset -= stream->position;
+		break;
+	case GMIME_STREAM_SEEK_END:
+		if (stream->bound_end == -1) {
+			/* gotta do this the slow way */
+			if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_END) == -1))
+				return -1;
+			
+			stream->position = real;
+			
+			buffer->bufptr = buffer->buffer;
+			buffer->buflen = 0;
+			
+			return real;
+		}
+		
+		if (offset > 0)
+			return -1;
+		
+		offset += stream->bound_end;
+		break;
+	default:
+		return -1;
+	}
+	
+	/* now that offset is relative to our current position... */
+	
+	if (offset == 0)
+		return stream->position;
+	
+	if ((offset < 0 && offset >= (buffer->buffer - buffer->bufptr))
+	    || (offset > 0 && offset <= buffer->buflen)) {
+		/* the position is within our pre-buffered region */
+		stream->position += offset;
+		buffer->bufptr += offset;
+		buffer->buflen -= offset;
+		
+		return stream->position;
+	}
+	
+	/* we are now forced to do an actual seek */
+	offset += stream->position;
+	if ((real = g_mime_stream_seek (buffer->source, offset, GMIME_STREAM_SEEK_SET)) == -1)
+		return -1;
+	
+	stream->position = real;
+	
+	buffer->bufptr = buffer->buffer;
+	buffer->buflen = 0;
+	
+	return real;
+}
+
+static off_t
+stream_seek_cache_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+{
+	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	size_t len, total = 0;
+	off_t pos, real;
+	ssize_t nread;
+	
+	switch (whence) {
+	case GMIME_STREAM_SEEK_SET:
+		real = offset;
+		break;
+	case GMIME_STREAM_SEEK_CUR:
+		real = stream->position + offset;
+		break;
+	case GMIME_STREAM_SEEK_END:
+		if (stream->bound_end == -1) {
+			real = g_mime_stream_seek (buffer->source, offset, whence);
+			if (real == -1 || real < stream->bound_start)
+				return -1;
+		} else {
+			real = stream->bound_end + offset;
+			if (real > stream->bound_end || real < stream->bound_start)
+				return -1;
+		}
+	}
+	
+	if (real > stream->position) {
+		/* buffer any data between position and real */
+		len = real - (stream->bound_start + (buffer->bufend - buffer->bufptr));
+		
+		if (buffer->bufptr + len <= buffer->bufend) {
+			buffer->bufptr += len;
+			stream->position = real;
+			return real;
+		}
+		
+		pos = buffer->bufptr - buffer->buffer;
+		
+		buffer->buflen = buffer->bufend - buffer->buffer + len;
+		
+		buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
+		buffer->bufend = buffer->buffer + buffer->buflen;
+		buffer->bufptr = buffer->buffer + pos;
+		
+		do {
+			nread = g_mime_stream_read (buffer->source, buffer->bufptr,
+						    buffer->bufend - buffer->bufptr);
+			if (nread > 0) {
+				total += nread;
+				buffer->bufptr += nread;
+			}
+		} while (nread != -1);
+		
+		buffer->bufend = buffer->bufptr;
+		if (total < len) {
+			/* we failed to seek that far so reset our bufptr */
+			buffer->bufptr = buffer->buffer + pos;
+			return -1;
+		}
+	} else if (real < stream->bound_start) {
+		return -1;
+	} else {
+		/* seek our cache pointer backwards */
+		buffer->bufptr = buffer->buffer + (real - stream->bound_start);
+	}
+	
+	stream->position = real;
+	
+	return real;
+}
+
+static off_t
 stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 {
 	/* FIXME: set errno appropriately?? */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	off_t real = -1;
+	off_t real;
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
 		if (stream_flush (stream) != 0)
 			return -1;
-		/* fall through... */
-	case GMIME_STREAM_BUFFER_BLOCK_READ:
+		
 		if ((real = g_mime_stream_seek (buffer->source, offset, whence)) != -1) {
-			stream->position = buffer->source->position;
+			stream->position = real;
 			buffer->buflen = 0;
 		}
 		
 		return real;
-		break;
+	case GMIME_STREAM_BUFFER_BLOCK_READ:
+		return stream_seek_block_read (stream, offset, whence);
 	case GMIME_STREAM_BUFFER_CACHE_READ:
-		switch (whence) {
-		case GMIME_STREAM_SEEK_SET:
-			real = offset;
-			break;
-		case GMIME_STREAM_SEEK_CUR:
-			real = stream->position + offset;
-			break;
-		case GMIME_STREAM_SEEK_END:
-			if (stream->bound_end == -1) {
-				real = g_mime_stream_seek (buffer->source, offset, whence);
-				if (real == -1 || real < stream->bound_start)
-					return -1;
-			} else {
-				real = stream->bound_end + offset;
-				if (real > stream->bound_end || real < stream->bound_start)
-					return -1;
-			}
-		}
-		
-		if (real > stream->position) {
-			/* buffer any data between position and real */
-			size_t len, total = 0;
-			ssize_t nread;
-			off_t pos;
-			
-			len = real - (stream->bound_start + (buffer->bufend - buffer->bufptr));
-			
-			if (buffer->bufptr + len <= buffer->bufend) {
-				buffer->bufptr += len;
-				stream->position = real;
-				return real;
-			}
-			
-			pos = buffer->bufptr - buffer->buffer;
-			
-			buffer->buflen = buffer->bufend - buffer->buffer + len;
-			
-			buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
-			buffer->bufend = buffer->buffer + buffer->buflen;
-			buffer->bufptr = buffer->buffer + pos;
-			
-			do {
-				nread = g_mime_stream_read (buffer->source, buffer->bufptr,
-							    buffer->bufend - buffer->bufptr);
-				if (nread > 0) {
-					total += nread;
-					buffer->bufptr += nread;
-				}
-			} while (nread != -1);
-			
-			buffer->bufend = buffer->bufptr;
-			if (total < len) {
-				/* we failed to seek that far so reset our bufptr */
-				buffer->bufptr = buffer->buffer + pos;
-				return -1;
-			}
-		} else if (real < stream->bound_start) {
-			return -1;
-		} else {
-			/* seek our cache pointer backwards */
-			buffer->bufptr = buffer->buffer + (real - stream->bound_start);
-		}
-		
-		stream->position = real;
-		return real;
-		
-		break;
+		return stream_seek_cache_read (stream, offset, whence);
 	default:
 		return -1;
-		break;
 	}
 }
 
@@ -474,8 +609,8 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
 		buffer->buffer = g_malloc (BLOCK_BUFFER_LEN);
-		buffer->bufptr = NULL;
-		buffer->bufend = NULL;
+		buffer->bufend = buffer->buffer + BLOCK_BUFFER_LEN;
+		buffer->bufptr = buffer->buffer;
 		buffer->buflen = 0;
 		break;
 	default:
@@ -483,6 +618,7 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
 		buffer->bufptr = buffer->buffer;
 		buffer->bufend = buffer->buffer;
 		buffer->buflen = BUFFER_GROW_SIZE;
+		break;
 	}
 	
 	g_mime_stream_construct (GMIME_STREAM (buffer),
@@ -513,7 +649,7 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 {
 	register char *inptr, *outptr;
 	char *inend, *outend;
-	ssize_t nread;
+	ssize_t nread, n;
 	char c = '\0';
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
@@ -524,69 +660,69 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 	if (GMIME_IS_STREAM_BUFFER (stream)) {
 		GMimeStreamBuffer *buffer = GMIME_STREAM_BUFFER (stream);
 		
-	again:
 		switch (buffer->mode) {
 		case GMIME_STREAM_BUFFER_BLOCK_READ:
-			inptr = buffer->buffer;
-			inend = buffer->buffer + buffer->buflen;
-			while (outptr < outend && inptr < inend && *inptr != '\n')
-				c = *outptr++ = *inptr++;
-			
-			if (outptr < outend && inptr < inend && c != '\n')
-				c = *outptr++ = *inptr++;
-			
-			memmove (buffer->buffer, inptr, inend - inptr);
-			buffer->buflen = inend - inptr;
-			
-			if (c == '\n')
-				break;
-			
-			if (buffer->buflen == 0) {
-				/* buffer more data */
-				buffer->buflen = g_mime_stream_read (buffer->source, buffer->buffer,
-								     BLOCK_BUFFER_LEN);
-				if (buffer->buflen <= 0) {
-					buffer->buflen = 0;
-					break;
-				}
+			while (outptr < outend) {
+				inptr = buffer->bufptr;
+				inend = inptr + buffer->buflen;
 				
-				if (outptr < outend)
-					goto again;
+				while (outptr < outend && inptr < inend && *inptr != '\n')
+					c = *outptr++ = *inptr++;
+				
+				if (outptr < outend && inptr < inend && c != '\n')
+					c = *outptr++ = *inptr++;
+				
+				buffer->buflen = inend - inptr;
+				buffer->bufptr = inptr;
+				
+				if (c == '\n')
+					break;
+				
+				if (buffer->buflen == 0) {
+					/* buffer more data */
+					buffer->bufptr = buffer->buffer;
+					n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
+					if (n <= 0) {
+						buffer->buflen = 0;
+						break;
+					}
+					
+					buffer->buflen = n;
+				}
 			}
-			
 			break;
 		case GMIME_STREAM_BUFFER_CACHE_READ:
-			inptr = buffer->bufptr;
-			inend = buffer->bufend;
-			while (outptr < outend && inptr < inend && *inptr != '\n')
-				c = *outptr++ = *inptr++;
-			
-			if (outptr < outend && inptr < inend && c != '\n')
-				c = *outptr++ = *inptr++;
-			
-			buffer->bufptr = inptr;
-			
-			if (c == '\n')
-				break;
-			
-			if (inptr == inend && outptr < outend) {
-				/* buffer more data */
-				unsigned int offset = buffer->bufptr - buffer->buffer;
+			while (outptr < outend) {
+				inptr = buffer->bufptr;
+				inend = buffer->bufend;
+				while (outptr < outend && inptr < inend && *inptr != '\n')
+					c = *outptr++ = *inptr++;
 				
-				buffer->buflen = buffer->bufend - buffer->buffer + MAX (BUFFER_GROW_SIZE,
-											outend - outptr + 1);
-				buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
-				buffer->bufend = buffer->buffer + buffer->buflen;
-				buffer->bufptr = buffer->buffer + offset;
-				nread = g_mime_stream_read (buffer->source, buffer->bufptr,
-							    buffer->bufend - buffer->bufptr);
+				if (outptr < outend && inptr < inend && c != '\n')
+					c = *outptr++ = *inptr++;
 				
-				buffer->bufend = nread >= 0 ? buffer->bufptr + nread : buffer->bufptr;
+				buffer->bufptr = inptr;
 				
-				if (nread <= 0)
+				if (c == '\n')
 					break;
 				
-				goto again;
+				if (inptr == inend && outptr < outend) {
+					/* buffer more data */
+					unsigned int offset = buffer->bufptr - buffer->buffer;
+					
+					buffer->buflen = buffer->bufend - buffer->buffer +
+						MAX (BUFFER_GROW_SIZE, outend - outptr + 1);
+					buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
+					buffer->bufend = buffer->buffer + buffer->buflen;
+					buffer->bufptr = buffer->buffer + offset;
+					nread = g_mime_stream_read (buffer->source, buffer->bufptr,
+								    buffer->bufend - buffer->bufptr);
+					
+					buffer->bufend = nread >= 0 ? buffer->bufptr + nread : buffer->bufptr;
+					
+					if (nread <= 0)
+						break;
+				}
 			}
 			break;
 		default:
@@ -596,7 +732,6 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 		
 		/* increment our stream position pointer */
 		stream->position += (outptr - buf);
-		
 	} else {
 		/* ugh...do it the slow and painful way... */
 	slow_and_painful:
