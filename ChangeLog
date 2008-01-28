@@ -1,5 +1,11 @@
 2008-01-27  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-stream-buffer.c (stream_write): Don't modify the
+	passed-in arguments so that it makes debugging easier if there's
+	ever a bug.
+
+2008-01-27  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-stream-buffer.c (stream_read): Optimized the
 	BLOCK_READ code-path.
 	(stream_write): Optimized the BLOCK_WRITE code-path.

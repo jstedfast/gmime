@@ -229,25 +229,26 @@ static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	ssize_t written = 0, n;
+	GMimeStream *source = buffer->source;
+	ssize_t n, nwritten = 0;
+	size_t left = len;
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
-		while (len > 0) {
-			n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, len);
+		while (left > 0) {
+			n = MIN (BLOCK_BUFFER_LEN - buffer->buflen, left);
 			if (buffer->buflen > 0 || n < BLOCK_BUFFER_LEN) {
 				/* add the data to our pending write buffer */
-				memcpy (buffer->bufptr, buf, n);
+				memcpy (buffer->bufptr, buf + nwritten, n);
 				buffer->bufptr += n;
 				buffer->buflen += n;
-				written += n;
-				buf += n;
-				len -= n;
+				nwritten += n;
+				left -= n;
 			}
 			
 			if (buffer->buflen == BLOCK_BUFFER_LEN) {
 				/* flush our buffer... */
-				n = g_mime_stream_write (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
+				n = g_mime_stream_write (source, buffer->buffer, BLOCK_BUFFER_LEN);
 				if (n == BLOCK_BUFFER_LEN) {
 					/* wrote everything... */
 					buffer->bufptr = buffer->buffer;
@@ -258,42 +259,41 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 					buffer->bufptr -= n;
 					buffer->buflen -= n;
 				} else if (n == -1) {
-					if (written == 0)
+					if (nwritten == 0)
 						return -1;
 					
 					break;
 				}
 			}
 			
-			if (buffer->buflen == 0 && len >= BLOCK_BUFFER_LEN) {
-				while (len >= BLOCK_BUFFER_LEN) {
-					if ((n = g_mime_stream_write (buffer->source, buf, BLOCK_BUFFER_LEN)) == -1) {
-						if (written == 0)
+			if (buffer->buflen == 0 && left >= BLOCK_BUFFER_LEN) {
+				while (left >= BLOCK_BUFFER_LEN) {
+					if ((n = g_mime_stream_write (source, buf + nwritten, BLOCK_BUFFER_LEN)) == -1) {
+						if (nwritten == 0)
 							return -1;
 						
 						break;
 					}
 					
-					written += n;
-					buf += n;
-					len -= n;
+					nwritten += n;
+					left -= n;
 				}
 				
-				if (len >= BLOCK_BUFFER_LEN)
+				if (left >= BLOCK_BUFFER_LEN)
 					break;
 			}
 		}
 		break;
 	default:
-		if ((written = g_mime_stream_write (buffer->source, buf, len)) == -1)
+		if ((nwritten = g_mime_stream_write (source, buf, len)) == -1)
 			return -1;
 		
 		break;
 	}
 	
-	stream->position += written;
+	stream->position += nwritten;
 	
-	return written;
+	return nwritten;
 }
 
 static int
