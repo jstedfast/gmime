@@ -83,8 +83,6 @@ enum {
 };
 
 struct _GMimeParserPrivate {
-	int state;
-	
 	GMimeStream *stream;
 	
 	off_t offset;
@@ -115,7 +113,7 @@ struct _GMimeParserPrivate {
 	off_t headers_start;
 	off_t header_start;
 	
-	unsigned int unstep:26;
+	int state:26;
 	unsigned int midline:1;
 	unsigned int seekable:1;
 	unsigned int scan_from:1;
@@ -326,7 +324,6 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->headers_start = -1;
 	priv->header_start = -1;
 	
-	priv->unstep = 0;
 	priv->midline = FALSE;
 	priv->seekable = offset != -1;
 	
@@ -352,14 +349,6 @@ parser_close (GMimeParser *parser)
 	
 	while (priv->bounds)
 		parser_pop_boundary (parser);
-}
-
-static void
-parser_unstep (GMimeParser *parser)
-{
-	struct _GMimeParserPrivate *priv = parser->priv;
-	
-	priv->unstep++;
 }
 
 
@@ -947,30 +936,24 @@ parser_step (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	
-	if (!priv->unstep) {
-	step:
-		switch (priv->state) {
-		case GMIME_PARSER_STATE_INIT:
-			if (priv->scan_from)
-				priv->state = GMIME_PARSER_STATE_FROM;
-			else
-				priv->state = GMIME_PARSER_STATE_HEADERS;
-			goto step;
-			break;
-		case GMIME_PARSER_STATE_FROM:
-			parser_step_from (parser);
-			break;
-		case GMIME_PARSER_STATE_HEADERS:
-			parser_step_headers (parser);
-			break;
-		case GMIME_PARSER_STATE_ERROR:
-			break;
-		default:
-			g_assert_not_reached ();
-			break;
-		}
-	} else {
-		priv->unstep--;
+	switch (priv->state) {
+	case GMIME_PARSER_STATE_INIT:
+		if (priv->scan_from)
+			priv->state = GMIME_PARSER_STATE_FROM;
+		else
+			priv->state = GMIME_PARSER_STATE_HEADERS;
+		break;
+	case GMIME_PARSER_STATE_FROM:
+		parser_step_from (parser);
+		break;
+	case GMIME_PARSER_STATE_HEADERS:
+		parser_step_headers (parser);
+		break;
+	case GMIME_PARSER_STATE_ERROR:
+		break;
+	default:
+		g_assert_not_reached ();
+		break;
 	}
 	
 	return priv->state;
@@ -1215,9 +1198,9 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	GMimeObject *object;
 	
 	/* get the headers */
-	parser->priv->state = GMIME_PARSER_STATE_HEADERS;
-	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
-		;
+	priv->state = GMIME_PARSER_STATE_HEADERS;
+	if (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
+		return;
 	
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
@@ -1229,7 +1212,6 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
-	parser_unstep (parser);
 	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, found);
 	else
@@ -1249,8 +1231,8 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	GMimeObject *object;
 	
 	/* get the headers */
-	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
-		;
+	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
+		parser_step (parser);
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
 	header = priv->headers;
@@ -1353,7 +1335,6 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		if (!(content_type = parser_content_type (parser)))
 			content_type = g_mime_content_type_new ("text", "plain");
 		
-		parser_unstep (parser);
 		if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 			subpart = parser_construct_multipart (parser, content_type, &found);
 		else
@@ -1384,8 +1365,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	GMimeObject *object;
 	
 	/* get the headers */
-	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
-		;
+	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
+		parser_step (parser);
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
 	header = priv->headers;
@@ -1437,18 +1418,18 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 static GMimeObject *
 parser_construct_part (GMimeParser *parser)
 {
+	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentType *content_type;
 	GMimeObject *object;
 	int found;
 	
 	/* get the headers */
-	while (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
-		;
+	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
+		parser_step (parser);
 	
 	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
-	parser_unstep (parser);
 	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
 	else
@@ -1484,14 +1465,13 @@ parser_construct_message (GMimeParser *parser)
 	int content_length = -1;
 	GMimeMessage *message;
 	GMimeObject *object;
-	int state, found;
+	int found;
 	
 	/* get the headers (and, optionally, the from-line) */
-	while ((state = parser_step (parser)) != GMIME_PARSER_STATE_ERROR && state != GMIME_PARSER_STATE_HEADERS_END)
-		;
-	
-	if (state == GMIME_PARSER_STATE_ERROR)
-		return NULL;
+	while (priv->state != GMIME_PARSER_STATE_HEADERS_END) {
+		if (parser_step (parser) == -1)
+			return NULL;
+	}
 	
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
@@ -1512,7 +1492,6 @@ parser_construct_message (GMimeParser *parser)
 	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
 	
-	parser_unstep (parser);
 	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
 	else

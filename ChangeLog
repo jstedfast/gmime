@@ -1,3 +1,8 @@
+2008-01-31  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c: Removed the need for 'unstep' state
+	information.
+
 2008-01-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-buffer.c (stream_write): Don't modify the
