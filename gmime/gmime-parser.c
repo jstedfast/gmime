@@ -1194,11 +1194,10 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	
 	encoding = g_mime_part_get_encoding (mime_part);
 	
-	if (priv->persist_stream && priv->seekable) {
+	if (priv->persist_stream && priv->seekable)
 		stream = g_mime_stream_substream (priv->stream, start, end);
-	} else {
+	else
 		stream = g_mime_stream_mem_new_with_byte_array (content);
-	}
 	
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, encoding);
 	g_mime_part_set_content_object (mime_part, wrapper);
@@ -1231,11 +1230,10 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
-	if (g_mime_content_type_is_type (content_type, "multipart", "*")) {
+	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, found);
-	} else {
+	else
 		object = parser_construct_leaf_part (parser, content_type, found);
-	}
 	
 	message->mime_part = object;
 	
@@ -1273,11 +1271,10 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	/* skip empty line after headers */
 	parser_skip_line (parser);
 	
-	if (GMIME_IS_MESSAGE_PART (object)) {
+	if (GMIME_IS_MESSAGE_PART (object))
 		parser_scan_message_part (parser, (GMimeMessagePart *) object, found);
-	} else {
+	else
 		parser_scan_mime_part_content (parser, (GMimePart *) object, found);
-	}
 	
 	return object;
 }
@@ -1357,11 +1354,10 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 			content_type = g_mime_content_type_new ("text", "plain");
 		
 		parser_unstep (parser);
-		if (g_mime_content_type_is_type (content_type, "multipart", "*")) {
+		if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 			subpart = parser_construct_multipart (parser, content_type, &found);
-		} else {
+		else
 			subpart = parser_construct_leaf_part (parser, content_type, &found);
-		}
 		
 		g_mime_multipart_add_part (multipart, subpart);
 		g_object_unref (subpart);
@@ -1453,11 +1449,10 @@ parser_construct_part (GMimeParser *parser)
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
-	if (g_mime_content_type_is_type (content_type, "multipart", "*")) {
+	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
-	} else {
+	else
 		object = parser_construct_leaf_part (parser, content_type, &found);
-	}
 	
 	return object;
 }
@@ -1518,11 +1513,10 @@ parser_construct_message (GMimeParser *parser)
 		content_type = g_mime_content_type_new ("text", "plain");
 	
 	parser_unstep (parser);
-	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*")) {
+	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
-	} else {
+	else
 		object = parser_construct_leaf_part (parser, content_type, &found);
-	}
 	
 	message->mime_part = object;
 	
