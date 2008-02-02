@@ -55,8 +55,8 @@ static GStaticMutex lock = G_STATIC_MUTEX_INIT;
 #define UNLOCK()
 #endif /* G_THREADS_ENABLED */
 
-static iconv_t utf8_to_locale;
-static iconv_t locale_to_utf8;
+static iconv_t utf8_to_locale = (iconv_t) -1;
+static iconv_t locale_to_utf8 = (iconv_t) -1;
 
 
 static void
@@ -70,11 +70,15 @@ iconv_utils_init (void)
 	
 	g_mime_charset_map_init ();
 	
-	utf8 = g_mime_charset_iconv_name ("utf-8");
-	locale = g_mime_charset_iconv_name (g_mime_locale_charset ());
+	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
-	utf8_to_locale = iconv_open (locale, utf8);
-	locale_to_utf8 = iconv_open (utf8, locale);
+	if (!(locale = g_mime_locale_charset ()))
+		locale = "US-ASCII";
+	
+	if ((locale = g_mime_charset_iconv_name (locale))) {
+		utf8_to_locale = iconv_open (locale, utf8);
+		locale_to_utf8 = iconv_open (utf8, locale);
+	}
 	
 	initialized = TRUE;
 }

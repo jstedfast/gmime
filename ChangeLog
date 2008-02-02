@@ -1,3 +1,8 @@
+2008-02-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-iconv-utils.c (iconv_utils_init): Don't break if the
+	user's locale is unset (e.g. US-ASCII).
+
 2008-01-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c: Removed the need for 'unstep' state
