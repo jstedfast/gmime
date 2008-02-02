@@ -232,12 +232,14 @@ int main (int argc, char **argv)
 	int fd, i;
 	DIR *dir;
 	
+#ifdef ENABLE_MBOX_MATCH
+	if (g_mkdir ("./tmp", 0755) == -1 && errno != EEXIST)
+		return 0;
+#endif
+	
 	g_mime_init (0);
 	
 	testsuite_init (argc, argv);
-	
-	system ("/bin/rm -rf ./tmp");
-	system ("/bin/mkdir -p ./tmp");
 	
 	path = datadir;
 	for (i = 1; i < argc; i++) {
@@ -419,7 +421,11 @@ int main (int argc, char **argv)
 		goto exit;
 	}
 	
-exit:
+ exit:
+	
+#ifdef ENABLE_MBOX_MATCH
+	g_rmdir ("./tmp");
+#endif
 	
 	testsuite_end ();
 	
