@@ -30,6 +30,7 @@
 
 #include "gmime-parser.h"
 
+#include "gmime-table-private.h"
 #include "gmime-stream-mem.h"
 #include "gmime-message-part.h"
 #include "gmime-multipart.h"
@@ -80,6 +81,7 @@ enum {
 	GMIME_PARSER_STATE_HEADERS,
 	GMIME_PARSER_STATE_HEADERS_END,
 	GMIME_PARSER_STATE_CONTENT,
+	GMIME_PARSER_STATE_COMPLETE,
 };
 
 struct _GMimeParserPrivate {
@@ -782,49 +784,73 @@ parser_step_from (GMimeParser *parser)
 	priv->rawptr = priv->rawbuf;                                      \
 } G_STMT_END
 
-#define header_parse(parser, priv, hend) G_STMT_START {                   \
-	struct _header_raw *header;                                       \
-	register char *colon;                                             \
-	size_t hlen;                                                      \
-	                                                                  \
-	header = g_new (struct _header_raw, 1);                           \
-	header->next = NULL;                                              \
-	                                                                  \
-	*priv->headerptr = '\0';                                          \
-	colon = priv->headerbuf;                                          \
-	while (*colon && *colon != ':')                                   \
-		colon++;                                                  \
-	                                                                  \
-	hlen = colon - priv->headerbuf;                                   \
-	                                                                  \
-	header->name = g_strndup (priv->headerbuf, hlen);                 \
-	g_strstrip (header->name);                                        \
-	if (*colon != ':') {                                              \
-		w(g_warning ("Invalid header: %s", header->name));        \
-		header->value = header->name;                             \
-		header->name = g_strdup ("X-Invalid-Header");             \
-	} else {                                                          \
-		header->value = g_strdup (colon + 1);                     \
-		g_strstrip (header->value);                               \
-	}                                                                 \
-	header->offset = priv->header_start;                              \
-	                                                                  \
-	hend->next = header;                                              \
-	hend = header;                                                    \
-	                                                                  \
-	priv->headerleft += priv->headerptr - priv->headerbuf;            \
-	priv->headerptr = priv->headerbuf;                                \
-	                                                                  \
-	if (priv->have_regex &&                                           \
-	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))     \
-		priv->header_cb (parser, header->name, header->value,     \
-				 header->offset, priv->user_data);        \
-} G_STMT_END
+static void
+header_parse (GMimeParser *parser, struct _header_raw **tail)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	struct _header_raw *header;
+	register char *inptr, *end;
+	char *start;
+	size_t hlen;
+	
+	header = g_new (struct _header_raw, 1);
+	header->next = NULL;
+	
+	*priv->headerptr = '\0';
+	inptr = priv->headerbuf;
+	while (*inptr && *inptr != ':' && !is_type (*inptr, IS_SPACE | IS_CTRL))
+		inptr++;
+	
+	if (*inptr != ':') {
+		/* ignore invalid headers */
+		w(g_warning ("Invalid header at %lld: '%s'",
+			     (long long) priv->header_start,
+			     priv->headerbuf));
+		
+		priv->headerleft += priv->headerptr - priv->headerbuf;
+		priv->headerptr = priv->headerbuf;
+		
+		return;
+	}
+	
+	hlen = inptr - priv->headerbuf;
+	header->name = g_strndup (priv->headerbuf, hlen);
+	
+	/* skip over leading lwsp */
+	inptr++;
+	while (is_lwsp (*inptr))
+		inptr++;
+	
+	/* cut trailing lwsp */
+	start = inptr++;
+	end = inptr;
+	
+	while (*inptr) {
+		if (!is_lwsp (*inptr++))
+			end = inptr;
+	}
+	
+	header->value = g_strndup (start, end - start);
+	
+	header->offset = priv->header_start;
+	
+	(*tail)->next = header;
+	*tail = header;
+	
+	priv->headerleft += priv->headerptr - priv->headerbuf;
+	priv->headerptr = priv->headerbuf;
+	
+	if (priv->have_regex &&
+	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))
+		priv->header_cb (parser, header->name, header->value,
+				 header->offset, priv->user_data);
+}
 
 static int
 parser_step_headers (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	gboolean valid = TRUE, fieldname = TRUE;
 	struct _header_raw *hend;
 	register char *inptr;
 	char *start, *inend;
@@ -832,6 +858,8 @@ parser_step_headers (GMimeParser *parser)
 	size_t len;
 	
 	priv->midline = FALSE;
+	raw_header_reset (priv);
+	header_raw_clear (&priv->headers);
 	hend = (struct _header_raw *) &priv->headers;
 	priv->headers_start = parser_offset (priv, NULL);
 	priv->header_start = parser_offset (priv, NULL);
@@ -853,6 +881,48 @@ parser_step_headers (GMimeParser *parser)
 		
 		while (inptr < inend) {
 			start = inptr;
+			
+			if (fieldname && *inptr != '\n') {
+				/* scan and validate the field name */
+				if (*inptr != ':') {
+					*inend = ':';
+					while (*inptr != ':') {
+						if (is_type (*inptr, IS_SPACE | IS_CTRL)) {
+							valid = FALSE;
+							break;
+						}
+						
+						inptr++;
+					}
+					
+					if (inptr == inend) {
+						/* don't have the full field name */
+						left = inend - start;
+						priv->inptr = start;
+						goto refill;
+					}
+					
+					*inend = '\n';
+				} else if (*inptr == ':') {
+					valid = FALSE;
+				}
+				
+				if (!valid) {
+					if (priv->scan_from && (inptr - start) == 4
+					    && !strncmp (start, "From ", 5))
+						goto next_message;
+					
+					if (priv->headers != NULL || *inptr == ':') {
+						/* probably the start of the content,
+						 * a broken mailer didn't terminate the
+						 * headers with an empty line. *sigh* */
+						goto content_start;
+					}
+				}
+			}
+			
+			fieldname = FALSE;
+			
 			/* Note: see optimization comment [1] */
 			while (*inptr != '\n')
 				inptr++;
@@ -886,9 +956,11 @@ parser_step_headers (GMimeParser *parser)
 			if (*inptr == ' ' || *inptr == '\t') {
 				priv->midline = TRUE;
 			} else {
-				priv->midline = FALSE;
-				header_parse (parser, priv, hend);
+				header_parse (parser, &hend);
 				priv->header_start = parser_offset (priv, inptr);
+				priv->midline = FALSE;
+				fieldname = TRUE;
+				valid = TRUE;
 			}
 		}
 		
@@ -906,15 +978,27 @@ parser_step_headers (GMimeParser *parser)
  headers_end:
 	
 	if (priv->headerptr > priv->headerbuf)
-		header_parse (parser, priv, hend);
-	
-	*priv->rawptr = '\0';
+		header_parse (parser, &hend);
 	
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
-	
-	g_assert (inptr <= priv->inend);
-	
+	*priv->rawptr = '\0';
 	priv->inptr = inptr;
+	
+	return 0;
+	
+ next_message:
+	
+	priv->state = GMIME_PARSER_STATE_COMPLETE;
+	*priv->rawptr = '\0';
+	priv->inptr = start;
+	
+	return 0;
+	
+ content_start:
+	
+	priv->state = GMIME_PARSER_STATE_CONTENT;
+	*priv->rawptr = '\0';
+	priv->inptr = start;
 	
 	return 0;
 }
@@ -932,11 +1016,48 @@ parser_content_type (GMimeParser *parser)
 }
 
 static int
+parser_skip_line (GMimeParser *parser)
+{
+	struct _GMimeParserPrivate *priv = parser->priv;
+	register char *inptr;
+	char *inend;
+	int rv = 0;
+	
+	do {
+		inptr = priv->inptr;
+		inend = priv->inend;
+		*inend = '\n';
+		
+		while (*inptr != '\n')
+			inptr++;
+		
+		if (inptr < inend)
+			break;
+		
+		priv->inptr = inptr;
+		
+		if (parser_fill (parser) <= 0) {
+			inptr = priv->inptr;
+			rv = -1;
+			break;
+		}
+	} while (1);
+	
+	priv->midline = FALSE;
+	
+	priv->inptr = MIN (inptr + 1, priv->inend);
+	
+	return rv;
+}
+
+static int
 parser_step (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	
 	switch (priv->state) {
+	case GMIME_PARSER_STATE_ERROR:
+		break;
 	case GMIME_PARSER_STATE_INIT:
 		if (priv->scan_from)
 			priv->state = GMIME_PARSER_STATE_FROM;
@@ -949,7 +1070,15 @@ parser_step (GMimeParser *parser)
 	case GMIME_PARSER_STATE_HEADERS:
 		parser_step_headers (parser);
 		break;
-	case GMIME_PARSER_STATE_ERROR:
+	case GMIME_PARSER_STATE_HEADERS_END:
+		if (parser_skip_line (parser) == -1)
+			priv->state = GMIME_PARSER_STATE_ERROR;
+		else
+			priv->state = GMIME_PARSER_STATE_CONTENT;
+		break;
+	case GMIME_PARSER_STATE_CONTENT:
+		break;
+	case GMIME_PARSER_STATE_COMPLETE:
 		break;
 	default:
 		g_assert_not_reached ();
@@ -959,41 +1088,10 @@ parser_step (GMimeParser *parser)
 	return priv->state;
 }
 
-static void
-parser_skip_line (GMimeParser *parser)
-{
-	struct _GMimeParserPrivate *priv = parser->priv;
-	register char *inptr;
-	char *inend;
-	
-	inptr = priv->inptr;
-	
-	do {
-		if (parser_fill (parser) <= 0) {
-			inptr = priv->inptr;
-			break;
-		}
-		
-		inptr = priv->inptr;
-		inend = priv->inend;
-		*inend = '\n';
-		
-		while (*inptr != '\n')
-			inptr++;
-		
-		if (inptr < inend)
-			break;
-		
-		priv->inptr = inptr;
-	} while (1);
-	
-	priv->midline = FALSE;
-	
-	priv->inptr = MIN (inptr + 1, priv->inend);
-}
 
 enum {
-	FOUND_EOS          = 1,
+	FOUND_NOTHING,
+	FOUND_EOS,
 	FOUND_BOUNDARY,
 	FOUND_END_BOUNDARY
 };
@@ -1059,7 +1157,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
  **/
 
 static int
-parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
+parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register char *inptr;
@@ -1120,7 +1218,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 					goto refill;
 				}
 				
-				/* check for a boundary not ending in a \n */
+				/* check for a boundary not ending in a \n (EOF) */
 				if ((found = check_boundary (priv, start, len)))
 					goto boundary;
 			}
@@ -1157,7 +1255,9 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
 	off_t start, end;
-	guint crlf;
+	int crlf;
+	
+	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
 	if (priv->persist_stream && priv->seekable)
 		start = parser_offset (priv, NULL);
@@ -1197,10 +1297,16 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	GMimeMessage *message;
 	GMimeObject *object;
 	
+	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
+	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
-	if (parser_step (parser) != GMIME_PARSER_STATE_HEADERS_END)
+	if (parser_step (parser) == -1) {
+		/* Note: currently cannot happen because
+		 * parser_step_headers() never returns error */
+		*found = FOUND_EOS;
 		return;
+	}
 	
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
@@ -1230,11 +1336,10 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	struct _header_raw *header;
 	GMimeObject *object;
 	
-	/* get the headers */
-	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
-		parser_step (parser);
+	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
+	
 	header = priv->headers;
 	while (header) {
 		g_mime_object_add_header (object, header->name, header->value);
@@ -1250,8 +1355,13 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	g_mime_header_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
 	
-	/* skip empty line after headers */
-	parser_skip_line (parser);
+	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
+		/* skip empty line after headers */
+		if (parser_step (parser) == -1) {
+			*found = FOUND_EOS;
+			return object;
+		}
+	}
 	
 	if (GMIME_IS_MESSAGE_PART (object))
 		parser_scan_message_part (parser, (GMimeMessagePart *) object, found);
@@ -1290,9 +1400,8 @@ static int
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
 	GByteArray *buffer;
-	guint crlf;
+	int found, crlf;
 	char *face;
-	int found;
 	
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer, &crlf);
@@ -1318,19 +1427,42 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 #define parser_scan_multipart_preface(parser, multipart) parser_scan_multipart_face (parser, multipart, TRUE)
 #define parser_scan_multipart_postface(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
 
+static gboolean
+found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
+{
+	struct _boundary_stack *s = priv->bounds;
+	size_t len = end ? s->boundarylenfinal : s->boundarylen;
+	
+	return !strncmp (priv->inptr, s->boundary, len)
+		&& (priv->inptr[len] == '\n' || priv->inptr[len] == '\r');
+}
+
 static int
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 {
+	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeContentType *content_type;
 	GMimeObject *subpart;
 	int found;
 	
 	do {
 		/* skip over the boundary marker */
-		parser_skip_line (parser);
+		if (parser_skip_line (parser) == -1) {
+			found = FOUND_EOS;
+			break;
+		}
 		
 		/* get the headers */
-		parser_step_headers (parser);
+		priv->state = GMIME_PARSER_STATE_HEADERS;
+		if (parser_step (parser) == -1) {
+			found = FOUND_EOS;
+			break;
+		}
+		
+		if (priv->state == GMIME_PARSER_STATE_COMPLETE && priv->headers == NULL) {
+			found = FOUND_END_BOUNDARY;
+			break;
+		}
 		
 		if (!(content_type = parser_content_type (parser)))
 			content_type = g_mime_content_type_new ("text", "plain");
@@ -1342,17 +1474,9 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		
 		g_mime_multipart_add_part (multipart, subpart);
 		g_object_unref (subpart);
-	} while (found == FOUND_BOUNDARY);
+	} while (found == FOUND_BOUNDARY && found_immediate_boundary (priv, FALSE));
 	
 	return found;
-}
-
-static gboolean
-found_immediate_boundary (struct _GMimeParserPrivate *priv)
-{
-	struct _boundary_stack *s = priv->bounds;
-	
-	return !strncmp (s->boundary, priv->inptr, s->boundarylenfinal);
 }
 
 static GMimeObject *
@@ -1364,11 +1488,10 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	const char *boundary;
 	GMimeObject *object;
 	
-	/* get the headers */
-	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
-		parser_step (parser);
+	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
+	
 	header = priv->headers;
 	while (header) {
 		g_mime_object_add_header (object, header->name, header->value);
@@ -1386,8 +1509,13 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	multipart = (GMimeMultipart *) object;
 	
-	/* skip empty line after headers */
-	parser_skip_line (parser);
+	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
+		/* skip empty line after headers */
+		if (parser_step (parser) == -1) {
+			*found = FOUND_EOS;
+			return object;
+		}
+	}
 	
 	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
 	if (boundary) {
@@ -1398,7 +1526,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		if (*found == FOUND_BOUNDARY)
 			*found = parser_scan_multipart_subparts (parser, multipart);
 		
-		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv)) {
+		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv, TRUE)) {
 			/* eat end boundary */
 			parser_skip_line (parser);
 			parser_pop_boundary (parser);
@@ -1424,8 +1552,10 @@ parser_construct_part (GMimeParser *parser)
 	int found;
 	
 	/* get the headers */
-	while (priv->state != GMIME_PARSER_STATE_HEADERS_END)
-		parser_step (parser);
+	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
+		if (parser_step (parser) == -1)
+			return NULL;
+	}
 	
 	if (!(content_type = parser_content_type (parser)))
 		content_type = g_mime_content_type_new ("text", "plain");
@@ -1460,15 +1590,22 @@ static GMimeMessage *
 parser_construct_message (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	unsigned int content_length = ULONG_MAX;
 	GMimeContentType *content_type;
 	struct _header_raw *header;
-	int content_length = -1;
 	GMimeMessage *message;
 	GMimeObject *object;
+	char *endptr;
 	int found;
 	
-	/* get the headers (and, optionally, the from-line) */
-	while (priv->state != GMIME_PARSER_STATE_HEADERS_END) {
+	/* scan the from-line if we are parsing an mbox */
+	while (priv->state != GMIME_PARSER_STATE_HEADERS) {
+		if (parser_step (parser) == -1)
+			return NULL;
+	}
+	
+	/* parse the headers */
+	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
 		if (parser_step (parser) == -1)
 			return NULL;
 	}
@@ -1476,8 +1613,11 @@ parser_construct_message (GMimeParser *parser)
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		if (priv->respect_content_length && !g_ascii_strcasecmp (header->name, "Content-Length"))
-			content_length = strtoul (header->value, NULL, 10);
+		if (priv->respect_content_length && !g_ascii_strcasecmp (header->name, "Content-Length")) {
+			content_length = strtoul (header->value, &endptr, 10);
+			if (endptr == header->value)
+				content_length = ULONG_MAX;
+		}
 		
 		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
@@ -1485,7 +1625,7 @@ parser_construct_message (GMimeParser *parser)
 	
 	if (priv->scan_from) {
 		parser_push_boundary (parser, "From ");
-		if (priv->respect_content_length && content_length != -1)
+		if (priv->respect_content_length && content_length < ULONG_MAX)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
 	}
 	

@@ -1,5 +1,52 @@
 2008-02-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fix for https://bugzilla.novell.com/show_bug.cgi?id=333292 and
+	some other bugs I discovered while fixing it.
+
+	* gmime/gmime-parser.c (header_parse): Made an actual function
+	rather than a macro. Don't turn invalid headers into
+	X-Invalid-Headers, just ignore them. Instead of using
+	g_strstrip(), do our own lwsp trimming so we can do it before
+	malloc'ing - this helps reduce memory usage and memmove()
+	processing in g_strstrip().
+	(parser_step_headers): Validate the header field names as we go so
+	that we can stop when we come to an invalid header in some
+	cases. May now return with 3 states rather than only 1:
+	HEADERS_END (as before), CONTENT (suggesting we've reached body
+	content w/o a blank line to separate it from the headers), and
+	COMPLETE (which suggests that we've reached the next message's
+	From-line).
+	(parser_skip_line): Rearranged a bit: don't fill unless/until we
+	need to.
+	(parser_step): For HEADERS_END state, skip a line and increment
+	state to CONTENT. No-op for CONTENT and COMPLETE states.
+	(parser_scan_message_part): parser_step() can return more than
+	just HEADERS_END on 'success' when starting with HEADERS state, so
+	check for error rather than HEADERS_END.
+	(parser_construct_leaf_part): No need to parser_step() thru header
+	parsing, they should already be parsed by the time we get
+	here. Also, don't call parser_skip_line() directly to skip the
+	blank line between headers and content, use parser_step() to do
+	that for us.
+	(parser_construct_multipart): Same as parser_construct_leaf_part()
+	(found_immediate_boundary): Now takes an 'end' argument so callers
+	can request a check against an end-boundary vs a part boundary.
+	(parser_scan_multipart_subparts): Check for errors with
+	parser_skip_line(). Set HEADERS state and use parser_step() to
+	parse headers rather than calling parser_step_headers()
+	directly. If, after parsing the headers, we are at the next
+	message (aka COMPLETE state) and we have no header list, then
+	break out of our loop and pretend we've found an
+	end-boundary. After parsing the content of each MIME part, check
+	that the boundary we found is our own and not a parent's (if it
+	belongs to a parent, break out).
+	(parser_construct_part): Loop parser_step() until we're at any
+	state past the header block (>= HEADERS_END).
+	(parser_construct_message): Same idea. Also, do error checking for
+	decoded content_length value.
+
+2008-02-02  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-iconv-utils.c (iconv_utils_init): Don't break if the
 	user's locale is unset (e.g. US-ASCII).
 
