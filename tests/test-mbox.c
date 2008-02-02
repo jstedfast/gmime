@@ -42,6 +42,9 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 
+//#define ENABLE_MBOX_MATCH
+
+
 #define INDENT "   "
 
 static void
@@ -90,7 +93,7 @@ header_cb (GMimeParser *parser, const char *header, const char *value, off_t off
 }
 
 static void
-test_parser (GMimeParser *parser, GMimeStream *stream)
+test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
 	GMimeMessage *message;
 	off_t start, end;
@@ -104,15 +107,20 @@ test_parser (GMimeParser *parser, GMimeStream *stream)
 		
 		end = g_mime_parser_tell (parser);
 		
-		g_mime_stream_printf (stream, "message offsets: " OFF_T ", " OFF_T "\n", start, end);
+		g_mime_stream_printf (summary, "message offsets: " OFF_T ", " OFF_T "\n", start, end);
 		
 		from = g_mime_parser_get_from (parser);
-		g_mime_stream_printf (stream, "%s\n", from);
-		g_free (from);
+		g_mime_stream_printf (summary, "%s\n", from);
+		print_mime_struct (summary, message->mime_part, 0);
+		g_mime_stream_write (summary, "\n", 1);
 		
-		print_mime_struct (stream, message->mime_part, 0);
-		g_mime_stream_write (stream, "\n", 1);
+		if (mbox) {
+			g_mime_stream_printf (mbox, "%s%s\n", nmsg > 0 ? "\n" : "", from);
+			g_mime_object_write_to_stream ((GMimeObject *) message, mbox);
+		}
+		
 		g_object_unref (message);
+		g_free (from);
 		nmsg++;
 	}
 }
@@ -120,9 +128,10 @@ test_parser (GMimeParser *parser, GMimeStream *stream)
 static gboolean
 streams_match (GMimeStream *istream, GMimeStream *ostream)
 {
-	char buf[4096], dbuf[4096], errstr[1024];
+	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
 	size_t totalsize, totalread = 0;
 	size_t nread, size;
+	off_t offset = 0;
 	ssize_t n;
 	
 	v(fprintf (stdout, "Checking if streams match... "));
@@ -164,12 +173,29 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 			goto fail;
 		}
 		
-		if (memcmp (buf, dbuf, size) != 0) {
-			strcpy (errstr, "Error: content does not match\n");
+		bufend = buf + size;
+		dbufptr = dbuf;
+		bufptr = buf;
+		
+		while (bufptr < bufend) {
+			if (*bufptr != *dbufptr)
+				break;
+			
+			dbufptr++;
+			bufptr++;
+		}
+		
+		if (bufptr < bufend) {
+			sprintf (errstr, "Error: content does not match at offset " OFF_T "\n",
+				 offset + (bufptr - buf));
+			/*fprintf (stderr, "-->'%.*s'<--\nvs\n-->'%.*s'<--\n",
+			  bufend - bufptr, bufptr, bufend - bufptr, dbufptr);*/
 			goto fail;
 		} else {
 			d(fprintf (stderr, SIZE_T " bytes identical\n", size));
 		}
+		
+		offset += size;
 	}
 	
 	if (totalread < totalsize) {
@@ -197,8 +223,8 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 int main (int argc, char **argv)
 {
 	const char *datadir = "data/mbox";
-	char input[256], output[256], *p, *q;
-	GMimeStream *istream, *ostream;
+	char input[256], output[256], *tmp, *p, *q;
+	GMimeStream *istream, *ostream, *mstream, *pstream;
 	GMimeParser *parser;
 	struct dirent *dent;
 	const char *path;
@@ -209,6 +235,9 @@ int main (int argc, char **argv)
 	g_mime_init (0);
 	
 	testsuite_init (argc, argv);
+	
+	system ("/bin/rm -rf ./tmp");
+	system ("/bin/mkdir -p ./tmp");
 	
 	path = datadir;
 	for (i = 1; i < argc; i++) {
@@ -248,9 +277,12 @@ int main (int argc, char **argv)
 			strcpy (p, dent->d_name);
 			strcpy (q, dent->d_name);
 			
+			tmp = NULL;
 			parser = NULL;
 			istream = NULL;
 			ostream = NULL;
+			mstream = NULL;
+			pstream = NULL;
 			
 			testsuite_check ("%s", dent->d_name);
 			try {
@@ -268,29 +300,56 @@ int main (int argc, char **argv)
 				
 				ostream = g_mime_stream_fs_new (fd);
 				
+#ifdef ENABLE_MBOX_MATCH
+				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent->d_name);
+				if ((fd = g_mkstemp (tmp)) == -1) {
+					throw (exception_new ("could not open `%s': %s",
+							      tmp, strerror (errno)));
+				}
+				
+				mstream = g_mime_stream_fs_new (fd);
+#endif
+				
 				parser = g_mime_parser_new_with_stream (istream);
 				g_mime_parser_set_persist_stream (parser, TRUE);
 				g_mime_parser_set_scan_from (parser, TRUE);
-				g_object_unref (istream);
 				
 				if (strstr (dent->d_name, "content-length") != NULL)
 					g_mime_parser_set_respect_content_length (parser, TRUE);
 				
-				istream = g_mime_stream_mem_new ();
-				g_mime_parser_set_header_regex (parser, "^Subject$", header_cb, istream);
-				test_parser (parser, istream);
+				pstream = g_mime_stream_mem_new ();
+				g_mime_parser_set_header_regex (parser, "^Subject$", header_cb, pstream);
+				test_parser (parser, mstream, pstream);
 				
+#ifdef ENABLE_MBOX_MATCH
 				g_mime_stream_reset (istream);
-				if (!streams_match (istream, ostream))
-					throw (exception_new ("streams do not match for `%s'", dent->d_name));
+				g_mime_stream_reset (mstream);
+				if (!streams_match (istream, mstream))
+					throw (exception_new ("mboxes do not match for `%s'", dent->d_name));
+#endif
+				
+				g_mime_stream_reset (ostream);
+				g_mime_stream_reset (pstream);
+				if (!streams_match (ostream, pstream))
+					throw (exception_new ("summaries do not match for `%s'", dent->d_name));
 				
 				testsuite_check_passed ();
+				
+#ifdef ENABLE_MBOX_MATCH
+				unlink (tmp);
+#endif
 			} catch (ex) {
 				if (parser != NULL)
 					testsuite_check_failed ("%s: %s", dent->d_name, ex->message);
 				else
 					testsuite_check_warn ("%s: %s", dent->d_name, ex->message);
 			} finally;
+			
+			if (mstream != NULL)
+				g_object_unref (mstream);
+			
+			if (pstream != NULL)
+				g_object_unref (pstream);
 			
 			if (istream != NULL)
 				g_object_unref (istream);
@@ -300,6 +359,8 @@ int main (int argc, char **argv)
 			
 			if (parser != NULL)
 				g_object_unref (parser);
+			
+			g_free (tmp);
 		}
 		
 		closedir (dir);
@@ -311,20 +372,49 @@ int main (int argc, char **argv)
 		istream = g_mime_stream_fs_new (fd);
 		parser = g_mime_parser_new_with_stream (istream);
 		g_mime_parser_set_scan_from (parser, TRUE);
-		g_object_unref (istream);
+		
+#ifdef ENABLE_MBOX_MATCH
+		tmp = g_strdup ("./tmp/mbox-test.XXXXXX");
+		if ((fd = g_mkstemp (tmp)) == -1) {
+			g_object_unref (istream);
+			g_object_unref (parser);
+			g_free (tmp);
+			goto exit;
+		}
+		
+		mstream = g_mime_stream_fs_new (fd);
+#else
+		mstream = NULL;
+#endif
 		
 		ostream = g_mime_stream_fs_new (dup (1));
 		g_mime_parser_set_header_regex (parser, "^Subject$", header_cb, ostream);
 		
 		testsuite_check ("user-input mbox: `%s'", path);
 		try {
-			test_parser (parser, ostream);
+			test_parser (parser, mstream, ostream);
+			
+#ifdef ENABLE_MBOX_MATCH
+			g_mime_stream_reset (istream);
+			g_mime_stream_reset (mstream);
+			if (!streams_match (istream, mstream))
+				throw (exception_new ("`%s' does not match `%s'", tmp, path));
+			
+			unlink (tmp);
+#endif
+			
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("user-input mbox `%s': %s", path, ex->message);
 		} finally;
 		
+		g_object_unref (istream);
 		g_object_unref (ostream);
+		
+#ifdef ENABLE_MBOX_MATCH
+		g_object_unref (mstream);
+		g_free (tmp);
+#endif
 	} else {
 		goto exit;
 	}
