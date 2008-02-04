@@ -1,3 +1,7 @@
+2008-02-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-cat.c (stream_read): Removed an extra seek.
+
 2008-02-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

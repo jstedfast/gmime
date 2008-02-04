@@ -162,11 +162,6 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		return -1;
 	
 	do {
-		/* make sure our stream position is where it should be */
-		offset = current->stream->bound_start + current->position;
-		if (g_mime_stream_seek (current->stream, offset, GMIME_STREAM_SEEK_SET) == -1)
-			return -1;
-		
 		if ((nread = g_mime_stream_read (current->stream, buf, len)) <= 0) {
 			cat->current = current = current->next;
 			if (current != NULL) {
