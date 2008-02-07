@@ -2779,7 +2779,7 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 	
 	if (i > 0) {
 		while (i < 3) {
-			saved <<= 8 | 0;
+			saved <<= 8;
 			uufill++;
 			i++;
 		}
@@ -2788,8 +2788,8 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 			/* convert 3 normal bytes into 4 uuencoded bytes */
 			unsigned char b0, b1, b2;
 			
-			b0 = saved >> 16;
-			b1 = saved >> 8 & 0xff;
+			b0 = (saved >> 16) & 0xff;
+			b1 = (saved >> 8) & 0xff;
 			b2 = saved & 0xff;
 			
 			*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
@@ -2797,9 +2797,9 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 			*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
 			*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
 			
-			i = 0;
-			saved = 0;
 			uulen += 3;
+			saved = 0;
+			i = 0;
 		}
 	}
 	
@@ -2845,53 +2845,91 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
 	register unsigned char *outptr, *bufptr;
 	const register unsigned char *inptr;
 	const unsigned char *inend;
-	register guint32 saved;
+	unsigned char b0, b1, b2;
+	guint32 saved;
 	int uulen, i;
+	
+	if (inlen == 0)
+		return 0;
+	
+	inend = in + inlen;
+	outptr = out;
+	inptr = in;
 	
 	saved = *save;
 	i = *state & 0xff;
 	uulen = (*state >> 8) & 0xff;
 	
-	inptr = in;
-	inend = in + inlen;
+	if ((inlen + uulen) < 45) {
+		/* not enough input to write a full uuencoded line */
+		bufptr = uubuf + ((uulen / 3) * 4);
+	} else {
+		bufptr = outptr + 1;
+		
+		if (uulen > 0) {
+			/* copy the previous call's tmpbuf to outbuf */
+			memcpy (bufptr, uubuf, ((uulen / 3) * 4));
+			bufptr += ((uulen / 3) * 4);
+		}
+	}
 	
-	outptr = out;
-	
-	bufptr = uubuf + ((uulen / 3) * 4);
+	if (i == 2) {
+		b0 = (saved >> 8) & 0xff;
+		b1 = saved & 0xff;
+		saved = 0;
+		i = 0;
+		
+		goto skip2;
+	} else if (i == 1) {
+		if ((inptr + 2) < inend) {
+			b0 = saved & 0xff;
+			saved = 0;
+			i = 0;
+			
+			goto skip1;
+		}
+		
+		while (inptr < inend) {
+			saved = (saved << 8) | *inptr++;
+			i++;
+		}
+	}
 	
 	while (inptr < inend) {
-		while (uulen < 45 && inptr < inend) {
-			while (i < 3 && inptr < inend) {
-				saved = (saved << 8) | *inptr++;
-				i++;
-			}
+		while (uulen < 45 && (inptr + 3) <= inend) {
+			b0 = *inptr++;
+		skip1:
+			b1 = *inptr++;
+		skip2:
+			b2 = *inptr++;
 			
-			if (i == 3) {
-				/* convert 3 normal bytes into 4 uuencoded bytes */
-				unsigned char b0, b1, b2;
-				
-				b0 = saved >> 16;
-				b1 = saved >> 8 & 0xff;
-				b2 = saved & 0xff;
-				
-				*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
-				*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
-				*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
-				*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
-				
-				i = 0;
-				saved = 0;
-				uulen += 3;
-			}
+			/* convert 3 normal bytes into 4 uuencoded bytes */
+			*bufptr++ = GMIME_UUENCODE_CHAR ((b0 >> 2) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b0 << 4) | ((b1 >> 4) & 0xf)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (((b1 << 2) | ((b2 >> 6) & 0x3)) & 0x3f);
+			*bufptr++ = GMIME_UUENCODE_CHAR (b2 & 0x3f);
+			
+			uulen += 3;
 		}
 		
 		if (uulen >= 45) {
-			*outptr++ = GMIME_UUENCODE_CHAR (uulen & 0xff);
-			memcpy (outptr, uubuf, ((uulen / 3) * 4));
-			outptr += ((uulen / 3) * 4);
+			/* output the uu line length */
+			*outptr = GMIME_UUENCODE_CHAR (uulen & 0xff);
+			outptr += ((45 / 3) * 4) + 1;
+			
 			*outptr++ = '\n';
 			uulen = 0;
-			bufptr = uubuf;
+			
+			if ((inptr + 45) <= inend) {
+				/* we have enough input to output another full line */
+				bufptr = outptr + 1;
+			} else {
+				bufptr = uubuf;
+			}
+		} else {
+			/* not enough input to continue... */
+			for (i = 0, saved = 0; inptr < inend; i++)
+				saved = (saved << 8) | *inptr++;
 		}
 	}
 	
