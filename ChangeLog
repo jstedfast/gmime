@@ -1,3 +1,8 @@
+2008-02-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* src/uudecode.c (uudecode): Use g_strchomp() on the filename
+	parsed from the 'begin' line.
+
 2008-02-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* util/url-scanner.c (url_web_end): Handle IP address literals
@@ -15,7 +20,7 @@
 
 	* README: Bumped version
 
-	* configure.in: Bumped version to 2.2.15
+	* configure.in: Bumped version to 2.2.16
 
 2008-02-02  Jeffrey Stedfast  <fejj@novell.com>
 

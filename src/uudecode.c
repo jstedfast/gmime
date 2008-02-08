@@ -188,7 +188,7 @@ uudecode (const char *progname, int argc, char **argv)
 		}
 		
 		if (!outfile || outfile != optarg)
-			outfile = str->str;
+			outfile = g_strchomp (str->str);
 		
 		if ((fd = open (outfile, O_CREAT | O_TRUNC | O_WRONLY, mode)) == -1) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
