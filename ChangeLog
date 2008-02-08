@@ -1,3 +1,8 @@
+2008-02-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* util/url-scanner.c (url_web_end): Handle IP address literals
+	within []'s. Fixes bug #515088.
+
 2008-02-06  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_utils_uuencode_step): Optimized.

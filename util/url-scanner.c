@@ -316,17 +316,21 @@ gboolean
 url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *match)
 {
 	register const char *inptr = pos;
+	gboolean openbracket = FALSE;
 	gboolean passwd = FALSE;
 	const char *save;
 	char close_brace;
-	int port;
+	int port, val, n;
+	char *end;
 	
 	inptr += strlen (match->pattern);
 	
 	close_brace = url_stop_at_brace (in, match->um_so);
 	
 	/* find the end of the domain */
-	if (is_atom (*inptr)) {
+	if (is_digit (*inptr)) {
+		goto ip_literal2;
+	} else if (is_atom (*inptr)) {
 		/* might be a domain or user@domain */
 		save = inptr;
 		while (inptr < inend) {
@@ -347,7 +351,78 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 		else
 			inptr++;
 		
-		goto domain;
+		if (*inptr == '[') {
+			/* IPv6 (or possibly IPv4) address literal */
+			goto ip_literal;
+		}
+		
+		if (is_domain (*inptr)) {
+			/* domain name or IPv4 address */
+			goto domain;
+		}
+	} else if (*inptr == '[') {
+	ip_literal:
+		openbracket = TRUE;
+		inptr++;
+		
+		if (is_digit (*inptr)) {
+		ip_literal2:
+			/* could be IPv4 or IPv6 */
+			if ((val = strtol (inptr, &end, 10)) < 0)
+				return FALSE;
+		} else if ((*inptr >= 'A' && *inptr <= 'F') || (*inptr >= 'a' && *inptr <= 'f')) {
+			/* IPv6 address literals are in hex */
+			if ((val = strtol (inptr, &end, 16)) < 0 || *end != ':')
+				return FALSE;
+		} else if (*inptr == ':') {
+			/* IPv6 can start with a ':' */
+			end = (char *) inptr;
+		} else {
+			return FALSE;
+		}
+		
+		switch (*end) {
+		case '.': /* IPv4 address literal */
+			n = 1;
+			do {
+				if (val > 255 || *end != '.')
+					return FALSE;
+				
+				inptr = end + 1;
+				if ((val = strtol (inptr, &end, 10)) < 0)
+					return FALSE;
+				
+				n++;
+			} while (n < 4);
+			
+			if (val > 255 || n < 4 || (openbracket && *end != ']'))
+				return FALSE;
+			
+			inptr = end + 1;
+			break;
+		case ':': /* IPv6 address literal */
+			if (!openbracket)
+				return FALSE;
+			
+			do {
+				if (end[1] != ':') {
+					inptr = end + 1;
+					if ((val = strtol (inptr, &end, 16)) < 0)
+						return FALSE;
+				} else {
+					inptr = end;
+					end++;
+				}
+			} while (end > inptr && *end == ':');
+			
+			if (*end != ']')
+				return FALSE;
+			
+			inptr = end + 1;
+			break;
+		default:
+			return FALSE;
+		}
 	} else if (is_domain (*inptr)) {
 	domain:
 		while (inptr < inend) {
