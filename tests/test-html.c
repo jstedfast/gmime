@@ -34,14 +34,14 @@ int main (int argc, char **argv)
 	fstream = g_mime_stream_file_new (stdout);
 	ostream = g_mime_stream_filter_new_with_stream (fstream);
 	g_mime_stream_unref (fstream);
-	/*html = g_mime_filter_html_new (GMIME_FILTER_HTML_CONVERT_NL |
+	html = g_mime_filter_html_new (GMIME_FILTER_HTML_CONVERT_NL |
 				       GMIME_FILTER_HTML_CONVERT_SPACES |
 				       GMIME_FILTER_HTML_CONVERT_URLS |
 				       GMIME_FILTER_HTML_MARK_CITATION |
 				       GMIME_FILTER_HTML_CONVERT_ADDRESSES |
 				       GMIME_FILTER_HTML_ESCAPE_8BIT |
-				       GMIME_FILTER_HTML_CITE, 0);*/
-	html = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ESCAPE);
+				       GMIME_FILTER_HTML_CITE, 0);
+	/*html = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ESCAPE);*/
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (ostream), html);
 	g_object_unref (html);
 	
