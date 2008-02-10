@@ -1,4 +1,4 @@
-                            GMime, version 2.2.16
+                            GMime, version 2.2.17
                    by Jeffrey Stedfast <fejj@gnome.org>
 
 
@@ -63,7 +63,7 @@ Cryptography related RFCs:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2007 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2008 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -99,6 +99,8 @@ OBTAINING GMIME
 
 Sources to GMime may be obtained from:
   http://spruce.sourceforge.net/gmime/sources/
+or
+  ftp://ftp.gnome.org/pub/GNOME/sources/gmime/
 
 Information regarding GMime may be obtained from the Spruce home page:
   http://spruce.sourceforge.net/gmime/

@@ -34,6 +34,7 @@
  * @short_description: Initialization, shutdown and version-check routines
  * @see_also:
  *
+ * Initialization, shutdown, and version-check functions.
  **/
 
 

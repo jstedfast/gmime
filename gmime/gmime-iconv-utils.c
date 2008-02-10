@@ -43,6 +43,7 @@
  * @short_description: High-level routines for converting text from one charset to another
  * @see_also:
  *
+ * Charset conversion utility functions.
  **/
 
 

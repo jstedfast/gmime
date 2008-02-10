@@ -65,6 +65,7 @@
  * @short_description: Charset helper functions
  * @see_also:
  *
+ * Charset utility functions.
  **/
 
 

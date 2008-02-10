@@ -26,6 +26,17 @@
 #include "gmime-error.h"
 #include "gmime-session-simple.h"
 
+
+/**
+ * SECTION: gmime-session-simple
+ * @title: GMimeSessionSimple
+ * @short_description: A Simple Session
+ * @see_also: #GMimeSession
+ *
+ * A #GMimeSessionSimple can be used for simple applications that
+ * don't care to implement their own #GMimeSession.
+ **/
+
 static void g_mime_session_simple_class_init (GMimeSessionSimpleClass *klass);
 static void g_mime_session_simple_init (GMimeSessionSimple *session, GMimeSessionSimpleClass *klass);
 static void g_mime_session_simple_finalize (GObject *object);

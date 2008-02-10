@@ -27,6 +27,16 @@
 #include "gmime-error.h"
 
 
+/**
+ * SECTION: gmime-session
+ * @title: GMimeSession
+ * @short_description: Session interface
+ * @see_also: #GMimeCipherContext
+ *
+ * A #GMimeSession provides a means for lower-levels of GMime to query
+ * for user-input through the application.
+ **/
+
 static void g_mime_session_class_init (GMimeSessionClass *klass);
 static void g_mime_session_init (GMimeSession *session, GMimeSessionClass *klass);
 static void g_mime_session_finalize (GObject *object);

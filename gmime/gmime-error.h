@@ -43,7 +43,7 @@ extern GQuark gmime_error_quark;
  * Decides if an error is a system error (aka errno value) vs. a GMime
  * error.
  *
- * Meant to be used with GError::code
+ * Meant to be used with #GError::code
  **/
 #define GMIME_ERROR_IS_SYSTEM(error) ((error) > 0)
 
