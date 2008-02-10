@@ -2066,7 +2066,7 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 	
 	switch (g_mime_utils_best_encoding ((const unsigned char *) word, len)) {
 	case GMIME_PART_ENCODING_BASE64:
-		enclen = BASE64_ENCODE_LEN (len);
+		enclen = GMIME_BASE64_ENCODE_LEN (len);
 		encoded = g_alloca (enclen + 1);
 		
 		encoding = 'b';
@@ -2089,7 +2089,7 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 		
 		break;
 	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		enclen = QP_ENCODE_LEN (len);
+		enclen = GMIME_QP_ENCODE_LEN (len);
 		encoded = g_alloca (enclen + 1);
 		
 		encoding = 'q';
@@ -2613,7 +2613,7 @@ g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
 	
-	if (inlen <= 0)
+	if (inlen == 0)
 		return 0;
 	
 	inptr = in;

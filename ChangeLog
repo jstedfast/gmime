@@ -1,3 +1,15 @@
+2008-02-09  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-filter-basic.c (filter_filter): Use the new macros
+	defined below.
+
+	* gmime/gmime-utils.c (rfc2047_encode_word): Use the new macros.
+
+	* gmime/gmime-utils.h: Added more accurate encoding-length macros
+	for base64, quoted-printable, and uuencode which are try to
+	minimize over-calculating the amount of output data that we
+	need. Also namespaced them.
+
 2008-02-08  Jeffrey Stedfast  <fejj@novell.com>
 
 	* src/uudecode.c (uudecode): Use g_strchomp() on the filename
