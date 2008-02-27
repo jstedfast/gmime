@@ -154,6 +154,21 @@ iconv_cache_node_expire (Cache *cache, CacheNode *node)
 }
 
 
+static void
+iconv_open_node_free (gpointer key, gpointer value, gpointer user_data)
+{
+	iconv_t cd = (iconv_t) key;
+	IconvCacheNode *node;
+	
+	node = (IconvCacheNode *) cache_node_lookup (iconv_cache, value, FALSE);
+	g_assert (node);
+	
+	if (cd != node->cd) {
+		node->refcount--;
+		iconv_close (cd);
+	}
+}
+
 
 /**
  * g_mime_iconv_shutdown:
@@ -173,11 +188,13 @@ g_mime_iconv_shutdown (void)
 	fprintf (stderr, "The following %d iconv cache buckets are still open:\n", iconv_cache->size);
 	shutdown = 1;
 #endif
-	cache_free (iconv_cache);
-	iconv_cache = NULL;
 	
+	g_hash_table_foreach (iconv_open_hash, iconv_open_node_free, NULL);
 	g_hash_table_destroy (iconv_open_hash);
 	iconv_open_hash = NULL;
+	
+	cache_free (iconv_cache);
+	iconv_cache = NULL;
 }
 
 

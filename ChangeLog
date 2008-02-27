@@ -1196,7 +1196,7 @@
 
 	* README: Updated
 
-	* configure.in: Bumped version to 2.1.5
+	* configure.in: Bumped version to 2.1.15
 
 	* gmime/gmime-parser.c (parser_step_headers): Don't check
 	inptr[-1] unless inptr > start
