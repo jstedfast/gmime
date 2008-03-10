@@ -905,8 +905,6 @@ g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *
 void
 g_mime_set_user_charsets (const char **charsets)
 {
-	int i, n = 0;
-	
 	if (user_charsets)
 		g_strfreev (user_charsets);
 	

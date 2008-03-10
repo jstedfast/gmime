@@ -1,3 +1,8 @@
+2008-03-10  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_scan_mime_part_content): Don't let
+	size go negative.
+
 2008-02-10  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

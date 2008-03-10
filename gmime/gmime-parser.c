@@ -1269,8 +1269,10 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 		/* last '\n' belongs to the boundary */
 		if (priv->persist_stream && priv->seekable)
 			end = parser_offset (priv, NULL) - crlf;
+		else if (content->len > crlf)
+			g_byte_array_set_size (content, content->len - crlf);
 		else
-			g_byte_array_set_size (content, MAX (content->len - crlf, 0));
+			g_byte_array_set_size (content, 0);
 	} else if (priv->persist_stream && priv->seekable) {
 		end = parser_offset (priv, NULL);
 	}

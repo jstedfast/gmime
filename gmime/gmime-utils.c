@@ -1549,8 +1549,8 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 	const char **charsets, **user_charsets, *locale, *best;
 	size_t outleft, outlen, min, ninval;
 	unsigned int included = 0;
-	char *out, *outbuf;
 	iconv_t cd;
+	char *out;
 	int i = 0;
 	
 	g_return_val_if_fail (text != NULL, NULL);
@@ -1774,7 +1774,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	len = declen;
 	buf = g_malloc (len + 1);
 	
-	charset_convert (cd, decoded, declen, &buf, &len, &ninval);
+	charset_convert (cd, (char *) decoded, declen, &buf, &len, &ninval);
 	
 	g_mime_iconv_close (cd);
 	
@@ -2281,7 +2281,6 @@ static void
 rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
 {
 	struct _rfc822_word *word, *next, *words = *wordsp;
-	gboolean rfc2047_words = FALSE;
 	
 	/* first pass: merge qstrings with adjacent qstrings and encwords with adjacent encwords */
 	word = words;
