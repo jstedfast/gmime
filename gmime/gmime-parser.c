@@ -1592,7 +1592,7 @@ static GMimeMessage *
 parser_construct_message (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	unsigned int content_length = ULONG_MAX;
+	unsigned long content_length = ULONG_MAX;
 	GMimeContentType *content_type;
 	struct _header_raw *header;
 	GMimeMessage *message;

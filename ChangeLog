@@ -1,3 +1,9 @@
+2008-03-13  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_construct_message): Changed
+	content_length to an unsigned long rather than unsigned int, fixes
+	bug #521872. Thanks to Pawel Salek for this fix.
+
 2008-03-10  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c (parser_scan_mime_part_content): Don't let
