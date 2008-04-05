@@ -793,9 +793,6 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 	char *start;
 	size_t hlen;
 	
-	header = g_new (struct _header_raw, 1);
-	header->next = NULL;
-	
 	*priv->headerptr = '\0';
 	inptr = priv->headerbuf;
 	while (*inptr && *inptr != ':' && !is_type (*inptr, IS_SPACE | IS_CTRL))
@@ -814,6 +811,10 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 	}
 	
 	hlen = inptr - priv->headerbuf;
+	
+	header = g_new (struct _header_raw, 1);
+	header->next = NULL;
+	
 	header->name = g_strndup (priv->headerbuf, hlen);
 	
 	/* skip over leading lwsp */
