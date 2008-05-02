@@ -851,7 +851,7 @@ static int
 parser_step_headers (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	gboolean valid = TRUE, fieldname = TRUE;
+	gboolean eoln, valid = TRUE, fieldname = TRUE;
 	struct _header_raw *hend;
 	register char *inptr;
 	char *start, *inend;
@@ -883,10 +883,13 @@ parser_step_headers (GMimeParser *parser)
 		while (inptr < inend) {
 			start = inptr;
 			
-			if (fieldname && *inptr != '\n') {
+			eoln = inptr[0] == '\n' || (inptr[0] == '\r' && inptr[1] == '\n');
+			if (fieldname && !eoln) {
 				/* scan and validate the field name */
 				if (*inptr != ':') {
+					/* Note: see optimization comment [1] */
 					*inend = ':';
+					
 					while (*inptr != ':') {
 						if (is_type (*inptr, IS_SPACE | IS_CTRL)) {
 							valid = FALSE;
@@ -903,6 +906,7 @@ parser_step_headers (GMimeParser *parser)
 						goto refill;
 					}
 					
+					/* Note: see optimization comment [1] */
 					*inend = '\n';
 				} else if (*inptr == ':') {
 					valid = FALSE;
@@ -941,12 +945,12 @@ parser_step_headers (GMimeParser *parser)
 				goto refill;
 			}
 			
-			/* check to see if we've reached the end of the headers */
-			if (!priv->midline && (inptr == start || (len == 1 && *start == '\r')))
-				goto headers_end;
-			
 			if (inptr > start && inptr[-1] == '\r')
 				len--;
+			
+			/* check to see if we've reached the end of the headers */
+			if (!priv->midline && len == 0)
+				goto headers_end;
 			
 			header_append (priv, start, len);
 			
