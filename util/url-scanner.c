@@ -24,6 +24,7 @@
 #endif
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "gtrie.h"
@@ -377,6 +378,7 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 		} else if (*inptr == ':') {
 			/* IPv6 can start with a ':' */
 			end = (char *) inptr;
+			val = 256; /* invalid value */
 		} else {
 			return FALSE;
 		}

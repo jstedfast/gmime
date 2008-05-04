@@ -482,6 +482,9 @@ stream_seek_cache_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whenc
 			if (real > stream->bound_end || real < stream->bound_start)
 				return -1;
 		}
+		break;
+	default:
+		return -1;
 	}
 	
 	if (real > stream->position) {

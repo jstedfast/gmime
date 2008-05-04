@@ -132,7 +132,7 @@ AC_ARG_ENABLE(profiling,
               AC_HELP_STRING([--enable-profiling],[enable profiling compile flags [[default=no]]]),,
               enable_profiling=no)
 if test "x$enable_profiling" = "xyes"; then
-#  CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
+# CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
   CFLAGS="-O0 -g -pg"
 fi
 
@@ -533,11 +533,11 @@ Configuration:
   Install prefix:       ${prefix}
   Compiler:             ${CC}
 
-  Profiling enabled:    ${enable_profile}
+  Profiling enabled:    ${enable_profiling}
 
   Large file support:   ${enable_largefile}
   rfc2047 workarounds:  ${enable_rfc2047_workarounds}
-  Warning output:       ${enable_warnings}
+  Console warnings:     ${enable_warnings}
 
   Mono bindings:        ${enable_mono}
 "

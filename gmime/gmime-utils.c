@@ -2075,7 +2075,7 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 		encoded[pos] = '\0';
 		
 		/* remove \n chars as headers need to be wrapped differently */
-		if (G_UNLIKELY (inptr = strchr ((char *) encoded, '\n'))) {
+		if (G_UNLIKELY ((inptr = strchr ((char *) encoded, '\n')))) {
 			outptr = inptr++;
 			while (G_LIKELY (*inptr)) {
 				if (G_LIKELY (*inptr != '\n'))

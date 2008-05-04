@@ -43,7 +43,7 @@
  * @short_description: MIME multiparts
  * @see_also:
  *
- * A #GMimeMultipart represents all multipart/* MIME container parts.
+ * A #GMimeMultipart represents all multipart MIME container parts.
  **/
 
 
@@ -245,7 +245,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	/* make sure a boundary is set unless we are writing out a raw
 	 * header (in which case it should already be set... or if
-	 * not, then it's a broken multipart/* and so we don't want to
+	 * not, then it's a broken multipart and so we don't want to
 	 * alter it or we'll completely break the output) */
 	if (!multipart->boundary && !g_mime_header_has_raw (object->headers))
 		g_mime_multipart_set_boundary (multipart, NULL);
