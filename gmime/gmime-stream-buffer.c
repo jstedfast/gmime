@@ -173,9 +173,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 				buffer->bufptr = buffer->buffer;
 			}
 			
-			if (n == -1) {
+			if (n <= 0) {
 				if (nread == 0)
-					return -1;
+					return n;
 				
 				break;
 			}
@@ -204,9 +204,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 				
 				buffer->bufend = n > 0 ? buffer->bufptr + n : buffer->bufptr;
 				
-				if (n == -1) {
+				if (n <= 0) {
 					if (nread == 0)
-						return -1;
+						return n;
 					
 					break;
 				}
@@ -685,10 +685,8 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 					/* buffer more data */
 					buffer->bufptr = buffer->buffer;
 					n = g_mime_stream_read (buffer->source, buffer->buffer, BLOCK_BUFFER_LEN);
-					if (n <= 0) {
-						buffer->buflen = 0;
+					if (n <= 0)
 						break;
-					}
 					
 					buffer->buflen = n;
 				}
@@ -741,10 +739,6 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 		while (outptr < outend && c != '\n' && (nread = g_mime_stream_read (stream, &c, 1)) == 1)
 			*outptr++ = c;
 	}
-	
-	/* strip \r */
-	if (c == '\n' && outptr > buf && outptr[-1] == '\r')
-		outptr--;
 	
 	if (outptr <= outend) {
 		/* this should always be true unless @max == 0 */

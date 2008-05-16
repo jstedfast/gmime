@@ -129,7 +129,7 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	ssize_t nread;
+	size_t nread;
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return -1;
@@ -143,14 +143,14 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	if ((nread = fread (buf, 1, len, fstream->fp)) > 0)
 		stream->position += nread;
 	
-	return nread;
+	return (ssize_t) nread;
 }
 
 static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	ssize_t nwritten;
+	size_t nwritten;
 	
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
 		return -1;
@@ -164,7 +164,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	if ((nwritten = fwrite (buf, 1, len, fstream->fp)) > 0)
 		stream->position += nwritten;
 	
-	return nwritten;
+	return (ssize_t) nwritten;
 }
 
 static int
