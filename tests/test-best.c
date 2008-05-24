@@ -42,7 +42,7 @@ int main (int argc, char **argv)
 	
 	stream = g_mime_stream_fs_new (fd);
 	istream = g_mime_stream_filter_new_with_stream (stream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	best = (GMimeFilterBest *) g_mime_filter_best_new (GMIME_FILTER_BEST_CHARSET |
 							   GMIME_FILTER_BEST_ENCODING);
 	
@@ -65,8 +65,8 @@ int main (int argc, char **argv)
 		g_mime_part_encoding_to_string (
 			g_mime_filter_best_encoding (best, GMIME_BEST_ENCODING_BINARY)));
 	
-	g_mime_stream_unref (istream);
-	g_mime_stream_unref (null);
+	g_object_unref (istream);
+	g_object_unref (null);
 	
 	return 0;
 }

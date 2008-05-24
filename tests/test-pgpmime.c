@@ -239,7 +239,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	g_mime_stream_reset (stream);
 	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_DEFAULT);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	g_mime_part_set_content_object (part, content);
 	g_object_unref (content);
@@ -278,7 +278,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	message = g_mime_parser_construct_message (parser);
 	g_object_unref (parser);

@@ -175,7 +175,7 @@ test_stream_buffer_gets (const char *filename)
 		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
 					ex->message);
 	} finally {
-		g_mime_stream_unref (buffered);
+		g_object_unref (buffered);
 	}
 	
 	testsuite_check ("GMimeStreamBuffer::cache gets");
@@ -188,10 +188,10 @@ test_stream_buffer_gets (const char *filename)
 		testsuite_check_failed ("GMimeStreamBuffer::block gets() failed: %s",
 					ex->message);
 	} finally {
-		g_mime_stream_unref (buffered);
+		g_object_unref (buffered);
 	}
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 }
 
 
@@ -229,8 +229,8 @@ test_stream_mem (const char *filename)
 					ex->message);
 	} finally;
 	
-	g_mime_stream_unref (fstream);
-	g_mime_stream_unref (stream);
+	g_object_unref (fstream);
+	g_object_unref (stream);
 	
 	testsuite_end ();
 }
