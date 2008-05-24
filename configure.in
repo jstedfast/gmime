@@ -11,8 +11,8 @@ AM_CONFIG_HEADER(config.h)
 # glib_libs:    libs to store in gmime-config
 
 GMIME_MAJOR_VERSION=2
-GMIME_MINOR_VERSION=2
-GMIME_MICRO_VERSION=21
+GMIME_MINOR_VERSION=3
+GMIME_MICRO_VERSION=0
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -497,8 +497,8 @@ LIBS="$LIBS $EXTRA_LIBS"
 AC_SUBST(LIBS)
 
 GMIME_LIBDIR="-L${libdir}"
-GMIME_INCLUDEDIR="-I${includedir}/gmime-2.0"
-GMIME_LIBS="-lgmime-2.0 $EXTRA_LIBS"
+GMIME_INCLUDEDIR="-I${includedir}/gmime-2.4"
+GMIME_LIBS="-lgmime-2.4 $EXTRA_LIBS"
 
 AC_SUBST(GMIME_LIBS)
 AC_SUBST(GMIME_LIBDIR)
@@ -520,8 +520,7 @@ mono/gmime-sharp.dll.config
 mono/gmime-sharp.pc
 src/Makefile
 tests/Makefile
-gmime-config
-gmime-2.0.pc
+gmime-2.4.pc
 gmime.spec
 )
 

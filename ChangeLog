@@ -1,5 +1,19 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* branched: now begins 2.3.x development
+
+	* gmime-2.4.pc.in: Renamed from gmime-2.0.pc.in.
+
+	* gmime-config.in: Removed.
+
+	* gmimeConf.sh.in: Removed.
+
+	* configure.in: Updated.
+
+	* */Makefile.am: Rename lib name to gmime-2.4.
+
+2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* mono/StreamWrapper.cs: Allow seeking to position 0 for
 	GMimeStreamFilter. Thanks to Debajyoti Bera for this patch.
 

@@ -10,11 +10,11 @@ noinst_PROGRAMS = basic-example imap-example
 
 DEPS = 						\
 	$(top_builddir)/util/libutil.la		\
-	$(top_builddir)/gmime/libgmime-2.0.la
+	$(top_builddir)/gmime/libgmime-2.4.la
 
 LDADDS = 					\
 	$(top_builddir)/util/libutil.la		\
-	$(top_builddir)/gmime/libgmime-2.0.la 	\
+	$(top_builddir)/gmime/libgmime-2.4.la 	\
 	$(GLIB_LIBS)
 
 basic_example_SOURCES = basic-example.c

@@ -2,7 +2,7 @@
 
 SUBDIRS = .
 
-gmimeincludedir = $(includedir)/gmime-2.0/gmime
+gmimeincludedir = $(includedir)/gmime-2.4/gmime
 
 INCLUDES = 				\
 	-I$(top_srcdir) 		\
@@ -20,9 +20,9 @@ VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\" 		\
 
 noinst_PROGRAMS = gen-table charset-map
 
-lib_LTLIBRARIES = libgmime-2.0.la
+lib_LTLIBRARIES = libgmime-2.4.la
 
-libgmime_2_0_la_SOURCES = 		\
+libgmime_2_4_la_SOURCES = 		\
 	gmime.c				\
 	gmime-charset.c			\
 	gmime-cipher-context.c		\
@@ -137,17 +137,17 @@ endif
 
 if OS_WIN32
 install-libtool-import-lib:
-	$(INSTALL) .libs/libgmime-2.0.dll.a $(DESTDIR)$(libdir)
+	$(INSTALL) .libs/libgmime-2.4.dll.a $(DESTDIR)$(libdir)
 
 uninstall-libtool-import-lib:
-	-rm $(DESTDIR)$(libdir)/libgmime-2.0.dll.a
+	-rm $(DESTDIR)$(libdir)/libgmime-2.4.dll.a
 else
 install-libtool-import-lib:
 uninstall-libtool-import-lib:
 endif
 
-libgmime_2_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
-libgmime_2_0_la_LDFLAGS = \
+libgmime_2_4_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+libgmime_2_4_la_LDFLAGS = \
 	-version-info $(GMIME_VERSION_INFO) \
 	-export-dynamic $(no_undefined)
 

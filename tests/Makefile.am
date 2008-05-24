@@ -33,8 +33,8 @@ MANUAL_TESTS =		\
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
-DEPS = $(top_builddir)/gmime/libgmime-2.0.la
-LDADDS = $(top_builddir)/gmime/libgmime-2.0.la $(GLIB_LIBS)
+DEPS = $(top_builddir)/gmime/libgmime-2.4.la
+LDADDS = $(top_builddir)/gmime/libgmime-2.4.la $(GLIB_LIBS)
 
 test_best_SOURCES = test-best.c
 test_best_LDFLAGS = 
