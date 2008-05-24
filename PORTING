@@ -9,6 +9,15 @@ will attempt to list the main things to watch out for when migrating
 to the new release from the prior version.
 
 
+Porting from GMime 2.2 to GMime 2.4
+-----------------------------------
+
+GMime 2.4 is much the same as GMime 2.2 except that ALL public APIs
+that used to use off_t in GMime 2.2 now use gint64 so that the API and
+ABI do not change based on whether or not large file support is
+supported.
+
+
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
 
