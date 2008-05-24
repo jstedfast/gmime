@@ -56,10 +56,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -386,11 +386,11 @@ stream_reset (GMimeStream *stream)
 	return 0;
 }
 
-static off_t
-stream_seek_block_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	off_t real;
+	gint64 real;
 	
 	/* convert all seeks into a relative seek (aka SEEK_CUR) */
 	switch (whence) {
@@ -457,12 +457,12 @@ stream_seek_block_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whenc
 	return real;
 }
 
-static off_t
-stream_seek_cache_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	size_t len, total = 0;
-	off_t pos, real;
+	gint64 pos, real;
 	ssize_t nread;
 	
 	switch (whence) {
@@ -532,12 +532,12 @@ stream_seek_cache_read (GMimeStream *stream, off_t offset, GMimeSeekWhence whenc
 	return real;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	/* FIXME: set errno appropriately?? */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	off_t real;
+	gint64 real;
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
@@ -559,7 +559,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	}
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	return stream->position;
@@ -572,7 +572,7 @@ stream_length (GMimeStream *stream)
 }
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	

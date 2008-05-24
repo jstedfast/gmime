@@ -49,10 +49,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -128,14 +128,14 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t bound_end;
+	gint64 bound_end;
 	ssize_t n;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
-	n = MIN (bound_end - stream->position, (off_t) len);
+	n = MIN (bound_end - stream->position, (gint64) len);
 	if (n > 0) {
 		memcpy (buf, mem->buffer->data + stream->position, n);
 		stream->position += n;
@@ -151,7 +151,7 @@ static ssize_t
 stream_write (GMimeStream *stream, const char *buf, size_t len)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t bound_end;
+	gint64 bound_end;
 	ssize_t n;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
@@ -162,7 +162,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	} else
 		bound_end = stream->bound_end;
 	
-	n = MIN (bound_end - stream->position, (off_t) len);
+	n = MIN (bound_end - stream->position, (gint64) len);
 	if (n > 0) {
 		memcpy (mem->buffer->data + stream->position, buf, n);
 		stream->position += n;
@@ -199,11 +199,11 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t bound_end;
+	gint64 bound_end;
 	
 	g_return_val_if_fail (mem->buffer != NULL, TRUE);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
 	return stream->position >= bound_end;
 }
@@ -216,15 +216,15 @@ stream_reset (GMimeStream *stream)
 	return mem->buffer ? 0 : -1;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
-	off_t bound_end, real = stream->position;
+	gint64 bound_end, real = stream->position;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
@@ -248,7 +248,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	return stream->position;
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
@@ -262,17 +262,17 @@ static ssize_t
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = GMIME_STREAM_MEM (stream);
-	off_t bound_end;
+	gint64 bound_end;
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	bound_end = stream->bound_end != -1 ? stream->bound_end : (off_t) mem->buffer->len;
+	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
 	return bound_end - stream->bound_start;
 }
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamMem *mem;
 	

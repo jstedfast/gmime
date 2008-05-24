@@ -1,5 +1,11 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/*.[c,h]: Use gint64 instead of off_t for public APIs.
+
+	* mono/gmime-api.raw: s/off_t/gint64/g
+
+2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* mono/Makefile.am: Don't delay-sign, newer versions of Mono do
 	not allow this anymore.
 

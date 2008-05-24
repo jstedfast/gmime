@@ -56,7 +56,7 @@ struct _GMimeStreamMmapClass {
 GType g_mime_stream_mmap_get_type (void);
 
 GMimeStream *g_mime_stream_mmap_new (int fd, int prot, int flags);
-GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, off_t end);
+GMimeStream *g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end);
 
 G_END_DECLS
 

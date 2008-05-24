@@ -240,7 +240,7 @@ test_stream_mem (const char *filename)
 
 
 static gboolean
-check_stream_fs (const char *input, const char *output, const char *filename, off_t start, off_t end)
+check_stream_fs (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -273,7 +273,7 @@ check_stream_fs (const char *input, const char *output, const char *filename, of
 }
 
 static gboolean
-check_stream_file (const char *input, const char *output, const char *filename, off_t start, off_t end)
+check_stream_file (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -306,7 +306,7 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 }
 
 static gboolean
-check_stream_mmap (const char *input, const char *output, const char *filename, off_t start, off_t end)
+check_stream_mmap (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -339,7 +339,7 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 }
 
 static gboolean
-check_stream_buffer_block (const char *input, const char *output, const char *filename, off_t start, off_t end)
+check_stream_buffer_block (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -374,7 +374,7 @@ check_stream_buffer_block (const char *input, const char *output, const char *fi
 }
 
 static gboolean
-check_stream_buffer_cache (const char *input, const char *output, const char *filename, off_t start, off_t end)
+check_stream_buffer_cache (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
 	GMimeStream *streams[2], *stream;
 	Exception *ex = NULL;
@@ -409,7 +409,7 @@ check_stream_buffer_cache (const char *input, const char *output, const char *fi
 }
 
 
-typedef gboolean (* checkFunc) (const char *, const char *, const char *, off_t, off_t);
+typedef gboolean (* checkFunc) (const char *, const char *, const char *, gint64, gint64);
 
 static struct {
 	const char *what;
@@ -427,7 +427,7 @@ test_streams (DIR *dir, const char *datadir, const char *filename)
 {
 	char inpath[256], outpath[256], *p, *q, *o;
 	struct dirent *dent;
-	off_t start, end;
+	gint64 start, end;
 	size_t n;
 	guint i;
 	
@@ -520,7 +520,7 @@ gen_test_data (const char *datadir, char **stream_name)
 {
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
-	off_t start, end;
+	gint64 start, end;
 	struct stat st;
 	size_t len;
 	int fd, i;
@@ -561,7 +561,7 @@ gen_test_data (const char *datadir, char **stream_name)
 	
 	for (i = 0; i < 64; i++) {
 	retry:
-		start = (off_t) (st.st_size * (rand () / (RAND_MAX + 1.0)));
+		start = (gint64) (st.st_size * (rand () / (RAND_MAX + 1.0)));
 		len = (size_t) (st.st_size * (rand () / (RAND_MAX + 1.0)));
 		if (start + len > st.st_size) {
 			len = st.st_size - start;

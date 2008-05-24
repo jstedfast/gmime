@@ -53,10 +53,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GObjectClass *parent_class = NULL;
@@ -139,7 +139,7 @@ g_mime_stream_finalize (GObject *object)
  * Initializes a new stream with bounds @start and @end.
  **/
 void
-g_mime_stream_construct (GMimeStream *stream, off_t start, off_t end)
+g_mime_stream_construct (GMimeStream *stream, gint64 start, gint64 end)
 {
 	stream->position = start;
 	stream->bound_start = start;
@@ -317,8 +317,8 @@ g_mime_stream_reset (GMimeStream *stream)
 }
 
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	d(g_warning ("Invoked default stream_seek implementation."));
 	return -1;
@@ -346,8 +346,8 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
  *
  * Returns the resultant position on success or %-1 on fail.
  **/
-off_t
-g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+gint64
+g_mime_stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
@@ -355,7 +355,7 @@ g_mime_stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 }
 
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	d(g_warning ("Invoked default stream_tell implementation."));
@@ -371,7 +371,7 @@ stream_tell (GMimeStream *stream)
  *
  * Returns the current position within the stream or %-1 on fail.
  **/
-off_t
+gint64
 g_mime_stream_tell (GMimeStream *stream)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
@@ -406,7 +406,7 @@ g_mime_stream_length (GMimeStream *stream)
 
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	d(g_warning ("Invoked default stream_tell implementation."));
 	return NULL;
@@ -424,7 +424,7 @@ stream_substream (GMimeStream *stream, off_t start, off_t end)
  * Returns a substream of @stream with bounds @start and @end.
  **/
 GMimeStream *
-g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end)
+g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStream *sub;
 	
@@ -482,7 +482,7 @@ g_mime_stream_unref (GMimeStream *stream)
  * Set the bounds on a stream.
  **/
 void
-g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end)
+g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end)
 {
 	g_return_if_fail (GMIME_IS_STREAM (stream));
 	

@@ -1289,14 +1289,14 @@ g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
 		retval = (char *) buf->data;
 	} else {
 		GByteArray *buf = GMIME_STREAM_MEM (stream)->buffer;
-		off_t end_index = (off_t) buf->len;
-		off_t start_index = 0;
+		gint64 end_index = (gint64) buf->len;
+		gint64 start_index = 0;
 		
 		/* check boundaries */
 		if (stream->bound_start >= 0)
-			start_index = CLAMP (stream->bound_start, 0, (off_t) buf->len);
+			start_index = CLAMP (stream->bound_start, 0, (gint64) buf->len);
 		if (stream->bound_end >= 0)
-			end_index = CLAMP (stream->bound_end, 0, (off_t) buf->len);
+			end_index = CLAMP (stream->bound_end, 0, (gint64) buf->len);
 		if (end_index < start_index)
 			end_index = start_index;
 		

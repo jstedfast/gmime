@@ -67,7 +67,7 @@ struct _GMimeParserClass {
  * g_mime_parser_set_header_regex().
  **/
 typedef void (* GMimeParserHeaderRegexFunc) (GMimeParser *parser, const char *header,
-					     const char *value, off_t offset,
+					     const char *value, gint64 offset,
 					     gpointer user_data);
 
 
@@ -95,13 +95,13 @@ GMimeObject *g_mime_parser_construct_part (GMimeParser *parser);
 
 GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser);
 
-off_t g_mime_parser_tell (GMimeParser *parser);
+gint64 g_mime_parser_tell (GMimeParser *parser);
 
 gboolean g_mime_parser_eos (GMimeParser *parser);
 
 char *g_mime_parser_get_from (GMimeParser *parser);
 
-off_t g_mime_parser_get_from_offset (GMimeParser *parser);
+gint64 g_mime_parser_get_from_offset (GMimeParser *parser);
 
 G_END_DECLS
 

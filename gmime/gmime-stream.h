@@ -77,9 +77,9 @@ struct _GMimeStream {
 	/* Note: these are private fields!! */
 	GMimeStream *super_stream;
 	
-	off_t position;
-	off_t bound_start;
-	off_t bound_end;
+	gint64 position;
+	gint64 bound_start;
+	gint64 bound_end;
 };
 
 struct _GMimeStreamClass {
@@ -91,16 +91,16 @@ struct _GMimeStreamClass {
 	int      (* close)  (GMimeStream *stream);
 	gboolean (* eos)    (GMimeStream *stream);
 	int      (* reset)  (GMimeStream *stream);
-	off_t    (* seek)   (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-	off_t    (* tell)   (GMimeStream *stream);
+	gint64    (* seek)   (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+	gint64    (* tell)   (GMimeStream *stream);
 	ssize_t  (* length) (GMimeStream *stream);
-	GMimeStream * (* substream) (GMimeStream *stream, off_t start, off_t end);
+	GMimeStream * (* substream) (GMimeStream *stream, gint64 start, gint64 end);
 };
 
 
 GType g_mime_stream_get_type (void);
 
-void g_mime_stream_construct (GMimeStream *stream, off_t start, off_t end);
+void g_mime_stream_construct (GMimeStream *stream, gint64 start, gint64 end);
 
 
 /* public methods */
@@ -110,18 +110,18 @@ int       g_mime_stream_flush   (GMimeStream *stream);
 int       g_mime_stream_close   (GMimeStream *stream);
 gboolean  g_mime_stream_eos     (GMimeStream *stream);
 int       g_mime_stream_reset   (GMimeStream *stream);
-off_t     g_mime_stream_seek    (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-off_t     g_mime_stream_tell    (GMimeStream *stream);
+gint64     g_mime_stream_seek    (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+gint64     g_mime_stream_tell    (GMimeStream *stream);
 ssize_t   g_mime_stream_length  (GMimeStream *stream);
 
-GMimeStream *g_mime_stream_substream (GMimeStream *stream, off_t start, off_t end);
+GMimeStream *g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 #ifndef GMIME_DISABLE_DEPRECATED
 void      g_mime_stream_ref     (GMimeStream *stream);
 void      g_mime_stream_unref   (GMimeStream *stream);
 #endif
 
-void      g_mime_stream_set_bounds (GMimeStream *stream, off_t start, off_t end);
+void      g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end);
 
 ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *string);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);

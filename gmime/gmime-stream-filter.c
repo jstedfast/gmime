@@ -79,10 +79,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -340,13 +340,13 @@ stream_reset (GMimeStream *stream)
 	return 0;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	return -1;
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	return -1;
@@ -359,7 +359,7 @@ stream_length (GMimeStream *stream)
 }
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	GMimeStreamFilter *sub;

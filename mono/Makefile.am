@@ -54,12 +54,6 @@ EXTRA_DIST =			\
 	$(SOURCES_XML)		\
 	gmime-sharp.pc.in
 
-if ENABLE_LARGEFILE
-off_t_type=gint64
-else
-off_t_type=long
-endif
-
 $(METADATA): $(srcdir)/$(METADATA_IN)
 	sed -e 's|\@off_t_type\@|$(off_t_type)|g' < $(srcdir)/$(METADATA_IN) > $@
 

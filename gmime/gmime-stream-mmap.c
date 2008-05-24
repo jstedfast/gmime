@@ -59,10 +59,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -158,9 +158,9 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	mapptr = mstream->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nread = MIN ((off_t) ((mstream->map + mstream->maplen) - mapptr), (off_t) len);
+		nread = MIN ((gint64) ((mstream->map + mstream->maplen) - mapptr), (gint64) len);
 	else
-		nread = MIN (stream->bound_end - stream->position, (off_t) len);
+		nread = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (nread > 0) {
 		memcpy (buf, mapptr, nread);
@@ -185,9 +185,9 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	mapptr = mstream->map + stream->position;
 	
 	if (stream->bound_end == -1)
-		nwritten = MIN ((off_t) ((mstream->map + mstream->maplen) - mapptr), (off_t) len);
+		nwritten = MIN ((gint64) ((mstream->map + mstream->maplen) - mapptr), (gint64) len);
 	else
-		nwritten = MIN (stream->bound_end - stream->position, (off_t) len);
+		nwritten = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (nwritten > 0) {
 		memcpy (mapptr, buf, nwritten);
@@ -255,11 +255,11 @@ stream_reset (GMimeStream *stream)
 	return 0;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
-	off_t real = stream->position;
+	gint64 real = stream->position;
 	
 	g_return_val_if_fail (mstream->fd != -1, -1);
 	
@@ -272,7 +272,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
-			real = offset <= 0 ? stream->bound_start + (off_t) mstream->maplen + offset : -1;
+			real = offset <= 0 ? stream->bound_start + (gint64) mstream->maplen + offset : -1;
 			if (real != -1) {
 				if (real < stream->bound_start)
 					real = stream->bound_start;
@@ -302,7 +302,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	return real;
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	return stream->position;
@@ -320,7 +320,7 @@ stream_length (GMimeStream *stream)
 }
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	/* FIXME: maybe we should return a GMimeStreamFs? */
 	GMimeStreamMmap *mstream;
@@ -354,7 +354,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 #ifdef HAVE_MMAP
 	GMimeStreamMmap *mstream;
 	struct stat st;
-	off_t start;
+	gint64 start;
 	char *map;
 	
 	start = lseek (fd, 0, SEEK_CUR);
@@ -398,7 +398,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
  * Returns a stream using @fd with bounds @start and @end.
  **/
 GMimeStream *
-g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, off_t start, off_t end)
+g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end)
 {
 #ifdef HAVE_MMAP
 	GMimeStreamMmap *mstream;

@@ -101,8 +101,8 @@ random_whole_stream (const char *datadir, char **filename)
 
 struct _StreamPart {
 	struct _StreamPart *next;
-	off_t pstart, pend;  /* start/end offsets of the part stream */
-	off_t wstart, wend;  /* corresponding start/end offsets of the whole stream */
+	gint64 pstart, pend;  /* start/end offsets of the part stream */
+	gint64 wstart, wend;  /* corresponding start/end offsets of the whole stream */
 	char filename[256];
 };
 
@@ -298,7 +298,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	struct _StreamPart *part = parts;
 	GMimeStream *stream, *cat;
 	Exception *ex;
-	off_t offset;
+	gint64 offset;
 	size_t size;
 	ssize_t n;
 	int fd;
@@ -332,7 +332,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random seek offset to compare at */
-	offset = (off_t) (size * (rand () / (RAND_MAX + 1.0)));
+	offset = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to " OFF_T " in original stream: %s",
@@ -358,7 +358,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 {
 	GMimeStream *stream, *cat, *sub1, *sub2;
 	struct _StreamPart *part = parts;
-	off_t start, end;
+	gint64 start, end;
 	Exception *ex;
 	size_t size;
 	ssize_t n;
@@ -393,9 +393,9 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random start/end offsets */
-	start = (off_t) (size * (rand () / (RAND_MAX + 1.0)));
+	start = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
 	if (rand () % 2)
-		end = start + (off_t) ((size - start) * (rand () / (RAND_MAX + 1.0)));
+		end = start + (gint64) ((size - start) * (rand () / (RAND_MAX + 1.0)));
 	else
 		end = -1;
 	
@@ -451,7 +451,7 @@ int main (int argc, char **argv)
 	ssize_t wholelen, left;
 	GMimeStream *whole;
 	guint32 part = 0;
-	off_t start = 0;
+	gint64 start = 0;
 	char *filename;
 	struct stat st;
 	size_t len;
@@ -515,7 +515,7 @@ int main (int argc, char **argv)
 		len = 1 + (size_t) (left * (rand() / (RAND_MAX + 1.0)));
 		n = g_new (struct _StreamPart, 1);
 		sprintf (n->filename, "%s.%u", filename, part++);
-		n->pstart = (off_t) 0; /* FIXME: we could make this a random offset */
+		n->pstart = (gint64) 0; /* FIXME: we could make this a random offset */
 		n->pend = n->pstart + len;
 		n->wend = start + len;
 		n->wstart = start;

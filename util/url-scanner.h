@@ -30,8 +30,8 @@ G_BEGIN_DECLS
 typedef struct {
 	const char *pattern;
 	const char *prefix;
-	off_t um_so;
-	off_t um_eo;
+	size_t um_so;
+	size_t um_eo;
 } urlmatch_t;
 
 typedef gboolean (*UrlScanFunc) (const char *in, const char *pos, const char *inend, urlmatch_t *match);

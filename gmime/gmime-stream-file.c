@@ -50,10 +50,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -135,7 +135,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		return -1;
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (off_t) len);
+		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	fseek (fstream->fp, stream->position, SEEK_SET);
@@ -156,7 +156,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		return -1;
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (off_t) len);
+		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	fseek (fstream->fp, stream->position, SEEK_SET);
@@ -222,11 +222,11 @@ stream_reset (GMimeStream *stream)
 	return 0;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	off_t real = stream->position;
+	gint64 real = stream->position;
 	FILE *fp = fstream->fp;
 	
 	g_return_val_if_fail (fstream->fp != NULL, -1);
@@ -272,7 +272,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	return real;
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	return stream->position;
@@ -282,7 +282,7 @@ static ssize_t
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
-	off_t bound_end;
+	gint64 bound_end;
 	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
@@ -298,7 +298,7 @@ stream_length (GMimeStream *stream)
 }
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
 	
@@ -326,7 +326,7 @@ GMimeStream *
 g_mime_stream_file_new (FILE *fp)
 {
 	GMimeStreamFile *fstream;
-	off_t start;
+	gint64 start;
 	
 	if ((start = ftell (fp)) == -1)
 		start = 0;
@@ -355,7 +355,7 @@ g_mime_stream_file_new (FILE *fp)
  * Returns a stream using @fp with bounds @start and @end.
  **/
 GMimeStream *
-g_mime_stream_file_new_with_bounds (FILE *fp, off_t start, off_t end)
+g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
 	

@@ -85,7 +85,7 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 
 
 static void
-header_cb (GMimeParser *parser, const char *header, const char *value, off_t offset, gpointer user_data)
+header_cb (GMimeParser *parser, const char *header, const char *value, gint64 offset, gpointer user_data)
 {
 	GMimeStream *stream = user_data;
 	
@@ -97,7 +97,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
 	GMimeMessage *message;
 	const char *exev;
-	off_t start, end;
+	gint64 start, end;
 	int nmsg = 0;
 	char *from;
 	
@@ -134,7 +134,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
 	size_t totalsize, totalread = 0;
 	size_t nread, size;
-	off_t offset = 0;
+	gint64 offset = 0;
 	ssize_t n;
 	
 	v(fprintf (stdout, "Checking if streams match... "));

@@ -50,10 +50,10 @@ static int stream_flush (GMimeStream *stream);
 static int stream_close (GMimeStream *stream);
 static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
-static off_t stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence);
-static off_t stream_tell (GMimeStream *stream);
+static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+static gint64 stream_tell (GMimeStream *stream);
 static ssize_t stream_length (GMimeStream *stream);
-static GMimeStream *stream_substream (GMimeStream *stream, off_t start, off_t end);
+static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
 static GMimeStreamClass *parent_class = NULL;
@@ -62,7 +62,7 @@ static GMimeStreamClass *parent_class = NULL;
 struct _cat_node {
 	struct _cat_node *next;
 	GMimeStream *stream;
-	off_t position;
+	gint64 position;
 	int id; /* for debugging */
 };
 
@@ -143,7 +143,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current;
 	ssize_t nread = 0;
-	off_t offset;
+	gint64 offset;
 	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
@@ -151,7 +151,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	/* don't allow our caller to read past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (off_t) len);
+		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (!(current = cat->current))
 		return -1;
@@ -188,7 +188,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	struct _cat_node *current;
 	size_t nwritten = 0;
 	ssize_t n = -1;
-	off_t offset;
+	gint64 offset;
 	
 	/* check for end-of-stream */
 	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
@@ -196,7 +196,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	
 	/* don't allow our caller to write past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (off_t) len);
+		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (!(current = cat->current))
 		return -1;
@@ -324,12 +324,12 @@ stream_reset (GMimeStream *stream)
 	return 0;
 }
 
-static off_t
-stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
+static gint64
+stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current, *n;
-	off_t real, off;
+	gint64 real, off;
 	ssize_t len;
 	
 	d(fprintf (stderr, "GMimeStreamCat::stream_seek (%p, %ld, %d)\n",
@@ -522,7 +522,7 @@ stream_seek (GMimeStream *stream, off_t offset, GMimeSeekWhence whence)
 	return offset;
 }
 
-static off_t
+static gint64
 stream_tell (GMimeStream *stream)
 {
 	return stream->position;
@@ -553,15 +553,15 @@ stream_length (GMimeStream *stream)
 struct _sub_node {
 	struct _sub_node *next;
 	GMimeStream *stream;
-	off_t start, end;
+	gint64 start, end;
 };
 
 static GMimeStream *
-stream_substream (GMimeStream *stream, off_t start, off_t end)
+stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _sub_node *streams, *tail, *s;
-	off_t offset = 0, subend = 0;
+	gint64 offset = 0, subend = 0;
 	GMimeStream *substream;
 	struct _cat_node *n;
 	ssize_t len;

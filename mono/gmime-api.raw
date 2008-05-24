@@ -124,7 +124,7 @@
         <parameter type="GMimeParser*" name="parser" />
         <parameter type="const-char*" name="header" />
         <parameter type="const-char*" name="value" />
-        <parameter type="off_t" name="offset" />
+        <parameter type="gint64" name="offset" />
         <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
@@ -1151,7 +1151,7 @@
         <return-type type="char*" />
       </method>
       <method name="GetFromOffset" cname="g_mime_parser_get_from_offset">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
       </method>
       <method name="GetPersistStream" cname="g_mime_parser_get_persist_stream">
         <return-type type="gboolean" />
@@ -1204,7 +1204,7 @@
         </parameters>
       </method>
       <method name="Tell" cname="g_mime_parser_tell">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
       </method>
     </object>
     <object name="Part" cname="GMimePart" parent="GMimeObject">
@@ -1465,9 +1465,9 @@
     </object>
     <object name="Stream" cname="GMimeStream" parent="GObject">
       <field name="SuperStream" cname="super_stream" type="GMimeStream*" />
-      <field name="Position" cname="position" type="off_t" />
-      <field name="BoundStart" cname="bound_start" type="off_t" />
-      <field name="BoundEnd" cname="bound_end" type="off_t" />
+      <field name="Position" cname="position" type="gint64" />
+      <field name="BoundStart" cname="bound_start" type="gint64" />
+      <field name="BoundEnd" cname="bound_end" type="gint64" />
       <virtual_method name="Read" cname="read">
         <return-type type="ssize_t" />
         <parameters>
@@ -1509,15 +1509,15 @@
         </parameters>
       </virtual_method>
       <virtual_method name="Seek" cname="seek">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
-          <parameter type="off_t" name="offset" />
+          <parameter type="gint64" name="offset" />
           <parameter type="GMimeSeekWhence" name="whence" />
         </parameters>
       </virtual_method>
       <virtual_method name="Tell" cname="tell">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
         </parameters>
@@ -1532,8 +1532,8 @@
         <return-type type="GMimeStream*" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </virtual_method>
       <method name="Close" cname="g_mime_stream_close">
@@ -1542,8 +1542,8 @@
       <method name="Construct" cname="g_mime_stream_construct">
         <return-type type="void" />
         <parameters>
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </method>
       <method name="Eos" cname="g_mime_stream_eos">
@@ -1579,28 +1579,28 @@
         <return-type type="int" />
       </method>
       <method name="Seek" cname="g_mime_stream_seek">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
         <parameters>
-          <parameter type="off_t" name="offset" />
+          <parameter type="gint64" name="offset" />
           <parameter type="GMimeSeekWhence" name="whence" />
         </parameters>
       </method>
       <method name="SetBounds" cname="g_mime_stream_set_bounds">
         <return-type type="void" />
         <parameters>
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </method>
       <method name="Substream" cname="g_mime_stream_substream">
         <return-type type="GMimeStream*" />
         <parameters>
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </method>
       <method name="Tell" cname="g_mime_stream_tell">
-        <return-type type="off_t" />
+        <return-type type="gint64" />
       </method>
       <method name="Unref" cname="g_mime_stream_unref" deprecated="1">
         <return-type type="void" />
@@ -1695,8 +1695,8 @@
       <constructor cname="g_mime_stream_file_new_with_bounds">
         <parameters>
           <parameter type="FILE*" name="fp" />
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </constructor>
       <method name="SetOwner" cname="g_mime_stream_file_set_owner">
@@ -1748,8 +1748,8 @@
       <constructor cname="g_mime_stream_fs_new_with_bounds">
         <parameters>
           <parameter type="int" name="fd" />
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </constructor>
       <method name="SetOwner" cname="g_mime_stream_fs_set_owner">
@@ -1817,8 +1817,8 @@
           <parameter type="int" name="fd" />
           <parameter type="int" name="prot" />
           <parameter type="int" name="flags" />
-          <parameter type="off_t" name="start" />
-          <parameter type="off_t" name="end" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
         </parameters>
       </constructor>
     </object>

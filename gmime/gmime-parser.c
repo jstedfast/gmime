@@ -87,7 +87,7 @@ enum {
 struct _GMimeParserPrivate {
 	GMimeStream *stream;
 	
-	off_t offset;
+	gint64 offset;
 	
 	/* i/o buffers */
 	char realbuf[SCAN_HEAD + SCAN_BUF + 1];
@@ -95,7 +95,7 @@ struct _GMimeParserPrivate {
 	char *inptr;
 	char *inend;
 	
-	off_t from_offset;
+	gint64 from_offset;
 	GByteArray *from_line;
 	
 	regex_t header_regex;
@@ -112,8 +112,8 @@ struct _GMimeParserPrivate {
 	char *rawptr;
 	size_t rawleft;
 	
-	off_t headers_start;
-	off_t header_start;
+	gint64 headers_start;
+	gint64 header_start;
 	
 	short int state;
 	
@@ -137,7 +137,7 @@ struct _boundary_stack {
 	size_t boundarylen;
 	size_t boundarylenfinal;
 	size_t boundarylenmax;
-	off_t content_end;
+	gint64 content_end;
 };
 
 
@@ -191,11 +191,11 @@ struct _header_raw {
 	struct _header_raw *next;
 	char *name;
 	char *value;
-	off_t offset;
+	gint64 offset;
 };
 
 static const char *
-header_raw_find (struct _header_raw *headers, const char *name, off_t *offset)
+header_raw_find (struct _header_raw *headers, const char *name, gint64 *offset)
 {
 	struct _header_raw *h;
 	
@@ -297,7 +297,7 @@ static void
 parser_init (GMimeParser *parser, GMimeStream *stream)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	off_t offset = -1;
+	gint64 offset = -1;
 	
 	if (stream) {
 		g_object_ref (stream);
@@ -627,7 +627,7 @@ parser_fill (GMimeParser *parser)
 }
 
 
-static off_t
+static gint64
 parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
 {
 	if (priv->offset == -1)
@@ -649,7 +649,7 @@ parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
  * Returns the current stream offset from the parser's internal stream
  * or -1 on error.
  **/
-off_t
+gint64
 g_mime_parser_tell (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
@@ -1125,7 +1125,7 @@ enum {
 static int
 check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
-	off_t offset = parser_offset (priv, start);
+	gint64 offset = parser_offset (priv, start);
 	
 	if (start[len - 1] == '\r')
 		len--;
@@ -1271,7 +1271,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GByteArray *content = NULL;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
-	off_t start, end;
+	gint64 start, end;
 	int crlf;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
@@ -1722,7 +1722,7 @@ g_mime_parser_get_from (GMimeParser *parser)
  * Returns the offset of the most recently parsed mbox-style From-line
  * or -1 on error.
  **/
-off_t
+gint64
 g_mime_parser_get_from_offset (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv;

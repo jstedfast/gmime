@@ -402,7 +402,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GPtrArray *parts;
 	size_t len, end;
 	const char *id;
-	off_t start;
+	gint64 start;
 	int i;
 	
 	*nparts = 0;
