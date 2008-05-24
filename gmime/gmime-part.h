@@ -113,11 +113,6 @@ const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
 void g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
 GMimeDataWrapper *g_mime_part_get_content_object (const GMimePart *mime_part);
 
-#ifndef GMIME_DISABLE_DEPRECATED
-ssize_t g_mime_part_write_to_stream (GMimePart *mime_part, GMimeStream *stream);
-char *g_mime_part_to_string (GMimePart *mime_part);
-#endif /* GMIME_DISABLE_DEPRECATED */
-
 G_END_DECLS
 
 #endif /* __GMIME_PART_H__ */

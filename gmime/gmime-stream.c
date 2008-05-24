@@ -440,40 +440,6 @@ g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 
 
 /**
- * g_mime_stream_ref:
- * @stream: stream
- *
- * Ref's a stream.
- *
- * WARNING: This method is deprecated. Use g_object_ref() instead.
- **/
-void
-g_mime_stream_ref (GMimeStream *stream)
-{
-	g_return_if_fail (GMIME_IS_STREAM (stream));
-	
-	g_object_ref (stream);
-}
-
-
-/**
- * g_mime_stream_unref:
- * @stream: stream
- *
- * Unref's a stream.
- *
- * WARNING: This method is deprecated. Use g_object_unref() instead.
- **/
-void
-g_mime_stream_unref (GMimeStream *stream)
-{
-	g_return_if_fail (GMIME_IS_STREAM (stream));
-	
-	g_object_unref (stream);
-}
-
-
-/**
  * g_mime_stream_set_bounds:
  * @stream: stream
  * @start: start boundary

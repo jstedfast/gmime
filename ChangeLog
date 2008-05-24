@@ -1,3 +1,16 @@
+2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_write_to_stream):
+	Removed. Removing all deprecated functions which have equivalent
+	functionality in a parent class.
+	(g_mime_message_to_string): Same.
+
+	* gmime/gmime-part.c (g_mime_part_write_to_stream): Same.
+	(g_mime_part_to_string): Same.
+
+	* gmime/gmime-stream.c (g_mime_stream_ref): Same.
+	(g_mime_stream_unref): Same.
+
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-fs.c: Cast offset arguments to lseek() to
