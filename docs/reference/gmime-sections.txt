@@ -64,8 +64,6 @@ GMimeSeekWhence
 GMimeStreamIOVector
 GMimeStream
 g_mime_stream_construct
-g_mime_stream_ref
-g_mime_stream_unref
 g_mime_stream_read
 g_mime_stream_write
 g_mime_stream_flush
@@ -622,8 +620,6 @@ GMimeObject
 GMimePartFunc
 g_mime_object_register_type
 g_mime_object_new_type
-g_mime_object_ref
-g_mime_object_unref
 g_mime_object_set_content_type
 g_mime_object_get_content_type
 g_mime_object_set_content_type_parameter
@@ -686,8 +682,6 @@ g_mime_part_set_content_byte_array
 g_mime_part_get_content
 g_mime_part_get_content_object
 g_mime_part_set_content_object
-g_mime_part_write_to_stream
-g_mime_part_to_string
 
 <SUBSECTION Private>
 g_mime_part_get_type
@@ -802,8 +796,6 @@ g_mime_message_set_header
 g_mime_message_get_header
 g_mime_message_set_mime_part
 g_mime_message_get_mime_part
-g_mime_message_write_to_stream
-g_mime_message_to_string
 g_mime_message_get_body
 g_mime_message_get_headers
 g_mime_message_foreach_part
