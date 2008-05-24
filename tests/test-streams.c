@@ -53,7 +53,7 @@ streams_match (GMimeStream **streams, const char *filename)
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (" OFF_T " -> " OFF_T ") with %s (" OFF_T ", " OFF_T ")... ",
+	v(fprintf (stdout, "Matching original stream (%lld -> %lld) with %s (%lld, %lld)... ",
 		   streams[0]->position, streams[0]->bound_end, filename,
 		   streams[1]->position, streams[1]->bound_end));
 	
@@ -570,7 +570,7 @@ gen_test_data (const char *datadir, char **stream_name)
 			end = start + len;
 		}
 		
-		sprintf (p, OFF_T "," OFF_T, start, end);
+		sprintf (p, "%lld,%lld", start, end);
 		
 		if ((fd = open (output, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, 0666)) == -1)
 			goto retry;

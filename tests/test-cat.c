@@ -115,7 +115,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (" OFF_T " -> " OFF_T ") with %s (" OFF_T ", " OFF_T ")... ",
+	v(fprintf (stdout, "Matching original stream (%lld -> %lld) with %s (%lld, %lld)... ",
 		   orig->position, orig->bound_end, filename, dup->position, dup->bound_end));
 	
 	if (orig->bound_end != -1) {
@@ -196,7 +196,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
+		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_CREAT | O_TRUNC | O_WRONLY, 0666)) == -1) {
@@ -268,7 +268,7 @@ test_cat_read (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
+		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
@@ -315,7 +315,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
+		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
@@ -335,13 +335,13 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	offset = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		ex = exception_new ("could not seek to " OFF_T " in original stream: %s",
+		ex = exception_new ("could not seek to %lld in original stream: %s",
 				    offset, strerror (errno));
 		throw (ex);
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
-		ex = exception_new ("could not seek to " OFF_T ": %s",
+		ex = exception_new ("could not seek to %lld: %s",
 				    offset, strerror (errno));
 		throw (ex);
 	}
@@ -376,7 +376,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	cat = g_mime_stream_cat_new ();
 	
 	while (part != NULL) {
-		d(fprintf (stderr, "adding %s start=" OFF_T ", end=" OFF_T "...\n",
+		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {

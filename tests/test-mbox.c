@@ -89,7 +89,7 @@ header_cb (GMimeParser *parser, const char *header, const char *value, gint64 of
 {
 	GMimeStream *stream = user_data;
 	
-	g_mime_stream_printf (stream, OFF_T ": %s: %s\n", offset, header, value);
+	g_mime_stream_printf (stream, "%lld: %s: %s\n", offset, header, value);
 }
 
 static void
@@ -108,7 +108,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		
 		end = g_mime_parser_tell (parser);
 		
-		g_mime_stream_printf (summary, "message offsets: " OFF_T ", " OFF_T "\n", start, end);
+		g_mime_stream_printf (summary, "message offsets: %lld, %lld\n", start, end);
 		
 		from = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (summary, "%s\n", from);
@@ -163,7 +163,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 		
 		do {
 			if ((n = g_mime_stream_read (ostream, dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "ostream's read() returned " SSIZE_T ", EOF\n", n);
+				fprintf (stderr, "ostream's read(%p, dbuf + " SIZE_T ", " SIZE_T ") returned " SSIZE_T ", EOF\n", ostream, nread, size - nread, n);
 				break;
 			}
 			d(fprintf (stderr, "read " SSIZE_T " bytes from ostream\n", n));
@@ -189,7 +189,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 		}
 		
 		if (bufptr < bufend) {
-			sprintf (errstr, "Error: content does not match at offset " OFF_T "\n",
+			sprintf (errstr, "Error: content does not match at offset %lld\n",
 				 offset + (bufptr - buf));
 			/*fprintf (stderr, "-->'%.*s'<--\nvs\n-->'%.*s'<--\n",
 			  bufend - bufptr, bufptr, bufend - bufptr, dbufptr);*/
