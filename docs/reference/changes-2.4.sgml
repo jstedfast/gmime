@@ -11,9 +11,44 @@
   <refsect1>
     <title>Changes from 2.2 to 2.4</title>
     <para>See also the PORTING document in the toplevel GMime source directory.</para>
-    <para>There are no incompatible changes between 2.2 and 2.4.</para>
+    <para>There are no incompatible changes between 2.2 and 2.4 if you stayed
+away from the functions marked as deprecated.</para>
     <para>GMime 2.4's API is identical to GMime 2.2 except that ALL public
 interfaces that used to use off_t in GMime 2.2 now use gint64 so that the API
 and ABI do not change based on whether or not large file support is supported.</para>
+  </refsect1>
+  <refsect1>
+    <title>Deprecated Functions removed from GMime 2.4</title>
+    <itemizedlist>
+      <listitem>
+        <para>Ref and Unref Functions</para>
+        <para>
+          <function>g_mime_stream_ref</function> and
+<function>g_mime_object_ref</function> have been removed. You should replace
+these calls with <function>g_object_ref</function> instead.
+        </para>
+        <para>
+          <function>g_mime_stream_unref</function> and
+<function>g_mime_object_unref</function> have been removed. You should replace
+these calls with <function>g_object_unref</function> instead.
+        </para>
+      </listitem>
+      <listitem>
+        <para>ToString Functions</para>
+        <para>
+          <function>g_mime_message_to_string</function> and
+<function>g_mime_part_to_string</function> have been removed. You should replace
+these calls with <function>g_mime_object_to_string</function> instead.
+        </para>
+      </listitem>
+      <listitem>
+        <para>WriteToStream Functions</para>
+        <para>
+          <function>g_mime_message_write_to_stream</function> and
+<function>g_mime_part_write_to_stream</function> have been removed. You should
+replace these calls with <function>g_mime_object_write_to_stream</function> instead.
+        </para>
+      </listitem>
+    </itemizedlist>
   </refsect1>
 </refentry>

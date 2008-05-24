@@ -17,6 +17,33 @@ that used to use off_t in GMime 2.2 now use gint64 so that the API and
 ABI do not change based on whether or not large file support is
 supported.
 
+In addition, some of the deprecated functions were removed if they had
+equivalent functionality in a parent class. The list of removed
+functions are as follows:
+
+- g_mime_stream_ref()
+- g_mime_stream_unref()
+
+- g_mime_object_ref()
+- g_mime_object_unref()
+
+- g_mime_part_to_string()
+- g_mime_part_write_to_stream()
+
+- g_mime_message_to_string()
+- g_mime_message_write_to_stream()
+
+If you were using any of the ref() or unref() functions listed above,
+you can replace them with calls to g_object_ref() or g_object_unref()
+instead.
+
+Calls to g_mime_part_to_string() or g_mime_message_to_string() should
+be replaced with calls to g_mime_object_to_string() instead.
+
+Similarly, calls to g_mime_part_write_to_stream() or
+g_mime_message_write_to_stream() should be replaced with calls to
+g_mime_object_write_to_stream() instead.
+
 
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
