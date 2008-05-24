@@ -1,3 +1,14 @@
+2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c: Check parser_step() against
+	GMIME_PARSER_STATE_ERROR rather than -1 in case the value ever
+	changes.
+	(struct _GMimeParserPrivate): Changed state to be 16bit int
+	instead of a 26bit int which apparently cannot be set to -1 on
+	Solaris. Fixes bug #534301.
+	(parser_step_headers): Fixed a corner-case where a read boundary
+	fell between the \n and \t of a folded header.
+
 2008-05-16  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

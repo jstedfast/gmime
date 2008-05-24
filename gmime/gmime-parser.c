@@ -105,23 +105,25 @@ struct _GMimeParserPrivate {
 	/* header buffer */
 	char *headerbuf;
 	char *headerptr;
-	guint headerleft;
+	size_t headerleft;
 	
 	/* raw header buffer */
 	char *rawbuf;
 	char *rawptr;
-	guint rawleft;
+	size_t rawleft;
 	
 	off_t headers_start;
 	off_t header_start;
 	
-	int state:26;
-	unsigned int midline:1;
-	unsigned int seekable:1;
-	unsigned int scan_from:1;
-	unsigned int have_regex:1;
-	unsigned int persist_stream:1;
-	unsigned int respect_content_length:1;
+	short int state;
+	
+	unsigned short int unused:10;
+	unsigned short int midline:1;
+	unsigned short int seekable:1;
+	unsigned short int scan_from:1;
+	unsigned short int have_regex:1;
+	unsigned short int persist_stream:1;
+	unsigned short int respect_content_length:1;
 	
 	GMimeContentType *content_type;
 	struct _header_raw *headers;
@@ -852,6 +854,7 @@ parser_step_headers (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean eoln, valid = TRUE, fieldname = TRUE;
+	gboolean continuation = FALSE;
 	struct _header_raw *hend;
 	register char *inptr;
 	char *start, *inend;
@@ -882,6 +885,15 @@ parser_step_headers (GMimeParser *parser)
 		
 		while (inptr < inend) {
 			start = inptr;
+			
+			/* if we are scanning a new line, check for a folded header */
+			if (!priv->midline && continuation && (*inptr != ' ' && *inptr != '\t')) {
+				header_parse (parser, &hend);
+				priv->header_start = parser_offset (priv, inptr);
+				continuation = FALSE;
+				fieldname = TRUE;
+				valid = TRUE;
+			}
 			
 			eoln = inptr[0] == '\n' || (inptr[0] == '\r' && inptr[1] == '\n');
 			if (fieldname && !eoln) {
@@ -933,17 +945,25 @@ parser_step_headers (GMimeParser *parser)
 				inptr++;
 			
 			len = (size_t) (inptr - start);
-			raw_header_append (priv, start, len);
 			
 			if (inptr == inend) {
-				/* we don't have enough data to tell if we
-				   got all of the header or not... */
+				/* we don't have the full line, save
+				 * what we have and refill our
+				 * buffer... */
+				if (inptr > start && inptr[-1] == '\r') {
+					inptr--;
+					len--;
+				}
+				
+				raw_header_append (priv, start, len);
 				header_append (priv, start, len);
 				priv->midline = TRUE;
 				left = inend - inptr;
 				priv->inptr = inptr;
 				goto refill;
 			}
+			
+			raw_header_append (priv, start, len);
 			
 			if (inptr > start && inptr[-1] == '\r')
 				len--;
@@ -955,18 +975,10 @@ parser_step_headers (GMimeParser *parser)
 			header_append (priv, start, len);
 			
 			/* inptr has to be less than inend - 1 */
-			raw_header_append (priv, inptr, 1);
+			raw_header_append (priv, "\n", 1);
+			priv->midline = FALSE;
+			continuation = TRUE;
 			inptr++;
-			
-			if (*inptr == ' ' || *inptr == '\t') {
-				priv->midline = TRUE;
-			} else {
-				header_parse (parser, &hend);
-				priv->header_start = parser_offset (priv, inptr);
-				priv->midline = FALSE;
-				fieldname = TRUE;
-				valid = TRUE;
-			}
 		}
 		
 		left = inend - inptr;
@@ -1308,7 +1320,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
-	if (parser_step (parser) == -1) {
+	if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
 		/* Note: currently cannot happen because
 		 * parser_step_headers() never returns error */
 		*found = FOUND_EOS;
@@ -1364,7 +1376,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
-		if (parser_step (parser) == -1) {
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
 			*found = FOUND_EOS;
 			return object;
 		}
@@ -1461,7 +1473,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		
 		/* get the headers */
 		priv->state = GMIME_PARSER_STATE_HEADERS;
-		if (parser_step (parser) == -1) {
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
 			found = FOUND_EOS;
 			break;
 		}
@@ -1518,7 +1530,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
 		/* skip empty line after headers */
-		if (parser_step (parser) == -1) {
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
 			*found = FOUND_EOS;
 			return object;
 		}
@@ -1560,7 +1572,7 @@ parser_construct_part (GMimeParser *parser)
 	
 	/* get the headers */
 	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
-		if (parser_step (parser) == -1)
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
@@ -1607,13 +1619,13 @@ parser_construct_message (GMimeParser *parser)
 	
 	/* scan the from-line if we are parsing an mbox */
 	while (priv->state != GMIME_PARSER_STATE_HEADERS) {
-		if (parser_step (parser) == -1)
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
 	/* parse the headers */
 	while (priv->state < GMIME_PARSER_STATE_HEADERS_END) {
-		if (parser_step (parser) == -1)
+		if (parser_step (parser) == GMIME_PARSER_STATE_ERROR)
 			return NULL;
 	}
 	
