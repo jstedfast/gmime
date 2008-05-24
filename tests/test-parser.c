@@ -107,7 +107,7 @@ test_parser (GMimeStream *stream)
 	g_object_unref (parser);
 	
 	ZenTimerStart (NULL);
-	text = g_mime_message_to_string (message);
+	text = g_mime_object_to_string ((GMimeObject *) message);
 	ZenTimerStop (NULL);
 	ZenTimerReport (NULL, "gmime::message_to_string");
 	/*fprintf (stdout, "Result should match previous MIME message dump\n\n%s\n", text);*/
@@ -135,7 +135,7 @@ test_parser (GMimeStream *stream)
 		g_mime_header_write_to_stream (GMIME_OBJECT (message)->headers, stream);
 		g_mime_stream_flush (stream);
 		GMIME_STREAM_FILE (stream)->fp = NULL;
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		fprintf (stdout, "\n");
 	}
 #endif
@@ -159,7 +159,7 @@ test_parser (GMimeStream *stream)
 	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
 	g_mime_stream_flush (stream);
 	GMIME_STREAM_FS (stream)->fd = -1;
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 #endif
 	
 #ifdef PRINT_MIME_STRUCT
@@ -167,7 +167,7 @@ test_parser (GMimeStream *stream)
 	print_mime_struct (message->mime_part, 0);
 #endif
 	
-	g_mime_object_unref (GMIME_OBJECT (message));
+	g_object_unref (message);
 }
 
 
@@ -204,20 +204,20 @@ int main (int argc, char **argv)
 	istream = g_mime_stream_mem_new ();
 	g_mime_stream_write_to_stream (stream, istream);
 	g_mime_stream_reset (istream);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	stream = istream;
 #endif
 	
 #ifdef STREAM_BUFFER
 	istream = g_mime_stream_buffer_new (stream,
 					    GMIME_STREAM_BUFFER_BLOCK_READ);
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	stream = istream;
 #endif
 	
 	test_parser (stream);
 	
-	g_mime_stream_unref (stream);
+	g_object_unref (stream);
 	
 	g_mime_shutdown ();
 	

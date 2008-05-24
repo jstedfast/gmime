@@ -33,7 +33,7 @@ int main (int argc, char **argv)
 	
 	fstream = g_mime_stream_file_new (stdout);
 	ostream = g_mime_stream_filter_new_with_stream (fstream);
-	g_mime_stream_unref (fstream);
+	g_object_unref (fstream);
 	html = g_mime_filter_html_new (GMIME_FILTER_HTML_CONVERT_NL |
 				       GMIME_FILTER_HTML_CONVERT_SPACES |
 				       GMIME_FILTER_HTML_CONVERT_URLS |
@@ -55,10 +55,10 @@ int main (int argc, char **argv)
 		
 		istream = g_mime_stream_file_new (fp);
 		g_mime_stream_write_to_stream (istream, ostream);
-		g_mime_stream_unref (istream);
+		g_object_unref (istream);
 	}
 	
-	g_mime_stream_unref (ostream);
+	g_object_unref (ostream);
 	
 	return 0;
 }

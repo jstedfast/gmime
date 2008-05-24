@@ -80,7 +80,7 @@ int main (int argc, char **argv)
 		
 		stream = g_mime_stream_fs_new (fd);
 		g_mime_parser_init_with_stream (parser, stream);
-		g_mime_stream_unref (stream);
+		g_object_unref (stream);
 		
 		if (!(message = g_mime_parser_construct_message (parser)))
 			return -2;
@@ -89,8 +89,8 @@ int main (int argc, char **argv)
 			return -3;
 		
 		g_ptr_array_add (partials, message->mime_part);
-		g_mime_object_ref (GMIME_OBJECT (message->mime_part));
-		g_mime_object_unref (GMIME_OBJECT (message));
+		g_object_ref (message->mime_part);
+		g_object_unref (message);
 	}
 	
 	g_object_unref (parser);
@@ -106,8 +106,8 @@ int main (int argc, char **argv)
 	
 	print_mime_struct (message->mime_part, 0);
 	
-	g_mime_object_unref (GMIME_OBJECT (message));
-	g_mime_stream_unref (stream);
+	g_object_unref (message);
+	g_object_unref (stream);
 	
 	g_mime_shutdown ();
 	
