@@ -344,7 +344,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * @prot: protection flags
  * @flags: map flags
  *
- * Creates a new GMimeStreamMmap object around @fd.
+ * Creates a new #GMimeStreamMmap object around @fd.
  *
  * Returns a stream using @fd.
  **/
@@ -392,7 +392,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
  * @start: start boundary
  * @end: end boundary
  *
- * Creates a new GMimeStreamMmap object around @fd with bounds @start
+ * Creates a new #GMimeStreamMmap object around @fd with bounds @start
  * and @end.
  *
  * Returns a stream using @fd with bounds @start and @end.
@@ -403,16 +403,18 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 #ifdef HAVE_MMAP
 	GMimeStreamMmap *mstream;
 	struct stat st;
+	size_t len;
 	char *map;
 	
 	if (end == -1) {
 		if (fstat (fd, &st) == -1)
 			return NULL;
+		
+		len = st.st_size;
 	} else
-		st.st_size = end /* - start */;
+		len = (size_t) end;
 	
-	map = mmap (NULL, st.st_size, prot, flags, fd, 0);
-	if (map == MAP_FAILED)
+	if ((map = mmap (NULL, len, prot, flags, fd, 0)) == MAP_FAILED)
 		return NULL;
 	
 	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
@@ -420,7 +422,7 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 	mstream->eos = FALSE;
 	mstream->fd = fd;
 	mstream->map = map;
-	mstream->maplen = st.st_size;
+	mstream->maplen = len;
 	
 	g_mime_stream_construct (GMIME_STREAM (mstream), start, end);
 	

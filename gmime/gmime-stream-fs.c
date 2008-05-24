@@ -145,7 +145,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	lseek (fs->fd, stream->position, SEEK_SET);
+	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
 	
 	do {
 		nread = read (fs->fd, buf, len);
@@ -173,7 +173,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	lseek (fs->fd, stream->position, SEEK_SET);
+	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
 	
 	do {
 		do {
@@ -248,7 +248,7 @@ stream_reset (GMimeStream *stream)
 	/* FIXME: if stream_read/write is always going to lseek to
 	 * make sure fd's seek position matches our own, we could just
 	 * set stream->position = stream->bound_start and be done. */
-	if (lseek (fs->fd, stream->bound_start, SEEK_SET) == -1)
+	if (lseek (fs->fd, (off_t) stream->bound_start, SEEK_SET) == -1)
 		return -1;
 	
 	fs->eos = FALSE;
@@ -277,7 +277,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 			 * we either don't know the offset of the end
 			 * of the stream and/or don't know if we can
 			 * seek past the end */
-			if ((real = lseek (fs->fd, offset, SEEK_END)) == -1)
+			if ((real = lseek (fs->fd, (off_t) offset, SEEK_END)) == -1)
 				return -1;
 		} else if (fs->eos && stream->bound_end == -1) {
 			/* seeking backwards from eos (which happens
@@ -305,7 +305,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	if (stream->bound_end != -1 && real > stream->bound_end)
 		return -1;
 	
-	if ((real = lseek (fs->fd, real, SEEK_SET)) == -1)
+	if ((real = lseek (fs->fd, (off_t) real, SEEK_SET)) == -1)
 		return -1;
 	
 	/* reset eos if appropriate */
@@ -333,8 +333,8 @@ stream_length (GMimeStream *stream)
 	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	bound_end = lseek (fs->fd, 0, SEEK_END);
-	lseek (fs->fd, stream->position, SEEK_SET);
+	bound_end = lseek (fs->fd, (off_t) 0, SEEK_END);
+	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
 	
 	if (bound_end < stream->bound_start)
 		return -1;
@@ -371,7 +371,7 @@ g_mime_stream_fs_new (int fd)
 	GMimeStreamFs *fs;
 	gint64 start;
 	
-	if ((start = lseek (fd, 0, SEEK_CUR)) == -1)
+	if ((start = lseek (fd, (off_t) 0, SEEK_CUR)) == -1)
 		start = 0;
 	
 	fs = g_object_new (GMIME_TYPE_STREAM_FS, NULL);

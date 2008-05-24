@@ -1,5 +1,14 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-stream-fs.c: Cast offset arguments to lseek() to
+	off_t.
+
+	* gmime/gmime-stream-file.c: Cast offset arguments to fseek() to
+	long.
+
+	* gmime/gmime-stream-mmap.c (g_mime_stream_mmap_new_with_bounds):
+	Don't assign to st.st_size.
+
 	* gmime/*.[c,h]: Use gint64 instead of off_t for public APIs.
 
 	* mono/gmime-api.raw: s/off_t/gint64/g

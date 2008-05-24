@@ -138,7 +138,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	fseek (fstream->fp, stream->position, SEEK_SET);
+	fseek (fstream->fp, (long) stream->position, SEEK_SET);
 	
 	if ((nread = fread (buf, 1, len, fstream->fp)) > 0)
 		stream->position += nread;
@@ -159,7 +159,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
-	fseek (fstream->fp, stream->position, SEEK_SET);
+	fseek (fstream->fp, (long) stream->position, SEEK_SET);
 	
 	if ((nwritten = fwrite (buf, 1, len, fstream->fp)) > 0)
 		stream->position += nwritten;
@@ -216,7 +216,7 @@ stream_reset (GMimeStream *stream)
 	if (stream->position == stream->bound_start)
 		return 0;
 	
-	if (fseek (fstream->fp, stream->bound_start, SEEK_SET) == -1)
+	if (fseek (fstream->fp, (long) stream->bound_start, SEEK_SET) == -1)
 		return -1;
 	
 	return 0;
@@ -244,7 +244,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 			 * we either don't know the offset of the end
 			 * of the stream and/or don't know if we can
 			 * seek past the end */
-			if (fseek (fp, offset, SEEK_END) == -1 || (real = ftell (fp)) == -1)
+			if (fseek (fp, (long) offset, SEEK_END) == -1 || (real = ftell (fp)) == -1)
 				return -1;
 		} else if (feof (fp) && stream->bound_end == -1) {
 			/* seeking backwards from eos (which happens
@@ -264,7 +264,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	if (stream->bound_end != -1 && real > stream->bound_end)
 		return -1;
 	
-	if (fseek (fp, real, SEEK_SET) == -1 || (real = ftell (fp)) == -1)
+	if (fseek (fp, (long) real, SEEK_SET) == -1 || (real = ftell (fp)) == -1)
 		return -1;
 	
 	stream->position = real;
@@ -287,9 +287,9 @@ stream_length (GMimeStream *stream)
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
-	fseek (fstream->fp, 0, SEEK_END);
+	fseek (fstream->fp, (long) 0, SEEK_END);
 	bound_end = ftell (fstream->fp);
-	fseek (fstream->fp, stream->position, SEEK_SET);
+	fseek (fstream->fp, (long) stream->position, SEEK_SET);
 	
 	if (bound_end < stream->bound_start)
 		return -1;
