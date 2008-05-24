@@ -263,7 +263,7 @@ static gboolean
 stream_eos (GMimeStream *stream)
 {
 	d(g_warning ("Invoked default stream_eos implementation."));
-	return stream->position < stream->bound_end;
+	return stream->position >= stream->bound_end;
 }
 
 

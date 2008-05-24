@@ -1,5 +1,9 @@
 2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-stream.c (stream_eos): Fixed a typo.
+
+2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
+
 	* tests/test-pgp.c: Updated.
 
 	* gmime/gmime-multipart-encrypted.c: Updated.
