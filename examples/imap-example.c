@@ -310,7 +310,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		
 		ostream = g_mime_stream_file_new (fp);
 		g_mime_object_write_to_stream (GMIME_OBJECT (message), ostream);
-		g_mime_stream_unref (ostream);
+		g_object_unref (ostream);
 	} else if (GMIME_IS_PART (part)) {
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
 		fp = fopen (buf, "wt");
@@ -320,8 +320,8 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		istream = g_mime_data_wrapper_get_stream (GMIME_PART (part)->content);
 		
 		g_mime_stream_write_to_stream (istream, ostream);
-		g_mime_stream_unref (istream);
-		g_mime_stream_unref (ostream);
+		g_object_unref (istream);
+		g_object_unref (ostream);
 	}
 }
 
