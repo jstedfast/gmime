@@ -9,4 +9,4 @@ Version: @VERSION@
 Description: MIME parser and utility library
 Requires: glib-2.0,gobject-2.0
 Libs: -L${libdir} @GMIME_LIBS@
-Cflags: -I${includedir}/gmime-2.0 @GMIME_CFLAGS@
+Cflags: -I${includedir}/gmime-2.4 @GMIME_CFLAGS@
