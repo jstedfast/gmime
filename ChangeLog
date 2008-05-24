@@ -1,3 +1,7 @@
+2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream.c (stream_eos): Fixed a typo.
+
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
 	* mono/StreamWrapper.cs: Allow seeking to position 0 for
