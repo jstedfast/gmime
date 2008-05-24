@@ -46,6 +46,7 @@ content_files = 			\
 	building.sgml			\
 	changes-2.0.sgml		\
 	changes-2.2.sgml		\
+	changes-2.4.sgml		\
 	compiling.sgml			\
 	data-wrappers.sgml		\
 	filters.sgml			\

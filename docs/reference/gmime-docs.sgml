@@ -56,6 +56,7 @@
 <!ENTITY gmime-Questions SYSTEM "question_index.sgml">
 <!ENTITY gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
 <!ENTITY gmime-Changes-2-2 SYSTEM "changes-2.2.sgml">
+<!ENTITY gmime-Changes-2-4 SYSTEM "changes-2.4.sgml">
 
 <!ENTITY gmime-Streams SYSTEM "streams.sgml">
 <!ENTITY gmime-Filters SYSTEM "filters.sgml">
@@ -139,6 +140,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-Compiling;
     &gmime-Changes-2-0;
     &gmime-Changes-2-2;
+    &gmime-Changes-2-4;
     &gmime-Resources;
     &gmime-Questions;
   </part>

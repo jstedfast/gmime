@@ -1,0 +1,19 @@
+<refentry id="gmime-changes-2-4" revision="23 May 2008">
+  <refmeta>
+    <refentrytitle>Changes from 2.2 to 2.4</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Changes from 2.2 to 2.4</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Changes from 2.2 to 2.4</refname>
+    <refpurpose>Changes made between version 2.2 and version 2.4</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Changes from 2.2 to 2.4</title>
+    <para>See also the PORTING document in the toplevel GMime source directory.</para>
+    <para>There are no incompatible changes between 2.2 and 2.4.</para>
+    <para>GMime 2.4's API is identical to GMime 2.2 except that ALL public
+interfaces that used to use off_t in GMime 2.2 now use gint64 so that the API
+and ABI do not change based on whether or not large file support is supported.</para>
+  </refsect1>
+</refentry>
