@@ -1,5 +1,10 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* mono/StreamWrapper.cs: Allow seeking to position 0 for
+	GMimeStreamFilter. Thanks to Debajyoti Bera for this patch.
+
+2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.2.21

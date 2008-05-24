@@ -40,7 +40,7 @@ namespace GMime {
 		}
 
 		public override bool CanSeek {
-			get { return this.gmime_stream == null ? false : true; }
+			get { return this.gmime_stream == null || this.gmime_stream is StreamFilter ? false : true; }
 		}
 		
 		// FIXME: Support writing?
@@ -65,7 +65,10 @@ namespace GMime {
 				return this.gmime_stream.Tell ();
 			}
 
-			set { Seek (value, SeekOrigin.Begin); }
+			set {
+				if (Seek (value, SeekOrigin.Begin) == -1)
+					throw new IOException ();
+			}
 		}
 
 		public override void Close ()
@@ -102,25 +105,41 @@ namespace GMime {
 			if (this.gmime_stream == null)
 				throw new ObjectDisposedException ("GMimeStream", "The stream has been closed");
 
+			if (this.gmime_stream is StreamFilter) {
+				if (offset != 0 || origin != SeekOrigin.Begin)
+					throw new NotSupportedException ();
+
+				// offset = 0 is a special case and means reset the streamfilter
+				((StreamFilter) this.gmime_stream).Reset ();
+				return 0;
+			}
+
+			long ret = -1;
+
 			switch (origin) {
 			case SeekOrigin.Begin:
 				if (offset < 0)
 					throw new ArgumentOutOfRangeException ();
 				
-				return this.gmime_stream.Seek (offset, GMime.SeekWhence.Set);
+				ret = this.gmime_stream.Seek (offset, GMime.SeekWhence.Set);
+				break;
 
 			case SeekOrigin.Current:
-				return this.gmime_stream.Seek (offset, GMime.SeekWhence.Cur);
+				ret = this.gmime_stream.Seek (offset, GMime.SeekWhence.Cur);
+				break;
 
 			case SeekOrigin.End:
 				if (offset > 0)
 					throw new ArgumentOutOfRangeException ();
 
-				return this.gmime_stream.Seek (offset, GMime.SeekWhence.End);
+				ret = this.gmime_stream.Seek (offset, GMime.SeekWhence.End);
+				break;
 			}
 
-			// Dunno why the compiler is insisting on this...
-			throw new Exception ();
+			if (ret == -1)
+				throw new IOException ();
+
+			return ret;
 		}
 
  		public override void SetLength (long value)
