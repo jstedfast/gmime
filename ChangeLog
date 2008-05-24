@@ -1,5 +1,15 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* mono/Makefile.am: Don't delay-sign, newer versions of Mono do
+	not allow this anymore.
+
+	* mono/gmime-sharp.snk: New sign-key for signing gmime-sharp
+	assembly.
+
+	* mono/AssemblyInfo.cs.in: Updated.
+
+2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
+
 	* branched: now begins 2.3.x development
 
 	* gmime-2.4.pc.in: Renamed from gmime-2.0.pc.in.

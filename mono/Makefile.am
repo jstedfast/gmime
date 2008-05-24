@@ -1,4 +1,4 @@
-API=gmime-api.xml
+API = gmime-api.xml
 RAW_API = gmime-api.raw
 METADATA = GMime.metadata
 METADATA_IN = $(METADATA).in
@@ -70,11 +70,13 @@ $(API): $(srcdir)/$(RAW_API) $(METADATA)
 
 generated-stamp: $(API) $(build_customs)
 	rm -f generated/* &&	\
-	$(GAPI_CODEGEN) --generate $(API) --outdir=generated --customdir=$(srcdir) --assembly-name=$(ASSEMBLY_NAME) 	\
+	$(GAPI_CODEGEN) --generate $(API) --outdir=generated --customdir=$(srcdir) --assembly-name=$(ASSEMBLY_NAME) \
 	&& touch generated-stamp
 
-$(ASSEMBLY): $(build_sources) generated-stamp $(ASSEMBLY_NAME).pub
-	$(CSC) --unsafe /out:$(ASSEMBLY) /target:library $(references) $(build_sources) generated/*.cs
+$(ASSEMBLY): $(build_sources) generated-stamp $(ASSEMBLY_NAME).snk
+	$(CSC) -unsafe /out:$(ASSEMBLY) /target:library $(references) \
+	-keyfile:$(ASSEMBLY_NAME).snk $(build_sources) generated/*.cs
+	sn -q -R $(ASSEMBLY) $(ASSEMBLY_NAME).snk
 
 install-data-local:
 	@if test -n '$(TARGET)'; then									\

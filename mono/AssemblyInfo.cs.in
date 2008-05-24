@@ -2,5 +2,3 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 
 [assembly:AssemblyVersion("@API_VERSION@")]
-[assembly:AssemblyDelaySign(true)]
-[assembly:AssemblyKeyFile("@srcdir@/gmime-sharp.pub")]
