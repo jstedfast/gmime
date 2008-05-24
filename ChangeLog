@@ -1,5 +1,9 @@
 2008-05-23  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.21
+
 	* gmime/gmime-parser.c: Check parser_step() against
 	GMIME_PARSER_STATE_ERROR rather than -1 in case the value ever
 	changes.
