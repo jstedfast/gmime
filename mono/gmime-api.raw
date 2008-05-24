@@ -729,15 +729,6 @@
           <parameter type="const-char*" name="subject" />
         </parameters>
       </method>
-      <method name="ToString" cname="g_mime_message_to_string" deprecated="1">
-        <return-type type="char*" />
-      </method>
-      <method name="WriteToStream" cname="g_mime_message_write_to_stream" deprecated="1">
-        <return-type type="ssize_t" />
-        <parameters>
-          <parameter type="GMimeStream*" name="stream" />
-        </parameters>
-      </method>
     </object>
     <object name="MessagePart" cname="GMimeMessagePart" parent="GMimeObject">
       <field name="Message" cname="message" type="GMimeMessage*" />
@@ -1376,17 +1367,8 @@
           <parameter type="GMimePartEncodingType" name="encoding" />
         </parameters>
       </method>
-      <method name="ToString" cname="g_mime_part_to_string" deprecated="1">
-        <return-type type="char*" />
-      </method>
       <method name="VerifyContentMd5" cname="g_mime_part_verify_content_md5">
         <return-type type="gboolean" />
-      </method>
-      <method name="WriteToStream" cname="g_mime_part_write_to_stream" deprecated="1">
-        <return-type type="ssize_t" />
-        <parameters>
-          <parameter type="GMimeStream*" name="stream" />
-        </parameters>
       </method>
     </object>
     <object name="Session" cname="GMimeSession" parent="GObject">

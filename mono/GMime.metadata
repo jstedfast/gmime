@@ -52,8 +52,6 @@
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
 
   <!-- Certain things take const unsigned char *, which the generator doesn't deal with nicely. -->
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned']" name="name">str</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned']" name="type">const-char*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="name">str</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="type">const-char*</attr>
 
@@ -76,4 +74,9 @@
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
+
+  <!-- Fix the GMimeSessionSimple properties which clash with GMimeSession's method names -->
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@cname='is_online']" name="name">IsOnlineFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@name='RequestPasswd']" name="name">RequestPasswdFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@name='ForgetPasswd']" name="name">ForgetPasswdFunc</attr>
 </metadata>

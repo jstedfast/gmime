@@ -1,7 +1,6 @@
 API = gmime-api.xml
 RAW_API = gmime-api.raw
 METADATA = GMime.metadata
-METADATA_IN = $(METADATA).in
 ASSEMBLY_NAME = gmime-sharp
 references = $(GTK_SHARP_LIBS)
 SOURCES_XML = sources.xml
@@ -12,7 +11,7 @@ ASSEMBLY = $(ASSEMBLY_NAME).dll
 gapidir = $(datadir)/gapi-2.0
 noinst_DATA = $(ASSEMBLY) $(ASSEMBLY).config
 gapi_DATA = $(API)
-CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API) $(METADATA)
+CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs
 
 pkgconfigdir = $(libdir)/pkgconfig
@@ -48,14 +47,10 @@ EXTRA_DIST =			\
 	$(ASSEMBLY_NAME).pub	\
 	AssemblyInfo.cs.in	\
 	$(RAW_API)		\
-	$(METADATA_IN)		\
 	$(customs)		\
 	$(sources)		\
 	$(SOURCES_XML)		\
 	gmime-sharp.pc.in
-
-$(METADATA): $(srcdir)/$(METADATA_IN)
-	sed -e 's|\@off_t_type\@|$(off_t_type)|g' < $(srcdir)/$(METADATA_IN) > $@
 
 $(API): $(srcdir)/$(RAW_API) $(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)
