@@ -44,6 +44,23 @@ Similarly, calls to g_mime_part_write_to_stream() or
 g_mime_message_write_to_stream() should be replaced with calls to
 g_mime_object_write_to_stream() instead.
 
+For the sake of consistency, functions such as g_mime_cipher_sign()
+were renamed to g_mime_cipher_context_sign() in order to match their
+class name. The old names have been deprecated but the symbols are
+still there to ease migration. Below is a mapping of the function name
+changes:
+
+GMime 2.2 Name            | GMime 2.4 Name
+-------------------------------------------------------------
+g_mime_cipher_hash_id       g_mime_cipher_context_hash_id
+g_mime_cipher_hash_name     g_mime_cipher_context_hash_name
+g_mime_cipher_sign          g_mime_cipher_context_sign
+g_mime_cipher_verify        g_mime_cipher_context_verify
+g_mime_cipher_encrypt       g_mime_cipher_context_encrypt
+g_mime_cipher_decrypt       g_mime_cipher_context_decrypt
+g_mime_cipher_import_keys   g_mime_cipher_context_import_keys
+g_mime_cipher_export_keys   g_mime_cipher_context_export_keys
+
 
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
