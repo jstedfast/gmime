@@ -109,9 +109,9 @@ test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	GError *err = NULL;
 	Exception *ex;
 	
-	g_mime_cipher_sign (ctx, "no.user@no.domain",
-			    GMIME_CIPHER_HASH_DEFAULT,
-			    cleartext, ciphertext, &err);
+	g_mime_cipher_context_sign (ctx, "no.user@no.domain",
+				    GMIME_CIPHER_HASH_DEFAULT,
+				    cleartext, ciphertext, &err);
 	
 	if (err != NULL) {
 		ex = exception_new ("%s", err->message);
@@ -131,8 +131,8 @@ test_verify (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	GError *err = NULL;
 	Exception *ex;
 	
-	validity = g_mime_cipher_verify (ctx, GMIME_CIPHER_HASH_DEFAULT,
-					 cleartext, ciphertext, &err);
+	validity = g_mime_cipher_context_verify (ctx, GMIME_CIPHER_HASH_DEFAULT,
+						 cleartext, ciphertext, &err);
 	
 	if (validity == NULL) {
 		ex = exception_new ("%s", err->message);
@@ -158,8 +158,8 @@ test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_cipher_encrypt (ctx, FALSE, "no.user@no.domain", recipients,
-			       cleartext, ciphertext, &err);
+	g_mime_cipher_context_encrypt (ctx, FALSE, "no.user@no.domain", recipients,
+				       cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
 	
@@ -184,7 +184,7 @@ test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 	
 	stream = g_mime_stream_mem_new ();
 	
-	g_mime_cipher_decrypt (ctx, ciphertext, stream, &err);
+	g_mime_cipher_context_decrypt (ctx, ciphertext, stream, &err);
 	
 	if (err != NULL) {
 		g_object_unref (stream);
@@ -231,7 +231,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 	
 	ostream = g_mime_stream_mem_new ();
 	
-	g_mime_cipher_export_keys (ctx, keys, ostream, &err);
+	g_mime_cipher_context_export_keys (ctx, keys, ostream, &err);
 	g_ptr_array_free (keys, TRUE);
 	if (err != NULL) {
 		ex = exception_new ("%s", err->message);
@@ -281,7 +281,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_cipher_import_keys (ctx, stream, &err);
+	g_mime_cipher_context_import_keys (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {

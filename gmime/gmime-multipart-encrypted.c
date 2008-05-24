@@ -267,7 +267,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_cipher_encrypt (ctx, FALSE, NULL, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_cipher_context_encrypt (ctx, FALSE, NULL, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return -1;
@@ -401,7 +401,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (crlf_filter);
 	
 	/* get the cleartext */
-	if (g_mime_cipher_decrypt (ctx, ciphertext, filtered_stream, err) == -1) {
+	if (g_mime_cipher_context_decrypt (ctx, ciphertext, filtered_stream, err) == -1) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);

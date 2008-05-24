@@ -1,5 +1,17 @@
 2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
 
+	* tests/test-pgp.c: Updated.
+
+	* gmime/gmime-multipart-encrypted.c: Updated.
+
+	* gmime/gmime-multipart-signed.c: Updated.
+
+	* gmime/gmime-cipher-context.c (g_mime_cipher_context_*): Renamed
+	from g_mime_cipher_*() which did not match the class
+	name. Deprecated the old names.
+
+2008-05-24  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-message.c (g_mime_message_write_to_stream):
 	Removed. Removing all deprecated functions which have equivalent
 	functionality in a parent class.

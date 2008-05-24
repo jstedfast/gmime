@@ -408,7 +408,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_cipher_import_keys (ctx, stream, &err);
+	g_mime_cipher_context_import_keys (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {

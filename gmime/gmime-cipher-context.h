@@ -112,7 +112,36 @@ struct _GMimeCipherContextClass {
 
 GType g_mime_cipher_context_get_type (void);
 
+/* hash routines */
+GMimeCipherHash      g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash);
 
+const char *         g_mime_cipher_context_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
+
+/* cipher routines */
+int                  g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid,
+						 GMimeCipherHash hash, GMimeStream *istream,
+						 GMimeStream *ostream, GError **err);
+
+GMimeSignatureValidity *g_mime_cipher_context_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+						      GMimeStream *istream, GMimeStream *sigstream,
+						      GError **err);
+
+int                  g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign,
+						    const char *userid, GPtrArray *recipients,
+						    GMimeStream *istream, GMimeStream *ostream,
+						    GError **err);
+
+int                  g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+						    GMimeStream *ostream, GError **err);
+
+/* key/certificate routines */
+int                  g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+							GError **err);
+
+int                  g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+							GMimeStream *ostream, GError **err);
+
+#ifndef GMIME_DISABLE_DEPRECATED
 /* hash routines */
 GMimeCipherHash      g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash);
 
@@ -141,7 +170,7 @@ int                  g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeSt
 
 int                  g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 						GMimeStream *ostream, GError **err);
-
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 
 /* signature status structures and functions */

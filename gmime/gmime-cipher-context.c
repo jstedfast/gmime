@@ -142,7 +142,7 @@ cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
 
 
 /**
- * g_mime_cipher_hash_id:
+ * g_mime_cipher_context_hash_id:
  * @ctx: Cipher Context
  * @hash: hash name
  *
@@ -151,7 +151,7 @@ cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
  * Returns the equivalent hash id or #GMIME_CIPHER_HASH_DEFAULT on fail.
  **/
 GMimeCipherHash
-g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
+g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), GMIME_CIPHER_HASH_DEFAULT);
 	g_return_val_if_fail (hash != NULL, GMIME_CIPHER_HASH_DEFAULT);
@@ -168,7 +168,7 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 
 
 /**
- * g_mime_cipher_hash_name:
+ * g_mime_cipher_context_hash_name:
  * @ctx: Cipher Context
  * @hash: hash id
  *
@@ -177,7 +177,7 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
  * Returns the equivalent hash name or %NULL on fail.
  **/
 const char *
-g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+g_mime_cipher_context_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	
@@ -197,7 +197,7 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
 
 
 /**
- * g_mime_cipher_sign:
+ * g_mime_cipher_context_sign:
  * @ctx: Cipher Context
  * @userid: private key to use to sign the stream
  * @hash: preferred Message-Integrity-Check hash algorithm
@@ -210,8 +210,8 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
  * Returns %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
-		    GMimeStream *istream, GMimeStream *ostream, GError **err)
+g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
+			    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
@@ -233,7 +233,7 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
 
 
 /**
- * g_mime_cipher_verify:
+ * g_mime_cipher_context_verify:
  * @ctx: Cipher Context
  * @hash: secure hash used
  * @istream: input stream
@@ -250,8 +250,8 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
  * execute at all.
  **/
 GMimeSignatureValidity *
-g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
-		      GMimeStream *sigstream, GError **err)
+g_mime_cipher_context_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
+			      GMimeStream *sigstream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
@@ -272,7 +272,7 @@ cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtr
 
 
 /**
- * g_mime_cipher_encrypt:
+ * g_mime_cipher_context_encrypt:
  * @ctx: Cipher Context
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
@@ -287,8 +287,8 @@ cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtr
  * Returns %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
-		       GMimeStream *istream, GMimeStream *ostream, GError **err)
+g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
+			       GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
@@ -310,7 +310,7 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 
 
 /**
- * g_mime_cipher_decrypt:
+ * g_mime_cipher_context_decrypt:
  * @ctx: Cipher Context
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
@@ -322,8 +322,8 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
  * Returns %0 on success or %-1 for fail.
  **/
 int
-g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-		       GMimeStream *ostream, GError **err)
+g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+			       GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
@@ -344,7 +344,7 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
 
 
 /**
- * g_mime_cipher_import_keys:
+ * g_mime_cipher_context_import_keys:
  * @ctx: Cipher Context
  * @istream: input stream (containing keys)
  * @err: exception
@@ -355,7 +355,7 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
  * Returns %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
+g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
@@ -376,7 +376,7 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 
 
 /**
- * g_mime_cipher_export_keys:
+ * g_mime_cipher_context_export_keys:
  * @ctx: Cipher Context
  * @keys: an array of key ids
  * @ostream: output stream
@@ -388,8 +388,8 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  * Returns %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
-			   GMimeStream *ostream, GError **err)
+g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+				   GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
@@ -764,4 +764,188 @@ void
 g_mime_cipher_validity_free (GMimeCipherValidity *validity)
 {
 	g_mime_signature_validity_free (validity);
+}
+
+
+/**
+ * g_mime_cipher_hash_id:
+ * @ctx: Cipher Context
+ * @hash: hash name
+ *
+ * Gets the hash id based on the hash name @hash.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_hash_id() instead.
+ *
+ * Returns the equivalent hash id or #GMIME_CIPHER_HASH_DEFAULT on fail.
+ **/
+GMimeCipherHash
+g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
+{
+	return g_mime_cipher_context_hash_id (ctx, hash);
+}
+
+
+/**
+ * g_mime_cipher_hash_name:
+ * @ctx: Cipher Context
+ * @hash: hash id
+ *
+ * Gets the hash name based on the hash id @hash.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_hash_name() instead.
+ *
+ * Returns the equivalent hash name or %NULL on fail.
+ **/
+const char *
+g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+{
+	return g_mime_cipher_context_hash_name (ctx, hash);
+}
+
+
+/**
+ * g_mime_cipher_sign:
+ * @ctx: Cipher Context
+ * @userid: private key to use to sign the stream
+ * @hash: preferred Message-Integrity-Check hash algorithm
+ * @istream: input stream
+ * @ostream: output stream
+ * @err: exception
+ *
+ * Signs the input stream and writes the resulting signature to the
+ * output stream.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_sign() instead.
+ *
+ * Returns %0 on success or %-1 on fail.
+ **/
+int
+g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
+		    GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	return g_mime_cipher_context_sign (ctx, userid, hash, istream, ostream, err);
+}
+
+
+/**
+ * g_mime_cipher_verify:
+ * @ctx: Cipher Context
+ * @hash: secure hash used
+ * @istream: input stream
+ * @sigstream: optional detached-signature stream
+ * @err: exception
+ *
+ * Verifies the signature. If @istream is a clearsigned stream,
+ * you should pass %NULL as the sigstream parameter. Otherwise
+ * @sigstream is assumed to be the signature stream and is used to
+ * verify the integirity of the @istream.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_verify() instead.
+ *
+ * Returns a #GMimeSignatureValidity structure containing information
+ * about the integrity of the input stream or %NULL on failure to
+ * execute at all.
+ **/
+GMimeSignatureValidity *
+g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
+		      GMimeStream *sigstream, GError **err)
+{
+	return g_mime_cipher_context_verify (ctx, hash, istream, sigstream, err);
+}
+
+
+/**
+ * g_mime_cipher_encrypt:
+ * @ctx: Cipher Context
+ * @sign: sign as well as encrypt
+ * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @recipients: an array of recipient key ids and/or email addresses
+ * @istream: cleartext input stream
+ * @ostream: ciphertext output stream
+ * @err: exception
+ *
+ * Encrypts (and optionally signs) the cleartext input stream and
+ * writes the resulting ciphertext to the output stream.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_encrypt() instead.
+ *
+ * Returns %0 on success or %-1 on fail.
+ **/
+int
+g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
+		       GMimeStream *istream, GMimeStream *ostream, GError **err)
+{
+	return g_mime_cipher_context_encrypt (ctx, sign, userid, recipients, istream, ostream, err);
+}
+
+
+/**
+ * g_mime_cipher_decrypt:
+ * @ctx: Cipher Context
+ * @istream: input/ciphertext stream
+ * @ostream: output/cleartext stream
+ * @err: exception
+ *
+ * Decrypts the ciphertext input stream and writes the resulting
+ * cleartext to the output stream.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_decrypt() instead.
+ *
+ * Returns %0 on success or %-1 for fail.
+ **/
+int
+g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+		       GMimeStream *ostream, GError **err)
+{
+	return g_mime_cipher_context_decrypt (ctx, istream, ostream, err);
+}
+
+
+/**
+ * g_mime_cipher_import_keys:
+ * @ctx: Cipher Context
+ * @istream: input stream (containing keys)
+ * @err: exception
+ *
+ * Imports a stream of keys/certificates contained within @istream
+ * into the key/certificate database controlled by @ctx.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_import_keys() instead.
+ *
+ * Returns %0 on success or %-1 on fail.
+ **/
+int
+g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
+{
+	return g_mime_cipher_context_import_keys (ctx, istream, err);
+}
+
+
+/**
+ * g_mime_cipher_export_keys:
+ * @ctx: Cipher Context
+ * @keys: an array of key ids
+ * @ostream: output stream
+ * @err: exception
+ *
+ * Exports the keys/certificates in @keys to the stream @ostream from
+ * the key/certificate database controlled by @ctx.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_cipher_context_export_keys() instead.
+ *
+ * Returns %0 on success or %-1 on fail.
+ **/
+int
+g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+			   GMimeStream *ostream, GError **err)
+{
+	return g_mime_cipher_context_export_keys (ctx, keys, ostream, err);
 }

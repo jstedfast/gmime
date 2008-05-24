@@ -51,4 +51,21 @@ replace these calls with <function>g_mime_object_write_to_stream</function> inst
       </listitem>
     </itemizedlist>
   </refsect1>
+  <refsect1>
+    <title>Newly Deprecated Functions in GMime 2.4</title>
+    <para>GMimeCipherContext methods have been renamed from
+<function>g_mime_cipher_*</function> to
+<function>g_mime_cipher_context_*</function>. The 2.2 to 2.4 name mapping is as
+follows:</para>
+    <itemizedlist>
+      <listitem><function>g_mime_cipher_hash_id</function> has been renamed to <function>g_mime_cipher_context_hash_id</function></listitem>
+      <listitem><function>g_mime_cipher_hash_name</function> has been renamed to <function>g_mime_cipher_context_hash_name</function></listitem>
+      <listitem><function>g_mime_cipher_sign</function> has been renamed to <function>g_mime_cipher_context_sign</function></listitem>
+      <listitem><function>g_mime_cipher_verify</function> has been renamed to <function>g_mime_cipher_context_verify</function></listitem>
+      <listitem><function>g_mime_cipher_encrypt</function> has been renamed to <function>g_mime_cipher_context_encrypt</function></listitem>
+      <listitem><function>g_mime_cipher_decrypt</function> has been renamed to <function>g_mime_cipher_context_decrypt</function></listitem>
+      <listitem><function>g_mime_cipher_import_keys</function> has been renamed to <function>g_mime_cipher_context_import_keys</function></listitem>
+      <listitem><function>g_mime_cipher_export_keys</function> has been renamed to <function>g_mime_cipher_context_export_keys</function></listitem>
+    </itemizedlist>
+  </refsect1>
 </refentry>
