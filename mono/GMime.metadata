@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <metadata>
-  <!-- Rename some items -->
+  <!-- Rename some enums -->
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
 
@@ -24,23 +24,44 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
 
-  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']" name="name">EightBitHeaderDecode</attr>
-  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']" name="name">EightBitHeaderEncode</attr>
-  <attr path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']" name="name">EightBitHeaderEncodePhrase</attr>
+  <!-- Remove some deprecated APIs -->
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']"/>
+  <remove-node path="/api/namespace/struct[@name='CipherValidity']"/>
+  <remove-node path="/api/namespace/class[@name='Cipher']"/>
 
-  <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
-  <attr path="/api/namespace/object[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
+  <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
+  <remove-node path="/api/namespace/class[@name='Decode']"/>
 
+  <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
+  <remove-node path="/api/namespace/class[@name='Strcase']"/>
+
+  <!-- Rename some GMimeDisposition methods -->
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDispositionType</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDispositionType</attr>
+
+  <!-- Rename some GMimeDataWrapper methods -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
 
+  <!-- Fix up some GMimeFilter APIs -->
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
+
+  <!-- Fix up some other method names -->
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
+  <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
+
+  <!-- Fix up bindings for yencode/decode -->
+  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_close']" name="name">EncodeClose</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_step']" name="name">EncodeStep</attr>
+  <attr path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']" name="name">DecodeStep</attr>
+  <move-node path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']">/api/namespace/class[@name='Yencode']</move-node>
 
   <!-- We want to be able to get at the type and subtype fields of this
        structure, so don't mark it as opaque. -->
@@ -76,7 +97,7 @@
   <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
 
   <!-- Fix the GMimeSessionSimple properties which clash with GMimeSession's method names -->
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@cname='is_online']" name="name">IsOnlineFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@name='RequestPasswd']" name="name">RequestPasswdFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/field[@name='ForgetPasswd']" name="name">ForgetPasswdFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="name">SetIsOnlineFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="name">SetRequestPasswdFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="name">SetForgetPasswdFunc</attr>
 </metadata>

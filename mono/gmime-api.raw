@@ -132,7 +132,7 @@
       <return-type type="void" />
       <parameters>
         <parameter type="GMimeObject*" name="part" />
-        <parameter type="gpointer" name="data" />
+        <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
     <callback name="SimpleForgetPasswdFunc" cname="GMimeSimpleForgetPasswdFunc">
@@ -230,8 +230,73 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </virtual_method>
+      <method name="Decrypt" cname="g_mime_cipher_context_decrypt">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="Encrypt" cname="g_mime_cipher_context_encrypt">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="gboolean" name="sign" />
+          <parameter type="const-char*" name="userid" />
+          <parameter type="GPtrArray*" name="recipients" />
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="ExportKeys" cname="g_mime_cipher_context_export_keys">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GPtrArray*" name="keys" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
       <method name="GetType" cname="g_mime_cipher_context_get_type" shared="true">
         <return-type type="GType" />
+      </method>
+      <method name="HashId" cname="g_mime_cipher_context_hash_id">
+        <return-type type="GMimeCipherHash" />
+        <parameters>
+          <parameter type="const-char*" name="hash" />
+        </parameters>
+      </method>
+      <method name="HashName" cname="g_mime_cipher_context_hash_name">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="GMimeCipherHash" name="hash" />
+        </parameters>
+      </method>
+      <method name="ImportKeys" cname="g_mime_cipher_context_import_keys">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="Sign" cname="g_mime_cipher_context_sign">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-char*" name="userid" />
+          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="Verify" cname="g_mime_cipher_context_verify">
+        <return-type type="GMimeSignatureValidity*" />
+        <parameters>
+          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="sigstream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
       </method>
     </object>
     <object name="DataWrapper" cname="GMimeDataWrapper" parent="GObject">
@@ -374,8 +439,8 @@
     <object name="FilterBasic" cname="GMimeFilterBasic" parent="GMimeFilter">
       <field name="Type" cname="type" type="GMimeFilterBasicType" />
       <field name="Uubuf" cname="uubuf" array_len="60" type="unsigned char" />
+      <field name="Save" cname="save" type="guint32" />
       <field name="State" cname="state" type="int" />
-      <field name="Save" cname="save" type="int" />
       <method name="GetType" cname="g_mime_filter_basic_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -485,7 +550,7 @@
       </constructor>
     </object>
     <object name="FilterHTML" cname="GMimeFilterHTML" parent="GMimeFilter">
-      <field name="Scanner" cname="scanner" type="struct-_GUrlScanner*" />
+      <field name="Scanner" cname="scanner" type="struct-_UrlScanner*" />
       <field name="Flags" cname="flags" type="guint32" />
       <field name="Colour" cname="colour" type="guint32" />
       <field name="Column" cname="column" bits="31" type="guint32" />
@@ -630,7 +695,10 @@
           <parameter type="gpointer" name="data" />
         </parameters>
       </method>
-      <method name="GetBody" cname="g_mime_message_get_body">
+      <method name="GetAllRecipients" cname="g_mime_message_get_all_recipients">
+        <return-type type="InternetAddressList*" />
+      </method>
+      <method name="GetBody" cname="g_mime_message_get_body" deprecated="1">
         <return-type type="char*" />
         <parameters>
           <parameter type="gboolean" name="want_plain" />
@@ -1071,9 +1139,6 @@
           <parameter type="const-char*" name="subtype" />
         </parameters>
       </constructor>
-      <method name="Ref" cname="g_mime_object_ref" deprecated="1">
-        <return-type type="void" />
-      </method>
       <method name="RegisterType" cname="g_mime_object_register_type" shared="true">
         <return-type type="void" />
         <parameters>
@@ -1116,9 +1181,6 @@
       </method>
       <method name="ToString" cname="g_mime_object_to_string">
         <return-type type="char*" />
-      </method>
-      <method name="Unref" cname="g_mime_object_unref" deprecated="1">
-        <return-type type="void" />
       </method>
       <method name="WriteToStream" cname="g_mime_object_write_to_stream">
         <return-type type="ssize_t" />
@@ -1554,9 +1616,6 @@
           <parameter type="size_t" name="len" />
         </parameters>
       </method>
-      <method name="Ref" cname="g_mime_stream_ref" deprecated="1">
-        <return-type type="void" />
-      </method>
       <method name="Reset" cname="g_mime_stream_reset">
         <return-type type="int" />
       </method>
@@ -1583,9 +1642,6 @@
       </method>
       <method name="Tell" cname="g_mime_stream_tell">
         <return-type type="gint64" />
-      </method>
-      <method name="Unref" cname="g_mime_stream_unref" deprecated="1">
-        <return-type type="void" />
       </method>
       <method name="Write" cname="g_mime_stream_write">
         <return-type type="ssize_t" />
@@ -1616,9 +1672,9 @@
     </object>
     <object name="StreamBuffer" cname="GMimeStreamBuffer" parent="GMimeStream">
       <field name="Source" cname="source" type="GMimeStream*" />
-      <field name="Buffer" cname="buffer" type="unsigned char*" />
-      <field name="Bufptr" cname="bufptr" type="unsigned char*" />
-      <field name="Bufend" cname="bufend" type="unsigned char*" />
+      <field name="Buffer" cname="buffer" type="char*" />
+      <field name="Bufptr" cname="bufptr" type="char*" />
+      <field name="Bufend" cname="bufend" type="char*" />
       <field name="Buflen" cname="buflen" type="size_t" />
       <field name="Mode" cname="mode" type="GMimeStreamBufferMode" />
       <method name="GetType" cname="g_mime_stream_buffer_get_type" shared="true">
@@ -1822,6 +1878,14 @@
       </method>
       <method name="BestName" cname="g_mime_charset_best_name">
         <return-type type="const-char*" />
+      </method>
+      <method name="CanEncode" cname="g_mime_charset_can_encode">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="charset" />
+          <parameter type="const-char*" name="text" />
+          <parameter type="size_t" name="len" />
+        </parameters>
       </method>
       <method name="CanonName" cname="g_mime_charset_canon_name" shared="true">
         <return-type type="const-char*" />
@@ -2062,7 +2126,7 @@
       </method>
     </struct>
     <struct name="Param" cname="GMimeParam" opaque="true">
-      <field name="Next" cname="next" type="struct-_GMimeParam*" access="public" writeable="true" />
+      <field name="Next" cname="next" type="GMimeParam*" access="public" writeable="true" />
       <field name="Name" cname="name" type="char*" access="public" writeable="true" />
       <field name="Value" cname="value" type="char*" access="public" writeable="true" />
       <method name="Append" cname="g_mime_param_append">
@@ -2101,7 +2165,7 @@
       </method>
     </struct>
     <struct name="References" cname="GMimeReferences">
-      <field name="Next" cname="next" type="struct-_GMimeReferences*" />
+      <field name="Next" cname="next" type="GMimeReferences*" />
       <field name="Msgid" cname="msgid" type="char*" />
       <method name="Append" cname="g_mime_references_append">
         <return-type type="void" />
@@ -2159,7 +2223,7 @@
       </method>
     </struct>
     <struct name="Signer" cname="GMimeSigner" opaque="true">
-      <field name="Next" cname="next" type="struct-_GMimeSigner*" access="public" writeable="true" />
+      <field name="Next" cname="next" type="GMimeSigner*" access="public" writeable="true" />
       <field name="Status" cname="status" bits="2" type="unsigned int" access="public" writeable="true" />
       <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
@@ -2175,7 +2239,7 @@
       <constructor cname="g_mime_signer_new" />
     </struct>
     <struct name="StreamIOVector" cname="GMimeStreamIOVector">
-      <field name="Data" cname="data" type="gpointer" />
+      <field name="Data" cname="data" type="void*" />
       <field name="Len" cname="len" type="size_t" />
     </struct>
     <struct name="InternetAddress" cname="InternetAddress" opaque="true">
@@ -2289,9 +2353,45 @@
           <parameter type="gboolean" name="encode" />
         </parameters>
       </method>
+      <method name="Writer" cname="internet_address_list_writer">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GString*" name="str" />
+        </parameters>
+      </method>
     </struct>
+    <class name="Global" cname="GMimeGlobal">
+      <method name="CheckVersion" cname="g_mime_check_version" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="guint" name="major" />
+          <parameter type="guint" name="minor" />
+          <parameter type="guint" name="micro" />
+        </parameters>
+      </method>
+      <method name="SetUserCharsets" cname="g_mime_set_user_charsets" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char**" name="charsets" />
+        </parameters>
+      </method>
+      <method name="UserCharsets" cname="g_mime_user_charsets" shared="true">
+        <return-type type="const-char**" />
+      </method>
+      <method name="YdecodeStep" cname="g_mime_ydecode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="out" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="pcrc" />
+          <parameter type="guint32*" name="crc" />
+        </parameters>
+      </method>
+    </class>
     <class name="Cipher" cname="GMimeCipher_">
-      <method name="Decrypt" cname="g_mime_cipher_decrypt" shared="true">
+      <method name="Decrypt" cname="g_mime_cipher_decrypt" deprecated="1" shared="true">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2300,7 +2400,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="Encrypt" cname="g_mime_cipher_encrypt" shared="true">
+      <method name="Encrypt" cname="g_mime_cipher_encrypt" deprecated="1" shared="true">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2312,7 +2412,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="ExportKeys" cname="g_mime_cipher_export_keys" shared="true">
+      <method name="ExportKeys" cname="g_mime_cipher_export_keys" deprecated="1" shared="true">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2321,21 +2421,21 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="HashId" cname="g_mime_cipher_hash_id" shared="true">
+      <method name="HashId" cname="g_mime_cipher_hash_id" deprecated="1" shared="true">
         <return-type type="GMimeCipherHash" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
           <parameter type="const-char*" name="hash" />
         </parameters>
       </method>
-      <method name="HashName" cname="g_mime_cipher_hash_name" shared="true">
+      <method name="HashName" cname="g_mime_cipher_hash_name" deprecated="1" shared="true">
         <return-type type="const-char*" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
           <parameter type="GMimeCipherHash" name="hash" />
         </parameters>
       </method>
-      <method name="ImportKeys" cname="g_mime_cipher_import_keys" shared="true">
+      <method name="ImportKeys" cname="g_mime_cipher_import_keys" deprecated="1" shared="true">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2343,7 +2443,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="Sign" cname="g_mime_cipher_sign" shared="true">
+      <method name="Sign" cname="g_mime_cipher_sign" deprecated="1" shared="true">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2354,7 +2454,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="Verify" cname="g_mime_cipher_verify" shared="true">
+      <method name="Verify" cname="g_mime_cipher_verify" deprecated="1" shared="true">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
@@ -2362,6 +2462,26 @@
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="sigstream" />
           <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Decode" cname="GMimeDecode_">
+      <method name="Domain" cname="g_mime_decode_domain" shared="true">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="const-char**" name="in" />
+        </parameters>
+      </method>
+      <method name="Lwsp" cname="g_mime_decode_lwsp" shared="true">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char**" name="in" />
+        </parameters>
+      </method>
+      <method name="Word" cname="g_mime_decode_word" shared="true">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="const-char**" name="in" />
         </parameters>
       </method>
     </class>
@@ -2506,6 +2626,13 @@
           <parameter type="size_t" name="len" />
         </parameters>
       </method>
+      <method name="Decode8bit" cname="g_mime_utils_decode_8bit" shared="true">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="const-char*" name="text" />
+          <parameter type="size_t" name="len" />
+        </parameters>
+      </method>
       <method name="DecodeMessageId" cname="g_mime_utils_decode_message_id" shared="true">
         <return-type type="char*" />
         <parameters>
@@ -2522,31 +2649,31 @@
         <return-type type="time_t" />
         <parameters>
           <parameter type="const-char*" name="in" />
-          <parameter type="int*" name="saveoffset" />
+          <parameter type="int*" name="tz_offset" />
         </parameters>
       </method>
       <method name="HeaderDecodePhrase" cname="g_mime_utils_header_decode_phrase" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-char*" name="in" />
         </parameters>
       </method>
       <method name="HeaderDecodeText" cname="g_mime_utils_header_decode_text" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-char*" name="in" />
         </parameters>
       </method>
       <method name="HeaderEncodePhrase" cname="g_mime_utils_header_encode_phrase" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-char*" name="in" />
         </parameters>
       </method>
       <method name="HeaderEncodeText" cname="g_mime_utils_header_encode_text" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-char*" name="in" />
         </parameters>
       </method>
       <method name="HeaderFold" cname="g_mime_utils_header_fold" shared="true">
@@ -2558,8 +2685,8 @@
       <method name="HeaderFormatDate" cname="g_mime_utils_header_format_date" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="time_t" name="time" />
-          <parameter type="int" name="offset" />
+          <parameter type="time_t" name="date" />
+          <parameter type="int" name="tz_offset" />
         </parameters>
       </method>
       <method name="HeaderPrintf" cname="g_mime_utils_header_printf" shared="true">
@@ -2581,8 +2708,8 @@
           <parameter type="const-unsigned-char*" name="in" />
           <parameter type="size_t" name="inlen" />
           <parameter type="unsigned-char*" name="out" />
-          <parameter type="int*" name="savestate" />
-          <parameter type="int*" name="saved" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
         </parameters>
       </method>
       <method name="QuotedEncodeClose" cname="g_mime_utils_quoted_encode_close" shared="true">
@@ -2592,7 +2719,7 @@
           <parameter type="size_t" name="inlen" />
           <parameter type="unsigned-char*" name="out" />
           <parameter type="int*" name="state" />
-          <parameter type="int*" name="save" />
+          <parameter type="guint32*" name="save" />
         </parameters>
       </method>
       <method name="QuotedEncodeStep" cname="g_mime_utils_quoted_encode_step" shared="true">
@@ -2602,7 +2729,7 @@
           <parameter type="size_t" name="inlen" />
           <parameter type="unsigned-char*" name="out" />
           <parameter type="int*" name="state" />
-          <parameter type="int*" name="save" />
+          <parameter type="guint32*" name="save" />
         </parameters>
       </method>
       <method name="StructuredHeaderFold" cname="g_mime_utils_structured_header_fold" shared="true">
@@ -2660,19 +2787,6 @@
           <parameter type="unsigned-char*" name="uubuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-    </class>
-    <class name="Global" cname="GMimeGlobal">
-      <method name="YdecodeStep" cname="g_mime_ydecode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="pcrc" />
-          <parameter type="guint32*" name="crc" />
         </parameters>
       </method>
     </class>
