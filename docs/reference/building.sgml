@@ -114,7 +114,7 @@
       the various libraries will be found.
     </para>
     <programlisting>
-      LD_LIBRARY_PATH=&quot;/opt/gtk/lib&quot;
+      LD_LIBRARY_PATH=&quot;/opt/gmime/lib&quot;
       PATH=&quot;/opt/gmime/bin:$PATH&quot;
       export LD_LIBRARY_PATH PATH
     </programlisting>
