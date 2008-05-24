@@ -2,6 +2,4 @@
 
 SUBDIRS = reference tutorial
 
-EXTRA_DIST = \
-	gmime-config.txt	\
-	gtkdocs_fix
+EXTRA_DIST = gtkdocs_fix
