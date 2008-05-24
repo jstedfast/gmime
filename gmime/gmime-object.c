@@ -178,40 +178,6 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 
 
 /**
- * g_mime_object_ref:
- * @object: mime object
- *
- * Ref's a MIME object.
- *
- * WARNING: This method is deprecated. Use g_object_ref() instead.
- **/
-void
-g_mime_object_ref (GMimeObject *object)
-{
-	g_return_if_fail (GMIME_IS_OBJECT (object));
-	
-	g_object_ref (object);
-}
-
-
-/**
- * g_mime_object_unref:
- * @object: mime object
- *
- * Unref's a MIME object.
- *
- * WARNING: This method is deprecated. Use g_object_unref() instead.
- **/
-void
-g_mime_object_unref (GMimeObject *object)
-{
-	g_return_if_fail (GMIME_IS_OBJECT (object));
-	
-	g_object_unref (object);
-}
-
-
-/**
  * g_mime_object_register_type:
  * @type: mime type
  * @subtype: mime subtype

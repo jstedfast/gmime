@@ -5,6 +5,9 @@
 	functionality in a parent class.
 	(g_mime_message_to_string): Same.
 
+	* gmime/gmime-object.c (g_mime_object_ref): Same.
+	(g_mime_object_unref): Same.
+
 	* gmime/gmime-part.c (g_mime_part_write_to_stream): Same.
 	(g_mime_part_to_string): Same.
 

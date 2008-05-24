@@ -84,11 +84,6 @@ GType g_mime_object_get_type (void);
 void g_mime_object_register_type (const char *type, const char *subtype, GType object_type);
 GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
 
-#ifndef GMIME_DISABLE_DEPRECATED
-void g_mime_object_ref (GMimeObject *object);
-void g_mime_object_unref (GMimeObject *object);
-#endif
-
 void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
 
