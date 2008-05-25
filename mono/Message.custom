@@ -18,20 +18,20 @@ public InternetAddressList GetRecipients (RecipientType type)
 public System.Collections.IEnumerable References {
 	get {
 		string header = GetHeader ("References");
-	
+
 		if (header == null)
 			yield break;
 
 		GMime.References gmime_reference = GMime.References.Decode (header);
-	
+
 		// keep gmime_reference for cleanup later
 		GMime.References iterator = gmime_reference;
-	
+
 		while (! iterator.Equals (GMime.References.Zero)) {
 			yield return iterator;
 			iterator = iterator.Next ();
 		}
-		
+
 		gmime_reference.Clear ();
 		yield break;
 	}
@@ -66,7 +66,6 @@ public string GetRecipientsAsString (RecipientType type, bool encode)
 		else
 			first = false;
 
-
 		sb.Append (GLib.Marshaller.PtrToStringGFree (raw_str));
 
 		raw_list = internet_address_list_next (raw_list);
@@ -83,6 +82,9 @@ public string GetRecipientsAsString (RecipientType type)
 [DllImport("gmime")]
 static extern void g_mime_message_get_date (IntPtr raw, out IntPtr date, out int gmt_offset);
 
+[DllImport("gmime")]
+static extern void g_mime_message_set_date (IntPtr raw, IntPtr date, int gmt_offset);
+
 public DateTime Date {
 	get {
 		IntPtr date_raw;
@@ -91,5 +93,8 @@ public DateTime Date {
 		g_mime_message_get_date (Handle, out date_raw, out gmt_offset);
 
 		return GLib.Marshaller.time_tToDateTime (date_raw);
+	}
+	set {
+		g_mime_message_set_date (Handle, GLib.Marshaller.DateTimeTotime_t (value), 0);
 	}
 }

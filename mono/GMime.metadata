@@ -42,6 +42,18 @@
   <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
   <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
 
+  <!-- Clean up some unnecessary helper methods from GMimeObject -->
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
+
+  <!-- Remove duplicate functionality from GMimeMessage -->
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_add_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_headers']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
+
   <!-- Change some GMimePart APIs -->
   <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition']"/>
   <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition']"/>
@@ -76,6 +88,8 @@
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
   <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
+  <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
+  <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
 
   <!-- Fix up bindings for yencode/decode -->
   <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_close']" name="name">EncodeClose</attr>
