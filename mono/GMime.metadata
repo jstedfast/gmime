@@ -106,13 +106,43 @@
        So rename this one -->
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
 
-  <!-- Certain things take const unsigned char *, which the generator doesn't deal with nicely. -->
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="name">str</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@type='const-unsigned-char*']" name="type">const-char*</attr>
+  <!-- Fix the base64/uu/qp encoder/decoder APIs. -->
+<!--
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='n_inbuf']" name="pass_as"></attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='n_inbuf']" name="type">guint32</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
+-->
+  <!-- Remove all of the encoder/decoders - we'll implement these manually -->
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64EncodeStep']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64EncodeClose']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64DecodeStep']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UuencodeStep']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UuencodeClose']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UudecodeStep']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedEncodeStep']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedEncodeClose']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedDecodeStep']"/>
+
+  <!-- Fix/Remove some other APIs from gmime-utils -->
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_decode_8bit']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_text_is_8bit']"/>
+  <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="type">guint32</attr>
+  <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
 
   <!-- Hide some problematic and nonsensical elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetDate']/*/*[@name='date']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>

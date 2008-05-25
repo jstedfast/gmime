@@ -1,0 +1,62 @@
+[DllImport("gmime")]
+static extern uint g_mime_utils_base64_encode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint Base64EncodeStep(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_base64_encode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_base64_encode_close(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint Base64EncodeClose(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_base64_encode_close(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_base64_decode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint Base64DecodeStep(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_base64_decode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_quoted_encode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint QuotedPrintableEncodeStep(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_quoted_encode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_quoted_encode_close(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint QuotedPrintableEncodeClose(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_quoted_encode_close(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_quoted_decode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint QuotedPrintableDecodeStep(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_quoted_decode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_uuencode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref byte[] uubuf, ref int state, ref uint save);
+
+public static uint UuEncodeStep(byte[] inbuf, ref byte[] outbuf, ref byte[] uubuf, ref int state, ref uint save) {
+	return g_mime_utils_uuencode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref uubuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_uuencode_close(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref byte[] uubuf, ref int state, ref uint save);
+
+public static uint UuEncodeClose(byte[] inbuf, ref byte[] outbuf, ref byte[] uubuf, ref int state, ref uint save) {
+	return g_mime_utils_uuencode_close(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref uubuf, ref state, ref save);
+}
+
+[DllImport("gmime")]
+static extern uint g_mime_utils_uudecode_step(byte[] inbuf, uint n_inbuf, ref byte[] outbuf, ref int state, ref uint save);
+
+public static uint UuDecodeStep(byte[] inbuf, ref byte[] outbuf, ref int state, ref uint save) {
+	return g_mime_utils_uudecode_step(inbuf, inbuf == null ? 0 : (uint) inbuf.Length, ref outbuf, ref state, ref save);
+}

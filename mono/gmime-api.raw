@@ -2577,27 +2577,27 @@
       <method name="8BitHeaderDecode" cname="g_mime_utils_8bit_header_decode" deprecated="1" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="text" />
         </parameters>
       </method>
       <method name="8BitHeaderEncode" cname="g_mime_utils_8bit_header_encode" deprecated="1" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="text" />
         </parameters>
       </method>
       <method name="8BitHeaderEncodePhrase" cname="g_mime_utils_8bit_header_encode_phrase" deprecated="1" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="text" />
         </parameters>
       </method>
       <method name="Base64DecodeStep" cname="g_mime_utils_base64_decode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2605,9 +2605,9 @@
       <method name="Base64EncodeClose" cname="g_mime_utils_base64_encode_close" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2615,9 +2615,9 @@
       <method name="Base64EncodeStep" cname="g_mime_utils_base64_encode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2651,38 +2651,38 @@
       <method name="HeaderDecodeDate" cname="g_mime_utils_header_decode_date" shared="true">
         <return-type type="time_t" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="str" />
           <parameter type="int*" name="tz_offset" />
         </parameters>
       </method>
       <method name="HeaderDecodePhrase" cname="g_mime_utils_header_decode_phrase" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="phrase" />
         </parameters>
       </method>
       <method name="HeaderDecodeText" cname="g_mime_utils_header_decode_text" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="text" />
         </parameters>
       </method>
       <method name="HeaderEncodePhrase" cname="g_mime_utils_header_encode_phrase" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="phrase" />
         </parameters>
       </method>
       <method name="HeaderEncodeText" cname="g_mime_utils_header_encode_text" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="text" />
         </parameters>
       </method>
       <method name="HeaderFold" cname="g_mime_utils_header_fold" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="HeaderFormatDate" cname="g_mime_utils_header_format_date" shared="true">
@@ -2702,15 +2702,15 @@
       <method name="QuoteString" cname="g_mime_utils_quote_string" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="QuotedDecodeStep" cname="g_mime_utils_quoted_decode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2718,9 +2718,9 @@
       <method name="QuotedEncodeClose" cname="g_mime_utils_quoted_encode_close" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2728,9 +2728,9 @@
       <method name="QuotedEncodeStep" cname="g_mime_utils_quoted_encode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2738,7 +2738,7 @@
       <method name="StructuredHeaderFold" cname="g_mime_utils_structured_header_fold" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="TextIs8bit" cname="g_mime_utils_text_is_8bit" shared="true">
@@ -2757,15 +2757,15 @@
       <method name="UnstructuredHeaderFold" cname="g_mime_utils_unstructured_header_fold" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="UudecodeStep" cname="g_mime_utils_uudecode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
         </parameters>
@@ -2773,9 +2773,9 @@
       <method name="UuencodeClose" cname="g_mime_utils_uuencode_close" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="unsigned-char*" name="uubuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
@@ -2784,9 +2784,9 @@
       <method name="UuencodeStep" cname="g_mime_utils_uuencode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="unsigned-char*" name="uubuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="save" />
