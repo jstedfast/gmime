@@ -38,12 +38,32 @@
   <remove-node path="/api/namespace/class[@name='Strcase']"/>
 
   <!-- Rename some GMimeDisposition methods -->
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDispositionType</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDispositionType</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="name">ContentDisposition</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
+
+  <!-- Change some GMimePart APIs -->
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_add_content_disposition_parameter']"/>
+  <attr path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition_object']" name="name">GetContentDisposition</attr>
+  <attr path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition_object']" name="name">SetContentDisposition</attr>
+
+  <!-- Remove deprecated GMimePart APIs -->
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_byte_array']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_pre_encoded_content']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content']"/>
 
   <!-- Rename some GMimeDataWrapper methods -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
+
+  <!-- Get rid of the IOVector APIs -->
+  <remove-node path="/api/namespace/object[@cname='GMimeStream']/method[@cname='g_mime_stream_writev']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeStreamIOVector']"/>
 
   <!-- Fix up some GMimeFilter APIs -->
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
