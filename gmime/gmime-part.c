@@ -922,11 +922,28 @@ g_mime_part_encoding_from_string (const char *encoding)
 
 
 /**
+ * g_mime_part_get_content_disposition_object:
+ * @mime_part: Mime part
+ *
+ * Get the content disposition for the specified mime part.
+ *
+ * Returns the #GMimeDisposition set on the mime part.
+ **/
+const GMimeDisposition *
+g_mime_part_get_content_disposition_object (GMimePart *mime_part)
+{
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
+	
+	return mime_part->disposition;
+}
+
+
+/**
  * g_mime_part_set_content_disposition_object:
  * @mime_part: Mime part
  * @disposition: disposition object
  *
- * Set the content disposition for the specified mime part
+ * Set the content disposition for the specified mime part.
  **/
 void
 g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition)

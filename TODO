@@ -54,6 +54,19 @@ Ideas for GMime "3.0"
 - GMimeMultipartEncrypted::decrypt() needs to return a
   GMimeSignatureStatus for signed/encrypted parts.
 
+- Rename GMimeDisposition to GMimeContentDisposition.
+
+- Move GMimePart's disposition APIs to GMimeObject since technically,
+  Multiparts can also have a disposition.
+
+- Rename g_mime_part_[g,s]et_content_disposition_object() to
+  g_mime_part_[g,s]et_content_disposition() and rename
+  g_mime_part_[g,s]et_content_disposition() to simply
+  g_mime_part_[g,s]et_disposition()
+
+- Make GMimeMultipart and InternetAddressList use arrays instead of
+  linked lists?
+
 - Get rid of deprecated functions.
 
 

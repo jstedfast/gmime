@@ -91,6 +91,7 @@ GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
 const char *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_encoding_from_string (const char *encoding);
 
+const GMimeDisposition *g_mime_part_get_content_disposition_object (GMimePart *mime_part);
 void g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition);
 void g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition);
 const char *g_mime_part_get_content_disposition (GMimePart *mime_part);

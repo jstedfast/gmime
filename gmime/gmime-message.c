@@ -1301,8 +1301,11 @@ g_mime_message_get_message_id (GMimeMessage *message)
  * @header: rfc822 header field
  * @value: the contents of the header field
  *
- * Add an arbitrary message header to the MIME Message such as X-Mailer,
- * X-Priority, or In-Reply-To.
+ * Add an arbitrary message header to the MIME Message such as
+ * X-Mailer, X-Priority, or In-Reply-To.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_object_add_header() instead.
  **/
 void
 g_mime_message_add_header (GMimeMessage *message, const char *header, const char *value)
@@ -1321,8 +1324,11 @@ g_mime_message_add_header (GMimeMessage *message, const char *header, const char
  * @header: rfc822 header field
  * @value: the contents of the header field
  *
- * Set an arbitrary message header to the MIME Message such as X-Mailer,
- * X-Priority, or In-Reply-To.
+ * Set an arbitrary message header to the MIME Message such as
+ * X-Mailer, X-Priority, or In-Reply-To.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_object_set_header().
  **/
 void
 g_mime_message_set_header (GMimeMessage *message, const char *header, const char *value)
@@ -1343,7 +1349,11 @@ g_mime_message_set_header (GMimeMessage *message, const char *header, const char
  * Gets the value of the requested header @header if it exists, or
  * %NULL otherwise.
  *
- * Returns the value of the requested header (or %NULL if it isn't set)
+ * WARNING: This interface is deprecated. Use
+ * g_mime_message_get_header().
+ *
+ * Returns the value of the requested header (or %NULL if it isn't
+ * set)
  **/
 const char *
 g_mime_message_get_header (GMimeMessage *message, const char *header)
@@ -1549,6 +1559,9 @@ g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gbool
  * @message: MIME Message
  *
  * Allocates a string buffer containing the raw message headers.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_object_get_headers() instead.
  *
  * Returns an allocated string containing the raw message headers.
  **/
