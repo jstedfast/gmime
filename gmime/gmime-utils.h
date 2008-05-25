@@ -135,7 +135,7 @@ struct _GMimeReferences {
 #define GMIME_UUDECODE_STATE_END    (1 << 17)
 #define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
 
-time_t g_mime_utils_header_decode_date (const char *in, int *tz_offset);
+time_t g_mime_utils_header_decode_date (const char *str, int *tz_offset);
 char  *g_mime_utils_header_format_date (time_t date, int tz_offset);
 
 char *g_mime_utils_generate_message_id (const char *fqdn);
@@ -149,12 +149,12 @@ void g_mime_references_append (GMimeReferences **refs, const char *msgid);
 void g_mime_references_clear (GMimeReferences **refs);
 GMimeReferences *g_mime_references_next (const GMimeReferences *ref);
 
-char  *g_mime_utils_structured_header_fold (const char *in);
-char  *g_mime_utils_unstructured_header_fold (const char *in);
-char  *g_mime_utils_header_fold (const char *in);
+char  *g_mime_utils_structured_header_fold (const char *str);
+char  *g_mime_utils_unstructured_header_fold (const char *str);
+char  *g_mime_utils_header_fold (const char *str);
 char  *g_mime_utils_header_printf (const char *format, ...);
 
-char  *g_mime_utils_quote_string (const char *string);
+char  *g_mime_utils_quote_string (const char *str);
 void   g_mime_utils_unquote_string (char *string);
 
 /* encoding decision making utilities ;-) */
@@ -165,32 +165,32 @@ GMimePartEncodingType g_mime_utils_best_encoding (const unsigned char *text, siz
 char *g_mime_utils_decode_8bit (const char *text, size_t len);
 
 /* utilities to (de/en)code headers */
-char *g_mime_utils_header_decode_text (const char *in);
-char *g_mime_utils_header_encode_text (const char *in);
+char *g_mime_utils_header_decode_text (const char *text);
+char *g_mime_utils_header_encode_text (const char *text);
 
-char *g_mime_utils_header_decode_phrase (const char *in);
-char *g_mime_utils_header_encode_phrase (const char *in);
+char *g_mime_utils_header_decode_phrase (const char *phrase);
+char *g_mime_utils_header_encode_phrase (const char *phrase);
 
 #ifndef GMIME_DISABLE_DEPRECATED
-char *g_mime_utils_8bit_header_decode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode (const unsigned char *in);
-char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *in);
+char *g_mime_utils_8bit_header_decode (const unsigned char *text);
+char *g_mime_utils_8bit_header_encode (const unsigned char *text);
+char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *text);
 #endif
 
 /* do incremental base64 (de/en)coding */
-size_t g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-size_t g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-size_t g_mime_utils_base64_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+size_t g_mime_utils_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
+size_t g_mime_utils_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
+size_t g_mime_utils_base64_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
 
 /* do incremental uu (de/en)coding */
-size_t g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-size_t g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save);
-size_t g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save);
+size_t g_mime_utils_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
+size_t g_mime_utils_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save);
+size_t g_mime_utils_uuencode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save);
 
 /* do incremental quoted-printable (de/en)coding */
-size_t g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-size_t g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
-size_t g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+size_t g_mime_utils_quoted_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
+size_t g_mime_utils_quoted_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
+size_t g_mime_utils_quoted_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
 
 
 G_END_DECLS

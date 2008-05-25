@@ -735,23 +735,23 @@ gmime_datetok_table_init (void)
 
 /**
  * g_mime_utils_header_decode_date:
- * @in: input date string
+ * @str: input date string
  * @tz_offset: timezone offset
  *
  * Decodes the rfc822 date string and saves the GMT offset into
  * @saveoffset if non-NULL.
  *
  * Returns the time_t representation of the date string specified by
- * @in. If 'saveoffset' is non-NULL, the value of the timezone offset
+ * @str. If 'saveoffset' is non-NULL, the value of the timezone offset
  * will be stored.
  **/
 time_t
-g_mime_utils_header_decode_date (const char *in, int *tz_offset)
+g_mime_utils_header_decode_date (const char *str, int *tz_offset)
 {
 	struct _date_token *token, *tokens;
 	time_t date;
 	
-	if (!(tokens = datetok (in))) {
+	if (!(tokens = datetok (str))) {
 		if (tz_offset)
 			*tz_offset = 0;
 		
@@ -1215,46 +1215,46 @@ header_fold (const char *in, gboolean structured)
 
 /**
  * g_mime_utils_structured_header_fold:
- * @in: input header string
+ * @str: input string
  *
  * Folds a structured header according to the rules in rfc822.
  *
  * Returns an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_structured_header_fold (const char *in)
+g_mime_utils_structured_header_fold (const char *str)
 {
-	return header_fold (in, TRUE);
+	return header_fold (str, TRUE);
 }
 
 
 /**
  * g_mime_utils_unstructured_header_fold:
- * @in: input header string
+ * @str: input string
  *
  * Folds an unstructured header according to the rules in rfc822.
  *
  * Returns an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_unstructured_header_fold (const char *in)
+g_mime_utils_unstructured_header_fold (const char *str)
 {
-	return header_fold (in, FALSE);
+	return header_fold (str, FALSE);
 }
 
 
 /**
  * g_mime_utils_header_fold:
- * @in: input header string
+ * @str: input string
  *
  * Folds a structured header according to the rules in rfc822.
  *
  * Returns an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_header_fold (const char *in)
+g_mime_utils_header_fold (const char *str)
 {
-	return header_fold (in, TRUE);
+	return header_fold (str, TRUE);
 }
 
 
@@ -1310,7 +1310,7 @@ need_quotes (const char *string)
 
 /**
  * g_mime_utils_quote_string:
- * @string: input string
+ * @str: input string
  *
  * Quotes @string as needed according to the rules in rfc2045.
  * 
@@ -1320,7 +1320,7 @@ need_quotes (const char *string)
  * as defined by rfc2045.
  **/
 char *
-g_mime_utils_quote_string (const char *string)
+g_mime_utils_quote_string (const char *str)
 {
 	gboolean quote;
 	const char *c;
@@ -1329,10 +1329,10 @@ g_mime_utils_quote_string (const char *string)
 	
 	out = g_string_new ("");
 	
-	if ((quote = need_quotes (string)))
+	if ((quote = need_quotes (str)))
 		g_string_append_c (out, '"');
 	
-	for (c = string; *c; c++) {
+	for (c = str; *c; c++) {
 		if ((*c == '"' && quote) || *c == '\\')
 			g_string_append_c (out, '\\');
 		
@@ -1350,44 +1350,44 @@ g_mime_utils_quote_string (const char *string)
 
 
 /**
- * g_mime_utils_unquote_string: Unquote a string.
- * @string: string
+ * g_mime_utils_unquote_string:
+ * @str: input string
  * 
  * Unquotes and unescapes a string.
  **/
 void
-g_mime_utils_unquote_string (char *string)
+g_mime_utils_unquote_string (char *str)
 {
 	/* if the string is quoted, unquote it */
-	register char *inptr = string;
+	register char *inptr = str;
 	int escaped = FALSE;
 	int quoted = FALSE;
 	
-	if (!string)
+	if (!str)
 		return;
 	
 	while (*inptr) {
 		if (*inptr == '\\') {
 			if (escaped)
-				*string++ = *inptr++;
+				*str++ = *inptr++;
 			else
 				inptr++;
 			escaped = !escaped;
 		} else if (*inptr == '"') {
 			if (escaped) {
-				*string++ = *inptr++;
+				*str++ = *inptr++;
 				escaped = FALSE;
 			} else {
 				quoted = !quoted;
 				inptr++;
 			}
 		} else {
-			*string++ = *inptr++;
+			*str++ = *inptr++;
 			escaped = FALSE;
 		}
 	}
 	
-	*string = '\0';
+	*str = '\0';
 }
 
 
@@ -1791,7 +1791,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 
 /**
  * g_mime_utils_header_decode_text:
- * @in: header to decode
+ * @text: header text to decode
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
@@ -1803,20 +1803,20 @@ rfc2047_decode_word (const char *in, size_t inlen)
  * header.
  **/
 char *
-g_mime_utils_header_decode_text (const char *in)
+g_mime_utils_header_decode_text (const char *text)
 {
-	register const char *inptr = in;
+	register const char *inptr = text;
 	gboolean encoded = FALSE;
-	const char *lwsp, *text;
+	const char *lwsp, *word;
 	size_t nlwsp, n;
 	gboolean ascii;
 	char *decoded;
 	GString *out;
 	
-	if (in == NULL)
+	if (text == NULL)
 		return g_strdup ("");
 	
-	out = g_string_sized_new (strlen (in) + 1);
+	out = g_string_sized_new (strlen (text) + 1);
 	
 	while (*inptr != '\0') {
 		lwsp = inptr;
@@ -1826,7 +1826,7 @@ g_mime_utils_header_decode_text (const char *in)
 		nlwsp = (size_t) (inptr - lwsp);
 		
 		if (*inptr != '\0') {
-			text = inptr;
+			word = inptr;
 			ascii = TRUE;
 			
 #ifdef ENABLE_RFC2047_WORKAROUNDS
@@ -1870,9 +1870,9 @@ g_mime_utils_header_decode_text (const char *in)
 			}
 #endif /* ENABLE_RFC2047_WORKAROUNDS */
 			
-			n = (size_t) (inptr - text);
-			if (is_rfc2047_encoded_word (text, n)) {
-				if ((decoded = rfc2047_decode_word (text, n))) {
+			n = (size_t) (inptr - word);
+			if (is_rfc2047_encoded_word (word, n)) {
+				if ((decoded = rfc2047_decode_word (word, n))) {
 					/* rfc2047 states that you must ignore all
 					 * whitespace between encoded words */
 					if (!encoded)
@@ -1894,11 +1894,11 @@ g_mime_utils_header_decode_text (const char *in)
 				/* append word token */
 				if (!ascii) {
 					/* *sigh* I hate broken mailers... */
-					decoded = g_mime_utils_decode_8bit (text, n);
+					decoded = g_mime_utils_decode_8bit (word, n);
 					g_string_append (out, decoded);
 					g_free (decoded);
 				} else {
-					g_string_append_len (out, text, n);
+					g_string_append_len (out, word, n);
 				}
 				
 				encoded = FALSE;
@@ -1919,7 +1919,7 @@ g_mime_utils_header_decode_text (const char *in)
 
 /**
  * g_mime_utils_header_decode_phrase:
- * @in: header to decode
+ * @phrase: header to decode
  *
  * Decodes an rfc2047 encoded 'phrase' header.
  *
@@ -1931,9 +1931,9 @@ g_mime_utils_header_decode_text (const char *in)
  * header.
  **/
 char *
-g_mime_utils_header_decode_phrase (const char *in)
+g_mime_utils_header_decode_phrase (const char *phrase)
 {
-	register const char *inptr = in;
+	register const char *inptr = phrase;
 	gboolean encoded = FALSE;
 	const char *lwsp, *text;
 	size_t nlwsp, n;
@@ -1941,10 +1941,10 @@ g_mime_utils_header_decode_phrase (const char *in)
 	char *decoded;
 	GString *out;
 	
-	if (in == NULL)
+	if (phrase == NULL)
 		return g_strdup ("");
 	
-	out = g_string_sized_new (strlen (in) + 1);
+	out = g_string_sized_new (strlen (phrase) + 1);
 	
 	while (*inptr != '\0') {
 		lwsp = inptr;
@@ -2449,7 +2449,7 @@ rfc2047_encode (const char *in, gushort safemask)
 
 /**
  * g_mime_utils_header_encode_phrase:
- * @in: header to encode
+ * @phrase: phrase to encode
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
@@ -2457,18 +2457,18 @@ rfc2047_encode (const char *in, gushort safemask)
  * addresses.
  **/
 char *
-g_mime_utils_header_encode_phrase (const char *in)
+g_mime_utils_header_encode_phrase (const char *phrase)
 {
-	if (in == NULL)
+	if (phrase == NULL)
 		return NULL;
 	
-	return rfc2047_encode (in, IS_PSAFE);
+	return rfc2047_encode (phrase, IS_PSAFE);
 }
 
 
 /**
  * g_mime_utils_header_encode_text:
- * @in: header to encode
+ * @text: text to encode
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *
@@ -2476,18 +2476,18 @@ g_mime_utils_header_encode_phrase (const char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_header_encode_text (const char *in)
+g_mime_utils_header_encode_text (const char *text)
 {
-	if (in == NULL)
+	if (text == NULL)
 		return NULL;
 	
-	return rfc2047_encode (in, IS_ESAFE);
+	return rfc2047_encode (text, IS_ESAFE);
 }
 
 
 /**
  * g_mime_utils_8bit_header_decode:
- * @in: header to decode
+ * @text: text to decode
  *
  * Decodes an rfc2047 encoded header.
  *
@@ -2498,15 +2498,15 @@ g_mime_utils_header_encode_text (const char *in)
  * possible).
  **/
 char *
-g_mime_utils_8bit_header_decode (const unsigned char *in)
+g_mime_utils_8bit_header_decode (const unsigned char *text)
 {
-	return g_mime_utils_header_decode_text ((const char *) in);
+	return g_mime_utils_header_decode_text ((const char *) text);
 }
 
 
 /**
  * g_mime_utils_8bit_header_encode:
- * @in: header to encode
+ * @text: text to encode
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *
@@ -2517,15 +2517,15 @@ g_mime_utils_8bit_header_decode (const unsigned char *in)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_8bit_header_encode (const unsigned char *in)
+g_mime_utils_8bit_header_encode (const unsigned char *text)
 {
-	return g_mime_utils_header_encode_text ((const char *) in);
+	return g_mime_utils_header_encode_text ((const char *) text);
 }
 
 
 /**
  * g_mime_utils_8bit_header_encode_phrase:
- * @in: header to encode
+ * @text: text to encode
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
@@ -2536,17 +2536,17 @@ g_mime_utils_8bit_header_encode (const unsigned char *in)
  * addresses.
  **/
 char *
-g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
+g_mime_utils_8bit_header_encode_phrase (const unsigned char *text)
 {
-	return g_mime_utils_header_encode_phrase ((const char *) in);
+	return g_mime_utils_header_encode_phrase ((const char *) text);
 }
 
 
 /**
  * g_mime_utils_base64_encode_close:
- * @in: input stream
- * @inlen: length of the input
- * @out: output string
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
@@ -2557,13 +2557,13 @@ g_mime_utils_8bit_header_encode_phrase (const unsigned char *in)
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_base64_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_base64_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	unsigned char *outptr = out;
+	unsigned char *outptr = outbuf;
 	int c1, c2;
 	
 	if (inlen > 0)
-		outptr += g_mime_utils_base64_encode_step (in, inlen, outptr, state, save);
+		outptr += g_mime_utils_base64_encode_step (inbuf, inlen, outptr, state, save);
 	
 	c1 = ((unsigned char *)save)[1];
 	c2 = ((unsigned char *)save)[2];
@@ -2587,15 +2587,15 @@ g_mime_utils_base64_encode_close (const unsigned char *in, size_t inlen, unsigne
 	*save = 0;
 	*state = 0;
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_base64_encode_step:
- * @in: input stream
- * @inlen: length of the input
- * @out: output string
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
@@ -2607,7 +2607,7 @@ g_mime_utils_base64_encode_close (const unsigned char *in, size_t inlen, unsigne
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -2615,11 +2615,11 @@ g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned
 	if (inlen == 0)
 		return 0;
 	
-	inptr = in;
-	outptr = out;
+	outptr = outbuf;
+	inptr = inbuf;
 	
 	if (inlen + ((unsigned char *)save)[0] > 2) {
-		const unsigned char *inend = in + inlen - 2;
+		const unsigned char *inend = inbuf + inlen - 2;
 		register int c1 = 0, c2 = 0, c3 = 0;
 		register int already;
 		
@@ -2675,24 +2675,25 @@ g_mime_utils_base64_encode_step (const unsigned char *in, size_t inlen, unsigned
 		  (int)((char *)save)[1],
 		  (int)((char *)save)[2]));
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_base64_decode_step:
- * @in: input stream
- * @inlen: max length of data to decode
- * @out: output stream
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  *
  * Decodes a chunk of base64 encoded data.
  *
- * Returns the number of bytes decoded (which have been dumped in @out).
+ * Returns the number of bytes decoded (which have been dumped in
+ * @outbuf).
  **/
 size_t
-g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -2701,13 +2702,13 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
 	unsigned char c;
 	int i;
 	
-	inend = in + inlen;
-	outptr = out;
+	inend = inbuf + inlen;
+	outptr = outbuf;
 	
 	/* convert 4 base64 bytes to 3 normal bytes */
 	saved = *save;
 	i = *state;
-	inptr = in;
+	inptr = inbuf;
 	while (inptr < inend) {
 		c = gmime_base64_rank[*inptr++];
 		if (c != 0xff) {
@@ -2728,25 +2729,25 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
 	/* quick scan back for '=' on the end somewhere */
 	/* fortunately we can drop 1 output char for each trailing = (upto 2) */
 	i = 2;
-	while (inptr > in && i) {
+	while (inptr > inbuf && i) {
 		inptr--;
 		if (gmime_base64_rank[*inptr] != 0xff) {
-			if (*inptr == '=' && outptr > out)
+			if (*inptr == '=' && outptr > outbuf)
 				outptr--;
 			i--;
 		}
 	}
 	
 	/* if i != 0 then there is a truncation error! */
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_uuencode_close:
- * @in: input stream
- * @inlen: input stream length
- * @out: output stream
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @uubuf: temporary buffer of 60 bytes
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
@@ -2757,16 +2758,16 @@ g_mime_utils_base64_decode_step (const unsigned char *in, size_t inlen, unsigned
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save)
+g_mime_utils_uuencode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save)
 {
 	register unsigned char *outptr, *bufptr;
 	register guint32 saved;
 	int uulen, uufill, i;
 	
-	outptr = out;
+	outptr = outbuf;
 	
 	if (inlen > 0)
-		outptr += g_mime_utils_uuencode_step (in, inlen, out, uubuf, state, save);
+		outptr += g_mime_utils_uuencode_step (inbuf, inlen, outbuf, uubuf, state, save);
 	
 	uufill = 0;
 	
@@ -2818,15 +2819,15 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
 	*save = 0;
 	*state = 0;
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_uuencode_step:
- * @in: input stream
- * @inlen: input stream length
- * @out: output stream
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output stream
  * @uubuf: temporary buffer of 60 bytes
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
@@ -2839,7 +2840,7 @@ g_mime_utils_uuencode_close (const unsigned char *in, size_t inlen, unsigned cha
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char *out, unsigned char *uubuf, int *state, guint32 *save)
+g_mime_utils_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save)
 {
 	register unsigned char *outptr, *bufptr;
 	const register unsigned char *inptr;
@@ -2851,9 +2852,9 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
 	if (inlen == 0)
 		return 0;
 	
-	inend = in + inlen;
-	outptr = out;
-	inptr = in;
+	inend = inbuf + inlen;
+	outptr = outbuf;
+	inptr = inbuf;
 	
 	saved = *save;
 	i = *state & 0xff;
@@ -2935,15 +2936,15 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
 	*save = saved;
 	*state = ((uulen & 0xff) << 8) | (i & 0xff);
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_uudecode_step:
- * @in: input stream
- * @inlen: max length of data to decode
- * @out: output stream
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  *
@@ -2954,7 +2955,7 @@ g_mime_utils_uuencode_step (const unsigned char *in, size_t inlen, unsigned char
  * Returns the number of bytes decoded.
  **/
 size_t
-g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
 	const register unsigned char *inptr;
 	register unsigned char *outptr;
@@ -2975,10 +2976,10 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 	else
 		last_was_eoln = FALSE;
 	
-	inend = in + inlen;
-	outptr = out;
+	inend = inbuf + inlen;
+	outptr = outbuf;
+	inptr = inbuf;
 	
-	inptr = in;
 	while (inptr < inend) {
 		if (*inptr == '\n') {
 			last_was_eoln = TRUE;
@@ -3038,15 +3039,15 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
 	*save = saved;
 	*state = (*state & GMIME_UUDECODE_STATE_MASK) | ((uulen & 0xff) << 8) | (i & 0xff);
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_quoted_encode_close:
- * @in: input stream
- * @inlen: length of the input
- * @out: output string
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
@@ -3057,13 +3058,13 @@ g_mime_utils_uudecode_step (const unsigned char *in, size_t inlen, unsigned char
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_quoted_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	register unsigned char *outptr = out;
+	register unsigned char *outptr = outbuf;
 	int last;
 	
 	if (inlen > 0)
-		outptr += g_mime_utils_quoted_encode_step (in, inlen, outptr, state, save);
+		outptr += g_mime_utils_quoted_encode_step (inbuf, inlen, outptr, state, save);
 	
 	last = *state;
 	if (last != -1) {
@@ -3083,15 +3084,15 @@ g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigne
 	*save = 0;
 	*state = -1;
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_quoted_encode_step:
- * @in: input stream
- * @inlen: length of the input
- * @out: output string
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been encoded
  *
@@ -3102,11 +3103,11 @@ g_mime_utils_quoted_encode_close (const unsigned char *in, size_t inlen, unsigne
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_quoted_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	const register unsigned char *inptr = in;
-	const unsigned char *inend = in + inlen;
-	register unsigned char *outptr = out;
+	const register unsigned char *inptr = inbuf;
+	const unsigned char *inend = inbuf + inlen;
+	register unsigned char *outptr = outbuf;
 	register guint32 sofar = *save;  /* keeps track of how many chars on a line */
 	register int last = *state;  /* keeps track if last char to end was a space cr etc */
 	unsigned char c;
@@ -3177,15 +3178,15 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
 	*save = sofar;
 	*state = last;
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
 
 
 /**
  * g_mime_utils_quoted_decode_step:
- * @in: input stream
- * @inlen: max length of data to decode
- * @out: output stream
+ * @inbuf: input buffer
+ * @inlen: input buffer length
+ * @outbuf: output buffer
  * @state: holds the number of bits that are stored in @save
  * @save: leftover bits that have not yet been decoded
  *
@@ -3195,7 +3196,7 @@ g_mime_utils_quoted_encode_step (const unsigned char *in, size_t inlen, unsigned
  * Returns the number of bytes decoded.
  **/
 size_t
-g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save)
+g_mime_utils_quoted_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
 	/* FIXME: this does not strip trailing spaces from lines (as
 	 * it should, rfc 2045, section 6.7) Should it also
@@ -3204,14 +3205,14 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 	 * Note: Trailing rubbish (at the end of input), like = or =x
 	 * or =\r will be lost.
 	 */
-	const register unsigned char *inptr = in;
-	const unsigned char *inend = in + inlen;
-	register unsigned char *outptr = out;
+	const register unsigned char *inptr = inbuf;
+	const unsigned char *inend = inbuf + inlen;
+	register unsigned char *outptr = outbuf;
 	guint32 isave = *save;
 	int istate = *state;
 	unsigned char c;
 	
-	d(printf ("quoted-printable, decoding text '%.*s'\n", inlen, in));
+	d(printf ("quoted-printable, decoding text '%.*s'\n", inlen, inbuf));
 	
 	while (inptr < inend) {
 		switch (istate) {
@@ -3284,5 +3285,5 @@ g_mime_utils_quoted_decode_step (const unsigned char *in, size_t inlen, unsigned
 	*state = istate;
 	*save = isave;
 	
-	return (outptr - out);
+	return (outptr - outbuf);
 }
