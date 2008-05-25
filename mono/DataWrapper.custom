@@ -16,8 +16,8 @@ public StreamWrapper Stream {
 			filter = new FilterBasic (FilterBasicType.QpDecode);
 			break;
 
-		case PartEncodingType.Uuencode:
-			filter = new FilterBasic (FilterBasicType.Uudecode);
+		case PartEncodingType.UuEncode:
+			filter = new FilterBasic (FilterBasicType.UuDecode);
 			break;
 
 		default:

@@ -10,15 +10,15 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BINARY']" name="name">Binary</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BASE64']" name="name">Base64</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_QUOTEDPRINTABLE']" name="name">QuotedPrintable</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_UUENCODE']" name="name">Uuencode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_NUM_ENCODINGS']" name="hidden">1</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_UUENCODE']" name="name">UuEncode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_NUM_ENCODINGS']" name="hidden">true</attr>
 
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_ENC']" name="name">Base64Encode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_DEC']" name="name">Base64Decode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_ENC']" name="name">QpEncode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_DEC']" name="name">QpDecode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_ENC']" name="name">Uuencode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_DEC']" name="name">Uudecode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_ENC']" name="name">UuEncode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_DEC']" name="name">UuDecode</attr>
 
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_SET']" name="value">0</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
@@ -100,6 +100,7 @@
   <!-- We want to be able to get at the type and subtype fields of this
        structure, so don't mark it as opaque. -->
   <attr path="/api/namespace/struct[@cname='GMimeContentType']" name="opaque">false</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='param_hash']" name="hidden">true</attr>
 
   <!-- The generator irritating always converts a method named GetType to a
        GType property regardless of whether or not it's actually a glib type
@@ -142,13 +143,13 @@
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
 
   <!-- Hide some problematic and nonsensical elements -->
-  <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">1</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">trye</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">true</attr>
 
   <!-- We implement this class by hand, hide it. -->
-  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">1</attr>
+  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">true</attr>
 
   <!-- Some functions return new objects with owned refs -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetGMimeStream']/return-type" name="owned">true</attr>
