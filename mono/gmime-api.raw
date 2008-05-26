@@ -1875,7 +1875,7 @@
       <method name="Best" cname="g_mime_charset_best" shared="true">
         <return-type type="const-char*" />
         <parameters>
-          <parameter type="const-char*" name="in" />
+          <parameter type="const-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
         </parameters>
       </method>
@@ -1935,8 +1935,8 @@
       <method name="Step" cname="g_mime_charset_step">
         <return-type type="void" />
         <parameters>
-          <parameter type="const-char*" name="in" />
-          <parameter type="size_t" name="len" />
+          <parameter type="const-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
         </parameters>
       </method>
     </struct>
