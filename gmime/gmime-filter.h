@@ -60,11 +60,11 @@ struct _GMimeFilterClass {
 	/* virtual functions */
 	GMimeFilter * (* copy) (GMimeFilter *filter);
 	
-	void (* filter)   (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			   char **out, size_t *outlen, size_t *outprespace);
+	void (* filter)   (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			   char **outbuf, size_t *outlen, size_t *outprespace);
 	
-	void (* complete) (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			   char **out, size_t *outlen, size_t *outprespace);
+	void (* complete) (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			   char **outbuf, size_t *outlen, size_t *outprespace);
 	
 	void (* reset)    (GMimeFilter *filter);
 };
@@ -76,12 +76,12 @@ GType g_mime_filter_get_type (void);
 GMimeFilter *g_mime_filter_copy (GMimeFilter *filter);
 
 void g_mime_filter_filter (GMimeFilter *filter,
-			   char *in, size_t len, size_t prespace,
-			   char **out, size_t *outlen, size_t *outprespace);
+			   char *inbuf, size_t inlen, size_t prespace,
+			   char **outbuf, size_t *outlen, size_t *outprespace);
 
 void g_mime_filter_complete (GMimeFilter *filter,
-			     char *in, size_t len, size_t prespace,
-			     char **out, size_t *outlen, size_t *outprespace);
+			     char *inbuf, size_t inlen, size_t prespace,
+			     char **outbuf, size_t *outlen, size_t *outprespace);
 
 void g_mime_filter_reset (GMimeFilter *filter);
 

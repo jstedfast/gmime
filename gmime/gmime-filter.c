@@ -53,10 +53,10 @@ static void g_mime_filter_init (GMimeFilter *filter, GMimeFilterClass *klass);
 static void g_mime_filter_finalize (GObject *object);
 
 static GMimeFilter *filter_copy (GMimeFilter *filter);
-static void filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			   char **out, size_t *outlen, size_t *outprespace);
-static void filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-			     char **out, size_t *outlen, size_t *outprespace);
+static void filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			   char **outbuf, size_t *outlen, size_t *outprespace);
+static void filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+			     char **outbuf, size_t *outlen, size_t *outprespace);
 static void filter_reset (GMimeFilter *filter);
 
 
@@ -156,17 +156,17 @@ g_mime_filter_copy (GMimeFilter *filter)
 
 
 static void
-filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-	    char **out, size_t *outlen, size_t *outprespace,
+filter_run (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+	    char **outbuf, size_t *outlen, size_t *outprespace,
 	    void (*filterfunc) (GMimeFilter *filter,
-				char *in, size_t len, size_t prespace,
-				char **out, size_t *outlen, size_t *outprespace))
+				char *inbuf, size_t inlen, size_t prespace,
+				char **outbuf, size_t *outlen, size_t *outprespace))
 {
 	/* here we take a performance hit, if the input buffer doesn't
 	   have the pre-space required.  We make a buffer that does... */
 	if (prespace < filter->backlen) {
 		struct _GMimeFilterPrivate *p = _PRIVATE (filter);
-		size_t newlen = len + prespace + filter->backlen;
+		size_t newlen = inlen + prespace + filter->backlen;
 		
 		if (p->inlen < newlen) {
 			/* NOTE: g_realloc copies data, we dont need that (slower) */
@@ -176,27 +176,27 @@ filter_run (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 		
 		/* copy to end of structure */
-		memcpy (p->inbuf + p->inlen - len, in, len);
-		in = p->inbuf + p->inlen - len;
-		prespace = p->inlen - len;
+		memcpy (p->inbuf + p->inlen - inlen, inbuf, inlen);
+		inbuf = p->inbuf + p->inlen - inlen;
+		prespace = p->inlen - inlen;
 	}
 	
 	/* preload any backed up data */
 	if (filter->backlen > 0) {
-		memcpy (in - filter->backlen, filter->backbuf, filter->backlen);
-		in -= filter->backlen;
-		len += filter->backlen;
+		memcpy (inbuf - filter->backlen, filter->backbuf, filter->backlen);
+		inbuf -= filter->backlen;
+		inlen += filter->backlen;
 		prespace -= filter->backlen;
 		filter->backlen = 0;
 	}
 	
-	filterfunc (filter, in, len, prespace, out, outlen, outprespace);
+	filterfunc (filter, inbuf, inlen, prespace, outbuf, outlen, outprespace);
 }
 
 
 static void
-filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-	       char **out, size_t *outlen, size_t *outprespace)
+filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	/* no-op */
 }
@@ -205,29 +205,29 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 /**
  * g_mime_filter_filter:
  * @filter: filter
- * @in: input buffer
- * @len: input buffer length
+ * @inbuf: input buffer
+ * @inlen: input buffer length
  * @prespace: prespace buffer length
- * @out: pointer to output buffer
+ * @outbuf: pointer to output buffer
  * @outlen: pointer to output length
  * @outprespace: pointer to output prespace buffer length
  *
  * Filters the input data and writes it to @out.
  **/
 void
-g_mime_filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-		      char **out, size_t *outlen, size_t *outprespace)
+g_mime_filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+		      char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	filter_run (filter, in, len, prespace, out, outlen, outprespace,
+	filter_run (filter, inbuf, inlen, prespace, outbuf, outlen, outprespace,
 		    GMIME_FILTER_GET_CLASS (filter)->filter);
 }
 
 
 static void
-filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-		 char **out, size_t *outlen, size_t *outprespace)
+filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+		 char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	/* no-op */
 }
@@ -236,10 +236,10 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 /**
  * g_mime_filter_complete:
  * @filter: filter
- * @in: input buffer
- * @len: input length
+ * @inbuf: input buffer
+ * @inlen: input buffer length
  * @prespace: prespace buffer length
- * @out: pointer to output buffer
+ * @outbuf: pointer to output buffer
  * @outlen: pointer to output length
  * @outprespace: pointer to output prespace buffer length
  *
@@ -247,12 +247,12 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
  **/
 void
 g_mime_filter_complete (GMimeFilter *filter,
-			char *in, size_t len, size_t prespace,
-			char **out, size_t *outlen, size_t *outprespace)
+			char *inbuf, size_t inlen, size_t prespace,
+			char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	g_return_if_fail (GMIME_IS_FILTER (filter));
 	
-	filter_run (filter, in, len, prespace, out, outlen, outprespace,
+	filter_run (filter, inbuf, inlen, prespace, outbuf, outlen, outprespace,
 		    GMIME_FILTER_GET_CLASS (filter)->complete);
 }
 
