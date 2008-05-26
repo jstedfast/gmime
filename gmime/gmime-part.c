@@ -776,6 +776,9 @@ g_mime_part_get_content_location (GMimePart *mime_part)
  * @mime_type: Mime content-type
  *
  * Set the content type/subtype for the specified mime part.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_object_set_content_type().
  **/
 void
 g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
@@ -793,6 +796,9 @@ g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
  *
  * Gets the Content-Type object for the given mime part or %NULL on
  * error.
+ *
+ * WARNING: This interface is deprecated. Use
+ * g_mime_object_get_content_type().
  *
  * Returns the content-type object for the specified mime part.
  **/

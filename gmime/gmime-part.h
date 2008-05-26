@@ -83,8 +83,10 @@ const char *g_mime_part_get_content_md5 (GMimePart *mime_part);
 void g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location);
 const char *g_mime_part_get_content_location (GMimePart *mime_part);
 
+#ifndef GMIME_DISABLE_DEPRECATED
 void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);
+#endif /* GMIME_DISABLE_DEPRECATED */
 
 void g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
