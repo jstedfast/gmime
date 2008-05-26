@@ -59,10 +59,10 @@ typedef struct _GMimeCharset {
 } GMimeCharset;
 
 void g_mime_charset_init (GMimeCharset *charset);
-void g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len);
+void g_mime_charset_step (GMimeCharset *charset, const char *inbuf, size_t inlen);
 const char *g_mime_charset_best_name (GMimeCharset *charset);
 
-const char *g_mime_charset_best (const char *in, size_t inlen);
+const char *g_mime_charset_best (const char *inbuf, size_t inlen);
 
 gboolean g_mime_charset_can_encode (GMimeCharset *mask, const char *charset,
 				    const char *text, size_t len);

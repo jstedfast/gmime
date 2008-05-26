@@ -694,8 +694,8 @@ g_mime_charset_init (GMimeCharset *charset)
 /**
  * g_mime_charset_step:
  * @charset: charset structure
- * @in: input text buffer (must be in UTF-8)
- * @len: input buffer length
+ * @inbuf: input text buffer (must be in UTF-8)
+ * @inlen: input buffer length
  *
  * Steps through the input buffer 1 unicode character (glyph) at a
  * time (ie, not necessarily 1 byte at a time). Bitwise 'and' our
@@ -703,10 +703,10 @@ g_mime_charset_init (GMimeCharset *charset)
  * limiting what charsets our @charset->mask can match.
  **/
 void
-g_mime_charset_step (GMimeCharset *charset, const char *in, size_t len)
+g_mime_charset_step (GMimeCharset *charset, const char *inbuf, size_t inlen)
 {
-	register const char *inptr = in;
-	const char *inend = in + len;
+	register const char *inptr = inbuf;
+	const char *inend = inbuf + inlen;
 	register unsigned int mask;
 	register int level;
 	
@@ -784,8 +784,8 @@ g_mime_charset_best_name (GMimeCharset *charset)
 
 /**
  * g_mime_charset_best:
- * @in: a UTF-8 text buffer
- * @inlen: length of @in
+ * @inbuf: a UTF-8 text buffer
+ * @inlen: input buffer length
  *
  * Computes the best charset to use to encode this text buffer.
  *
@@ -793,12 +793,12 @@ g_mime_charset_best_name (GMimeCharset *charset)
  * it is US-ASCII safe.
  **/
 const char *
-g_mime_charset_best (const char *in, size_t inlen)
+g_mime_charset_best (const char *inbuf, size_t inlen)
 {
 	GMimeCharset charset;
 	
 	g_mime_charset_init (&charset);
-	g_mime_charset_step (&charset, in, inlen);
+	g_mime_charset_step (&charset, inbuf, inlen);
 	
 	return g_mime_charset_best_name (&charset);
 }
