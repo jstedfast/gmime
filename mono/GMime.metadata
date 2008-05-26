@@ -1,5 +1,16 @@
 <?xml version="1.0"?>
 <metadata>
+  <!-- We need to remap size_t and ssize_t -->
+  <attr path="/api/namespace/*/field[@type='size_t']" name="type">guint32</attr>
+  <attr path="/api/namespace/*/*/return-type[@type='size_t']" name="type">guint32</attr>
+  <attr path="/api/namespace/*/*/parameter[@type='size_t']" name="type">guint32</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='size_t']" name="type">guint32</attr>
+
+  <attr path="/api/namespace/*/field[@type='ssize_t']" name="type">gint32</attr>
+  <attr path="/api/namespace/*/*/return-type[@type='ssize_t']" name="type">gint32</attr>
+  <attr path="/api/namespace/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
+
   <!-- Rename some enums -->
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
@@ -79,10 +90,20 @@
 
   <!-- Fix up some GMimeFilter APIs -->
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@name='outlen']" name="name">foo</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']/*/*[@type='char**']" name="pass_as">out</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@name='outlen']" name="name">foo</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_complete']/*/*[@type='char**']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='n_inbuf']" name="type">guint32</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="type">guint8**</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outlen']" name="type">guint32</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outlen']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outprespace']" name="type">guint32</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outprespace']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='data']" name="name">buf</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="array">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='length']" name="name">n_buf</attr>
 
   <!-- Fix up some other method names -->
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
