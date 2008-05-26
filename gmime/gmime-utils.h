@@ -155,7 +155,7 @@ char  *g_mime_utils_header_fold (const char *str);
 char  *g_mime_utils_header_printf (const char *format, ...);
 
 char  *g_mime_utils_quote_string (const char *str);
-void   g_mime_utils_unquote_string (char *string);
+void   g_mime_utils_unquote_string (char *str);
 
 /* encoding decision making utilities ;-) */
 gboolean g_mime_utils_text_is_8bit (const unsigned char *text, size_t len);

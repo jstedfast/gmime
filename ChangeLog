@@ -1,5 +1,9 @@
 2008-05-25  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):
+	Don't use g_mime_part_set_content() as it is a deprecated
+	function.
+
 	* gmime/gmime-part.c (g_mime_part_get_content_disposition_object):
 	Added an accessor to make bindings easier.
 
