@@ -3,12 +3,10 @@
   <!-- We need to remap size_t and ssize_t -->
   <attr path="/api/namespace/*/field[@type='size_t']" name="type">guint32</attr>
   <attr path="/api/namespace/*/*/return-type[@type='size_t']" name="type">guint32</attr>
-  <attr path="/api/namespace/*/*/parameter[@type='size_t']" name="type">guint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='size_t']" name="type">guint32</attr>
 
   <attr path="/api/namespace/*/field[@type='ssize_t']" name="type">gint32</attr>
   <attr path="/api/namespace/*/*/return-type[@type='ssize_t']" name="type">gint32</attr>
-  <attr path="/api/namespace/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
 
   <!-- Rename some enums -->
@@ -129,31 +127,16 @@
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
 
   <!-- Fix the base64/uu/qp encoder/decoder APIs. -->
-<!--
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='n_inbuf']" name="pass_as"></attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='n_inbuf']" name="type">guint32</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="pass_as">ref</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="array">true</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="pass_as">ref</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
--->
-  <!-- Remove all of the encoder/decoders - we'll implement these manually -->
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64EncodeStep']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64EncodeClose']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='Base64DecodeStep']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UuencodeStep']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UuencodeClose']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='UudecodeStep']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedEncodeStep']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedEncodeClose']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='QuotedDecodeStep']"/>
 
   <!-- Fix/Remove some other APIs from gmime-utils -->
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_decode_8bit']"/>
