@@ -15,7 +15,7 @@ CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = gmime-sharp.pc
+pkgconfig_DATA = gmime-sharp-2.4.pc
 
 sources = 				\
 	InternetAddressList.cs		\
@@ -50,7 +50,7 @@ EXTRA_DIST =			\
 	$(customs)		\
 	$(sources)		\
 	$(SOURCES_XML)		\
-	gmime-sharp.pc.in
+	gmime-sharp-2.4.pc.in
 
 $(API): $(srcdir)/$(RAW_API) $(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)

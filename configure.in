@@ -469,6 +469,11 @@ if test "x$enable_mono" = "xyes"; then
         	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
 	fi
 	
+	AC_PATH_PROG(GAPI_PARSER, gapi2-parser, no)
+	if test "x$GAPI_PARSER" = "xno"; then
+        	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
+	fi
+	
 	dnl The version should be along the lines of
 	dnl "<major>.<minor>.0.<interface count>", where major and minor are
 	dnl the current major and minor gmime versions, and interface count is
@@ -517,7 +522,7 @@ gmime/Makefile
 mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config
-mono/gmime-sharp.pc
+mono/gmime-sharp-2.4.pc
 src/Makefile
 tests/Makefile
 gmime-2.4.pc
