@@ -28,10 +28,13 @@
 G_BEGIN_DECLS
 
 struct _GMimeContentType {
+	/* <private> */
+	gpointer parent_object;
+	GHashTable *param_hash;
+	
+	/* <public:read-only> */
 	char *type;
 	char *subtype;
-	
-	GHashTable *param_hash;
 	GMimeParam *params;
 };
 

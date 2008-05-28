@@ -1898,9 +1898,10 @@
       </method>
     </struct>
     <struct name="ContentDisposition" cname="GMimeContentDisposition" opaque="true">
+      <field name="ParentObject" cname="parent_object" type="gpointer" access="public" writeable="true" />
+      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
       <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
-      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_disposition_destroy">
         <return-type type="void" />
       </method>
@@ -1912,6 +1913,9 @@
         <parameters>
           <parameter type="const-char*" name="attribute" />
         </parameters>
+      </method>
+      <method name="GetParams" cname="g_mime_content_disposition_get_params">
+        <return-type type="const-GMimeParam*" />
       </method>
       <constructor cname="g_mime_content_disposition_new" />
       <constructor cname="g_mime_content_disposition_new_from_string">
@@ -1940,9 +1944,10 @@
       </method>
     </struct>
     <struct name="ContentType" cname="GMimeContentType" opaque="true">
+      <field name="ParentObject" cname="parent_object" type="gpointer" access="public" writeable="true" />
+      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <field name="Type" cname="type" type="char*" access="public" writeable="true" />
       <field name="Subtype" cname="subtype" type="char*" access="public" writeable="true" />
-      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
       <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_type_destroy">
         <return-type type="void" />
@@ -2119,8 +2124,11 @@
           <parameter type="const-char*" name="text" />
         </parameters>
       </method>
-      <method name="Next" cname="g_mime_references_next">
-        <return-type type="GMimeReferences*" />
+      <method name="GetMessageId" cname="g_mime_references_get_message_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetNext" cname="g_mime_references_get_next">
+        <return-type type="const-GMimeReferences*" />
       </method>
     </struct>
     <struct name="SignatureValidity" cname="GMimeSignatureValidity" opaque="true">

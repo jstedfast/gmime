@@ -45,9 +45,13 @@ G_BEGIN_DECLS
 
 
 struct _GMimeContentDisposition {
+	/* <private> */
+	gpointer parent_object;
+	GHashTable *param_hash;
+	
+	/* <public:read-only> */
 	char *disposition;
 	GMimeParam *params;
-	GHashTable *param_hash;
 };
 
 typedef struct _GMimeContentDisposition GMimeContentDisposition;
@@ -58,14 +62,16 @@ GMimeContentDisposition *g_mime_content_disposition_new_from_string (const char 
 void g_mime_content_disposition_destroy (GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
-const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);
+const char *g_mime_content_disposition_get_disposition (const GMimeContentDisposition *disposition);
+
+const GMimeParam *g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition,
 					       const char *attribute, const char *value);
-const char *g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition,
+const char *g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposition,
 						      const char *attribute);
 
-char *g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold);
+char *g_mime_content_disposition_to_string (const GMimeContentDisposition *disposition, gboolean fold);
 
 G_END_DECLS
 

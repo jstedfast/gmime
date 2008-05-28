@@ -83,7 +83,7 @@
   <!-- Fix up some other method names -->
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
-<attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
+  <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
 
@@ -92,10 +92,6 @@
   <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_step']" name="name">EncodeStep</attr>
   <attr path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']" name="name">DecodeStep</attr>
   <move-node path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']">/api/namespace/class[@name='Yencode']</move-node>
-
-  <!-- We want to be able to get at the type and subtype fields of this
-       structure, so don't mark it as opaque. -->
-  <attr path="/api/namespace/struct[@cname='GMimeContentType']" name="opaque">true</attr>
 
   <!-- The generator irritating always converts a method named GetType to a
        GType property regardless of whether or not it's actually a glib type
@@ -119,6 +115,10 @@
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
+
+  <!-- Fix GMimeReferences -->
+  <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>
+  <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
 
   <!-- Hide some problematic and nonsensical elements -->
   <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">true</attr>

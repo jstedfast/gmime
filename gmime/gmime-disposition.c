@@ -57,6 +57,7 @@ g_mime_content_disposition_new (void)
 	disposition->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
 	disposition->params = NULL;
 	disposition->param_hash = NULL;
+	disposition->parent_object = NULL;
 	
 	return disposition;
 }
@@ -82,6 +83,7 @@ g_mime_content_disposition_new_from_string (const char *str)
 		return g_mime_content_disposition_new ();
 	
 	disposition = g_new (GMimeContentDisposition, 1);
+	disposition->parent_object = NULL;
 	
 	/* get content disposition part */
 	
@@ -160,11 +162,26 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
  **/
 const char *
-g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition)
+g_mime_content_disposition_get_disposition (const GMimeContentDisposition *disposition)
 {
 	g_return_val_if_fail (disposition != NULL, NULL);
 	
 	return disposition->disposition;
+}
+
+
+/**
+ * g_mime_content_disposition_get_params:
+ * @disposition: a #GMimeContentDisposition object
+ *
+ * Gets the Content-Disposition parameter list.
+ **/
+const GMimeParam *
+g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition)
+{
+	g_return_val_if_fail (disposition != NULL, NULL);
+	
+	return disposition->params;
 }
 
 
@@ -212,7 +229,7 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
  * Returns the value of the parameter of name @attribute.
  **/
 const char *
-g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, const char *attribute)
+g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposition, const char *attribute)
 {
 	GMimeParam *param;
 	
@@ -240,7 +257,7 @@ g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, 
  * Returns a string containing the disposition header
  **/
 char *
-g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold)
+g_mime_content_disposition_to_string (const GMimeContentDisposition *disposition, gboolean fold)
 {
 	GString *string;
 	char *header, *buf;

@@ -147,7 +147,8 @@ char *g_mime_utils_decode_message_id (const char *message_id);
 GMimeReferences *g_mime_references_decode (const char *text);
 void g_mime_references_append (GMimeReferences **refs, const char *msgid);
 void g_mime_references_clear (GMimeReferences **refs);
-GMimeReferences *g_mime_references_next (const GMimeReferences *ref);
+const GMimeReferences *g_mime_references_get_next (const GMimeReferences *ref);
+const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 
 char  *g_mime_utils_structured_header_fold (const char *str);
 char  *g_mime_utils_unstructured_header_fold (const char *str);

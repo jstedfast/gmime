@@ -1085,17 +1085,32 @@ g_mime_references_clear (GMimeReferences **refs)
 
 
 /**
- * g_mime_references_next:
+ * g_mime_references_get_next:
  * @ref: a #GMimeReferences list
  *
  * Advances to the next reference node in the #GMimeReferences list.
  *
  * Returns the next reference node in the #GMimeReferences list.
  **/
-GMimeReferences *
-g_mime_references_next (const GMimeReferences *ref)
+const GMimeReferences *
+g_mime_references_get_next (const GMimeReferences *ref)
 {
 	return ref ? ref->next : NULL;
+}
+
+
+/**
+ * g_mime_references_get_message_id:
+ * @ref: a #GMimeReferences list
+ *
+ * Gets the Message-Id reference from the #GMimeReferences node.
+ *
+ * Returns the Message-Id reference from the #GMimeReferences node.
+ **/
+const char *
+g_mime_references_get_message_id (const GMimeReferences *ref)
+{
+	return ref ? ref->msgid : NULL;
 }
 
 

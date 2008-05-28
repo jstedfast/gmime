@@ -22,14 +22,14 @@ public System.Collections.IEnumerable References {
 		if (header == null)
 			yield break;
 
-		GMime.References gmime_reference = GMime.References.Decode (header);
+		GMime.References gmime_reference = GMime.References.Parse (header);
 
 		// keep gmime_reference for cleanup later
 		GMime.References iterator = gmime_reference;
 
-		while (! iterator.Equals (GMime.References.Zero)) {
+		while (iterator != null) {
 			yield return iterator;
-			iterator = iterator.Next ();
+			iterator = iterator.Next;
 		}
 
 		gmime_reference.Clear ();
@@ -42,7 +42,7 @@ public System.Collections.IEnumerable References {
 static extern IntPtr internet_address_list_get_address (IntPtr raw);
 
 [DllImport("gmime")]
-static extern IntPtr internet_address_to_string(IntPtr raw, bool encode);
+static extern IntPtr internet_address_to_string (IntPtr raw, bool encode);
 
 [DllImport("gmime")]
 static extern IntPtr internet_address_list_next (IntPtr raw);

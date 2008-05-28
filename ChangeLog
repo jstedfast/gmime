@@ -1,5 +1,13 @@
 2008-05-27  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (g_mime_references_get_message_id): New
+	accessor function to ease bindings.
+	(g_mime_references_get_next): Renamed from
+	g_mime_references_next() for consistency.
+
+	* gmime/gmime-disposition.c (g_mime_content_disposition_get_params):
+	New accessor function to ease bindings.
+
 	* gmime/gmime-content-type.c (g_mime_content_type_get_media_type):
 	New accessor function to ease bindings.
 	(g_mime_content_type_get_media_subtype): Same.
