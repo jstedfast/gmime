@@ -79,9 +79,9 @@ static int gpg_sign (GMimeCipherContext *ctx, const char *userid,
 		     GMimeCipherHash hash, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
 	
-static GMimeCipherValidity *gpg_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					GMimeStream *istream, GMimeStream *sigstream,
-					GError **err);
+static GMimeSignatureValidity *gpg_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+					   GMimeStream *istream, GMimeStream *sigstream,
+					   GError **err);
 
 static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			const char *userid, GPtrArray *recipients,

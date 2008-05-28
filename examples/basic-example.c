@@ -191,8 +191,10 @@ verify_foreach_callback (GMimeObject *part, gpointer user_data)
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
 		GMimeMultipartSigned *mps = (GMimeMultipartSigned *) part;
-		GMimeCipherValidity *validity;
+		GMimeSignatureValidity *validity;
+		GMimeSignatureStatus status;
 		GError *err = NULL;
+		const char *str;
 		
 		if (!(validity = g_mime_multipart_signed_verify (mps, ctx, &err))) {
 			/* an error occured - probably couldn't start gpg? */
@@ -205,10 +207,26 @@ verify_foreach_callback (GMimeObject *part, gpointer user_data)
 			g_error_free (err);
 		} else {
 			/* print out validity info - GOOD vs BAD and "why" */
-			printf ("PGP signature is %s:\n%s\n", g_mime_cipher_validity_get_valid (validity) ? "GOOD" : "BAD",
-				g_mime_cipher_validity_get_description (validity));
+			status = g_mime_signature_validity_get_status (validity);
+			switch (status) {
+			case GMIME_SIGNATURE_STATUS_GOOD:
+				str = "Good";
+				break;
+			case GMIME_SIGNATURE_STATUS_BAD:
+				str = "Bad";
+				break;
+			case GMIME_SIGNATURE_STATUS_UNKNOWN:
+				str = "Unknown";
+				break;
+			default:
+				str = NULL;
+				break;
+			}
 			
-			g_mime_cipher_validity_free (validity);
+			printf ("PGP signature is %s:\n%s\n", str,
+				g_mime_signature_validity_get_details (validity));
+			
+			g_mime_signature_validity_free (validity);
 		}
 	}
 }
