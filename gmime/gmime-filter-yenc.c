@@ -440,15 +440,15 @@ static const int yenc_crc_table[256] = {
 
 /**
  * g_mime_ydecode_step:
- * @in: input buffer
+ * @inbuf: input buffer
  * @inlen: input buffer length
- * @out: output buffer
+ * @outbuf: output buffer
  * @state: ydecode state
  * @pcrc: part crc state
  * @crc: crc state
  *
  * Performs a 'decode step' on a chunk of yEncoded data of length
- * @inlen pointed to by @in and writes to @out. Assumes the =ybegin
+ * @inlen pointed to by @inbuf and writes to @outbuf. Assumes the =ybegin
  * and =ypart lines have already been stripped off.
  *
  * To get the crc32 value of the part, use #GMIME_YENCODE_CRC_FINAL
@@ -460,7 +460,7 @@ static const int yenc_crc_table[256] = {
  * Returns the number of bytes decoded.
  **/
 size_t
-g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
+g_mime_ydecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 		     int *state, guint32 *pcrc, guint32 *crc)
 {
 	const register unsigned char *inptr;
@@ -474,10 +474,10 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	ystate = *state;
 	
-	inend = in + inlen;
-	outptr = out;
+	inend = inbuf + inlen;
+	outptr = outbuf;
 	
-	inptr = in;
+	inptr = inbuf;
 	while (inptr < inend) {
 		c = *inptr++;
 		
@@ -514,23 +514,23 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	*state = ystate;
 	
-	return outptr - out;
+	return outptr - outbuf;
 }
 
 
 /**
  * g_mime_yencode_step:
- * @in: input buffer
+ * @inbuf: input buffer
  * @inlen: input buffer length
- * @out: output buffer
+ * @outbuf: output buffer
  * @state: yencode state
  * @pcrc: part crc state
  * @crc: crc state
  *
  * Performs an yEncode 'encode step' on a chunk of raw data of length
- * @inlen pointed to by @in and writes to @out.
+ * @inlen pointed to by @inbuf and writes to @outbuf.
  *
- * @state should be initialized to GMIME_YENCODE_STATE_INIT before
+ * @state should be initialized to #GMIME_YENCODE_STATE_INIT before
  * beginning making the first call to this function. Subsequent calls
  * should reuse @state.
  *
@@ -540,7 +540,7 @@ g_mime_ydecode_step (const unsigned char *in, size_t inlen, unsigned char *out,
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
+g_mime_yencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 		     int *state, guint32 *pcrc, guint32 *crc)
 {
 	const register unsigned char *inptr;
@@ -549,12 +549,12 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	register int already;
 	unsigned char c;
 	
-	inend = in + inlen;
-	outptr = out;
+	inend = inbuf + inlen;
+	outptr = outbuf;
 	
 	already = *state;
 	
-	inptr = in;
+	inptr = inbuf;
 	while (inptr < inend) {
 		c = *inptr++;
 		
@@ -580,45 +580,43 @@ g_mime_yencode_step (const unsigned char *in, size_t inlen, unsigned char *out,
 	
 	*state = already;
 	
-	return outptr - out;
+	return outptr - outbuf;
 }
 
 
 /**
  * g_mime_yencode_close:
- * @in: input buffer
+ * @inbuf: input buffer
  * @inlen: input buffer length
- * @out: output buffer
+ * @outbuf: output buffer
  * @state: yencode state
  * @pcrc: part crc state
  * @crc: crc state
  *
  * Call this function when finished encoding data with
- * g_mime_yencode_step to flush off the remaining state.
+ * g_mime_yencode_step() to flush off the remaining state.
  *
- * GMIME_YENCODE_CRC_FINAL (@pcrc) will give you the crc32 of the
+ * #GMIME_YENCODE_CRC_FINAL (@pcrc) will give you the crc32 of the
  * encoded "part". If there are more "parts" to encode, you should
  * re-use @crc when encoding the next "parts" and then use
- * GMIME_YENCODE_CRC_FINAL (@crc) to get the combined crc32 value of
+ * #GMIME_YENCODE_CRC_FINAL (@crc) to get the combined crc32 value of
  * all the parts.
  *
  * Returns the number of bytes encoded.
  **/
 size_t
-g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
+g_mime_yencode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 		      int *state, guint32 *pcrc, guint32 *crc)
 {
-	register unsigned char *outptr;
-	
-	outptr = out;
+	register unsigned char *outptr = outbuf;
 	
 	if (inlen)
-		outptr += g_mime_yencode_step (in, inlen, out, state, pcrc, crc);
+		outptr += g_mime_yencode_step (inbuf, inlen, outbuf, state, pcrc, crc);
 	
 	if (*state)
 		*outptr++ = '\n';
 	
 	*state = GMIME_YENCODE_STATE_INIT;
 	
-	return outptr - out;
+	return outptr - outbuf;
 }

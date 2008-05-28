@@ -164,11 +164,11 @@ guint32 g_mime_filter_yenc_get_pcrc (GMimeFilterYenc *yenc);
 guint32 g_mime_filter_yenc_get_crc (GMimeFilterYenc *yenc);
 
 
-size_t g_mime_ydecode_step  (const unsigned char *in, size_t inlen, unsigned char *out,
+size_t g_mime_ydecode_step  (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 			     int *state, guint32 *pcrc, guint32 *crc);
-size_t g_mime_yencode_step  (const unsigned char *in, size_t inlen, unsigned char *out,
+size_t g_mime_yencode_step  (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 			     int *state, guint32 *pcrc, guint32 *crc);
-size_t g_mime_yencode_close (const unsigned char *in, size_t inlen, unsigned char *out,
+size_t g_mime_yencode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 			     int *state, guint32 *pcrc, guint32 *crc);
 
 G_END_DECLS
