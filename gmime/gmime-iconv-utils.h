@@ -29,14 +29,14 @@
 
 G_BEGIN_DECLS
 
-char *g_mime_iconv_strdup (iconv_t cd, const char *string);
-char *g_mime_iconv_strndup (iconv_t cd, const char *string, size_t n);
+char *g_mime_iconv_strdup (iconv_t cd, const char *str);
+char *g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n);
 
-char *g_mime_iconv_locale_to_utf8 (const char *string);
-char *g_mime_iconv_locale_to_utf8_length (const char *string, size_t n);
+char *g_mime_iconv_locale_to_utf8 (const char *str);
+char *g_mime_iconv_locale_to_utf8_length (const char *str, size_t n);
 
-char *g_mime_iconv_utf8_to_locale (const char *string);
-char *g_mime_iconv_utf8_to_locale_length (const char *string, size_t n);
+char *g_mime_iconv_utf8_to_locale (const char *str);
+char *g_mime_iconv_utf8_to_locale_length (const char *str, size_t n);
 
 G_END_DECLS
 

@@ -58,7 +58,7 @@ static void message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
+static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *str);
 
 static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
@@ -1038,14 +1038,14 @@ g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *nam
 
 
 static void
-message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
+message_add_recipients_from_string (GMimeMessage *message, char *type, const char *str)
 {
 	InternetAddressList *recipients, *addrlist;
 	
 	recipients = g_hash_table_lookup (message->recipients, type);
 	g_hash_table_remove (message->recipients, type);
 	
-	if ((addrlist = internet_address_parse_string (string))) {
+	if ((addrlist = internet_address_parse_string (str))) {
 		recipients = internet_address_list_concat (recipients, addrlist);
 		internet_address_list_destroy (addrlist);
 	}
@@ -1058,7 +1058,7 @@ message_add_recipients_from_string (GMimeMessage *message, char *type, const cha
  * g_mime_message_add_recipients_from_string:
  * @message: MIME Message
  * @type: Recipient type
- * @string: A string of recipient names and addresses.
+ * @str: A string of recipient names and addresses.
  *
  * Add a list of recipients of a chosen type to the MIME
  * Message. Available recipient types include:
@@ -1067,13 +1067,13 @@ message_add_recipients_from_string (GMimeMessage *message, char *type, const cha
  * specified in rfc822.
  **/
 void
-g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
+g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *str)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (type != NULL);
-	g_return_if_fail (string != NULL);
+	g_return_if_fail (str != NULL);
 	
-	message_add_recipients_from_string (message, type, string);
+	message_add_recipients_from_string (message, type, str);
 	
 	sync_recipient_header (message, type);
 }

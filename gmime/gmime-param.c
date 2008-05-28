@@ -65,7 +65,7 @@ static unsigned char tohex[16] = {
 
 
 /**
- * g_mime_param_new: Create a new MIME Param object
+ * g_mime_param_new:
  * @name: parameter name
  * @value: parameter value
  *
@@ -608,24 +608,24 @@ decode_param_list (const char *in)
 
 
 /**
- * g_mime_param_new_from_string: Create a new MIME Param object
- * @string: input string
+ * g_mime_param_new_from_string:
+ * @str: input string
  *
  * Creates a parameter list based on the input string.
  *
  * Returns a #GMimeParam structure based on @string.
  **/
 GMimeParam *
-g_mime_param_new_from_string (const char *string)
+g_mime_param_new_from_string (const char *str)
 {
-	g_return_val_if_fail (string != NULL, NULL);
+	g_return_val_if_fail (str != NULL, NULL);
 	
-	return decode_param_list (string);
+	return decode_param_list (str);
 }
 
 
 /**
- * g_mime_param_destroy: Destroy the MIME Param
+ * g_mime_param_destroy:
  * @param: Mime param list to destroy
  *
  * Releases all memory used by this mime param back to the Operating
@@ -911,7 +911,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
  * g_mime_param_write_to_string:
  * @param: MIME Param list
  * @fold: specifies whether or not to fold headers
- * @string: output string
+ * @str: output string
  *
  * Assumes the output string contains only the Content-* header and
  * it's immediate value.
@@ -919,9 +919,9 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
  * Writes the params out to the string @string.
  **/
 void
-g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *string)
+g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *str)
 {
-	g_return_if_fail (string != NULL);
+	g_return_if_fail (str != NULL);
 	
-	param_list_format (string, param, fold);
+	param_list_format (str, param, fold);
 }

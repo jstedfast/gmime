@@ -1004,7 +1004,7 @@ decode_address (const char **in)
 
 /**
  * internet_address_parse_string:
- * @string: a string containing internet addresses
+ * @str: a string containing internet addresses
  *
  * Construct a list of internet addresses from the given string.
  *
@@ -1012,12 +1012,10 @@ decode_address (const char **in)
  * the caller.
  **/
 InternetAddressList *
-internet_address_parse_string (const char *string)
+internet_address_parse_string (const char *str)
 {
 	InternetAddressList *node, *tail, *addrlist = NULL;
-	const char *inptr;
-	
-	inptr = string;
+	const char *inptr = str;
 	
 	tail = (InternetAddressList *) &addrlist;
 	

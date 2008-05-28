@@ -118,7 +118,7 @@ GMimeStream *g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 
 
 void      g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end);
 
-ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *string);
+ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *str);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);
 
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);

@@ -102,7 +102,7 @@ InternetAddress *internet_address_list_get_address (const InternetAddressList *l
 int internet_address_list_length (const InternetAddressList *list);
 void internet_address_list_destroy (InternetAddressList *list);
 
-InternetAddressList *internet_address_parse_string (const char *string);
+InternetAddressList *internet_address_parse_string (const char *str);
 
 char *internet_address_to_string (const InternetAddress *ia, gboolean encode);
 char *internet_address_list_to_string (const InternetAddressList *list, gboolean encode);

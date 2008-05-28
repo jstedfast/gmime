@@ -465,19 +465,19 @@ g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end)
 /**
  * g_mime_stream_write_string:
  * @stream: stream
- * @string: string to write
+ * @str: string to write
  *
  * Writes @string to @stream.
  *
  * Returns the number of bytes written or %-1 on fail.
  **/
 ssize_t
-g_mime_stream_write_string (GMimeStream *stream, const char *string)
+g_mime_stream_write_string (GMimeStream *stream, const char *str)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
-	g_return_val_if_fail (string != NULL, -1);
+	g_return_val_if_fail (str != NULL, -1);
 	
-	return g_mime_stream_write (stream, (char *) string, strlen (string));
+	return g_mime_stream_write (stream, (char *) str, strlen (str));
 }
 
 
