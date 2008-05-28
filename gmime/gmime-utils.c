@@ -2501,63 +2501,6 @@ g_mime_utils_header_encode_text (const char *text)
 
 
 /**
- * g_mime_utils_8bit_header_decode:
- * @text: text to decode
- *
- * Decodes an rfc2047 encoded header.
- *
- * WARNING: This function is deprecated. Use
- * g_mime_utils_header_decode_text() instead.
- *
- * Returns the decoded header (which will be in UTF-8 if at all
- * possible).
- **/
-char *
-g_mime_utils_8bit_header_decode (const unsigned char *text)
-{
-	return g_mime_utils_header_decode_text ((const char *) text);
-}
-
-
-/**
- * g_mime_utils_8bit_header_encode:
- * @text: text to encode
- *
- * Encodes a 'text' header according to the rules in rfc2047.
- *
- * WARNING: This function is deprecated. Use
- * g_mime_utils_header_encode_text() instead.
- *
- * Returns the encoded header. Useful for encoding
- * headers like "Subject".
- **/
-char *
-g_mime_utils_8bit_header_encode (const unsigned char *text)
-{
-	return g_mime_utils_header_encode_text ((const char *) text);
-}
-
-
-/**
- * g_mime_utils_8bit_header_encode_phrase:
- * @text: text to encode
- *
- * Encodes a 'phrase' header according to the rules in rfc2047.
- *
- * WARNING: This function is deprecated. Use
- * g_mime_utils_header_encode_phrase() instead.
- *
- * Returns the encoded 'phrase'. Useful for encoding internet
- * addresses.
- **/
-char *
-g_mime_utils_8bit_header_encode_phrase (const unsigned char *text)
-{
-	return g_mime_utils_header_encode_phrase ((const char *) text);
-}
-
-
-/**
  * g_mime_utils_base64_encode_close:
  * @inbuf: input buffer
  * @inlen: input buffer length

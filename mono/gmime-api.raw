@@ -2441,24 +2441,6 @@
       </method>
     </class>
     <class name="Utils" cname="GMimeUtils_">
-      <method name="8BitHeaderDecode" cname="g_mime_utils_8bit_header_decode" deprecated="1" shared="true">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="text" />
-        </parameters>
-      </method>
-      <method name="8BitHeaderEncode" cname="g_mime_utils_8bit_header_encode" deprecated="1" shared="true">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="text" />
-        </parameters>
-      </method>
-      <method name="8BitHeaderEncodePhrase" cname="g_mime_utils_8bit_header_encode_phrase" deprecated="1" shared="true">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="text" />
-        </parameters>
-      </method>
       <method name="Base64DecodeStep" cname="g_mime_utils_base64_decode_step" shared="true">
         <return-type type="size_t" />
         <parameters>

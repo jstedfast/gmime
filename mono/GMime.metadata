@@ -33,11 +33,6 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
 
-  <!-- Remove some deprecated APIs -->
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']"/>
-  <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']"/>
-
   <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
   <remove-node path="/api/namespace/class[@name='Decode']"/>
 

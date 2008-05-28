@@ -172,12 +172,6 @@ char *g_mime_utils_header_encode_text (const char *text);
 char *g_mime_utils_header_decode_phrase (const char *phrase);
 char *g_mime_utils_header_encode_phrase (const char *phrase);
 
-#ifndef GMIME_DISABLE_DEPRECATED
-char *g_mime_utils_8bit_header_decode (const unsigned char *text);
-char *g_mime_utils_8bit_header_encode (const unsigned char *text);
-char *g_mime_utils_8bit_header_encode_phrase (const unsigned char *text);
-#endif
-
 /* do incremental base64 (de/en)coding */
 size_t g_mime_utils_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);
 size_t g_mime_utils_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save);

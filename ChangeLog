@@ -4,6 +4,9 @@
 	accessor function to ease bindings.
 	(g_mime_references_get_next): Renamed from
 	g_mime_references_next() for consistency.
+	(g_mime_utils_8bit_header_decode): Removed.
+	(g_mime_utils_8bit_header_encode): Removed.
+	(g_mime_utils_8bit_header_encode_phrase): Removed.
 
 	* gmime/gmime-disposition.c (g_mime_content_disposition_get_params):
 	New accessor function to ease bindings.
