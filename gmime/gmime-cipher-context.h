@@ -141,37 +141,6 @@ int                  g_mime_cipher_context_import_keys (GMimeCipherContext *ctx,
 int                  g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 							GMimeStream *ostream, GError **err);
 
-#ifndef GMIME_DISABLE_DEPRECATED
-/* hash routines */
-GMimeCipherHash      g_mime_cipher_hash_id (GMimeCipherContext *ctx, const char *hash);
-
-const char *         g_mime_cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
-
-/* cipher routines */
-int                  g_mime_cipher_sign (GMimeCipherContext *ctx, const char *userid,
-					 GMimeCipherHash hash, GMimeStream *istream,
-					 GMimeStream *ostream, GError **err);
-
-GMimeSignatureValidity *g_mime_cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
-					      GMimeStream *istream, GMimeStream *sigstream,
-					      GError **err);
-
-int                  g_mime_cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
-					    const char *userid, GPtrArray *recipients,
-					    GMimeStream *istream, GMimeStream *ostream,
-					    GError **err);
-
-int                  g_mime_cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-					    GMimeStream *ostream, GError **err);
-
-/* key/certificate routines */
-int                  g_mime_cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
-						GError **err);
-
-int                  g_mime_cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
-						GMimeStream *ostream, GError **err);
-#endif /* GMIME_DISABLE_DEPRECATED */
-
 
 /* signature status structures and functions */
 
@@ -310,31 +279,6 @@ void                    g_mime_signature_validity_set_details (GMimeSignatureVal
 
 const GMimeSigner      *g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity);
 void                    g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer);
-
-
-#ifndef GMIME_DISABLE_DEPRECATED
-
-/* for backward compatability */
-typedef struct _GMimeSignatureValidity GMimeCipherValidity;
-
-GMimeCipherValidity *g_mime_cipher_validity_new (void);
-
-void                 g_mime_cipher_validity_init (GMimeCipherValidity *validity);
-
-gboolean             g_mime_cipher_validity_get_valid (GMimeCipherValidity *validity);
-
-void                 g_mime_cipher_validity_set_valid (GMimeCipherValidity *validity, gboolean valid);
-
-const char          *g_mime_cipher_validity_get_description (GMimeCipherValidity *validity);
-
-void                 g_mime_cipher_validity_set_description (GMimeCipherValidity *validity,
-							     const char *description);
-
-void                 g_mime_cipher_validity_clear (GMimeCipherValidity *validity);
-
-void                 g_mime_cipher_validity_free (GMimeCipherValidity *validity);
-
-#endif /* GMIME_DISABLE_DEPRECATED */
 
 G_END_DECLS
 

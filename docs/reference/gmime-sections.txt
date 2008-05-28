@@ -1013,7 +1013,6 @@ g_mime_iconv_locale_to_utf8_length
 <FILE>gmime-cipher-context</FILE>
 GMimeCipherHash
 GMimeCipherContext
-GMimeCipherValidity
 GMimeSignatureValidity
 GMimeSignatureStatus
 GMimeSignerStatus
@@ -1048,15 +1047,6 @@ g_mime_signature_validity_get_details
 g_mime_signature_validity_set_details
 g_mime_signature_validity_get_signers
 g_mime_signature_validity_add_signer
-<SUBSECTION>
-g_mime_cipher_validity_init
-g_mime_cipher_validity_new
-g_mime_cipher_validity_clear
-g_mime_cipher_validity_free
-g_mime_cipher_validity_get_valid
-g_mime_cipher_validity_set_valid
-g_mime_cipher_validity_get_description
-g_mime_cipher_validity_set_description
 
 <SUBSECTION Private>
 g_mime_cipher_context_get_type

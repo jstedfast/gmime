@@ -1,3 +1,13 @@
+2008-05-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* examples/basic-example.c: Fixed to use GMimeSignatureValidity.
+
+	* gmime/gmime-cipher-context.c (g_mime_cipher_*): Removed, since
+	we're not going to maintain compatability with 2.2, no sense
+	keeping these wrappers around.
+	(g_mime_cipher_validity_*): Removed. No one should still be using
+	these...
+
 2008-05-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (g_mime_message_get_body): Removed.
