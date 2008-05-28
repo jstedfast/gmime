@@ -1496,65 +1496,6 @@ handle_multipart_mixed (GMimeMultipart *multipart, gboolean want_plain, gboolean
 
 
 /**
- * g_mime_message_get_body:
- * @message: MIME Message
- * @want_plain: request text/plain
- * @is_html: body returned is in html format
- *
- * Attempts to get the body of the message in the preferred format
- * specified by @want_plain.
- *
- * WARNING: This interface is deprecated.
- *
- * Returns the prefered form of the message body. Sets the value of
- * @is_html to %TRUE if the part returned is in HTML format, otherwise
- * %FALSE.
- *
- * Note: This function is NOT guarenteed to always work as it
- * makes some assumptions that are not necessarily true. It is
- * recommended that you traverse the MIME structure yourself.
- **/
-char *
-g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html)
-{
-	GMimeObject *mime_part = NULL;
-	const GMimeContentType *type;
-	GMimeMultipart *multipart;
-	const char *content;
-	char *body = NULL;
-	size_t len = 0;
-	
-	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	g_return_val_if_fail (is_html != NULL, NULL);
-	
-	type = g_mime_object_get_content_type (message->mime_part);
-	if (GMIME_IS_MULTIPART (message->mime_part)) {
-		/* let's see if we can find a body in the multipart */
-		multipart = GMIME_MULTIPART (message->mime_part);
-		if (g_mime_content_type_is_type (type, "multipart", "alternative"))
-			mime_part = handle_multipart_alternative (multipart, want_plain, is_html);
-		else
-			mime_part = handle_multipart_mixed (multipart, want_plain, is_html);
-	} else if (g_mime_content_type_is_type (type, "text", "*")) {
-		/* this *has* to be the message body */
-		if (g_mime_content_type_is_type (type, "text", "html"))
-			*is_html = TRUE;
-		else
-			*is_html = FALSE;
-		
-		mime_part = message->mime_part;
-	}
-	
-	if (mime_part != NULL) {
-		content = g_mime_part_get_content (GMIME_PART (mime_part), &len);
-		body = g_strndup (content, len);
-	}
-	
-	return body;
-}
-
-
-/**
  * g_mime_message_get_headers:
  * @message: MIME Message
  *

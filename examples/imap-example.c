@@ -191,9 +191,9 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		/* print body */
 		write_part_bodystructure ((GMimeObject *) message->mime_part, fp);
 	} else if (GMIME_IS_PART (part)) {
-		if (GMIME_PART (part)->disposition) {
-			fprintf (fp, "\"%s\" ", GMIME_PART (part)->disposition->disposition);
-			if ((param = GMIME_PART (part)->disposition->params)) {
+		if (GMIME_OBJECT (part)->disposition) {
+			fprintf (fp, "\"%s\" ", GMIME_OBJECT (part)->disposition->disposition);
+			if ((param = GMIME_OBJECT (part)->disposition->params)) {
 				fputc ('(', fp);
 				while (param) {
 					fprintf (fp, "\"%s\" \"%s\"", param->name, param->value);

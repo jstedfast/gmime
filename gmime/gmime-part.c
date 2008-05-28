@@ -67,8 +67,6 @@ static void mime_part_remove_header (GMimeObject *object, const char *header);
 static char *mime_part_get_headers (GMimeObject *object);
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
-
 #define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
 				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
@@ -125,22 +123,16 @@ static void
 g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 {
 	mime_part->encoding = GMIME_PART_ENCODING_DEFAULT;
-	mime_part->disposition = NULL;
 	mime_part->content_description = NULL;
 	mime_part->content_location = NULL;
 	mime_part->content_md5 = NULL;
 	mime_part->content = NULL;
-	
-	g_mime_header_register_writer (((GMimeObject *) mime_part)->headers, "Content-Disposition", write_disposition);
 }
 
 static void
 g_mime_part_finalize (GObject *object)
 {
 	GMimePart *mime_part = (GMimePart *) object;
-	
-	if (mime_part->disposition)
-		g_mime_disposition_destroy (mime_part->disposition);
 	
 	g_free (mime_part->content_description);
 	g_free (mime_part->content_location);
@@ -162,7 +154,6 @@ mime_part_init (GMimeObject *object)
 
 enum {
 	HEADER_CONTENT_TRANSFER_ENCODING,
-	HEADER_CONTENT_DISPOSITION,
 	HEADER_CONTENT_DESCRIPTION,
 	HEADER_CONTENT_LOCATION,
 	HEADER_CONTENT_MD5,
@@ -171,55 +162,12 @@ enum {
 
 static char *headers[] = {
 	"Content-Transfer-Encoding",
-	"Content-Disposition",
 	"Content-Description",
 	"Content-Location",
 	"Content-Md5",
 	NULL
 };
 
-static ssize_t
-write_disposition (GMimeStream *stream, const char *name, const char *value)
-{
-	GMimeDisposition *disposition;
-	ssize_t nwritten;
-	GString *out;
-	
-	out = g_string_new ("");
-	g_string_printf (out, "%s: ", name);
-	
-	disposition = g_mime_disposition_new (value);
-	g_string_append (out, disposition->disposition);
-	
-	g_mime_param_write_to_string (disposition->params, TRUE, out);
-	g_mime_disposition_destroy (disposition);
-	
-	nwritten = g_mime_stream_write (stream, out->str, out->len);
-	g_string_free (out, TRUE);
-	
-	return nwritten;
-}
-
-static void
-set_disposition (GMimePart *mime_part, const char *disposition)
-{
-	if (mime_part->disposition)
-		g_mime_disposition_destroy (mime_part->disposition);
-	
-	mime_part->disposition = g_mime_disposition_new (disposition);
-}
-
-static void
-sync_content_disposition (GMimePart *mime_part)
-{
-	char *str;
-	
-	if (mime_part->disposition) {
-		str = g_mime_disposition_header (mime_part->disposition, FALSE);
-		g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Disposition", str);
-		g_free (str);
-	}
-}
 
 static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
@@ -239,9 +187,6 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		strcpy (text, value);
 		g_strstrip (text);
 		mime_part->encoding = g_mime_part_encoding_from_string (text);
-		break;
-	case HEADER_CONTENT_DISPOSITION:
-		set_disposition (mime_part, value);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
 		/* FIXME: we should decode this */
@@ -922,128 +867,6 @@ g_mime_part_encoding_from_string (const char *encoding)
 
 
 /**
- * g_mime_part_get_content_disposition_object:
- * @mime_part: Mime part
- *
- * Get the content disposition for the specified mime part.
- *
- * Returns the #GMimeDisposition set on the mime part.
- **/
-const GMimeDisposition *
-g_mime_part_get_content_disposition_object (GMimePart *mime_part)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	return mime_part->disposition;
-}
-
-
-/**
- * g_mime_part_set_content_disposition_object:
- * @mime_part: Mime part
- * @disposition: disposition object
- *
- * Set the content disposition for the specified mime part.
- **/
-void
-g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	if (mime_part->disposition)
-		g_mime_disposition_destroy (mime_part->disposition);
-	
-	mime_part->disposition = disposition;
-	
-	sync_content_disposition (mime_part);
-}
-
-
-/**
- * g_mime_part_set_content_disposition:
- * @mime_part: Mime part
- * @disposition: disposition
- *
- * Set the content disposition for the specified mime part
- **/
-void
-g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	set_disposition (mime_part, disposition);
-	sync_content_disposition (mime_part);
-}
-
-
-/**
- * g_mime_part_get_content_disposition:
- * @mime_part: Mime part
- *
- * Gets the content disposition if set or %NULL otherwise.
- *
- * Returns the content disposition for the specified mime part.
- **/
-const char *
-g_mime_part_get_content_disposition (GMimePart *mime_part)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	if (mime_part->disposition)
-		return g_mime_disposition_get (mime_part->disposition);
-	
-	return NULL;
-}
-
-
-/**
- * g_mime_part_add_content_disposition_parameter:
- * @mime_part: Mime part
- * @attribute: parameter name
- * @value: parameter value
- *
- * Add a content-disposition parameter to the specified mime part.
- **/
-void
-g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute, const char *value)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (attribute != NULL);
-	
-	if (!mime_part->disposition)
-		mime_part->disposition = g_mime_disposition_new (GMIME_DISPOSITION_ATTACHMENT);
-	
-	g_mime_disposition_add_parameter (mime_part->disposition, attribute, value);
-	
-	sync_content_disposition (mime_part);
-}
-
-
-/**
- * g_mime_part_get_content_disposition_parameter:
- * @mime_part: Mime part
- * @attribute: parameter name
- *
- * Gets the value of the Content-Disposition parameter specified by
- * @attribute, or %NULL if the parameter does not exist.
- *
- * Returns the value of a previously defined content-disposition
- * parameter specified by @attribute.
- **/
-const char *
-g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	g_return_val_if_fail (attribute != NULL, NULL);
-	
-	if (!mime_part->disposition)
-		return NULL;
-	
-	return g_mime_disposition_get_parameter (mime_part->disposition, attribute);
-}
-
-
-/**
  * g_mime_part_set_filename:
  * @mime_part: Mime part
  * @filename: the filename of the Mime Part's content
@@ -1054,16 +877,15 @@ g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char 
 void
 g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
+	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (!mime_part->disposition)
-		mime_part->disposition = g_mime_disposition_new (GMIME_DISPOSITION_ATTACHMENT);
+	if (!object->disposition)
+		g_mime_object_set_disposition (object, GMIME_DISPOSITION_ATTACHMENT);
 	
-	g_mime_disposition_add_parameter (mime_part->disposition, "filename", filename);
-	
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mime_part), "name", filename);
-	
-	sync_content_disposition (mime_part);
+	g_mime_object_set_content_disposition_parameter (object, "filename", filename);
+	g_mime_object_set_content_type_parameter (object, "name", filename);
 }
 
 
@@ -1081,135 +903,16 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 const char *
 g_mime_part_get_filename (const GMimePart *mime_part)
 {
+	GMimeObject *object = (GMimeObject *) mime_part;
 	const char *filename = NULL;
 	
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
-	if (mime_part->disposition)
-		filename = g_mime_disposition_get_parameter (mime_part->disposition, "filename");
+	if ((filename = g_mime_object_get_content_disposition_parameter (object, "filename")))
+		return filename;
 	
-	if (!filename) {
-		/* check the "name" param in the content-type */
-		return g_mime_object_get_content_type_parameter (GMIME_OBJECT (mime_part), "name");
-	}
-	
-	return filename;
-}
-
-
-/**
- * g_mime_part_set_content:
- * @mime_part: Mime part
- * @content: raw mime part content
- * @len: raw content length
- *
- * WARNING: This interface is deprecated. Use
- * g_mime_part_set_content_object() instead.
- *
- * Sets the content of the Mime Part (only non-multiparts)
- **/
-void
-g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len)
-{
-	GMimeStream *stream;
-	
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	if (!mime_part->content)
-		mime_part->content = g_mime_data_wrapper_new ();
-	
-	stream = g_mime_stream_mem_new_with_buffer (content, len);
-	g_mime_data_wrapper_set_stream (mime_part->content, stream);
-	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_object_unref (stream);
-}
-
-
-/**
- * g_mime_part_set_content_byte_array:
- * @mime_part: Mime part
- * @content: raw mime part content.
- *
- * WARNING: This interface is deprecated. Use
- * g_mime_part_set_content_object() instead.
- *
- * Sets the content of the Mime Part (only non-multiparts)
- **/
-void
-g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content)
-{
-	GMimeStream *stream;
-	
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	if (!mime_part->content)
-		mime_part->content = g_mime_data_wrapper_new ();
-	
-	stream = g_mime_stream_mem_new_with_byte_array (content);
-	g_mime_data_wrapper_set_stream (mime_part->content, stream);
-	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_object_unref (stream);
-}
-
-
-/**
- * g_mime_part_set_pre_encoded_content:
- * @mime_part: Mime part
- * @content: encoded mime part content
- * @len: length of the content
- * @encoding: content encoding
- *
- * WARNING: This interface is deprecated. Use
- * g_mime_part_set_content_object() instead.
- *
- * Sets the encoding type and raw content on the mime part after
- * decoding the content.
- **/
-void
-g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
-				     size_t len, GMimePartEncodingType encoding)
-{
-	GMimeStream *stream, *filtered_stream;
-	GMimeFilter *filter;
-	
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (content != NULL);
-	
-	if (!mime_part->content)
-		mime_part->content = g_mime_data_wrapper_new ();
-	
-	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
-	switch (encoding) {
-	case GMIME_PART_ENCODING_BASE64:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		g_object_unref (filter);
-		break;
-	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		g_object_unref (filter);
-		break;
-	case GMIME_PART_ENCODING_UUENCODE:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		g_object_unref (filter);
-		break;
-	default:
-		break;
-	}
-	
-	g_mime_stream_write (filtered_stream, (char *) content, len);
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
-	
-	g_mime_stream_reset (stream);
-	g_mime_data_wrapper_set_stream (mime_part->content, stream);
-	g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-	g_object_unref (stream);
-	
-	mime_part->encoding = encoding;
+	/* check the "name" param in the content-type */
+	return g_mime_object_get_content_type_parameter (object, "name");
 }
 
 
@@ -1253,73 +956,4 @@ g_mime_part_get_content_object (const GMimePart *mime_part)
 		g_object_ref (mime_part->content);
 	
 	return mime_part->content;
-}
-
-
-/**
- * g_mime_part_get_content: 
- * @mime_part: MIME part object
- * @len: pointer to the content length
- *
- * Gets the raw contents of the mime part and sets @len to the length
- * of the raw data buffer.
- *
- * WARNING: This interface is deprecated. Use
- * g_mime_part_get_content_object() instead.
- * 
- * Returns a const char * pointer to the raw contents of the MIME Part
- * and sets @len to the length of the buffer. Note: textual content
- * will not be converted to UTF-8. Also note that this buffer will not
- * be nul-terminated and may in fact contain nul bytes mid-buffer so
- * you MUST treat the data returned as raw binary data even if the
- * content type is text.
- **/
-const char *
-g_mime_part_get_content (const GMimePart *mime_part, size_t *len)
-{
-	const char *retval = NULL;
-	GMimeStream *stream;
-	
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	if (!mime_part->content || !mime_part->content->stream) {
-		d(g_warning ("no content set on this mime part"));
-		return NULL;
-	}
-	
-	stream = mime_part->content->stream;
-	if (!GMIME_IS_STREAM_MEM (stream) || NEEDS_DECODING (mime_part->content->encoding)) {
-		/* Decode and cache this mime part's contents... */
-		GMimeStream *cache;
-		GByteArray *buf;
-		
-		buf = g_byte_array_new ();
-		cache = g_mime_stream_mem_new_with_byte_array (buf);
-		
-		g_mime_data_wrapper_write_to_stream (mime_part->content, cache);
-		
-		g_mime_data_wrapper_set_stream (mime_part->content, cache);
-		g_mime_data_wrapper_set_encoding (mime_part->content, GMIME_PART_ENCODING_DEFAULT);
-		g_object_unref (cache);
-		
-		*len = buf->len;
-		retval = (char *) buf->data;
-	} else {
-		GByteArray *buf = GMIME_STREAM_MEM (stream)->buffer;
-		gint64 end_index = (gint64) buf->len;
-		gint64 start_index = 0;
-		
-		/* check boundaries */
-		if (stream->bound_start >= 0)
-			start_index = CLAMP (stream->bound_start, 0, (gint64) buf->len);
-		if (stream->bound_end >= 0)
-			end_index = CLAMP (stream->bound_end, 0, (gint64) buf->len);
-		if (end_index < start_index)
-			end_index = start_index;
-		
-		*len = end_index - start_index;
-		retval = (char *) buf->data + start_index;
-	}
-	
-	return retval;
 }

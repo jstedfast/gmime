@@ -698,13 +698,6 @@
       <method name="GetAllRecipients" cname="g_mime_message_get_all_recipients">
         <return-type type="InternetAddressList*" />
       </method>
-      <method name="GetBody" cname="g_mime_message_get_body" deprecated="1">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="gboolean" name="want_plain" />
-          <parameter type="gboolean*" name="is_html" />
-        </parameters>
-      </method>
       <method name="GetDate" cname="g_mime_message_get_date">
         <return-type type="void" />
         <parameters>
@@ -1050,6 +1043,7 @@
       </method>
     </object>
     <object name="Object" cname="GMimeObject" parent="GObject">
+      <field name="Disposition" cname="disposition" type="GMimeContentDisposition*" />
       <field name="ContentType" cname="content_type" type="GMimeContentType*" />
       <field name="Headers" cname="headers" type="GMimeHeader*" />
       <field name="ContentId" cname="content_id" type="char*" />
@@ -1109,6 +1103,15 @@
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
+      <method name="GetContentDisposition" cname="g_mime_object_get_content_disposition">
+        <return-type type="const-GMimeContentDisposition*" />
+      </method>
+      <method name="GetContentDispositionParameter" cname="g_mime_object_get_content_disposition_parameter">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="const-char*" name="attribute" />
+        </parameters>
+      </method>
       <method name="GetContentId" cname="g_mime_object_get_content_id">
         <return-type type="const-char*" />
       </method>
@@ -1120,6 +1123,9 @@
         <parameters>
           <parameter type="const-char*" name="name" />
         </parameters>
+      </method>
+      <method name="GetDisposition" cname="g_mime_object_get_disposition">
+        <return-type type="const-char*" />
       </method>
       <method name="GetHeader" cname="g_mime_object_get_header">
         <return-type type="const-char*" />
@@ -1153,6 +1159,19 @@
           <parameter type="const-char*" name="header" />
         </parameters>
       </method>
+      <method name="SetContentDisposition" cname="g_mime_object_set_content_disposition">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeContentDisposition*" name="disposition" />
+        </parameters>
+      </method>
+      <method name="SetContentDispositionParameter" cname="g_mime_object_set_content_disposition_parameter">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
       <method name="SetContentId" cname="g_mime_object_set_content_id">
         <return-type type="void" />
         <parameters>
@@ -1170,6 +1189,12 @@
         <parameters>
           <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetDisposition" cname="g_mime_object_set_disposition">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="disposition" />
         </parameters>
       </method>
       <method name="SetHeader" cname="g_mime_object_set_header">
@@ -1262,18 +1287,10 @@
     </object>
     <object name="Part" cname="GMimePart" parent="GMimeObject">
       <field name="Encoding" cname="encoding" type="GMimePartEncodingType" />
-      <field name="Disposition" cname="disposition" type="GMimeDisposition*" />
       <field name="ContentDescription" cname="content_description" type="char*" />
       <field name="ContentLocation" cname="content_location" type="char*" />
       <field name="ContentMd5" cname="content_md5" type="char*" />
       <field name="Content" cname="content" type="GMimeDataWrapper*" />
-      <method name="AddContentDispositionParameter" cname="g_mime_part_add_content_disposition_parameter">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="attribute" />
-          <parameter type="const-char*" name="value" />
-        </parameters>
-      </method>
       <method name="EncodingFromString" cname="g_mime_part_encoding_from_string" shared="true">
         <return-type type="GMimePartEncodingType" />
         <parameters>
@@ -1286,26 +1303,8 @@
           <parameter type="GMimePartEncodingType" name="encoding" />
         </parameters>
       </method>
-      <method name="GetContent" cname="g_mime_part_get_content" deprecated="1">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="size_t*" name="len" />
-        </parameters>
-      </method>
       <method name="GetContentDescription" cname="g_mime_part_get_content_description">
         <return-type type="const-char*" />
-      </method>
-      <method name="GetContentDisposition" cname="g_mime_part_get_content_disposition">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetContentDispositionObject" cname="g_mime_part_get_content_disposition_object">
-        <return-type type="const-GMimeDisposition*" />
-      </method>
-      <method name="GetContentDispositionParameter" cname="g_mime_part_get_content_disposition_parameter">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="const-char*" name="attribute" />
-        </parameters>
       </method>
       <method name="GetContentHeader" cname="g_mime_part_get_content_header">
         <return-type type="const-char*" />
@@ -1344,35 +1343,10 @@
           <parameter type="const-char*" name="subtype" />
         </parameters>
       </constructor>
-      <method name="SetContent" cname="g_mime_part_set_content" deprecated="1">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="content" />
-          <parameter type="size_t" name="len" />
-        </parameters>
-      </method>
-      <method name="SetContentByteArray" cname="g_mime_part_set_content_byte_array" deprecated="1">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GByteArray*" name="content" />
-        </parameters>
-      </method>
       <method name="SetContentDescription" cname="g_mime_part_set_content_description">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="description" />
-        </parameters>
-      </method>
-      <method name="SetContentDisposition" cname="g_mime_part_set_content_disposition">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="disposition" />
-        </parameters>
-      </method>
-      <method name="SetContentDispositionObject" cname="g_mime_part_set_content_disposition_object">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeDisposition*" name="disposition" />
         </parameters>
       </method>
       <method name="SetContentHeader" cname="g_mime_part_set_content_header">
@@ -1422,14 +1396,6 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="filename" />
-        </parameters>
-      </method>
-      <method name="SetPreEncodedContent" cname="g_mime_part_set_pre_encoded_content" deprecated="1">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="content" />
-          <parameter type="size_t" name="len" />
-          <parameter type="GMimePartEncodingType" name="encoding" />
         </parameters>
       </method>
       <method name="VerifyContentMd5" cname="g_mime_part_verify_content_md5">
@@ -1973,6 +1939,48 @@
         </parameters>
       </method>
     </struct>
+    <struct name="ContentDisposition" cname="GMimeContentDisposition" opaque="true">
+      <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
+      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
+      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
+      <method name="Destroy" cname="g_mime_content_disposition_destroy">
+        <return-type type="void" />
+      </method>
+      <method name="GetDisposition" cname="g_mime_content_disposition_get_disposition">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetParameter" cname="g_mime_content_disposition_get_parameter">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="const-char*" name="attribute" />
+        </parameters>
+      </method>
+      <constructor cname="g_mime_content_disposition_new" />
+      <constructor cname="g_mime_content_disposition_new_from_string">
+        <parameters>
+          <parameter type="const-char*" name="str" />
+        </parameters>
+      </constructor>
+      <method name="SetDisposition" cname="g_mime_content_disposition_set_disposition">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetParameter" cname="g_mime_content_disposition_set_parameter">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="ToString" cname="g_mime_content_disposition_to_string">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="gboolean" name="fold" />
+        </parameters>
+      </method>
+    </struct>
     <struct name="ContentType" cname="GMimeContentType" opaque="true">
       <field name="Type" cname="type" type="char*" access="public" writeable="true" />
       <field name="Subtype" cname="subtype" type="char*" access="public" writeable="true" />
@@ -2014,47 +2022,6 @@
       </method>
       <method name="ToString" cname="g_mime_content_type_to_string">
         <return-type type="char*" />
-      </method>
-    </struct>
-    <struct name="Disposition" cname="GMimeDisposition" opaque="true">
-      <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
-      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
-      <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
-      <method name="AddParameter" cname="g_mime_disposition_add_parameter">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="attribute" />
-          <parameter type="const-char*" name="value" />
-        </parameters>
-      </method>
-      <method name="Destroy" cname="g_mime_disposition_destroy">
-        <return-type type="void" />
-      </method>
-      <method name="Get" cname="g_mime_disposition_get">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetParameter" cname="g_mime_disposition_get_parameter">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="const-char*" name="attribute" />
-        </parameters>
-      </method>
-      <method name="Header" cname="g_mime_disposition_header">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="gboolean" name="fold" />
-        </parameters>
-      </method>
-      <constructor cname="g_mime_disposition_new">
-        <parameters>
-          <parameter type="const-char*" name="disposition" />
-        </parameters>
-      </constructor>
-      <method name="Set" cname="g_mime_disposition_set">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="value" />
-        </parameters>
       </method>
     </struct>
     <struct name="Header" cname="GMimeHeader" opaque="true">
@@ -2751,7 +2718,7 @@
       <method name="UnquoteString" cname="g_mime_utils_unquote_string" shared="true">
         <return-type type="void" />
         <parameters>
-          <parameter type="char*" name="string" />
+          <parameter type="char*" name="str" />
         </parameters>
       </method>
       <method name="UnstructuredHeaderFold" cname="g_mime_utils_unstructured_header_fold" shared="true">

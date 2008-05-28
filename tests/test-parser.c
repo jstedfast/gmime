@@ -39,7 +39,6 @@
 
 /*#define TEST_RAW_HEADER*/
 #define TEST_PRESERVE_HEADERS
-#define TEST_GET_BODY
 #define PRINT_MIME_STRUCT
 /*#define TEST_WRITE_TO_STREAM*/
 
@@ -137,20 +136,6 @@ test_parser (GMimeStream *stream)
 		GMIME_STREAM_FILE (stream)->fp = NULL;
 		g_object_unref (stream);
 		fprintf (stdout, "\n");
-	}
-#endif
-	
-#ifdef TEST_GET_BODY
-	{
-		/* test of get_body */
-		char *body;
-		
-		body = g_mime_message_get_body (message, FALSE, &is_html);
-		fprintf (stdout, "Testing get_body (looking for html...%s)\n\n-->%s<--\n\n",
-			 body && is_html ? "found" : "not found",
-			 body ? body : "No message body found");
-		
-		g_free (body);
 	}
 #endif
 	

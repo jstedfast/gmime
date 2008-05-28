@@ -44,26 +44,28 @@ G_BEGIN_DECLS
 #define GMIME_DISPOSITION_INLINE     "inline"
 
 
-struct _GMimeDisposition {
+struct _GMimeContentDisposition {
 	char *disposition;
 	GMimeParam *params;
 	GHashTable *param_hash;
 };
 
-typedef struct _GMimeDisposition GMimeDisposition;
+typedef struct _GMimeContentDisposition GMimeContentDisposition;
 
-GMimeDisposition *g_mime_disposition_new (const char *disposition);
+GMimeContentDisposition *g_mime_content_disposition_new (void);
+GMimeContentDisposition *g_mime_content_disposition_new_from_string (const char *str);
 
-void g_mime_disposition_destroy (GMimeDisposition *disposition);
+void g_mime_content_disposition_destroy (GMimeContentDisposition *disposition);
 
-void g_mime_disposition_set (GMimeDisposition *disposition, const char *value);
-const char *g_mime_disposition_get (GMimeDisposition *disposition);
+void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
+const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);
 
-void g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *attribute,
-				       const char *value);
-const char *g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *attribute);
+void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition,
+					       const char *attribute, const char *value);
+const char *g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition,
+						      const char *attribute);
 
-char *g_mime_disposition_header (GMimeDisposition *disposition, gboolean fold);
+char *g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold);
 
 G_END_DECLS
 

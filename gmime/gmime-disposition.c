@@ -32,77 +32,91 @@
 
 /**
  * SECTION: gmime-disposition
- * @title: GMimeDisposition
+ * @title: GMimeContentDisposition
  * @short_description: Content-Disposition fields
  * @see_also:
  *
- * A #GMimeDisposition represents the pre-parsed contents of a
+ * A #GMimeContentDisposition represents the pre-parsed contents of a
  * Content-Disposition header field.
  **/
 
 
 /**
- * g_mime_disposition_new:
- * @disposition: disposition header (and params)
+ * g_mime_content_disposition_new:
  *
- * Creates a new GMimeDisposition object.
+ * Creates a new #GMimeContentDisposition object.
  *
- * Returns a new disposition object
+ * Returns a new #GMimeContentDisposition object.
  **/
-GMimeDisposition *
-g_mime_disposition_new (const char *disposition)
+GMimeContentDisposition *
+g_mime_content_disposition_new (void)
 {
-	GMimeDisposition *new;
-	GMimeParam *param;
-	const char *inptr;
-	char *value;
+	GMimeContentDisposition *disposition;
 	
-	new = g_new (GMimeDisposition, 1);
-	if (!disposition) {
-		new->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
-		new->params = NULL;
-		new->param_hash = NULL;
-		
-		return new;
-	}
+	disposition = g_new (GMimeContentDisposition, 1);
+	disposition->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
+	disposition->params = NULL;
+	disposition->param_hash = NULL;
 	
-	/* get content disposition part */
-	
-	/* find ; or \0 */
-	inptr = disposition;
-	while (*inptr && *inptr != ';')
-		inptr++;
-	
-	value = g_strndup (disposition, (size_t) (inptr - disposition));
-	g_strstrip (value);
-	
-	new->disposition = value;
-	
-	/* parse the parameters, if any */
-	if (*inptr++ == ';' && *inptr) {
-		param = new->params = g_mime_param_new_from_string (inptr);
-		new->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-		while (param) {
-			g_hash_table_insert (new->param_hash, param->name, param);
-			param = param->next;
-		}
-	} else {
-		new->params = NULL;
-		new->param_hash = NULL;
-	}
-	
-	return new;
+	return disposition;
 }
 
 
 /**
- * g_mime_disposition_destroy:
- * @disposition: disposition object
+ * g_mime_content_disposition_new_from_string:
+ * @str: Content-Disposition field value or %NULL
  *
- * Destroy the disposition object.
+ * Creates a new #GMimeContentDisposition object.
+ *
+ * Returns a new #GMimeContentDisposition object.
+ **/
+GMimeContentDisposition *
+g_mime_content_disposition_new_from_string (const char *str)
+{
+	GMimeContentDisposition *disposition;
+	const char *inptr = str;
+	GMimeParam *param;
+	char *value;
+	
+	if (str == NULL)
+		return g_mime_content_disposition_new ();
+	
+	disposition = g_new (GMimeContentDisposition, 1);
+	
+	/* get content disposition part */
+	
+	/* find ; or \0 */
+	while (*inptr && *inptr != ';')
+		inptr++;
+	
+	value = g_strndup (str, (size_t) (inptr - str));
+	disposition->disposition = g_strstrip (value);
+	
+	/* parse the parameters, if any */
+	if (*inptr++ == ';' && *inptr) {
+		param = disposition->params = g_mime_param_new_from_string (inptr);
+		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+		while (param) {
+			g_hash_table_insert (disposition->param_hash, param->name, param);
+			param = param->next;
+		}
+	} else {
+		disposition->param_hash = NULL;
+		disposition->params = NULL;
+	}
+	
+	return disposition;
+}
+
+
+/**
+ * g_mime_content_disposition_destroy:
+ * @disposition: a #GMimeContentDisposition object
+ *
+ * Destroy the #GMimeContentDisposition object.
  **/
 void
-g_mime_disposition_destroy (GMimeDisposition *disposition)
+g_mime_content_disposition_destroy (GMimeContentDisposition *disposition)
 {
 	if (disposition) {
 		g_free (disposition->disposition);
@@ -116,17 +130,17 @@ g_mime_disposition_destroy (GMimeDisposition *disposition)
 
 
 /**
- * g_mime_disposition_set:
- * @disposition: disposition object
+ * g_mime_content_disposition_set_disposition:
+ * @disposition: a #GMimeContentDisposition object
  * @value: disposition value
  *
  * Sets the disposition to @value which may be one of
- * GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE or, by your
- * choice, any other string which would indicate how the MIME part
- * should be displayed by the MUA.
+ * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE or, by
+ * your choice, any other string which would indicate how the MIME
+ * part should be displayed by the MUA.
  **/
 void
-g_mime_disposition_set (GMimeDisposition *disposition, const char *value)
+g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value)
 {
 	g_return_if_fail (disposition != NULL);
 	g_return_if_fail (value != NULL);
@@ -137,16 +151,16 @@ g_mime_disposition_set (GMimeDisposition *disposition, const char *value)
 
 
 /**
- * g_mime_disposition_get:
- * @disposition: disposition object
+ * g_mime_content_disposition_get_disposition:
+ * @disposition: a #GMimeContentDisposition object
  *
  * Gets the disposition or %NULL on fail.
  *
  * Returns the disposition string which is probably one of
- * GMIME_DISPOSITION_ATTACHMENT or GMIME_DISPOSITION_INLINE.
+ * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
  **/
 const char *
-g_mime_disposition_get (GMimeDisposition *disposition)
+g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition)
 {
 	g_return_val_if_fail (disposition != NULL, NULL);
 	
@@ -155,16 +169,15 @@ g_mime_disposition_get (GMimeDisposition *disposition)
 
 
 /**
- * g_mime_disposition_add_parameter:
- * @disposition: disposition object
+ * g_mime_content_disposition_set_parameter:
+ * @disposition: a #GMimeContentDisposition object
  * @attribute: parameter name
  * @value: parameter value
  *
- * Adds a new parameter of name @name and value @value to the
- * disposition.
+ * Sets a parameter on the Content-Disposition.
  **/
 void
-g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *attribute, const char *value)
+g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, const char *attribute, const char *value)
 {
 	GMimeParam *param = NULL;
 	
@@ -173,28 +186,25 @@ g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *att
 	g_return_if_fail (value != NULL);
 	
 	if (disposition->params) {
-		param = g_hash_table_lookup (disposition->param_hash, attribute);
-		if (param) {
+		if ((param = g_hash_table_lookup (disposition->param_hash, attribute))) {
 			g_free (param->value);
 			param->value = g_strdup (value);
+			return;
 		}
-	} else {
+	} else if (!disposition->param_hash) {
 		/* hash table may not be initialized */
-		if (!disposition->param_hash)
-			disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	}
 	
-	if (param == NULL) {
-		param = g_mime_param_new (attribute, value);
-		disposition->params = g_mime_param_append_param (disposition->params, param);
-		g_hash_table_insert (disposition->param_hash, param->name, param);
-	}
+	param = g_mime_param_new (attribute, value);
+	disposition->params = g_mime_param_append_param (disposition->params, param);
+	g_hash_table_insert (disposition->param_hash, param->name, param);
 }
 
 
 /**
- * g_mime_disposition_get_parameter:
- * @disposition: disposition object
+ * g_mime_content_disposition_get_parameter:
+ * @disposition: a #GMimeContentDisposition object
  * @attribute: parameter name
  *
  * Gets the value of the parameter @attribute, or %NULL on fail.
@@ -202,7 +212,7 @@ g_mime_disposition_add_parameter (GMimeDisposition *disposition, const char *att
  * Returns the value of the parameter of name @attribute.
  **/
 const char *
-g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *attribute)
+g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, const char *attribute)
 {
 	GMimeParam *param;
 	
@@ -212,18 +222,16 @@ g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *att
 	if (!disposition->param_hash)
 		return NULL;
 	
-	param = g_hash_table_lookup (disposition->param_hash, attribute);
-	
-	if (param)
-		return param->value;
-	else
+	if (!(param = g_hash_table_lookup (disposition->param_hash, attribute)))
 		return NULL;
+	
+	return param->value;
 }
 
 
 /**
- * g_mime_disposition_header:
- * @disposition: disposition object
+ * g_mime_content_disposition_to_string:
+ * @disposition: a #GMimeContentDisposition object
  * @fold: fold header if needed
  *
  * Allocates a string buffer containing the Content-Disposition header
@@ -232,7 +240,7 @@ g_mime_disposition_get_parameter (GMimeDisposition *disposition, const char *att
  * Returns a string containing the disposition header
  **/
 char *
-g_mime_disposition_header (GMimeDisposition *disposition, gboolean fold)
+g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold)
 {
 	GString *string;
 	char *header, *buf;

@@ -123,10 +123,6 @@ const char *g_mime_message_get_header (GMimeMessage *message, const char *header
 GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
 
-#ifndef GMIME_DISABLE_DEPRECATED
-char *g_mime_message_get_body (const GMimeMessage *message, gboolean want_plain, gboolean *is_html);
-#endif /* GMIME_DISABLE_DEPRECATED */
-
 char *g_mime_message_get_headers (GMimeMessage *message);
 
 void g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data);

@@ -1,3 +1,51 @@
+2008-05-26  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_get_body): Removed.
+
+	* gmime/gmime-disposition.c: Changed GMimeDisposition to
+	GMimeContentDisposition and updated method names to match.
+	(g_mime_content_disposition_new_from_string): Same as the old
+	g_mime_disposition_new().
+	(g_mime_content_disposition_new): New ctor that doesn't take any
+	args.
+	(g_mime_content_disposition_set_parameter): Renamed from
+	g_mime_disposition_add_parameter().
+	(g_mime_content_disposition_get_disposition): Renamed from
+	g_mime_disposition_get().
+	(g_mime_content_disposition_set_disposition): Renamed from
+	g_mime_disposition_set().
+
+	* gmime/gmime-object.c: Moved Content-Disposition handling here.
+	(g_mime_object_get_content_disposition): New method which is the
+	equivalent of g_mime_part_get_content_disposition_object().
+	(g_mime_object_set_content_disposition): New method which is the
+	equivalent of g_mime_part_set_content_disposition_object().
+	(g_mime_object_get_disposition): New method which is the
+	equivalent of g_mime_part_get_content_disposition().
+	(g_mime_object_set_disposition): New method which is the
+	equivalent of g_mime_part_set_content_disposition().
+	(g_mime_object_get_content_disposition_parameter): New method
+	which is the equivalent of
+	g_mime_part_get_content_disposition_parameter().
+	(g_mime_object_set_content_disposition_parameter): New method
+	which is the equivalent of
+	g_mime_part_add_content_disposition_parameter().
+
+	* gmime/gmime-part.c (g_mime_part_get_content_disposition_object):
+	Moved functionality to GMimeObject.
+	(g_mime_part_set_content_disposition_object): Same.
+	(g_mime_part_set_content_disposition): Same.
+	(g_mime_part_get_content_disposition): Same.
+	(g_mime_part_add_content_disposition_parameter): Same.
+	(g_mime_part_get_content_disposition_parameter): Same.
+	(g_mime_part_set_content): Removed long-deprecated function.
+	(g_mime_part_set_content_byte_array): Same.
+	(g_mime_part_set_pre_encoded_content): Same.
+	(g_mime_part_get_content): Same.
+	(g_mime_part_set_content_type):
+	Removed... equivalent functionality already on GMimeObject.
+	(g_mime_part_get_content_type): Same.
+
 2008-05-25  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):

@@ -26,8 +26,6 @@
 #include <stdio.h>
 
 #include <gmime/gmime-object.h>
-#include <gmime/gmime-param.h>
-#include <gmime/gmime-disposition.h>
 #include <gmime/gmime-data-wrapper.h>
 
 G_BEGIN_DECLS
@@ -46,7 +44,6 @@ struct _GMimePart {
 	GMimeObject parent_object;
 	
 	GMimePartEncodingType encoding;
-	GMimeDisposition *disposition;
 	char *content_description;
 	char *content_location;
 	char *content_md5;
@@ -83,33 +80,13 @@ const char *g_mime_part_get_content_md5 (GMimePart *mime_part);
 void g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location);
 const char *g_mime_part_get_content_location (GMimePart *mime_part);
 
-void g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type);
-const GMimeContentType *g_mime_part_get_content_type (GMimePart *mime_part);
-
 void g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
 const char *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
 GMimePartEncodingType g_mime_part_encoding_from_string (const char *encoding);
 
-const GMimeDisposition *g_mime_part_get_content_disposition_object (GMimePart *mime_part);
-void g_mime_part_set_content_disposition_object (GMimePart *mime_part, GMimeDisposition *disposition);
-void g_mime_part_set_content_disposition (GMimePart *mime_part, const char *disposition);
-const char *g_mime_part_get_content_disposition (GMimePart *mime_part);
-
-void g_mime_part_add_content_disposition_parameter (GMimePart *mime_part, const char *attribute,
-						    const char *value);
-const char *g_mime_part_get_content_disposition_parameter (GMimePart *mime_part, const char *attribute);
-
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (const GMimePart *mime_part);
-
-#ifndef GMIME_DISABLE_DEPRECATED
-void g_mime_part_set_content_byte_array (GMimePart *mime_part, GByteArray *content);
-void g_mime_part_set_content (GMimePart *mime_part, const char *content, size_t len);
-void g_mime_part_set_pre_encoded_content (GMimePart *mime_part, const char *content,
-					  size_t len, GMimePartEncodingType encoding);
-const char *g_mime_part_get_content (const GMimePart *mime_part, size_t *len);
-#endif /* GMIME_DISABLE_DEPRECATED */
 
 void g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
 GMimeDataWrapper *g_mime_part_get_content_object (const GMimePart *mime_part);

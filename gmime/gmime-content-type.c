@@ -283,11 +283,9 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 		mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	}
 	
-	if (param == NULL) {
-		param = g_mime_param_new (attribute, value);
-		mime_type->params = g_mime_param_append_param (mime_type->params, param);
-		g_hash_table_insert (mime_type->param_hash, param->name, param);
-	}
+	param = g_mime_param_new (attribute, value);
+	mime_type->params = g_mime_param_append_param (mime_type->params, param);
+	g_hash_table_insert (mime_type->param_hash, param->name, param);
 }
 
 

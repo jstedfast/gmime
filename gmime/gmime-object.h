@@ -26,6 +26,7 @@
 #include <glib-object.h>
 
 #include <gmime/gmime-content-type.h>
+#include <gmime/gmime-disposition.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-header.h>
 
@@ -44,6 +45,7 @@ typedef struct _GMimeObjectClass GMimeObjectClass;
 struct _GMimeObject {
 	GObject parent_object;
 	
+	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	GMimeHeader *headers;
 	
@@ -86,9 +88,17 @@ GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
 
 void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type);
 const GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
-
 void g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value);
 const char *g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name);
+
+void g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition);
+const GMimeContentDisposition *g_mime_object_get_content_disposition (GMimeObject *object);
+
+void g_mime_object_set_disposition (GMimeObject *object, const char *disposition);
+const char *g_mime_object_get_disposition (GMimeObject *object);
+
+void g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *attribute, const char *value);
+const char *g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *attribute);
 
 void g_mime_object_set_content_id (GMimeObject *object, const char *content_id);
 const char *g_mime_object_get_content_id (GMimeObject *object);

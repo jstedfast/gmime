@@ -35,10 +35,10 @@
 /**
  * SECTION: gmime-object
  * @title: GMimeObject
- * @short_description: Abstract MIME objects
+ * @short_description: Abstract Mime objects
  * @see_also:
  *
- * #GMimeObject is an abstract class from which all Message and MIME
+ * #GMimeObject is an abstract class from which all Message and Mime
  * parts are derived.
  **/
 
@@ -68,6 +68,7 @@ static char *get_headers (GMimeObject *object);
 static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
 
 static void type_registry_init (void);
 
@@ -126,11 +127,13 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 static void
 g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
-	object->content_type = NULL;
 	object->headers = g_mime_header_new ();
+	object->content_type = NULL;
+	object->disposition = NULL;
 	object->content_id = NULL;
 	
 	g_mime_header_register_writer (object->headers, "Content-Type", write_content_type);
+	g_mime_header_register_writer (object->headers, "Content-Disposition", write_disposition);
 }
 
 static void
@@ -140,6 +143,9 @@ g_mime_object_finalize (GObject *object)
 	
 	if (mime->content_type)
 		g_mime_content_type_destroy (mime->content_type);
+	
+	if (mime->disposition)
+		g_mime_content_disposition_destroy (mime->disposition);
 	
 	if (mime->headers)
 		g_mime_header_destroy (mime->headers);
@@ -169,6 +175,28 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 	
 	g_mime_param_write_to_string (content_type->params, TRUE, out);
 	g_mime_content_type_destroy (content_type);
+	
+	nwritten = g_mime_stream_write (stream, out->str, out->len);
+	g_string_free (out, TRUE);
+	
+	return nwritten;
+}
+
+static ssize_t
+write_disposition (GMimeStream *stream, const char *name, const char *value)
+{
+	GMimeContentDisposition *disposition;
+	ssize_t nwritten;
+	GString *out;
+	
+	out = g_string_new ("");
+	g_string_printf (out, "%s: ", name);
+	
+	disposition = g_mime_content_disposition_new_from_string (value);
+	g_string_append (out, disposition->disposition);
+	
+	g_mime_param_write_to_string (disposition->params, TRUE, out);
+	g_mime_content_disposition_destroy (disposition);
 	
 	nwritten = g_mime_stream_write (stream, out->str, out->len);
 	g_string_free (out, TRUE);
@@ -230,7 +258,7 @@ init (GMimeObject *object)
  *
  * Performs a lookup of registered #GMimeObject subclasses, registered
  * using g_mime_object_register_type(), to find an appropriate class
- * capable of handling MIME parts of type @type/@subtype. If no class
+ * capable of handling Mime parts of type @type/@subtype. If no class
  * has been registered to handle that type, it looks for a registered
  * class that can handle @type. If that also fails, then it will use
  * the generic part class, #GMimePart.
@@ -306,7 +334,6 @@ sync_content_type (GMimeObject *object)
 	g_free (p);
 }
 
-
 static void
 set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
@@ -321,10 +348,10 @@ set_content_type (GMimeObject *object, GMimeContentType *content_type)
 
 /**
  * g_mime_object_set_content_type:
- * @object: MIME object
- * @mime_type: MIME type
+ * @object: Mime object
+ * @mime_type: Mime type
  *
- * Sets the content-type for the specified MIME object.
+ * Sets the content-type for the specified Mime object.
  **/
 void
 g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type)
@@ -338,12 +365,12 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type
 
 /**
  * g_mime_object_get_content_type:
- * @object: MIME object
+ * @object: Mime object
  *
- * Gets the Content-Type object for the given MIME object or %NULL on
+ * Gets the Content-Type object for the given Mime object or %NULL on
  * fail.
  *
- * Returns the content-type object for the specified MIME object.
+ * Returns the content-type object for the specified Mime object.
  **/
 const GMimeContentType *
 g_mime_object_get_content_type (GMimeObject *object)
@@ -356,7 +383,7 @@ g_mime_object_get_content_type (GMimeObject *object)
 
 /**
  * g_mime_object_set_content_type_parameter:
- * @object: MIME object
+ * @object: Mime object
  * @name: param name
  * @value: param value
  *
@@ -376,10 +403,10 @@ g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name,
 
 /**
  * g_mime_object_get_content_type_parameter:
- * @object: MIME object
+ * @object: Mime object
  * @name: param name
  *
- * Gets the value of the content-type param @name set on the MIME part
+ * Gets the value of the content-type param @name set on the Mime part
  * @object.
  *
  * Returns the value of the requested content-type param or %NULL on
@@ -396,11 +423,157 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
 
 
 /**
+ * g_mime_object_get_content_disposition:
+ * @object: Mime object
+ *
+ * Get the content disposition for the specified Mime object.
+ *
+ * Returns the #GMimeContentDisposition set on the Mime object.
+ **/
+const GMimeContentDisposition *
+g_mime_object_get_content_disposition (GMimeObject *object)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	
+	return object->disposition;
+}
+
+
+static void
+sync_content_disposition (GMimeObject *object)
+{
+	char *str;
+	
+	if (object->disposition) {
+		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
+		g_mime_header_set (object->headers, "Content-Disposition", str);
+		g_free (str);
+	} else {
+		g_mime_header_remove (object->headers, "Content-Disposition");
+	}
+}
+
+
+/**
+ * g_mime_object_set_content_disposition:
+ * @object: Mime object
+ * @disposition: a #GMimeContentDisposition object
+ *
+ * Set the content disposition for the specified mime part.
+ **/
+void
+g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	
+	if (object->disposition)
+		g_mime_content_disposition_destroy (object->disposition);
+	
+	object->disposition = disposition;
+	
+	sync_content_disposition (object);
+}
+
+
+/**
+ * g_mime_object_set_disposition:
+ * @object: Mime object
+ * @disposition: disposition ("attachment" or "inline")
+ *
+ * Sets the disposition to @disposition which may be one of
+ * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE or, by
+ * your choice, any other string which would indicate how the Mime
+ * part should be displayed by the MUA.
+ **/
+void
+g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	
+	if (object->disposition) {
+		g_mime_content_disposition_set_disposition (object->disposition, disposition);
+		sync_content_disposition (object);
+	} else if (disposition) {
+		object->disposition = g_mime_content_disposition_new_from_string (disposition);
+		sync_content_disposition (object);
+	}
+}
+
+
+/**
+ * g_mime_object_get_disposition:
+ * @object: Mime object
+ *
+ * Gets the Mime object's disposition if set or %NULL otherwise.
+ *
+ * Returns the disposition string which is probably one of
+ * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
+ **/
+const char *
+g_mime_object_get_disposition (GMimeObject *object)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	
+	if (object->disposition)
+		return g_mime_content_disposition_get_disposition (object->disposition);
+	
+	return NULL;
+}
+
+
+/**
+ * g_mime_object_set_content_disposition_parameter:
+ * @object: Mime object
+ * @attribute: parameter name
+ * @value: parameter value
+ *
+ * Add a content-disposition parameter to the specified mime part.
+ **/
+void
+g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *attribute, const char *value)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (attribute != NULL);
+	
+	if (!object->disposition)
+		object->disposition = g_mime_content_disposition_new ();
+	
+	g_mime_content_disposition_set_parameter (object->disposition, attribute, value);
+	
+	sync_content_disposition (object);
+}
+
+
+/**
+ * g_mime_object_get_content_disposition_parameter:
+ * @object: Mime object
+ * @attribute: parameter name
+ *
+ * Gets the value of the Content-Disposition parameter specified by
+ * @attribute, or %NULL if the parameter does not exist.
+ *
+ * Returns the value of a previously defined content-disposition
+ * parameter specified by @attribute.
+ **/
+const char *
+g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *attribute)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	g_return_val_if_fail (attribute != NULL, NULL);
+	
+	if (!object->disposition)
+		return NULL;
+	
+	return g_mime_content_disposition_get_parameter (object->disposition, attribute);
+}
+
+
+/**
  * g_mime_object_set_content_id:
- * @object: MIME object
+ * @object: Mime object
  * @content_id: content-id (addr-spec portion)
  *
- * Sets the Content-Id of the MIME object.
+ * Sets the Content-Id of the Mime object.
  **/
 void
 g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
@@ -420,9 +593,9 @@ g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
 
 /**
  * g_mime_object_get_content_id:
- * @object: MIME object
+ * @object: Mime object
  *
- * Gets the Content-Id of the MIME object or NULL if one is not set.
+ * Gets the Content-Id of the Mime object or NULL if one is not set.
  *
  * Returns a const pointer to the Content-Id header.
  **/
@@ -436,12 +609,14 @@ g_mime_object_get_content_id (GMimeObject *object)
 
 
 enum {
+	HEADER_CONTENT_DISPOSITION,
 	HEADER_CONTENT_TYPE,
 	HEADER_CONTENT_ID,
 	HEADER_UNKNOWN,
 };
 
 static char *headers[] = {
+	"Content-Disposition",
 	"Content-Type",
 	"Content-Id",
 	NULL
@@ -450,6 +625,7 @@ static char *headers[] = {
 static gboolean
 process_header (GMimeObject *object, const char *header, const char *value)
 {
+	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	int i;
 	
@@ -459,6 +635,12 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	}
 	
 	switch (i) {
+	case HEADER_CONTENT_DISPOSITION:
+		disposition = g_mime_content_disposition_new_from_string (value);
+		if (object->disposition)
+			g_mime_content_disposition_destroy (object->disposition);
+		object->disposition = disposition;
+		break;
 	case HEADER_CONTENT_TYPE:
 		content_type = g_mime_content_type_new_from_string (value);
 		g_mime_object_set_content_type (object, content_type);
@@ -490,7 +672,7 @@ add_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Adds an arbitrary header to the MIME object.
+ * Adds an arbitrary header to the Mime object.
  **/
 void
 g_mime_object_add_header (GMimeObject *object, const char *header, const char *value)
@@ -517,7 +699,7 @@ set_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Sets an arbitrary header on the MIME object.
+ * Sets an arbitrary header on the Mime object.
  **/
 void
 g_mime_object_set_header (GMimeObject *object, const char *header, const char *value)
@@ -593,10 +775,10 @@ get_headers (GMimeObject *object)
  * g_mime_object_get_headers:
  * @object: mime object
  *
- * Allocates a string buffer containing all of the MIME object's raw
+ * Allocates a string buffer containing all of the Mime object's raw
  * headers.
  *
- * Returns an allocated string containing all of the raw MIME headers.
+ * Returns an allocated string containing all of the raw Mime headers.
  **/
 char *
 g_mime_object_get_headers (GMimeObject *object)
@@ -619,7 +801,7 @@ write_to_stream (GMimeObject *object, GMimeStream *stream)
  * @object: mime object
  * @stream: stream
  *
- * Write the contents of the MIME object to @stream.
+ * Write the contents of the Mime object to @stream.
  *
  * Returns -1 on fail.
  **/
