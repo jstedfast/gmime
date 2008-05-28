@@ -1,5 +1,12 @@
 2008-05-27  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-content-type.c (g_mime_content_type_get_media_type):
+	New accessor function to ease bindings.
+	(g_mime_content_type_get_media_subtype): Same.
+	(g_mime_content_type_get_params): Same.
+
+2008-05-27  Jeffrey Stedfast  <fejj@novell.com>
+
 	* examples/basic-example.c: Fixed to use GMimeSignatureValidity.
 
 	* gmime/gmime-cipher-context.c (g_mime_cipher_*): Removed, since

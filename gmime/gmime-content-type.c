@@ -100,22 +100,20 @@ g_mime_content_type_new (const char *type, const char *subtype)
 
 /**
  * g_mime_content_type_new_from_string:
- * @string: input string containing a content-type (and params)
+ * @str: input string containing a content-type (and params)
  *
  * Constructs a new Content-Type object based on the input string.
  *
  * Returns a new MIME Content-Type based on the input string.
  **/
 GMimeContentType *
-g_mime_content_type_new_from_string (const char *string)
+g_mime_content_type_new_from_string (const char *str)
 {
 	GMimeContentType *mime_type;
 	char *type = NULL, *subtype;
-	const char *inptr;
+	const char *inptr = str;
 	
-	g_return_val_if_fail (string != NULL, NULL);
-	
-	inptr = string;
+	g_return_val_if_fail (str != NULL, NULL);
 	
 	/* get the type */
 	type = (char *) inptr;
@@ -252,6 +250,57 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 	}
 	
 	return FALSE;
+}
+
+
+/**
+ * g_mime_content_type_get_media_type:
+ * @mime_type: MIME Content-Type
+ *
+ * Gets the Content-Type's media type.
+ *
+ * Returns the Content-Type's media type.
+ **/
+const char *
+g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
+{
+	g_return_val_if_fail (mime_type != NULL, NULL);
+	
+	return mime_type->type;
+}
+
+
+/**
+ * g_mime_content_type_get_media_subtype:
+ * @mime_type: MIME Content-Type
+ *
+ * Gets the Content-Type's media sub-type.
+ *
+ * Returns the Content-Type's media sub-type.
+ **/
+const char *
+g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
+{
+	g_return_val_if_fail (mime_type != NULL, NULL);
+	
+	return mime_type->subtype;
+}
+
+
+/**
+ * g_mime_content_type_get_params:
+ * @mime_type: MIME Content-Type
+ *
+ * Gets the Content-Type's parameter list.
+ *
+ * Returns the Content-Type's parameter list.
+ **/
+const GMimeParam *
+g_mime_content_type_get_params (const GMimeContentType *mime_type)
+{
+	g_return_val_if_fail (mime_type != NULL, NULL);
+	
+	return mime_type->params;
 }
 
 

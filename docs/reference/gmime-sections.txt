@@ -596,6 +596,9 @@ g_mime_content_type_new_from_string
 g_mime_content_type_destroy
 g_mime_content_type_to_string
 g_mime_content_type_is_type
+g_mime_content_type_get_media_type
+g_mime_content_type_get_media_subtype
+g_mime_content_type_get_params
 g_mime_content_type_set_parameter
 g_mime_content_type_get_parameter
 </SECTION>

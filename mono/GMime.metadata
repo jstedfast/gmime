@@ -95,8 +95,7 @@
 
   <!-- We want to be able to get at the type and subtype fields of this
        structure, so don't mark it as opaque. -->
-  <attr path="/api/namespace/struct[@cname='GMimeContentType']" name="opaque">false</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='param_hash']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeContentType']" name="opaque">true</attr>
 
   <!-- The generator irritating always converts a method named GetType to a
        GType property regardless of whether or not it's actually a glib type

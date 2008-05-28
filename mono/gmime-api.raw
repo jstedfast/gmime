@@ -685,7 +685,7 @@
         <return-type type="void" />
         <parameters>
           <parameter type="char*" name="type" />
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="ForeachPart" cname="g_mime_message_foreach_part">
@@ -1613,7 +1613,7 @@
       <method name="WriteString" cname="g_mime_stream_write_string">
         <return-type type="ssize_t" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="WriteToStream" cname="g_mime_stream_write_to_stream">
@@ -1942,16 +1942,25 @@
     <struct name="ContentType" cname="GMimeContentType" opaque="true">
       <field name="Type" cname="type" type="char*" access="public" writeable="true" />
       <field name="Subtype" cname="subtype" type="char*" access="public" writeable="true" />
-      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
       <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
+      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_type_destroy">
         <return-type type="void" />
+      </method>
+      <method name="GetMediaSubtype" cname="g_mime_content_type_get_media_subtype">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetMediaType" cname="g_mime_content_type_get_media_type">
+        <return-type type="const-char*" />
       </method>
       <method name="GetParameter" cname="g_mime_content_type_get_parameter">
         <return-type type="const-char*" />
         <parameters>
           <parameter type="const-char*" name="attribute" />
         </parameters>
+      </method>
+      <method name="GetParams" cname="g_mime_content_type_get_params">
+        <return-type type="const-GMimeParam*" />
       </method>
       <method name="IsType" cname="g_mime_content_type_is_type">
         <return-type type="gboolean" />
@@ -1968,7 +1977,7 @@
       </constructor>
       <constructor cname="g_mime_content_type_new_from_string">
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </constructor>
       <method name="SetParameter" cname="g_mime_content_type_set_parameter">
@@ -2081,14 +2090,14 @@
       </constructor>
       <constructor cname="g_mime_param_new_from_string">
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </constructor>
       <method name="WriteToString" cname="g_mime_param_write_to_string">
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="fold" />
-          <parameter type="GString*" name="string" />
+          <parameter type="GString*" name="str" />
         </parameters>
       </method>
     </struct>
@@ -2208,7 +2217,7 @@
       <method name="ParseString" cname="internet_address_parse_string" shared="true">
         <return-type type="InternetAddressList*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="Ref" cname="internet_address_ref">
@@ -2351,13 +2360,13 @@
       <method name="LocaleToUtf8" cname="g_mime_iconv_locale_to_utf8" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="LocaleToUtf8Length" cname="g_mime_iconv_locale_to_utf8_length" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
           <parameter type="size_t" name="n" />
         </parameters>
       </method>
@@ -2375,27 +2384,27 @@
         <return-type type="char*" />
         <parameters>
           <parameter type="iconv_t" name="cd" />
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="Strndup" cname="g_mime_iconv_strndup" shared="true">
         <return-type type="char*" />
         <parameters>
           <parameter type="iconv_t" name="cd" />
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
           <parameter type="size_t" name="n" />
         </parameters>
       </method>
       <method name="Utf8ToLocale" cname="g_mime_iconv_utf8_to_locale" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="Utf8ToLocaleLength" cname="g_mime_iconv_utf8_to_locale_length" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="string" />
+          <parameter type="const-char*" name="str" />
           <parameter type="size_t" name="n" />
         </parameters>
       </method>
