@@ -90,4 +90,4 @@ uninstall-local:
 	fi
 
 parse:
-	gapi-parser $(SOURCES_XML)
+	$(GAPI_PARSER) $(SOURCES_XML)

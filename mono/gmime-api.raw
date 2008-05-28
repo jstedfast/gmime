@@ -1324,9 +1324,6 @@
       <method name="GetContentObject" cname="g_mime_part_get_content_object">
         <return-type type="GMimeDataWrapper*" />
       </method>
-      <method name="GetContentType" cname="g_mime_part_get_content_type">
-        <return-type type="const-GMimeContentType*" />
-      </method>
       <method name="GetEncoding" cname="g_mime_part_get_encoding">
         <return-type type="GMimePartEncodingType" />
       </method>
@@ -1378,12 +1375,6 @@
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeDataWrapper*" name="content" />
-        </parameters>
-      </method>
-      <method name="SetContentType" cname="g_mime_part_set_content_type">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeContentType*" name="mime_type" />
         </parameters>
       </method>
       <method name="SetEncoding" cname="g_mime_part_set_encoding">
@@ -1906,39 +1897,6 @@
         </parameters>
       </method>
     </struct>
-    <struct name="CipherValidity" cname="GMimeCipherValidity" opaque="true">
-      <field name="Status" cname="status" type="GMimeSignatureStatus" access="public" writeable="true" />
-      <field name="Signers" cname="signers" type="GMimeSigner*" access="public" writeable="true" />
-      <field name="Details" cname="details" type="char*" access="public" writeable="true" />
-      <method name="Clear" cname="g_mime_cipher_validity_clear" deprecated="1">
-        <return-type type="void" />
-      </method>
-      <method name="Free" cname="g_mime_cipher_validity_free" deprecated="1">
-        <return-type type="void" />
-      </method>
-      <method name="GetDescription" cname="g_mime_cipher_validity_get_description" deprecated="1">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetValid" cname="g_mime_cipher_validity_get_valid" deprecated="1">
-        <return-type type="gboolean" />
-      </method>
-      <method name="Init" cname="g_mime_cipher_validity_init" deprecated="1">
-        <return-type type="void" />
-      </method>
-      <constructor cname="g_mime_cipher_validity_new" deprecated="1" />
-      <method name="SetDescription" cname="g_mime_cipher_validity_set_description" deprecated="1">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="description" />
-        </parameters>
-      </method>
-      <method name="SetValid" cname="g_mime_cipher_validity_set_valid" deprecated="1">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="gboolean" name="valid" />
-        </parameters>
-      </method>
-    </struct>
     <struct name="ContentDisposition" cname="GMimeContentDisposition" opaque="true">
       <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
       <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
@@ -2357,81 +2315,6 @@
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="pcrc" />
           <parameter type="guint32*" name="crc" />
-        </parameters>
-      </method>
-    </class>
-    <class name="Cipher" cname="GMimeCipher_">
-      <method name="Decrypt" cname="g_mime_cipher_decrypt" deprecated="1" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GMimeStream*" name="istream" />
-          <parameter type="GMimeStream*" name="ostream" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="Encrypt" cname="g_mime_cipher_encrypt" deprecated="1" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="gboolean" name="sign" />
-          <parameter type="const-char*" name="userid" />
-          <parameter type="GPtrArray*" name="recipients" />
-          <parameter type="GMimeStream*" name="istream" />
-          <parameter type="GMimeStream*" name="ostream" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="ExportKeys" cname="g_mime_cipher_export_keys" deprecated="1" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GPtrArray*" name="keys" />
-          <parameter type="GMimeStream*" name="ostream" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="HashId" cname="g_mime_cipher_hash_id" deprecated="1" shared="true">
-        <return-type type="GMimeCipherHash" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="const-char*" name="hash" />
-        </parameters>
-      </method>
-      <method name="HashName" cname="g_mime_cipher_hash_name" deprecated="1" shared="true">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GMimeCipherHash" name="hash" />
-        </parameters>
-      </method>
-      <method name="ImportKeys" cname="g_mime_cipher_import_keys" deprecated="1" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GMimeStream*" name="istream" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="Sign" cname="g_mime_cipher_sign" deprecated="1" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCipherHash" name="hash" />
-          <parameter type="GMimeStream*" name="istream" />
-          <parameter type="GMimeStream*" name="ostream" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="Verify" cname="g_mime_cipher_verify" deprecated="1" shared="true">
-        <return-type type="GMimeSignatureValidity*" />
-        <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GMimeCipherHash" name="hash" />
-          <parameter type="GMimeStream*" name="istream" />
-          <parameter type="GMimeStream*" name="sigstream" />
-          <parameter type="GError**" name="err" />
         </parameters>
       </method>
     </class>

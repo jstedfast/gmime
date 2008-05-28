@@ -37,8 +37,6 @@
   <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderDecode']"/>
   <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncode']"/>
   <remove-node path="/api/namespace/class[@name='Utils']/method[@name='8BitHeaderEncodePhrase']"/>
-  <remove-node path="/api/namespace/struct[@name='CipherValidity']"/>
-  <remove-node path="/api/namespace/class[@name='Cipher']"/>
 
   <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
   <remove-node path="/api/namespace/class[@name='Decode']"/>
@@ -46,14 +44,11 @@
   <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
   <remove-node path="/api/namespace/class[@name='Strcase']"/>
 
-  <!-- Rename some GMimeDisposition methods -->
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']" name="name">ContentDisposition</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Get']" name="name">GetDisposition</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeDisposition']/method[@name='Set']" name="name">SetDisposition</attr>
-
   <!-- Clean up some unnecessary helper methods from GMimeObject -->
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_disposition_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_disposition_parameter']"/>
 
   <!-- Remove duplicate functionality from GMimeMessage -->
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_add_header']"/>
@@ -62,21 +57,6 @@
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_headers']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
-
-  <!-- Change some GMimePart APIs -->
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition_parameter']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition_parameter']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_add_content_disposition_parameter']"/>
-  <attr path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content_disposition_object']" name="name">GetContentDisposition</attr>
-  <attr path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_disposition_object']" name="name">SetContentDisposition</attr>
-
-  <!-- Remove deprecated GMimePart APIs -->
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content_byte_array']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_content']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_set_pre_encoded_content']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimePart']/method[@cname='g_mime_part_get_content']"/>
 
   <!-- Rename some GMimeDataWrapper methods -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
@@ -91,12 +71,9 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="array">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='n_inbuf']" name="type">guint32</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="type">guint8**</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="array">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outlen']" name="type">guint32</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outlen']" name="pass_as">out</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outprespace']" name="type">guint32</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outprespace']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='data']" name="name">buf</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
@@ -106,7 +83,7 @@
   <!-- Fix up some other method names -->
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
-  <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
+<attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
 
@@ -130,7 +107,6 @@
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='n_inbuf']" name="type">guint32</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
@@ -143,7 +119,6 @@
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_text_is_8bit']"/>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
-  <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="type">guint32</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
 
   <!-- Hide some problematic and nonsensical elements -->
