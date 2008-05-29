@@ -44,7 +44,7 @@ build_customs = 			\
 
 EXTRA_DIST =			\
 	$(ASSEMBLY).config.in	\
-	$(ASSEMBLY_NAME).pub	\
+	$(ASSEMBLY_NAME).snk	\
 	AssemblyInfo.cs.in	\
 	$(RAW_API)		\
 	$(customs)		\

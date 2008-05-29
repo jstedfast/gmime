@@ -1,5 +1,11 @@
 2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.0
+
+2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
+
 	These changes are to make it so that changing the GMimeContentType
 	and/or GMimeContentDisposition fields directly will still update
 	the headers.
