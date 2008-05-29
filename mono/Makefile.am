@@ -46,26 +46,27 @@ EXTRA_DIST =			\
 	$(ASSEMBLY).config.in	\
 	$(ASSEMBLY_NAME).snk	\
 	AssemblyInfo.cs.in	\
+	$(METADATA)		\
 	$(RAW_API)		\
 	$(customs)		\
 	$(sources)		\
 	$(SOURCES_XML)		\
 	gmime-sharp-2.4.pc.in
 
-$(API): $(srcdir)/$(RAW_API) $(METADATA)
+$(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)
 	chmod u+w $(API)
-	$(GAPI_FIXUP) --api=$(API) --metadata=$(METADATA)
+	$(GAPI_FIXUP) --api=$(API) --metadata=$(srcdir)/$(METADATA)
 
 generated-stamp: $(API) $(build_customs)
 	rm -f generated/* &&	\
 	$(GAPI_CODEGEN) --generate $(API) --outdir=generated --customdir=$(srcdir) --assembly-name=$(ASSEMBLY_NAME) \
 	&& touch generated-stamp
 
-$(ASSEMBLY): $(build_sources) generated-stamp $(ASSEMBLY_NAME).snk
+$(ASSEMBLY): $(build_sources) generated-stamp $(srcdir)/$(ASSEMBLY_NAME).snk
 	$(CSC) -unsafe /out:$(ASSEMBLY) /target:library $(references) \
-	-keyfile:$(ASSEMBLY_NAME).snk $(build_sources) generated/*.cs
-	sn -q -R $(ASSEMBLY) $(ASSEMBLY_NAME).snk
+	-keyfile:$(srcdir)/$(ASSEMBLY_NAME).snk $(build_sources) generated/*.cs
+	sn -q -R $(ASSEMBLY) $(srcdir)/$(ASSEMBLY_NAME).snk
 
 install-data-local:
 	@if test -n '$(TARGET)'; then									\
