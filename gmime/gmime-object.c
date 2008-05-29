@@ -182,6 +182,33 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 	return nwritten;
 }
 
+void
+_g_mime_object_content_type_changed (GMimeObject *object)
+{
+	GMimeContentType *content_type;
+	GMimeParam *params;
+	GString *string;
+	char *type, *p;
+	
+	content_type = object->content_type;
+	
+	string = g_string_new ("Content-Type: ");
+	
+	type = g_mime_content_type_to_string (content_type);
+	g_string_append (string, type);
+	g_free (type);
+	
+	if ((params = content_type->params))
+		g_mime_param_write_to_string (params, FALSE, string);
+	
+	p = string->str;
+	g_string_free (string, FALSE);
+	
+	type = p + strlen ("Content-Type: ");
+	g_mime_header_set (object->headers, "Content-Type", type);
+	g_free (p);
+}
+
 static ssize_t
 write_disposition (GMimeStream *stream, const char *name, const char *value)
 {
@@ -202,6 +229,20 @@ write_disposition (GMimeStream *stream, const char *name, const char *value)
 	g_string_free (out, TRUE);
 	
 	return nwritten;
+}
+
+void
+_g_mime_object_content_disposition_changed (GMimeObject *object)
+{
+	char *str;
+	
+	if (object->disposition) {
+		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
+		g_mime_header_set (object->headers, "Content-Disposition", str);
+		g_free (str);
+	} else {
+		g_mime_header_remove (object->headers, "Content-Disposition");
+	}
 }
 
 
@@ -306,43 +347,16 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	return object;
 }
 
-
-static void
-sync_content_type (GMimeObject *object)
-{
-	GMimeContentType *content_type;
-	GMimeParam *params;
-	GString *string;
-	char *type, *p;
-	
-	content_type = object->content_type;
-	
-	string = g_string_new ("Content-Type: ");
-	
-	type = g_mime_content_type_to_string (content_type);
-	g_string_append (string, type);
-	g_free (type);
-	
-	if ((params = content_type->params))
-		g_mime_param_write_to_string (params, FALSE, string);
-	
-	p = string->str;
-	g_string_free (string, FALSE);
-	
-	type = p + strlen ("Content-Type: ");
-	g_mime_header_set (object->headers, "Content-Type", type);
-	g_free (p);
-}
-
 static void
 set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
 	if (object->content_type)
 		g_mime_content_type_destroy (object->content_type);
 	
-	object->content_type = content_type;
+	if ((object->content_type = content_type))
+		content_type->parent_object = object;
 	
-	sync_content_type (object);
+	_g_mime_object_content_type_changed (object);
 }
 
 
@@ -396,8 +410,6 @@ g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name,
 	g_return_if_fail (name != NULL);
 	
 	g_mime_content_type_set_parameter (object->content_type, name, value);
-	
-	sync_content_type (object);
 }
 
 
@@ -439,21 +451,6 @@ g_mime_object_get_content_disposition (GMimeObject *object)
 }
 
 
-static void
-sync_content_disposition (GMimeObject *object)
-{
-	char *str;
-	
-	if (object->disposition) {
-		str = g_mime_content_disposition_to_string (object->disposition, FALSE);
-		g_mime_header_set (object->headers, "Content-Disposition", str);
-		g_free (str);
-	} else {
-		g_mime_header_remove (object->headers, "Content-Disposition");
-	}
-}
-
-
 /**
  * g_mime_object_set_content_disposition:
  * @object: Mime object
@@ -469,9 +466,10 @@ g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposit
 	if (object->disposition)
 		g_mime_content_disposition_destroy (object->disposition);
 	
-	object->disposition = disposition;
+	if ((object->disposition = disposition))
+		disposition->parent_object = object;
 	
-	sync_content_disposition (object);
+	_g_mime_object_content_disposition_changed (object);
 }
 
 
@@ -492,10 +490,10 @@ g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
 	
 	if (object->disposition) {
 		g_mime_content_disposition_set_disposition (object->disposition, disposition);
-		sync_content_disposition (object);
 	} else if (disposition) {
-		object->disposition = g_mime_content_disposition_new_from_string (disposition);
-		sync_content_disposition (object);
+		if ((object->disposition = g_mime_content_disposition_new_from_string (disposition)))
+			object->disposition->parent_object = object;
+		_g_mime_object_content_disposition_changed (object);
 	}
 }
 
@@ -535,12 +533,12 @@ g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	g_return_if_fail (attribute != NULL);
 	
-	if (!object->disposition)
+	if (!object->disposition) {
 		object->disposition = g_mime_content_disposition_new ();
+		object->disposition->parent_object = object;
+	}
 	
 	g_mime_content_disposition_set_parameter (object->disposition, attribute, value);
-	
-	sync_content_disposition (object);
 }
 
 

@@ -41,6 +41,10 @@
  **/
 
 
+struct _GMimeObject;
+void _g_mime_object_content_disposition_changed (struct _GMimeObject *object);
+
+
 /**
  * g_mime_content_disposition_new:
  *
@@ -55,9 +59,9 @@ g_mime_content_disposition_new (void)
 	
 	disposition = g_new (GMimeContentDisposition, 1);
 	disposition->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
-	disposition->params = NULL;
-	disposition->param_hash = NULL;
 	disposition->parent_object = NULL;
+	disposition->param_hash = NULL;
+	disposition->params = NULL;
 	
 	return disposition;
 }
@@ -149,6 +153,9 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
 	
 	g_free (disposition->disposition);
 	disposition->disposition = g_strdup (value);
+	
+	if (disposition->parent_object)
+		_g_mime_object_content_disposition_changed (disposition->parent_object);
 }
 
 
@@ -206,7 +213,7 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 		if ((param = g_hash_table_lookup (disposition->param_hash, attribute))) {
 			g_free (param->value);
 			param->value = g_strdup (value);
-			return;
+			goto changed;
 		}
 	} else if (!disposition->param_hash) {
 		/* hash table may not be initialized */
@@ -216,6 +223,11 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 	param = g_mime_param_new (attribute, value);
 	disposition->params = g_mime_param_append_param (disposition->params, param);
 	g_hash_table_insert (disposition->param_hash, param->name, param);
+	
+ changed:
+	
+	if (disposition->parent_object)
+		_g_mime_object_content_disposition_changed (disposition->parent_object);
 }
 
 

@@ -53,10 +53,14 @@
  **/
 
 
+struct _GMimeObject;
+void _g_mime_object_content_type_changed (struct _GMimeObject *object);
+
+
 /**
  * g_mime_content_type_new:
- * @type: MIME type (or NULL for "text")
- * @subtype: MIME subtype (or NULL for "plain")
+ * @type: MIME type (or %NULL for "text")
+ * @subtype: MIME subtype (or %NULL for "plain")
  *
  * Creates a Content-Type object with type @type and subtype @subtype.
  *
@@ -325,7 +329,7 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 		if ((param = g_hash_table_lookup (mime_type->param_hash, attribute))) {
 			g_free (param->value);
 			param->value = g_strdup (value);
-			return;
+			goto changed;
 		}
 	} else if (!mime_type->param_hash) {
 		/* hash table not initialized */
@@ -335,6 +339,11 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 	param = g_mime_param_new (attribute, value);
 	mime_type->params = g_mime_param_append_param (mime_type->params, param);
 	g_hash_table_insert (mime_type->param_hash, param->name, param);
+	
+ changed:
+	
+	if (mime_type->parent_object)
+		_g_mime_object_content_type_changed (mime_type->parent_object);
 }
 
 

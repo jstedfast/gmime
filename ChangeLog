@@ -1,5 +1,30 @@
 2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
 
+	These changes are to make it so that changing the GMimeContentType
+	and/or GMimeContentDisposition fields directly will still update
+	the headers.
+
+	* gmime/gmime-disposition.c (g_mime_content_disposition_set_disposition):
+	Notify our parent object that we've changed.
+	(g_mime_content_disposition_set_parameter): Same.
+
+	* gmime/gmime-content-type.c (g_mime_content_type_set_parameter):
+	Notify our parent object that we've changed.
+
+	* gmime/gmime-object.c (_g_mime_object_content_type_changed):
+	Renamed from sync_content_type() and also made callable from
+	gmime-content-type.c
+	(_g_mime_object_content_disposition_changed): Renamed from
+	sync_content_disposition() and also made callable from
+	gmime-disposition.c
+	(g_mime_object_set_content_type): Set the parent object on the
+	GMimeContentType and call _g_mime_object_content_type_changed().
+	(g_mime_object_set_content_disposition): Set the parent object on
+	the GMimeContentDisposition and call
+	_g_mime_object_content_disposition_changed().
+
+2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-encodings.c: New source file containing all the
 	basic MIME encoding functions.
 

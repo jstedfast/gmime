@@ -29,7 +29,6 @@
       <member cname="GMIME_CONTENT_ENCODING_BASE64" name="Base64" />
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
-      <member cname="GMIME_CONTENT_ENCODING_COUNT" name="Count" />
     </enum>
     <enum name="FilterCRLFDirection" cname="GMimeFilterCRLFDirection" type="enum">
       <member cname="GMIME_FILTER_CRLF_ENCODE" name="Encode" />
