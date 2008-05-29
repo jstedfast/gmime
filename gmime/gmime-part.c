@@ -67,10 +67,6 @@ static void mime_part_remove_header (GMimeObject *object, const char *header);
 static char *mime_part_get_headers (GMimeObject *object);
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-#define NEEDS_DECODING(encoding) (((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_BASE64 ||   \
-				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_UUENCODE || \
-				  ((GMimePartEncodingType) encoding) == GMIME_PART_ENCODING_QUOTEDPRINTABLE)
-
 
 static GMimeObjectClass *parent_class = NULL;
 
@@ -122,7 +118,7 @@ g_mime_part_class_init (GMimePartClass *klass)
 static void
 g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass)
 {
-	mime_part->encoding = GMIME_PART_ENCODING_DEFAULT;
+	mime_part->encoding = GMIME_CONTENT_ENCODING_DEFAULT;
 	mime_part->content_description = NULL;
 	mime_part->content_location = NULL;
 	mime_part->content_md5 = NULL;
@@ -186,7 +182,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		text = g_alloca (strlen (value) + 1);
 		strcpy (text, value);
 		g_strstrip (text);
-		mime_part->encoding = g_mime_part_encoding_from_string (text);
+		mime_part->encoding = g_mime_content_encoding_from_string (text);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
 		/* FIXME: we should decode this */
@@ -284,19 +280,8 @@ write_content (GMimePart *part, GMimeStream *stream)
 		const char *filename;
 		GMimeFilter *filter;
 		
-		filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 		switch (part->encoding) {
-		case GMIME_PART_ENCODING_BASE64:
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_ENC);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-			g_object_unref (filter);
-			break;
-		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_ENC);
-			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-			g_object_unref (filter);
-			break;
-		case GMIME_PART_ENCODING_UUENCODE:
+		case GMIME_CONTENT_ENCODING_UUENCODE:
 			filename = g_mime_part_get_filename (part);
 			nwritten = g_mime_stream_printf (stream, "begin 0644 %s\n",
 							 filename ? filename : "unknown");
@@ -307,11 +292,17 @@ write_content (GMimePart *part, GMimeStream *stream)
 			
 			total += nwritten;
 			
-			filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+			/* fall thru... */
+		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+		case GMIME_CONTENT_ENCODING_BASE64:
+			filter = g_mime_filter_basic_new (part->encoding, TRUE);
+			filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 			g_object_unref (filter);
 			break;
 		default:
+			filtered_stream = stream;
+			g_object_ref (stream);
 			break;
 		}
 		
@@ -324,7 +315,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 		
 		total += nwritten;
 		
-		if (part->encoding == GMIME_PART_ENCODING_UUENCODE) {
+		if (part->encoding == GMIME_CONTENT_ENCODING_UUENCODE) {
 			/* FIXME: get rid of this special-case x-uuencode crap */
 			nwritten = g_mime_stream_write (stream, "end\n", 4);
 			if (nwritten == -1)
@@ -586,7 +577,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
 		g_object_unref (md5_filter);
 		
-		len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+		len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);
 		b64digest[len] = '\0';
 		g_strstrip ((char *) b64digest);
 		
@@ -651,7 +642,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	g_mime_filter_md5_get_digest ((GMimeFilterMd5 *) md5_filter, digest);
 	g_object_unref (md5_filter);
 	
-	len = g_mime_utils_base64_encode_close (digest, 16, b64digest, &state, &save);
+	len = g_mime_encoding_base64_encode_close (digest, 16, b64digest, &state, &save);
 	b64digest[len] = '\0';
 	g_strstrip ((char *) b64digest);
 	
@@ -679,7 +670,7 @@ g_mime_part_get_content_md5 (GMimePart *mime_part)
 
 /**
  * g_mime_part_set_content_location:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  * @content_location: content location
  *
  * Set the content location for the specified mime part.
@@ -699,7 +690,7 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 
 /**
  * g_mime_part_get_content_location:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Gets the value of the Content-Location header if it exists, or
  * %NULL otherwise.
@@ -716,153 +707,37 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 
 
 /**
- * g_mime_part_set_content_type:
- * @mime_part: Mime part
- * @mime_type: Mime content-type
+ * g_mime_part_set_content_encoding:
+ * @mime_part: a #GMimePart
+ * @encoding: a #GMimeContentEncoding
  *
- * Set the content type/subtype for the specified mime part.
+ * Set the content encoding for the specified mime part.
  **/
 void
-g_mime_part_set_content_type (GMimePart *mime_part, GMimeContentType *mime_type)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (mime_type != NULL);
-	
-	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), mime_type);
-}
-
-
-/**
- * g_mime_part_get_content_type: Get the content type/subtype
- * @mime_part: Mime part
- *
- * Gets the Content-Type object for the given mime part or %NULL on
- * error.
- *
- * Returns the content-type object for the specified mime part.
- **/
-const GMimeContentType *
-g_mime_part_get_content_type (GMimePart *mime_part)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	return g_mime_object_get_content_type (GMIME_OBJECT (mime_part));
-}
-
-
-/**
- * g_mime_part_set_encoding: Set the content encoding
- * @mime_part: Mime part
- * @encoding: Mime encoding
- *
- * Set the content encoding for the specified mime part. Available
- * values for the encoding are: GMIME_PART_ENCODING_DEFAULT,
- * GMIME_PART_ENCODING_7BIT, GMIME_PART_ENCODING_8BIT,
- * GMIME_PART_ENCODING_BINARY, GMIME_PART_ENCODING_BASE64 and
- * GMIME_PART_ENCODING_QUOTEDPRINTABLE.
- **/
-void
-g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding)
+g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
 	mime_part->encoding = encoding;
 	g_mime_header_set (GMIME_OBJECT (mime_part)->headers, "Content-Transfer-Encoding",
-			   g_mime_part_encoding_to_string (encoding));
+			   g_mime_content_encoding_to_string (encoding));
 }
 
 
 /**
- * g_mime_part_get_encoding: Get the content encoding
- * @mime_part: Mime part
+ * g_mime_part_get_content_encoding:
+ * @mime_part: a #GMimePart
  *
  * Gets the content encoding of the mime part.
  *
- * Returns the content encoding for the specified mime part. The
- * return value will be one of the following:
- * #GMIME_PART_ENCODING_DEFAULT, #GMIME_PART_ENCODING_7BIT,
- * #GMIME_PART_ENCODING_8BIT, #GMIME_PART_ENCODING_BINARY,
- * #GMIME_PART_ENCODING_BASE64, #GMIME_PART_ENCODING_QUOTEDPRINTABLE
- * or #GMIME_PART_ENCODING_UUENCODE.
+ * Returns the content encoding for the specified mime part.
  **/
-GMimePartEncodingType
-g_mime_part_get_encoding (GMimePart *mime_part)
+GMimeContentEncoding
+g_mime_part_get_content_encoding (GMimePart *mime_part)
 {
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_PART_ENCODING_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_CONTENT_ENCODING_DEFAULT);
 	
 	return mime_part->encoding;
-}
-
-
-/**
- * g_mime_part_encoding_to_string:
- * @encoding: Mime encoding
- *
- * Gets the string value of the content encoding.
- *
- * Returns the encoding type as a string. Available
- * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
- * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
- * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
- * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
- * #GMIME_PART_ENCODING_UUENCODE.
- **/
-const char *
-g_mime_part_encoding_to_string (GMimePartEncodingType encoding)
-{
-	switch (encoding) {
-        case GMIME_PART_ENCODING_7BIT:
-		return "7bit";
-        case GMIME_PART_ENCODING_8BIT:
-		return "8bit";
-	case GMIME_PART_ENCODING_BINARY:
-		return "binary";
-        case GMIME_PART_ENCODING_BASE64:
-		return "base64";
-        case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		return "quoted-printable";
-	case GMIME_PART_ENCODING_UUENCODE:
-		return "x-uuencode";
-	default:
-		/* I guess this is a good default... */
-		return NULL;
-	}
-}
-
-
-/**
- * g_mime_part_encoding_from_string:
- * @encoding: Mime encoding in string format
- *
- * Gets the content encoding enumeration value based on the input
- * string.
- *
- * Returns the encoding string as a #GMimePartEncodingType.  Available
- * values for the encoding are: #GMIME_PART_ENCODING_DEFAULT,
- * #GMIME_PART_ENCODING_7BIT, #GMIME_PART_ENCODING_8BIT,
- * #GMIME_PART_ENCODING_BINARY, #GMIME_PART_ENCODING_BASE64,
- * #GMIME_PART_ENCODING_QUOTEDPRINTABLE and
- * #GMIME_PART_ENCODING_UUENCODE.
- **/
-GMimePartEncodingType
-g_mime_part_encoding_from_string (const char *encoding)
-{
-	if (!g_ascii_strcasecmp (encoding, "7bit"))
-		return GMIME_PART_ENCODING_7BIT;
-	else if (!g_ascii_strcasecmp (encoding, "8bit"))
-		return GMIME_PART_ENCODING_8BIT;
-	else if (!g_ascii_strcasecmp (encoding, "binary"))
-		return GMIME_PART_ENCODING_BINARY;
-	else if (!g_ascii_strcasecmp (encoding, "base64"))
-		return GMIME_PART_ENCODING_BASE64;
-	else if (!g_ascii_strcasecmp (encoding, "quoted-printable"))
-		return GMIME_PART_ENCODING_QUOTEDPRINTABLE;
-	else if (!g_ascii_strcasecmp (encoding, "uuencode"))
-		return GMIME_PART_ENCODING_UUENCODE;
-	else if (!g_ascii_strcasecmp (encoding, "x-uuencode"))
-		return GMIME_PART_ENCODING_UUENCODE;
-	else
-		return GMIME_PART_ENCODING_DEFAULT;
 }
 
 

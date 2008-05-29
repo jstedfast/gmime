@@ -91,7 +91,7 @@ g_mime_data_wrapper_class_init (GMimeDataWrapperClass *klass)
 static void
 g_mime_data_wrapper_init (GMimeDataWrapper *wrapper, GMimeDataWrapperClass *klass)
 {
-	wrapper->encoding = GMIME_PART_ENCODING_DEFAULT;
+	wrapper->encoding = GMIME_CONTENT_ENCODING_DEFAULT;
 	wrapper->stream = NULL;
 }
 
@@ -126,14 +126,14 @@ g_mime_data_wrapper_new (void)
  * @stream: stream
  * @encoding: stream's encoding
  *
- * Creates a new GMimeDataWrapper object around @stream.
+ * Creates a new #GMimeDataWrapper object around @stream.
  *
  * Returns a data wrapper around @stream. Since the wrapper owns its
  * own reference on the stream, caller is responsible for unrefing
  * its own copy.
  **/
 GMimeDataWrapper *
-g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding)
+g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding)
 {
 	GMimeDataWrapper *wrapper;
 	
@@ -142,6 +142,7 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType 
 	wrapper = g_mime_data_wrapper_new ();
 	wrapper->encoding = encoding;
 	wrapper->stream = stream;
+	
 	if (stream)
 		g_object_ref (stream);
 	
@@ -208,7 +209,7 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
  * Sets the encoding type of the internal stream.
  **/
 void
-g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding)
+g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimeContentEncoding encoding)
 {
 	g_return_if_fail (GMIME_IS_DATA_WRAPPER (wrapper));
 	
@@ -224,10 +225,10 @@ g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingTy
  *
  * Returns the encoding type of the internal stream.
  **/
-GMimePartEncodingType
+GMimeContentEncoding
 g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
 {
-	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), GMIME_PART_ENCODING_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), GMIME_CONTENT_ENCODING_DEFAULT);
 	
 	return wrapper->encoding;
 }
@@ -242,24 +243,18 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	
 	g_mime_stream_reset (wrapper->stream);
 	
-	filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);
 	switch (wrapper->encoding) {
-	case GMIME_PART_ENCODING_BASE64:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_BASE64_DEC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		g_object_unref (filter);
-		break;
-	case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_QP_DEC);
-		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
-		g_object_unref (filter);
-		break;
-	case GMIME_PART_ENCODING_UUENCODE:
-		filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_DEC);
+	case GMIME_CONTENT_ENCODING_BASE64:
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+	case GMIME_CONTENT_ENCODING_UUENCODE:
+		filter = g_mime_filter_basic_new (wrapper->encoding, FALSE);
+		filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		g_object_unref (filter);
 		break;
 	default:
+		filtered_stream = wrapper->stream;
+		g_object_ref (wrapper->stream);
 		break;
 	}
 	

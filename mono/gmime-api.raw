@@ -21,13 +21,15 @@
       <member cname="GMIME_CIPHER_HASH_TIGER192" name="Tiger192" />
       <member cname="GMIME_CIPHER_HASH_HAVAL5160" name="Haval5160" />
     </enum>
-    <enum name="FilterBasicType" cname="GMimeFilterBasicType" type="enum">
-      <member cname="GMIME_FILTER_BASIC_BASE64_ENC" name="Base64Enc" value="1" />
-      <member cname="GMIME_FILTER_BASIC_BASE64_DEC" name="Base64Dec" />
-      <member cname="GMIME_FILTER_BASIC_QP_ENC" name="QpEnc" />
-      <member cname="GMIME_FILTER_BASIC_QP_DEC" name="QpDec" />
-      <member cname="GMIME_FILTER_BASIC_UU_ENC" name="UuEnc" />
-      <member cname="GMIME_FILTER_BASIC_UU_DEC" name="UuDec" />
+    <enum name="ContentEncoding" cname="GMimeContentEncoding" type="enum">
+      <member cname="GMIME_CONTENT_ENCODING_DEFAULT" name="Default" />
+      <member cname="GMIME_CONTENT_ENCODING_7BIT" name="7Bit" />
+      <member cname="GMIME_CONTENT_ENCODING_8BIT" name="8Bit" />
+      <member cname="GMIME_CONTENT_ENCODING_BINARY" name="Binary" />
+      <member cname="GMIME_CONTENT_ENCODING_BASE64" name="Base64" />
+      <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
+      <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
+      <member cname="GMIME_CONTENT_ENCODING_COUNT" name="Count" />
     </enum>
     <enum name="FilterCRLFDirection" cname="GMimeFilterCRLFDirection" type="enum">
       <member cname="GMIME_FILTER_CRLF_ENCODE" name="Encode" />
@@ -49,16 +51,6 @@
     <enum name="FilterYencDirection" cname="GMimeFilterYencDirection" type="enum">
       <member cname="GMIME_FILTER_YENC_DIRECTION_ENCODE" name="Encode" />
       <member cname="GMIME_FILTER_YENC_DIRECTION_DECODE" name="Decode" />
-    </enum>
-    <enum name="PartEncodingType" cname="GMimePartEncodingType" type="enum">
-      <member cname="GMIME_PART_ENCODING_DEFAULT" name="EncodingDefault" />
-      <member cname="GMIME_PART_ENCODING_7BIT" name="Encoding7bit" />
-      <member cname="GMIME_PART_ENCODING_8BIT" name="Encoding8bit" />
-      <member cname="GMIME_PART_ENCODING_BINARY" name="EncodingBinary" />
-      <member cname="GMIME_PART_ENCODING_BASE64" name="EncodingBase64" />
-      <member cname="GMIME_PART_ENCODING_QUOTEDPRINTABLE" name="EncodingQuotedprintable" />
-      <member cname="GMIME_PART_ENCODING_UUENCODE" name="EncodingUuencode" />
-      <member cname="GMIME_PART_NUM_ENCODINGS" name="NumEncodings" />
     </enum>
     <enum name="SeekWhence" cname="GMimeSeekWhence" type="enum">
       <member cname="GMIME_STREAM_SEEK_SET" name="Set" value="SEEK_SET" />
@@ -300,7 +292,7 @@
       </method>
     </object>
     <object name="DataWrapper" cname="GMimeDataWrapper" parent="GObject">
-      <field name="Encoding" cname="encoding" type="GMimePartEncodingType" />
+      <field name="Encoding" cname="encoding" type="GMimeContentEncoding" />
       <field name="Stream" cname="stream" type="GMimeStream*" />
       <virtual_method name="WriteToStream" cname="write_to_stream">
         <return-type type="ssize_t" />
@@ -310,7 +302,7 @@
         </parameters>
       </virtual_method>
       <method name="GetEncoding" cname="g_mime_data_wrapper_get_encoding">
-        <return-type type="GMimePartEncodingType" />
+        <return-type type="GMimeContentEncoding" />
       </method>
       <method name="GetStream" cname="g_mime_data_wrapper_get_stream">
         <return-type type="GMimeStream*" />
@@ -322,13 +314,13 @@
       <constructor cname="g_mime_data_wrapper_new_with_stream">
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
-          <parameter type="GMimePartEncodingType" name="encoding" />
+          <parameter type="GMimeContentEncoding" name="encoding" />
         </parameters>
       </constructor>
       <method name="SetEncoding" cname="g_mime_data_wrapper_set_encoding">
         <return-type type="void" />
         <parameters>
-          <parameter type="GMimePartEncodingType" name="encoding" />
+          <parameter type="GMimeContentEncoding" name="encoding" />
         </parameters>
       </method>
       <method name="SetStream" cname="g_mime_data_wrapper_set_stream">
@@ -437,16 +429,14 @@
       </method>
     </object>
     <object name="FilterBasic" cname="GMimeFilterBasic" parent="GMimeFilter">
-      <field name="Type" cname="type" type="GMimeFilterBasicType" />
-      <field name="Uubuf" cname="uubuf" array_len="60" type="unsigned char" />
-      <field name="Save" cname="save" type="guint32" />
-      <field name="State" cname="state" type="int" />
+      <field name="Encoder" cname="encoder" type="GMimeEncoding" />
       <method name="GetType" cname="g_mime_filter_basic_get_type" shared="true">
         <return-type type="GType" />
       </method>
-      <constructor cname="g_mime_filter_basic_new_type">
+      <constructor cname="g_mime_filter_basic_new">
         <parameters>
-          <parameter type="GMimeFilterBasicType" name="type" />
+          <parameter type="GMimeContentEncoding" name="encoding" />
+          <parameter type="gboolean" name="encode" />
         </parameters>
       </constructor>
     </object>
@@ -467,7 +457,7 @@
         <return-type type="const-char*" />
       </method>
       <method name="Encoding" cname="g_mime_filter_best_encoding">
-        <return-type type="GMimePartEncodingType" />
+        <return-type type="GMimeContentEncoding" />
         <parameters>
           <parameter type="GMimeBestEncoding" name="required" />
         </parameters>
@@ -1286,25 +1276,16 @@
       </method>
     </object>
     <object name="Part" cname="GMimePart" parent="GMimeObject">
-      <field name="Encoding" cname="encoding" type="GMimePartEncodingType" />
+      <field name="Encoding" cname="encoding" type="GMimeContentEncoding" />
       <field name="ContentDescription" cname="content_description" type="char*" />
       <field name="ContentLocation" cname="content_location" type="char*" />
       <field name="ContentMd5" cname="content_md5" type="char*" />
       <field name="Content" cname="content" type="GMimeDataWrapper*" />
-      <method name="EncodingFromString" cname="g_mime_part_encoding_from_string" shared="true">
-        <return-type type="GMimePartEncodingType" />
-        <parameters>
-          <parameter type="const-char*" name="encoding" />
-        </parameters>
-      </method>
-      <method name="EncodingToString" cname="g_mime_part_encoding_to_string" shared="true">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="GMimePartEncodingType" name="encoding" />
-        </parameters>
-      </method>
       <method name="GetContentDescription" cname="g_mime_part_get_content_description">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetContentEncoding" cname="g_mime_part_get_content_encoding">
+        <return-type type="GMimeContentEncoding" />
       </method>
       <method name="GetContentHeader" cname="g_mime_part_get_content_header">
         <return-type type="const-char*" />
@@ -1324,9 +1305,6 @@
       <method name="GetContentObject" cname="g_mime_part_get_content_object">
         <return-type type="GMimeDataWrapper*" />
       </method>
-      <method name="GetEncoding" cname="g_mime_part_get_encoding">
-        <return-type type="GMimePartEncodingType" />
-      </method>
       <method name="GetFilename" cname="g_mime_part_get_filename">
         <return-type type="const-char*" />
       </method>
@@ -1344,6 +1322,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="description" />
+        </parameters>
+      </method>
+      <method name="SetContentEncoding" cname="g_mime_part_set_content_encoding">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeContentEncoding" name="encoding" />
         </parameters>
       </method>
       <method name="SetContentHeader" cname="g_mime_part_set_content_header">
@@ -1375,12 +1359,6 @@
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeDataWrapper*" name="content" />
-        </parameters>
-      </method>
-      <method name="SetEncoding" cname="g_mime_part_set_encoding">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimePartEncodingType" name="encoding" />
         </parameters>
       </method>
       <method name="SetFilename" cname="g_mime_part_set_filename">
@@ -1996,6 +1974,137 @@
         <return-type type="char*" />
       </method>
     </struct>
+    <struct name="Encoding" cname="GMimeEncoding" opaque="true">
+      <method name="Base64DecodeStep" cname="g_mime_encoding_base64_decode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="Base64EncodeClose" cname="g_mime_encoding_base64_encode_close" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="Base64EncodeStep" cname="g_mime_encoding_base64_encode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="Flush" cname="g_mime_encoding_flush">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="char*" name="outbuf" />
+        </parameters>
+      </method>
+      <method name="InitDecode" cname="g_mime_encoding_init_decode">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeContentEncoding" name="encoding" />
+        </parameters>
+      </method>
+      <method name="InitEncode" cname="g_mime_encoding_init_encode">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeContentEncoding" name="encoding" />
+        </parameters>
+      </method>
+      <method name="Outlen" cname="g_mime_encoding_outlen">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="size_t" name="inlen" />
+        </parameters>
+      </method>
+      <method name="QuotedDecodeStep" cname="g_mime_encoding_quoted_decode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="QuotedEncodeClose" cname="g_mime_encoding_quoted_encode_close" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="QuotedEncodeStep" cname="g_mime_encoding_quoted_encode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="Reset" cname="g_mime_encoding_reset">
+        <return-type type="void" />
+      </method>
+      <method name="Step" cname="g_mime_encoding_step">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="char*" name="outbuf" />
+        </parameters>
+      </method>
+      <method name="UudecodeStep" cname="g_mime_encoding_uudecode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="UuencodeClose" cname="g_mime_encoding_uuencode_close" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="unsigned-char*" name="uubuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+      <method name="UuencodeStep" cname="g_mime_encoding_uuencode_step" shared="true">
+        <return-type type="size_t" />
+        <parameters>
+          <parameter type="const-unsigned-char*" name="inbuf" />
+          <parameter type="size_t" name="inlen" />
+          <parameter type="unsigned-char*" name="outbuf" />
+          <parameter type="unsigned-char*" name="uubuf" />
+          <parameter type="int*" name="state" />
+          <parameter type="guint32*" name="save" />
+        </parameters>
+      </method>
+    </struct>
     <struct name="Header" cname="GMimeHeader" opaque="true">
       <method name="Add" cname="g_mime_header_add">
         <return-type type="void" />
@@ -2123,6 +2232,9 @@
         <parameters>
           <parameter type="const-char*" name="text" />
         </parameters>
+      </method>
+      <method name="Free" cname="g_mime_references_free">
+        <return-type type="void" />
       </method>
       <method name="GetMessageId" cname="g_mime_references_get_message_id">
         <return-type type="const-char*" />
@@ -2326,12 +2438,26 @@
       <method name="YdecodeStep" cname="g_mime_ydecode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="pcrc" />
           <parameter type="guint32*" name="crc" />
+        </parameters>
+      </method>
+    </class>
+    <class name="Content" cname="GMimeContent_">
+      <method name="EncodingFromString" cname="g_mime_content_encoding_from_string" shared="true">
+        <return-type type="GMimeContentEncoding" />
+        <parameters>
+          <parameter type="const-char*" name="str" />
+        </parameters>
+      </method>
+      <method name="EncodingToString" cname="g_mime_content_encoding_to_string" shared="true">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="GMimeContentEncoding" name="encoding" />
         </parameters>
       </method>
     </class>
@@ -2441,38 +2567,8 @@
       </method>
     </class>
     <class name="Utils" cname="GMimeUtils_">
-      <method name="Base64DecodeStep" cname="g_mime_utils_base64_decode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="Base64EncodeClose" cname="g_mime_utils_base64_encode_close" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="Base64EncodeStep" cname="g_mime_utils_base64_encode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
       <method name="BestEncoding" cname="g_mime_utils_best_encoding" shared="true">
-        <return-type type="GMimePartEncodingType" />
+        <return-type type="GMimeContentEncoding" />
         <parameters>
           <parameter type="const-unsigned-char*" name="text" />
           <parameter type="size_t" name="len" />
@@ -2554,36 +2650,6 @@
           <parameter type="const-char*" name="str" />
         </parameters>
       </method>
-      <method name="QuotedDecodeStep" cname="g_mime_utils_quoted_decode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="QuotedEncodeClose" cname="g_mime_utils_quoted_encode_close" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="QuotedEncodeStep" cname="g_mime_utils_quoted_encode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
       <method name="StructuredHeaderFold" cname="g_mime_utils_structured_header_fold" shared="true">
         <return-type type="char*" />
         <parameters>
@@ -2609,46 +2675,14 @@
           <parameter type="const-char*" name="str" />
         </parameters>
       </method>
-      <method name="UudecodeStep" cname="g_mime_utils_uudecode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="UuencodeClose" cname="g_mime_utils_uuencode_close" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="unsigned-char*" name="uubuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
-      <method name="UuencodeStep" cname="g_mime_utils_uuencode_step" shared="true">
-        <return-type type="size_t" />
-        <parameters>
-          <parameter type="const-unsigned-char*" name="inbuf" />
-          <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="outbuf" />
-          <parameter type="unsigned-char*" name="uubuf" />
-          <parameter type="int*" name="state" />
-          <parameter type="guint32*" name="save" />
-        </parameters>
-      </method>
     </class>
     <class name="Yencode" cname="GMimeYencode_">
       <method name="Close" cname="g_mime_yencode_close" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="pcrc" />
           <parameter type="guint32*" name="crc" />
@@ -2657,9 +2691,9 @@
       <method name="Step" cname="g_mime_yencode_step" shared="true">
         <return-type type="size_t" />
         <parameters>
-          <parameter type="const-unsigned-char*" name="in" />
+          <parameter type="const-unsigned-char*" name="inbuf" />
           <parameter type="size_t" name="inlen" />
-          <parameter type="unsigned-char*" name="out" />
+          <parameter type="unsigned-char*" name="outbuf" />
           <parameter type="int*" name="state" />
           <parameter type="guint32*" name="pcrc" />
           <parameter type="guint32*" name="crc" />

@@ -209,22 +209,22 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		}
 		
 		switch (GMIME_PART (part)->encoding) {
-		case GMIME_PART_ENCODING_7BIT:
+		case GMIME_CONTENT_ENCODING_7BIT:
 			fputs ("\"7bit\"", fp);
 			break;
-		case GMIME_PART_ENCODING_8BIT:
+		case GMIME_CONTENT_ENCODING_8BIT:
 			fputs ("\"8bit\"", fp);
 			break;
-		case GMIME_PART_ENCODING_BINARY:
+		case GMIME_CONTENT_ENCODING_BINARY:
 			fputs ("\"binary\"", fp);
 			break;
-		case GMIME_PART_ENCODING_BASE64:
+		case GMIME_CONTENT_ENCODING_BASE64:
 			fputs ("\"base64\"", fp);
 			break;
-		case GMIME_PART_ENCODING_QUOTEDPRINTABLE:
+		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 			fputs ("\"quoted-printable\"", fp);
 			break;
-		case GMIME_PART_ENCODING_UUENCODE:
+		case GMIME_CONTENT_ENCODING_UUENCODE:
 			fputs ("\"x-uuencode\"", fp);
 			break;
 		default:

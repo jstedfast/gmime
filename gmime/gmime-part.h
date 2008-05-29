@@ -26,6 +26,7 @@
 #include <stdio.h>
 
 #include <gmime/gmime-object.h>
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-data-wrapper.h>
 
 G_BEGIN_DECLS
@@ -43,7 +44,7 @@ typedef struct _GMimePartClass GMimePartClass;
 struct _GMimePart {
 	GMimeObject parent_object;
 	
-	GMimePartEncodingType encoding;
+	GMimeContentEncoding encoding;
 	char *content_description;
 	char *content_location;
 	char *content_md5;
@@ -80,10 +81,8 @@ const char *g_mime_part_get_content_md5 (GMimePart *mime_part);
 void g_mime_part_set_content_location (GMimePart *mime_part, const char *content_location);
 const char *g_mime_part_get_content_location (GMimePart *mime_part);
 
-void g_mime_part_set_encoding (GMimePart *mime_part, GMimePartEncodingType encoding);
-GMimePartEncodingType g_mime_part_get_encoding (GMimePart *mime_part);
-const char *g_mime_part_encoding_to_string (GMimePartEncodingType encoding);
-GMimePartEncodingType g_mime_part_encoding_from_string (const char *encoding);
+void g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding encoding);
+GMimeContentEncoding g_mime_part_get_content_encoding (GMimePart *mime_part);
 
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (const GMimePart *mime_part);

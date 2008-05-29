@@ -22,6 +22,7 @@
 #ifndef __GMIME_FILTER_BASIC_H__
 #define __GMIME_FILTER_BASIC_H__
 
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-filter.h>
 
 G_BEGIN_DECLS
@@ -36,23 +37,9 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterBasic GMimeFilterBasic;
 typedef struct _GMimeFilterBasicClass GMimeFilterBasicClass;
 
-typedef enum {
-	GMIME_FILTER_BASIC_BASE64_ENC = 1,
-	GMIME_FILTER_BASIC_BASE64_DEC,
-	GMIME_FILTER_BASIC_QP_ENC,
-	GMIME_FILTER_BASIC_QP_DEC,
-	GMIME_FILTER_BASIC_UU_ENC,
-	GMIME_FILTER_BASIC_UU_DEC
-} GMimeFilterBasicType;
-
 struct _GMimeFilterBasic {
 	GMimeFilter parent_object;
-	
-	GMimeFilterBasicType type;
-	
-	unsigned char uubuf[60];
-	guint32 save;
-	int state;
+	GMimeEncoding encoder;
 };
 
 struct _GMimeFilterBasicClass {
@@ -63,7 +50,7 @@ struct _GMimeFilterBasicClass {
 
 GType g_mime_filter_basic_get_type (void);
 
-GMimeFilter *g_mime_filter_basic_new_type (GMimeFilterBasicType type);
+GMimeFilter *g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode);
 
 G_END_DECLS
 

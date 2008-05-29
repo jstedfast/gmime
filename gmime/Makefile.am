@@ -30,6 +30,7 @@ libgmime_2_4_la_SOURCES = 		\
 	gmime-content-type.c		\
 	gmime-data-wrapper.c		\
 	gmime-disposition.c		\
+	gmime-encodings.c		\
 	gmime-filter.c			\
 	gmime-filter-basic.c		\
 	gmime-filter-best.c		\
@@ -79,6 +80,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-content-type.h		\
 	gmime-data-wrapper.h		\
 	gmime-disposition.h		\
+	gmime-encodings.h		\
 	gmime-error.h			\
 	gmime-filter.h			\
 	gmime-filter-basic.h		\

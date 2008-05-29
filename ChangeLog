@@ -1,3 +1,73 @@
+2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-encodings.c: New source file containing all the
+	basic MIME encoding functions.
+
+	* src/uuencode.c: Updated.
+
+	* src/uudecode.c: Updated.
+
+	* gmime/gmime-parser.c: Updated for GMimeContentEncoding change.
+
+	* gmime/gmime-multipart-signed.c: Updated for GMimeContentEncoding
+	change.
+
+	* gmime/gmime-multipart-encrypted.c: Updated for
+	GMimeContentEncoding change.
+
+	* gmime/gmime-message-partial.c: Updated for GMimeContentEncoding
+	change.
+
+	* gmime/gmime-filter-best.c (g_mime_filter_best_encoding): Updated
+	to use the new GMimeContentEncoding enum.
+
+	* gmime/gmime-data-wrapper.c: Updated to use GMimeContentEncoding
+	enum.
+	(write_to_stream): Drastically simplified using the new
+	GMimeFilterBasic API.
+
+	* gmime/gmime-filter-basic.c: Updated to use the new GMimeEncoding
+	API.
+	(g_mime_filter_basic_new): Renamed and changed the arguments. We
+	now just re-use the GMimeContentEncoding enum and a bool to
+	declare encode vs decode.
+
+	* gmime/gmime-utils.c (g_mime_references_free): New function to
+	simplify bindings.
+	(g_mime_utils_best_encoding): Updated to use the new
+	GMimeContentEncoding enum.
+	(g_mime_utils_base64_encode_close): Moved to gmime-encodings.c
+	and renamed to g_mime_encoding_base64_encode_close().
+	(g_mime_utils_base64_encode_step): Same.
+	(g_mime_utils_base64_decode_step): Same.
+	(g_mime_utils_uuencode_close): Same.
+	(g_mime_utils_uuencode_step): Same.
+	(g_mime_utils_uudecode_step): Same.
+	(g_mime_utils_quoted_encode_close): Same.
+	(g_mime_utils_quoted_encode_step): Same.
+	(g_mime_utils_quoted_decode_step): Same.
+
+	* gmime/gmime-utils.h (GMimePartEncodingType): Removed. This enum
+	has been replaced.
+
+	* gmime/gmime-part.c (g_mime_part_set_content_type): Removed,
+	GMimeObject already has this functionality.
+	(g_mime_part_get_content_type): Same.
+	(g_mime_part_set_content_encoding): Renamed from
+	g_mime_part_set_encoding() and updated to use the new
+	GMimeContentEncoding enum.
+	(g_mime_part_get_content_encoding): Renamed from
+	g_mime_part_get_encoding() and updated to use the new
+	GMimeContentEncoding enum.
+	(g_mime_part_encoding_to_string): Removed, equivalent
+	functionality has been added to gmime-encodings.c named
+	g_mime_content_encoding_to_string().
+	(g_mime_part_encoding_from_string): Removed, equivalent
+	functionality has been added to gmime-encodings.c named
+	g_mime_content_encoding_from_string().
+	(write_content): Updated for new GMimeFilterBasic API which helps
+	simplify this.
+
 2008-05-27  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c (g_mime_references_get_message_id): New

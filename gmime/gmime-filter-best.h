@@ -22,6 +22,7 @@
 #ifndef __GMIME_FILTER_BEST_H__
 #define __GMIME_FILTER_BEST_H__
 
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-filter.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-utils.h>
@@ -85,7 +86,7 @@ GMimeFilter *g_mime_filter_best_new (unsigned int flags);
 
 const char *g_mime_filter_best_charset (GMimeFilterBest *best);
 
-GMimePartEncodingType g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required);
+GMimeContentEncoding g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required);
 
 G_END_DECLS
 

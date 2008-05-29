@@ -282,8 +282,7 @@ GMIME_FILTER_GET_CLASS
 <SECTION>
 <FILE>gmime-filter-basic</FILE>
 GMimeFilterBasic
-GMimeFilterBasicType
-g_mime_filter_basic_new_type
+g_mime_filter_basic_new
 
 <SUBSECTION Private>
 g_mime_filter_basic_get_type
@@ -674,10 +673,8 @@ g_mime_part_get_content_md5
 g_mime_part_verify_content_md5
 g_mime_part_set_content_location
 g_mime_part_get_content_location
-g_mime_part_set_encoding
-g_mime_part_get_encoding
-g_mime_part_encoding_to_string
-g_mime_part_encoding_from_string
+g_mime_part_set_content_encoding
+g_mime_part_get_content_encoding
 g_mime_part_set_filename
 g_mime_part_get_filename
 g_mime_part_get_content_object
@@ -858,7 +855,6 @@ GMimeMessagePartialClass
 
 <SECTION>
 <FILE>gmime-utils</FILE>
-GMimePartEncodingType
 GMimeReferences
 g_mime_utils_header_decode_date
 g_mime_utils_header_format_date
@@ -869,6 +865,7 @@ g_mime_references_get_next
 g_mime_references_decode
 g_mime_references_append
 g_mime_references_clear
+g_mime_references_free
 g_mime_utils_header_fold
 g_mime_utils_header_printf
 g_mime_utils_quote_string
@@ -882,25 +879,37 @@ g_mime_utils_header_decode_phrase
 g_mime_utils_header_encode_phrase
 g_mime_utils_structured_header_fold
 g_mime_utils_unstructured_header_fold
+</SECTION>
+
+<SECTION>
+<FILE>gmime-encodings</FILE>
+GMimeContentEncoding
+g_mime_content_encoding_from_string
+g_mime_content_encoding_to_string
+GMimeEncoding
+g_mime_encoding_init_encode
+g_mime_encoding_init_decode
+g_mime_encoding_reset
+g_mime_encoding_outlen
+g_mime_encoding_step
+g_mime_encoding_flush
 GMIME_BASE64_ENCODE_LEN
-g_mime_utils_base64_decode_step
-g_mime_utils_base64_encode_step
-g_mime_utils_base64_encode_close
+g_mime_encoding_base64_decode_step
+g_mime_encoding_base64_encode_step
+g_mime_encoding_base64_encode_close
 GMIME_UUDECODE_STATE_INIT
 GMIME_UUDECODE_STATE_BEGIN
 GMIME_UUDECODE_STATE_END
 GMIME_UUENCODE_LEN
-g_mime_utils_uudecode_step
-g_mime_utils_uuencode_step
-g_mime_utils_uuencode_close
+g_mime_encoding_uudecode_step
+g_mime_encoding_uuencode_step
+g_mime_encoding_uuencode_close
 GMIME_QP_ENCODE_LEN
-g_mime_utils_quoted_decode_step
-g_mime_utils_quoted_encode_step
-g_mime_utils_quoted_encode_close
+g_mime_encoding_quoted_decode_step
+g_mime_encoding_quoted_encode_step
+g_mime_encoding_quoted_encode_close
 
 <SUBSECTION Private>
-QP_ENCODE_LEN
-BASE64_ENCODE_LEN
 GMIME_UUDECODE_STATE_MASK
 
 </SECTION>
@@ -1029,14 +1038,6 @@ g_mime_cipher_context_encrypt
 g_mime_cipher_context_decrypt
 g_mime_cipher_context_import_keys
 g_mime_cipher_context_export_keys
-g_mime_cipher_hash_id
-g_mime_cipher_hash_name
-g_mime_cipher_sign
-g_mime_cipher_verify
-g_mime_cipher_encrypt
-g_mime_cipher_decrypt
-g_mime_cipher_import_keys
-g_mime_cipher_export_keys
 <SUBSECTION>
 g_mime_signer_new
 g_mime_signer_free

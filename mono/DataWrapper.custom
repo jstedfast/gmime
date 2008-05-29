@@ -1,35 +1,25 @@
 public StreamWrapper Stream {
 	get {
 		GMime.Stream gmime_stream = GMimeStream;
-		GMime.StreamFilter filtered_stream = new GMime.StreamFilter (gmime_stream);
-		gmime_stream.Dispose ();
-
+		GMime.StreamFilter filtered_stream;
 		FilterBasic filter;
 
 		switch (Encoding) {
-
-		case PartEncodingType.Base64:
-			filter = new FilterBasic (FilterBasicType.Base64Decode);
-			break;
-
-		case PartEncodingType.QuotedPrintable:
-			filter = new FilterBasic (FilterBasicType.QpDecode);
-			break;
-
-		case PartEncodingType.UuEncode:
-			filter = new FilterBasic (FilterBasicType.UuDecode);
-			break;
-
-		default:
-			filter = null;
-			break;
-		}
-
-		if (filter != null) {
+		case ContentEncoding.QuotedPrintable:
+		case ContentEncoding.UuEncode:
+		case ContentEncoding.Base64:
+			filtered_stream = new GMime.StreamFilter (gmime_stream);
+			filter = new FilterBasic (Encoding, false);
 			filtered_stream.Add (filter);
+			gmime_stream.Dispose ();
 			filter.Dispose ();
+
+			gmime_stream = filtered_stream;
+			break;
+		default:
+			break;
 		}
 
-		return new StreamWrapper (filtered_stream);
+		return new StreamWrapper (gmime_stream);
 	}
 }

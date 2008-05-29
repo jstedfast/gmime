@@ -88,7 +88,7 @@ static int
 uudecode (const char *progname, int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
-	GMimeFilterBasicType encoding;
+	GMimeContentEncoding encoding;
 	int fd, opt, longindex = 0;
 	register const char *p;
 	char inbuf[4096], *q;
@@ -135,11 +135,11 @@ uudecode (const char *progname, int argc, char **argv)
 		p = NULL;
 		while ((fgets (inbuf, sizeof (inbuf), fp)) != NULL) {
 			if (!strncmp (inbuf, "begin-base64 ", 13)) {
-				encoding = GMIME_FILTER_BASIC_BASE64_DEC;
+				encoding = GMIME_CONTENT_ENCODING_BASE64;
 				p = inbuf + 13;
 				break;
 			} else if (!strncmp (inbuf, "begin ", 6)) {
-				encoding = GMIME_FILTER_BASIC_UU_DEC;
+				encoding = GMIME_CONTENT_ENCODING_UUENCODE;
 				p = inbuf + 6;
 				break;
 			}
@@ -202,14 +202,14 @@ uudecode (const char *progname, int argc, char **argv)
 		istream = g_mime_stream_file_new (fp);
 		ostream = g_mime_stream_fs_new (fd);
 		fstream = g_mime_stream_filter_new_with_stream (ostream);
-		filter = g_mime_filter_basic_new_type (encoding);
+		filter = g_mime_filter_basic_new (encoding, FALSE);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 		g_object_unref (ostream);
 		g_object_unref (filter);
 		
-		if (encoding == GMIME_FILTER_BASIC_UU_DEC) {
+		if (encoding == GMIME_CONTENT_ENCODING_UUENCODE) {
 			/* Tell the filter that we've already read past the begin line */
-			((GMimeFilterBasic *) filter)->state |= GMIME_UUDECODE_STATE_BEGIN;
+			((GMimeFilterBasic *) filter)->encoder.state |= GMIME_UUDECODE_STATE_BEGIN;
 		}
 		
 		if (g_mime_stream_write_to_stream (istream, fstream) == -1) {

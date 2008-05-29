@@ -1267,7 +1267,7 @@ static void
 parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	GMimePartEncodingType encoding;
+	GMimeContentEncoding encoding;
 	GByteArray *content = NULL;
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
@@ -1294,7 +1294,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 		end = parser_offset (priv, NULL);
 	}
 	
-	encoding = g_mime_part_get_encoding (mime_part);
+	encoding = g_mime_part_get_content_encoding (mime_part);
 	
 	if (priv->persist_stream && priv->seekable)
 		stream = g_mime_stream_substream (priv->stream, start, end);

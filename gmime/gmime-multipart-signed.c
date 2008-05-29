@@ -228,7 +228,7 @@ g_mime_multipart_signed_new (void)
 static void
 sign_prepare (GMimeObject *mime_part)
 {
-	GMimePartEncodingType encoding;
+	GMimeContentEncoding encoding;
 	GMimeObject *subpart;
 	
 	if (GMIME_IS_MULTIPART (mime_part)) {
@@ -249,11 +249,11 @@ sign_prepare (GMimeObject *mime_part)
 		subpart = GMIME_MESSAGE_PART (mime_part)->message->mime_part;
 		sign_prepare (subpart);
 	} else {
-		encoding = g_mime_part_get_encoding (GMIME_PART (mime_part));
+		encoding = g_mime_part_get_content_encoding (GMIME_PART (mime_part));
 		
-		if (encoding != GMIME_PART_ENCODING_BASE64)
-			g_mime_part_set_encoding (GMIME_PART (mime_part),
-						  GMIME_PART_ENCODING_QUOTEDPRINTABLE);
+		if (encoding != GMIME_CONTENT_ENCODING_BASE64)
+			g_mime_part_set_content_encoding (GMIME_PART (mime_part),
+							  GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE);
 	}
 }
 
@@ -363,8 +363,8 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	 * the CipherContext class - maybe ::sign can take/output a
 	 * GMimePart instead. */
 	if (!g_ascii_strcasecmp (mps->protocol, "application/pkcs7-signature")) {
+		g_mime_part_set_content_encoding (GMIME_PART (signature), GMIME_CONTENT_ENCODING_BASE64);
 		g_mime_part_set_filename (GMIME_PART (signature), "smime.p7m");
-		g_mime_part_set_encoding (GMIME_PART (signature), GMIME_PART_ENCODING_BASE64);
 	}
 	
 	/* save the content and signature parts */

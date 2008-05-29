@@ -22,6 +22,15 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_UUENCODE']" name="name">UuEncode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_PART_NUM_ENCODINGS']" name="hidden">true</attr>
 
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_DEFAULT']" name="name">Default</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_7BIT']" name="name">SevenBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_8BIT']" name="name">EightBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_BINARY']" name="name">Binary</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_BASE64']" name="name">Base64</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE']" name="name">QuotedPrintable</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_UUENCODE']" name="name">UuEncode</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_COUNT']" name="hidden">true</attr>
+
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_ENC']" name="name">Base64Encode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_DEC']" name="name">Base64Decode</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_ENC']" name="name">QpEncode</attr>

@@ -99,7 +99,7 @@ static int
 uuencode (const char *progname, int argc, char **argv)
 {
 	GMimeStream *istream, *ostream, *fstream;
-	GMimeFilterBasicType encoding;
+	GMimeContentEncoding encoding;
 	const char *filename, *name;
 	GMimeFilter *filter;
 	gboolean base64;
@@ -107,7 +107,7 @@ uuencode (const char *progname, int argc, char **argv)
 	int fd, opt;
 	
 	base64 = FALSE;
-	encoding = GMIME_FILTER_BASIC_UU_ENC;
+	encoding = GMIME_CONTENT_ENCODING_UUENCODE;
 	while ((opt = getopt_long (argc, argv, "hvm", longopts, NULL)) != -1) {
 		switch (opt) {
 		case 'h':
@@ -118,7 +118,7 @@ uuencode (const char *progname, int argc, char **argv)
 			return 0;
 		case 'm':
 			base64 = TRUE;
-			encoding = GMIME_FILTER_BASIC_BASE64_ENC;
+			encoding = GMIME_CONTENT_ENCODING_BASE64;
 			break;
 		default:
 			printf ("Try `%s --help' for more information.\n", progname);
@@ -173,7 +173,7 @@ uuencode (const char *progname, int argc, char **argv)
 	
 	fstream = g_mime_stream_filter_new_with_stream (ostream);
 	
-	filter = g_mime_filter_basic_new_type (encoding);
+	filter = g_mime_filter_basic_new (encoding, TRUE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 	g_object_unref (filter);
 	

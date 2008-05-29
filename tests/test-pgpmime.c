@@ -224,7 +224,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	part = g_mime_part_new ();
 	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (part, content_type);
+	g_mime_object_set_content_type ((GMimeObject *) part, content_type);
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_write_string (stream, MULTIPART_SIGNED_CONTENT);
@@ -238,7 +238,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 #endif
 	
 	g_mime_stream_reset (stream);
-	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_DEFAULT);
+	content = g_mime_data_wrapper_new_with_stream (stream, GMIME_CONTENT_ENCODING_DEFAULT);
 	g_object_unref (stream);
 	
 	g_mime_part_set_content_object (part, content);
@@ -332,7 +332,7 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	
 	part = g_mime_part_new ();
 	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_part_set_content_type (part, content_type);
+	g_mime_object_set_content_type ((GMimeObject *) part, content_type);
 	g_mime_part_set_content_object (part, content);
 	g_object_unref (content);
 	

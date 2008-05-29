@@ -26,6 +26,7 @@
 #include <glib-object.h>
 
 #include <gmime/gmime-content-type.h>
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-utils.h>
 
@@ -44,7 +45,7 @@ typedef struct _GMimeDataWrapperClass GMimeDataWrapperClass;
 struct _GMimeDataWrapper {
 	GObject parent_object;
 	
-	GMimePartEncodingType encoding;
+	GMimeContentEncoding encoding;
 	GMimeStream *stream;
 };
 
@@ -58,13 +59,13 @@ struct _GMimeDataWrapperClass {
 GType g_mime_data_wrapper_get_type (void);
 
 GMimeDataWrapper *g_mime_data_wrapper_new (void);
-GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimePartEncodingType encoding);
+GMimeDataWrapper *g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimeContentEncoding encoding);
 
 void g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
 GMimeStream *g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper);
 
-void g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimePartEncodingType encoding);
-GMimePartEncodingType g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper);
+void g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimeContentEncoding encoding);
+GMimeContentEncoding g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper);
 
 ssize_t g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream);
 

@@ -459,7 +459,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	for (i = 0; i < parts->len; i++) {
 		partial = g_mime_message_partial_new (id, i + 1, parts->len);
 		wrapper = g_mime_data_wrapper_new_with_stream (GMIME_STREAM (parts->pdata[i]),
-							       GMIME_PART_ENCODING_DEFAULT);
+							       GMIME_CONTENT_ENCODING_DEFAULT);
 		g_object_unref (parts->pdata[i]);
 		g_mime_part_set_content_object (GMIME_PART (partial), wrapper);
 		g_object_unref (wrapper);

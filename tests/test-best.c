@@ -56,13 +56,13 @@ int main (int argc, char **argv)
 	printf ("summary for %s:\n", argv[1]);
 	printf ("\tbest charset: %s\n", g_mime_filter_best_charset (best));
 	printf ("\tbest encoding (7bit): %s\n",
-		g_mime_part_encoding_to_string (
+		g_mime_content_encoding_to_string (
 			g_mime_filter_best_encoding (best, GMIME_BEST_ENCODING_7BIT)));
 	printf ("\tbest encoding (8bit): %s\n",
-		g_mime_part_encoding_to_string (
+		g_mime_content_encoding_to_string (
 			g_mime_filter_best_encoding (best, GMIME_BEST_ENCODING_8BIT)));
 	printf ("\tbest encoding (binary): %s\n",
-		g_mime_part_encoding_to_string (
+		g_mime_content_encoding_to_string (
 			g_mime_filter_best_encoding (best, GMIME_BEST_ENCODING_BINARY)));
 	
 	g_object_unref (istream);

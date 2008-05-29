@@ -288,44 +288,44 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
  *
  * Returns the best encoding for the stream filtered by @best.
  **/
-GMimePartEncodingType
+GMimeContentEncoding
 g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)
 {
-	GMimePartEncodingType encoding = GMIME_PART_ENCODING_DEFAULT;
+	GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_DEFAULT;
 	
-	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_PART_ENCODING_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_FILTER_BEST (best), GMIME_CONTENT_ENCODING_DEFAULT);
 	
 	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
-		return GMIME_PART_ENCODING_DEFAULT;
+		return GMIME_CONTENT_ENCODING_DEFAULT;
 	
 	switch (required) {
 	case GMIME_BEST_ENCODING_7BIT:
 		if (best->count0 > 0) {
-			encoding = GMIME_PART_ENCODING_BASE64;
+			encoding = GMIME_CONTENT_ENCODING_BASE64;
 		} else if (best->count8 > 0) {
 			if (best->count8 >= (best->total * 17 / 100))
-				encoding = GMIME_PART_ENCODING_BASE64;
+				encoding = GMIME_CONTENT_ENCODING_BASE64;
 			else
-				encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+				encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		} else if (best->maxline > 998) {
-			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 		break;
 	case GMIME_BEST_ENCODING_8BIT:
 		if (best->count0 > 0) {
-			encoding = GMIME_PART_ENCODING_BASE64;
+			encoding = GMIME_CONTENT_ENCODING_BASE64;
 		} else if (best->maxline > 998) {
-			encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 		break;
 	case GMIME_BEST_ENCODING_BINARY:
 		if (best->count0 + best->count8 > 0)
-			encoding = GMIME_PART_ENCODING_BINARY;
+			encoding = GMIME_CONTENT_ENCODING_BINARY;
 		break;
 	}
 	
-	if (encoding == GMIME_PART_ENCODING_DEFAULT && best->hadfrom)
-		encoding = GMIME_PART_ENCODING_QUOTEDPRINTABLE;
+	if (encoding == GMIME_CONTENT_ENCODING_DEFAULT && best->hadfrom)
+		encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 	
 	return encoding;
 }
