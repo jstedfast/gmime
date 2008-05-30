@@ -1,3 +1,14 @@
+2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_get_headers): Removed as
+	GMimeObject has an equivalent method.
+	(handle_multipart_alternative): Removed.
+	(handle_multipart_mixed): Removed.
+	(g_mime_message_get_header): Removed, this has equivalent
+	functionality on GMimeObject.
+	(g_mime_message_set_header): Same.
+	(g_mime_message_add_header): Same.
+
 2008-05-28  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

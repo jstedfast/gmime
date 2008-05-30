@@ -788,12 +788,8 @@ g_mime_message_get_date
 g_mime_message_get_date_string
 g_mime_message_set_message_id
 g_mime_message_get_message_id
-g_mime_message_add_header
-g_mime_message_set_header
-g_mime_message_get_header
 g_mime_message_set_mime_part
 g_mime_message_get_mime_part
-g_mime_message_get_headers
 g_mime_message_foreach_part
 
 <SUBSECTION Private>
