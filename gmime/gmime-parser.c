@@ -1330,7 +1330,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
+		g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1361,7 +1361,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header = priv->headers;
 	while (header) {
-		g_mime_object_add_header (object, header->name, header->value);
+		g_mime_object_append_header (object, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1371,7 +1371,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
 	
-	g_mime_header_set_raw (object->headers, priv->rawbuf);
+	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
@@ -1513,7 +1513,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header = priv->headers;
 	while (header) {
-		g_mime_object_add_header (object, header->name, header->value);
+		g_mime_object_append_header (object, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1523,7 +1523,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		g_mime_content_type_destroy (object->content_type);
 	object->content_type = content_type;
 	
-	g_mime_header_set_raw (object->headers, priv->rawbuf);
+	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
 	
 	multipart = (GMimeMultipart *) object;
@@ -1638,7 +1638,7 @@ parser_construct_message (GMimeParser *parser)
 				content_length = ULONG_MAX;
 		}
 		
-		g_mime_object_add_header ((GMimeObject *) message, header->name, header->value);
+		g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	

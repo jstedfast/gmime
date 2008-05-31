@@ -28,21 +28,33 @@
 G_BEGIN_DECLS
 
 /**
- * GMimeHeader:
+ * GMimeHeaderIter:
+ *
+ * A message or mime-part header iterator.
+ **/
+typedef struct _GMimeHeaderIter GMimeHeaderIter;
+
+GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
+void g_mime_header_iter_free (GMimeHeaderIter *iter);
+
+gboolean g_mime_header_iter_is_valid (GMimeHeaderIter *iter);
+
+gboolean g_mime_header_iter_next (GMimeHeaderIter *iter);
+gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);
+
+gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);
+const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
+gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
+const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);
+gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
+
+
+/**
+ * GMimeHeaderList:
  *
  * A message or mime-part header.
  **/
-typedef struct _GMimeHeader GMimeHeader;
-
-/**
- * GMimeHeaderForeachFunc:
- * @name: The field name.
- * @value: The field value.
- * @user_data: The user-supplied callback data.
- *
- * Function signature for the callback to g_mime_header_foreach().
- **/
-typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
+typedef struct _GMimeHeaderList GMimeHeaderList;
 
 
 /**
@@ -58,33 +70,38 @@ typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gp
  **/
 typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
 
+ /**
+  * GMimeHeaderForeachFunc:
+  * @name: The field name.
+  * @value: The field value.
+  * @user_data: The user-supplied callback data.
+  *
+  * Function signature for the callback to g_mime_header_list_foreach().
+  **/
+typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
 
-GMimeHeader *g_mime_header_new (void);
 
-void g_mime_header_destroy (GMimeHeader *header);
+GMimeHeaderList *g_mime_header_list_new (void);
 
-void g_mime_header_set (GMimeHeader *header, const char *name, const char *value);
+void g_mime_header_list_destroy (GMimeHeaderList *headers);
 
-void g_mime_header_add (GMimeHeader *header, const char *name, const char *value);
+void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value);
+void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value);
+void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value);
+const char *g_mime_header_list_get (const GMimeHeaderList *headers, const char *name);
+gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
 
-void g_mime_header_prepend (GMimeHeader *header, const char *name, const char *value);
+GMimeHeaderIter *g_mime_header_list_get_iter (GMimeHeaderList *headers);
 
-const char *g_mime_header_get (const GMimeHeader *header, const char *name);
+void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
+ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);
+char *g_mime_header_list_to_string (const GMimeHeaderList *headers);
 
-void g_mime_header_remove (GMimeHeader *header, const char *name);
-
-ssize_t g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream);
-
-char *g_mime_header_to_string (const GMimeHeader *header);
-
-void g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, gpointer user_data);
-
-void g_mime_header_register_writer (GMimeHeader *header, const char *name, GMimeHeaderWriter writer);
-
+void g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data);
 
 /* for internal use only */
-void g_mime_header_set_raw (GMimeHeader *header, const char *raw);
-gboolean g_mime_header_has_raw (GMimeHeader *header);
+void g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw);
+gboolean g_mime_header_list_has_raw (const GMimeHeaderList *headers);
 
 G_END_DECLS
 

@@ -47,7 +47,7 @@ struct _GMimeObject {
 	
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
-	GMimeHeader *headers;
+	GMimeHeaderList *headers;
 	
 	char *content_id;
 };
@@ -57,10 +57,11 @@ struct _GMimeObjectClass {
 	
 	void         (* init)          (GMimeObject *object);
 	
-	void         (* add_header)    (GMimeObject *object, const char *header, const char *value);
-	void         (* set_header)    (GMimeObject *object, const char *header, const char *value);
-	const char * (* get_header)    (GMimeObject *object, const char *header);
-	void         (* remove_header) (GMimeObject *object, const char *header);
+	void         (* prepend_header) (GMimeObject *object, const char *header, const char *value);
+	void         (* append_header)  (GMimeObject *object, const char *header, const char *value);
+	void         (* set_header)     (GMimeObject *object, const char *header, const char *value);
+	const char * (* get_header)     (GMimeObject *object, const char *header);
+	gboolean     (* remove_header)  (GMimeObject *object, const char *header);
 	
 	void         (* set_content_type) (GMimeObject *object, GMimeContentType *content_type);
 	
@@ -103,10 +104,14 @@ const char *g_mime_object_get_content_disposition_parameter (GMimeObject *object
 void g_mime_object_set_content_id (GMimeObject *object, const char *content_id);
 const char *g_mime_object_get_content_id (GMimeObject *object);
 
-void g_mime_object_add_header (GMimeObject *object, const char *header, const char *value);
+void g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value);
+void g_mime_object_append_header (GMimeObject *object, const char *header, const char *value);
 void g_mime_object_set_header (GMimeObject *object, const char *header, const char *value);
 const char *g_mime_object_get_header (GMimeObject *object, const char *header);
-void g_mime_object_remove_header (GMimeObject *object, const char *header);
+gboolean g_mime_object_remove_header (GMimeObject *object, const char *header);
+
+void g_mime_object_set_header_list (GMimeObject *object, GMimeHeaderList *headers);
+const GMimeHeaderList *g_mime_object_get_header_list (GMimeObject *object);
 
 char *g_mime_object_get_headers (GMimeObject *object);
 

@@ -31,6 +31,8 @@
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
 
+#include "list.h"
+
 
 /**
  * SECTION: gmime-header
@@ -42,261 +44,607 @@
  * values.
  **/
 
-struct raw_header {
-	struct raw_header *next;
+
+typedef struct _GMimeHeader GMimeHeader;
+
+struct _GMimeHeaderList {
+	GHashTable *writers;
+	GHashTable *hash;
+	List iters;
+	List list;
+	char *raw;
+};
+
+/**
+ * GMimeHeader:
+ *
+ * A message/rfc822 header.
+ **/
+struct _GMimeHeader {
+	struct _GMimeHeader *next;
+	struct _GMimeHeader *prev;
+	gint64 offset;
 	char *name;
 	char *value;
 };
 
-struct _GMimeHeader {
-	GHashTable *hash;
-	GHashTable *writers;
-	struct raw_header *headers;
-	char *raw;
+struct _GMimeHeaderIter {
+	struct _GMimeHeaderIter *next;
+	struct _GMimeHeaderIter *prev;
+	GMimeHeaderList *headers;
+	GMimeHeader *cursor;
 };
 
 
+static GMimeHeader *g_mime_header_new (const char *name, const char *value, gint64 offset);
+static void g_mime_header_free (GMimeHeader *header);
+
 /**
  * g_mime_header_new:
+ * @name: header name
+ * @value: header value
+ * @offset: file/stream offset for the start of the header (or %-1 if unknown)
  *
- * Creates a new #GMimeHeader object.
+ * Creates a new #GMimeHeader.
  *
- * Returns a new header object.
+ * Returns a new #GMimeHeader with the specified values.
  **/
-GMimeHeader *
-g_mime_header_new (void)
+static GMimeHeader *
+g_mime_header_new (const char *name, const char *value, gint64 offset)
 {
-	GMimeHeader *new;
+	GMimeHeader *header;
 	
-	new = g_new (GMimeHeader, 1);
-	new->hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-	new->writers = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-	new->headers = NULL;
-	new->raw = NULL;
+	header = g_new (GMimeHeader, 1);
+	header->name = g_strdup (name);
+	header->value = g_strdup (value);
+	header->offset = offset;
+	header->next = NULL;
+	header->prev = NULL;
 	
-	return new;
-}
-
-
-static void
-writer_free (gpointer key, gpointer value, gpointer user_data)
-{
-	g_free (key);
+	return header;
 }
 
 
 /**
- * g_mime_header_destroy:
- * @header: header object
+ * g_mime_header_free:
+ * @header: a #GMimeHeader
  *
- * Destroy the header object
+ * Frees a single #GMimeHeader node.
+ **/
+static void
+g_mime_header_free (GMimeHeader *header)
+{
+	g_free (header->name);
+	g_free (header->value);
+	g_free (header);
+}
+
+
+/**
+ * g_mime_header_iter_copy:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Copies a header iterator.
+ *
+ * Returns a new #GMimeHeaderIter which matches @iter's state.
+ **/
+GMimeHeaderIter *
+g_mime_header_iter_copy (GMimeHeaderIter *iter)
+{
+	GMimeHeaderIter *copy;
+	
+	g_return_val_if_fail (iter != NULL, NULL);
+	
+	copy = g_new (GMimeHeaderIter, 1);
+	copy->headers = iter->headers;
+	copy->cursor = iter->cursor;
+	
+	if (iter->headers)
+		list_append (&iter->headers->iters, (ListNode *) copy);
+	
+	return copy;
+}
+
+
+/**
+ * g_mime_header_iter_free:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Frees a #GMimeHeaderIter.
  **/
 void
-g_mime_header_destroy (GMimeHeader *header)
+g_mime_header_iter_free (GMimeHeaderIter *iter)
 {
-	if (header) {
-		struct raw_header *h, *n;
+	g_return_if_fail (iter != NULL);
+	
+	if (iter->headers)
+		list_unlink ((ListNode *) iter);
+	
+	g_free (iter);
+}
+
+
+/**
+ * g_mime_header_iter_is_valid:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Checks if a #GMimeHeaderIter is valid. An iterator may become
+ * invalid if the #GMimeHeaderList that the iterator refers to changes
+ * or is destroyed.
+ *
+ * Returns %TRUE if @iter is still valid or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_iter_is_valid (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	return iter->cursor && iter->cursor->next;
+}
+
+
+/**
+ * g_mime_header_iter_next:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Advances to the next header.
+ *
+ * Returns %TRUE on success or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_iter_next (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return FALSE;
+	
+	iter->cursor = iter->cursor->next;
+	
+	return iter->next != NULL;
+}
+
+
+/**
+ * g_mime_header_iter_next:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Advances to the previous header.
+ *
+ * Returns %TRUE on success or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_iter_prev (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	if (!iter->cursor || !iter->cursor->prev)
+		return FALSE;
+	
+	iter->cursor = iter->cursor->prev;
+	
+	return iter->prev != NULL;
+}
+
+
+/**
+ * g_mime_header_iter_get_offset:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Gets the current header's file/stream offset.
+ *
+ * Returns the file/stream offset or %-1 if unknown or invalid.
+ **/
+gint64
+g_mime_header_iter_get_offset (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return -1;
+	
+	return iter->cursor->offset;
+}
+
+
+/**
+ * g_mime_header_iter_get_name:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Gets the current header's name.
+ *
+ * Returns the header name or %NULL if invalid.
+ **/
+const char *
+g_mime_header_iter_get_name (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, NULL);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return NULL;
+	
+	return iter->cursor->name;
+}
+
+
+/**
+ * g_mime_header_iter_set_value:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Sets the current header's value.
+ *
+ * Returns %TRUE if the value was set or %FALSE otherwise (indicates
+ * invalid iter).
+ **/
+gboolean
+g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value)
+{
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return FALSE;
+	
+	g_free (iter->cursor->value);
+	iter->cursor->value = g_strdup (value);
+	
+	g_mime_header_list_set_raw (iter->headers, NULL);
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_header_iter_get_value:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Gets the current header's name.
+ *
+ * Returns the header name or %NULL if invalid.
+ **/
+const char *
+g_mime_header_iter_get_value (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, NULL);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return NULL;
+	
+	return iter->cursor->value;
+}
+
+
+/**
+ * g_mime_header_iter_remove:
+ * @iter: a #GMimeHeaderIter
+ *
+ * Removes the current header from the references #GMimeHeaderList.
+ *
+ * Returns %TRUE on success or %FALSE otherwise
+ **/
+gboolean
+g_mime_header_iter_remove (GMimeHeaderIter *iter)
+{
+	GMimeHeader *header, *next;
+	GMimeHeaderList *headers;
+	char *name;
+	
+	g_return_val_if_fail (iter != NULL, FALSE);
+	
+	if (!iter->cursor || !iter->cursor->next)
+		return FALSE;
+	
+	/* save iter state */
+	next = iter->cursor->next;
+	name = iter->cursor->name;
+	headers = iter->headers;
+	
+	if (!(header = g_hash_table_lookup (headers->hash, name)))
+		return FALSE;
+	
+	if (iter->cursor == header) {
+		/* update the header lookup table */
+		GMimeHeader *node = iter->cursor->next;
 		
-		h = header->headers;
-		while (h) {
-			g_free (h->name);
-			g_free (h->value);
-			n = h->next;
-			g_free (h);
-			h = n;
+		g_hash_table_remove (headers->hash, name);
+		
+		while (node->next) {
+			if (!g_ascii_strcasecmp (node->name, name)) {
+				/* enter this node into the lookup table */
+				g_hash_table_insert (headers->hash, node->name, node);
+				break;
+			}
+			
+			node = node->next;
+		}
+	}
+	
+	/* remove/free the header */
+	list_unlink ((ListNode *) iter->cursor);
+	g_mime_header_free (iter->cursor);
+	
+	/* restore iter state */
+	iter->headers = headers;
+	iter->cursor = next;
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_header_list_invalidate_iters:
+ * @headers: a #GMimeHeaderList
+ * @header: a #GMimeHeader
+ *
+ * Invalidate all outstanding iterators that are currently referencing
+ * @header. If @header is NULL, then invalidate all iterators.
+ **/
+static void
+g_mime_header_list_invalidate_iters (GMimeHeaderList *headers, GMimeHeader *header)
+{
+	GMimeHeaderIter *iter, *next;
+	
+	/* invalidate all our outstanding iterators matching @header */
+	iter = (GMimeHeaderIter *) headers->iters.head;
+	while (iter->next) {
+		next = iter->next;
+		
+		if (!header || iter->cursor == header) {
+			/* invalidate this iter */
+			list_unlink ((ListNode *) iter);
+			iter->headers = NULL;
+			iter->cursor = NULL;
 		}
 		
-		g_hash_table_destroy (header->hash);
-		g_hash_table_foreach (header->writers, writer_free, NULL);
-		g_hash_table_destroy (header->writers);
-		g_free (header->raw);
-		g_free (header);
+		iter = next;
 	}
 }
 
 
 /**
- * g_mime_header_set:
- * @header: header object
- * @name: header name
- * @value: header value
+ * g_mime_header_list_new:
  *
- * Set the value of the specified header. If @value is %NULL and the
- * header, @name, had not been previously set, a space will be set
- * aside for it (useful for setting the order of headers before values
- * can be obtained for them) otherwise the header will be unset.
+ * Creates a new #GMimeHeaderList object.
+ *
+ * Returns a new header list object.
+ **/
+GMimeHeaderList *
+g_mime_header_list_new (void)
+{
+	GMimeHeaderList *headers;
+	
+	headers = g_new (GMimeHeaderList, 1);
+	headers->writers = g_hash_table_new_full (g_mime_strcase_hash,
+						  g_mime_strcase_equal,
+						  g_free, NULL);
+	headers->hash = g_hash_table_new (g_mime_strcase_hash,
+					  g_mime_strcase_equal);
+	list_init (&headers->iters);
+	list_init (&headers->list);
+	headers->raw = NULL;
+	
+	return headers;
+}
+
+
+/**
+ * g_mime_header_list_destroy:
+ * @headers: a #GMimeHeaderList
+ *
+ * Destroy the header list.
  **/
 void
-g_mime_header_set (GMimeHeader *header, const char *name, const char *value)
+g_mime_header_list_destroy (GMimeHeaderList *headers)
 {
-	struct raw_header *h, *n;
+	GMimeHeader *header, *next;
+	GMimeHeaderIter *iter;
 	
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (name != NULL);
+	if (!headers)
+		return;
 	
-	if ((h = g_hash_table_lookup (header->hash, name))) {
-		g_free (h->value);
-		h->value = g_strdup (value);
-	} else {
-		n = g_new (struct raw_header, 1);
-		n->next = NULL;
-		n->name = g_strdup (name);
-		n->value = g_strdup (value);
-		
-		h = header->headers;
-		while (h && h->next)
-			h = h->next;
-		
-		if (h != NULL)
-			h->next = n;
-		else
-			header->headers = n;
-		
-		g_hash_table_insert (header->hash, n->name, n);
+	/* invalidate all our outstanding iterators */
+	g_mime_header_list_invalidate_iters (headers, NULL);
+	
+	header = (GMimeHeader *) headers->list.head;
+	while (header->next) {
+		next = header->next;
+		g_mime_header_free (header);
+		header = next;
 	}
 	
-	g_free (header->raw);
-	header->raw = NULL;
+	g_hash_table_destroy (headers->writers);
+	g_hash_table_destroy (headers->hash);
+	g_free (headers->raw);
+	g_free (headers);
 }
 
 
 /**
- * g_mime_header_add:
- * @header: header object
+ * g_mime_header_list_prepend:
+ * @headers: a #GMimeHeaderList
  * @name: header name
  * @value: header value
  *
- * Adds a header. If @value is %NULL, a space will be set aside for it
+ * Prepends a header. If @value is %NULL, a space will be set aside
+ * for it (useful for setting the order of headers before values can
+ * be obtained for them) otherwise the header will be unset.
+ **/
+void
+g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value)
+{
+	GMimeHeader *header;
+	
+	g_return_if_fail (headers != NULL);
+	g_return_if_fail (name != NULL);
+	
+	header = g_mime_header_new (name, value, -1);
+	list_append (&headers->list, (ListNode *) header);
+	g_hash_table_replace (headers->hash, header->name, header);
+	
+	g_free (headers->raw);
+	headers->raw = NULL;
+}
+
+
+/**
+ * g_mime_header_list_append:
+ * @headers: a #GMimeHeaderList
+ * @name: header name
+ * @value: header value
+ *
+ * Appends a header. If @value is %NULL, a space will be set aside for it
  * (useful for setting the order of headers before values can be
  * obtained for them) otherwise the header will be unset.
  **/
 void
-g_mime_header_add (GMimeHeader *header, const char *name, const char *value)
+g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value)
 {
-	struct raw_header *h, *n;
+	GMimeHeader *header;
 	
-	g_return_if_fail (header != NULL);
+	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	n = g_new (struct raw_header, 1);
-	n->next = NULL;
-	n->name = g_strdup (name);
-	n->value = g_strdup (value);
+	header = g_mime_header_new (name, value, -1);
+	list_append (&headers->list, (ListNode *) header);
 	
-	h = header->headers;
-	while (h && h->next)
-		h = h->next;
+	if (!g_hash_table_lookup (headers->hash, name))
+		g_hash_table_insert (headers->hash, header->name, header);
 	
-	if (h)
-		h->next = n;
-	else
-		header->headers = n;
-	
-	if (!g_hash_table_lookup (header->hash, name))
-		g_hash_table_insert (header->hash, n->name, n);
-	
-	g_free (header->raw);
-	header->raw = NULL;
+	g_free (headers->raw);
+	headers->raw = NULL;
 }
 
 
 /**
- * g_mime_header_prepend:
- * @header: header object
- * @name: header name
- * @value: header value
- *
- * Adds a header to the head of the list. If @value is %NULL, a space
- * will be set aside for it (useful for setting the order of headers
- * before values can be obtained for them) otherwise the header will
- * be unset.
- **/
-void
-g_mime_header_prepend (GMimeHeader *header, const char *name, const char *value)
-{
-	struct raw_header *n;
-	
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (name != NULL);
-	
-	n = g_new (struct raw_header, 1);
-	n->next = header->headers;
-	n->name = g_strdup (name);
-	n->value = g_strdup (value);
-	header->headers = n;
-	
-	if (!g_hash_table_lookup (header->hash, name))
-		g_hash_table_insert (header->hash, n->name, n);
-	
-	g_free (header->raw);
-	header->raw = NULL;
-}
-
-
-/**
- * g_mime_header_get:
- * @header: header object
+ * g_mime_header_list_get:
+ * @headers: a #GMimeHeaderList
  * @name: header name
  *
- * Gets the value of the header requested.
+ * Gets the value of the first header with the name requested.
  *
  * Returns the value of the header requested.
  **/
 const char *
-g_mime_header_get (const GMimeHeader *header, const char *name)
+g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
 {
-	const struct raw_header *h;
+	const GMimeHeader *header;
 	
-	g_return_val_if_fail (header != NULL, NULL);
+	g_return_val_if_fail (headers != NULL, NULL);
 	g_return_val_if_fail (name != NULL, NULL);
 	
-	h = g_hash_table_lookup (header->hash, name);
+	if (!(header = g_hash_table_lookup (headers->hash, name)))
+		return NULL;
 	
-	return h ? h->value : NULL;
+	return header->value;
 }
 
 
 /**
- * g_mime_header_remove:
- * @header: header object
+ * g_mime_header_list_set:
+ * @headers: a #GMimeHeaderList
+ * @name: header name
+ * @value: header value
+ *
+ * Set the value of the first header with the name specified. If
+ * @value is %NULL and the header, @name, had not been previously set,
+ * a space will be set aside for it (useful for setting the order of
+ * headers before values can be obtained for them) otherwise the
+ * header will be unset.
+ **/
+void
+g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
+{
+	GMimeHeader *header;
+	
+	g_return_if_fail (headers != NULL);
+	g_return_if_fail (name != NULL);
+	
+	if ((header = g_hash_table_lookup (headers->hash, name))) {
+		g_free (header->value);
+		header->value = g_strdup (value);
+	} else {
+		header = g_mime_header_new (name, value, -1);
+		list_append (&headers->list, (ListNode *) header);
+		g_hash_table_insert (headers->hash, header->name, header);
+	}
+	
+	g_free (headers->raw);
+	headers->raw = NULL;
+}
+
+
+/**
+ * g_mime_header_list_remove:
+ * @headers: a #GMimeHeaderList
  * @name: header name
  *
  * Remove the specified header.
+ *
+ * Returns %TRUE if the header was successfully removed or %FALSE if
+ * the specified header could not be found.
  **/
-void
-g_mime_header_remove (GMimeHeader *header, const char *name)
+gboolean
+g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 {
-	struct raw_header *h, *n;
+	GMimeHeader *header, *node;
 	
-	g_return_if_fail (header != NULL);
+	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	if ((h = g_hash_table_lookup (header->hash, name))) {
-		/* remove the header */
-		g_hash_table_remove (header->hash, name);
-		n = header->headers;
-		
-		if (h == n) {
-			header->headers = h->next;
-		} else {
-			while (n->next != h)
-				n = n->next;
-			
-			n->next = h->next;
+	if (!(header = g_hash_table_lookup (headers->hash, name)))
+		return FALSE;
+	
+	/* look for another header with the same name... */
+	node = header->next;
+	while (node->next) {
+		if (!g_ascii_strcasecmp (node->name, name)) {
+			/* enter this node into the lookup table */
+			g_hash_table_replace (headers->hash, node->name, node);
+			break;
 		}
 		
-		g_free (h->name);
-		g_free (h->value);
-		g_free (h);
+		node = node->next;
 	}
 	
-	g_free (header->raw);
-	header->raw = NULL;
+	/* invalidate all our outstanding iterators matching @header */
+	g_mime_header_list_invalidate_iters (headers, header);
+	
+	/* remove/free the header */
+	list_unlink ((ListNode *) header);
+	g_mime_header_free (header);
+	
+	g_free (headers->raw);
+	headers->raw = NULL;
+}
+
+
+/**
+ * g_mime_header_list_get_iter:
+ * @headers: a #GMimeHeaderList
+ *
+ * Gets a new iterator for traversing @headers.
+ *
+ * Returns a new #GMimeHeaderIter which must be freed using
+ * g_mime_header_iter_free() when finished with it.
+ **/
+GMimeHeaderIter *
+g_mime_header_list_get_iter (GMimeHeaderList *headers)
+{
+	GMimeHeaderIter *iter;
+	
+	g_return_val_if_fail (headers != NULL, NULL);
+	
+	iter = g_new (GMimeHeaderIter, 1);
+	iter->cursor = (GMimeHeader *) headers->list.head;
+	iter->headers = headers;
+	
+	list_append (&headers->iters, (ListNode *) iter);
+	
+	return iter;
 }
 
 
 static ssize_t
-write_default (GMimeStream *stream, const char *name, const char *value)
+default_writer (GMimeStream *stream, const char *name, const char *value)
 {
 	ssize_t nwritten;
 	char *val;
@@ -310,8 +658,8 @@ write_default (GMimeStream *stream, const char *name, const char *value)
 
 
 /**
- * g_mime_header_write_to_stream:
- * @header: header object
+ * g_mime_header_list_write_to_stream:
+ * @headers: a #GMimeHeaderList
  * @stream: output stream
  *
  * Write the headers to a stream.
@@ -319,34 +667,34 @@ write_default (GMimeStream *stream, const char *name, const char *value)
  * Returns the number of bytes written or %-1 on fail.
  **/
 ssize_t
-g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
+g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream)
 {
-	GMimeHeaderWriter header_write;
 	ssize_t nwritten, total = 0;
-	struct raw_header *h;
+	GMimeHeaderWriter writer;
+	GHashTable *writers;
+	GMimeHeader *header;
 	
-	g_return_val_if_fail (header != NULL, -1);
+	g_return_val_if_fail (headers != NULL, -1);
 	g_return_val_if_fail (stream != NULL, -1);
 	
-	if (header->raw)
-		return g_mime_stream_write_string (stream, header->raw);
+	if (headers->raw)
+		return g_mime_stream_write_string (stream, headers->raw);
 	
-	h = header->headers;
-	while (h) {
-		if (h->value) {
-			header_write = g_hash_table_lookup (header->writers, h->name);
-			if (header_write)
-				nwritten = (*header_write) (stream, h->name, h->value);
-			else
-				nwritten = write_default (stream, h->name, h->value);
+	header = (GMimeHeader *) headers->list.head;
+	writers = headers->writers;
+	
+	while (header->next) {
+		if (header->value) {
+			if (!(writer = g_hash_table_lookup (writers, header->name)))
+				writer = default_writer;
 			
-			if (nwritten == -1)
+			if ((nwritten = (* writer) (stream, header->name, header->value)) == -1)
 				return -1;
 			
 			total += nwritten;
 		}
 		
-		h = h->next;
+		header = header->next;
 	}
 	
 	return total;
@@ -354,27 +702,30 @@ g_mime_header_write_to_stream (const GMimeHeader *header, GMimeStream *stream)
 
 
 /**
- * g_mime_header_to_string:
- * @header: header object
+ * g_mime_header_list_to_string:
+ * @headers: a #GMimeHeaderList
  *
  * Allocates a string buffer containing the raw rfc822 headers
- * contained in @header.
+ * contained in @headers.
  *
- * Returns a string containing the header block
+ * Returns a string containing the header block.
  **/
 char *
-g_mime_header_to_string (const GMimeHeader *header)
+g_mime_header_list_to_string (const GMimeHeaderList *headers)
 {
 	GMimeStream *stream;
 	GByteArray *array;
 	char *str;
 	
-	g_return_val_if_fail (header != NULL, NULL);
+	g_return_val_if_fail (headers != NULL, NULL);
+	
+	if (headers->raw)
+		return g_strdup (headers->raw);
 	
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
-	g_mime_header_write_to_stream (header, stream);
+	g_mime_header_list_write_to_stream (headers, stream);
 	g_object_unref (stream);
 	
 	g_byte_array_append (array, (unsigned char *) "", 1);
@@ -386,30 +737,32 @@ g_mime_header_to_string (const GMimeHeader *header)
 
 
 /**
- * g_mime_header_foreach:
- * @header: header object
+ * g_mime_header_list_foreach:
+ * @headers: a #GMimeHeaderList
  * @func: function to be called for each header.
  * @user_data: User data to be passed to the func.
  *
  * Calls @func for each header name/value pair.
  */
 void
-g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, gpointer user_data)
+g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data)
 {
-	const struct raw_header *h;
+	const GMimeHeader *header;
 	
-	g_return_if_fail (header != NULL);
-	g_return_if_fail (header->hash != NULL);
+	g_return_if_fail (headers != NULL);
 	g_return_if_fail (func != NULL);
 	
-	for (h = header->headers; h != NULL; h = h->next)
-		(*func) (h->name, h->value, user_data);
+	header = (const GMimeHeader *) headers->list.head;
+	while (header->next) {
+		(*func) (header->name, header->value, user_data);
+		header = header->next;
+	}
 }
 
 
 /**
- * g_mime_header_register_writer:
- * @header: header object
+ * g_mime_header_list_register_writer:
+ * @headers: a #GMimeHeaderList
  * @name: header name
  * @writer: writer function
  *
@@ -418,54 +771,54 @@ g_mime_header_foreach (const GMimeHeader *header, GMimeHeaderForeachFunc func, g
  * the default header folding style for a particular header.
  **/
 void
-g_mime_header_register_writer (GMimeHeader *header, const char *name, GMimeHeaderWriter writer)
+g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer)
 {
 	gpointer okey, oval;
 	
-	g_return_if_fail (header != NULL);
+	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	if (g_hash_table_lookup (header->writers, name)) {
-		g_hash_table_lookup_extended (header->writers, name, &okey, &oval);
-		g_hash_table_remove (header->writers, name);
+	if (g_hash_table_lookup (headers->writers, name)) {
+		g_hash_table_lookup_extended (headers->writers, name, &okey, &oval);
+		g_hash_table_remove (headers->writers, name);
 		g_free (okey);
 	}
 	
 	if (writer)
-		g_hash_table_insert (header->writers, g_strdup (name), writer);
+		g_hash_table_insert (headers->writers, g_strdup (name), writer);
 }
 
 
 
 /**
- * g_mime_header_set_raw:
- * @header: header object
+ * g_mime_header_list_set_raw:
+ * @headers: a #GMimeHeaderList
  * @raw: raw mime part header
  *
  * Set the raw header.
  **/
 void
-g_mime_header_set_raw (GMimeHeader *header, const char *raw)
+g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw)
 {
-	g_return_if_fail (header != NULL);
+	g_return_if_fail (headers != NULL);
 	
-	g_free (header->raw);
-	header->raw = raw ? g_strdup (raw) : NULL;
+	g_free (headers->raw);
+	headers->raw = raw ? g_strdup (raw) : NULL;
 }
 
 
 /**
- * g_mime_header_has_raw:
- * @header: ehader object
+ * g_mime_header_list_has_raw:
+ * @headers: a #GMimeHeaderList
  *
- * Gets whether or not a raw header has been set on @header.
+ * Gets whether or not a raw header has been set on @headers.
  *
  * Returns %TRUE if a raw header is set or %FALSE otherwise.
  **/
 gboolean
-g_mime_header_has_raw (GMimeHeader *header)
+g_mime_header_list_has_raw (const GMimeHeaderList *headers)
 {
-	g_return_val_if_fail (header != NULL, FALSE);
+	g_return_val_if_fail (headers != NULL, FALSE);
 	
-	return header->raw ? TRUE : FALSE;
+	return headers->raw ? TRUE : FALSE;
 }

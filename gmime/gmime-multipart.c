@@ -54,10 +54,11 @@ static void g_mime_multipart_finalize (GObject *object);
 
 /* GMimeObject class methods */
 static void multipart_init (GMimeObject *object);
-static void multipart_add_header (GMimeObject *object, const char *header, const char *value);
+static void multipart_prepend_header (GMimeObject *object, const char *header, const char *value);
+static void multipart_append_header (GMimeObject *object, const char *header, const char *value);
 static void multipart_set_header (GMimeObject *object, const char *header, const char *value);
 static const char *multipart_get_header (GMimeObject *object, const char *header);
-static void multipart_remove_header (GMimeObject *object, const char *header);
+static gboolean multipart_remove_header (GMimeObject *object, const char *header);
 static void multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *multipart_get_headers (GMimeObject *object);
 static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
@@ -112,10 +113,11 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	gobject_class->finalize = g_mime_multipart_finalize;
 	
 	object_class->init = multipart_init;
-	object_class->add_header = multipart_add_header;
+	object_class->prepend_header = multipart_prepend_header;
+	object_class->append_header = multipart_append_header;
+	object_class->remove_header = multipart_remove_header;
 	object_class->set_header = multipart_set_header;
 	object_class->get_header = multipart_get_header;
-	object_class->remove_header = multipart_remove_header;
 	object_class->set_content_type = multipart_set_content_type;
 	object_class->get_headers = multipart_get_headers;
 	object_class->write_to_stream = multipart_write_to_stream;
@@ -171,13 +173,21 @@ multipart_init (GMimeObject *object)
 }
 
 static void
-multipart_add_header (GMimeObject *object, const char *header, const char *value)
+multipart_prepend_header (GMimeObject *object, const char *header, const char *value)
 {
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a multipart */
-	
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->add_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
+}
+
+static void
+multipart_append_header (GMimeObject *object, const char *header, const char *value)
+{
+	/* Make sure that the header is a Content-* header, else it
+           doesn't belong on a multipart */
+	if (!g_ascii_strncasecmp ("Content-", header, 8))
+		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
 }
 
 static void
@@ -189,7 +199,6 @@ multipart_set_header (GMimeObject *object, const char *header, const char *value
 	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a multipart */
-	
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 }
@@ -199,21 +208,21 @@ multipart_get_header (GMimeObject *object, const char *header)
 {
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a multipart */
-	
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 	else
 		return NULL;
 }
 
-static void
+static gboolean
 multipart_remove_header (GMimeObject *object, const char *header)
 {
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a multipart */
+	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
+		return FALSE;
 	
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static void
@@ -247,11 +256,11 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	 * header (in which case it should already be set... or if
 	 * not, then it's a broken multipart and so we don't want to
 	 * alter it or we'll completely break the output) */
-	if (!multipart->boundary && !g_mime_header_has_raw (object->headers))
+	if (!multipart->boundary && !g_mime_header_list_has_raw (object->headers))
 		g_mime_multipart_set_boundary (multipart, NULL);
 	
 	/* write the content headers */
-	if ((nwritten = g_mime_header_write_to_stream (object->headers, stream)) == -1)
+	if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
 		return -1;
 	
 	total += nwritten;

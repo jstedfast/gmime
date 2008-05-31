@@ -1,5 +1,42 @@
 2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-parser.c: Updated for GMimeHeaderList and
+	GMimeObject changes.
+
+	* gmime/gmime-message-partial.c: Updated for GMimeHeaderList and
+	GMimeObject changes.
+
+	* gmime/gmime-multipart-encrypted.c: Updated for GMimeHeaderList
+	and GMimeObject changes.
+
+	* gmime/gmime-multipart-signed.c: Updated for GMimeHeaderList and
+	GMimeObject changes.
+
+	* gmime/gmime-multipart.c: Updated for GMimeHeaderList and
+	GMimeObject changes.
+
+	* gmime/gmime-part.c: Updated for GMimeHeaderList and GMimeObject
+	changes.
+
+	* gmime/gmime-message.c: Updated for GMimeHeaderList and
+	GMimeObject changes.
+
+	* gmime/gmime-object.c (g_mime_object_append_header): Renamed from
+	g_mime_object_add_header().
+	(g_mime_object_prepend_header): New method.
+	(remove_header): Cleanup content-header variables if they get
+	removed. Don't allow removal of the Content-Type header.
+
+	* gmime/gmime-header.[c,h]: Renamed GMimeHeader to GMimeHeaderList
+	and all of it's methods appropriately. Added a new GMimeHeaderIter
+	class for iterating over a header list.
+	(g_mime_header_list_remove): Return gboolean specifying whether or
+	not a header was removed.
+	(g_mime_header_list_get_iter): New function to get a header
+	iterator.
+
+2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
+
 	* util/cache.c: Updated for list.[c,h] changes.
 
 	* util/list.c (list_append): Renamed from list_append_node().
