@@ -29,7 +29,7 @@ build_sources =  			\
 customs = 				\
 	DataWrapper.custom		\
 	Global.custom			\
-	Header.custom			\
+	HeaderList.custom		\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom
@@ -37,7 +37,7 @@ customs = 				\
 build_customs = 			\
 	$(srcdir)/DataWrapper.custom	\
 	$(srcdir)/Global.custom		\
-	$(srcdir)/Header.custom		\
+	$(srcdir)/HeaderList.custom	\
 	$(srcdir)/Message.custom	\
 	$(srcdir)/Object.custom		\
 	$(srcdir)/Stream.custom

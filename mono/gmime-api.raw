@@ -703,9 +703,6 @@
           <parameter type="const-char*" name="header" />
         </parameters>
       </method>
-      <method name="GetHeaders" cname="g_mime_message_get_headers">
-        <return-type type="char*" />
-      </method>
       <method name="GetMessageId" cname="g_mime_message_get_message_id">
         <return-type type="const-char*" />
       </method>
@@ -1034,7 +1031,7 @@
     <object name="Object" cname="GMimeObject" parent="GObject">
       <field name="Disposition" cname="disposition" type="GMimeContentDisposition*" />
       <field name="ContentType" cname="content_type" type="GMimeContentType*" />
-      <field name="Headers" cname="headers" type="GMimeHeader*" />
+      <field name="Headers" cname="headers" type="GMimeHeaderList*" />
       <field name="ContentId" cname="content_id" type="char*" />
       <virtual_method name="Init" cname="init">
         <return-type type="void" />
@@ -1042,7 +1039,15 @@
           <parameter type="GMimeObject*" name="object" />
         </parameters>
       </virtual_method>
-      <virtual_method name="AddHeader" cname="add_header">
+      <virtual_method name="PrependHeader" cname="prepend_header">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeObject*" name="object" />
+          <parameter type="const-char*" name="header" />
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="AppendHeader" cname="append_header">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeObject*" name="object" />
@@ -1059,7 +1064,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="RemoveHeader" cname="remove_header">
-        <return-type type="void" />
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeObject*" name="object" />
           <parameter type="const-char*" name="header" />
@@ -1085,7 +1090,7 @@
           <parameter type="GMimeStream*" name="stream" />
         </parameters>
       </virtual_method>
-      <method name="AddHeader" cname="g_mime_object_add_header">
+      <method name="AppendHeader" cname="g_mime_object_append_header">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="header" />
@@ -1122,6 +1127,9 @@
           <parameter type="const-char*" name="header" />
         </parameters>
       </method>
+      <method name="GetHeaderList" cname="g_mime_object_get_header_list">
+        <return-type type="const-GMimeHeaderList*" />
+      </method>
       <method name="GetHeaders" cname="g_mime_object_get_headers">
         <return-type type="char*" />
       </method>
@@ -1134,6 +1142,13 @@
           <parameter type="const-char*" name="subtype" />
         </parameters>
       </constructor>
+      <method name="PrependHeader" cname="g_mime_object_prepend_header">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="header" />
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
       <method name="RegisterType" cname="g_mime_object_register_type" shared="true">
         <return-type type="void" />
         <parameters>
@@ -1143,7 +1158,7 @@
         </parameters>
       </method>
       <method name="RemoveHeader" cname="g_mime_object_remove_header">
-        <return-type type="void" />
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="const-char*" name="header" />
         </parameters>
@@ -1191,6 +1206,12 @@
         <parameters>
           <parameter type="const-char*" name="header" />
           <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="SetHeaderList" cname="g_mime_object_set_header_list">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeHeaderList*" name="headers" />
         </parameters>
       </method>
       <method name="ToString" cname="g_mime_object_to_string">
@@ -2104,71 +2125,121 @@
         </parameters>
       </method>
     </struct>
-    <struct name="Header" cname="GMimeHeader" opaque="true">
-      <method name="Add" cname="g_mime_header_add">
+    <struct name="HeaderIter" cname="GMimeHeaderIter" opaque="true">
+      <method name="Copy" cname="g_mime_header_iter_copy">
+        <return-type type="GMimeHeaderIter*" owned="true" />
+      </method>
+      <method name="Equal" cname="g_mime_header_iter_equal">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeHeaderIter*" name="iter2" />
+        </parameters>
+      </method>
+      <method name="First" cname="g_mime_header_iter_first">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Free" cname="g_mime_header_iter_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetName" cname="g_mime_header_iter_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetOffset" cname="g_mime_header_iter_get_offset">
+        <return-type type="gint64" />
+      </method>
+      <method name="GetValue" cname="g_mime_header_iter_get_value">
+        <return-type type="const-char*" />
+      </method>
+      <method name="IsValid" cname="g_mime_header_iter_is_valid">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Last" cname="g_mime_header_iter_last">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Next" cname="g_mime_header_iter_next">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Prev" cname="g_mime_header_iter_prev">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Remove" cname="g_mime_header_iter_remove">
+        <return-type type="gboolean" />
+      </method>
+      <method name="SetValue" cname="g_mime_header_iter_set_value">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="HeaderList" cname="GMimeHeaderList" opaque="true">
+      <method name="Append" cname="g_mime_header_list_append">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
-      <method name="Destroy" cname="g_mime_header_destroy">
+      <method name="Destroy" cname="g_mime_header_list_destroy">
         <return-type type="void" />
       </method>
-      <method name="Foreach" cname="g_mime_header_foreach">
+      <method name="Foreach" cname="g_mime_header_list_foreach">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeHeaderForeachFunc" name="func" />
           <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
-      <method name="Get" cname="g_mime_header_get">
+      <method name="Get" cname="g_mime_header_list_get">
         <return-type type="const-char*" />
         <parameters>
           <parameter type="const-char*" name="name" />
         </parameters>
       </method>
-      <method name="HasRaw" cname="g_mime_header_has_raw">
+      <method name="GetIter" cname="g_mime_header_list_get_iter">
+        <return-type type="GMimeHeaderIter*" />
+      </method>
+      <method name="HasRaw" cname="g_mime_header_list_has_raw">
         <return-type type="gboolean" />
       </method>
-      <constructor cname="g_mime_header_new" />
-      <method name="Prepend" cname="g_mime_header_prepend">
+      <constructor cname="g_mime_header_list_new" />
+      <method name="Prepend" cname="g_mime_header_list_prepend">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
-      <method name="RegisterWriter" cname="g_mime_header_register_writer">
+      <method name="RegisterWriter" cname="g_mime_header_list_register_writer">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="name" />
           <parameter type="GMimeHeaderWriter" name="writer" />
         </parameters>
       </method>
-      <method name="Remove" cname="g_mime_header_remove">
-        <return-type type="void" />
+      <method name="Remove" cname="g_mime_header_list_remove">
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="const-char*" name="name" />
         </parameters>
       </method>
-      <method name="Set" cname="g_mime_header_set">
+      <method name="Set" cname="g_mime_header_list_set">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
-      <method name="SetRaw" cname="g_mime_header_set_raw">
+      <method name="SetRaw" cname="g_mime_header_list_set_raw">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="raw" />
         </parameters>
       </method>
-      <method name="ToString" cname="g_mime_header_to_string">
+      <method name="ToString" cname="g_mime_header_list_to_string">
         <return-type type="char*" />
       </method>
-      <method name="WriteToStream" cname="g_mime_header_write_to_stream">
+      <method name="WriteToStream" cname="g_mime_header_list_write_to_stream">
         <return-type type="ssize_t" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />

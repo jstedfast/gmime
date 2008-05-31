@@ -55,10 +55,6 @@
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_disposition_parameter']"/>
 
   <!-- Remove duplicate functionality from GMimeMessage -->
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_add_header']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_header']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_header']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_headers']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
 
@@ -125,7 +121,8 @@
   <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
 
   <!-- Hide some problematic and nonsensical elements -->
-  <attr path="/api/namespace/struct[@cname='GMimeHeader']/method[@name='SetRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">trye</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">true</attr>

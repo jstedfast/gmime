@@ -575,6 +575,9 @@ GMimeHeaderForeachFunc
 GMimeHeaderWriter
 g_mime_header_iter_copy
 g_mime_header_iter_free
+g_mime_header_iter_equal
+g_mime_header_iter_first
+g_mime_header_iter_last
 g_mime_header_iter_next
 g_mime_header_iter_prev
 g_mime_header_iter_is_valid

@@ -37,7 +37,12 @@ typedef struct _GMimeHeaderIter GMimeHeaderIter;
 GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
 void g_mime_header_iter_free (GMimeHeaderIter *iter);
 
+gboolean g_mime_header_iter_equal (GMimeHeaderIter *iter1, GMimeHeaderIter *iter2);
+
 gboolean g_mime_header_iter_is_valid (GMimeHeaderIter *iter);
+
+gboolean g_mime_header_iter_first (GMimeHeaderIter *iter);
+gboolean g_mime_header_iter_last (GMimeHeaderIter *iter);
 
 gboolean g_mime_header_iter_next (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);

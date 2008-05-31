@@ -20,6 +20,7 @@ AUTOMATED_TESTS =	\
 	test-iconv	\
 	test-streams	\
 	test-cat	\
+	test-headers	\
 	test-mbox	\
 	test-mime	\
 	test-pgp	\
@@ -45,6 +46,11 @@ test_mime_SOURCES = test-mime.c testsuite.c testsuite.h
 test_mime_LDFLAGS = 
 test_mime_DEPENDENCIES = $(DEPS)
 test_mime_LDADD = $(LDADDS)
+
+test_headers_SOURCES = test-headers.c testsuite.c testsuite.h
+test_headers_LDFLAGS = 
+test_headers_DEPENDENCIES = $(DEPS)
+test_headers_LDADD = $(LDADDS)
 
 test_parser_SOURCES = test-parser.c
 test_parser_LDFLAGS = 

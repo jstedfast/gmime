@@ -1,3 +1,18 @@
+2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-headers.c: New set of unit tests for GMimeHeaderIter.
+
+	* gmime/gmime-header.c (g_mime_header_iter_equal): New method to
+	check if two iters are equal.
+	(g_mime_header_iter_first): New method to update @iter to point to
+	the first header.
+	(g_mime_header_iter_last): New method to update @iter to point to
+	the last header.
+	(g_mime_header_iter_next): Fixed.
+	(g_mime_header_iter_prev): Fixed.
+	(g_mime_header_iter_remove): Invalidate all other iters currently
+	pointing to the same header as @iter.
+
 2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c: Updated for GMimeHeaderList and
