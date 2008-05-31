@@ -282,7 +282,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_part_set_encoding (version_part, GMIME_PART_ENCODING_7BIT);
 	stream = g_mime_stream_mem_new_with_buffer ("Version: 1\n", strlen ("Version: 1\n"));
 	wrapper = g_mime_data_wrapper_new_with_stream (stream, GMIME_PART_ENCODING_7BIT);
-	g_mime_part_set_content_object (encrypted_part, wrapper);
+	g_mime_part_set_content_object (version_part, wrapper);
 	g_object_unref (wrapper);
 	g_object_unref (stream);
 	
