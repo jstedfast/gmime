@@ -17,6 +17,10 @@
       <member cname="GMIME_CIPHER_HASH_MD2" name="Md2" />
       <member cname="GMIME_CIPHER_HASH_MD5" name="Md5" />
       <member cname="GMIME_CIPHER_HASH_SHA1" name="Sha1" />
+      <member cname="GMIME_CIPHER_HASH_SHA224" name="Sha224" />
+      <member cname="GMIME_CIPHER_HASH_SHA256" name="Sha256" />
+      <member cname="GMIME_CIPHER_HASH_SHA384" name="Sha384" />
+      <member cname="GMIME_CIPHER_HASH_SHA512" name="Sha512" />
       <member cname="GMIME_CIPHER_HASH_RIPEMD160" name="Ripemd160" />
       <member cname="GMIME_CIPHER_HASH_TIGER192" name="Tiger192" />
       <member cname="GMIME_CIPHER_HASH_HAVAL5160" name="Haval5160" />
@@ -2334,15 +2338,90 @@
       <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
       <field name="Unused" cname="unused" bits="23" type="unsigned int" access="public" writeable="true" />
-      <field name="SigCreated" cname="sig_created" type="time_t" access="public" writeable="true" />
-      <field name="SigExpire" cname="sig_expire" type="time_t" access="public" writeable="true" />
       <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
+      <field name="Created" cname="created" type="time_t" access="public" writeable="true" />
+      <field name="Expires" cname="expires" type="time_t" access="public" writeable="true" />
       <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
       <field name="Name" cname="name" type="char*" access="public" writeable="true" />
       <method name="Free" cname="g_mime_signer_free">
         <return-type type="void" />
       </method>
+      <method name="GetCreated" cname="g_mime_signer_get_created">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetErrors" cname="g_mime_signer_get_errors">
+        <return-type type="GMimeSignerError" />
+      </method>
+      <method name="GetExpires" cname="g_mime_signer_get_expires">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetFingerprint" cname="g_mime_signer_get_fingerprint">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetKeyId" cname="g_mime_signer_get_key_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetName" cname="g_mime_signer_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetStatus" cname="g_mime_signer_get_status">
+        <return-type type="GMimeSignerStatus" />
+      </method>
+      <method name="GetTrust" cname="g_mime_signer_get_trust">
+        <return-type type="GMimeSignerTrust" />
+      </method>
       <constructor cname="g_mime_signer_new" />
+      <method name="Next" cname="g_mime_signer_next">
+        <return-type type="GMimeSigner*" />
+      </method>
+      <method name="SetCreated" cname="g_mime_signer_set_created">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="created" />
+        </parameters>
+      </method>
+      <method name="SetErrors" cname="g_mime_signer_set_errors">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignerError" name="error" />
+        </parameters>
+      </method>
+      <method name="SetExpires" cname="g_mime_signer_set_expires">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="expires" />
+        </parameters>
+      </method>
+      <method name="SetFingerprint" cname="g_mime_signer_set_fingerprint">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="fingerprint" />
+        </parameters>
+      </method>
+      <method name="SetKeyId" cname="g_mime_signer_set_key_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="key_id" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="g_mime_signer_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="g_mime_signer_set_status">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignerStatus" name="status" />
+        </parameters>
+      </method>
+      <method name="SetTrust" cname="g_mime_signer_set_trust">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignerTrust" name="trust" />
+        </parameters>
+      </method>
     </struct>
     <struct name="StreamIOVector" cname="GMimeStreamIOVector">
       <field name="Data" cname="data" type="void*" />
