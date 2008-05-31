@@ -1,5 +1,8 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-object.c (g_mime_object_get_header_list): New
+	function to get at the GMimeObject headers.
+
 	* gmime/gmime-message-partial.c (message_partial_message_new): Use
 	iters to copy the headers.
 

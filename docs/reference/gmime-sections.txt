@@ -655,6 +655,7 @@ g_mime_object_remove_header
 g_mime_object_set_header
 g_mime_object_get_header
 g_mime_object_get_headers
+g_mime_object_get_header_list
 g_mime_object_write_to_stream
 g_mime_object_to_string
 

@@ -13,15 +13,6 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
 
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_DEFAULT']" name="name">Default</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_7BIT']" name="name">SevenBit</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_8BIT']" name="name">EightBit</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BINARY']" name="name">Binary</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_BASE64']" name="name">Base64</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_QUOTEDPRINTABLE']" name="name">QuotedPrintable</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_ENCODING_UUENCODE']" name="name">UuEncode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_PART_NUM_ENCODINGS']" name="hidden">true</attr>
-
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_DEFAULT']" name="name">Default</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_8BIT']" name="name">EightBit</attr>
@@ -29,14 +20,6 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_BASE64']" name="name">Base64</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE']" name="name">QuotedPrintable</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_UUENCODE']" name="name">UuEncode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_COUNT']" name="hidden">true</attr>
-
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_ENC']" name="name">Base64Encode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_BASE64_DEC']" name="name">Base64Decode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_ENC']" name="name">QpEncode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_QP_DEC']" name="name">QpDecode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_ENC']" name="name">UuEncode</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_FILTER_BASIC_UU_DEC']" name="name">UuDecode</attr>
 
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_SET']" name="value">0</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
@@ -99,15 +82,15 @@
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
 
   <!-- Fix the base64/uu/qp encoder/decoder APIs. -->
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inbuf']" name="array">true</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='uubuf']" name="array">true</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='outbuf']" name="array">true</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
-  <attr path="/api/namespace/class[@name='Utils']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
 
   <!-- Fix/Remove some other APIs from gmime-utils -->
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_decode_8bit']"/>

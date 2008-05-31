@@ -1120,7 +1120,7 @@
         </parameters>
       </method>
       <method name="GetHeaderList" cname="g_mime_object_get_header_list">
-        <return-type type="const-GMimeHeaderList*" />
+        <return-type type="GMimeHeaderList*" />
       </method>
       <method name="GetHeaders" cname="g_mime_object_get_headers">
         <return-type type="char*" />
@@ -1198,12 +1198,6 @@
         <parameters>
           <parameter type="const-char*" name="header" />
           <parameter type="const-char*" name="value" />
-        </parameters>
-      </method>
-      <method name="SetHeaderList" cname="g_mime_object_set_header_list">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeHeaderList*" name="headers" />
         </parameters>
       </method>
       <method name="ToString" cname="g_mime_object_to_string">

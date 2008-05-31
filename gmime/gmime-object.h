@@ -110,8 +110,7 @@ void g_mime_object_set_header (GMimeObject *object, const char *header, const ch
 const char *g_mime_object_get_header (GMimeObject *object, const char *header);
 gboolean g_mime_object_remove_header (GMimeObject *object, const char *header);
 
-void g_mime_object_set_header_list (GMimeObject *object, GMimeHeaderList *headers);
-const GMimeHeaderList *g_mime_object_get_header_list (GMimeObject *object);
+GMimeHeaderList *g_mime_object_get_header_list (GMimeObject *object);
 
 char *g_mime_object_get_headers (GMimeObject *object);
 

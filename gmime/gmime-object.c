@@ -901,6 +901,24 @@ g_mime_object_to_string (GMimeObject *object)
 }
 
 
+/**
+ * g_mime_object_get_header_list:
+ * @object: a #GMimeObject
+ *
+ * Get the header list for @object.
+ *
+ * Returns the #GMimeHeaderList for @object. Do not free this pointer
+ * when you are done with it.
+ **/
+GMimeHeaderList *
+g_mime_object_get_header_list (GMimeObject *object)
+{
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
+	
+	return object->headers;
+}
+
+
 static void
 subtype_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
 {
