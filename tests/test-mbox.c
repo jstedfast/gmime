@@ -112,7 +112,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		
 		from = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (summary, "%s\n", from);
-		exev = g_mime_message_get_header (message, "X-Evolution");
+		exev = g_mime_object_get_header ((GMimeObject *) message, "X-Evolution");
 		g_mime_stream_printf (summary, "X-Evolution: %s\n", exev ? exev : "None");
 		print_mime_struct (summary, message->mime_part, 0);
 		g_mime_stream_write (summary, "\n", 1);

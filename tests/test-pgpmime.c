@@ -266,7 +266,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 				      "Federico Mena-Quintero",
 				      "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_set_header (message, "X-Mailer", "main.c");
+	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
 	g_object_unref (mps);
 	
@@ -365,7 +365,7 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
 				      "Federico Mena-Quintero", "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
-	g_mime_message_set_header (message, "X-Mailer", "main.c");
+	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
 	
 	/* okay, now to test our decrypt function... */
