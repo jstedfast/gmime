@@ -412,7 +412,7 @@ g_mime_header_iter_get_value (GMimeHeaderIter *iter)
  * g_mime_header_iter_remove:
  * @iter: a #GMimeHeaderIter
  *
- * Removes the current header from the references #GMimeHeaderList.
+ * Removes the current header and advances to the next header.
  *
  * Returns %TRUE on success or %FALSE otherwise
  **/
