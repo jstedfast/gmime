@@ -2,8 +2,9 @@
 
 	* gmime/gmime-gpg-context.c: Updated.
 
-	* gmime/gmime-cipher-context.c (g_mime_signer_next): New function
-	to ease binding.
+	* gmime/gmime-cipher-context.c: Added GMimeCipherHash enums for
+	SHA-224, SHA-256, SHA-384 and SHA-512.
+	(g_mime_signer_next): New function to ease binding.
 	(g_mime_signer_set_status): Same.
 	(g_mime_signer_get_status): Same.
 	(g_mime_signer_set_error): Same.
