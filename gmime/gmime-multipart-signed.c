@@ -209,7 +209,7 @@ multipart_signed_write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Creates a new MIME multipart/signed object.
  *
- * Returns an empty MIME multipart/signed object.
+ * Returns: an empty MIME multipart/signed object.
  **/
 GMimeMultipartSigned *
 g_mime_multipart_signed_new (void)
@@ -281,7 +281,7 @@ sign_prepare (GMimeObject *mime_part)
  * successful, the signed #GMimeObject is set as the signed part of
  * the multipart/signed object @mps.
  *
- * Returns %0 on success or %-1 on fail. If the signing fails, an
+ * Returns: %0 on success or %-1 on fail. If the signing fails, an
  * exception will be set on @err to provide information as to why the
  * failure occured.
  **/
@@ -401,8 +401,8 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
  * Attempts to verify the signed MIME part contained within the
  * multipart/signed object @mps using the @ctx cipher context.
  *
- * Returns a new #GMimeCipherValidity object on success or %NULL on
- * fail. If the signing fails, an exception will be set on @err to
+ * Returns: a new #GMimeSignatureValidity object on success or %NULL
+ * on fail. If the signing fails, an exception will be set on @err to
  * provide information as to why the failure occured.
  **/
 GMimeSignatureValidity *

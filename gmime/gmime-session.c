@@ -118,7 +118,7 @@ session_is_online (GMimeSession *session)
  * Gets whether or not the session is 'online' or not (online meaning
  * that we are connected to the internet).
  *
- * Returns %TRUE if the session is online or %FALSE otherwise.
+ * Returns: %TRUE if the session is online or %FALSE otherwise.
  **/
 gboolean
 g_mime_session_is_online (GMimeSession *session)
@@ -150,7 +150,7 @@ session_request_passwd (GMimeSession *session, const char *prompt,
  *
  * Requests the password for item @item.
  *
- * Returns a string buffer containing the password for the requested
+ * Returns: a string buffer containing the password for the requested
  * item or %NULL on fail.
  **/
 char *

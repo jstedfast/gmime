@@ -100,7 +100,7 @@ static GStaticMutex iconv_cache_lock = G_STATIC_MUTEX_INIT;
  * Creates a new cache node, inserts it into the cache and increments
  * the cache size.
  *
- * Returns a pointer to the newly allocated cache node.
+ * Returns: a pointer to the newly allocated cache node.
  **/
 static IconvCacheNode *
 iconv_cache_node_new (const char *key, iconv_t cd)
@@ -232,7 +232,7 @@ g_mime_iconv_init (void)
  *
  * See the manual page for iconv_open(3) for further details.
  *
- * Returns a new conversion descriptor for use with g_mime_iconv() on
+ * Returns: a new conversion descriptor for use with g_mime_iconv() on
  * success or (iconv_t) %-1 on fail as well as setting an appropriate
  * errno value.
  **/
@@ -315,7 +315,7 @@ g_mime_iconv_open (const char *to, const char *from)
  *
  * See the manual page for iconv_close(3) for further details.
  *
- * Returns %0 on success or %-1 on fail as well as setting an
+ * Returns: %0 on success or %-1 on fail as well as setting an
  * appropriate errno value.
  **/
 int

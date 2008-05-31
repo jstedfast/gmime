@@ -220,7 +220,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new GMimeFilterCRLF filter.
  *
- * Returns a new crlf(/dot) filter.
+ * Returns: a new crlf(/dot) filter.
  **/
 GMimeFilter *
 g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode)

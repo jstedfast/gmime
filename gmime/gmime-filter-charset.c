@@ -284,7 +284,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new #GMimeFilterCharset filter.
  *
- * Returns a new charset filter.
+ * Returns: a new charset filter.
  **/
 GMimeFilter *
 g_mime_filter_charset_new (const char *from_charset, const char *to_charset)

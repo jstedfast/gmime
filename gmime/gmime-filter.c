@@ -144,7 +144,7 @@ filter_copy (GMimeFilter *filter)
  *
  * Copies @filter into a new GMimeFilter object.
  *
- * Returns a duplicate of @filter.
+ * Returns: a duplicate of @filter.
  **/
 GMimeFilter *
 g_mime_filter_copy (GMimeFilter *filter)

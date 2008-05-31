@@ -361,7 +361,7 @@ parser_close (GMimeParser *parser)
  *
  * Creates a new parser object.
  *
- * Returns a new parser object.
+ * Returns: a new parser object.
  **/
 GMimeParser *
 g_mime_parser_new (void)
@@ -380,7 +380,7 @@ g_mime_parser_new (void)
  *
  * Creates a new parser object preset to parse @stream.
  *
- * Returns a new parser object.
+ * Returns: a new parser object.
  **/
 GMimeParser *
 g_mime_parser_new_with_stream (GMimeStream *stream)
@@ -432,7 +432,7 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
  *
  * Gets whether or not the underlying stream is persistent.
  *
- * Returns %TRUE if the @parser will leave the content on disk or
+ * Returns: %TRUE if the @parser will leave the content on disk or
  * %FALSE if it will load the content into memory.
  **/
 gboolean
@@ -477,7 +477,7 @@ g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
  *
  * Gets whether or not @parser is set to scan mbox-style From-lines.
  *
- * Returns whether or not @parser is set to scan mbox-style
+ * Returns: whether or not @parser is set to scan mbox-style
  * From-lines.
  **/
 gboolean
@@ -512,7 +512,7 @@ g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
  * Gets whether or not @parser is set to use Content-Length for
  * determining the offset of the end of the message.
  *
- * Returns whether or not @parser is set to use Content-Length for
+ * Returns: whether or not @parser is set to use Content-Length for
  * determining the offset of the end of the message.
  **/
 gboolean
@@ -646,7 +646,7 @@ parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
  *
  * Gets the current stream offset from the parser's internal stream.
  *
- * Returns the current stream offset from the parser's internal stream
+ * Returns: the current stream offset from the parser's internal stream
  * or -1 on error.
  **/
 gint64
@@ -665,7 +665,7 @@ g_mime_parser_tell (GMimeParser *parser)
  *
  * Tests the end-of-stream indicator for @parser's internal stream.
  *
- * Returns %TRUE on EOS or %FALSE otherwise.
+ * Returns: %TRUE on EOS or %FALSE otherwise.
  **/
 gboolean
 g_mime_parser_eos (GMimeParser *parser)
@@ -1594,7 +1594,7 @@ parser_construct_part (GMimeParser *parser)
  *
  * Constructs a MIME part from @parser.
  *
- * Returns a MIME part based on @parser or %NULL on fail.
+ * Returns: a MIME part based on @parser or %NULL on fail.
  **/
 GMimeObject *
 g_mime_parser_construct_part (GMimeParser *parser)
@@ -1673,7 +1673,7 @@ parser_construct_message (GMimeParser *parser)
  *
  * Constructs a MIME message from @parser.
  *
- * Returns a MIME message or %NULL on fail.
+ * Returns: a MIME message or %NULL on fail.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (GMimeParser *parser)
@@ -1691,7 +1691,7 @@ g_mime_parser_construct_message (GMimeParser *parser)
  * Gets the mbox-style From-line of the most recently parsed message
  * (gotten from g_mime_parser_construct_message()).
  *
- * Returns the mbox-style From-line of the most recently parsed
+ * Returns: the mbox-style From-line of the most recently parsed
  * message or %NULL on error.
  **/
 char *
@@ -1719,7 +1719,7 @@ g_mime_parser_get_from (GMimeParser *parser)
  * Gets the offset of the most recently parsed mbox-style From-line
  * (gotten from g_mime_parser_construct_message()).
  *
- * Returns the offset of the most recently parsed mbox-style From-line
+ * Returns: the offset of the most recently parsed mbox-style From-line
  * or -1 on error.
  **/
 gint64

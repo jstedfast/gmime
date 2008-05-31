@@ -291,7 +291,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new GMimeStreamMem object.
  *
- * Returns a new memory stream.
+ * Returns: a new memory stream.
  **/
 GMimeStream *
 g_mime_stream_mem_new (void)
@@ -314,7 +314,7 @@ g_mime_stream_mem_new (void)
  *
  * Creates a new GMimeStreamMem with data @array.
  *
- * Returns a new memory stream using @array.
+ * Returns: a new memory stream using @array.
  **/
 GMimeStream *
 g_mime_stream_mem_new_with_byte_array (GByteArray *array)
@@ -339,7 +339,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
  * Creates a new GMimeStreamMem object and initializes the stream
  * contents with the first @len bytes of @buffer.
  *
- * Returns a new memory stream initialized with @buffer.
+ * Returns: a new memory stream initialized with @buffer.
  **/
 GMimeStream *
 g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
@@ -364,7 +364,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
  *
  * Gets the byte array from the memory stream.
  *
- * Returns the byte array from the memory stream.
+ * Returns: the byte array from the memory stream.
  **/
 GByteArray *
 g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
@@ -413,7 +413,7 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
  *
  * Gets whether or not @mem owns the backend memory buffer.
  *
- * Returns %TRUE if @mem owns the backend memory buffer or %FALSE
+ * Returns: %TRUE if @mem owns the backend memory buffer or %FALSE
  * otherwise.
  **/
 gboolean

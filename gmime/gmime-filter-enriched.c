@@ -597,7 +597,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new GMimeFilterEnriched object.
  *
- * Returns a new GMimeFilter object.
+ * Returns: a new GMimeFilter object.
  **/
 GMimeFilter *
 g_mime_filter_enriched_new (guint32 flags)

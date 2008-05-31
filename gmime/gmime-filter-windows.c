@@ -176,7 +176,7 @@ filter_reset (GMimeFilter *filter)
  * been filtered, it can be determined whether or not said text stream
  * was in @claimed_charset or the equivalent Windows-CP125# charset.
  *
- * Returns a new windows filter.
+ * Returns: a new windows filter.
  **/
 GMimeFilter *
 g_mime_filter_windows_new (const char *claimed_charset)
@@ -199,7 +199,7 @@ g_mime_filter_windows_new (const char *claimed_charset)
  * Determines whether or not a Windows-CP125# charset has been
  * detected so far.
  *
- * Returns %TRUE if the filtered stream has been detected to contain
+ * Returns: %TRUE if the filtered stream has been detected to contain
  * Windows-CP125# characters or %FALSE otherwise.
  **/
 gboolean
@@ -217,7 +217,7 @@ g_mime_filter_windows_is_windows_charset (GMimeFilterWindows *filter)
  *
  * Figures out the real charset that the text is encoded in based on whether or not Windows-CP125# characters were found.
  *
- * Returns a const string pointer to the claimed charset if filtered
+ * Returns: a const string pointer to the claimed charset if filtered
  * text stream was found not to contain any Windows-CP125# characters
  * or the proper Windows-CP125# charset.
  **/

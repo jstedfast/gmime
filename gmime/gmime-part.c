@@ -417,7 +417,7 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * Creates a new MIME Part object with a default content-type of
  * text/plain.
  *
- * Returns an empty MIME Part object with a default content-type of
+ * Returns: an empty MIME Part object with a default content-type of
  * text/plain.
  **/
 GMimePart *
@@ -442,7 +442,7 @@ g_mime_part_new (void)
  *
  * Creates a new MIME Part with a sepcified type.
  *
- * Returns an empty MIME Part object with the specified content-type.
+ * Returns: an empty MIME Part object with the specified content-type.
  **/
 GMimePart *
 g_mime_part_new_with_type (const char *type, const char *subtype)
@@ -485,7 +485,7 @@ g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const 
  * Gets the value of the requested header if it exists, or %NULL
  * otherwise.
  *
- * Returns the value of the content header @header.
+ * Returns: the value of the content header @header.
  **/
 const char *
 g_mime_part_get_content_header (GMimePart *mime_part, const char *header)
@@ -524,7 +524,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
  * Gets the value of the Content-Description for the specified mime
  * part if it exists or %NULL otherwise.
  *
- * Returns the content description for the specified mime part.
+ * Returns: the content description for the specified mime part.
  **/
 const char *
 g_mime_part_get_content_description (const GMimePart *mime_part)
@@ -558,7 +558,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
  * Gets the content-id of the specified mime part if it exists, or
  * %NULL otherwise.
  *
- * Returns the content id for the specified mime part.
+ * Returns: the content id for the specified mime part.
  **/
 const char *
 g_mime_part_get_content_id (GMimePart *mime_part)
@@ -639,7 +639,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
  *
  * Verify the content md5 for the specified mime part.
  *
- * Returns %TRUE if the md5 is valid or %FALSE otherwise. Note: will
+ * Returns: %TRUE if the md5 is valid or %FALSE otherwise. Note: will
  * return %FALSE if the mime part does not contain a Content-MD5.
  **/
 gboolean
@@ -701,7 +701,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
  * Gets the md5sum contained in the Content-Md5 header of the
  * specified mime part if it exists, or %NULL otherwise.
  *
- * Returns the content md5 for the specified mime part.
+ * Returns: the content md5 for the specified mime part.
  **/
 const char *
 g_mime_part_get_content_md5 (GMimePart *mime_part)
@@ -739,7 +739,7 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
  * Gets the value of the Content-Location header if it exists, or
  * %NULL otherwise.
  *
- * Returns the content location for the specified mime part.
+ * Returns: the content location for the specified mime part.
  **/
 const char *
 g_mime_part_get_content_location (GMimePart *mime_part)
@@ -774,7 +774,7 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
  *
  * Gets the content encoding of the mime part.
  *
- * Returns the content encoding for the specified mime part.
+ * Returns: the content encoding for the specified mime part.
  **/
 GMimeContentEncoding
 g_mime_part_get_content_encoding (GMimePart *mime_part)
@@ -815,7 +815,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
  * Gets the filename of the specificed mime part, or %NULL if the mime
  * part does not have the filename or name parameter set.
  *
- * Returns the filename of the specified MIME Part. It first checks to
+ * Returns: the filename of the specified MIME Part. It first checks to
  * see if the "filename" parameter was set on the Content-Disposition
  * and if not then checks the "name" parameter in the Content-Type.
  **/
@@ -864,7 +864,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  * Gets the internal data-wrapper of the specified mime part, or %NULL
  * on error.
  *
- * Returns the data-wrapper for the mime part's contents.
+ * Returns: the data-wrapper for the mime part's contents.
  **/
 GMimeDataWrapper *
 g_mime_part_get_content_object (const GMimePart *mime_part)

@@ -88,7 +88,7 @@ static void g_mime_header_free (GMimeHeader *header);
  *
  * Creates a new #GMimeHeader.
  *
- * Returns a new #GMimeHeader with the specified values.
+ * Returns: a new #GMimeHeader with the specified values.
  **/
 static GMimeHeader *
 g_mime_header_new (const char *name, const char *value, gint64 offset)
@@ -127,7 +127,7 @@ g_mime_header_free (GMimeHeader *header)
  *
  * Copies a header iterator.
  *
- * Returns a new #GMimeHeaderIter which matches @iter's state.
+ * Returns: a new #GMimeHeaderIter which matches @iter's state.
  **/
 GMimeHeaderIter *
 g_mime_header_iter_copy (GMimeHeaderIter *iter)
@@ -172,7 +172,7 @@ g_mime_header_iter_free (GMimeHeaderIter *iter)
  *
  * Check that @iter1 and @iter2 reference the same header.
  *
- * Returns %TRUE if @iter1 and @iter2 refer to the same header or
+ * Returns: %TRUE if @iter1 and @iter2 refer to the same header or
  * %FALSE otherwise.
  **/
 gboolean
@@ -193,7 +193,7 @@ g_mime_header_iter_equal (GMimeHeaderIter *iter1, GMimeHeaderIter *iter2)
  * invalid if the #GMimeHeaderList that the iterator refers to changes
  * or is destroyed.
  *
- * Returns %TRUE if @iter is still valid or %FALSE otherwise.
+ * Returns: %TRUE if @iter is still valid or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_iter_is_valid (GMimeHeaderIter *iter)
@@ -210,7 +210,7 @@ g_mime_header_iter_is_valid (GMimeHeaderIter *iter)
  *
  * Updates @iter to point to the first header.
  *
- * Returns %TRUE on success or %FALSE otherwise.
+ * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_iter_first (GMimeHeaderIter *iter)
@@ -239,7 +239,7 @@ g_mime_header_iter_first (GMimeHeaderIter *iter)
  *
  * Updates @iter to point to the last header.
  *
- * Returns %TRUE on success or %FALSE otherwise.
+ * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_iter_last (GMimeHeaderIter *iter)
@@ -268,7 +268,7 @@ g_mime_header_iter_last (GMimeHeaderIter *iter)
  *
  * Advances to the next header.
  *
- * Returns %TRUE on success or %FALSE otherwise.
+ * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_iter_next (GMimeHeaderIter *iter)
@@ -298,7 +298,7 @@ g_mime_header_iter_next (GMimeHeaderIter *iter)
  *
  * Advances to the previous header.
  *
- * Returns %TRUE on success or %FALSE otherwise.
+ * Returns: %TRUE on success or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_iter_prev (GMimeHeaderIter *iter)
@@ -328,7 +328,7 @@ g_mime_header_iter_prev (GMimeHeaderIter *iter)
  *
  * Gets the current header's file/stream offset.
  *
- * Returns the file/stream offset or %-1 if unknown or invalid.
+ * Returns: the file/stream offset or %-1 if unknown or invalid.
  **/
 gint64
 g_mime_header_iter_get_offset (GMimeHeaderIter *iter)
@@ -348,7 +348,7 @@ g_mime_header_iter_get_offset (GMimeHeaderIter *iter)
  *
  * Gets the current header's name.
  *
- * Returns the header name or %NULL if invalid.
+ * Returns: the header name or %NULL if invalid.
  **/
 const char *
 g_mime_header_iter_get_name (GMimeHeaderIter *iter)
@@ -368,7 +368,7 @@ g_mime_header_iter_get_name (GMimeHeaderIter *iter)
  *
  * Sets the current header's value.
  *
- * Returns %TRUE if the value was set or %FALSE otherwise (indicates
+ * Returns: %TRUE if the value was set or %FALSE otherwise (indicates
  * invalid iter).
  **/
 gboolean
@@ -394,7 +394,7 @@ g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value)
  *
  * Gets the current header's name.
  *
- * Returns the header name or %NULL if invalid.
+ * Returns: the header name or %NULL if invalid.
  **/
 const char *
 g_mime_header_iter_get_value (GMimeHeaderIter *iter)
@@ -414,7 +414,7 @@ g_mime_header_iter_get_value (GMimeHeaderIter *iter)
  *
  * Removes the current header and advances to the next header.
  *
- * Returns %TRUE on success or %FALSE otherwise
+ * Returns: %TRUE on success or %FALSE otherwise
  **/
 gboolean
 g_mime_header_iter_remove (GMimeHeaderIter *iter)
@@ -504,7 +504,7 @@ g_mime_header_list_invalidate_iters (GMimeHeaderList *headers, GMimeHeader *head
  *
  * Creates a new #GMimeHeaderList object.
  *
- * Returns a new header list object.
+ * Returns: a new header list object.
  **/
 GMimeHeaderList *
 g_mime_header_list_new (void)
@@ -620,7 +620,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  *
  * Gets the value of the first header with the name requested.
  *
- * Returns the value of the header requested.
+ * Returns: the value of the header requested.
  **/
 const char *
 g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
@@ -678,7 +678,7 @@ g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *
  *
  * Remove the specified header.
  *
- * Returns %TRUE if the header was successfully removed or %FALSE if
+ * Returns: %TRUE if the header was successfully removed or %FALSE if
  * the specified header could not be found.
  **/
 gboolean
@@ -722,7 +722,7 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
  *
  * Gets a new iterator for traversing @headers.
  *
- * Returns a new #GMimeHeaderIter which must be freed using
+ * Returns: a new #GMimeHeaderIter which must be freed using
  * g_mime_header_iter_free() when finished with it.
  **/
 GMimeHeaderIter *
@@ -763,7 +763,7 @@ default_writer (GMimeStream *stream, const char *name, const char *value)
  *
  * Write the headers to a stream.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream)
@@ -807,7 +807,7 @@ g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream 
  * Allocates a string buffer containing the raw rfc822 headers
  * contained in @headers.
  *
- * Returns a string containing the header block.
+ * Returns: a string containing the header block.
  **/
 char *
 g_mime_header_list_to_string (const GMimeHeaderList *headers)
@@ -888,7 +888,7 @@ g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw)
  *
  * Gets whether or not a raw header has been set on @headers.
  *
- * Returns %TRUE if a raw header is set or %FALSE otherwise.
+ * Returns: %TRUE if a raw header is set or %FALSE otherwise.
  **/
 gboolean
 g_mime_header_list_has_raw (const GMimeHeaderList *headers)

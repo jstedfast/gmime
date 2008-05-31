@@ -59,7 +59,7 @@
  *
  * Creates a new #InternetAddress object
  * 
- * Returns a new #InternetAddress object.
+ * Returns: a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new (void)
@@ -135,7 +135,7 @@ internet_address_unref (InternetAddress *ia)
  * Creates a new #InternetAddress object with name @name and address
  * @addr.
  * 
- * Returns a new #InternetAddress object.
+ * Returns: a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new_name (const char *name, const char *addr)
@@ -162,7 +162,7 @@ internet_address_new_name (const char *name, const char *addr)
  *
  * Creates a new #InternetAddress object with group name @name.
  * 
- * Returns a new #InternetAddress object.
+ * Returns: a new #InternetAddress object.
  **/
 InternetAddress *
 internet_address_new_group (const char *name)
@@ -265,7 +265,7 @@ internet_address_add_member (InternetAddress *ia, InternetAddress *member)
  * Gets the type of the internet address, which will either be
  * #INTERNET_ADDRESS_NAME or #INTERNET_ADDRESS_GROUP.
  *
- * Returns the type of @ia.
+ * Returns: the type of @ia.
  **/
 InternetAddressType
 internet_address_get_type (InternetAddress *ia)
@@ -282,7 +282,7 @@ internet_address_get_type (InternetAddress *ia)
  * Gets the name component of the internet address. If the internet
  * address is a group, it will get the group name.
  *
- * Returns the name of @ia.
+ * Returns: the name of @ia.
  **/
 const char *
 internet_address_get_name (InternetAddress *ia)
@@ -299,7 +299,7 @@ internet_address_get_name (InternetAddress *ia)
  *
  * Gets the addr-spec of the internet address.
  *
- * Returns the address of @ia.
+ * Returns: the address of @ia.
  **/
 const char *
 internet_address_get_addr (InternetAddress *ia)
@@ -318,7 +318,7 @@ internet_address_get_addr (InternetAddress *ia)
  * Gets the #InternetAddressList containing the group members of an
  * rfc822 group address.
  *
- * Returns the members of @ia.
+ * Returns: the members of @ia.
  **/
 const InternetAddressList *
 internet_address_get_members (InternetAddress *ia)
@@ -338,7 +338,7 @@ internet_address_get_members (InternetAddress *ia)
  * Prepends the internet address @ia to the list of internet addresses
  * pointed to by @list.
  *
- * Returns the resultant list.
+ * Returns: the resultant list.
  **/
 InternetAddressList *
 internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
@@ -364,7 +364,7 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia)
  * Appends the internet address to the list of internet addresses
  * pointed to by @list.
  *
- * Returns the resultant list.
+ * Returns: the resultant list.
  **/
 InternetAddressList *
 internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
@@ -398,7 +398,7 @@ internet_address_list_append (InternetAddressList *list, InternetAddress *ia)
  *
  * Concatenates a copy of list @b onto the end of list @a.
  *
- * Returns the resulting list.
+ * Returns: the resulting list.
  **/
 InternetAddressList *
 internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
@@ -440,7 +440,7 @@ internet_address_list_concat (InternetAddressList *a, InternetAddressList *b)
  *
  * Advances to the next address node in the #InternetAddessList.
  *
- * Returns the next address node in the #InternetAddessList.
+ * Returns: the next address node in the #InternetAddessList.
  **/
 InternetAddressList *
 internet_address_list_next (const InternetAddressList *list)
@@ -455,7 +455,7 @@ internet_address_list_next (const InternetAddressList *list)
  *
  * Gets the #InternetAddress currently pointed to in @list.
  *
- * Returns the #InternetAddress currently pointed to in @list.
+ * Returns: the #InternetAddress currently pointed to in @list.
  **/
 InternetAddress *
 internet_address_list_get_address (const InternetAddressList *list)
@@ -469,7 +469,7 @@ internet_address_list_get_address (const InternetAddressList *list)
  *
  * Calculates the length of the list of addresses.
  *
- * Returns the number of internet addresses in @list.
+ * Returns: the number of internet addresses in @list.
  **/
 int
 internet_address_list_length (const InternetAddressList *list)
@@ -700,7 +700,7 @@ _internet_address_list_to_string (const InternetAddressList *list, guint32 flags
  * Allocates a string containing the contents of the #InternetAddress
  * object.
  * 
- * Returns the #InternetAddress object as an allocated string in
+ * Returns: the #InternetAddress object as an allocated string in
  * rfc822 format.
  **/
 char *
@@ -729,7 +729,7 @@ internet_address_to_string (const InternetAddress *ia, gboolean encode)
  * Allocates a string buffer containing the rfc822 formatted addresses
  * in @list.
  *
- * Returns a string containing the list of addresses in rfc822 format.
+ * Returns: a string containing the list of addresses in rfc822 format.
  **/
 char *
 internet_address_list_to_string (const InternetAddressList *list, gboolean encode)
@@ -1008,7 +1008,7 @@ decode_address (const char **in)
  *
  * Construct a list of internet addresses from the given string.
  *
- * Returns a linked list of internet addresses. *Must* be free'd by
+ * Returns: a linked list of internet addresses. *Must* be free'd by
  * the caller.
  **/
 InternetAddressList *

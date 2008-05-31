@@ -245,7 +245,7 @@ filter_reset (GMimeFilter *filter)
  * remember to also use a #GMimeFilterBasic filter with mode
  * #GMIME_FILTER_BASIC_QP_ENC.
  *
- * Returns a new from filter with mode @mode.
+ * Returns: a new from filter with mode @mode.
  **/
 GMimeFilter *
 g_mime_filter_from_new (GMimeFilterFromMode mode)

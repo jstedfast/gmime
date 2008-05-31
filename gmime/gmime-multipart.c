@@ -324,7 +324,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * Creates a new MIME multipart object with a default content-type of
  * multipart/mixed.
  *
- * Returns an empty MIME multipart object with a default content-type of
+ * Returns: an empty MIME multipart object with a default content-type of
  * multipart/mixed.
  **/
 GMimeMultipart *
@@ -349,7 +349,7 @@ g_mime_multipart_new (void)
  * Creates a new MIME multipart object with a content-type of
  * multipart/@subtype.
  *
- * Returns an empty MIME multipart object with a content-type of
+ * Returns: an empty MIME multipart object with a content-type of
  * multipart/@subtype.
  **/
 GMimeMultipart *
@@ -390,7 +390,7 @@ g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface)
  *
  * Gets the preface on the multipart.
  *
- * Returns a pointer to the preface string on the multipart.
+ * Returns: a pointer to the preface string on the multipart.
  **/
 const char *
 g_mime_multipart_get_preface (GMimeMultipart *multipart)
@@ -424,7 +424,7 @@ g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface)
  *
  * Gets the postface on the multipart.
  *
- * Returns a pointer to the postface string on the multipart.
+ * Returns: a pointer to the postface string on the multipart.
  **/
 const char *
 g_mime_multipart_get_postface (GMimeMultipart *multipart)
@@ -576,7 +576,7 @@ multipart_remove_part_at (GMimeMultipart *multipart, int index)
  *
  * Removes the mime part at position @index from the multipart.
  *
- * Returns the mime part that was removed.
+ * Returns: the mime part that was removed.
  **/
 GMimeObject *
 g_mime_multipart_remove_part_at (GMimeMultipart *multipart, int index)
@@ -614,7 +614,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
  *
  * Gets the mime part at position @index within the multipart.
  *
- * Returns the mime part at position @index.
+ * Returns: the mime part at position @index.
  **/
 GMimeObject *
 g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
@@ -642,7 +642,7 @@ multipart_get_number (GMimeMultipart *multipart)
  *
  * Gets the number of mime parts contained within the multipart.
  *
- * Returns the number of mime parts contained within the multipart.
+ * Returns: the number of mime parts contained within the multipart.
  **/
 int
 g_mime_multipart_get_number (GMimeMultipart *multipart)
@@ -742,7 +742,7 @@ multipart_get_boundary (GMimeMultipart *multipart)
  * %NULL, then an auto-generated boundary will be set on the multipart
  * and returned.
  *
- * Returns the boundary on the multipart.
+ * Returns: the boundary on the multipart.
  **/
 const char *
 g_mime_multipart_get_boundary (GMimeMultipart *multipart)
@@ -788,7 +788,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
  * Gets the mime part with the content-id @content_id from the
  * multipart @multipart.
  *
- * Returns the GMimeObject whose content-id matches the search string,
+ * Returns: the GMimeObject whose content-id matches the search string,
  * or %NULL if a match cannot be found.
  **/
 GMimeObject *

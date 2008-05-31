@@ -474,7 +474,7 @@ filter_reset (GMimeFilter *filter)
  * Creates a new GMimeFilterHTML filter which can be used to convert a
  * plain UTF-8 text stream into an html stream.
  *
- * Returns a new html filter.
+ * Returns: a new html filter.
  **/
 GMimeFilter *
 g_mime_filter_html_new (guint32 flags, guint32 colour)

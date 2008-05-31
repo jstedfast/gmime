@@ -50,7 +50,7 @@ void _g_mime_object_content_disposition_changed (struct _GMimeObject *object);
  *
  * Creates a new #GMimeContentDisposition object.
  *
- * Returns a new #GMimeContentDisposition object.
+ * Returns: a new #GMimeContentDisposition object.
  **/
 GMimeContentDisposition *
 g_mime_content_disposition_new (void)
@@ -73,7 +73,7 @@ g_mime_content_disposition_new (void)
  *
  * Creates a new #GMimeContentDisposition object.
  *
- * Returns a new #GMimeContentDisposition object.
+ * Returns: a new #GMimeContentDisposition object.
  **/
 GMimeContentDisposition *
 g_mime_content_disposition_new_from_string (const char *str)
@@ -165,7 +165,7 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
  *
  * Gets the disposition or %NULL on fail.
  *
- * Returns the disposition string which is probably one of
+ * Returns: the disposition string which is probably one of
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
  **/
 const char *
@@ -238,7 +238,7 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
  *
  * Gets the value of the parameter @attribute, or %NULL on fail.
  *
- * Returns the value of the parameter of name @attribute.
+ * Returns: the value of the parameter of name @attribute.
  **/
 const char *
 g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposition, const char *attribute)
@@ -266,7 +266,7 @@ g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposi
  * Allocates a string buffer containing the Content-Disposition header
  * represented by the disposition object @disposition.
  *
- * Returns a string containing the disposition header
+ * Returns: a string containing the disposition header
  **/
 char *
 g_mime_content_disposition_to_string (const GMimeContentDisposition *disposition, gboolean fold)

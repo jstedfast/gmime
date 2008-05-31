@@ -64,7 +64,7 @@ void _g_mime_object_content_type_changed (struct _GMimeObject *object);
  *
  * Creates a Content-Type object with type @type and subtype @subtype.
  *
- * Returns a new MIME Content-Type object.
+ * Returns: a new MIME Content-Type object.
  **/
 GMimeContentType *
 g_mime_content_type_new (const char *type, const char *subtype)
@@ -108,7 +108,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
  *
  * Constructs a new Content-Type object based on the input string.
  *
- * Returns a new MIME Content-Type based on the input string.
+ * Returns: a new MIME Content-Type based on the input string.
  **/
 GMimeContentType *
 g_mime_content_type_new_from_string (const char *str)
@@ -204,7 +204,7 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
  * Allocates a string buffer containing the type and subtype defined
  * by the @mime_type.
  *
- * Returns an allocated string containing the type and subtype of the
+ * Returns: an allocated string containing the type and subtype of the
  * content-type in the format: type/subtype.
  **/
 char *
@@ -231,7 +231,7 @@ g_mime_content_type_to_string (const GMimeContentType *mime_type)
  * Compares the given type and subtype with that of the given mime
  * type object.
  *
- * Returns TRUE if the MIME types match or FALSE otherwise. You may
+ * Returns: TRUE if the MIME types match or FALSE otherwise. You may
  * use "*" in place of @type and/or @subtype as a wilcard.
  **/
 gboolean
@@ -263,7 +263,7 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
  *
  * Gets the Content-Type's media type.
  *
- * Returns the Content-Type's media type.
+ * Returns: the Content-Type's media type.
  **/
 const char *
 g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
@@ -280,7 +280,7 @@ g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
  *
  * Gets the Content-Type's media sub-type.
  *
- * Returns the Content-Type's media sub-type.
+ * Returns: the Content-Type's media sub-type.
  **/
 const char *
 g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
@@ -297,7 +297,7 @@ g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
  *
  * Gets the Content-Type's parameter list.
  *
- * Returns the Content-Type's parameter list.
+ * Returns: the Content-Type's parameter list.
  **/
 const GMimeParam *
 g_mime_content_type_get_params (const GMimeContentType *mime_type)
@@ -354,7 +354,7 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
  *
  * Gets the parameter value specified by @attribute if it's available.
  *
- * Returns a const pointer to the paramer value specified by
+ * Returns: a const pointer to the paramer value specified by
  * @attribute or %NULL on fail.
  **/
 const char *

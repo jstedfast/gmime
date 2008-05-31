@@ -675,7 +675,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new GMimeStreamCat object.
  *
- * Returns a new cat stream.
+ * Returns: a new cat stream.
  **/
 GMimeStream *
 g_mime_stream_cat_new (void)
@@ -697,7 +697,7 @@ g_mime_stream_cat_new (void)
  *
  * Adds the @source stream to the cat stream @cat.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_stream_cat_add_source (GMimeStreamCat *cat, GMimeStream *source)

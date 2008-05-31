@@ -405,7 +405,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * Creates a new GMimeStreamFilter object using @stream as the source
  * stream.
  *
- * Returns a new filter stream with @stream as its source.
+ * Returns: a new filter stream with @stream as its source.
  **/
 GMimeStream *
 g_mime_stream_filter_new_with_stream (GMimeStream *stream)
@@ -433,7 +433,7 @@ g_mime_stream_filter_new_with_stream (GMimeStream *stream)
  *
  * Adds a @filter to @fstream.
  *
- * Returns an id for the filter.
+ * Returns: an id for the filter.
  **/
 int
 g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)

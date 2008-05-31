@@ -95,7 +95,7 @@ iconv_utils_init (void)
  * converted to the destination charset as described by the conversion
  * descriptor @cd.
  *
- * Returns a new string buffer containing the first @n bytes of
+ * Returns: a new string buffer containing the first @n bytes of
  * @str converted to the destination charset as described by the
  * conversion descriptor @cd.
  **/
@@ -190,7 +190,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
  * Allocates a new string buffer containing @str converted to the
  * destination charset described in @cd.
  *
- * Returns a new string buffer containing the original string
+ * Returns: a new string buffer containing the original string
  * converted to the new charset.
  **/
 char *
@@ -206,7 +206,7 @@ g_mime_iconv_strdup (iconv_t cd, const char *str)
  *
  * Allocates a new string buffer containing @str in UTF-8.
  *
- * Returns a new string buffer containing @str converted to UTF-8.
+ * Returns: a new string buffer containing @str converted to UTF-8.
  **/
 char *
 g_mime_iconv_locale_to_utf8 (const char *str)
@@ -231,7 +231,7 @@ g_mime_iconv_locale_to_utf8 (const char *str)
  * Allocates a new string buffer containing the first @n bytes of
  * @str converted to UTF-8.
  *
- * Returns a new string buffer containing the first @n bytes of
+ * Returns: a new string buffer containing the first @n bytes of
  * @str converted to UTF-8.
  **/
 char *
@@ -256,7 +256,7 @@ g_mime_iconv_locale_to_utf8_length (const char *str, size_t n)
  * Allocates a new string buffer containing @str converted to the
  * user's locale charset.
  *
- * Returns a new string buffer containing @str converted to the
+ * Returns: a new string buffer containing @str converted to the
  * user's locale charset.
  **/
 char *
@@ -282,7 +282,7 @@ g_mime_iconv_utf8_to_locale (const char *str)
  * Allocates a new string buffer containing the first @n bytes of
  * @str converted to the user's locale charset.
  *
- * Returns a new string buffer containing the first @n bytes of
+ * Returns: a new string buffer containing the first @n bytes of
  * @str converted to the user's locale charset.
  **/
 char *

@@ -152,7 +152,7 @@ static char *tm_days[] = {
  * Allocates a string buffer containing the rfc822 formatted date
  * string represented by @time and @offset.
  *
- * Returns a valid string representation of the date.
+ * Returns: a valid string representation of the date.
  **/
 char *
 g_mime_utils_header_format_date (time_t date, int tz_offset)
@@ -696,7 +696,7 @@ gmime_datetok_table_init (void)
  * Decodes the rfc822 date string and saves the GMT offset into
  * @saveoffset if non-NULL.
  *
- * Returns the time_t representation of the date string specified by
+ * Returns: the time_t representation of the date string specified by
  * @str. If 'saveoffset' is non-NULL, the value of the timezone offset
  * will be stored.
  **/
@@ -733,7 +733,7 @@ g_mime_utils_header_decode_date (const char *str, int *tz_offset)
  *
  * Generates a unique Message-Id.
  *
- * Returns a unique string in an addr-spec format suitable for use as
+ * Returns: a unique string in an addr-spec format suitable for use as
  * a Message-Id.
  **/
 char *
@@ -928,7 +928,7 @@ decode_msgid (const char **in)
  *
  * Decodes a msg-id as defined by rfc822.
  *
- * Returns the addr-spec portion of the msg-id.
+ * Returns: the addr-spec portion of the msg-id.
  **/
 char *
 g_mime_utils_decode_message_id (const char *message_id)
@@ -946,7 +946,7 @@ g_mime_utils_decode_message_id (const char *message_id)
  * Decodes a list of msg-ids as in the References and/or In-Reply-To
  * headers defined in rfc822.
  *
- * Returns a list of referenced msg-ids.
+ * Returns: a list of referenced msg-ids.
  **/
 GMimeReferences *
 g_mime_references_decode (const char *text)
@@ -1057,7 +1057,7 @@ g_mime_references_clear (GMimeReferences **refs)
  *
  * Advances to the next reference node in the #GMimeReferences list.
  *
- * Returns the next reference node in the #GMimeReferences list.
+ * Returns: the next reference node in the #GMimeReferences list.
  **/
 const GMimeReferences *
 g_mime_references_get_next (const GMimeReferences *ref)
@@ -1072,7 +1072,7 @@ g_mime_references_get_next (const GMimeReferences *ref)
  *
  * Gets the Message-Id reference from the #GMimeReferences node.
  *
- * Returns the Message-Id reference from the #GMimeReferences node.
+ * Returns: the Message-Id reference from the #GMimeReferences node.
  **/
 const char *
 g_mime_references_get_message_id (const GMimeReferences *ref)
@@ -1201,7 +1201,7 @@ header_fold (const char *in, gboolean structured)
  *
  * Folds a structured header according to the rules in rfc822.
  *
- * Returns an allocated string containing the folded header.
+ * Returns: an allocated string containing the folded header.
  **/
 char *
 g_mime_utils_structured_header_fold (const char *str)
@@ -1216,7 +1216,7 @@ g_mime_utils_structured_header_fold (const char *str)
  *
  * Folds an unstructured header according to the rules in rfc822.
  *
- * Returns an allocated string containing the folded header.
+ * Returns: an allocated string containing the folded header.
  **/
 char *
 g_mime_utils_unstructured_header_fold (const char *str)
@@ -1231,7 +1231,7 @@ g_mime_utils_unstructured_header_fold (const char *str)
  *
  * Folds a structured header according to the rules in rfc822.
  *
- * Returns an allocated string containing the folded header.
+ * Returns: an allocated string containing the folded header.
  **/
 char *
 g_mime_utils_header_fold (const char *str)
@@ -1248,7 +1248,7 @@ g_mime_utils_header_fold (const char *str)
  * Allocates a buffer containing a formatted header specified by the
  * @Varargs.
  *
- * Returns an allocated string containing the folded header specified
+ * Returns: an allocated string containing the folded header specified
  * by @format and the following arguments.
  **/
 char *
@@ -1296,7 +1296,7 @@ need_quotes (const char *string)
  *
  * Quotes @string as needed according to the rules in rfc2045.
  * 
- * Returns an allocated string containing the escaped and quoted (if
+ * Returns: an allocated string containing the escaped and quoted (if
  * needed to be) input string. The decision to quote the string is
  * based on whether or not the input string contains any 'tspecials'
  * as defined by rfc2045.
@@ -1381,7 +1381,7 @@ g_mime_utils_unquote_string (char *str)
  * Determines if @text contains 8bit characters within the first @len
  * bytes.
  *
- * Returns %TRUE if the text contains 8bit characters or %FALSE
+ * Returns: %TRUE if the text contains 8bit characters or %FALSE
  * otherwise.
  **/
 gboolean
@@ -1409,7 +1409,7 @@ g_mime_utils_text_is_8bit (const unsigned char *text, size_t len)
  * Determines the best content encoding for the first @len bytes of
  * @text.
  *
- * Returns a #GMimeContentEncoding that is determined to be the best
+ * Returns: a #GMimeContentEncoding that is determined to be the best
  * encoding type for the specified block of text. ("best" in this
  * particular case means smallest output size)
  **/
@@ -1454,7 +1454,7 @@ g_mime_utils_best_encoding (const unsigned char *text, size_t len)
  * pre-allocated buffer of length *@outlenp. This is done so that the
  * same output buffer can be reused multiple times.
  *
- * Returns the string length of the output buffer.
+ * Returns: the string length of the output buffer.
  **/
 static size_t
 charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size_t *outlenp, size_t *ninval)
@@ -1523,7 +1523,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
  * it will choose the best match and convert invalid byte sequences
  * into question-marks (?) in the returned string buffer.
  *
- * Returns a UTF-8 string representation of @text.
+ * Returns: a UTF-8 string representation of @text.
  **/
 char *
 g_mime_utils_decode_8bit (const char *text, size_t len)
@@ -1781,7 +1781,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
  * conversion is handled for unencoded 8bit text and/or wrongly
  * specified rfc2047 encoded-word tokens.
  *
- * Returns a newly allocated UTF-8 string representing the the decoded
+ * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
  **/
 char *
@@ -1909,7 +1909,7 @@ g_mime_utils_header_decode_text (const char *text)
  * conversion is handled for unencoded 8bit text and/or wrongly
  * specified rfc2047 encoded-word tokens.
  *
- * Returns a newly allocated UTF-8 string representing the the decoded
+ * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
  **/
 char *
@@ -2435,7 +2435,7 @@ rfc2047_encode (const char *in, gushort safemask)
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
- * Returns the encoded 'phrase'. Useful for encoding internet
+ * Returns: the encoded 'phrase'. Useful for encoding internet
  * addresses.
  **/
 char *
@@ -2454,7 +2454,7 @@ g_mime_utils_header_encode_phrase (const char *phrase)
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *
- * Returns the encoded header. Useful for encoding
+ * Returns: the encoded header. Useful for encoding
  * headers like "Subject".
  **/
 char *

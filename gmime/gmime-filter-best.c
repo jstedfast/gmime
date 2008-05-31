@@ -237,7 +237,7 @@ filter_reset (GMimeFilter *filter)
  * Note: In order for the g_mime_filter_best_charset() function to
  * work, the stream being filtered MUST already be encoded in UTF-8.
  *
- * Returns a new best filter with flags @flags.
+ * Returns: a new best filter with flags @flags.
  **/
 GMimeFilter *
 g_mime_filter_best_new (unsigned int flags)
@@ -259,7 +259,7 @@ g_mime_filter_best_new (unsigned int flags)
  * Calculates the best charset for encoding the stream filtered
  * through the @best filter.
  *
- * Returns a pointer to a string containing the name of the charset
+ * Returns: a pointer to a string containing the name of the charset
  * best suited for the text filtered through @best.
  **/
 const char *
@@ -286,7 +286,7 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
  * Calculates the best Content-Transfer-Encoding for the stream
  * filtered through @best that fits within the @required encoding.
  *
- * Returns the best encoding for the stream filtered by @best.
+ * Returns: the best encoding for the stream filtered by @best.
  **/
 GMimeContentEncoding
 g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)

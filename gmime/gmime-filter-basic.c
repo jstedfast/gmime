@@ -238,7 +238,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new basic filter for @encoding.
  *
- * Returns a new basic encoder filter.
+ * Returns: a new basic encoder filter.
  **/
 GMimeFilter *
 g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode)

@@ -163,7 +163,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
  *
  * Attempts to read up to @len bytes from @stream into @buf.
  *
- * Returns the number of bytes read or %-1 on fail.
+ * Returns: the number of bytes read or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_read (GMimeStream *stream, char *buf, size_t len)
@@ -194,7 +194,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
  *
  * Attempts to write up to @len bytes of @buf to @stream.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_write (GMimeStream *stream, const char *buf, size_t len)
@@ -223,7 +223,7 @@ stream_flush (GMimeStream *stream)
  *
  * Sync's the stream to disk.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_stream_flush (GMimeStream *stream)
@@ -248,7 +248,7 @@ stream_close (GMimeStream *stream)
  *
  * Closes the stream.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_stream_close (GMimeStream *stream)
@@ -273,7 +273,7 @@ stream_eos (GMimeStream *stream)
  *
  * Tests the end-of-stream indicator for @stream.
  *
- * Returns %TRUE on EOS or %FALSE otherwise.
+ * Returns: %TRUE on EOS or %FALSE otherwise.
  **/
 gboolean
 g_mime_stream_eos (GMimeStream *stream)
@@ -301,7 +301,7 @@ stream_reset (GMimeStream *stream)
  *
  * Resets the stream.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_stream_reset (GMimeStream *stream)
@@ -344,7 +344,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
  *     #GMIME_STREAM_SEEK_END: Seek @offset bytes relative to the
  *     end of the stream (bound_end if non-negative).
  *
- * Returns the resultant position on success or %-1 on fail.
+ * Returns: the resultant position on success or %-1 on fail.
  **/
 gint64
 g_mime_stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
@@ -369,7 +369,7 @@ stream_tell (GMimeStream *stream)
  *
  * Gets the current offset within the stream.
  *
- * Returns the current position within the stream or %-1 on fail.
+ * Returns: the current position within the stream or %-1 on fail.
  **/
 gint64
 g_mime_stream_tell (GMimeStream *stream)
@@ -394,7 +394,7 @@ stream_length (GMimeStream *stream)
  *
  * Gets the length of the stream.
  *
- * Returns the length of the stream or %-1 if unknown.
+ * Returns: the length of the stream or %-1 if unknown.
  **/
 ssize_t
 g_mime_stream_length (GMimeStream *stream)
@@ -421,7 +421,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new substream of @stream with bounds @start and @end.
  *
- * Returns a substream of @stream with bounds @start and @end.
+ * Returns: a substream of @stream with bounds @start and @end.
  **/
 GMimeStream *
 g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)
@@ -469,7 +469,7 @@ g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Writes @string to @stream.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_write_string (GMimeStream *stream, const char *str)
@@ -489,7 +489,7 @@ g_mime_stream_write_string (GMimeStream *stream, const char *str)
  *
  * Write formatted output to a stream.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
@@ -522,7 +522,7 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
  *
  * Attempts to write stream @src to stream @dest.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
@@ -564,7 +564,7 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
  *
  * Writes at most @count blocks described by @vector to @stream.
  *
- * Returns the number of bytes written or %-1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count)

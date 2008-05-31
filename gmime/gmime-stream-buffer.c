@@ -592,7 +592,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new GMimeStreamBuffer object.
  *
- * Returns a new buffer stream with source @source and mode @mode.
+ * Returns: a new buffer stream with source @source and mode @mode.
  **/
 GMimeStream *
 g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
@@ -640,11 +640,11 @@ g_mime_stream_buffer_new (GMimeStream *source, GMimeStreamBufferMode mode)
  *
  * Reads in at most one less than @max characters from @stream and
  * stores them into the buffer pointed to by @buf. Reading stops after
- * an EOS or newline (#'\n'). If a newline is read, it is stored into
- * the buffer. A #'\0' is stored after the last character in the
+ * an EOS or newline ('\n'). If a newline is read, it is stored into
+ * the buffer. A '\0' is stored after the last character in the
  * buffer.
  *
- * Returns the number of characters read into @buf on success and -1
+ * Returns: the number of characters read into @buf on success or %-1
  * on fail.
  **/
 ssize_t

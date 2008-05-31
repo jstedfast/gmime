@@ -157,7 +157,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new Md5 filter.
  *
- * Returns a new Md5 filter.
+ * Returns: a new Md5 filter.
  **/
 GMimeFilter *
 g_mime_filter_md5_new (void)

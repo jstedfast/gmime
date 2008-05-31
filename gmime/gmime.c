@@ -58,7 +58,7 @@ static unsigned int initialized = 0;
  * Checks that the GMime library version meets the requirements of the
  * required version.
  *
- * Returns %TRUE if the requirement is met or %FALSE otherwise.
+ * Returns: %TRUE if the requirement is met or %FALSE otherwise.
  **/
 gboolean
 g_mime_check_version (guint major, guint minor, guint micro)

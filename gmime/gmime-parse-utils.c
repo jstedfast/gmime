@@ -127,7 +127,7 @@ decode_atom (const char **in)
  *
  * Extracts the next rfc822 'word' token.
  *
- * Returns the next rfc822 'word' token or %NULL if non exist.
+ * Returns: the next rfc822 'word' token or %NULL if non exist.
  **/
 char *
 g_mime_decode_word (const char **in)
@@ -195,7 +195,7 @@ decode_domain_literal (const char **in, GString *domain)
  *
  * Extracts the next rfc822 'domain' token.
  *
- * Returns the next rfc822 'domain' token or %NULL if non exist.
+ * Returns: the next rfc822 'domain' token or %NULL if non exist.
  **/
 char *
 g_mime_decode_domain (const char **in)

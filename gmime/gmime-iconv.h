@@ -92,7 +92,7 @@ iconv_t g_mime_iconv_open (const char *to, const char *from);
  * #g_mime_iconv function sets @cd's conversion state to the initial
  * state.
  *
- * Returns the number of characters converted in a nonreversible way
+ * Returns: the number of characters converted in a nonreversible way
  * during this call; reversible conversions are not counted. In case
  * of error, it sets errno and returns (size_t)(-1).
  **/

@@ -324,7 +324,7 @@ g_mime_charset_map_init (void)
  *
  * Gets the user's locale charset (or iso-8859-1 by default).
  *
- * Returns the user's locale charset (or iso-8859-1 by default).
+ * Returns: the user's locale charset (or iso-8859-1 by default).
  **/
 const char *
 g_mime_locale_charset (void)
@@ -343,7 +343,7 @@ g_mime_locale_charset (void)
  *
  * Gets the user's locale language code (or %NULL by default).
  *
- * Returns the user's locale language code (or %NULL by default).
+ * Returns: the user's locale language code (or %NULL by default).
  **/
 const char *
 g_mime_locale_language (void)
@@ -365,7 +365,7 @@ g_mime_locale_language (void)
  * @charset. Currently only handles CJK and Russian/Ukranian
  * charset->lang mapping. Everything else will return %NULL.
  *
- * Returns a language code that is specific to @charset, or %NULL on
+ * Returns: a language code that is specific to @charset, or %NULL on
  * fail.
  **/
 const char *
@@ -405,7 +405,7 @@ strdown (char *str)
  *
  * Attempts to find an iconv-friendly charset name for @charset.
  *
- * Returns an iconv-friendly charset name for @charset.
+ * Returns: an iconv-friendly charset name for @charset.
  **/
 const char *
 g_mime_charset_iconv_name (const char *charset)
@@ -538,7 +538,7 @@ static const char *windows_charsets[] = {
  * the canonical ISO charset names (such as using ISO8859-1 rather
  * than the canonical form ISO-8859-1).
  *
- * Returns a canonical charset name for @charset.
+ * Returns: a canonical charset name for @charset.
  **/
 const char *
 g_mime_charset_canon_name (const char *charset)
@@ -590,7 +590,7 @@ g_mime_charset_canon_name (const char *charset)
  * Note: This function is deprecated. Use g_mime_charset_iconv_name()
  * instead.
  *
- * Returns an iconv-friendly charset name for @charset.
+ * Returns: an iconv-friendly charset name for @charset.
  **/
 const char *
 g_mime_charset_name (const char *charset)
@@ -607,7 +607,7 @@ g_mime_charset_name (const char *charset)
  * Note: This function is deprecated. Use g_mime_locale_charset()
  * instead.
  *
- * Returns the user's locale charset (or iso-8859-1 by default).
+ * Returns: the user's locale charset (or iso-8859-1 by default).
  **/
 const char *
 g_mime_charset_locale_name (void)
@@ -623,7 +623,7 @@ g_mime_charset_locale_name (void)
  * Maps the ISO-8859-# charset to the equivalent Windows-CP125#
  * charset.
  *
- * Returns equivalent Windows charset.
+ * Returns: equivalent Windows charset.
  **/
 const char *
 g_mime_charset_iso_to_windows (const char *isocharset)
@@ -767,7 +767,7 @@ charset_best_mask (unsigned int mask)
  *
  * Gets the best charset name based on the charset mask @charset.
  *
- * Returns a pointer to a string containing the best charset name that
+ * Returns: a pointer to a string containing the best charset name that
  * can represent the charset mask @charset.
  **/
 const char *
@@ -789,7 +789,7 @@ g_mime_charset_best_name (GMimeCharset *charset)
  *
  * Computes the best charset to use to encode this text buffer.
  *
- * Returns the charset name best suited for the input text or %NULL if
+ * Returns: the charset name best suited for the input text or %NULL if
  * it is US-ASCII safe.
  **/
 const char *
@@ -813,7 +813,7 @@ g_mime_charset_best (const char *inbuf, size_t inlen)
  *
  * Check to see if the UTF-8 @text will fit safely within @charset.
  *
- * Returns %TRUE if it is safe to encode @text into @charset or %FALSE
+ * Returns: %TRUE if it is safe to encode @text into @charset or %FALSE
  * otherwise.
  **/
 gboolean
@@ -923,7 +923,7 @@ g_mime_set_user_charsets (const char **charsets)
  * Get the list of user-preferred charsets set with
  * g_mime_set_user_charsets().
  *
- * Returns an array of user-set charsets or %NULL if none set.
+ * Returns: an array of user-set charsets or %NULL if none set.
  **/
 const char **
 g_mime_user_charsets (void)

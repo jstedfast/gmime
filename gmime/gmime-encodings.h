@@ -62,7 +62,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
  * Calculates the maximum number of bytes needed to base64 encode the
  * full input buffer of length @x.
  *
- * Returns the number of output bytes needed to base64 encode an input
+ * Returns: the number of output bytes needed to base64 encode an input
  * buffer of size @x.
  **/
 #define GMIME_BASE64_ENCODE_LEN(x) ((size_t) (((((x) + 2) / 57) * 77) + 77))
@@ -75,7 +75,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
  * Calculates the maximum number of bytes needed to encode the full
  * input buffer of length @x using the quoted-printable encoding.
  *
- * Returns the number of output bytes needed to encode an input buffer
+ * Returns: the number of output bytes needed to encode an input buffer
  * of size @x using the quoted-printable encoding.
  **/
 #define GMIME_QP_ENCODE_LEN(x)     ((size_t) (((x) + 1) * 3))
@@ -88,7 +88,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
  * Calculates the maximum number of bytes needed to uuencode the full
  * input buffer of length @x.
  *
- * Returns the number of output bytes needed to uuencode an input
+ * Returns: the number of output bytes needed to uuencode an input
  * buffer of size @x.
  **/
 #define GMIME_UUENCODE_LEN(x)      ((size_t) (((((x) + 2) / 45) * 62) + 62))

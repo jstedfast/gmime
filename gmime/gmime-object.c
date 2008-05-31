@@ -306,7 +306,7 @@ init (GMimeObject *object)
  * class that can handle @type. If that also fails, then it will use
  * the generic part class, #GMimePart.
  *
- * Returns an appropriate #GMimeObject registered to handle mime-types
+ * Returns: an appropriate #GMimeObject registered to handle mime-types
  * of @type/@subtype.
  **/
 GMimeObject *
@@ -383,10 +383,10 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type
  * g_mime_object_get_content_type:
  * @object: a #GMimeObject
  *
- * Gets the Content-Type object for the given Mime object or %NULL on
- * fail.
+ * Gets the #GMimeContentType object for the given Mime object or
+ * %NULL on fail.
  *
- * Returns the content-type object for the specified Mime object.
+ * Returns: the content-type object for the specified Mime object.
  **/
 const GMimeContentType *
 g_mime_object_get_content_type (GMimeObject *object)
@@ -423,7 +423,7 @@ g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name,
  * Gets the value of the content-type param @name set on the Mime part
  * @object.
  *
- * Returns the value of the requested content-type param or %NULL on
+ * Returns: the value of the requested content-type param or %NULL on
  * if the param doesn't exist.
  **/
 const char *
@@ -440,9 +440,9 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
  * g_mime_object_get_content_disposition:
  * @object: a #GMimeObject
  *
- * Get the content disposition for the specified Mime object.
+ * Gets the #GMimeContentDisposition for the specified Mime object.
  *
- * Returns the #GMimeContentDisposition set on the Mime object.
+ * Returns: the #GMimeContentDisposition set on the Mime object.
  **/
 const GMimeContentDisposition *
 g_mime_object_get_content_disposition (GMimeObject *object)
@@ -506,7 +506,7 @@ g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
  *
  * Gets the Mime object's disposition if set or %NULL otherwise.
  *
- * Returns the disposition string which is probably one of
+ * Returns: the disposition string which is probably one of
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
  **/
 const char *
@@ -552,7 +552,7 @@ g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char
  * Gets the value of the Content-Disposition parameter specified by
  * @attribute, or %NULL if the parameter does not exist.
  *
- * Returns the value of a previously defined content-disposition
+ * Returns: the value of a previously defined content-disposition
  * parameter specified by @attribute.
  **/
 const char *
@@ -597,7 +597,7 @@ g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
  *
  * Gets the Content-Id of the Mime object or NULL if one is not set.
  *
- * Returns a const pointer to the Content-Id header.
+ * Returns: a const pointer to the Content-Id header.
  **/
 const char *
 g_mime_object_get_content_id (GMimeObject *object)
@@ -752,7 +752,7 @@ get_header (GMimeObject *object, const char *header)
  * Gets the value of the requested header if it exists or %NULL
  * otherwise.
  *
- * Returns the value of the header @header if it exists or %NULL
+ * Returns: the value of the header @header if it exists or %NULL
  * otherwise.
  **/
 const char *
@@ -804,7 +804,7 @@ remove_header (GMimeObject *object, const char *header)
  *
  * Removed the specified header if it exists.
  *
- * Returns %TRUE if the header was removed or %FALSE if it could not
+ * Returns: %TRUE if the header was removed or %FALSE if it could not
  * be found.
  **/
 gboolean
@@ -831,7 +831,7 @@ get_headers (GMimeObject *object)
  * Allocates a string buffer containing all of the Mime object's raw
  * headers.
  *
- * Returns an allocated string containing all of the raw Mime headers.
+ * Returns: an allocated string containing all of the raw Mime headers.
  **/
 char *
 g_mime_object_get_headers (GMimeObject *object)
@@ -856,7 +856,7 @@ write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Write the contents of the Mime object to @stream.
  *
- * Returns -1 on fail.
+ * Returns: the number of bytes written or %-1 on fail.
  **/
 ssize_t
 g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
@@ -874,7 +874,7 @@ g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Allocates a string buffer containing the contents of @object.
  *
- * Returns an allocated string containing the contents of the mime
+ * Returns: an allocated string containing the contents of the mime
  * object.
  **/
 char *
@@ -907,7 +907,7 @@ g_mime_object_to_string (GMimeObject *object)
  *
  * Get the header list for @object.
  *
- * Returns the #GMimeHeaderList for @object. Do not free this pointer
+ * Returns: the #GMimeHeaderList for @object. Do not free this pointer
  * when you are done with it.
  **/
 GMimeHeaderList *

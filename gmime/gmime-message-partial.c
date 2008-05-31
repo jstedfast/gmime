@@ -207,7 +207,7 @@ message_partial_set_content_type (GMimeObject *object, GMimeContentType *content
  *
  * Creates a new MIME message/partial object.
  *
- * Returns an empty MIME message/partial object.
+ * Returns: an empty MIME message/partial object.
  **/
 GMimeMessagePartial *
 g_mime_message_partial_new (const char *id, int number, int total)
@@ -245,7 +245,7 @@ g_mime_message_partial_new (const char *id, int number, int total)
  *
  * Gets the message/partial id parameter value.
  *
- * Returns the message/partial id or %NULL on fail.
+ * Returns: the message/partial id or %NULL on fail.
  **/
 const char *
 g_mime_message_partial_get_id (GMimeMessagePartial *partial)
@@ -262,7 +262,7 @@ g_mime_message_partial_get_id (GMimeMessagePartial *partial)
  *
  * Gets the message/partial part number.
  *
- * Returns the message/partial part number or %-1 on fail.
+ * Returns: the message/partial part number or %-1 on fail.
  **/
 int
 g_mime_message_partial_get_number (GMimeMessagePartial *partial)
@@ -280,7 +280,7 @@ g_mime_message_partial_get_number (GMimeMessagePartial *partial)
  * Gets the total number of message/partial parts needed to
  * reconstruct the original message.
  *
- * Returns the total number of message/partial parts needed to
+ * Returns: the total number of message/partial parts needed to
  * reconstruct the original message or -1 on fail.
  **/
 int
@@ -314,7 +314,7 @@ partial_compare (const void *v1, const void *v2)
  * Reconstructs the GMimeMessage from the given message/partial parts
  * in @partials.
  *
- * Returns a GMimeMessage object on success or %NULL on fail.
+ * Returns: a GMimeMessage object on success or %NULL on fail.
  **/
 GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
@@ -421,7 +421,7 @@ message_partial_message_new (GMimeMessage *base)
  * @max_size bytes or fewer. @nparts is set to the number of
  * #GMimeMessagePartial objects created.
  *
- * Returns an array of #GMimeMessage objects and sets @nparts to th
+ * Returns: an array of #GMimeMessage objects and sets @nparts to th
  * number of messages returned or %NULL on fail.
  **/
 GMimeMessage **

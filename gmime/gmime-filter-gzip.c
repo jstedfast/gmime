@@ -471,7 +471,7 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new gzip (or gunzip) filter.
  *
- * Returns a new gzip (or gunzip) filter.
+ * Returns: a new gzip (or gunzip) filter.
  **/
 GMimeFilter *
 g_mime_filter_gzip_new (GMimeFilterGZipMode mode, int level)

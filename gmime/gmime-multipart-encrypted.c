@@ -206,7 +206,7 @@ multipart_encrypted_write_to_stream (GMimeObject *object, GMimeStream *stream)
  *
  * Creates a new MIME multipart/encrypted object.
  *
- * Returns an empty MIME multipart/encrypted object.
+ * Returns: an empty MIME multipart/encrypted object.
  **/
 GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_new (void)
@@ -236,7 +236,7 @@ g_mime_multipart_encrypted_new (void)
  * encrypted #GMimeObject is set as the encrypted part of the
  * multipart/encrypted object @mpe.
  *
- * Returns %0 on success or %-1 on fail. If the encryption fails, an
+ * Returns: %0 on success or %-1 on fail. If the encryption fails, an
  * exception will be set on @err to provide information as to why the
  * failure occured.
  **/
@@ -330,7 +330,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  * Attempts to decrypt the encrypted MIME part contained within the
  * multipart/encrypted object @mpe using the @ctx decryption context.
  *
- * Returns the decrypted MIME part on success or %NULL on fail. If the
+ * Returns: the decrypted MIME part on success or %NULL on fail. If the
  * decryption fails, an exception will be set on @err to provide
  * information as to why the failure occured.
  **/

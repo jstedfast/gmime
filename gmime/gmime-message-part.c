@@ -235,7 +235,7 @@ message_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * Creates a new MIME message part object with a default content-type
  * of message/@subtype.
  *
- * Returns an empty MIME message part object with a default
+ * Returns: an empty MIME message part object with a default
  * content-type of message/@subtype.
  **/
 GMimeMessagePart *
@@ -261,7 +261,7 @@ g_mime_message_part_new (const char *subtype)
  * Creates a new MIME message part object with a default content-type
  * of message/@subtype containing @message.
  *
- * Returns a MIME message part object with a default content-type of
+ * Returns: a MIME message part object with a default content-type of
  * message/@subtype containing @message.
  **/
 GMimeMessagePart *
@@ -305,7 +305,7 @@ g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
  *
  * Gets the message object on the message part object @part.
  *
- * Returns the message part contained within @part.
+ * Returns: the message part contained within @part.
  **/
 GMimeMessage *
 g_mime_message_part_get_message (GMimeMessagePart *part)

@@ -346,7 +346,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new #GMimeStreamMmap object around @fd.
  *
- * Returns a stream using @fd.
+ * Returns: a stream using @fd.
  **/
 GMimeStream *
 g_mime_stream_mmap_new (int fd, int prot, int flags)
@@ -395,7 +395,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
  * Creates a new #GMimeStreamMmap object around @fd with bounds @start
  * and @end.
  *
- * Returns a stream using @fd with bounds @start and @end.
+ * Returns: a stream using @fd with bounds @start and @end.
  **/
 GMimeStream *
 g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, gint64 end)

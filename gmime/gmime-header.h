@@ -71,7 +71,7 @@ typedef struct _GMimeHeaderList GMimeHeaderList;
  * Function signature for the callback to
  * g_mime_header_register_writer().
  *
- * Returns the number of bytes written or %-1 on error.
+ * Returns: the number of bytes written or %-1 on error.
  **/
 typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
 

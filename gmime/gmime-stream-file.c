@@ -320,7 +320,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * Note: The created GMimeStreamFile object will own the FILE pointer
  * passed in.
  *
- * Returns a stream using @fp.
+ * Returns: a stream using @fp.
  **/
 GMimeStream *
 g_mime_stream_file_new (FILE *fp)
@@ -352,7 +352,7 @@ g_mime_stream_file_new (FILE *fp)
  * Note: The created GMimeStreamFile object will own the FILE pointer
  * passed in.
  *
- * Returns a stream using @fp with bounds @start and @end.
+ * Returns: a stream using @fp with bounds @start and @end.
  **/
 GMimeStream *
 g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
@@ -374,7 +374,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
  *
  * Gets whether or not @stream owns the backend FILE pointer.
  *
- * Returns %TRUE if @stream owns the backend FILE pointer or %FALSE
+ * Returns: %TRUE if @stream owns the backend FILE pointer or %FALSE
  * otherwise.
  **/
 gboolean

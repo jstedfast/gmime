@@ -107,7 +107,7 @@ static unsigned char tohex[16] = {
  * Gets the appropriate #GMimeContentEncoding enumeration value based
  * on the input string.
  *
- * Returns the #GMimeContentEncoding specified by @str or
+ * Returns: the #GMimeContentEncoding specified by @str or
  * #GMIME_CONTENT_ENCODING_DEFAULT on error.
  **/
 GMimeContentEncoding
@@ -138,7 +138,7 @@ g_mime_content_encoding_from_string (const char *str)
  *
  * Gets the string value of the content encoding.
  *
- * Returns the encoding type as a string or %NULL on error. Available
+ * Returns: the encoding type as a string or %NULL on error. Available
  * values for the encoding are: #GMIME_CONTENT_ENCODING_DEFAULT,
  * #GMIME_CONTENT_ENCODING_7BIT, #GMIME_CONTENT_ENCODING_8BIT,
  * #GMIME_CONTENT_ENCODING_BINARY, #GMIME_CONTENT_ENCODING_BASE64,
@@ -234,7 +234,7 @@ g_mime_encoding_reset (GMimeEncoding *state)
  * Given the input length, @inlen, calculate the needed output length
  * to perform an encoding or decoding step.
  *
- * Returns the maximum number of bytes needed to encode or decode a
+ * Returns: the maximum number of bytes needed to encode or decode a
  * buffer of @inlen bytes.
  **/
 size_t
@@ -276,7 +276,7 @@ g_mime_encoding_outlen (GMimeEncoding *state, size_t inlen)
  * g_mime_encoding_outlen() to find out how large @outbuf might need
  * to be.
  *
- * Returns the number of bytes written to @outbuf.
+ * Returns: the number of bytes written to @outbuf.
  **/
 size_t
 g_mime_encoding_step (GMimeEncoding *state, const char *inbuf, size_t inlen, char *outbuf)
@@ -317,7 +317,7 @@ g_mime_encoding_step (GMimeEncoding *state, const char *inbuf, size_t inlen, cha
  * Completes the incremental encode or decode of the input stream (see
  * g_mime_encoding_step() for details).
  *
- * Returns the number of bytes written to @outbuf.
+ * Returns: the number of bytes written to @outbuf.
  **/
 size_t
 g_mime_encoding_flush (GMimeEncoding *state, const char *inbuf, size_t inlen, char *outbuf)
@@ -360,7 +360,7 @@ g_mime_encoding_flush (GMimeEncoding *state, const char *inbuf, size_t inlen, ch
  * when finished encoding data with g_mime_encoding_base64_encode_step()
  * to flush off the last little bit.
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
@@ -410,7 +410,7 @@ g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, u
  * left-over state in state and save (initialise to 0 on first
  * invocation).
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
@@ -495,7 +495,7 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
  *
  * Decodes a chunk of base64 encoded data.
  *
- * Returns the number of bytes decoded (which have been dumped in
+ * Returns: the number of bytes decoded (which have been dumped in
  * @outbuf).
  **/
 size_t
@@ -561,7 +561,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
  * Uuencodes a chunk of data. Call this when finished encoding data
  * with g_mime_encoding_uuencode_step() to flush off the last little bit.
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_uuencode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save)
@@ -643,7 +643,7 @@ g_mime_encoding_uuencode_close (const unsigned char *inbuf, size_t inlen, unsign
  * state in @uubuf, @state and @save (initialize to 0 on first
  * invocation).
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save)
@@ -758,7 +758,7 @@ g_mime_encoding_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigne
  * uuencoded data. Assumes the "begin mode filename" line has
  * been stripped off.
  *
- * Returns the number of bytes decoded.
+ * Returns: the number of bytes decoded.
  **/
 size_t
 g_mime_encoding_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
@@ -861,7 +861,7 @@ g_mime_encoding_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigne
  * encoding data with g_mime_encoding_quoted_encode_step() to flush off
  * the last little bit.
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
@@ -906,7 +906,7 @@ g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, u
  * step', saves left-over state in state and save (initialise to -1 on
  * first invocation).
  *
- * Returns the number of bytes encoded.
+ * Returns: the number of bytes encoded.
  **/
 size_t
 g_mime_encoding_quoted_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
@@ -999,7 +999,7 @@ g_mime_encoding_quoted_encode_step (const unsigned char *inbuf, size_t inlen, un
  * Decodes a block of quoted-printable encoded data. Performs a
  * 'decode step' on a chunk of QP encoded data.
  *
- * Returns the number of bytes decoded.
+ * Returns: the number of bytes decoded.
  **/
 size_t
 g_mime_encoding_quoted_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)

@@ -148,7 +148,7 @@ cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
  *
  * Gets the hash id based on the hash name @hash.
  *
- * Returns the equivalent hash id or #GMIME_CIPHER_HASH_DEFAULT on fail.
+ * Returns: the equivalent hash id or #GMIME_CIPHER_HASH_DEFAULT on fail.
  **/
 GMimeCipherHash
 g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash)
@@ -174,7 +174,7 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
  *
  * Gets the hash name based on the hash id @hash.
  *
- * Returns the equivalent hash name or %NULL on fail.
+ * Returns: the equivalent hash name or %NULL on fail.
  **/
 const char *
 g_mime_cipher_context_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
@@ -207,7 +207,7 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
@@ -245,7 +245,7 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
  * @sigstream is assumed to be the signature stream and is used to
  * verify the integirity of the @istream.
  *
- * Returns a #GMimeSignatureValidity structure containing information
+ * Returns: a #GMimeSignatureValidity structure containing information
  * about the integrity of the input stream or %NULL on failure to
  * execute at all.
  **/
@@ -284,7 +284,7 @@ cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtr
  * Encrypts (and optionally signs) the cleartext input stream and
  * writes the resulting ciphertext to the output stream.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
@@ -319,7 +319,7 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
  * Decrypts the ciphertext input stream and writes the resulting
  * cleartext to the output stream.
  *
- * Returns %0 on success or %-1 for fail.
+ * Returns: %0 on success or %-1 for fail.
  **/
 int
 g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
@@ -352,7 +352,7 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
  * Imports a stream of keys/certificates contained within @istream
  * into the key/certificate database controlled by @ctx.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
@@ -385,7 +385,7 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  * Exports the keys/certificates in @keys to the stream @ostream from
  * the key/certificate database controlled by @ctx.
  *
- * Returns %0 on success or %-1 on fail.
+ * Returns: %0 on success or %-1 on fail.
  **/
 int
 g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
@@ -404,7 +404,7 @@ g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  *
  * Allocates an new GMimeSigner.
  *
- * Returns a new #GMimeSigner.
+ * Returns: a new #GMimeSigner.
  **/
 GMimeSigner *
 g_mime_signer_new (void)
@@ -447,7 +447,7 @@ g_mime_signer_free (GMimeSigner *signer)
  *
  * Creates a new #GMimeSignatureValidity.
  *
- * Returns a new #GMimeSignatureValidity.
+ * Returns: a new #GMimeSignatureValidity.
  **/
 GMimeSignatureValidity *
 g_mime_signature_validity_new (void)
@@ -499,7 +499,7 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
  *
  * Gets the signature status (GOOD, BAD, UNKNOWN).
  *
- * Returns a #GMimeSignatureStatus value.
+ * Returns: a #GMimeSignatureStatus value.
  **/
 GMimeSignatureStatus
 g_mime_signature_validity_get_status (GMimeSignatureValidity *validity)
@@ -533,7 +533,7 @@ g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSig
  *
  * Gets any user-readable status details.
  *
- * Returns a user-readable string containing any status information.
+ * Returns: a user-readable string containing any status information.
  **/
 const char *
 g_mime_signature_validity_get_details (GMimeSignatureValidity *validity)
@@ -567,7 +567,7 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
  *
  * Gets the list of signers.
  *
- * Returns a #GMimeSigner list which contain further information such
+ * Returns: a #GMimeSigner list which contain further information such
  * as trust and cipher keys.
  **/
 const GMimeSigner *

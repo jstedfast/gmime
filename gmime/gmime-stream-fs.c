@@ -363,7 +363,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new GMimeStreamFs object around @fd.
  *
- * Returns a stream using @fd.
+ * Returns: a stream using @fd.
  **/
 GMimeStream *
 g_mime_stream_fs_new (int fd)
@@ -393,7 +393,7 @@ g_mime_stream_fs_new (int fd)
  * Creates a new GMimeStreamFs object around @fd with bounds @start
  * and @end.
  *
- * Returns a stream using @fd with bounds @start and @end.
+ * Returns: a stream using @fd with bounds @start and @end.
  **/
 GMimeStream *
 g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
@@ -416,7 +416,7 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
  *
  * Gets whether or not @stream owns the backend file descriptor.
  *
- * Returns %TRUE if @stream owns the backend file descriptor or %FALSE
+ * Returns: %TRUE if @stream owns the backend file descriptor or %FALSE
  * otherwise.
  **/
 gboolean

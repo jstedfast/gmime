@@ -914,7 +914,7 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
  * strictly a cosmetic thing, so if you are unsure, it is safe to say
  * no (%FALSE).
  *
- * Returns an empty MIME Message object.
+ * Returns: an empty MIME Message object.
  **/
 GMimeMessage *
 g_mime_message_new (gboolean pretty_headers)
@@ -971,7 +971,7 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
  *
  * Gets the email address of the sender from @message.
  *
- * Returns the sender's name and address of the MIME Message.
+ * Returns: the sender's name and address of the MIME Message.
  **/
 const char *
 g_mime_message_get_sender (GMimeMessage *message)
@@ -1008,7 +1008,7 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
  *
  * Gets the Reply-To address from @message.
  *
- * Returns the sender's Reply-To address from the MIME Message.
+ * Returns: the sender's Reply-To address from the MIME Message.
  **/
 const char *
 g_mime_message_get_reply_to (GMimeMessage *message)
@@ -1121,7 +1121,7 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, co
  * recipient types include: #GMIME_RECIPIENT_TYPE_TO,
  * #GMIME_RECIPIENT_TYPE_CC and #GMIME_RECIPIENT_TYPE_BCC.
  *
- * Returns a list of recipients of a chosen type from the MIME
+ * Returns: a list of recipients of a chosen type from the MIME
  * Message.
  **/
 const InternetAddressList *
@@ -1146,7 +1146,7 @@ static const char *recipient_types[] = {
  *
  * Gets the complete list of recipients for @message.
  *
- * Returns a newly allocated #InternetAddressList containing all
+ * Returns: a newly allocated #InternetAddressList containing all
  * recipients of the message.
  **/
 InternetAddressList *
@@ -1208,7 +1208,7 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
  *
  * Gets the message's subject.
  *
- * Returns the unencoded UTF-8 Subject field on a MIME Message.
+ * Returns: the unencoded UTF-8 Subject field on a MIME Message.
  **/
 const char *
 g_mime_message_get_subject (GMimeMessage *message)
@@ -1271,7 +1271,7 @@ g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
  *
  * Gets the message's sent date in string format.
  * 
- * Returns the sent-date of the MIME Message in string format.
+ * Returns: the sent-date of the MIME Message in string format.
  **/
 char *
 g_mime_message_get_date_string (GMimeMessage *message)
@@ -1317,7 +1317,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
  *
  * Gets the Message-Id header of @message.
  *
- * Returns the Message-Id of a message.
+ * Returns: the Message-Id of a message.
  **/
 const char *
 g_mime_message_get_message_id (GMimeMessage *message)
@@ -1334,7 +1334,7 @@ g_mime_message_get_message_id (GMimeMessage *message)
  *
  * Gets the toplevel MIME part contained within @message.
  *
- * Returns the toplevel MIME part of @message.
+ * Returns: the toplevel MIME part of @message.
  **/
 GMimeObject *
 g_mime_message_get_mime_part (GMimeMessage *message)

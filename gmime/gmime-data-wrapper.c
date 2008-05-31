@@ -112,7 +112,7 @@ g_mime_data_wrapper_finalize (GObject *object)
  *
  * Creates a new GMimeDataWrapper object.
  *
- * Returns a new data wrapper object.
+ * Returns: a new data wrapper object.
  **/
 GMimeDataWrapper *
 g_mime_data_wrapper_new (void)
@@ -128,7 +128,7 @@ g_mime_data_wrapper_new (void)
  *
  * Creates a new #GMimeDataWrapper object around @stream.
  *
- * Returns a data wrapper around @stream. Since the wrapper owns its
+ * Returns: a data wrapper around @stream. Since the wrapper owns its
  * own reference on the stream, caller is responsible for unrefing
  * its own copy.
  **/
@@ -184,7 +184,7 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
  *
  * Gets a reference to the stream wrapped by @wrapper.
  *
- * Returns a reference to the internal stream. Caller is responsible
+ * Returns: a reference to the internal stream. Caller is responsible
  * for unrefing it.
  **/
 GMimeStream *
@@ -223,7 +223,7 @@ g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimeContentEncodin
  *
  * Gets the encoding type of the stream wrapped by @wrapper.
  *
- * Returns the encoding type of the internal stream.
+ * Returns: the encoding type of the internal stream.
  **/
 GMimeContentEncoding
 g_mime_data_wrapper_get_encoding (GMimeDataWrapper *wrapper)
@@ -274,7 +274,7 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
  *
  * Writes the raw (decoded) data to the output stream.
  *
- * Returns the number of bytes written or %-1 on failure.
+ * Returns: the number of bytes written or %-1 on failure.
  **/
 ssize_t
 g_mime_data_wrapper_write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
