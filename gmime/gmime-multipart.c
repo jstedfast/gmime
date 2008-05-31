@@ -685,7 +685,7 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		
 		strcpy (bbuf, "=-");
 		p = (unsigned char *) bbuf + 2;
-		p += g_mime_encoding_base64_encode_close (digest, 16, p, &state, &save);
+		p += g_mime_encoding_base64_encode_step (digest, 16, p, &state, &save);
 		*p = '\0';
 		
 		boundary = bbuf;
