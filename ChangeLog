@@ -1,5 +1,9 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.1
+
 	* gmime/gmime-header.c (g_mime_header_list_invalidate_iters): Only
 	unlink the iter if the headers are being destroyed.
 
