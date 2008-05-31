@@ -472,7 +472,7 @@ g_mime_header_iter_remove (GMimeHeaderIter *iter)
  * @header: a #GMimeHeader
  *
  * Invalidate all outstanding iterators that are currently referencing
- * @header. If @header is NULL, then invalidate all iterators.
+ * @header. If @header is %NULL, then invalidate all iterators.
  **/
 static void
 g_mime_header_list_invalidate_iters (GMimeHeaderList *headers, GMimeHeader *header)
@@ -486,11 +486,12 @@ g_mime_header_list_invalidate_iters (GMimeHeaderList *headers, GMimeHeader *head
 		
 		if (!header || iter->cursor == header) {
 			/* invalidate this iter */
-			list_unlink ((ListNode *) iter);
 			iter->cursor = NULL;
 			
 			if (header == NULL) {
-				/* invalidating because HeaderList is being destroyed */
+				/* invalidating because HeaderList is
+				 * being destroyed */
+				list_unlink ((ListNode *) iter);
 				iter->headers = NULL;
 			}
 		}

@@ -1,5 +1,8 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-header.c (g_mime_header_list_invalidate_iters): Only
+	unlink the iter if the headers are being destroyed.
+
 	* gmime/gmime-gpg-context.c: Updated.
 
 	* gmime/gmime-cipher-context.c: Added GMimeCipherHash enums for
