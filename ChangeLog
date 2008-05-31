@@ -1,5 +1,28 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c: Updated.
+
+	* gmime/gmime-cipher-context.c (g_mime_signer_next): New function
+	to ease binding.
+	(g_mime_signer_set_status): Same.
+	(g_mime_signer_get_status): Same.
+	(g_mime_signer_set_error): Same.
+	(g_mime_signer_get_error): Same.
+	(g_mime_signer_set_trust): Same.
+	(g_mime_signer_get_trust): Same.
+	(g_mime_signer_set_fingerprint): Same.
+	(g_mime_signer_get_fingerprint): Same.
+	(g_mime_signer_set_key_id): Same.
+	(g_mime_signer_get_key_id): Same.
+	(g_mime_signer_set_name): Same.
+	(g_mime_signer_get_name): Same.
+	(g_mime_signer_set_sig_created): Same.
+	(g_mime_signer_get_sig_created): Same.
+	(g_mime_signer_set_sig_expire): Same.
+	(g_mime_signer_get_sig_expire): Same.
+
+2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-object.c (g_mime_object_get_header_list): New
 	function to get at the GMimeObject headers.
 

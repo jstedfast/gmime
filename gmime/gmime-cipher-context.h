@@ -52,6 +52,10 @@ typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
  * @GMIME_CIPHER_HASH_MD2: The MD2 hash algorithm.
  * @GMIME_CIPHER_HASH_MD5: The MD5 hash algorithm.
  * @GMIME_CIPHER_HASH_SHA1: The SHA-1 hash algorithm.
+ * @GMIME_CIPHER_HASH_SHA224: The SHA-224 hash algorithm.
+ * @GMIME_CIPHER_HASH_SHA256: The SHA-256 hash algorithm.
+ * @GMIME_CIPHER_HASH_SHA384: The SHA-384 hash algorithm.
+ * @GMIME_CIPHER_HASH_SHA512: The SHA-512 hash algorithm.
  * @GMIME_CIPHER_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
  * @GMIME_CIPHER_HASH_TIGER192: The TIGER-192 hash algorithm.
  * @GMIME_CIPHER_HASH_HAVAL5160: The HAVAL-5160 hash algorithm.
@@ -63,6 +67,10 @@ typedef enum {
 	GMIME_CIPHER_HASH_MD2,
 	GMIME_CIPHER_HASH_MD5,
 	GMIME_CIPHER_HASH_SHA1,
+	GMIME_CIPHER_HASH_SHA224,
+	GMIME_CIPHER_HASH_SHA256,
+	GMIME_CIPHER_HASH_SHA384,
+	GMIME_CIPHER_HASH_SHA512,
 	GMIME_CIPHER_HASH_RIPEMD160,
 	GMIME_CIPHER_HASH_TIGER192,
 	GMIME_CIPHER_HASH_HAVAL5160
@@ -209,8 +217,8 @@ typedef enum {
  * @errors: A bitfield of #GMimeSignerError values.
  * @trust: A #GMimeSignerTrust.
  * @unused: Unused expansion bits for future use; ignore this.
- * @sig_created: The creation date of the signature.
- * @sig_expire: The expiration date of the signature.
+ * @created: The creation date of the signature.
+ * @expires: The expiration date of the signature.
  * @fingerprint: A hex string representing the signer's fingerprint.
  * @keyid: The signer's key id.
  * @name: The name of the person or entity.
@@ -223,9 +231,9 @@ struct _GMimeSigner {
 	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
 	unsigned int unused:23;   /* unused expansion bits */
-	time_t sig_created;
-	time_t sig_expire;
 	char *fingerprint;
+	time_t created;
+	time_t expires;
 	char *keyid;
 	char *name;
 };
@@ -233,6 +241,33 @@ struct _GMimeSigner {
 
 GMimeSigner *g_mime_signer_new (void);
 void         g_mime_signer_free (GMimeSigner *signer);
+
+GMimeSigner *g_mime_signer_next (GMimeSigner *signer);
+
+void g_mime_signer_set_status (GMimeSigner *signer, GMimeSignerStatus status);
+GMimeSignerStatus g_mime_signer_get_status (GMimeSigner *signer);
+
+void g_mime_signer_set_errors (GMimeSigner *signer, GMimeSignerError error);
+GMimeSignerError g_mime_signer_get_errors (GMimeSigner *signer);
+
+void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
+GMimeSignerTrust g_mime_signer_get_trust (GMimeSigner *signer);
+
+void g_mime_signer_set_fingerprint (GMimeSigner *signer, const char *fingerprint);
+const char *g_mime_signer_get_fingerprint (GMimeSigner *signer);
+
+void g_mime_signer_set_key_id (GMimeSigner *signer, const char *key_id);
+const char *g_mime_signer_get_key_id (GMimeSigner *signer);
+
+void g_mime_signer_set_name (GMimeSigner *signer, const char *name);
+const char *g_mime_signer_get_name (GMimeSigner *signer);
+
+void g_mime_signer_set_created (GMimeSigner *signer, time_t created);
+time_t g_mime_signer_get_created (GMimeSigner *signer);
+
+void g_mime_signer_set_expires (GMimeSigner *signer, time_t expires);
+time_t g_mime_signer_get_expires (GMimeSigner *signer);
+
 
 
 /**

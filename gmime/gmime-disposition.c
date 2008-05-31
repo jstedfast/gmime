@@ -182,6 +182,8 @@ g_mime_content_disposition_get_disposition (const GMimeContentDisposition *dispo
  * @disposition: a #GMimeContentDisposition object
  *
  * Gets the Content-Disposition parameter list.
+ *
+ * Returns: the list of #GMimeParam's set on @disposition.
  **/
 const GMimeParam *
 g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition)

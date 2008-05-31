@@ -172,9 +172,9 @@ print_verify_results (GMimeSignatureValidity *validity)
 			break;
 		}
 		
-		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
-		if (signer->sig_expire != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expire));
+		fprintf (stdout, "\tSignature made on %s", ctime (&signer->created));
+		if (signer->expires != (time_t) 0)
+			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->expires));
 		else
 			fprintf (stdout, "\tSignature never expires\n");
 		

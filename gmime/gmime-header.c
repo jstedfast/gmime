@@ -365,8 +365,9 @@ g_mime_header_iter_get_name (GMimeHeaderIter *iter)
 /**
  * g_mime_header_iter_set_value:
  * @iter: a #GMimeHeaderIter
+ * @value: new header value
  *
- * Sets the current header's value.
+ * Sets the current header's value to the new value.
  *
  * Returns: %TRUE if the value was set or %FALSE otherwise (indicates
  * invalid iter).

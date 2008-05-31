@@ -184,6 +184,14 @@ gpg_hash_id (GMimeCipherContext *ctx, const char *hash)
 		return GMIME_CIPHER_HASH_MD5;
 	else if (!g_ascii_strcasecmp (hash, "sha1"))
 		return GMIME_CIPHER_HASH_SHA1;
+	else if (!g_ascii_strcasecmp (hash, "sha224"))
+		return GMIME_CIPHER_HASH_SHA224;
+	else if (!g_ascii_strcasecmp (hash, "sha256"))
+		return GMIME_CIPHER_HASH_SHA256;
+	else if (!g_ascii_strcasecmp (hash, "sha384"))
+		return GMIME_CIPHER_HASH_SHA384;
+	else if (!g_ascii_strcasecmp (hash, "sha512"))
+		return GMIME_CIPHER_HASH_SHA512;
 	else if (!g_ascii_strcasecmp (hash, "ripemd160"))
 		return GMIME_CIPHER_HASH_RIPEMD160;
 	else if (!g_ascii_strcasecmp (hash, "tiger192"))
@@ -204,6 +212,14 @@ gpg_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 		return "pgp-md5";
 	case GMIME_CIPHER_HASH_SHA1:
 		return "pgp-sha1";
+	case GMIME_CIPHER_HASH_SHA224:
+		return "pgp-sha224";
+	case GMIME_CIPHER_HASH_SHA256:
+		return "pgp-sha256";
+	case GMIME_CIPHER_HASH_SHA384:
+		return "pgp-sha384";
+	case GMIME_CIPHER_HASH_SHA512:
+		return "pgp-sha512";
 	case GMIME_CIPHER_HASH_RIPEMD160:
 		return "pgp-ripemd160";
 	case GMIME_CIPHER_HASH_TIGER192:
@@ -1019,7 +1035,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status = next_token (status, NULL);
 				
 				/* get the signature expiration date (or 0 for never) */
-				signer->sig_expire = strtoul (status, NULL, 10);
+				signer->expires = strtoul (status, NULL, 10);
 				status = next_token (status, NULL);
 				
 				/* the last token is the 'rc' which we don't care about */
@@ -1049,14 +1065,14 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status = next_token (status, NULL);
 				
 				/* the third token is the signature creation date (or 0 for unknown?) */
-				signer->sig_created = strtoul (status, &inend, 10);
+				signer->created = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ')
 					break;
 				
 				status = inend + 1;
 				
 				/* the fourth token is the signature expiration date (or 0 for never) */
-				signer->sig_expire = strtoul (status, NULL, 10);
+				signer->expires = strtoul (status, NULL, 10);
 				
 				/* ignore the rest... */
 			} else if (!strncmp (status, "TRUST_", 6)) {
