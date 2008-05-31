@@ -49,10 +49,10 @@ G_GNUC_INTERNAL int list_length (List *list);
 G_GNUC_INTERNAL ListNode *list_unlink_head (List *list);
 G_GNUC_INTERNAL ListNode *list_unlink_tail (List *list);
 
-G_GNUC_INTERNAL ListNode *list_prepend_node (List *list, ListNode *node);
-G_GNUC_INTERNAL ListNode *list_append_node  (List *list, ListNode *node);
+G_GNUC_INTERNAL ListNode *list_prepend (List *list, ListNode *node);
+G_GNUC_INTERNAL ListNode *list_append  (List *list, ListNode *node);
 
-G_GNUC_INTERNAL ListNode *list_node_unlink (ListNode *node);
+G_GNUC_INTERNAL ListNode *list_unlink (ListNode *node);
 
 G_END_DECLS
 

@@ -1,5 +1,13 @@
 2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
 
+	* util/cache.c: Updated for list.[c,h] changes.
+
+	* util/list.c (list_append): Renamed from list_append_node().
+	(list_prepend): Renamed from list_prepend_node().
+	(list_unlink): Renamed from list_node_unlink().
+
+2008-05-30  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-message.c (g_mime_message_get_headers): Removed as
 	GMimeObject has an equivalent method.
 	(handle_multipart_alternative): Removed.

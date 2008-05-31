@@ -83,7 +83,7 @@ cache_expire_unused (Cache *cache)
 		prev = node->prev;
 		if (cache->expire (cache, (CacheNode *) node)) {
 			g_hash_table_remove (cache->node_hash, ((CacheNode *) node)->key);
-			list_node_unlink (node);
+			list_unlink (node);
 			cache_node_free ((CacheNode *) node);
 			cache->size--;
 		}
@@ -106,7 +106,7 @@ cache_node_insert (Cache *cache, const char *key)
 	node->cache = cache;
 	
 	g_hash_table_insert (cache->node_hash, node->key, node);
-	list_prepend_node (&cache->list, (ListNode *) node);
+	list_prepend (&cache->list, (ListNode *) node);
 	
 	return node;
 }
@@ -118,8 +118,8 @@ cache_node_lookup (Cache *cache, const char *key, gboolean use)
 	
 	node = g_hash_table_lookup (cache->node_hash, key);
 	if (node && use) {
-		list_node_unlink ((ListNode *) node);
-		list_prepend_node (&cache->list, (ListNode *) node);
+		list_unlink ((ListNode *) node);
+		list_prepend (&cache->list, (ListNode *) node);
 	}
 	
 	return node;
@@ -132,7 +132,7 @@ cache_node_expire (CacheNode *node)
 	
 	cache = node->cache;
 	g_hash_table_remove (cache->node_hash, node->key);
-	list_node_unlink ((ListNode *) node);
+	list_unlink ((ListNode *) node);
 	cache_node_free (node);
 	cache->size--;
 }

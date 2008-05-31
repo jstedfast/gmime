@@ -87,7 +87,7 @@ list_unlink_tail (List *list)
 }
 
 ListNode *
-list_prepend_node (List *list, ListNode *node)
+list_prepend (List *list, ListNode *node)
 {
 	node->next = list->head;
 	node->prev = (ListNode *) &list->head;
@@ -98,7 +98,7 @@ list_prepend_node (List *list, ListNode *node)
 }
 
 ListNode *
-list_append_node (List *list, ListNode *node)
+list_append (List *list, ListNode *node)
 {
 	node->next = (ListNode *) &list->tail;
 	node->prev = list->tailpred;
@@ -109,7 +109,7 @@ list_append_node (List *list, ListNode *node)
 }
 
 ListNode *
-list_node_unlink (ListNode *node)
+list_unlink (ListNode *node)
 {
 	node->next->prev = node->prev;
         node->prev->next = node->next;
