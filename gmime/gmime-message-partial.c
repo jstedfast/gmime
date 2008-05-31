@@ -384,22 +384,27 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 }
 
 
-static void
-header_copy (const char *name, const char *value, gpointer user_data)
-{
-	GMimeMessage *message = (GMimeMessage *) user_data;
-	
-	if (value)
-		g_mime_object_append_header (GMIME_OBJECT (message), name, value);
-}
-
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
+	const char *name, *value;
 	GMimeMessage *message;
+	GMimeHeaderList *list;
+	GMimeHeaderIter *iter;
 	
 	message = g_mime_message_new (FALSE);
-	g_mime_header_list_foreach (GMIME_OBJECT (base)->headers, header_copy, message);
+	
+	list = ((GMimeObject *) base)->headers;
+	iter = g_mime_header_list_get_iter (list);
+	if (g_mime_header_iter_is_valid (iter)) {
+		do {
+			name = g_mime_header_iter_get_name (iter);
+			value = g_mime_header_iter_get_value (iter);
+			g_mime_object_append_header ((GMimeObject *) message, name, value);
+		} while (g_mime_header_iter_next (iter));
+	}
+	
+	g_mime_header_iter_free (iter);
 	
 	return message;
 }

@@ -571,7 +571,6 @@ g_mime_param_write_to_string
 <FILE>gmime-header</FILE>
 GMimeHeaderIter
 GMimeHeaderList
-GMimeHeaderForeachFunc
 GMimeHeaderWriter
 g_mime_header_iter_copy
 g_mime_header_iter_free
@@ -594,10 +593,9 @@ g_mime_header_list_remove
 g_mime_header_list_set
 g_mime_header_list_get
 g_mime_header_list_get_iter
+g_mime_header_list_register_writer
 g_mime_header_list_write_to_stream
 g_mime_header_list_to_string
-g_mime_header_list_foreach
-g_mime_header_list_register_writer
 g_mime_header_list_has_raw
 g_mime_header_list_set_raw
 </SECTION>

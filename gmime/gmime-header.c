@@ -836,30 +836,6 @@ g_mime_header_list_to_string (const GMimeHeaderList *headers)
 
 
 /**
- * g_mime_header_list_foreach:
- * @headers: a #GMimeHeaderList
- * @func: function to be called for each header.
- * @user_data: User data to be passed to the func.
- *
- * Calls @func for each header name/value pair.
- */
-void
-g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data)
-{
-	const GMimeHeader *header;
-	
-	g_return_if_fail (headers != NULL);
-	g_return_if_fail (func != NULL);
-	
-	header = (const GMimeHeader *) headers->list.head;
-	while (header->next) {
-		(*func) (header->name, header->value, user_data);
-		header = header->next;
-	}
-}
-
-
-/**
  * g_mime_header_list_register_writer:
  * @headers: a #GMimeHeaderList
  * @name: header name

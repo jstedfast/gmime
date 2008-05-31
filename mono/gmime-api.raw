@@ -93,14 +93,6 @@
       <member cname="INTERNET_ADDRESS_NAME" name="Name" />
       <member cname="INTERNET_ADDRESS_GROUP" name="Group" />
     </enum>
-    <callback name="HeaderForeachFunc" cname="GMimeHeaderForeachFunc">
-      <return-type type="void" />
-      <parameters>
-        <parameter type="const-char*" name="name" />
-        <parameter type="const-char*" name="value" />
-        <parameter type="gpointer" name="user_data" />
-      </parameters>
-    </callback>
     <callback name="HeaderWriter" cname="GMimeHeaderWriter">
       <return-type type="ssize_t" />
       <parameters>
@@ -2182,13 +2174,6 @@
       </method>
       <method name="Destroy" cname="g_mime_header_list_destroy">
         <return-type type="void" />
-      </method>
-      <method name="Foreach" cname="g_mime_header_list_foreach">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeHeaderForeachFunc" name="func" />
-          <parameter type="gpointer" name="user_data" />
-        </parameters>
       </method>
       <method name="Get" cname="g_mime_header_list_get">
         <return-type type="const-char*" />

@@ -75,16 +75,6 @@ typedef struct _GMimeHeaderList GMimeHeaderList;
  **/
 typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
 
- /**
-  * GMimeHeaderForeachFunc:
-  * @name: The field name.
-  * @value: The field value.
-  * @user_data: The user-supplied callback data.
-  *
-  * Function signature for the callback to g_mime_header_list_foreach().
-  **/
-typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
-
 
 GMimeHeaderList *g_mime_header_list_new (void);
 
@@ -101,8 +91,6 @@ GMimeHeaderIter *g_mime_header_list_get_iter (GMimeHeaderList *headers);
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);
 char *g_mime_header_list_to_string (const GMimeHeaderList *headers);
-
-void g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data);
 
 /* for internal use only */
 void g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw);

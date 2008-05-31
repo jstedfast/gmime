@@ -1,5 +1,13 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message-partial.c (message_partial_message_new): Use
+	iters to copy the headers.
+
+	* gmime/gmime-header.c (g_mime_header_list_foreach): Removed, this
+	API sucked.
+
+2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* tests/test-headers.c: New set of unit tests for GMimeHeaderIter.
 
 	* gmime/gmime-header.c (g_mime_header_iter_equal): New method to
