@@ -123,56 +123,56 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "Subject")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Subject")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "From")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "From")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "Sender")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Sender")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "Reply-To")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Reply-To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "To")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "Cc")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Cc")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "Bcc")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "Bcc")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
 		fprintf (fp, "\"%s\" ", nstring);
 		g_free (nstring);
 		
-		if ((str = g_mime_message_get_header (message, "In-Reply-To")))
+		if ((str = g_mime_object_get_header ((GMimeObject *) message, "In-Reply-To")))
 			nstring = escape_string (str);
 		else
 			nstring = g_strdup ("");
