@@ -1,5 +1,8 @@
 2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* tools/gmime-port-2-2-to-2-4.sh: New helper tool to port existing
+	GMime 2.0 and 2.2 based applications over to GMime 2.4.
+
 	* gmime/gmime-part.c: Updated for GMimeFilterCRLF changes.
 
 	* gmime/gmime-multipart-signed.c: Updated for GMimeFilterCRLF
