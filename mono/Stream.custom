@@ -2,13 +2,3 @@ public long Seek (long offset)
 {
 	return this.Seek (offset, GMime.SeekWhence.Set);
 }
-
-[DllImport ("gmime")]
-static extern IntPtr g_mime_stream_read (IntPtr raw, [Out] byte[] buf, UIntPtr count);
-
-public long Read (byte[] buf, ulong count)
-{
-	IntPtr raw_ret = g_mime_stream_read (Handle, buf, new UIntPtr (count));
-	long ret = (long) raw_ret;
-	return ret;
-}

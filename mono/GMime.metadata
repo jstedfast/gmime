@@ -9,7 +9,62 @@
   <attr path="/api/namespace/*/*/return-type[@type='ssize_t']" name="type">gint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
 
-  <!-- Rename some enums -->
+  <!-- Global / Locale -->
+  <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
+  <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
+  <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
+
+  <!-- Charset -->
+
+  <!-- Common -->
+  <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
+  <remove-node path="/api/namespace/class[@name='Strcase']"/>
+
+  <!-- CipherContext -->
+  
+  <!-- ContentDisposition -->
+  
+  <!-- ContentType -->
+  
+  <!-- DataWrapper -->
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
+  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetGMimeStream']/return-type" name="owned">true</attr>
+
+  <!-- Encoding -->
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_close']" name="name">yEncodeClose</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_step']" name="name">yEncodeStep</attr>
+  <attr path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']" name="name">yDecodeStep</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='pcrc']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Yencode']/*/*/parameter[@name='crc']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='inbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='outbuf']" name="array">true</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='pcrc']" name="pass_as">ref</attr>
+  <attr path="/api/namespace/class[@name='Global']/*/*/parameter[@name='crc']" name="pass_as">ref</attr>
+  <move-node path="/api/namespace/class[@name='Yencode']/method[@name='yEncodeClose']">/api/namespace/struct[@name='Encoding']</move-node>
+  <move-node path="/api/namespace/class[@name='Yencode']/method[@name='yEncodeStep']">/api/namespace/struct[@name='Encoding']</move-node>
+  <move-node path="/api/namespace/class[@name='Global']/method[@name='yDecodeStep']">/api/namespace/struct[@name='Encoding']</move-node>
+
+  <!-- Enumerations -->
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
 
@@ -25,31 +80,7 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
 
-  <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
-  <remove-node path="/api/namespace/class[@name='Decode']"/>
-
-  <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
-  <remove-node path="/api/namespace/class[@name='Strcase']"/>
-
-  <!-- Clean up some unnecessary helper methods from GMimeObject -->
-  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_disposition_parameter']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_disposition_parameter']"/>
-
-  <!-- Remove duplicate functionality from GMimeMessage -->
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
-
-  <!-- Rename some GMimeDataWrapper methods -->
-  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
-  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
-
-  <!-- Get rid of the IOVector APIs -->
-  <remove-node path="/api/namespace/object[@cname='GMimeStream']/method[@cname='g_mime_stream_writev']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeStreamIOVector']"/>
-
-  <!-- Fix up some GMimeFilter APIs -->
+  <!-- Filter -->
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="array">true</attr>
@@ -63,68 +94,101 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="array">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='length']" name="name">n_buf</attr>
 
-  <!-- Fix up some other method names -->
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
-  <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
-  <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
-  <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
+  <!-- GPGContext -->
+  
+  <!-- Header -->
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
 
-  <!-- Fix up bindings for yencode/decode -->
-  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_close']" name="name">EncodeClose</attr>
-  <attr path="/api/namespace/class[@name='Yencode']/method[@cname='g_mime_yencode_step']" name="name">EncodeStep</attr>
-  <attr path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']" name="name">DecodeStep</attr>
-  <move-node path="/api/namespace/class[@name='Global']/method[@cname='g_mime_ydecode_step']">/api/namespace/class[@name='Yencode']</move-node>
+  <!-- iconv -->
+  
+  <!-- iconv-utils -->
 
+  <!-- InternetAddress -->
   <!-- The generator irritating always converts a method named GetType to a
        GType property regardless of whether or not it's actually a glib type
        So rename this one -->
   <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
 
-  <!-- Fix the base64/uu/qp encoder/decoder APIs. -->
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="array">true</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="type">guint8*</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='uubuf']" name="array">true</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="type">guint8*</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='outbuf']" name="array">true</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='state']" name="pass_as">ref</attr>
-  <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='save']" name="pass_as">ref</attr>
+  <!-- InternetAddressList -->
+  <!-- We implement this class by hand, hide it. -->
+  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">true</attr>
 
-  <!-- Fix/Remove some other APIs from gmime-utils -->
+  <!-- Message -->
+  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
+  <!-- We implement these properties by hand, hide them. -->
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
+
+  <!-- MessagePart -->
+  <attr path="/api/namespace/object[@cname='GMimeMessagePart']/method[@name='GetMessage']/return-type" name="owned">true</attr>
+
+  <!-- MessagePartial -->
+  
+  <!-- Multipart -->
+  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetSubpartFromContentId']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
+
+  <!-- MultipartEncrypted -->
+  
+  <!-- MultipartSigned -->
+  
+  <!-- Object -->
+  <!-- Clean up some unnecessary helper methods from GMimeObject -->
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_disposition_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_disposition_parameter']"/>
+
+  <!-- Param -->
+  
+  <!-- Parser -->
+  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
+
+  <!-- Parse Utils -->
+  <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
+  <remove-node path="/api/namespace/class[@name='Decode']"/>
+
+  <!-- Part -->
+  <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
+
+  <!-- References -->
+  <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>
+  <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
+
+  <!-- Session -->
+
+  <!-- SessionSimple -->
+  <!-- Fix the GMimeSessionSimple properties which clash with GMimeSession's method names -->
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="name">SetIsOnlineFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="name">SetRequestPasswdFunc</attr>
+  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="name">SetForgetPasswdFunc</attr>
+
+  <!-- Stream IOVectors -->
+  <remove-node path="/api/namespace/object[@cname='GMimeStream']/method[@cname='g_mime_stream_writev']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeStreamIOVector']"/>
+
+  <!-- Stream -->
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']/*/parameter[@name='buf']" name="array">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Write']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Write']/*/parameter[@name='buf']" name="array">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='WriteString']" name="name">Write</attr>
+
+  <!-- StreamFile -->
+  <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">true</attr>
+
+  <!-- StreamMem -->
+  <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">true</attr>
+
+  <!-- Utils -->
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_decode_8bit']"/>
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_text_is_8bit']"/>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
 
-  <!-- Fix GMimeReferences -->
-  <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>
-  <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
-
-  <!-- Hide some problematic and nonsensical elements -->
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']" name="hidden">trye</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">true</attr>
-
-  <!-- We implement this class by hand, hide it. -->
-  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">true</attr>
-
-  <!-- Some functions return new objects with owned refs -->
-  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetGMimeStream']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMessagePart']/method[@name='GetMessage']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetSubpartFromContentId']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
-
-  <!-- Fix the GMimeSessionSimple properties which clash with GMimeSession's method names -->
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="name">SetIsOnlineFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="name">SetRequestPasswdFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="name">SetForgetPasswdFunc</attr>
 </metadata>
