@@ -191,4 +191,8 @@
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
 
+  <!-- Yencode -->
+  <!-- We've already moved the encoder/decoder functions into Encoding... -->
+  <remove-node path="/api/namespace/class[@name='Yencode']"/>
+
 </metadata>
