@@ -1,3 +1,10 @@
+2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-param.c (g_mime_param_next): New helper function for
+	bindings.
+	(g_mime_param_get_name): Same.
+	(g_mime_param_get_value): Same.
+
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* tests/test-html.c (main): Updated.

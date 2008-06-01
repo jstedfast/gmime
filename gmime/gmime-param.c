@@ -647,6 +647,57 @@ g_mime_param_destroy (GMimeParam *param)
 
 
 /**
+ * g_mime_param_next:
+ * @param: a #GMimeParam node
+ *
+ * Gets the next #GMimeParam node in the list.
+ *
+ * Returns: the next #GMimeParam node in the list.
+ **/
+const GMimeParam *
+g_mime_param_next (const GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->next;
+}
+
+
+/**
+ * g_mime_param_get_name:
+ * @param: a #GMimeParam
+ *
+ * Gets the name of the parameter.
+ *
+ * Returns: the name of the parameter.
+ **/
+const char *
+g_mime_param_get_name (const GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->name;
+}
+
+
+/**
+ * g_mime_param_get_value:
+ * @param: a #GMimeParam
+ *
+ * Gets the value of the parameter.
+ *
+ * Returns: the value of the parameter.
+ **/
+const char *
+g_mime_param_get_value (const GMimeParam *param)
+{
+	g_return_val_if_fail (param != NULL, NULL);
+	
+	return param->value;
+}
+
+
+/**
  * g_mime_param_append:
  * @params: param list
  * @name: new param name
@@ -798,7 +849,7 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static void
-param_list_format (GString *out, GMimeParam *param, gboolean fold)
+param_list_format (GString *out, const GMimeParam *param, gboolean fold)
 {
 	int used = out->len;
 	
@@ -919,7 +970,7 @@ param_list_format (GString *out, GMimeParam *param, gboolean fold)
  * Writes the params out to the string @string.
  **/
 void
-g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *str)
+g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *str)
 {
 	g_return_if_fail (str != NULL);
 	

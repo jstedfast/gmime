@@ -2245,6 +2245,12 @@
       <method name="Destroy" cname="g_mime_param_destroy">
         <return-type type="void" />
       </method>
+      <method name="GetName" cname="g_mime_param_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetValue" cname="g_mime_param_get_value">
+        <return-type type="const-char*" />
+      </method>
       <constructor cname="g_mime_param_new">
         <parameters>
           <parameter type="const-char*" name="name" />
@@ -2256,6 +2262,9 @@
           <parameter type="const-char*" name="str" />
         </parameters>
       </constructor>
+      <method name="Next" cname="g_mime_param_next">
+        <return-type type="const-GMimeParam*" />
+      </method>
       <method name="WriteToString" cname="g_mime_param_write_to_string">
         <return-type type="void" />
         <parameters>

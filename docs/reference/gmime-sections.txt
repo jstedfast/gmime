@@ -563,6 +563,9 @@ GMimeParam
 g_mime_param_new
 g_mime_param_new_from_string
 g_mime_param_destroy
+g_mime_param_next
+g_mime_param_get_name
+g_mime_param_get_value
 g_mime_param_append
 g_mime_param_append_param
 g_mime_param_write_to_string

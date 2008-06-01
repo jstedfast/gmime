@@ -48,10 +48,15 @@ GMimeParam *g_mime_param_new (const char *name, const char *value);
 GMimeParam *g_mime_param_new_from_string (const char *str);
 void g_mime_param_destroy (GMimeParam *param);
 
+const GMimeParam *g_mime_param_next (const GMimeParam *param);
+
 GMimeParam *g_mime_param_append (GMimeParam *params, const char *name, const char *value);
 GMimeParam *g_mime_param_append_param (GMimeParam *params, GMimeParam *param);
 
-void g_mime_param_write_to_string (GMimeParam *param, gboolean fold, GString *str);
+const char *g_mime_param_get_name (const GMimeParam *param);
+const char *g_mime_param_get_value (const GMimeParam *param);
+
+void g_mime_param_write_to_string (const GMimeParam *param, gboolean fold, GString *str);
 
 G_END_DECLS
 
