@@ -399,16 +399,16 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 
 
 /**
- * g_mime_stream_filter_new_with_stream:
+ * g_mime_stream_filter_new:
  * @stream: source stream
  *
- * Creates a new GMimeStreamFilter object using @stream as the source
+ * Creates a new #GMimeStreamFilter object using @stream as the source
  * stream.
  *
  * Returns: a new filter stream with @stream as its source.
  **/
 GMimeStream *
-g_mime_stream_filter_new_with_stream (GMimeStream *stream)
+g_mime_stream_filter_new (GMimeStream *stream)
 {
 	GMimeStreamFilter *filter;
 	

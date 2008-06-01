@@ -114,7 +114,7 @@ filter_copy (GMimeFilter *filter)
 {
 	GMimeFilterYenc *yenc = (GMimeFilterYenc *) filter;
 	
-	return g_mime_filter_yenc_new (yenc->direction);
+	return g_mime_filter_yenc_new (yenc->encode);
 }
 
 /* here we do all of the basic yEnc filtering */
@@ -127,8 +127,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	unsigned char *outbuf;
 	size_t newlen = 0;
 	
-	switch (yenc->direction) {
-	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+	if (yenc->encode) {
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
 		outbuf = (unsigned char *) filter->outbuf;
@@ -136,8 +135,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		newlen = g_mime_yencode_step (inbuf, len, outbuf, &yenc->state,
 					      &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
-		break;
-	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+	} else {
 		if (!(yenc->state & GMIME_YDECODE_STATE_DECODE)) {
 			register char *inptr, *inend;
 			size_t left;
@@ -212,12 +210,11 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		} else {
 			newlen = 0;
 		}
-		break;
 	}
 	
+	*outprespace = filter->outpre;
 	*out = filter->outbuf;
 	*outlen = newlen;
-	*outprespace = filter->outpre;
 }
 
 static void
@@ -229,8 +226,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	unsigned char *outbuf;
 	size_t newlen = 0;
 	
-	switch (yenc->direction) {
-	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+	if (yenc->encode) {
 		/* won't go to more than 2 * (x + 2) + 62 */
 		g_mime_filter_set_size (filter, (len + 2) * 2 + 62, FALSE);
 		outbuf = (unsigned char *) filter->outbuf;
@@ -238,8 +234,7 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		newlen = g_mime_yencode_close (inbuf, len, outbuf, &yenc->state,
 					       &yenc->pcrc, &yenc->crc);
 		g_assert (newlen <= (len + 2) * 2 + 62);
-		break;
-	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+	} else {
 		if ((yenc->state & GMIME_YDECODE_STATE_DECODE) && !(yenc->state & GMIME_YDECODE_STATE_END)) {
 			/* all yEnc headers have been found so we can now start decoding */
 			g_mime_filter_set_size (filter, len + 3, FALSE);
@@ -251,12 +246,11 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		} else {
 			newlen = 0;
 		}
-		break;
 	}
 	
+	*outprespace = filter->outpre;
 	*out = filter->outbuf;
 	*outlen = newlen;
-	*outprespace = filter->outpre;
 }
 
 /* should this 'flush' outstanding state/data bytes? */
@@ -265,14 +259,11 @@ filter_reset (GMimeFilter *filter)
 {
 	GMimeFilterYenc *yenc = (GMimeFilterYenc *) filter;
 	
-	switch (yenc->direction) {
-	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+	if (yenc->encode)
 		yenc->state = GMIME_YENCODE_STATE_INIT;
-		break;
-	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+	else
 		yenc->state = GMIME_YDECODE_STATE_INIT;
-		break;
-	}
+	
 	yenc->pcrc = GMIME_YENCODE_CRC_INIT;
 	yenc->crc = GMIME_YENCODE_CRC_INIT;
 }
@@ -280,30 +271,24 @@ filter_reset (GMimeFilter *filter)
 
 /**
  * g_mime_filter_yenc_new:
- * @direction: encode direction
+ * @encode: encode vs decode
  *
  * Creates a new yEnc filter.
  *
  * Returns: a new yEnc filter.
  **/
 GMimeFilter *
-g_mime_filter_yenc_new (GMimeFilterYencDirection direction)
+g_mime_filter_yenc_new (gboolean encode)
 {
 	GMimeFilterYenc *new;
 	
 	new = g_object_new (GMIME_TYPE_FILTER_YENC, NULL);
-	new->direction = direction;
+	new->encode = encode;
 	
-	switch (direction) {
-	case GMIME_FILTER_YENC_DIRECTION_ENCODE:
+	if (encode)
 		new->state = GMIME_YENCODE_STATE_INIT;
-		break;
-	case GMIME_FILTER_YENC_DIRECTION_DECODE:
+	else
 		new->state = GMIME_YDECODE_STATE_INIT;
-		break;
-	default:
-		g_assert_not_reached ();
-	}
 	
 	return (GMimeFilter *) new;
 }

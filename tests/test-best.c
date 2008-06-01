@@ -41,7 +41,7 @@ int main (int argc, char **argv)
 	g_mime_init (0);
 	
 	stream = g_mime_stream_fs_new (fd);
-	istream = g_mime_stream_filter_new_with_stream (stream);
+	istream = g_mime_stream_filter_new (stream);
 	g_object_unref (stream);
 	best = (GMimeFilterBest *) g_mime_filter_best_new (GMIME_FILTER_BEST_CHARSET |
 							   GMIME_FILTER_BEST_ENCODING);

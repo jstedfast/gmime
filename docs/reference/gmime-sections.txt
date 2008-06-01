@@ -239,7 +239,7 @@ GMIME_STREAM_NULL_GET_CLASS
 <SECTION>
 <FILE>gmime-stream-filter</FILE>
 GMimeStreamFilter
-g_mime_stream_filter_new_with_stream
+g_mime_stream_filter_new
 g_mime_stream_filter_add
 g_mime_stream_filter_remove
 
@@ -498,6 +498,14 @@ GMIME_FILTER_WINDOWS_GET_CLASS
 
 <SECTION>
 <FILE>gmime-filter-yenc</FILE>
+GMimeFilterYenc
+g_mime_filter_yenc_new
+g_mime_filter_yenc_set_state
+g_mime_filter_yenc_set_crc
+g_mime_filter_yenc_get_crc
+g_mime_filter_yenc_get_pcrc
+
+<SUBSECTION>
 GMIME_YENCODE_CRC_INIT
 GMIME_YENCODE_CRC_FINAL
 GMIME_YENCODE_STATE_INIT
@@ -511,13 +519,6 @@ GMIME_YDECODE_STATE_PART
 g_mime_ydecode_step
 g_mime_yencode_step
 g_mime_yencode_close
-GMimeFilterYenc
-GMimeFilterYencDirection
-g_mime_filter_yenc_new
-g_mime_filter_yenc_set_state
-g_mime_filter_yenc_set_crc
-g_mime_filter_yenc_get_crc
-g_mime_filter_yenc_get_pcrc
 
 <SUBSECTION Private>
 g_mime_filter_yenc_get_type

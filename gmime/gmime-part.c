@@ -339,8 +339,8 @@ write_content (GMimePart *part, GMimeStream *stream)
 			/* fall thru... */
 		case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 		case GMIME_CONTENT_ENCODING_BASE64:
+			filtered_stream = g_mime_stream_filter_new (stream);
 			filter = g_mime_filter_basic_new (part->encoding, TRUE);
-			filtered_stream = g_mime_stream_filter_new_with_stream (stream);
 			g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 			g_object_unref (filter);
 			break;
@@ -596,7 +596,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	if (!content_md5) {
 		/* compute a md5sum */
 		stream = g_mime_stream_null_new ();
-		filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
+		filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new (stream);
 		g_object_unref (stream);
 		
 		content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);
@@ -661,7 +661,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 		return FALSE;
 	
 	stream = g_mime_stream_null_new ();
-	filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = (GMimeStreamFilter *) g_mime_stream_filter_new (stream);
 	g_object_unref (stream);
 	
 	content_type = g_mime_object_get_content_type ((GMimeObject *) mime_part);

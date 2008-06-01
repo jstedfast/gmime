@@ -258,7 +258,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = g_mime_stream_filter_new (stream);
 	
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
@@ -404,7 +404,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (wrapper);
 	
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = g_mime_stream_filter_new (stream);
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_DECODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);

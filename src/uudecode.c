@@ -201,7 +201,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		istream = g_mime_stream_file_new (fp);
 		ostream = g_mime_stream_fs_new (fd);
-		fstream = g_mime_stream_filter_new_with_stream (ostream);
+		fstream = g_mime_stream_filter_new (ostream);
 		filter = g_mime_filter_basic_new (encoding, FALSE);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 		g_object_unref (ostream);

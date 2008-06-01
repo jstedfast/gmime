@@ -32,7 +32,7 @@ int main (int argc, char **argv)
 	g_mime_init (0);
 	
 	fstream = g_mime_stream_file_new (stdout);
-	ostream = g_mime_stream_filter_new_with_stream (fstream);
+	ostream = g_mime_stream_filter_new (fstream);
 	g_object_unref (fstream);
 	html = g_mime_filter_html_new (GMIME_FILTER_HTML_CONVERT_NL |
 				       GMIME_FILTER_HTML_CONVERT_SPACES |

@@ -38,19 +38,6 @@ typedef struct _GMimeFilterYencClass GMimeFilterYencClass;
 
 
 /**
- * GMimeFilterYencDirection:
- * @GMIME_FILTER_YENC_DIRECTION_ENCODE: yEncode.
- * @GMIME_FILTER_YENC_DIRECTION_DECODE: yDecode.
- *
- * The direction the #GMimeFilterYenc should convert.
- **/
-typedef enum {
-	GMIME_FILTER_YENC_DIRECTION_ENCODE,
-	GMIME_FILTER_YENC_DIRECTION_DECODE
-} GMimeFilterYencDirection;
-
-
-/**
  * GMIME_YDECODE_STATE_INIT:
  *
  * Initial state for the g_mime_ydecode_step() function.
@@ -137,7 +124,7 @@ typedef enum {
 struct _GMimeFilterYenc {
 	GMimeFilter parent_object;
 	
-	GMimeFilterYencDirection direction;
+	gboolean encode;
 	
 	int part;
 	
@@ -154,7 +141,7 @@ struct _GMimeFilterYencClass {
 
 GType g_mime_filter_yenc_get_type (void);
 
-GMimeFilter *g_mime_filter_yenc_new (GMimeFilterYencDirection direction);
+GMimeFilter *g_mime_filter_yenc_new (gboolean encode);
 
 void g_mime_filter_yenc_set_state (GMimeFilterYenc *yenc, int state);
 void g_mime_filter_yenc_set_crc (GMimeFilterYenc *yenc, guint32 crc);

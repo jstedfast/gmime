@@ -248,7 +248,7 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
 	case GMIME_CONTENT_ENCODING_UUENCODE:
 		filter = g_mime_filter_basic_new (wrapper->encoding, FALSE);
-		filtered_stream = g_mime_stream_filter_new_with_stream (wrapper->stream);
+		filtered_stream = g_mime_stream_filter_new (wrapper->stream);
 		g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), filter);
 		g_object_unref (filter);
 		break;

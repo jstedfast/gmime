@@ -1,5 +1,32 @@
 2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* tests/test-html.c (main): Updated.
+
+	* tests/test-best.c (main): Updated.
+
+	* src/uuencode.c (uuencode): Updated.
+
+	* gmime/gmime-part.c: Updated for filter stream change.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_sign):
+	Updated for filter stream change.
+
+	* gmime/gmime-multipart-encrypted.c: Updated for filter stream
+	change.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_new): Updated for filter
+	stream change.
+
+	* gmime/gmime-filter-yenc.c (g_mime_filter_yenc_new): Now takes a
+	bool encode argument rather than a GMimeFilterYencDirection - no
+	sense making this more complicated than it needs to be.
+
+	* gmime/gmime-stream-filter.c (g_mime_stream_filter_new): Renamed
+	from g_mime_stream_filter_new_with_stream(). This is the only
+	constructor, so should be named _new().
+
+2008-05-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.3.1

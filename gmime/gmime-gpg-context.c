@@ -365,8 +365,8 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 		GMimeStream *fstream;
 		GMimeFilter *filter;
 		
+		fstream = g_mime_stream_filter_new (stream);
 		filter = g_mime_filter_charset_new (charset, "UTF-8");
-		fstream = g_mime_stream_filter_new_with_stream (stream);
 		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 		g_object_unref (stream);
 		g_object_unref (filter);

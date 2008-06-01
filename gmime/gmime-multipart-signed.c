@@ -308,7 +308,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc3156, section 3 - second note */
 	from_filter = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ARMOR);
@@ -326,7 +326,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_mime_stream_reset (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = g_mime_stream_filter_new (stream);
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
 					      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
 	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
@@ -457,7 +457,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	/* get the content stream */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new_with_stream (stream);
+	filtered_stream = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
 	crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,

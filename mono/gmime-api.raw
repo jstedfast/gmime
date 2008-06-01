@@ -51,10 +51,6 @@
       <member cname="GMIME_FILTER_GZIP_MODE_ZIP" name="Zip" />
       <member cname="GMIME_FILTER_GZIP_MODE_UNZIP" name="Unzip" />
     </enum>
-    <enum name="FilterYencDirection" cname="GMimeFilterYencDirection" type="enum">
-      <member cname="GMIME_FILTER_YENC_DIRECTION_ENCODE" name="Encode" />
-      <member cname="GMIME_FILTER_YENC_DIRECTION_DECODE" name="Decode" />
-    </enum>
     <enum name="SeekWhence" cname="GMimeSeekWhence" type="enum">
       <member cname="GMIME_STREAM_SEEK_SET" name="Set" value="SEEK_SET" />
       <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" value="SEEK_CUR" />
@@ -588,7 +584,7 @@
       </method>
     </object>
     <object name="FilterYenc" cname="GMimeFilterYenc" parent="GMimeFilter">
-      <field name="Direction" cname="direction" type="GMimeFilterYencDirection" />
+      <field name="Encode" cname="encode" type="gboolean" />
       <field name="Part" cname="part" type="int" />
       <field name="State" cname="state" type="int" />
       <field name="Pcrc" cname="pcrc" type="guint32" />
@@ -604,7 +600,7 @@
       </method>
       <constructor cname="g_mime_filter_yenc_new">
         <parameters>
-          <parameter type="GMimeFilterYencDirection" name="direction" />
+          <parameter type="gboolean" name="encode" />
         </parameters>
       </constructor>
       <method name="SetCrc" cname="g_mime_filter_yenc_set_crc">
@@ -1704,7 +1700,7 @@
       <method name="GetType" cname="g_mime_stream_filter_get_type" shared="true">
         <return-type type="GType" />
       </method>
-      <constructor cname="g_mime_stream_filter_new_with_stream">
+      <constructor cname="g_mime_stream_filter_new">
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
         </parameters>

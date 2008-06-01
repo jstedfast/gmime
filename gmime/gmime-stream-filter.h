@@ -53,7 +53,7 @@ struct _GMimeStreamFilterClass {
 
 GType g_mime_stream_filter_get_type (void);
 
-GMimeStream *g_mime_stream_filter_new_with_stream (GMimeStream *stream);
+GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 
 int g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter);
 void g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id);
