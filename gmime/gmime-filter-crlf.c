@@ -111,26 +111,20 @@ filter_copy (GMimeFilter *filter)
 {
 	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
 	
-	return g_mime_filter_crlf_new (crlf->direction, crlf->mode);
+	return g_mime_filter_crlf_new (crlf->encode, crlf->dots);
 }
 
 static void
-filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-	       char **out, size_t *outlen, size_t *outprespace)
+filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterCRLF *crlf = (GMimeFilterCRLF *) filter;
-	register const char *inptr;
-	const char *inend;
-	gboolean do_dots;
+	register const char *inptr = inbuf;
+	const char *inend = inbuf + inlen;
 	char *outptr;
 	
-	do_dots = crlf->mode == GMIME_FILTER_CRLF_MODE_CRLF_DOTS;
-	
-	inptr = in;
-	inend = in + len;
-	
-	if (crlf->direction == GMIME_FILTER_CRLF_ENCODE) {
-		g_mime_filter_set_size (filter, 3 * len, FALSE);
+	if (crlf->encode) {
+		g_mime_filter_set_size (filter, 3 * inlen, FALSE);
 		
 		outptr = filter->outbuf;
 		while (inptr < inend) {
@@ -142,7 +136,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 					*outptr++ = '\r';
 				crlf->saw_cr = FALSE;
 			} else {
-				if (do_dots && *inptr == '.' && crlf->saw_lf)
+				if (crlf->dots && *inptr == '.' && crlf->saw_lf)
 					*outptr++ = '.';
 				
 				crlf->saw_cr = FALSE;
@@ -152,7 +146,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			*outptr++ = *inptr++;
 		}
 	} else {
-		g_mime_filter_set_size (filter, len + 1, FALSE);
+		g_mime_filter_set_size (filter, inlen + 1, FALSE);
 		
 		outptr = filter->outbuf;
 		while (inptr < inend) {
@@ -173,7 +167,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				*outptr++ = *inptr;
 			}
 			
-			if (do_dots && *inptr == '.') {
+			if (crlf->dots && *inptr == '.') {
 				if (crlf->saw_lf) {
 					crlf->saw_dot = TRUE;
 					crlf->saw_lf = FALSE;
@@ -189,17 +183,17 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 	}
 	
-	*out = filter->outbuf;
 	*outlen = outptr - filter->outbuf;
 	*outprespace = filter->outpre;
+	*outbuf = filter->outbuf;
 }
 
 static void 
-filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-		 char **out, size_t *outlen, size_t *outprespace)
+filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+		 char **outbuf, size_t *outlen, size_t *outprespace)
 {
-	if (in && len)
-		filter_filter (filter, in, len, prespace, out, outlen, outprespace);
+	if (inbuf && inlen)
+		filter_filter (filter, inbuf, inlen, prespace, outbuf, outlen, outprespace);
 }
 
 static void
@@ -215,21 +209,32 @@ filter_reset (GMimeFilter *filter)
 
 /**
  * g_mime_filter_crlf_new:
- * @direction: encode direction
- * @mode: crlf or crlf & dot mode
+ * @encode: %TRUE if the filter should encode or %FALSE otherwise
+ * @dots: encode/decode dots (as for SMTP)
  *
- * Creates a new GMimeFilterCRLF filter.
+ * Creates a new #GMimeFilterCRLF filter.
  *
- * Returns: a new crlf(/dot) filter.
+ * If @encode is %TRUE, then lone line-feeds ('\n') will be 'encoded'
+ * into the canonical CRLF end-of-line sequence ("\r\n") otherwise
+ * CRLF sequences will be 'decoded' into the UNIX line-ending form
+ * ('\n').
+ *
+ * The @dots parameter tells the filter whether or not it should
+ * encode or decode lines beginning with a dot ('.'). If both @encode
+ * and @dots are %TRUE, then a '.' at the beginning of a line will be
+ * 'encoded' into "..". If @encode is %FALSE, then ".." at the
+ * beginning of a line will be decoded into a single '.'.
+ *
+ * Returns: a new #GMimeFilterCRLF filter.
  **/
 GMimeFilter *
-g_mime_filter_crlf_new (GMimeFilterCRLFDirection direction, GMimeFilterCRLFMode mode)
+g_mime_filter_crlf_new (gboolean encode, gboolean dots)
 {
 	GMimeFilterCRLF *new;
 	
 	new = g_object_new (GMIME_TYPE_FILTER_CRLF, NULL);
-	new->direction = direction;
-	new->mode = mode;
+	new->encode = encode;
+	new->dots = dots;
 	
 	return (GMimeFilter *) new;
 }

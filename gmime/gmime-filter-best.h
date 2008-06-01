@@ -39,11 +39,31 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterBest GMimeFilterBest;
 typedef struct _GMimeFilterBestClass GMimeFilterBestClass;
 
-enum {
-	GMIME_FILTER_BEST_CHARSET      = (1 << 0),
-	GMIME_FILTER_BEST_ENCODING     = (1 << 1)
-};
+/**
+ * GMimeFilterBestFlags:
+ * @GMIME_FILTER_BEST_CHARSET: Enable best-charset detection.
+ * @GMIME_FILTER_BEST_ENCODING: Enable best-encoding detection.
+ *
+ * Bit flags to enable charset and/or encoding scanning to make
+ * educated guesses as to what the best charset and/or encodings to
+ * use for the content passed through the filter.
+ **/
+typedef enum {
+	GMIME_FILTER_BEST_CHARSET  = (1 << 0),
+	GMIME_FILTER_BEST_ENCODING = (1 << 1)
+} GMimeFilterBestFlags;
 
+
+/**
+ * GMimeBestEncoding:
+ * @GMIME_BEST_ENCODING_7BIT: The stream data must fit within the 7bit ASCII range.
+ * @GMIME_BEST_ENCODING_8BIT: The stream data may have bytes with the high bit set, but no null bytes.
+ * @GMIME_BEST_ENCODING_BINARY: The stream may contain any binary data.
+ *
+ * Used with g_mime_filter_best_encoding() as the 'required'
+ * argument. These values provide a means of letting the filter know
+ * what the encoding requirements are for the stream.
+ **/
 typedef enum {
 	GMIME_BEST_ENCODING_7BIT,
 	GMIME_BEST_ENCODING_8BIT,
@@ -53,7 +73,7 @@ typedef enum {
 struct _GMimeFilterBest {
 	GMimeFilter parent_object;
 	
-	unsigned int flags;
+	GMimeFilterBestFlags flags;
 	
 	/* for best charset detection */
 	GMimeCharset charset;
@@ -82,7 +102,7 @@ struct _GMimeFilterBestClass {
 
 GType g_mime_filter_best_get_type (void);
 
-GMimeFilter *g_mime_filter_best_new (unsigned int flags);
+GMimeFilter *g_mime_filter_best_new (GMimeFilterBestFlags flags);
 
 const char *g_mime_filter_best_charset (GMimeFilterBest *best);
 

@@ -603,9 +603,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 		if (g_mime_content_type_is_type (content_type, "text", "*")) {
 			GMimeFilter *crlf_filter;
 			
-			crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
-							      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-			
+			crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
 			g_mime_stream_filter_add (filtered_stream, crlf_filter);
 			g_object_unref (crlf_filter);
 		}
@@ -668,9 +666,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 	if (g_mime_content_type_is_type (content_type, "text", "*")) {
 		GMimeFilter *crlf_filter;
 		
-		crlf_filter = g_mime_filter_crlf_new (GMIME_FILTER_CRLF_ENCODE,
-						      GMIME_FILTER_CRLF_MODE_CRLF_ONLY);
-		
+		crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
 		g_mime_stream_filter_add (filtered_stream, crlf_filter);
 		g_object_unref (crlf_filter);
 	}

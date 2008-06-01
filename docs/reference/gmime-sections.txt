@@ -301,6 +301,7 @@ GMIME_FILTER_BASIC_GET_CLASS
 <FILE>gmime-filter-best</FILE>
 GMimeFilterBest
 GMimeBestEncoding
+GMimeFilterBestFlags
 g_mime_filter_best_new
 g_mime_filter_best_charset
 g_mime_filter_best_encoding
@@ -339,8 +340,6 @@ GMIME_FILTER_CHARSET_GET_CLASS
 <SECTION>
 <FILE>gmime-filter-crlf</FILE>
 GMimeFilterCRLF
-GMimeFilterCRLFDirection
-GMimeFilterCRLFMode
 g_mime_filter_crlf_new
 
 <SUBSECTION Private>

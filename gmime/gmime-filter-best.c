@@ -118,24 +118,25 @@ filter_copy (GMimeFilter *filter)
 }
 
 static void
-filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
-	       char **out, size_t *outlen, size_t *outprespace)
+filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
+	       char **outbuf, size_t *outlen, size_t *outprespace)
 {
 	GMimeFilterBest *best = (GMimeFilterBest *) filter;
 	register unsigned char *inptr, *inend;
+	register unsigned char c;
 	size_t left;
 	
 	if (best->flags & GMIME_FILTER_BEST_CHARSET)
-		g_mime_charset_step (&best->charset, in, len);
+		g_mime_charset_step (&best->charset, inbuf, inlen);
 	
 	if (best->flags & GMIME_FILTER_BEST_ENCODING) {
-		best->total += len;
+		best->total += inlen;
 		
-		inptr = (unsigned char *) in;
-		inend = inptr + len;
+		inptr = (unsigned char *) inbuf;
+		inend = inptr + inlen;
 		
 		while (inptr < inend) {
-			register unsigned char c = '\0';
+			c = 0;
 			
 			if (best->midline) {
 				while (inptr < inend && (c = *inptr++) != '\n') {
@@ -151,9 +152,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				}
 				
 				if (c == '\n') {
+					best->maxline = MAX (best->maxline, best->linelen);
 					best->startline = TRUE;
 					best->midline = FALSE;
-					best->maxline = MAX (best->maxline, best->linelen);
 				}
 			}
 			
@@ -177,7 +178,6 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				} else {
 					if (!strncmp ((char *) inptr, "From ", 5)) {
 						best->hadfrom = TRUE;
-						
 						inptr += 5;
 					}
 				}
@@ -188,9 +188,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 	}
 	
-	*out = in;
-	*outlen = len;
 	*outprespace = prespace;
+	*outlen = inlen;
+	*outbuf = inbuf;
 }
 
 static void 
@@ -240,7 +240,7 @@ filter_reset (GMimeFilter *filter)
  * Returns: a new best filter with flags @flags.
  **/
 GMimeFilter *
-g_mime_filter_best_new (unsigned int flags)
+g_mime_filter_best_new (GMimeFilterBestFlags flags)
 {
 	GMimeFilterBest *new;
 	

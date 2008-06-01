@@ -34,13 +34,9 @@
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
     </enum>
-    <enum name="FilterCRLFDirection" cname="GMimeFilterCRLFDirection" type="enum">
-      <member cname="GMIME_FILTER_CRLF_ENCODE" name="Encode" />
-      <member cname="GMIME_FILTER_CRLF_DECODE" name="Decode" />
-    </enum>
-    <enum name="FilterCRLFMode" cname="GMimeFilterCRLFMode" type="enum">
-      <member cname="GMIME_FILTER_CRLF_MODE_CRLF_DOTS" name="Dots" />
-      <member cname="GMIME_FILTER_CRLF_MODE_CRLF_ONLY" name="Only" />
+    <enum name="FilterBestFlags" cname="GMimeFilterBestFlags" type="flags">
+      <member cname="GMIME_FILTER_BEST_CHARSET" name="Charset" value="1 &lt;&lt; 0" />
+      <member cname="GMIME_FILTER_BEST_ENCODING" name="Encoding" value="1 &lt;&lt; 1" />
     </enum>
     <enum name="FilterFromMode" cname="GMimeFilterFromMode" type="enum">
       <member cname="GMIME_FILTER_FROM_MODE_DEFAULT" name="Default" />
@@ -432,7 +428,7 @@
       </constructor>
     </object>
     <object name="FilterBest" cname="GMimeFilterBest" parent="GMimeFilter">
-      <field name="Flags" cname="flags" type="unsigned int" />
+      <field name="Flags" cname="flags" type="GMimeFilterBestFlags" />
       <field name="Charset" cname="charset" type="GMimeCharset" />
       <field name="Count0" cname="count0" type="unsigned int" />
       <field name="Count8" cname="count8" type="unsigned int" />
@@ -458,7 +454,7 @@
       </method>
       <constructor cname="g_mime_filter_best_new">
         <parameters>
-          <parameter type="unsigned-int" name="flags" />
+          <parameter type="GMimeFilterBestFlags" name="flags" />
         </parameters>
       </constructor>
     </object>
@@ -477,8 +473,8 @@
       </constructor>
     </object>
     <object name="FilterCRLF" cname="GMimeFilterCRLF" parent="GMimeFilter">
-      <field name="Direction" cname="direction" type="GMimeFilterCRLFDirection" />
-      <field name="Mode" cname="mode" type="GMimeFilterCRLFMode" />
+      <field name="Encode" cname="encode" type="gboolean" />
+      <field name="Dots" cname="dots" type="gboolean" />
       <field name="SawCr" cname="saw_cr" type="gboolean" />
       <field name="SawLf" cname="saw_lf" type="gboolean" />
       <field name="SawDot" cname="saw_dot" type="gboolean" />
@@ -487,8 +483,8 @@
       </method>
       <constructor cname="g_mime_filter_crlf_new">
         <parameters>
-          <parameter type="GMimeFilterCRLFDirection" name="direction" />
-          <parameter type="GMimeFilterCRLFMode" name="mode" />
+          <parameter type="gboolean" name="encode" />
+          <parameter type="gboolean" name="dots" />
         </parameters>
       </constructor>
     </object>

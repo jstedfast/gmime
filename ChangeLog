@@ -1,5 +1,21 @@
 2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-part.c: Updated for GMimeFilterCRLF changes.
+
+	* gmime/gmime-multipart-signed.c: Updated for GMimeFilterCRLF
+	changes.
+
+	* gmime/gmime-multipart-encrypted.c: Updated for GMimeFilterCRLF
+	changes.
+
+	* gmime/gmime-filter-crlf.c (g_mime_filter_crlf_new): No longer
+	takes 2 enum arguments, rather it now takes 2 bool arguments which
+	makes the API simpler to understand.
+
+	* gmime/gmime-filter-best.c (g_mime_filter_best_new): Changed the
+	unsigned int flags argument to be an enum so developers could more
+	easily figure out what the argument was.
+
 	* gmime/gmime-param.c (g_mime_param_next): New helper function for
 	bindings.
 	(g_mime_param_get_name): Same.
