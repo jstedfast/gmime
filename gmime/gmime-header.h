@@ -28,14 +28,25 @@
 G_BEGIN_DECLS
 
 /**
+ * GMimeHeaderList:
+ *
+ * A message or mime-part header.
+ **/
+typedef struct _GMimeHeaderList GMimeHeaderList;
+
+
+/**
  * GMimeHeaderIter:
  *
  * A message or mime-part header iterator.
  **/
 typedef struct _GMimeHeaderIter GMimeHeaderIter;
 
-GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
+GMimeHeaderIter *g_mime_header_iter_new (void);
 void g_mime_header_iter_free (GMimeHeaderIter *iter);
+
+GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
+gboolean g_mime_header_iter_copy_to (GMimeHeaderIter *src, GMimeHeaderIter *dest);
 
 gboolean g_mime_header_iter_equal (GMimeHeaderIter *iter1, GMimeHeaderIter *iter2);
 
@@ -52,14 +63,6 @@ const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
 const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
-
-
-/**
- * GMimeHeaderList:
- *
- * A message or mime-part header.
- **/
-typedef struct _GMimeHeaderList GMimeHeaderList;
 
 
 /**
@@ -86,7 +89,7 @@ void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const c
 const char *g_mime_header_list_get (const GMimeHeaderList *headers, const char *name);
 gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
 
-GMimeHeaderIter *g_mime_header_list_get_iter (GMimeHeaderList *headers);
+gboolean g_mime_header_list_get_iter (GMimeHeaderList *headers, GMimeHeaderIter *iter);
 
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);

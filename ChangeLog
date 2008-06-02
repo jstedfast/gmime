@@ -1,5 +1,15 @@
 2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-header.c (g_mime_header_iter_new): New function to
+	allocate an iter on the heap.
+	(g_mime_header_iter_copy_to): New copy function so that you can
+	copy to a pre-allocated destination iter.
+	(g_mime_header_list_get_iter): Changed the API a bit. Instead of
+	returning a newly allocated iter, instead return bool and take an
+	iter arg to initialize.
+
+2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
+
 	* tools/gmime-port-2-2-to-2-4.sh: New helper tool to port existing
 	GMime 2.0 and 2.2 based applications over to GMime 2.4.
 

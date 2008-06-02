@@ -575,8 +575,10 @@ g_mime_param_write_to_string
 GMimeHeaderIter
 GMimeHeaderList
 GMimeHeaderWriter
-g_mime_header_iter_copy
+g_mime_header_iter_new
 g_mime_header_iter_free
+g_mime_header_iter_copy
+g_mime_header_iter_copy_to
 g_mime_header_iter_equal
 g_mime_header_iter_first
 g_mime_header_iter_last

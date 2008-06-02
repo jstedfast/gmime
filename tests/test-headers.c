@@ -78,11 +78,15 @@ test_iter_forward_back (void)
 	guint i;
 	
 	list = header_list_new ();
-	iter = g_mime_header_list_get_iter (list);
+	
+	iter = g_mime_header_iter_new ();
 	
 	/* make sure initial iter is valid */
 	testsuite_check ("initial iter");
 	try {
+		if (!g_mime_header_list_get_iter (list, iter))
+			throw (exception_new ("get_iter() failed"));
+		
 		if (!g_mime_header_iter_is_valid (iter))
 			throw (exception_new ("invalid iter"));
 		
@@ -175,7 +179,8 @@ test_iter_remove_all (void)
 	guint i = 0;
 	
 	list = header_list_new ();
-	iter = g_mime_header_list_get_iter (list);
+	iter = g_mime_header_iter_new ();
+	g_mime_header_list_get_iter (list, iter);
 	
 	testsuite_check ("removing all headers");
 	try {
@@ -193,9 +198,7 @@ test_iter_remove_all (void)
 		testsuite_check_failed ("removing all headers: %s", ex->message);
 	} finally;
 	
-	g_mime_header_iter_free (iter);
-	
-	iter = g_mime_header_list_get_iter (list);
+	g_mime_header_list_get_iter (list, iter);
 	
 	testsuite_check ("empty list iter");
 	try {
@@ -221,7 +224,8 @@ test_iter_remove (void)
 	guint i;
 	
 	list = header_list_new ();
-	iter1 = g_mime_header_list_get_iter (list);
+	iter1 = g_mime_header_iter_new ();
+	g_mime_header_list_get_iter (list, iter1);
 	
 	testsuite_check ("iter copying");
 	try {

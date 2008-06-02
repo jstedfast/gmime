@@ -395,8 +395,9 @@ message_partial_message_new (GMimeMessage *base)
 	message = g_mime_message_new (FALSE);
 	
 	list = ((GMimeObject *) base)->headers;
-	iter = g_mime_header_list_get_iter (list);
-	if (g_mime_header_iter_is_valid (iter)) {
+	iter = g_mime_header_iter_new ();
+	
+	if (g_mime_header_list_get_iter (list, iter)) {
 		do {
 			name = g_mime_header_iter_get_name (iter);
 			value = g_mime_header_iter_get_value (iter);
