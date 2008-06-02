@@ -84,23 +84,24 @@ HISTORY
 -------
 
 As a developer and user of Electronic Mail clients, I had come to
-realize that the vast majority of E-Mail client solutions had
-less-than-satisfactory MIME implementations. More often than not these
-E-Mail clients created broken MIME messages and/or would incorrectly
-try to parse a MIME message thus subtracting from the full benefits
-that MIME was meant to provide. GMime is meant to address this issue
-by following the MIME specification as closely as possible while also
-providing programmers with an extremely easy to use application
-programming interface (API).
+realize that the vast majority of E-Mail client (and server) software
+had less-than-satisfactory MIME implementations. More often than not
+these E-Mail clients created broken MIME messages and/or would
+incorrectly try to parse a MIME message thus subtracting from the full
+benefits that MIME was meant to provide. GMime is meant to address
+this issue by following the MIME specification as closely as possible
+while also providing programmers with an extremely easy to use
+high-level application programming interface (API).
 
 
 OBTAINING GMIME
 ---------------
 
 Sources to GMime may be obtained from:
-  http://spruce.sourceforge.net/gmime/sources/
-or
+  http://download.gnome.org/pub/GNOME/sources/gmime/
   ftp://ftp.gnome.org/pub/GNOME/sources/gmime/
+or
+  http://spruce.sourceforge.net/gmime/sources/
 
 Information regarding GMime may be obtained from the Spruce home page:
   http://spruce.sourceforge.net/gmime/
@@ -131,7 +132,11 @@ This is the README file for GMime.  Additional documentation related to
 development using GMime has been included within the source release
 of GMime.
 
-  doc/                  Contains SGML and HTML versions of the GMime manual
+  docs/reference/       Contains SGML and HTML versions of the GMime
+                        reference manual
+
+  docs/tutorial/        Contains SGML and HTML versions of the GMime
+                        tutorial
 
   rfc/                  Contains text versions of the RFCs for the
                         specifications GMime supports
