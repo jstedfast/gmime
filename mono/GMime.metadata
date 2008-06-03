@@ -4,10 +4,12 @@
   <attr path="/api/namespace/*/field[@type='size_t']" name="type">guint32</attr>
   <attr path="/api/namespace/*/*/return-type[@type='size_t']" name="type">guint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='size_t']" name="type">guint32</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='size_t*']" name="type">guint32*</attr>
 
   <attr path="/api/namespace/*/field[@type='ssize_t']" name="type">gint32</attr>
   <attr path="/api/namespace/*/*/return-type[@type='ssize_t']" name="type">gint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
+  <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t*']" name="type">gint32*</attr>
 
   <!-- Global / Locale -->
   <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
@@ -105,8 +107,6 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inlen']" name="name">n_inbuf</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="type">guint8**</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outbuf']" name="array">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outlen']" name="pass_as">out</attr>
-  <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='outprespace']" name="pass_as">out</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='data']" name="name">buf</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="array">true</attr>
