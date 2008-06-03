@@ -390,22 +390,19 @@ message_partial_message_new (GMimeMessage *base)
 	const char *name, *value;
 	GMimeMessage *message;
 	GMimeHeaderList *list;
-	GMimeHeaderIter *iter;
+	GMimeHeaderIter iter;
 	
 	message = g_mime_message_new (FALSE);
 	
 	list = ((GMimeObject *) base)->headers;
-	iter = g_mime_header_iter_new ();
 	
-	if (g_mime_header_list_get_iter (list, iter)) {
+	if (g_mime_header_list_get_iter (list, &iter)) {
 		do {
-			name = g_mime_header_iter_get_name (iter);
-			value = g_mime_header_iter_get_value (iter);
+			name = g_mime_header_iter_get_name (&iter);
+			value = g_mime_header_iter_get_value (&iter);
 			g_mime_object_append_header ((GMimeObject *) message, name, value);
-		} while (g_mime_header_iter_next (iter));
+		} while (g_mime_header_iter_next (&iter));
 	}
-	
-	g_mime_header_iter_free (iter);
 	
 	return message;
 }

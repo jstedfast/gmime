@@ -74,24 +74,22 @@ test_iter_forward_back (void)
 {
 	const char *name, *value;
 	GMimeHeaderList *list;
-	GMimeHeaderIter *iter;
+	GMimeHeaderIter iter;
 	guint i;
 	
 	list = header_list_new ();
 	
-	iter = g_mime_header_iter_new ();
-	
 	/* make sure initial iter is valid */
 	testsuite_check ("initial iter");
 	try {
-		if (!g_mime_header_list_get_iter (list, iter))
+		if (!g_mime_header_list_get_iter (list, &iter))
 			throw (exception_new ("get_iter() failed"));
 		
-		if (!g_mime_header_iter_is_valid (iter))
+		if (!g_mime_header_iter_is_valid (&iter))
 			throw (exception_new ("invalid iter"));
 		
-		name = g_mime_header_iter_get_name (iter);
-		value = g_mime_header_iter_get_value (iter);
+		name = g_mime_header_iter_get_name (&iter);
+		value = g_mime_header_iter_get_value (&iter);
 		
 		if (strcmp (initial[0].name, name) != 0 || strcmp (initial[0].value, value) != 0)
 			throw (exception_new ("resulted in unexpected header"));
@@ -104,14 +102,14 @@ test_iter_forward_back (void)
 	for (i = 1; i < G_N_ELEMENTS (initial); i++) {
 		testsuite_check ("next iter[%u]", i);
 		try {
-			if (!g_mime_header_iter_next (iter))
+			if (!g_mime_header_iter_next (&iter))
 				throw (exception_new ("failed to advance"));
 			
-			if (!g_mime_header_iter_is_valid (iter))
+			if (!g_mime_header_iter_is_valid (&iter))
 				throw (exception_new ("advanced but is invalid"));
 			
-			name = g_mime_header_iter_get_name (iter);
-			value = g_mime_header_iter_get_value (iter);
+			name = g_mime_header_iter_get_name (&iter);
+			value = g_mime_header_iter_get_value (&iter);
 			
 			if (strcmp (initial[i].name, name) != 0 ||
 			    strcmp (initial[i].value, value) != 0)
@@ -125,7 +123,7 @@ test_iter_forward_back (void)
 	/* make sure trying to advance past the last header fails */
 	testsuite_check ("iter->next past end of headers");
 	try {
-		if (g_mime_header_iter_next (iter))
+		if (g_mime_header_iter_next (&iter))
 			throw (exception_new ("should not have worked"));
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -137,14 +135,14 @@ test_iter_forward_back (void)
 	while (i > 0) {
 		testsuite_check ("prev iter[%u]", i);
 		try {
-			if (!g_mime_header_iter_prev (iter))
+			if (!g_mime_header_iter_prev (&iter))
 				throw (exception_new ("failed to advance"));
 			
-			if (!g_mime_header_iter_is_valid (iter))
+			if (!g_mime_header_iter_is_valid (&iter))
 				throw (exception_new ("advanced but is invalid"));
 			
-			name = g_mime_header_iter_get_name (iter);
-			value = g_mime_header_iter_get_value (iter);
+			name = g_mime_header_iter_get_name (&iter);
+			value = g_mime_header_iter_get_value (&iter);
 			
 			if (strcmp (initial[i - 1].name, name) != 0 ||
 			    strcmp (initial[i - 1].value, value) != 0)
@@ -160,37 +158,36 @@ test_iter_forward_back (void)
 	/* make sure trying to advance prev of the first header fails */
 	testsuite_check ("iter->prev past beginning of headers");
 	try {
-		if (g_mime_header_iter_prev (iter))
+		if (g_mime_header_iter_prev (&iter))
 			throw (exception_new ("should not have worked"));
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("iter->prev past beginning of headers: %s", ex->message);
 	} finally;
 	
-	g_mime_header_iter_free (iter);
 	g_mime_header_list_destroy (list);
 }
 
 static void
 test_iter_remove_all (void)
 {
-	GMimeHeaderIter *iter, *iter1;
 	GMimeHeaderList *list;
+	GMimeHeaderIter iter;
 	guint i = 0;
 	
 	list = header_list_new ();
-	iter = g_mime_header_iter_new ();
-	g_mime_header_list_get_iter (list, iter);
+	
+	g_mime_header_list_get_iter (list, &iter);
 	
 	testsuite_check ("removing all headers");
 	try {
-		while (g_mime_header_iter_remove (iter))
+		while (g_mime_header_iter_remove (&iter))
 			i++;
 		
 		if (i != G_N_ELEMENTS (initial))
 			throw (exception_new ("only removed %u of %u", i, G_N_ELEMENTS (initial)));
 		
-		if (g_mime_header_iter_is_valid (iter))
+		if (g_mime_header_iter_is_valid (&iter))
 			throw (exception_new ("expected invalid iter"));
 		
 		testsuite_check_passed ();
@@ -198,11 +195,11 @@ test_iter_remove_all (void)
 		testsuite_check_failed ("removing all headers: %s", ex->message);
 	} finally;
 	
-	g_mime_header_list_get_iter (list, iter);
+	g_mime_header_list_get_iter (list, &iter);
 	
 	testsuite_check ("empty list iter");
 	try {
-		if (g_mime_header_iter_is_valid (iter))
+		if (g_mime_header_iter_is_valid (&iter))
 			throw (exception_new ("expected invalid iter"));
 		
 		testsuite_check_passed ();
@@ -210,129 +207,160 @@ test_iter_remove_all (void)
 		testsuite_check_failed ("empty list iter: %s", ex->message);
 	} finally;
 	
-	g_mime_header_iter_free (iter);
-	
 	g_mime_header_list_destroy (list);
 }
 
 static void
 test_iter_remove (void)
 {
-	GMimeHeaderIter *iter, *iter1, *iter2, *iter3, *iter4;
+	GMimeHeaderIter iter, iter1, iter2, iter3;
 	const char *name, *value;
 	GMimeHeaderList *list;
 	guint i;
 	
 	list = header_list_new ();
-	iter1 = g_mime_header_iter_new ();
-	g_mime_header_list_get_iter (list, iter1);
+	
+	g_mime_header_list_get_iter (list, &iter1);
 	
 	testsuite_check ("iter copying");
 	try {
 		/* make iter2 point to the second header */
-		iter2 = g_mime_header_iter_copy (iter1);
-		if (!g_mime_header_iter_next (iter2))
+		g_mime_header_iter_copy_to (&iter1, &iter2);
+		if (!g_mime_header_iter_next (&iter2))
 			throw (exception_new ("iter2->next failed"));
 		
-		name = g_mime_header_iter_get_name (iter2);
-		value = g_mime_header_iter_get_value (iter2);
+		name = g_mime_header_iter_get_name (&iter2);
+		value = g_mime_header_iter_get_value (&iter2);
 		
 		if (strcmp (initial[1].name, name) != 0 ||
 		    strcmp (initial[1].value, value) != 0)
 			throw (exception_new ("iter2 resulted in unexpected header"));
 		
 		/* make iter3 point to the third header */
-		iter3 = g_mime_header_iter_copy (iter2);
-		if (!g_mime_header_iter_next (iter3))
+		g_mime_header_iter_copy_to (&iter2, &iter3);
+		if (!g_mime_header_iter_next (&iter3))
 			throw (exception_new ("iter3->next failed"));
 		
-		name = g_mime_header_iter_get_name (iter3);
-		value = g_mime_header_iter_get_value (iter3);
+		name = g_mime_header_iter_get_name (&iter3);
+		value = g_mime_header_iter_get_value (&iter3);
 		
 		if (strcmp (initial[2].name, name) != 0 ||
 		    strcmp (initial[2].value, value) != 0)
 			throw (exception_new ("iter3 resulted in unexpected header"));
-		
-		/* make iter4 point to the forth header */
-		iter4 = g_mime_header_iter_copy (iter3);
-		if (!g_mime_header_iter_next (iter4))
-			throw (exception_new ("iter4->next failed"));
-		
-		name = g_mime_header_iter_get_name (iter4);
-		value = g_mime_header_iter_get_value (iter4);
-		
-		if (strcmp (initial[3].name, name) != 0 ||
-		    strcmp (initial[3].value, value) != 0)
-			throw (exception_new ("iter4 resulted in unexpected header"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("iter copying: %s", ex->message);
 	} finally;
 	
-	testsuite_check ("iter remove");
+	testsuite_check ("remove first header");
 	try {
-		/* remove the third header */
-		iter = g_mime_header_iter_copy (iter3);
-		if (!g_mime_header_iter_remove (iter)) {
-			g_mime_header_iter_free (iter);
-			throw (exception_new ("iter::remove(3) failed"));
-		}
-		
-		/* make sure iter now points to the same header as iter4 */
-		if (!g_mime_header_iter_equal (iter, iter4)) {
-			g_mime_header_iter_free (iter);
-			throw (exception_new ("iter::remove (3) iter::equal(4) failed"));
-		}
-		
-		g_mime_header_iter_free (iter);
-		
-		/* make sure that iter3 is invalid */
-		if (g_mime_header_iter_is_valid (iter3))
-			throw (exception_new ("iter::remove (3) iter3::isvalid() incorrect"));
-		
-		/* make sure that iter1, iter2, and iter4 are still valid */
-		if (!g_mime_header_iter_is_valid (iter1))
-			throw (exception_new ("iter::remove (3) iter1::isvalid() incorrect"));
-		if (!g_mime_header_iter_is_valid (iter2))
-			throw (exception_new ("iter::remove (3) iter2::isvalid() incorrect"));
-		if (!g_mime_header_iter_is_valid (iter4))
-			throw (exception_new ("iter::remove (3) iter4::isvalid() incorrect"));
-		
 		/* remove the first header */
-		iter = g_mime_header_iter_copy (iter1);
-		if (!g_mime_header_iter_remove (iter)) {
-			g_mime_header_iter_free (iter);
-			throw (exception_new ("iter::remove(1) failed"));
-		}
+		g_mime_header_iter_copy_to (&iter1, &iter);
+		if (!g_mime_header_iter_remove (&iter))
+			throw (exception_new ("iter::remove() failed"));
 		
-		/* make sure iter now points to the same header as iter2 */
-		if (!g_mime_header_iter_equal (iter, iter2)) {
-			g_mime_header_iter_free (iter);
-			throw (exception_new ("iter::remove (1) iter::equal(2) failed"));
-		}
+		/* make sure iter now points to the 2nd header */
+		name = g_mime_header_iter_get_name (&iter);
+		value = g_mime_header_iter_get_value (&iter);
 		
-		g_mime_header_iter_free (iter);
+		if (strcmp (initial[1].name, name) != 0 ||
+		    strcmp (initial[1].value, value) != 0)
+			throw (exception_new ("iter doesn't point to 2nd header as expected"));
 		
-		/* make sure that iter1 is invalid */
-		if (g_mime_header_iter_is_valid (iter1))
-			throw (exception_new ("iter::remove (1) iter1::isvalid() incorrect"));
-		
-		/* make sure that iter2 and iter4 are still valid */
-		if (!g_mime_header_iter_is_valid (iter2))
-			throw (exception_new ("iter::remove (1) iter2::isvalid() incorrect"));
-		if (!g_mime_header_iter_is_valid (iter4))
-			throw (exception_new ("iter::remove (1) iter4::isvalid() incorrect"));
+		/* make sure that the other iters have been invalidated */
+		if (g_mime_header_iter_is_valid (&iter1))
+			throw (exception_new ("iter::remove() iter1::isvalid() incorrect"));
+		if (g_mime_header_iter_is_valid (&iter2))
+			throw (exception_new ("iter::remove() iter2::isvalid() incorrect"));
+		if (g_mime_header_iter_is_valid (&iter3))
+			throw (exception_new ("iter::remove() iter3::isvalid() incorrect"));
 		
 		testsuite_check_passed ();
 	} catch (ex) {
-		testsuite_check_failed ("iter remove: %s", ex->message);
+		testsuite_check_failed ("remove first header: %s", ex->message);
 	} finally;
 	
-	g_mime_header_iter_free (iter1);
-	g_mime_header_iter_free (iter2);
-	g_mime_header_iter_free (iter3);
-	g_mime_header_iter_free (iter4);
+	testsuite_check ("remove last header");
+	try {
+		/* remove the last header */
+		g_mime_header_iter_last (&iter);
+		
+		if (!g_mime_header_iter_remove (&iter))
+			throw (exception_new ("iter::remove() failed"));
+		
+		/* iter should be invalid now because it couldn't advance to a header beyond the last */
+		if (g_mime_header_iter_is_valid (&iter))
+			throw (exception_new ("iter::remove() iter is valid when it shouldn't be"));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("remove last header: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("remove middle header");
+	try {
+		g_mime_header_list_get_iter (list, &iter);
+		
+		/* advance to a header in the middle somewhere... */
+		g_mime_header_iter_next (&iter);
+		g_mime_header_iter_next (&iter);
+		
+		/* we should now be pointing to the 3rd header (4th from the initial headers) */
+		name = g_mime_header_iter_get_name (&iter);
+		value = g_mime_header_iter_get_value (&iter);
+		
+		if (strcmp (initial[3].name, name) != 0 ||
+		    strcmp (initial[3].value, value) != 0)
+			throw (exception_new ("iter doesn't point to 3rd header as expected"));
+		
+		/* remove it */
+		if (!g_mime_header_iter_remove (&iter))
+			throw (exception_new ("iter::remove() failed"));
+		
+		/* make sure the iter is still valid */
+		if (!g_mime_header_iter_is_valid (&iter))
+			throw (exception_new ("iter::remove() iter isn't valid when it should be"));
+		
+		/* make sure iter now points to the 4th header */
+		name = g_mime_header_iter_get_name (&iter);
+		value = g_mime_header_iter_get_value (&iter);
+		
+		if (strcmp (initial[4].name, name) != 0 ||
+		    strcmp (initial[4].value, value) != 0)
+			throw (exception_new ("iter doesn't point to 4th header as expected"));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("remove first header: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("resulting lists match");
+	try {
+		g_mime_header_list_get_iter (list, &iter);
+		i = 1;
+		
+		do {
+			name = g_mime_header_iter_get_name (&iter);
+			value = g_mime_header_iter_get_value (&iter);
+			
+			if (i == 3)
+				i++;
+			
+			if (strcmp (initial[i].name, name) != 0 ||
+			    strcmp (initial[i].value, value) != 0)
+				throw (exception_new ("iter vs array mismatch @ index %u", i));
+			
+			i++;
+		} while (g_mime_header_iter_next (&iter));
+		
+		if (++i != G_N_ELEMENTS (initial))
+			throw (exception_new ("iter didn't have as many headers as expected"));
+		
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("resulting lists match: %s", ex->message);
+	} finally;
 	
 	g_mime_header_list_destroy (list);
 }
@@ -351,7 +379,7 @@ int main (int argc, char **argv)
 	test_iter_remove_all ();
 	testsuite_end ();
 	
-	testsuite_start ("removing headers");
+	testsuite_start ("removing individual headers");
 	test_iter_remove ();
 	testsuite_end ();
 	

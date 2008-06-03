@@ -27,6 +27,9 @@
 
 G_BEGIN_DECLS
 
+typedef struct _GMimeHeader GMimeHeader;
+
+
 /**
  * GMimeHeaderList:
  *
@@ -37,16 +40,27 @@ typedef struct _GMimeHeaderList GMimeHeaderList;
 
 /**
  * GMimeHeaderIter:
+ * @hdrlist: a #GMimeHeaderList
+ * @cursor: a #GMimeHeader
+ * @version: the version of @hdrlist when initialized
  *
- * A message or mime-part header iterator.
+ * A message or mime-part header iterator. All members should be
+ * considered private.
  **/
 typedef struct _GMimeHeaderIter GMimeHeaderIter;
+
+struct _GMimeHeaderIter {
+	GMimeHeaderList *hdrlist;
+	GMimeHeader *cursor;
+	guint32 version;
+};
+
 
 GMimeHeaderIter *g_mime_header_iter_new (void);
 void g_mime_header_iter_free (GMimeHeaderIter *iter);
 
 GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
-gboolean g_mime_header_iter_copy_to (GMimeHeaderIter *src, GMimeHeaderIter *dest);
+void g_mime_header_iter_copy_to (GMimeHeaderIter *src, GMimeHeaderIter *dest);
 
 gboolean g_mime_header_iter_equal (GMimeHeaderIter *iter1, GMimeHeaderIter *iter2);
 

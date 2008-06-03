@@ -117,6 +117,11 @@
   <!-- Header -->
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='SetValue']/return-type" name="type">void</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']" name="opaque">true</attr>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='hdrlist']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='version']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='cursor']"/>
 
   <!-- iconv -->
   

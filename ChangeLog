@@ -1,3 +1,15 @@
+2008-06-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message-partial.c (message_partial_message_new): Use
+	an iter on the stack.
+
+	* gmime/gmime-header.[c,h]: Changed iters again. Iters are now
+	able to be allocated on the stack by making the struct public,
+	however this means that they are more sensitive to changes in the
+	HeaderList (e.g. all iters other than the one used to remove a
+	header become invalid regardless of whether or not the header they
+	refer to still exists).
+
 2008-06-01  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-header.c (g_mime_header_iter_new): New function to

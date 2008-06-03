@@ -2107,9 +2107,19 @@
         </parameters>
       </method>
     </struct>
+    <struct name="Header" cname="GMimeHeader" opaque="true" />
     <struct name="HeaderIter" cname="GMimeHeaderIter" opaque="true">
+      <field name="Hdrlist" cname="hdrlist" type="GMimeHeaderList*" access="public" writeable="true" />
+      <field name="Cursor" cname="cursor" type="GMimeHeader*" access="public" writeable="true" />
+      <field name="Version" cname="version" type="guint32" access="public" writeable="true" />
       <method name="Copy" cname="g_mime_header_iter_copy">
         <return-type type="GMimeHeaderIter*" owned="true" />
+      </method>
+      <method name="CopyTo" cname="g_mime_header_iter_copy_to">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeHeaderIter*" name="dest" />
+        </parameters>
       </method>
       <method name="Equal" cname="g_mime_header_iter_equal">
         <return-type type="gboolean" />
@@ -2138,6 +2148,7 @@
       <method name="Last" cname="g_mime_header_iter_last">
         <return-type type="gboolean" />
       </method>
+      <constructor cname="g_mime_header_iter_new" />
       <method name="Next" cname="g_mime_header_iter_next">
         <return-type type="gboolean" />
       </method>
@@ -2172,7 +2183,10 @@
         </parameters>
       </method>
       <method name="GetIter" cname="g_mime_header_list_get_iter">
-        <return-type type="GMimeHeaderIter*" />
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeHeaderIter*" name="iter" />
+        </parameters>
       </method>
       <method name="HasRaw" cname="g_mime_header_list_has_raw">
         <return-type type="gboolean" />
