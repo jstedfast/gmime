@@ -107,13 +107,14 @@ request_passwd (GMimeSession *session, const char *prompt, gboolean secret, cons
 
 
 static void
-print_verify_results (GMimeSignatureValidity *validity)
+print_verify_results (const GMimeSignatureValidity *validity)
 {
 	GMimeSigner *signer;
 	
 	switch (validity->status) {
 	case GMIME_SIGNATURE_STATUS_NONE:
-		fputs ("Unset\n", stdout);
+		fputs ("NONE\n", stdout);
+		break;
 	case GMIME_SIGNATURE_STATUS_GOOD:
 		fputs ("GOOD\n", stdout);
 		break;
@@ -271,9 +272,8 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	g_object_unref (mps);
 	
 	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (GMIME_OBJECT (message), stream);
+	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
 	g_mime_stream_reset (stream);
-	
 	g_object_unref (message);
 	
 	parser = g_mime_parser_new ();
@@ -308,16 +308,18 @@ test_multipart_signed (GMimeCipherContext *ctx)
 #define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
 
 static void
-test_multipart_encrypted (GMimeCipherContext *ctx)
+test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 {
+	const GMimeSignatureValidity *sv;
 	GMimeStream *cleartext, *stream;
 	GMimeContentType *content_type;
 	GMimeMultipartEncrypted *mpe;
 	GMimeDataWrapper *content;
 	GMimeObject *decrypted;
-	GMimeMessage *message;
 	GPtrArray *recipients;
+	GMimeMessage *message;
 	Exception *ex = NULL;
+	GMimeParser *parser;
 	GByteArray *buf[2];
 	GError *err = NULL;
 	GMimePart *part;
@@ -347,7 +349,8 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	/* encrypt the part */
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
-	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, recipients, &err);
+	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
+					    "no.user@no.domain", recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	
@@ -363,25 +366,64 @@ test_multipart_encrypted (GMimeCipherContext *ctx)
 	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
 	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
 	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				      "Federico Mena-Quintero", "federico@helixcode.com");
+				      "Federico Mena-Quintero",
+				      "federico@helixcode.com");
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
+	g_object_unref (mpe);
+	
+	stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
+	g_mime_stream_reset (stream);
+	g_object_unref (message);
+	
+	parser = g_mime_parser_new ();
+	g_mime_parser_init_with_stream (parser, stream);
+	g_object_unref (stream);
+	
+	message = g_mime_parser_construct_message (parser);
+	g_object_unref (parser);
+	
+	if (!GMIME_IS_MULTIPART_ENCRYPTED (message->mime_part)) {
+		ex = exception_new ("resultant top-level mime part not a multipart/encrypted?");
+		g_object_unref (message);
+		throw (ex);
+	}
+	
+	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
 	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
+		g_object_unref (cleartext);
+		g_object_unref (mpe);
 		g_error_free (err);
+		throw (ex);
+	}
+	
+	sv = g_mime_multipart_encrypted_get_signature_validity (mpe);
+	v(print_verify_results (sv));
+	
+	if (sign) {
+		if (sv->status != GMIME_SIGNATURE_STATUS_GOOD)
+			ex = exception_new ("signature validity status expected to be GOOD");
+	} else {
+		if (sv->status != GMIME_SIGNATURE_STATUS_NONE)
+			ex = exception_new ("signature validity status expected to be NONE");
+	}
+	
+	g_object_unref (mpe);
+	
+	if (ex != NULL) {
+		g_object_unref (cleartext);
 		throw (ex);
 	}
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_object_write_to_stream (decrypted, stream);
 	g_object_unref (decrypted);
-	
-	g_object_unref (message);
-	g_object_unref (mpe);
 	
 	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
 	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
@@ -480,10 +522,18 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("multipart/encrypted");
 	try {
-		test_multipart_encrypted (ctx);
+		test_multipart_encrypted (ctx, FALSE);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
+	} finally;
+	
+	testsuite_check ("multipart/encrypted+sign");
+	try {
+		test_multipart_encrypted (ctx, TRUE);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("multipart/encrypted+sign failed: %s", ex->message);
 	} finally;
 	
 	g_object_unref (session);

@@ -88,8 +88,8 @@ static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			GMimeStream *istream, GMimeStream *ostream,
 			GError **err);
 
-static int gpg_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-			GMimeStream *ostream, GError **err);
+static GMimeSignatureValidity *gpg_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+					    GMimeStream *ostream, GError **err);
 
 static int gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
 			    GError **err);
@@ -236,6 +236,7 @@ enum _GpgCtxMode {
 	GPG_CTX_MODE_SIGN,
 	GPG_CTX_MODE_VERIFY,
 	GPG_CTX_MODE_ENCRYPT,
+	GPG_CTX_MODE_SIGN_ENCRYPT,
 	GPG_CTX_MODE_DECRYPT,
 	GPG_CTX_MODE_IMPORT,
 	GPG_CTX_MODE_EXPORT,
@@ -413,7 +414,9 @@ gpg_ctx_set_userid (struct _GpgCtx *gpg, const char *userid)
 static void
 gpg_ctx_add_recipient (struct _GpgCtx *gpg, const char *keyid)
 {
-	if (gpg->mode != GPG_CTX_MODE_ENCRYPT && gpg->mode != GPG_CTX_MODE_EXPORT)
+	if (gpg->mode != GPG_CTX_MODE_ENCRYPT &&
+	    gpg->mode != GPG_CTX_MODE_SIGN_ENCRYPT &&
+	    gpg->mode != GPG_CTX_MODE_EXPORT)
 		return;
 	
 	if (!gpg->recipients)
@@ -613,10 +616,16 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 			g_ptr_array_add (argv, gpg->sigfile);
 		g_ptr_array_add (argv, "-");
 		break;
+	case GPG_CTX_MODE_SIGN_ENCRYPT:
+		g_ptr_array_add (argv,  "--sign");
+		
+		/* fall thru... */
 	case GPG_CTX_MODE_ENCRYPT:
 		g_ptr_array_add (argv,  "--encrypt");
+		
 		if (gpg->armor)
 			g_ptr_array_add (argv, "--armor");
+		
 		if (gpg->always_trust)
 			g_ptr_array_add (argv, "--always-trust");
 		
@@ -624,6 +633,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 			g_ptr_array_add (argv, "-u");
 			g_ptr_array_add (argv, (char *) gpg->userid);
 		}
+		
 		if (gpg->recipients) {
 			for (i = 0; i < gpg->recipients->len; i++) {
 				g_ptr_array_add (argv, "-r");
@@ -784,12 +794,127 @@ next_token (char *in, char **token)
 	return inptr;
 }
 
+static void
+gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
+{
+	GMimeSigner *signer;
+	
+	if (!strncmp (status, "SIG_ID ", 7)) {
+		/* not sure if this contains anything we care about... */
+	} else if (!strncmp (status, "GOODSIG ", 8)) {
+		gpg->goodsig = TRUE;
+		status += 8;
+		
+		signer = g_mime_signer_new ();
+		signer->status = GMIME_SIGNER_STATUS_GOOD;
+		gpg->signer->next = signer;
+		gpg->signer = signer;
+		
+		/* get the key id of the signer */
+		status = next_token (status, &signer->keyid);
+		
+		/* the rest of the string is the signer's name */
+		signer->name = g_strdup (status);
+	} else if (!strncmp (status, "BADSIG ", 7)) {
+		gpg->badsig = TRUE;
+		status += 7;
+		
+		signer = g_mime_signer_new ();
+		signer->status = GMIME_SIGNER_STATUS_BAD;
+		gpg->signer->next = signer;
+		gpg->signer = signer;
+		
+		/* get the key id of the signer */
+		status = next_token (status, &signer->keyid);
+		
+		/* the rest of the string is the signer's name */
+		signer->name = g_strdup (status);
+	} else if (!strncmp (status, "ERRSIG ", 7)) {
+		/* Note: NO_PUBKEY often comes after an ERRSIG */
+		gpg->errsig = TRUE;
+		status += 7;
+		
+		signer = g_mime_signer_new ();
+		signer->status = GMIME_SIGNER_STATUS_ERROR;
+		gpg->signer->next = signer;
+		gpg->signer = signer;
+		
+		/* get the key id of the signer */
+		status = next_token (status, &signer->keyid);
+		
+		/* skip the pubkey_algo */
+		status = next_token (status, NULL);
+		
+		/* skip the digest_algo */
+		status = next_token (status, NULL);
+		
+		/* skip the class */
+		status = next_token (status, NULL);
+		
+		/* get the signature expiration date (or 0 for never) */
+		signer->expires = strtoul (status, NULL, 10);
+		status = next_token (status, NULL);
+		
+		/* the last token is the 'rc' which we don't care about */
+	} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
+		/* the only token is the keyid, but we've already got it */
+		gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
+		gpg->nopubkey = TRUE;
+	} else if (!strncmp (status, "EXPSIG", 6)) {
+		/* FIXME: see what else we can glean from this... */
+		gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
+	} else if (!strncmp (status, "EXPKEYSIG", 9)) {
+		gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+	} else if (!strncmp (status, "REVKEYSIG", 9)) {
+		gpg->signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
+	} else if (!strncmp (status, "VALIDSIG ", 9)) {
+		char *inend;
+		
+		gpg->validsig = TRUE;
+		status += 9;
+		
+		signer = gpg->signer;
+		
+		/* the first token is the fingerprint */
+		status = next_token (status, &signer->fingerprint);
+		
+		/* the second token is the date the stream was signed YYYY-MM-DD */
+		status = next_token (status, NULL);
+		
+		/* the third token is the signature creation date (or 0 for unknown?) */
+		signer->created = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ')
+			return;
+		
+		status = inend + 1;
+		
+		/* the fourth token is the signature expiration date (or 0 for never) */
+		signer->expires = strtoul (status, NULL, 10);
+		
+		/* ignore the rest... */
+	} else if (!strncmp (status, "TRUST_", 6)) {
+		status += 6;
+		
+		signer = gpg->signer;
+		if (!strncmp (status, "NEVER", 5)) {
+			signer->trust = GMIME_SIGNER_TRUST_NEVER;
+		} else if (!strncmp (status, "MARGINAL", 8)) {
+			signer->trust = GMIME_SIGNER_TRUST_MARGINAL;
+		} else if (!strncmp (status, "FULLY", 5)) {
+			signer->trust = GMIME_SIGNER_TRUST_FULLY;
+		} else if (!strncmp (status, "ULTIMATE", 8)) {
+			signer->trust = GMIME_SIGNER_TRUST_ULTIMATE;
+		} else if (!strncmp (status, "UNDEFINED", 9)) {
+			signer->trust = GMIME_SIGNER_TRUST_UNDEFINED;
+		}
+	}
+}
+
 static int
 gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 {
 	size_t nread, nwritten;
 	register char *inptr;
-	GMimeSigner *signer;
 	char *status, *tmp;
 	int len;
 	
@@ -982,116 +1107,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			}
 			break;
 		case GPG_CTX_MODE_VERIFY:
-			if (!strncmp (status, "SIG_ID ", 7)) {
-				/* not sure if this contains anything we care about... */
-			} else if (!strncmp (status, "GOODSIG ", 8)) {
-				gpg->goodsig = TRUE;
-				status += 8;
-				
-				signer = g_mime_signer_new ();
-				signer->status = GMIME_SIGNER_STATUS_GOOD;
-				gpg->signer->next = signer;
-				gpg->signer = signer;
-				
-				/* get the key id of the signer */
-				status = next_token (status, &signer->keyid);
-				
-				/* the rest of the string is the signer's name */
-				signer->name = g_strdup (status);
-			} else if (!strncmp (status, "BADSIG ", 7)) {
-				gpg->badsig = TRUE;
-				status += 7;
-				
-				signer = g_mime_signer_new ();
-				signer->status = GMIME_SIGNER_STATUS_BAD;
-				gpg->signer->next = signer;
-				gpg->signer = signer;
-				
-				/* get the key id of the signer */
-				status = next_token (status, &signer->keyid);
-				
-				/* the rest of the string is the signer's name */
-				signer->name = g_strdup (status);
-			} else if (!strncmp (status, "ERRSIG ", 7)) {
-				/* Note: NO_PUBKEY often comes after an ERRSIG */
-				gpg->errsig = TRUE;
-				status += 7;
-				
-				signer = g_mime_signer_new ();
-				signer->status = GMIME_SIGNER_STATUS_ERROR;
-				gpg->signer->next = signer;
-				gpg->signer = signer;
-				
-				/* get the key id of the signer */
-				status = next_token (status, &signer->keyid);
-				
-				/* skip the pubkey_algo */
-				status = next_token (status, NULL);
-				
-				/* skip the digest_algo */
-				status = next_token (status, NULL);
-				
-				/* skip the class */
-				status = next_token (status, NULL);
-				
-				/* get the signature expiration date (or 0 for never) */
-				signer->expires = strtoul (status, NULL, 10);
-				status = next_token (status, NULL);
-				
-				/* the last token is the 'rc' which we don't care about */
-			} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
-				/* the only token is the keyid, but we've already got it */
-				gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
-				gpg->nopubkey = TRUE;
-			} else if (!strncmp (status, "EXPSIG", 6)) {
-				/* FIXME: see what else we can glean from this... */
-				gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
-			} else if (!strncmp (status, "EXPKEYSIG", 9)) {
-				gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
-			} else if (!strncmp (status, "REVKEYSIG", 9)) {
-				gpg->signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
-			} else if (!strncmp (status, "VALIDSIG ", 9)) {
-				char *inend;
-				
-				gpg->validsig = TRUE;
-				status += 9;
-				
-				signer = gpg->signer;
-				
-				/* the first token is the fingerprint */
-				status = next_token (status, &signer->fingerprint);
-				
-				/* the second token is the date the stream was signed YYYY-MM-DD */
-				status = next_token (status, NULL);
-				
-				/* the third token is the signature creation date (or 0 for unknown?) */
-				signer->created = strtoul (status, &inend, 10);
-				if (inend == status || *inend != ' ')
-					break;
-				
-				status = inend + 1;
-				
-				/* the fourth token is the signature expiration date (or 0 for never) */
-				signer->expires = strtoul (status, NULL, 10);
-				
-				/* ignore the rest... */
-			} else if (!strncmp (status, "TRUST_", 6)) {
-				status += 6;
-				
-				signer = gpg->signer;
-				if (!strncmp (status, "NEVER", 5)) {
-					signer->trust = GMIME_SIGNER_TRUST_NEVER;
-				} else if (!strncmp (status, "MARGINAL", 8)) {
-					signer->trust = GMIME_SIGNER_TRUST_MARGINAL;
-				} else if (!strncmp (status, "FULLY", 5)) {
-					signer->trust = GMIME_SIGNER_TRUST_FULLY;
-				} else if (!strncmp (status, "ULTIMATE", 8)) {
-					signer->trust = GMIME_SIGNER_TRUST_ULTIMATE;
-				} else if (!strncmp (status, "UNDEFINED", 9)) {
-					signer->trust = GMIME_SIGNER_TRUST_UNDEFINED;
-				}
-			}
+			gpg_ctx_parse_signer_info (gpg, status);
 			break;
+		case GPG_CTX_MODE_SIGN_ENCRYPT:
 		case GPG_CTX_MODE_ENCRYPT:
 			if (!strncmp (status, "BEGIN_ENCRYPTION", 16)) {
 				/* nothing to do... but we know to expect data on stdout soon */
@@ -1107,7 +1125,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			if (!strncmp (status, "BEGIN_DECRYPTION", 16)) {
 				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
-				/* nothing to do, but we know the end is near? */
+				/* nothing to do, but we know we're done */
+			} else {
+				gpg_ctx_parse_signer_info (gpg, status);
 			}
 			break;
 		case GPG_CTX_MODE_IMPORT:
@@ -1350,6 +1370,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	case GPG_CTX_MODE_VERIFY:
 		mode = "verify";
 		break;
+	case GPG_CTX_MODE_SIGN_ENCRYPT:
 	case GPG_CTX_MODE_ENCRYPT:
 		mode = "encrypt";
 		break;
@@ -1650,7 +1671,10 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	int i;
 	
 	gpg = gpg_ctx_new (context->session, ctx->path);
-	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_ENCRYPT);
+	if (sign)
+		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN_ENCRYPT);
+	else
+		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_ENCRYPT);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
 	gpg_ctx_set_istream (gpg, istream);
@@ -1698,12 +1722,15 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 }
 
 
-static int
+static GMimeSignatureValidity *
 gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	GMimeSignatureValidity *validity;
+	const char *diagnostics;
 	struct _GpgCtx *gpg;
+	int save;
 	
 	gpg = gpg_ctx_new (context->session, ctx->path);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_DECRYPT);
@@ -1716,7 +1743,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		
-		return -1;
+		return NULL;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
@@ -1724,14 +1751,11 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 			gpg_ctx_op_cancel (gpg);
 			gpg_ctx_free (gpg);
 			
-			return -1;
+			return NULL;
 		}
 	}
 	
 	if (gpg_ctx_op_wait (gpg) != 0) {
-		const char *diagnostics;
-		int save;
-		
 		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
@@ -1739,12 +1763,34 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 		g_set_error (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
-		return -1;
+		return NULL;
+	}
+	
+	diagnostics = gpg_ctx_get_diagnostics (gpg);
+	
+	validity = g_mime_signature_validity_new ();
+	g_mime_signature_validity_set_details (validity, diagnostics);
+	
+	if (gpg->signers) {
+		if (gpg->goodsig && !(gpg->badsig || gpg->errsig || gpg->nodata)) {
+			/* all signatures were good */
+			validity->status = GMIME_SIGNATURE_STATUS_GOOD;
+		} else if (gpg->badsig && !(gpg->goodsig && !gpg->errsig)) {
+			/* all signatures were bad */
+			validity->status = GMIME_SIGNATURE_STATUS_BAD;
+		} else if (!gpg->nodata) {
+			validity->status = GMIME_SIGNATURE_STATUS_UNKNOWN;
+		} else {
+			validity->status = GMIME_SIGNATURE_STATUS_BAD;
+		}
+		
+		validity->signers = gpg->signers;
+		gpg->signers = NULL;
 	}
 	
 	gpg_ctx_free (gpg);
 	
-	return 0;
+	return validity;
 }
 
 static int

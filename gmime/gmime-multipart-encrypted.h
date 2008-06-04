@@ -45,9 +45,9 @@ enum {
 struct _GMimeMultipartEncrypted {
 	GMimeMultipart parent_object;
 	
-	char *protocol;
-	
+	GMimeSignatureValidity *validity;
 	GMimeObject *decrypted;
+	char *protocol;
 };
 
 struct _GMimeMultipartEncryptedClass {
@@ -61,12 +61,15 @@ GType g_mime_multipart_encrypted_get_type (void);
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
 int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
-					GMimeCipherContext *ctx, GPtrArray *recipients,
+					GMimeCipherContext *ctx, gboolean sign,
+					const char *userid, GPtrArray *recipients,
 					GError **err);
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeCipherContext *ctx,
 						 GError **err);
+
+const GMimeSignatureValidity *g_mime_multipart_encrypted_get_signature_validity (GMimeMultipartEncrypted *mpe);
 
 G_END_DECLS
 

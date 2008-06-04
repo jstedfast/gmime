@@ -1,3 +1,32 @@
+2008-06-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-pgpmime.c: Updated to test for
+	multipart/encrypted+sign
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):
+	Changed to take 'sign' and 'userid' arguments so that it is
+	possible to both sign and encrypt the content.
+	(g_mime_multipart_encrypted_decrypt): Updated to save the
+	GMimeSignatureValidity from our call ot
+	g_mime_cipher_context_decrypt() so that callers can choose to get
+	the signer validity (in the case where the encrypted part was also
+	signed).
+	(g_mime_multipart_encrypted_get_signature_validity): New function.
+
+	* gmime/gmime-gpg-context.c (gpg_decrypt): Updated to return a
+	GMimeSignatureValidity.
+	(gpg_ctx_parse_signer_info): Split out from gpg_ctx_parse_status()
+	to parse signer info.
+	(gpg_ctx_parse_status): Updated VERIFY mode to call
+	gpg_ctx_parse_signer_info() and made DECRYPT also call it so that
+	we properly collect signer info when the encrypted stream was also
+	signed.
+	(gpg_encrypt): Respect the 'sign' argument.
+
+	* gmime/gmime-cipher-context.c (g_mime_cipher_context_decrypt):
+	Now returns a GMimeSignatureValidity in case the encrypted stream
+	was also signed.
+
 2008-06-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message-partial.c (message_partial_message_new): Use

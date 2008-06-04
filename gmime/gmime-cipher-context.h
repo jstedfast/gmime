@@ -107,7 +107,7 @@ struct _GMimeCipherContextClass {
 						  GMimeStream *istream, GMimeStream *ostream,
 						  GError **err);
 	
-	int                      (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
+	GMimeSignatureValidity * (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
 	int                      (* import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
@@ -139,8 +139,8 @@ int                  g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gbo
 						    GMimeStream *istream, GMimeStream *ostream,
 						    GError **err);
 
-int                  g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-						    GMimeStream *ostream, GError **err);
+GMimeSignatureValidity *g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+						       GMimeStream *ostream, GError **err);
 
 /* key/certificate routines */
 int                  g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
@@ -306,13 +306,13 @@ struct _GMimeSignatureValidity {
 GMimeSignatureValidity *g_mime_signature_validity_new (void);
 void                    g_mime_signature_validity_free (GMimeSignatureValidity *validity);
 
-GMimeSignatureStatus    g_mime_signature_validity_get_status (GMimeSignatureValidity *validity);
+GMimeSignatureStatus    g_mime_signature_validity_get_status (const GMimeSignatureValidity *validity);
 void                    g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSignatureStatus status);
 
-const char             *g_mime_signature_validity_get_details (GMimeSignatureValidity *validity);
+const char             *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
 void                    g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);
 
-const GMimeSigner      *g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity);
+const GMimeSigner      *g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity);
 void                    g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer);
 
 G_END_DECLS

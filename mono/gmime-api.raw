@@ -184,7 +184,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="Decrypt" cname="decrypt">
-        <return-type type="int" />
+        <return-type type="GMimeSignatureValidity*" />
         <parameters>
           <parameter type="GMimeCipherContext*" name="ctx" />
           <parameter type="GMimeStream*" name="istream" />
@@ -210,7 +210,7 @@
         </parameters>
       </virtual_method>
       <method name="Decrypt" cname="g_mime_cipher_context_decrypt">
-        <return-type type="int" />
+        <return-type type="GMimeSignatureValidity*" />
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -968,8 +968,9 @@
       </method>
     </object>
     <object name="MultipartEncrypted" cname="GMimeMultipartEncrypted" parent="GMimeMultipart">
-      <field name="Protocol" cname="protocol" type="char*" />
+      <field name="Validity" cname="validity" type="GMimeSignatureValidity*" />
       <field name="Decrypted" cname="decrypted" type="GMimeObject*" />
+      <field name="Protocol" cname="protocol" type="char*" />
       <method name="Decrypt" cname="g_mime_multipart_encrypted_decrypt">
         <return-type type="GMimeObject*" />
         <parameters>
@@ -982,9 +983,14 @@
         <parameters>
           <parameter type="GMimeObject*" name="content" />
           <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="gboolean" name="sign" />
+          <parameter type="const-char*" name="userid" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GError**" name="err" />
         </parameters>
+      </method>
+      <method name="GetSignatureValidity" cname="g_mime_multipart_encrypted_get_signature_validity">
+        <return-type type="const-GMimeSignatureValidity*" />
       </method>
       <method name="GetType" cname="g_mime_multipart_encrypted_get_type" shared="true">
         <return-type type="GType" />

@@ -59,8 +59,8 @@ static int cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
 			   GMimeStream *istream, GMimeStream *ostream,
 			   GError **err);
 
-static int cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
-			   GMimeStream *ostream, GError **err);
+static GMimeSignatureValidity *cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+					       GMimeStream *ostream, GError **err);
 
 static int cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
 			       GError **err);
@@ -298,14 +298,14 @@ g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign, const cha
 }
 
 
-static int
+static GMimeSignatureValidity *
 cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 		GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
 		     "Decryption is not supported by this cipher");
 	
-	return -1;
+	return NULL;
 }
 
 
@@ -319,15 +319,24 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
  * Decrypts the ciphertext input stream and writes the resulting
  * cleartext to the output stream.
  *
- * Returns: %0 on success or %-1 for fail.
+ * If the encrypted input stream was also signed, the returned
+ * #GMimeSignatureValidity will have signer information included and
+ * the signature status will be one of #GMIME_SIGNATURE_STATUS_GOOD,
+ * #GMIME_SIGNATURE_STATUS_BAD, or #GMIME_SIGNATURE_STATUS_UNKNOWN.
+ *
+ * If the encrypted input text was not signed, then the signature
+ * status of the returned #GMimeSignatureValidity will be
+ * #GMIME_SIGNATURE_STATUS_NONE.
+ *
+ * Returns: a #GMimeSignatureValidity on success or %NULL on error.
  **/
-int
+GMimeSignatureValidity *
 g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 			       GMimeStream *ostream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
-	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
-	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
+	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
 	
 	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, istream, ostream, err);
 }
@@ -786,7 +795,7 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
  * Returns: a #GMimeSignatureStatus value.
  **/
 GMimeSignatureStatus
-g_mime_signature_validity_get_status (GMimeSignatureValidity *validity)
+g_mime_signature_validity_get_status (const GMimeSignatureValidity *validity)
 {
 	g_return_val_if_fail (validity != NULL, GMIME_SIGNATURE_STATUS_NONE);
 	
@@ -820,7 +829,7 @@ g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSig
  * Returns: a user-readable string containing any status information.
  **/
 const char *
-g_mime_signature_validity_get_details (GMimeSignatureValidity *validity)
+g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity)
 {
 	g_return_val_if_fail (validity != NULL, NULL);
 	
@@ -855,7 +864,7 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
  * as trust and cipher keys.
  **/
 const GMimeSigner *
-g_mime_signature_validity_get_signers (GMimeSignatureValidity *validity)
+g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)
 {
 	g_return_val_if_fail (validity != NULL, NULL);
 	
