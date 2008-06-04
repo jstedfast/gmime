@@ -149,7 +149,7 @@ test_verify (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 }
 
 static void
-test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_encrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GPtrArray *recipients;
 	GError *err = NULL;
@@ -158,7 +158,7 @@ test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_cipher_context_encrypt (ctx, FALSE, "no.user@no.domain", recipients,
+	g_mime_cipher_context_encrypt (ctx, sign, "no.user@no.domain", recipients,
 				       cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
@@ -175,8 +175,9 @@ test_encrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 }
 
 static void
-test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_decrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeSignatureValidity *sv;
 	Exception *ex = NULL;
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -184,12 +185,25 @@ test_decrypt (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciph
 	
 	stream = g_mime_stream_mem_new ();
 	
-	g_mime_cipher_context_decrypt (ctx, ciphertext, stream, &err);
-	
-	if (err != NULL) {
+	if (!(sv = g_mime_cipher_context_decrypt (ctx, ciphertext, stream, &err))) {
 		g_object_unref (stream);
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
+		throw (ex);
+	}
+	
+	if (sign) {
+		if (sv->status != GMIME_SIGNATURE_STATUS_GOOD)
+			ex = exception_new ("expected GOOD signature");
+	} else {
+		if (sv->status != GMIME_SIGNATURE_STATUS_NONE)
+			ex = exception_new ("unexpected signature");
+	}
+	
+	g_mime_signature_validity_free (sv);
+	
+	if (ex != NULL) {
+		g_object_unref (stream);
 		throw (ex);
 	}
 	
@@ -386,14 +400,34 @@ int main (int argc, char **argv)
 	what = "GMimeGpgContext::encrypt";
 	testsuite_check (what);
 	try {
-		test_encrypt (ctx, istream, ostream);
+		test_encrypt (ctx, FALSE, istream, ostream);
 		testsuite_check_passed ();
 		
 		what = "GMimeGpgContext::decrypt";
 		testsuite_check (what);
 		g_mime_stream_reset (istream);
 		g_mime_stream_reset (ostream);
-		test_decrypt (ctx, istream, ostream);
+		test_decrypt (ctx, FALSE, istream, ostream);
+		testsuite_check_passed ();
+	} catch (ex) {
+		testsuite_check_failed ("%s failed: %s", what, ex->message);
+	} finally;
+	
+	g_object_unref (ostream);
+	g_mime_stream_reset (istream);
+	ostream = g_mime_stream_mem_new ();
+	
+	what = "GMimeGpgContext::encrypt+sign";
+	testsuite_check (what);
+	try {
+		test_encrypt (ctx, TRUE, istream, ostream);
+		testsuite_check_passed ();
+		
+		what = "GMimeGpgContext::decrypt+verify";
+		testsuite_check (what);
+		g_mime_stream_reset (istream);
+		g_mime_stream_reset (ostream);
+		test_decrypt (ctx, TRUE, istream, ostream);
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("%s failed: %s", what, ex->message);

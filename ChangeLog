@@ -1,3 +1,8 @@
+2008-06-04  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-pgp.c (main): Test encrypt+sign and decrypt+verify as
+	well.
+
 2008-06-03  Jeffrey Stedfast  <fejj@novell.com>
 
 	* tests/test-pgpmime.c: Updated to test for
