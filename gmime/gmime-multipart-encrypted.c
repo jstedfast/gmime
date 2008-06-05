@@ -58,7 +58,6 @@ static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps, GMime
 static void g_mime_multipart_encrypted_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void multipart_encrypted_init (GMimeObject *object);
 static void multipart_encrypted_prepend_header (GMimeObject *object, const char *header, const char *value);
 static void multipart_encrypted_append_header (GMimeObject *object, const char *header, const char *value);
 static void multipart_encrypted_set_header (GMimeObject *object, const char *header, const char *value);
@@ -107,7 +106,6 @@ g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass)
 	
 	gobject_class->finalize = g_mime_multipart_encrypted_finalize;
 	
-	object_class->init = multipart_encrypted_init;
 	object_class->prepend_header = multipart_encrypted_prepend_header;
 	object_class->append_header = multipart_encrypted_append_header;
 	object_class->remove_header = multipart_encrypted_remove_header;
@@ -140,14 +138,6 @@ g_mime_multipart_encrypted_finalize (GObject *object)
 		g_mime_signature_validity_free (mpe->validity);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-
-static void
-multipart_encrypted_init (GMimeObject *object)
-{
-	/* no-op */
-	GMIME_OBJECT_CLASS (parent_class)->init (object);
 }
 
 static void

@@ -830,10 +830,7 @@
       </method>
     </object>
     <object name="Multipart" cname="GMimeMultipart" parent="GMimeObject">
-      <field name="Boundary" cname="boundary" type="char*" />
-      <field name="Preface" cname="preface" type="char*" />
-      <field name="Postface" cname="postface" type="char*" />
-      <field name="Subparts" cname="subparts" type="GList*" />
+      <field name="Priv" cname="priv" type="struct-_GMimeMultipartPrivate*" />
       <virtual_method name="AddPart" cname="add_part">
         <return-type type="void" />
         <parameters>
@@ -850,7 +847,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="RemovePart" cname="remove_part">
-        <return-type type="void" />
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
           <parameter type="GMimeObject*" name="part" />
@@ -937,7 +934,7 @@
         </parameters>
       </constructor>
       <method name="RemovePart" cname="g_mime_multipart_remove_part">
-        <return-type type="void" />
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeObject*" name="part" />
         </parameters>
@@ -1027,12 +1024,6 @@
       <field name="ContentType" cname="content_type" type="GMimeContentType*" />
       <field name="Headers" cname="headers" type="GMimeHeaderList*" />
       <field name="ContentId" cname="content_id" type="char*" />
-      <virtual_method name="Init" cname="init">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeObject*" name="object" />
-        </parameters>
-      </virtual_method>
       <virtual_method name="PrependHeader" cname="prepend_header">
         <return-type type="void" />
         <parameters>

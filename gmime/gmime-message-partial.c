@@ -48,7 +48,6 @@ static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMess
 static void g_mime_message_partial_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_partial_init (GMimeObject *object);
 static void message_partial_prepend_header (GMimeObject *object, const char *header, const char *value);
 static void message_partial_append_header (GMimeObject *object, const char *header, const char *value);
 static void message_partial_set_header (GMimeObject *object, const char *header, const char *value);
@@ -95,7 +94,6 @@ g_mime_message_partial_class_init (GMimeMessagePartialClass *klass)
 	
 	gobject_class->finalize = g_mime_message_partial_finalize;
 	
-	object_class->init = message_partial_init;
 	object_class->prepend_header = message_partial_prepend_header;
 	object_class->append_header = message_partial_append_header;
 	object_class->remove_header = message_partial_remove_header;
@@ -120,13 +118,6 @@ g_mime_message_partial_finalize (GObject *object)
 	g_free (partial->id);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-static void
-message_partial_init (GMimeObject *object)
-{
-	/* no-op */
-	GMIME_OBJECT_CLASS (parent_class)->init (object);
 }
 
 static void

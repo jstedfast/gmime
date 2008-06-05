@@ -59,7 +59,6 @@ static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
 static void g_mime_part_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void mime_part_init (GMimeObject *object);
 static void mime_part_prepend_header (GMimeObject *object, const char *header, const char *value);
 static void mime_part_append_header (GMimeObject *object, const char *header, const char *value);
 static void mime_part_set_header (GMimeObject *object, const char *header, const char *value);
@@ -107,7 +106,6 @@ g_mime_part_class_init (GMimePartClass *klass)
 	
 	gobject_class->finalize = g_mime_part_finalize;
 	
-	object_class->init = mime_part_init;
 	object_class->prepend_header = mime_part_prepend_header;
 	object_class->append_header = mime_part_append_header;
 	object_class->remove_header = mime_part_remove_header;
@@ -142,13 +140,6 @@ g_mime_part_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-
-static void
-mime_part_init (GMimeObject *object)
-{
-	/* no-op */
-	GMIME_OBJECT_CLASS (parent_class)->init (object);
-}
 
 enum {
 	HEADER_CONTENT_TRANSFER_ENCODING,

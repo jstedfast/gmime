@@ -80,7 +80,6 @@ static void
 write_part_bodystructure (GMimeObject *part, FILE *fp)
 {
 	GMimeParam *param;
-	GList *l;
 	
 	fputc ('(', fp);
 	
@@ -104,10 +103,15 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 	}
 	
 	if (GMIME_IS_MULTIPART (part)) {
-		l = GMIME_MULTIPART (part)->subparts;
-		while (l != NULL) {
-			write_part_bodystructure (l->data, fp);
-			l = l->next;
+		GMimeMultipart *multipart = (GMimeMultipart *) part;
+		GMimeObject *subpart;
+		int i, n;
+		
+		n = g_mime_multipart_get_number (multipart);
+		for (i = 0; i < n; i++) {
+			subpart = g_mime_multipart_get_part (multipart, i);
+			write_part_bodystructure (subpart, fp);
+			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
 		GMimeMessage *message;
@@ -272,10 +276,12 @@ static void
 write_part (GMimeObject *part, const char *uid, const char *spec)
 {
 	GMimeStream *istream, *ostream;
+	GMimeMultipart *multipart;
+	GMimeMessage *message;
+	GMimeObject *subpart;
 	char *buf, *id;
-	GList *l;
 	FILE *fp;
-	int i;
+	int i, n;
 	
 	buf = g_strdup_printf ("%s/%s.HEADER", uid, spec);
 	fp = fopen (buf, "wt");
@@ -288,20 +294,19 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 	fclose (fp);
 	
 	if (GMIME_IS_MULTIPART (part)) {
+		multipart = (GMimeMultipart *) part;
 		buf = g_alloca (strlen (spec) + 14);
 		id = g_stpcpy (buf, spec);
 		*id++ = '.';
-		i = 1;
-		l = GMIME_MULTIPART (part)->subparts;
-		while (l != NULL) {
-			sprintf (id, "%d", i);
-			write_part (l->data, uid, buf);
-			l = l->next;
-			i++;
+		
+		n = g_mime_multipart_get_number (multipart);
+		for (i = 0; i < n; i++) {
+			subpart = g_mime_multipart_get_part (multipart, i);
+			sprintf (id, "%d", i + 1);
+			write_part (subpart, uid, buf);
+			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
-		GMimeMessage *message;
-		
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
 		fp = fopen (buf, "wt");
 		g_free (buf);

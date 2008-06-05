@@ -41,18 +41,22 @@ void
 print_mime_struct (GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
+	GMimeMultipart *multipart;
+	GMimeObject *subpart;
+	int i, n;
 	
 	print_depth (depth);
 	type = g_mime_object_get_content_type (part);
 	fprintf (stdout, "Content-Type: %s/%s\n", type->type, type->subtype);
 		
 	if (GMIME_IS_MULTIPART (part)) {
-		GList *subpart;
+		multipart = (GMimeMultipart *) part;
 		
-		subpart = GMIME_MULTIPART (part)->subparts;
-		while (subpart) {
-			print_mime_struct (subpart->data, depth + 1);
-			subpart = subpart->next;
+		n = g_mime_multipart_get_number (multipart);
+		for (i = 0; i < n; i++) {
+			subpart = g_mime_multipart_get_part (multipart, i);
+			print_mime_struct (subpart, depth + 1);
+			g_object_unref (subpart);
 		}
 	}
 }

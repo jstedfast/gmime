@@ -60,6 +60,10 @@ static void
 print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 {
 	const GMimeContentType *type;
+	GMimeMultipart *multipart;
+	GMimeMessagePart *mpart;
+	GMimeObject *subpart;
+	int i, n;
 	
 	print_depth (stream, depth);
 	
@@ -68,15 +72,16 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 	g_mime_stream_printf (stream, "Content-Type: %s/%s\n", type->type, type->subtype);
 	
 	if (GMIME_IS_MULTIPART (part)) {
-		GList *subpart;
+		multipart = (GMimeMultipart *) part;
 		
-		subpart = GMIME_MULTIPART (part)->subparts;
-		while (subpart) {
-			print_mime_struct (stream, subpart->data, depth + 1);
-			subpart = subpart->next;
+		n = g_mime_multipart_get_number (multipart);
+		for (i = 0; i < n; i++) {
+			subpart = g_mime_multipart_get_part (multipart, i);
+			print_mime_struct (stream, subpart, depth + 1);
+			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
-		GMimeMessagePart *mpart = (GMimeMessagePart *) part;
+		mpart = (GMimeMessagePart *) part;
 		
 		if (mpart->message)
 			print_mime_struct (stream, mpart->message->mime_part, depth + 1);

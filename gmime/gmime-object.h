@@ -55,8 +55,6 @@ struct _GMimeObject {
 struct _GMimeObjectClass {
 	GObjectClass parent_class;
 	
-	void         (* init)          (GMimeObject *object);
-	
 	void         (* prepend_header) (GMimeObject *object, const char *header, const char *value);
 	void         (* append_header)  (GMimeObject *object, const char *header, const char *value);
 	void         (* set_header)     (GMimeObject *object, const char *header, const char *value);

@@ -58,7 +58,6 @@ static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
-static void init (GMimeObject *object);
 static void prepend_header (GMimeObject *object, const char *name, const char *value);
 static void append_header (GMimeObject *object, const char *name, const char *value);
 static void set_header (GMimeObject *object, const char *name, const char *value);
@@ -113,7 +112,6 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	
 	object_class->finalize = g_mime_object_finalize;
 	
-	klass->init = init;
 	klass->prepend_header = prepend_header;
 	klass->append_header = append_header;
 	klass->remove_header = remove_header;
@@ -287,13 +285,6 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 }
 
 
-static void
-init (GMimeObject *object)
-{
-	/* no-op */
-}
-
-
 /**
  * g_mime_object_new_type:
  * @type: mime type
@@ -343,8 +334,6 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	}
 	
 	object = g_object_new (obj_type, NULL);
-	
-	GMIME_OBJECT_GET_CLASS (object)->init (object);
 	
 	return object;
 }

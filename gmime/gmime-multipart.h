@@ -41,12 +41,7 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
 struct _GMimeMultipart {
 	GMimeObject parent_object;
 	
-	char *boundary;
-	
-	char *preface;
-	char *postface;
-	
-	GList *subparts;
+	struct _GMimeMultipartPrivate *priv;
 };
 
 struct _GMimeMultipartClass {
@@ -54,7 +49,7 @@ struct _GMimeMultipartClass {
 	
 	void (* add_part) (GMimeMultipart *multipart, GMimeObject *part);
 	void (* add_part_at) (GMimeMultipart *multipart, GMimeObject *part, int index);
-	void (* remove_part) (GMimeMultipart *multipart, GMimeObject *part);
+	gboolean (* remove_part) (GMimeMultipart *multipart, GMimeObject *part);
 	
 	GMimeObject * (* remove_part_at) (GMimeMultipart *multipart, int index);
 	GMimeObject * (* get_part) (GMimeMultipart *multipart, int index);
@@ -80,7 +75,7 @@ const char *g_mime_multipart_get_postface (GMimeMultipart *multipart);
 
 void g_mime_multipart_add_part (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index);
-void g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);
+gboolean g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part);
 
 GMimeObject *g_mime_multipart_remove_part_at (GMimeMultipart *multipart, int index);
 GMimeObject *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);

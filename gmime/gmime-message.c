@@ -50,7 +50,6 @@ static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass
 static void g_mime_message_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_init (GMimeObject *object);
 static void message_prepend_header (GMimeObject *object, const char *header, const char *value);
 static void message_append_header (GMimeObject *object, const char *header, const char *value);
 static void message_set_header (GMimeObject *object, const char *header, const char *value);
@@ -119,7 +118,6 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	
 	gobject_class->finalize = g_mime_message_finalize;
 	
-	object_class->init = message_init;
 	object_class->prepend_header = message_prepend_header;
 	object_class->append_header = message_append_header;
 	object_class->remove_header = message_remove_header;
@@ -195,15 +193,7 @@ g_mime_message_finalize (GObject *object)
 }
 
 
-static void
-message_init (GMimeObject *object)
-{
-	/* no-op */
-	GMIME_OBJECT_CLASS (parent_class)->init (object);
-}
-
-
-typedef void (*token_skip_t) (const char **in);
+typedef void (* token_skip_t) (const char **in);
 
 struct _received_token {
 	char *token;

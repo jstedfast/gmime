@@ -58,7 +58,6 @@ static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultip
 static void g_mime_multipart_signed_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void multipart_signed_init (GMimeObject *object);
 static void multipart_signed_prepend_header (GMimeObject *object, const char *header, const char *value);
 static void multipart_signed_append_header (GMimeObject *object, const char *header, const char *value);
 static void multipart_signed_set_header (GMimeObject *object, const char *header, const char *value);
@@ -107,7 +106,6 @@ g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass)
 	
 	gobject_class->finalize = g_mime_multipart_signed_finalize;
 	
-	object_class->init = multipart_signed_init;
 	object_class->prepend_header = multipart_signed_prepend_header;
 	object_class->append_header = multipart_signed_append_header;
 	object_class->remove_header = multipart_signed_remove_header;
@@ -134,14 +132,6 @@ g_mime_multipart_signed_finalize (GObject *object)
 	g_free (mps->micalg);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-
-static void
-multipart_signed_init (GMimeObject *object)
-{
-	/* no-op */
-	GMIME_OBJECT_CLASS (parent_class)->init (object);
 }
 
 static void
@@ -238,21 +228,24 @@ static void
 sign_prepare (GMimeObject *mime_part)
 {
 	GMimeContentEncoding encoding;
+	GMimeMultipart *multipart;
 	GMimeObject *subpart;
+	int i, n;
 	
 	if (GMIME_IS_MULTIPART (mime_part)) {
-		GList *lpart;
+		multipart = (GMimeMultipart *) mime_part;
 		
-		if (GMIME_IS_MULTIPART_SIGNED (mime_part) || GMIME_IS_MULTIPART_ENCRYPTED (mime_part)) {
+		if (GMIME_IS_MULTIPART_SIGNED (multipart) ||
+		    GMIME_IS_MULTIPART_ENCRYPTED (multipart)) {
 			/* must not modify these parts as they must be treated as opaque */
 			return;
 		}
 		
-		lpart = GMIME_MULTIPART (mime_part)->subparts;
-		while (lpart) {
-			subpart = GMIME_OBJECT (lpart->data);
+		n = g_mime_multipart_get_number (multipart);
+		for (i = 0; i < n; i++) {
+			subpart = g_mime_multipart_get_part (multipart, i);
 			sign_prepare (subpart);
-			lpart = lpart->next;
+			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (mime_part)) {
 		subpart = GMIME_MESSAGE_PART (mime_part)->message->mime_part;

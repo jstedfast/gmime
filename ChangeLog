@@ -1,3 +1,14 @@
+2008-06-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-object.c: Get rid of the 'init' class method,
+	GObject already has an initializer (must be a leftover from before
+	the port to GObject).
+	(g_mime_object_new_type): Don't call GMimeObject->init(),
+	g_object_new() has already initialized the object.
+
+	* gmime/gmime-multipart.c: Moved all fields into a private struct.
+	(g_mime_multipart_remove_part): Now returns TRUE or FALSE.
+
 2008-06-04  Jeffrey Stedfast  <fejj@novell.com>
 
 	* tests/test-pgp.c (main): Test encrypt+sign and decrypt+verify as
