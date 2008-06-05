@@ -149,7 +149,10 @@
   <attr path="/api/namespace/object[@cname='GMimeMessagePart']/method[@name='GetMessage']/return-type" name="owned">true</attr>
 
   <!-- MessagePartial -->
-  
+  <add-node path="/api/namespace/object[@cname='GMimeMessagePartial']/method[@name='ReconstructMessage']/parameters"><parameter name="partials" type="GMimeMessagePartial**" array="true"/></add-node>
+  <attr path="/api/namespace/object[@cname='GMimeMessagePartial']/method[@name='ReconstructMessage']" name="shared">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMessagePartial']/method[@name='ReconstructMessage']/*/parameter[@name='num']" name="name">n_partials</attr>
+
   <!-- Multipart -->
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetSubpartFromContentId']/return-type" name="owned">true</attr>

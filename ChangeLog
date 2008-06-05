@@ -1,5 +1,9 @@
 2008-06-05  Jeffrey Stedfast  <fejj@novell.com>
 
+	* mono/GMime.metadata: Fixed MessagePartial.ReconstructMessage
+	binding, thanks to Mike Kestner for helping me figure out the
+	proper metadata kung-fu to achieve this.
+
 	* gmime/gmime-object.c: Get rid of the 'init' class method,
 	GObject already has an initializer (must be a leftover from before
 	the port to GObject).
