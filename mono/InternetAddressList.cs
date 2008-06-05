@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 namespace GMime {
 	public class InternetAddressList : ArrayList, IDisposable {
 		bool needs_destroy;
-		IntPtr raw_list;
+		IntPtr list;
 
 		[DllImport("gmime")]
 		static extern IntPtr internet_address_list_next (IntPtr raw);
@@ -16,34 +16,34 @@ namespace GMime {
 		[DllImport("gmime")]
 		static extern void internet_address_list_destroy (IntPtr raw);
 
-		public InternetAddressList (IntPtr raw_list, bool needs_destroy)
+		public InternetAddressList (IntPtr list, bool needs_destroy)
 		{
 			this.needs_destroy = needs_destroy;
-			this.raw_list = raw_list;
+			this.list = list;
 			
-			while (raw_list != IntPtr.Zero) {
-				IntPtr raw_ia = internet_address_list_get_address (raw_list);
+			while (list != IntPtr.Zero) {
+				IntPtr ia = internet_address_list_get_address (list);
 				
-				InternetAddress addr = new InternetAddress (raw_ia);
-				this.Add (addr);
+				InternetAddress addr = new InternetAddress (ia);
+				Add (addr);
 				
-				raw_list = internet_address_list_next (raw_list);
+				list = internet_address_list_next (list);
 			}
 		}
 
-		public InternetAddressList (IntPtr raw_list) : this (raw_list, false) { }
+		public InternetAddressList (IntPtr list) : this (list, false) { }
 
 		~InternetAddressList ()
 		{
-			this.Dispose ();
+			Dispose ();
 		}
 
 		public void Dispose ()
 		{
-			if (this.needs_destroy) {
-				internet_address_list_destroy (this.raw_list);
-				this.raw_list = IntPtr.Zero;
-				this.needs_destroy = false;
+			if (needs_destroy) {
+				internet_address_list_destroy (list);
+				needs_destroy = false;
+				list = IntPtr.Zero;
 			}
 			GC.SuppressFinalize (this);
 		}
@@ -53,9 +53,24 @@ namespace GMime {
 
 		public static InternetAddressList ParseString (string list)
 		{
-			IntPtr raw_ret = internet_address_parse_string (list);
+			IntPtr ret = internet_address_parse_string (list);
 			
-			return new InternetAddressList (raw_ret, true);
+			return new InternetAddressList (ret, true);
+		}
+
+		[DllImport("gmime")]
+		static extern IntPtr internet_address_list_to_string (IntPtr list, bool encode);
+
+		public string ToString (bool encode)
+		{
+			IntPtr str = internet_address_list_to_string (list, encode);
+			
+			return GLib.Marshaller.PtrToStringGFree (str);
+		}
+
+		public override string ToString ()
+		{
+			return ToString (false);
 		}
 	}
 }
