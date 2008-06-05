@@ -188,6 +188,7 @@
   <!-- References -->
   <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>
   <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
+  <remove-node path="/api/namespace/struct[@name='References']/method[@name='Clear']"/>
 
   <!-- Session -->
 

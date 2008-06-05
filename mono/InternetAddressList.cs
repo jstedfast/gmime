@@ -4,8 +4,8 @@ using System.Runtime.InteropServices;
 
 namespace GMime {
 	public class InternetAddressList : ArrayList, IDisposable {
-		private IntPtr raw_list;
-		private bool needs_destroy;
+		bool needs_destroy;
+		IntPtr raw_list;
 
 		[DllImport("gmime")]
 		static extern IntPtr internet_address_list_next (IntPtr raw);
@@ -18,8 +18,8 @@ namespace GMime {
 
 		public InternetAddressList (IntPtr raw_list, bool needs_destroy)
 		{
-			this.raw_list = raw_list;
 			this.needs_destroy = needs_destroy;
+			this.raw_list = raw_list;
 			
 			while (raw_list != IntPtr.Zero) {
 				IntPtr raw_ia = internet_address_list_get_address (raw_list);
@@ -37,7 +37,7 @@ namespace GMime {
 		{
 			this.Dispose ();
 		}
-		
+
 		public void Dispose ()
 		{
 			if (this.needs_destroy) {
