@@ -52,17 +52,28 @@ typedef enum {
 } GMimeStreamBufferMode;
 
 
+/**
+ * GMimeStreamBuffer:
+ * @parent_object: parent #GMimeStream
+ * @mode: buffering mode
+ * @source: source stream
+ * @buffer: internal buffer
+ * @bufptr: current position in the buffer
+ * @bufend: end of the buffer
+ * @buflen: buffer length
+ *
+ * A buffered stream wrapper around any #GMimeStream object.
+ **/
 struct _GMimeStreamBuffer {
 	GMimeStream parent_object;
 	
+	GMimeStreamBufferMode mode;
 	GMimeStream *source;
 	
 	char *buffer;
 	char *bufptr;
 	char *bufend;
 	size_t buflen;
-	
-	GMimeStreamBufferMode mode;
 };
 
 struct _GMimeStreamBufferClass {

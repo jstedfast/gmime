@@ -47,14 +47,6 @@
  **/
 
 
-struct _GMimeMultipartPrivate {
-	GPtrArray *children;
-	char *boundary;
-	char *preface;
-	char *postface;
-};
-
-
 /* GObject class methods */
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
 static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass);
@@ -141,29 +133,26 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 static void
 g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
-	multipart->priv = g_new (struct _GMimeMultipartPrivate, 1);
-	multipart->priv->children = g_ptr_array_new ();
-	multipart->priv->boundary = NULL;
-	multipart->priv->preface = NULL;
-	multipart->priv->postface = NULL;
+	multipart->children = g_ptr_array_new ();
+	multipart->boundary = NULL;
+	multipart->preface = NULL;
+	multipart->postface = NULL;
 }
 
 static void
 g_mime_multipart_finalize (GObject *object)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
 	guint i;
 	
-	g_free (priv->boundary);
-	g_free (priv->preface);
-	g_free (priv->postface);
+	g_free (multipart->boundary);
+	g_free (multipart->preface);
+	g_free (multipart->postface);
 	
-	for (i = 0; i < priv->children->len; i++)
-		g_object_unref (priv->children->pdata[i]);
+	for (i = 0; i < multipart->children->len; i++)
+		g_object_unref (multipart->children->pdata[i]);
 	
-	g_ptr_array_free (priv->children, TRUE);
-	g_free (priv);
+	g_ptr_array_free (multipart->children, TRUE);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -228,8 +217,8 @@ multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 	const char *boundary;
 	
 	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
-	g_free (multipart->priv->boundary);
-	multipart->priv->boundary = g_strdup (boundary);
+	g_free (multipart->boundary);
+	multipart->boundary = g_strdup (boundary);
 	
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
@@ -244,7 +233,6 @@ static ssize_t
 multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
 	ssize_t nwritten, total = 0;
 	GMimeObject *part;
 	guint i;
@@ -253,7 +241,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	 * header (in which case it should already be set... or if
 	 * not, then it's a broken multipart and so we don't want to
 	 * alter it or we'll completely break the output) */
-	if (!priv->boundary && !g_mime_header_list_has_raw (object->headers))
+	if (!multipart->boundary && !g_mime_header_list_has_raw (object->headers))
 		g_mime_multipart_set_boundary (multipart, NULL);
 	
 	/* write the content headers */
@@ -263,24 +251,24 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	total += nwritten;
 	
 	/* write the preface */
-	if (priv->preface) {
+	if (multipart->preface) {
 		/* terminate the headers */
 		if (g_mime_stream_write (stream, "\n", 1) == -1)
 			return -1;
 		
 		total++;
 		
-		if ((nwritten = g_mime_stream_write_string (stream, priv->preface)) == -1)
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->preface)) == -1)
 			return -1;
 		
 		total += nwritten;
 	}
 	
-	for (i = 0; i < priv->children->len; i++) {
-		part = priv->children->pdata[i];
+	for (i = 0; i < multipart->children->len; i++) {
+		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", priv->boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -293,16 +281,16 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	}
 	
 	/* write the end-boundary (but only if a boundary is set) */
-	if (priv->boundary) {
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", priv->boundary)) == -1)
+	if (multipart->boundary) {
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
 	}
 	
 	/* write the postface */
-	if (priv->postface) {
-		if ((nwritten = g_mime_stream_write_string (stream, priv->postface)) == -1)
+	if (multipart->postface) {
+		if ((nwritten = g_mime_stream_write_string (stream, multipart->postface)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -373,8 +361,8 @@ g_mime_multipart_set_preface (GMimeMultipart *multipart, const char *preface)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	
-	g_free (multipart->priv->preface);
-	multipart->priv->preface = g_strdup (preface);
+	g_free (multipart->preface);
+	multipart->preface = g_strdup (preface);
 }
 
 
@@ -391,7 +379,7 @@ g_mime_multipart_get_preface (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return multipart->priv->preface;
+	return multipart->preface;
 }
 
 
@@ -407,8 +395,8 @@ g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface)
 {
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	
-	g_free (multipart->priv->postface);
-	multipart->priv->postface = g_strdup (postface);
+	g_free (multipart->postface);
+	multipart->postface = g_strdup (postface);
 }
 
 
@@ -425,18 +413,16 @@ g_mime_multipart_get_postface (GMimeMultipart *multipart)
 {
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	
-	return multipart->priv->postface;
+	return multipart->postface;
 }
 
 
 static void
 multipart_add_part (GMimeMultipart *multipart, GMimeObject *part)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
-	
 	g_object_ref (part);
 	
-	g_ptr_array_add (priv->children, part);
+	g_ptr_array_add (multipart->children, part);
 }
 
 
@@ -480,11 +466,9 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 static void
 multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int index)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
-	
 	g_object_ref (part);
 	
-	ptr_array_insert (priv->children, index, part);
+	ptr_array_insert (multipart->children, index, part);
 }
 
 
@@ -510,9 +494,7 @@ g_mime_multipart_add_part_at (GMimeMultipart *multipart, GMimeObject *part, int 
 static gboolean
 multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
-	
-	if (!g_ptr_array_remove (priv->children, part))
+	if (!g_ptr_array_remove (multipart->children, part))
 		return FALSE;
 	
 	g_object_unref (part);
@@ -543,15 +525,14 @@ g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 static GMimeObject *
 multipart_remove_part_at (GMimeMultipart *multipart, int index)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
 	GMimeObject *part;
 	
-	if (index >= priv->children->len)
+	if (index >= multipart->children->len)
 		return NULL;
 	
-	part = priv->children->pdata[index];
+	part = multipart->children->pdata[index];
 	
-	g_ptr_array_remove_index (priv->children, index);
+	g_ptr_array_remove_index (multipart->children, index);
 	
 	return part;
 }
@@ -579,13 +560,12 @@ g_mime_multipart_remove_part_at (GMimeMultipart *multipart, int index)
 static GMimeObject *
 multipart_get_part (GMimeMultipart *multipart, int index)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
 	GMimeObject *part;
 	
-	if (index >= priv->children->len)
+	if (index >= multipart->children->len)
 		return NULL;
 	
-	part = priv->children->pdata[index];
+	part = multipart->children->pdata[index];
 	g_object_ref (part);
 	
 	return part;
@@ -614,7 +594,7 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 static int
 multipart_get_number (GMimeMultipart *multipart)
 {
-	return multipart->priv->children->len;
+	return multipart->children->len;
 }
 
 
@@ -664,7 +644,6 @@ read_random_pool (unsigned char *buffer, size_t bytes)
 static void
 multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
 	char bbuf[35];
 	
 	if (!boundary) {
@@ -683,8 +662,8 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		boundary = bbuf;
 	}
 	
-	g_free (priv->boundary);
-	priv->boundary = g_strdup (boundary);
+	g_free (multipart->boundary);
+	multipart->boundary = g_strdup (boundary);
 	
 	g_mime_object_set_content_type_parameter (GMIME_OBJECT (multipart), "boundary", boundary);
 }
@@ -710,12 +689,10 @@ g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 static const char *
 multipart_get_boundary (GMimeMultipart *multipart)
 {
-	struct _GMimeMultipartPrivate *priv = multipart->priv;
-	
-	if (!priv->boundary)
+	if (!multipart->boundary)
 		multipart_set_boundary (multipart, NULL);
 	
-	return priv->boundary;
+	return multipart->boundary;
 }
 
 
@@ -749,16 +726,14 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 void
 g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data)
 {
-	struct _GMimeMultipartPrivate *priv;
 	GMimeObject *part;
 	guint i;
 	
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
-	priv = multipart->priv;
-	for (i = 0; i < priv->children->len; i++) {
-		part = priv->children->pdata[i];
+	for (i = 0; i < multipart->children->len; i++) {
+		part = multipart->children->pdata[i];
 		callback (part, user_data);
 	}
 }
@@ -779,7 +754,6 @@ GMimeObject *
 g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)
 {
 	GMimeObject *object = (GMimeObject *) multipart;
-	struct _GMimeMultipartPrivate *priv;
 	GMimeObject *subpart, *part;
 	GMimeMultipart *mpart;
 	guint i;
@@ -787,15 +761,13 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (content_id != NULL, NULL);
 	
-	priv = multipart->priv;
-	
 	if (object->content_id && !strcmp (object->content_id, content_id)) {
 		g_object_ref (object);
 		return object;
 	}
 	
-	for (i = 0; i < priv->children->len; i++) {
-		subpart = priv->children->pdata[i];
+	for (i = 0; i < multipart->children->len; i++) {
+		subpart = multipart->children->pdata[i];
 		
 		if (GMIME_IS_MULTIPART (subpart)) {
 			mpart = (GMimeMultipart *) subpart;

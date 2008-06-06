@@ -38,11 +38,27 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilter GMimeFilter;
 typedef struct _GMimeFilterClass GMimeFilterClass;
 
+/**
+ * GMimeFilter:
+ * @parent_object: parent #GObject
+ * @priv: private state data
+ * @outreal: real malloc'd buffer
+ * @outbuf: first writable position allowed (outreal + outpre)
+ * @outptr: current writale position
+ * @outsize: current bytes in @outbuf
+ * @outpre: current prespace of @outbuf
+ * @backbuf: backup buffer
+ * @backsize: backup buffer size
+ * @backlen: number of bytes backed-up in @backbuf
+ *
+ * Base class for filters used by #GMimeStreamFilter.
+ **/
 struct _GMimeFilter {
 	GObject parent_object;
 	
 	struct _GMimeFilterPrivate *priv;
 	
+	/* <protected> */
 	char *outreal;		/* real malloc'd buffer */
 	char *outbuf;		/* first 'writable' position allowed (outreal + outpre) */
 	char *outptr;

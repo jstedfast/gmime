@@ -42,6 +42,16 @@ G_BEGIN_DECLS
 typedef struct _GMimeObject GMimeObject;
 typedef struct _GMimeObjectClass GMimeObjectClass;
 
+/**
+ * GMimeObject:
+ * @parent_object: parent #GObject
+ * @disposition: a #GMimeContentDisposition
+ * @content_type: a #GMimeContentType
+ * @content_id: a Content-Id
+ * @headers: a #GMimeHeaderList
+ *
+ * Base class for all MIME parts.
+ **/
 struct _GMimeObject {
 	GObject parent_object;
 	

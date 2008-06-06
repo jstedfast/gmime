@@ -37,11 +37,19 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamMem GMimeStreamMem;
 typedef struct _GMimeStreamMemClass GMimeStreamMemClass;
 
+/**
+ * GMimeStreamMem:
+ * @parent_object: parent #GMimeStream
+ * @buffer: a memory buffer
+ * @owner: %TRUE if this stream owns the memory buffer
+ *
+ * A memory-backed #GMimeStream.
+ **/
 struct _GMimeStreamMem {
 	GMimeStream parent_object;
 	
-	gboolean owner;
 	GByteArray *buffer;
+	gboolean owner;
 };
 
 struct _GMimeStreamMemClass {

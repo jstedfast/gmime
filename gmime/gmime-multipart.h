@@ -38,10 +38,23 @@ G_BEGIN_DECLS
 typedef struct _GMimeMultipart GMimeMultipart;
 typedef struct _GMimeMultipartClass GMimeMultipartClass;
 
+/**
+ * GMimeMultipart:
+ * @parent_object: parent #GMimeObject
+ * @children: array of MIME sub-parts
+ * @boundary: MIME boundary
+ * @preface: multipart preface
+ * @postface: multipart postface
+ *
+ * A base MIME multipart object.
+ **/
 struct _GMimeMultipart {
 	GMimeObject parent_object;
 	
-	struct _GMimeMultipartPrivate *priv;
+	GPtrArray *children;
+	char *boundary;
+	char *preface;
+	char *postface;
 };
 
 struct _GMimeMultipartClass {

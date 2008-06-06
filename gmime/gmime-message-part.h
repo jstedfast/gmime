@@ -37,6 +37,13 @@ G_BEGIN_DECLS
 typedef struct _GMimeMessagePart GMimeMessagePart;
 typedef struct _GMimeMessagePartClass GMimeMessagePartClass;
 
+/**
+ * GMimeMessagePart:
+ * @parent_object: parent #GMimeObject
+ * @message: child #GMimeMessage
+ *
+ * A message/rfc822 or message/news MIME part.
+ **/
 struct _GMimeMessagePart {
 	GMimeObject parent_object;
 	

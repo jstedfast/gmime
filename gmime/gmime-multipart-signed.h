@@ -42,6 +42,15 @@ enum {
 	GMIME_MULTIPART_SIGNED_SIGNATURE
 };
 
+
+/**
+ * GMimeMultipartSigned:
+ * @parent_object: parent #GMimeMultipart
+ * @protocol: signature protocol string
+ * @micalg: signature hash
+ *
+ * A multipart/signed MIME part.
+ **/
 struct _GMimeMultipartSigned {
 	GMimeMultipart parent_object;
 	

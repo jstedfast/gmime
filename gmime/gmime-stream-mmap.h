@@ -36,6 +36,17 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamMmap GMimeStreamMmap;
 typedef struct _GMimeStreamMmapClass GMimeStreamMmapClass;
 
+/**
+ * GMimeStreamMmap:
+ * @parent_object: parent #GMimeStream
+ * @owner: %TRUE if this stream owns the memory map
+ * @eos: %TRUE if end-of-stream
+ * @fd: file descriptor
+ * @map: memory map
+ * @maplen: length of the memory map
+ *
+ * A memory-mapped #GMimeStream.
+ **/
 struct _GMimeStreamMmap {
 	GMimeStream parent_object;
 	

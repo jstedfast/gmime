@@ -42,22 +42,33 @@ G_BEGIN_DECLS
 typedef struct _GMimeMessage GMimeMessage;
 typedef struct _GMimeMessageClass GMimeMessageClass;
 
+
+/**
+ * GMimeMessage:
+ * @parent_object: parent #GMimeObject
+ * @mime_part: toplevel MIME part
+ * @recipients: hash table of recipients using recipient header name as the hash key
+ * @message_id: Message-Id string
+ * @reply_to: Reply-To string
+ * @subject: Subject string
+ * @from: From string
+ * @date: Date value
+ * @tz_offset: timezone offset
+ *
+ * A MIME Message object.
+ **/
 struct _GMimeMessage {
 	GMimeObject parent_object;
 	
-	char *from;
-	char *reply_to;
-	
+	GMimeObject *mime_part;
 	GHashTable *recipients;
-	
+	char *message_id;
+	char *reply_to;
 	char *subject;
+	char *from;
 	
 	time_t date;
-	int gmt_offset;     /* GMT offset */
-	
-	char *message_id;
-	
-	GMimeObject *mime_part;
+	int tz_offset;
 };
 
 struct _GMimeMessageClass {
@@ -109,9 +120,10 @@ InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject);
 const char *g_mime_message_get_subject (GMimeMessage *message);
 
-void g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset);
-void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset);
-char *g_mime_message_get_date_string (GMimeMessage *message);
+void g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset);
+void g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset);
+void g_mime_message_set_date_as_string (GMimeMessage *message, const char *str);
+char *g_mime_message_get_date_as_string (GMimeMessage *message);
 
 void g_mime_message_set_message_id (GMimeMessage *message, const char *message_id);
 const char *g_mime_message_get_message_id (GMimeMessage *message);

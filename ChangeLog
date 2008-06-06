@@ -1,5 +1,11 @@
 2008-06-05  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c (g_mime_message_get_date_as_string):
+	Renamed from g_mime_message_get_date_string().
+	(g_mime_message_set_date_as_string): New function to provide
+	another means of setting a date (might help with some bindings
+	where time_t and tz_offsets are more difficult to work with).
+
 	* mono/GMime.metadata: Fixed MessagePartial.ReconstructMessage
 	binding, thanks to Mike Kestner for helping me figure out the
 	proper metadata kung-fu to achieve this.
@@ -10,8 +16,8 @@
 	(g_mime_object_new_type): Don't call GMimeObject->init(),
 	g_object_new() has already initialized the object.
 
-	* gmime/gmime-multipart.c: Moved all fields into a private struct.
-	(g_mime_multipart_remove_part): Now returns TRUE or FALSE.
+	* gmime/gmime-multipart.c (g_mime_multipart_remove_part): Now
+	returns TRUE or FALSE.
 
 2008-06-04  Jeffrey Stedfast  <fejj@novell.com>
 

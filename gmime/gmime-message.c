@@ -137,7 +137,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	message->recipients = g_hash_table_new (g_str_hash, g_str_equal);
 	message->subject = NULL;
 	message->date = 0;
-	message->gmt_offset = 0;
+	message->tz_offset = 0;
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	
@@ -656,7 +656,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		if (value) {
 			date = g_mime_utils_header_decode_date (value, &offset);
 			message->date = date;
-			message->gmt_offset = offset;
+			message->tz_offset = offset;
 		}
 		break;
 	case HEADER_MESSAGE_ID:
@@ -808,7 +808,7 @@ message_remove_header (GMimeObject *object, const char *header)
 		break;
 	case HEADER_DATE:
 		message->date = 0;
-		message->gmt_offset = 0;
+		message->tz_offset = 0;
 		break;
 	case HEADER_MESSAGE_ID:
 		g_free (message->message_id);
@@ -1212,68 +1212,90 @@ g_mime_message_get_subject (GMimeMessage *message)
 /**
  * g_mime_message_set_date:
  * @message: MIME Message
- * @date: Sent-date (ex: gotten from time (NULL))
- * @gmt_offset: GMT date offset (in +/- hours)
+ * @date: a date to be used in the Date header
+ * @tz_offset: timezone offset (in +/- hours)
  * 
- * Sets the sent-date on a MIME Message.
+ * Sets the Date header on a MIME Message.
  **/
 void
-g_mime_message_set_date (GMimeMessage *message, time_t date, int gmt_offset)
+g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 {
-	char *date_str;
+	char *str;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	message->date = date;
-	message->gmt_offset = gmt_offset;
+	message->tz_offset = tz_offset;
 	
-	date_str = g_mime_message_get_date_string (message);
-	g_mime_object_set_header (GMIME_OBJECT (message), "Date", date_str);
-	g_free (date_str);
+	str = g_mime_utils_header_format_date (date, tz_offset);
+	g_mime_object_set_header (GMIME_OBJECT (message), "Date", str);
+	g_free (str);
 }
 
 
 /**
  * g_mime_message_get_date:
  * @message: MIME Message
- * @date: Sent-date
- * @gmt_offset: GMT date offset (in +/- hours)
+ * @date: pointer to a date in time_t
+ * @tz_offset: pointer to timezone offset (in +/- hours)
  * 
- * Stores the date in time_t format in #date and the GMT offset in
- * @gmt_offset.
+ * Stores the date in time_t format in @date. If @tz_offset is
+ * non-%NULL, then the timezone offset in will be stored in
+ * @tz_offset.
  **/
 void
-g_mime_message_get_date (GMimeMessage *message, time_t *date, int *gmt_offset)
+g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (date != NULL);
 	
 	*date = message->date;
 	
-	if (gmt_offset)
-		*gmt_offset = message->gmt_offset;
+	if (tz_offset)
+		*tz_offset = message->tz_offset;
 }
 
 
 /**
- * g_mime_message_get_date_string:
+ * g_mime_message_get_date_as_string:
  * @message: MIME Message
  *
- * Gets the message's sent date in string format.
+ * Gets the message's sent-date in string format.
  * 
- * Returns: the sent-date of the MIME Message in string format.
+ * Returns: a newly allocated string containing the Date header value.
  **/
 char *
-g_mime_message_get_date_string (GMimeMessage *message)
+g_mime_message_get_date_as_string (GMimeMessage *message)
 {
-	char *date_str;
-	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	date_str = g_mime_utils_header_format_date (message->date,
-						    message->gmt_offset);
+	return g_mime_utils_header_format_date (message->date, message->tz_offset);
+}
+
+
+/**
+ * g_mime_message_set_date_as_string:
+ * @message: MIME Message
+ * @str: a date string
+ *
+ * Sets the sent-date of the message.
+ **/
+void
+g_mime_message_set_date_as_string (GMimeMessage *message, const char *str)
+{
+	int tz_offset;
+	time_t date;
+	char *buf;
 	
-	return date_str;
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	
+	date = g_mime_utils_header_decode_date (str, &tz_offset);
+	message->tz_offset = tz_offset;
+	message->date = date;
+	
+	buf = g_mime_utils_header_format_date (date, tz_offset);
+	g_mime_object_set_header (GMIME_OBJECT (message), "Date", buf);
+	g_free (buf);
 }
 
 

@@ -39,12 +39,21 @@ G_BEGIN_DECLS
 typedef struct _GMimeMessagePartial GMimeMessagePartial;
 typedef struct _GMimeMessagePartialClass GMimeMessagePartialClass;
 
+/**
+ * GMimeMessagePartial:
+ * @parent_object: parent #GMimePart object
+ * @number: the part number
+ * @total: the total number of message/partials that make up the whole message/rfc822
+ * @id: message/partial id
+ *
+ * A message/partial MIME part.
+ **/
 struct _GMimeMessagePartial {
 	GMimePart parent_object;
 	
-	char *id;
 	int number;
 	int total;
+	char *id;
 };
 
 struct _GMimeMessagePartialClass {

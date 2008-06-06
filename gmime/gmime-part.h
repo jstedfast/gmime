@@ -41,6 +41,17 @@ G_BEGIN_DECLS
 typedef struct _GMimePart GMimePart;
 typedef struct _GMimePartClass GMimePartClass;
 
+/**
+ * GMimePart:
+ * @parent_object: parent #GMimeObject
+ * @encoding: a #GMimeContentEncoding
+ * @content_description: Content-Description string
+ * @content_location: Content-Location string
+ * @content_md5: Content-MD5 string
+ * @content: a #GMimeDataWrapper representing the MIME part's content
+ *
+ * Base leaf-node MIME part object.
+ **/
 struct _GMimePart {
 	GMimeObject parent_object;
 	

@@ -640,7 +640,7 @@
       <field name="Recipients" cname="recipients" type="GHashTable*" />
       <field name="Subject" cname="subject" type="char*" />
       <field name="Date" cname="date" type="time_t" />
-      <field name="GmtOffset" cname="gmt_offset" type="int" />
+      <field name="TzOffset" cname="tz_offset" type="int" />
       <field name="MessageId" cname="message_id" type="char*" />
       <field name="MimePart" cname="mime_part" type="GMimeObject*" />
       <method name="AddHeader" cname="g_mime_message_add_header">
@@ -679,10 +679,10 @@
         <return-type type="void" />
         <parameters>
           <parameter type="time_t*" name="date" />
-          <parameter type="int*" name="gmt_offset" />
+          <parameter type="int*" name="tz_offset" />
         </parameters>
       </method>
-      <method name="GetDateString" cname="g_mime_message_get_date_string">
+      <method name="GetDateAsString" cname="g_mime_message_get_date_as_string">
         <return-type type="char*" />
       </method>
       <method name="GetHeader" cname="g_mime_message_get_header">
@@ -724,7 +724,13 @@
         <return-type type="void" />
         <parameters>
           <parameter type="time_t" name="date" />
-          <parameter type="int" name="gmt_offset" />
+          <parameter type="int" name="tz_offset" />
+        </parameters>
+      </method>
+      <method name="SetDateAsString" cname="g_mime_message_set_date_as_string">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="str" />
         </parameters>
       </method>
       <method name="SetHeader" cname="g_mime_message_set_header">

@@ -37,6 +37,15 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamFs GMimeStreamFs;
 typedef struct _GMimeStreamFsClass GMimeStreamFsClass;
 
+/**
+ * GMimeStreamFs:
+ * @parent_object: parent #GMimeStream
+ * @owner: %TRUE if this stream owns @fd
+ * @eos: %TRUE if end-of-stream
+ * @fd: file descriptor
+ *
+ * A #GMimeStream wrapper around POSIX file descriptors.
+ **/
 struct _GMimeStreamFs {
 	GMimeStream parent_object;
 	

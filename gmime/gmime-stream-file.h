@@ -38,6 +38,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamFile GMimeStreamFile;
 typedef struct _GMimeStreamFileClass GMimeStreamFileClass;
 
+/**
+ * GMimeStreamFile:
+ * @parent_object: parent #GMimeStream
+ * @owner: %TRUE if this stream owns @fd
+ * @fp: standard-c FILE pointer
+ *
+ * A #GMimeStream wrapper around standard-c FILE pointers.
+ **/
 struct _GMimeStreamFile {
 	GMimeStream parent_object;
 	

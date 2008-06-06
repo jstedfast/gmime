@@ -322,7 +322,6 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
  * @ctx: decryption cipher context
- * @validity: a #GMimeSignatureValidity
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the

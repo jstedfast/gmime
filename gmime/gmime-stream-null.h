@@ -37,6 +37,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamNull GMimeStreamNull;
 typedef struct _GMimeStreamNullClass GMimeStreamNullClass;
 
+/**
+ * GMimeStreamNull:
+ * @parent_object: parent #GMimeStream
+ * @written: number of bytes written to this stream
+ * @newlines: the number of newlines written to this stream
+ *
+ * A #GMimeStream which has no backing store.
+ **/
 struct _GMimeStreamNull {
 	GMimeStream parent_object;
 	

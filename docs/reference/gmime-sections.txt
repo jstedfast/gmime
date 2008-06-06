@@ -752,6 +752,7 @@ GMimeMultipartEncrypted
 g_mime_multipart_encrypted_new
 g_mime_multipart_encrypted_encrypt
 g_mime_multipart_encrypted_decrypt
+g_mime_multipart_encrypted_get_signature_validity
 
 <SUBSECTION Private>
 g_mime_multipart_encrypted_get_type
@@ -805,7 +806,8 @@ g_mime_message_set_subject
 g_mime_message_get_subject
 g_mime_message_set_date
 g_mime_message_get_date
-g_mime_message_get_date_string
+g_mime_message_set_date_as_string
+g_mime_message_get_date_as_string
 g_mime_message_set_message_id
 g_mime_message_get_message_id
 g_mime_message_set_mime_part

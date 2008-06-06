@@ -37,6 +37,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamCat GMimeStreamCat;
 typedef struct _GMimeStreamCatClass GMimeStreamCatClass;
 
+/**
+ * GMimeStreamCat:
+ * @parent_object: parent #GMimeStream
+ * @sources: list of sources
+ * @current: current source
+ *
+ * A concatenation of other #GMimeStream objects.
+ **/
 struct _GMimeStreamCat {
 	GMimeStream parent_object;
 	

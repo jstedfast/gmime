@@ -30,6 +30,7 @@ do
 	-e "s/g_mime_message_set_header/g_mime_object_set_header/g" \
 	-e "s/g_mime_message_write_to_stream/g_mime_object_write_to_stream/g" \
 	-e "s/g_mime_message_to_string/g_mime_object_to_string/g" \
+	-e "s/g_mime_message_get_date_string/g_mime_message_get_date_as_string/g" \
 	-e "s/GMimeDisposition/GMimeContentDisposition/g" \
 	-e "s/g_mime_disposition_new/g_mime_content_disposition_new_from_string/g" \
 	-e "s/g_mime_disposition_destroy/g_mime_content_disposition_destroy/g" \

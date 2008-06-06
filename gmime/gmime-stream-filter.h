@@ -37,6 +37,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeStreamFilter GMimeStreamFilter;
 typedef struct _GMimeStreamFilterClass GMimeStreamFilterClass;
 
+/**
+ * GMimeStreamFilter:
+ * @parent_object: parent #GMimeStream
+ * @priv: private state data
+ * @source: source stream
+ *
+ * A #GMimeStream which passes data through any #GMimeFilter objects.
+ **/
 struct _GMimeStreamFilter {
 	GMimeStream parent_object;
 	
