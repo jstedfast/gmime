@@ -45,6 +45,15 @@ typedef struct _GMimeFilterEnrichedClass GMimeFilterEnrichedClass;
  **/
 #define GMIME_FILTER_ENRICHED_IS_RICHTEXT  (1 << 0)
 
+/**
+ * GMimeFilterEnriched:
+ * @parent_object: parent #GMimeFilter
+ * @flags: bit flags
+ * @nofill: nofill tag state
+ *
+ * A filter for converting text/enriched or text/richtext textual
+ * streams into text/html.
+ **/
 struct _GMimeFilterEnriched {
 	GMimeFilter parent_object;
 	

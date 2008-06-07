@@ -37,6 +37,13 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterBasic GMimeFilterBasic;
 typedef struct _GMimeFilterBasicClass GMimeFilterBasicClass;
 
+/**
+ * GMimeFilterBasic:
+ * @parent_object: parent #GMimeFilter
+ * @encoder: #GMimeEncoding state
+ *
+ * A basic encoder/decoder filter for the MIME encodings.
+ **/
 struct _GMimeFilterBasic {
 	GMimeFilter parent_object;
 	GMimeEncoding encoder;

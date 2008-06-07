@@ -36,6 +36,12 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterStrip GMimeFilterStrip;
 typedef struct _GMimeFilterStripClass GMimeFilterStripClass;
 
+/**
+ * GMimeFilterStrip:
+ * @parent_object: parent #GMimeFilter
+ *
+ * A filter for stripping whitespace from the end of lines.
+ **/
 struct _GMimeFilterStrip {
 	GMimeFilter parent_object;
 	

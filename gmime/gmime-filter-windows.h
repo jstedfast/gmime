@@ -36,6 +36,16 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterWindows GMimeFilterWindows;
 typedef struct _GMimeFilterWindowsClass GMimeFilterWindowsClass;
 
+/**
+ * GMimeFilterWindows:
+ * @parent_object: parent #GMimeFilter
+ * @is_windows: %TRUE if the stream is detected to be a windows-cp125x charset
+ * @claimed_charset: charset the text stream is claimed to be
+ *
+ * A filter for detecting whether or not a text stream claimed to be
+ * iso-8859-X is really that charset or if it is really a
+ * Windows-CP125x charset.
+ **/
 struct _GMimeFilterWindows {
 	GMimeFilter parent_object;
 	

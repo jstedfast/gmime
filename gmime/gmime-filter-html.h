@@ -102,6 +102,17 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
 #define GMIME_FILTER_HTML_CITE              (1 << 7)
 
 
+/**
+ * GMimeFilterHTML:
+ * @parent_object: parent #GMimeFilter
+ * @scanner: URL scanner state
+ * @flags: flags specifying HTML conversion rules
+ * @colour: cite colour
+ * @column: current column
+ * @pre_open: currently inside of a 'pre' tag.
+ *
+ * A filter for converting text/plain into text/html.
+ **/
 struct _GMimeFilterHTML {
 	GMimeFilter parent_object;
 	

@@ -50,6 +50,15 @@ typedef enum {
 } GMimeFilterGZipMode;
 
 
+/**
+ * GMimeFilterGZip:
+ * @parent_object: parent #GMimeFilter
+ * @priv: private state data
+ * @mode: #GMimeFilterGZipMode
+ * @level: compression level
+ *
+ * A filter for compresing or decompressing a gzip stream.
+ **/
 struct _GMimeFilterGZip {
 	GMimeFilter parent_object;
 	

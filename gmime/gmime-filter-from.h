@@ -52,6 +52,14 @@ typedef enum {
 } GMimeFilterFromMode;
 
 
+/**
+ * GMimeFilterFrom:
+ * @parent_object: parent #GMimeFilter
+ * @mode: #GMimeFilterFromMode
+ * @midline: %TRUE if in the middle of a line
+ *
+ * A filter for armoring or escaping lines beginning with "From ".
+ **/
 struct _GMimeFilterFrom {
 	GMimeFilter parent_object;
 	

@@ -36,6 +36,13 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterMd5 GMimeFilterMd5;
 typedef struct _GMimeFilterMd5Class GMimeFilterMd5Class;
 
+/**
+ * GMimeFilterMd5:
+ * @parent_object: parent #GMimeFilter
+ * @priv: private state data
+ *
+ * A filter for calculating the MD5 checksum of a stream.
+ **/
 struct _GMimeFilterMd5 {
 	GMimeFilter parent_object;
 	

@@ -121,6 +121,17 @@ typedef struct _GMimeFilterYencClass GMimeFilterYencClass;
  **/
 #define GMIME_YENCODE_CRC_FINAL(crc) (~crc)
 
+/**
+ * GMimeFilterYenc:
+ * @parent_object: parent #GMimeFilter
+ * @encode: encode vs decode
+ * @part: part id
+ * @state: encode/decode state
+ * @pcrc: part crc
+ * @crc: full crc
+ *
+ * A filter for yEncoding or yDecoding a stream.
+ **/
 struct _GMimeFilterYenc {
 	GMimeFilter parent_object;
 	

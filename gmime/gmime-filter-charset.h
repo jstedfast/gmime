@@ -37,6 +37,15 @@ G_BEGIN_DECLS
 typedef struct _GMimeFilterCharset GMimeFilterCharset;
 typedef struct _GMimeFilterCharsetClass GMimeFilterCharsetClass;
 
+/**
+ * GMimeFilterCharset:
+ * @parent_object: parent #GMimeFilter
+ * @from_charset: charset that the filter is converting from
+ * @to_charset: charset the filter is converting to
+ * @cd: charset conversion state
+ *
+ * A filter to convert between charsets.
+ **/
 struct _GMimeFilterCharset {
 	GMimeFilter parent_object;
 	

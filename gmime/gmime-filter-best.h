@@ -70,6 +70,26 @@ typedef enum {
 	GMIME_BEST_ENCODING_BINARY
 } GMimeBestEncoding;
 
+
+/**
+ * GMimeFilterBest:
+ * @parent_object: parent #GMimeFilter
+ * @flags: #GMimeFilterBestFlags
+ * @charset: #GMimeCharset state
+ * @count0: count of nul-bytes passed through the filter
+ * @count8: count of 8bit bytes passed through the filter
+ * @total: total number of bytes passed through the filter
+ * @maxline: the length of the longest line passed through the filter
+ * @linelen: current line length
+ * @frombuf: buffer for checking From_ lines
+ * @fromlen: length of bytes in @frombuf
+ * @hadfrom: %TRUE if any line started with "From "
+ * @startline: start line state
+ * @midline: mid-line state
+ *
+ * A filter for calculating the best encoding and/or charset to encode
+ * the data passed through it.
+ **/
 struct _GMimeFilterBest {
 	GMimeFilter parent_object;
 	
