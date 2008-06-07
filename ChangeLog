@@ -21,7 +21,7 @@
 
 	* README: Bumped version
 
-	* configure.in: Bumped version to 2.3.1
+	* configure.in: Bumped version to 2.3.2
 
 	* gmime/*.[c,h]: Updated a bunch of gtk-doc documentation.
 
