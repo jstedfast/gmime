@@ -283,13 +283,13 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCipherContext *ctx, const char *userid,
 			      GMimeCipherHash hash, GError **err)
 {
-	GMimeObject *signature;
-	GMimeDataWrapper *wrapper;
-	GMimeStream *filtered_stream;
-	GMimeStream *stream, *sigstream;
-	GMimeFilter *crlf_filter, *from_filter, *strip_filter;
+	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
+	GMimeDataWrapper *wrapper;
+	GMimeObject *signature;
+	GMimeFilter *filter;
 	GMimeParser *parser;
+	int rv;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), -1);
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
@@ -301,41 +301,41 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
-	filtered_stream = g_mime_stream_filter_new (stream);
+	filtered = g_mime_stream_filter_new (stream);
 	
 	/* Note: see rfc3156, section 3 - second note */
-	from_filter = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ARMOR);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), from_filter);
-	g_object_unref (from_filter);
+	filter = g_mime_filter_from_new (GMIME_FILTER_FROM_MODE_ARMOR);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
 	
 	/* Note: see rfc3156, section 5.4 (this is the main difference between rfc2015 and rfc3156) */
-	strip_filter = g_mime_filter_strip_new ();
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), strip_filter);
-	g_object_unref (strip_filter);
+	filter = g_mime_filter_strip_new ();
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
 	
-	g_mime_object_write_to_stream (content, filtered_stream);
-	g_mime_stream_flush (filtered_stream);
-	g_object_unref (filtered_stream);
+	g_mime_object_write_to_stream (content, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
 	g_mime_stream_reset (stream);
 	
 	/* Note: see rfc2015 or rfc3156, section 5.1 */
-	filtered_stream = g_mime_stream_filter_new (stream);
-	crlf_filter = g_mime_filter_crlf_new (TRUE, FALSE);
-	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered_stream), crlf_filter);
-	g_object_unref (crlf_filter);
+	filtered = g_mime_stream_filter_new (stream);
+	filter = g_mime_filter_crlf_new (TRUE, FALSE);
+	g_mime_stream_filter_add (GMIME_STREAM_FILTER (filtered), filter);
+	g_object_unref (filter);
 	
 	/* construct the signature stream */
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if (g_mime_cipher_context_sign (ctx, userid, hash, filtered_stream, sigstream, err) == -1) {
-		g_object_unref (filtered_stream);
+	if ((rv = g_mime_cipher_context_sign (ctx, userid, hash, filtered, sigstream, err)) == -1) {
 		g_object_unref (sigstream);
+		g_object_unref (filtered);
 		g_object_unref (stream);
 		return -1;
 	}
 	
-	g_object_unref (filtered_stream);
+	g_object_unref (filtered);
 	g_mime_stream_reset (sigstream);
 	g_mime_stream_reset (stream);
 	
@@ -354,7 +354,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_object_unref (wrapper);
 	
 	mps->protocol = g_strdup (ctx->sign_protocol);
-	mps->micalg = g_strdup (g_mime_cipher_context_hash_name (ctx, hash));
+	mps->micalg = g_strdup (g_mime_cipher_context_hash_name (ctx, (GMimeCipherHash) rv));
 	
 	/* set the content-type of the signature part */
 	content_type = g_mime_content_type_new_from_string (mps->protocol);

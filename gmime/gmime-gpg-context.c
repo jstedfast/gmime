@@ -284,7 +284,7 @@ struct _GpgCtx {
 	unsigned int complete:1;
 	unsigned int seen_eof1:1;
 	unsigned int seen_eof2:1;
-	unsigned int flushed:1;      /* flushed the diagnostics stream (ie, what we read from stderr) */
+	unsigned int flushed:1;      /* flushed the diagnostics stream (aka stderr) */
 	unsigned int always_trust:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
@@ -549,8 +549,18 @@ gpg_hash_str (GMimeCipherHash hash)
 		return "--digest-algo=MD5";
 	case GMIME_CIPHER_HASH_SHA1:
 		return "--digest-algo=SHA1";
+	case GMIME_CIPHER_HASH_SHA224:
+		return "--digest-algo=SHA224";
+	case GMIME_CIPHER_HASH_SHA256:
+		return "--digest-algo=SHA256";
+	case GMIME_CIPHER_HASH_SHA384:
+		return "--digest-algo=SHA384";
+	case GMIME_CIPHER_HASH_SHA512:
+		return "--digest-algo=SHA512";
 	case GMIME_CIPHER_HASH_RIPEMD160:
 		return "--digest-algo=RIPEMD160";
+	case GMIME_CIPHER_HASH_TIGER192:
+		return "--digest-algo=TIGER192";
 	default:
 		return NULL;
 	}
@@ -916,7 +926,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	size_t nread, nwritten;
 	register char *inptr;
 	char *status, *tmp;
-	int len;
+	int id, len;
 	
  parse:
 	
@@ -1102,8 +1112,27 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	} else {
 		switch (gpg->mode) {
 		case GPG_CTX_MODE_SIGN:
-			if (!strncmp (status, "SIG_CREATED ", 12)) {
-				/* FIXME: save this state? */
+			if (strncmp (status, "SIG_CREATED ", 12) != 0)
+				break;
+			
+			status += 12;
+			
+			/* skip the next single-char token ("D" for detached) */
+			status = next_token (status, NULL);
+			
+			/* skip the public-key algo token */
+			status = next_token (status, NULL);
+			
+			/* this token is the hash algorithm used */
+			switch (strtol (status, NULL, 10)) {
+			case 1: gpg->hash = GMIME_CIPHER_HASH_MD5; break;
+			case 2: gpg->hash = GMIME_CIPHER_HASH_SHA1; break;
+			case 3:	gpg->hash = GMIME_CIPHER_HASH_RIPEMD160; break;
+			case 8: gpg->hash = GMIME_CIPHER_HASH_SHA256; break;
+			case 9: gpg->hash = GMIME_CIPHER_HASH_SHA384; break;
+			case 10: gpg->hash = GMIME_CIPHER_HASH_SHA512; break;
+			case 11: gpg->hash = GMIME_CIPHER_HASH_SHA224; break;
+			default: break;
 			}
 			break;
 		case GPG_CTX_MODE_VERIFY:
@@ -1539,9 +1568,12 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 		return -1;
 	}
 	
+	/* save the hash used */
+	hash = gpg->hash;
+	
 	gpg_ctx_free (gpg);
 	
-	return 0;
+	return hash;
 }
 
 

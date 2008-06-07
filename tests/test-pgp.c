@@ -108,18 +108,20 @@ test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 {
 	GError *err = NULL;
 	Exception *ex;
+	int rv;
 	
-	g_mime_cipher_context_sign (ctx, "no.user@no.domain",
-				    GMIME_CIPHER_HASH_DEFAULT,
-				    cleartext, ciphertext, &err);
+	rv = g_mime_cipher_context_sign (ctx, "no.user@no.domain",
+					 GMIME_CIPHER_HASH_SHA256,
+					 cleartext, ciphertext, &err);
 	
-	if (err != NULL) {
+	if (rv == -1 || err != NULL) {
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	v(fprintf (stderr, "signature:\n%.*s\n",
+	v(fprintf (stderr, "signature (%s):\n%.*s\n",
+		   g_mime_cipher_context_hash_name (ctx, rv),
 		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
 		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }

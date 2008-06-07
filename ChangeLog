@@ -1,5 +1,21 @@
 2008-06-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_sign):
+	Use the GMimeCipherHash returned from g_mime_cipher_context_sign()
+	to create the micalg parameter value - this way if the requested
+	hash was DEFAULT, we set the micalg to the proper value.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Parse which
+	hash algorithm was actually used by gpg.
+	(gpg_hash_str): Updated to return strings for the new SHA
+	algorithms added this past week.
+	(gpg_sign): Return the hash algorithm actually used.
+
+	* gmime/gmime-cipher-context.c (g_mime_cipher_context_sign): This
+	method now returns -1 on fail or the GMimeCipherHash on success.
+
+2008-06-07  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-parse-utils.c (g_mime_decode_word): No longer
 	returns a strdup'd string, this helps increase the performance of
 	the address parser and reduces memory fragmentation.

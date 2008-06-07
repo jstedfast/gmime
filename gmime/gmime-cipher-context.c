@@ -207,7 +207,8 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
- * Returns: %0 on success or %-1 on fail.
+ * Returns: the #GMimeCipherHash used on success (useful if @hash is
+ * specified as #GMIME_CIPHER_HASH_DEFAULT) or %-1 on fail.
  **/
 int
 g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
