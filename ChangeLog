@@ -1,3 +1,22 @@
+2008-06-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parse-utils.c (g_mime_decode_word): No longer
+	returns a strdup'd string, this helps increase the performance of
+	the address parser and reduces memory fragmentation.
+
+	* gmime/gmime-utils.c (g_mime_references_decode): Updated for
+	decode_word() changes.
+	(decode_addrspec): Same.
+
+	* gmime/internet-address.c (decode_mailbox): Make sure we don't
+	stray beyond the end of the input string. Also updated for changes
+	to decode_word() (which now returns a const string rather than a
+	strdup'd string).
+
+	* gmime/gmime-header.c (g_mime_header_iter_is_valid): Fixed an FMR
+	when the header the cursor is pointing to has been removed by
+	validating the hdrlist version first.
+
 2008-06-06  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

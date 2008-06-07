@@ -74,15 +74,14 @@ g_mime_decode_lwsp (const char **in)
 	*in = inptr;
 }
 
-static char *
+static const char *
 decode_quoted_string (const char **in)
 {
-	const char *inptr = *in;
-	char *out = NULL;
+	register const char *inptr = *in;
+	const char *qstring = NULL;
 	
-	decode_lwsp (&inptr);
 	if (*inptr == '"') {
-		out = (char *) inptr;
+		qstring = inptr;
 		
 		inptr++;
 		while (*inptr && *inptr != '"') {
@@ -96,28 +95,28 @@ decode_quoted_string (const char **in)
 		if (*inptr == '"')
 			inptr++;
 		
-		out = g_strndup (out, inptr - out);
+		*in = inptr;
 	}
 	
-	*in = inptr;
-	
-	return out;
+	return qstring;
 }
 
-static char *
+static const char *
 decode_atom (const char **in)
 {
-	const char *inptr = *in, *start;
+	register const char *inptr = *in;
+	const char *atom = NULL;
 	
-	decode_lwsp (&inptr);
-	start = inptr;
+	if (!is_atom (*inptr))
+		return NULL;
+	
+	atom = inptr++;
 	while (is_atom (*inptr))
 		inptr++;
+	
 	*in = inptr;
-	if (inptr > start)
-		return g_strndup (start, inptr - start);
-	else
-		return NULL;
+	
+	return atom;
 }
 
 
@@ -129,7 +128,7 @@ decode_atom (const char **in)
  *
  * Returns: the next rfc822 'word' token or %NULL if non exist.
  **/
-char *
+const char *
 g_mime_decode_word (const char **in)
 {
 	const char *inptr = *in;
@@ -200,9 +199,9 @@ decode_domain_literal (const char **in, GString *domain)
 char *
 g_mime_decode_domain (const char **in)
 {
-	const char *inptr, *save;
+	const char *inptr, *save, *atom;
 	GString *domain;
-	char *dom, *atom;
+	char *dom;
 	
 	domain = g_string_new ("");
 	
@@ -230,8 +229,7 @@ g_mime_decode_domain (const char **in)
 				break;
 			}
 			
-			g_string_append (domain, atom);
-			g_free (atom);
+			g_string_append_len (domain, atom, inptr - atom);
 		}
 		
 		save = inptr;

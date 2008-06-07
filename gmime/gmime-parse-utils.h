@@ -27,7 +27,7 @@ G_BEGIN_DECLS
 void g_mime_decode_lwsp (const char **in);
 #define decode_lwsp(in) g_mime_decode_lwsp (in)
 
-char *g_mime_decode_word (const char **in);
+const char *g_mime_decode_word (const char **in);
 #define decode_word(in) g_mime_decode_word (in)
 
 char *g_mime_decode_domain (const char **in);

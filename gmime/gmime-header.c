@@ -235,10 +235,13 @@ g_mime_header_iter_is_valid (GMimeHeaderIter *iter)
 {
 	g_return_val_if_fail (iter != NULL, FALSE);
 	
-	if (!iter->hdrlist || !iter->cursor || !iter->cursor->next)
+	if (!iter->hdrlist || iter->version != iter->hdrlist->version)
 		return FALSE;
 	
-	return iter->version == iter->hdrlist->version;
+	if (!iter->cursor || !iter->cursor->next)
+		return FALSE;
+	
+	return TRUE;
 }
 
 

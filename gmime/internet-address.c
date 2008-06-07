@@ -770,38 +770,42 @@ static InternetAddress *
 decode_mailbox (const char **in)
 {
 	InternetAddress *mailbox = NULL;
-	const char *inptr;
+	const char *inptr, *word;
 	gboolean bracket = FALSE;
 	GString *name = NULL;
 	GString *addr;
-	char *pre;
+	size_t n = 0;
 	
 	addr = g_string_new ("");
 	
 	decode_lwsp (in);
 	inptr = *in;
 	
-	pre = decode_word (&inptr);
+	if ((word = decode_word (&inptr)))
+		n = inptr - word;
+	
 	decode_lwsp (&inptr);
 	if (*inptr && !strchr (",.@", *inptr)) {
 		gboolean retried = FALSE;
 		
 		/* this mailbox has a name part, so get the name */
 		name = g_string_new ("");
-		while (pre) {
+		while (word) {
+			g_string_append_len (name, word, n);
 			retried = FALSE;
-			g_string_append (name, pre);
-			g_free (pre);
 		retry:
-			if ((pre = decode_word (&inptr)))
+			if ((word = decode_word (&inptr))) {
 				g_string_append_c (name, ' ');
+				n = inptr - word;
+			}
 		}
 		
 		decode_lwsp (&inptr);
 		if (*inptr == '<') {
 			inptr++;
 			bracket = TRUE;
-			pre = decode_word (&inptr);
+			if ((word = decode_word (&inptr)))
+				n = inptr - word;
 		} else if (!retried && *inptr) {
 			w(g_warning ("Unexpected char '%c' in mailbox: %s: attempting recovery.",
 				     *inptr, *in));
@@ -818,8 +822,8 @@ decode_mailbox (const char **in)
 		}
 	}
 	
-	if (pre) {
-		g_string_append (addr, pre);
+	if (word) {
+		g_string_append_len (addr, word, n);
 	} else {
 		w(g_warning ("No local part for email address: %s", *in));
 		if (name)
@@ -827,7 +831,7 @@ decode_mailbox (const char **in)
 		g_string_free (addr, TRUE);
 		
 		/* comma will be eaten by our caller */
-		if (*inptr != ',')
+		if (*inptr && *inptr != ',')
 			*in = inptr + 1;
 		else
 			*in = inptr;
@@ -837,16 +841,16 @@ decode_mailbox (const char **in)
 	
 	/* get the rest of the local-part */
 	decode_lwsp (&inptr);
-	while (*inptr == '.' && pre) {
+	while (*inptr == '.' && word) {
 		inptr++;
-		g_free (pre);
-		if ((pre = decode_word (&inptr))) {
+		
+		if ((word = decode_word (&inptr))) {
 			g_string_append_c (addr, '.');
-			g_string_append (addr, pre);
+			g_string_append_len (addr, word, inptr - word);
 		}
+		
 		decode_lwsp (&inptr);
 	}
-	g_free (pre);
 	
 	/* we should be at the '@' now... */
 	if (*inptr == '@') {
@@ -929,20 +933,19 @@ decode_address (const char **in)
 {
 	InternetAddress *addr = NULL;
 	const char *inptr, *start;
+	const char *word;
 	GString *name;
-	char *pre;
 	
 	decode_lwsp (in);
 	start = inptr = *in;
 	
 	/* pre-scan */
 	name = g_string_new ("");
-	pre = decode_word (&inptr);
-	while (pre) {
-		g_string_append (name, pre);
-		g_free (pre);
-		
-		if ((pre = decode_word (&inptr)))
+	word = decode_word (&inptr);
+	
+	while (word) {
+		g_string_append_len (name, word, inptr - word);
+		if ((word = decode_word (&inptr)))
 			g_string_append_c (name, ' ');
 	}
 	
@@ -1024,7 +1027,6 @@ internet_address_parse_string (const char *str)
 		const char *start;
 		
 		start = inptr;
-		
 		addr = decode_address (&inptr);
 		
 		if (addr) {

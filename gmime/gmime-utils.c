@@ -827,8 +827,8 @@ g_mime_utils_generate_message_id (const char *fqdn)
 static char *
 decode_addrspec (const char **in)
 {
-	char *domain, *word, *str = NULL;
-	const char *inptr;
+	char *domain, *str = NULL;
+	const char *word, *inptr;
 	GString *addrspec;
 	
 	decode_lwsp (in);
@@ -839,17 +839,16 @@ decode_addrspec (const char **in)
 		return NULL;
 	}
 	
-	addrspec = g_string_new (word);
-	g_free (word);
+	addrspec = g_string_new ("");
+	g_string_append_len (addrspec, word, inptr - word);
 	
 	/* get the rest of the local-part */
 	decode_lwsp (&inptr);
 	while (*inptr == '.') {
 		g_string_append_c (addrspec, *inptr++);
 		if ((word = decode_word (&inptr))) {
-			g_string_append (addrspec, word);
+			g_string_append_len (addrspec, word, inptr - word);
 			decode_lwsp (&inptr);
-			g_free (word);
 		} else {
 			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
 			goto exception;
@@ -952,8 +951,8 @@ GMimeReferences *
 g_mime_references_decode (const char *text)
 {
 	GMimeReferences *refs, *tail, *ref;
-	const char *inptr = text;
-	char *word, *msgid;
+	const char *word, *inptr = text;
+	char *msgid;
 	
 	g_return_val_if_fail (text != NULL, NULL);
 	
@@ -976,9 +975,7 @@ g_mime_references_decode (const char *text)
 			}
 		} else if (*inptr) {
 			/* looks like part of a phrase */
-			if ((word = decode_word (&inptr))) {
-				g_free (word);
-			} else {
+			if (!(word = decode_word (&inptr))) {
 				w(g_warning ("Invalid References header: %s", inptr));
 				break;
 			}
