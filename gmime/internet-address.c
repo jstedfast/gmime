@@ -827,7 +827,7 @@ decode_mailbox (const char **in)
 		g_string_free (addr, TRUE);
 		
 		/* comma will be eaten by our caller */
-		if (*inptr != ',')
+		if (*inptr && *inptr != ',')
 			*in = inptr + 1;
 		else
 			*in = inptr;
