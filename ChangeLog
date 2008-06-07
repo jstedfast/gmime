@@ -1,3 +1,11 @@
+2008-06-06  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.1
+
+	* gmime/*.[c,h]: Updated a bunch of gtk-doc documentation.
+
 2008-06-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (g_mime_message_get_date_as_string):
