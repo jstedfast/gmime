@@ -22,28 +22,28 @@ were removed (usually they had equivalent functionality in a parent
 class).
 
 Many functions have also been renamed for better clarity and/or
-consistency.
-
-Below is a mapping of the function name changes:
-
-GMime 2.2 Name            | GMime 2.4 Name
--------------------------------------------------------------
-g_mime_cipher_hash_id       g_mime_cipher_context_hash_id
-g_mime_cipher_hash_name     g_mime_cipher_context_hash_name
-g_mime_cipher_sign          g_mime_cipher_context_sign
-g_mime_cipher_verify        g_mime_cipher_context_verify
-g_mime_cipher_encrypt       g_mime_cipher_context_encrypt
-g_mime_cipher_decrypt       g_mime_cipher_context_decrypt
-g_mime_cipher_import_keys   g_mime_cipher_context_import_keys
-g_mime_cipher_export_keys   g_mime_cipher_context_export_keys
-
-
-For convenience, GMime 2.4 source packages include a shell-script to
-aid in porting applications using GMime 2.2 (should work for most
-GMime 2.0 applications as well) to the 2.4 API. You can find this
-script under the tools/ directory, named `gmime-port-2-2-to-2-4.sh'.
+consistency. For convenience, GMime 2.4 source packages include a
+shell-script to aid in porting applications using GMime 2.2 (should
+work for most GMime 2.0 applications as well) to the 2.4 API. You can
+find this script under the tools/ directory, named
+`gmime-port-2-2-to-2-4.sh'.
 
 This script won't fix everything, but it should help quite a bit.
+
+Beyond that, a few methods have changed in other ways:
+
+- g_mime_cipher_context_sign() still returns int, but if the value
+  isn't -1 (failure), then it will represent a GMimeCipherHash that it
+  used for signing. This is useful, for example, when the requested
+  hash was GMIME_CIPHER_HASH_DEFAULT.
+
+- g_mime_cipher_context_decrypt() now returns a GMimeSignatureValidty
+  on success and NULL on failure. This is needed in case the encrypted
+  stream was also signed.
+
+- g_mime_multipart_encrypted_encrypt() now takes a boolean 'sign'
+  argument to allow the caller to request encrypting and signing in a
+  single pass.
 
 
 Porting from GMime 2.0 to GMime 2.2

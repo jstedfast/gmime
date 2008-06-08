@@ -10,62 +10,35 @@
   </refnamediv>
   <refsect1>
     <title>Changes from 2.2 to 2.4</title>
-    <para>See also the PORTING document in the toplevel GMime source directory.</para>
-    <para>There are no incompatible changes between 2.2 and 2.4 if you stayed
-away from the functions marked as deprecated.</para>
-    <para>GMime 2.4's API is identical to GMime 2.2 except that ALL public
-interfaces that used to use off_t in GMime 2.2 now use gint64 so that the API
-and ABI do not change based on whether or not large file support is supported.</para>
-  </refsect1>
-  <refsect1>
-    <title>Deprecated Functions removed from GMime 2.4</title>
+    <para>GMime 2.4 has had a number of API changes since GMime
+2.2. To start, ALL public APIs that used to use off_t in GMime 2.2 now
+use gint64 so that the API and ABI do not change based on whether or
+not large file support is enabled.</para>
+    <para>In addition, all of the functions marked as deprecated in
+2.0 and 2.2 were removed (usually they had equivalent functionality in
+a parent class).</para>
+    <para>Many functions have also been renamed for better clarity
+and/or consistency. For convenience, GMime 2.4 source packages include
+a shell-script to aid in porting applications using GMime 2.2 (should
+work for most GMime 2.0 applications as well) to the 2.4 API. You can
+find this script under the tools/ directory, named
+`gmime-port-2-2-to-2-4.sh'.</para>
+    <para>This script won't fix everything, but it should help quite a
+bit.</para>
+    <para>Beyond that, a few methods have changed in other ways:</para>
     <itemizedlist>
-      <listitem>
-        <para>Ref and Unref Functions</para>
-        <para>
-          <function>g_mime_stream_ref</function> and
-<function>g_mime_object_ref</function> have been removed. You should replace
-these calls with <function>g_object_ref</function> instead.
-        </para>
-        <para>
-          <function>g_mime_stream_unref</function> and
-<function>g_mime_object_unref</function> have been removed. You should replace
-these calls with <function>g_object_unref</function> instead.
-        </para>
-      </listitem>
-      <listitem>
-        <para>ToString Functions</para>
-        <para>
-          <function>g_mime_message_to_string</function> and
-<function>g_mime_part_to_string</function> have been removed. You should replace
-these calls with <function>g_mime_object_to_string</function> instead.
-        </para>
-      </listitem>
-      <listitem>
-        <para>WriteToStream Functions</para>
-        <para>
-          <function>g_mime_message_write_to_stream</function> and
-<function>g_mime_part_write_to_stream</function> have been removed. You should
-replace these calls with <function>g_mime_object_write_to_stream</function> instead.
-        </para>
-      </listitem>
-    </itemizedlist>
-  </refsect1>
-  <refsect1>
-    <title>Newly Deprecated Functions in GMime 2.4</title>
-    <para>GMimeCipherContext methods have been renamed from
-<function>g_mime_cipher_*</function> to
-<function>g_mime_cipher_context_*</function>. The 2.2 to 2.4 name mapping is as
-follows:</para>
-    <itemizedlist>
-      <listitem><function>g_mime_cipher_hash_id</function> has been renamed to <function>g_mime_cipher_context_hash_id</function></listitem>
-      <listitem><function>g_mime_cipher_hash_name</function> has been renamed to <function>g_mime_cipher_context_hash_name</function></listitem>
-      <listitem><function>g_mime_cipher_sign</function> has been renamed to <function>g_mime_cipher_context_sign</function></listitem>
-      <listitem><function>g_mime_cipher_verify</function> has been renamed to <function>g_mime_cipher_context_verify</function></listitem>
-      <listitem><function>g_mime_cipher_encrypt</function> has been renamed to <function>g_mime_cipher_context_encrypt</function></listitem>
-      <listitem><function>g_mime_cipher_decrypt</function> has been renamed to <function>g_mime_cipher_context_decrypt</function></listitem>
-      <listitem><function>g_mime_cipher_import_keys</function> has been renamed to <function>g_mime_cipher_context_import_keys</function></listitem>
-      <listitem><function>g_mime_cipher_export_keys</function> has been renamed to <function>g_mime_cipher_context_export_keys</function></listitem>
+      <listitem><para><function>g_mime_cipher_context_sign()</function>
+  still returns int, but if the value isn't -1 (failure), then it will
+  represent a GMimeCipherHash that it used for signing. This is
+  useful, for example, when the requested hash was
+  GMIME_CIPHER_HASH_DEFAULT.</para></listitem>
+      <listitem><para><function>g_mime_cipher_context_decrypt()</function>
+  now returns a GMimeSignatureValidty on success and NULL on
+  failure. This is needed in case the encrypted stream was also
+  signed.</para></listitem>
+      <listitem><para><function>g_mime_multipart_encrypted_encrypt()</function>
+  now takes a boolean 'sign' argument to allow the caller to request
+  encrypting and signing in a single pass.</para></listitem>
     </itemizedlist>
   </refsect1>
 </refentry>
