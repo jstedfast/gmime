@@ -12,7 +12,7 @@ if !PLATFORM_WIN32
 SUBDIRS += examples
 endif
 
-SUBDIRS += .
+SUBDIRS += tools .
 
 ## We create gmimeConf.sh here and not from configure because we want
 ## to get the paths expanded correctly.  Macros like srcdir are given

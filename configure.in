@@ -525,6 +525,7 @@ mono/gmime-sharp.dll.config
 mono/gmime-sharp-2.4.pc
 src/Makefile
 tests/Makefile
+tools/Makefile
 gmime-2.4.pc
 gmime.spec
 )
