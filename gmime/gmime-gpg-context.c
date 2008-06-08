@@ -1128,6 +1128,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			case 1: gpg->hash = GMIME_CIPHER_HASH_MD5; break;
 			case 2: gpg->hash = GMIME_CIPHER_HASH_SHA1; break;
 			case 3:	gpg->hash = GMIME_CIPHER_HASH_RIPEMD160; break;
+			case 5: gpg->hash = GMIME_CIPHER_HASH_MD2; break; /* ? */
+			case 6: gpg->hash = GMIME_CIPHER_HASH_TIGER192; break; /* ? */
+			case 7: gpg->hash = GMIME_CIPHER_HASH_HAVAL5160; break; /* ? */
 			case 8: gpg->hash = GMIME_CIPHER_HASH_SHA256; break;
 			case 9: gpg->hash = GMIME_CIPHER_HASH_SHA384; break;
 			case 10: gpg->hash = GMIME_CIPHER_HASH_SHA512; break;

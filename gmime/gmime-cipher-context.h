@@ -58,7 +58,7 @@ typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
  * @GMIME_CIPHER_HASH_SHA512: The SHA-512 hash algorithm.
  * @GMIME_CIPHER_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
  * @GMIME_CIPHER_HASH_TIGER192: The TIGER-192 hash algorithm.
- * @GMIME_CIPHER_HASH_HAVAL5160: The HAVAL-5160 hash algorithm.
+ * @GMIME_CIPHER_HASH_HAVAL5160: The HAVAL5-160 hash algorithm.
  *
  * A hash algorithm.
  **/
