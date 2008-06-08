@@ -1,5 +1,9 @@
 2008-06-08  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.3
+
 	* docs/reference/changes-2.4.sgml: Updated.
 
 	* PORTING: Updated.
