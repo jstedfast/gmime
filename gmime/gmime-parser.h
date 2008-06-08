@@ -43,6 +43,14 @@ G_BEGIN_DECLS
 typedef struct _GMimeParser GMimeParser;
 typedef struct _GMimeParserClass GMimeParserClass;
 
+
+/**
+ * GMimeParser:
+ * @parent_object: parent #GObject
+ * @priv: private parser state
+ *
+ * A MIME parser context.
+ **/
 struct _GMimeParser {
 	GObject parent_object;
 	

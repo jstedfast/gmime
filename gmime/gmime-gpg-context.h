@@ -37,11 +37,18 @@ typedef struct _GMimeGpgContext GMimeGpgContext;
 typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 
 
+/**
+ * GMimeGpgContext:
+ * @parent_object: parent #GMimeCipherContext
+ * @always_trust: %TRUE if keys should always be trusted
+ * @path: path to gpg
+ *
+ * A GnuPG cipher context.
+ **/
 struct _GMimeGpgContext {
 	GMimeCipherContext parent_object;
-	
-	char *path;
 	gboolean always_trust;
+	char *path;
 };
 
 struct _GMimeGpgContextClass {

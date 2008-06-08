@@ -37,6 +37,15 @@ G_BEGIN_DECLS
 typedef struct _GMimeSession GMimeSession;
 typedef struct _GMimeSessionClass GMimeSessionClass;
 
+
+/**
+ * GMimeSession:
+ * @parent_object: parent #GObject
+ *
+ * An object used for interfacing with the user through the
+ * application. This object is meant to be subclassed by the
+ * application.
+ **/
 struct _GMimeSession {
 	GObject parent_object;
 	

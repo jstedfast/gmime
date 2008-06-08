@@ -1,5 +1,8 @@
 2008-06-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/*.h: Finished documenting all of the structs. Now at 100%
+	symbols documented! Woot!
+
 	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_sign):
 	Use the GMimeCipherHash returned from g_mime_cipher_context_sign()
 	to create the micalg parameter value - this way if the requested

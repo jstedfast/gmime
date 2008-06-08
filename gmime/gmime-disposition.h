@@ -44,14 +44,23 @@ G_BEGIN_DECLS
 #define GMIME_DISPOSITION_INLINE     "inline"
 
 
+/**
+ * GMimeContentDisposition:
+ * @parent_object: parent object pointer
+ * @param_hash: parameter hash table keyed by param name
+ * @params: a #GMimeParam list
+ * @disposition: disposition
+ *
+ * A data structure representing a Content-Disposition.
+ **/
 struct _GMimeContentDisposition {
 	/* <private> */
 	gpointer parent_object;
 	GHashTable *param_hash;
 	
 	/* <public:read-only> */
-	char *disposition;
 	GMimeParam *params;
+	char *disposition;
 };
 
 typedef struct _GMimeContentDisposition GMimeContentDisposition;

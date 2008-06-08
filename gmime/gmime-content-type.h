@@ -27,15 +27,25 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GMimeContentType:
+ * @parent_object: parent object pointer
+ * @param_hash: parameter hash keyed by param name
+ * @params: a #GMimeParam list
+ * @type: media type
+ * @subtype: media subtype
+ *
+ * A data structure representing a Content-Type.
+ **/
 struct _GMimeContentType {
 	/* <private> */
 	gpointer parent_object;
 	GHashTable *param_hash;
 	
 	/* <public:read-only> */
+	GMimeParam *params;
 	char *type;
 	char *subtype;
-	GMimeParam *params;
 };
 
 typedef struct _GMimeContentType GMimeContentType;

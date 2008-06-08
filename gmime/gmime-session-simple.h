@@ -43,6 +43,17 @@ typedef char * (* GMimeSimpleRequestPasswdFunc) (GMimeSession *session, const ch
 typedef void (* GMimeSimpleForgetPasswdFunc) (GMimeSession *session, const char *item,
 					      GError **err);
 
+
+/**
+ * GMimeSessionSimple:
+ * @parent_object: parent #GMimeSession
+ * @is_online: callback to check network state
+ * @request_passwd: password-request callback
+ * @forget_passwd: callback to uncache a passwd
+ *
+ * A simple #GMimeSession for applications that don't want to
+ * implement their own #GMimeSession context.
+ **/
 struct _GMimeSessionSimple {
 	GMimeSession parent_object;
 	

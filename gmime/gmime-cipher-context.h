@@ -76,6 +76,17 @@ typedef enum {
 	GMIME_CIPHER_HASH_HAVAL5160
 } GMimeCipherHash;
 
+
+/**
+ * GMimeCipherContext:
+ * @parent_object: parent #GObject
+ * @session: a #GMimeSession
+ * @sign_protocol: signature protocol (must be set by subclass)
+ * @encrypt_protocol: encryption protocol (must be set by subclass)
+ * @key_protocol: key exchange protocol (must be set by subclass)
+ *
+ * A crypto context for use with MIME.
+ **/
 struct _GMimeCipherContext {
 	GObject parent_object;
 	

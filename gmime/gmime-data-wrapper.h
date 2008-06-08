@@ -42,6 +42,15 @@ G_BEGIN_DECLS
 typedef struct _GMimeDataWrapper GMimeDataWrapper;
 typedef struct _GMimeDataWrapperClass GMimeDataWrapperClass;
 
+
+/**
+ * GMimeDataWrapper:
+ * @parent_object: parent #GObject
+ * @encoding: the encoding of the content
+ * @stream: content stream
+ *
+ * A wrapper for a stream which may be encoded.
+ **/
 struct _GMimeDataWrapper {
 	GObject parent_object;
 	

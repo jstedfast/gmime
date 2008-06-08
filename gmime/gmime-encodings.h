@@ -121,6 +121,16 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
 #define GMIME_UUDECODE_STATE_MASK   (GMIME_UUDECODE_STATE_BEGIN | GMIME_UUDECODE_STATE_END)
 
 
+/**
+ * GMimeEncoding:
+ * @encoding: the type of encoding
+ * @uubuf: a temporary buffer needed when uuencoding data
+ * @encode: %TRUE if encoding or %FALSE if decoding
+ * @save: saved bytes from the previous step
+ * @state: current encder/decoder state
+ *
+ * A context used for encoding or decoding data.
+ **/
 typedef struct _GMimeEncoding {
 	GMimeContentEncoding encoding;
 	unsigned char uubuf[60];
