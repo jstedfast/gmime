@@ -12,7 +12,14 @@ do
 	-e "s/GMIME_FILTER_CRLF_MODE_CRLF_ONLY/FALSE/g" \
 	-e "s/GMIME_FILTER_YENC_DIRECTION_ENCODE/TRUE/g" \
 	-e "s/GMIME_FILTER_YENC_DIRECTION_DECODE/FALSE/g" \
+	-e "s/GMIME_FILTER_BASIC_BASE64_ENC/GMIME_CONTENT_ENCODING_BASE64, TRUE/g" \
+	-e "s/GMIME_FILTER_BASIC_BASE64_DEC/GMIME_CONTENT_ENCODING_BASE64, FALSE/g" \
+	-e "s/GMIME_FILTER_BASIC_QP_ENC/GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, TRUE/g" \
+	-e "s/GMIME_FILTER_BASIC_QP_DEC/GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE, FALSE/g" \
+	-e "s/GMIME_FILTER_BASIC_UU_ENC/GMIME_CONTENT_ENCODING_UUENCODE, TRUE/g" \
+	-e "s/GMIME_FILTER_BASIC_UU_DEC/GMIME_CONTENT_ENCODING_UUENCODE, FALSE/g" \
 	-e "s/g_mime_stream_filter_new_with_stream/g_mime_stream_filter_new/g" \
+	-e "s/g_mime_filter_basic_new_type/g_mime_filter_basic_new/g" \
 	-e "s/g_mime_object_add_header/g_mime_object_append_header/g" \
 	-e "s/g_mime_header_register_writer/g_mime_header_list_register_writer/g" \
 	-e "s/g_mime_header_write_to_stream/g_mime_header_list_write_to_stream/g" \
@@ -46,6 +53,8 @@ do
 	-e "s/g_mime_part_set_content_disposition/g_mime_object_set_disposition/g" \
 	-e "s/g_mime_part_get_content_type/g_mime_object_get_content_type/g" \
 	-e "s/g_mime_part_set_content_type/g_mime_object_set_content_type/g" \
+	-e "s/g_mime_part_get_encoding/g_mime_part_get_content_encoding/g" \
+	-e "s/g_mime_part_set_encoding/g_mime_part_set_content_encoding/g" \
 	-e "s/g_mime_part_write_to_stream/g_mime_object_write_to_stream/g" \
 	-e "s/g_mime_part_to_string/g_mime_object_to_string/g" \
 	-e "s/g_mime_utils_base64_encode_close/g_mime_encoding_base64_encode_close/g" \
