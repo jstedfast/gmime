@@ -1,3 +1,9 @@
+2008-06-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.h (GMIME_QP_ENCODE_LEN): Add an extra byte for
+	\n in the case of quoted_encode_close(). Thanks to Peter
+	Bloomfield for discovering this.
+
 2008-06-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (decode_mailbox): Prevent reading past
