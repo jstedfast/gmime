@@ -275,6 +275,7 @@ internet_address_get_type (InternetAddress *ia)
 	return ia->type;
 }
 
+
 /**
  * internet_address_get_name:
  * @ia: internet address
