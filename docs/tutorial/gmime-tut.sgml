@@ -47,8 +47,8 @@ url="http://spruce.sourceforge.net/gmime/tutorial/">http://spruce.sourceforge.ne
     <para>GMime is a library for parsing and creating messages using the
 Multipurpose Internet Mail Extension (MIME) format. It is licensed
 under the <ulink
-url="http://http://www.gnu.org/licenses/licenses.html#GPL">GNU General
-Public License (GPL)</ulink> so you are free to develop your Free
+url="http://http://www.gnu.org/licenses/licenses.html#LGPL">GNU Lesser General
+Public License (LGPL)</ulink> so you are free to develop your Free
 Software applications using GMime without having to spend anything for
 licenses or royalties.</para>
     
@@ -56,7 +56,7 @@ licenses or royalties.</para>
     
     <itemizedlist>
       <listitem>
-	<simpara>Jeffrey Stedfast <ulink url="mailto:fejj@ximian.com">fejj@ximian.com</ulink></simpara>
+	<simpara>Jeffrey Stedfast <ulink url="mailto:fejj@ximian.com">fejj@gnome.org</ulink></simpara>
       </listitem>
     </itemizedlist>
     
@@ -70,7 +70,7 @@ serves as the foundation for such libraries as the GIMP ToolKit
 (Gtk+). GLib is mostly a portability layer but also contains
 additional functionality such as hash tables, linked lists, etc. For
 more information on GLib, you should see the API reference at <ulink
-url="http://http://developer.gnome.org/doc/API/2.0/glib/index.html">http://developer.gnome.org/doc/API/2.0/glib/index.html</ulink>.</para>
+url="http://library.gnome.org/devel/glib/stable/">http://library.gnome.org/devel/glib/stable/</ulink>.</para>
     
   </chapter>
   
@@ -78,16 +78,16 @@ url="http://http://developer.gnome.org/doc/API/2.0/glib/index.html">http://devel
   <chapter id="ch-getting-started">
     <title>Getting Started</title>
     
-    <para>The first thing to do, of course, is download the GMime source
-and install it. You can always get the latest version from <ulink
-url="http://spruce.sourceforge.net/gmime/sources/">http://spruce.sourceforge.net/gmime/sources</ulink>. GMime
+    <para>The first thing you need to do, of course, is download the
+GMime source and install it. You can always get the latest version
+from <ulink url="http://download.gnome.org/pub/GNOME/sources/gmime/">http://download.gnome.org/pub/GNOME/sources/gmime/</ulink>. GMime
 uses GNU autoconf for configuration. Once untar'd, type
 <literal>./configure --help</literal> to see a list of options.</para>
     
     <para>More information about building GMime is available in either the
 source distribution under <filename>docs/reference/</filename> or via
 the online reference at <ulink
-url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.sourceforge.net/gmime/doc/gmime-building.html</ulink>.</para>
+url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://library.gnome.org/devel/gmime/stable/gmime-building.html</ulink>.</para>
     
   </chapter>
   
@@ -108,7 +108,7 @@ url="http://spruce.sourceforge.net/gmime/doc/gmime-building.html">http://spruce.
 
       <para>
         <literallayout>
-          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-2.0`</literal>
+          <literal>gcc -g -Wall -o simple simple.c `pkg-config --cflags --libs gmime-2.4`</literal>
         </literallayout>
       </para>
     </sect1>
@@ -177,7 +177,7 @@ int main (int argc, char **argv)
       <para>Hopefully, the only thing that may be new to you in either
       of the above examples is the flushing of the stream after
       writing to it. Most likely, in both examples, it is an unneeded
-      call, however it is there for completenss and you should
+      call, however it is there for completeness and you should
       probably get into the habbit of flushing a stream after you've
       finished writing to it. Like fflush(), g_mime_stream_flush()
       will flush any write-buffers that the previous write-calls may
@@ -250,19 +250,17 @@ int main (int argc, char **argv)
       using <literal>man</literal> on your local Unix system or by
       reading the Reference Manual for your libc.</para>
       
-      <note>
-	<para>New in GMime 2.2 are some functions to tell
-	GMimeStreamFile, GMimeStreamFs and GMimeStreamMem that they
-	are not the owners of the backend storage and so when they are
-	destroyed, they should not close the file or free the memory
-	buffer (respectively). These functions are:</para>
+      <para>There are also some functions to tell GMimeStreamFile,
+      GMimeStreamFs and GMimeStreamMem that they are not the owners of
+      the backend storage and so when they are destroyed, they should
+      not close the file or free the memory buffer
+      (respectively). These functions are:</para>
 	
-	<programlisting role="C">
+      <programlisting role="C">
 void g_mime_stream_file_set_owner (GMimeStreamFile *stream, gboolean owner);
 void g_mime_stream_fs_set_owner (GMimeStreamFs *stream, gboolean owner);
 void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
-        </programlisting>
-      </note>
+      </programlisting>
       
       <para>Next, let's examine some of the other stream
       functions.</para>
@@ -282,7 +280,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       <para>This function will reset the state of a stream. Usually
       this only means 'rewinding' to the beginning of the file. For
       more complex streams, such as GMimeStreamFilter, however, this
-      will also reset the state of all the the filters that have been
+      will also reset the state of all of the filters that have been
       attached to it (more on this later).</para>
       
       <programlisting role="C">
@@ -301,13 +299,45 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
 	g_mime_stream_substream (stream, start, end);
       </programlisting>
       
-      <para>This last function will return a substream of the original
+      <para>This function will return a substream of the original
       stream, where the beginning of the new substream is the start
       offset and the end is the end offset. These start and end
       offsets MUST be within the bounds of the original
       stream. Substreams can be useful if you want to only allow
       reading and writing to a subsection of the original
       stream.</para>
+
+      <programlisting role="C">
+	g_mime_stream_read (stream, buf, n);
+      </programlisting>
+
+      <para>Like POSIX <literal>read()</literal>, this function will
+      try to read <literal>n</literal> bytes from the stream
+      into <literal>buf</literal>, but be warned that it is not
+      guaranteed to read the full requested buffer size if that much
+      data is not currently available.</para>
+
+      <programlisting role="C">
+	g_mime_stream_write (stream, buf, n);
+      </programlisting>
+
+      <para>Like POSIX <literal>write()</literal> and standard
+      C's <literal>fwrite()</literal>, this function will write a
+      buffer of the specified length to the underlying
+      stream. However, unlike the POSIX <literal>write()</literal>
+      function, it will only fail if an irrecoverable error has
+      occurred and so it is not necessary to loop write attempts until
+      the entire buffer is written.</para>
+
+      <programlisting role="C">
+	g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_SET);
+	g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_CUR);
+	g_mime_stream_seek (stream, offset, GMIME_STREAM_SEEK_END);
+      </programlisting>
+
+      <para>This function works exactly like the
+      POSIX <literal>lseek()</literal> or standard
+      C's <literal>fseek()</literal> functions.</para>
 
     </sect1>
     
@@ -394,7 +424,7 @@ void g_mime_stream_mem_set_owner (GMimeStreamMem *stream, gboolean owner);
       should be aware that if you will mostly be reading and writing
       blocks of larger than 4K, it is probably best to avoid using
       GMimeStreamBuffer as it will not likely gain you any performance
-      and will likely decrease performance instead.</para>
+      and may decrease performance instead.</para>
       
       <para>GMimeStreamBuffer also adds 2 convenience functions for
       reading. While they will both work with any stream class, they
@@ -412,7 +442,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       <literal>fgets()</literal> function (although the arguments are
       in a slightly different order). It reads up to the first
       <literal>max - 1</literal> bytes, stopping after a
-      <literal>\n</literal> character if found. <literal>buf</literal>
+      <literal>\n</literal> character, if found. <literal>buf</literal>
       will always be nul-terminated.</para>
       
       <para>The second function,
@@ -458,9 +488,9 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
 	
 	istream = g_mime_stream_fs_new (fd);
 	
-	fstream = g_mime_stream_filter_new_with_stream (ostream);
+	fstream = g_mime_stream_filter_new (ostream);
 	
-	filter = g_mime_filter_basic_new_type (GMIME_FILTER_BASIC_UU_ENC);
+	filter = g_mime_filter_basic_new (GMIME_CONTENT_ENCODING_UUENCODE, TRUE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 	g_object_unref (filter);
 	
@@ -495,8 +525,8 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       run a program to do this many times in the past using the Unix
       command <literal>uuencode</literal>. Never thought writing a
       replacement for <literal>uuencode</literal> could be so easy,
-      did you? Well, it is. And not only is it <emphasis>that easy</emphasis>, but it
-      also runs three times faster than the
+      did you? Well, it is. And not only is it <emphasis>that
+      easy</emphasis>, but it also runs faster than the
       <literal>uuencode</literal> shipped with GNU Sharutils (at least
       up to and including the 4.2.1 release).</para>
       
@@ -524,7 +554,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       <para>GMimeFilterCRLF will likely become very useful to you if
       you are implementing any internet standards or DOS/Unix
       compatability. This filter is meant for converting line endings
-      from the traditional Unix sequence (LF) to the internet standard
+      from the traditional UNIX sequence (LF) to the internet standard
       (and DOS) sequence, CRLF, and vice versa. Also included in this
       filter is a way to escape and unescape lines beginning with '.'
       in the method used by the SMTP and POP protocols.</para>
@@ -539,11 +569,11 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       in ">From ". The other mode might come in handy if you are
       implementing a multipart/signed method where you are
       quoted-printable encoding a text stream and need to special-case
-      From-lines in order to protect against Unix systems which will
+      From-lines in order to protect against UNIX systems which will
       alter the message when writing it to an mbox file such as the
       previously mentioned filter mode. The result is something like
       "=46rom " which prevents the need to prepend a '>' character
-      when the message arrives at a Unix machine.</para>
+      when the message arrives at a UNIX machine.</para>
       
       <para>Also included are: GMimeFilterBest (which will likely not
       concern you), GMimeFilterEnriched (which will convert
@@ -552,13 +582,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       wrap strings that appear to be hyperlinks with appropriate &lt;a
       href=...&gt; tags; GMimeFilterStrip (again, likely this won't
       concern you), and finally GMimeFilterYenc which will encode or
-      decode the horrific YEncode format that has recently crawled out
-      of the woodwork on Usenet. I emplore you, if you decide to use
-      the YEncode filter in your application,
-      <emphasis>please</emphasis> only use it for compatability with
-      the broken news agents that so evilly pollute our beautiful
-      internet with this rubbish and don't add support to your
-      application to send this nasty format.</para>
+      decode the YEncode encoding.</para>
       
       <para>For an example on how to use filters, please see the end
       of the previous chapter where it talks about GMimeStreamFilter
@@ -566,8 +590,8 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       <filename>src/uuencode.c</filename></para>
       
       <note>
-	<para>Note: Since it is non-obvious, filters are applied to a
-	stream in the same order that they are added to the
+	<para>Note: Since it may be non-obvious, filters are applied
+	to a stream in the same order that they are added to the
 	GMimeFilterStream. This means that if you add a base64 encode
 	filter and then add a CRLF filter, the stream will first be
 	base64 encoded and then the end-of-line formatting will be
