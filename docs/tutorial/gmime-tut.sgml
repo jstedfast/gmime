@@ -123,7 +123,7 @@ url="http://library.gnome.org/devel/gmime/stable/gmime-building.html">http://lib
       
       <para>If you've looked at the API at all already, you will have
       probably noticed that the stream functions work very much like
-      those of the standard low-level Unix I/O functions (those that
+      those of the standard low-level UNIX I/O functions (those that
       use file descriptors) but with a few extras taken from the
       higher-level Standard C I/O API.</para>
       
@@ -247,7 +247,7 @@ int main (int argc, char **argv)
       <literal>FILE*</literal> handle. The <literal>dup()</literal>
       function makes a duplicate of the file descriptor passed to
       it. More information can be read about these 2 functions by
-      using <literal>man</literal> on your local Unix system or by
+      using <literal>man</literal> on your local UNIX system or by
       reading the Reference Manual for your libc.</para>
       
       <para>There are also some functions to tell GMimeStreamFile,
@@ -522,7 +522,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       (<literal>fstream</literal>). The filter attached to
       <literal>fstream</literal> is one of the basic MIME filters that
       encodes data in the traditional UUCP format. You have probably
-      run a program to do this many times in the past using the Unix
+      run a program to do this many times in the past using the UNIX
       command <literal>uuencode</literal>. Never thought writing a
       replacement for <literal>uuencode</literal> could be so easy,
       did you? Well, it is. And not only is it <emphasis>that
@@ -552,7 +552,7 @@ void    g_mime_stream_buffer_readln (GMimeStream *stream, GByteArray *buffer);
       text streams of one charset into another charset.</para>
       
       <para>GMimeFilterCRLF will likely become very useful to you if
-      you are implementing any internet standards or DOS/Unix
+      you are implementing any internet standards or DOS/UNIX
       compatability. This filter is meant for converting line endings
       from the traditional UNIX sequence (LF) to the internet standard
       (and DOS) sequence, CRLF, and vice versa. Also included in this
