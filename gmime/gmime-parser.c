@@ -317,13 +317,13 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->from_offset = -1;
 	priv->from_line = g_byte_array_new ();
 	
-	priv->headerbuf = g_malloc (SCAN_HEAD + 1);
+	priv->headerbuf = g_malloc (SCAN_HEAD);
 	priv->headerptr = priv->headerbuf;
-	priv->headerleft = SCAN_HEAD;
+	priv->headerleft = SCAN_HEAD - 1;
 	
-	priv->rawbuf = g_malloc (SCAN_HEAD + 1);
+	priv->rawbuf = g_malloc (SCAN_HEAD);
 	priv->rawptr = priv->rawbuf;
-	priv->rawleft = SCAN_HEAD;
+	priv->rawleft = SCAN_HEAD - 1;
 	
 	priv->headers_start = -1;
 	priv->header_start = -1;
@@ -741,19 +741,31 @@ parser_step_from (GMimeParser *parser)
 	return 0;
 }
 
+static size_t
+nearest_pow (size_t num)
+{
+	size_t n = num > 0 ? num - 1 : 0;
+	
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	n++;
+	
+	return n;
+}
+
 #define header_append(priv, start, len) G_STMT_START {                    \
 	if (priv->headerleft <= len) {                                    \
 		size_t hlen, hoff;                                        \
 		                                                          \
-		hlen = hoff = priv->headerptr - priv->headerbuf;          \
-		hlen = hlen ? hlen : 1;                                   \
+		hoff = priv->headerptr - priv->headerbuf;                 \
+		hlen = nearest_pow (hoff + len + 1);                      \
 		                                                          \
-		while (hlen < hoff + len)                                 \
-			hlen <<= 1;                                       \
-		                                                          \
-		priv->headerbuf = g_realloc (priv->headerbuf, hlen + 1);  \
+		priv->headerbuf = g_realloc (priv->headerbuf, hlen);      \
 		priv->headerptr = priv->headerbuf + hoff;                 \
-		priv->headerleft = hlen - hoff;                           \
+		priv->headerleft = (hlen - 1) - hoff;                     \
 	}                                                                 \
 	                                                                  \
 	memcpy (priv->headerptr, start, len);                             \
@@ -765,15 +777,12 @@ parser_step_from (GMimeParser *parser)
 	if (priv->rawleft <= len) {                                       \
 		size_t hlen, hoff;                                        \
 		                                                          \
-		hlen = hoff = priv->rawptr - priv->rawbuf;                \
-		hlen = hlen ? hlen : 1;                                   \
+		hoff = priv->rawptr - priv->rawbuf;                       \
+		hlen = nearest_pow (hoff + len + 1);                      \
 		                                                          \
-		while (hlen < hoff + len)                                 \
-			hlen <<= 1;                                       \
-		                                                          \
-		priv->rawbuf = g_realloc (priv->rawbuf, hlen + 1);        \
+		priv->rawbuf = g_realloc (priv->rawbuf, hlen);            \
 		priv->rawptr = priv->rawbuf + hoff;                       \
-		priv->rawleft = hlen - hoff;                              \
+		priv->rawleft = (hlen - 1) - hoff;                        \
 	}                                                                 \
 	                                                                  \
 	memcpy (priv->rawptr, start, len);                                \

@@ -1,3 +1,9 @@
+2008-06-14  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c: When mallocing header/raw buffers, malloc
+	a power-of-2 rather than a power-of-2 + 1. Also optimized the
+	logic to calculate the amount of memory to realloc.
+
 2008-06-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-encodings.h (GMIME_QP_ENCODE_LEN): Add an extra byte
