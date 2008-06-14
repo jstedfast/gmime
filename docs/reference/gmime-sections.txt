@@ -1076,16 +1076,6 @@ g_mime_signer_get_created
 g_mime_signer_set_created
 g_mime_signer_get_expires
 g_mime_signer_set_expires
-<SUBSECTION>
-g_mime_signature_validity_new
-g_mime_signature_validity_free
-g_mime_signature_validity_get_status
-g_mime_signature_validity_set_status
-g_mime_signature_validity_get_details
-g_mime_signature_validity_set_details
-g_mime_signature_validity_get_signers
-g_mime_signature_validity_add_signer
-
 <SUBSECTION Private>
 g_mime_cipher_context_get_type
 
