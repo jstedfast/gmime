@@ -1188,19 +1188,31 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	return 0;
 }
 
+static size_t
+nearest_pow (size_t num)
+{
+	size_t n = num > 0 ? num - 1 : 0;
+	
+	n |= n >> 1;
+	n |= n >> 2;
+	n |= n >> 4;
+	n |= n >> 8;
+	n |= n >> 16;
+	n++;
+	
+	return n;
+}
+
 #define status_backup(gpg, start, len) G_STMT_START {                     \
 	if (gpg->statusleft <= len) {                                     \
-		unsigned int slen, soff;                                  \
+		size_t slen, soff;                                        \
 		                                                          \
-		slen = soff = gpg->statusptr - gpg->statusbuf;            \
-		slen = slen ? slen : 1;                                   \
+		soff = gpg->statusptr - gpg->statusbuf;                   \
+		slen = nearest_pow (soff + len + 1);                      \
 		                                                          \
-		while (slen < soff + len)                                 \
-			slen <<= 1;                                       \
-		                                                          \
-		gpg->statusbuf = g_realloc (gpg->statusbuf, slen + 1);    \
+		gpg->statusbuf = g_realloc (gpg->statusbuf, slen);        \
 		gpg->statusptr = gpg->statusbuf + soff;                   \
-		gpg->statusleft = slen - soff;                            \
+		gpg->statusleft = (slen - 1) - soff;                      \
 	}                                                                 \
 	                                                                  \
 	memcpy (gpg->statusptr, start, len);                              \
