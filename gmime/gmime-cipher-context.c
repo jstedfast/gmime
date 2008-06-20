@@ -527,7 +527,7 @@ g_mime_signer_set_errors (GMimeSigner *signer, GMimeSignerError errors)
  * Returns: the signer errors.
  **/
 GMimeSignerError
-g_mime_signer_get_error (GMimeSigner *signer)
+g_mime_signer_get_errors (GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_ERROR_NONE);
 	

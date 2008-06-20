@@ -926,7 +926,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	size_t nread, nwritten;
 	register char *inptr;
 	char *status, *tmp;
-	int id, len;
+	int len;
 	
  parse:
 	

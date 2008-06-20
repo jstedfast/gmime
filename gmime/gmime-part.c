@@ -320,10 +320,8 @@ write_content (GMimePart *part, GMimeStream *stream)
 			filename = g_mime_part_get_filename (part);
 			nwritten = g_mime_stream_printf (stream, "begin 0644 %s\n",
 							 filename ? filename : "unknown");
-			if (nwritten == -1) {
-				g_object_unref (filtered_stream);
+			if (nwritten == -1)
 				return -1;
-			}
 			
 			total += nwritten;
 			

@@ -1,3 +1,24 @@
+2008-06-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-multipart.c (g_mime_multipart_remove_part): Fixed
+	g_return macros to return bool instead of void.
+
+	* gmime/gmime-cipher-context.c (g_mime_signer_get_errors): Fixed
+	the function name to match the prototype name.
+
+	* gmime/gmime-header.c (g_mime_header_list_remove): Fixed the
+	g_return macros here too. Also need to make sure to return TRUE at
+	the end of the function.
+
+	* gmime/gmime-part.c (write_content): Don't unred filtered_stream
+	if we haven't used it.
+
+	* gmime/gmime-object.c (g_mime_object_remove_header): Fixed
+	g_return macros, this function returns bool, not void.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Get rid of
+	unused variable.
+
 2008-06-18  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

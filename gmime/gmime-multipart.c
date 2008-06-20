@@ -515,8 +515,8 @@ multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 gboolean
 g_mime_multipart_remove_part (GMimeMultipart *multipart, GMimeObject *part)
 {
-	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
-	g_return_if_fail (GMIME_IS_OBJECT (part));
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), FALSE);
+	g_return_val_if_fail (GMIME_IS_OBJECT (part), FALSE);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->remove_part (multipart, part);
 }

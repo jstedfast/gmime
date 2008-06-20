@@ -695,8 +695,8 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 {
 	GMimeHeader *header, *node;
 	
-	g_return_if_fail (headers != NULL);
-	g_return_if_fail (name != NULL);
+	g_return_val_if_fail (headers != NULL, FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
 	
 	if (!(header = g_hash_table_lookup (headers->hash, name)))
 		return FALSE;
@@ -722,6 +722,8 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 	
 	g_free (headers->raw);
 	headers->raw = NULL;
+	
+	return TRUE;
 }
 
 

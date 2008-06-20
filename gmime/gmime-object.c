@@ -54,6 +54,9 @@ struct _subtype_bucket {
 	GType object_type;
 };
 
+extern void _g_mime_object_content_type_changed (GMimeObject *object);
+extern void _g_mime_object_content_disposition_changed (GMimeObject *object);
+
 static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
@@ -799,8 +802,8 @@ remove_header (GMimeObject *object, const char *header)
 gboolean
 g_mime_object_remove_header (GMimeObject *object, const char *header)
 {
-	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (header != NULL);
+	g_return_val_if_fail (GMIME_IS_OBJECT (object), FALSE);
+	g_return_val_if_fail (header != NULL, FALSE);
 	
 	return GMIME_OBJECT_GET_CLASS (object)->remove_header (object, header);
 }
