@@ -195,7 +195,7 @@ static char *tm_days[] = {
  * @tz_offset: Timezone offset
  *
  * Allocates a string buffer containing the rfc822 formatted date
- * string represented by @time and @offset.
+ * string represented by @time and @tz_offset.
  *
  * Returns a valid string representation of the date.
  **/
@@ -739,11 +739,11 @@ gmime_datetok_table_init (void)
  * @tz_offset: timezone offset
  *
  * Decodes the rfc822 date string and saves the GMT offset into
- * @saveoffset if non-NULL.
+ * @tz_offset if non-NULL.
  *
  * Returns the time_t representation of the date string specified by
- * @in. If 'saveoffset' is non-NULL, the value of the timezone offset
- * will be stored.
+ * @in or (time_t) %0 on error. If @tz_offset is non-NULL, the value
+ * of the timezone offset will be stored.
  **/
 time_t
 g_mime_utils_header_decode_date (const char *in, int *tz_offset)
