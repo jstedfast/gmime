@@ -58,7 +58,7 @@ static void message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static void message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string);
+static void message_add_recipients_from_string (GMimeMessage *message, const char *type, const char *string);
 
 static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
@@ -1014,7 +1014,7 @@ sync_recipient_header (GMimeMessage *message, const char *type)
  * #GMIME_RECIPIENT_TYPE_CC and #GMIME_RECIPIENT_TYPE_BCC.
  **/
 void
-g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *name, const char *address)
+g_mime_message_add_recipient (GMimeMessage *message, const char *type, const char *name, const char *address)
 {
 	InternetAddressList *recipients;
 	InternetAddress *ia;
@@ -1038,7 +1038,7 @@ g_mime_message_add_recipient (GMimeMessage *message, char *type, const char *nam
 
 
 static void
-message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
+message_add_recipients_from_string (GMimeMessage *message, const char *type, const char *string)
 {
 	InternetAddressList *recipients, *addrlist;
 	
@@ -1067,7 +1067,7 @@ message_add_recipients_from_string (GMimeMessage *message, char *type, const cha
  * specified in rfc822.
  **/
 void
-g_mime_message_add_recipients_from_string (GMimeMessage *message, char *type, const char *string)
+g_mime_message_add_recipients_from_string (GMimeMessage *message, const char *type, const char *string)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (type != NULL);
