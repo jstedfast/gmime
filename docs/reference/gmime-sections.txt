@@ -789,9 +789,7 @@ GMimeMultipartSignedClass
 
 <SECTION>
 <FILE>gmime-message</FILE>
-GMIME_RECIPIENT_TYPE_TO
-GMIME_RECIPIENT_TYPE_CC
-GMIME_RECIPIENT_TYPE_BCC
+GMimeRecipientType
 GMimeMessage
 g_mime_message_new
 g_mime_message_set_sender

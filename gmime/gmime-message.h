@@ -44,6 +44,21 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
 
 
 /**
+ * GMimeRecipientType:
+ * @GMIME_RECIPIENT_TYPE_TO: Represents the recipients in the To: header.
+ * @GMIME_RECIPIENT_TYPE_CC: Represents the recipients in the Cc: header.
+ * @GMIME_RECIPIENT_TYPE_BCC: Represents the recipients in the Bcc: header.
+ *
+ * A message recipient type.
+ **/
+typedef enum _GMimeRecipientType {
+	GMIME_RECIPIENT_TYPE_TO,
+	GMIME_RECIPIENT_TYPE_CC,
+	GMIME_RECIPIENT_TYPE_BCC,
+} GMimeRecipientType;
+
+
+/**
  * GMimeMessage:
  * @parent_object: parent #GMimeObject
  * @mime_part: toplevel MIME part
@@ -77,31 +92,6 @@ struct _GMimeMessageClass {
 };
 
 
-/**
- * GMIME_RECIPIENT_TYPE_TO:
- *
- * Recipients in the To: header.
- **/
-#define	GMIME_RECIPIENT_TYPE_TO  "To"
-
-
-/**
- * GMIME_RECIPIENT_TYPE_CC:
- *
- * Recipients in the Cc: header.
- **/
-#define	GMIME_RECIPIENT_TYPE_CC  "Cc"
-
-
-/**
- * GMIME_RECIPIENT_TYPE_BCC:
- *
- * Recipients in the Bcc: header.
- **/
-#define	GMIME_RECIPIENT_TYPE_BCC "Bcc"
-
-
-
 GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
@@ -112,9 +102,9 @@ const char *g_mime_message_get_sender (GMimeMessage *message);
 void g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to);
 const char *g_mime_message_get_reply_to (GMimeMessage *message);
 
-void g_mime_message_add_recipient (GMimeMessage *message, const char *type, const char *name, const char *address);
-void g_mime_message_add_recipients_from_string (GMimeMessage *message, const char *type, const char *str);
-const InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, const char *type);
+void g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, const char *name, const char *address);
+void g_mime_message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str);
+const InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type);
 InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject);

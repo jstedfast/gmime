@@ -1,15 +1,9 @@
-public enum RecipientType {
-	To,
-	Cc,
-	Bcc
-};
-
 [DllImport ("gmime")]
-static extern IntPtr g_mime_message_get_recipients (IntPtr message, string type);
+static extern IntPtr g_mime_message_get_recipients (IntPtr message, int type);
 
-public InternetAddressList GetRecipients (RecipientType type)
+public InternetAddressList GetRecipients (GMime.RecipientType type)
 {
-	IntPtr list = g_mime_message_get_recipients (Handle, type.ToString ());
+	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
 
 	return new InternetAddressList (list);
 }
@@ -38,9 +32,9 @@ public System.Collections.IEnumerable References {
 [DllImport("gmime")]
 static extern IntPtr internet_address_list_to_string (IntPtr list, bool encode);
 
-public string GetRecipientsAsString (RecipientType type, bool encode)
+public string GetRecipientsAsString (GMime.RecipientType type, bool encode)
 {
-	IntPtr list = g_mime_message_get_recipients (Handle, type.ToString ());
+	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
 	IntPtr str;
 	
 	if (list == IntPtr.Zero)
@@ -51,7 +45,7 @@ public string GetRecipientsAsString (RecipientType type, bool encode)
 	return GLib.Marshaller.PtrToStringGFree (str);
 }
 
-public string GetRecipientsAsString (RecipientType type)
+public string GetRecipientsAsString (GMime.RecipientType type)
 {
 	return GetRecipientsAsString (type, false);
 }

@@ -1,5 +1,13 @@
 2008-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* mono/Message.custom: Updated.
+
+	* gmime/gmime-message.[c,h]: Make GMIME_RECIPIENT_TYPE_* string
+	macros into an enum. Translate the enum into strings as
+	appropriate internally.
+
+2008-07-04  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #541578
 
 	* gmime/gmime-message.c (g_mime_message_add_recipient): Change

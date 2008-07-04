@@ -47,6 +47,11 @@
       <member cname="GMIME_FILTER_GZIP_MODE_ZIP" name="Zip" />
       <member cname="GMIME_FILTER_GZIP_MODE_UNZIP" name="Unzip" />
     </enum>
+    <enum name="RecipientType" cname="GMimeRecipientType" type="enum">
+      <member cname="GMIME_RECIPIENT_TYPE_TO" name="To" />
+      <member cname="GMIME_RECIPIENT_TYPE_CC" name="Cc" />
+      <member cname="GMIME_RECIPIENT_TYPE_BCC" name="Bcc" />
+    </enum>
     <enum name="SeekWhence" cname="GMimeSeekWhence" type="enum">
       <member cname="GMIME_STREAM_SEEK_SET" name="Set" value="SEEK_SET" />
       <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" value="SEEK_CUR" />
@@ -613,8 +618,8 @@
       </method>
     </object>
     <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCipherContext">
-      <field name="Path" cname="path" type="char*" />
       <field name="AlwaysTrust" cname="always_trust" type="gboolean" />
+      <field name="Path" cname="path" type="char*" />
       <method name="GetAlwaysTrust" cname="g_mime_gpg_context_get_always_trust">
         <return-type type="gboolean" />
       </method>
@@ -635,14 +640,14 @@
       </method>
     </object>
     <object name="Message" cname="GMimeMessage" parent="GMimeObject">
-      <field name="From" cname="from" type="char*" />
-      <field name="ReplyTo" cname="reply_to" type="char*" />
+      <field name="MimePart" cname="mime_part" type="GMimeObject*" />
       <field name="Recipients" cname="recipients" type="GHashTable*" />
+      <field name="MessageId" cname="message_id" type="char*" />
+      <field name="ReplyTo" cname="reply_to" type="char*" />
       <field name="Subject" cname="subject" type="char*" />
+      <field name="From" cname="from" type="char*" />
       <field name="Date" cname="date" type="time_t" />
       <field name="TzOffset" cname="tz_offset" type="int" />
-      <field name="MessageId" cname="message_id" type="char*" />
-      <field name="MimePart" cname="mime_part" type="GMimeObject*" />
       <method name="AddHeader" cname="g_mime_message_add_header">
         <return-type type="void" />
         <parameters>
@@ -653,7 +658,7 @@
       <method name="AddRecipient" cname="g_mime_message_add_recipient">
         <return-type type="void" />
         <parameters>
-          <parameter type="char*" name="type" />
+          <parameter type="GMimeRecipientType" name="type" />
           <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="address" />
         </parameters>
@@ -661,7 +666,7 @@
       <method name="AddRecipientsFromString" cname="g_mime_message_add_recipients_from_string">
         <return-type type="void" />
         <parameters>
-          <parameter type="char*" name="type" />
+          <parameter type="GMimeRecipientType" name="type" />
           <parameter type="const-char*" name="str" />
         </parameters>
       </method>
@@ -700,7 +705,7 @@
       <method name="GetRecipients" cname="g_mime_message_get_recipients">
         <return-type type="const-InternetAddressList*" />
         <parameters>
-          <parameter type="const-char*" name="type" />
+          <parameter type="GMimeRecipientType" name="type" />
         </parameters>
       </method>
       <method name="GetReplyTo" cname="g_mime_message_get_reply_to">
@@ -798,9 +803,9 @@
       </method>
     </object>
     <object name="MessagePartial" cname="GMimeMessagePartial" parent="GMimePart">
-      <field name="Id" cname="id" type="char*" />
       <field name="Number" cname="number" type="int" />
       <field name="Total" cname="total" type="int" />
+      <field name="Id" cname="id" type="char*" />
       <method name="GetId" cname="g_mime_message_partial_get_id">
         <return-type type="const-char*" />
       </method>
@@ -836,7 +841,10 @@
       </method>
     </object>
     <object name="Multipart" cname="GMimeMultipart" parent="GMimeObject">
-      <field name="Priv" cname="priv" type="struct-_GMimeMultipartPrivate*" />
+      <field name="Children" cname="children" type="GPtrArray*" />
+      <field name="Boundary" cname="boundary" type="char*" />
+      <field name="Preface" cname="preface" type="char*" />
+      <field name="Postface" cname="postface" type="char*" />
       <virtual_method name="AddPart" cname="add_part">
         <return-type type="void" />
         <parameters>
@@ -1614,12 +1622,12 @@
       </method>
     </object>
     <object name="StreamBuffer" cname="GMimeStreamBuffer" parent="GMimeStream">
+      <field name="Mode" cname="mode" type="GMimeStreamBufferMode" />
       <field name="Source" cname="source" type="GMimeStream*" />
       <field name="Buffer" cname="buffer" type="char*" />
       <field name="Bufptr" cname="bufptr" type="char*" />
       <field name="Bufend" cname="bufend" type="char*" />
       <field name="Buflen" cname="buflen" type="size_t" />
-      <field name="Mode" cname="mode" type="GMimeStreamBufferMode" />
       <method name="GetType" cname="g_mime_stream_buffer_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1741,8 +1749,8 @@
       </method>
     </object>
     <object name="StreamMem" cname="GMimeStreamMem" parent="GMimeStream">
-      <field name="Owner" cname="owner" type="gboolean" />
       <field name="Buffer" cname="buffer" type="GByteArray*" />
+      <field name="Owner" cname="owner" type="gboolean" />
       <method name="GetByteArray" cname="g_mime_stream_mem_get_byte_array">
         <return-type type="GByteArray*" />
       </method>
@@ -1883,8 +1891,8 @@
     <struct name="ContentDisposition" cname="GMimeContentDisposition" opaque="true">
       <field name="ParentObject" cname="parent_object" type="gpointer" access="public" writeable="true" />
       <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
-      <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
       <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
+      <field name="Disposition" cname="disposition" type="char*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_disposition_destroy">
         <return-type type="void" />
       </method>
@@ -1929,9 +1937,9 @@
     <struct name="ContentType" cname="GMimeContentType" opaque="true">
       <field name="ParentObject" cname="parent_object" type="gpointer" access="public" writeable="true" />
       <field name="ParamHash" cname="param_hash" type="GHashTable*" access="public" writeable="true" />
+      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
       <field name="Type" cname="type" type="char*" access="public" writeable="true" />
       <field name="Subtype" cname="subtype" type="char*" access="public" writeable="true" />
-      <field name="Params" cname="params" type="GMimeParam*" access="public" writeable="true" />
       <method name="Destroy" cname="g_mime_content_type_destroy">
         <return-type type="void" />
       </method>
@@ -2621,7 +2629,7 @@
         </parameters>
       </method>
       <method name="Word" cname="g_mime_decode_word" shared="true">
-        <return-type type="char*" />
+        <return-type type="const-char*" />
         <parameters>
           <parameter type="const-char**" name="in" />
         </parameters>
