@@ -1032,7 +1032,7 @@ g_mime_message_add_recipient (GMimeMessage *message, const char *type, const cha
 	recipients = internet_address_list_append (recipients, ia);
 	internet_address_unref (ia);
 	
-	g_hash_table_insert (message->recipients, type, recipients);
+	g_hash_table_insert (message->recipients, (char *) type, recipients);
 	sync_recipient_header (message, type);
 }
 
@@ -1050,7 +1050,7 @@ message_add_recipients_from_string (GMimeMessage *message, const char *type, con
 		internet_address_list_destroy (addrlist);
 	}
 	
-	g_hash_table_insert (message->recipients, type, recipients);
+	g_hash_table_insert (message->recipients, (char *) type, recipients);
 }
 
 
