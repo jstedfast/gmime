@@ -40,9 +40,11 @@ $(pkgconfig_DATA): config.status
 
 $(libgmime_2_4_la_SOURCES): $(srcdir)/gmime
 
-dist-hook: gmime.spec
-	-cp gmime.spec $(distdir)
-	(cd $(srcdir) ; tar -cf -) | (cd $(distdir); tar xf -)
+dist-hook: $(BUILD_EXTRA_DIST)
+	files='$(BUILD_EXTRA_DIST)'; \
+	for f in $$files; do \
+	  if test -f $$f; then d=.; else d=$(srcdir); fi; \
+	  rm -f $(distdir)/$$f && cp $$d/$$f $(distdir) || exit 1; done
 
 # This is a version of the automake-1.7 distcheck rule modified to
 # pass --enable-gtk-doc to ./configure and to not chmod distdir to

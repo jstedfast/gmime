@@ -1,3 +1,9 @@
+2008-07-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Doltified and bumped version to 2.3.5
+
 2008-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
 	* mono/Message.custom: Updated.
