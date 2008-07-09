@@ -1,5 +1,7 @@
 2008-07-08  Jeffrey Stedfast  <fejj@novell.com>
 
+	* COPYING: Fixed to reference LGPL v2.1
+
 	* docs/reference/gmime-sections.txt: Updated.
 
 	* gmime/gmime-header.c (g_mime_header_list_foreach): Added back
