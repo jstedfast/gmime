@@ -1,5 +1,7 @@
 2008-07-08  Jeffrey Stedfast  <fejj@novell.com>
 
+	* COPYING: Fixed to reference LGPL v2.1
+
 	* gmime/gmime-common.h: Removed unused prototypes.
 
 2008-07-04  Jeffrey Stedfast  <fejj@novell.com>
