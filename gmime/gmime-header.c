@@ -756,6 +756,31 @@ g_mime_header_list_get_iter (GMimeHeaderList *headers, GMimeHeaderIter *iter)
 }
 
 
+/**
+ * g_mime_header_list_foreach:
+ * @headers: A #GMimeHeaderList
+ * @func: function to be called for each header.
+ * @user_data: User data to be passed to the func.
+ *
+ * Calls @func for each header name/value pair.
+ */
+void
+g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data)
+{
+	const GMimeHeader *header;
+	
+	g_return_if_fail (headers != NULL);
+	g_return_if_fail (func != NULL);
+	
+	header = (const GMimeHeader *) headers->list.head;
+	
+	while (header->next) {
+		func (header->name, header->value, user_data);
+		header = header->next;
+	}
+}
+
+
 static ssize_t
 default_writer (GMimeStream *stream, const char *name, const char *value)
 {
@@ -801,7 +826,7 @@ g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream 
 			if (!(writer = g_hash_table_lookup (writers, header->name)))
 				writer = default_writer;
 			
-			if ((nwritten = (* writer) (stream, header->name, header->value)) == -1)
+			if ((nwritten = writer (stream, header->name, header->value)) == -1)
 				return -1;
 			
 			total += nwritten;

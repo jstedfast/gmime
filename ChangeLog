@@ -1,3 +1,15 @@
+2008-07-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* docs/reference/gmime-sections.txt: Updated.
+
+	* gmime/gmime-header.c (g_mime_header_list_foreach): Added back
+	since it's fairly simple and makes it easier for apps to be ported
+	over to GMime 2.4
+
+	* gmime/gmime-message.h: Removed unused prototypes.
+
+	* gmime/gmime-common.h: Same.
+
 2008-07-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

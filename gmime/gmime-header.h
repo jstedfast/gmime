@@ -31,6 +31,17 @@ typedef struct _GMimeHeader GMimeHeader;
 
 
 /**
+ * GMimeHeaderForeachFunc:
+ * @name: The field name.
+ * @value: The field value.
+ * @user_data: The user-supplied callback data.
+ *
+ * Function signature for the callback to g_mime_header_list_foreach().
+ **/
+typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
+
+
+/**
  * GMimeHeaderList:
  *
  * A message or mime-part header.
@@ -104,6 +115,8 @@ const char *g_mime_header_list_get (const GMimeHeaderList *headers, const char *
 gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
 
 gboolean g_mime_header_list_get_iter (GMimeHeaderList *headers, GMimeHeaderIter *iter);
+
+void g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data);
 
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);

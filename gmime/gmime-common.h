@@ -30,14 +30,6 @@ int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
 
 guint g_mime_strcase_hash (gconstpointer key);
 
-#ifndef HAVE_STRNCASECMP
-int strncasecmp (const char *s1, const char *s2, size_t n);
-#endif
-
-#ifndef HAVE_STRCASECMP
-int strcasecmp (const char *s1, const char *s2);
-#endif
-
 G_END_DECLS
 
 #endif /* __GMIME_COMMON_H__ */
