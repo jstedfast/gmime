@@ -1,3 +1,7 @@
+2008-07-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-common.h: Removed unused prototypes.
+
 2008-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
 	Fixes bug #541578
