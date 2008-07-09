@@ -31,6 +31,7 @@ do
 	-e "s/g_mime_header_get/g_mime_header_list_get/g" \
 	-e "s/g_mime_header_set/g_mime_header_list_set/g" \
 	-e "s/g_mime_header_new/g_mime_header_list_new/g" \
+	-e "s/g_mime_header_foreach/g_mime_header_list_foreach/g" \
 	-e "s/g_mime_message_get_headers/g_mime_object_get_headers/g" \
 	-e "s/g_mime_message_add_header/g_mime_object_append_header/g" \
 	-e "s/g_mime_message_get_header/g_mime_object_get_header/g" \
