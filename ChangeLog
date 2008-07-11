@@ -1,3 +1,8 @@
+2008-07-11  Jeffrey Stedfast  <fejj@novell.com>
+
+	* src/uudecode.c (uudecode): Don't base64 decode the
+	end-tag ("====\n"). Fixes bug #542222.
+
 2008-07-08  Jeffrey Stedfast  <fejj@novell.com>
 
 	* COPYING: Fixed to reference LGPL v2.1
