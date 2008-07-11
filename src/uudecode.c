@@ -84,20 +84,24 @@ uufopen (const char *filename, const char *rw, int flags, mode_t mode)
 	return fdopen (fd, rw);
 }
 
+typedef size_t (* Decoder) (const unsigned char *in, size_t inlen, unsigned char *out, int *state, guint32 *save);
+
 static int
 uudecode (const char *progname, int argc, char **argv)
 {
-	GMimeStream *istream, *ostream, *fstream;
-	GMimeContentEncoding encoding;
-	int fd, opt, longindex = 0;
+	gboolean midline = FALSE, base64 = FALSE;
+	int fd, opt, longindex = 0, state = 0;
 	register const char *p;
 	char inbuf[4096], *q;
-	GMimeFilter *filter;
 	GString *str = NULL;
 	const char *infile;
+	char outbuf[4100];
+	FILE *fin, *fout;
+	guint32 save = 0;
+	Decoder decode;
 	char *outfile;
 	mode_t mode;
-	FILE *fp;
+	size_t n;
 	
 	outfile = NULL;
 	while ((opt = getopt_long (argc, argv, "hvo:", longopts, &longindex)) != -1) {
@@ -126,26 +130,28 @@ uudecode (const char *progname, int argc, char **argv)
 	infile = optind < argc ? argv[optind] : DEFAULT_FILENAME;
 	
 	do {
-		if ((fp = uufopen (infile, "r", O_RDONLY, 0)) == NULL) {
-			fprintf (stderr, "%s: %s: uufopen %s\n", progname,
+		if ((fin = uufopen (infile, "r", O_RDONLY, 0)) == NULL) {
+			fprintf (stderr, "%s: %s: %s\n", progname,
 				 infile, strerror (errno));
 			return -1;
 		}
 		
 		p = NULL;
-		while ((fgets (inbuf, sizeof (inbuf), fp)) != NULL) {
+		while ((fgets (inbuf, sizeof (inbuf), fin)) != NULL) {
 			if (!strncmp (inbuf, "begin-base64 ", 13)) {
-				encoding = GMIME_CONTENT_ENCODING_BASE64;
+				decode = g_mime_encoding_base64_decode_step;
 				p = inbuf + 13;
+				base64 = TRUE;
 				break;
 			} else if (!strncmp (inbuf, "begin ", 6)) {
-				encoding = GMIME_CONTENT_ENCODING_UUENCODE;
+				decode = g_mime_encoding_uudecode_step;
+				state = GMIME_UUDECODE_STATE_BEGIN;
 				p = inbuf + 6;
 				break;
 			}
 			
 			while (!(strchr (inbuf, '\n'))) {
-				if (!(fgets (inbuf, sizeof (inbuf), fp)))
+				if (!(fgets (inbuf, sizeof (inbuf), fin)))
 					goto nexti;
 			}
 		}
@@ -153,7 +159,7 @@ uudecode (const char *progname, int argc, char **argv)
 		if (p == NULL) {
 			fprintf (stderr, "%s: %s: No `begin' line\n", progname,
 				 (!strcmp (infile, DEFAULT_FILENAME)) ? "stdin" : infile);
-			fclose (fp);
+			fclose (fin);
 			goto nexti;
 		}
 		
@@ -173,7 +179,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		g_string_append_len (str, q, p - q);
 		if (*p != '\n') {
-			while ((fgets (inbuf, sizeof (inbuf), fp)) != NULL) {
+			while ((fgets (inbuf, sizeof (inbuf), fin)) != NULL) {
 				p = inbuf;
 				while (*p && *p != '\n')
 					p++;
@@ -194,34 +200,51 @@ uudecode (const char *progname, int argc, char **argv)
 			fprintf (stderr, "%s: %s: %s\n", progname,
 				 outfile, strerror (errno));
 			g_string_free (str, TRUE);
-			fclose (fp);
+			fclose (fin);
 			
 			return -1;
 		}
 		
-		istream = g_mime_stream_file_new (fp);
-		ostream = g_mime_stream_fs_new (fd);
-		fstream = g_mime_stream_filter_new (ostream);
-		filter = g_mime_filter_basic_new (encoding, FALSE);
-		g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
-		g_object_unref (ostream);
-		g_object_unref (filter);
-		
-		if (encoding == GMIME_CONTENT_ENCODING_UUENCODE) {
-			/* Tell the filter that we've already read past the begin line */
-			((GMimeFilterBasic *) filter)->encoder.state |= GMIME_UUDECODE_STATE_BEGIN;
-		}
-		
-		if (g_mime_stream_write_to_stream (istream, fstream) == -1) {
-			fprintf (stderr, "%s: %s: %s\n", progname, outfile, strerror (errno));
-			g_object_unref (fstream);
-			g_object_unref (istream);
+		if (!(fout = fdopen (fd, "wb"))) {
+			fprintf (stderr, "%s: %s: %s\n", progname,
+				 outfile, strerror (errno));
+			g_string_free (str, TRUE);
+			fclose (fin);
+			close (fd);
+			
 			return -1;
 		}
 		
-		g_mime_stream_flush (fstream);
-		g_object_unref (fstream);
-		g_object_unref (istream);
+		while ((fgets (inbuf, sizeof (inbuf), fin))) {
+			if (!midline) {
+				if (base64) {
+					if (!strncmp (inbuf, "====", 4) &&
+					    (inbuf[4] == '\r' || inbuf[4] == '\n'))
+						break;
+				} else {
+					if ((state & GMIME_UUDECODE_STATE_END) &&
+					    !strncmp (inbuf, "end", 3) &&
+					    (inbuf[3] == '\r' || inbuf[3] == '\n'))
+						break;
+				}
+			}
+			
+			n = strlen (inbuf);
+			midline = inbuf[n - 1] != '\n';
+			
+			n = decode ((const unsigned char *) inbuf, n, (unsigned char *) outbuf, &state, &save);
+			if (fwrite (outbuf, 1, n, fout) != n) {
+				fprintf (stderr, "%s: %s: %s\n", progname, outfile,
+					 strerror (ferror (fout)));
+				fclose (fout);
+				fclose (fin);
+				return -1;
+			}
+		}
+		
+		fflush (fout);
+		fclose (fout);
+		fclose (fin);
 		
 	nexti:
 		if (str) {
