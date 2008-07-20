@@ -8,9 +8,7 @@ if HAVE_DOCBOOK
 	  (cd $(srcdir); \
 	   db2html gmime-tut.sgml; \
 	   test -d html && rm -r html; \
-	   mv gmime-tut html; \
-	   mkdir html/images; \
-	   cp images/*.png html/images); \
+	   mv gmime-tut html); \
 	fi
 else
 	echo "***"

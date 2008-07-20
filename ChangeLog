@@ -1,3 +1,9 @@
+2008-07-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.22
+
 2008-07-11  Jeffrey Stedfast  <fejj@novell.com>
 
 	* src/uudecode.c (uudecode): Don't base64 decode the

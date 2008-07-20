@@ -36,3 +36,4 @@ GObject
     GMimeStreamMmap
     GMimeStreamNull
 GInterface
+  GTypePlugin
