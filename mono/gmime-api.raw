@@ -94,6 +94,14 @@
       <member cname="INTERNET_ADDRESS_NAME" name="Name" />
       <member cname="INTERNET_ADDRESS_GROUP" name="Group" />
     </enum>
+    <callback name="HeaderForeachFunc" cname="GMimeHeaderForeachFunc">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="const-char*" name="name" />
+        <parameter type="const-char*" name="value" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
     <callback name="HeaderWriter" cname="GMimeHeaderWriter">
       <return-type type="ssize_t" />
       <parameters>
@@ -648,13 +656,6 @@
       <field name="From" cname="from" type="char*" />
       <field name="Date" cname="date" type="time_t" />
       <field name="TzOffset" cname="tz_offset" type="int" />
-      <method name="AddHeader" cname="g_mime_message_add_header">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="header" />
-          <parameter type="const-char*" name="value" />
-        </parameters>
-      </method>
       <method name="AddRecipient" cname="g_mime_message_add_recipient">
         <return-type type="void" />
         <parameters>
@@ -689,12 +690,6 @@
       </method>
       <method name="GetDateAsString" cname="g_mime_message_get_date_as_string">
         <return-type type="char*" />
-      </method>
-      <method name="GetHeader" cname="g_mime_message_get_header">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="const-char*" name="header" />
-        </parameters>
       </method>
       <method name="GetMessageId" cname="g_mime_message_get_message_id">
         <return-type type="const-char*" />
@@ -736,13 +731,6 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="str" />
-        </parameters>
-      </method>
-      <method name="SetHeader" cname="g_mime_message_set_header">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="header" />
-          <parameter type="const-char*" name="value" />
         </parameters>
       </method>
       <method name="SetMessageId" cname="g_mime_message_set_message_id">
@@ -2147,9 +2135,6 @@
       <method name="GetName" cname="g_mime_header_iter_get_name">
         <return-type type="const-char*" />
       </method>
-      <method name="GetOffset" cname="g_mime_header_iter_get_offset">
-        <return-type type="gint64" />
-      </method>
       <method name="GetValue" cname="g_mime_header_iter_get_value">
         <return-type type="const-char*" />
       </method>
@@ -2186,6 +2171,13 @@
       </method>
       <method name="Destroy" cname="g_mime_header_list_destroy">
         <return-type type="void" />
+      </method>
+      <method name="Foreach" cname="g_mime_header_list_foreach">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeHeaderForeachFunc" name="func" />
+          <parameter type="gpointer" name="user_data" />
+        </parameters>
       </method>
       <method name="Get" cname="g_mime_header_list_get">
         <return-type type="const-char*" />
