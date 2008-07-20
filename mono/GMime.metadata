@@ -115,6 +115,9 @@
   <!-- GPGContext -->
   
   <!-- Header -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeader']"/>
+
+  <!-- HeaderList -->
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Prepend']" name="name">PrependHeader</attr>
