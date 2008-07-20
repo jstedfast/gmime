@@ -1,3 +1,8 @@
+2008-07-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-header.c (g_mime_header_iter_get_offset): Disable
+	for now, currently it never gets set.
+
 2008-07-11  Jeffrey Stedfast  <fejj@novell.com>
 
 	* src/uudecode.c (uudecode): Don't base64 decode the

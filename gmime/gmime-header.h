@@ -83,7 +83,7 @@ gboolean g_mime_header_iter_last (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_next (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);
 
-gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);
+/*gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);*/
 const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
 const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);

@@ -59,7 +59,7 @@
 struct _GMimeHeader {
 	GMimeHeader *next;
 	GMimeHeader *prev;
-	gint64 offset;
+	/*gint64 offset;*/
 	char *name;
 	char *value;
 };
@@ -95,7 +95,7 @@ g_mime_header_new (const char *name, const char *value, gint64 offset)
 	header = g_new (GMimeHeader, 1);
 	header->name = g_strdup (name);
 	header->value = g_strdup (value);
-	header->offset = offset;
+	/*header->offset = offset;*/
 	header->next = NULL;
 	header->prev = NULL;
 	
@@ -365,6 +365,7 @@ g_mime_header_iter_prev (GMimeHeaderIter *iter)
 }
 
 
+#if 0
 /**
  * g_mime_header_iter_get_offset:
  * @iter: a #GMimeHeaderIter
@@ -383,6 +384,7 @@ g_mime_header_iter_get_offset (GMimeHeaderIter *iter)
 	
 	return iter->cursor->offset;
 }
+#endif
 
 
 /**

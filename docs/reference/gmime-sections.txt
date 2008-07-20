@@ -586,7 +586,6 @@ g_mime_header_iter_last
 g_mime_header_iter_next
 g_mime_header_iter_prev
 g_mime_header_iter_is_valid
-g_mime_header_iter_get_offset
 g_mime_header_iter_get_name
 g_mime_header_iter_get_value
 g_mime_header_iter_set_value
