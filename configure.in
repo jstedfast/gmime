@@ -547,14 +547,3 @@ Configuration:
 
   Mono bindings:        ${enable_mono}
 "
-
-if test "$enable_largefile" = "yes"; then
-   echo "
-WARNING: You have elected to enable large file support (>2GB).
-This may break API/ABI compatability with previous installations
-of GMime which could cause applications using GMime on your
-system to break in mysterious ways. It is not recommended that
-you enable this feature unless you really know what you are
-doing.
-"
-fi
