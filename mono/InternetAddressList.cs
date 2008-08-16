@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 namespace GMime {
 	public class InternetAddressList : IDisposable, IList {
 		IntPtr list;
+		bool owner;
 		
 #region Native Methods
 		[DllImport("gmime")]
@@ -56,19 +57,20 @@ namespace GMime {
 		static extern void internet_address_ref (IntPtr raw);
 #endregion
 		
-		public InternetAddressList () : this (internet_address_list_new ())
+		public InternetAddressList () : this (internet_address_list_new (), true)
 		{
 			
 		}
 		
-		public InternetAddressList (IntPtr raw)
+		internal InternetAddressList (IntPtr raw, bool owner)
 		{
+			this.owner = owner;
 			list = raw;
 		}
 		
 		public void Dispose ()
 		{
-			if (list != IntPtr.Zero)
+			if (owner && list != IntPtr.Zero)
 				internet_address_list_destroy (list);
 			
 			list = IntPtr.Zero;
@@ -258,7 +260,7 @@ namespace GMime {
 			InternetAddressList list = null;
 			
 			if (raw != IntPtr.Zero)
-				list = new InternetAddressList (raw);
+				list = new InternetAddressList (raw, true);
 			
 			GLib.Marshaller.Free (native_str);
 			

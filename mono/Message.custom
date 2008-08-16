@@ -5,7 +5,7 @@ public InternetAddressList GetRecipients (GMime.RecipientType type)
 {
 	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
 
-	return new InternetAddressList (list);
+	return new InternetAddressList (list, false);
 }
 
 
