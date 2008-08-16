@@ -1,5 +1,11 @@
 2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.6
+
+2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
+
 	* mono/InternetAddressList.cs: Rewritten to be more awesome. Now
 	implements IList.
 
