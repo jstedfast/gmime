@@ -1,3 +1,18 @@
+2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
+
+	* mono/InternetAddressList.cs: Rewritten to be more awesome. Now
+	implements IList.
+
+	* tools/gmime-port-2-2-to-2-4.sh: Updated.
+
+	* gmime/gmime-message.c: Updated for InternetAddressList API
+	changes.
+
+	* gmime/internet-address.c: Completely reworked the
+	InternetAddressList API.
+	(internet_address_list_parse_string): Renamed from
+	internet_address_parse_string().
+
 2008-08-15  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (decode_mailbox): Implemented a

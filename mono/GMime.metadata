@@ -145,12 +145,13 @@
   <remove-node path="/api/namespace/struct[@cname='InternetAddress']/field[@cname='type']"/>
 
   <!-- InternetAddressList -->
-  <!-- We implement this class by hand, hide it. -->
-  <attr path="/api/namespace/struct[@cname='InternetAddressList']" name="hidden">true</attr>
+  <!-- We implement this class by hand, remove it. -->
+  <remove-node path="/api/namespace/struct[@cname='InternetAddressList']"/>
 
   <!-- Message -->
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
   <!-- We implement these properties by hand, hide them. -->
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_recipients']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
 

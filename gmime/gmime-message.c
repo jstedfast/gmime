@@ -581,7 +581,7 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	str = g_string_new (name);
 	g_string_append (str, ": ");
 	
-	if (value && (addrlist = internet_address_parse_string (value))) {
+	if (value && (addrlist = internet_address_list_parse_string (value))) {
 		internet_address_list_writer (addrlist, str);
 		internet_address_list_destroy (addrlist);
 	}
@@ -634,13 +634,13 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	switch (i) {
 	case HEADER_FROM:
 		g_free (message->from);
-		addrlist = internet_address_parse_string (value);
+		addrlist = internet_address_list_parse_string (value);
 		message->from = internet_address_list_to_string (addrlist, FALSE);
 		internet_address_list_destroy (addrlist);
 		break;
 	case HEADER_REPLY_TO:
 		g_free (message->reply_to);
-		addrlist = internet_address_parse_string (value);
+		addrlist = internet_address_list_parse_string (value);
 		message->reply_to = internet_address_list_to_string (addrlist, FALSE);
 		internet_address_list_destroy (addrlist);
 		break;
@@ -954,7 +954,7 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 	
 	g_free (message->from);
 	
-	addrlist = internet_address_parse_string (sender);
+	addrlist = internet_address_list_parse_string (sender);
 	message->from = internet_address_list_to_string (addrlist, FALSE);
 	encoded = internet_address_list_to_string (addrlist, TRUE);
 	internet_address_list_destroy (addrlist);
@@ -1060,7 +1060,7 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 	recipients = g_hash_table_lookup (message->recipients, recipient_types[type]);
 	g_hash_table_remove (message->recipients, recipient_types[type]);
 	
-	recipients = internet_address_list_append (recipients, ia);
+	internet_address_list_add (recipients, ia);
 	internet_address_unref (ia);
 	
 	g_hash_table_insert (message->recipients, (char *) recipient_types[type], recipients);
@@ -1076,8 +1076,8 @@ message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType ty
 	recipients = g_hash_table_lookup (message->recipients, recipient_types[type]);
 	g_hash_table_remove (message->recipients, recipient_types[type]);
 	
-	if ((addrlist = internet_address_parse_string (str))) {
-		recipients = internet_address_list_concat (recipients, addrlist);
+	if ((addrlist = internet_address_list_parse_string (str))) {
+		internet_address_list_concat (recipients, addrlist);
 		internet_address_list_destroy (addrlist);
 	}
 	
@@ -1134,31 +1134,24 @@ g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
  * Gets the complete list of recipients for @message.
  *
  * Returns: a newly allocated #InternetAddressList containing all
- * recipients of the message.
+ * recipients of the message or %NULL if no recipients are set.
  **/
 InternetAddressList *
 g_mime_message_get_all_recipients (GMimeMessage *message)
 {
-	InternetAddressList *list, *tail, *node, *recipients;
+	InternetAddressList *recipients, *list = NULL;
 	guint i;
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	list = NULL;
-	tail = (InternetAddressList *) &list;
-	
 	for (i = 0; i < G_N_ELEMENTS (recipient_types); i++) {
-		recipients = g_hash_table_lookup (message->recipients, recipient_types[i]);
-		while (recipients != NULL) {
-			internet_address_ref (recipients->address);
-			node = g_new (InternetAddressList, 1);
-			node->address = recipients->address;
-			node->next = NULL;
-			tail->next = node;
-			tail = node;
-			
-			recipients = recipients->next;
-		}
+		if (!(recipients = g_hash_table_lookup (message->recipients, recipient_types[i])))
+			continue;
+		
+		if (list == NULL)
+			list = internet_address_list_new ();
+		
+		internet_address_list_concat (list, recipients);
 	}
 	
 	return list;

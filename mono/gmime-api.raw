@@ -2480,12 +2480,6 @@
           <parameter type="const-char*" name="addr" />
         </parameters>
       </constructor>
-      <method name="ParseString" cname="internet_address_parse_string" shared="true">
-        <return-type type="InternetAddressList*" />
-        <parameters>
-          <parameter type="const-char*" name="str" />
-        </parameters>
-      </method>
       <method name="Ref" cname="internet_address_ref">
         <return-type type="void" />
       </method>
@@ -2518,35 +2512,75 @@
       </method>
     </struct>
     <struct name="InternetAddressList" cname="InternetAddressList" opaque="true">
-      <field name="Next" cname="next" type="struct-_InternetAddressList*" access="public" writeable="true" />
-      <field name="Address" cname="address" type="InternetAddress*" access="public" writeable="true" />
-      <method name="Append" cname="internet_address_list_append">
-        <return-type type="InternetAddressList*" />
+      <method name="Add" cname="internet_address_list_add">
+        <return-type type="int" />
         <parameters>
           <parameter type="InternetAddress*" name="ia" />
         </parameters>
       </method>
+      <method name="Clear" cname="internet_address_list_clear">
+        <return-type type="void" />
+      </method>
       <method name="Concat" cname="internet_address_list_concat">
-        <return-type type="InternetAddressList*" />
+        <return-type type="void" />
         <parameters>
-          <parameter type="InternetAddressList*" name="b" />
+          <parameter type="InternetAddressList*" name="concat" />
+        </parameters>
+      </method>
+      <method name="Contains" cname="internet_address_list_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-InternetAddress*" name="ia" />
         </parameters>
       </method>
       <method name="Destroy" cname="internet_address_list_destroy">
         <return-type type="void" />
       </method>
       <method name="GetAddress" cname="internet_address_list_get_address">
-        <return-type type="InternetAddress*" />
+        <return-type type="const-InternetAddress*" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="IndexOf" cname="internet_address_list_index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="const-InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="Insert" cname="internet_address_list_insert">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
       </method>
       <method name="Length" cname="internet_address_list_length">
         <return-type type="int" />
       </method>
-      <method name="Next" cname="internet_address_list_next">
-        <return-type type="InternetAddressList*" />
-      </method>
-      <method name="Prepend" cname="internet_address_list_prepend">
+      <constructor cname="internet_address_list_new" />
+      <method name="ParseString" cname="internet_address_list_parse_string" shared="true">
         <return-type type="InternetAddressList*" />
         <parameters>
+          <parameter type="const-char*" name="str" />
+        </parameters>
+      </method>
+      <method name="Remove" cname="internet_address_list_remove">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="RemoveAt" cname="internet_address_list_remove_at">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="SetAddress" cname="internet_address_list_set_address">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
           <parameter type="InternetAddress*" name="ia" />
         </parameters>
       </method>

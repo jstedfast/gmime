@@ -85,6 +85,8 @@ do
 	-e "s/g_mime_object_ref/g_object_ref/g" \
 	-e "s/g_mime_stream_unref/g_object_unref/g" \
 	-e "s/g_mime_stream_ref/g_object_ref/g" \
+	-e "s/internet_address_parse_string/internet_address_list_parse_string/g" \
+	-e "s/internet_address_list_append/internet_address_list_add/g" \
 	< "$src" > "$src.tmp"
     mv "$src.tmp" "$src"
 done

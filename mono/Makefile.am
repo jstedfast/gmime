@@ -30,6 +30,7 @@ customs = 				\
 	DataWrapper.custom		\
 	Global.custom			\
 	HeaderList.custom		\
+	InternetAddress.custom		\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom
@@ -38,6 +39,7 @@ build_customs = 			\
 	$(srcdir)/DataWrapper.custom	\
 	$(srcdir)/Global.custom		\
 	$(srcdir)/HeaderList.custom	\
+	$(srcdir)/InternetAddress.custom\
 	$(srcdir)/Message.custom	\
 	$(srcdir)/Object.custom		\
 	$(srcdir)/Stream.custom

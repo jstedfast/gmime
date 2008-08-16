@@ -174,7 +174,7 @@ test_addrspec (void)
 		
 		testsuite_check ("addrspec[%u]", i);
 		try {
-			if (!(addrlist = internet_address_parse_string (addrspec[i].input)))
+			if (!(addrlist = internet_address_list_parse_string (addrspec[i].input)))
 				throw (exception_new ("could not parse addr-spec"));
 			
 			str = internet_address_list_to_string (addrlist, FALSE);

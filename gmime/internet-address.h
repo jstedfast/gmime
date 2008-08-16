@@ -42,6 +42,15 @@ typedef enum {
 } InternetAddressType;
 
 typedef struct _InternetAddress InternetAddress;
+
+
+/**
+ * InternetAddressList:
+ * @next: Pointer to the next item in the list.
+ * @address: The #InternetAddress.
+ *
+ * A collection of #InternetAddresses.
+ **/
 typedef struct _InternetAddressList InternetAddressList;
 
 
@@ -64,19 +73,6 @@ struct _InternetAddress {
 };
 
 
-/**
- * InternetAddressList:
- * @next: Pointer to the next item in the list.
- * @address: The #InternetAddress.
- *
- * A list of #InternetAddress structures.
- **/
-struct _InternetAddressList {
-	struct _InternetAddressList *next;
-	InternetAddress *address;
-};
-
-
 InternetAddress *internet_address_new (void);
 InternetAddress *internet_address_new_name (const char *name, const char *addr);
 InternetAddress *internet_address_new_group (const char *name);
@@ -94,15 +90,26 @@ const char *internet_address_get_name (InternetAddress *ia);
 const char *internet_address_get_addr (InternetAddress *ia);
 const InternetAddressList *internet_address_get_members (InternetAddress *ia);
 
-InternetAddressList *internet_address_list_prepend (InternetAddressList *list, InternetAddress *ia);
-InternetAddressList *internet_address_list_append (InternetAddressList *list, InternetAddress *ia);
-InternetAddressList *internet_address_list_concat (InternetAddressList *a, InternetAddressList *b);
-InternetAddressList *internet_address_list_next (const InternetAddressList *list);
-InternetAddress *internet_address_list_get_address (const InternetAddressList *list);
-int internet_address_list_length (const InternetAddressList *list);
+InternetAddressList *internet_address_list_new (void);
 void internet_address_list_destroy (InternetAddressList *list);
 
-InternetAddressList *internet_address_parse_string (const char *str);
+int internet_address_list_length (const InternetAddressList *list);
+
+void internet_address_list_clear (InternetAddressList *list);
+
+int internet_address_list_add (InternetAddressList *list, InternetAddress *ia);
+void internet_address_list_concat (InternetAddressList *list, InternetAddressList *concat);
+void internet_address_list_insert (InternetAddressList *list, int index, InternetAddress *ia);
+gboolean internet_address_list_remove (InternetAddressList *list, InternetAddress *ia);
+gboolean internet_address_list_remove_at (InternetAddressList *list, int index);
+
+gboolean internet_address_list_contains (const InternetAddressList *list, const InternetAddress *ia);
+int internet_address_list_index_of (const InternetAddressList *list, const InternetAddress *ia);
+
+const InternetAddress *internet_address_list_get_address (const InternetAddressList *list, int index);
+void internet_address_list_set_address (InternetAddressList *list, int index, InternetAddress *ia);
+
+InternetAddressList *internet_address_list_parse_string (const char *str);
 
 char *internet_address_to_string (const InternetAddress *ia, gboolean encode);
 char *internet_address_list_to_string (const InternetAddressList *list, gboolean encode);
