@@ -23,6 +23,7 @@
 #include <config.h>
 #endif
 
+#include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
@@ -843,12 +844,19 @@ decode_mailbox (const char **in)
 	/* get the rest of the local-part */
 	decode_lwsp (&inptr);
 	while (*inptr == '.' && word) {
-		inptr++;
-		
-		if ((word = decode_word (&inptr))) {
+		/* Note: According to the spec, only a single '.' is
+		 * allowed between word tokens in the local-part of an
+		 * addr-spec token, but according to Evolution bug
+		 * #547969, some Japanese cellphones have email
+		 * addresses that look like x..y@somewhere.jp */
+		do {
+			inptr++;
+			decode_lwsp (&inptr);
 			g_string_append_c (addr, '.');
+		} while (*inptr == '.');
+		
+		if ((word = decode_word (&inptr)))
 			g_string_append_len (addr, word, inptr - word);
-		}
 		
 		decode_lwsp (&inptr);
 	}

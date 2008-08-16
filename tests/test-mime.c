@@ -150,6 +150,15 @@ static struct {
 	{ "undisclosed-recipients",
 	  "undisclosed-recipients",
 	  "undisclosed-recipients" },
+	/* The following 2 addr-specs are invalid according to the
+	 * spec, but apparently some japanese cellphones use them?
+	 * See Evolution bug #547969 */
+	{ "some...dots@hocus.pocus.net",
+	  "some...dots@hocus.pocus.net",
+	  "some...dots@hocus.pocus.net" },
+	{ "some.dots..@hocus.pocus.net",
+	  "some.dots..@hocus.pocus.net",
+	  "some.dots..@hocus.pocus.net" },
 };
 
 static void

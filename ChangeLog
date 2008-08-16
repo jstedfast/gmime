@@ -1,3 +1,10 @@
+2008-08-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/internet-address.c (decode_mailbox): Implemented a
+	work-around for broken email addresses that have more than a
+	single '.' between word tokens making up the local-part of an
+	addr-spec. See Evolution bug #547969 for details.
+
 2008-08-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message-part.c (g_mime_message_part_get_message):
