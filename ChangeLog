@@ -1,5 +1,13 @@
 2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.7
+
+2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes to actually pass the test suite. D'oh!
+
 	* gmime/gmime-message.c (process_header): Protect against passing
 	a NULL list to internet_address_list_to_string().
 	(g_mime_message_add_recipient): Create a new InternetAddressList
