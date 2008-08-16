@@ -835,7 +835,7 @@ _internet_address_list_to_string (const InternetAddressList *list, guint32 flags
 	for (i = 0; i < list->array->len; i++) {
 		_internet_address_to_string (list->array->pdata[i], flags, linelen, string);
 		
-		if (i < list->array->len) {
+		if (i + 1 < list->array->len) {
 			g_string_append (string, ", ");
 			*linelen += 2;
 		}

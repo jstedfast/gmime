@@ -169,7 +169,8 @@ recipients_destroy (gpointer key, gpointer value, gpointer user_data)
 {
 	InternetAddressList *recipients = value;
 	
-	internet_address_list_destroy (recipients);
+	if (recipients)
+		internet_address_list_destroy (recipients);
 	
 	return TRUE;
 }
@@ -634,15 +635,21 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	switch (i) {
 	case HEADER_FROM:
 		g_free (message->from);
-		addrlist = internet_address_list_parse_string (value);
-		message->from = internet_address_list_to_string (addrlist, FALSE);
-		internet_address_list_destroy (addrlist);
+		if ((addrlist = internet_address_list_parse_string (value))) {
+			message->from = internet_address_list_to_string (addrlist, FALSE);
+			internet_address_list_destroy (addrlist);
+		} else {
+			message->from = NULL;
+		}
 		break;
 	case HEADER_REPLY_TO:
 		g_free (message->reply_to);
-		addrlist = internet_address_list_parse_string (value);
-		message->reply_to = internet_address_list_to_string (addrlist, FALSE);
-		internet_address_list_destroy (addrlist);
+		if ((addrlist = internet_address_list_parse_string (value))) {
+			message->reply_to = internet_address_list_to_string (addrlist, FALSE);
+			internet_address_list_destroy (addrlist);
+		} else {
+			message->reply_to = NULL;
+		}
 		break;
 	case HEADER_TO:
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_TO, value);
@@ -1057,8 +1064,10 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 	
 	ia = internet_address_new_name (name, address);
 	
-	recipients = g_hash_table_lookup (message->recipients, recipient_types[type]);
-	g_hash_table_remove (message->recipients, recipient_types[type]);
+	if ((recipients = g_hash_table_lookup (message->recipients, recipient_types[type])))
+		g_hash_table_remove (message->recipients, recipient_types[type]);
+	else
+		recipients = internet_address_list_new ();
 	
 	internet_address_list_add (recipients, ia);
 	internet_address_unref (ia);
@@ -1073,15 +1082,20 @@ message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType ty
 {
 	InternetAddressList *recipients, *addrlist;
 	
-	recipients = g_hash_table_lookup (message->recipients, recipient_types[type]);
-	g_hash_table_remove (message->recipients, recipient_types[type]);
+	if ((recipients = g_hash_table_lookup (message->recipients, recipient_types[type])))
+		g_hash_table_remove (message->recipients, recipient_types[type]);
 	
 	if ((addrlist = internet_address_list_parse_string (str))) {
-		internet_address_list_concat (recipients, addrlist);
-		internet_address_list_destroy (addrlist);
+		if (recipients != NULL) {
+			internet_address_list_concat (recipients, addrlist);
+			internet_address_list_destroy (addrlist);
+		} else {
+			recipients = addrlist;
+		}
 	}
 	
-	g_hash_table_insert (message->recipients, (char *) recipient_types[type], recipients);
+	if (recipients)
+		g_hash_table_insert (message->recipients, (char *) recipient_types[type], recipients);
 }
 
 

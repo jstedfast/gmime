@@ -1,5 +1,18 @@
 2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c (process_header): Protect against passing
+	a NULL list to internet_address_list_to_string().
+	(g_mime_message_add_recipient): Create a new InternetAddressList
+	if it doesn't already exist in the hash table.
+	(message_add_recipients_from_string): Protect against passing a
+	NULL list to internet_address_list_concat().
+
+	* gmime/internet-address.c (_internet_address_list_to_string):
+	Fixed the logic to avoid adding a ',' after the last email
+	address.
+
+2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.3.6
