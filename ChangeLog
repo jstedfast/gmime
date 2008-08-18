@@ -1,3 +1,22 @@
+2008-08-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tools/gmime-port-2-2-to-2-4.sh: Updated.
+
+	* gmime/internet-address.c (internet_address_new_mailbox): Renamed
+	from internet_address_new_name() to make it less ambiguous (and to
+	use the terminology used in the RFC's).
+	(internet_address_get_type): Now takes a const InternetAddress
+	argument.
+	(internet_address_get_name): Same.
+	(internet_address_get_addr): Same.
+	(internet_address_get_members): Same, but now returns a ref'd
+	InternetAddressList rather than a const InternetAddressList.
+	(internet_address_list_ref): InternetAddressLists are now
+	reffable.
+	(internet_address_list_unref): Same.
+	(internet_address_list_get_address): Now returns a ref'd copy of
+	the InternetAddress at the index specified.
+
 2008-08-16  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

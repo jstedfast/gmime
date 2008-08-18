@@ -937,7 +937,7 @@ InternetAddressType
 InternetAddressList
 InternetAddress
 internet_address_new
-internet_address_new_name
+internet_address_new_mailbox
 internet_address_new_group
 internet_address_ref
 internet_address_unref
@@ -951,7 +951,8 @@ internet_address_add_member
 internet_address_get_members
 internet_address_to_string
 internet_address_list_new
-internet_address_list_destroy
+internet_address_list_ref
+internet_address_list_unref
 internet_address_list_length
 internet_address_list_clear
 internet_address_list_add
