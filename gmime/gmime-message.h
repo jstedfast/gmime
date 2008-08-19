@@ -104,7 +104,7 @@ const char *g_mime_message_get_reply_to (GMimeMessage *message);
 
 void g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, const char *name, const char *address);
 void g_mime_message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str);
-const InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type);
+InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type);
 InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject);

@@ -80,6 +80,9 @@ DOLT
 
 AM_MAINTAINER_MODE
 
+GMIME_MARSHAL_RULE=$srcdir/marshal.mk
+AC_SUBST_FILE(GMIME_MARSHAL_RULE)
+
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/param.h)

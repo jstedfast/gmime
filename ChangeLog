@@ -1,4 +1,18 @@
+2008-08-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/internet-address.c: InternetAddress is now GObject with a
+	"changed" signal. Split out InternetAddressMailbox and
+	InternetAddressGroup subclasses of
+	InternetAddress. InternetAddressList is now also a GObject with a
+	"changed" signal. These changes were made so that manipulating an
+	InternetAddress[List] of recipients will auto-magically update
+	GMimeMessage's corresponding recipient header.
+
 2008-08-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_get_recipients): Now
+	returns a ref'd version of the InternetAddressList. You must now
+	unref the list when you are done with it.
 
 	* tools/gmime-port-2-2-to-2-4.sh: Updated.
 

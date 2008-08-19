@@ -193,7 +193,7 @@ test_addrspec (void)
 		
 		g_free (str);
 		if (addrlist)
-			internet_address_list_unref (addrlist);
+			g_object_unref (addrlist);
 	}
 }
 

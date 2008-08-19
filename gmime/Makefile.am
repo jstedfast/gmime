@@ -48,6 +48,7 @@ libgmime_2_4_la_SOURCES = 		\
 	gmime-header.c			\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
+	gmime-marshal.c			\
 	gmime-message.c			\
 	gmime-message-part.c		\
 	gmime-message-partial.c		\
@@ -99,6 +100,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-header.h			\
 	gmime-iconv.h			\
 	gmime-iconv-utils.h		\
+	gmime-marshal.h			\
 	gmime-message.h			\
 	gmime-message-part.h		\
 	gmime-message-partial.h		\
@@ -128,6 +130,9 @@ noinst_HEADERS = 			\
 	gmime-common.h			\
 	gmime-table-private.h		\
 	gmime-charset-map-private.h
+
+MARSHAL_GENERATED = gmime-marshal.c gmime-marshal.h
+@GMIME_MARSHAL_RULE@
 
 install-data-local: install-libtool-import-lib
 
@@ -162,3 +167,11 @@ charset_map_SOURCES = charset-map.c
 charset_map_LDFLAGS = 
 charset_map_DEPENDENCIES = 
 charset_map_LDADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+
+BUILT_SOURCES = $(MARSHAL_GENERATED)
+CLEANFILES    = $(BUILT_SOURCES)
+
+EXTRA_DIST = gmime-marshal.list
+
+dist-hook:
+	cd $(distdir); rm -f $(BUILT_SOURCES)
