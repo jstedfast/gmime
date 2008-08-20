@@ -1,13 +1,4 @@
-using System;
-using System.Collections;
-using System.Runtime.InteropServices;
-
-namespace GMime {
-	public sealed class InternetAddressList : GLib.Object, IList {
 #region Native Methods
-		[DllImport("gmime")]
-		static extern IntPtr internet_address_list_new ();
-		
 		[DllImport("gmime")]
 		static extern int internet_address_list_length (IntPtr list);
 		
@@ -47,16 +38,6 @@ namespace GMime {
 		[DllImport("gmime")]
 		static extern IntPtr internet_address_list_parse_string (IntPtr str);
 #endregion
-		
-		public InternetAddressList ()
-		{
-			Raw = internet_address_list_new ();
-		}
-		
-		internal InternetAddressList (IntPtr raw) : base (raw)
-		{
-			
-		}
 		
 		Exception CannotAdd (object value)
 		{
@@ -316,5 +297,3 @@ namespace GMime {
 				return index < list.Count;
 			}
 		}
-	}
-}

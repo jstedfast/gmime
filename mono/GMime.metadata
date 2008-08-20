@@ -147,9 +147,31 @@
   <attr path="/api/namespace/object[@cname='InternetAddressMailbox']/method[@name='SetAddr']" name="name">SetAddress</attr>
   
   <!-- InternetAddressList -->
-  <!-- We implement this class by hand, remove it. -->
-  <attr path="/api/namespace/object[@cname='InternetAddressList']" name="hidden">true</attr>
-
+  <!-- Remove internal methods/fields/signals -->
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/signal[@name='Changed']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Writer']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/field[@name='Array']"/>
+  <!-- We're going to implement the IList interface -->
+  <add-node path="/api/namespace/object[@cname='InternetAddressList']">
+    <implements>
+      <interface name="IList"/>
+    </implements>
+  </add-node>
+  <!-- Remove methods we're going to implement manually in InternetAddressList.custom -->
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Add']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Clear']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Concat']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Contains']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='IndexOf']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Insert']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Length']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='ParseString']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Remove']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='RemoveAt']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='GetAddress']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='SetAddress']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='ToString']"/>
+  
   <!-- Message -->
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
   <!-- We implement these properties by hand, hide them. -->

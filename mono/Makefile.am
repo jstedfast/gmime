@@ -18,11 +18,9 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = gmime-sharp-2.4.pc
 
 sources = 				\
-	InternetAddressList.cs		\
 	StreamWrapper.cs
 
 build_sources =  			\
-	$(srcdir)/InternetAddressList.cs\
 	$(srcdir)/StreamWrapper.cs	\
 	AssemblyInfo.cs
 
@@ -31,17 +29,19 @@ customs = 				\
 	Global.custom			\
 	HeaderList.custom		\
 	InternetAddress.custom		\
+	InternetAddressList.custom	\
 	Message.custom			\
 	Object.custom			\
 	Stream.custom
 
-build_customs = 			\
-	$(srcdir)/DataWrapper.custom	\
-	$(srcdir)/Global.custom		\
-	$(srcdir)/HeaderList.custom	\
-	$(srcdir)/InternetAddress.custom\
-	$(srcdir)/Message.custom	\
-	$(srcdir)/Object.custom		\
+build_customs = 				\
+	$(srcdir)/DataWrapper.custom		\
+	$(srcdir)/Global.custom			\
+	$(srcdir)/HeaderList.custom		\
+	$(srcdir)/InternetAddress.custom	\
+	$(srcdir)/InternetAddressList.custom	\
+	$(srcdir)/Message.custom		\
+	$(srcdir)/Object.custom			\
 	$(srcdir)/Stream.custom
 
 EXTRA_DIST =			\
