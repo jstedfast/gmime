@@ -137,16 +137,18 @@
   <!-- iconv-utils -->
 
   <!-- InternetAddress -->
-  <!-- The generator irritating always converts a method named GetType to a
-       GType property regardless of whether or not it's actually a glib type
-       So rename this one -->
-  <attr path="/api/namespace/struct[@cname='InternetAddress']/method[@cname='internet_address_get_type']" name="name">GetAddressType</attr>
-  <remove-node path="/api/namespace/struct[@cname='InternetAddress']/field[@cname='refcount']"/>
-  <remove-node path="/api/namespace/struct[@cname='InternetAddress']/field[@cname='type']"/>
-
+  <remove-node path="/api/namespace/object[@cname='InternetAddress']/signal[@name='Changed']"/>
+  
+  <!-- InternetAddressGroup -->
+  <remove-node path="/api/namespace/object[@cname='InternetAddressGroup']/method[@name='AddMember']"/>
+  
+  <!-- InternetAddressMailbox -->
+  <attr path="/api/namespace/object[@cname='InternetAddressMailbox']/method[@name='GetAddr']" name="name">GetAddress</attr>
+  <attr path="/api/namespace/object[@cname='InternetAddressMailbox']/method[@name='SetAddr']" name="name">SetAddress</attr>
+  
   <!-- InternetAddressList -->
   <!-- We implement this class by hand, remove it. -->
-  <remove-node path="/api/namespace/struct[@cname='InternetAddressList']"/>
+  <attr path="/api/namespace/object[@cname='InternetAddressList']" name="hidden">true</attr>
 
   <!-- Message -->
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>

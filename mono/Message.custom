@@ -5,9 +5,20 @@ public InternetAddressList GetRecipients (GMime.RecipientType type)
 {
 	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
 
-	return new InternetAddressList (list, false);
+	return new InternetAddressList (list);
 }
 
+public InternetAddressList To {
+       get { return GetRecipients (RecipientType.To); }
+}
+
+public InternetAddressList Cc {
+       get { return GetRecipients (RecipientType.Cc); }
+}
+
+public InternetAddressList Bcc {
+       get { return GetRecipients (RecipientType.Bcc); }
+}
 
 public System.Collections.IEnumerable References {
 	get {

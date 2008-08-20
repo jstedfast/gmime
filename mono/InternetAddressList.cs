@@ -3,16 +3,10 @@ using System.Collections;
 using System.Runtime.InteropServices;
 
 namespace GMime {
-	public class InternetAddressList : IDisposable, IList {
-		IntPtr list;
-		bool owner;
-		
+	public sealed class InternetAddressList : GLib.Object, IList {
 #region Native Methods
 		[DllImport("gmime")]
 		static extern IntPtr internet_address_list_new ();
-		
-		[DllImport("gmime")]
-		static extern void internet_address_list_destroy (IntPtr list);
 		
 		[DllImport("gmime")]
 		static extern int internet_address_list_length (IntPtr list);
@@ -52,28 +46,16 @@ namespace GMime {
 		
 		[DllImport("gmime")]
 		static extern IntPtr internet_address_list_parse_string (IntPtr str);
-		
-		[DllImport("gmime")]
-		static extern void internet_address_ref (IntPtr raw);
 #endregion
 		
-		public InternetAddressList () : this (internet_address_list_new (), true)
+		public InternetAddressList ()
 		{
-			
+			Raw = internet_address_list_new ();
 		}
 		
-		internal InternetAddressList (IntPtr raw, bool owner)
+		internal InternetAddressList (IntPtr raw) : base (raw)
 		{
-			this.owner = owner;
-			list = raw;
-		}
-		
-		public void Dispose ()
-		{
-			if (owner && list != IntPtr.Zero)
-				internet_address_list_destroy (list);
 			
-			list = IntPtr.Zero;
 		}
 		
 		Exception CannotAdd (object value)
@@ -120,9 +102,8 @@ namespace GMime {
 			return new InvalidOperationException (message);
 		}
 		
-#region IList
 		public int Count { 
-			get { return internet_address_list_length (list); }
+			get { return internet_address_list_length (Handle); }
 		}
 		
 		public bool IsFixedSize {
@@ -141,29 +122,40 @@ namespace GMime {
 			get { return this; }
 		}
 		
-		public int Add (object value)
+		public int Add (InternetAddress addr)
+		{
+			if (addr == null)
+				throw CannotAdd (addr);
+			
+			return internet_address_list_add (Handle, addr.Handle);
+		}
+		
+		int IList.Add (object value)
 		{
 			InternetAddress addr = value as InternetAddress;
 			
 			if (addr == null)
 				throw CannotAdd (value);
 			
-			return internet_address_list_add (list, addr.Handle);
+			return Add (value as InternetAddress);
 		}
 		
 		public void Clear ()
 		{
-			internet_address_list_clear (list);
+			internet_address_list_clear (Handle);
 		}
 		
-		public bool Contains (object value)
+		public bool Contains (InternetAddress addr)
 		{
-			InternetAddress addr = value as InternetAddress;
-			
 			if (addr == null)
 				return false;
 			
-			return internet_address_list_contains (list, addr.Handle);
+			return internet_address_list_contains (Handle, addr.Handle);
+		}
+		
+		bool IList.Contains (object value)
+		{
+			return Contains (value as InternetAddress);
 		}
 		
 		public void CopyTo (Array array, int index)
@@ -185,37 +177,56 @@ namespace GMime {
 			return new InternetAddressListIterator (this);
 		}
 		
-		public int IndexOf (object value)
+		public int IndexOf (InternetAddress addr)
 		{
-			InternetAddress addr = value as InternetAddress;
-			
 			if (addr == null)
 				return -1;
 			
-			return internet_address_list_index_of (list, addr.Handle);
+			return internet_address_list_index_of (Handle, addr.Handle);
 		}
 		
-		public void Insert (int index, object value)
+		int IList.IndexOf (object value)
+		{
+			return IndexOf (value as InternetAddress);
+		}
+		
+		public void Insert (int index, InternetAddress addr)
+		{
+			if (addr == null)
+				throw CannotInsert (addr);
+			
+			if (index < 0)
+				throw new ArgumentOutOfRangeException ("index");
+			
+			internet_address_list_insert (Handle, index, addr.Handle);
+		}
+		
+		void IList.Insert (int index, object value)
 		{
 			InternetAddress addr = value as InternetAddress;
 			
 			if (addr == null)
 				throw CannotInsert (value);
 			
-			if (index < 0)
-				throw new ArgumentOutOfRangeException ("index");
-			
-			internet_address_list_insert (list, index, addr.Handle);
+			Insert (index, addr);
 		}
 		
-		public void Remove (object value)
+		public void Remove (InternetAddress addr)
+		{
+			if (addr == null)
+				throw CannotRemove (addr);
+			
+			internet_address_list_remove (Handle, addr.Handle);
+		}
+		
+		void IList.Remove (object value)
 		{
 			InternetAddress addr = value as InternetAddress;
 			
 			if (addr == null)
 				throw CannotRemove (value);
 			
-			internet_address_list_remove (list, addr.Handle);
+			Remove (addr);
 		}
 		
 		public void RemoveAt (int index)
@@ -223,35 +234,36 @@ namespace GMime {
 			if (index < 0 || index >= Count)
 				throw new ArgumentOutOfRangeException ("index");
 			
-			internet_address_list_remove_at (list, index);
+			internet_address_list_remove_at (Handle, index);
 		}
 		
-		public object this[int index] {
+		public InternetAddress this[int index] {
 			get {
-				IntPtr raw = internet_address_list_get_address (list, index);
-				InternetAddress addr;
+				IntPtr raw = internet_address_list_get_address (Handle, index);
 				
 				if (raw == IntPtr.Zero)
 					return null;
 				
-				internet_address_ref (raw);
-				
-				addr = new InternetAddress (raw);
-				addr.Owned = true;
-				
-				return addr;
+				return GLib.Object.GetObject (raw) as InternetAddress;
 			}
 			
 			set {
-				InternetAddress addr = value as InternetAddress;
-				
-				if (addr == null)
+				if (value == null)
 					throw CannotSet (value);
 				
-				internet_address_list_set_address (list, index, addr.Handle);
+				internet_address_list_set_address (Handle, index, value.Handle);
 			}
 		}
-#endregion
+		
+		object IList.this[int index] {
+			get {
+				return this[index];
+			}
+			
+			set {
+				this[index] = value as InternetAddress;
+			}
+		}
 		
 		public static InternetAddressList Parse (string str)
 		{
@@ -260,7 +272,7 @@ namespace GMime {
 			InternetAddressList list = null;
 			
 			if (raw != IntPtr.Zero)
-				list = new InternetAddressList (raw, true);
+				list = new InternetAddressList (raw);
 			
 			GLib.Marshaller.Free (native_str);
 			
@@ -269,7 +281,7 @@ namespace GMime {
 		
 		public string ToString (bool encode)
 		{
-			IntPtr raw = internet_address_list_to_string (list, encode);
+			IntPtr raw = internet_address_list_to_string (Handle, encode);
 			
 			return GLib.Marshaller.PtrToStringGFree (raw);
 		}

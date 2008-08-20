@@ -89,11 +89,6 @@
       <member cname="GMIME_STREAM_BUFFER_BLOCK_READ" name="BlockRead" />
       <member cname="GMIME_STREAM_BUFFER_BLOCK_WRITE" name="BlockWrite" />
     </enum>
-    <enum name="InternetAddressType" cname="InternetAddressType" type="enum">
-      <member cname="INTERNET_ADDRESS_NONE" name="None" />
-      <member cname="INTERNET_ADDRESS_NAME" name="Name" />
-      <member cname="INTERNET_ADDRESS_GROUP" name="Group" />
-    </enum>
     <callback name="HeaderForeachFunc" cname="GMimeHeaderForeachFunc">
       <return-type type="void" />
       <parameters>
@@ -698,7 +693,7 @@
         <return-type type="GMimeObject*" />
       </method>
       <method name="GetRecipients" cname="g_mime_message_get_recipients">
-        <return-type type="const-InternetAddressList*" />
+        <return-type type="InternetAddressList*" />
         <parameters>
           <parameter type="GMimeRecipientType" name="type" />
         </parameters>
@@ -1807,6 +1802,182 @@
       </method>
       <constructor cname="g_mime_stream_null_new" />
     </object>
+    <object name="InternetAddressList" cname="InternetAddressList" parent="GObject">
+      <field name="Array" cname="array" type="GPtrArray*" />
+      <signal name="Changed" cname="changed" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddressList*" name="list" />
+        </parameters>
+      </signal>
+      <method name="Add" cname="internet_address_list_add">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="Clear" cname="internet_address_list_clear">
+        <return-type type="void" />
+      </method>
+      <method name="Concat" cname="internet_address_list_concat">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddressList*" name="concat" />
+        </parameters>
+      </method>
+      <method name="Contains" cname="internet_address_list_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="GetAddress" cname="internet_address_list_get_address">
+        <return-type type="InternetAddress*" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="internet_address_list_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="IndexOf" cname="internet_address_list_index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="Insert" cname="internet_address_list_insert">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="Length" cname="internet_address_list_length">
+        <return-type type="int" />
+      </method>
+      <constructor cname="internet_address_list_new" />
+      <method name="ParseString" cname="internet_address_list_parse_string" shared="true">
+        <return-type type="InternetAddressList*" />
+        <parameters>
+          <parameter type="const-char*" name="str" />
+        </parameters>
+      </method>
+      <method name="Remove" cname="internet_address_list_remove">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="RemoveAt" cname="internet_address_list_remove_at">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="SetAddress" cname="internet_address_list_set_address">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </method>
+      <method name="ToString" cname="internet_address_list_to_string">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="gboolean" name="encode" />
+        </parameters>
+      </method>
+      <method name="Writer" cname="internet_address_list_writer">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GString*" name="str" />
+        </parameters>
+      </method>
+    </object>
+    <object name="InternetAddressGroup" cname="InternetAddressGroup" parent="InternetAddress">
+      <field name="Members" cname="members" type="InternetAddressList*" />
+      <method name="AddMember" cname="internet_address_group_add_member">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddress*" name="member" />
+        </parameters>
+      </method>
+      <method name="GetMembers" cname="internet_address_group_get_members">
+        <return-type type="InternetAddressList*" />
+      </method>
+      <method name="GetType" cname="internet_address_group_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="internet_address_group_new">
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </constructor>
+      <method name="SetMembers" cname="internet_address_group_set_members">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddressList*" name="members" />
+        </parameters>
+      </method>
+    </object>
+    <object name="InternetAddressMailbox" cname="InternetAddressMailbox" parent="InternetAddress">
+      <field name="Addr" cname="addr" type="char*" />
+      <method name="GetAddr" cname="internet_address_mailbox_get_addr">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetType" cname="internet_address_mailbox_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="internet_address_mailbox_new">
+        <parameters>
+          <parameter type="const-char*" name="name" />
+          <parameter type="const-char*" name="addr" />
+        </parameters>
+      </constructor>
+      <method name="SetAddr" cname="internet_address_mailbox_set_addr">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="addr" />
+        </parameters>
+      </method>
+    </object>
+    <object name="InternetAddress" cname="InternetAddress" parent="GObject">
+      <field name="Name" cname="name" type="char*" />
+      <signal name="Changed" cname="changed" when="LAST">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+        </parameters>
+      </signal>
+      <virtual_method name="ToString" cname="to_string">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddress*" name="ia" />
+          <parameter type="guint32" name="flags" />
+          <parameter type="size_t*" name="linelen" />
+          <parameter type="GString*" name="out" />
+        </parameters>
+      </virtual_method>
+      <method name="GetName" cname="internet_address_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetType" cname="internet_address_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="SetName" cname="internet_address_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="ToString" cname="internet_address_to_string">
+        <return-type type="char*" />
+        <parameters>
+          <parameter type="gboolean" name="encode" />
+        </parameters>
+      </method>
+    </object>
     <struct name="Charset" cname="GMimeCharset" opaque="true">
       <method name="Best" cname="g_mime_charset_best" shared="true">
         <return-type type="const-char*" />
@@ -2444,158 +2615,6 @@
     <struct name="StreamIOVector" cname="GMimeStreamIOVector">
       <field name="Data" cname="data" type="void*" />
       <field name="Len" cname="len" type="size_t" />
-    </struct>
-    <struct name="InternetAddress" cname="InternetAddress" opaque="true">
-      <field name="Type" cname="type" type="InternetAddressType" access="public" writeable="true" />
-      <field name="Refcount" cname="refcount" type="unsigned int" access="public" writeable="true" />
-      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
-      <field name="Addr" cname="addr" type="char*" access="public" writeable="true" />
-      <method name="AddMember" cname="internet_address_add_member">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="InternetAddress*" name="member" />
-        </parameters>
-      </method>
-      <method name="GetAddr" cname="internet_address_get_addr">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetMembers" cname="internet_address_get_members">
-        <return-type type="const-InternetAddressList*" />
-      </method>
-      <method name="GetName" cname="internet_address_get_name">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetType" cname="internet_address_get_type">
-        <return-type type="InternetAddressType" />
-      </method>
-      <constructor cname="internet_address_new" />
-      <constructor cname="internet_address_new_group">
-        <parameters>
-          <parameter type="const-char*" name="name" />
-        </parameters>
-      </constructor>
-      <constructor cname="internet_address_new_name">
-        <parameters>
-          <parameter type="const-char*" name="name" />
-          <parameter type="const-char*" name="addr" />
-        </parameters>
-      </constructor>
-      <method name="Ref" cname="internet_address_ref">
-        <return-type type="void" />
-      </method>
-      <method name="SetAddr" cname="internet_address_set_addr">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="addr" />
-        </parameters>
-      </method>
-      <method name="SetGroup" cname="internet_address_set_group">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="InternetAddressList*" name="group" />
-        </parameters>
-      </method>
-      <method name="SetName" cname="internet_address_set_name">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="name" />
-        </parameters>
-      </method>
-      <method name="ToString" cname="internet_address_to_string">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="gboolean" name="encode" />
-        </parameters>
-      </method>
-      <method name="Unref" cname="internet_address_unref">
-        <return-type type="void" />
-      </method>
-    </struct>
-    <struct name="InternetAddressList" cname="InternetAddressList" opaque="true">
-      <method name="Add" cname="internet_address_list_add">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="Clear" cname="internet_address_list_clear">
-        <return-type type="void" />
-      </method>
-      <method name="Concat" cname="internet_address_list_concat">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="InternetAddressList*" name="concat" />
-        </parameters>
-      </method>
-      <method name="Contains" cname="internet_address_list_contains">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="const-InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="Destroy" cname="internet_address_list_destroy">
-        <return-type type="void" />
-      </method>
-      <method name="GetAddress" cname="internet_address_list_get_address">
-        <return-type type="const-InternetAddress*" />
-        <parameters>
-          <parameter type="int" name="index" />
-        </parameters>
-      </method>
-      <method name="IndexOf" cname="internet_address_list_index_of">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="const-InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="Insert" cname="internet_address_list_insert">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="int" name="index" />
-          <parameter type="InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="Length" cname="internet_address_list_length">
-        <return-type type="int" />
-      </method>
-      <constructor cname="internet_address_list_new" />
-      <method name="ParseString" cname="internet_address_list_parse_string" shared="true">
-        <return-type type="InternetAddressList*" />
-        <parameters>
-          <parameter type="const-char*" name="str" />
-        </parameters>
-      </method>
-      <method name="Remove" cname="internet_address_list_remove">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="RemoveAt" cname="internet_address_list_remove_at">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="int" name="index" />
-        </parameters>
-      </method>
-      <method name="SetAddress" cname="internet_address_list_set_address">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="int" name="index" />
-          <parameter type="InternetAddress*" name="ia" />
-        </parameters>
-      </method>
-      <method name="ToString" cname="internet_address_list_to_string">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="gboolean" name="encode" />
-        </parameters>
-      </method>
-      <method name="Writer" cname="internet_address_list_writer">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GString*" name="str" />
-        </parameters>
-      </method>
     </struct>
     <class name="Global" cname="GMimeGlobal">
       <method name="CheckVersion" cname="g_mime_check_version" shared="true">
