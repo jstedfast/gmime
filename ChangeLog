@@ -1,5 +1,8 @@
 2008-08-19  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c: Updated to listen to changed events from
+	recipient lists and to update the headers when the lists change.
+
 	* gmime/internet-address.c: InternetAddress is now GObject with a
 	"changed" signal. Split out InternetAddressMailbox and
 	InternetAddressGroup subclasses of

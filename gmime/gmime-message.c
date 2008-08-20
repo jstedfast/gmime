@@ -66,11 +66,20 @@ static ssize_t write_received (GMimeStream *stream, const char *name, const char
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
+static void to_list_changed (InternetAddressList *list, GMimeMessage *message);
+static void cc_list_changed (InternetAddressList *list, GMimeMessage *message);
+static void bcc_list_changed (InternetAddressList *list, GMimeMessage *message);
+
 
 static GMimeObjectClass *parent_class = NULL;
 
-static const char *recipient_types[] = {
-	"To", "Cc", "Bcc"
+static struct {
+	const char *name;
+	GCallback changed_cb;
+} recipient_types[] = {
+	{ "To",  G_CALLBACK (to_list_changed)  },
+	{ "Cc",  G_CALLBACK (cc_list_changed)  },
+	{ "Bcc", G_CALLBACK (bcc_list_changed) }
 };
 
 #define N_RECIPIENT_TYPES G_N_ELEMENTS (recipient_types)
@@ -132,19 +141,87 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->write_to_stream = message_write_to_stream;
 }
 
+static gulong
+lookup_recipient_changed_id (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list;
+	GCallback changed_cb;
+	const char *name;
+	
+	changed_cb = recipient_types[type].changed_cb;
+	name = recipient_types[type].name;
+	
+	list = g_hash_table_lookup (message->recipients, name);
+	
+	return g_signal_handler_find (list, G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+				      0, 0, NULL, changed_cb, message);
+}
+
+static void
+connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list;
+	
+	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
+	
+	g_signal_connect (list, "changed", recipient_types[type].changed_cb, message);
+}
+
+static void
+disconnect_changed_event (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list;
+	gulong id;
+	
+	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
+	id = lookup_recipient_changed_id (message, type);
+	g_signal_handler_disconnect (list, id);
+}
+
+static void
+block_changed_event (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list;
+	gulong id;
+	
+	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
+	id = lookup_recipient_changed_id (message, type);
+	g_signal_handler_block (list, id);
+}
+
+static void
+unblock_changed_event (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list;
+	gulong id;
+	
+	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
+	id = lookup_recipient_changed_id (message, type);
+	g_signal_handler_unblock (list, id);
+}
+
 static void
 g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 {
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
+	InternetAddressList *list;
+	guint i;
 	
 	message->from = NULL;
 	message->reply_to = NULL;
-	message->recipients = g_hash_table_new (g_str_hash, g_str_equal);
+	message->recipients = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
 	message->subject = NULL;
 	message->date = 0;
 	message->tz_offset = 0;
 	message->message_id = NULL;
 	message->mime_part = NULL;
+	
+	/* initialize recipient lists */
+	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
+		list = internet_address_list_new ();
+		g_hash_table_insert (message->recipients, (char *) recipient_types[i].name, list);
+		connect_changed_event (message, i);
+	}
 	
 	g_mime_header_list_register_writer (headers, "Sender", write_addrspec);
 	g_mime_header_list_register_writer (headers, "From", write_addrspec);
@@ -164,27 +241,19 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	g_mime_header_list_register_writer (headers, "References", write_structured);
 }
 
-static gboolean
-recipients_destroy (gpointer key, gpointer value, gpointer user_data)
-{
-	InternetAddressList *recipients = value;
-	
-	if (recipients)
-		g_object_unref (recipients);
-	
-	return TRUE;
-}
-
 static void
 g_mime_message_finalize (GObject *object)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
+	guint i;
 	
 	g_free (message->from);
 	g_free (message->reply_to);
 	
-	/* destroy all recipients */
-	g_hash_table_foreach_remove (message->recipients, recipients_destroy, NULL);
+	/* disconnect changed handlers */
+	for (i = 0; i < N_RECIPIENT_TYPES; i++)
+		disconnect_changed_event (message, i);
+	
 	g_hash_table_destroy (message->recipients);
 	
 	g_free (message->subject);
@@ -626,6 +695,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	InternetAddressList *addrlist;
 	int offset, i;
 	time_t date;
+	gulong id;
 	
 	for (i = 0; i < G_N_ELEMENTS (message_headers); i++) {
 		if (!g_ascii_strcasecmp (message_headers[i], header))
@@ -652,13 +722,19 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		}
 		break;
 	case HEADER_TO:
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_TO, value);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
 		break;
 	case HEADER_CC:
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_CC, value);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
 		break;
 	case HEADER_BCC:
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
 		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_BCC, value);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -801,22 +877,25 @@ message_remove_header (GMimeObject *object, const char *header)
 		message->reply_to = NULL;
 		break;
 	case HEADER_TO:
-		type = recipient_types[GMIME_RECIPIENT_TYPE_TO];
+		type = recipient_types[GMIME_RECIPIENT_TYPE_TO].name;
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
 		addrlist = g_hash_table_lookup (message->recipients, type);
-		g_hash_table_remove (message->recipients, type);
-		g_object_unref (addrlist);
+		internet_address_list_clear (addrlist);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
 		break;
 	case HEADER_CC:
-		type = recipient_types[GMIME_RECIPIENT_TYPE_CC];
+		type = recipient_types[GMIME_RECIPIENT_TYPE_CC].name;
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
 		addrlist = g_hash_table_lookup (message->recipients, type);
-		g_hash_table_remove (message->recipients, type);
-		g_object_unref (addrlist);
+		internet_address_list_clear (addrlist);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		type = recipient_types[GMIME_RECIPIENT_TYPE_BCC];
+		type = recipient_types[GMIME_RECIPIENT_TYPE_BCC].name;
+		block_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
 		addrlist = g_hash_table_lookup (message->recipients, type);
-		g_hash_table_remove (message->recipients, type);
-		g_object_unref (addrlist);
+		internet_address_list_clear (addrlist);
+		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -1031,7 +1110,7 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 static void
 sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 {
-	const char *name = recipient_types[type];
+	const char *name = recipient_types[type].name;
 	InternetAddressList *recipients;
 	char *string;
 	
@@ -1042,6 +1121,24 @@ sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 		g_free (string);
 	} else
 		g_mime_header_list_set (GMIME_OBJECT (message)->headers, name, NULL);
+}
+
+static void
+to_list_changed (InternetAddressList *list, GMimeMessage *message)
+{
+	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_TO);
+}
+
+static void
+cc_list_changed (InternetAddressList *list, GMimeMessage *message)
+{
+	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_CC);
+}
+
+static void
+bcc_list_changed (InternetAddressList *list, GMimeMessage *message)
+{
+	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_BCC);
 }
 
 
@@ -1064,18 +1161,10 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 	g_return_if_fail (type < N_RECIPIENT_TYPES);
 	g_return_if_fail (address != NULL);
 	
+	recipients = g_hash_table_lookup (message->recipients, recipient_types[type].name);
 	ia = internet_address_mailbox_new (name, address);
-	
-	if ((recipients = g_hash_table_lookup (message->recipients, recipient_types[type])))
-		g_hash_table_remove (message->recipients, recipient_types[type]);
-	else
-		recipients = internet_address_list_new ();
-	
 	internet_address_list_add (recipients, ia);
 	g_object_unref (ia);
-	
-	g_hash_table_insert (message->recipients, (char *) recipient_types[type], recipients);
-	sync_recipient_header (message, type);
 }
 
 
@@ -1084,20 +1173,12 @@ message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType ty
 {
 	InternetAddressList *recipients, *addrlist;
 	
-	if ((recipients = g_hash_table_lookup (message->recipients, recipient_types[type])))
-		g_hash_table_remove (message->recipients, recipient_types[type]);
+	recipients = g_hash_table_lookup (message->recipients, recipient_types[type].name);
 	
 	if ((addrlist = internet_address_list_parse_string (str))) {
-		if (recipients != NULL) {
-			internet_address_list_concat (recipients, addrlist);
-			g_object_unref (addrlist);
-		} else {
-			recipients = addrlist;
-		}
+		internet_address_list_concat (recipients, addrlist);
+		g_object_unref (addrlist);
 	}
-	
-	if (recipients)
-		g_hash_table_insert (message->recipients, (char *) recipient_types[type], recipients);
 }
 
 
@@ -1118,8 +1199,6 @@ g_mime_message_add_recipients_from_string (GMimeMessage *message, GMimeRecipient
 	g_return_if_fail (str != NULL);
 	
 	message_add_recipients_from_string (message, type, str);
-	
-	sync_recipient_header (message, type);
 }
 
 
@@ -1141,8 +1220,8 @@ g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	g_return_val_if_fail (type < N_RECIPIENT_TYPES, NULL);
 	
-	if ((list = g_hash_table_lookup (message->recipients, recipient_types[type])))
-		g_object_ref (list);
+	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
+	g_object_ref (list);
 	
 	return list;
 }
@@ -1166,7 +1245,10 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
 	for (i = 0; i < G_N_ELEMENTS (recipient_types); i++) {
-		if (!(recipients = g_hash_table_lookup (message->recipients, recipient_types[i])))
+		if (!(recipients = g_hash_table_lookup (message->recipients, recipient_types[i].name)))
+			continue;
+		
+		if (internet_address_list_length (recipients) == 0)
 			continue;
 		
 		if (list == NULL)
