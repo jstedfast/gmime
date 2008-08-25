@@ -1,3 +1,29 @@
+2008-08-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-headers.c (test_header_sync): Check that changes to
+	the GMimeContentType, GMimeDisposition, and InternetAddressList
+	objects cause a re-sync of the GMimeObject/GMimeMessage headers.
+
+	* gmime/internet-address.c (internet_address_list_add): Connect to
+	the added address's changed signal. Exposed by my new test-suite
+	code.
+	(internet_address_list_insert): Assert index >= 0, not < 0.
+	(internet_address_list_remove_at): Same.
+	(internet_address_list_get_address): Same.
+	(internet_address_list_set_address): Same.
+	(internet_address_list_to_string): Return NULL if the list is
+	empty. This makes it easier to keep the new behavior of keeping
+	around InternetAddressList objects in GMimeMessage the same as the
+	old behavior when all of the addresses have been removed.
+
+	* gmime/gmime-disposition.c (g_mime_content_disposition_set_params):
+	New function.
+
+	* gmime/gmime-content-type.c (g_mime_content_type_set_media_type):
+	New function.
+	(g_mime_content_type_set_media_subtype): Another new function.
+	(g_mime_content_type_set_params): New function.
+
 2008-08-19  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c: Updated to listen to changed events from

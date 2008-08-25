@@ -178,6 +178,40 @@ g_mime_content_disposition_get_disposition (const GMimeContentDisposition *dispo
 
 
 /**
+ * g_mime_content_disposition_set_params:
+ * @disposition: a #GMimeContentDisposition object
+ * @params: a list of #GMimeParam objects
+ *
+ * Sets the Content-Disposition's parameter list.
+ **/
+void
+g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMimeParam *params)
+{
+	g_return_if_fail (disposition != NULL);
+	
+	/* destroy the current list/hash */
+	if (disposition->param_hash)
+		g_hash_table_destroy (disposition->param_hash);
+	
+	g_mime_param_destroy (disposition->params);
+	disposition->params = params;
+	
+	if (params != NULL) {
+		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+		while (params != NULL) {
+			g_hash_table_insert (disposition->param_hash, params->name, params);
+			params = params->next;
+		}
+	} else {
+		disposition->param_hash = NULL;
+	}
+	
+	if (disposition->parent_object)
+		_g_mime_object_content_disposition_changed (disposition->parent_object);
+}
+
+
+/**
  * g_mime_content_disposition_get_params:
  * @disposition: a #GMimeContentDisposition object
  *

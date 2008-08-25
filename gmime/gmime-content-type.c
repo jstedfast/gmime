@@ -258,6 +258,30 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 
 
 /**
+ * g_mime_content_type_set_media_type:
+ * @mime_type: MIME Content-Type
+ * @type: media type
+ *
+ * Sets the Content-Type's media type.
+ **/
+void
+g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *type)
+{
+	char *buf;
+	
+	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (type != NULL);
+	
+	buf = g_strdup (type);
+	g_free (mime_type->type);
+	mime_type->type = buf;
+	
+	if (mime_type->parent_object)
+		_g_mime_object_content_type_changed (mime_type->parent_object);
+}
+
+
+/**
  * g_mime_content_type_get_media_type:
  * @mime_type: MIME Content-Type
  *
@@ -271,6 +295,30 @@ g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
 	g_return_val_if_fail (mime_type != NULL, NULL);
 	
 	return mime_type->type;
+}
+
+
+/**
+ * g_mime_content_type_set_media_subtype:
+ * @mime_type: MIME Content-Type
+ * @subtype: media subtype
+ *
+ * Sets the Content-Type's media subtype.
+ **/
+void
+g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *subtype)
+{
+	char *buf;
+	
+	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (subtype != NULL);
+	
+	buf = g_strdup (subtype);
+	g_free (mime_type->subtype);
+	mime_type->subtype = buf;
+	
+	if (mime_type->parent_object)
+		_g_mime_object_content_type_changed (mime_type->parent_object);
 }
 
 
@@ -290,6 +338,39 @@ g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
 	return mime_type->subtype;
 }
 
+
+/**
+ * g_mime_content_type_set_params:
+ * @mime_type: MIME Content-Type
+ * @params: a list of #GMimeParam objects
+ *
+ * Sets the Content-Type's parameter list.
+ **/
+void
+g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
+{
+	g_return_if_fail (mime_type != NULL);
+	
+	/* destroy the current list/hash */
+	if (mime_type->param_hash)
+		g_hash_table_destroy (mime_type->param_hash);
+	
+	g_mime_param_destroy (mime_type->params);
+	mime_type->params = params;
+	
+	if (params != NULL) {
+		mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+		while (params != NULL) {
+			g_hash_table_insert (mime_type->param_hash, params->name, params);
+			params = params->next;
+		}
+	} else {
+		mime_type->param_hash = NULL;
+	}
+	
+	if (mime_type->parent_object)
+		_g_mime_object_content_type_changed (mime_type->parent_object);
+}
 
 /**
  * g_mime_content_type_get_params:

@@ -158,9 +158,6 @@ internet_address_set_name (InternetAddress *ia, const char *name)
 	
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
 	
-	if (ia->name == name)
-		return;
-	
 	if (name) {
 		buf = g_mime_utils_header_decode_phrase (name);
 		g_mime_utils_unquote_string (buf);
@@ -696,6 +693,8 @@ internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), -1);
 	g_return_val_if_fail (IS_INTERNET_ADDRESS (ia), -1);
 	
+	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+	
 	index = list->array->len;
 	g_ptr_array_add (list->array, ia);
 	g_object_ref (ia);
@@ -750,7 +749,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 	
 	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
-	g_return_if_fail (index < 0);
+	g_return_if_fail (index >= 0);
 	
 	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
 	g_object_ref (ia);
@@ -817,7 +816,7 @@ internet_address_list_remove_at (InternetAddressList *list, int index)
 	InternetAddress *ia;
 	
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), FALSE);
-	g_return_val_if_fail (index < 0, FALSE);
+	g_return_val_if_fail (index >= 0, FALSE);
 	
 	if (index >= list->array->len)
 		return FALSE;
@@ -899,7 +898,7 @@ internet_address_list_get_address (InternetAddressList *list, int index)
 	InternetAddress *ia;
 	
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), NULL);
-	g_return_val_if_fail (index < 0, NULL);
+	g_return_val_if_fail (index >= 0, NULL);
 	
 	if ((guint) index >= list->array->len)
 		return NULL;
@@ -926,7 +925,7 @@ internet_address_list_set_address (InternetAddressList *list, int index, Interne
 	
 	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
-	g_return_if_fail (index < 0);
+	g_return_if_fail (index >= 0);
 	
 	if ((guint) index > list->array->len)
 		return;
@@ -1146,7 +1145,8 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
  * Allocates a string buffer containing the rfc822 formatted addresses
  * in @list.
  *
- * Returns: a string containing the list of addresses in rfc822 format.
+ * Returns: a string containing the list of addresses in rfc822 format
+ * or %NULL if no addresses are contained in the list.
  **/
 char *
 internet_address_list_to_string (InternetAddressList *list, gboolean encode)
@@ -1155,6 +1155,11 @@ internet_address_list_to_string (InternetAddressList *list, gboolean encode)
 	size_t linelen = 0;
 	GString *string;
 	char *str;
+	
+	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), NULL);
+	
+	if (list->array->len == 0)
+		return NULL;
 	
 	string = g_string_new ("");
 	_internet_address_list_to_string (list, flags, &linelen, string);
@@ -1179,6 +1184,9 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 {
 	guint32 flags = INTERNET_ADDRESS_ENCODE | INTERNET_ADDRESS_FOLD;
 	size_t linelen = str->len;
+	
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
+	g_return_if_fail (str != NULL);
 	
 	_internet_address_list_to_string (list, flags, &linelen, str);
 }

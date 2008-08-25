@@ -1110,17 +1110,20 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 static void
 sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 {
+	GMimeObject *object = (GMimeObject *) message;
 	const char *name = recipient_types[type].name;
-	InternetAddressList *recipients;
+	InternetAddressList *list;
 	char *string;
 	
 	/* sync the specified recipient header */
-	if ((recipients = g_mime_message_get_recipients (message, type))) {
-		string = internet_address_list_to_string (recipients, TRUE);
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, name, string);
+	if ((list = g_hash_table_lookup (message->recipients, recipient_types[type].name))) {
+		string = internet_address_list_to_string (list, TRUE);
+		g_mime_header_list_set (object->headers, name, string);
 		g_free (string);
-	} else
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, name, NULL);
+	} else {
+		/* list should never be NULL... */
+		g_mime_header_list_set (object->headers, name, NULL);
+	}
 }
 
 static void

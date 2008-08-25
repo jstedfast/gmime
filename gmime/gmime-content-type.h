@@ -59,14 +59,18 @@ char *g_mime_content_type_to_string (const GMimeContentType *mime_type);
 
 gboolean g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype);
 
+void g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *type);
 const char *g_mime_content_type_get_media_type (const GMimeContentType *mime_type);
+
+void g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *subtype);
 const char *g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type);
+
+void g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params);
 const GMimeParam *g_mime_content_type_get_params (const GMimeContentType *mime_type);
 
 void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attribute, const char *value);
 const char *g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute);
 
-
 G_END_DECLS
 
-#endif /* __GMIME_PART_H__ */
+#endif /* __GMIME_CONTENT_TYPE_H__ */

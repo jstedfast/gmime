@@ -73,6 +73,7 @@ void g_mime_content_disposition_destroy (GMimeContentDisposition *disposition);
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
 const char *g_mime_content_disposition_get_disposition (const GMimeContentDisposition *disposition);
 
+void g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMimeParam *params);
 const GMimeParam *g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition,
