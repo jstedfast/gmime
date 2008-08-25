@@ -264,6 +264,9 @@
 		{
 			IntPtr raw = internet_address_list_to_string (Handle, encode);
 			
+			if (raw == IntPtr.Zero)
+				return String.Empty;
+			
 			return GLib.Marshaller.PtrToStringGFree (raw);
 		}
 		
