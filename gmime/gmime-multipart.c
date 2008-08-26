@@ -566,7 +566,6 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 		return NULL;
 	
 	part = multipart->children->pdata[index];
-	g_object_ref (part);
 	
 	return part;
 }
@@ -761,10 +760,8 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
 	g_return_val_if_fail (content_id != NULL, NULL);
 	
-	if (object->content_id && !strcmp (object->content_id, content_id)) {
-		g_object_ref (object);
+	if (object->content_id && !strcmp (object->content_id, content_id))
 		return object;
-	}
 	
 	for (i = 0; i < multipart->children->len; i++) {
 		subpart = multipart->children->pdata[i];
@@ -774,7 +771,6 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 			if ((part = g_mime_multipart_get_subpart_from_content_id (mpart, content_id)))
 				return part;
 		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
-			g_object_ref (subpart);
 			return subpart;
 		}
 	}

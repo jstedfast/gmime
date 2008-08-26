@@ -398,7 +398,6 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_object_unref (cleartext);
-		g_object_unref (mpe);
 		g_error_free (err);
 		throw (ex);
 	}
@@ -414,8 +413,6 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 			ex = exception_new ("signature validity status expected to be NONE");
 	}
 	
-	g_object_unref (mpe);
-	
 	if (ex != NULL) {
 		g_object_unref (cleartext);
 		throw (ex);
@@ -423,7 +420,6 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_object_write_to_stream (decrypted, stream);
-	g_object_unref (decrypted);
 	
 	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
 	buf[1] = GMIME_STREAM_MEM (stream)->buffer;

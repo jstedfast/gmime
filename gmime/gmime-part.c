@@ -362,7 +362,6 @@ write_content (GMimePart *part, GMimeStream *stream)
 		content_stream = g_mime_data_wrapper_get_stream (part->content);
 		g_mime_stream_reset (content_stream);
 		nwritten = g_mime_stream_write_to_stream (content_stream, stream);
-		g_object_unref (content_stream);
 		
 		if (nwritten == -1)
 			return -1;
@@ -855,9 +854,6 @@ GMimeDataWrapper *
 g_mime_part_get_content_object (const GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	
-	if (mime_part->content)
-		g_object_ref (mime_part->content);
 	
 	return mime_part->content;
 }

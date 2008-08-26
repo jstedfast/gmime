@@ -245,7 +245,6 @@ sign_prepare (GMimeObject *mime_part)
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			sign_prepare (subpart);
-			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (mime_part)) {
 		subpart = GMIME_MESSAGE_PART (mime_part)->message->mime_part;
@@ -438,7 +437,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	/* make sure the protocol matches the signature content-type */
 	content_type = g_mime_content_type_to_string (signature->content_type);
 	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
-		g_object_unref (signature);
 		g_free (content_type);
 		
 		return NULL;
@@ -460,7 +458,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_mime_stream_flush (filtered_stream);
 	g_object_unref (filtered_stream);
 	g_mime_stream_reset (stream);
-	g_object_unref (content);
 	
 	/* get the signature stream */
 	wrapper = g_mime_part_get_content_object (GMIME_PART (signature));
@@ -477,8 +474,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	}
 	
 	g_mime_stream_reset (sigstream);
-	g_object_unref (signature);
-	g_object_unref (wrapper);
 	
 	/* verify the signature */
 	hash = g_mime_cipher_context_hash_id (ctx, mps->micalg);
@@ -487,7 +482,6 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
-	g_object_unref (sigstream);
 	g_object_unref (stream);
 	
 	return valid;

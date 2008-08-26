@@ -85,11 +85,19 @@ do
 	-e "s/g_mime_object_ref/g_object_ref/g" \
 	-e "s/g_mime_stream_unref/g_object_unref/g" \
 	-e "s/g_mime_stream_ref/g_object_ref/g" \
-	-e "s/INTERNET_ADDRESS_NAME/INTERNET_ADDRESS?MAILBOX/g" \
-	-e "s/internet_address_new_name/internet_address_new_mailbox/g" \
+	-e "s/INTERNET_ADDRESS_NAME/INTERNET_ADDRESS_MAILBOX/g" \
+	-e "s/internet_address_unref/g_object_unref/g" \
+	-e "s/internet_address_ref/g_object_ref/g" \
+	-e "s/internet_address_new_name/internet_address_mailbox_new/g" \
+	-e "s/internet_address_get_addr/internet_address_mailbox_get_addr/g" \
+	-e "s/internet_address_set_addr/internet_address_mailbox_set_addr/g" \
+	-e "s/internet_address_new_group/internet_address_group_new/g" \
+	-e "s/internet_address_get_members/internet_address_group_get_members/g" \
+	-e "s/internet_address_set_group/internet_address_group_set_members/g" \
+	-e "s/internet_address_add_member/internet_address_group_add_member/g" \
 	-e "s/internet_address_parse_string/internet_address_list_parse_string/g" \
-	-e "s/internet_address_list_destroy/internet_address_list_unref/g" \
 	-e "s/internet_address_list_append/internet_address_list_add/g" \
+	-e "s/internet_address_list_destroy/g_object_unref/g" \
 	< "$src" > "$src.tmp"
     mv "$src.tmp" "$src"
 done

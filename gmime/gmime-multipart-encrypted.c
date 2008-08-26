@@ -356,7 +356,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	if (mpe->decrypted) {
 		/* we seem to have already decrypted the part */
-		g_object_ref (mpe->decrypted);
 		return mpe->decrypted;
 	}
 	
@@ -383,7 +382,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 			     "Failed to decrypt MIME part: protocol error");
 		
-		g_object_unref (version);
 		g_free (content_type);
 		
 		return NULL;
@@ -395,7 +393,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	mime_type = g_mime_object_get_content_type (encrypted);
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
 		g_object_unref (encrypted);
-		g_object_unref (version);
 		return NULL;
 	}
 	
@@ -403,7 +400,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	wrapper = g_mime_part_get_content_object (GMIME_PART (encrypted));
 	ciphertext = g_mime_data_wrapper_get_stream (wrapper);
 	g_mime_stream_reset (ciphertext);
-	g_object_unref (wrapper);
 	
 	stream = g_mime_stream_mem_new ();
 	filtered_stream = g_mime_stream_filter_new (stream);
@@ -414,7 +410,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	/* get the cleartext */
 	if (!(sv = g_mime_cipher_context_decrypt (ctx, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
-		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		
 		return NULL;
@@ -422,7 +417,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	
 	g_mime_stream_flush (filtered_stream);
 	g_object_unref (filtered_stream);
-	g_object_unref (ciphertext);
 	
 	g_mime_stream_reset (stream);
 	parser = g_mime_parser_new ();
@@ -442,7 +436,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	}
 	
 	/* cache the decrypted part */
-	g_object_ref (decrypted);
 	mpe->decrypted = decrypted;
 	mpe->validity = sv;
 	

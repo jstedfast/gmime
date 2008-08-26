@@ -380,7 +380,7 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type
  *
  * Returns: the content-type object for the specified Mime object.
  **/
-const GMimeContentType *
+GMimeContentType *
 g_mime_object_get_content_type (GMimeObject *object)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
@@ -436,7 +436,7 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
  *
  * Returns: the #GMimeContentDisposition set on the Mime object.
  **/
-const GMimeContentDisposition *
+GMimeContentDisposition *
 g_mime_object_get_content_disposition (GMimeObject *object)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);

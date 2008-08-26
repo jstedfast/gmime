@@ -58,8 +58,6 @@ static gboolean message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
-static void message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str);
-
 static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
@@ -664,6 +662,18 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	return n;
 }
 
+static void
+message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str)
+{
+	InternetAddressList *recipients, *addrlist;
+	
+	recipients = g_mime_message_get_recipients (message, type);
+	
+	if ((addrlist = internet_address_list_parse_string (str))) {
+		internet_address_list_concat (recipients, addrlist);
+		g_object_unref (addrlist);
+	}
+}
 
 enum {
 	HEADER_FROM,
@@ -1116,7 +1126,7 @@ sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 	char *string;
 	
 	/* sync the specified recipient header */
-	if ((list = g_hash_table_lookup (message->recipients, recipient_types[type].name))) {
+	if ((list = g_mime_message_get_recipients (message, type))) {
 		string = internet_address_list_to_string (list, TRUE);
 		g_mime_header_list_set (object->headers, name, string);
 		g_free (string);
@@ -1171,20 +1181,6 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 }
 
 
-static void
-message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str)
-{
-	InternetAddressList *recipients, *addrlist;
-	
-	recipients = g_hash_table_lookup (message->recipients, recipient_types[type].name);
-	
-	if ((addrlist = internet_address_list_parse_string (str))) {
-		internet_address_list_concat (recipients, addrlist);
-		g_object_unref (addrlist);
-	}
-}
-
-
 /**
  * g_mime_message_add_recipients_from_string:
  * @message: MIME Message
@@ -1224,7 +1220,6 @@ g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
 	g_return_val_if_fail (type < N_RECIPIENT_TYPES, NULL);
 	
 	list = g_hash_table_lookup (message->recipients, recipient_types[type].name);
-	g_object_ref (list);
 	
 	return list;
 }
@@ -1451,8 +1446,6 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 	
 	if (message->mime_part == NULL)
 		return NULL;
-	
-	g_object_ref (message->mime_part);
 	
 	return message->mime_part;
 }

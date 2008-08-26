@@ -503,8 +503,6 @@ internet_address_group_get_members (InternetAddressGroup *group)
 {
 	g_return_val_if_fail (INTERNET_ADDRESS_IS_GROUP (group), NULL);
 	
-	g_object_ref (group->members);
-	
 	return group->members;
 }
 
@@ -895,18 +893,13 @@ internet_address_list_index_of (InternetAddressList *list, InternetAddress *ia)
 InternetAddress *
 internet_address_list_get_address (InternetAddressList *list, int index)
 {
-	InternetAddress *ia;
-	
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
 	
 	if ((guint) index >= list->array->len)
 		return NULL;
 	
-	ia = list->array->pdata[index];
-	g_object_ref (ia);
-	
-	return ia;
+	return list->array->pdata[index];
 }
 
 

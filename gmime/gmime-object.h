@@ -96,12 +96,12 @@ void g_mime_object_register_type (const char *type, const char *subtype, GType o
 GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
 
 void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type);
-const GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
+GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
 void g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value);
 const char *g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name);
 
 void g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition);
-const GMimeContentDisposition *g_mime_object_get_content_disposition (GMimeObject *object);
+GMimeContentDisposition *g_mime_object_get_content_disposition (GMimeObject *object);
 
 void g_mime_object_set_disposition (GMimeObject *object, const char *disposition);
 const char *g_mime_object_get_disposition (GMimeObject *object);

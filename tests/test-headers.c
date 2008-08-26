@@ -537,7 +537,6 @@ test_header_sync (void)
 	} finally;
 	
 	g_object_unref (message);
-	g_object_unref (list);
 }
 
 int main (int argc, char **argv)

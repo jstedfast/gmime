@@ -111,7 +111,6 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			write_part_bodystructure (subpart, fp);
-			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
 		GMimeMessage *message;
@@ -304,7 +303,6 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 			subpart = g_mime_multipart_get_part (multipart, i);
 			sprintf (id, "%d", i + 1);
 			write_part (subpart, uid, buf);
-			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
 		buf = g_strdup_printf ("%s/%s.TEXT", uid, spec);
@@ -755,16 +753,15 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 static void
 reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char *spec)
 {
+	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
 	char *filename;
 	int fd;
 	
-	if (msgpart->message)
-		g_object_unref (msgpart->message);
-	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
 	if ((fd = open (filename, O_RDONLY))) {
+		g_mime_message_part_set_message (msgpart, NULL);
 		g_free (filename);
 		return;
 	}
@@ -776,8 +773,11 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	g_mime_parser_set_scan_from (parser, FALSE);
 	g_object_unref (stream);
 	
-	msgpart->message = g_mime_parser_construct_message (parser);
+	message = g_mime_parser_construct_message (parser);
 	g_object_unref (parser);
+	
+	g_mime_message_part_set_message (msgpart, message);
+	g_object_unref (message);
 }
 
 static void

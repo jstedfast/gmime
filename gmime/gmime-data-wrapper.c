@@ -192,11 +192,6 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 {
 	g_return_val_if_fail (GMIME_IS_DATA_WRAPPER (wrapper), NULL);
 	
-	if (wrapper->stream == NULL)
-		return NULL;
-	
-	g_object_ref (wrapper->stream);
-	
 	return wrapper->stream;
 }
 

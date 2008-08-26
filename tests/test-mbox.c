@@ -78,7 +78,6 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			print_mime_struct (stream, subpart, depth + 1);
-			g_object_unref (subpart);
 		}
 	} else if (GMIME_IS_MESSAGE_PART (part)) {
 		mpart = (GMimeMessagePart *) part;
