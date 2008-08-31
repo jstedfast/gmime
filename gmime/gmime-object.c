@@ -35,7 +35,7 @@
 /**
  * SECTION: gmime-object
  * @title: GMimeObject
- * @short_description: Abstract Mime objects
+ * @short_description: Abstract MIME objects
  * @see_also:
  *
  * #GMimeObject is an abstract class from which all Message and Mime
@@ -54,9 +54,6 @@ struct _subtype_bucket {
 	GType object_type;
 };
 
-extern void _g_mime_object_content_type_changed (GMimeObject *object);
-extern void _g_mime_object_content_disposition_changed (GMimeObject *object);
-
 static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
@@ -72,6 +69,9 @@ static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
+
+static void content_type_changed (GMimeContentType *content_type, GMimeObject *object);
+static void content_disposition_changed (GMimeContentDisposition *disposition, GMimeObject *object);
 
 static void type_registry_init (void);
 
@@ -144,11 +144,19 @@ g_mime_object_finalize (GObject *object)
 {
 	GMimeObject *mime = (GMimeObject *) object;
 	
-	if (mime->content_type)
-		g_mime_content_type_destroy (mime->content_type);
+	if (mime->content_type) {
+		g_signal_handlers_disconnect_matched (mime->content_type,
+						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+						      0, 0, NULL, content_type_changed, object);
+		g_object_unref (mime->content_type);
+	}
 	
-	if (mime->disposition)
-		g_mime_content_disposition_destroy (mime->disposition);
+	if (mime->disposition) {
+		g_signal_handlers_disconnect_matched (mime->disposition,
+						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+						      0, 0, NULL, content_disposition_changed, object);
+		g_object_unref (mime->disposition);
+	}
 	
 	if (mime->headers)
 		g_mime_header_list_destroy (mime->headers);
@@ -177,7 +185,7 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 	g_free (val);
 	
 	g_mime_param_write_to_string (content_type->params, TRUE, out);
-	g_mime_content_type_destroy (content_type);
+	g_object_unref (content_type);
 	
 	nwritten = g_mime_stream_write (stream, out->str, out->len);
 	g_string_free (out, TRUE);
@@ -185,15 +193,12 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 	return nwritten;
 }
 
-void
-_g_mime_object_content_type_changed (GMimeObject *object)
+static void
+content_type_changed (GMimeContentType *content_type, GMimeObject *object)
 {
-	GMimeContentType *content_type;
 	GMimeParam *params;
 	GString *string;
 	char *type, *p;
-	
-	content_type = object->content_type;
 	
 	string = g_string_new ("Content-Type: ");
 	
@@ -226,7 +231,7 @@ write_disposition (GMimeStream *stream, const char *name, const char *value)
 	g_string_append (out, disposition->disposition);
 	
 	g_mime_param_write_to_string (disposition->params, TRUE, out);
-	g_mime_content_disposition_destroy (disposition);
+	g_object_unref (disposition);
 	
 	nwritten = g_mime_stream_write (stream, out->str, out->len);
 	g_string_free (out, TRUE);
@@ -234,8 +239,8 @@ write_disposition (GMimeStream *stream, const char *name, const char *value)
 	return nwritten;
 }
 
-void
-_g_mime_object_content_disposition_changed (GMimeObject *object)
+static void
+content_disposition_changed (GMimeContentDisposition *disposition, GMimeObject *object)
 {
 	char *str;
 	
@@ -287,6 +292,82 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 	g_hash_table_insert (bucket->subtype_hash, sub->subtype, sub);
 }
 
+static void
+set_content_type_internal (GMimeObject *object, GMimeContentType *content_type, gboolean resync)
+{
+	if (content_type == object->content_type)
+		return;
+	
+	if (object->content_type) {
+		g_signal_handlers_disconnect_matched (object->content_type,
+						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+						      0, 0, NULL, content_type_changed, object);
+		g_object_unref (object->content_type);
+	}
+	
+	g_signal_connect (content_type, "changed", G_CALLBACK (content_type_changed), object);
+	object->content_type = content_type;
+	g_object_ref (content_type);
+	
+	if (resync)
+		content_type_changed (content_type, object);
+}
+
+/**
+ * g_mime_object_new:
+ * @content_type: a #GMimeContentType object
+ *
+ * Performs a lookup of registered #GMimeObject subclasses, registered
+ * using g_mime_object_register_type(), to find an appropriate class
+ * capable of handling MIME parts of the specified Content-Type. If no
+ * class has been registered to handle that type, it looks for a
+ * registered class that can handle @content_type's media type. If
+ * that also fails, then it will use the generic part class,
+ * #GMimePart.
+ *
+ * Returns: an appropriate #GMimeObject registered to handle MIME
+ * parts appropriate for @content_type.
+ **/
+GMimeObject *
+g_mime_object_new (GMimeContentType *content_type)
+{
+	struct _type_bucket *bucket;
+	struct _subtype_bucket *sub;
+	GMimeObject *object;
+	GType obj_type;
+	
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (content_type), NULL);
+	
+	type_registry_init ();
+	
+	if ((bucket = g_hash_table_lookup (type_hash, content_type->type))) {
+		if (!(sub = g_hash_table_lookup (bucket->subtype_hash, content_type->subtype)))
+			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
+		
+		obj_type = sub ? sub->object_type : 0;
+	} else {
+		bucket = g_hash_table_lookup (type_hash, "*");
+		obj_type = bucket ? bucket->object_type : 0;
+	}
+	
+	if (!obj_type) {
+		/* use the default mime object */
+		if ((bucket = g_hash_table_lookup (type_hash, "*"))) {
+			sub = g_hash_table_lookup (bucket->subtype_hash, "*");
+			obj_type = sub ? sub->object_type : 0;
+		}
+		
+		if (!obj_type)
+			return NULL;
+	}
+	
+	object = g_object_new (obj_type, NULL);
+	
+	g_mime_object_set_content_type (object, content_type);
+	
+	return object;
+}
+
 
 /**
  * g_mime_object_new_type:
@@ -295,7 +376,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
  *
  * Performs a lookup of registered #GMimeObject subclasses, registered
  * using g_mime_object_register_type(), to find an appropriate class
- * capable of handling Mime parts of type @type/@subtype. If no class
+ * capable of handling MIME parts of type @type/@subtype. If no class
  * has been registered to handle that type, it looks for a registered
  * class that can handle @type. If that also fails, then it will use
  * the generic part class, #GMimePart.
@@ -341,31 +422,26 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	return object;
 }
 
+
 static void
 set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	if (object->content_type)
-		g_mime_content_type_destroy (object->content_type);
-	
-	if ((object->content_type = content_type))
-		content_type->parent_object = object;
-	
-	_g_mime_object_content_type_changed (object);
+	set_content_type_internal (object, content_type, TRUE);
 }
 
 
 /**
  * g_mime_object_set_content_type:
  * @object: a #GMimeObject
- * @mime_type: Mime type
+ * @mime_type: a #GMimeContentType object
  *
- * Sets the content-type for the specified Mime object.
+ * Sets the content-type for the specified MIME object.
  **/
 void
 g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type)
 {
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (mime_type != NULL);
 	
 	GMIME_OBJECT_GET_CLASS (object)->set_content_type (object, mime_type);
 }
@@ -375,10 +451,10 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type
  * g_mime_object_get_content_type:
  * @object: a #GMimeObject
  *
- * Gets the #GMimeContentType object for the given Mime object or
+ * Gets the #GMimeContentType object for the given MIME object or
  * %NULL on fail.
  *
- * Returns: the content-type object for the specified Mime object.
+ * Returns: the content-type object for the specified MIME object.
  **/
 GMimeContentType *
 g_mime_object_get_content_type (GMimeObject *object)
@@ -412,7 +488,7 @@ g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name,
  * @object: a #GMimeObject
  * @name: param name
  *
- * Gets the value of the content-type param @name set on the Mime part
+ * Gets the value of the content-type param @name set on the MIME part
  * @object.
  *
  * Returns: the value of the requested content-type param or %NULL on
@@ -432,9 +508,9 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
  * g_mime_object_get_content_disposition:
  * @object: a #GMimeObject
  *
- * Gets the #GMimeContentDisposition for the specified Mime object.
+ * Gets the #GMimeContentDisposition for the specified MIME object.
  *
- * Returns: the #GMimeContentDisposition set on the Mime object.
+ * Returns: the #GMimeContentDisposition set on the MIME object.
  **/
 GMimeContentDisposition *
 g_mime_object_get_content_disposition (GMimeObject *object)
@@ -444,6 +520,27 @@ g_mime_object_get_content_disposition (GMimeObject *object)
 	return object->disposition;
 }
 
+
+static void
+set_content_disposition_internal (GMimeObject *object, GMimeContentDisposition *disposition, gboolean resync)
+{
+	if (disposition == object->disposition)
+		return;
+	
+	if (object->disposition) {
+		g_signal_handlers_disconnect_matched (object->disposition,
+						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+						      0, 0, NULL, content_disposition_changed, object);
+		g_object_unref (object->disposition);
+	}
+	
+	g_signal_connect (disposition, "changed", G_CALLBACK (content_disposition_changed), object);
+	object->disposition = disposition;
+	g_object_ref (disposition);
+	
+	if (resync)
+		content_disposition_changed (disposition, object);
+}
 
 /**
  * g_mime_object_set_content_disposition:
@@ -455,15 +552,10 @@ g_mime_object_get_content_disposition (GMimeObject *object)
 void
 g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition)
 {
+	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	
-	if (object->disposition)
-		g_mime_content_disposition_destroy (object->disposition);
-	
-	if ((object->disposition = disposition))
-		disposition->parent_object = object;
-	
-	_g_mime_object_content_disposition_changed (object);
+	set_content_disposition_internal (object, disposition, TRUE);
 }
 
 
@@ -474,21 +566,26 @@ g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposit
  *
  * Sets the disposition to @disposition which may be one of
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE or, by
- * your choice, any other string which would indicate how the Mime
+ * your choice, any other string which would indicate how the MIME
  * part should be displayed by the MUA.
  **/
 void
 g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
 {
+	GMimeContentDisposition *disp;
+	
 	g_return_if_fail (GMIME_IS_OBJECT (object));
+	g_return_if_fail (disposition != NULL);
 	
 	if (object->disposition) {
 		g_mime_content_disposition_set_disposition (object->disposition, disposition);
-	} else if (disposition) {
-		if ((object->disposition = g_mime_content_disposition_new_from_string (disposition)))
-			object->disposition->parent_object = object;
-		_g_mime_object_content_disposition_changed (object);
+		return;
 	}
+	
+	disp = g_mime_content_disposition_new ();
+	g_mime_content_disposition_set_disposition (disp, disposition);
+	g_mime_object_set_content_disposition (object, disp);
+	g_object_ref (disp);
 }
 
 
@@ -496,7 +593,7 @@ g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
  * g_mime_object_get_disposition:
  * @object: a #GMimeObject
  *
- * Gets the Mime object's disposition if set or %NULL otherwise.
+ * Gets the MIME object's disposition if set or %NULL otherwise.
  *
  * Returns: the disposition string which is probably one of
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
@@ -524,12 +621,14 @@ g_mime_object_get_disposition (GMimeObject *object)
 void
 g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *attribute, const char *value)
 {
+	GMimeContentDisposition *disposition;
+	
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	g_return_if_fail (attribute != NULL);
 	
 	if (!object->disposition) {
-		object->disposition = g_mime_content_disposition_new ();
-		object->disposition->parent_object = object;
+		disposition = g_mime_content_disposition_new ();
+		set_content_disposition_internal (object, disposition, FALSE);
 	}
 	
 	g_mime_content_disposition_set_parameter (object->disposition, attribute, value);
@@ -565,7 +664,7 @@ g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char
  * @object: a #GMimeObject
  * @content_id: content-id (addr-spec portion)
  *
- * Sets the Content-Id of the Mime object.
+ * Sets the Content-Id of the MIME object.
  **/
 void
 g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
@@ -587,7 +686,7 @@ g_mime_object_set_content_id (GMimeObject *object, const char *content_id)
  * g_mime_object_get_content_id:
  * @object: a #GMimeObject
  *
- * Gets the Content-Id of the Mime object or NULL if one is not set.
+ * Gets the Content-Id of the MIME object or NULL if one is not set.
  *
  * Returns: a const pointer to the Content-Id header.
  **/
@@ -628,13 +727,13 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
 		disposition = g_mime_content_disposition_new_from_string (value);
-		if (object->disposition)
-			g_mime_content_disposition_destroy (object->disposition);
-		object->disposition = disposition;
+		set_content_disposition_internal (object, disposition, FALSE);
+		g_object_unref (disposition);
 		break;
 	case HEADER_CONTENT_TYPE:
 		content_type = g_mime_content_type_new_from_string (value);
-		g_mime_object_set_content_type (object, content_type);
+		set_content_type_internal (object, content_type, FALSE);
+		g_object_unref (content_type);
 		break;
 	case HEADER_CONTENT_ID:
 		g_free (object->content_id);
@@ -663,7 +762,7 @@ prepend_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Prepends a header to the Mime object.
+ * Prepends a header to the MIME object.
  **/
 void
 g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value)
@@ -689,7 +788,7 @@ append_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Appends a header to the Mime object.
+ * Appends a header to the MIME object.
  **/
 void
 g_mime_object_append_header (GMimeObject *object, const char *header, const char *value)
@@ -716,7 +815,7 @@ set_header (GMimeObject *object, const char *header, const char *value)
  * @header: header name
  * @value: header value
  *
- * Sets an arbitrary header on the Mime object.
+ * Sets an arbitrary header on the MIME object.
  **/
 void
 g_mime_object_set_header (GMimeObject *object, const char *header, const char *value)
@@ -770,7 +869,10 @@ remove_header (GMimeObject *object, const char *header)
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
 		if (object->disposition) {
-			g_mime_content_disposition_destroy (object->disposition);
+			g_signal_handlers_disconnect_matched (object->disposition,
+							      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
+							      0, 0, NULL, content_disposition_changed, object);
+			g_object_unref (object->disposition);
 			object->disposition = NULL;
 		}
 		break;
@@ -820,10 +922,10 @@ get_headers (GMimeObject *object)
  * g_mime_object_get_headers:
  * @object: a #GMimeObject
  *
- * Allocates a string buffer containing all of the Mime object's raw
+ * Allocates a string buffer containing all of the MIME object's raw
  * headers.
  *
- * Returns: an allocated string containing all of the raw Mime headers.
+ * Returns: an allocated string containing all of the raw MIME headers.
  **/
 char *
 g_mime_object_get_headers (GMimeObject *object)
@@ -846,7 +948,7 @@ write_to_stream (GMimeObject *object, GMimeStream *stream)
  * @object: a #GMimeObject
  * @stream: stream
  *
- * Write the contents of the Mime object to @stream.
+ * Write the contents of the MIME object to @stream.
  *
  * Returns: the number of bytes written or %-1 on fail.
  **/

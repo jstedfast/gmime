@@ -53,8 +53,88 @@
  **/
 
 
-struct _GMimeObject;
-void _g_mime_object_content_type_changed (struct _GMimeObject *object);
+enum {
+	CHANGED,
+	LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
+
+static void g_mime_content_type_class_init (GMimeContentTypeClass *klass);
+static void g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass);
+static void g_mime_content_type_finalize (GObject *object);
+
+
+static GObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_content_type_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeContentTypeClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_content_type_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeContentType),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_content_type_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeContentType", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_content_type_class_init (GMimeContentTypeClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_content_type_finalize;
+	
+	/* signals */
+	signals[CHANGED] =
+		g_signal_new ("changed",
+			      GMIME_TYPE_CONTENT_TYPE,
+			      G_SIGNAL_RUN_LAST,
+			      0,
+			      NULL,
+			      NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+}
+
+static void
+g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass)
+{
+	content_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	content_type->params = NULL;
+	content_type->subtype = NULL;
+	content_type->type = NULL;
+}
+
+static void
+g_mime_content_type_finalize (GObject *object)
+{
+	GMimeContentType *content_type = (GMimeContentType *) object;
+	
+	g_hash_table_destroy (content_type->param_hash);
+	g_mime_param_destroy (content_type->params);
+	g_free (content_type->subtype);
+	g_free (content_type->type);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
 
 
 /**
@@ -64,14 +144,14 @@ void _g_mime_object_content_type_changed (struct _GMimeObject *object);
  *
  * Creates a Content-Type object with type @type and subtype @subtype.
  *
- * Returns: a new MIME Content-Type object.
+ * Returns: a new #GMimeContentType object.
  **/
 GMimeContentType *
 g_mime_content_type_new (const char *type, const char *subtype)
 {
 	GMimeContentType *mime_type;
 	
-	mime_type = g_new0 (GMimeContentType, 1);
+	mime_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
 	
 	if (type && *type && subtype && *subtype) {
 		mime_type->type = g_strdup (type);
@@ -108,7 +188,7 @@ g_mime_content_type_new (const char *type, const char *subtype)
  *
  * Constructs a new Content-Type object based on the input string.
  *
- * Returns: a new MIME Content-Type based on the input string.
+ * Returns: a new #GMimeContentType object based on the input string.
  **/
 GMimeContentType *
 g_mime_content_type_new_from_string (const char *str)
@@ -157,16 +237,12 @@ g_mime_content_type_new_from_string (const char *str)
 		inptr++;
 	
 	if (*inptr++ == ';' && *inptr) {
-		GMimeParam *p;
+		GMimeParam *param;
 		
-		mime_type->params = g_mime_param_new_from_string (inptr);
-		if ((p = mime_type->params) != NULL) {
-			mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-			
-			while (p != NULL) {
-				g_hash_table_insert (mime_type->param_hash, p->name, p);
-				p = p->next;
-			}
+		param = mime_type->params = g_mime_param_new_from_string (inptr);
+		while (param != NULL) {
+			g_hash_table_insert (mime_type->param_hash, param->name, param);
+			param = param->next;
 		}
 	}
 	
@@ -175,31 +251,8 @@ g_mime_content_type_new_from_string (const char *str)
 
 
 /**
- * g_mime_content_type_destroy: Destroy a MIME Content-Type object
- * @mime_type: MIME Content-Type object to destroy
- *
- * Destroys the given MIME Content-Type object.
- **/
-void
-g_mime_content_type_destroy (GMimeContentType *mime_type)
-{
-	g_return_if_fail (mime_type != NULL);
-	
-	g_free (mime_type->type);
-	g_free (mime_type->subtype);
-	
-	if (mime_type->param_hash)
-		g_hash_table_destroy (mime_type->param_hash);
-	
-	g_mime_param_destroy (mime_type->params);
-	
-	g_free (mime_type);
-}
-
-
-/**
  * g_mime_content_type_to_string:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  *
  * Allocates a string buffer containing the type and subtype defined
  * by the @mime_type.
@@ -208,11 +261,11 @@ g_mime_content_type_destroy (GMimeContentType *mime_type)
  * content-type in the format: type/subtype.
  **/
 char *
-g_mime_content_type_to_string (const GMimeContentType *mime_type)
+g_mime_content_type_to_string (GMimeContentType *mime_type)
 {
 	char *string;
 	
-	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
 	
 	/* type and subtype should never be NULL, but check anyway */
 	string = g_strdup_printf ("%s/%s", mime_type->type ? mime_type->type : "text",
@@ -224,7 +277,7 @@ g_mime_content_type_to_string (const GMimeContentType *mime_type)
 
 /**
  * g_mime_content_type_is_type:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  * @type: MIME type to compare against
  * @subtype: MIME subtype to compare against
  *
@@ -235,9 +288,9 @@ g_mime_content_type_to_string (const GMimeContentType *mime_type)
  * use "*" in place of @type and/or @subtype as a wilcard.
  **/
 gboolean
-g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type, const char *subtype)
+g_mime_content_type_is_type (GMimeContentType *mime_type, const char *type, const char *subtype)
 {
-	g_return_val_if_fail (mime_type != NULL, FALSE);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), FALSE);
 	g_return_val_if_fail (mime_type->type != NULL, FALSE);
 	g_return_val_if_fail (mime_type->subtype != NULL, FALSE);
 	g_return_val_if_fail (type != NULL, FALSE);
@@ -259,7 +312,7 @@ g_mime_content_type_is_type (const GMimeContentType *mime_type, const char *type
 
 /**
  * g_mime_content_type_set_media_type:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  * @type: media type
  *
  * Sets the Content-Type's media type.
@@ -269,30 +322,29 @@ g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *typ
 {
 	char *buf;
 	
-	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
 	g_return_if_fail (type != NULL);
 	
 	buf = g_strdup (type);
 	g_free (mime_type->type);
 	mime_type->type = buf;
 	
-	if (mime_type->parent_object)
-		_g_mime_object_content_type_changed (mime_type->parent_object);
+	g_signal_emit (mime_type, signals[CHANGED], 0);
 }
 
 
 /**
  * g_mime_content_type_get_media_type:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  *
  * Gets the Content-Type's media type.
  *
  * Returns: the Content-Type's media type.
  **/
 const char *
-g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
+g_mime_content_type_get_media_type (GMimeContentType *mime_type)
 {
-	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
 	
 	return mime_type->type;
 }
@@ -300,7 +352,7 @@ g_mime_content_type_get_media_type (const GMimeContentType *mime_type)
 
 /**
  * g_mime_content_type_set_media_subtype:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  * @subtype: media subtype
  *
  * Sets the Content-Type's media subtype.
@@ -310,30 +362,29 @@ g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *
 {
 	char *buf;
 	
-	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
 	g_return_if_fail (subtype != NULL);
 	
 	buf = g_strdup (subtype);
 	g_free (mime_type->subtype);
 	mime_type->subtype = buf;
 	
-	if (mime_type->parent_object)
-		_g_mime_object_content_type_changed (mime_type->parent_object);
+	g_signal_emit (mime_type, signals[CHANGED], 0);
 }
 
 
 /**
  * g_mime_content_type_get_media_subtype:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  *
  * Gets the Content-Type's media sub-type.
  *
  * Returns: the Content-Type's media sub-type.
  **/
 const char *
-g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
+g_mime_content_type_get_media_subtype (GMimeContentType *mime_type)
 {
-	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
 	
 	return mime_type->subtype;
 }
@@ -341,7 +392,7 @@ g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
 
 /**
  * g_mime_content_type_set_params:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  * @params: a list of #GMimeParam objects
  *
  * Sets the Content-Type's parameter list.
@@ -349,41 +400,34 @@ g_mime_content_type_get_media_subtype (const GMimeContentType *mime_type)
 void
 g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
 {
-	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
 	
-	/* destroy the current list/hash */
-	if (mime_type->param_hash)
-		g_hash_table_destroy (mime_type->param_hash);
-	
+	/* clear the current list/hash */
+	g_hash_table_remove_all (mime_type->param_hash);
 	g_mime_param_destroy (mime_type->params);
 	mime_type->params = params;
 	
-	if (params != NULL) {
-		mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-		while (params != NULL) {
-			g_hash_table_insert (mime_type->param_hash, params->name, params);
-			params = params->next;
-		}
-	} else {
-		mime_type->param_hash = NULL;
+	while (params != NULL) {
+		g_hash_table_insert (mime_type->param_hash, params->name, params);
+		params = params->next;
 	}
 	
-	if (mime_type->parent_object)
-		_g_mime_object_content_type_changed (mime_type->parent_object);
+	g_signal_emit (mime_type, signals[CHANGED], 0);
 }
+
 
 /**
  * g_mime_content_type_get_params:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  *
  * Gets the Content-Type's parameter list.
  *
  * Returns: the Content-Type's parameter list.
  **/
 const GMimeParam *
-g_mime_content_type_get_params (const GMimeContentType *mime_type)
+g_mime_content_type_get_params (GMimeContentType *mime_type)
 {
-	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
 	
 	return mime_type->params;
 }
@@ -402,35 +446,26 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 {
 	GMimeParam *param = NULL;
 	
-	g_return_if_fail (mime_type != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_TYPE (mime_type));
 	g_return_if_fail (attribute != NULL);
 	g_return_if_fail (value != NULL);
 	
-	if (mime_type->params) {
-		if ((param = g_hash_table_lookup (mime_type->param_hash, attribute))) {
-			g_free (param->value);
-			param->value = g_strdup (value);
-			goto changed;
-		}
-	} else if (!mime_type->param_hash) {
-		/* hash table not initialized */
-		mime_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	if ((param = g_hash_table_lookup (mime_type->param_hash, attribute))) {
+		g_free (param->value);
+		param->value = g_strdup (value);
+	} else {
+		param = g_mime_param_new (attribute, value);
+		mime_type->params = g_mime_param_append_param (mime_type->params, param);
+		g_hash_table_insert (mime_type->param_hash, param->name, param);
 	}
 	
-	param = g_mime_param_new (attribute, value);
-	mime_type->params = g_mime_param_append_param (mime_type->params, param);
-	g_hash_table_insert (mime_type->param_hash, param->name, param);
-	
- changed:
-	
-	if (mime_type->parent_object)
-		_g_mime_object_content_type_changed (mime_type->parent_object);
+	g_signal_emit (mime_type, signals[CHANGED], 0);
 }
 
 
 /**
  * g_mime_content_type_get_parameter:
- * @mime_type: MIME Content-Type
+ * @mime_type: a #GMimeContentType object
  * @attribute: parameter name (aka attribute)
  *
  * Gets the parameter value specified by @attribute if it's available.
@@ -439,15 +474,12 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
  * @attribute or %NULL on fail.
  **/
 const char *
-g_mime_content_type_get_parameter (const GMimeContentType *mime_type, const char *attribute)
+g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *attribute)
 {
 	GMimeParam *param;
 	
-	g_return_val_if_fail (mime_type != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_TYPE (mime_type), NULL);
 	g_return_val_if_fail (attribute != NULL, NULL);
-	
-	if (!mime_type->param_hash)
-		return NULL;
 	
 	if (!(param = g_hash_table_lookup (mime_type->param_hash, attribute)))
 		return NULL;

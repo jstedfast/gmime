@@ -203,28 +203,29 @@ message_partial_set_content_type (GMimeObject *object, GMimeContentType *content
 GMimeMessagePartial *
 g_mime_message_partial_new (const char *id, int number, int total)
 {
+	GMimeContentType *content_type;
 	GMimeMessagePartial *partial;
-	GMimeContentType *type;
 	char *num;
 	
 	partial = g_object_new (GMIME_TYPE_MESSAGE_PARTIAL, NULL);
 	
-	type = g_mime_content_type_new ("message", "partial");
+	content_type = g_mime_content_type_new ("message", "partial");
 	
 	partial->id = g_strdup (id);
-	g_mime_content_type_set_parameter (type, "id", id);
+	g_mime_content_type_set_parameter (content_type, "id", id);
 	
 	partial->number = number;
 	num = g_strdup_printf ("%d", number);
-	g_mime_content_type_set_parameter (type, "number", num);
+	g_mime_content_type_set_parameter (content_type, "number", num);
 	g_free (num);
 	
 	partial->total = total;
 	num = g_strdup_printf ("%d", total);
-	g_mime_content_type_set_parameter (type, "total", num);
+	g_mime_content_type_set_parameter (content_type, "total", num);
 	g_free (num);
 	
-	g_mime_object_set_content_type (GMIME_OBJECT (partial), type);
+	g_mime_object_set_content_type (GMIME_OBJECT (partial), content_type);
+	g_object_unref (content_type);
 	
 	return partial;
 }

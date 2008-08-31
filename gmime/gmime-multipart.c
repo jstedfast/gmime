@@ -312,13 +312,14 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 GMimeMultipart *
 g_mime_multipart_new (void)
 {
+	GMimeContentType *content_type;
 	GMimeMultipart *multipart;
-	GMimeContentType *type;
 	
 	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
-	type = g_mime_content_type_new ("multipart", "mixed");
-	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
+	content_type = g_mime_content_type_new ("multipart", "mixed");
+	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
+	g_object_unref (content_type);
 	
 	return multipart;
 }
@@ -337,13 +338,14 @@ g_mime_multipart_new (void)
 GMimeMultipart *
 g_mime_multipart_new_with_subtype (const char *subtype)
 {
+	GMimeContentType *content_type;
 	GMimeMultipart *multipart;
-	GMimeContentType *type;
 	
 	multipart = g_object_new (GMIME_TYPE_MULTIPART, NULL);
 	
-	type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
-	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
+	content_type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
+	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
+	g_object_unref (content_type);
 	
 	return multipart;
 }

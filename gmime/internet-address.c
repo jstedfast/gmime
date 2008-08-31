@@ -120,7 +120,7 @@ internet_address_class_init (InternetAddressClass *klass)
 		g_signal_new ("changed",
 			      INTERNET_ADDRESS_TYPE,
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (InternetAddressClass, changed),
+			      0,
 			      NULL,
 			      NULL,
 			      g_cclosure_marshal_VOID__VOID,
@@ -569,9 +569,9 @@ internet_address_list_class_init (InternetAddressListClass *klass)
 	/* signals */
 	list_signals[CHANGED] =
 		g_signal_new ("changed",
-			      internet_address_list_get_type (),
+			      INTERNET_ADDRESS_LIST_TYPE,
 			      G_SIGNAL_RUN_LAST,
-			      G_STRUCT_OFFSET (InternetAddressListClass, changed),
+			      0,
 			      NULL,
 			      NULL,
 			      g_cclosure_marshal_VOID__VOID,

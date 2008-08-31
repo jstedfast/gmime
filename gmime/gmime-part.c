@@ -411,13 +411,14 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 GMimePart *
 g_mime_part_new (void)
 {
+	GMimeContentType *content_type;
 	GMimePart *mime_part;
-	GMimeContentType *type;
 	
 	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
 	
-	type = g_mime_content_type_new ("text", "plain");
-	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), type);
+	content_type = g_mime_content_type_new ("text", "plain");
+	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);
+	g_object_unref (content_type);
 	
 	return mime_part;
 }
@@ -435,53 +436,16 @@ g_mime_part_new (void)
 GMimePart *
 g_mime_part_new_with_type (const char *type, const char *subtype)
 {
-	GMimePart *mime_part;
 	GMimeContentType *content_type;
+	GMimePart *mime_part;
 	
 	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
 	
 	content_type = g_mime_content_type_new (type, subtype);
 	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);
+	g_object_unref (content_type);
 	
 	return mime_part;
-}
-
-
-/**
- * g_mime_part_set_content_header:
- * @mime_part: mime part
- * @header: header name
- * @value: header value
- *
- * Set an arbitrary MIME content header.
- **/
-void
-g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const char *value)
-{
-	g_return_if_fail (GMIME_IS_PART (mime_part));
-	g_return_if_fail (header != NULL);
-	
-	g_mime_object_set_header (GMIME_OBJECT (mime_part), header, value);
-}
-
-
-/**
- * g_mime_part_get_content_header:
- * @mime_part: mime part
- * @header: header name
- *
- * Gets the value of the requested header if it exists, or %NULL
- * otherwise.
- *
- * Returns: the value of the content header @header.
- **/
-const char *
-g_mime_part_get_content_header (GMimePart *mime_part, const char *header)
-{
-	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
-	g_return_val_if_fail (header != NULL, NULL);
-	
-	return g_mime_object_get_header (GMIME_OBJECT (mime_part), header);
 }
 
 
@@ -568,8 +532,8 @@ void
 g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 {
 	unsigned char digest[16], b64digest[32];
-	const GMimeContentType *content_type;
 	GMimeStreamFilter *filtered_stream;
+	GMimeContentType *content_type;
 	GMimeFilter *md5_filter;
 	GMimeStream *stream;
 	guint32 save = 0;
@@ -632,8 +596,8 @@ gboolean
 g_mime_part_verify_content_md5 (GMimePart *mime_part)
 {
 	unsigned char digest[16], b64digest[32];
-	const GMimeContentType *content_type;
 	GMimeStreamFilter *filtered_stream;
+	GMimeContentType *content_type;
 	GMimeFilter *md5_filter;
 	GMimeStream *stream;
 	guint32 save = 0;
@@ -783,9 +747,6 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 	GMimeObject *object = (GMimeObject *) mime_part;
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
-	
-	if (!object->disposition)
-		g_mime_object_set_disposition (object, GMIME_DISPOSITION_ATTACHMENT);
 	
 	g_mime_object_set_content_disposition_parameter (object, "filename", filename);
 	g_mime_object_set_content_type_parameter (object, "name", filename);

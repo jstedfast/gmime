@@ -1376,9 +1376,8 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	if (object->content_type)
-		g_mime_content_type_destroy (object->content_type);
-	object->content_type = content_type;
+	g_mime_object_set_content_type (object, content_type);
+	g_object_unref (content_type);
 	
 	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
@@ -1528,9 +1527,8 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	if (object->content_type)
-		g_mime_content_type_destroy (object->content_type);
-	object->content_type = content_type;
+	g_mime_object_set_content_type (object, content_type);
+	g_object_unref (content_type);
 	
 	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);

@@ -76,9 +76,6 @@ GMimePart *g_mime_part_new (void);
 GMimePart *g_mime_part_new_with_type (const char *type, const char *subtype);
 
 /* accessor functions */
-void g_mime_part_set_content_header (GMimePart *mime_part, const char *header, const char *value);
-const char *g_mime_part_get_content_header (GMimePart *mime_part, const char *header);
-
 void g_mime_part_set_content_description (GMimePart *mime_part, const char *description);
 const char *g_mime_part_get_content_description (const GMimePart *mime_part);
 

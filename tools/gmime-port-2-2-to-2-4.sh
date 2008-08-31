@@ -52,6 +52,8 @@ do
 	-e "s/g_mime_part_set_content_disposition_object/g_mime_object_set_content_disposition/g" \
 	-e "s/g_mime_part_get_content_disposition/g_mime_object_get_disposition/g" \
 	-e "s/g_mime_part_set_content_disposition/g_mime_object_set_disposition/g" \
+	-e "s/g_mime_part_get_content_header/g_mime_object_get_header/g" \
+	-e "s/g_mime_part_set_content_header/g_mime_object_set_header/g" \
 	-e "s/g_mime_part_get_content_type/g_mime_object_get_content_type/g" \
 	-e "s/g_mime_part_set_content_type/g_mime_object_set_content_type/g" \
 	-e "s/g_mime_part_get_encoding/g_mime_part_get_content_encoding/g" \

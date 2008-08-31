@@ -23,10 +23,21 @@
 #define __GMIME_DISPOSITION_H__
 
 #include <glib.h>
+#include <glib-object.h>
+
 #include <gmime/gmime-param.h>
 
 G_BEGIN_DECLS
 
+#define GMIME_TYPE_CONTENT_DISPOSITION              (g_mime_content_disposition_get_type ())
+#define GMIME_CONTENT_DISPOSITION(obj)              (G_TYPE_CHECK_INSTANCE_CAST ((obj), g_mime_content_disposition_get_type (), GMimeContentDisposition))
+#define GMIME_CONTENT_DISPOSITION_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), g_mime_content_disposition_get_type (), GMimeContentDispositionClass))
+#define GMIME_IS_CONTENT_DISPOSITION(obj)           (G_TYPE_CHECK_INSTANCE_TYPE ((obj), g_mime_content_disposition_get_type ()))
+#define GMIME_IS_CONTENT_DISPOSITION_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), g_mime_content_disposition_get_type ()))
+#define GMIME_CONTENT_DISPOSITION_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), g_mime_content_disposition_get_type (), GMimeContentDispositionClass))
+
+typedef struct _GMimeContentDisposition GMimeContentDisposition;
+typedef struct _GMimeContentDispositionClass GMimeContentDispositionClass;
 
 /**
  * GMIME_DISPOSITION_ATTACHMENT:
@@ -46,7 +57,7 @@ G_BEGIN_DECLS
 
 /**
  * GMimeContentDisposition:
- * @parent_object: parent object pointer
+ * @parent_object: parent #GObject
  * @param_hash: parameter hash table keyed by param name
  * @params: a #GMimeParam list
  * @disposition: disposition
@@ -54,34 +65,36 @@ G_BEGIN_DECLS
  * A data structure representing a Content-Disposition.
  **/
 struct _GMimeContentDisposition {
-	/* <private> */
-	gpointer parent_object;
-	GHashTable *param_hash;
+	GObject parent_object;
 	
-	/* <public:read-only> */
+	GHashTable *param_hash;
 	GMimeParam *params;
 	char *disposition;
 };
 
-typedef struct _GMimeContentDisposition GMimeContentDisposition;
+struct _GMimeContentDispositionClass {
+	GObjectClass parent_class;
+	
+};
+
+GType g_mime_content_disposition_get_type (void);
+
 
 GMimeContentDisposition *g_mime_content_disposition_new (void);
 GMimeContentDisposition *g_mime_content_disposition_new_from_string (const char *str);
 
-void g_mime_content_disposition_destroy (GMimeContentDisposition *disposition);
-
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
-const char *g_mime_content_disposition_get_disposition (const GMimeContentDisposition *disposition);
+const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMimeParam *params);
-const GMimeParam *g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition);
+const GMimeParam *g_mime_content_disposition_get_params (GMimeContentDisposition *disposition);
 
 void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition,
 					       const char *attribute, const char *value);
-const char *g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposition,
+const char *g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition,
 						      const char *attribute);
 
-char *g_mime_content_disposition_to_string (const GMimeContentDisposition *disposition, gboolean fold);
+char *g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold);
 
 G_END_DECLS
 

@@ -41,8 +41,86 @@
  **/
 
 
-struct _GMimeObject;
-void _g_mime_object_content_disposition_changed (struct _GMimeObject *object);
+enum {
+	CHANGED,
+	LAST_SIGNAL
+};
+
+static guint signals[LAST_SIGNAL] = { 0 };
+
+static void g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass);
+static void g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass);
+static void g_mime_content_disposition_finalize (GObject *object);
+
+
+static GObjectClass *parent_class = NULL;
+
+
+GType
+g_mime_content_disposition_get_type (void)
+{
+	static GType type = 0;
+	
+	if (!type) {
+		static const GTypeInfo info = {
+			sizeof (GMimeContentDispositionClass),
+			NULL, /* base_class_init */
+			NULL, /* base_class_finalize */
+			(GClassInitFunc) g_mime_content_disposition_class_init,
+			NULL, /* class_finalize */
+			NULL, /* class_data */
+			sizeof (GMimeContentDisposition),
+			0,    /* n_preallocs */
+			(GInstanceInitFunc) g_mime_content_disposition_init,
+		};
+		
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeContentDisposition", &info, 0);
+	}
+	
+	return type;
+}
+
+
+static void
+g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+	
+	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	
+	object_class->finalize = g_mime_content_disposition_finalize;
+	
+	/* signals */
+	signals[CHANGED] =
+		g_signal_new ("changed",
+			      GMIME_TYPE_CONTENT_DISPOSITION,
+			      G_SIGNAL_RUN_LAST,
+			      0,
+			      NULL,
+			      NULL,
+			      g_cclosure_marshal_VOID__VOID,
+			      G_TYPE_NONE, 0);
+}
+
+static void
+g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass)
+{
+	disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	disposition->disposition = NULL;
+	disposition->params = NULL;
+}
+
+static void
+g_mime_content_disposition_finalize (GObject *object)
+{
+	GMimeContentDisposition *disposition = (GMimeContentDisposition *) object;
+	
+	g_hash_table_destroy (disposition->param_hash);
+	g_mime_param_destroy (disposition->params);
+	g_free (disposition->disposition);
+	
+	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
 
 
 /**
@@ -57,11 +135,8 @@ g_mime_content_disposition_new (void)
 {
 	GMimeContentDisposition *disposition;
 	
-	disposition = g_new (GMimeContentDisposition, 1);
+	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
 	disposition->disposition = g_strdup (GMIME_DISPOSITION_ATTACHMENT);
-	disposition->parent_object = NULL;
-	disposition->param_hash = NULL;
-	disposition->params = NULL;
 	
 	return disposition;
 }
@@ -86,8 +161,7 @@ g_mime_content_disposition_new_from_string (const char *str)
 	if (str == NULL)
 		return g_mime_content_disposition_new ();
 	
-	disposition = g_new (GMimeContentDisposition, 1);
-	disposition->parent_object = NULL;
+	disposition = g_object_new (GMIME_TYPE_CONTENT_DISPOSITION, NULL);
 	
 	/* get content disposition part */
 	
@@ -101,37 +175,14 @@ g_mime_content_disposition_new_from_string (const char *str)
 	/* parse the parameters, if any */
 	if (*inptr++ == ';' && *inptr) {
 		param = disposition->params = g_mime_param_new_from_string (inptr);
-		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+		
 		while (param) {
 			g_hash_table_insert (disposition->param_hash, param->name, param);
 			param = param->next;
 		}
-	} else {
-		disposition->param_hash = NULL;
-		disposition->params = NULL;
 	}
 	
 	return disposition;
-}
-
-
-/**
- * g_mime_content_disposition_destroy:
- * @disposition: a #GMimeContentDisposition object
- *
- * Destroy the #GMimeContentDisposition object.
- **/
-void
-g_mime_content_disposition_destroy (GMimeContentDisposition *disposition)
-{
-	if (disposition) {
-		g_free (disposition->disposition);
-		if (disposition->params)
-			g_mime_param_destroy (disposition->params);
-		if (disposition->param_hash)
-			g_hash_table_destroy (disposition->param_hash);
-		g_free (disposition);
-	}
 }
 
 
@@ -148,14 +199,16 @@ g_mime_content_disposition_destroy (GMimeContentDisposition *disposition)
 void
 g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value)
 {
-	g_return_if_fail (disposition != NULL);
+	char *buf;
+	
+	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
 	g_return_if_fail (value != NULL);
 	
+	buf = g_strdup (value);
 	g_free (disposition->disposition);
-	disposition->disposition = g_strdup (value);
+	disposition->disposition = buf;
 	
-	if (disposition->parent_object)
-		_g_mime_object_content_disposition_changed (disposition->parent_object);
+	g_signal_emit (disposition, signals[CHANGED], 0);
 }
 
 
@@ -169,9 +222,9 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
  * #GMIME_DISPOSITION_ATTACHMENT or #GMIME_DISPOSITION_INLINE.
  **/
 const char *
-g_mime_content_disposition_get_disposition (const GMimeContentDisposition *disposition)
+g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition)
 {
-	g_return_val_if_fail (disposition != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	
 	return disposition->disposition;
 }
@@ -187,27 +240,19 @@ g_mime_content_disposition_get_disposition (const GMimeContentDisposition *dispo
 void
 g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMimeParam *params)
 {
-	g_return_if_fail (disposition != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
 	
 	/* destroy the current list/hash */
-	if (disposition->param_hash)
-		g_hash_table_destroy (disposition->param_hash);
-	
+	g_hash_table_remove_all (disposition->param_hash);
 	g_mime_param_destroy (disposition->params);
 	disposition->params = params;
 	
-	if (params != NULL) {
-		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-		while (params != NULL) {
-			g_hash_table_insert (disposition->param_hash, params->name, params);
-			params = params->next;
-		}
-	} else {
-		disposition->param_hash = NULL;
+	while (params != NULL) {
+		g_hash_table_insert (disposition->param_hash, params->name, params);
+		params = params->next;
 	}
 	
-	if (disposition->parent_object)
-		_g_mime_object_content_disposition_changed (disposition->parent_object);
+	g_signal_emit (disposition, signals[CHANGED], 0);
 }
 
 
@@ -220,9 +265,9 @@ g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMi
  * Returns: the list of #GMimeParam's set on @disposition.
  **/
 const GMimeParam *
-g_mime_content_disposition_get_params (const GMimeContentDisposition *disposition)
+g_mime_content_disposition_get_params (GMimeContentDisposition *disposition)
 {
-	g_return_val_if_fail (disposition != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	
 	return disposition->params;
 }
@@ -241,29 +286,20 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 {
 	GMimeParam *param = NULL;
 	
-	g_return_if_fail (disposition != NULL);
+	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
 	g_return_if_fail (attribute != NULL);
 	g_return_if_fail (value != NULL);
 	
-	if (disposition->params) {
-		if ((param = g_hash_table_lookup (disposition->param_hash, attribute))) {
-			g_free (param->value);
-			param->value = g_strdup (value);
-			goto changed;
-		}
-	} else if (!disposition->param_hash) {
-		/* hash table may not be initialized */
-		disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	if ((param = g_hash_table_lookup (disposition->param_hash, attribute))) {
+		g_free (param->value);
+		param->value = g_strdup (value);
+	} else {
+		param = g_mime_param_new (attribute, value);
+		disposition->params = g_mime_param_append_param (disposition->params, param);
+		g_hash_table_insert (disposition->param_hash, param->name, param);
 	}
 	
-	param = g_mime_param_new (attribute, value);
-	disposition->params = g_mime_param_append_param (disposition->params, param);
-	g_hash_table_insert (disposition->param_hash, param->name, param);
-	
- changed:
-	
-	if (disposition->parent_object)
-		_g_mime_object_content_disposition_changed (disposition->parent_object);
+	g_signal_emit (disposition, signals[CHANGED], 0);
 }
 
 
@@ -277,15 +313,12 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
  * Returns: the value of the parameter of name @attribute.
  **/
 const char *
-g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposition, const char *attribute)
+g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, const char *attribute)
 {
 	GMimeParam *param;
 	
-	g_return_val_if_fail (disposition != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	g_return_val_if_fail (attribute != NULL, NULL);
-	
-	if (!disposition->param_hash)
-		return NULL;
 	
 	if (!(param = g_hash_table_lookup (disposition->param_hash, attribute)))
 		return NULL;
@@ -305,12 +338,12 @@ g_mime_content_disposition_get_parameter (const GMimeContentDisposition *disposi
  * Returns: a string containing the disposition header
  **/
 char *
-g_mime_content_disposition_to_string (const GMimeContentDisposition *disposition, gboolean fold)
+g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold)
 {
 	GString *string;
 	char *header, *buf;
 	
-	g_return_val_if_fail (disposition != NULL, NULL);
+	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
 	
 	/* we need to have this so wrapping is correct */
 	string = g_string_new ("Content-Disposition: ");

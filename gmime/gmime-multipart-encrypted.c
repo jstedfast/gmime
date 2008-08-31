@@ -207,12 +207,13 @@ GMimeMultipartEncrypted *
 g_mime_multipart_encrypted_new (void)
 {
 	GMimeMultipartEncrypted *multipart;
-	GMimeContentType *type;
+	GMimeContentType *content_type;
 	
 	multipart = g_object_new (GMIME_TYPE_MULTIPART_ENCRYPTED, NULL);
 	
-	type = g_mime_content_type_new ("multipart", "encrypted");
-	g_mime_object_set_content_type (GMIME_OBJECT (multipart), type);
+	content_type = g_mime_content_type_new ("multipart", "encrypted");
+	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
+	g_object_unref (content_type);
 	
 	return multipart;
 }
@@ -281,7 +282,10 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_stream_reset (ciphertext);
 	
 	/* construct the version part */
-	version_part = g_mime_part_new ();
+	content_type = g_mime_content_type_new_from_string (ctx->encrypt_protocol);
+	version_part = g_mime_part_new_with_type (content_type->type, content_type->subtype);
+	g_object_unref (content_type);
+	
 	content_type = g_mime_content_type_new_from_string (ctx->encrypt_protocol);
 	g_mime_object_set_content_type (GMIME_OBJECT (version_part), content_type);
 	g_mime_part_set_content_encoding (version_part, GMIME_CONTENT_ENCODING_7BIT);
@@ -340,9 +344,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 				    GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
-	const GMimeContentType *mime_type;
 	GMimeStream *stream, *ciphertext;
 	GMimeStream *filtered_stream;
+	GMimeContentType *mime_type;
 	GMimeSignatureValidity *sv;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;

@@ -231,13 +231,14 @@ message_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 GMimeMessagePart *
 g_mime_message_part_new (const char *subtype)
 {
+	GMimeContentType *content_type;
 	GMimeMessagePart *part;
-	GMimeContentType *type;
 	
 	part = g_object_new (GMIME_TYPE_MESSAGE_PART, NULL);
 	
-	type = g_mime_content_type_new ("message", subtype ? subtype : "rfc822");
-	g_mime_object_set_content_type (GMIME_OBJECT (part), type);
+	content_type = g_mime_content_type_new ("message", subtype ? subtype : "rfc822");
+	g_mime_object_set_content_type (GMIME_OBJECT (part), content_type);
+	g_object_unref (content_type);
 	
 	return part;
 }

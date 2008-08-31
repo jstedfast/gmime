@@ -82,9 +82,6 @@ struct _InternetAddress {
 struct _InternetAddressClass {
 	GObjectClass parent_class;
 	
-	/* internal signals */
-	void (* changed) (InternetAddress *ia);
-	
 	/* public virtual methods */
 	void (* to_string) (InternetAddress *ia, guint32 flags, size_t *linelen, GString *out);
 };
@@ -170,8 +167,6 @@ struct _InternetAddressList {
 struct _InternetAddressListClass {
 	GObjectClass parent_class;
 	
-	/* internal signals */
-	void (* changed) (InternetAddressList *list);
 };
 
 

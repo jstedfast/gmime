@@ -419,6 +419,7 @@ int main (int argc, char **argv)
 		
 		g_object_unref (istream);
 		g_object_unref (ostream);
+		g_object_unref (parser);
 		
 #ifdef ENABLE_MBOX_MATCH
 		g_object_unref (mstream);

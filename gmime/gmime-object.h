@@ -93,6 +93,8 @@ typedef void (* GMimePartFunc) (GMimeObject *part, gpointer user_data);
 GType g_mime_object_get_type (void);
 
 void g_mime_object_register_type (const char *type, const char *subtype, GType object_type);
+
+GMimeObject *g_mime_object_new (GMimeContentType *content_type);
 GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
 
 void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type);
