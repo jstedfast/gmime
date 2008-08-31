@@ -295,13 +295,15 @@ add_a_mime_part (GMimeMessage *message)
 	multipart = g_mime_multipart_new_with_subtype ("mixed");
 	
 	/* add our new text part to it */
-	g_mime_multipart_add_part (multipart, (GMimeObject *) mime_part);
+	g_mime_multipart_add (multipart, (GMimeObject *) mime_part);
+	g_object_unref (mime_part);
 	
 	/* now append the message's toplevel part to our multipart */
-	g_mime_multipart_add_part (multipart, message->mime_part);
+	g_mime_multipart_add (multipart, message->mime_part);
 	
 	/* now replace the message's toplevel mime part with our new multipart */
 	g_mime_message_set_mime_part (message, (GMimeObject *) multipart);
+	g_object_unref (multipart);
 }
 
 static void
@@ -317,7 +319,7 @@ remove_a_mime_part (GMimeMessage *message)
 	multipart = (GMimeMultipart *) message->mime_part;
 	
 	/* subpart indexes start at 0 */
-	g_mime_multipart_remove_part_at (multipart, 0);
+	g_mime_multipart_remove_at (multipart, 0);
 	
 	/* now we should be left with a toplevel multipart/mixed which
 	   contains the mime parts of the original message */

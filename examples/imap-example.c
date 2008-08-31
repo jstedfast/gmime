@@ -107,7 +107,7 @@ write_part_bodystructure (GMimeObject *part, FILE *fp)
 		GMimeObject *subpart;
 		int i, n;
 		
-		n = g_mime_multipart_get_number (multipart);
+		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			write_part_bodystructure (subpart, fp);
@@ -298,7 +298,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		id = g_stpcpy (buf, spec);
 		*id++ = '.';
 		
-		n = g_mime_multipart_get_number (multipart);
+		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			sprintf (id, "%d", i + 1);
@@ -839,7 +839,7 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 			reconstruct_part_content ((GMimePart *) subpart, uid, subspec);
 		}
 		
-		g_mime_multipart_add_part (multipart, subpart);
+		g_mime_multipart_add (multipart, subpart);
 		g_object_unref (subpart);
 		
 		part = part->next;
