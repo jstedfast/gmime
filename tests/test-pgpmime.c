@@ -213,7 +213,6 @@ static void
 test_multipart_signed (GMimeCipherContext *ctx)
 {
 	GMimeSignatureValidity *validity;
-	GMimeContentType *content_type;
 	GMimeMultipartSigned *mps;
 	GMimeDataWrapper *content;
 	GMimeMessage *message;
@@ -223,9 +222,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	GMimePart *part;
 	Exception *ex;
 	
-	part = g_mime_part_new ();
-	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_object_set_content_type ((GMimeObject *) part, content_type);
+	part = g_mime_part_new_with_type ("text", "plain");
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_write_string (stream, MULTIPART_SIGNED_CONTENT);
@@ -312,7 +309,6 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 {
 	const GMimeSignatureValidity *sv;
 	GMimeStream *cleartext, *stream;
-	GMimeContentType *content_type;
 	GMimeMultipartEncrypted *mpe;
 	GMimeDataWrapper *content;
 	GMimeObject *decrypted;
@@ -332,9 +328,7 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 	g_mime_data_wrapper_set_stream (content, cleartext);
 	g_object_unref (cleartext);
 	
-	part = g_mime_part_new ();
-	content_type = g_mime_content_type_new ("text", "plain");
-	g_mime_object_set_content_type ((GMimeObject *) part, content_type);
+	part = g_mime_part_new_with_type ("text", "plain");
 	g_mime_part_set_content_object (part, content);
 	g_object_unref (content);
 	
