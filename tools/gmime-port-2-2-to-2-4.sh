@@ -92,7 +92,8 @@ do
 	-e "s/g_mime_object_ref/g_object_ref/g" \
 	-e "s/g_mime_stream_unref/g_object_unref/g" \
 	-e "s/g_mime_stream_ref/g_object_ref/g" \
-	-e "s/INTERNET_ADDRESS_NAME/INTERNET_ADDRESS_MAILBOX/g" \
+	-e "s/INTERNET_ADDRESS_NAME/INTERNET_ADDRESS_TYPE_MAILBOX/g" \
+	-e "s/INTERNET_ADDRESS_GROUP/INTERNET_ADDRESS_TYPE_GROUP/g" \
 	-e "s/internet_address_unref/g_object_unref/g" \
 	-e "s/internet_address_ref/g_object_ref/g" \
 	-e "s/internet_address_new_name/internet_address_mailbox_new/g" \
