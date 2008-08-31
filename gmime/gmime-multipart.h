@@ -60,11 +60,15 @@ struct _GMimeMultipart {
 struct _GMimeMultipartClass {
 	GMimeObjectClass parent_class;
 	
+	void (* clear) (GMimeMultipart *multipart);
 	void (* add) (GMimeMultipart *multipart, GMimeObject *part);
 	void (* insert) (GMimeMultipart *multipart, int index, GMimeObject *part);
 	gboolean (* remove) (GMimeMultipart *multipart, GMimeObject *part);
 	GMimeObject * (* remove_at) (GMimeMultipart *multipart, int index);
 	GMimeObject * (* get_part) (GMimeMultipart *multipart, int index);
+	
+	gboolean (* contains) (GMimeMultipart *multipart, GMimeObject *part);
+	int (* index_of) (GMimeMultipart *multipart, GMimeObject *part);
 	
 	int  (* get_count) (GMimeMultipart *multipart);
 	
@@ -85,11 +89,16 @@ const char *g_mime_multipart_get_preface (GMimeMultipart *multipart);
 void g_mime_multipart_set_postface (GMimeMultipart *multipart, const char *postface);
 const char *g_mime_multipart_get_postface (GMimeMultipart *multipart);
 
+void g_mime_multipart_clear (GMimeMultipart *multipart);
+
 void g_mime_multipart_add (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part);
 gboolean g_mime_multipart_remove (GMimeMultipart *multipart, GMimeObject *part);
 GMimeObject *g_mime_multipart_remove_at (GMimeMultipart *multipart, int index);
 GMimeObject *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);
+
+gboolean g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part);
+int g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeObject *part);
 
 int g_mime_multipart_get_count (GMimeMultipart *multipart);
 

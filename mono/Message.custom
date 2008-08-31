@@ -1,82 +1,82 @@
-[DllImport ("gmime")]
-static extern IntPtr g_mime_message_get_recipients (IntPtr message, int type);
-
-public InternetAddressList GetRecipients (GMime.RecipientType type)
-{
-	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
-
-	return new InternetAddressList (list);
-}
-
-public InternetAddressList To {
-       get { return GetRecipients (RecipientType.To); }
-}
-
-public InternetAddressList Cc {
-       get { return GetRecipients (RecipientType.Cc); }
-}
-
-public InternetAddressList Bcc {
-       get { return GetRecipients (RecipientType.Bcc); }
-}
-
-public System.Collections.IEnumerable References {
-	get {
-		string references = GetHeader ("References");
+		[DllImport ("gmime")]
+		static extern IntPtr g_mime_message_get_recipients (IntPtr message, int type);
 		
-		if (references == null)
-			yield break;
-		
-		GMime.References refs = GMime.References.Parse (references);
-		GMime.References iter = refs;
-		
-		while (iter != null) {
-			yield return iter;
-			iter = iter.Next;
+		public InternetAddressList GetRecipients (GMime.RecipientType type)
+		{
+			IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
+			
+			return new InternetAddressList (list);
 		}
 		
-		yield break;
-	}
-}
-
-
-[DllImport("gmime")]
-static extern IntPtr internet_address_list_to_string (IntPtr list, bool encode);
-
-public string GetRecipientsAsString (GMime.RecipientType type, bool encode)
-{
-	IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
-	IntPtr str;
-	
-	if (list == IntPtr.Zero)
-		return null;
-	
-	str = internet_address_list_to_string (list, encode);
-	
-	return GLib.Marshaller.PtrToStringGFree (str);
-}
-
-public string GetRecipientsAsString (GMime.RecipientType type)
-{
-	return GetRecipientsAsString (type, false);
-}
-
-[DllImport("gmime")]
-static extern void g_mime_message_get_date (IntPtr message, out IntPtr date, out int gmt_offset);
-
-[DllImport("gmime")]
-static extern void g_mime_message_set_date (IntPtr message, IntPtr date, int gmt_offset);
-
-public DateTime Date {
-	get {
-		int tz_offset;
-		IntPtr date;
-
-		g_mime_message_get_date (Handle, out date, out tz_offset);
-
-		return GLib.Marshaller.time_tToDateTime (date);
-	}
-	set {
-		g_mime_message_set_date (Handle, GLib.Marshaller.DateTimeTotime_t (value), 0);
-	}
-}
+		public InternetAddressList To {
+			get { return GetRecipients (RecipientType.To); }
+		}
+		
+		public InternetAddressList Cc {
+			get { return GetRecipients (RecipientType.Cc); }
+		}
+		
+		public InternetAddressList Bcc {
+			get { return GetRecipients (RecipientType.Bcc); }
+		}
+		
+		public System.Collections.IEnumerable References {
+			get {
+				string references = GetHeader ("References");
+				
+				if (references == null)
+					yield break;
+				
+				GMime.References refs = GMime.References.Parse (references);
+				GMime.References iter = refs;
+				
+				while (iter != null) {
+					yield return iter;
+					iter = iter.Next;
+				}
+				
+				yield break;
+			}
+		}
+		
+		[DllImport("gmime")]
+		static extern IntPtr internet_address_list_to_string (IntPtr list, bool encode);
+		
+		public string GetRecipientsAsString (GMime.RecipientType type, bool encode)
+		{
+			IntPtr list = g_mime_message_get_recipients (Handle, (int) type);
+			IntPtr str;
+			
+			if (list == IntPtr.Zero)
+				return null;
+			
+			str = internet_address_list_to_string (list, encode);
+			
+			return GLib.Marshaller.PtrToStringGFree (str);
+		}
+		
+		public string GetRecipientsAsString (GMime.RecipientType type)
+		{
+			return GetRecipientsAsString (type, false);
+		}
+		
+		[DllImport("gmime")]
+		static extern void g_mime_message_get_date (IntPtr message, out IntPtr date, out int gmt_offset);
+		
+		[DllImport("gmime")]
+		static extern void g_mime_message_set_date (IntPtr message, IntPtr date, int gmt_offset);
+		
+		public DateTime Date {
+			get {
+				int tz_offset;
+				IntPtr date;
+				
+				g_mime_message_get_date (Handle, out date, out tz_offset);
+				
+				return GLib.Marshaller.time_tToDateTime (date);
+			}
+			
+			set {
+				g_mime_message_set_date (Handle, GLib.Marshaller.DateTimeTotime_t (value), 0);
+			}
+		}

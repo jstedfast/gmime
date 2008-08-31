@@ -12,7 +12,7 @@
 		//static extern void internet_address_list_concat (IntPtr list, IntPtr concat);
 		
 		[DllImport("gmime")]
-		static extern void internet_address_list_insert (IntPtr list, int index, IntPtr concat);
+		static extern void internet_address_list_insert (IntPtr list, int index, IntPtr ia);
 		
 		[DllImport("gmime")]
 		static extern bool internet_address_list_remove (IntPtr list, IntPtr ia);
@@ -118,7 +118,7 @@
 			if (addr == null)
 				throw CannotAdd (value);
 			
-			return Add (value as InternetAddress);
+			return Add (addr);
 		}
 		
 		public void Clear ()

@@ -31,6 +31,7 @@ customs = 				\
 	InternetAddress.custom		\
 	InternetAddressList.custom	\
 	Message.custom			\
+	Multipart.custom		\
 	Object.custom			\
 	Stream.custom
 
@@ -41,6 +42,7 @@ build_customs = 				\
 	$(srcdir)/InternetAddress.custom	\
 	$(srcdir)/InternetAddressList.custom	\
 	$(srcdir)/Message.custom		\
+	$(srcdir)/Multipart.custom		\
 	$(srcdir)/Object.custom			\
 	$(srcdir)/Stream.custom
 

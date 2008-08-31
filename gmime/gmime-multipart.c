@@ -63,11 +63,14 @@ static char *multipart_get_headers (GMimeObject *object);
 static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 /* GMimeMultipart class methods */
+static void multipart_clear (GMimeMultipart *multipart);
 static void multipart_add (GMimeMultipart *multipart, GMimeObject *part);
 static void multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part);
 static gboolean multipart_remove (GMimeMultipart *multipart, GMimeObject *part);
 static GMimeObject *multipart_remove_at (GMimeMultipart *multipart, int index);
 static GMimeObject *multipart_get_part (GMimeMultipart *multipart, int index);
+static gboolean multipart_contains (GMimeMultipart *multipart, GMimeObject *part);
+static int multipart_index_of (GMimeMultipart *multipart, GMimeObject *part);
 static int multipart_get_count (GMimeMultipart *multipart);
 static void multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 static const char *multipart_get_boundary (GMimeMultipart *multipart);
@@ -121,10 +124,13 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	object_class->write_to_stream = multipart_write_to_stream;
 	
 	klass->add = multipart_add;
+	klass->clear = multipart_clear;
 	klass->insert = multipart_insert;
 	klass->remove = multipart_remove;
 	klass->remove_at = multipart_remove_at;
 	klass->get_part = multipart_get_part;
+	klass->contains = multipart_contains;
+	klass->index_of = multipart_index_of;
 	klass->get_count = multipart_get_count;
 	klass->set_boundary = multipart_set_boundary;
 	klass->get_boundary = multipart_get_boundary;
@@ -420,6 +426,33 @@ g_mime_multipart_get_postface (GMimeMultipart *multipart)
 
 
 static void
+multipart_clear (GMimeMultipart *multipart)
+{
+	int i;
+	
+	for (i = 0; i < (int) multipart->children->len; i++)
+		g_object_unref (multipart->children->pdata[i]);
+	
+	g_ptr_array_set_size (multipart->children, 0);
+}
+
+
+/**
+ * g_mime_multipart_clear:
+ * @multipart: a #GMimeMultipart object
+ *
+ * Removes all subparts from @multipart.
+ **/
+void
+g_mime_multipart_clear (GMimeMultipart *multipart)
+{
+	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
+	
+	GMIME_MULTIPART_GET_CLASS (multipart)->clear (multipart);
+}
+
+
+static void
 multipart_add (GMimeMultipart *multipart, GMimeObject *part)
 {
 	g_ptr_array_add (multipart->children, part);
@@ -589,6 +622,73 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 	g_return_val_if_fail (index >= 0, NULL);
 	
 	return GMIME_MULTIPART_GET_CLASS (multipart)->get_part (multipart, index);
+}
+
+
+static gboolean
+multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
+{
+	int i;
+	
+	for (i = 0; i < (int) multipart->children->len; i++) {
+		if (part == (GMimeObject *) multipart->children->pdata[i])
+			return TRUE;
+	}
+	
+	return FALSE;
+}
+
+
+/**
+ * g_mime_multipart_contains:
+ * @multipart: a #GMimeMultipart object
+ * @part: mime part
+ *
+ * Checks if @part is contained within @multipart.
+ *
+ * Returns: %TRUE if @part is a subpart of @multipart or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
+{
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), FALSE);
+	g_return_val_if_fail (GMIME_IS_OBJECT (part), FALSE);
+	
+	return GMIME_MULTIPART_GET_CLASS (multipart)->contains (multipart, part);
+}
+
+
+static int
+multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
+{
+	int i;
+	
+	for (i = 0; i < (int) multipart->children->len; i++) {
+		if (part == (GMimeObject *) multipart->children->pdata[i])
+			return i;
+	}
+	
+	return -1;
+}
+
+
+/**
+ * g_mime_multipart_index_of:
+ * @multipart: a #GMimeMultipart object
+ * @part: mime part
+ *
+ * Gets the index of @part within @multipart.
+ *
+ * Returns: the index of @part within @multipart or %-1 if not found.
+ **/
+int
+g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
+{
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), -1);
+	g_return_val_if_fail (GMIME_IS_OBJECT (part), -1);
+	
+	return GMIME_MULTIPART_GET_CLASS (multipart)->index_of (multipart, part);
 }
 
 

@@ -659,13 +659,6 @@
           <parameter type="const-char*" name="address" />
         </parameters>
       </method>
-      <method name="AddRecipientsFromString" cname="g_mime_message_add_recipients_from_string">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeRecipientType" name="type" />
-          <parameter type="const-char*" name="str" />
-        </parameters>
-      </method>
       <method name="ForeachPart" cname="g_mime_message_foreach_part">
         <return-type type="void" />
         <parameters>
@@ -828,29 +821,35 @@
       <field name="Boundary" cname="boundary" type="char*" />
       <field name="Preface" cname="preface" type="char*" />
       <field name="Postface" cname="postface" type="char*" />
-      <virtual_method name="AddPart" cname="add_part">
+      <virtual_method name="Clear" cname="clear">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="Add" cname="add">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
           <parameter type="GMimeObject*" name="part" />
         </parameters>
       </virtual_method>
-      <virtual_method name="AddPartAt" cname="add_part_at">
+      <virtual_method name="Insert" cname="insert">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
-          <parameter type="GMimeObject*" name="part" />
           <parameter type="int" name="index" />
+          <parameter type="GMimeObject*" name="part" />
         </parameters>
       </virtual_method>
-      <virtual_method name="RemovePart" cname="remove_part">
+      <virtual_method name="Remove" cname="remove">
         <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
           <parameter type="GMimeObject*" name="part" />
         </parameters>
       </virtual_method>
-      <virtual_method name="RemovePartAt" cname="remove_part_at">
+      <virtual_method name="RemoveAt" cname="remove_at">
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
@@ -864,7 +863,21 @@
           <parameter type="int" name="index" />
         </parameters>
       </virtual_method>
-      <virtual_method name="GetNumber" cname="get_number">
+      <virtual_method name="Contains" cname="contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart" />
+          <parameter type="GMimeObject*" name="part" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="IndexOf" cname="index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeMultipart*" name="multipart" />
+          <parameter type="GMimeObject*" name="part" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="GetCount" cname="get_count">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeMultipart*" name="multipart" />
@@ -877,17 +890,19 @@
           <parameter type="const-char*" name="boundary" />
         </parameters>
       </virtual_method>
-      <method name="AddPart" cname="g_mime_multipart_add_part">
+      <method name="Add" cname="g_mime_multipart_add">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeObject*" name="part" />
         </parameters>
       </method>
-      <method name="AddPartAt" cname="g_mime_multipart_add_part_at">
+      <method name="Clear" cname="g_mime_multipart_clear">
         <return-type type="void" />
+      </method>
+      <method name="Contains" cname="g_mime_multipart_contains">
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeObject*" name="part" />
-          <parameter type="int" name="index" />
         </parameters>
       </method>
       <method name="Foreach" cname="g_mime_multipart_foreach">
@@ -900,7 +915,7 @@
       <method name="GetBoundary" cname="g_mime_multipart_get_boundary">
         <return-type type="const-char*" />
       </method>
-      <method name="GetNumber" cname="g_mime_multipart_get_number">
+      <method name="GetCount" cname="g_mime_multipart_get_count">
         <return-type type="int" />
       </method>
       <method name="GetPart" cname="g_mime_multipart_get_part">
@@ -924,19 +939,32 @@
       <method name="GetType" cname="g_mime_multipart_get_type" shared="true">
         <return-type type="GType" />
       </method>
+      <method name="IndexOf" cname="g_mime_multipart_index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeObject*" name="part" />
+        </parameters>
+      </method>
+      <method name="Insert" cname="g_mime_multipart_insert">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeObject*" name="part" />
+        </parameters>
+      </method>
       <constructor cname="g_mime_multipart_new" />
       <constructor cname="g_mime_multipart_new_with_subtype">
         <parameters>
           <parameter type="const-char*" name="subtype" />
         </parameters>
       </constructor>
-      <method name="RemovePart" cname="g_mime_multipart_remove_part">
+      <method name="Remove" cname="g_mime_multipart_remove">
         <return-type type="gboolean" />
         <parameters>
           <parameter type="GMimeObject*" name="part" />
         </parameters>
       </method>
-      <method name="RemovePartAt" cname="g_mime_multipart_remove_part_at">
+      <method name="RemoveAt" cname="g_mime_multipart_remove_at">
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="int" name="index" />

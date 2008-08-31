@@ -43,7 +43,6 @@
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='SetStream']" name="name">SetGMimeStream</attr>
-  <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetGMimeStream']/return-type" name="owned">true</attr>
 
   <!-- Encoding -->
   <attr path="/api/namespace/struct[@name='Encoding']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
@@ -118,6 +117,7 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeHeader']"/>
 
   <!-- HeaderList -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@cname='g_mime_header_list_foreach']"/>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Prepend']" name="name">PrependHeader</attr>
@@ -173,14 +173,14 @@
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='ToString']"/>
   
   <!-- Message -->
-  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetMimePart']/return-type" name="owned">true</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetAllRecipients']/return-type" name="owned">true</attr>
   <!-- We implement these properties by hand, hide them. -->
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_recipients']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_foreach_part']"/>
 
   <!-- MessagePart -->
-  <attr path="/api/namespace/object[@cname='GMimeMessagePart']/method[@name='GetMessage']/return-type" name="owned">true</attr>
 
   <!-- MessagePartial -->
   <add-node path="/api/namespace/object[@cname='GMimeMessagePartial']/method[@name='ReconstructMessage']/parameters"><parameter name="partials" type="GMimeMessagePartial**" array="true"/></add-node>
@@ -188,9 +188,23 @@
   <attr path="/api/namespace/object[@cname='GMimeMessagePartial']/method[@name='ReconstructMessage']/*/parameter[@name='num']" name="name">n_partials</attr>
 
   <!-- Multipart -->
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetSubpartFromContentId']/return-type" name="owned">true</attr>
-  <attr path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']" name="name">ForeachPart</attr>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Foreach']"/>
+  <!-- We're going to implement the IList interface -->
+  <add-node path="/api/namespace/object[@cname='GMimeMultipart']">
+    <implements>
+      <interface name="IList"/>
+    </implements>
+  </add-node>
+  <!-- Remove methods we're going to implement manually in GMimeMultipart.custom -->
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Add']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Clear']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetCount']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Contains']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='IndexOf']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Insert']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Remove']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='RemoveAt']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']"/>
 
   <!-- MultipartEncrypted -->
   
@@ -217,7 +231,6 @@
   <remove-node path="/api/namespace/class[@name='Decode']"/>
 
   <!-- Part -->
-  <attr path="/api/namespace/object[@cname='GMimePart']/method[@name='GetContentObject']/return-type" name="owned">true</attr>
 
   <!-- References -->
   <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>

@@ -1182,26 +1182,6 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 
 
 /**
- * g_mime_message_add_recipients_from_string:
- * @message: MIME Message
- * @type: A #GMimeRecipientType
- * @str: A string of recipient names and addresses.
- *
- * Add a list of recipients of a chosen type to the MIME Message. The
- * string @str must be in the format specified in rfc822.
- **/
-void
-g_mime_message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str)
-{
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (type < N_RECIPIENT_TYPES);
-	g_return_if_fail (str != NULL);
-	
-	message_add_recipients_from_string (message, type, str);
-}
-
-
-/**
  * g_mime_message_get_recipients:
  * @message: MIME Message
  * @type: A #GMimeRecipientType

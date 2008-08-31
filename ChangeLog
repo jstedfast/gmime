@@ -1,5 +1,19 @@
 2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* mono/Multipart.custom: GMime.Multipart now implements the IList
+	interface.
+
+	* gmime/gmime-message.c (g_mime_message_add_recipients_from_string):
+	Removed. This function was a kludge - use
+	g_mime_message_get_recipients() and then add recipients you have
+	manually instead.
+
+	* gmime/gmime-multipart.c (g_mime_multipart_clear): New method.
+	(g_mime_multipart_contains): Same.
+	(g_mime_multipart_index_of): Same.
+
+2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-parser.c (parser_scan_multipart_subparts): Updated
 	for GMimeMultipart API changes.
 
