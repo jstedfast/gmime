@@ -39,9 +39,14 @@ do
 	-e "s/g_mime_message_write_to_stream/g_mime_object_write_to_stream/g" \
 	-e "s/g_mime_message_to_string/g_mime_object_to_string/g" \
 	-e "s/g_mime_message_get_date_string/g_mime_message_get_date_as_string/g" \
+	-e "s/g_mime_content_type_destroy/g_object_unref/g" \
+	-e "s/g_mime_content_type_get_type/g_mime_content_type_get_media_type/g" \
+	-e "s/g_mime_content_type_set_type/g_mime_content_type_set_media_type/g" \
+	-e "s/g_mime_content_type_get_subtype/g_mime_content_type_get_media_subtype/g" \
+	-e "s/g_mime_content_type_set_subtype/g_mime_content_type_set_media_subtype/g" \
 	-e "s/GMimeDisposition/GMimeContentDisposition/g" \
 	-e "s/g_mime_disposition_new/g_mime_content_disposition_new_from_string/g" \
-	-e "s/g_mime_disposition_destroy/g_mime_content_disposition_destroy/g" \
+	-e "s/g_mime_disposition_destroy/g_object_unref/g" \
 	-e "s/g_mime_disposition_add_parameter/g_mime_content_disposition_set_parameter/g" \
 	-e "s/g_mime_disposition_get_parameter/g_mime_content_disposition_get_parameter/g" \
 	-e "s/g_mime_disposition_get/g_mime_content_disposition_get_disposition/g" \
