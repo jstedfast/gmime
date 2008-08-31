@@ -16,6 +16,10 @@
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
 
+  <!-- Callback Functions -->
+  <remove-node path="/api/namespace/callback[@name='HeaderForeachFunc']"/>
+  <remove-node path="/api/namespace/callback[@name='PartFunc']"/>
+
   <!-- Charset -->
 
   <!-- Common -->
