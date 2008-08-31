@@ -1499,7 +1499,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		else
 			subpart = parser_construct_leaf_part (parser, content_type, &found);
 		
-		g_mime_multipart_add_part (multipart, subpart);
+		g_mime_multipart_add (multipart, subpart);
 		g_object_unref (subpart);
 	} while (found == FOUND_BOUNDARY && found_immediate_boundary (priv, FALSE));
 	

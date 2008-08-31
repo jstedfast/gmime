@@ -309,8 +309,8 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* save the version and encrypted parts */
 	/* FIXME: make sure there aren't any other parts?? */
-	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), GMIME_OBJECT (version_part));
-	g_mime_multipart_add_part (GMIME_MULTIPART (mpe), GMIME_OBJECT (encrypted_part));
+	g_mime_multipart_add (GMIME_MULTIPART (mpe), GMIME_OBJECT (version_part));
+	g_mime_multipart_add (GMIME_MULTIPART (mpe), GMIME_OBJECT (encrypted_part));
 	g_object_unref (encrypted_part);
 	g_object_unref (version_part);
 	

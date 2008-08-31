@@ -65,6 +65,11 @@ do
 	-e "s/g_mime_part_set_encoding/g_mime_part_set_content_encoding/g" \
 	-e "s/g_mime_part_write_to_stream/g_mime_object_write_to_stream/g" \
 	-e "s/g_mime_part_to_string/g_mime_object_to_string/g" \
+	-e "s/g_mime_multipart_add_part/g_mime_multipart_add/g" \
+	-e "s/g_mime_multipart_add_part_at/g_mime_multipart_insert/g" \
+	-e "s/g_mime_multipart_remove_part/g_mime_multipart_remove/g" \
+	-e "s/g_mime_multipart_remove_part_at/g_mime_multipart_remove_at/g" \
+	-e "s/g_mime_multipart_get_number/g_mime_multipart_get_count/g" \
 	-e "s/g_mime_utils_base64_encode_close/g_mime_encoding_base64_encode_close/g" \
 	-e "s/g_mime_utils_base64_encode_step/g_mime_encoding_base64_encode_step/g" \
 	-e "s/g_mime_utils_base64_decode_step/g_mime_encoding_base64_decode_step/g" \

@@ -70,7 +70,7 @@ print_mime_struct (GMimeObject *part, int depth)
 	if (GMIME_IS_MULTIPART (part)) {
 		multipart = (GMimeMultipart *) part;
 		
-		n = g_mime_multipart_get_number (multipart);
+		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			print_mime_struct (subpart, depth + 1);

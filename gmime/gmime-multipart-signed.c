@@ -242,7 +242,7 @@ sign_prepare (GMimeObject *mime_part)
 			return;
 		}
 		
-		n = g_mime_multipart_get_number (multipart);
+		n = g_mime_multipart_get_count (multipart);
 		for (i = 0; i < n; i++) {
 			subpart = g_mime_multipart_get_part (multipart, i);
 			sign_prepare (subpart);
@@ -373,8 +373,8 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* save the content and signature parts */
 	/* FIXME: make sure there aren't any other parts?? */
-	g_mime_multipart_add_part (GMIME_MULTIPART (mps), content);
-	g_mime_multipart_add_part (GMIME_MULTIPART (mps), (GMimeObject *) signature);
+	g_mime_multipart_add (GMIME_MULTIPART (mps), content);
+	g_mime_multipart_add (GMIME_MULTIPART (mps), (GMimeObject *) signature);
 	g_object_unref (signature);
 	g_object_unref (content);
 	
@@ -413,7 +413,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (ctx->sign_protocol != NULL, NULL);
 	
-	if (g_mime_multipart_get_number ((GMimeMultipart *) mps) < 2) {
+	if (g_mime_multipart_get_count ((GMimeMultipart *) mps) < 2) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "%s",
 			     "Cannot verify multipart/signed part due to missing subparts.");
 		return NULL;

@@ -1,5 +1,25 @@
 2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-parser.c (parser_scan_multipart_subparts): Updated
+	for GMimeMultipart API changes.
+
+	* gmime/gmime-multipart-signed.c (sign_prepare): Updated for
+	GMimeMultipart API changes.
+	(g_mime_multipart_signed_sign): Same.
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):
+	Updated for GMimeMultipart API changes.
+
+	* gmime/gmime-multipart.c (g_mime_multipart_add): Renamed from
+	g_mime_multipart_add_part(). The "_part" seemed superfluous.
+	(g_mime_multipart_remove): Same.
+	(g_mime_multipart_remove_at): Same.
+	(g_mime_multipart_insert): Renamed from
+	g_mime_multipart_add_part_at().
+	(g_mime_multipart_get_count): Renamed to be more obvious.
+
+2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-message-partial.c (g_mime_message_partial_new): Need
 	to unref the content_type after setting it on the object.
 
