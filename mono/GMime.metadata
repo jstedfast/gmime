@@ -6,10 +6,10 @@
   <attr path="/api/namespace/*/*/*/parameter[@type='size_t']" name="type">guint32</attr>
   <attr path="/api/namespace/*/*/*/parameter[@type='size_t*']" name="type">guint32*</attr>
 
-  <attr path="/api/namespace/*/field[@type='ssize_t']" name="type">gint32</attr>
+  <!--<attr path="/api/namespace/*/field[@type='ssize_t']" name="type">gint32</attr>-->
   <attr path="/api/namespace/*/*/return-type[@type='ssize_t']" name="type">gint32</attr>
-  <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>
-  <attr path="/api/namespace/*/*/*/parameter[@type='ssize_t*']" name="type">gint32*</attr>
+  <!--<attr path="/api/namespace/*/*/*/parameter[@type='ssize_t']" name="type">gint32</attr>-->
+  <!--<attr path="/api/namespace/*/*/*/parameter[@type='ssize_t*']" name="type">gint32*</attr>-->
 
   <!-- Global / Locale -->
   <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
@@ -29,16 +29,16 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='keyid']"/>
 
   <!-- ContentDisposition -->
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentDisposition']/field[@cname='parent_object']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentDisposition']/field[@cname='param_hash']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentDisposition']/field[@cname='params']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='param_hash']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='params']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/signal[@name='Changed']"/>
 
   <!-- ContentType -->
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='parent_object']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='param_hash']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='params']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='subtype']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeContentType']/field[@cname='type']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='param_hash']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='params']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='subtype']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='type']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/signal[@name='Changed']"/>
 
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
