@@ -45,6 +45,22 @@ Beyond that, a few methods have changed in other ways:
   argument to allow the caller to request encrypting and signing in a
   single pass.
 
+Several structs have also been rewritten to subclass GObject like
+GMimeContentType and GMimeContentDisposition as well as
+InternetAddress and InternetAddressList.
+
+Not only have InternetAddress and InternetAddressList been ported to
+GObject, but they have also undergone other design
+changes. InternetAddress is now a base class for
+InternetAddressMailbox and InternetAddressGroup, meaning that
+InternetAddress no longer contains a union for group/addr fields.
+
+All functions that return a GObject have been changed to not add a ref
+to the object returned, meaning that it is no longer necessary to call
+g_object_unref() on MIME parts returned from functions like
+g_mime_message_get_mime_part() or g_mime_multipart_get_part(). This
+was done to be more consistent with the Gtk+ API.
+
 
 Porting from GMime 2.0 to GMime 2.2
 -----------------------------------
