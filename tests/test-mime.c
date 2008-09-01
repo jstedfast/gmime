@@ -159,6 +159,13 @@ static struct {
 	{ "some.dots..@hocus.pocus.net",
 	  "some.dots..@hocus.pocus.net",
 	  "some.dots..@hocus.pocus.net" },
+	/* The following test case is to check that we properly handle
+	 * mailbox addresses that do not have any lwsp between the
+	 * name component and the addr-spec. See Evolution bug
+	 * #347520 */
+	{ "Canonical Patch Queue Manager<pqm@pqm.ubuntu.com>",
+	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>",
+	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>" },
 };
 
 static void
