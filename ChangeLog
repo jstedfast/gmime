@@ -1,5 +1,11 @@
 2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.8
+
+2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* mono/Multipart.custom: GMime.Multipart now implements the IList
 	interface.
 

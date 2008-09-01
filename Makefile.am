@@ -28,7 +28,6 @@ EXTRA_DIST = 			\
 	iconv-detect.c		\
 	zentimer.h 		\
 	zenprofiler.h		\
-	marshal.mk		\
 	gtk-doc.make
 
 BUILD_EXTRA_DIST = 		\
