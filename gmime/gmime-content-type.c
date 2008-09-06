@@ -194,45 +194,20 @@ GMimeContentType *
 g_mime_content_type_new_from_string (const char *str)
 {
 	GMimeContentType *mime_type;
-	char *type = NULL, *subtype;
 	const char *inptr = str;
+	char *type, *subtype;
 	
 	g_return_val_if_fail (str != NULL, NULL);
 	
-	/* get the type */
-	type = (char *) inptr;
-	while (*inptr && is_ttoken (*inptr))
-		inptr++;
+	if (!g_mime_parse_content_type (&inptr, &type, &subtype))
+		return g_mime_content_type_new ("application", "octet-stream");
 	
-	type = g_strndup (type, (unsigned) (inptr - type));
-	
-	decode_lwsp (&inptr);
-	
-	/* get the subtype */
-	if (*inptr == '/') {
-		inptr++;
-		
-		decode_lwsp (&inptr);
-		
-		subtype = (char *) inptr;
-		while (*inptr && is_ttoken (*inptr))
-			inptr++;
-		
-		if (inptr > subtype)
-			subtype = g_strndup (subtype, (size_t) (inptr - subtype));
-		else
-			subtype = NULL;
-		
-		decode_lwsp (&inptr);
-	} else {
-		subtype = NULL;
-	}
-	
-	mime_type = g_mime_content_type_new (type, subtype);
-	g_free (subtype);
-	g_free (type);
+	mime_type = g_object_new (GMIME_TYPE_CONTENT_TYPE, NULL);
+	mime_type->subtype = subtype;
+	mime_type->type = type;
 	
 	/* skip past any remaining junk that shouldn't be here... */
+	decode_lwsp (&inptr);
 	while (*inptr && *inptr != ';')
 		inptr++;
 	

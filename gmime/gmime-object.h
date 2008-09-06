@@ -97,7 +97,7 @@ void g_mime_object_register_type (const char *type, const char *subtype, GType o
 GMimeObject *g_mime_object_new (GMimeContentType *content_type);
 GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
 
-void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *mime_type);
+void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);
 void g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value);
 const char *g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name);

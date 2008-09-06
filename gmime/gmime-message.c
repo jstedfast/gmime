@@ -948,7 +948,8 @@ message_get_headers (GMimeObject *object)
 	} else {
 		g_mime_header_list_write_to_stream (object->headers, stream);
 		if (message->mime_part) {
-			g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
+			if (g_mime_object_get_header (message->mime_part, "Content-Type"))
+				g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
 			g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
 		}
 	}

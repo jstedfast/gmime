@@ -50,7 +50,7 @@ typedef struct _GMimePartClass GMimePartClass;
  * @content_md5: Content-MD5 string
  * @content: a #GMimeDataWrapper representing the MIME part's content
  *
- * Base leaf-node MIME part object.
+ * A leaf-node MIME part object.
  **/
 struct _GMimePart {
 	GMimeObject parent_object;
@@ -66,6 +66,7 @@ struct _GMimePart {
 struct _GMimePartClass {
 	GMimeObjectClass parent_class;
 	
+	void (* set_content_object) (GMimePart *mime_part, GMimeDataWrapper *content);
 };
 
 

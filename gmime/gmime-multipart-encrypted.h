@@ -48,7 +48,6 @@ enum {
  * @parent_object: parent #GMimeMultipart
  * @validity: a #GMimeSignatureValidity if the part has been decrypted or %NULL otherwise
  * @decrypted: cached decrypted MIME part
- * @protocol: encryption protocol string
  *
  * A multipart/encrypted MIME part.
  **/
@@ -57,7 +56,6 @@ struct _GMimeMultipartEncrypted {
 	
 	GMimeSignatureValidity *validity;
 	GMimeObject *decrypted;
-	char *protocol;
 };
 
 struct _GMimeMultipartEncryptedClass {

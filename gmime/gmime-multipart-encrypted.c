@@ -119,7 +119,6 @@ g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass)
 static void
 g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mpe, GMimeMultipartEncryptedClass *klass)
 {
-	mpe->protocol = NULL;
 	mpe->decrypted = NULL;
 	mpe->validity = NULL;
 }
@@ -128,8 +127,6 @@ static void
 g_mime_multipart_encrypted_finalize (GObject *object)
 {
 	GMimeMultipartEncrypted *mpe = (GMimeMultipartEncrypted *) object;
-	
-	g_free (mpe->protocol);
 	
 	if (mpe->decrypted)
 		g_object_unref (mpe->decrypted);
@@ -173,13 +170,6 @@ multipart_encrypted_remove_header (GMimeObject *object, const char *header)
 static void
 multipart_encrypted_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	GMimeMultipartEncrypted *mpe = (GMimeMultipartEncrypted *) object;
-	const char *protocol;
-	
-	protocol = g_mime_content_type_get_parameter (content_type, "protocol");
-	g_free (mpe->protocol);
-	mpe->protocol = g_strdup (protocol);
-	
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
@@ -295,7 +285,6 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_object_unref (wrapper);
 	g_object_unref (stream);
 	
-	mpe->protocol = g_strdup (ctx->encrypt_protocol);
 	mpe->decrypted = content;
 	g_object_ref (content);
 	
@@ -315,7 +304,8 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_object_unref (version_part);
 	
 	/* set the content-type params for this multipart/encrypted part */
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mpe), "protocol", mpe->protocol);
+	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mpe), "protocol",
+						  ctx->encrypt_protocol);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mpe), NULL);
 	
 	return 0;

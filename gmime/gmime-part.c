@@ -67,6 +67,9 @@ static gboolean mime_part_remove_header (GMimeObject *object, const char *header
 static char *mime_part_get_headers (GMimeObject *object);
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
+/* GMimePart class methods */
+static void set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
+
 
 static GMimeObjectClass *parent_class = NULL;
 
@@ -113,6 +116,8 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->get_header = mime_part_get_header;
 	object_class->get_headers = mime_part_get_headers;
 	object_class->write_to_stream = mime_part_write_to_stream;
+	
+	klass->set_content_object = set_content_object;
 }
 
 static void
@@ -426,8 +431,8 @@ g_mime_part_new (void)
 
 /**
  * g_mime_part_new_with_type:
- * @type: content-type
- * @subtype: content-subtype
+ * @type: content-type string
+ * @subtype: content-subtype string
  *
  * Creates a new MIME Part with a sepcified type.
  *
@@ -451,7 +456,7 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 
 /**
  * g_mime_part_set_content_description:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  * @description: content description
  *
  * Set the content description for the specified mime part.
@@ -461,9 +466,10 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->content_description)
-		g_free (mime_part->content_description);
+	if (mime_part->content_description == description)
+		return;
 	
+	g_free (mime_part->content_description);
 	mime_part->content_description = g_strdup (description);
 	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Description", description);
 }
@@ -471,7 +477,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
 
 /**
  * g_mime_part_get_content_description:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Gets the value of the Content-Description for the specified mime
  * part if it exists or %NULL otherwise.
@@ -489,7 +495,7 @@ g_mime_part_get_content_description (const GMimePart *mime_part)
 
 /**
  * g_mime_part_set_content_id:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  * @content_id: content id
  *
  * Set the content id for the specified mime part.
@@ -505,7 +511,7 @@ g_mime_part_set_content_id (GMimePart *mime_part, const char *content_id)
 
 /**
  * g_mime_part_get_content_id:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Gets the content-id of the specified mime part if it exists, or
  * %NULL otherwise.
@@ -523,7 +529,7 @@ g_mime_part_get_content_id (GMimePart *mime_part)
 
 /**
  * g_mime_part_set_content_md5:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  * @content_md5: content md5 or %NULL to generate the md5 digest.
  *
  * Set the content md5 for the specified mime part.
@@ -542,8 +548,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 	
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->content_md5)
-		g_free (mime_part->content_md5);
+	g_free (mime_part->content_md5);
 	
 	if (!content_md5) {
 		/* compute a md5sum */
@@ -585,7 +590,7 @@ g_mime_part_set_content_md5 (GMimePart *mime_part, const char *content_md5)
 
 /**
  * g_mime_part_verify_content_md5:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Verify the content md5 for the specified mime part.
  *
@@ -644,7 +649,7 @@ g_mime_part_verify_content_md5 (GMimePart *mime_part)
 
 /**
  * g_mime_part_get_content_md5:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Gets the md5sum contained in the Content-Md5 header of the
  * specified mime part if it exists, or %NULL otherwise.
@@ -672,9 +677,10 @@ g_mime_part_set_content_location (GMimePart *mime_part, const char *content_loca
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (mime_part->content_location)
-		g_free (mime_part->content_location);
+	if (mime_part->content_location == content_location)
+		return;
 	
+	g_free (mime_part->content_location);
 	mime_part->content_location = g_strdup (content_location);
 	g_mime_header_list_set (GMIME_OBJECT (mime_part)->headers, "Content-Location", content_location);
 }
@@ -700,7 +706,7 @@ g_mime_part_get_content_location (GMimePart *mime_part)
 
 /**
  * g_mime_part_set_content_encoding:
- * @mime_part: a #GMimePart
+ * @mime_part: a #GMimePart object
  * @encoding: a #GMimeContentEncoding
  *
  * Set the content encoding for the specified mime part.
@@ -718,7 +724,7 @@ g_mime_part_set_content_encoding (GMimePart *mime_part, GMimeContentEncoding enc
 
 /**
  * g_mime_part_get_content_encoding:
- * @mime_part: a #GMimePart
+ * @mime_part: a #GMimePart object
  *
  * Gets the content encoding of the mime part.
  *
@@ -735,7 +741,7 @@ g_mime_part_get_content_encoding (GMimePart *mime_part)
 
 /**
  * g_mime_part_set_filename:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  * @filename: the filename of the Mime Part's content
  *
  * Sets the "filename" parameter on the Content-Disposition and also sets the
@@ -755,7 +761,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
 
 /**
  * g_mime_part_get_filename:
- * @mime_part: Mime part
+ * @mime_part: a #GMimePart object
  *
  * Gets the filename of the specificed mime part, or %NULL if the mime
  * part does not have the filename or name parameter set.
@@ -780,10 +786,20 @@ g_mime_part_get_filename (const GMimePart *mime_part)
 }
 
 
+static void
+set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
+{
+	if (mime_part->content)
+		g_object_unref (mime_part->content);
+	
+	mime_part->content = content;
+	g_object_ref (content);
+}
+
 /**
  * g_mime_part_set_content_object:
- * @mime_part: MIME Part
- * @content: content object
+ * @mime_part: a #GMimePart object
+ * @content: a #GMimeDataWrapper content object
  *
  * Sets the content object on the mime part.
  **/
@@ -792,19 +808,16 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 {
 	g_return_if_fail (GMIME_IS_PART (mime_part));
 	
-	if (content)
-		g_object_ref (content);
+	if (mime_part->content == content)
+		return;
 	
-	if (mime_part->content)
-		g_object_unref (mime_part->content);
-	
-	mime_part->content = content;
+	GMIME_PART_GET_CLASS (mime_part)->set_content_object (mime_part, content);
 }
 
 
 /**
  * g_mime_part_get_content_object:
- * @mime_part: MIME part object
+ * @mime_part: a #GMimePart object
  *
  * Gets the internal data-wrapper of the specified mime part, or %NULL
  * on error.

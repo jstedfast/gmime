@@ -57,6 +57,13 @@
  **/
 
 
+typedef struct _ContentType {
+	char *type, *subtype;
+	gboolean exists;
+} ContentType;
+
+extern void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
+
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);
 static void g_mime_parser_finalize (GObject *object);
@@ -64,9 +71,9 @@ static void g_mime_parser_finalize (GObject *object);
 static void parser_init (GMimeParser *parser, GMimeStream *stream);
 static void parser_close (GMimeParser *parser);
 
-static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
+static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type,
 						int *found);
-static GMimeObject *parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
+static GMimeObject *parser_construct_multipart (GMimeParser *parser, ContentType *content_type,
 						int *found);
 
 static GObjectClass *parent_class = NULL;
@@ -125,7 +132,6 @@ struct _GMimeParserPrivate {
 	unsigned short int persist_stream:1;
 	unsigned short int respect_content_length:1;
 	
-	GMimeContentType *content_type;
 	struct _header_raw *headers;
 	
 	struct _boundary_stack *bounds;
@@ -1029,16 +1035,49 @@ parser_step_headers (GMimeParser *parser)
 	return 0;
 }
 
-static GMimeContentType *
+static void
+content_type_destroy (ContentType *content_type)
+{
+	g_free (content_type->subtype);
+	g_free (content_type->type);
+	g_free (content_type);
+}
+
+static gboolean
+content_type_is_type (ContentType *content_type, const char *type, const char *subtype)
+{
+	if (!strcmp (type, "*") || !g_ascii_strcasecmp (content_type->type, type)) {
+		if (!strcmp (subtype, "*")) {
+			/* special case */
+			return TRUE;
+		}
+		
+		if (!g_ascii_strcasecmp (content_type->subtype, subtype))
+			return TRUE;
+	}
+	
+	return FALSE;
+}
+
+static ContentType *
 parser_content_type (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	const char *content_type;
+	register const char *inptr;
+	ContentType *content_type;
+	const char *value;
 	
-	if ((content_type = header_raw_find (priv->headers, "Content-Type", NULL)))
-		return g_mime_content_type_new_from_string (content_type);
+	content_type = g_new (ContentType, 1);
 	
-	return NULL;
+	if (!(value = header_raw_find (priv->headers, "Content-Type", NULL)) ||
+	    !g_mime_parse_content_type (&value, &content_type->type, &content_type->subtype)) {
+		content_type->type = g_strdup ("text");
+		content_type->subtype = g_strdup ("plain");
+	}
+	
+	content_type->exists = value != NULL;
+	
+	return content_type;
 }
 
 static int
@@ -1320,8 +1359,8 @@ static void
 parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	GMimeContentType *content_type;
 	struct _header_raw *header;
+	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
 	
@@ -1343,14 +1382,13 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 		header = header->next;
 	}
 	
-	if (!(content_type = parser_content_type (parser)))
-		content_type = g_mime_content_type_new ("text", "plain");
-	
-	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
+	content_type = parser_content_type (parser);
+	if (content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, found);
 	else
 		object = parser_construct_leaf_part (parser, content_type, found);
 	
+	content_type_destroy (content_type);
 	message->mime_part = object;
 	
 	g_mime_message_part_set_message (mpart, message);
@@ -1358,7 +1396,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 }
 
 static GMimeObject *
-parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type, int *found)
+parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _header_raw *header;
@@ -1368,6 +1406,14 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	
 	object = g_mime_object_new_type (content_type->type, content_type->subtype);
 	
+	if (!content_type->exists) {
+		GMimeContentType *mime_type;
+		
+		mime_type = g_mime_content_type_new ("text", "plain");
+		_g_mime_object_set_content_type (object, mime_type);
+		g_object_unref (mime_type);
+	}
+	
 	header = priv->headers;
 	while (header) {
 		g_mime_object_append_header (object, header->name, header->value);
@@ -1375,9 +1421,6 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeContentType *content_type,
 	}
 	
 	header_raw_clear (&priv->headers);
-	
-	g_mime_object_set_content_type (object, content_type);
-	g_object_unref (content_type);
 	
 	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
@@ -1468,7 +1511,7 @@ static int
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	GMimeContentType *content_type;
+	ContentType *content_type;
 	GMimeObject *subpart;
 	int found;
 	
@@ -1491,15 +1534,14 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 			break;
 		}
 		
-		if (!(content_type = parser_content_type (parser)))
-			content_type = g_mime_content_type_new ("text", "plain");
-		
-		if (g_mime_content_type_is_type (content_type, "multipart", "*"))
+		content_type = parser_content_type (parser);
+		if (content_type_is_type (content_type, "multipart", "*"))
 			subpart = parser_construct_multipart (parser, content_type, &found);
 		else
 			subpart = parser_construct_leaf_part (parser, content_type, &found);
 		
 		g_mime_multipart_add (multipart, subpart);
+		content_type_destroy (content_type);
 		g_object_unref (subpart);
 	} while (found == FOUND_BOUNDARY && found_immediate_boundary (priv, FALSE));
 	
@@ -1507,7 +1549,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 }
 
 static GMimeObject *
-parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type, int *found)
+parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	struct _header_raw *header;
@@ -1527,9 +1569,6 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_object_set_content_type (object, content_type);
-	g_object_unref (content_type);
-	
 	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
 	raw_header_reset (priv);
 	
@@ -1543,7 +1582,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeContentType *content_type,
 		}
 	}
 	
-	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
+	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
 	if (boundary) {
 		parser_push_boundary (parser, boundary);
 		
@@ -1573,7 +1612,7 @@ static GMimeObject *
 parser_construct_part (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	GMimeContentType *content_type;
+	ContentType *content_type;
 	GMimeObject *object;
 	int found;
 	
@@ -1583,13 +1622,13 @@ parser_construct_part (GMimeParser *parser)
 			return NULL;
 	}
 	
-	if (!(content_type = parser_content_type (parser)))
-		content_type = g_mime_content_type_new ("text", "plain");
-	
-	if (g_mime_content_type_is_type (content_type, "multipart", "*"))
+	content_type = parser_content_type (parser);
+	if (content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
 	else
 		object = parser_construct_leaf_part (parser, content_type, &found);
+	
+	content_type_destroy (content_type);
 	
 	return object;
 }
@@ -1617,8 +1656,8 @@ parser_construct_message (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	unsigned long content_length = ULONG_MAX;
-	GMimeContentType *content_type;
 	struct _header_raw *header;
+	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
 	char *endptr;
@@ -1655,14 +1694,13 @@ parser_construct_message (GMimeParser *parser)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
 	}
 	
-	if (!(content_type = parser_content_type (parser)))
-		content_type = g_mime_content_type_new ("text", "plain");
-	
-	if (content_type && g_mime_content_type_is_type (content_type, "multipart", "*"))
+	content_type = parser_content_type (parser);
+	if (content_type_is_type (content_type, "multipart", "*"))
 		object = parser_construct_multipart (parser, content_type, &found);
 	else
 		object = parser_construct_leaf_part (parser, content_type, &found);
 	
+	content_type_destroy (content_type);
 	message->mime_part = object;
 	
 	if (priv->scan_from) {

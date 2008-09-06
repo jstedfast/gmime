@@ -1,3 +1,50 @@
+2008-09-06  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-part.c (g_mime_part_set_content_object): Made
+	virtual, seems like it could be useful.
+
+	* gmime/gmime-object.c (set_content_type): Do not serialize the
+	GMimeContentType object to the headers. This is done elsewhere
+	now.
+	(g_mime_object_set_content_type): After calling the virtual
+	set_content_type(), serialize the GMimeContentType object to the
+	headers.
+
+	* gmime/gmime-multipart-encrypted.c: Get rid of the protocol
+	member variable, it's not needed.
+
+	* gmime/gmime-multipart-signed.c: Get rid of the protocol and
+	micalg member strings, these aren't needed - just request them
+	from the content_type.
+
+	* gmime/gmime-multipart.c: Get rid of boundary member variable, we
+	can just request it from the ContentType object. No sense
+	duplicating strings.
+
+	* gmime/gmime-message.c (message_get_headers): Don't write out a
+	MIME-Version header if a Content-Type header doesn't exist.
+
+	* gmime/gmime-parser.c (parser_content_type): Instead of returning
+	a GMimeContentType object, we now return a simpler ContentType
+	struct so that we don't waste time processing more of the header
+	than we need to, all we need is the type/subtype to figure out
+	which MIME object type to instantiate.
+	(parser_scan_message_part): After finishing parsing the object,
+	destroy the content_type ourselves.
+	(parser_construct_leaf_part): Updated. Don't set a
+	GMimeContentType on the GMimeObject unless the Content-Type header
+	doesn't exist (if it does exist, then appending the Content-Type
+	header will cause one to be created and set on the GMimeObject).
+	(parser_construct_multipart): Updated.
+
+	* gmime/gmime-content-type.c (g_mime_content_type_new_from_string):
+	Use the new g_mime_parse_content_type() utility function and set
+	the parsed string values on the new GMimeContentType object
+	directly to avoid unnecessary strdup()ing.
+
+	* gmime/gmime-parse-utils.c (g_mime_parse_content_type): New
+	function to parse the simple type/subtype Content-Type form.
+
 2008-08-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
@@ -64,7 +111,7 @@
 	(g_mime_part_set_content_header): Removed.
 	(g_mime_part_get_content_header): Removed.
 	(g_mime_part_set_filename): Don't need to pre-set a
-	ContentDisposition ob the object if it is NULL,
+	ContentDisposition on the object if it is NULL,
 	g_mime_object_set_content_disposition_parameter() will do that for
 	us.
 

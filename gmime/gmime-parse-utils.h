@@ -24,6 +24,8 @@
 
 G_BEGIN_DECLS
 
+gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
+
 void g_mime_decode_lwsp (const char **in);
 #define decode_lwsp(in) g_mime_decode_lwsp (in)
 

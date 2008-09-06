@@ -140,7 +140,6 @@ static void
 g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
 	multipart->children = g_ptr_array_new ();
-	multipart->boundary = NULL;
 	multipart->preface = NULL;
 	multipart->postface = NULL;
 }
@@ -151,7 +150,6 @@ g_mime_multipart_finalize (GObject *object)
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	guint i;
 	
-	g_free (multipart->boundary);
 	g_free (multipart->preface);
 	g_free (multipart->postface);
 	
@@ -219,13 +217,6 @@ multipart_remove_header (GMimeObject *object, const char *header)
 static void
 multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	GMimeMultipart *multipart = (GMimeMultipart *) object;
-	const char *boundary;
-	
-	boundary = g_mime_content_type_get_parameter (content_type, "boundary");
-	g_free (multipart->boundary);
-	multipart->boundary = g_strdup (boundary);
-	
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
@@ -240,6 +231,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	ssize_t nwritten, total = 0;
+	const char *boundary;
 	GMimeObject *part;
 	guint i;
 	
@@ -247,8 +239,11 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	 * header (in which case it should already be set... or if
 	 * not, then it's a broken multipart and so we don't want to
 	 * alter it or we'll completely break the output) */
-	if (!multipart->boundary && !g_mime_header_list_has_raw (object->headers))
+	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
+	if (!boundary && !g_mime_header_list_has_raw (object->headers)) {
 		g_mime_multipart_set_boundary (multipart, NULL);
+		boundary = g_mime_object_get_content_type_parameter (object, "boundary");
+	}
 	
 	/* write the content headers */
 	if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
@@ -274,7 +269,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", multipart->boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -287,8 +282,8 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	}
 	
 	/* write the end-boundary (but only if a boundary is set) */
-	if (multipart->boundary) {
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", multipart->boundary)) == -1)
+	if (boundary) {
+		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -763,9 +758,6 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		boundary = bbuf;
 	}
 	
-	g_free (multipart->boundary);
-	multipart->boundary = g_strdup (boundary);
-	
 	g_mime_object_set_content_type_parameter (GMIME_OBJECT (multipart), "boundary", boundary);
 }
 
@@ -790,10 +782,15 @@ g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 static const char *
 multipart_get_boundary (GMimeMultipart *multipart)
 {
-	if (!multipart->boundary)
-		multipart_set_boundary (multipart, NULL);
+	GMimeObject *object = (GMimeObject *) multipart;
+	const char *boundary;
 	
-	return multipart->boundary;
+	if ((boundary = g_mime_object_get_content_type_parameter (object, "boundary")))
+		return boundary;
+	
+	multipart_set_boundary (multipart, NULL);
+	
+	return g_mime_object_get_content_type_parameter (object, "boundary");
 }
 
 

@@ -39,6 +39,68 @@
 
 
 /**
+ * g_mime_parse_content_type:
+ * @in: address of input text string
+ * @type: address of the 'type' output string
+ * @subtype: address of the 'subtype' output string
+ *
+ * Decodes the simple Content-Type type/subtype tokens and updates @in
+ * to point to the first char after the end of the subtype.
+ *
+ * Returns: %TRUE if the string was successfully parsed or %FALSE
+ * otherwise.
+ **/
+gboolean
+g_mime_parse_content_type (const char **in, char **type, char **subtype)
+{
+	register const char *inptr;
+	const char *start = *in;
+	
+	decode_lwsp (&start);
+	inptr = start;
+	
+	/* decode the type */
+	while (*inptr && is_ttoken (*inptr))
+		inptr++;
+	
+	*type = g_strndup (start, (size_t) (inptr - start));
+	
+	start = inptr;
+	decode_lwsp (&start);
+	
+	/* check for type/subtype delimeter */
+	if (*start++ != '/') {
+		g_free (*type);
+		*subtype = NULL;
+		*type = NULL;
+		return FALSE;
+	}
+	
+	decode_lwsp (&start);
+	inptr = start;
+	
+	/* decode the subtype */
+	while (*inptr && is_ttoken (*inptr))
+		inptr++;
+	
+	/* check that the subtype exists */
+	if (inptr == start) {
+		g_free (*type);
+		*subtype = NULL;
+		*type = NULL;
+		return FALSE;
+	}
+	
+	*subtype = g_strndup (start, (size_t) (inptr - start));
+	
+	/* update the input string pointer */
+	*in = inptr;
+	
+	return TRUE;
+}
+
+
+/**
  * g_mime_decode_lwsp:
  * @in: address of input text string
  *

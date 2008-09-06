@@ -119,17 +119,13 @@ g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass)
 static void
 g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass)
 {
-	mps->protocol = NULL;
-	mps->micalg = NULL;
+	
 }
 
 static void
 g_mime_multipart_signed_finalize (GObject *object)
 {
 	GMimeMultipartSigned *mps = (GMimeMultipartSigned *) object;
-	
-	g_free (mps->protocol);
-	g_free (mps->micalg);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -167,17 +163,6 @@ multipart_signed_remove_header (GMimeObject *object, const char *header)
 static void
 multipart_signed_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	GMimeMultipartSigned *mps = (GMimeMultipartSigned *) object;
-	const char *protocol, *micalg;
-	
-	protocol = g_mime_content_type_get_parameter (content_type, "protocol");
-	g_free (mps->protocol);
-	mps->protocol = g_strdup (protocol);
-	
-	micalg = g_mime_content_type_get_parameter (content_type, "micalg");
-	g_free (mps->micalg);
-	mps->micalg = g_strdup (micalg);
-	
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
 
@@ -289,6 +274,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	GMimePart *signature;
 	GMimeFilter *filter;
 	GMimeParser *parser;
+	const char *micalg;
 	int rv;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), -1);
@@ -340,10 +326,10 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_mime_stream_reset (stream);
 	
 	/* set the multipart/signed protocol and micalg */
-	mps->protocol = g_strdup (ctx->sign_protocol);
-	mps->micalg = g_strdup (g_mime_cipher_context_hash_name (ctx, (GMimeCipherHash) rv));
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mps), "protocol", mps->protocol);
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mps), "micalg", mps->micalg);
+	content_type = g_mime_object_get_content_type (GMIME_OBJECT (mps));
+	g_mime_content_type_set_parameter (content_type, "protocol", ctx->sign_protocol);
+	micalg = g_strdup (g_mime_cipher_context_hash_name (ctx, (GMimeCipherHash) rv));
+	g_mime_content_type_set_parameter (content_type, "micalg", micalg);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mps), NULL);
 	
 	/* construct the content part */
@@ -353,7 +339,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_object_unref (parser);
 	
 	/* construct the signature part */
-	content_type = g_mime_content_type_new_from_string (mps->protocol);
+	content_type = g_mime_content_type_new_from_string (ctx->sign_protocol);
 	signature = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
@@ -366,7 +352,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* FIXME: temporary hack, this info should probably be set in
 	 * the CipherContext class - maybe ::sign can take/output a
 	 * GMimePart instead. */
-	if (!g_ascii_strcasecmp (mps->protocol, "application/pkcs7-signature")) {
+	if (!g_ascii_strcasecmp (ctx->sign_protocol, "application/pkcs7-signature")) {
 		g_mime_part_set_content_encoding (signature, GMIME_CONTENT_ENCODING_BASE64);
 		g_mime_part_set_filename (signature, "smime.p7m");
 	}
@@ -475,7 +461,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_mime_stream_reset (sigstream);
 	
 	/* verify the signature */
-	hash = g_mime_cipher_context_hash_id (ctx, mps->micalg);
+	hash = g_mime_cipher_context_hash_id (ctx, micalg);
 	valid = g_mime_cipher_context_verify (ctx, hash, stream, sigstream, err);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
