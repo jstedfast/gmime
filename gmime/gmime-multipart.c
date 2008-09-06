@@ -845,7 +845,7 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpo
  * Gets the mime part with the content-id @content_id from the
  * multipart @multipart.
  *
- * Returns: the GMimeObject whose content-id matches the search string,
+ * Returns: the #GMimeObject whose content-id matches the search string,
  * or %NULL if a match cannot be found.
  **/
 GMimeObject *
@@ -865,12 +865,13 @@ g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const c
 	for (i = 0; i < multipart->children->len; i++) {
 		subpart = multipart->children->pdata[i];
 		
+		if (subpart->content_id && !strcmp (subpart->content_id, content_id))
+			return subpart;
+		
 		if (GMIME_IS_MULTIPART (subpart)) {
 			mpart = (GMimeMultipart *) subpart;
 			if ((part = g_mime_multipart_get_subpart_from_content_id (mpart, content_id)))
 				return part;
-		} else if (subpart->content_id && !strcmp (subpart->content_id, content_id)) {
-			return subpart;
 		}
 	}
 	

@@ -1,5 +1,10 @@
 2008-09-06  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-multipart.c (g_mime_multipart_get_subpart_from_content_id):
+	Multiparts can have Content-Id's too.
+
+2008-09-06  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-part.c (g_mime_part_set_content_object): Made
 	virtual, seems like it could be useful.
 
