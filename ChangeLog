@@ -1,5 +1,10 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-charset.c (g_mime_charset_map_init): Create the
+	iconv_charsets hashtable using g_hash_table_new_full() so that we
+	don't have to call g_hash_table_foreach() before destroying it in
+	g_mime_charset_map_shutdown().
+
 	* gmime/gmime-gpg-context.c: Use g_hash_table_new_full() so that
 	we don't have to g_hash_table_foreach() to remove all user-id
 	hints before destroying the user-id hint hashtable.

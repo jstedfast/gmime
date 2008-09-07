@@ -174,14 +174,6 @@ static GStaticMutex charset_lock = G_STATIC_MUTEX_INIT;
 #endif /* G_THREADS_ENABLED */
 
 
-static void
-iconv_charset_free (gpointer key, gpointer value, gpointer user_data)
-{
-	g_free (key);
-	g_free (value);
-}
-
-
 /**
  * g_mime_charset_map_shutdown:
  *
@@ -193,7 +185,6 @@ g_mime_charset_map_shutdown (void)
 	if (!iconv_charsets)
 		return;
 	
-	g_hash_table_foreach (iconv_charsets, iconv_charset_free, NULL);
 	g_hash_table_destroy (iconv_charsets);
 	iconv_charsets = NULL;
 	
@@ -264,7 +255,7 @@ g_mime_charset_map_init (void)
 	if (iconv_charsets)
 		return;
 	
-	iconv_charsets = g_hash_table_new (g_str_hash, g_str_equal);
+	iconv_charsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	
 	for (i = 0; known_iconv_charsets[i].charset != NULL; i++) {
 		charset = g_ascii_strdown (known_iconv_charsets[i].charset, -1);
