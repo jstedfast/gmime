@@ -105,6 +105,14 @@
         <parameter type="const-char*" name="value" />
       </parameters>
     </callback>
+    <callback name="ObjectForeachFunc" cname="GMimeObjectForeachFunc">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="GMimeObject*" name="parent" />
+        <parameter type="GMimeObject*" name="part" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
     <callback name="ParserHeaderRegexFunc" cname="GMimeParserHeaderRegexFunc">
       <return-type type="void" />
       <parameters>
@@ -112,13 +120,6 @@
         <parameter type="const-char*" name="header" />
         <parameter type="const-char*" name="value" />
         <parameter type="gint64" name="offset" />
-        <parameter type="gpointer" name="user_data" />
-      </parameters>
-    </callback>
-    <callback name="PartFunc" cname="GMimePartFunc">
-      <return-type type="void" />
-      <parameters>
-        <parameter type="GMimeObject*" name="part" />
         <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
@@ -659,11 +660,11 @@
           <parameter type="const-char*" name="address" />
         </parameters>
       </method>
-      <method name="ForeachPart" cname="g_mime_message_foreach_part">
+      <method name="Foreach" cname="g_mime_message_foreach">
         <return-type type="void" />
         <parameters>
-          <parameter type="GMimePartFunc" name="callback" />
-          <parameter type="gpointer" name="data" />
+          <parameter type="GMimeObjectForeachFunc" name="callback" />
+          <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
       <method name="GetAllRecipients" cname="g_mime_message_get_all_recipients">
@@ -908,7 +909,7 @@
       <method name="Foreach" cname="g_mime_multipart_foreach">
         <return-type type="void" />
         <parameters>
-          <parameter type="GMimePartFunc" name="callback" />
+          <parameter type="GMimeObjectForeachFunc" name="callback" />
           <parameter type="gpointer" name="user_data" />
         </parameters>
       </method>
@@ -992,7 +993,6 @@
     <object name="MultipartEncrypted" cname="GMimeMultipartEncrypted" parent="GMimeMultipart">
       <field name="Validity" cname="validity" type="GMimeSignatureValidity*" />
       <field name="Decrypted" cname="decrypted" type="GMimeObject*" />
-      <field name="Protocol" cname="protocol" type="char*" />
       <method name="Decrypt" cname="g_mime_multipart_encrypted_decrypt">
         <return-type type="GMimeObject*" />
         <parameters>
@@ -1020,8 +1020,6 @@
       <constructor cname="g_mime_multipart_encrypted_new" />
     </object>
     <object name="MultipartSigned" cname="GMimeMultipartSigned" parent="GMimeMultipart">
-      <field name="Protocol" cname="protocol" type="char*" />
-      <field name="Micalg" cname="micalg" type="char*" />
       <method name="GetType" cname="g_mime_multipart_signed_get_type" shared="true">
         <return-type type="GType" />
       </method>
@@ -1200,7 +1198,7 @@
       <method name="SetContentType" cname="g_mime_object_set_content_type">
         <return-type type="void" />
         <parameters>
-          <parameter type="GMimeContentType*" name="mime_type" />
+          <parameter type="GMimeContentType*" name="content_type" />
         </parameters>
       </method>
       <method name="SetContentTypeParameter" cname="g_mime_object_set_content_type_parameter">
@@ -1310,6 +1308,13 @@
       <field name="ContentLocation" cname="content_location" type="char*" />
       <field name="ContentMd5" cname="content_md5" type="char*" />
       <field name="Content" cname="content" type="GMimeDataWrapper*" />
+      <virtual_method name="SetContentObject" cname="set_content_object">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimePart*" name="mime_part" />
+          <parameter type="GMimeDataWrapper*" name="content" />
+        </parameters>
+      </virtual_method>
       <method name="GetContentDescription" cname="g_mime_part_get_content_description">
         <return-type type="const-char*" />
       </method>
@@ -2677,6 +2682,14 @@
           <parameter type="guint" name="major" />
           <parameter type="guint" name="minor" />
           <parameter type="guint" name="micro" />
+        </parameters>
+      </method>
+      <method name="ParseContentType" cname="g_mime_parse_content_type" shared="true">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char**" name="in" />
+          <parameter type="char**" name="type" />
+          <parameter type="char**" name="subtype" />
         </parameters>
       </method>
       <method name="SetUserCharsets" cname="g_mime_set_user_charsets" shared="true">

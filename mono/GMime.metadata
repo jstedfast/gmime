@@ -12,6 +12,7 @@
   <!--<attr path="/api/namespace/*/*/*/parameter[@type='ssize_t*']" name="type">gint32*</attr>-->
 
   <!-- Global / Locale -->
+  <remove-node path="/api/namespace/class[@name='Global']/method[@name='ParseContentType']"/>
   <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
@@ -182,7 +183,7 @@
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_recipients']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_get_date']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_set_date']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_foreach_part']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMessage']/method[@cname='g_mime_message_foreach']"/>
 
   <!-- MessagePart -->
 
