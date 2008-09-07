@@ -1248,6 +1248,12 @@
       <method name="GetFromOffset" cname="g_mime_parser_get_from_offset">
         <return-type type="gint64" />
       </method>
+      <method name="GetHeadersBegin" cname="g_mime_parser_get_headers_begin">
+        <return-type type="gint64" />
+      </method>
+      <method name="GetHeadersEnd" cname="g_mime_parser_get_headers_end">
+        <return-type type="gint64" />
+      </method>
       <method name="GetPersistStream" cname="g_mime_parser_get_persist_stream">
         <return-type type="gboolean" />
       </method>

@@ -1044,6 +1044,8 @@ g_mime_parser_construct_part
 g_mime_parser_construct_message
 g_mime_parser_get_from
 g_mime_parser_get_from_offset
+g_mime_parser_get_headers_begin
+g_mime_parser_get_headers_end
 
 <SUBSECTION Private>
 g_mime_parser_get_type

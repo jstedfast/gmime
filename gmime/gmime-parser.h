@@ -110,6 +110,8 @@ gboolean g_mime_parser_eos (GMimeParser *parser);
 char *g_mime_parser_get_from (GMimeParser *parser);
 
 gint64 g_mime_parser_get_from_offset (GMimeParser *parser);
+gint64 g_mime_parser_get_headers_begin (GMimeParser *parser);
+gint64 g_mime_parser_get_headers_end (GMimeParser *parser);
 
 G_END_DECLS
 

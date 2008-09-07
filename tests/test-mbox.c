@@ -99,9 +99,9 @@ header_cb (GMimeParser *parser, const char *header, const char *value, gint64 of
 static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
+	gint64 headers_begin, headers_end, start, end;
 	GMimeMessage *message;
 	const char *exev;
-	gint64 start, end;
 	int nmsg = 0;
 	char *from;
 	
@@ -112,7 +112,12 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		
 		end = g_mime_parser_tell (parser);
 		
+		headers_begin = g_mime_parser_get_headers_begin (parser);
+		headers_end = g_mime_parser_get_headers_end (parser);
+		
 		g_mime_stream_printf (summary, "message offsets: %lld, %lld\n", start, end);
+		g_mime_stream_printf (summary, "header offsets: %lld, %lld\n",
+				      headers_begin, headers_end);
 		
 		from = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (summary, "%s\n", from);

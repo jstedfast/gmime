@@ -119,8 +119,12 @@ struct _GMimeParserPrivate {
 	char *rawptr;
 	size_t rawleft;
 	
-	gint64 headers_start;
-	gint64 header_start;
+	/* current message headerblock offsets */
+	gint64 headers_begin;
+	gint64 headers_end;
+	
+	/* current header field offset */
+	gint64 header_offset;
 	
 	short int state;
 	
@@ -331,8 +335,10 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->rawptr = priv->rawbuf;
 	priv->rawleft = SCAN_HEAD - 1;
 	
-	priv->headers_start = -1;
-	priv->header_start = -1;
+	priv->headers_begin = -1;
+	priv->headers_end = -1;
+	
+	priv->header_offset = -1;
 	
 	priv->midline = FALSE;
 	priv->seekable = offset != -1;
@@ -402,7 +408,7 @@ g_mime_parser_new_with_stream (GMimeStream *stream)
 
 /**
  * g_mime_parser_init_with_stream:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  * @stream: raw message or part stream
  *
  * Initializes @parser to use @stream.
@@ -434,7 +440,7 @@ g_mime_parser_init_with_stream (GMimeParser *parser, GMimeStream *stream)
 
 /**
  * g_mime_parser_get_persist_stream:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets whether or not the underlying stream is persistent.
  *
@@ -452,7 +458,7 @@ g_mime_parser_get_persist_stream (GMimeParser *parser)
 
 /**
  * g_mime_parser_set_persist_stream:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  * @persist: persist attribute
  *
  * Sets whether or not the @parser's underlying stream is persistent.
@@ -479,7 +485,7 @@ g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
 
 /**
  * g_mime_parser_get_scan_from:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets whether or not @parser is set to scan mbox-style From-lines.
  *
@@ -497,7 +503,7 @@ g_mime_parser_get_scan_from (GMimeParser *parser)
 
 /**
  * g_mime_parser_set_scan_from:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  * @scan_from: %TRUE to scan From-lines or %FALSE otherwise
  *
  * Sets whether or not @parser should scan mbox-style From-lines.
@@ -513,7 +519,7 @@ g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
 
 /**
  * g_mime_parser_get_respect_content_length:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets whether or not @parser is set to use Content-Length for
  * determining the offset of the end of the message.
@@ -532,7 +538,7 @@ g_mime_parser_get_respect_content_length (GMimeParser *parser)
 
 /**
  * g_mime_parser_set_respect_content_length:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  * @respect_content_length: %TRUE if the parser should use Content-Length headers or %FALSE otherwise.
  *
  * Sets whether or not @parser should respect Content-Length headers
@@ -553,7 +559,7 @@ g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_
 
 /**
  * g_mime_parser_set_header_regex:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  * @regex: regular expression
  * @header_cb: callback function
  * @user_data: user data
@@ -648,7 +654,7 @@ parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
 
 /**
  * g_mime_parser_tell:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets the current stream offset from the parser's internal stream.
  *
@@ -818,7 +824,7 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 	if (*inptr != ':') {
 		/* ignore invalid headers */
 		w(g_warning ("Invalid header at %lld: '%s'",
-			     (long long) priv->header_start,
+			     (long long) priv->header_offset,
 			     priv->headerbuf));
 		
 		priv->headerleft += priv->headerptr - priv->headerbuf;
@@ -850,7 +856,7 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 	
 	header->value = g_strndup (start, end - start);
 	
-	header->offset = priv->header_start;
+	header->offset = priv->header_offset;
 	
 	(*tail)->next = header;
 	*tail = header;
@@ -880,8 +886,10 @@ parser_step_headers (GMimeParser *parser)
 	raw_header_reset (priv);
 	header_raw_clear (&priv->headers);
 	hend = (struct _header_raw *) &priv->headers;
-	priv->headers_start = parser_offset (priv, NULL);
-	priv->header_start = parser_offset (priv, NULL);
+	priv->header_offset = parser_offset (priv, NULL);
+	
+	if (priv->headers_begin == -1)
+		priv->headers_begin = parser_offset (priv, NULL);
 	
 	inptr = priv->inptr;
 	inend = priv->inend;
@@ -904,7 +912,7 @@ parser_step_headers (GMimeParser *parser)
 			/* if we are scanning a new line, check for a folded header */
 			if (!priv->midline && continuation && (*inptr != ' ' && *inptr != '\t')) {
 				header_parse (parser, &hend);
-				priv->header_start = parser_offset (priv, inptr);
+				priv->header_offset = parser_offset (priv, inptr);
 				continuation = FALSE;
 				fieldname = TRUE;
 				valid = TRUE;
@@ -1012,6 +1020,9 @@ parser_step_headers (GMimeParser *parser)
 	if (priv->headerptr > priv->headerbuf)
 		header_parse (parser, &hend);
 	
+	if (priv->headers_end == -1)
+		priv->headers_end = parser_offset (priv, start);
+	
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
 	*priv->rawptr = '\0';
 	priv->inptr = inptr;
@@ -1020,6 +1031,9 @@ parser_step_headers (GMimeParser *parser)
 	
  next_message:
 	
+	if (priv->headers_end == -1)
+		priv->headers_end = parser_offset (priv, start);
+	
 	priv->state = GMIME_PARSER_STATE_COMPLETE;
 	*priv->rawptr = '\0';
 	priv->inptr = start;
@@ -1027,6 +1041,9 @@ parser_step_headers (GMimeParser *parser)
 	return 0;
 	
  content_start:
+	
+	if (priv->headers_end == -1)
+		priv->headers_end = parser_offset (priv, start);
 	
 	priv->state = GMIME_PARSER_STATE_CONTENT;
 	*priv->rawptr = '\0';
@@ -1124,12 +1141,16 @@ parser_step (GMimeParser *parser)
 	case GMIME_PARSER_STATE_ERROR:
 		break;
 	case GMIME_PARSER_STATE_INIT:
+		parser->priv->headers_begin = -1;
+		parser->priv->headers_end = -1;
 		if (priv->scan_from)
 			priv->state = GMIME_PARSER_STATE_FROM;
 		else
 			priv->state = GMIME_PARSER_STATE_HEADERS;
 		break;
 	case GMIME_PARSER_STATE_FROM:
+		parser->priv->headers_begin = -1;
+		parser->priv->headers_end = -1;
 		parser_step_from (parser);
 		break;
 	case GMIME_PARSER_STATE_HEADERS:
@@ -1636,7 +1657,7 @@ parser_construct_part (GMimeParser *parser)
 
 /**
  * g_mime_parser_construct_part:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Constructs a MIME part from @parser.
  *
@@ -1714,7 +1735,7 @@ parser_construct_message (GMimeParser *parser)
 
 /**
  * g_mime_parser_construct_message:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Constructs a MIME message from @parser.
  *
@@ -1731,7 +1752,7 @@ g_mime_parser_construct_message (GMimeParser *parser)
 
 /**
  * g_mime_parser_get_from:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets the mbox-style From-line of the most recently parsed message
  * (gotten from g_mime_parser_construct_message()).
@@ -1759,13 +1780,13 @@ g_mime_parser_get_from (GMimeParser *parser)
 
 /**
  * g_mime_parser_get_from_offset:
- * @parser: MIME parser object
+ * @parser: a #GMimeParser context
  *
  * Gets the offset of the most recently parsed mbox-style From-line
  * (gotten from g_mime_parser_construct_message()).
  *
  * Returns: the offset of the most recently parsed mbox-style From-line
- * or -1 on error.
+ * or %-1 on error.
  **/
 gint64
 g_mime_parser_get_from_offset (GMimeParser *parser)
@@ -1779,4 +1800,42 @@ g_mime_parser_get_from_offset (GMimeParser *parser)
 		return -1;
 	
 	return priv->from_offset;
+}
+
+
+/**
+ * g_mime_parser_get_headers_begin:
+ * @parser: a #GMimeParser context
+ *
+ * Gets the stream offset of the beginning of the headers of the most
+ * recently parsed message.
+ *
+ * Returns: the offset of the beginning of the headers of the most
+ * recently parsed message or %-1 on error.
+ **/
+gint64
+g_mime_parser_get_headers_begin (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
+	
+	return parser->priv->headers_begin;
+}
+
+
+/**
+ * g_mime_parser_get_headers_end:
+ * @parser: a #GMimeParser context
+ *
+ * Gets the stream offset of the end of the headers of the most
+ * recently parsed message.
+ *
+ * Returns: the offset of the end of the headers of the most recently
+ * parsed message or %-1 on error.
+ **/
+gint64
+g_mime_parser_get_headers_end (GMimeParser *parser)
+{
+	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
+	
+	return parser->priv->headers_end;
 }

@@ -1,5 +1,22 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	New feature needed by the Bongo project (seems DBMail could also
+	use this feature as they currently have a hack-around).
+
+	* tests/test-mbox.c: Output header offsets as well so that they
+	can be checked.
+
+	* gmime/gmime-parser.c (g_mime_parser_get_headers_begin): New
+	function to get the beginning offset of the message headers.
+	(g_mime_parser_get_headers_end): Same, but for the end offset.
+	(parser_step_headers): Only set priv->headers_begin and
+	priv->headers_end if they are set to -1, we don't want to
+	overwrite this value if parsing a subpart.
+	(parser_step): Reset priv->headers_begin and priv->headers_end
+	when appropriate.
+
+2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-charset.c (g_mime_charset_map_init): Create the
 	iconv_charsets hashtable using g_hash_table_new_full() so that we
 	don't have to call g_hash_table_foreach() before destroying it in
