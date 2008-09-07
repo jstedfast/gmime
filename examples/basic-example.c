@@ -131,27 +131,27 @@ parse_message (int fd)
 
 
 static void
-count_foreach_callback (GMimeObject *part, gpointer user_data)
+count_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
 	int *count = user_data;
 	
 	(*count)++;
 	
-	/* 'part' points to the current part node that g_mime_message_foreach_part() is iterating over */
+	/* 'part' points to the current part node that
+	 * g_mime_message_foreach() is iterating over */
 	
 	/* find out what class 'part' is... */
 	if (GMIME_IS_MESSAGE_PART (part)) {
 		/* message/rfc822 or message/news */
 		GMimeMessage *message;
 		
-		/* g_mime_message_foreach_part() won't descend into
+		/* g_mime_message_foreach() won't descend into
                    child message parts, so if we want to count any
                    subparts of this child message, we'll have to call
-                   g_mime_message_foreach_part() again here. */
+                   g_mime_message_foreach() again here. */
 		
 		message = g_mime_message_part_get_message ((GMimeMessagePart *) part);
-		g_mime_message_foreach_part (message, count_foreach_callback, count);
-		g_object_unref (message);
+		g_mime_message_foreach (message, count_foreach_callback, count);
 	} else if (GMIME_IS_MESSAGE_PARTIAL (part)) {
 		/* message/partial */
 		
@@ -162,11 +162,15 @@ count_foreach_callback (GMimeObject *part, gpointer user_data)
                    piece this back together again once we get all the
                    parts? */
 	} else if (GMIME_IS_MULTIPART (part)) {
-		/* multipart/mixed, multipart/alternative, multipart/related, multipart/signed, multipart/encrypted, etc... */
+		/* multipart/mixed, multipart/alternative,
+		 * multipart/related, multipart/signed,
+		 * multipart/encrypted, etc... */
 		
-		/* we'll get to finding out if this is a signed/encrypted multipart later... */
+		/* we'll get to finding out if this is a
+		 * signed/encrypted multipart later... */
 	} else if (GMIME_IS_PART (part)) {
-		/* a normal leaf part, could be text/plain or image/jpeg etc */
+		/* a normal leaf part, could be text/plain or
+		 * image/jpeg etc */
 	} else {
 		g_assert_not_reached ();
 	}
@@ -177,14 +181,15 @@ count_parts_in_message (GMimeMessage *message)
 {
 	int count = 0;
 	
-	/* count the number of parts (recursively) in the message including the container multiparts */
-	g_mime_message_foreach_part (message, count_foreach_callback, &count);
+	/* count the number of parts (recursively) in the message
+	 * including the container multiparts */
+	g_mime_message_foreach (message, count_foreach_callback, &count);
 	
 	printf ("There are %d parts in the message\n", count);
 }
 
 static void
-verify_foreach_callback (GMimeObject *part, gpointer user_data)
+verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
 	GMimeCipherContext *ctx = user_data;
 	
@@ -235,7 +240,7 @@ static void
 verify_signed_parts (GMimeMessage *message, GMimeCipherContext *ctx)
 {
 	/* descend the mime tree and verify any signed parts */
-	g_mime_message_foreach_part (message, verify_foreach_callback, ctx);
+	g_mime_message_foreach (message, verify_foreach_callback, ctx);
 }
 
 static void

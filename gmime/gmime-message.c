@@ -1458,21 +1458,21 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 
 
 /**
- * g_mime_message_foreach_part:
- * @message: MIME message
+ * g_mime_message_foreach:
+ * @message: a #GMimeMessage
  * @callback: function to call on each of the mime parts contained by the mime message
- * @data: extra data to pass to the callback
+ * @user_data: user-supplied callback data
  *
- * Calls @callback on each of the mime parts in the mime message.
+ * Recursively calls @callback on each of the mime parts in the mime message.
  **/
 void
-g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data)
+g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback, gpointer user_data)
 {
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (callback != NULL);
 	
+	callback ((GMimeObject *) message, message->mime_part, user_data);
+	
 	if (GMIME_IS_MULTIPART (message->mime_part))
-		g_mime_multipart_foreach (GMIME_MULTIPART (message->mime_part), callback, data);
-	else
-		callback (message->mime_part, data);
+		g_mime_multipart_foreach ((GMimeMultipart *) message->mime_part, callback, user_data);
 }

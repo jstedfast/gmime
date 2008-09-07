@@ -813,27 +813,37 @@ g_mime_multipart_get_boundary (GMimeMultipart *multipart)
 }
 
 
-/**
- * g_mime_multipart_foreach: 
- * @multipart: a multipart
- * @callback: function to call for @multipart and all of its subparts
- * @user_data: extra data to pass to the callback
- * 
- * Calls @callback on each of @multipart's subparts.
- **/
-void
-g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data)
+static void
+multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback, gpointer user_data)
 {
 	GMimeObject *part;
 	guint i;
 	
+	for (i = 0; i < multipart->children->len; i++) {
+		part = (GMimeObject *) multipart->children->pdata[i];
+		callback ((GMimeObject *) multipart, part, user_data);
+		
+		if (GMIME_IS_MULTIPART (part))
+			multipart_foreach ((GMimeMultipart *) part, callback, user_data);
+	}
+}
+
+
+/**
+ * g_mime_multipart_foreach: 
+ * @multipart: a #GMimeMultipart
+ * @callback: function to call for each of @multipart's subparts.
+ * @user_data: user-supplied callback data
+ * 
+ * Recursively calls @callback on each of @multipart's subparts.
+ **/
+void
+g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback, gpointer user_data)
+{
 	g_return_if_fail (GMIME_IS_MULTIPART (multipart));
 	g_return_if_fail (callback != NULL);
 	
-	for (i = 0; i < multipart->children->len; i++) {
-		part = multipart->children->pdata[i];
-		callback (part, user_data);
-	}
+	multipart_foreach (multipart, callback, user_data);
 }
 
 

@@ -80,14 +80,15 @@ struct _GMimeObjectClass {
 
 
 /**
- * GMimePartFunc:
- * @part: A MIME part.
+ * GMimeObjectForeachFunc:
+ * @parent: parent #GMimeObject
+ * @part: a #GMimeObject
  * @user_data: User-supplied callback data.
  *
- * The function signature for a callback to
- * g_mime_message_foreach_part() and g_mime_multipart_foreach().
+ * The function signature for a callback to g_mime_message_foreach()
+ * and g_mime_multipart_foreach().
  **/
-typedef void (* GMimePartFunc) (GMimeObject *part, gpointer user_data);
+typedef void (* GMimeObjectForeachFunc) (GMimeObject *parent, GMimeObject *part, gpointer user_data);
 
 
 GType g_mime_object_get_type (void);

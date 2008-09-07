@@ -120,7 +120,8 @@ const char *g_mime_message_get_message_id (GMimeMessage *message);
 GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
 
-void g_mime_message_foreach_part (GMimeMessage *message, GMimePartFunc callback, gpointer data);
+void g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback,
+			     gpointer user_data);
 
 G_END_DECLS
 

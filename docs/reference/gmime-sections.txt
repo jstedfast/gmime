@@ -666,7 +666,7 @@ GMimeContentDispositionClass
 <SECTION>
 <FILE>gmime-object</FILE>
 GMimeObject
-GMimePartFunc
+GMimeObjectForeachFunc
 g_mime_object_register_type
 g_mime_object_new
 g_mime_object_new_type
@@ -838,7 +838,7 @@ g_mime_message_set_message_id
 g_mime_message_get_message_id
 g_mime_message_set_mime_part
 g_mime_message_get_mime_part
-g_mime_message_foreach_part
+g_mime_message_foreach
 
 <SUBSECTION Private>
 g_mime_message_get_type

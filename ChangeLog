@@ -1,3 +1,13 @@
+2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* examples/basic-example.c: Updated for the foreach() changes.
+
+	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Changed to
+	be recursive. The callback function signature has changed a bit to
+	be more useful as well by providing the parent MIME object.
+
+	* gmime/gmime-message.c (g_mime_message_foreach): Same.
+
 2008-09-06  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart.c (g_mime_multipart_get_subpart_from_content_id):

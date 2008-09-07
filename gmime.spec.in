@@ -24,7 +24,7 @@ Copyright: LGPL
 Group: Development/Libraries
 URL: http://spruce.sourceforge.net/gmime/
 
-Source: http://spruce.sourceforge.net/gmime/sources/v2.4/gmime-%{version}.tar.gz
+Source: ftp://ftp.gnome.org/pub/GNOME/sources/gmime/2.4/gmime-%{version}.tar.bz2
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
 Requires: glib2 >= 2.0.0

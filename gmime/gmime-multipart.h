@@ -105,7 +105,8 @@ int g_mime_multipart_get_count (GMimeMultipart *multipart);
 void g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 const char *g_mime_multipart_get_boundary (GMimeMultipart *multipart);
 
-void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimePartFunc callback, gpointer user_data);
+void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback,
+			       gpointer user_data);
 
 GMimeObject *g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart,
 							   const char *content_id);
