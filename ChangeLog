@@ -1,5 +1,11 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.9
+
+2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
+
 	New feature needed by the Bongo project (seems DBMail could also
 	use this feature as they currently have a hack-around).
 
