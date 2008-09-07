@@ -313,7 +313,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->mode = GPG_CTX_MODE_SIGN;
 	gpg->session = session;
 	g_object_ref (session);
-	gpg->userid_hint = g_hash_table_new (g_str_hash, g_str_equal);
+	gpg->userid_hint = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	gpg->complete = FALSE;
 	gpg->seen_eof1 = TRUE;
 	gpg->seen_eof2 = FALSE;
@@ -470,13 +470,6 @@ gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 }
 
 static void
-userid_hint_free (gpointer key, gpointer value, gpointer user_data)
-{
-	g_free (key);
-	g_free (value);
-}
-
-static void
 gpg_ctx_free (struct _GpgCtx *gpg)
 {
 	GMimeSigner *signer, *next;
@@ -485,7 +478,6 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	if (gpg->session)
 		g_object_unref (gpg->session);
 	
-	g_hash_table_foreach (gpg->userid_hint, userid_hint_free, NULL);
 	g_hash_table_destroy (gpg->userid_hint);
 	
 	g_free (gpg->path);

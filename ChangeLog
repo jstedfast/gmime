@@ -1,5 +1,9 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c: Use g_hash_table_new_full() so that
+	we don't have to g_hash_table_foreach() to remove all user-id
+	hints before destroying the user-id hint hashtable.
+
 	* util/cache.c: Updated to use GSlice instead of a custom MemChunk
 	allocator.
 
