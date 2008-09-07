@@ -27,7 +27,6 @@
 #include <sys/types.h>
 
 #include <util/list.h>
-#include <util/memchunk.h>
 
 G_BEGIN_DECLS
 
@@ -46,7 +45,7 @@ struct _Cache {
 	List list;
 	size_t size;
 	size_t max_size;
-	MemChunk *node_chunks;
+	size_t node_size;
 	GHashTable *node_hash;
 	CacheNodeExpireFunc expire;
 	CacheNodeFreeFunc free_node;
