@@ -141,7 +141,7 @@ g_trie_new (gboolean icase)
 	trie->root.match = NULL;
 	trie->root.final = 0;
 	
-	trie->fail_states = g_ptr_array_sized_new (8);
+	trie->fail_states = g_ptr_array_new ();
 	trie->icase = icase;
 	
 	return trie;
