@@ -27,7 +27,6 @@
 #include <string.h>
 
 #include "gtrie.h"
-#include "memchunk.h"
 
 #define d(x)
 
@@ -49,10 +48,42 @@ struct _GTrie {
 	struct _trie_state root;
 	GPtrArray *fail_states;
 	gboolean icase;
-	
-	MemChunk *match_chunks;
-	MemChunk *state_chunks;
 };
+
+static void trie_match_free (struct _trie_match *match);
+static void trie_state_free (struct _trie_state *state);
+
+static struct _trie_match *
+trie_match_new (void)
+{
+	return g_slice_new (struct _trie_match);
+}
+
+static void
+trie_match_free (struct _trie_match *match)
+{
+	struct _trie_match *next;
+	
+	while (match) {
+		next = match->next;
+		trie_state_free (match->state);
+		g_slice_free (struct _trie_match, match);
+		match = next;
+	}
+}
+
+static struct _trie_state *
+trie_state_new (void)
+{
+	return g_slice_new (struct _trie_state);
+}
+
+static void
+trie_state_free (struct _trie_state *state)
+{
+	trie_match_free (state->match);
+	g_slice_free (struct _trie_state, state);
+}
 
 
 static inline gunichar
@@ -113,18 +144,15 @@ g_trie_new (gboolean icase)
 	trie->fail_states = g_ptr_array_sized_new (8);
 	trie->icase = icase;
 	
-	trie->match_chunks = memchunk_new (sizeof (struct _trie_match), 8, FALSE);
-	trie->state_chunks = memchunk_new (sizeof (struct _trie_state), 8, FALSE);
-	
 	return trie;
 }
+
 
 void
 g_trie_free (GTrie *trie)
 {
 	g_ptr_array_free (trie->fail_states, TRUE);
-	memchunk_destroy (trie->match_chunks);
-	memchunk_destroy (trie->state_chunks);
+	trie_match_free (trie->root.match);
 	g_free (trie);
 }
 
@@ -146,12 +174,12 @@ trie_insert (GTrie *trie, int depth, struct _trie_state *q, gunichar c)
 {
 	struct _trie_match *m;
 	
-	m = memchunk_alloc (trie->match_chunks);
+	m = trie_match_new ();
 	m->next = q->match;
 	m->c = c;
 	
 	q->match = m;
-	q = m->state = memchunk_alloc (trie->state_chunks);
+	q = m->state = trie_state_new ();
 	q->match = NULL;
 	q->fail = &trie->root;
 	q->final = 0;
@@ -382,13 +410,14 @@ int main (int argc, char **argv)
 {
 	const char *match;
 	GTrie *trie;
-	int id, i;
+	guint i;
+	int id;
 	
 	trie = g_trie_new (TRUE);
-	for (i = 0; i < (sizeof (patterns) / sizeof (patterns[0])); i++)
+	for (i = 0; i < G_N_ELEMENTS (patterns); i++)
 		g_trie_add (trie, patterns[i], i);
 	
-	for (i = 0; i < (sizeof (haystacks) / sizeof (haystacks[0])); i++) {
+	for (i = 0; i < G_N_ELEMENTS (haystacks); i++) {
 		if ((match = g_trie_search (trie, haystacks[i], -1, &id))) {
 			fprintf (stderr, "matched @ '%s' with pattern '%s'\n", match, patterns[id]);
 		} else {

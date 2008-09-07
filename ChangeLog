@@ -1,5 +1,9 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* util/gtrie.c: Updated to use GSlice instead of my custom
+	MemChunk. The main purpose of using MemChunk had been for ease of
+	cleanup, but it made it more difficult to use GTrie elsewhere.
+
 	* examples/basic-example.c: Updated for the foreach() changes.
 
 	* gmime/gmime-multipart.c (g_mime_multipart_foreach): Changed to
