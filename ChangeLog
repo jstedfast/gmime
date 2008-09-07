@@ -30,8 +30,9 @@
 	allocator.
 
 	* util/gtrie.c: Updated to use GSlice instead of my custom
-	MemChunk. The main purpose of using MemChunk had been for ease of
-	cleanup, but it made it more difficult to use GTrie elsewhere.
+	MemChunk. The main purpose for using the MemChunk allocator had
+	been ease of cleanup, but it made it more difficult to use GTrie
+	elsewhere.
 
 	* examples/basic-example.c: Updated for the foreach() changes.
 
