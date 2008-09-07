@@ -20,8 +20,6 @@ libutil_la_SOURCES =			\
 	list.h				\
 	md5-utils.c			\
 	md5-utils.h			\
-	memchunk.c			\
-	memchunk.h			\
 	url-scanner.c			\
 	url-scanner.h
 

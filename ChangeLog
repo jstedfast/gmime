@@ -1,5 +1,9 @@
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* util/memchunk.[c,h]: Removed. No longer used.
+
+2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.3.9
