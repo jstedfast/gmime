@@ -92,7 +92,7 @@ g_mime_header_new (const char *name, const char *value, gint64 offset)
 {
 	GMimeHeader *header;
 	
-	header = g_new (GMimeHeader, 1);
+	header = g_slice_new (GMimeHeader);
 	header->name = g_strdup (name);
 	header->value = g_strdup (value);
 	/*header->offset = offset;*/
@@ -114,7 +114,8 @@ g_mime_header_free (GMimeHeader *header)
 {
 	g_free (header->name);
 	g_free (header->value);
-	g_free (header);
+	
+	g_slice_free (GMimeHeader, header);
 }
 
 
@@ -654,16 +655,19 @@ g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
  * @name: header name
  * @value: header value
  *
- * Set the value of the first header with the name specified. If
- * @value is %NULL and the header, @name, had not been previously set,
- * a space will be set aside for it (useful for setting the order of
- * headers before values can be obtained for them) otherwise the
- * header will be unset.
+ * Set the value of the specified header. If @value is %NULL and the
+ * header, @name, had not been previously set, a space will be set
+ * aside for it (useful for setting the order of headers before values
+ * can be obtained for them) otherwise the header will be unset.
+ *
+ * Note: If there are multiple headers with the specified field name,
+ * the first instance of the header will be replaced and further
+ * instances will be removed.
  **/
 void
 g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
 {
-	GMimeHeader *header;
+	GMimeHeader *header, *next;
 	
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
@@ -671,6 +675,20 @@ g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *
 	if ((header = g_hash_table_lookup (headers->hash, name))) {
 		g_free (header->value);
 		header->value = g_strdup (value);
+		
+		header = header->next;
+		while (header->next) {
+			next = header->next;
+			
+			if (!g_ascii_strcasecmp (header->name, name)) {
+				/* remove/free the header */
+				list_unlink ((ListNode *) header);
+				g_mime_header_free (header);
+				headers->version++;
+			}
+			
+			header = next;
+		}
 	} else {
 		header = g_mime_header_new (name, value, -1);
 		list_append (&headers->list, (ListNode *) header);

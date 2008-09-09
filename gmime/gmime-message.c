@@ -662,19 +662,6 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	return n;
 }
 
-static void
-message_add_recipients_from_string (GMimeMessage *message, GMimeRecipientType type, const char *str)
-{
-	InternetAddressList *recipients, *addrlist;
-	
-	recipients = g_mime_message_get_recipients (message, type);
-	
-	if ((addrlist = internet_address_list_parse_string (str))) {
-		internet_address_list_concat (recipients, addrlist);
-		g_object_unref (addrlist);
-	}
-}
-
 enum {
 	HEADER_FROM,
 	HEADER_REPLY_TO,
@@ -698,8 +685,39 @@ static const char *message_headers[] = {
 	"Message-Id",
 };
 
+enum {
+	PREPEND,
+	APPEND,
+	SET
+};
+
+static void
+message_add_recipients_from_string (GMimeMessage *message, int action, GMimeRecipientType type, const char *str)
+{
+	InternetAddressList *recipients, *addrlist;
+	InternetAddress *ia;
+	int count, i;
+	
+	recipients = g_mime_message_get_recipients (message, type);
+	
+	if (action == SET)
+		internet_address_list_clear (recipients);
+	
+	if ((addrlist = internet_address_list_parse_string (str))) {
+		count = internet_address_list_length (addrlist);
+		for (i = 0; i < count; i++) {
+			ia = internet_address_list_get_address (addrlist, i);
+			if (action == PREPEND)
+				internet_address_list_insert (recipients, i, ia);
+			else
+				internet_address_list_add (recipients, ia);
+		}
+		g_object_unref (addrlist);
+	}
+}
+
 static gboolean
-process_header (GMimeObject *object, const char *header, const char *value)
+process_header (GMimeObject *object, int action, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;	
 	InternetAddressList *addrlist;
@@ -733,17 +751,17 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		break;
 	case HEADER_TO:
 		block_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
-		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_TO, value);
+		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_TO, value);
 		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
 		break;
 	case HEADER_CC:
 		block_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
-		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_CC, value);
+		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_CC, value);
 		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
 		break;
 	case HEADER_BCC:
 		block_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
-		message_add_recipients_from_string (message, GMIME_RECIPIENT_TYPE_BCC, value);
+		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_BCC, value);
 		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
@@ -781,7 +799,7 @@ message_prepend_header (GMimeObject *object, const char *header, const char *val
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		return;
 	
-	if (!process_header (object, header, value))
+	if (!process_header (object, PREPEND, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
 	else
 		g_mime_header_list_prepend (object->headers, header, value);
@@ -803,7 +821,7 @@ message_append_header (GMimeObject *object, const char *header, const char *valu
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		return;
 	
-	if (!process_header (object, header, value))
+	if (!process_header (object, APPEND, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
 	else
 		g_mime_header_list_append (object->headers, header, value);
@@ -825,7 +843,7 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
 		return;
 	
-	if (!process_header (object, header, value))
+	if (!process_header (object, SET, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
 	else
 		g_mime_header_list_set (object->headers, header, value);

@@ -1,3 +1,20 @@
+2008-09-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (message_add_recipients_from_string):
+	Prepend, append, or set the addresses in the recipients list
+	depending on the new 'action' argument.
+	(process_header): Pass along our 'action' to
+	message_add_recipients_from_string().
+	(message_prepend_header): Pass PREPEND as the action argument to
+	process_header().
+	(message_append_header): Pass APPEND as the action argument to
+	process_header().
+	(message_set_header): Pass SET as the action argument to
+	process_header().
+
+	* gmime/gmime-header.c (g_mime_header_list_set): If there is more
+	than a single header with the specified name, remove them.
+
 2008-09-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* util/memchunk.[c,h]: Removed. No longer used.
