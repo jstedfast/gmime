@@ -594,7 +594,7 @@ g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 
 
 static ssize_t
-parser_fill (GMimeParser *parser)
+parser_fill (GMimeParser *parser, size_t atleast)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	char *inbuf, *inptr, *inend;
@@ -607,6 +607,9 @@ parser_fill (GMimeParser *parser)
 	inlen = inend - inptr;
 	
 	g_assert (inptr <= inend);
+	
+	if (inlen > atleast)
+		return inlen;
 	
 	/* attempt to align 'inend' with realbuf + SCAN_HEAD */
 	if (inptr >= inbuf) {
@@ -628,7 +631,7 @@ parser_fill (GMimeParser *parser)
 	
 	priv->inptr = inptr;
 	priv->inend = inbuf;
-	inend = priv->realbuf + SCAN_HEAD + SCAN_BUF - 1;
+	inend = priv->realbuf + SCAN_HEAD + SCAN_BUF;
 	
 	if ((nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf)) > 0)
 		priv->inend += nread;
@@ -707,7 +710,7 @@ parser_step_from (GMimeParser *parser)
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= left) {
+		if (parser_fill (parser, MAX (SCAN_HEAD, left)) <= left) {
 			/* failed to find a From line; EOF reached */
 			priv->state = GMIME_PARSER_STATE_ERROR;
 			priv->inptr = priv->inend;
@@ -896,7 +899,7 @@ parser_step_headers (GMimeParser *parser)
 	
 	do {
 	refill:
-		if (parser_fill (parser) <= left)
+		if (parser_fill (parser, MAX (SCAN_HEAD, left)) <= left)
 			break;
 		
 		inptr = priv->inptr;
@@ -1118,7 +1121,7 @@ parser_skip_line (GMimeParser *parser)
 		
 		priv->inptr = inptr;
 		
-		if (parser_fill (parser) <= 0) {
+		if (parser_fill (parser, SCAN_HEAD) <= 0) {
 			inptr = priv->inptr;
 			rv = -1;
 			break;
@@ -1242,6 +1245,10 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
  * job correctly ;-)
  **/
 
+
+/* we add 2 for \r\n */
+#define MAX_BOUNDARY_LEN(bounds) (bounds ? bounds->boundarylenmax + 2 : 0)
+
 static int
 parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 {
@@ -1249,6 +1256,7 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 	register char *inptr;
 	char *start, *inend;
 	size_t nleft, len;
+	size_t atleast;
 	int found = 0;
 	
 	d(printf ("scan-content\n"));
@@ -1259,10 +1267,13 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
 	
 	start = inptr = priv->inptr;
 	
+	/* figure out minimum amount of data we need */
+	atleast = MAX (SCAN_HEAD, MAX_BOUNDARY_LEN (priv->bounds));
+	
 	do {
 	refill:
 		nleft = priv->inend - inptr;
-		if (parser_fill (parser) <= 0) {
+		if (parser_fill (parser, atleast) <= 0) {
 			start = priv->inptr;
 			found = FOUND_EOS;
 			break;

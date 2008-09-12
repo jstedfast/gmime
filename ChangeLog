@@ -1,3 +1,17 @@
+2008-09-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	I/O Optimization
+
+	* gmime/gmime-parser.c (parser_fill): Now takes an 'atleast'
+	argument which we use to decide whether we should bother calling
+	read() or not. If we have more than 'atleast' bytes left in our
+	buffer, we don't read.
+	(parser_scan_content): Take advantage of the 'atleast' argument to
+	parser_fill().
+	(parser_step_headers): Same.
+	(parser_step_from): Here too.
+	(parser_skip_line): And here.
+
 2008-09-08  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (message_add_recipients_from_string):
