@@ -244,7 +244,7 @@ g_mime_filter_best_new (GMimeFilterBestFlags flags)
 {
 	GMimeFilterBest *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_BEST, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_BEST, 0, NULL);
 	new->flags = flags;
 	filter_reset ((GMimeFilter *) new);
 	

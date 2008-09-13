@@ -419,7 +419,7 @@ g_mime_part_new (void)
 	GMimeContentType *content_type;
 	GMimePart *mime_part;
 	
-	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
+	mime_part = g_object_newv (GMIME_TYPE_PART, 0, NULL);
 	
 	content_type = g_mime_content_type_new ("text", "plain");
 	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);
@@ -444,7 +444,7 @@ g_mime_part_new_with_type (const char *type, const char *subtype)
 	GMimeContentType *content_type;
 	GMimePart *mime_part;
 	
-	mime_part = g_object_new (GMIME_TYPE_PART, NULL);
+	mime_part = g_object_newv (GMIME_TYPE_PART, 0, NULL);
 	
 	content_type = g_mime_content_type_new (type, subtype);
 	g_mime_object_set_content_type (GMIME_OBJECT (mime_part), content_type);

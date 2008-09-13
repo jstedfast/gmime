@@ -232,7 +232,7 @@ g_mime_filter_crlf_new (gboolean encode, gboolean dots)
 {
 	GMimeFilterCRLF *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_CRLF, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_CRLF, 0, NULL);
 	new->encode = encode;
 	new->dots = dots;
 	

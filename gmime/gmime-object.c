@@ -344,7 +344,7 @@ g_mime_object_new (GMimeContentType *content_type)
 			return NULL;
 	}
 	
-	object = g_object_new (obj_type, NULL);
+	object = g_object_newv (obj_type, 0, NULL);
 	
 	g_mime_object_set_content_type (object, content_type);
 	
@@ -372,7 +372,6 @@ g_mime_object_new_type (const char *type, const char *subtype)
 {
 	struct _type_bucket *bucket;
 	struct _subtype_bucket *sub;
-	GMimeObject *object;
 	GType obj_type;
 	
 	g_return_val_if_fail (type != NULL, NULL);
@@ -400,9 +399,7 @@ g_mime_object_new_type (const char *type, const char *subtype)
 			return NULL;
 	}
 	
-	object = g_object_new (obj_type, NULL);
-	
-	return object;
+	return g_object_newv (obj_type, 0, NULL);
 }
 
 

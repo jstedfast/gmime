@@ -378,11 +378,7 @@ parser_close (GMimeParser *parser)
 GMimeParser *
 g_mime_parser_new (void)
 {
-	GMimeParser *parser;
-	
-	parser = g_object_new (GMIME_TYPE_PARSER, NULL);
-	
-	return parser;
+	return g_object_newv (GMIME_TYPE_PARSER, 0, NULL);
 }
 
 
@@ -1232,7 +1228,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		d(printf ("'%.*s' not a boundary\n", len, start));
 	}
 	
-	return 0;
+	return FOUND_NOTHING;
 }
 
 /* Optimization Notes:

@@ -185,7 +185,7 @@ g_mime_filter_windows_new (const char *claimed_charset)
 	
 	g_return_val_if_fail (claimed_charset != NULL, NULL);
 	
-	new = g_object_new (GMIME_TYPE_FILTER_WINDOWS, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_WINDOWS, 0, NULL);
 	new->claimed_charset = g_strdup (claimed_charset);
 	
 	return (GMimeFilter *) new;

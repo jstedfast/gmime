@@ -117,7 +117,7 @@ g_mime_data_wrapper_finalize (GObject *object)
 GMimeDataWrapper *
 g_mime_data_wrapper_new (void)
 {
-	return (GMimeDataWrapper *) g_object_new (GMIME_TYPE_DATA_WRAPPER, NULL);
+	return g_object_newv (GMIME_TYPE_DATA_WRAPPER, 0, NULL);
 }
 
 

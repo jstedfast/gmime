@@ -302,7 +302,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
+	fstream = g_object_newv (GMIME_TYPE_STREAM_FILE, 0, NULL);
 	g_mime_stream_construct (GMIME_STREAM (fstream), start, end);
 	fstream->owner = FALSE;
 	fstream->fp = GMIME_STREAM_FILE (stream)->fp;
@@ -331,7 +331,7 @@ g_mime_stream_file_new (FILE *fp)
 	if ((start = ftell (fp)) == -1)
 		start = 0;
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
+	fstream = g_object_newv (GMIME_TYPE_STREAM_FILE, 0, NULL);
 	g_mime_stream_construct (GMIME_STREAM (fstream), start, -1);
 	fstream->owner = TRUE;
 	fstream->fp = fp;
@@ -359,7 +359,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
 	
-	fstream = g_object_new (GMIME_TYPE_STREAM_FILE, NULL);
+	fstream = g_object_newv (GMIME_TYPE_STREAM_FILE, 0, NULL);
 	g_mime_stream_construct (GMIME_STREAM (fstream), start, end);
 	fstream->owner = TRUE;
 	fstream->fp = fp;

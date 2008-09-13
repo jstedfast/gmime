@@ -284,7 +284,8 @@ filter_reset (GMimeFilter *filter)
  *
  * Creates a new #GMimeFilterCharset filter.
  *
- * Returns: a new charset filter.
+ * Returns: a new charset filter or %NULL if the charset conversion is
+ * not possible.
  **/
 GMimeFilter *
 g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
@@ -296,7 +297,7 @@ g_mime_filter_charset_new (const char *from_charset, const char *to_charset)
 	if (cd == (iconv_t) -1)
 		return NULL;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_CHARSET, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_CHARSET, 0, NULL);
 	new->from_charset = g_strdup (from_charset);
 	new->to_charset = g_strdup (to_charset);
 	new->cd = cd;

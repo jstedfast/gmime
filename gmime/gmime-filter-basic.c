@@ -245,7 +245,7 @@ g_mime_filter_basic_new (GMimeContentEncoding encoding, gboolean encode)
 {
 	GMimeFilterBasic *basic;
 	
-	basic = g_object_new (GMIME_TYPE_FILTER_BASIC, NULL);
+	basic = g_object_newv (GMIME_TYPE_FILTER_BASIC, 0, NULL);
 	
 	if (encode)
 		g_mime_encoding_init_encode (&basic->encoder, encoding);

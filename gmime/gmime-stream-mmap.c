@@ -325,16 +325,15 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	/* FIXME: maybe we should return a GMimeStreamFs? */
 	GMimeStreamMmap *mstream;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
-	mstream->owner = FALSE;
-	mstream->fd = GMIME_STREAM_MMAP (stream)->fd;
-	
-	mstream->map = GMIME_STREAM_MMAP (stream)->map;
-	mstream->maplen = GMIME_STREAM_MMAP (stream)->maplen;
-	
+	mstream = g_object_newv (GMIME_TYPE_STREAM_MMAP, 0, NULL);
 	g_mime_stream_construct (GMIME_STREAM (mstream), start, end);
+	mstream->fd = GMIME_STREAM_MMAP (stream)->fd;
+	mstream->owner = FALSE;
 	
-	return GMIME_STREAM (mstream);
+	mstream->maplen = GMIME_STREAM_MMAP (stream)->maplen;
+	mstream->map = GMIME_STREAM_MMAP (stream)->map;
+	
+	return (GMimeStream *) mstream;
 }
 
 
@@ -368,16 +367,15 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	if (map == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
+	mstream = g_object_newv (GMIME_TYPE_STREAM_MMAP, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mstream, start, -1);
 	mstream->owner = TRUE;
 	mstream->eos = FALSE;
 	mstream->fd = fd;
 	mstream->map = map;
 	mstream->maplen = st.st_size;
 	
-	g_mime_stream_construct (GMIME_STREAM (mstream), start, -1);
-	
-	return GMIME_STREAM (mstream);
+	return (GMimeStream *) mstream;
 #else
 	return NULL;
 #endif /* HAVE_MMAP */
@@ -417,16 +415,15 @@ g_mime_stream_mmap_new_with_bounds (int fd, int prot, int flags, gint64 start, g
 	if ((map = mmap (NULL, len, prot, flags, fd, 0)) == MAP_FAILED)
 		return NULL;
 	
-	mstream = g_object_new (GMIME_TYPE_STREAM_MMAP, NULL);
+	mstream = g_object_newv (GMIME_TYPE_STREAM_MMAP, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mstream, start, end);
 	mstream->owner = TRUE;
 	mstream->eos = FALSE;
 	mstream->fd = fd;
 	mstream->map = map;
 	mstream->maplen = len;
 	
-	g_mime_stream_construct (GMIME_STREAM (mstream), start, end);
-	
-	return GMIME_STREAM (mstream);
+	return (GMimeStream *) mstream;
 #else
 	return NULL;
 #endif /* HAVE_MMAP */

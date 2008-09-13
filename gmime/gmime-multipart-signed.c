@@ -192,7 +192,7 @@ g_mime_multipart_signed_new (void)
 	GMimeMultipartSigned *multipart;
 	GMimeContentType *content_type;
 	
-	multipart = g_object_new (GMIME_TYPE_MULTIPART_SIGNED, NULL);
+	multipart = g_object_newv (GMIME_TYPE_MULTIPART_SIGNED, 0, NULL);
 	
 	content_type = g_mime_content_type_new ("multipart", "signed");
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);

@@ -180,9 +180,5 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_strip_new (void)
 {
-	GMimeFilterStrip *new;
-	
-	new = g_object_new (GMIME_TYPE_FILTER_STRIP, NULL);
-	
-	return (GMimeFilter *) new;
+	return g_object_newv (GMIME_TYPE_FILTER_STRIP, 0, NULL);
 }

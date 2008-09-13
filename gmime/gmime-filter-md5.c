@@ -162,7 +162,7 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_md5_new (void)
 {
-	return (GMimeFilter *) g_object_new (GMIME_TYPE_FILTER_MD5, NULL);
+	return g_object_newv (GMIME_TYPE_FILTER_MD5, 0, NULL);
 }
 
 

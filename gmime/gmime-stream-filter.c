@@ -364,7 +364,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	GMimeStreamFilter *filter = (GMimeStreamFilter *) stream;
 	GMimeStreamFilter *sub;
 	
-	sub = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL);
+	sub = g_object_newv (GMIME_TYPE_STREAM_FILTER, 0, NULL);
 	sub->source = filter->source;
 	g_object_ref (sub->source);
 	
@@ -414,7 +414,7 @@ g_mime_stream_filter_new (GMimeStream *stream)
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), NULL);
 	
-	filter = g_object_new (GMIME_TYPE_STREAM_FILTER, NULL);
+	filter = g_object_newv (GMIME_TYPE_STREAM_FILTER, 0, NULL);
 	filter->source = stream;
 	g_object_ref (stream);
 	

@@ -604,7 +604,7 @@ g_mime_filter_enriched_new (guint32 flags)
 {
 	GMimeFilterEnriched *new;
 	
-	new = (GMimeFilterEnriched *) g_object_new (GMIME_TYPE_FILTER_ENRICHED, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_ENRICHED, 0, NULL);
 	new->flags = flags;
 	
 	return (GMimeFilter *) new;

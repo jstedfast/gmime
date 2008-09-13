@@ -282,7 +282,7 @@ g_mime_filter_yenc_new (gboolean encode)
 {
 	GMimeFilterYenc *new;
 	
-	new = g_object_new (GMIME_TYPE_FILTER_YENC, NULL);
+	new = g_object_newv (GMIME_TYPE_FILTER_YENC, 0, NULL);
 	new->encode = encode;
 	
 	if (encode)

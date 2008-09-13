@@ -276,13 +276,12 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
-	mem->owner = FALSE;
+	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mem, start, end);
 	mem->buffer = GMIME_STREAM_MEM (stream)->buffer;
+	mem->owner = FALSE;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), start, end);
-	
-	return GMIME_STREAM (mem);
+	return (GMimeStream *) mem;
 }
 
 
@@ -298,13 +297,12 @@ g_mime_stream_mem_new (void)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
+	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = g_byte_array_new ();
 	mem->owner = TRUE;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
-	
-	return GMIME_STREAM (mem);
+	return (GMimeStream *) mem;
 }
 
 
@@ -321,13 +319,12 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
-	mem->owner = TRUE;
+	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = array;
+	mem->owner = TRUE;
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
-	
-	return GMIME_STREAM (mem);
+	return (GMimeStream *) mem;
 }
 
 
@@ -346,15 +343,14 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 {
 	GMimeStreamMem *mem;
 	
-	mem = g_object_new (GMIME_TYPE_STREAM_MEM, NULL);
-	mem->owner = TRUE;
+	mem = g_object_newv (GMIME_TYPE_STREAM_MEM, 0, NULL);
+	g_mime_stream_construct ((GMimeStream *) mem, 0, -1);
 	mem->buffer = g_byte_array_new ();
+	mem->owner = TRUE;
 	
 	g_byte_array_append (mem->buffer, (unsigned char *) buffer, len);
 	
-	g_mime_stream_construct (GMIME_STREAM (mem), 0, -1);
-	
-	return GMIME_STREAM (mem);
+	return (GMimeStream *) mem;
 }
 
 

@@ -215,7 +215,7 @@ stream_tell (GMimeStream *stream)
 static ssize_t
 stream_length (GMimeStream *stream)
 {
-	GMimeStreamNull *null = GMIME_STREAM_NULL (stream);
+	GMimeStreamNull *null = (GMimeStreamNull *) stream;
 	gint64 bound_end;
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : null->written;
@@ -226,13 +226,12 @@ stream_length (GMimeStream *stream)
 static GMimeStream *
 stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 {
-	GMimeStreamNull *null;
+	GMimeStream *null;
 	
-	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
+	null = g_object_newv (GMIME_TYPE_STREAM_NULL, 0, NULL);
+	g_mime_stream_construct (null, start, end);
 	
-	g_mime_stream_construct (GMIME_STREAM (null), start, end);
-	
-	return GMIME_STREAM (null);
+	return null;
 }
 
 
@@ -246,11 +245,10 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 GMimeStream *
 g_mime_stream_null_new (void)
 {
-	GMimeStreamNull *null;
+	GMimeStream *null;
 	
-	null = g_object_new (GMIME_TYPE_STREAM_NULL, NULL);
+	null = g_object_newv (GMIME_TYPE_STREAM_NULL, 0, NULL);
+	g_mime_stream_construct (null, 0, -1);
 	
-	g_mime_stream_construct (GMIME_STREAM (null), 0, -1);
-	
-	return GMIME_STREAM (null);
+	return null;
 }
