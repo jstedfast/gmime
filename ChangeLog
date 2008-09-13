@@ -1,6 +1,52 @@
+2008-09-13  Jeffrey Stedfast  <fejj@novell.com>
+
+	Epic optimization hack-a-thon which resulted in another ~5%
+	performance improvement.
+
+	* gmime/gmime-message.c (g_mime_message_init): Instead of using a
+	hash table for our recipients table, simply use an array since we
+	can easily look them up using the GMimeRecipientType as an array
+	index. Eliminates unnecessary memory and, most importantly,
+	performance overhead.
+	(message_add_recipients_from_string): Optimized quite a bit by
+	using the new internet_address_list_append/prepend functions.
+
+	* gmime/gmime-utils.c (decode_addrspec): Updated for
+	g_mime_decode_domain() changes.
+
+	* gmime/gmime-parse-utils.c (g_mime_decode_domain): Changed the
+	API a bit to prevent the need for string duplication/g_free
+	overhead in our callers.
+
+	* gmime/gmime-parser.c (parser_fill): Keep track of the stream
+	offset ourselves.
+
+	* gmime/internet-address.c (internet_address_list_append): Renamed
+	from internet_address_list_concat() and optimized slightly.
+	(internet_address_list_prepend): New function that prepends the
+	contents of a list to another list.
+	(_internet_address_set_name): New internal function which avoids
+	emitting a "changed" event in an attempt to enhance the
+	performance of internet_address_list_parse().
+	(_internet_address_list_add): Same idea as
+	_internet_address_set_name(), but also takes ownership of the
+	InternetAddress' ref to avoid unnecessary ref/unref overhead.
+	(internet_address_mailbox_new): Instead of calling
+	internet_address_mailbox_set_addr(), set it manually to avoid a
+	g_signal_emit().
+	(internet_address_group_new): Call _internet_address_set_name() to
+	avoid signal emission.
+	(internet_address_group_add_member): Now returns the index of the
+	newly added member.
+	(decode_mailbox): Avoid string duplication of the addrspec token,
+	use the new g_mime_decode_domain() API to avoid unnecessary
+	strdup/g_free overhead, and use _internet_address_set_name().
+	(decode_address): Don't need to unref members anymore as the lists
+	we add them to take ownership of the refs.
+
 2008-09-12  Jeffrey Stedfast  <fejj@novell.com>
 
-	I/O Optimization
+	I/O Optimization which improved performance by ~5%
 
 	* gmime/gmime-parser.c (parser_fill): Now takes an 'atleast'
 	argument which we use to decide whether we should bother calling

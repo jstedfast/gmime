@@ -633,10 +633,10 @@ parser_fill (GMimeParser *parser, size_t atleast)
 	priv->inend = inbuf;
 	inend = priv->realbuf + SCAN_HEAD + SCAN_BUF;
 	
-	if ((nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf)) > 0)
+	if ((nread = g_mime_stream_read (priv->stream, inbuf, inend - inbuf)) > 0) {
+		priv->offset += nread;
 		priv->inend += nread;
-	
-	priv->offset = g_mime_stream_tell (priv->stream);
+	}
 	
 	return priv->inend - priv->inptr;
 }

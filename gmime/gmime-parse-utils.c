@@ -253,19 +253,18 @@ decode_domain_literal (const char **in, GString *domain)
 /**
  * g_mime_decode_domain:
  * @in: address of input text string
+ * @domain: a #GString to decode the domain into
  *
- * Extracts the next rfc822 'domain' token.
+ * Extracts the next rfc822 'domain' token and appends it to @domain.
  *
- * Returns: the next rfc822 'domain' token or %NULL if non exist.
+ * Returns: %TRUE if an rfc822 'domain' token was decoded or %FALSE
+ * otherwise.
  **/
-char *
-g_mime_decode_domain (const char **in)
+gboolean
+g_mime_decode_domain (const char **in, GString *domain)
 {
 	const char *inptr, *save, *atom;
-	GString *domain;
-	char *dom;
-	
-	domain = g_string_new ("");
+	size_t initial = domain->len;
 	
 	inptr = *in;
 	while (inptr && *inptr) {
@@ -305,14 +304,7 @@ g_mime_decode_domain (const char **in)
 		inptr++;
 	}
 	
-	if (domain->len)
-		dom = domain->str;
-	else
-		dom = NULL;
-	
-	g_string_free (domain, dom ? FALSE : TRUE);
-	
 	*in = inptr;
 	
-	return dom;
+	return domain->len > initial;
 }

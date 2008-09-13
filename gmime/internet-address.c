@@ -144,19 +144,10 @@ internet_address_finalize (GObject *object)
 }
 
 
-/**
- * internet_address_set_name:
- * @ia: a #InternetAddress
- * @name: the display name for the address group or mailbox
- *
- * Set the display name of the #InternetAddress.
- **/
-void
-internet_address_set_name (InternetAddress *ia, const char *name)
+static void
+_internet_address_set_name (InternetAddress *ia, const char *name)
 {
 	char *buf;
-	
-	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
 	
 	if (name) {
 		buf = g_mime_utils_header_decode_phrase (name);
@@ -167,6 +158,21 @@ internet_address_set_name (InternetAddress *ia, const char *name)
 		g_free (ia->name);
 		ia->name = NULL;
 	}
+}
+
+/**
+ * internet_address_set_name:
+ * @ia: a #InternetAddress
+ * @name: the display name for the address group or mailbox
+ *
+ * Set the display name of the #InternetAddress.
+ **/
+void
+internet_address_set_name (InternetAddress *ia, const char *name)
+{
+	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
+	
+	_internet_address_set_name (ia, name);
 	
 	g_signal_emit (ia, address_signals[CHANGED], 0);
 }
@@ -186,13 +192,6 @@ internet_address_get_name (InternetAddress *ia)
 	g_return_val_if_fail (IS_INTERNET_ADDRESS (ia), NULL);
 	
 	return ia->name;
-}
-
-
-static void
-_internet_address_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *out)
-{
-	;
 }
 
 
@@ -307,11 +306,11 @@ internet_address_mailbox_new (const char *name, const char *addr)
 	
 	g_return_val_if_fail (addr != NULL, NULL);
 	
-	mailbox = g_object_new (INTERNET_ADDRESS_TYPE_MAILBOX, NULL);
-	internet_address_mailbox_set_addr (mailbox, addr);
+	mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
+	mailbox->addr = g_strdup (addr);
 	
 	if (name != NULL)
-		internet_address_set_name ((InternetAddress *) mailbox, name);
+		_internet_address_set_name ((InternetAddress *) mailbox, name);
 	
 	return (InternetAddress *) mailbox;
 }
@@ -447,8 +446,8 @@ internet_address_group_new (const char *name)
 {
 	InternetAddress *group;
 	
-	group = g_object_new (INTERNET_ADDRESS_TYPE_GROUP, NULL);
-	internet_address_set_name (group, name);
+	group = g_object_newv (INTERNET_ADDRESS_TYPE_GROUP, 0, NULL);
+	_internet_address_set_name (group, name);
 	
 	return group;
 }
@@ -507,20 +506,24 @@ internet_address_group_get_members (InternetAddressGroup *group)
 }
 
 
+#define _internet_address_group_add_member(group,member) _internet_address_list_add (group->members, member)
+
 /**
  * internet_address_group_add_member:
  * @group: a #InternetAddressGroup
  * @member: a #InternetAddress
  *
  * Add a contact to the internet address group.
+ *
+ * Returns: the index of the newly added member.
  **/
-void
+int
 internet_address_group_add_member (InternetAddressGroup *group, InternetAddress *member)
 {
 	g_return_if_fail (INTERNET_ADDRESS_IS_GROUP (group));
 	g_return_if_fail (IS_INTERNET_ADDRESS (member));
 	
-	internet_address_list_add (group->members, member);
+	return internet_address_list_add (group->members, member);
 }
 
 
@@ -623,7 +626,7 @@ internet_address_list_finalize (GObject *object)
 InternetAddressList *
 internet_address_list_new (void)
 {
-	return g_object_new (INTERNET_ADDRESS_LIST_TYPE, NULL);
+	return g_object_newv (INTERNET_ADDRESS_LIST_TYPE, 0, NULL);
 }
 
 
@@ -674,6 +677,20 @@ internet_address_list_clear (InternetAddressList *list)
 }
 
 
+static int
+_internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
+{
+	int index;
+	
+	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+	
+	index = list->array->len;
+	g_ptr_array_add (list->array, ia);
+	
+	return index;
+}
+
+
 /**
  * internet_address_list_add:
  * @list: a #InternetAddressList
@@ -691,10 +708,7 @@ internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), -1);
 	g_return_val_if_fail (IS_INTERNET_ADDRESS (ia), -1);
 	
-	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
-	
-	index = list->array->len;
-	g_ptr_array_add (list->array, ia);
+	index = _internet_address_list_add (list, ia);
 	g_object_ref (ia);
 	
 	g_signal_emit (list, list_signals[CHANGED], 0);
@@ -704,25 +718,67 @@ internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 
 
 /**
- * internet_address_list_concat:
+ * internet_address_list_prepend:
  * @list: a #InternetAddressList
- * @concat: a #InternetAddressList
+ * @prepend: a #InternetAddressList
  *
- * Adds all of the addresses in @concat to @list.
+ * Inserts all of the addresses in @prepend to the beginning of @list.
  **/
 void
-internet_address_list_concat (InternetAddressList *list, InternetAddressList *concat)
+internet_address_list_prepend (InternetAddressList *list, InternetAddressList *prepend)
 {
 	InternetAddress *ia;
-	guint i;
+	char *dest, *src;
+	guint len, i;
 	
-	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (concat));
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (prepend));
 	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
 	
-	for (i = 0; i < concat->array->len; i++) {
-		ia = (InternetAddress *) concat->array->pdata[i];
+	if (prepend->array->len == 0)
+		return;
+	
+	len = prepend->array->len;
+	g_ptr_array_set_size (list->array, list->array->len + len);
+	
+	src = ((char *) list->array->pdata);
+	dest = src + (sizeof (void *) * len);
+	
+	g_memmove (dest, src, (sizeof (void *) * list->array->len));
+	
+	for (i = 0; i < prepend->array->len; i++) {
+		ia = (InternetAddress *) prepend->array->pdata[i];
 		g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
-		g_ptr_array_add (list->array, ia);
+		list->array->pdata[i] = ia;
+		g_object_ref (ia);
+	}
+	
+	g_signal_emit (list, list_signals[CHANGED], 0);
+}
+
+
+/**
+ * internet_address_list_append:
+ * @list: a #InternetAddressList
+ * @append: a #InternetAddressList
+ *
+ * Adds all of the addresses in @append to @list.
+ **/
+void
+internet_address_list_append (InternetAddressList *list, InternetAddressList *append)
+{
+	InternetAddress *ia;
+	guint len, i;
+	
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (append));
+	g_return_if_fail (IS_INTERNET_ADDRESS_LIST (list));
+	
+	len = list->array->len;
+	g_ptr_array_set_size (list->array, len + append->array->len);
+	
+	for (i = 0; i < append->array->len; i++) {
+		ia = (InternetAddress *) append->array->pdata[i];
+		g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+		list->array->pdata[len + i] = ia;
 		g_object_ref (ia);
 	}
 	
@@ -1279,14 +1335,13 @@ decode_mailbox (const char **in)
 	
 	/* we should be at the '@' now... */
 	if (*inptr == '@') {
-		char *domain;
+		size_t len = addr->len;
 		
+		g_string_append_c (addr, '@');
 		inptr++;
-		if ((domain = decode_domain (&inptr))) {
-			g_string_append_c (addr, '@');
-			g_string_append (addr, domain);
-			g_free (domain);
-		}
+		
+		if (!decode_domain (&inptr, addr))
+			g_string_truncate (addr, len);
 	} else {
 		w(g_warning ("No domain in email address: %s", *in));
 	}
@@ -1343,10 +1398,14 @@ decode_mailbox (const char **in)
 			g_free (utf8);
 		}
 		
-		mailbox = internet_address_mailbox_new (name ? name->str : NULL, addr->str);
+		mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
+		((InternetAddressMailbox *) mailbox)->addr = addr->str;
+		
+		if (name)
+			_internet_address_set_name (mailbox, name->str);
 	}
 	
-	g_string_free (addr, TRUE);
+	g_string_free (addr, mailbox ? FALSE : TRUE);
 	if (name)
 		g_string_free (name, TRUE);
 	
@@ -1385,19 +1444,15 @@ decode_address (const char **in)
 		while (*inptr && *inptr != ';') {
 			InternetAddress *member;
 			
-			if ((member = decode_mailbox (&inptr))) {
-				internet_address_group_add_member (group, member);
-				g_object_unref (member);
-			}
+			if ((member = decode_mailbox (&inptr)))
+				_internet_address_group_add_member (group, member);
 			
 			decode_lwsp (&inptr);
 			while (*inptr == ',') {
 				inptr++;
 				decode_lwsp (&inptr);
-				if ((member = decode_mailbox (&inptr))) {
-					internet_address_group_add_member (group, member);
-					g_object_unref (member);
-				}
+				if ((member = decode_mailbox (&inptr)))
+					_internet_address_group_add_member (group, member);
 				
 				decode_lwsp (&inptr);
 			}
@@ -1445,8 +1500,7 @@ internet_address_list_parse_string (const char *str)
 		start = inptr;
 		
 		if ((addr = decode_address (&inptr))) {
-			internet_address_list_add (addrlist, addr);
-			g_object_unref (addr);
+			_internet_address_list_add (addrlist, addr);
 		} else {
 			w(g_warning ("Invalid or incomplete address: %.*s",
 				     inptr - start, start));

@@ -32,8 +32,8 @@ void g_mime_decode_lwsp (const char **in);
 const char *g_mime_decode_word (const char **in);
 #define decode_word(in) g_mime_decode_word (in)
 
-char *g_mime_decode_domain (const char **in);
-#define decode_domain(in) g_mime_decode_domain (in)
+gboolean g_mime_decode_domain (const char **in, GString *domain);
+#define decode_domain(in, domain) g_mime_decode_domain (in, domain)
 
 G_END_DECLS
 

@@ -827,9 +827,9 @@ g_mime_utils_generate_message_id (const char *fqdn)
 static char *
 decode_addrspec (const char **in)
 {
-	char *domain, *str = NULL;
 	const char *word, *inptr;
 	GString *addrspec;
+	char *str;
 	
 	decode_lwsp (in);
 	inptr = *in;
@@ -861,14 +861,11 @@ decode_addrspec (const char **in)
 		goto exception;
 	}
 	
-	if (!(domain = decode_domain (&inptr))) {
+	g_string_append_c (addrspec, '@');
+	if (!decode_domain (&inptr, addrspec)) {
 		w(g_warning ("No domain in addr-spec: %s", *in));
 		goto exception;
 	}
-	
-	g_string_append_c (addrspec, '@');
-	g_string_append (addrspec, domain);
-	g_free (domain);
 	
 	str = addrspec->str;
 	g_string_free (addrspec, FALSE);

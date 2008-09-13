@@ -148,7 +148,7 @@ InternetAddress *internet_address_group_new (const char *name);
 void internet_address_group_set_members (InternetAddressGroup *group, InternetAddressList *members);
 InternetAddressList *internet_address_group_get_members (InternetAddressGroup *group);
 
-void internet_address_group_add_member (InternetAddressGroup *group, InternetAddress *member);
+int internet_address_group_add_member (InternetAddressGroup *group, InternetAddress *member);
 
 
 /**
@@ -179,7 +179,8 @@ int internet_address_list_length (InternetAddressList *list);
 void internet_address_list_clear (InternetAddressList *list);
 
 int internet_address_list_add (InternetAddressList *list, InternetAddress *ia);
-void internet_address_list_concat (InternetAddressList *list, InternetAddressList *concat);
+void internet_address_list_prepend (InternetAddressList *list, InternetAddressList *prepend);
+void internet_address_list_append (InternetAddressList *list, InternetAddressList *append);
 void internet_address_list_insert (InternetAddressList *list, int index, InternetAddress *ia);
 gboolean internet_address_list_remove (InternetAddressList *list, InternetAddress *ia);
 gboolean internet_address_list_remove_at (InternetAddressList *list, int index);
