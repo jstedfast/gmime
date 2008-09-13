@@ -1,3 +1,14 @@
+2008-09-13  Jeffrey Stedfast  <fejj@novell.com>
+
+	* docs/reference/gmime-sections.txt: Updated.
+
+	* gmime/gmime-parser.c (nearest_pow): New faster method for
+	calculating nearest power of 2, rather than an expensive
+	while-loop.
+	(g_mime_parser_get_headers_begin): New function backported from
+	2.3.x
+	(g_mime_parser_get_headers_end): Same.
+
 2008-08-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message-part.c (g_mime_message_part_get_message):

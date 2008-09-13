@@ -103,6 +103,9 @@ char *g_mime_parser_get_from (GMimeParser *parser);
 
 off_t g_mime_parser_get_from_offset (GMimeParser *parser);
 
+off_t g_mime_parser_get_headers_begin (GMimeParser *parser);
+off_t g_mime_parser_get_headers_end (GMimeParser *parser);
+
 G_END_DECLS
 
 #endif /* __GMIME_PARSER_H__ */
