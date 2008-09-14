@@ -97,7 +97,8 @@ internet_address_get_type (void)
 			(GInstanceInitFunc) internet_address_init,
 		};
 		
-		type = g_type_register_static (G_TYPE_OBJECT, "InternetAddress", &info, 0);
+		type = g_type_register_static (G_TYPE_OBJECT, "InternetAddress",
+					       &info, G_TYPE_FLAG_ABSTRACT);
 	}
 	
 	return type;

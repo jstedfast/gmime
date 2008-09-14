@@ -80,7 +80,8 @@ g_mime_stream_get_type (void)
 			(GInstanceInitFunc) g_mime_stream_init,
 		};
 		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStream", &info, 0);
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeStream",
+					       &info, G_TYPE_FLAG_ABSTRACT);
 	}
 	
 	return type;

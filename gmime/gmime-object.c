@@ -102,7 +102,8 @@ g_mime_object_get_type (void)
 			(GInstanceInitFunc) g_mime_object_init,
 		};
 		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeObject", &info, 0);
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeObject",
+					       &info, G_TYPE_FLAG_ABSTRACT);
 	}
 	
 	return type;

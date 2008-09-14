@@ -1,8 +1,19 @@
 2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-object.c (g_mime_object_get_type): Register this
+	class as being abstract.
+
+	* gmime/gmime-filter.c (g_mime_filter_get_type): Register this
+	class as being abstract.
+
+	* gmime/gmime-stream.c (g_mime_stream_get_type): Register this
+	class as being abstract.
+
 	* gmime/internet-address.c (decode_mailbox): Pass name->len to
 	g_utf8_validate() rather than -1 since we have the length. Might
 	save us some cycles.
+	(internet_address_get_type): Register this class as being
+	abstract.
 
 	* gmime/gmime-parser.c (parser_init): Initialize the headerbuf and
 	rawbuf buffers to something more reasonable.
