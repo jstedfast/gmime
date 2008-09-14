@@ -1,3 +1,9 @@
+2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.3.10
+
 2008-09-13  Jeffrey Stedfast  <fejj@novell.com>
 
 	Epic optimization hack-a-thon which resulted in another ~5%
