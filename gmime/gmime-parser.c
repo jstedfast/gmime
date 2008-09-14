@@ -78,8 +78,16 @@ static GMimeObject *parser_construct_multipart (GMimeParser *parser, ContentType
 
 static GObjectClass *parent_class = NULL;
 
-#define SCAN_BUF 4096		/* size of read buffer */
-#define SCAN_HEAD 128		/* headroom guaranteed to be before each read buffer */
+/* size of read buffer */
+#define SCAN_BUF 4096
+
+/* headroom guaranteed to be before each read buffer */
+#define SCAN_HEAD 128
+
+/* conservative growth sizes */
+#define HEADER_INIT_SIZE 128
+#define HEADER_RAW_INIT_SIZE 1024
+
 
 enum {
 	GMIME_PARSER_STATE_ERROR = -1,
@@ -327,13 +335,13 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->from_offset = -1;
 	priv->from_line = g_byte_array_new ();
 	
-	priv->headerbuf = g_malloc (SCAN_HEAD);
+	priv->headerbuf = g_malloc (HEADER_INIT_SIZE);
+	priv->headerleft = HEADER_INIT_SIZE - 1;
 	priv->headerptr = priv->headerbuf;
-	priv->headerleft = SCAN_HEAD - 1;
 	
-	priv->rawbuf = g_malloc (SCAN_HEAD);
+	priv->rawbuf = g_malloc (HEADER_RAW_INIT_SIZE);
+	priv->rawleft = HEADER_RAW_INIT_SIZE - 1;
 	priv->rawptr = priv->rawbuf;
-	priv->rawleft = SCAN_HEAD - 1;
 	
 	priv->headers_begin = -1;
 	priv->headers_end = -1;
@@ -658,7 +666,7 @@ parser_offset (struct _GMimeParserPrivate *priv, const char *inptr)
  * Gets the current stream offset from the parser's internal stream.
  *
  * Returns: the current stream offset from the parser's internal stream
- * or -1 on error.
+ * or %-1 on error.
  **/
 gint64
 g_mime_parser_tell (GMimeParser *parser)
@@ -672,7 +680,7 @@ g_mime_parser_tell (GMimeParser *parser)
 
 /**
  * g_mime_parser_eos:
- * @parser: MIME parser
+ * @parser: a #GMimeParser context
  *
  * Tests the end-of-stream indicator for @parser's internal stream.
  *

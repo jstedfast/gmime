@@ -1389,7 +1389,7 @@ decode_mailbox (const char **in)
 	*in = inptr;
 	
 	if (addr->len) {
-		if (name && !g_utf8_validate (name->str, -1, NULL)) {
+		if (name && !g_utf8_validate (name->str, name->len, NULL)) {
 			/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
 			char *utf8 = g_mime_utils_decode_8bit (name->str, name->len);
 			

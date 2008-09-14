@@ -1,5 +1,14 @@
 2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/internet-address.c (decode_mailbox): Pass name->len to
+	g_utf8_validate() rather than -1 since we have the length. Might
+	save us some cycles.
+
+	* gmime/gmime-parser.c (parser_init): Initialize the headerbuf and
+	rawbuf buffers to something more reasonable.
+
+2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.3.10
