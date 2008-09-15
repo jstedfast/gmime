@@ -110,6 +110,7 @@ do
 	-e "s/internet_address_add_member/internet_address_group_add_member/g" \
 	-e "s/internet_address_parse_string/internet_address_list_parse_string/g" \
 	-e "s/internet_address_list_append/internet_address_list_add/g" \
+	-e "s/internet_address_list_concat/internet_address_list_append/g" \
 	-e "s/internet_address_list_destroy/g_object_unref/g" \
 	< "$src" > "$src.tmp"
     mv "$src.tmp" "$src"
