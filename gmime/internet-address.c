@@ -33,6 +33,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-iconv-utils.h"
 #include "gmime-utils.h"
+#include "list.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -62,13 +63,130 @@ enum {
 	INTERNET_ADDRESS_FOLD   = 1 << 1,
 };
 
-enum {
-	CHANGED,
-	LAST_SIGNAL
-};
 
-static guint address_signals[LAST_SIGNAL] = { 0 };
-static guint list_signals[LAST_SIGNAL] = { 0 };
+typedef void (* EventCallback) (gpointer sender, gpointer args);
+
+typedef struct _EventListener {
+	struct _EventListener *next;
+	struct _EventListener *prev;
+	EventCallback callback;
+	gpointer user_data;
+	int blocked;
+} EventListener;
+
+static EventListener *
+event_listener_new (EventCallback callback, gpointer user_data)
+{
+	EventListener *listener;
+	
+	listener = g_slice_new (EventListener);
+	listener->user_data = user_data;
+	listener->callback = callback;
+	listener->prev = NULL;
+	listener->next = NULL;
+	listener->blocked = 0;
+	
+	return listener;
+}
+
+static void
+event_listener_free (EventListener *listener)
+{
+	g_slice_free (EventListener, listener);
+}
+
+
+static List *
+event_list_new (void)
+{
+	List *list;
+	
+	list = g_slice_new (List);
+	list_init (list);
+	
+	return list;
+}
+
+static void
+event_list_free (List *list)
+{
+	EventListener *node, *next;
+	
+	node = (EventListener *) list->head;
+	while (node->next) {
+		next = node->next;
+		event_listener_free (node);
+		node = next;
+	}
+	
+	g_slice_free (List, list);
+}
+
+static EventListener *
+event_list_find_listener (List *list, EventCallback callback, gpointer user_data)
+{
+	EventListener *node, *next;
+	
+	node = (EventListener *) list->head;
+	while (node->next) {
+		if (node->callback == callback && node->user_data == user_data)
+			return node;
+		node = node->next;
+	}
+	
+	return NULL;
+}
+
+static void
+event_list_block (List *list, EventCallback callback, gpointer user_data)
+{
+	EventListener *listener;
+	
+	if ((listener = event_list_find_listener (list, callback, user_data)))
+		listener->blocked++;
+}
+
+static void
+event_list_unblock (List *list, EventCallback callback, gpointer user_data)
+{
+	EventListener *listener;
+	
+	if ((listener = event_list_find_listener (list, callback, user_data)))
+		listener->blocked--;
+}
+
+static void
+event_list_add (List *list, EventCallback callback, gpointer user_data)
+{
+	EventListener *listener;
+	
+	listener = event_listener_new (callback, user_data);
+	list_append (list, (ListNode *) listener);
+}
+
+static void
+event_list_remove (List *list, EventCallback callback, gpointer user_data)
+{
+	EventListener *listener;
+	
+	if ((listener = event_list_find_listener (list, callback, user_data))) {
+		list_unlink ((ListNode *) listener);
+		event_listener_free (listener);
+	}
+}
+
+static void
+event_list_emit (List *list, gpointer sender)
+{
+	EventListener *node;
+	
+	node = (EventListener *) list->head;
+	while (node->next) {
+		if (node->blocked <= 0)
+			node->callback (sender, node->user_data);
+		node = node->next;
+	}
+}
 
 
 static void internet_address_class_init (InternetAddressClass *klass);
@@ -115,22 +233,12 @@ internet_address_class_init (InternetAddressClass *klass)
 	object_class->finalize = internet_address_finalize;
 	
 	klass->to_string = NULL;
-	
-	/* signals */
-	address_signals[CHANGED] =
-		g_signal_new ("changed",
-			      INTERNET_ADDRESS_TYPE,
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL,
-			      NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 }
 
 static void
 internet_address_init (InternetAddress *ia, InternetAddressClass *klass)
 {
+	ia->priv = event_list_new ();
 	ia->name = NULL;
 }
 
@@ -139,6 +247,7 @@ internet_address_finalize (GObject *object)
 {
 	InternetAddress *ia = (InternetAddress *) object;
 	
+	event_list_free (ia->priv);
 	g_free (ia->name);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -175,7 +284,7 @@ internet_address_set_name (InternetAddress *ia, const char *name)
 	
 	_internet_address_set_name (ia, name);
 	
-	g_signal_emit (ia, address_signals[CHANGED], 0);
+	event_list_emit (ia->priv, ia);
 }
 
 
@@ -335,7 +444,7 @@ internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *
 	g_free (mailbox->addr);
 	mailbox->addr = g_strdup (addr);
 	
-	g_signal_emit (mailbox, address_signals[CHANGED], 0);
+	event_list_emit (((InternetAddress *) mailbox)->priv, mailbox);
 }
 
 
@@ -407,7 +516,7 @@ internet_address_group_class_init (InternetAddressGroupClass *klass)
 static void
 members_changed (InternetAddressList *members, InternetAddress *group)
 {
-	g_signal_emit (group, address_signals[CHANGED], 0);
+	event_list_emit (((InternetAddress *) group)->priv, group);
 }
 
 static void
@@ -415,7 +524,7 @@ internet_address_group_init (InternetAddressGroup *group, InternetAddressGroupCl
 {
 	group->members = internet_address_list_new ();
 	
-	g_signal_connect (group->members, "changed", G_CALLBACK (members_changed), group);
+	event_list_add (group->members->priv, (EventCallback) members_changed, group);
 }
 
 static void
@@ -423,9 +532,7 @@ internet_address_group_finalize (GObject *object)
 {
 	InternetAddressGroup *group = (InternetAddressGroup *) object;
 	
-	g_signal_handlers_disconnect_matched (group->members, MATCH_ID_FUNC_DATA,
-					      list_signals[CHANGED], 0, NULL,
-					      G_CALLBACK (members_changed), group);
+	event_list_remove (group->members->priv, (EventCallback) members_changed, group);
 	
 	g_object_unref (group->members);
 	
@@ -471,21 +578,18 @@ internet_address_group_set_members (InternetAddressGroup *group, InternetAddress
 		return;
 	
 	if (group->members) {
-		g_signal_handlers_disconnect_matched (group->members, MATCH_ID_FUNC_DATA,
-						      list_signals[CHANGED], 0, NULL,
-						      G_CALLBACK (members_changed), group);
-		
+		event_list_remove (group->members->priv, (EventCallback) members_changed, group);
 		g_object_unref (group->members);
 	}
 	
 	if (members) {
-		g_signal_connect (members, "changed", G_CALLBACK (members_changed), group);
+		event_list_add (group->members->priv, (EventCallback) members_changed, group);
 		g_object_ref (members);
 	}
 	
 	group->members = members;
 	
-	g_signal_emit (group, address_signals[CHANGED], 0);
+	event_list_emit (((InternetAddress *) group)->priv, group);
 }
 
 
@@ -569,29 +673,19 @@ internet_address_list_class_init (InternetAddressListClass *klass)
 	list_parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = internet_address_list_finalize;
-	
-	/* signals */
-	list_signals[CHANGED] =
-		g_signal_new ("changed",
-			      INTERNET_ADDRESS_LIST_TYPE,
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL,
-			      NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 }
 
 static void
 internet_address_list_init (InternetAddressList *list, InternetAddressListClass *klass)
 {
+	list->priv = event_list_new ();
 	list->array = g_ptr_array_new ();
 }
 
 static void
 address_changed (InternetAddress *ia, InternetAddressList *list)
 {
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 static void
@@ -603,13 +697,11 @@ internet_address_list_finalize (GObject *object)
 	
 	for (i = 0; i < list->array->len; i++) {
 		ia = (InternetAddress *) list->array->pdata[i];
-		
-		g_signal_handlers_disconnect_matched (ia, MATCH_ID_FUNC_DATA,
-						      address_signals[CHANGED], 0, NULL,
-						      G_CALLBACK (address_changed), list);
-		
+		event_list_remove (ia->priv, (EventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
+	
+	event_list_free (list->priv);
 	
 	g_ptr_array_free (list->array, TRUE);
 	
@@ -664,17 +756,13 @@ internet_address_list_clear (InternetAddressList *list)
 	
 	for (i = 0; i < list->array->len; i++) {
 		ia = (InternetAddress *) list->array->pdata[i];
-		
-		g_signal_handlers_disconnect_matched (ia, MATCH_ID_FUNC_DATA,
-						      address_signals[CHANGED], 0, NULL,
-						      G_CALLBACK (address_changed), list);
-		
+		event_list_remove (ia->priv, (EventCallback) address_changed, list);
 		g_object_unref (ia);
 	}
 	
 	g_ptr_array_set_size (list->array, 0);
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 
@@ -683,7 +771,7 @@ _internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 {
 	int index;
 	
-	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+	event_list_add (ia->priv, (EventCallback) address_changed, list);
 	
 	index = list->array->len;
 	g_ptr_array_add (list->array, ia);
@@ -712,7 +800,7 @@ internet_address_list_add (InternetAddressList *list, InternetAddress *ia)
 	index = _internet_address_list_add (list, ia);
 	g_object_ref (ia);
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 	
 	return index;
 }
@@ -748,12 +836,12 @@ internet_address_list_prepend (InternetAddressList *list, InternetAddressList *p
 	
 	for (i = 0; i < prepend->array->len; i++) {
 		ia = (InternetAddress *) prepend->array->pdata[i];
-		g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+		event_list_add (ia->priv, (EventCallback) address_changed, list);
 		list->array->pdata[i] = ia;
 		g_object_ref (ia);
 	}
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 
@@ -778,12 +866,12 @@ internet_address_list_append (InternetAddressList *list, InternetAddressList *ap
 	
 	for (i = 0; i < append->array->len; i++) {
 		ia = (InternetAddress *) append->array->pdata[i];
-		g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+		event_list_add (ia->priv, (EventCallback) address_changed, list);
 		list->array->pdata[len + i] = ia;
 		g_object_ref (ia);
 	}
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 
@@ -806,7 +894,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
 	g_return_if_fail (index >= 0);
 	
-	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+	event_list_add (ia->priv, (EventCallback) address_changed, list);
 	g_object_ref (ia);
 	
 	if ((guint) index < list->array->len) {
@@ -823,7 +911,7 @@ internet_address_list_insert (InternetAddressList *list, int index, InternetAddr
 		g_ptr_array_add (list->array, ia);
 	}
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 
@@ -877,14 +965,12 @@ internet_address_list_remove_at (InternetAddressList *list, int index)
 		return FALSE;
 	
 	ia = list->array->pdata[index];
-	g_signal_handlers_disconnect_matched (ia, MATCH_ID_FUNC_DATA,
-					      address_signals[CHANGED], 0, NULL,
-					      G_CALLBACK (address_changed), list);
+	event_list_remove (ia->priv, (EventCallback) address_changed, list);
 	g_object_unref (ia);
 	
 	g_ptr_array_remove_index (list->array, index);
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 	
 	return TRUE;
 }
@@ -988,16 +1074,14 @@ internet_address_list_set_address (InternetAddressList *list, int index, Interne
 	if ((old = list->array->pdata[index]) == ia)
 		return;
 	
-	g_signal_handlers_disconnect_matched (old, MATCH_ID_FUNC_DATA,
-					      address_signals[CHANGED], 0, NULL,
-					      G_CALLBACK (address_changed), list);
+	event_list_remove (old->priv, (EventCallback) address_changed, list);
 	g_object_unref (old);
 	
-	g_signal_connect (ia, "changed", G_CALLBACK (address_changed), list);
+	event_list_add (ia->priv, (EventCallback) address_changed, list);
 	list->array->pdata[index] = ia;
 	g_object_ref (ia);
 	
-	g_signal_emit (list, list_signals[CHANGED], 0);
+	event_list_emit (list->priv, list);
 }
 
 
@@ -1524,4 +1608,32 @@ internet_address_list_parse_string (const char *str)
 	}
 	
 	return addrlist;
+}
+
+
+void
+_internet_address_list_block_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data)
+{
+	event_list_block (list->priv, callback, user_data);
+}
+
+
+void
+_internet_address_list_unblock_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data)
+{
+	event_list_unblock (list->priv, callback, user_data);
+}
+
+
+void
+_internet_address_list_add_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data)
+{
+	event_list_add (list->priv, callback, user_data);
+}
+
+
+void
+_internet_address_list_remove_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data)
+{
+	event_list_remove (list->priv, callback, user_data);
 }

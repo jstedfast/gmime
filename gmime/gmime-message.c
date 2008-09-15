@@ -45,6 +45,15 @@
  * A #GMimeMessage represents an rfc822 message.
  **/
 
+
+typedef void (* EventCallback) (gpointer sender, gpointer args);
+
+void _internet_address_list_block_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+void _internet_address_list_unblock_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+void _internet_address_list_add_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+void _internet_address_list_remove_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+
+
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
 static void g_mime_message_finalize (GObject *object);
@@ -73,11 +82,11 @@ static GMimeObjectClass *parent_class = NULL;
 
 static struct {
 	const char *name;
-	GCallback changed_cb;
+	EventCallback changed_cb;
 } recipient_types[] = {
-	{ "To",  G_CALLBACK (to_list_changed)  },
-	{ "Cc",  G_CALLBACK (cc_list_changed)  },
-	{ "Bcc", G_CALLBACK (bcc_list_changed) }
+	{ "To",  (EventCallback) to_list_changed  },
+	{ "Cc",  (EventCallback) cc_list_changed  },
+	{ "Bcc", (EventCallback) bcc_list_changed }
 };
 
 #define N_RECIPIENT_TYPES G_N_ELEMENTS (recipient_types)
@@ -139,19 +148,6 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->write_to_stream = message_write_to_stream;
 }
 
-static gulong
-lookup_recipient_changed_id (GMimeMessage *message, GMimeRecipientType type)
-{
-	InternetAddressList *list;
-	GCallback changed_cb;
-	
-	changed_cb = recipient_types[type].changed_cb;
-	list = message->recipients[type];
-	
-	return g_signal_handler_find (list, G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-				      0, 0, NULL, changed_cb, message);
-}
-
 static void
 connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
@@ -159,40 +155,37 @@ connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	g_signal_connect (list, "changed", recipient_types[type].changed_cb, message);
+	_internet_address_list_add_event_handler (list, recipient_types[type].changed_cb, message);
 }
 
 static void
 disconnect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
 	InternetAddressList *list;
-	gulong id;
 	
 	list = message->recipients[type];
-	id = lookup_recipient_changed_id (message, type);
-	g_signal_handler_disconnect (list, id);
+	
+	_internet_address_list_remove_event_handler (list, recipient_types[type].changed_cb, message);
 }
 
 static void
 block_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
 	InternetAddressList *list;
-	gulong id;
 	
 	list = message->recipients[type];
-	id = lookup_recipient_changed_id (message, type);
-	g_signal_handler_block (list, id);
+	
+	_internet_address_list_block_event_handler (list, recipient_types[type].changed_cb, message);
 }
 
 static void
 unblock_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
 	InternetAddressList *list;
-	gulong id;
 	
 	list = message->recipients[type];
-	id = lookup_recipient_changed_id (message, type);
-	g_signal_handler_unblock (list, id);
+	
+	_internet_address_list_block_event_handler (list, recipient_types[type].changed_cb, message);
 }
 
 static void

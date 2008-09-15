@@ -1,3 +1,11 @@
+2008-09-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c: Use the new InternetAddressList event
+	system.
+
+	* gmime/internet-address.c: Implemented a custom event system
+	which gains us another 20% performance improvement.
+
 2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-object.c (g_mime_object_get_type): Register this

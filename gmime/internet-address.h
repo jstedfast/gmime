@@ -69,12 +69,14 @@ typedef struct _InternetAddressListClass InternetAddressListClass;
 /**
  * InternetAddress:
  * @parent_object: parent #GObject
+ * @priv: private data
  * @name: display name
  *
  * An RFC 2822 Address object.
  **/
 struct _InternetAddress {
 	GObject parent_object;
+	gpointer priv;
 	
 	char *name;
 };
@@ -154,12 +156,14 @@ int internet_address_group_add_member (InternetAddressGroup *group, InternetAddr
 /**
  * InternetAddressList:
  * @parent_object: parent #GObject
+ * @priv: private data
  * @array: The array of #InternetAddress objects.
  *
  * A collection of #InternetAddress objects.
  **/
 struct _InternetAddressList {
 	GObject parent_object;
+	gpointer priv;
 	
 	GPtrArray *array;
 };
