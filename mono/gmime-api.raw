@@ -644,8 +644,8 @@
       </method>
     </object>
     <object name="Message" cname="GMimeMessage" parent="GMimeObject">
+      <field name="Recipients" cname="recipients" type="InternetAddressList**" />
       <field name="MimePart" cname="mime_part" type="GMimeObject*" />
-      <field name="Recipients" cname="recipients" type="GHashTable*" />
       <field name="MessageId" cname="message_id" type="char*" />
       <field name="ReplyTo" cname="reply_to" type="char*" />
       <field name="Subject" cname="subject" type="char*" />
@@ -657,7 +657,7 @@
         <parameters>
           <parameter type="GMimeRecipientType" name="type" />
           <parameter type="const-char*" name="name" />
-          <parameter type="const-char*" name="address" />
+          <parameter type="const-char*" name="addr" />
         </parameters>
       </method>
       <method name="Foreach" cname="g_mime_message_foreach">
@@ -1967,27 +1967,22 @@
       </method>
     </object>
     <object name="InternetAddressList" cname="InternetAddressList" parent="GObject">
+      <field name="Priv" cname="priv" type="gpointer" />
       <field name="Array" cname="array" type="GPtrArray*" />
-      <signal name="Changed" cname="changed" when="LAST">
-        <return-type type="void" />
-        <parameters>
-          <parameter name="inst" type="InternetAddressList*" />
-        </parameters>
-      </signal>
       <method name="Add" cname="internet_address_list_add">
         <return-type type="int" />
         <parameters>
           <parameter type="InternetAddress*" name="ia" />
         </parameters>
       </method>
-      <method name="Clear" cname="internet_address_list_clear">
-        <return-type type="void" />
-      </method>
-      <method name="Concat" cname="internet_address_list_concat">
+      <method name="Append" cname="internet_address_list_append">
         <return-type type="void" />
         <parameters>
-          <parameter type="InternetAddressList*" name="concat" />
+          <parameter type="InternetAddressList*" name="append" />
         </parameters>
+      </method>
+      <method name="Clear" cname="internet_address_list_clear">
+        <return-type type="void" />
       </method>
       <method name="Contains" cname="internet_address_list_contains">
         <return-type type="gboolean" />
@@ -2027,6 +2022,12 @@
           <parameter type="const-char*" name="str" />
         </parameters>
       </method>
+      <method name="Prepend" cname="internet_address_list_prepend">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="InternetAddressList*" name="prepend" />
+        </parameters>
+      </method>
       <method name="Remove" cname="internet_address_list_remove">
         <return-type type="gboolean" />
         <parameters>
@@ -2062,7 +2063,7 @@
     <object name="InternetAddressGroup" cname="InternetAddressGroup" parent="InternetAddress">
       <field name="Members" cname="members" type="InternetAddressList*" />
       <method name="AddMember" cname="internet_address_group_add_member">
-        <return-type type="void" />
+        <return-type type="int" />
         <parameters>
           <parameter type="InternetAddress*" name="member" />
         </parameters>
@@ -2107,13 +2108,8 @@
       </method>
     </object>
     <object name="InternetAddress" cname="InternetAddress" parent="GObject">
+      <field name="Priv" cname="priv" type="gpointer" />
       <field name="Name" cname="name" type="char*" />
-      <signal name="Changed" cname="changed" when="LAST">
-        <return-type type="void" />
-        <parameters>
-          <parameter name="inst" type="InternetAddress*" />
-        </parameters>
-      </signal>
       <virtual_method name="ToString" cname="to_string">
         <return-type type="void" />
         <parameters>
@@ -2735,9 +2731,10 @@
     </class>
     <class name="Decode" cname="GMimeDecode_">
       <method name="Domain" cname="g_mime_decode_domain" shared="true">
-        <return-type type="char*" />
+        <return-type type="gboolean" />
         <parameters>
           <parameter type="const-char**" name="in" />
+          <parameter type="GString*" name="domain" />
         </parameters>
       </method>
       <method name="Lwsp" cname="g_mime_decode_lwsp" shared="true">

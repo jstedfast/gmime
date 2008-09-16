@@ -105,6 +105,7 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_REVKEYSIG']" name="name">RevokedSignatureKey</attr>
 
   <!-- Filter -->
+  <attr path="/api/namespace/object[@cname='GMimeFilter']" name="abstract">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@cname='g_mime_filter_filter']" name="name">ApplyFilter</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/*/*/parameter[@name='inbuf']" name="array">true</attr>
@@ -142,7 +143,8 @@
   <!-- iconv-utils -->
 
   <!-- InternetAddress -->
-  <remove-node path="/api/namespace/object[@cname='InternetAddress']/signal[@name='Changed']"/>
+  <attr path="/api/namespace/object[@cname='InternetAddress']" name="abstract">1</attr>
+  <remove-node path="/api/namespace/object[@cname='InternetAddress']/field[@cname='priv']"/>
   
   <!-- InternetAddressGroup -->
   <remove-node path="/api/namespace/object[@cname='InternetAddressGroup']/method[@name='AddMember']"/>
@@ -153,9 +155,9 @@
   
   <!-- InternetAddressList -->
   <!-- Remove internal methods/fields/signals -->
-  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/signal[@name='Changed']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/field[@cname='array']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/field[@cname='priv']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Writer']"/>
-  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/field[@name='Array']"/>
   <!-- We're going to implement the IList interface -->
   <add-node path="/api/namespace/object[@cname='InternetAddressList']">
     <implements>
@@ -165,7 +167,6 @@
   <!-- Remove methods we're going to implement manually in InternetAddressList.custom -->
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Add']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Clear']"/>
-  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Concat']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Contains']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='IndexOf']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Insert']"/>
@@ -176,6 +177,8 @@
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='GetAddress']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='SetAddress']"/>
   <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='ToString']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Prepend']"/>
+  <remove-node path="/api/namespace/object[@cname='InternetAddressList']/method[@name='Append']"/>
   
   <!-- Message -->
   <attr path="/api/namespace/object[@cname='GMimeMessage']/method[@name='GetAllRecipients']/return-type" name="owned">true</attr>
@@ -255,6 +258,7 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeStreamIOVector']"/>
 
   <!-- Stream -->
+  <attr path="/api/namespace/object[@cname='GMimeStream']" name="abstract">1</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Length']" name="name">GetLength</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Read']/*/parameter[@name='buf']" name="array">true</attr>
