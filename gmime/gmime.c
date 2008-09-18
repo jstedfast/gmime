@@ -104,6 +104,16 @@ g_mime_init (guint32 flags)
 	
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 	
+	/* register our GObject types with the GType system */
+	g_mime_message_get_type ();
+	g_mime_content_type_get_type ();
+	g_mime_content_disposition_get_type ();
+	
+	internet_address_get_type ();
+	internet_address_list_get_type ();
+	internet_address_group_get_type ();
+	internet_address_mailbox_get_type ();
+	
 	/* register our default mime object types */
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
 	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());

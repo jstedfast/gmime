@@ -1,3 +1,10 @@
+2008-09-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime.c (g_mime_init): Register all of our GObject types
+	with the glib type system so that there's less risk of a
+	race-condition in multi-threaded applications (not sure if this is
+	a justifiable concern or not, but it doesn't hurt).
+
 2008-09-15  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c: Use the new InternetAddressList event
