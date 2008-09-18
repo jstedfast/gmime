@@ -1,4 +1,6 @@
 GObject
+  GMimeContentDisposition
+  GMimeContentType
   GMimeObject
     GMimePart
       GMimeMessagePartial
@@ -35,5 +37,9 @@ GObject
     GMimeStreamMem
     GMimeStreamMmap
     GMimeStreamNull
+  InternetAddress
+    InternetAddressGroup
+    InternetAddressMailbox
+  InternetAddressList
 GInterface
   GTypePlugin
