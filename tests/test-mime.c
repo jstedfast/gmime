@@ -304,7 +304,13 @@ static struct {
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
 	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
-#ifdef ENABLE_RFC2047_WORKAROUNDS
+};
+
+static struct {
+	const char *input;
+	const char *decoded;
+	const char *encoded;
+} broken_rfc2047_text[] = {
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?=alytiker",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
 	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
@@ -320,7 +326,6 @@ static struct {
 	{ "=?utf-8?q?OT_-_ich_?==?iso-8859-1?b?d2Vp3yw=?= trotzdem",
 	  "OT - ich wei\xc3\x9f, trotzdem",
 	  "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem" },
-#endif /* ENABLE_RFC2047_WORKAROUNDS */
 };
 
 static struct {
@@ -332,7 +337,7 @@ static struct {
 };
 
 static void
-test_rfc2047 (void)
+test_rfc2047 (gboolean test_broken)
 {
 	char *enc, *dec;
 	guint i;
@@ -352,6 +357,27 @@ test_rfc2047 (void)
 			testsuite_check_passed ();
 		} catch (ex) {
 			testsuite_check_failed ("rfc2047_text[%u]: %s", i, ex->message);
+		} finally;
+		
+		g_free (dec);
+		g_free (enc);
+	}
+	
+	for (i = 0; test_broken && i < G_N_ELEMENTS (broken_rfc2047_text); i++) {
+		dec = enc = NULL;
+		testsuite_check ("broken_rfc2047_text[%u]", i);
+		try {
+			dec = g_mime_utils_header_decode_text (broken_rfc2047_text[i].input);
+			if (strcmp (broken_rfc2047_text[i].decoded, dec) != 0)
+				throw (exception_new ("decoded text does not match: %s", dec));
+			
+			enc = g_mime_utils_header_encode_text (dec);
+			if (strcmp (broken_rfc2047_text[i].encoded, enc) != 0)
+				throw (exception_new ("encoded text does not match: %s", enc));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("broken_rfc2047_text[%u]: %s", i, ex->message);
 		} finally;
 		
 		g_free (dec);
@@ -505,7 +531,7 @@ int main (int argc, char **argv)
 	testsuite_end ();
 	
 	testsuite_start ("rfc2047 encoding/decoding");
-	test_rfc2047 ();
+	test_rfc2047 (FALSE);
 	testsuite_end ();
 	
 	testsuite_start ("rfc2184 encoding/decoding");
@@ -516,6 +542,12 @@ int main (int argc, char **argv)
 	test_qstring ();
 	testsuite_end ();
 	
+	g_mime_shutdown ();
+	
+	g_mime_init (GMIME_ENABLE_RFC2047_WORKAROUNDS);
+	testsuite_start ("broken rfc2047 encoding/decoding");
+	test_rfc2047 (TRUE);
+	testsuite_end ();
 	g_mime_shutdown ();
 	
 	return testsuite_exit ();
