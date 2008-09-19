@@ -51,10 +51,39 @@
  * SECTION: internet-address
  * @title: InternetAddress
  * @short_description: Internet addresses
- * @see_also:
+ * @see_also: #InternetAddressGroup, #InternetAddressMailbox
  *
- * An #InternetAddress represents what is commonly referred to as an
- * E-Mail address.
+ * An #InternetAddress is the base class for #InternetAddressGroup and
+ * #InternetAddressMailbox.
+ **/
+
+/**
+ * SECTION: internet-address-group
+ * @title: InternetAddressGroup
+ * @short_description: rfc822 'group' address
+ * @see_also: #InternetAddress
+ *
+ * An #InternetAddressGroup represents an rfc822 'group' address.
+ **/
+
+/**
+ * SECTION: internet-address-mailbox
+ * @title: InternetAddressMailbox
+ * @short_description: rfc822 'mailbox' address
+ * @see_also: #InternetAddress
+ *
+ * An #InternetAddressMailbox represents what is a typical "email
+ * address".
+ **/
+
+/**
+ * SECTION: internet-address-list
+ * @title: InternetAddressList
+ * @short_description: A list of internet addresses
+ * @see_also: #InternetAddress
+ *
+ * An #InternetAddressList is a collection of #InternetAddress
+ * objects.
  **/
 
 
