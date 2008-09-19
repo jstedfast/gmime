@@ -1,5 +1,11 @@
 2008-09-18  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/internet-address.c (internet_address_group_set_members):
+	Add an event listener to the new members, not the unref'd old
+	member list. Thanks to Peter Bloomfield for spotting this.
+
+2008-09-18  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime.c (g_mime_init): Register all of our GObject types
 	with the glib type system so that there's less risk of a
 	race-condition in multi-threaded applications (not sure if this is

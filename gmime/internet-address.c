@@ -583,7 +583,7 @@ internet_address_group_set_members (InternetAddressGroup *group, InternetAddress
 	}
 	
 	if (members) {
-		event_list_add (group->members->priv, (EventCallback) members_changed, group);
+		event_list_add (members->priv, (EventCallback) members_changed, group);
 		g_object_ref (members);
 	}
 	
