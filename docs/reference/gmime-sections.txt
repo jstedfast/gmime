@@ -961,19 +961,65 @@ GMIME_UUDECODE_STATE_MASK
 <SECTION>
 <FILE>internet-address</FILE>
 InternetAddress
-InternetAddressMailbox
-InternetAddressGroup
-InternetAddressList
 internet_address_get_name
 internet_address_set_name
 internet_address_to_string
-internet_address_mailbox_new
-internet_address_mailbox_get_addr
-internet_address_mailbox_set_addr
+
+<SUBSECTION Private>
+internet_address_get_type
+
+<SUBSECTION Standard>
+INTERNET_ADDRESS
+IS_INTERNET_ADDRESS
+INTERNET_ADDRESS_TYPE
+INTERNET_ADDRESS_CLASS
+IS_INTERNET_ADDRESS_CLASS
+INTERNET_ADDRESS_GET_CLASS
+InternetAddressClass
+</SECTION>
+
+<SECTION>
+<FILE>internet-address-group</FILE>
+InternetAddressGroup
 internet_address_group_new
 internet_address_group_get_members
 internet_address_group_set_members
 internet_address_group_add_member
+
+<SUBSECTION Private>
+internet_address_group_get_type
+
+<SUBSECTION Standard>
+INTERNET_ADDRESS_GROUP
+INTERNET_ADDRESS_IS_GROUP
+INTERNET_ADDRESS_TYPE_GROUP
+INTERNET_ADDRESS_GROUP_CLASS
+INTERNET_ADDRESS_IS_GROUP_CLASS
+InternetAddressGroupClass
+</SECTION>
+
+<SECTION>
+<FILE>internet-address-mailbox</FILE>
+InternetAddressMailbox
+internet_address_mailbox_new
+internet_address_mailbox_get_addr
+internet_address_mailbox_set_addr
+
+<SUBSECTION Private>
+internet_address_mailbox_get_type
+
+<SUBSECTION Standard>
+INTERNET_ADDRESS_MAILBOX
+INTERNET_ADDRESS_IS_MAILBOX
+INTERNET_ADDRESS_TYPE_MAILBOX
+INTERNET_ADDRESS_MAILBOX_CLASS
+INTERNET_ADDRESS_IS_MAILBOX_CLASS
+InternetAddressMailboxClass
+</SECTION>
+
+<SECTION>
+<FILE>internet-address-list</FILE>
+InternetAddressList
 internet_address_list_new
 internet_address_list_length
 internet_address_list_clear
@@ -992,37 +1038,15 @@ internet_address_list_parse_string
 internet_address_list_writer
 
 <SUBSECTION Private>
-internet_address_get_type
 internet_address_list_get_type
-internet_address_group_get_type
-internet_address_mailbox_get_type
 
 <SUBSECTION Standard>
-INTERNET_ADDRESS
-INTERNET_ADDRESS_CLASS
-INTERNET_ADDRESS_GET_CLASS
-INTERNET_ADDRESS_GROUP
-INTERNET_ADDRESS_GROUP_CLASS
-INTERNET_ADDRESS_IS_GROUP
-INTERNET_ADDRESS_IS_GROUP_CLASS
-INTERNET_ADDRESS_IS_MAILBOX
-INTERNET_ADDRESS_IS_MAILBOX_CLASS
 INTERNET_ADDRESS_LIST
-INTERNET_ADDRESS_LIST_CLASS
-INTERNET_ADDRESS_LIST_TYPE
-INTERNET_ADDRESS_MAILBOX
-INTERNET_ADDRESS_MAILBOX_CLASS
-INTERNET_ADDRESS_TYPE
-INTERNET_ADDRESS_TYPE_GROUP
-INTERNET_ADDRESS_TYPE_MAILBOX
-IS_INTERNET_ADDRESS
-IS_INTERNET_ADDRESS_CLASS
 IS_INTERNET_ADDRESS_LIST
+INTERNET_ADDRESS_LIST_TYPE
+INTERNET_ADDRESS_LIST_CLASS
 IS_INTERNET_ADDRESS_LIST_CLASS
-InternetAddressClass
-InternetAddressGroupClass
 InternetAddressListClass
-InternetAddressMailboxClass
 </SECTION>
 
 <SECTION>

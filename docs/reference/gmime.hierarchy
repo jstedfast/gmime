@@ -1,14 +1,18 @@
 GObject
-  GMimeContentDisposition
-  GMimeContentType
   GMimeObject
+    GMimeMessage
     GMimePart
       GMimeMessagePartial
     GMimeMultipart
       GMimeMultipartEncrypted
       GMimeMultipartSigned
     GMimeMessagePart
-    GMimeMessage
+  GMimeContentType
+  GMimeContentDisposition
+  InternetAddress
+    InternetAddressGroup
+    InternetAddressMailbox
+  InternetAddressList
   GMimeCipherContext
     GMimeGpgContext
   GMimeDataWrapper
@@ -37,9 +41,5 @@ GObject
     GMimeStreamMem
     GMimeStreamMmap
     GMimeStreamNull
-  InternetAddress
-    InternetAddressGroup
-    InternetAddressMailbox
-  InternetAddressList
 GInterface
   GTypePlugin

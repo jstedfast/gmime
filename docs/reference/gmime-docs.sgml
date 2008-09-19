@@ -20,6 +20,9 @@
 <!ENTITY gmime-utils SYSTEM "xml/gmime-utils.xml">
 <!ENTITY gmime-encodings SYSTEM "xml/gmime-encodings.xml">
 <!ENTITY InternetAddress SYSTEM "xml/internet-address.xml">
+<!ENTITY InternetAddressGroup SYSTEM "xml/internet-address-group.xml">
+<!ENTITY InternetAddressMailbox SYSTEM "xml/internet-address-mailbox.xml">
+<!ENTITY InternetAddressList SYSTEM "xml/internet-address-list.xml">
 <!ENTITY GMimeParser SYSTEM "xml/gmime-parser.xml">
 <!ENTITY gmime-charset SYSTEM "xml/gmime-charset.xml">
 <!ENTITY gmime-iconv SYSTEM "xml/gmime-iconv.xml">
@@ -216,6 +219,9 @@ string utilities, file utilities, a main loop abstraction, and so on.
     <chapter id="InternetAddresses">
       <title>Internet Addresses</title>
       &InternetAddress;
+      &InternetAddressGroup;
+      &InternetAddressMailbox;
+      &InternetAddressList;
     </chapter>
 
     <chapter id="MimeParts">

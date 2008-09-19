@@ -1,9 +1,9 @@
 <screen>
-    <link linkend="GMimeContentType">GMimeContentType</link>
-    <link linkend="GMimeDisposition">GMimeDisposition</link>
     <link linkend="GMimeHeader">GMimeHeader</link>
     <link linkend="GMimeParam">GMimeParam</link>
     <link linkend="GObject">GObject</link>
+        <link linkend="GMimeContentDisposition">GMimeContentDisposition</link>
+        <link linkend="GMimeContentType">GMimeContentType</link>
         <link linkend="GMimeDataWrapper">GMimeDataWrapper</link>
         <link linkend="GMimeObject">GMimeObject</link>
             <link linkend="GMimeMessage">GMimeMessage</link>
@@ -38,5 +38,8 @@
             <link linkend="GMimeGpgContext">GMimeGpgContext</link>
         <link linkend="GMimeSession">GMimeSession</link>
             <link linkend="GMimeSessionSimple">GMimeSessionSimple</link>
-    <link linkend="InternetAddress">InternetAddress</link>
+        <link linkend="InternetAddress">InternetAddress</link>
+            <link linkend="InternetAddressGroup">InternetAddressGroup</link>
+            <link linkend="InternetAddressMailbox">InternetAddressMailbox</link>
+        <link linkend="InternetAddressList">InternetAddressList</link>
 </screen>
