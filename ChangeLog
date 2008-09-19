@@ -1,5 +1,14 @@
 2008-09-18  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_text): Check if
+	rfc2047-workarounds has been enabled at runtime.
+
+	* gmime/gmime.h (GMIME_ENABLE_RFC2047_WORKAROUNDS): New
+	g_mime_init() flag so that a programmer can enable rfc2047
+	workarounds at runtime.
+
+	* gmime/gmime.c (g_mime_init): Save the init flags.
+
 	* gmime/internet-address.c (internet_address_group_set_members):
 	Add an event listener to the new members, not the unref'd old
 	member list. Thanks to Peter Bloomfield for spotting this.

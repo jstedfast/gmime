@@ -1,7 +1,7 @@
 <SECTION>
 <FILE>gmime</FILE>
 GMIME_CHECK_VERSION
-GMIME_INIT_FLAG_UTF8
+GMIME_ENABLE_RFC2047_WORKAROUNDS
 g_mime_init
 g_mime_shutdown
 gmime_major_version

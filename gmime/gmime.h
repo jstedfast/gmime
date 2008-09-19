@@ -124,15 +124,12 @@ gboolean g_mime_check_version (guint major, guint minor, guint micro);
 
 
 /**
- * GMIME_INIT_FLAG_UTF8:
+ * GMIME_ENABLE_RFC2047_WORKAROUNDS:
  *
- * Initialization flag to enable UTF-8 interfaces throughout GMime.
- *
- * Note: this flag is really a no-op and remains only for backward
- * compatablity. Interfaces will be UTF-8 whether this flag is used or
- * not.
+ * Initialization flag to enable workarounds for badly formed rfc2047
+ * encoded-words.
  **/
-#define GMIME_INIT_FLAG_UTF8  (1 << 0)
+#define GMIME_ENABLE_RFC2047_WORKAROUNDS  (1 << 0)
 
 void g_mime_init (guint32 flags);
 void g_mime_shutdown (void);

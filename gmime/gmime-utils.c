@@ -69,6 +69,8 @@
  * and encodings.
  **/
 
+extern gboolean _g_mime_enable_rfc2047_workarounds (void);
+
 #define GMIME_FOLD_PREENCODED  (GMIME_FOLD_LEN / 2)
 
 /* date parser macros */
@@ -1781,6 +1783,7 @@ rfc2047_decode_word (const char *in, size_t inlen)
 char *
 g_mime_utils_header_decode_text (const char *text)
 {
+	gboolean enable_rfc2047_workarounds = _g_mime_enable_rfc2047_workarounds ();
 	register const char *inptr = text;
 	gboolean encoded = FALSE;
 	const char *lwsp, *word;
@@ -1805,46 +1808,46 @@ g_mime_utils_header_decode_text (const char *text)
 			word = inptr;
 			ascii = TRUE;
 			
-#ifdef ENABLE_RFC2047_WORKAROUNDS
-			if (!strncmp (inptr, "=?", 2)) {
-				inptr += 2;
-				
-				/* skip past the charset (if one is even declared, sigh) */
-				while (*inptr && *inptr != '?') {
-					ascii = ascii && is_ascii (*inptr);
-					inptr++;
-				}
-				
-				/* sanity check encoding type */
-				if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
-					goto non_rfc2047;
-				
-				inptr += 3;
-				
-				/* find the end of the rfc2047 encoded word token */
-				while (*inptr && strncmp (inptr, "?=", 2) != 0) {
-					ascii = ascii && is_ascii (*inptr);
-					inptr++;
-				}
-				
-				if (!strncmp (inptr, "?=", 2))
+			if (enable_rfc2047_workarounds) {
+				if (!strncmp (inptr, "=?", 2)) {
 					inptr += 2;
+					
+					/* skip past the charset (if one is even declared, sigh) */
+					while (*inptr && *inptr != '?') {
+						ascii = ascii && is_ascii (*inptr);
+						inptr++;
+					}
+					
+					/* sanity check encoding type */
+					if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
+						goto non_rfc2047;
+					
+					inptr += 3;
+					
+					/* find the end of the rfc2047 encoded word token */
+					while (*inptr && strncmp (inptr, "?=", 2) != 0) {
+						ascii = ascii && is_ascii (*inptr);
+						inptr++;
+					}
+					
+					if (!strncmp (inptr, "?=", 2))
+						inptr += 2;
+				} else {
+				non_rfc2047:
+					/* stop if we encounter a possible rfc2047 encoded
+					 * token even if it's inside another word, sigh. */
+					while (*inptr && !is_lwsp (*inptr) &&
+					       strncmp (inptr, "=?", 2) != 0) {
+						ascii = ascii && is_ascii (*inptr);
+						inptr++;
+					}
+				}
 			} else {
-			non_rfc2047:
-				/* stop if we encounter a possible rfc2047 encoded
-				 * token even if it's inside another word, sigh. */
-				while (*inptr && !is_lwsp (*inptr) &&
-				       strncmp (inptr, "=?", 2) != 0) {
+				while (*inptr && !is_lwsp (*inptr)) {
 					ascii = ascii && is_ascii (*inptr);
 					inptr++;
 				}
 			}
-#else
-			while (*inptr && !is_lwsp (*inptr)) {
-				ascii = ascii && is_ascii (*inptr);
-				inptr++;
-			}
-#endif /* ENABLE_RFC2047_WORKAROUNDS */
 			
 			n = (size_t) (inptr - word);
 			if (is_rfc2047_encoded_word (word, n)) {

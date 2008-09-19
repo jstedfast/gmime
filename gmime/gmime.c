@@ -47,6 +47,7 @@ const guint gmime_interface_age = 0;
 const guint gmime_binary_age = 0;
 
 static unsigned int initialized = 0;
+static guint32 enable = 0;
 
 
 /**
@@ -96,6 +97,8 @@ g_mime_init (guint32 flags)
 	tzset ();
 #endif
 	
+	enable = flags;
+	
 	g_type_init ();
 	
 	g_mime_charset_map_init ();
@@ -140,4 +143,11 @@ g_mime_shutdown (void)
 	
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_shutdown ();
+}
+
+
+gboolean
+_g_mime_enable_rfc2047_workarounds (void)
+{
+	return (enable & GMIME_ENABLE_RFC2047_WORKAROUNDS);
 }

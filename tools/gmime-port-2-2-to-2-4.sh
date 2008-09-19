@@ -3,7 +3,8 @@
 for src in `find . -name "*.[c,h]"`
 do
     echo "Auto-porting '$src' from GMime-2.2 to GMime-2.4..."
-    sed -e "s/GMimeDisposition/GMimeContentDisposition/g" \
+    sed -e "s/GMIME_INIT_FLAG_UTF8/0/g" \
+        -e "s/GMimeDisposition/GMimeContentDisposition/g" \
 	-e "s/GMimePartEncodingType/GMimeContentEncoding/g" \
 	-e "s/GMIME_PART_ENCODING_/GMIME_CONTENT_ENCODING_/g" \
 	-e "s/GMIME_FILTER_CRLF_ENCODE/TRUE/g" \
