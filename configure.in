@@ -231,15 +231,6 @@ AC_TRY_LINK([
 	AC_MSG_RESULT(no)
 )
 
-dnl Check if we should work around broken rfc2047 encodings
-AC_ARG_ENABLE(rfc2047-workarounds,
-              AC_HELP_STRING([--enable-rfc2047-workarounds],
-	      [enable workarounds for broken rfc2047 encodings [[default=no]]]),,
-	      enable_rfc2047_workarounds=no)
-if test "x$enable_rfc2047_workarounds" = "xyes"; then
-  AC_DEFINE(ENABLE_RFC2047_WORKAROUNDS, 1, [Define if GMime should enable workarounds for broken rfc2047 encodings.])
-fi
-
 dnl Check for MAXHOSTNAMELEN
 AC_MSG_CHECKING(for MAXHOSTNAMELEN)
 AC_TRY_COMPILE([
@@ -542,7 +533,6 @@ Configuration:
   Profiling enabled:    ${enable_profiling}
 
   Large file support:   ${enable_largefile}
-  rfc2047 workarounds:  ${enable_rfc2047_workarounds}
   Console warnings:     ${enable_warnings}
 
   Mono bindings:        ${enable_mono}
