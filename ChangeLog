@@ -1,5 +1,10 @@
 2008-09-25  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-stream.c (stream_length): Implemented a default
+	solution using g_mime_stream_seek().
+
+2008-09-25  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.4.0

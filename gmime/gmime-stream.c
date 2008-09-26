@@ -384,8 +384,18 @@ g_mime_stream_tell (GMimeStream *stream)
 static ssize_t
 stream_length (GMimeStream *stream)
 {
-	d(g_warning ("Invoked default stream_length implementation."));
-	return -1;
+	gint64 bound_end;
+	
+	if (stream->bound_end != -1)
+		return stream->bound_end - stream->bound_start;
+	
+	bound_end = g_mime_stream_seek (stream, 0, GMIME_STREAM_SEEK_END);
+	g_mime_stream_seek (stream, stream->position, GMIME_STREAM_SEEK_SET);
+	
+	if (bound_end < stream->bound_start)
+		return -1;
+	
+	return bound_end - stream->bound_start;
 }
 
 
