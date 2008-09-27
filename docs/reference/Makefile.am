@@ -23,8 +23,6 @@ SCAN_OPTIONS = --deprecated-guards="GMIME_DISABLE_DEPRECATED"
 # Extra options to pass to gtkdoc-scangobj
 SCANGOBJ_OPTIONS=--type-init-func="g_mime_init (0)"
 
-#SCANOBJ_FILES = $(DOC_MODULE).hierarchy
-
 # Extra options to supply to gtkdoc-mkdb
 MKDB_OPTIONS = --sgml-mode --output-format=xml --ignore-files=trio
 
