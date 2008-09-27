@@ -8,7 +8,6 @@ SOURCES_XML = sources.xml
 PACKAGE_SHARP = $(PACKAGE)-sharp
 TARGET = $(ASSEMBLY)
 ASSEMBLY = $(ASSEMBLY_NAME).dll
-gapidir = $(datadir)/gapi-2.0
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs
