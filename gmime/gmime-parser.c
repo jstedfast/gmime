@@ -760,7 +760,8 @@ parser_step_from (GMimeParser *parser)
 	return 0;
 }
 
-static size_t
+#ifdef ALLOC_NEAREST_POW2
+static inline size_t
 nearest_pow (size_t num)
 {
 	size_t n = num > 0 ? num - 1 : 0;
@@ -775,12 +776,21 @@ nearest_pow (size_t num)
 	return n;
 }
 
+#define next_alloc_size(n) nearest_pow (n)
+#else
+static inline size_t
+next_alloc_size (size_t n)
+{
+	return ((n + 63) / 64) * 64;
+}
+#endif
+
 #define header_append(priv, start, len) G_STMT_START {                    \
 	if (priv->headerleft <= len) {                                    \
 		size_t hlen, hoff;                                        \
 		                                                          \
 		hoff = priv->headerptr - priv->headerbuf;                 \
-		hlen = nearest_pow (hoff + len + 1);                      \
+		hlen = next_alloc_size (hoff + len + 1);                  \
 		                                                          \
 		priv->headerbuf = g_realloc (priv->headerbuf, hlen);      \
 		priv->headerptr = priv->headerbuf + hoff;                 \
@@ -797,7 +807,7 @@ nearest_pow (size_t num)
 		size_t hlen, hoff;                                        \
 		                                                          \
 		hoff = priv->rawptr - priv->rawbuf;                       \
-		hlen = nearest_pow (hoff + len + 1);                      \
+		hlen = next_alloc_size (hoff + len + 1);                  \
 		                                                          \
 		priv->rawbuf = g_realloc (priv->rawbuf, hlen);            \
 		priv->rawptr = priv->rawbuf + hoff;                       \
