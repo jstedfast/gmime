@@ -5,7 +5,7 @@ ASSEMBLY_NAME = gmime-sharp
 references = $(GTK_SHARP_LIBS)
 SOURCES_XML = sources.xml
 
-PACKAGE_SHARP = $(PACKAGE)-sharp
+PACKAGE_SHARP = $(PACKAGE)-sharp-2.4
 TARGET = $(ASSEMBLY)
 ASSEMBLY = $(ASSEMBLY_NAME).dll
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
