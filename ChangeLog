@@ -1,5 +1,10 @@
 2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gtk-doc.make: Allow for a versioned install of the
+	gtk-docs. Completes the fix for bug #554121.
+
+	* docs/reference/Makefile.am: Define a DOC_MODULE_VERSION
+
 	* mono/Makefile.am: Fix PACKAGE_SHARP to be versioned. Partial fix
 	for bug #554121.
 

@@ -2,7 +2,7 @@
 
 # The name of the module.
 DOC_MODULE = gmime
-DOC_MODULE_VERSIONED = $(DOC_MODULE)-$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
+DOC_MODULE_VERSION = -$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE = gmime-docs.sgml
@@ -14,8 +14,6 @@ HTML_DIR = $(datadir)/gtk-doc/html
 
 # Images to copy into HTML directory
 HTML_IMAGES = 
-
-#TARGET_DIR = $(HTML_DIR)/$(DOC_MODULE_VERSIONED)
 
 # Extra options to supply to gtkdoc-scan
 SCAN_OPTIONS = --deprecated-guards="GMIME_DISABLE_DEPRECATED"
@@ -70,9 +68,7 @@ include $(top_srcdir)/gtk-doc.make
 
 # Other files to distribute
 EXTRA_DIST += 				\
-	$(content_files)		\
 	$(DOC_MODULE)-docs.sgml		\
-	$(DOC_MODULE)-sections.txt	\
 	gmime.hierarchy
 
 BUILT_EXTRA_DIST = 
