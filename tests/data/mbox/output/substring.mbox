@@ -1,0 +1,30 @@
+85: Subject: this'll probably break a lot of mime parsers
+message offsets: 0, 526
+header offsets: 8, 216
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/mixed
+      Content-Type: multipart/mixed
+         Content-Type: text/plain
+
+611: Subject: this'll probably break even more mime parsers
+message offsets: 526, 1029
+header offsets: 534, 728
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/mixed
+      Content-Type: multipart/mixed
+         Content-Type: text/plain
+
+1114: Subject: if a mime parser can correctly handle this, I'm impressed
+message offsets: 1029, 1535
+header offsets: 1037, 1242
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/mixed
+      Content-Type: multipart/mixed
+         Content-Type: text/plain
+
