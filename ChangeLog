@@ -1,5 +1,11 @@
 2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.1
+
+2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gtk-doc.make: Allow for a versioned install of the
 	gtk-docs. Completes the fix for bug #554121.
 
