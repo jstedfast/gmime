@@ -5,7 +5,7 @@ ASSEMBLY_NAME = gmime-sharp
 references = $(GTK_SHARP_LIBS)
 SOURCES_XML = sources.xml
 
-PACKAGE_SHARP = $(PACKAGE)-sharp-2.4
+PACKAGE_SHARP = $(PACKAGE)-sharp-$(GMIME_API_VERSION)
 TARGET = $(ASSEMBLY)
 ASSEMBLY = $(ASSEMBLY_NAME).dll
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
@@ -13,7 +13,7 @@ CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = gmime-sharp-2.4.pc
+pkgconfig_DATA = $(PACKAGE_SHARP).pc
 
 sources = 				\
 	StreamWrapper.cs
@@ -53,7 +53,7 @@ EXTRA_DIST =			\
 	$(customs)		\
 	$(sources)		\
 	$(SOURCES_XML)		\
-	gmime-sharp-2.4.pc.in
+	$(PACKAGE_SHARP).pc.in
 
 $(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)

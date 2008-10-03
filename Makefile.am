@@ -21,20 +21,20 @@ SUBDIRS += tools .
 
 DISTCLEANFILES = iconv-detect.h
 
-EXTRA_DIST = 			\
-	PORTING			\
-	gmime-2.4.pc.in		\
-	gmime.spec.in 		\
-	iconv-detect.c		\
-	zentimer.h 		\
-	zenprofiler.h		\
+EXTRA_DIST = 				\
+	PORTING				\
+	gmime-$(GMIME_API_VERSION).pc.in\
+	gmime.spec.in 			\
+	iconv-detect.c			\
+	zentimer.h 			\
+	zenprofiler.h			\
 	gtk-doc.make
 
-BUILD_EXTRA_DIST = 		\
+BUILD_EXTRA_DIST = 			\
 	gmime.spec
 
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = gmime-2.4.pc
+pkgconfig_DATA = gmime-$(GMIME_API_VERSION).pc
 
 $(pkgconfig_DATA): config.status
 

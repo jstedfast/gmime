@@ -1,5 +1,18 @@
 2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fixes for bug #554830
+
+	* mono/Makefile.am: Don't hard-code the API version.
+
+	* mono/gmime-sharp-2.4.pc.in: Fixed incorrect path to include the
+	API_VERSION.
+
+	* gmime-2.4.pc.in: Similar fixes.
+
+	* configure.in: Define GMIME_API_VERSION
+
+2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.4.1

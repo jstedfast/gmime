@@ -4,4 +4,4 @@ libdir=${prefix}/lib
 Name: gmime-sharp 
 Version: @VERSION@
 Description: .NET bindings for GMime
-Libs: -r:${libdir}/mono/gmime-sharp/gmime-sharp.dll
+Libs: -r:${libdir}/mono/gmime-sharp-@GMIME_API_VERSION@/gmime-sharp.dll
