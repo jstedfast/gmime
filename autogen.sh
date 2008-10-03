@@ -81,7 +81,7 @@ fi
 $ACLOCAL $ACLOCAL_FLAGS || exit $?
 
 libtoolize --force || exit $?
-#gtkdocize || exit $?
+gtkdocize || exit $?
 
 autoheader || exit $?
 

@@ -2,7 +2,6 @@
 
 # The name of the module.
 DOC_MODULE = gmime
-DOC_MODULE_VERSION = -$(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 
 # The top-level SGML file.
 DOC_MAIN_SGML_FILE = gmime-docs.sgml

@@ -1,5 +1,9 @@
 2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	* docs/reference/Makefile.am: Reverted previous change, this
+	unfortunately breaks devhelp. Seems like parallel installable docs
+	will have to wait for a fix from the gtk-doc maintainers.
+
 	Fixes for bug #554830
 
 	* mono/Makefile.am: Don't hard-code the API version.
