@@ -37,9 +37,6 @@ InternetAddress with a name of "Joe Bob" and a NULL addr
 Ideas for GMime "3.0"
 =====================
 
-- Make g_mime_stream_*_new() functions more consistent (maybe add
-  fs/FILE "from filename" functions too)
-
 - Add internet_address_new_name_static() which would take static
   strings (e.g. strings which should not be free'd on destroy) so that
   apps can save string memory by reusing strings.
@@ -50,24 +47,6 @@ Ideas for GMime "3.0"
 
 - GMimeParser should also take a GError arg and/or return int error
   codes.
-
-- GMimeMultipartEncrypted::decrypt() needs to return a
-  GMimeSignatureStatus for signed/encrypted parts.
-
-- Rename GMimeDisposition to GMimeContentDisposition.
-
-- Move GMimePart's disposition APIs to GMimeObject since technically,
-  Multiparts can also have a disposition.
-
-- Rename g_mime_part_[g,s]et_content_disposition_object() to
-  g_mime_part_[g,s]et_content_disposition() and rename
-  g_mime_part_[g,s]et_content_disposition() to simply
-  g_mime_part_[g,s]et_disposition()
-
-- Make GMimeMultipart and InternetAddressList use arrays instead of
-  linked lists?
-
-- Get rid of deprecated functions.
 
 
 
