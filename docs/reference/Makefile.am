@@ -1,6 +1,7 @@
 ## Process this file with automake to produce Makefile.in
 
 # The name of the module.
+DOC_MODULE_VERSION = $(GMIME_MAJOR_VERSION).$(GMIME_MINOR_VERSION)
 DOC_MODULE = gmime
 
 # The top-level SGML file.
