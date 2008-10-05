@@ -110,7 +110,7 @@ g_mime_data_wrapper_finalize (GObject *object)
 /**
  * g_mime_data_wrapper_new:
  *
- * Creates a new GMimeDataWrapper object.
+ * Creates a new #GMimeDataWrapper object.
  *
  * Returns: a new data wrapper object.
  **/
@@ -123,7 +123,7 @@ g_mime_data_wrapper_new (void)
 
 /**
  * g_mime_data_wrapper_new_with_stream:
- * @stream: stream
+ * @stream: a #GMimeStream
  * @encoding: stream's encoding
  *
  * Creates a new #GMimeDataWrapper object around @stream.
@@ -152,8 +152,8 @@ g_mime_data_wrapper_new_with_stream (GMimeStream *stream, GMimeContentEncoding e
 
 /**
  * g_mime_data_wrapper_set_stream:
- * @wrapper: data wrapper
- * @stream: stream
+ * @wrapper: a #GMimeDataWrapper
+ * @stream: a #GMimeStream
  *
  * Replaces the wrapper's internal stream with @stream. Don't forget,
  * if @stream is not of the same encoding as the old stream, you'll
@@ -180,7 +180,7 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 
 /**
  * g_mime_data_wrapper_get_stream:
- * @wrapper: data wrapper
+ * @wrapper: a #GMimeDataWrapper
  *
  * Gets a reference to the stream wrapped by @wrapper.
  *
@@ -198,7 +198,7 @@ g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)
 
 /**
  * g_mime_data_wrapper_set_encoding:
- * @wrapper: data wrapper
+ * @wrapper: a #GMimeDataWrapper
  * @encoding: encoding
  *
  * Sets the encoding type of the internal stream.
@@ -214,7 +214,7 @@ g_mime_data_wrapper_set_encoding (GMimeDataWrapper *wrapper, GMimeContentEncodin
 
 /**
  * g_mime_data_wrapper_get_encoding:
- * @wrapper: data wrapper
+ * @wrapper: a #GMimeDataWrapper
  *
  * Gets the encoding type of the stream wrapped by @wrapper.
  *
@@ -264,7 +264,7 @@ write_to_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
 
 /**
  * g_mime_data_wrapper_write_to_stream:
- * @wrapper: data wrapper
+ * @wrapper: a #GMimeDataWrapper
  * @stream: output stream
  *
  * Writes the raw (decoded) data to the output stream.
