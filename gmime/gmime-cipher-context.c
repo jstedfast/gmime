@@ -143,7 +143,7 @@ cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
 
 /**
  * g_mime_cipher_context_hash_id:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @hash: hash name
  *
  * Gets the hash id based on the hash name @hash.
@@ -169,7 +169,7 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 
 /**
  * g_mime_cipher_context_hash_name:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @hash: hash id
  *
  * Gets the hash name based on the hash id @hash.
@@ -198,12 +198,12 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
 
 /**
  * g_mime_cipher_context_sign:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @userid: private key to use to sign the stream
  * @hash: preferred Message-Integrity-Check hash algorithm
  * @istream: input stream
  * @ostream: output stream
- * @err: exception
+ * @err: a #GError
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
@@ -235,11 +235,11 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
 
 /**
  * g_mime_cipher_context_verify:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @hash: secure hash used
  * @istream: input stream
  * @sigstream: optional detached-signature stream
- * @err: exception
+ * @err: a #GError
  *
  * Verifies the signature. If @istream is a clearsigned stream,
  * you should pass %NULL as the sigstream parameter. Otherwise
@@ -274,13 +274,13 @@ cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtr
 
 /**
  * g_mime_cipher_context_encrypt:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @recipients: an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
  * @ostream: ciphertext output stream
- * @err: exception
+ * @err: a #GError
  *
  * Encrypts (and optionally signs) the cleartext input stream and
  * writes the resulting ciphertext to the output stream.
@@ -312,10 +312,10 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 
 /**
  * g_mime_cipher_context_decrypt:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
- * @err: exception
+ * @err: a #GError
  *
  * Decrypts the ciphertext input stream and writes the resulting
  * cleartext to the output stream.
@@ -355,9 +355,9 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
 
 /**
  * g_mime_cipher_context_import_keys:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @istream: input stream (containing keys)
- * @err: exception
+ * @err: a #GError
  *
  * Imports a stream of keys/certificates contained within @istream
  * into the key/certificate database controlled by @ctx.
@@ -387,10 +387,10 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 
 /**
  * g_mime_cipher_context_export_keys:
- * @ctx: Cipher Context
+ * @ctx: a #GMimeCipherContext
  * @keys: an array of key ids
  * @ostream: output stream
- * @err: exception
+ * @err: a #GError
  *
  * Exports the keys/certificates in @keys to the stream @ostream from
  * the key/certificate database controlled by @ctx.
@@ -412,7 +412,7 @@ g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 /**
  * g_mime_signer_new:
  *
- * Allocates an new GMimeSigner.
+ * Allocates an new #GMimeSigner.
  *
  * Returns: a new #GMimeSigner.
  **/

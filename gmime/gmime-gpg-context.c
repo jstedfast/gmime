@@ -1935,7 +1935,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 
 /**
  * g_mime_gpg_context_new:
- * @session: session
+ * @session: a #GMimeSession
  * @path: path to gpg binary
  *
  * Creates a new gpg cipher context object.
@@ -1964,7 +1964,7 @@ g_mime_gpg_context_new (GMimeSession *session, const char *path)
 
 /**
  * g_mime_gpg_context_get_always_trust:
- * @ctx: gpg context
+ * @ctx: a #GMimeGpgContext
  *
  * Gets the @always_trust flag on the gpg context.
  *
@@ -1981,7 +1981,7 @@ g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
 
 /**
  * g_mime_gpg_context_set_always_trust:
- * @ctx: gpg context
+ * @ctx: a #GMimeGpgContext
  * @always_trust: always truct flag
  *
  * Sets the @always_trust flag on the gpg context which is used for
