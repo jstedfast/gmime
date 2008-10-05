@@ -315,9 +315,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * g_mime_stream_file_new:
  * @fp: file pointer
  *
- * Creates a new GMimeStreamFile object around @fp.
+ * Creates a new #GMimeStreamFile object around @fp.
  *
- * Note: The created GMimeStreamFile object will own the FILE pointer
+ * Note: The created #GMimeStreamFile object will own the FILE pointer
  * passed in.
  *
  * Returns: a stream using @fp.
@@ -346,10 +346,10 @@ g_mime_stream_file_new (FILE *fp)
  * @start: start boundary
  * @end: end boundary
  *
- * Creates a new GMimeStreamFile object around @fp with bounds @start
+ * Creates a new #GMimeStreamFile object around @fp with bounds @start
  * and @end.
  *
- * Note: The created GMimeStreamFile object will own the FILE pointer
+ * Note: The created #GMimeStreamFile object will own the FILE pointer
  * passed in.
  *
  * Returns: a stream using @fp with bounds @start and @end.

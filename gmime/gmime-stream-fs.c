@@ -32,7 +32,7 @@
 
 
 #ifndef HAVE_FSYNC
-int fsync (int fd) { return 0; }
+static int fsync (int fd) { return 0; }
 #endif
 
 
@@ -361,7 +361,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  * g_mime_stream_fs_new:
  * @fd: file descriptor
  *
- * Creates a new GMimeStreamFs object around @fd.
+ * Creates a new #GMimeStreamFs object around @fd.
  *
  * Returns: a stream using @fd.
  **/
@@ -390,7 +390,7 @@ g_mime_stream_fs_new (int fd)
  * @start: start boundary
  * @end: end boundary
  *
- * Creates a new GMimeStreamFs object around @fd with bounds @start
+ * Creates a new #GMimeStreamFs object around @fd with bounds @start
  * and @end.
  *
  * Returns: a stream using @fd with bounds @start and @end.

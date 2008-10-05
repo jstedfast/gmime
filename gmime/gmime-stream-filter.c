@@ -428,25 +428,26 @@ g_mime_stream_filter_new (GMimeStream *stream)
 
 /**
  * g_mime_stream_filter_add:
- * @fstream: filter stream
- * @filter: filter
+ * @stream: a #GMimeStreamFilter
+ * @filter: a #GMimeFilter
  *
- * Adds a @filter to @fstream.
+ * Adds @filter to @stream. Filters are applied in the same order in
+ * which they are added.
  *
  * Returns: an id for the filter.
  **/
 int
-g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
+g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter)
 {
 	struct _GMimeStreamFilterPrivate *priv;
 	struct _filter *f, *fn;
 	
-	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (fstream), -1);
+	g_return_val_if_fail (GMIME_IS_STREAM_FILTER (stream), -1);
 	g_return_val_if_fail (GMIME_IS_FILTER (filter), -1);
 	
 	g_object_ref (filter);
 	
-	priv = fstream->priv;
+	priv = stream->priv;
 	
 	fn = g_new (struct _filter, 1);
 	fn->next = NULL;
@@ -466,21 +467,21 @@ g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter)
 
 /**
  * g_mime_stream_filter_remove:
- * @fstream: filter stream
+ * @stream: a #GMimeStreamFilter
  * @id: filter id
  *
  * Removed a filter from the stream based on the id (as returned from
  * filter_add).
  **/
 void
-g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id)
+g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id)
 {
 	struct _GMimeStreamFilterPrivate *priv;
 	struct _filter *f, *fn;
 	
-	g_return_if_fail (GMIME_IS_STREAM_FILTER (fstream));
+	g_return_if_fail (GMIME_IS_STREAM_FILTER (stream));
 	
-	priv = fstream->priv;
+	priv = stream->priv;
 	
 	if (id == -1)
 		return;

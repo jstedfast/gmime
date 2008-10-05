@@ -63,8 +63,8 @@ GType g_mime_stream_filter_get_type (void);
 
 GMimeStream *g_mime_stream_filter_new (GMimeStream *stream);
 
-int g_mime_stream_filter_add (GMimeStreamFilter *fstream, GMimeFilter *filter);
-void g_mime_stream_filter_remove (GMimeStreamFilter *fstream, int id);
+int g_mime_stream_filter_add (GMimeStreamFilter *stream, GMimeFilter *filter);
+void g_mime_stream_filter_remove (GMimeStreamFilter *stream, int id);
 
 G_END_DECLS
 
