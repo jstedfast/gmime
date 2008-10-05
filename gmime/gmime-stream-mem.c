@@ -288,7 +288,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 /**
  * g_mime_stream_mem_new:
  *
- * Creates a new GMimeStreamMem object.
+ * Creates a new #GMimeStreamMem object.
  *
  * Returns: a new memory stream.
  **/
@@ -310,7 +310,7 @@ g_mime_stream_mem_new (void)
  * g_mime_stream_mem_new_with_byte_array:
  * @array: source data
  *
- * Creates a new GMimeStreamMem with data @array.
+ * Creates a new #GMimeStreamMem with data @array.
  *
  * Returns: a new memory stream using @array.
  **/
@@ -331,9 +331,9 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 /**
  * g_mime_stream_mem_new_with_buffer:
  * @buffer: stream data
- * @len: data length
+ * @len: buffer length
  *
- * Creates a new GMimeStreamMem object and initializes the stream
+ * Creates a new #GMimeStreamMem object and initializes the stream
  * contents with the first @len bytes of @buffer.
  *
  * Returns: a new memory stream initialized with @buffer.
@@ -356,7 +356,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
 
 /**
  * g_mime_stream_mem_get_byte_array:
- * @mem: memory stream
+ * @mem: a #GMimeStreamMem
  *
  * Gets the byte array from the memory stream.
  *
@@ -373,7 +373,7 @@ g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
 
 /**
  * g_mime_stream_mem_set_byte_array:
- * @mem: memory stream
+ * @mem: a #GMimeStreamMem
  * @array: stream data
  *
  * Sets the byte array on the memory stream.
@@ -405,7 +405,7 @@ g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
 
 /**
  * g_mime_stream_mem_get_owner:
- * @mem: memory stream
+ * @mem: a #GMimeStreamMem
  *
  * Gets whether or not @mem owns the backend memory buffer.
  *
@@ -423,7 +423,7 @@ g_mime_stream_mem_get_owner (GMimeStreamMem *mem)
 
 /**
  * g_mime_stream_mem_set_owner:
- * @mem: memory stream
+ * @mem: a #GMimeStreamMem
  * @owner: owner
  *
  * Sets whether or not @mem owns the backend memory buffer.

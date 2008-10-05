@@ -238,7 +238,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 /**
  * g_mime_stream_null_new:
  *
- * Creates a new GMimeStreamNull object.
+ * Creates a new #GMimeStreamNull object.
  *
  * Returns: a new null stream (similar to /dev/null on Unix).
  **/
