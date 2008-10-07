@@ -329,12 +329,12 @@ g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
  */
 
 const char *
-g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
+g_trie_quick_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 {
 	const unsigned char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
-	struct _trie_state *q;
 	struct _trie_match *m = NULL;
+	struct _trie_state *q;
 	gunichar c;
 	
 	inptr = (const unsigned char *) buffer;
@@ -350,6 +350,7 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 			pat = (const unsigned char *) buffer + buflen;
 			g_warning ("Invalid UTF-8 in buffer '%.*s' at %.*s",
 				   buflen, buffer, pat - prev, prev);
+			
 			pat = prev = inptr;
 		}
 		
@@ -372,7 +373,7 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 				if (matched_id)
 					*matched_id = q->id;
 				
-				return (const char *) pat;
+				return pat;
 			}
 		}
 		
@@ -380,6 +381,72 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 	}
 	
 	return NULL;
+}
+
+const char *
+g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
+{
+	const unsigned char *inptr, *inend, *prev, *pat;
+	register size_t inlen = buflen;
+	struct _trie_match *m = NULL;
+	struct _trie_state *q;
+	size_t matched = 0;
+	gunichar c;
+	
+	inptr = (const unsigned char *) buffer;
+	inend = inptr + buflen;
+	
+	q = &trie->root;
+	pat = prev = inptr;
+	while ((c = trie_utf8_getc (&inptr, inlen))) {
+		inlen = (inend - inptr);
+		
+		if (c == 0xfffe) {
+			if (matched)
+				return pat;
+			
+			prev = (inptr - 1);
+			pat = (const unsigned char *) buffer + buflen;
+			g_warning ("Invalid UTF-8 in buffer '%.*s' at %.*s",
+				   buflen, buffer, pat - prev, prev);
+			
+			pat = prev = inptr;
+		}
+		
+		if (trie->icase)
+			c = g_unichar_tolower (c);
+		
+		while (q != NULL && (m = g (q, c)) == NULL && matched == 0)
+			q = q->fail;
+		
+		if (q == &trie->root) {
+			if (matched)
+				return pat;
+			
+			pat = prev;
+		}
+		
+		if (q == NULL) {
+			if (matched)
+				return pat;
+			
+			q = &trie->root;
+			pat = inptr;
+		} else if (m != NULL) {
+			q = m->state;
+			
+			if (q->final > matched) {
+				if (matched_id)
+					*matched_id = q->id;
+				
+				matched = q->final;
+			}
+		}
+		
+		prev = inptr;
+	}
+	
+	return matched ? pat : NULL;
 }
 
 

@@ -1,3 +1,12 @@
+2008-10-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* util/gtrie.c (g_trie_search): Instead of returning the first
+	match, find instead the best match starting at the same starting
+	offset (e.g. if we have two patterns "abc" and "abcdef" and the
+	input buffer is "abcdefghi", we want to match "abcdef" rather than
+	just "abc").
+	(g_trie_quick_search): Renamed from the old g_trie_search().
+
 2008-10-06  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
