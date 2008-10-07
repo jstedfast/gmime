@@ -1,8 +1,15 @@
+2008-10-06  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.2
+
 2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
-	* docs/reference/Makefile.am: Reverted previous change, this
-	unfortunately breaks devhelp. Seems like parallel installable docs
-	will have to wait for a fix from the gtk-doc maintainers.
+	* gtk-doc.make: More parallel-install fixes so that devhelp
+	actually works. Patch to gtk-doc.make submitted upstream.
+
+2008-10-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	Fixes for bug #554830
 
