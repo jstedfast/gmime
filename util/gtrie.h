@@ -33,6 +33,8 @@ void g_trie_free (GTrie *trie);
 
 void g_trie_add (GTrie *trie, const char *pattern, int pattern_id);
 
+const char *g_trie_quick_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id);
+
 const char *g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id);
 
 G_END_DECLS
