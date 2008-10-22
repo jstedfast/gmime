@@ -1,5 +1,11 @@
 2008-10-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.3
+
+2008-10-22  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes by Damian Pietras.
 
 	* gmime/gmime-parser.c (check_boundary): Check that len > 0 before
