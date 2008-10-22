@@ -1,3 +1,11 @@
+2008-10-22  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes by Damian Pietras.
+
+	* gmime/gmime-parser.c (check_boundary): Check that len > 0 before
+	checking for \r.
+	(header_parse): Fixed to handle headers with nothing but lwsp.
+
 2008-10-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* util/gtrie.c (g_trie_search): Instead of returning the first

@@ -863,7 +863,7 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 		inptr++;
 	
 	/* cut trailing lwsp */
-	start = inptr++;
+	start = inptr;
 	end = inptr;
 	
 	while (*inptr) {
@@ -1213,7 +1213,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
 	gint64 offset = parser_offset (priv, start);
 	
-	if (start[len - 1] == '\r')
+	if (len > 0 && start[len - 1] == '\r')
 		len--;
 	
 	if (possible_boundary (priv->scan_from, start, len)) {
