@@ -764,14 +764,26 @@ parser_step_from (GMimeParser *parser)
 static inline size_t
 nearest_pow (size_t num)
 {
-	size_t n = num > 0 ? num - 1 : 0;
+	size_t n;
 	
+	if (num == 0)
+		return 0;
+	
+	n = num - 1;
+#if defined (__GNUC__) && defined (__i386__)
+	__asm__("bsrl %1,%0\n\t"
+		"jnz 1f\n\t"
+		"movl $-1,%0\n"
+		"1:" : "=r" (n) : "rm" (n));
+	n = (1 << (n + 1));
+#else
 	n |= n >> 1;
 	n |= n >> 2;
 	n |= n >> 4;
 	n |= n >> 8;
 	n |= n >> 16;
 	n++;
+#endif
 	
 	return n;
 }

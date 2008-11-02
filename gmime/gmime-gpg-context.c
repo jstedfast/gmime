@@ -1180,27 +1180,49 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 	return 0;
 }
 
-static size_t
+#ifdef ALLOC_NEAREST_POW2
+static inline size_t
 nearest_pow (size_t num)
 {
-	size_t n = num > 0 ? num - 1 : 0;
+	size_t n;
 	
+	if (num == 0)
+		return 0;
+	
+	n = num - 1;
+#if defined (__GNUC__) && defined (__i386__)
+	__asm__("bsrl %1,%0\n\t"
+		"jnz 1f\n\t"
+		"movl $-1,%0\n"
+		"1:" : "=r" (n) : "rm" (n));
+	n = (1 << (n + 1));
+#else
 	n |= n >> 1;
 	n |= n >> 2;
 	n |= n >> 4;
 	n |= n >> 8;
 	n |= n >> 16;
 	n++;
+#endif
 	
 	return n;
 }
+
+#define next_alloc_size(n) nearest_pow (n)
+#else
+static inline size_t
+next_alloc_size (size_t n)
+{
+	return ((n + 63) / 64) * 64;
+}
+#endif
 
 #define status_backup(gpg, start, len) G_STMT_START {                     \
 	if (gpg->statusleft <= len) {                                     \
 		size_t slen, soff;                                        \
 		                                                          \
 		soff = gpg->statusptr - gpg->statusbuf;                   \
-		slen = nearest_pow (soff + len + 1);                      \
+		slen = next_alloc_size (soff + len + 1);                  \
 		                                                          \
 		gpg->statusbuf = g_realloc (gpg->statusbuf, slen);        \
 		gpg->statusptr = gpg->statusbuf + soff;                   \

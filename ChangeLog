@@ -1,3 +1,12 @@
+2008-11-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (nearest_pow): Implement using asm on i386
+	- this code path isn't normally built, but it's fun to
+	micro-optimize anyway ;-)
+
+	* gmime/gmime-gpg-context.c (status_backup): Use next_alloc_size()
+	macro - same as gmime-parser.c
+
 2008-10-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
