@@ -1,3 +1,9 @@
+2009-01-09  Jeffrey Stedfast  <fejj@novell.com>
+
+	* examples/imap-example.c (write_part): Don't unref the stream we
+	get from g_mime_data_wrapper_get_stream().
+	(reconstruct_part_content): Fixed error-checking.
+
 2008-11-01  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c (nearest_pow): Implement using asm on i386

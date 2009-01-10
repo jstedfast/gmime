@@ -321,9 +321,7 @@ write_part (GMimeObject *part, const char *uid, const char *spec)
 		
 		ostream = g_mime_stream_file_new (fp);
 		istream = g_mime_data_wrapper_get_stream (GMIME_PART (part)->content);
-		
 		g_mime_stream_write_to_stream (istream, ostream);
-		g_object_unref (istream);
 		g_object_unref (ostream);
 	}
 }
@@ -735,7 +733,7 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	int fd;
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	if ((fd = open (filename, O_RDONLY))) {
+	if ((fd = open (filename, O_RDONLY)) == -1) {
 		g_free (filename);
 		return;
 	}
