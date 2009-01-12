@@ -1,3 +1,8 @@
+2009-01-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* mono/Makefile.am: Fixed to parallel make install, thanks to
+	Diego Pettenò. Fixes bug #567549.
+
 2009-01-09  Jeffrey Stedfast  <fejj@novell.com>
 
 	* examples/imap-example.c (write_part): Don't unref the stream we

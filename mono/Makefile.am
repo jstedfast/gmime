@@ -70,7 +70,7 @@ $(ASSEMBLY): $(build_sources) generated-stamp $(srcdir)/$(ASSEMBLY_NAME).snk
 	-keyfile:$(srcdir)/$(ASSEMBLY_NAME).snk $(build_sources) generated/*.cs
 	sn -q -R $(ASSEMBLY) $(srcdir)/$(ASSEMBLY_NAME).snk
 
-install-data-local:
+install-data-hook:
 	@if test -n '$(TARGET)'; then									\
 	  if test -n '$(DESTDIR)'; then								\
 	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /root $(DESTDIR)$(prefix)/lib";		\
