@@ -44,8 +44,6 @@
 
 #define d(x)
 
-#define MATCH_ID_FUNC_DATA (G_SIGNAL_MATCH_ID | G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA)
-
 
 /**
  * SECTION: internet-address
