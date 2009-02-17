@@ -445,7 +445,7 @@ url_web_end (const char *in, const char *pos, const char *inend, urlmatch_t *mat
 	
 	if (inptr < inend) {
 		switch (*inptr) {
-			case ':': /* we either have a port or a password */
+		case ':': /* we either have a port or a password */
 			inptr++;
 			
 			if (is_digit (*inptr) || passwd) {
