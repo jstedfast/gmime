@@ -309,7 +309,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	const char *charset;
 	GMimeStream *stream;
 	
-	gpg = g_new (struct _GpgCtx, 1);
+	gpg = g_slice_new (struct _GpgCtx);
 	gpg->mode = GPG_CTX_MODE_SIGN;
 	gpg->session = session;
 	g_object_ref (session);
@@ -528,7 +528,7 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 		signer = next;
 	}
 	
-	g_free (gpg);
+	g_slice_free (struct _GpgCtx, gpg);
 }
 
 static const char *

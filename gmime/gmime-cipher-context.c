@@ -421,7 +421,7 @@ g_mime_signer_new (void)
 {
 	GMimeSigner *signer;
 	
-	signer = g_new (GMimeSigner, 1);
+	signer = g_slice_new (GMimeSigner);
 	signer->status = GMIME_SIGNER_STATUS_NONE;
 	signer->errors = GMIME_SIGNER_ERROR_NONE;
 	signer->trust = GMIME_SIGNER_TRUST_NONE;
@@ -448,7 +448,8 @@ g_mime_signer_free (GMimeSigner *signer)
 	g_free (signer->fingerprint);
 	g_free (signer->keyid);
 	g_free (signer->name);
-	g_free (signer);
+	
+	g_slice_free (GMimeSigner, signer);
 }
 
 
@@ -748,7 +749,7 @@ g_mime_signature_validity_new (void)
 {
 	GMimeSignatureValidity *validity;
 	
-	validity = g_new (GMimeSignatureValidity, 1);
+	validity = g_slice_new (GMimeSignatureValidity);
 	validity->status = GMIME_SIGNATURE_STATUS_NONE;
 	validity->signers = NULL;
 	validity->details = NULL;
@@ -774,16 +775,13 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
 	signer = validity->signers;
 	while (signer != NULL) {
 		next = signer->next;
-		g_free (signer->fingerprint);
-		g_free (signer->keyid);
-		g_free (signer->name);
-		g_free (signer);
+		g_mime_signer_free (signer);
 		signer = next;
 	}
 	
 	g_free (validity->details);
 	
-	g_free (validity);
+	g_slice_free (GMimeSignatureValidity, validity);
 }
 
 

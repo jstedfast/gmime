@@ -1,3 +1,20 @@
+2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-header.c (g_mime_header_iter_new): Use
+	g_slice_new().
+	(g_mime_header_iter_free): Use g_slice_free().
+	(g_mime_header_list_new): Use g_slice_new().
+	(g_mime_header_list_destroy): Use g_slice_free().
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_new): Use g_slice_new().
+	(gpg_ctx_free): Use g_slice_free().
+
+	* gmime/gmime-cipher-context.c (g_mime_signer_new): Use
+	g_slice_new() instead of g_new().
+	(g_mime_signature_validity_new): Same.
+	(g_mime_signature_validity_free): Use g_slice_free().
+	(g_mime_signer_free): Same.
+
 2009-02-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c: Removed some unused macros.

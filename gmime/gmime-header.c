@@ -134,7 +134,7 @@ g_mime_header_iter_new (void)
 {
 	GMimeHeaderIter *iter;
 	
-	iter = g_new (GMimeHeaderIter, 1);
+	iter = g_slice_new (GMimeHeaderIter);
 	iter->hdrlist = NULL;
 	iter->cursor = NULL;
 	iter->version = 0;
@@ -195,7 +195,7 @@ g_mime_header_iter_free (GMimeHeaderIter *iter)
 {
 	g_return_if_fail (iter != NULL);
 	
-	g_free (iter);
+	g_slice_free (GMimeHeaderIter, iter);
 }
 
 
@@ -527,7 +527,7 @@ g_mime_header_list_new (void)
 {
 	GMimeHeaderList *headers;
 	
-	headers = g_new (GMimeHeaderList, 1);
+	headers = g_slice_new (GMimeHeaderList);
 	headers->writers = g_hash_table_new_full (g_mime_strcase_hash,
 						  g_mime_strcase_equal,
 						  g_free, NULL);
@@ -565,7 +565,8 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 	g_hash_table_destroy (headers->writers);
 	g_hash_table_destroy (headers->hash);
 	g_free (headers->raw);
-	g_free (headers);
+	
+	g_slice_free (GMimeHeaderList, headers);
 }
 
 
