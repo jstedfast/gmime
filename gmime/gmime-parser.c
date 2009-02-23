@@ -56,8 +56,22 @@
  * into multiple #GMimeMessage objects.
  **/
 
+typedef struct _boundary_stack {
+	struct _boundary_stack *parent;
+	char *boundary;
+	size_t boundarylen;
+	size_t boundarylenfinal;
+	size_t boundarylenmax;
+	gint64 content_end;
+} BoundaryStack;
 
-typedef struct _ContentType {
+typedef struct _header_raw {
+	struct _header_raw *next;
+	char *name, *value;
+	gint64 offset;
+} HeaderRaw;
+
+typedef struct _content_type {
 	char *type, *subtype;
 	gboolean exists;
 } ContentType;
@@ -144,18 +158,9 @@ struct _GMimeParserPrivate {
 	unsigned short int persist_stream:1;
 	unsigned short int respect_content_length:1;
 	
-	struct _header_raw *headers;
+	HeaderRaw *headers;
 	
-	struct _boundary_stack *bounds;
-};
-
-struct _boundary_stack {
-	struct _boundary_stack *parent;
-	char *boundary;
-	size_t boundarylen;
-	size_t boundarylenfinal;
-	size_t boundarylenmax;
-	gint64 content_end;
+	BoundaryStack *bounds;
 };
 
 
@@ -163,12 +168,12 @@ static void
 parser_push_boundary (GMimeParser *parser, const char *boundary)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _boundary_stack *s;
+	BoundaryStack *s;
 	size_t max;
 	
 	max = priv->bounds ? priv->bounds->boundarylenmax : 0;
 	
-	s = g_new (struct _boundary_stack, 1);
+	s = g_slice_new (BoundaryStack);
 	s->parent = priv->bounds;
 	priv->bounds = s;
 	
@@ -191,7 +196,7 @@ static void
 parser_pop_boundary (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _boundary_stack *s;
+	BoundaryStack *s;
 	
 	if (!priv->bounds) {
 		d(g_warning ("boundary stack underflow"));
@@ -202,47 +207,42 @@ parser_pop_boundary (GMimeParser *parser)
 	priv->bounds = priv->bounds->parent;
 	
 	g_free (s->boundary);
-	g_free (s);
+	
+	g_slice_free (BoundaryStack, s);
 }
 
-struct _header_raw {
-	struct _header_raw *next;
-	char *name;
-	char *value;
-	gint64 offset;
-};
-
 static const char *
-header_raw_find (struct _header_raw *headers, const char *name, gint64 *offset)
+header_raw_find (HeaderRaw *headers, const char *name, gint64 *offset)
 {
-	struct _header_raw *h;
+	HeaderRaw *header = headers;
 	
-	h = headers;
-	while (h) {
-		if (!g_ascii_strcasecmp (h->name, name)) {
+	while (header) {
+		if (!g_ascii_strcasecmp (header->name, name)) {
 			if (offset)
-				*offset = h->offset;
-			return h->value;
+				*offset = header->offset;
+			return header->value;
 		}
 		
-		h = h->next;
+		header = header->next;
 	}
 	
 	return NULL;
 }
 
 static void
-header_raw_clear (struct _header_raw **headers)
+header_raw_clear (HeaderRaw **headers)
 {
-	struct _header_raw *h, *n;
+	HeaderRaw *header, *next;
 	
-	h = *headers;
-	while (h) {
-		n = h->next;
-		g_free (h->name);
-		g_free (h->value);
-		g_free (h);
-		h = n;
+	header = *headers;
+	while (header) {
+		next = header->next;
+		g_free (header->name);
+		g_free (header->value);
+		
+		g_slice_free (HeaderRaw, header);
+		
+		header = next;
 	}
 	
 	*headers = NULL;
@@ -837,11 +837,11 @@ next_alloc_size (size_t n)
 } G_STMT_END
 
 static void
-header_parse (GMimeParser *parser, struct _header_raw **tail)
+header_parse (GMimeParser *parser, HeaderRaw **tail)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _header_raw *header;
 	register char *inptr, *end;
+	HeaderRaw *header;
 	char *start;
 	size_t hlen;
 	
@@ -864,7 +864,7 @@ header_parse (GMimeParser *parser, struct _header_raw **tail)
 	
 	hlen = inptr - priv->headerbuf;
 	
-	header = g_new (struct _header_raw, 1);
+	header = g_slice_new (HeaderRaw);
 	header->next = NULL;
 	
 	header->name = g_strndup (priv->headerbuf, hlen);
@@ -905,16 +905,16 @@ parser_step_headers (GMimeParser *parser)
 	struct _GMimeParserPrivate *priv = parser->priv;
 	gboolean eoln, valid = TRUE, fieldname = TRUE;
 	gboolean continuation = FALSE;
-	struct _header_raw *hend;
 	register char *inptr;
 	char *start, *inend;
 	ssize_t left = 0;
+	HeaderRaw *tail;
 	size_t len;
 	
 	priv->midline = FALSE;
 	raw_header_reset (priv);
 	header_raw_clear (&priv->headers);
-	hend = (struct _header_raw *) &priv->headers;
+	tail = (HeaderRaw *) &priv->headers;
 	priv->header_offset = parser_offset (priv, NULL);
 	
 	if (priv->headers_begin == -1)
@@ -940,7 +940,7 @@ parser_step_headers (GMimeParser *parser)
 			
 			/* if we are scanning a new line, check for a folded header */
 			if (!priv->midline && continuation && (*inptr != ' ' && *inptr != '\t')) {
-				header_parse (parser, &hend);
+				header_parse (parser, &tail);
 				priv->header_offset = parser_offset (priv, inptr);
 				continuation = FALSE;
 				fieldname = TRUE;
@@ -1047,7 +1047,7 @@ parser_step_headers (GMimeParser *parser)
  headers_end:
 	
 	if (priv->headerptr > priv->headerbuf)
-		header_parse (parser, &hend);
+		header_parse (parser, &tail);
 	
 	if (priv->headers_end == -1)
 		priv->headers_end = parser_offset (priv, start);
@@ -1086,7 +1086,8 @@ content_type_destroy (ContentType *content_type)
 {
 	g_free (content_type->subtype);
 	g_free (content_type->type);
-	g_free (content_type);
+	
+	g_slice_free (ContentType, content_type);
 }
 
 static gboolean
@@ -1113,7 +1114,7 @@ parser_content_type (GMimeParser *parser)
 	ContentType *content_type;
 	const char *value;
 	
-	content_type = g_new (ContentType, 1);
+	content_type = g_slice_new (ContentType);
 	
 	if (!(value = header_raw_find (priv->headers, "Content-Type", NULL)) ||
 	    !g_mime_parse_content_type (&value, &content_type->type, &content_type->subtype)) {
@@ -1229,7 +1230,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		len--;
 	
 	if (possible_boundary (priv->scan_from, start, len)) {
-		struct _boundary_stack *s;
+		BoundaryStack *s;
 		
 		d(printf ("checking boundary '%.*s'\n", len, start));
 		
@@ -1417,10 +1418,10 @@ static void
 parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _header_raw *header;
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	HeaderRaw *header;
 	
 	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
 	
@@ -1457,8 +1458,8 @@ static GMimeObject *
 parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _header_raw *header;
 	GMimeObject *object;
+	HeaderRaw *header;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
@@ -1558,7 +1559,7 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 static gboolean
 found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
 {
-	struct _boundary_stack *s = priv->bounds;
+	BoundaryStack *s = priv->bounds;
 	size_t len = end ? s->boundarylenfinal : s->boundarylen;
 	
 	return !strncmp (priv->inptr, s->boundary, len)
@@ -1610,10 +1611,10 @@ static GMimeObject *
 parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	struct _header_raw *header;
 	GMimeMultipart *multipart;
 	const char *boundary;
 	GMimeObject *object;
+	HeaderRaw *header;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
@@ -1714,10 +1715,10 @@ parser_construct_message (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	unsigned long content_length = ULONG_MAX;
-	struct _header_raw *header;
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	HeaderRaw *header;
 	char *endptr;
 	int found;
 	

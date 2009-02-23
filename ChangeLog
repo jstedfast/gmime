@@ -1,5 +1,9 @@
 2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-parser.c: Updated to use GSlice.
+
+2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-header.c (g_mime_header_iter_new): Use
 	g_slice_new().
 	(g_mime_header_iter_free): Use g_slice_free().
