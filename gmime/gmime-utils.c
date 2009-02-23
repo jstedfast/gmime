@@ -179,17 +179,20 @@ g_mime_utils_header_format_date (time_t date, int tz_offset)
 
 /* This is where it gets ugly... */
 
-struct _date_token {
+typedef struct _date_token {
 	struct _date_token *next;
 	unsigned char mask;
 	const char *start;
 	size_t len;
-};
+} date_token;
 
-static struct _date_token *
+#define date_token_free(tok) g_slice_free (date_token, tok)
+#define date_token_new() g_slice_new (date_token)
+
+static date_token *
 datetok (const char *date)
 {
-	struct _date_token *tokens = NULL, *token, *tail = (struct _date_token *) &tokens;
+	date_token *tokens = NULL, *token, *tail = (date_token *) &tokens;
 	const char *start, *end;
         unsigned char mask;
 	
@@ -210,7 +213,7 @@ datetok (const char *date)
 			mask |= gmime_datetok_table[(unsigned char) *end++];
 		
 		if (end != start) {
-			token = g_malloc (sizeof (struct _date_token));
+			token = date_token_new ();
 			token->next = NULL;
 			token->start = start;
 			token->len = end - start;
@@ -390,7 +393,7 @@ get_time (const char *in, size_t inlen, int *hour, int *min, int *sec)
 }
 
 static int
-get_tzone (struct _date_token **token)
+get_tzone (date_token **token)
 {
 	const char *inptr, *inend;
 	size_t inlen;
@@ -456,10 +459,10 @@ mktime_utc (struct tm *tm)
 }
 
 static time_t
-parse_rfc822_date (struct _date_token *tokens, int *tzone)
+parse_rfc822_date (date_token *tokens, int *tzone)
 {
 	int hour, min, sec, offset, n;
-	struct _date_token *token;
+	date_token *token;
 	struct tm tm;
 	time_t t;
 	
@@ -527,7 +530,7 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 }
 
 
-#define date_token_mask(t)  (((struct _date_token *) t)->mask)
+#define date_token_mask(t)  (((date_token *) t)->mask)
 #define is_numeric(t)       ((date_token_mask (t) & DATE_TOKEN_NON_NUMERIC) == 0)
 #define is_weekday(t)       ((date_token_mask (t) & DATE_TOKEN_NON_WEEKDAY) == 0)
 #define is_month(t)         ((date_token_mask (t) & DATE_TOKEN_NON_MONTH) == 0)
@@ -537,11 +540,11 @@ parse_rfc822_date (struct _date_token *tokens, int *tzone)
 #define is_tzone(t)         (is_tzone_alpha (t) || is_tzone_numeric (t))
 
 static time_t
-parse_broken_date (struct _date_token *tokens, int *tzone)
+parse_broken_date (date_token *tokens, int *tzone)
 {
 	gboolean got_wday, got_month, got_tzone;
 	int hour, min, sec, offset, n;
-	struct _date_token *token;
+	date_token *token;
 	struct tm tm;
 	time_t t;
 	
@@ -580,7 +583,7 @@ parse_broken_date (struct _date_token *tokens, int *tzone)
 		}
 		
 		if (is_tzone (token) && !got_tzone) {
-			struct _date_token *t = token;
+			date_token *t = token;
 			
 			if ((n = get_tzone (&t)) != -1) {
 				d(printf ("tzone; "));
@@ -705,7 +708,7 @@ gmime_datetok_table_init (void)
 time_t
 g_mime_utils_header_decode_date (const char *str, int *tz_offset)
 {
-	struct _date_token *token, *tokens;
+	date_token *token, *tokens;
 	time_t date;
 	
 	if (!(tokens = datetok (str))) {
@@ -722,7 +725,7 @@ g_mime_utils_header_decode_date (const char *str, int *tz_offset)
 	while (tokens) {
 		token = tokens;
 		tokens = tokens->next;
-		g_free (token);
+		date_token_free (token);
 	}
 	
 	return date;
@@ -2089,31 +2092,34 @@ rfc2047_encode_word (GString *string, const char *word, size_t len,
 }
 
 
-enum _rfc822_word_t {
+typedef enum {
 	WORD_ATOM,
 	WORD_QSTRING,
 	WORD_2047
-};
+} rfc822_word_t;
 
-struct _rfc822_word {
+typedef struct _rfc822_word {
 	struct _rfc822_word *next;
-	enum _rfc822_word_t type;
 	const char *start, *end;
+	rfc822_word_t type;
 	int encoding;
-};
+} rfc822_word;
+
+#define rfc822_word_free(word) g_slice_free (rfc822_word, word)
+#define rfc822_word_new() g_slice_new (rfc822_word)
 
 /* okay, so 'unstructured text' fields don't actually contain 'word'
  * tokens, but we can group stuff similarly... */
-static struct _rfc822_word *
+static rfc822_word *
 rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 {
-	struct _rfc822_word *words, *tail, *word;
-	enum _rfc822_word_t type = WORD_ATOM;
+	rfc822_word *words, *tail, *word;
+	rfc822_word_t type = WORD_ATOM;
 	const char *inptr, *start, *last;
 	int count = 0, encoding = 0;
 	
 	words = NULL;
-	tail = (struct _rfc822_word *) &words;
+	tail = (rfc822_word *) &words;
 	
 	last = start = inptr = in;
 	while (inptr && *inptr) {
@@ -2132,7 +2138,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 		
 		if (c < 256 && is_lwsp (c)) {
 			if (count > 0) {
-				word = g_new (struct _rfc822_word, 1);
+				word = rfc822_word_new ();
 				word->next = NULL;
 				word->start = start;
 				word->end = last;
@@ -2162,7 +2168,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 			}
 			
 			if (count >= GMIME_FOLD_PREENCODED) {
-				word = g_new (struct _rfc822_word, 1);
+				word = rfc822_word_new ();
 				word->next = NULL;
 				word->start = start;
 				word->end = inptr;
@@ -2185,7 +2191,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 	}
 	
 	if (count > 0) {
-		word = g_new (struct _rfc822_word, 1);
+		word = rfc822_word_new ();
 		word->next = NULL;
 		word->start = start;
 		word->end = last;
@@ -2214,7 +2220,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 #define MERGED_WORD_LT_FOLDLEN(wlen, type) ((type) == WORD_2047 ? (wlen) < GMIME_FOLD_PREENCODED : (wlen) < (GMIME_FOLD_LEN - 8))
 
 static gboolean
-should_merge_words (struct _rfc822_word *word, struct _rfc822_word *next)
+should_merge_words (rfc822_word *word, rfc822_word *next)
 {
 	switch (word->type) {
 	case WORD_ATOM:
@@ -2257,9 +2263,9 @@ should_merge_words (struct _rfc822_word *word, struct _rfc822_word *next)
 }
 
 static void
-rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
+rfc2047_encode_merge_rfc822_words (rfc822_word **wordsp)
 {
-	struct _rfc822_word *word, *next, *words = *wordsp;
+	rfc822_word *word, *next, *words = *wordsp;
 	
 	/* first pass: merge qstrings with adjacent qstrings and encwords with adjacent encwords */
 	word = words;
@@ -2274,7 +2280,7 @@ rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
 			word->end = next->end;
 			word->next = next->next;
 			
-			g_free (next);
+			rfc822_word_free (next);
 			
 			next = word;
 		}
@@ -2296,7 +2302,7 @@ rfc2047_encode_merge_rfc822_words (struct _rfc822_word **wordsp)
 			word->end = next->end;
 			word->next = next->next;
 			
-			g_free (next);
+			rfc822_word_free (next);
 			
 			continue;
 		}
@@ -2333,7 +2339,7 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 static char *
 rfc2047_encode (const char *in, gushort safemask)
 {
-	struct _rfc822_word *words, *word, *prev = NULL;
+	rfc822_word *words, *word, *prev = NULL;
 	const char **charsets, *charset;
 	const char *start;
 	GMimeCharset mask;
@@ -2412,12 +2418,13 @@ rfc2047_encode (const char *in, gushort safemask)
 			break;
 		}
 		
-		g_free (prev);
+		rfc822_word_free (prev);
+		
 		prev = word;
 		word = word->next;
 	}
 	
-	g_free (prev);
+	rfc822_word_free (prev);
 	
 	outstr = out->str;
 	g_string_free (out, FALSE);

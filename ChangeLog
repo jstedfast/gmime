@@ -1,5 +1,8 @@
 2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c: Use GSlice for rfc822 word tokens and date
+	tokens.
+
 	* gmime/gmime-parser.c: Updated to use GSlice.
 
 2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
