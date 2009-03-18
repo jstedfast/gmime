@@ -1,5 +1,11 @@
 2009-03-18  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.4
+
+2009-03-18  Jeffrey Stedfast  <fejj@novell.com>
+
 	* configure.in: Check for select() and poll() as well as poll.h
 
 	* gmime/gmime-gpg-context.c (poll): Implement our own poll()
