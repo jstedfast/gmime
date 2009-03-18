@@ -87,11 +87,13 @@ AM_MAINTAINER_MODE
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/param.h)
+AC_CHECK_HEADERS(sys/time.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
 AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(ctype.h)
 AC_CHECK_HEADERS(time.h)
+AC_CHECK_HEADERS(poll.h)
 
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
@@ -118,6 +120,9 @@ AC_CHECK_FUNCS(strftime localtime gmtime_r)
 dnl Check for working mmap
 AC_FUNC_MMAP
 AC_CHECK_FUNCS(munmap msync)
+
+dnl Check for select() and poll()
+AC_CHECK_FUNCS(select poll)
 
 dnl ************************************
 dnl Checks for gtk-doc and docbook-tools

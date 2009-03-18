@@ -1,3 +1,11 @@
+2009-03-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Check for select() and poll() as well as poll.h
+
+	* gmime/gmime-gpg-context.c (poll): Implement our own poll()
+	function using select() for portability to MacOS 10.2, which
+	apparently doesn't have poll().
+
 2009-02-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c: Use GSlice for rfc822 word tokens and date

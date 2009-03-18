@@ -37,7 +37,9 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <ctype.h>
+#ifdef HAVE_POLL_H
 #include <poll.h>
+#endif
 
 #include "gmime-gpg-context.h"
 #include "gmime-filter-charset.h"
@@ -1242,6 +1244,83 @@ enum {
 	GPG_PASSWD_FD,
 	GPG_N_FDS
 };
+
+#ifndef HAVE_POLL
+struct pollfd {
+	int fd;
+	short events;
+	short revents;
+};
+
+#define POLLIN   (1 << 0)
+#define POLLPRI  (1 << 1)
+#define POLLOUT  (1 << 2)
+#define POLLERR  (1 << 3)
+#define POLLHUP  (1 << 4)
+#define POLLNVAL (1 << 5)
+
+#ifdef HAVE_SELECT
+static int
+poll (struct pollfd *pfds, nfds_t nfds, int timeout)
+{
+	fd_set rset, wset, xset;
+	struct timeval tv;
+	int maxfd = 0;
+	int ready;
+	nfds_t i;
+	
+	if (nfds == 0)
+		return 0;
+	
+	/* initialize our select() timeout */
+	tv.tv_sec = timeout / 1000;
+	tv.tv_usec = (timeout % 1000) * 1000;
+	
+	/* initialize our select() fd sets */
+	FD_ZERO (&rset);
+	FD_ZERO (&wset);
+	FD_ZERO (&xset);
+	
+	for (i = 0; i < nfds; i++) {
+		if (pfds[i].events & POLLIN)
+			FD_SET (pfds[i].fd, &rset);
+		if (pfds[i].events & POLLOUT)
+			FD_SET (pfds[i].fd, &wset);
+		if (pfds[i].events & POLLPRI)
+			FD_SET (pfds[i].fd, &xset);
+		if (pfds[i].fd > maxfd && (pfds[i].events & (POLLIN | POLLOUT | POLLPRI)))
+			maxfd = pfds[i].fd;
+		pfds[i].revents = 0;
+	}
+	
+	/* poll our fds... */
+	if ((ready = select (maxfd + 1, &rset, &wset, &xset, timeout != -1 ? &tv : NULL)) > 0) {
+		ready = 0;
+		
+		for (i = 0; i < nfds; i++) {
+			if (FD_ISSET (pfds[i].fd, &rset))
+				pfds[i].revents |= POLLIN;
+			if (FD_ISSET (pfds[i].fd, &wset))
+				pfds[i].revents |= POLLOUT;
+			if (FD_ISSET (pfds[i].fd, &xset))
+				pfds[i].revents |= POLLPRI;
+			
+			if (pfds[i].revents != 0)
+				ready++;
+		}
+	}
+	
+	return ready;
+}
+#else
+static int
+poll (struct pollfd *pfds, nfds_t nfds, int timeout)
+{
+	errno = EIO;
+	return -1;
+}
+#endif /* HAVE_SELECT */
+#endif /* ! HAVE_POLL */
 
 static int
 gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
