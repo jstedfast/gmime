@@ -1,3 +1,13 @@
+2009-03-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Default --enable-largefile to yes. Looks like I
+	forgot to do this before rolling the version to 2.4.0 like I
+	intended.
+
+	* tools/Makefile.am: Fixed to include the porting script in
+	EXTRA_DIST (instead of extra_DIST) so that the tarball includes
+	it, doh!
+
 2009-03-18  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

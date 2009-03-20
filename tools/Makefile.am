@@ -2,4 +2,4 @@
 
 SUBDIRS = .
 
-extra_DIST = gmime-port-2-2-to-2-4.sh
+EXTRA_DIST = gmime-port-2-2-to-2-4.sh
