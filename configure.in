@@ -322,7 +322,7 @@ AC_ARG_ENABLE(largefile,
 	      enable_largefile="yes")
 if test "x$enable_largefile" != "xno"; then
     AC_SYS_LARGEFILE
-    AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], largefile64_source,
+    AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], _cv_largefile64_source,
     [
 	AC_TRY_COMPILE([
 		#include <sys/types.h>
@@ -331,7 +331,7 @@ if test "x$enable_largefile" != "xno"; then
 	],[
 		int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
 	],[
-		largefile64_source="no"
+		_cv_largefile64_source="no"
 	],[
 		AC_TRY_COMPILE([
 			#define _LARGEFILE64_SOURCE
@@ -341,13 +341,14 @@ if test "x$enable_largefile" != "xno"; then
 		],[
 			int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
 		],[
-			largefile64_source="yes"
+			_cv_largefile64_source="yes"
 		],[
-			largefile64_source="unknown"
+			_cv_largefile64_source="unknown"
 		])
 	])
     ])
     
+    largefile64_source = "$_cv_largefile64_source"
     enable_largefile="no"
     
     if test "x$largefile64_source" = "xyes"; then
