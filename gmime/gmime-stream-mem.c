@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-mem.h"
 
@@ -131,7 +132,10 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	gint64 bound_end;
 	ssize_t n;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
@@ -140,7 +144,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		memcpy (buf, mem->buffer->data + stream->position, n);
 		stream->position += n;
 	} else if (n < 0) {
-		/* set errno?? */
+		errno = EINVAL;
 		n = -1;
 	}
 	
@@ -154,7 +158,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	gint64 bound_end;
 	ssize_t n;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len) {
 		g_byte_array_set_size (mem->buffer, stream->position + len);
@@ -167,7 +174,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		memcpy (mem->buffer->data + stream->position, buf, n);
 		stream->position += n;
 	} else if (n < 0) {
-		/* FIXME: set errno?? */
+		errno = EINVAL;
 		n = -1;
 	}
 	
@@ -177,7 +184,13 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 static int
 stream_flush (GMimeStream *stream)
 {
-	/* no-op */
+	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
+	
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	return 0;
 }
 
@@ -190,7 +203,6 @@ stream_close (GMimeStream *stream)
 		g_byte_array_free (mem->buffer, TRUE);
 	
 	mem->buffer = NULL;
-	stream->position = 0;
 	
 	return 0;
 }
@@ -201,7 +213,8 @@ stream_eos (GMimeStream *stream)
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	gint64 bound_end;
 	
-	g_return_val_if_fail (mem->buffer != NULL, TRUE);
+	if (mem->buffer == NULL)
+		return TRUE;
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
@@ -213,7 +226,12 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	return mem->buffer ? 0 : -1;
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
+	return 0;
 }
 
 static gint64
@@ -222,7 +240,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	gint64 bound_end, real = stream->position;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	
@@ -238,10 +259,24 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 		break;
 	}
 	
-	if (real < stream->bound_start)
-		real = stream->bound_start;
-	else if (real > bound_end)
-		real = bound_end;
+	if (real < stream->bound_start) {
+		errno = EINVAL;
+		return -1;
+	}
+	
+	if (stream->bound_end != -1 && real > bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
+	
+	if (real > bound_end) {
+		if (real > G_MAXUINT) {
+			errno = ENOSPC;
+			return -1;
+		}
+		
+		g_byte_array_set_size (mem->buffer, real);
+	}
 	
 	stream->position = real;
 	
@@ -253,7 +288,10 @@ stream_tell (GMimeStream *stream)
 {
 	GMimeStreamMem *mem = (GMimeStreamMem *) stream;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	return stream->position;
 }
@@ -264,7 +302,10 @@ stream_length (GMimeStream *stream)
 	GMimeStreamMem *mem = GMIME_STREAM_MEM (stream);
 	gint64 bound_end;
 	
-	g_return_val_if_fail (mem->buffer != NULL, -1);
+	if (mem->buffer == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	bound_end = stream->bound_end != -1 ? stream->bound_end : (gint64) mem->buffer->len;
 	

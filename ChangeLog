@@ -1,3 +1,22 @@
+2009-03-27  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-buffer.c: Fixed to be more diligent in setting
+	errno on error.
+
+	* gmime/gmime-stream-mmap.c: Fixed to be more diligent in setting
+	errno on error.
+
+	* gmime/gmime-stream-mem.c: Fixed to be more diligent in setting
+	errno on error.
+	(stream_seek): If the user seeks beyond the end of the buffer and
+	bound_end is unbound, then grow the buffer (e.g. a sparse file).
+
+	* gmime/gmime-stream-file.c: Fixed to be more diligent in setting
+	errno on error.
+
+	* gmime/gmime-stream-fs.c: Fixed to be more diligent in setting
+	errno on error.
+
 2009-03-20  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.in: Default --enable-largefile to yes. Looks like I

@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-buffer.h"
 
@@ -144,6 +145,11 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	ssize_t n, nread = 0;
 	size_t offset;
 	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
 		while (len > 0) {
@@ -232,6 +238,11 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	GMimeStream *source = buffer->source;
 	ssize_t n, nwritten = 0;
 	size_t left = len;
+	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
@@ -344,6 +355,9 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	
+	if (buffer->source == NULL)
+		return TRUE;
+	
 	if (!g_mime_stream_eos (buffer->source))
 		return FALSE;
 	
@@ -363,6 +377,11 @@ static int
 stream_reset (GMimeStream *stream)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_READ:
@@ -401,8 +420,11 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 		if (stream->position == offset)
 			return stream->position;
 		
-		if (offset < 0)
+		if (offset < 0) {
+			/* not allowed to seek to a negative position */
+			errno = EINVAL;
 			return -1;
+		}
 		
 		offset -= stream->position;
 		break;
@@ -420,12 +442,17 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 			return real;
 		}
 		
-		if (offset > 0)
+		if (offset > 0) {
+			/* not allowed to seek past bound_end */
+			errno = EINVAL;
 			return -1;
+		}
 		
 		offset += stream->bound_end;
 		break;
 	default:
+		/* invalid whence argument */
+		errno = EINVAL;
 		return -1;
 	}
 	
@@ -474,16 +501,27 @@ stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 		break;
 	case GMIME_STREAM_SEEK_END:
 		if (stream->bound_end == -1) {
-			real = g_mime_stream_seek (buffer->source, offset, whence);
-			if (real == -1 || real < stream->bound_start)
+			/* we have to do a real seek because the end boundary is unknown */
+			if ((real = g_mime_stream_seek (buffer->source, offset, whence)) == -1)
 				return -1;
+			
+			if (real < stream->bound_start) {
+				/* seek offset out of bounds */
+				errno = EINVAL;
+				return -1;
+			}
 		} else {
 			real = stream->bound_end + offset;
-			if (real > stream->bound_end || real < stream->bound_start)
+			if (real > stream->bound_end || real < stream->bound_start) {
+				/* seek offset out of bounds */
+				errno = EINVAL;
 				return -1;
+			}
 		}
 		break;
 	default:
+		/* invalid whence argument */
+		errno = EINVAL;
 		return -1;
 	}
 	
@@ -518,9 +556,12 @@ stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 		if (total < len) {
 			/* we failed to seek that far so reset our bufptr */
 			buffer->bufptr = buffer->buffer + pos;
+			errno = EINVAL;
 			return -1;
 		}
 	} else if (real < stream->bound_start) {
+		/* seek offset out of bounds */
+		errno = EINVAL;
 		return -1;
 	} else {
 		/* seek our cache pointer backwards */
@@ -535,9 +576,13 @@ stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
-	/* FIXME: set errno appropriately?? */
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
 	gint64 real;
+	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (buffer->mode) {
 	case GMIME_STREAM_BUFFER_BLOCK_WRITE:
@@ -555,6 +600,8 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	case GMIME_STREAM_BUFFER_CACHE_READ:
 		return stream_seek_cache_read (stream, offset, whence);
 	default:
+		/* invalid whence argument */
+		errno = EINVAL;
 		return -1;
 	}
 }
@@ -562,13 +609,27 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	return stream->position;
 }
 
 static ssize_t
 stream_length (GMimeStream *stream)
 {
-	return g_mime_stream_length (GMIME_STREAM_BUFFER (stream)->source);
+	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	
+	if (buffer->source == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
+	return g_mime_stream_length (buffer->source);
 }
 
 static GMimeStream *

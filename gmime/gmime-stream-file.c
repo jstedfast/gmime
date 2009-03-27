@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <errno.h>
+
 #include "gmime-stream-file.h"
 
 
@@ -131,8 +133,15 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	size_t nread;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (fstream->fp == NULL) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
@@ -152,8 +161,15 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	size_t nwritten;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (fstream->fp == NULL) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
@@ -172,7 +188,10 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	if (fstream->fp == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	return fflush (fstream->fp);
 }
@@ -197,7 +216,8 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	g_return_val_if_fail (fstream->fp != NULL, TRUE);
+	if (fstream->fp == NULL)
+		return TRUE;
 	
 	if (stream->bound_end == -1)
 		return feof (fstream->fp) ? TRUE : FALSE;
@@ -210,8 +230,10 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	
-	if (fstream->fp == NULL)
+	if (fstream->fp == NULL) {
+		errno = EBADF;
 		return -1;
+	}
 	
 	if (stream->position == stream->bound_start)
 		return 0;
@@ -229,7 +251,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	gint64 real = stream->position;
 	FILE *fp = fstream->fp;
 	
-	g_return_val_if_fail (fstream->fp != NULL, -1);
+	if (fstream->fp == NULL) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
@@ -258,11 +283,15 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	}
 	
 	/* sanity check the resultant offset */
-	if (real < stream->bound_start)
+	if (real < stream->bound_start) {
+		errno = EINVAL;
 		return -1;
+	}
 	
-	if (stream->bound_end != -1 && real > stream->bound_end)
+	if (stream->bound_end != -1 && real > stream->bound_end) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	if (fseek (fp, (long) real, SEEK_SET) == -1 || (real = ftell (fp)) == -1)
 		return -1;
@@ -284,6 +313,11 @@ stream_length (GMimeStream *stream)
 	GMimeStreamFile *fstream = (GMimeStreamFile *) stream;
 	gint64 bound_end;
 	
+	if (fstream->fp == NULL) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
@@ -291,8 +325,10 @@ stream_length (GMimeStream *stream)
 	bound_end = ftell (fstream->fp);
 	fseek (fstream->fp, (long) stream->position, SEEK_SET);
 	
-	if (bound_end < stream->bound_start)
+	if (bound_end < stream->bound_start) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	return bound_end - stream->bound_start;
 }

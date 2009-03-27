@@ -138,8 +138,15 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	ssize_t nread;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (fs->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
@@ -166,8 +173,15 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	size_t nwritten = 0;
 	ssize_t n;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (fs->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	if (stream->bound_end != -1)
 		len = MIN (stream->bound_end - stream->position, (gint64) len);
@@ -200,7 +214,10 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	
-	g_return_val_if_fail (fs->fd != -1, -1);
+	if (fs->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	return fsync (fs->fd);
 }
@@ -227,7 +244,8 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	
-	g_return_val_if_fail (fs->fd != -1, TRUE);
+	if (fs->fd == -1)
+		return TRUE;
 	
 	return fs->eos;
 }
@@ -237,8 +255,10 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	
-	if (fs->fd == -1)
+	if (fs->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
 	
 	if (stream->position == stream->bound_start) {
 		fs->eos = FALSE;
@@ -262,7 +282,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	gint64 real;
 	
-	g_return_val_if_fail (fs->fd != -1, -1);
+	if (fs->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
@@ -295,15 +318,19 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	}
 	
 	/* sanity check the resultant offset */
-	if (real < stream->bound_start)
+	if (real < stream->bound_start) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	/* short-cut if we are seeking to our current position */
 	if (real == stream->position)
 		return real;
 	
-	if (stream->bound_end != -1 && real > stream->bound_end)
+	if (stream->bound_end != -1 && real > stream->bound_end) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	if ((real = lseek (fs->fd, (off_t) real, SEEK_SET)) == -1)
 		return -1;
@@ -330,14 +357,21 @@ stream_length (GMimeStream *stream)
 	GMimeStreamFs *fs = (GMimeStreamFs *) stream;
 	gint64 bound_end;
 	
+	if (fs->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	if (stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
 	
 	bound_end = lseek (fs->fd, (off_t) 0, SEEK_END);
 	lseek (fs->fd, (off_t) stream->position, SEEK_SET);
 	
-	if (bound_end < stream->bound_start)
+	if (bound_end < stream->bound_start) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	return bound_end - stream->bound_start;
 }

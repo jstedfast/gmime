@@ -151,8 +151,15 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	register char *mapptr;
 	ssize_t nread;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (mstream->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	/* make sure we are at the right position */
 	mapptr = mstream->map + stream->position;
@@ -178,8 +185,15 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	register char *mapptr;
 	ssize_t nwritten;
 	
-	if (stream->bound_end != -1 && stream->position >= stream->bound_end)
+	if (mstream->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
+	
+	if (stream->bound_end != -1 && stream->position >= stream->bound_end) {
+		errno = EINVAL;
+		return -1;
+	}
 	
 	/* make sure we are at the right position */
 	mapptr = mstream->map + stream->position;
@@ -202,7 +216,10 @@ stream_flush (GMimeStream *stream)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
 	
-	g_return_val_if_fail (mstream->fd != -1, -1);
+	if (mstream->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 	
 #ifdef HAVE_MSYNC
 	return msync (mstream->map, mstream->maplen, MS_SYNC /* | MS_INVALIDATE */);
@@ -237,7 +254,8 @@ stream_eos (GMimeStream *stream)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
 	
-	g_return_val_if_fail (mstream->fd != -1, TRUE);
+	if (mstream->fd == -1)
+		return TRUE;
 	
 	return mstream->eos;
 }
@@ -247,8 +265,10 @@ stream_reset (GMimeStream *stream)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
 	
-	if (mstream->fd == -1)
+	if (mstream->fd == -1) {
+		errno = EBADF;
 		return -1;
+	}
 	
 	mstream->eos = FALSE;
 	
@@ -261,7 +281,10 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
 	gint64 real = stream->position;
 	
-	g_return_val_if_fail (mstream->fd != -1, -1);
+	if (mstream->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	switch (whence) {
 	case GMIME_STREAM_SEEK_SET:
@@ -286,11 +309,15 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 	}
 	
 	/* sanity check the resultant offset */
-	if (real < stream->bound_start)
+	if (real < stream->bound_start) {
+		errno = EINVAL;
 		return -1;
+	}
 	
-	if (stream->bound_end != -1 && real > stream->bound_end)
+	if (stream->bound_end != -1 && real > stream->bound_end) {
+		errno = EINVAL;
 		return -1;
+	}
 	
 	/* reset eos if appropriate */
 	if ((stream->bound_end != -1 && real < stream->bound_end) ||
@@ -305,6 +332,13 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 static gint64
 stream_tell (GMimeStream *stream)
 {
+	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	
+	if (mstream->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
+	
 	return stream->position;
 }
 
@@ -312,6 +346,11 @@ static ssize_t
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamMmap *mstream = (GMimeStreamMmap *) stream;
+	
+	if (mstream->fd == -1) {
+		errno = EBADF;
+		return -1;
+	}
 	
 	if (stream->bound_start != -1 && stream->bound_end != -1)
 		return stream->bound_end - stream->bound_start;
@@ -356,8 +395,7 @@ g_mime_stream_mmap_new (int fd, int prot, int flags)
 	gint64 start;
 	char *map;
 	
-	start = lseek (fd, 0, SEEK_CUR);
-	if (start == -1)
+	if ((start = lseek (fd, 0, SEEK_CUR)) == -1)
 		return NULL;
 	
 	if (fstat (fd, &st) == -1)
