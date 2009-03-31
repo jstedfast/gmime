@@ -26,7 +26,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#ifdef HAVE_REGEX_H
 #include <regex.h>
+#endif
 
 #include "gmime-parser.h"
 
@@ -127,9 +129,11 @@ struct _GMimeParserPrivate {
 	gint64 from_offset;
 	GByteArray *from_line;
 	
+#ifdef HAVE_REGEX_H
 	regex_t header_regex;
 	GMimeParserHeaderRegexFunc header_cb;
 	gpointer user_data;
+#endif
 	
 	/* header buffer */
 	char *headerbuf;
@@ -302,8 +306,10 @@ g_mime_parser_finalize (GObject *object)
 	
 	parser_close (parser);
 	
+#ifdef HAVE_REGEX_H
 	if (parser->priv->have_regex)
 		regfree (&parser->priv->header_regex);
+#endif
 	
 	g_free (parser->priv);
 	
@@ -576,6 +582,7 @@ void
 g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 				GMimeParserHeaderRegexFunc header_cb, gpointer user_data)
 {
+#if HAVE_REGEX_H
 	struct _GMimeParserPrivate *priv;
 	
 	g_return_if_fail (GMIME_IS_PARSER (parser));
@@ -594,6 +601,7 @@ g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 	priv->user_data = user_data;
 	
 	priv->have_regex = !regcomp (&priv->header_regex, regex, REG_EXTENDED | REG_ICASE | REG_NOSUB);
+#endif
 }
 
 
@@ -893,10 +901,12 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 	priv->headerleft += priv->headerptr - priv->headerbuf;
 	priv->headerptr = priv->headerbuf;
 	
+#ifdef HAVE_REGEX_H
 	if (priv->have_regex &&
 	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))
 		priv->header_cb (parser, header->name, header->value,
 				 header->offset, priv->user_data);
+#endif
 }
 
 static int

@@ -1,5 +1,10 @@
 2009-03-30  Jeffrey Stedfast  <fejj@novell.com>
 
+	* configure.in: Check for regex.h
+
+	* gmime/gmime-parser.c: #ifdef out the regex functionality if the
+	system does not have regex.h
+
 	* gmime/gmime-part.c: Removed unused includes.
 
 	* gmime/gmime-utils.c: Only #include <sys/utsname.h> if we have
