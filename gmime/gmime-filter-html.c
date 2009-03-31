@@ -152,9 +152,10 @@ filter_copy (GMimeFilter *filter)
 static char *
 check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 {
+	size_t outleft = (size_t) (*outend - outptr);
 	size_t offset;
 	
-	if ((*outend - outptr) >= len)
+	if (outleft >= len)
 		return outptr;
 	
 	offset = outptr - filter->outbuf;
