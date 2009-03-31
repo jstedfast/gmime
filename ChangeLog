@@ -1,5 +1,11 @@
 2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime.sln: New Microsoft Visual Studio 2008 Solution file for GMime.
+
+	* gmime.vcproj: New Microsoft Visual C++ Project file for GMime.
+
+2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-utils.c: Removed unneeded #include <unistd.h>
 
 	* configure.in: Check for unistd.h
