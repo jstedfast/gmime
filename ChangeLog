@@ -1,5 +1,7 @@
 2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c: Removed unneeded #include <unistd.h>
+
 	* configure.in: Check for unistd.h
 
 	* gmime/gmime-multipart.c (read_random_pool): Implement using

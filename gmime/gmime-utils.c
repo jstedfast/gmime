@@ -37,7 +37,6 @@
 #include <sys/utsname.h>
 #endif
 #include <sys/types.h>
-#include <unistd.h>
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
