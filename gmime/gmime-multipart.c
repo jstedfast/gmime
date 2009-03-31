@@ -423,9 +423,9 @@ g_mime_multipart_get_postface (GMimeMultipart *multipart)
 static void
 multipart_clear (GMimeMultipart *multipart)
 {
-	int i;
+	guint i;
 	
-	for (i = 0; i < (int) multipart->children->len; i++)
+	for (i = 0; i < multipart->children->len; i++)
 		g_object_unref (multipart->children->pdata[i]);
 	
 	g_ptr_array_set_size (multipart->children, 0);
@@ -623,9 +623,9 @@ g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
 static gboolean
 multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
 {
-	int i;
+	guint i;
 	
-	for (i = 0; i < (int) multipart->children->len; i++) {
+	for (i = 0; i < multipart->children->len; i++) {
 		if (part == (GMimeObject *) multipart->children->pdata[i])
 			return TRUE;
 	}
@@ -657,9 +657,9 @@ g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
 static int
 multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
 {
-	int i;
+	guint i;
 	
-	for (i = 0; i < (int) multipart->children->len; i++) {
+	for (i = 0; i < multipart->children->len; i++) {
 		if (part == (GMimeObject *) multipart->children->pdata[i])
 			return i;
 	}
