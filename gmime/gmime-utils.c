@@ -33,7 +33,9 @@
 #else
 #define MAXHOSTNAMELEN 64
 #endif
+#ifdef HAVE_UTSNAME_DOMAINNAME
 #include <sys/utsname.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #ifdef HAVE_NETDB_H

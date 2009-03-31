@@ -1,3 +1,10 @@
+2009-03-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-part.c: Removed unused includes.
+
+	* gmime/gmime-utils.c: Only #include <sys/utsname.h> if we have
+	utsname.domainname. Helps build process on Windows.
+
 2009-03-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
