@@ -556,7 +556,7 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 {
 	GMimeObject *part;
 	
-	if (index >= multipart->children->len)
+	if ((guint) index >= multipart->children->len)
 		return NULL;
 	
 	part = multipart->children->pdata[index];
@@ -592,7 +592,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 {
 	GMimeObject *part;
 	
-	if (index >= multipart->children->len)
+	if ((guint) index >= multipart->children->len)
 		return NULL;
 	
 	part = multipart->children->pdata[index];
