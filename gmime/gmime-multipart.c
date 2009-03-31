@@ -23,12 +23,16 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
+#include <time.h>
 
 #include "gmime-multipart.h"
 #include "gmime-utils.h"
@@ -714,6 +718,7 @@ g_mime_multipart_get_count (GMimeMultipart *multipart)
 static void
 read_random_pool (unsigned char *buffer, size_t bytes)
 {
+#ifdef HAVE_UNISTD_H
 	size_t nread = 0;
 	ssize_t n;
 	int fd;
@@ -735,6 +740,14 @@ read_random_pool (unsigned char *buffer, size_t bytes)
 	} while (nread < bytes);
 	
 	close (fd);
+#else
+	size_t i;
+	
+	srand (time (NULL));
+	
+	for (i = 0; i < bytes; i++)
+		buffer[i] = (unsigned char) (rand () % 256);
+#endif
 }
 
 static void

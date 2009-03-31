@@ -1,5 +1,10 @@
 2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* configure.in: Check for unistd.h
+
+	* gmime/gmime-multipart.c (read_random_pool): Implement using
+	rand() in the case that unistd.h is not available.
+
 	* gmime/gmime-parser.c (parser_scan_content): Fixed 'crlf'
 	argument to be a guint to make it easier to avoid compile warnings
 	about comparison between signed/unsigned ints in the callers.
