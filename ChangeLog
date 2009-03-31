@@ -5,6 +5,8 @@
 	* gmime/gmime-parser.c: #ifdef out the regex functionality if the
 	system does not have regex.h
 
+	* gmime/gmime-stream-fs.h: Don't #include <unistd.h> here.
+
 	* gmime/gmime-stream.h: Removed #include <unistd.h> as it isn't
 	needed there.
 

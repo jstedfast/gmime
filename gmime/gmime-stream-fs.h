@@ -22,7 +22,6 @@
 #ifndef __GMIME_STREAM_FS_H__
 #define __GMIME_STREAM_FS_H__
 
-#include <unistd.h>
 #include <gmime/gmime-stream.h>
 
 G_BEGIN_DECLS
