@@ -33,8 +33,9 @@
 #include "gmime-parser.h"
 
 #include "gmime-table-private.h"
-#include "gmime-stream-mem.h"
 #include "gmime-message-part.h"
+#include "gmime-parse-utils.h"
+#include "gmime-stream-mem.h"
 #include "gmime-multipart.h"
 #include "gmime-part.h"
 
@@ -1120,7 +1121,6 @@ static ContentType *
 parser_content_type (GMimeParser *parser)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register const char *inptr;
 	ContentType *content_type;
 	const char *value;
 	
@@ -1287,7 +1287,7 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 #define MAX_BOUNDARY_LEN(bounds) (bounds ? bounds->boundarylenmax + 2 : 0)
 
 static int
-parser_scan_content (GMimeParser *parser, GByteArray *content, int *crlf)
+parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	register char *inptr;
@@ -1389,7 +1389,7 @@ parser_scan_mime_part_content (GMimeParser *parser, GMimePart *mime_part, int *f
 	GMimeDataWrapper *wrapper;
 	GMimeStream *stream;
 	gint64 start, end;
-	int crlf;
+	guint crlf;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
@@ -1539,8 +1539,9 @@ static int
 parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboolean preface)
 {
 	GByteArray *buffer;
-	int found, crlf;
 	char *face;
+	guint crlf;
+	int found;
 	
 	buffer = g_byte_array_new ();
 	found = parser_scan_content (parser, buffer, &crlf);

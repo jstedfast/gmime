@@ -1,3 +1,13 @@
+2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-parser.c (parser_scan_content): Fixed 'crlf'
+	argument to be a guint to make it easier to avoid compile warnings
+	about comparison between signed/unsigned ints in the callers.
+
+	* gmime/internet-address.c (internet_address_group_add_member):
+	Fixed g_return macros to return a value.
+	(internet_address_mailbox_get_addr): Same.
+
 2009-03-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.in: Check for regex.h

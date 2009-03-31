@@ -152,7 +152,7 @@ event_list_free (List *list)
 static EventListener *
 event_list_find_listener (List *list, EventCallback callback, gpointer user_data)
 {
-	EventListener *node, *next;
+	EventListener *node;
 	
 	node = (EventListener *) list->head;
 	while (node->next) {
@@ -486,7 +486,7 @@ internet_address_mailbox_set_addr (InternetAddressMailbox *mailbox, const char *
 const char *
 internet_address_mailbox_get_addr (InternetAddressMailbox *mailbox)
 {
-	g_return_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox));
+	g_return_val_if_fail (INTERNET_ADDRESS_IS_MAILBOX (mailbox), NULL);
 	
 	return mailbox->addr;
 }
@@ -652,8 +652,8 @@ internet_address_group_get_members (InternetAddressGroup *group)
 int
 internet_address_group_add_member (InternetAddressGroup *group, InternetAddress *member)
 {
-	g_return_if_fail (INTERNET_ADDRESS_IS_GROUP (group));
-	g_return_if_fail (IS_INTERNET_ADDRESS (member));
+	g_return_val_if_fail (INTERNET_ADDRESS_IS_GROUP (group), -1);
+	g_return_val_if_fail (IS_INTERNET_ADDRESS (member), -1);
 	
 	return internet_address_list_add (group->members, member);
 }
@@ -988,7 +988,7 @@ internet_address_list_remove_at (InternetAddressList *list, int index)
 	g_return_val_if_fail (IS_INTERNET_ADDRESS_LIST (list), FALSE);
 	g_return_val_if_fail (index >= 0, FALSE);
 	
-	if (index >= list->array->len)
+	if ((guint) index >= list->array->len)
 		return FALSE;
 	
 	ia = list->array->pdata[index];
