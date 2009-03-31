@@ -27,7 +27,6 @@
 
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <stdarg.h>
 
 G_BEGIN_DECLS
@@ -101,8 +100,8 @@ struct _GMimeStreamClass {
 	int      (* close)  (GMimeStream *stream);
 	gboolean (* eos)    (GMimeStream *stream);
 	int      (* reset)  (GMimeStream *stream);
-	gint64    (* seek)   (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
-	gint64    (* tell)   (GMimeStream *stream);
+	gint64   (* seek)   (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+	gint64   (* tell)   (GMimeStream *stream);
 	ssize_t  (* length) (GMimeStream *stream);
 	GMimeStream * (* substream) (GMimeStream *stream, gint64 start, gint64 end);
 };
