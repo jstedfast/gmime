@@ -1,5 +1,10 @@
 2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-parser.c: If glib is >= 2.14, use GRegex instead of
+	glibc regex.
+
+2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-utils.c: Need to #include <unistd.h> for getpid().
 
 	* gmime/gmime-stream-fs.c: Need to #include <unistd.h> here.
