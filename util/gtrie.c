@@ -28,6 +28,12 @@
 
 #include "gtrie.h"
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #define d(x)
 
 struct _trie_state {
@@ -87,9 +93,9 @@ trie_state_free (struct _trie_state *state)
 
 
 static inline gunichar
-trie_utf8_getc (const unsigned char **in, size_t inlen)
+trie_utf8_getc (const char **in, size_t inlen)
 {
-	register const unsigned char *inptr = *in;
+	register const unsigned char *inptr = (const unsigned char *) *in;
 	const unsigned char *inend = inptr + inlen;
 	register unsigned char c, r;
 	register gunichar m, u = 0;
@@ -99,7 +105,7 @@ trie_utf8_getc (const unsigned char **in, size_t inlen)
 	
 	r = *inptr++;
 	if (r < 0x80) {
-		*in = inptr;
+		*in = (const char *) inptr;
 		u = r;
 	} else if (r < 0xfe) { /* valid start char? */
 		u = r;
@@ -117,7 +123,7 @@ trie_utf8_getc (const unsigned char **in, size_t inlen)
 			m <<= 5;
 		} while (r & 0x40);
 		
-		*in = inptr;
+		*in = (const char *) inptr;
 		
 		u &= ~m;
 	} else {
@@ -240,7 +246,7 @@ dump_trie (struct _trie_state *s, int depth)
 void
 g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 {
-	const unsigned char *inptr = (const unsigned char *) pattern;
+	const char *inptr = pattern;
 	struct _trie_state *q, *q1, *r;
 	struct _trie_match *m, *n;
 	int i, depth = 0;
@@ -252,8 +258,8 @@ g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 	
 	while ((c = trie_utf8_getc (&inptr, -1))) {
 		if (c == 0xfffe) {
-			g_warning ("Invalid UTF-8 sequence in pattern '%s' at %s",
-				   pattern, (inptr - 1));
+			w(g_warning ("Invalid UTF-8 sequence in pattern '%s' at %s",
+				     pattern, (inptr - 1)));
 			continue;
 		}
 		
@@ -331,14 +337,14 @@ g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 const char *
 g_trie_quick_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 {
-	const unsigned char *inptr, *inend, *prev, *pat;
+	const char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
 	struct _trie_match *m = NULL;
 	struct _trie_state *q;
 	gunichar c;
 	
-	inptr = (const unsigned char *) buffer;
-	inend = inptr + buflen;
+	inend = buffer + buflen;
+	inptr = buffer;
 	
 	q = &trie->root;
 	pat = prev = inptr;
@@ -346,10 +352,12 @@ g_trie_quick_search (GTrie *trie, const char *buffer, size_t buflen, int *matche
 		inlen = (inend - inptr);
 		
 		if (c == 0xfffe) {
+#ifdef ENABLE_WARNINGS
 			prev = (inptr - 1);
-			pat = (const unsigned char *) buffer + buflen;
+			pat = buffer + buflen;
 			g_warning ("Invalid UTF-8 in buffer '%.*s' at %.*s",
 				   buflen, buffer, pat - prev, prev);
+#endif
 			
 			pat = prev = inptr;
 		}
@@ -386,15 +394,15 @@ g_trie_quick_search (GTrie *trie, const char *buffer, size_t buflen, int *matche
 const char *
 g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 {
-	const unsigned char *inptr, *inend, *prev, *pat;
+	const char *inptr, *inend, *prev, *pat;
 	register size_t inlen = buflen;
 	struct _trie_match *m = NULL;
 	struct _trie_state *q;
 	size_t matched = 0;
 	gunichar c;
 	
-	inptr = (const unsigned char *) buffer;
-	inend = inptr + buflen;
+	inend = buffer + buflen;
+	inptr = buffer;
 	
 	q = &trie->root;
 	pat = prev = inptr;
@@ -405,10 +413,12 @@ g_trie_search (GTrie *trie, const char *buffer, size_t buflen, int *matched_id)
 			if (matched)
 				return pat;
 			
+#ifdef ENABLE_WARNINGS
 			prev = (inptr - 1);
-			pat = (const unsigned char *) buffer + buflen;
+			pat = buffer + buflen;
 			g_warning ("Invalid UTF-8 in buffer '%.*s' at %.*s",
 				   buflen, buffer, pat - prev, prev);
+#endif
 			
 			pat = prev = inptr;
 		}

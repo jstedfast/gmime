@@ -125,8 +125,6 @@ g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedCla
 static void
 g_mime_multipart_signed_finalize (GObject *object)
 {
-	GMimeMultipartSigned *mps = (GMimeMultipartSigned *) object;
-	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 

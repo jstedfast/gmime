@@ -1,3 +1,19 @@
+2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c: Need to #include <unistd.h> for getpid().
+
+	* gmime/gmime-stream-fs.c: Need to #include <unistd.h> here.
+
+	* gmime/gmime-multipart-signed.c: Got rid of an unused variable.
+
+	* gmime/gmime-message.c: Removed unused variables.
+
+	* gmime/gmime-content-type.c: Don't need to #include
+	"gmime-table-private.h" here as we don't actually use it.
+
+	* util/gtrie.c: Disable g_warning()'s when compiled w/o
+	--enable-warnings and also fixed some compile warnings.
+
 2009-03-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime.sln: New Microsoft Visual Studio 2008 Solution file for GMime.

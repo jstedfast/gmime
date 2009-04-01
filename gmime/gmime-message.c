@@ -192,7 +192,6 @@ static void
 g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 {
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
-	InternetAddressList *list;
 	guint i;
 	
 	message->from = NULL;
@@ -707,9 +706,9 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 {
 	GMimeMessage *message = (GMimeMessage *) object;	
 	InternetAddressList *addrlist;
-	int offset, i;
 	time_t date;
-	gulong id;
+	int offset;
+	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (message_headers); i++) {
 		if (!g_ascii_strcasecmp (message_headers[i], header))

@@ -29,7 +29,6 @@
 
 #include "gmime-common.h"
 #include "gmime-content-type.h"
-#include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 
 

@@ -108,6 +108,7 @@ AC_TRY_COMPILE([
 	#include <poll.h>
 	], [
 	nfds_t nfds = 1;
+	return nfds;
 	]
 ,
 	AC_MSG_RESULT(yes)
@@ -265,6 +266,8 @@ AC_TRY_COMPILE([
 	struct utsname unam;
 		
 	unam.domainname[0] = '\0';
+
+	return unam.domainname[0];
 	],
 	AC_MSG_RESULT(yes)
    	AC_DEFINE(HAVE_UTSNAME_DOMAINNAME, 1, [Define if struct utsname has a domainname member])
@@ -279,6 +282,7 @@ AC_CACHE_CHECK(for tm_gmtoff in struct tm, ac_cv_struct_tm_gmtoff,
 		], [
 		struct tm tm;
 		tm.tm_gmtoff = 1;
+		return tm.tm_gmtoff;
 		], ac_cv_struct_tm_gmtoff="yes", ac_cv_struct_tm_gmtoff="no"))
 if test "$ac_cv_struct_tm_gmtoff" = "yes"; then
 	AC_DEFINE(HAVE_TM_GMTOFF, 1, [Define if struct tm has a tm_gmtoff member])
@@ -331,7 +335,7 @@ if test "x$enable_largefile" != "xno"; then
 		#include <sys/stat.h>
 		#include <fcntl.h>
 	],[
-		int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
+		return open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
 	],[
 		ac_cv_largefile64_source="no"
 	],[
@@ -341,7 +345,7 @@ if test "x$enable_largefile" != "xno"; then
 			#include <sys/stat.h>
 			#include <fcntl.h>
 		],[
-			int fd = open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
+			return open ("__o_largefile", O_CREAT | O_RDWR | O_LARGEFILE, 0644);
 		],[
 			ac_cv_largefile64_source="yes"
 		],[

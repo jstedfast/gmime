@@ -29,14 +29,17 @@
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h> /* for MAXHOSTNAMELEN */
+#include <sys/param.h>      /* for MAXHOSTNAMELEN */
 #else
 #define MAXHOSTNAMELEN 64
 #endif
 #ifdef HAVE_UTSNAME_DOMAINNAME
-#include <sys/utsname.h>
+#include <sys/utsname.h>    /* for uname() */
 #endif
 #include <sys/types.h>
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>         /* for getpid() */
+#endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
 #endif
