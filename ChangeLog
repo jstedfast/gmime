@@ -1,5 +1,7 @@
 2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c: #include <process.h> for building on Windows.
+
 	* gmime/gmime-parser.c: If glib is >= 2.14, use GRegex instead of
 	glibc regex.
 

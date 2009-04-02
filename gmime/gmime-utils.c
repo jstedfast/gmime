@@ -38,7 +38,9 @@
 #endif
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>         /* for getpid() */
+#include <unistd.h>         /* Unix header for getpid() */
+#else
+#include <process.h>        /* Windows header for getpid() */
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>
