@@ -1,6 +1,10 @@
 2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
 
-	* gmime/gmime-utils.c: #include <process.h> for building on Windows.
+	* gmime/gmime-utils.c: #include <process.h> for building on
+	Windows.
+	(mktime_utc): Use _get_timezone() when building on Windows.
+	(g_mime_utils_header_format_date): Windows has gmtime_s() instead
+	of gmtime_r(), so use that on Windows.
 
 	* gmime/gmime-parser.c: If glib is >= 2.14, use GRegex instead of
 	glibc regex.

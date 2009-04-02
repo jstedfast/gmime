@@ -169,8 +169,10 @@ g_mime_utils_header_format_date (time_t date, int tz_offset)
 	
 	date += ((tz_offset / 100) * (60 * 60)) + (tz_offset % 100) * 60;
 	
-#ifdef HAVE_GMTIME_R
+#if defined (HAVE_GMTIME_R)
 	gmtime_r (&date, &tm);
+#elif defined (HAVE_GMTIME_S)
+	gmtime_s (&tm, &date);
 #else
 	memcpy (&tm, gmtime (&date), sizeof (tm));
 #endif
@@ -440,28 +442,32 @@ static time_t
 mktime_utc (struct tm *tm)
 {
 	time_t tt;
+	long tz;
 	
 	tm->tm_isdst = -1;
 	tt = mktime (tm);
 	
-#if defined (HAVE_TM_GMTOFF)
-	tt += tm->tm_gmtoff;
+#if defined (_WINDOWS)
+	_get_timezone (&tz);
+#elif defined (HAVE_TM_GMTOFF)
+	tz = -tm->tm_gmtoff;
 #elif defined (HAVE_TIMEZONE)
 	if (tm->tm_isdst > 0) {
 #if defined (HAVE_ALTZONE)
-		tt -= altzone;
+		tz = altzone;
 #else /* !defined (HAVE_ALTZONE) */
-		tt -= (timezone - 3600);
+		tz = (timezone - 3600);
 #endif
-	} else
-		tt -= timezone;
+	} else {
+		tz = timezone;
+	}
 #elif defined (HAVE__TIMEZONE)
-	tt -= _timezone;
+	tz = _timezone;
 #else
 #error Neither HAVE_TIMEZONE nor HAVE_TM_GMTOFF defined. Rerun autoheader, autoconf, etc.
 #endif
 	
-	return tt;
+	return tt - tz;
 }
 
 static time_t
