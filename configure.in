@@ -88,6 +88,7 @@ dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
 AC_CHECK_HEADERS(sys/param.h)
 AC_CHECK_HEADERS(sys/time.h)
+AC_CHECK_HEADERS(ws2tcpip.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
 AC_CHECK_HEADERS(unistd.h)
@@ -113,12 +114,12 @@ AC_TRY_COMPILE([
 ,
 	AC_MSG_RESULT(yes)
 ,
-	AC_DEFINE(nfds_t, unsigned int, [Define to `unsigned int' if <poll.h> does not define.])
+	AC_DEFINE(nfds_t, unsigned long int, [Define to `unsigned long int' if <poll.h> does not define.])
 	AC_MSG_RESULT(no)
 )
 
 dnl Check for some time functions
-AC_CHECK_FUNCS(strftime localtime gmtime_r)
+AC_CHECK_FUNCS(strftime localtime gmtime_r gmtime_s)
 
 dnl Check for working mmap
 AC_FUNC_MMAP
@@ -203,10 +204,6 @@ AC_TRY_RUN([
 
 CFLAGS="$CFLAGS_save"
 LIBS="$LIBS_save"
-
-dnl Check for regex
-AC_CHECK_HEADER(regex.h, have_regex="yes")
-AM_CONDITIONAL(HAVE_REGEX, test "x$have_regex" = "xyes")
 
 dnl Check for GNU getopt
 AC_CHECK_HEADER(getopt.h)
@@ -407,7 +404,7 @@ dnl ****************************
 dnl *** Checks for libsocket ***
 dnl ****************************
 LIBSOCKET=""
-AC_CHECK_LIB(socket, getaddrinfo, LIBSOCKET="-lsocket -lnsl")
+AC_CHECK_LIB(socket, getaddrinfo, LIBSOCKET="-lsocket")
 
 dnl *************************
 dnl *** Checks for libnsl ***
@@ -422,7 +419,7 @@ AC_ARG_ENABLE(mono,
 	      AC_HELP_STRING([--enable-mono],
 	      [enable Mono bindings [[default=auto]]]),,
 	      enable_mono="auto")
-if test ! "x$enable_mono" = "xno"; then
+if test "x$enable_mono" != "xno"; then
 	AC_PATH_PROG(CSC, mcs, no)
 	# if we found mcs, make sure it's mono and not something else named
 	# mcs, such as Tru64's /usr/bin/mcs, for manipulating object file
