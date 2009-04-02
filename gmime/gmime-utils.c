@@ -851,14 +851,14 @@ decode_addrspec (const char **in)
 	}
 	
 	addrspec = g_string_new ("");
-	g_string_append_len (addrspec, word, inptr - word);
+	g_string_append_len (addrspec, word, (size_t) (inptr - word));
 	
 	/* get the rest of the local-part */
 	decode_lwsp (&inptr);
 	while (*inptr == '.') {
 		g_string_append_c (addrspec, *inptr++);
 		if ((word = decode_word (&inptr))) {
-			g_string_append_len (addrspec, word, inptr - word);
+			g_string_append_len (addrspec, word, (size_t) (inptr - word));
 			decode_lwsp (&inptr);
 		} else {
 			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
@@ -1626,7 +1626,7 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 		
 		*outbuf++ = '\0';
 		
-		return g_realloc (out, outbuf - out);
+		return g_realloc (out, (size_t) (outbuf - out));
 	}
 	
 	outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
@@ -1670,7 +1670,7 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out)
 		}
 	}
 	
-	return (outptr - out);
+	return (ssize_t) (outptr - out);
 }
 
 #define is_rfc2047_encoded_word(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
@@ -2375,11 +2375,11 @@ rfc2047_encode (const char *in, gushort safemask)
 		
 		switch (word->type) {
 		case WORD_ATOM:
-			g_string_append_len (out, word->start, word->end - word->start);
+			g_string_append_len (out, word->start, (size_t) (word->end - word->start));
 			break;
 		case WORD_QSTRING:
 			g_assert (safemask & IS_PSAFE);
-			g_string_append_len_quoted (out, word->start, word->end - word->start);
+			g_string_append_len_quoted (out, word->start, (size_t) (word->end - word->start));
 			break;
 		case WORD_2047:
 			if (prev && prev->type == WORD_2047) {

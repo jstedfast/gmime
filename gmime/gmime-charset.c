@@ -298,7 +298,7 @@ g_mime_charset_map_init (void)
 				while (*p && !strchr ("@;/", *p))
 					p++;
 				
-				locale_charset = g_ascii_strdown (codeset, p - codeset);
+				locale_charset = g_ascii_strdown (codeset, (size_t)(p - codeset));
 			} else {
 				/* charset unknown */
 				locale_charset = NULL;

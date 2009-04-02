@@ -571,7 +571,7 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 			g_string_append (str, "\n\t");
 			len = 1;
 		} else if (lwsp) {
-			g_string_append_len (str, lwsp, part->start - lwsp);
+			g_string_append_len (str, lwsp, (size_t) (part->start - lwsp));
 		}
 		
 		g_string_append_len (str, part->start, part->len);

@@ -676,7 +676,7 @@ parser_fill (GMimeParser *parser, size_t atleast)
 		priv->inend += nread;
 	}
 	
-	return priv->inend - priv->inptr;
+	return (ssize_t) (priv->inend - priv->inptr);
 }
 
 
@@ -766,12 +766,12 @@ parser_step_from (GMimeParser *parser)
 			
 			if (inptr + 1 >= inend) {
 				/* we don't have enough data; if we can't get more we have to bail */
-				left = inend - start;
+				left = (ssize_t) (inend - start);
 				priv->inptr = start;
 				goto refill;
 			}
 			
-			len = inptr - start;
+			len = (size_t) (inptr - start);
 			inptr++;
 			
 			if (len >= 5 && !strncmp (start, "From ", 5)) {
@@ -1005,7 +1005,7 @@ parser_step_headers (GMimeParser *parser)
 					
 					if (inptr == inend) {
 						/* don't have the full field name */
-						left = inend - start;
+						left = (ssize_t) (inend - start);
 						priv->inptr = start;
 						goto refill;
 					}
@@ -1049,8 +1049,8 @@ parser_step_headers (GMimeParser *parser)
 				
 				raw_header_append (priv, start, len);
 				header_append (priv, start, len);
+				left = (ssize_t) (inend - inptr);
 				priv->midline = TRUE;
-				left = inend - inptr;
 				priv->inptr = inptr;
 				goto refill;
 			}
@@ -1073,7 +1073,7 @@ parser_step_headers (GMimeParser *parser)
 			inptr++;
 		}
 		
-		left = inend - inptr;
+		left = (ssize_t) (inend - inptr);
 		priv->inptr = inptr;
 	} while (1);
 	

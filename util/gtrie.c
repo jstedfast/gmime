@@ -176,7 +176,7 @@ g (struct _trie_state *s, gunichar c)
 }
 
 static struct _trie_state *
-trie_insert (GTrie *trie, int depth, struct _trie_state *q, gunichar c)
+trie_insert (GTrie *trie, guint depth, struct _trie_state *q, gunichar c)
 {
 	struct _trie_match *m;
 	
@@ -249,7 +249,7 @@ g_trie_add (GTrie *trie, const char *pattern, int pattern_id)
 	const char *inptr = pattern;
 	struct _trie_state *q, *q1, *r;
 	struct _trie_match *m, *n;
-	int i, depth = 0;
+	guint i, depth = 0;
 	gunichar c;
 	
 	/* Step 1: add the pattern to the trie */

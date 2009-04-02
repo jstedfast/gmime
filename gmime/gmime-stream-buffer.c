@@ -771,7 +771,7 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 				
 				if (inptr == inend && outptr < outend) {
 					/* buffer more data */
-					unsigned int offset = buffer->bufptr - buffer->buffer;
+					size_t offset = (size_t) (buffer->bufptr - buffer->buffer);
 					
 					buffer->buflen = buffer->bufend - buffer->buffer +
 						MAX (BUFFER_GROW_SIZE, outend - outptr + 1);
@@ -807,7 +807,7 @@ g_mime_stream_buffer_gets (GMimeStream *stream, char *buf, size_t max)
 		*outptr = '\0';
 	}
 	
-	return (outptr - buf);
+	return (ssize_t) (outptr - buf);
 }
 
 

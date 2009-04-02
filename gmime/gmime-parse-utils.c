@@ -290,7 +290,7 @@ g_mime_decode_domain (const char **in, GString *domain)
 				break;
 			}
 			
-			g_string_append_len (domain, atom, inptr - atom);
+			g_string_append_len (domain, atom, (size_t) (inptr - atom));
 		}
 		
 		save = inptr;

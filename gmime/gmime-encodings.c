@@ -468,12 +468,12 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
 		/* points to the slot for the next char to save */
 		saveout = & (((char *)save)[1]) + ((char *)save)[0];
 		
-		/* inlen can only be 0 1 or 2 */
+		/* inlen can only be 0, 1 or 2 */
 		switch (inlen) {
 		case 2:	*saveout++ = *inptr++;
 		case 1:	*saveout++ = *inptr++;
 		}
-		((char *)save)[0] += inlen;
+		((char *)save)[0] += (char) inlen;
 	}
 	
 	d(printf ("mode = %d\nc1 = %c\nc2 = %c\n",

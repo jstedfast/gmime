@@ -329,8 +329,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamCat *cat = (GMimeStreamCat *) stream;
 	struct _cat_node *current, *n;
-	gint64 real, off;
-	ssize_t len;
+	gint64 real, off, len;
 	
 	d(fprintf (stderr, "GMimeStreamCat::stream_seek (%p, %ld, %d)\n",
 		   stream, offset, whence));
@@ -432,7 +431,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 						return -1;
 				}
 				
-				d(fprintf (stderr, "real = %ld, stream[%d] len = %ld\n",
+				d(fprintf (stderr, "real = %lld, stream[%d] len = %lld\n",
 					   real, current->id, len));
 				
 				if ((real + len) > offset) {

@@ -856,8 +856,8 @@ param_list_format (GString *out, const GMimeParam *param, gboolean fold)
 	
 	while (param) {
 		gboolean encoded = FALSE;
-		unsigned nlen, vlen;
 		int here = out->len;
+		size_t nlen, vlen;
 		int quote = 0;
 		char *value;
 		
@@ -896,7 +896,7 @@ param_list_format (GString *out, const GMimeParam *param, gboolean fold)
 		
 		if (nlen + vlen + quote > GMIME_FOLD_LEN - 2) {
 			/* we need to do special rfc2184 parameter wrapping */
-			int maxlen = GMIME_FOLD_LEN - (nlen + 6);
+			size_t maxlen = GMIME_FOLD_LEN - (nlen + 6);
 			char *inptr, *inend;
 			int i = 0;
 			
@@ -904,7 +904,7 @@ param_list_format (GString *out, const GMimeParam *param, gboolean fold)
 			inend = value + vlen;
 			
 			while (inptr < inend) {
-				char *ptr = inptr + MIN (inend - inptr, maxlen);
+				char *ptr = inptr + MIN ((size_t) (inend - inptr), maxlen);
 				
 				if (encoded && ptr < inend) {
 					/* be careful not to break an encoded char (ie %20) */
@@ -930,9 +930,9 @@ param_list_format (GString *out, const GMimeParam *param, gboolean fold)
 							i++, encoded ? "*" : "");
 				
 				if (encoded || !quote)
-					g_string_append_len (out, inptr, ptr - inptr);
+					g_string_append_len (out, inptr, (size_t) (ptr - inptr));
 				else
-					g_string_append_len_quoted (out, inptr, ptr - inptr);
+					g_string_append_len_quoted (out, inptr, (size_t) (ptr - inptr));
 				
 				used += (out->len - here);
 				

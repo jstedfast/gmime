@@ -1440,7 +1440,7 @@ decode_mailbox (const char **in)
 		} while (*inptr == '.');
 		
 		if ((word = decode_word (&inptr)))
-			g_string_append_len (addr, word, inptr - word);
+			g_string_append_len (addr, word, (size_t) (inptr - word));
 		
 		decode_lwsp (&inptr);
 	}
@@ -1489,7 +1489,7 @@ decode_mailbox (const char **in)
 				if (*cend == ')')
 					cend--;
 				
-				comment = g_strndup (comment + 1, cend - comment);
+				comment = g_strndup (comment + 1, (size_t) (cend - comment));
 				g_strstrip (comment);
 				
 				name = g_string_new (comment);
@@ -1541,7 +1541,7 @@ decode_address (const char **in)
 	word = decode_word (&inptr);
 	
 	while (word) {
-		g_string_append_len (name, word, inptr - word);
+		g_string_append_len (name, word, (size_t) (inptr - word));
 		if ((word = decode_word (&inptr)))
 			g_string_append_c (name, ' ');
 	}

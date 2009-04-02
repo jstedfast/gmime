@@ -130,9 +130,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	GMimeFilterFrom *from = (GMimeFilterFrom *) filter;
 	struct fromnode *head = NULL, *tail = (struct fromnode *) &head, *node;
 	register char *inptr, *inend;
-	unsigned int left;
 	int fromcount = 0;
 	char *outptr;
+	size_t left;
 	
 	inptr = in;
 	inend = inptr + len;
@@ -146,7 +146,7 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 		}
 		
 		if (c == '\n' || !from->midline) {
-			left = inend - inptr;
+			left = (size_t) (inend - inptr);
 			if (left > 0) {
 				from->midline = TRUE;
 				if (left < 5) {
@@ -202,14 +202,14 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			node = node->next;
 		}
 		
-		memcpy (outptr, inptr, (unsigned) (inend - inptr));
+		memcpy (outptr, inptr, (size_t) (inend - inptr));
 		outptr += inend - inptr;
 		*out = filter->outbuf;
-		*outlen = outptr - filter->outbuf;
+		*outlen = (size_t) (outptr - filter->outbuf);
 		*outprespace = filter->outbuf - filter->outreal;
 	} else {
 		*out = in;
-		*outlen = inend - in;
+		*outlen = (size_t) (inend - in);
 		*outprespace = prespace;
 	}
 }

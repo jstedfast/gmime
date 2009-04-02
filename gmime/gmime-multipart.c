@@ -743,7 +743,7 @@ read_random_pool (unsigned char *buffer, size_t bytes)
 #else
 	size_t i;
 	
-	srand (time (NULL));
+	srand ((unsigned int) time (NULL));
 	
 	for (i = 0; i < bytes; i++)
 		buffer[i] = (unsigned char) (rand () % 256);
