@@ -237,7 +237,7 @@ param_parse_colour (const char *inptr, size_t inlen)
 		while (end < inend && ((*end >= 'a' && *end <= 'z') || (*end >= 'A' && *end <= 'Z')))
 			end++;
 		
-		return g_strndup (inptr, end - inptr);
+		return g_strndup (inptr, (size_t) (end - inptr));
 	}
 	
 	for (i = 0; i < 3; i++) {
@@ -269,7 +269,7 @@ param_parse_font (const char *fontfamily, size_t inlen)
 	while (inptr < inend && *inptr != '"' && *inptr != '<' && *inptr != '>')
 		inptr++;
 	
-	return g_strndup (fontfamily, inptr - fontfamily);
+	return g_strndup (fontfamily, (size_t) (inptr - fontfamily));
 }
 
 static char *
@@ -282,7 +282,7 @@ param_parse_lang (const char *lang, size_t inlen)
 	while (inptr < inend && *inptr != '"' && *inptr != '<' && *inptr != '>')
 		inptr++;
 	
-	return g_strndup (lang, inptr - lang);
+	return g_strndup (lang, (size_t) (inptr - lang));
 }
 
 static char *
@@ -467,7 +467,7 @@ enriched_to_html (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 							inptr++;
 						
 #define PARAM_TAG_MIN_LEN  (sizeof ("<param>") + sizeof ("</param>") - 1)
-						if (inptr == inend || (inend - inptr) <= PARAM_TAG_MIN_LEN) {
+						if (inptr == inend || (size_t) (inend - inptr) <= PARAM_TAG_MIN_LEN) {
 							inptr = tag - 1;
 							goto need_input;
 						}

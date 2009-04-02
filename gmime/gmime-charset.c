@@ -202,7 +202,7 @@ locale_parse_lang (const char *locale)
 	char *codeset, *lang;
 	
 	if ((codeset = strchr (locale, '.')))
-		lang = g_strndup (locale, codeset - locale);
+		lang = g_strndup (locale, (size_t) (codeset - locale));
 	else
 		lang = g_strdup (locale);
 	

@@ -163,7 +163,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	char *text;
-	int i;
+	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
 		if (!g_ascii_strcasecmp (content_headers[i], header))
@@ -255,7 +255,7 @@ static gboolean
 mime_part_remove_header (GMimeObject *object, const char *header)
 {
 	GMimePart *mime_part = (GMimePart *) object;
-	int i;
+	guint i;
 	
 	/* Make sure that the header is a Content-* header, else it
 	   doesn't belong on a mime part */

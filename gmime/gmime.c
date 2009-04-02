@@ -37,6 +37,7 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
+extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 
 GQuark gmime_error_quark;
 

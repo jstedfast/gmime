@@ -861,7 +861,7 @@ message_remove_header (GMimeObject *object, const char *header)
 	GMimeMessage *message = (GMimeMessage *) object;
 	InternetAddressList *addrlist;
 	GMimeRecipientType type;
-	int i;
+	guint i;
 	
 	if (!g_ascii_strcasecmp ("MIME-Version", header))
 		return FALSE;
@@ -1020,7 +1020,7 @@ g_mime_message_new (gboolean pretty_headers)
 {
 	GMimeHeaderList *headers;
 	GMimeMessage *message;
-	int i;
+	guint i;
 	
 	message = g_object_newv (GMIME_TYPE_MESSAGE, 0, NULL);
 	

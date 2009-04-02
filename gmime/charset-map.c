@@ -117,9 +117,10 @@ int main (int argc, char **argv)
 	char *inbuf, *outbuf;
 	guint32 out[128], c;
 	char in[128];
-	int i, j, k;
-	int bytes;
 	iconv_t cd;
+	int bytes;
+	int j, k;
+	size_t i;
 	
 	/* dont count the terminator */
 	bytes = ((sizeof (tables) / sizeof (tables[0])) + 7 - 1) / 8;
@@ -134,7 +135,7 @@ int main (int argc, char **argv)
 		inleft = sizeof (in);
 		outbuf = (char *) out;
 		outleft = sizeof (out);
-		while (iconv (cd, &inbuf, &inleft, &outbuf, &outleft) == -1) {
+		while (iconv (cd, &inbuf, &inleft, &outbuf, &outleft) == (size_t) -1) {
 			if (errno == EILSEQ) {
 				inbuf++;
 				inleft--;

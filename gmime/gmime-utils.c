@@ -919,7 +919,7 @@ decode_msgid (const char **in)
 		while (*inptr && *inptr != '>')
 			inptr++;
 		
-		msgid = g_strndup (*in, inptr - *in);
+		msgid = g_strndup (*in, (size_t) (inptr - *in));
 		*in = inptr;
 	}
 	

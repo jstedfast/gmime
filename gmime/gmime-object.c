@@ -741,7 +741,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
-	int i;
+	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
 		if (!g_ascii_strcasecmp (content_headers[i], header))
@@ -883,7 +883,7 @@ g_mime_object_get_header (GMimeObject *object, const char *header)
 static gboolean
 remove_header (GMimeObject *object, const char *header)
 {
-	int i;
+	guint i;
 	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
 		if (!g_ascii_strcasecmp (content_headers[i], header))

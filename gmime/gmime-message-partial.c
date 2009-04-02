@@ -320,17 +320,17 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 	const char *id;
 	size_t i;
 	
-	g_return_val_if_fail (num > 0, NULL);
-	
-	if (!(id = g_mime_message_partial_get_id (partials[0])))
+	if (num == 0 || !(id = g_mime_message_partial_get_id (partials[0])))
 		return NULL;
 	
 	/* get them into the correct order... */
 	qsort ((void *) partials, num, sizeof (gpointer), partial_compare);
 	
 	/* only the last message/partial part is REQUIRED to have the total parameter */
-	total = g_mime_message_partial_get_total (partials[num - 1]);
-	if (num != total)
+	if ((total = g_mime_message_partial_get_total (partials[num - 1])) == -1)
+		return NULL;
+	
+	if (num != (size_t) total)
 		return NULL;
 	
 	cat = g_mime_stream_cat_new ();
@@ -346,8 +346,10 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 			goto exception;
 		
 		/* sanity check to make sure we aren't missing any parts */
-		number = g_mime_message_partial_get_number (partial);
-		if (number != i + 1)
+		if ((number = g_mime_message_partial_get_number (partial)) == -1)
+			goto exception;
+		
+		if ((size_t) number != i + 1)
 			goto exception;
 		
 		wrapper = g_mime_part_get_content_object (GMIME_PART (partial));
@@ -424,7 +426,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	size_t len, end;
 	const char *id;
 	gint64 start;
-	int i;
+	guint i;
 	
 	*nparts = 0;
 	

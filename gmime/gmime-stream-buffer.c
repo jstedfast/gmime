@@ -142,8 +142,8 @@ static ssize_t
 stream_read (GMimeStream *stream, char *buf, size_t len)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
+	size_t buflen, offset;
 	ssize_t n, nread = 0;
-	size_t offset;
 	
 	if (buffer->source == NULL) {
 		errno = EBADF;
@@ -189,7 +189,8 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		break;
 	case GMIME_STREAM_BUFFER_CACHE_READ:
 		while (len > 0) {
-			if ((n = MIN (buffer->bufend - buffer->bufptr, len)) > 0) {
+			buflen = (size_t) (buffer->bufend - buffer->bufptr);
+			if ((n = MIN (buflen, len)) > 0) {
 				memcpy (buf + nread, buffer->bufptr, n);
 				buffer->bufptr += n;
 				nread += n;

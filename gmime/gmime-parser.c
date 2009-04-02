@@ -917,7 +917,7 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 			end = inptr;
 	}
 	
-	header->value = g_strndup (start, end - start);
+	header->value = g_strndup (start, (size_t) (end - start));
 	
 	header->offset = priv->header_offset;
 	

@@ -475,7 +475,7 @@ static void
 gpg_ctx_free (struct _GpgCtx *gpg)
 {
 	GMimeSigner *signer, *next;
-	int i;
+	guint i;
 	
 	if (gpg->session)
 		g_object_unref (gpg->session);
@@ -566,7 +566,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 	const char *hash_str;
 	GPtrArray *argv;
 	char *buf;
-	int i;
+	guint i;
 	
 	argv = g_ptr_array_new ();
 	g_ptr_array_add (argv, "gpg");
@@ -793,7 +793,7 @@ next_token (char *in, char **token)
 		inptr++;
 	
 	if (token)
-		*token = g_strndup (start, inptr - start);
+		*token = g_strndup (start, (size_t) (inptr - start));
 	
 	return inptr;
 }
@@ -1391,7 +1391,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 			goto exception;
 		
 		if (nread > 0) {
-			status_backup (gpg, buffer, nread);
+			status_backup (gpg, buffer, (size_t) nread);
 			if (gpg_ctx_parse_status (gpg, err) == -1)
 				return -1;
 		} else {
@@ -1439,8 +1439,8 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	}
 	
 	if ((pfds[GPG_PASSWD_FD].revents & (POLLOUT | POLLHUP)) && gpg->need_passwd && gpg->send_passwd) {
-		ssize_t w, nwritten = 0;
-		size_t n;
+		size_t n, nwritten = 0;
+		ssize_t w;
 		
 		d(printf ("sending gpg our passphrase...\n"));
 		
@@ -1808,7 +1808,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
-	int i;
+	guint i;
 	
 	gpg = gpg_ctx_new (context->session, ctx->path);
 	if (sign)
@@ -1985,7 +1985,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
-	int i;
+	guint i;
 	
 	gpg = gpg_ctx_new (context->session, ctx->path);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_EXPORT);

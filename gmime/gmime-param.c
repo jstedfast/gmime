@@ -141,11 +141,11 @@ decode_quoted_string (const char **in)
 	
 	if (*inptr == '"') {
 		start++;
-		out = g_strndup (start, (unsigned int) (inptr - start));
+		out = g_strndup (start, (size_t) (inptr - start));
 		inptr++;
 	} else {
 		/* string wasn't properly quoted */
-		out = g_strndup (start, (unsigned int) (inptr - start));
+		out = g_strndup (start, (size_t) (inptr - start));
 	}
 	
 	*in = inptr;
@@ -177,7 +177,7 @@ decode_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, (unsigned int) (inptr - start));
+		return g_strndup (start, (size_t) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -215,7 +215,7 @@ decode_param_token (const char **in)
 		inptr++;
 	if (inptr > start) {
 		*in = inptr;
-		return g_strndup (start, (unsigned int) (inptr - start));
+		return g_strndup (start, (size_t) (inptr - start));
 	} else {
 		return NULL;
 	}
@@ -396,7 +396,7 @@ rfc2184_param_charset (const char **in, char **langp)
 	
 	if (*inptr == '\'') {
 		if (langp)
-			*langp = g_strndup (lang, inptr - lang);
+			*langp = g_strndup (lang, (size_t) (inptr - lang));
 		
 		inptr++;
 	}
@@ -517,7 +517,8 @@ decode_param_list (const char *in)
 	char *name, *value;
 	gboolean encoded;
 	GString *gvalue;
-	int id, i;
+	guint i;
+	int id;
 	
 	params = NULL;
 	tail = (GMimeParam *) &params;
