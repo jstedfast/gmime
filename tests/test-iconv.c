@@ -30,10 +30,8 @@
 
 #include "testsuite.h"
 
-#ifndef G_OS_WIN32
-#define ENABLE_ZENTIMER
+/*#define ENABLE_ZENTIMER*/
 #include "zentimer.h"
-#endif
 
 #ifdef TEST_CACHE
 static char *charsets[] = {

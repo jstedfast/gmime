@@ -60,7 +60,7 @@ streams_match (GMimeStream **streams, const char *filename)
 	if (streams[0]->bound_end != -1) {
 		totalsize = streams[0]->bound_end - streams[0]->position;
 	} else if ((n = g_mime_stream_length (streams[0])) == -1) {
-		sprintf (errstr, "Error: Unable to get length of original stream\n");
+		sprintf (errstr, "Error: Unable to get length of original stream: %s\n", g_strerror (errno));
 		goto fail;
 	} else if (n < (streams[0]->position - streams[0]->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
@@ -77,19 +77,19 @@ streams_match (GMimeStream **streams, const char *filename)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read " SIZE_T " bytes from stream[0]\n", size));
+		d(fprintf (stderr, "read %zu bytes from stream[0]\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (streams[1], dbuf + nread, size - nread)) <= 0) {
-				d(fprintf (stderr, "stream[1] read() returned " SSIZE_T ", EOF\n", n));
+				d(fprintf (stderr, "stream[1] read() returned %zd, EOF\n", n));
 				break;
 			}
-			d(fprintf (stderr, "read " SSIZE_T " bytes from stream[1]\n", n));
+			d(fprintf (stderr, "read %zd bytes from stream[1]\n", n));
 			nread += n;
 		} while (nread < size);
 		
 		if (nread < size) {
-			sprintf (errstr, "Error: `%s' appears to be truncated, short %u+ bytes\n",
+			sprintf (errstr, "Error: `%s' appears to be truncated, short %zu+ bytes\n",
 				 filename, size - nread);
 			goto fail;
 		}
@@ -98,7 +98,7 @@ streams_match (GMimeStream **streams, const char *filename)
 			sprintf (errstr, "Error: `%s': content does not match\n", filename);
 			goto fail;
 		} else {
-			d(fprintf (stderr, "%u bytes identical\n", size));
+			d(fprintf (stderr, "%zu bytes identical\n", size));
 		}
 	}
 	
@@ -132,7 +132,7 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	FILE *fp;
 	
 	if (!(fp = fopen (filename, "r+")))
-		throw (exception_new ("could not open `%s': %s", filename, strerror (errno)));
+		throw (exception_new ("could not open `%s': %s", filename, g_strerror (errno)));
 	
 	while (!g_mime_stream_eos (stream)) {
 		rbuf[0] = '\0';
@@ -146,8 +146,8 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	fclose (fp);
 	
 	if (strcmp (sbuf, rbuf) != 0) {
-		v(fprintf (stderr, "\tstream: \"%s\" (" SIZE_T ")\n", sbuf, strlen (sbuf)));
-		v(fprintf (stderr, "\treal:   \"%s\" (" SIZE_T ")\n", rbuf, strlen (rbuf)));
+		v(fprintf (stderr, "\tstream: \"%s\" (%zu)\n", sbuf, strlen (sbuf)));
+		v(fprintf (stderr, "\treal:   \"%s\" (%zu)\n", rbuf, strlen (rbuf)));
 		throw (exception_new ("streams did not match"));
 	}
 }
@@ -155,7 +155,7 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 static void
 test_stream_buffer_gets (const char *filename)
 {
-	GMimeStream *stream, *buffered;
+	GMimeStream *stream, *buffered = NULL;
 	int fd;
 	
 	if ((fd = open (filename, O_RDONLY)) == -1) {
@@ -204,7 +204,7 @@ test_stream_mem (const char *filename)
 	int fd;
 	
 	if ((fd = open (filename, O_RDONLY)) == -1) {
-		v(fprintf (stderr, "failed to open %s", filename));
+		v(fprintf (stderr, "failed to open %s: %s\n", filename, g_strerror (errno)));
 		return;
 	}
 	
@@ -489,7 +489,7 @@ gen_random_stream (GMimeStream *stream)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating " SIZE_T " bytes of random data... ", size));
+	v(fprintf (stdout, "Generating %zu bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	while (total < size) {

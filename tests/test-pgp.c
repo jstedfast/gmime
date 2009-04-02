@@ -257,7 +257,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 		throw (ex);
 	}
 	
-	inbuf = GMIME_STREAM_MEM (istream)->buffer->data;
+	inbuf = (const char *) GMIME_STREAM_MEM (istream)->buffer->data;
 	inlen = GMIME_STREAM_MEM (istream)->buffer->len;
 	if ((inptr = strstr (inbuf, "\n\n"))) {
 		/* skip past the headers which may have different version numbers */
@@ -266,7 +266,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 		inbuf = inptr;
 	}
 	
-	outbuf = GMIME_STREAM_MEM (ostream)->buffer->data;
+	outbuf = (const char *) GMIME_STREAM_MEM (ostream)->buffer->data;
 	outlen = GMIME_STREAM_MEM (ostream)->buffer->len;
 	if ((inptr = strstr (outbuf, "\n\n"))) {
 		/* skip past the headers which may have different version numbers */

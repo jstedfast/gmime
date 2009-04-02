@@ -168,19 +168,19 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read " SIZE_T " bytes from istream\n", size));
+		d(fprintf (stderr, "read %zu bytes from istream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (ostream, dbuf + nread, size - nread)) <= 0) {
-				fprintf (stderr, "ostream's read(%p, dbuf + " SIZE_T ", " SIZE_T ") returned " SSIZE_T ", EOF\n", ostream, nread, size - nread, n);
+				fprintf (stderr, "ostream's read(%p, dbuf + %zu, %zu) returned %zd, EOF\n", ostream, nread, size - nread, n);
 				break;
 			}
-			d(fprintf (stderr, "read " SSIZE_T " bytes from ostream\n", n));
+			d(fprintf (stderr, "read %zd bytes from ostream\n", n));
 			nread += n;
 		} while (nread < size);
 		
 		if (nread < size) {
-			sprintf (errstr, "Error: ostream appears to be truncated, short %u+ bytes\n",
+			sprintf (errstr, "Error: ostream appears to be truncated, short %zu+ bytes\n",
 				 size - nread);
 			goto fail;
 		}
@@ -204,7 +204,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 			  bufend - bufptr, bufptr, bufend - bufptr, dbufptr);*/
 			goto fail;
 		} else {
-			d(fprintf (stderr, SIZE_T " bytes identical\n", size));
+			d(fprintf (stderr, "%zu bytes identical\n", size));
 		}
 		
 		offset += size;

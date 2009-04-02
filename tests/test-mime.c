@@ -328,6 +328,7 @@ static struct {
 	  "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem" },
 };
 
+#if 0
 static struct {
 	const char *input;
 	const char *decoded;
@@ -335,6 +336,7 @@ static struct {
 } rfc2047_phrase[] = {
 	/* FIXME: add some phrase tests */
 };
+#endif
 
 static void
 test_rfc2047 (gboolean test_broken)

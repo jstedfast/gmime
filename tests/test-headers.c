@@ -368,13 +368,12 @@ test_iter_remove (void)
 static void
 test_header_sync (void)
 {
-	InternetAddressList *members, *list;
+	InternetAddressList *list;
 	InternetAddress *addr, *ia;
 	GMimeMessage *message;
 	GMimeObject *object;
 	const char *value;
 	GMimePart *part;
-	int i;
 	
 	part = g_mime_part_new_with_type ("application", "octet-stream");
 	object = (GMimeObject *) part;

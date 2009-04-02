@@ -44,7 +44,7 @@
 
 extern int verbose;
 
-#define d(x) 
+#define d(x)
 #define v(x) if (verbose > 3) x;
 
 
@@ -59,7 +59,7 @@ random_whole_stream (const char *datadir, char **filename)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating " SIZE_T " bytes of random data... ", size));
+	v(fprintf (stdout, "Generating %zu bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	g_mkdir_with_parents (datadir, 0755);
@@ -138,19 +138,19 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read " SIZE_T " bytes from original stream\n", size));
+		d(fprintf (stderr, "read %zu bytes from original stream\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (dup, dbuf + nread, size - nread)) <= 0) {
-				d(fprintf (stderr, "dup read() returned " SSIZE_T ", EOF\n", n));
+				d(fprintf (stderr, "dup read() returned %zd, EOF\n", n));
 				break;
 			}
-			d(fprintf (stderr, "read " SSIZE_T " bytes from dup stream\n", n));
+			d(fprintf (stderr, "read %zd bytes from dup stream\n", n));
 			nread += n;
 		} while (nread < size);
 		
 		if (nread < size) {
-			sprintf (errstr, "Error: `%s' appears to be truncated, short %u+ bytes\n",
+			sprintf (errstr, "Error: `%s' appears to be truncated, short %zu+ bytes\n",
 				 filename, size - nread);
 			goto fail;
 		}
@@ -159,7 +159,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 			sprintf (errstr, "Error: `%s': content does not match\n", filename);
 			goto fail;
 		} else {
-			d(fprintf (stderr, SIZE_T " bytes identical\n", size));
+			d(fprintf (stderr, "%zu bytes identical\n", size));
 		}
 	}
 	

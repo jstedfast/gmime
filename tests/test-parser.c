@@ -94,7 +94,6 @@ test_parser (GMimeStream *stream)
 {
 	GMimeParser *parser;
 	GMimeMessage *message;
-	gboolean is_html;
 	char *text;
 	
 	fprintf (stdout, "\nTesting MIME parser...\n\n");
