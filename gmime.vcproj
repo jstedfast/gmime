@@ -39,7 +39,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;ssize_t&quot;=&quot;gssize&quot; /D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;5&quot; /D &quot;ICONV_CONST&quot;=&quot;&quot; /D &quot;HAVE_TIMEZONE&quot;"
+				AdditionalOptions="/D &quot;ssize_t&quot;=&quot;gssize&quot; /D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;5&quot; /D &quot;ICONV_CONST&quot;=&quot;&quot; /D &quot;HAVE_GMTIME_S&quot; /D &quot;HAVE_WS2TCPIP_H&quot; /D &quot;HAVE_GETADDRINFO&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;.&quot;; &quot;util&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMIME_EXPORTS;"
@@ -48,7 +48,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
-				Detect64BitPortabilityProblems="true"
+				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -62,7 +62,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="libiconv.lib glib-2.0.lib gobject-2.0.lib zdll.lib"
+				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib zdll.lib"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"

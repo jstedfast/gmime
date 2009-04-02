@@ -42,8 +42,11 @@
 #else
 #include <process.h>        /* Windows header for getpid() */
 #endif
+#ifdef HAVE_WS2TCPIP_H
+#include <ws2tcpip.h>       /* Windows header for getaddrinfo() */
+#endif
 #ifdef HAVE_NETDB_H
-#include <netdb.h>
+#include <netdb.h>          /* Unix header for getaddrinfo() */
 #endif
 #include <ctype.h>
 #include <errno.h>
