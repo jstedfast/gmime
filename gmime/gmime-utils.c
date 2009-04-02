@@ -37,15 +37,13 @@
 #include <sys/utsname.h>    /* for uname() */
 #endif
 #include <sys/types.h>
-#ifdef HAVE_PROCESS_H
-#include <process.h>        /* Windows header for getpid() */
-#endif
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>         /* Unix header for getpid() */
 #endif
-#ifdef HAVE_WINSOCK2_H
+#ifdef _WINDOWS
 #include <winsock2.h>
 #include <ws2tcpip.h>
+#include <process.h>
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>

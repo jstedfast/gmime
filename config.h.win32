@@ -132,9 +132,6 @@
 /* Define with a value if your <sys/param.h> does not define MAXHOSTNAMELEN */
 /* #undef MAXHOSTNAMELEN */
 
-/* Define to the `off_t' printf formatter. */
-#define OFF_T "%ld"
-
 /* Define to 0 if your system does not have the O_LARGEFILE flag */
 /* #undef O_LARGEFILE */
 
@@ -164,12 +161,6 @@
 
 /* The size of `ssize_t', as computed by sizeof. */
 #define SIZEOF_SSIZE_T 4
-
-/* Define to the `size_t' printf formatter. */
-#define SIZE_T "%lu"
-
-/* Define to the `ssize_t' printf formatter. */
-#define SSIZE_T "%ld"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
