@@ -301,6 +301,7 @@
 		<File RelativePath=".\MAINTAINERS" />
 		<File RelativePath=".\PORTING" />
 		<File RelativePath=".\README" />
+		<File RelativePath=".\config.h.win32" />
 	</Files>
 	<Globals>
 	</Globals>

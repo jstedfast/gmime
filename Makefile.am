@@ -24,6 +24,7 @@ DISTCLEANFILES = iconv-detect.h
 EXTRA_DIST = 				\
 	PORTING				\
 	gmime-$(GMIME_API_VERSION).pc.in\
+	config.h.win32			\
 	gmime.spec.in 			\
 	iconv-detect.c			\
 	zentimer.h 			\
