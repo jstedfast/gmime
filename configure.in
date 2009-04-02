@@ -380,21 +380,6 @@ AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(off_t)
 CFLAGS="$CFLAGS_save"
 
-dnl convenience printf formatting macros for ssize_t/size_t/off_t
-if test $ac_cv_sizeof_size_t -eq 8; then
-   AC_DEFINE(SSIZE_T, "%lld", [Define to the `ssize_t' printf formatter.])
-   AC_DEFINE(SIZE_T, "%llu", [Define to the `size_t' printf formatter.])
-else
-   AC_DEFINE(SSIZE_T, "%ld", [Define to the `ssize_t' printf formatter.])
-   AC_DEFINE(SIZE_T, "%lu", [Define to the `size_t' printf formatter.])
-fi
-if test $ac_cv_sizeof_off_t -eq 8; then
-   AC_DEFINE(OFF_T, "%lld", [Define to the `off_t' printf formatter.])
-else
-   AC_DEFINE(OFF_T, "%ld", [Define to the `off_t' printf formatter.])
-fi
-
-
 dnl Check for some network functions
 AC_CHECK_FUNCS(gethostname getdomainname getaddrinfo)
 
