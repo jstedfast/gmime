@@ -1,3 +1,10 @@
+2009-04-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime.vcproj: Added logic to the PreBuild step to copy
+	config.h.win32 to config.h
+
+	* config.h.win32: Added.
+
 2009-04-01  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c: #include <process.h> for getpid() and ws2tcpip.h
