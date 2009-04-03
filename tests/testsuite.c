@@ -24,12 +24,14 @@
 
 #include <glib.h>
 #include <stdlib.h>
+#ifdef ENABLE_THREADS
 #include <pthread.h>
+#endif
+
 #include "testsuite.h"
 
 
 static struct _stack *stack = NULL;
-static pthread_key_t key;
 static int total_errors = 0;
 static int total_tests = 0;
 int verbose = 0;
@@ -62,6 +64,9 @@ struct _stack {
 	} v;
 };
 
+#ifdef ENABLE_THREADS
+static pthread_key_t key;
+
 static void
 key_data_destroy (void *user_data)
 {
@@ -74,6 +79,16 @@ key_data_destroy (void *user_data)
 		stack = parent;
 	}
 }
+
+#define exception_env_set(env) pthread_setspecific (key, env)
+#define exception_env_get()    pthread_getspecific (key)
+#else
+static ExceptionEnv *exenv = NULL;
+
+#define exception_env_set(env) exenv = (env)
+#define exception_env_get()    exenv
+#endif
+
 
 void
 testsuite_init (int argc, char **argv)
@@ -89,7 +104,9 @@ testsuite_init (int argc, char **argv)
 		}
 	}
 	
+#ifdef ENABLE_THREADS
 	pthread_key_create (&key, key_data_destroy);
+#endif
 }
 
 int
@@ -311,14 +328,12 @@ exception_free (Exception *ex)
 void
 _try (ExceptionEnv *env)
 {
-	ExceptionEnv *penv;
-	
-	penv = pthread_getspecific (key);
+	ExceptionEnv *penv = exception_env_get ();
 	
 	env->parent = penv;
 	env->ex = NULL;
 	
-	pthread_setspecific (key, env);
+	exception_env_set (env);
 }
 
 void
@@ -326,13 +341,13 @@ throw (Exception *ex)
 {
 	ExceptionEnv *env;
 	
-	if (!(env = pthread_getspecific (key))) {
+	if (!(env = exception_env_get ())) {
 		fprintf (stderr, "Uncaught exception: %s\n", ex->message);
 		abort ();
 	}
 	
 	env->ex = ex;
-	pthread_setspecific (key, env->parent);
+	exception_env_set (env->parent);
 	longjmp (env->env, 1);
 }
 

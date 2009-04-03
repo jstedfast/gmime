@@ -1,5 +1,8 @@
 2009-04-02  Jeffrey Stedfast  <fejj@novell.com>
 
+	* tests/testsuite.c: Modified to compile without the need for
+	pthread.h
+
 	* gmime.vcproj: Added logic to the PreBuild step to copy
 	config.h.win32 to config.h
 
