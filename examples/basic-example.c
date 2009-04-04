@@ -22,18 +22,23 @@
 #include <config.h>
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <errno.h>
-
 #include <glib.h>
 #include <gmime/gmime.h>
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
+#ifdef G_OS_WIN32
+#include <io.h>
+#endif
+
 #ifndef G_OS_WIN32
-static char *path = "/usr/bin/gpg";
-/*static char *userid = "pgp-mime@xtorshun.org";*/
-static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
+static const char *path = "/usr/bin/gpg";
+static const char *passphrase = "no.secret";
 
 typedef struct _ExampleSession ExampleSession;
 typedef struct _ExampleSessionClass ExampleSessionClass;
@@ -96,26 +101,19 @@ example_session_class_init (ExampleSessionClass *klass)
 static char *
 request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
 {
-#if 0
-	char buffer[256];
-	
-	fprintf (stdout, "%s\nPassphrase: %s\n", prompt, passphrase);
-	fgets (buffer, 255, stdin);
-	buffer[strlen (buffer) - 1] = '\0'; /* chop off \n */
-#endif
-	return g_strdup (/*buffer*/passphrase);
+	return g_strdup (passphrase);
 }
 #endif /* ! G_OS_WIN32 */
 
 static GMimeMessage *
-parse_message (FILE *fp)
+parse_message (int fd)
 {
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
 	
 	/* create a stream to read from the file descriptor */
-	stream = g_mime_stream_file_new (fp);
+	stream = g_mime_stream_fs_new (fd);
 	
 	/* create a new parser object to parse the stream */
 	parser = g_mime_parser_new_with_stream (stream);
@@ -343,13 +341,13 @@ int main (int argc, char **argv)
 	GMimeCipherContext *ctx;
 #endif
 	GMimeMessage *message;
-	FILE *fp;
+	int fd;
 	
 	if (argc < 2) {
 		printf ("Usage: a.out <message file>\n");
 		return 0;
 	} else {
-		if ((fp = fopen (argv[1], "rt")) == NULL) {
+		if ((fd = open (argv[1], O_RDONLY)) == -1) {
 			fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], g_strerror (errno));
 			return 0;
 		}
@@ -359,7 +357,7 @@ int main (int argc, char **argv)
 	g_mime_init (0);
 	
 	/* parse the message */
-	message = parse_message (fp);
+	message = parse_message (fd);
 	
 	/* count the number of parts in the message */
 	count_parts_in_message (message);

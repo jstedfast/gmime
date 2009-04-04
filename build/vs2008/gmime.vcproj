@@ -339,6 +339,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\gmime\gmime-stream-fs.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\gmime\gmime-stream-mem.h"
 				>
 			</File>
@@ -556,6 +560,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-stream-filter.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-stream-fs.c"
 				>
 			</File>
 			<File

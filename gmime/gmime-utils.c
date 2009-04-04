@@ -25,6 +25,8 @@
 
 #define _GNU_SOURCE
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -44,6 +46,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <process.h>
+#define getpid() _getpid()
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>

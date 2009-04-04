@@ -1,3 +1,13 @@
+2009-04-04  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-fs.c: Ported to Windows by #including io.h
+
+	* examples/basic-example.c: Reverted to the old GMimeStreamFs logic
+	and #included io.h for G_OS_WIN32 systems.
+
+	* examples/imap-example.c: Ported to Windows by #including io.h and
+	using g_ascii_strcasecmp().
+
 2009-04-03  Jeffrey Stedfast  <fejj@novell.com>
 
 	* build/vs2008: New directory for Visual Studio 2008 Solution & Project

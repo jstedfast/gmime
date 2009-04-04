@@ -22,19 +22,22 @@
 #include <config.h>
 #endif
 
+#include <glib.h>
+#include <glib/gstdio.h>
+#include <gmime/gmime.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
-
-#include <glib.h>
-#include <glib/gstdio.h>
-
-#include <gmime/gmime.h>
-
+#ifdef G_OS_WIN32
+#include <io.h>
+#endif
 
 static char *
 basename (char *path)
@@ -553,7 +556,7 @@ bodystruct_part_decode (unsigned char **in, unsigned char *inend)
 	part->envelope = NULL;
 	part->subparts = NULL;
 	
-	if (!strcasecmp (part->content.type, "multipart")) {
+	if (!g_ascii_strcasecmp (part->content.type, "multipart")) {
 		list = NULL;
 		tail = (struct _bodystruct *) &list;
 		
@@ -569,7 +572,7 @@ bodystruct_part_decode (unsigned char **in, unsigned char *inend)
 		}
 		
 		part->subparts = list;
-	} else if (!strcasecmp (part->content.type, "message") && !strcasecmp (part->content.subtype, "rfc822")) {
+	} else if (!g_ascii_strcasecmp (part->content.type, "message") && !g_ascii_strcasecmp (part->content.subtype, "rfc822")) {
 		part->envelope = decode_envelope (&inptr, inend);
 		part->subparts = bodystruct_part_decode (&inptr, inend);
 	} else {
@@ -617,13 +620,13 @@ bodystruct_dump (struct _bodystruct *part, int depth)
 	
 	fputc ('\n', stderr);
 	
-	if (!strcasecmp (part->content.type, "multipart")) {
+	if (!g_ascii_strcasecmp (part->content.type, "multipart")) {
 		part = part->subparts;
 		while (part != NULL) {
 			bodystruct_dump (part, depth + 1);
 			part = part->next;
 		}
-	} else if (!strcasecmp (part->content.type, "message") && !strcasecmp (part->content.subtype, "rfc822")) {
+	} else if (!g_ascii_strcasecmp (part->content.type, "message") && !g_ascii_strcasecmp (part->content.subtype, "rfc822")) {
 		depth++;
 		
 		for (i = 0; i < depth; i++)
