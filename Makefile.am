@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = util gmime src 
+SUBDIRS = build util gmime src 
 
 if ENABLE_MONO
 SUBDIRS += mono
@@ -24,14 +24,11 @@ DISTCLEANFILES = iconv-detect.h
 EXTRA_DIST = 				\
 	PORTING				\
 	gmime-$(GMIME_API_VERSION).pc.in\
-	config.h.win32			\
 	gmime.spec.in 			\
 	iconv-detect.c			\
 	zentimer.h 			\
 	zenprofiler.h			\
-	gtk-doc.make			\
-	gmime.vcproj			\
-	gmime.sln
+	gtk-doc.make
 
 BUILD_EXTRA_DIST = 			\
 	gmime.spec

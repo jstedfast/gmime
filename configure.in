@@ -500,6 +500,8 @@ AC_SUBST(GMIME_CFLAGS)
 
 AC_OUTPUT(
 Makefile
+build/Makefile
+build/vs2008/Makefile
 docs/Makefile
 docs/reference/Makefile
 docs/tutorial/Makefile
