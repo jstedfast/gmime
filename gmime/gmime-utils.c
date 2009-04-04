@@ -40,7 +40,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>         /* Unix header for getpid() */
 #endif
-#ifdef _WINDOWS
+#ifdef G_OS_WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <process.h>
@@ -450,7 +450,7 @@ mktime_utc (struct tm *tm)
 	tm->tm_isdst = -1;
 	tt = mktime (tm);
 	
-#if defined (_WINDOWS)
+#if defined (G_OS_WIN32)
 	_get_timezone (&tz);
 #elif defined (HAVE_TM_GMTOFF)
 	tz = -tm->tm_gmtoff;
