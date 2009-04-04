@@ -24,6 +24,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Generating config.h ..."
 				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config.h.win32 ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
 			/>
 			<Tool
@@ -51,6 +52,7 @@
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="false"
 				DebugInformationFormat="4"
+				CompileAs="1"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
