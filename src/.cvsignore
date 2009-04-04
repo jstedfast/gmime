@@ -1,5 +1,0 @@
-*.o
-Makefile
-Makefile.in
-uuencode
-uudecode

@@ -18,17 +18,19 @@
  */
 
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
 
 #include <glib.h>
 #include <gmime/gmime.h>
 
+#ifndef G_OS_WIN32
 static char *path = "/usr/bin/gpg";
 /*static char *userid = "pgp-mime@xtorshun.org";*/
 static char *passphrase = "PGP/MIME is rfc2015, now go and read it.";
@@ -103,16 +105,17 @@ request_passwd (GMimeSession *session, const char *prompt, gboolean secret, cons
 #endif
 	return g_strdup (/*buffer*/passphrase);
 }
+#endif /* ! G_OS_WIN32 */
 
 static GMimeMessage *
-parse_message (int fd)
+parse_message (FILE *fp)
 {
 	GMimeMessage *message;
 	GMimeParser *parser;
 	GMimeStream *stream;
 	
 	/* create a stream to read from the file descriptor */
-	stream = g_mime_stream_fs_new (dup (fd));
+	stream = g_mime_stream_file_new (fp);
 	
 	/* create a new parser object to parse the stream */
 	parser = g_mime_parser_new_with_stream (stream);
@@ -188,6 +191,7 @@ count_parts_in_message (GMimeMessage *message)
 	printf ("There are %d parts in the message\n", count);
 }
 
+#ifndef G_OS_WIN32
 static void
 verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
@@ -242,6 +246,7 @@ verify_signed_parts (GMimeMessage *message, GMimeCipherContext *ctx)
 	/* descend the mime tree and verify any signed parts */
 	g_mime_message_foreach (message, verify_foreach_callback, ctx);
 }
+#endif
 
 static void
 write_message_to_screen (GMimeMessage *message)
@@ -249,7 +254,8 @@ write_message_to_screen (GMimeMessage *message)
 	GMimeStream *stream;
 	
 	/* create a new stream for writing to stdout */
-	stream = g_mime_stream_fs_new (dup (1));
+	stream = g_mime_stream_file_new (stdout);
+	g_mime_stream_file_set_owner ((GMimeStreamFile *) stream, FALSE);
 	
 	/* write the message to the stream */
 	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
@@ -332,17 +338,19 @@ remove_a_mime_part (GMimeMessage *message)
 
 int main (int argc, char **argv)
 {
+#ifndef G_OS_WIN32
 	GMimeSession *session;
 	GMimeCipherContext *ctx;
+#endif
 	GMimeMessage *message;
-	int fd;
+	FILE *fp;
 	
 	if (argc < 2) {
 		printf ("Usage: a.out <message file>\n");
 		return 0;
 	} else {
-		if ((fd = open (argv[1], O_RDONLY)) == -1) {
-			fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], strerror (errno));
+		if ((fp = fopen (argv[1], "rt")) == NULL) {
+			fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], g_strerror (errno));
 			return 0;
 		}
 	}
@@ -350,6 +358,13 @@ int main (int argc, char **argv)
 	/* init the gmime library */
 	g_mime_init (0);
 	
+	/* parse the message */
+	message = parse_message (fp);
+	
+	/* count the number of parts in the message */
+	count_parts_in_message (message);
+	
+#ifndef G_OS_WIN32
 	/* create our cipher context (and session - which is used by the context to query the user) */
 	session = g_object_new (example_session_get_type (), NULL);
 	ctx = g_mime_gpg_context_new (session, path);
@@ -358,15 +373,10 @@ int main (int argc, char **argv)
 	/* set the always_trust flag so that gpg will be spawned with `gpg --always-trust` */
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
-	/* parse the message */
-	message = parse_message (fd);
-	close (fd);
-	
-	/* count the number of parts in the message */
-	count_parts_in_message (message);
-	
 	/* verify any signed parts */
 	verify_signed_parts (message, ctx);
+	g_object_unref (ctx);
+#endif
 	
 	/* add and remove parts */
 	add_a_mime_part (message);
@@ -377,9 +387,6 @@ int main (int argc, char **argv)
 	
 	/* free the mesage */
 	g_object_unref (message);
-	
-	/* free the gpg context */
-	g_object_unref (ctx);
 	
 	return 0;
 }

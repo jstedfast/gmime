@@ -18,13 +18,13 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="Debug"
-			IntermediateDirectory="Debug"
-			ConfigurationType="2"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
+			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if exist config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config.h.win32 config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
+				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config.h.win32 ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;5&quot;"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;.&quot;; &quot;util&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -62,19 +62,10 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib zdll.lib"
-				OutputFile="$(OutDir)\$(ProjectName)-2.4.dll"
-				LinkIncremental="2"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -86,21 +77,18 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)"
 			ConfigurationType="2"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if exist config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config.h.win32 config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
+				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config.h.win32 ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -117,7 +105,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;5&quot;"
-				AdditionalIncludeDirectories="&quot;.&quot;; &quot;util&quot;"
+				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
@@ -177,227 +165,219 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\util\cache.h"
+				RelativePath="..\..\util\cache.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-charset-map-private.h"
+				RelativePath="..\..\gmime\gmime-charset-map-private.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-charset.h"
+				RelativePath="..\..\gmime\gmime-charset.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-cipher-context.h"
+				RelativePath="..\..\gmime\gmime-cipher-context.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-common.h"
+				RelativePath="..\..\gmime\gmime-common.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-content-type.h"
+				RelativePath="..\..\gmime\gmime-content-type.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-data-wrapper.h"
+				RelativePath="..\..\gmime\gmime-data-wrapper.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-disposition.h"
+				RelativePath="..\..\gmime\gmime-disposition.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-encodings.h"
+				RelativePath="..\..\gmime\gmime-encodings.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-error.h"
+				RelativePath="..\..\gmime\gmime-error.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-basic.h"
+				RelativePath="..\..\gmime\gmime-filter-basic.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-best.h"
+				RelativePath="..\..\gmime\gmime-filter-best.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-charset.h"
+				RelativePath="..\..\gmime\gmime-filter-charset.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-crlf.h"
+				RelativePath="..\..\gmime\gmime-filter-crlf.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-enriched.h"
+				RelativePath="..\..\gmime\gmime-filter-enriched.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-from.h"
+				RelativePath="..\..\gmime\gmime-filter-from.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-gzip.h"
+				RelativePath="..\..\gmime\gmime-filter-gzip.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-html.h"
+				RelativePath="..\..\gmime\gmime-filter-html.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-md5.h"
+				RelativePath="..\..\gmime\gmime-filter-md5.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-strip.h"
+				RelativePath="..\..\gmime\gmime-filter-strip.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-windows.h"
+				RelativePath="..\..\gmime\gmime-filter-windows.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-yenc.h"
+				RelativePath="..\..\gmime\gmime-filter-yenc.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter.h"
+				RelativePath="..\..\gmime\gmime-filter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-header.h"
+				RelativePath="..\..\gmime\gmime-header.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-iconv-utils.h"
+				RelativePath="..\..\gmime\gmime-iconv-utils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-iconv.h"
+				RelativePath="..\..\gmime\gmime-iconv.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message-part.h"
+				RelativePath="..\..\gmime\gmime-message-part.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message-partial.h"
+				RelativePath="..\..\gmime\gmime-message-partial.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message.h"
+				RelativePath="..\..\gmime\gmime-message.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart-encrypted.h"
+				RelativePath="..\..\gmime\gmime-multipart-encrypted.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart-signed.h"
+				RelativePath="..\..\gmime\gmime-multipart-signed.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart.h"
+				RelativePath="..\..\gmime\gmime-multipart.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-object.h"
+				RelativePath="..\..\gmime\gmime-object.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-param.h"
+				RelativePath="..\..\gmime\gmime-param.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-parse-utils.h"
+				RelativePath="..\..\gmime\gmime-parse-utils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-parser.h"
+				RelativePath="..\..\gmime\gmime-parser.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-part.h"
+				RelativePath="..\..\gmime\gmime-part.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-session-simple.h"
+				RelativePath="..\..\gmime\gmime-session-simple.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-session.h"
+				RelativePath="..\..\gmime\gmime-session.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-buffer.h"
+				RelativePath="..\..\gmime\gmime-stream-buffer.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-cat.h"
+				RelativePath="..\..\gmime\gmime-stream-cat.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-file.h"
+				RelativePath="..\..\gmime\gmime-stream-file.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-filter.h"
+				RelativePath="..\..\gmime\gmime-stream-filter.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-mem.h"
+				RelativePath="..\..\gmime\gmime-stream-mem.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-null.h"
+				RelativePath="..\..\gmime\gmime-stream-null.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream.h"
+				RelativePath="..\..\gmime\gmime-stream.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-table-private.h"
+				RelativePath="..\..\gmime\gmime-table-private.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-utils.h"
+				RelativePath="..\..\gmime\gmime-utils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime.h"
+				RelativePath="..\..\gmime\gmime.h"
 				>
 			</File>
 			<File
-				RelativePath=".\util\gtrie.h"
+				RelativePath="..\..\util\gtrie.h"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\internet-address.h"
+				RelativePath="..\..\gmime\internet-address.h"
 				>
 			</File>
 			<File
-				RelativePath=".\util\list.h"
+				RelativePath="..\..\util\list.h"
 				>
 			</File>
 			<File
-				RelativePath=".\util\md5-utils.h"
+				RelativePath="..\..\util\md5-utils.h"
 				>
 			</File>
 			<File
-				RelativePath=".\util\url-scanner.h"
-				>
-			</File>
-			<File
-				RelativePath=".\zenprofiler.h"
-				>
-			</File>
-			<File
-				RelativePath=".\zentimer.h"
+				RelativePath="..\..\util\url-scanner.h"
 				>
 			</File>
 		</Filter>
@@ -413,216 +393,216 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\util\cache.c"
+				RelativePath="..\..\util\cache.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-charset.c"
+				RelativePath="..\..\gmime\gmime-charset.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-cipher-context.c"
+				RelativePath="..\..\gmime\gmime-cipher-context.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-common.c"
+				RelativePath="..\..\gmime\gmime-common.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-content-type.c"
+				RelativePath="..\..\gmime\gmime-content-type.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-data-wrapper.c"
+				RelativePath="..\..\gmime\gmime-data-wrapper.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-disposition.c"
+				RelativePath="..\..\gmime\gmime-disposition.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-encodings.c"
+				RelativePath="..\..\gmime\gmime-encodings.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-basic.c"
+				RelativePath="..\..\gmime\gmime-filter-basic.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-best.c"
+				RelativePath="..\..\gmime\gmime-filter-best.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-charset.c"
+				RelativePath="..\..\gmime\gmime-filter-charset.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-crlf.c"
+				RelativePath="..\..\gmime\gmime-filter-crlf.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-enriched.c"
+				RelativePath="..\..\gmime\gmime-filter-enriched.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-from.c"
+				RelativePath="..\..\gmime\gmime-filter-from.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-gzip.c"
+				RelativePath="..\..\gmime\gmime-filter-gzip.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-html.c"
+				RelativePath="..\..\gmime\gmime-filter-html.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-md5.c"
+				RelativePath="..\..\gmime\gmime-filter-md5.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-strip.c"
+				RelativePath="..\..\gmime\gmime-filter-strip.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-windows.c"
+				RelativePath="..\..\gmime\gmime-filter-windows.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter-yenc.c"
+				RelativePath="..\..\gmime\gmime-filter-yenc.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-filter.c"
+				RelativePath="..\..\gmime\gmime-filter.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-header.c"
+				RelativePath="..\..\gmime\gmime-header.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-iconv-utils.c"
+				RelativePath="..\..\gmime\gmime-iconv-utils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-iconv.c"
+				RelativePath="..\..\gmime\gmime-iconv.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message-part.c"
+				RelativePath="..\..\gmime\gmime-message-part.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message-partial.c"
+				RelativePath="..\..\gmime\gmime-message-partial.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-message.c"
+				RelativePath="..\..\gmime\gmime-message.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart-encrypted.c"
+				RelativePath="..\..\gmime\gmime-multipart-encrypted.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart-signed.c"
+				RelativePath="..\..\gmime\gmime-multipart-signed.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-multipart.c"
+				RelativePath="..\..\gmime\gmime-multipart.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-object.c"
+				RelativePath="..\..\gmime\gmime-object.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-param.c"
+				RelativePath="..\..\gmime\gmime-param.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-parse-utils.c"
+				RelativePath="..\..\gmime\gmime-parse-utils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-parser.c"
+				RelativePath="..\..\gmime\gmime-parser.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-part.c"
+				RelativePath="..\..\gmime\gmime-part.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-session-simple.c"
+				RelativePath="..\..\gmime\gmime-session-simple.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-session.c"
+				RelativePath="..\..\gmime\gmime-session.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-buffer.c"
+				RelativePath="..\..\gmime\gmime-stream-buffer.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-cat.c"
+				RelativePath="..\..\gmime\gmime-stream-cat.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-file.c"
+				RelativePath="..\..\gmime\gmime-stream-file.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-filter.c"
+				RelativePath="..\..\gmime\gmime-stream-filter.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-mem.c"
+				RelativePath="..\..\gmime\gmime-stream-mem.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream-null.c"
+				RelativePath="..\..\gmime\gmime-stream-null.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-stream.c"
+				RelativePath="..\..\gmime\gmime-stream.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime-utils.c"
+				RelativePath="..\..\gmime\gmime-utils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\gmime.c"
+				RelativePath="..\..\gmime\gmime.c"
 				>
 			</File>
 			<File
-				RelativePath=".\util\gtrie.c"
+				RelativePath="..\..\util\gtrie.c"
 				>
 			</File>
 			<File
-				RelativePath=".\gmime\internet-address.c"
+				RelativePath="..\..\gmime\internet-address.c"
 				>
 			</File>
 			<File
-				RelativePath=".\util\list.c"
+				RelativePath="..\..\util\list.c"
 				>
 			</File>
 			<File
-				RelativePath=".\util\md5-utils.c"
+				RelativePath="..\..\util\md5-utils.c"
 				>
 			</File>
 			<File
-				RelativePath=".\util\url-scanner.c"
+				RelativePath="..\..\util\url-scanner.c"
 				>
 			</File>
 		</Filter>
 		<File
-			RelativePath=".\AUTHORS"
+			RelativePath="..\..\AUTHORS"
 			>
 		</File>
 		<File
-			RelativePath=".\ChangeLog"
+			RelativePath="..\..\ChangeLog"
 			>
 		</File>
 		<File
@@ -630,27 +610,39 @@
 			>
 		</File>
 		<File
-			RelativePath=".\COPYING"
+			RelativePath="..\..\COPYING"
 			>
 		</File>
 		<File
-			RelativePath=".\HACKING"
+			RelativePath="..\..\HACKING"
 			>
 		</File>
 		<File
-			RelativePath=".\LICENSE"
+			RelativePath="..\..\INSTALL"
 			>
 		</File>
 		<File
-			RelativePath=".\MAINTAINERS"
+			RelativePath="..\..\LICENSE"
 			>
 		</File>
 		<File
-			RelativePath=".\PORTING"
+			RelativePath="..\..\MAINTAINERS"
 			>
 		</File>
 		<File
-			RelativePath=".\README"
+			RelativePath="..\..\NEWS"
+			>
+		</File>
+		<File
+			RelativePath="..\..\PORTING"
+			>
+		</File>
+		<File
+			RelativePath="..\..\README"
+			>
+		</File>
+		<File
+			RelativePath="..\..\TODO"
 			>
 		</File>
 	</Files>

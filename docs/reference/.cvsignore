@@ -1,9 +1,0 @@
-Makefile
-Makefile.in
-gmime-decl*.txt
-gmime-undocumented.txt
-gmime-unused.txt
-*.stamp
-html
-sgml
-tmpl

@@ -1,3 +1,22 @@
+2009-04-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* build/vs2008: New directory for Visual Studio 2008 Solution & Project
+	files.
+
+	* gmime.vcproj: Moved to build/vs2008
+
+	* config.h.win32: Same.
+
+	* gmime.sln: Same.
+
+	* examples/basic-example.c: Fixed to build under Visual Studio by
+	using GMimeStreamFile instead of GMimeStreamFs and by #ifdef'ing
+	out the GnuPG code.
+
+	* tests/testsuit.[c,h]: Fixed to compile under Visual Studio which
+	basically means we can't use _try() as a function. Renamed to g_try().
+	Also renamed throw() to g_throw() for consistency.
+
 2009-04-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* tests/testsuite.c: Modified to compile without the need for

@@ -66,13 +66,13 @@ typedef struct _ExceptionEnv {
 	jmp_buf env;
 } ExceptionEnv;
 
-void _try (ExceptionEnv *env);
-
+void g_try (ExceptionEnv *env);
+void g_throw (Exception *ex) G_GNUC_NORETURN;
 
 /* PUBLIC: try/throw/catch/finally - similar to c++, etc */
-#define try { ExceptionEnv __env; _try (&__env); if (setjmp (__env.env) == 0)
+#define try { ExceptionEnv __env; g_try (&__env); if (setjmp (__env.env) == 0)
 #define catch(e) else { Exception *e = __env.ex; if (e != NULL)
-void throw (Exception *ex) G_GNUC_NORETURN;
+#define throw(e) g_throw (e)
 #define finally } if (__env.ex != NULL) exception_free (__env.ex); }
 
 G_END_DECLS

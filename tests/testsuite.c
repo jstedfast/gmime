@@ -326,7 +326,7 @@ exception_free (Exception *ex)
 }
 
 void
-_try (ExceptionEnv *env)
+g_try (ExceptionEnv *env)
 {
 	ExceptionEnv *penv = exception_env_get ();
 	
@@ -337,7 +337,7 @@ _try (ExceptionEnv *env)
 }
 
 void
-throw (Exception *ex)
+g_throw (Exception *ex)
 {
 	ExceptionEnv *env;
 	
