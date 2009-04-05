@@ -455,6 +455,12 @@ mktime_utc (struct tm *tm)
 	
 #if defined (G_OS_WIN32)
 	_get_timezone (&tz);
+	if (tm->tm_isdst > 0) {
+		int dst;
+		
+		_get_dstbias (&dst);
+		tz += dst;
+	}
 #elif defined (HAVE_TM_GMTOFF)
 	tz = -tm->tm_gmtoff;
 #elif defined (HAVE_TIMEZONE)
@@ -1496,6 +1502,13 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 				break;
 			}
 			
+#ifdef G_OS_WIN32
+			/* seems that GnuWin32's libiconv 1.9 does not set errno in
+			 * the E2BIG case, so we have to fake it */
+			if (outleft <= inleft)
+				errno = E2BIG;
+#endif
+			
 			if (errno == E2BIG) {
 				/* need to grow the output buffer */
 				outlen += (inleft * 2) + 16;
@@ -1713,14 +1726,21 @@ rfc2047_decode_word (const char *in, size_t inlen)
 	case 'B':
 	case 'b':
 		inptr += 2;
-		decoded = g_alloca (inend - inptr);
-		declen = g_mime_encoding_base64_decode_step (inptr, inend - inptr, decoded, &state, &save);
+		len = (size_t) (inend - inptr);
+		decoded = g_alloca (len);
+		declen = g_mime_encoding_base64_decode_step (inptr, len, decoded, &state, &save);
+		
+		if (declen == -1) {
+			d(fprintf (stderr, "encountered broken 'Q' encoding\n"));
+			return NULL;
+		}
 		break;
 	case 'Q':
 	case 'q':
 		inptr += 2;
-		decoded = g_alloca (inend - inptr);
-		declen = quoted_decode (inptr, inend - inptr, decoded);
+		len = (size_t) (inend - inptr);
+		decoded = g_alloca (len);
+		declen = quoted_decode (inptr, len, decoded);
 		
 		if (declen == -1) {
 			d(fprintf (stderr, "encountered broken 'Q' encoding\n"));
@@ -1754,10 +1774,10 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		p = (char *) decoded;
 		len = declen;
 		
-		while (!g_utf8_validate (p, len, (const char **) &p)) {
-			len = declen - (p - (char *) decoded);
-			*p = '?';
-		}
+		//while (!g_utf8_validate (p, len, (const char **) &p)) {
+		//	len = declen - (p - (char *) decoded);
+		//	*p = '?';
+		//}
 		
 		return g_strndup ((char *) decoded, declen);
 	}

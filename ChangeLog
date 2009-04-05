@@ -1,5 +1,10 @@
 2009-04-05  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (mktime_utc): Fixed the Windows code-path.
+	(charset_convert): In the Windows case, fake the E2BIG error condition
+	if outleft <= inleft on any error as errno doesn't seem to get
+	properly set in this case.
+
 	* tests/test-headers.c: Removed unused headers to fix the build on
 	Windows.
 
