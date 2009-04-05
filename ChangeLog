@@ -1,3 +1,8 @@
+2009-04-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-headers.c: Removed unused headers to fix the build on
+	Windows.
+
 2009-04-04  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-fs.c: Ported to Windows by #including io.h
