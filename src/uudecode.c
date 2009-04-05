@@ -22,14 +22,22 @@
 #include <config.h>
 #endif
 
+#include <gmime/gmime.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
+#ifdef G_OS_WIN32
+#include <io.h>
+typedef int mode_t;
+#endif
 
 #ifdef HAVE_GETOPT_H
 #define _GNU_SOURCE
@@ -37,8 +45,6 @@
 #else
 #include "getopt.h"
 #endif
-
-#include <gmime/gmime.h>
 
 
 #define DEFAULT_FILENAME "-"
@@ -132,7 +138,7 @@ uudecode (const char *progname, int argc, char **argv)
 	do {
 		if ((fin = uufopen (infile, "r", O_RDONLY, 0)) == NULL) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
-				 infile, strerror (errno));
+				 infile, g_strerror (errno));
 			return -1;
 		}
 		
@@ -198,7 +204,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		if ((fd = open (outfile, O_CREAT | O_TRUNC | O_WRONLY, mode)) == -1) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
-				 outfile, strerror (errno));
+				 outfile, g_strerror (errno));
 			g_string_free (str, TRUE);
 			fclose (fin);
 			
@@ -207,7 +213,7 @@ uudecode (const char *progname, int argc, char **argv)
 		
 		if (!(fout = fdopen (fd, "wb"))) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
-				 outfile, strerror (errno));
+				 outfile, g_strerror (errno));
 			g_string_free (str, TRUE);
 			fclose (fin);
 			close (fd);
@@ -235,7 +241,7 @@ uudecode (const char *progname, int argc, char **argv)
 			n = decode ((const unsigned char *) inbuf, n, (unsigned char *) outbuf, &state, &save);
 			if (fwrite (outbuf, 1, n, fout) != n) {
 				fprintf (stderr, "%s: %s: %s\n", progname, outfile,
-					 strerror (ferror (fout)));
+					 g_strerror (ferror (fout)));
 				fclose (fout);
 				fclose (fin);
 				return -1;

@@ -52,14 +52,21 @@
 #include <config.h>
 #endif
 
+#include <gmime/gmime.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
+#endif
 #include <fcntl.h>
 #include <errno.h>
+#ifdef G_OS_WIN32
+#include <io.h>
+#endif
 
 #ifdef HAVE_GETOPT_H
 #define _GNU_SOURCE
@@ -67,8 +74,6 @@
 #else
 #include "getopt.h"
 #endif
-
-#include <gmime/gmime.h>
 
 
 static struct option longopts[] = {
@@ -133,7 +138,7 @@ uuencode (const char *progname, int argc, char **argv)
 	
 	if ((fd = dup (1)) == -1) {
 		fprintf (stderr, "%s: cannot open stdout: %s\n",
-			 progname, strerror (errno));
+			 progname, g_strerror (errno));
 		return -1;
 	}
 	
@@ -149,7 +154,7 @@ uuencode (const char *progname, int argc, char **argv)
 	if ((fd = filename ? open (filename, O_RDONLY) : dup (0)) == -1) {
 		fprintf (stderr, "%s: %s: %s\n", progname,
 			 filename ? filename : "stdin",
-			 strerror (errno));
+			 g_strerror (errno));
 		g_object_unref (ostream);
 		return -1;
 	}
@@ -157,14 +162,14 @@ uuencode (const char *progname, int argc, char **argv)
 	if (fstat (fd, &st) == -1) {
 		fprintf (stderr, "%s: %s: %s\n", progname,
 			 filename ? filename : "stdin",
-			 strerror (errno));
+			 g_strerror (errno));
 		g_object_unref (ostream);
 		return -1;
 	}
 	
 	if (g_mime_stream_printf (ostream, "begin%s %.3o %s\n",
 				  base64 ? "-base64" : "", st.st_mode & 0777, name) == -1) {
-		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		fprintf (stderr, "%s: %s\n", progname, g_strerror (errno));
 		g_object_unref (ostream);
 		return -1;
 	}
@@ -178,7 +183,7 @@ uuencode (const char *progname, int argc, char **argv)
 	g_object_unref (filter);
 	
 	if (g_mime_stream_write_to_stream (istream, fstream) == -1) {
-		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		fprintf (stderr, "%s: %s\n", progname, g_strerror (errno));
 		g_object_unref (fstream);
 		g_object_unref (istream);
 		g_object_unref (ostream);
@@ -190,7 +195,7 @@ uuencode (const char *progname, int argc, char **argv)
 	g_object_unref (istream);
 	
 	if (g_mime_stream_write_string (ostream, base64 ? "====\n" : "end\n") == -1) {
-		fprintf (stderr, "%s: %s\n", progname, strerror (errno));
+		fprintf (stderr, "%s: %s\n", progname, g_strerror (errno));
 		g_object_unref (ostream);
 		return -1;
 	}
