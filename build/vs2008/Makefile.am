@@ -3,6 +3,8 @@
 EXTRA_DIST = \
 	config.h.win32		\
 	gmime.vcproj		\
+	uuencode.vcproj		\
+	uudecode.vcproj		\
 	gmime.sln		\
 	basic-example.vcproj	\
 	imap-example.vcproj	\
