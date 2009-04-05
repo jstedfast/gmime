@@ -1,10 +1,10 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
-	Name="test-cat"
-	ProjectGUID="{0304DFB4-9E94-4944-BCAD-72B9C4071911}"
-	RootNamespace="testcat"
+	Name="uudecode"
+	ProjectGUID="{D076BFF6-F838-4D2B-9E61-D9C755140D62}"
+	RootNamespace="uudecode"
 	Keyword="Win32Proj"
 	TargetFrameworkVersion="196613"
 	>
@@ -19,10 +19,9 @@
 		<Configuration
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)\test-cat"
+			IntermediateDirectory="$(ConfigurationName)\uudecode"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -177,11 +176,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\tests\test-cat.c"
+				RelativePath="..\..\src\getopt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\tests\testsuite.c"
+				RelativePath="..\..\src\getopt1.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\src\uudecode.c"
 				>
 			</File>
 		</Filter>
@@ -191,7 +194,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\tests\testsuite.h"
+				RelativePath="..\..\src\getopt.h"
 				>
 			</File>
 		</Filter>
