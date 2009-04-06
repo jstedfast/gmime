@@ -824,18 +824,20 @@ g_mime_encoding_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigne
 					*outptr++ = gmime_uu_rank[b0] << 2 | gmime_uu_rank[b1] >> 4;
 					*outptr++ = gmime_uu_rank[b1] << 4 | gmime_uu_rank[b2] >> 2;
 				        *outptr++ = gmime_uu_rank[b2] << 6 | gmime_uu_rank[b3];
+					uulen -= 3;
 				} else {
 					if (uulen >= 1) {
 						*outptr++ = gmime_uu_rank[b0] << 2 | gmime_uu_rank[b1] >> 4;
+						uulen--;
 					}
 					if (uulen >= 2) {
 						*outptr++ = gmime_uu_rank[b1] << 4 | gmime_uu_rank[b2] >> 2;
+						uulen--;
 					}
 				}
 				
 				i = 0;
 				saved = 0;
-				uulen -= 3;
 			}
 		} else {
 			break;

@@ -1,5 +1,8 @@
 2009-04-05  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-encodings.c (g_mime_encoding_uudecode_step): Fixed a
+	bug wrt updating uulen when the data isn't an exact multiple of 3.
+
 	* src/uuencode.c (uuencode): Don't bother dup()ing the stdout fd, just
 	use set_owner(FALSE) so that it doesn't close when we destroy the stream
 	instead.
