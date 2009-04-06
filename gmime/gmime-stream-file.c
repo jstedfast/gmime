@@ -149,8 +149,20 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	/* make sure we are at the right position */
 	fseek (fstream->fp, (long) stream->position, SEEK_SET);
 	
-	if ((nread = fread (buf, 1, len, fstream->fp)) > 0)
+	if ((nread = fread (buf, 1, len, fstream->fp)) > 0) {
+#ifdef G_OS_WIN32
+		/* fucking Windows... sigh. Since it might decide to translate \r\n into \n,
+		 * we need to query the real position rather than using simple math. */
+		long pos;
+		
+		if ((pos = ftell (fstream->fp)) == -1)
+			stream->position += nread;
+		else
+			stream->position = pos;
+#else
 		stream->position += nread;
+#endif
+	}
 	
 	return (ssize_t) nread;
 }
@@ -176,9 +188,21 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	
 	/* make sure we are at the right position */
 	fseek (fstream->fp, (long) stream->position, SEEK_SET);
-	
-	if ((nwritten = fwrite (buf, 1, len, fstream->fp)) > 0)
+
+	if ((nwritten = fwrite (buf, 1, len, fstream->fp)) > 0) {
+#ifdef G_OS_WIN32
+		/* fucking Windows... sigh. Since it might decide to translate \n into \r\n,
+		 * we need to query the real position rather than using simple math. */
+		long pos;
+		
+		if ((pos = ftell (fstream->fp)) == -1)
+			stream->position += nwritten;
+		else
+			stream->position = pos;
+#else
 		stream->position += nwritten;
+#endif
+	}
 	
 	return (ssize_t) nwritten;
 }

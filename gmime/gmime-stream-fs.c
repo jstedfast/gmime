@@ -40,7 +40,9 @@
 
 #ifndef HAVE_FSYNC
 #ifdef G_OS_WIN32
-static int fsync (int fd) { return _commit (fd); }
+/* _commit() is the equivalent of fsync() on Windows, but it aborts the
+ * program if the fd is a tty, so we'll just no-op for now... */
+static int fsync (int fd) { return 0; }
 #else
 static int fsync (int fd) { return 0; }
 #endif
@@ -169,10 +171,22 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 		nread = read (fs->fd, buf, len);
 	} while (nread == -1 && errno == EINTR);
 	
-	if (nread > 0)
+	if (nread > 0) {
+#ifdef G_OS_WIN32
+		/* fucking Windows... sigh. Since it might decide to translate \r\n into \n,
+		 * we need to query the real position rather than using simple math. */
+		off_t pos;
+		
+		if ((pos = lseek (fs->fd, 0, SEEK_CUR)) == -1)
+			stream->position += nread;
+		else
+			stream->position = pos;
+#else
 		stream->position += nread;
-	else if (nread == 0)
+#endif
+	} else if (nread == 0) {
 		fs->eos = TRUE;
+	}
 	
 	return nread;
 }
@@ -212,10 +226,23 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	if (n == -1 && (errno == EFBIG || errno == ENOSPC))
 		fs->eos = TRUE;
 	
-	if (nwritten > 0)
+	if (nwritten > 0) {
+#ifdef G_OS_WIN32
+		/* fucking Windows... sigh. Since it might decide to translate \n into \r\n,
+		 * we need to query the real position rather than using simple math. */
+		off_t pos;
+		
+		if ((pos = lseek (fs->fd, 0, SEEK_CUR)) == -1)
+			stream->position += nwritten;
+		else
+			stream->position = pos;
+#else
 		stream->position += nwritten;
-	else if (n == -1)
+#endif
+	} else if (n == -1) {
+		/* error and nothing written */
 		return -1;
+	}
 	
 	return nwritten;
 }

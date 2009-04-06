@@ -136,14 +136,6 @@ uuencode (const char *progname, int argc, char **argv)
 		return -1;
 	}
 	
-	if ((fd = dup (1)) == -1) {
-		fprintf (stderr, "%s: cannot open stdout: %s\n",
-			 progname, g_strerror (errno));
-		return -1;
-	}
-	
-	ostream = g_mime_stream_fs_new (fd);
-	
 	if (optind + 1 < argc)
 		filename = argv[optind++];
 	else
@@ -151,33 +143,35 @@ uuencode (const char *progname, int argc, char **argv)
 	
 	name = argv[optind];
 	
+	/* open our input file... */
 	if ((fd = filename ? open (filename, O_RDONLY) : dup (0)) == -1) {
 		fprintf (stderr, "%s: %s: %s\n", progname,
 			 filename ? filename : "stdin",
 			 g_strerror (errno));
-		g_object_unref (ostream);
 		return -1;
 	}
 	
+	/* stat() our input file for file mode permissions */
 	if (fstat (fd, &st) == -1) {
 		fprintf (stderr, "%s: %s: %s\n", progname,
 			 filename ? filename : "stdin",
 			 g_strerror (errno));
-		g_object_unref (ostream);
+		close (fd);
 		return -1;
 	}
 	
-	if (g_mime_stream_printf (ostream, "begin%s %.3o %s\n",
-				  base64 ? "-base64" : "", st.st_mode & 0777, name) == -1) {
-		fprintf (stderr, "%s: %s\n", progname, g_strerror (errno));
-		g_object_unref (ostream);
-		return -1;
-	}
+	printf ("begin%s %.3o %s\n", base64 ? "-base64" : "", st.st_mode & 0777, name);
+	fflush (stdout);
 	
 	istream = g_mime_stream_fs_new (fd);
 	
+	/* open our output stream */
+	ostream = g_mime_stream_fs_new (1);
+	g_mime_stream_fs_set_owner ((GMimeStreamFs *) ostream, FALSE);
+	
 	fstream = g_mime_stream_filter_new (ostream);
 	
+	/* attach an encode filter */
 	filter = g_mime_filter_basic_new (encoding, TRUE);
 	g_mime_stream_filter_add ((GMimeStreamFilter *) fstream, filter);
 	g_object_unref (filter);

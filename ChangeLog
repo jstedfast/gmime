@@ -1,5 +1,16 @@
 2009-04-05  Jeffrey Stedfast  <fejj@novell.com>
 
+	* src/uuencode.c (uuencode): Don't bother dup()ing the stdout fd, just
+	use set_owner(FALSE) so that it doesn't close when we destroy the stream
+	instead.
+
+	* gmime/gmime-stream-file.c (stream_read, stream_write): Don't depend on
+	simple arithmetic to update our stream->position on Windows since it
+	may do line-ending translation behind our backs. Call ftell() to get
+	our real position after reading or writing.
+	
+	* gmime/gmime-stream-fs.c (stream_read, stream_write): Same idea.
+
 	* gmime/gmime-utils.c (mktime_utc): Fixed the Windows code-path.
 	(charset_convert): In the Windows case, fake the E2BIG error condition
 	if outleft <= inleft on any error as errno doesn't seem to get
