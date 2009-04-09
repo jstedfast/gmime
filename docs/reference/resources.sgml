@@ -45,8 +45,10 @@ slip through the cracks.
   </refsect1>
   <refsect1>
     <title>Mailing lists</title>
-    <para>
-There are currently no mailing lists dedicated to GMime.
+    <para>There is currently only one mailing-list devoted to GMime
+    itself which is for both the development of and development with
+    GMime. You can subscribe to this list
+    at <ulink url="http://mail.gnome.org/mailman/listinfo/gmime-devel-list">http://mail.gnome.org/mailman/listinfo/gmime-devel-list</ulink>.
 </para>
   </refsect1>
 </refentry>
