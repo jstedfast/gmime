@@ -1,4 +1,4 @@
-                            GMime, version 2.4.5
+                            GMime, version 2.4.6
                    by Jeffrey Stedfast <fejj@gnome.org>
 
 
@@ -63,7 +63,7 @@ Cryptography related RFCs:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2008 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2009 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
