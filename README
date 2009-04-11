@@ -5,7 +5,7 @@
 WHAT IS GMIME
 -------------
 
-GMime is a set of utilities for parsing and creating messages using
+GMime is a C/C++ library for parsing and creating messages using
 the Multipurpose Internet Mail Extension (MIME) as defined by the
 following RFCs:
 
@@ -100,9 +100,8 @@ OBTAINING GMIME
 
 Sources to GMime may be obtained from:
   http://download.gnome.org/pub/GNOME/sources/gmime/
-  ftp://ftp.gnome.org/pub/GNOME/sources/gmime/
 or
-  http://spruce.sourceforge.net/gmime/sources/
+  ftp://ftp.gnome.org/pub/GNOME/sources/gmime/
 
 Information regarding GMime may be obtained from the Spruce home page:
   http://spruce.sourceforge.net/gmime/
@@ -119,7 +118,8 @@ REQUIREMENTS
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version 2.x
+  - Glib version >= 2.12.0
+
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
     distributions.  Glib sources may be obtained from:
@@ -139,9 +139,6 @@ of GMime.
   docs/tutorial/        Contains SGML and HTML versions of the GMime
                         tutorial
 
-  rfc/                  Contains text versions of the RFCs for the
-                        specifications GMime supports
-
   AUTHORS               List of primary authors (source code developers)
 
   COPYING               The GNU General Public License, version 2
@@ -159,7 +156,7 @@ of GMime.
 
 
 You can find online developer documentation at
-http://spruce.sourceforge.net/gmime/doc
+http://library.gnome.org/devel/gmime/stable/
 
 
 MAILING-LIST
