@@ -40,6 +40,7 @@ Other RFCs of interest:
 
  * 1872: The MIME Multipart/Related Content-type
  * 1927: Suggested Additional MIME Types for Associating Documents
+ * 2111: Content-ID and Message-ID Uniform Resource Locators
  * 2311: S/MIME Version 2 Message Specification
  * 2312: S/MIME Version 2 Certificate Handling
  * 2387: The Multipart/Related Content-Type.
