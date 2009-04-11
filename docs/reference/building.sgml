@@ -222,7 +222,7 @@
 	arguments for the other GMime libraries are described in
 	the documentation distributed with those libraries.)
 
-	<cmdsynopsis><command>./configure</command><group><arg>--enable-profiling</arg><arg>--enable-warnings</arg><arg>--enable-mono</arg><arg>--enable-gtk-doc</arg><arg>--enable-rfc2047-workarounds</arg><arg>--enable-largfile</arg></group></cmdsynopsis>
+	<cmdsynopsis><command>./configure</command><group><arg>--enable-profiling</arg><arg>--enable-warnings</arg><arg>--enable-mono</arg><arg>--enable-gtk-doc</arg><arg>--enable-largfile</arg></group></cmdsynopsis>
     </para>
     <formalpara>
       <title>
