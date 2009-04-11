@@ -1,4 +1,4 @@
-<refentry id="gmime-building" revision="27 Dec 2007">
+<refentry id="gmime-building" revision="11 Apr 2009">
   <refmeta>
     <refentrytitle>Compiling the GMime libraries</refentrytitle>
     <manvolnum>3</manvolnum>
@@ -242,8 +242,8 @@
         <systemitem>--enable-warnings</systemitem>
       </title>
       <para>
-        This option enables more verbose warnings to be used during
-        compilation of the libraries. Again, it is unlikely you will
+        This option enables parser warnings about invalid MIME to be
+        logged to stderr at runtime. Again, it is unlikely you will
         care to use this option.
       </para>
     </formalpara>
@@ -268,30 +268,13 @@
     </formalpara>
     <formalpara>
       <title>
-        <systemitem>--enable-rfc2047-workarounds</systemitem>
-      </title>
-      <para>
-        This option will enable work-arounds for common bugs in
-        other E-Mail software's rfc2047 encoders.
-      </para>
-    </formalpara>
-    <formalpara>
-      <title>
         <systemitem>--enable-largefile</systemitem>
       </title>
       <para>
-        This option will enable large file support (e.g. files
-        larger than 2GB) on 32bit systems.
-      </para>
-      <para>
-        Note that enabling this feature will change GMime's ABI.
-        It is strongly advised that you not enable this feature
-        unless you (re)build all software depending on GMime
-        with large file support as well.
+        This option will enable large file support (e.g. files larger
+        than 2GB) on 32bit systems. This flag is enabled by default
+        starting with GMime 2.4.5.
       </para>
     </formalpara>
   </refsect1>
-<!-- Local Variables: -->
-<!-- sgml-parent-document: ("gmime-docs.sgml" "chapter" "refentry")  -->
-<!-- End: -->
 </refentry>
