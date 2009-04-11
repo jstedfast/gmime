@@ -31,31 +31,23 @@ Find answers to common questions in the GMime manual
         <qandaentry>
           <question><para>How do I port from one GMime version to another?</para></question>
           <answer>
-            <para>See the <link linkend="gmime-changes-2-0">list of
-            incompatible changes from 1.0 to 2.0</link>.</para>
-            <para>If you have a question not covered in the manual,
-            feel free to ask me personally by emailing me at <ulink
-            url="mailto:fejj@ximian.com">fejj@ximian.com</ulink>.
-            </para>
+            <para>See the <link linkend="gmime-changes-2-4">list of
+            incompatible changes from 2.2 to 2.4</link>.</para>
           </answer>
         </qandaentry>
         <qandaentry>
           <question><para>How does memory management work in GMime? Should I free data returned from functions?</para></question>
           <answer>
-            <para>See the documentation for <ulink
-            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink>. For <ulink
-            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink> note specifically <ulink
-            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html#g-object-ref">g_object_ref()</ulink> and <ulink
-            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html#g-object-unref">g_object_unref()</ulink>.
-            </para>
-            <para>For strings returned from functions, they will be
+	    <para>Most accessor functions return a pointer to internal
+	    members. When these internal members are objects
+	    themselves (e.g. subclasses
+	    of <ulink url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink>),
+	    there is no need to unref them unless otherwise stated in
+	    the documentation for that particular function.</para>
+            <para>For accessor functions that return strings, they will be
             declared "const" if they should not be freed. Non-const
             strings should be freed with <ulink
-            url="http://developer.gnome.org/doc/API/2.0/glib/glib-Memory-Allocation.html#g-free">g_free()</ulink>. Arrays follow the same
-            rule.  (If you find an exception to the rules, please
-            report a bug to <ulink
-            url="http://bugzilla.gnome.org">http://bugzilla.gnome.org</ulink>.)
-            </para>
+            url="http://developer.gnome.org/doc/API/2.0/glib/glib-Memory-Allocation.html#g-free">g_free()</ulink>.</para>
           </answer>
         </qandaentry>
         <qandaentry>
@@ -64,12 +56,14 @@ Find answers to common questions in the GMime manual
             <para>First, read the <ulink
             url="http://developer.gnome.org/doc/API/2.0/glib/glib-Threads.html">GThread</ulink> documentation for
             portable threading primitives.</para>
-            <para>Secondly, all functions in <link
-            linkend="gmime-charset">gmime-charset</link>, <link
-            linkend="gmime-iconv">gmime-iconv</link> and <link
-            linkend="gmime-utils">gmime-utils</link> should be
-            thread-safe. Objects subclassing <ulink
-            url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink> are not.
+            <para>Secondly, all functions
+            in <link linkend="gmime-charset">gmime-charset</link>, <link linkend="gmime-iconv">gmime-iconv</link>
+            and <link linkend="gmime-utils">gmime-utils</link> should
+            be thread-safe. Objects subclassing 
+            <ulink url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink>
+            are not. This means that you'll have to do your own mutex
+            locking if you want to acess the same GObjects from
+            multiple threads.
             </para>
           </answer>
         </qandaentry>
@@ -79,15 +73,6 @@ Find answers to common questions in the GMime manual
             <para>The GMime header files use the subset of C that's
             also valid C++, so you can simply use the normal GMime API
             in a C++ program.</para>
-          </answer>
-        </qandaentry>
-        <qandaentry>
-          <question><para>How do I use GMime with other non-C languages?</para></question>
-          <answer>
-            <para>As of June 18th, 2003 there is now a set of Perl
-            bindings for GMime called <ulink
-            url="http://search.cpan.org/dist/MIME-Fast/">MIME::Fast</ulink>. Thanks
-            to Piotr Klaban for his efforts.</para>
           </answer>
         </qandaentry>
       </qandadiv>
