@@ -62,7 +62,7 @@ Find answers to common questions in the GMime manual
             be thread-safe. Objects subclassing 
             <ulink url="http://developer.gnome.org/doc/API/2.0/gobject/gobject-The-Base-Object-Type.html">GObject</ulink>
             are not. This means that you'll have to do your own mutex
-            locking if you want to acess the same GObjects from
+            locking if you want to access the same GObjects from
             multiple threads.
             </para>
           </answer>
