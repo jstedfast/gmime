@@ -34,7 +34,7 @@ INCLUDES = \
 
 GTKDOC_LIBS = 					\
 	$(top_builddir)/util/libutil.la		\
-	$(top_builddir)/gmime/libgmime-2.4.la 	\
+	$(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la 	\
 	$(GLIB_LIBS)
 
 # Extra SGML files that are included by $(DOC_MAIN_SGML_FILE)

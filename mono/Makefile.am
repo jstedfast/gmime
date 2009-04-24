@@ -53,7 +53,10 @@ EXTRA_DIST =			\
 	$(customs)		\
 	$(sources)		\
 	$(SOURCES_XML)		\
-	$(PACKAGE_SHARP).pc.in
+	gmime-sharp.pc.in
+
+$(PACKAGE_SHARP).pc: gmime-sharp.pc
+	-cp gmime-sharp.pc $(PACKAGE_SHARP).pc
 
 $(API): $(srcdir)/$(RAW_API) $(srcdir)/$(METADATA)
 	cp $(srcdir)/$(RAW_API) $(API)

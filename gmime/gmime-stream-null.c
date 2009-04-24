@@ -54,7 +54,7 @@ static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
 static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
 static gint64 stream_tell (GMimeStream *stream);
-static ssize_t stream_length (GMimeStream *stream);
+static gint64 stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
@@ -212,7 +212,7 @@ stream_tell (GMimeStream *stream)
 	return stream->position;
 }
 
-static ssize_t
+static gint64
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamNull *null = (GMimeStreamNull *) stream;

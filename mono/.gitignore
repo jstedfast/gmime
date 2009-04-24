@@ -4,6 +4,6 @@ generated-stamp
 generated/
 AssemblyInfo.cs
 gmime-api.xml
-gmime-sharp-2.4.pc
+gmime-sharp*.pc
 gmime-sharp.dll.config
 gmime-sharp.dll

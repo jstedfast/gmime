@@ -8,11 +8,11 @@ bin_PROGRAMS = uuencode uudecode
 
 DEPS = 						\
 	$(top_builddir)/util/libutil.la		\
-	$(top_builddir)/gmime/libgmime-2.4.la
+	$(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la
 
 LDADDS = 					\
 	$(top_builddir)/util/libutil.la		\
-	$(top_builddir)/gmime/libgmime-2.4.la 	\
+	$(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la 	\
 	$(GLIB_LIBS)
 
 if SYSTEM_GETOPT

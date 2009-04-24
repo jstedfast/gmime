@@ -55,7 +55,7 @@ static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
 static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
 static gint64 stream_tell (GMimeStream *stream);
-static ssize_t stream_length (GMimeStream *stream);
+static gint64 stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
@@ -381,7 +381,7 @@ g_mime_stream_tell (GMimeStream *stream)
 }
 
 
-static ssize_t
+static gint64
 stream_length (GMimeStream *stream)
 {
 	gint64 position = stream->position;
@@ -408,7 +408,7 @@ stream_length (GMimeStream *stream)
  *
  * Returns: the length of the stream or %-1 if unknown.
  **/
-ssize_t
+gint64
 g_mime_stream_length (GMimeStream *stream)
 {
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);

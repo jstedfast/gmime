@@ -1,7 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
 EXTRA_DIST = \
-	config.h.win32		\
+	config-win32.h.in	\
+	config-win32.h		\
 	gmime.vcproj		\
 	uuencode.vcproj		\
 	uudecode.vcproj		\

@@ -27,8 +27,8 @@ URL: http://spruce.sourceforge.net/gmime/
 Source: ftp://ftp.gnome.org/pub/GNOME/sources/gmime/2.4/gmime-%{version}.tar.bz2
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
 
-Requires: glib2 >= 2.0.0
-BuildRequires: glib2-devel >= 2.0.0
+Requires: glib2 >= 2.12.0
+BuildRequires: glib2-devel >= 2.12.0
 
 %description
 GMime is a set of utilities for parsing and creating messages using
@@ -40,10 +40,10 @@ the Multipurpose Internet Mail Extension (MIME)
 Summary: .NET bindings for GMime
 Group: Development/Libraries
 Requires: %{name} = %{version}-%{release}
-BuildRequires: mono-core >= 1.0.0
-BuildRequires: gtk-sharp >= 0.9.1
-Requires: mono-core >= 1.0.0
-Requires: gtk-sharp >= 0.9.1
+BuildRequires: mono-core >= 2.0.0
+BuildRequires: gtk-sharp >= 2.4.0
+Requires: mono-core >= 2.0.0
+Requires: gtk-sharp >= 2.4.0
 
 %description sharp
 .NET Bindings for GMime
@@ -80,7 +80,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/lib/*.sh
 %{prefix}/lib/libgmime*
 %{prefix}/lib/pkgconfig/*
-%{prefix}/include/gmime-2.4/gmime/*.h
+%{prefix}/include/gmime-2.6/gmime/*.h
 %if %{enable_gtk_doc}
 %{_datadir}/gtk-doc/html/*/*
 %endif

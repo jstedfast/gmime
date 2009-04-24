@@ -25,7 +25,11 @@
 #ifdef ENABLE_ZENTIMER
 
 #include <stdio.h>
+#ifdef WINDOWS
+#include <windows.h>
+#else
 #include <sys/time.h>
+#endif
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #elif HAVE_INTTYPES_H
@@ -46,14 +50,22 @@ extern "C" {
 /* ztime_t represents usec */
 typedef uint64_t ztime_t;
 
+#ifdef WINDOWS
+static uint64_t ztimer_freq = 0;
+#endif
+
 static void
 ztime (ztime_t *ztimep)
 {
+#ifdef WINDOWS
+	QueryPerformanceCounter ((LARGE_INTEGER *) ztimep);
+#else
 	struct timeval tv;
 	
 	gettimeofday (&tv, NULL);
 	
 	*ztimep = ((uint64_t) tv.tv_sec * ZTIME_USEC_PER_SEC) + tv.tv_usec;
+#endif
 }
 
 enum {
@@ -121,28 +133,39 @@ ZenTimerResume (ztimer_t *ztimer)
 	ztimer->start += delta;
 }
 
-static void
-ZenTimerReport (ztimer_t *ztimer, const char *oper)
+static double
+ZenTimerElapsed (ztimer_t *ztimer, uint64_t *usec)
 {
-	ztime_t delta;
-	int paused;
+#ifdef WINDOWS
+	static uint64_t freq = 0;
+	ztime_t delta, stop;
+	
+	if (freq == 0)
+		QueryPerformanceFrequency ((LARGE_INTEGER *) &freq);
+#else
+#define freq ZTIME_USEC_PER_SEC
+	ztime_t delta, stop;
+#endif
 	
 	ztimer = ztimer ? ztimer : &__ztimer;
 	
-	if (ztimer->state == ZTIMER_ACTIVE) {
-		ZenTimerPause (ztimer);
-		paused = 1;
-	} else {
-		paused = 0;
-	}
+	if (ztimer->state != ZTIMER_ACTIVE)
+		stop = ztimer->stop;
+	else
+		ztime (&stop);
 	
-	delta = ztimer->stop - ztimer->start;
+	delta = stop - ztimer->start;
 	
-	fprintf (stderr, "ZenTimer: %s took %.6f seconds\n", oper,
-		 (double) delta / (double) ZTIME_USEC_PER_SEC);
+	if (usec != NULL)
+		*usec = (uint64_t) (delta * ((double) ZTIME_USEC_PER_SEC / (double) freq));
 	
-	if (paused)
-		ZenTimerResume (ztimer);
+	return (double) delta / (double) freq;
+}
+
+static void
+ZenTimerReport (ztimer_t *ztimer, const char *oper)
+{
+	fprintf (stderr, "ZenTimer: %s took %.6f seconds\n", oper, ZenTimerElapsed (ztimer, NULL));
 }
 
 #ifdef __cplusplus
@@ -155,6 +178,7 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 #define ZenTimerStop(ztimerp)
 #define ZenTimerPause(ztimerp)
 #define ZenTimerResume(ztimerp)
+#define ZenTimerElapsed(ztimerp, usec)
 #define ZenTimerReport(ztimerp, oper)
 
 #endif /* ENABLE_ZENTIMER */

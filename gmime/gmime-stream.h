@@ -102,7 +102,7 @@ struct _GMimeStreamClass {
 	int      (* reset)  (GMimeStream *stream);
 	gint64   (* seek)   (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
 	gint64   (* tell)   (GMimeStream *stream);
-	ssize_t  (* length) (GMimeStream *stream);
+	gint64   (* length) (GMimeStream *stream);
 	GMimeStream * (* substream) (GMimeStream *stream, gint64 start, gint64 end);
 };
 
@@ -119,9 +119,9 @@ int       g_mime_stream_flush   (GMimeStream *stream);
 int       g_mime_stream_close   (GMimeStream *stream);
 gboolean  g_mime_stream_eos     (GMimeStream *stream);
 int       g_mime_stream_reset   (GMimeStream *stream);
-gint64     g_mime_stream_seek    (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
-gint64     g_mime_stream_tell    (GMimeStream *stream);
-ssize_t   g_mime_stream_length  (GMimeStream *stream);
+gint64    g_mime_stream_seek    (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
+gint64    g_mime_stream_tell    (GMimeStream *stream);
+gint64    g_mime_stream_length  (GMimeStream *stream);
 
 GMimeStream *g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
@@ -131,7 +131,6 @@ ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *str);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);
 
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
-
 
 ssize_t    g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
 

@@ -4,6 +4,24 @@
 /* Define if GMime should enable warning output. */
 /* #undef ENABLE_WARNINGS */
 
+/* Define to the GMime binary age */
+#define GMIME_BINARY_AGE @GMIME_BINARY_AGE@
+
+/* Define to the GMime interface age */
+#define GMIME_INTERFACE_AGE @GMIME_INTERFACE_AGE@
+
+/* Define to the GMime major version */
+#define GMIME_MAJOR_VERSION @GMIME_MAJOR_VERSION@
+
+/* Define to the GMime micro version */
+#define GMIME_MICRO_VERSION @GMIME_MICRO_VERSION@
+
+/* Define to the GMime minor version */
+#define GMIME_MINOR_VERSION @GMIME_MINOR_VERSION@
+
+/* Define to the GMime version */
+#define GMIME_VERSION "@GMIME_VERSION@"
+
 /* Define if libc defines an altzone variable */
 /* #undef HAVE_ALTZONE */
 
@@ -116,6 +134,9 @@
 /* Define if struct utsname has a domainname member */
 /* #undef HAVE_UTSNAME_DOMAINNAME */
 
+/* Define to 1 if you have the <winsock2.h> header file. */
+#define HAVE_WINSOCK2_H 1
+
 /* Define to 1 if you have the <zlib.h> header file. */
 #define HAVE_ZLIB_H 1
 
@@ -135,23 +156,20 @@
 /* Define to 0 if your system does not have the O_LARGEFILE flag */
 /* #undef O_LARGEFILE */
 
-/* Name of package */
-#define PACKAGE "gmime"
-
 /* Define to the address where bug reports for this package should be sent. */
-#define PACKAGE_BUGREPORT ""
+#define PACKAGE_BUGREPORT "http://bugzilla.gnome.org/enter_bug.cgi?product=gmime"
 
 /* Define to the full name of this package. */
-#define PACKAGE_NAME ""
+#define PACKAGE_NAME "gmime"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING ""
+#define PACKAGE_STRING "gmime @GMIME_VERSION@"
 
 /* Define to the one symbol short name of this package. */
-#define PACKAGE_TARNAME ""
+#define PACKAGE_TARNAME "gmime"
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION ""
+#define PACKAGE_VERSION "@GMIME_VERSION@"
 
 /* The size of `off_t', as computed by sizeof. */
 #define SIZEOF_OFF_T 4
@@ -164,9 +182,6 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
-
-/* Version number of package */
-#define VERSION "2.4.5"
 
 /* Number of bits in a file offset, on hosts where this is settable. */
 /* #undef _FILE_OFFSET_BITS */

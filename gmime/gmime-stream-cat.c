@@ -52,7 +52,7 @@ static gboolean stream_eos (GMimeStream *stream);
 static int stream_reset (GMimeStream *stream);
 static gint64 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence);
 static gint64 stream_tell (GMimeStream *stream);
-static ssize_t stream_length (GMimeStream *stream);
+static gint64 stream_length (GMimeStream *stream);
 static GMimeStream *stream_substream (GMimeStream *stream, gint64 start, gint64 end);
 
 
@@ -527,11 +527,11 @@ stream_tell (GMimeStream *stream)
 	return stream->position;
 }
 
-static ssize_t
+static gint64
 stream_length (GMimeStream *stream)
 {
 	GMimeStreamCat *cat = GMIME_STREAM_CAT (stream);
-	ssize_t len, total = 0;
+	gint64 len, total = 0;
 	struct _cat_node *n;
 	
 	if (stream->bound_end != -1)
@@ -563,7 +563,7 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 	gint64 offset = 0, subend = 0;
 	GMimeStream *substream;
 	struct _cat_node *n;
-	ssize_t len;
+	gint64 len;
 	
 	d(fprintf (stderr, "GMimeStreamCat::substream (%p, %ld, %ld)\n", stream, start, end));
 	

@@ -97,7 +97,7 @@ usage (const char *progname)
 static void
 version (const char *progname)
 {
-	printf ("%s - GMime %s\n", progname, VERSION);
+	printf ("%s - GMime %s\n", progname, GMIME_VERSION);
 }
 
 static int

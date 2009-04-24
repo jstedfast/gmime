@@ -2,27 +2,21 @@
 
 SUBDIRS = .
 
-gmimeincludedir = $(includedir)/gmime-2.4/gmime
+gmimeincludedir = $(includedir)/gmime-$(GMIME_API_VERSION)/gmime
 
 INCLUDES = 				\
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/util		\
-	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
 	-DG_DISABLE_DEPRECATED		\
 	$(GMIME_CFLAGS)			\
 	$(GLIB_CFLAGS)
 
-VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\" 		\
-		-DGMIME_MAJOR_VERSION=$(GMIME_MAJOR_VERSION)	\
-		-DGMIME_MINOR_VERSION=$(GMIME_MINOR_VERSION)	\
-		-DGMIME_MICRO_VERSION=$(GMIME_MICRO_VERSION)
-
 noinst_PROGRAMS = gen-table charset-map
 
-lib_LTLIBRARIES = libgmime-2.4.la
+lib_LTLIBRARIES = libgmime-2.6.la
 
-libgmime_2_4_la_SOURCES = 		\
+libgmime_2_6_la_SOURCES = 		\
 	gmime.c				\
 	gmime-charset.c			\
 	gmime-cipher-context.c		\
@@ -139,18 +133,18 @@ endif
 
 if OS_WIN32
 install-libtool-import-lib:
-	$(INSTALL) .libs/libgmime-2.4.dll.a $(DESTDIR)$(libdir)
+	$(INSTALL) .libs/libgmime-$(GMIME_API_VERSION).dll.a $(DESTDIR)$(libdir)
 
 uninstall-libtool-import-lib:
-	-rm $(DESTDIR)$(libdir)/libgmime-2.4.dll.a
+	-rm $(DESTDIR)$(libdir)/libgmime-$(GMIME_API_VERSION).dll.a
 else
 install-libtool-import-lib:
 uninstall-libtool-import-lib:
 endif
 
-libgmime_2_4_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
-libgmime_2_4_la_LDFLAGS = \
-	-version-info $(GMIME_VERSION_INFO) \
+libgmime_2_6_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+libgmime_2_6_la_LDFLAGS = \
+	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
 	-export-dynamic $(no_undefined)
 
 gen_table_SOURCES = gen-table.c

@@ -16,3 +16,4 @@ gmime.interfaces
 gmime.prerequisites
 gmime.signals
 *.stamp
+*.bak

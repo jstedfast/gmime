@@ -1,67 +1,146 @@
-dnl Process this file with autoconf to produce a configure script.
-AC_INIT(configure.in)
-AM_CONFIG_HEADER(config.h)
+# Process this file with autoconf to produce a configure script.
+# require autoconf 2.54
+AC_PREREQ(2.54)
 
-# In the following, there are a the following variants
-# of GLib cflags and libs variables
+# Making releases:
+#   gmime_micro_version += 1;
+#   gmime_interface_age += 1;
+#   gmime_binary_age += 1;
+# if any functions have been added, set gmime_interface_age to 0.
+# if backwards compatibility has been broken,
+# set gmime_binary_age _and_ gmime_interface_age to 0.
 #
-# GLIB_CFLAGS:  cflags for compiling libraries and example progs
-# GLIB_LIBS:    libraries for linking example programs
-# glib_cflags:  cflags to store in gmime-config
-# glib_libs:    libs to store in gmime-config
+m4_define([gmime_major_version], [2])
+m4_define([gmime_minor_version], [5])
+m4_define([gmime_micro_version], [0])
+m4_define([gmime_interface_age], [0])
+m4_define([gmime_binary_age],
+          [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
+m4_define([gmime_version],
+          [gmime_major_version.gmime_minor_version.gmime_micro_version])
 
-GMIME_MAJOR_VERSION=2
-GMIME_MINOR_VERSION=4
-GMIME_MICRO_VERSION=6
-GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
-GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
+# libtool version related macros
+m4_define([gmime_lt_release], [gmime_major_version.gmime_minor_version])
+m4_define([gmime_lt_current],
+          [m4_eval(100 * gmime_minor_version + gmime_micro_version - gmime_interface_age)])
+m4_define([gmime_lt_revision], [gmime_interface_age])
+m4_define([gmime_lt_age], [m4_eval(gmime_binary_age - gmime_interface_age)])
+m4_define([gmime_lt_current_minus_age],
+          [m4_eval(gmime_lt_current - gmime_lt_age)])
+
+# if the minor version number is odd, then we want debugging.  Otherwise
+# we only want minimal debugging support.
+m4_define([gmime_debug_default],
+          [m4_if(m4_eval(gmime_minor_version % 2), [1], [yes], [minimum])])
+
+# the API version is the major.minor where minor is always even
+m4_define([gmime_api_stable], [m4_eval(10 * gmime_major_version + gmime_minor_version + m4_eval(gmime_minor_version % 2))])
+m4_define([gmime_api_major], [m4_eval(gmime_api_stable / 10)])
+m4_define([gmime_api_minor], [m4_eval(gmime_api_stable % 10)])
+m4_define([gmime_api_version], [gmime_api_major.gmime_api_minor])
+
+
+AC_INIT(gmime, [gmime_version],
+        [http://bugzilla.gnome.org/enter_bug.cgi?product=gmime])
+
+AC_CONFIG_SRCDIR([gmime/gmime.h])
+
+# Save this value here, since automake will set cflags later
+cflags_set=${CFLAGS+set}
+
+AM_INIT_AUTOMAKE([no-define])
+
+# Specify a configuration file
+AM_CONFIG_HEADER([config.h])
+
+
+GMIME_MAJOR_VERSION=gmime_major_version
+GMIME_MINOR_VERSION=gmime_minor_version
+GMIME_MICRO_VERSION=gmime_micro_version
+GMIME_INTERFACE_AGE=gmime_interface_age
+GMIME_BINARY_AGE=gmime_binary_age
+GMIME_API_VERSION=gmime_api_version
+GMIME_VERSION=gmime_version
 
 AC_SUBST(GMIME_MAJOR_VERSION)
 AC_SUBST(GMIME_MINOR_VERSION)
 AC_SUBST(GMIME_MICRO_VERSION)
-AC_SUBST(GMIME_VERSION)
-AC_SUBST(GMIME_VERSION_INFO)
-
-dnl GMIME_API_VERSION does not necessarily reflect GMime's major.minor version
-GMIME_API_VERSION=2.4
 AC_SUBST(GMIME_API_VERSION)
+AC_SUBST(GMIME_VERSION)
+AC_SUBST(GMIME_INTERFACE_AGE)
+AC_SUBST(GMIME_BINARY_AGE)
 
-VERSION=$GMIME_VERSION
+AC_DEFINE(GMIME_MAJOR_VERSION, [gmime_major_version],
+	  [Define to the GMime major version])
+AC_DEFINE(GMIME_MINOR_VERSION, [gmime_minor_version],
+	  [Define to the GMime minor version])
+AC_DEFINE(GMIME_MICRO_VERSION, [gmime_micro_version],
+	  [Define to the GMime micro version])
+AC_DEFINE(GMIME_INTERFACE_AGE, [gmime_interface_age],
+	  [Define to the GMime interface age])
+AC_DEFINE(GMIME_BINARY_AGE, [gmime_binary_age],
+	  [Define to the GMime binary age])
+AC_DEFINE(GMIME_VERSION, ["gmime_version"],
+	  [Define to the GMime version])
 
-AM_INIT_AUTOMAKE(gmime, $VERSION)
+# libtool versioning
+LT_RELEASE=gmime_lt_release
+LT_CURRENT=gmime_lt_current
+LT_REVISION=gmime_lt_revision
+LT_AGE=gmime_lt_age
+LT_CURRENT_MINUS_AGE=gmime_lt_current_minus_age
+AC_SUBST(LT_RELEASE)
+AC_SUBST(LT_CURRENT)
+AC_SUBST(LT_REVISION)
+AC_SUBST(LT_AGE)
+AC_SUBST(LT_CURRENT_MINUS_AGE)
+
+
+dnl Initialize maintainer mode
+AM_MAINTAINER_MODE
 
 AC_CANONICAL_HOST
 
 dnl Check for win32 platforms
 AC_MSG_CHECKING([if building for Win32])
+LIB_EXE_MACHINE_FLAG=X86
 case "$host" in
   *-*-mingw*)
     platform_win32="yes"
     native_win32="yes"
-    ;;
-  *-*-cygwin*)
-    platform_win32="yes"
-    native_win32="no"
+    case "$host" in
+    x86_64-*-*)
+      LIB_EXE_MACHINE_FLAG=X64
+      ;;
+    esac
     ;;
   *)
     platform_win32="no"
     native_win32="no"
     ;;
 esac
-AC_MSG_RESULT($platform_win32)
-AM_CONDITIONAL(PLATFORM_WIN32, test "x$platform_win32" = "xyes")
-AM_CONDITIONAL(OS_WIN32, test "$native_win32" = "xyes")
+
+AC_MSG_RESULT([$platform_win32])
+
+AC_SUBST(LIB_EXE_MACHINE_FLAG)
+
+AM_CONDITIONAL(PLATFORM_WIN32, [test "x$platform_win32" = "xyes"])
+AM_CONDITIONAL(OS_WIN32, test ["$native_win32" = "xyes"])
+AM_CONDITIONAL(OS_WIN32_X64, [test "$LIB_EXE_MACHINE_FLAG" = "X64"])
 
 if test "$glib_native_win32" = "yes"; then
-  if test "X$enable_static" = "xyes" -o "x$enable_static" = "x"; then
-    AC_MSG_WARN([Disabling static library build, must build as DLL on Windows])
-    enable_static="no"
+  AC_CHECK_TOOL(WINDRES, windres, no)
+  if test "$WINDRES" = no; then
+    AC_MSG_ERROR([*** Could not find an implementation of windres in your PATH.])
   fi
-  if test "x$enable_shared" = "xno"; then
-    AC_MSG_WARN([Enabling shared library build, must build as DLL on Windows])
-    enable_shared="yes"
+  AC_CHECK_TOOL(NM, nm, no)
+  if test "$NM" = no; then
+    AC_MSG_ERROR([*** Could not find an implementation of nm in your PATH.])
   fi
+  AC_CHECK_TOOL(RANLIB, ranlib, :)
+  AC_CHECK_PROG(ms_librarian, [lib.exe], [yes], [no])
 fi
+AM_CONDITIONAL(MS_LIB_AVAILABLE, [test x$ms_librarian = xyes])
 
 dnl Checks for programs.
 AC_ISC_POSIX
@@ -80,9 +159,9 @@ AC_PATH_PROG(TAR, tar, /bin/tar)
 
 AC_EXEEXT
 AC_PROG_LIBTOOL
+dnl when using libtool 2.x create libtool early, because it's used in configure
+m4_ifdef([LT_OUTPUT], [LT_OUTPUT])
 DOLT
-
-AM_MAINTAINER_MODE
 
 dnl Checks for header files.
 AC_CHECK_HEADERS(sys/mman.h)
@@ -161,11 +240,6 @@ dnl We need at *least* glib 2.12.0 for g_hash_table_remove_all()
 AM_PATH_GLIB_2_0(2.12.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread)
-
-glib_cflags="$GLIB_CFLAGS"
-glib_libs="$GLIB_LIBS"
-AC_SUBST(glib_cflags)
-AC_SUBST(glib_libs)
 
 dnl *****************************
 dnl *** Checks for zlib       ***
@@ -489,8 +563,8 @@ LIBS="$LIBS $EXTRA_LIBS"
 AC_SUBST(LIBS)
 
 GMIME_LIBDIR="-L${libdir}"
-GMIME_INCLUDEDIR="-I${includedir}/gmime-2.4"
-GMIME_LIBS="-lgmime-2.4 $EXTRA_LIBS"
+GMIME_INCLUDEDIR="-I${includedir}/gmime-2.6"
+GMIME_LIBS="-lgmime-2.6 $EXTRA_LIBS"
 
 AC_SUBST(GMIME_LIBS)
 AC_SUBST(GMIME_LIBDIR)
@@ -502,6 +576,7 @@ AC_OUTPUT(
 Makefile
 build/Makefile
 build/vs2008/Makefile
+build/vs2008/config-win32.h
 docs/Makefile
 docs/reference/Makefile
 docs/tutorial/Makefile
@@ -511,12 +586,12 @@ gmime/Makefile
 mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config
-mono/gmime-sharp-2.4.pc
+mono/gmime-sharp.pc
 src/Makefile
 tests/Makefile
 tools/Makefile
-gmime-2.4.pc
 gmime.spec
+gmime.pc
 )
 
 echo "

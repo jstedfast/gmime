@@ -23,7 +23,7 @@ DISTCLEANFILES = iconv-detect.h
 
 EXTRA_DIST = 				\
 	PORTING				\
-	gmime-$(GMIME_API_VERSION).pc.in\
+	gmime.pc.in			\
 	gmime.spec.in 			\
 	iconv-detect.c			\
 	zentimer.h 			\
@@ -38,13 +38,14 @@ pkgconfig_DATA = gmime-$(GMIME_API_VERSION).pc
 
 $(pkgconfig_DATA): config.status
 
-$(libgmime_2_4_la_SOURCES): $(srcdir)/gmime
-
 dist-hook: $(BUILD_EXTRA_DIST)
 	files='$(BUILD_EXTRA_DIST)'; \
 	for f in $$files; do \
 	  if test -f $$f; then d=.; else d=$(srcdir); fi; \
 	  rm -f $(distdir)/$$f && cp $$d/$$f $(distdir) || exit 1; done
+
+gmime-$(GMIME_API_VERSION).pc: gmime.pc
+	-cp gmime.pc gmime-$(GMIME_API_VERSION).pc
 
 # This is a version of the automake-1.7 distcheck rule modified to
 # pass --enable-gtk-doc to ./configure and to not chmod distdir to

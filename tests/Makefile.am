@@ -5,16 +5,10 @@ SUBDIRS = .
 INCLUDES = 				\
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/util		\
-	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"gmime-tests\"	\
 	-DG_DISABLE_DEPRECATED		\
 	$(GMIME_CFLAGS)			\
 	$(GLIB_CFLAGS)
-
-VERSION_FLAGS = -DGMIME_VERSION=\"$(GMIME_VERSION)\" 		\
-		-DGMIME_MAJOR_VERSION=$(GMIME_MAJOR_VERSION)	\
-		-DGMIME_MINOR_VERSION=$(GMIME_MINOR_VERSION)	\
-		-DGMIME_MICRO_VERSION=$(GMIME_MICRO_VERSION)
 
 AUTOMATED_TESTS =	\
 	test-iconv	\
@@ -34,8 +28,8 @@ MANUAL_TESTS =		\
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
-DEPS = $(top_builddir)/gmime/libgmime-2.4.la
-LDADDS = $(top_builddir)/gmime/libgmime-2.4.la $(GLIB_LIBS)
+DEPS = $(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la
+LDADDS = $(top_builddir)/gmime/libgmime-$(GMIME_API_VERSION).la $(GLIB_LIBS)
 
 test_best_SOURCES = test-best.c
 test_best_LDFLAGS = 
