@@ -24,15 +24,15 @@
 
 G_BEGIN_DECLS
 
-gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
+G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
 
-void g_mime_decode_lwsp (const char **in);
+G_GNUC_INTERNAL void g_mime_decode_lwsp (const char **in);
 #define decode_lwsp(in) g_mime_decode_lwsp (in)
 
-const char *g_mime_decode_word (const char **in);
+G_GNUC_INTERNAL const char *g_mime_decode_word (const char **in);
 #define decode_word(in) g_mime_decode_word (in)
 
-gboolean g_mime_decode_domain (const char **in, GString *domain);
+G_GNUC_INTERNAL gboolean g_mime_decode_domain (const char **in, GString *domain);
 #define decode_domain(in, domain) g_mime_decode_domain (in, domain)
 
 G_END_DECLS

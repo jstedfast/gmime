@@ -205,6 +205,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\gmime\gmime-events.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\gmime\gmime-filter-basic.h"
 				>
 			</File>
@@ -426,6 +430,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-encodings.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-events.c"
 				>
 			</File>
 			<File

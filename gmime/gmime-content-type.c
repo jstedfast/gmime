@@ -30,6 +30,7 @@
 #include "gmime-common.h"
 #include "gmime-content-type.h"
 #include "gmime-parse-utils.h"
+#include "gmime-events.h"
 
 
 #ifdef ENABLE_WARNINGS
@@ -51,13 +52,6 @@
  * Content-Type header field.
  **/
 
-
-enum {
-	CHANGED,
-	LAST_SIGNAL
-};
-
-static guint signals[LAST_SIGNAL] = { 0 };
 
 static void g_mime_content_type_class_init (GMimeContentTypeClass *klass);
 static void g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass);
@@ -100,23 +94,13 @@ g_mime_content_type_class_init (GMimeContentTypeClass *klass)
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = g_mime_content_type_finalize;
-	
-	/* signals */
-	signals[CHANGED] =
-		g_signal_new ("changed",
-			      GMIME_TYPE_CONTENT_TYPE,
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL,
-			      NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 }
 
 static void
 g_mime_content_type_init (GMimeContentType *content_type, GMimeContentTypeClass *klass)
 {
 	content_type->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	content_type->priv = g_mime_event_new ((GObject *) content_type);
 	content_type->params = NULL;
 	content_type->subtype = NULL;
 	content_type->type = NULL;
@@ -129,6 +113,7 @@ g_mime_content_type_finalize (GObject *object)
 	
 	g_hash_table_destroy (content_type->param_hash);
 	g_mime_param_destroy (content_type->params);
+	g_mime_event_destroy (content_type->priv);
 	g_free (content_type->subtype);
 	g_free (content_type->type);
 	
@@ -303,7 +288,7 @@ g_mime_content_type_set_media_type (GMimeContentType *mime_type, const char *typ
 	g_free (mime_type->type);
 	mime_type->type = buf;
 	
-	g_signal_emit (mime_type, signals[CHANGED], 0);
+	g_mime_event_emit (mime_type->priv, NULL);
 }
 
 
@@ -343,7 +328,7 @@ g_mime_content_type_set_media_subtype (GMimeContentType *mime_type, const char *
 	g_free (mime_type->subtype);
 	mime_type->subtype = buf;
 	
-	g_signal_emit (mime_type, signals[CHANGED], 0);
+	g_mime_event_emit (mime_type->priv, NULL);
 }
 
 
@@ -386,7 +371,7 @@ g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params)
 		params = params->next;
 	}
 	
-	g_signal_emit (mime_type, signals[CHANGED], 0);
+	g_mime_event_emit (mime_type->priv, NULL);
 }
 
 
@@ -433,7 +418,7 @@ g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attr
 		g_hash_table_insert (mime_type->param_hash, param->name, param);
 	}
 	
-	g_signal_emit (mime_type, signals[CHANGED], 0);
+	g_mime_event_emit (mime_type->priv, NULL);
 }
 
 

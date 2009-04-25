@@ -8,7 +8,7 @@ GMime 2.6 Planning:
 ===================
 
 - Replace all uses of g_signals with my own event stuff. None of this
-  needs to be public and my events are a lot more performant.
+  needs to be public and my events are a lot more performant. [ DONE ]
 
 - Need to add a Changed event to GMimeHeaderList so that GMimeMessage
   can listen to changes in the toplevel mime_part's headers. When they

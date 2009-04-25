@@ -59,7 +59,9 @@ CFILE_GLOB=$(top_srcdir)/gmime/*.c
 IGNORE_HFILES = 			\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
-	gmime-type-utils.h
+	gmime-parse-utils.h		\
+	gmime-common.h			\
+	gmime-events.h
 
 # Extra options to supply to gtkdoc-fixref
 FIXXREF_OPTIONS = 

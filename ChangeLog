@@ -1,3 +1,20 @@
+2009-04-25  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-content-type.c: Use the new GMimeEvent API instead
+	of libgobject's g_signal API which is more than we need.
+
+	* gmime/gmime-disposition.c: Same.
+
+	* gmime/gmime-object.c: Updated to use the GMimeEvent API for
+	content-type and content-disposition.
+
+	* gmime/internet-address.c: Use the new GMimeEvent API instead of
+	our own.
+
+	* gmime/gmime-events.[c,h]: New source files implementing a simple
+	and performant event system needed internally within GMime. Based
+	on the event system that used to be in internet-address.c
+
 2009-04-24  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-parser.c (struct _GMimeParserPrivate): Added

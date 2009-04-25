@@ -69,6 +69,9 @@ struct _GMimeContentDisposition {
 	
 	GHashTable *param_hash;
 	GMimeParam *params;
+	
+	gpointer priv;
+	
 	char *disposition;
 };
 

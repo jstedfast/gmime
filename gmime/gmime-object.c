@@ -29,6 +29,7 @@
 #include "gmime-common.h"
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
+#include "gmime-events.h"
 #include "gmime-utils.h"
 
 
@@ -73,8 +74,8 @@ static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
 
-static void content_type_changed (GMimeContentType *content_type, GMimeObject *object);
-static void content_disposition_changed (GMimeContentDisposition *disposition, GMimeObject *object);
+static void content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object);
+static void content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object);
 
 static void type_registry_init (void);
 
@@ -149,16 +150,12 @@ g_mime_object_finalize (GObject *object)
 	GMimeObject *mime = (GMimeObject *) object;
 	
 	if (mime->content_type) {
-		g_signal_handlers_disconnect_matched (mime->content_type,
-						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-						      0, 0, NULL, content_type_changed, object);
+		g_mime_event_remove (mime->content_type->priv, (GMimeEventCallback) content_type_changed, object);
 		g_object_unref (mime->content_type);
 	}
 	
 	if (mime->disposition) {
-		g_signal_handlers_disconnect_matched (mime->disposition,
-						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-						      0, 0, NULL, content_disposition_changed, object);
+		g_mime_event_remove (mime->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (mime->disposition);
 	}
 	
@@ -198,7 +195,7 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 }
 
 static void
-content_type_changed (GMimeContentType *content_type, GMimeObject *object)
+content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object)
 {
 	GMimeParam *params;
 	GString *string;
@@ -244,7 +241,7 @@ write_disposition (GMimeStream *stream, const char *name, const char *value)
 }
 
 static void
-content_disposition_changed (GMimeContentDisposition *disposition, GMimeObject *object)
+content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object)
 {
 	char *str;
 	
@@ -408,13 +405,11 @@ static void
 set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
 	if (object->content_type) {
-		g_signal_handlers_disconnect_matched (object->content_type,
-						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-						      0, 0, NULL, content_type_changed, object);
+		g_mime_event_remove (object->content_type->priv, (GMimeEventCallback) content_type_changed, object);
 		g_object_unref (object->content_type);
 	}
 	
-	g_signal_connect (content_type, "changed", G_CALLBACK (content_type_changed), object);
+	g_mime_event_add (content_type->priv, (GMimeEventCallback) content_type_changed, object);
 	object->content_type = content_type;
 	g_object_ref (content_type);
 }
@@ -456,7 +451,7 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_t
 	
 	GMIME_OBJECT_GET_CLASS (object)->set_content_type (object, content_type);
 	
-	content_type_changed (content_type, object);
+	content_type_changed (content_type, NULL, object);
 }
 
 
@@ -548,13 +543,11 @@ static void
 _g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition)
 {
 	if (object->disposition) {
-		g_signal_handlers_disconnect_matched (object->disposition,
-						      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-						      0, 0, NULL, content_disposition_changed, object);
+		g_mime_event_remove (object->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
 		g_object_unref (object->disposition);
 	}
 	
-	g_signal_connect (disposition, "changed", G_CALLBACK (content_disposition_changed), object);
+	g_mime_event_add (disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
 	object->disposition = disposition;
 	g_object_ref (disposition);
 }
@@ -579,7 +572,7 @@ g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposit
 	
 	_g_mime_object_set_content_disposition (object, disposition);
 	
-	content_disposition_changed (disposition, object);
+	content_disposition_changed (disposition, NULL, object);
 }
 
 
@@ -893,9 +886,7 @@ remove_header (GMimeObject *object, const char *header)
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
 		if (object->disposition) {
-			g_signal_handlers_disconnect_matched (object->disposition,
-							      G_SIGNAL_MATCH_FUNC | G_SIGNAL_MATCH_DATA,
-							      0, 0, NULL, content_disposition_changed, object);
+			g_mime_event_remove (object->disposition->priv, (GMimeEventCallback) content_disposition_changed, object);
 			g_object_unref (object->disposition);
 			object->disposition = NULL;
 		}

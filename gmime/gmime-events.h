@@ -19,17 +19,29 @@
  */
 
 
-#ifndef __GMIME_COMMON_H__
-#define __GMIME_COMMON_H__
+#ifndef __GMIME_EVENTS_H__
+#define __GMIME_EVENTS_H__
 
 #include <glib.h>
+#include <glib-object.h>
 
 G_BEGIN_DECLS
 
-G_GNUC_INTERNAL int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
+typedef void (* GMimeEventCallback) (GObject *sender, gpointer args, gpointer user_data);
 
-G_GNUC_INTERNAL guint g_mime_strcase_hash (gconstpointer key);
+typedef struct _GMimeEvent GMimeEvent;
+
+G_GNUC_INTERNAL GMimeEvent *g_mime_event_new (GObject *owner);
+G_GNUC_INTERNAL void g_mime_event_destroy (GMimeEvent *event);
+
+G_GNUC_INTERNAL void g_mime_event_add (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);
+G_GNUC_INTERNAL void g_mime_event_remove (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);
+
+G_GNUC_INTERNAL void g_mime_event_block (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);
+G_GNUC_INTERNAL void g_mime_event_unblock (GMimeEvent *event, GMimeEventCallback callback, gpointer user_data);
+
+G_GNUC_INTERNAL void g_mime_event_emit (GMimeEvent *event, gpointer args);
 
 G_END_DECLS
 
-#endif /* __GMIME_COMMON_H__ */
+#endif /* __GMIME_EVENTS_H__ */

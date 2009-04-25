@@ -54,6 +54,9 @@ struct _GMimeContentType {
 	
 	GHashTable *param_hash;
 	GMimeParam *params;
+	
+	gpointer priv;
+	
 	char *type;
 	char *subtype;
 };

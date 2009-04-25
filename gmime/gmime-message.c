@@ -34,6 +34,7 @@
 #include "gmime-stream-mem.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
+#include "gmime-events.h"
 
 
 /**
@@ -44,14 +45,6 @@
  *
  * A #GMimeMessage represents an rfc822 message.
  **/
-
-
-typedef void (* EventCallback) (gpointer sender, gpointer args);
-
-extern void _internet_address_list_block_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-extern void _internet_address_list_unblock_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-extern void _internet_address_list_add_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-extern void _internet_address_list_remove_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
 
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
@@ -80,13 +73,14 @@ static void bcc_list_changed (InternetAddressList *list, GMimeMessage *message);
 
 static GMimeObjectClass *parent_class = NULL;
 
+
 static struct {
 	const char *name;
-	EventCallback changed_cb;
+	GMimeEventCallback changed_cb;
 } recipient_types[] = {
-	{ "To",  (EventCallback) to_list_changed  },
-	{ "Cc",  (EventCallback) cc_list_changed  },
-	{ "Bcc", (EventCallback) bcc_list_changed }
+	{ "To",  (GMimeEventCallback) to_list_changed  },
+	{ "Cc",  (GMimeEventCallback) cc_list_changed  },
+	{ "Bcc", (GMimeEventCallback) bcc_list_changed }
 };
 
 #define N_RECIPIENT_TYPES G_N_ELEMENTS (recipient_types)
@@ -155,7 +149,7 @@ connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	_internet_address_list_add_event_handler (list, recipient_types[type].changed_cb, message);
+	g_mime_event_add (list->priv, recipient_types[type].changed_cb, message);
 }
 
 static void
@@ -165,7 +159,7 @@ disconnect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	_internet_address_list_remove_event_handler (list, recipient_types[type].changed_cb, message);
+	g_mime_event_remove (list->priv, recipient_types[type].changed_cb, message);
 }
 
 static void
@@ -175,7 +169,7 @@ block_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	_internet_address_list_block_event_handler (list, recipient_types[type].changed_cb, message);
+	g_mime_event_block (list->priv, recipient_types[type].changed_cb, message);
 }
 
 static void
@@ -185,7 +179,7 @@ unblock_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	_internet_address_list_block_event_handler (list, recipient_types[type].changed_cb, message);
+	g_mime_event_unblock (list->priv, recipient_types[type].changed_cb, message);
 }
 
 static void

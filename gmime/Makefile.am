@@ -25,6 +25,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-data-wrapper.c		\
 	gmime-disposition.c		\
 	gmime-encodings.c		\
+	gmime-events.c			\
 	gmime-filter.c			\
 	gmime-filter-basic.c		\
 	gmime-filter-best.c		\
@@ -101,7 +102,6 @@ gmimeinclude_HEADERS = 			\
 	gmime-multipart-signed.h	\
 	gmime-object.h			\
 	gmime-param.h			\
-	gmime-parse-utils.h		\
 	gmime-parser.h			\
 	gmime-part.h			\
 	gmime-session.h			\
@@ -119,9 +119,11 @@ gmimeinclude_HEADERS = 			\
 	internet-address.h
 
 noinst_HEADERS = 			\
-	gmime-common.h			\
+	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
-	gmime-charset-map-private.h
+	gmime-parse-utils.h		\
+	gmime-common.h			\
+	gmime-events.h
 
 install-data-local: install-libtool-import-lib
 

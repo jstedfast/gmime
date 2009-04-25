@@ -28,6 +28,7 @@
 
 #include "gmime-common.h"
 #include "gmime-disposition.h"
+#include "gmime-events.h"
 
 
 /**
@@ -40,13 +41,6 @@
  * Content-Disposition header field.
  **/
 
-
-enum {
-	CHANGED,
-	LAST_SIGNAL
-};
-
-static guint signals[LAST_SIGNAL] = { 0 };
 
 static void g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass);
 static void g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass);
@@ -89,23 +83,13 @@ g_mime_content_disposition_class_init (GMimeContentDispositionClass *klass)
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = g_mime_content_disposition_finalize;
-	
-	/* signals */
-	signals[CHANGED] =
-		g_signal_new ("changed",
-			      GMIME_TYPE_CONTENT_DISPOSITION,
-			      G_SIGNAL_RUN_LAST,
-			      0,
-			      NULL,
-			      NULL,
-			      g_cclosure_marshal_VOID__VOID,
-			      G_TYPE_NONE, 0);
 }
 
 static void
 g_mime_content_disposition_init (GMimeContentDisposition *disposition, GMimeContentDispositionClass *klass)
 {
 	disposition->param_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
+	disposition->priv = g_mime_event_new ((GObject *) disposition);
 	disposition->disposition = NULL;
 	disposition->params = NULL;
 }
@@ -117,6 +101,7 @@ g_mime_content_disposition_finalize (GObject *object)
 	
 	g_hash_table_destroy (disposition->param_hash);
 	g_mime_param_destroy (disposition->params);
+	g_mime_event_destroy (disposition->priv);
 	g_free (disposition->disposition);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -208,7 +193,7 @@ g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition
 	g_free (disposition->disposition);
 	disposition->disposition = buf;
 	
-	g_signal_emit (disposition, signals[CHANGED], 0);
+	g_mime_event_emit (disposition->priv, NULL);
 }
 
 
@@ -252,7 +237,7 @@ g_mime_content_disposition_set_params (GMimeContentDisposition *disposition, GMi
 		params = params->next;
 	}
 	
-	g_signal_emit (disposition, signals[CHANGED], 0);
+	g_mime_event_emit (disposition->priv, NULL);
 }
 
 
@@ -299,7 +284,7 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 		g_hash_table_insert (disposition->param_hash, param->name, param);
 	}
 	
-	g_signal_emit (disposition, signals[CHANGED], 0);
+	g_mime_event_emit (disposition->priv, NULL);
 }
 
 
