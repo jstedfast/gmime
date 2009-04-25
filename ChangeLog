@@ -1,5 +1,17 @@
 2009-04-25  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-object.c (g_mime_object_set_disposition): Unref the
+	disposition after setting it on the GMimeObject, don't ref it
+	again. Oops.
+
+	* gmime/gmime-message.c (to_list_changed, cc_list_changed):
+	(bcc_list_changed): Fixed callback signatures. Oops.
+
+	* gmime/gmime-events.c: Fixed list traversal. What was I thinking
+	before?
+
+2009-04-25  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-parse-utils.h: Marked APIs as internal linkage only.
 
 	* gmime/gmime-common.h: Same.

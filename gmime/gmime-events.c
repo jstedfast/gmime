@@ -94,7 +94,7 @@ g_mime_event_destroy (GMimeEvent *event)
 {
 	EventListener *node, *next;
 	
-	node = (EventListener *) &event->list.head;
+	node = (EventListener *) event->list.head;
 	while (node->next) {
 		next = node->next;
 		event_listener_free (node);
@@ -110,7 +110,7 @@ g_mime_event_find_listener (GMimeEvent *event, GMimeEventCallback callback, gpoi
 {
 	EventListener *node;
 	
-	node = (EventListener *) &event->list.head;
+	node = (EventListener *) event->list.head;
 	while (node->next) {
 		if (node->callback == callback && node->user_data == user_data)
 			return node;
@@ -211,7 +211,7 @@ g_mime_event_emit (GMimeEvent *event, gpointer args)
 {
 	EventListener *node;
 	
-	node = (EventListener *) &event->list.head;
+	node = (EventListener *) event->list.head;
 	while (node->next) {
 		if (node->blocked <= 0)
 			node->callback (event->owner, args, node->user_data);

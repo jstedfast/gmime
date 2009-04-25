@@ -66,9 +66,9 @@ static ssize_t write_received (GMimeStream *stream, const char *name, const char
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
-static void to_list_changed (InternetAddressList *list, GMimeMessage *message);
-static void cc_list_changed (InternetAddressList *list, GMimeMessage *message);
-static void bcc_list_changed (InternetAddressList *list, GMimeMessage *message);
+static void to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 
 
 static GMimeObjectClass *parent_class = NULL;
@@ -1143,19 +1143,19 @@ sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 }
 
 static void
-to_list_changed (InternetAddressList *list, GMimeMessage *message)
+to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
 	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_TO);
 }
 
 static void
-cc_list_changed (InternetAddressList *list, GMimeMessage *message)
+cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
 	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_CC);
 }
 
 static void
-bcc_list_changed (InternetAddressList *list, GMimeMessage *message)
+bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
 	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_BCC);
 }
