@@ -126,6 +126,12 @@ void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *n
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);
 char *g_mime_header_list_to_string (const GMimeHeaderList *headers);
 
+#ifndef GMIME_DISABLE_DEPRECATED
+/* for internal use only */
+void g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw);
+gboolean g_mime_header_list_has_raw (const GMimeHeaderList *headers);
+#endif /* GMIME_DISABLE_DEPRECATED */
+
 G_END_DECLS
 
 #endif /* __GMIME_HEADER_H__ */

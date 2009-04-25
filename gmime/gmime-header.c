@@ -947,6 +947,8 @@ g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, 
  * @stream: a #GMimeStream
  *
  * Set the raw header stream.
+ *
+ * Since: 2.4.7
  **/
 void
 g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
@@ -971,6 +973,8 @@ g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
  * Gets the raw stream representing @headers.
  *
  * Returns: a #GMimeStream if set or %NULL otherwise.
+ *
+ * Since: 2.4.7
  **/
 GMimeStream *
 g_mime_header_list_get_stream (GMimeHeaderList *headers)
@@ -978,4 +982,48 @@ g_mime_header_list_get_stream (GMimeHeaderList *headers)
 	g_return_val_if_fail (headers != NULL, NULL);
 	
 	return headers->stream;
+}
+
+
+/**
+ * g_mime_header_list_set_raw:
+ * @headers: a #GMimeHeaderList
+ * @raw: raw mime part header
+ *
+ * Set the raw header.
+ *
+ * Deprecated:2.4.7: Use g_mime_header_list_set_stream() instead.
+ **/
+void
+g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw)
+{
+	g_return_if_fail (headers != NULL);
+	
+	if (headers->stream)
+		g_object_unref (headers->stream);
+	
+	if (raw)
+		headers->stream = g_mime_stream_mem_new_with_buffer (raw, strlen (raw));
+	else
+		headers->stream = NULL;
+}
+
+
+/**
+ * g_mime_header_list_has_raw:
+ * @headers: a #GMimeHeaderList
+ *
+ * Gets whether or not a raw header has been set on @headers.
+ *
+ * Returns: %TRUE if a raw header is set or %FALSE otherwise.
+ *
+ * Deprecated:2.4.7: Use g_mime_header_list_get_stream() and check
+ * against NULL instead.
+ **/
+gboolean
+g_mime_header_list_has_raw (const GMimeHeaderList *headers)
+{
+	g_return_val_if_fail (headers != NULL, FALSE);
+	
+	return headers->stream ? TRUE : FALSE;
 }

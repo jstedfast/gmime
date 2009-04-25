@@ -602,6 +602,8 @@ g_mime_header_list_foreach
 g_mime_header_list_register_writer
 g_mime_header_list_write_to_stream
 g_mime_header_list_to_string
+g_mime_header_list_get_stream
+g_mime_header_list_set_stream
 g_mime_header_list_has_raw
 g_mime_header_list_set_raw
 </SECTION>
