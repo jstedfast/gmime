@@ -4,6 +4,36 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 
+GMime 2.6 Planning:
+===================
+
+- Replace all uses of g_signals with my own event stuff. None of this
+  needs to be public and my events are a lot more performant.
+
+- Need to add a Changed event to GMimeHeaderList so that GMimeMessage
+  can listen to changes in the toplevel mime_part's headers. When they
+  change, we need to unset the cached header stream on the
+  GMimeMessage. (see the "Note:" comments in message_write_to_stream
+  and message_get_headers, while this hack works, it'd be nicer if we
+  did it based on event callbacks)
+
+- Get rid of GMimeSession and replace it with
+  GMimePassphraseRequestFunc or something. See GpgMe's passphrase
+  request callback signature for ideas.
+
+- Consider optionally using GpgMe so that we can support S/MIME?
+
+- Consider GCancellable and GError for GMimeStreams and
+  GMimeParser... GError being far more important than GCancellable.
+
+- Add GIO-based GMimeStream and bump glib dep to 2.16
+
+
+
+Other:
+======
+
+
 - make thread-safe? some stuff already is, like the gmime-iconv code
 and some of the other charset stuff. Streams and other objects,
 however, are not. How can I do this...? And is it really needed?
