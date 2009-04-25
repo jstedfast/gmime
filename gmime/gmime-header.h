@@ -87,6 +87,7 @@ gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);
 const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
 const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);
+
 gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
 
 
@@ -108,6 +109,9 @@ GMimeHeaderList *g_mime_header_list_new (void);
 
 void g_mime_header_list_destroy (GMimeHeaderList *headers);
 
+void g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream);
+GMimeStream *g_mime_header_list_get_stream (GMimeHeaderList *headers);
+
 void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value);
@@ -121,10 +125,6 @@ void g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderFore
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);
 char *g_mime_header_list_to_string (const GMimeHeaderList *headers);
-
-/* for internal use only */
-void g_mime_header_list_set_raw (GMimeHeaderList *headers, const char *raw);
-gboolean g_mime_header_list_has_raw (const GMimeHeaderList *headers);
 
 G_END_DECLS
 

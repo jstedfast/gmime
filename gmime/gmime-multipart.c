@@ -244,7 +244,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	 * not, then it's a broken multipart and so we don't want to
 	 * alter it or we'll completely break the output) */
 	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
-	if (!boundary && !g_mime_header_list_has_raw (object->headers)) {
+	if (!boundary && !g_mime_header_list_get_stream (object->headers)) {
 		g_mime_multipart_set_boundary (multipart, NULL);
 		boundary = g_mime_object_get_content_type_parameter (object, "boundary");
 	}
