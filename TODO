@@ -28,6 +28,11 @@ GMime 2.6 Planning:
 
 - Add GIO-based GMimeStream and bump glib dep to 2.16
 
+- Add a g_mime_part_set_best_encoding()?
+
+- How about a g_mime_part_set_best_charset()? This one could be
+  awkward since it depends on the input text being UTF-8...
+
 
 
 Other:
