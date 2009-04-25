@@ -16,3 +16,5 @@ test-partial
 test-pgp
 test-pgpmime
 test-streams
+gmime.gpg.pub
+gmime.gpg.sec
