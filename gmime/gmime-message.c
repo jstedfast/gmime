@@ -185,7 +185,7 @@ unblock_changed_event (GMimeMessage *message, GMimeRecipientType type)
 	
 	list = message->recipients[type];
 	
-	_internet_address_list_block_event_handler (list, recipient_types[type].changed_cb, message);
+	_internet_address_list_unblock_event_handler (list, recipient_types[type].changed_cb, message);
 }
 
 static void

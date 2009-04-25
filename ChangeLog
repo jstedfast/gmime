@@ -1,5 +1,8 @@
 2009-04-25  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-message.c (unblock_changed_event): Oops, this needs
+	to /unblock/ the event handler.
+
 	* gmime/gmime-header.c (g_mime_header_list_set_raw): Added back
 	just in case someone was foolish enough to use this API.
 	(g_mime_header_list_has_raw): Same.
