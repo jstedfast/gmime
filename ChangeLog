@@ -1,7 +1,5 @@
 2009-04-24  Jeffrey Stedfast  <fejj@novell.com>
 
-	* tests/test-parser.c (test_parser): Updated.
-
 	* gmime/gmime-parser.c (struct _GMimeParserPrivate): Added
 	message_headers_begin/end and changed the meaning of
 	headers_begin/end to be for the current MIME part rather than for
