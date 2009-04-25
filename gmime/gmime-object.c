@@ -609,7 +609,7 @@ g_mime_object_set_disposition (GMimeObject *object, const char *disposition)
 	disp = g_mime_content_disposition_new ();
 	g_mime_content_disposition_set_disposition (disp, disposition);
 	g_mime_object_set_content_disposition (object, disp);
-	g_object_ref (disp);
+	g_object_unref (disp);
 }
 
 
