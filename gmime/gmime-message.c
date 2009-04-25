@@ -48,10 +48,10 @@
 
 typedef void (* EventCallback) (gpointer sender, gpointer args);
 
-void _internet_address_list_block_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-void _internet_address_list_unblock_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-void _internet_address_list_add_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
-void _internet_address_list_remove_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+extern void _internet_address_list_block_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+extern void _internet_address_list_unblock_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+extern void _internet_address_list_add_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
+extern void _internet_address_list_remove_event_handler (InternetAddressList *list, EventCallback callback, gpointer user_data);
 
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
@@ -790,7 +790,7 @@ message_prepend_header (GMimeObject *object, const char *header, const char *val
 		g_mime_header_list_prepend (object->headers, header, value);
 	
 	if (message->mime_part)
-		g_mime_header_list_set_raw (message->mime_part->headers, NULL);
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 static void
@@ -812,7 +812,7 @@ message_append_header (GMimeObject *object, const char *header, const char *valu
 		g_mime_header_list_append (object->headers, header, value);
 	
 	if (message->mime_part)
-		g_mime_header_list_set_raw (message->mime_part->headers, NULL);
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 static void
@@ -834,7 +834,7 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
 		g_mime_header_list_set (object->headers, header, value);
 	
 	if (message->mime_part)
-		g_mime_header_list_set_raw (message->mime_part->headers, NULL);
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 static const char *
@@ -927,7 +927,7 @@ message_remove_header (GMimeObject *object, const char *header)
 	}
 	
 	if (message->mime_part)
-		g_mime_header_list_set_raw (message->mime_part->headers, NULL);
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 	
 	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
@@ -945,10 +945,15 @@ message_get_headers (GMimeObject *object)
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), ba);
 	
-	if (message->mime_part && g_mime_header_list_has_raw (message->mime_part->headers)) {
+	if (message->mime_part && g_mime_header_list_get_stream (message->mime_part->headers)) {
 		/* if the mime part has raw headers, then it contains the message headers as well */
 		g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
 	} else {
+		/* Note: if the user changed the mime_part's headers,
+		 * we need to unset our cached header stream or it
+		 * won't reflect the changes. */
+		g_mime_header_list_set_stream (object->headers, NULL);
+		
 		g_mime_header_list_write_to_stream (object->headers, stream);
 		if (message->mime_part) {
 			if (g_mime_object_get_header (message->mime_part, "Content-Type"))
@@ -972,9 +977,12 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	ssize_t nwritten, total = 0;
 	
 	if (message->mime_part) {
-		if (!g_mime_header_list_has_raw (message->mime_part->headers)) {
-			/* if the mime part has raw headers, then it contains the message
-			 * headers as well otherwise it doesn't, so write them now */
+		if (!g_mime_header_list_get_stream (message->mime_part->headers)) {
+			/* Note: if the user changed the mime_part's headers,
+			 * we need to unset our cached header stream or it
+			 * won't reflect the changes. */
+			g_mime_header_list_set_stream (object->headers, NULL);
+			
 			if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
 				return -1;
 			
@@ -1444,12 +1452,14 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 	g_return_if_fail (GMIME_IS_OBJECT (mime_part));
 	
 	g_object_ref (mime_part);
-	g_mime_header_list_set_raw (mime_part->headers, NULL);
+	g_mime_header_list_set_stream (mime_part->headers, NULL);
 	
 	if (message->mime_part) {
-		g_mime_header_list_set_raw (message->mime_part->headers, NULL);
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 		g_object_unref (message->mime_part);
 	}
+	
+	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
 	
 	message->mime_part = mime_part;
 }

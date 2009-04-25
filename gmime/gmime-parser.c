@@ -153,6 +153,10 @@ struct _GMimeParserPrivate {
 	size_t rawleft;
 	
 	/* current message headerblock offsets */
+	gint64 message_headers_begin;
+	gint64 message_headers_end;
+	
+	/* current mime-part headerblock offsets */
 	gint64 headers_begin;
 	gint64 headers_end;
 	
@@ -298,16 +302,16 @@ static void
 g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass)
 {
 	parser->priv = g_new (struct _GMimeParserPrivate, 1);
-	parser_init (parser, NULL);
+	parser->priv->respect_content_length = FALSE;
+	parser->priv->persist_stream = TRUE;
+	parser->priv->have_regex = FALSE;
+	parser->priv->scan_from = FALSE;
 	
 #if defined (HAVE_GLIB_REGEX)
 	parser->priv->regex = NULL;
 #endif
 	
-	parser->priv->scan_from = FALSE;
-	parser->priv->have_regex = FALSE;
-	parser->priv->persist_stream = TRUE;
-	parser->priv->respect_content_length = FALSE;
+	parser_init (parser, NULL);
 }
 
 static void
@@ -359,9 +363,18 @@ parser_init (GMimeParser *parser, GMimeStream *stream)
 	priv->headerleft = HEADER_INIT_SIZE - 1;
 	priv->headerptr = priv->headerbuf;
 	
-	priv->rawbuf = g_malloc (HEADER_RAW_INIT_SIZE);
-	priv->rawleft = HEADER_RAW_INIT_SIZE - 1;
-	priv->rawptr = priv->rawbuf;
+	if (offset == -1 || !priv->persist_stream) {
+		priv->rawbuf = g_malloc (HEADER_RAW_INIT_SIZE);
+		priv->rawleft = HEADER_RAW_INIT_SIZE - 1;
+		priv->rawptr = priv->rawbuf;
+	} else {
+		priv->rawbuf = NULL;
+		priv->rawptr = NULL;
+		priv->rawleft = 0;
+	}
+	
+	priv->message_headers_begin = -1;
+	priv->message_headers_end = -1;
 	
 	priv->headers_begin = -1;
 	priv->headers_end = -1;
@@ -501,9 +514,33 @@ g_mime_parser_get_persist_stream (GMimeParser *parser)
 void
 g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
 {
+	struct _GMimeParserPrivate *priv;
+	
 	g_return_if_fail (GMIME_IS_PARSER (parser));
 	
-	parser->priv->persist_stream = persist;
+	priv = parser->priv;
+	
+	if (priv->persist_stream == persist)
+		return;
+	
+	if (persist) {
+		priv->persist_stream = TRUE;
+		
+		if (priv->seekable && !priv->rawbuf) {
+			priv->rawbuf = g_malloc (HEADER_RAW_INIT_SIZE);
+			priv->rawleft = HEADER_RAW_INIT_SIZE - 1;
+			priv->rawptr = priv->rawbuf;
+		}
+	} else {
+		priv->persist_stream = FALSE;
+		
+		if (priv->rawbuf) {
+			g_free (priv->rawbuf);
+			priv->rawbuf = NULL;
+			priv->rawptr = NULL;
+			priv->rawleft = 0;
+		}
+	}
 }
 
 
@@ -849,25 +886,29 @@ next_alloc_size (size_t n)
 } G_STMT_END
 
 #define raw_header_append(priv, start, len) G_STMT_START {                \
-	if (priv->rawleft <= len) {                                       \
-		size_t hlen, hoff;                                        \
+	if (priv->rawbuf) {                                               \
+		if (priv->rawleft <= len) {                               \
+			size_t hlen, hoff;                                \
+			                                                  \
+			hoff = priv->rawptr - priv->rawbuf;               \
+			hlen = next_alloc_size (hoff + len + 1);          \
+			                                                  \
+			priv->rawbuf = g_realloc (priv->rawbuf, hlen);    \
+			priv->rawptr = priv->rawbuf + hoff;               \
+			priv->rawleft = (hlen - 1) - hoff;                \
+		}                                                         \
 		                                                          \
-		hoff = priv->rawptr - priv->rawbuf;                       \
-		hlen = next_alloc_size (hoff + len + 1);                  \
-		                                                          \
-		priv->rawbuf = g_realloc (priv->rawbuf, hlen);            \
-		priv->rawptr = priv->rawbuf + hoff;                       \
-		priv->rawleft = (hlen - 1) - hoff;                        \
+		memcpy (priv->rawptr, start, len);                        \
+		priv->rawptr += len;                                      \
+		priv->rawleft -= len;                                     \
 	}                                                                 \
-	                                                                  \
-	memcpy (priv->rawptr, start, len);                                \
-	priv->rawptr += len;                                              \
-	priv->rawleft -= len;                                             \
 } G_STMT_END
 
 #define raw_header_reset(priv) G_STMT_START {                             \
-	priv->rawleft += priv->rawptr - priv->rawbuf;                     \
-	priv->rawptr = priv->rawbuf;                                      \
+	if (priv->rawbuf) {                                               \
+		priv->rawleft += priv->rawptr - priv->rawbuf;             \
+		priv->rawptr = priv->rawbuf;                              \
+	}                                                                 \
 } G_STMT_END
 
 static void
@@ -955,10 +996,8 @@ parser_step_headers (GMimeParser *parser)
 	raw_header_reset (priv);
 	header_raw_clear (&priv->headers);
 	tail = (HeaderRaw *) &priv->headers;
-	priv->header_offset = parser_offset (priv, NULL);
-	
-	if (priv->headers_begin == -1)
-		priv->headers_begin = parser_offset (priv, NULL);
+	priv->headers_begin = parser_offset (priv, NULL);
+	priv->header_offset = priv->headers_begin;
 	
 	inptr = priv->inptr;
 	inend = priv->inend;
@@ -1089,33 +1128,30 @@ parser_step_headers (GMimeParser *parser)
 	if (priv->headerptr > priv->headerbuf)
 		header_parse (parser, &tail);
 	
-	if (priv->headers_end == -1)
-		priv->headers_end = parser_offset (priv, start);
-	
+	priv->headers_end = parser_offset (priv, start);
 	priv->state = GMIME_PARSER_STATE_HEADERS_END;
-	*priv->rawptr = '\0';
+	if (priv->rawbuf)
+		*priv->rawptr = '\0';
 	priv->inptr = inptr;
 	
 	return 0;
 	
  next_message:
 	
-	if (priv->headers_end == -1)
-		priv->headers_end = parser_offset (priv, start);
-	
+	priv->headers_end = parser_offset (priv, start);
 	priv->state = GMIME_PARSER_STATE_COMPLETE;
-	*priv->rawptr = '\0';
+	if (priv->rawbuf)
+		*priv->rawptr = '\0';
 	priv->inptr = start;
 	
 	return 0;
 	
  content_start:
 	
-	if (priv->headers_end == -1)
-		priv->headers_end = parser_offset (priv, start);
-	
+	priv->headers_end = parser_offset (priv, start);
 	priv->state = GMIME_PARSER_STATE_CONTENT;
-	*priv->rawptr = '\0';
+	if (priv->rawbuf)
+		*priv->rawptr = '\0';
 	priv->inptr = start;
 	
 	return 0;
@@ -1210,20 +1246,25 @@ parser_step (GMimeParser *parser)
 	case GMIME_PARSER_STATE_ERROR:
 		break;
 	case GMIME_PARSER_STATE_INIT:
-		parser->priv->headers_begin = -1;
-		parser->priv->headers_end = -1;
+		priv->message_headers_begin = -1;
+		priv->message_headers_end = -1;
 		if (priv->scan_from)
 			priv->state = GMIME_PARSER_STATE_FROM;
 		else
 			priv->state = GMIME_PARSER_STATE_HEADERS;
 		break;
 	case GMIME_PARSER_STATE_FROM:
-		parser->priv->headers_begin = -1;
-		parser->priv->headers_end = -1;
+		priv->message_headers_begin = -1;
+		priv->message_headers_end = -1;
 		parser_step_from (parser);
 		break;
 	case GMIME_PARSER_STATE_HEADERS:
 		parser_step_headers (parser);
+		
+		if (priv->message_headers_begin == -1) {
+			priv->message_headers_begin = priv->headers_begin;
+			priv->message_headers_end = priv->headers_end;
+		}
 		break;
 	case GMIME_PARSER_STATE_HEADERS_END:
 		if (parser_skip_line (parser) == -1)
@@ -1460,6 +1501,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	GMimeStream *stream;
 	HeaderRaw *header;
 	
 	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
@@ -1489,6 +1531,10 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	content_type_destroy (content_type);
 	message->mime_part = object;
 	
+	/* set the same raw header stream on the message's header-list */
+	if ((stream = g_mime_header_list_get_stream (object->headers)))
+		g_mime_header_list_set_stream (((GMimeObject *) message)->headers, stream);
+	
 	g_mime_message_part_set_message (mpart, message);
 	g_object_unref (message);
 }
@@ -1498,6 +1544,7 @@ parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int 
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeObject *object;
+	GMimeStream *stream;
 	HeaderRaw *header;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
@@ -1520,7 +1567,15 @@ parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int 
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
+	/* set the raw header stream on the header-list */
+	if (priv->persist_stream && priv->seekable)
+		stream = g_mime_stream_substream (priv->stream, priv->headers_begin, priv->headers_end);
+	else
+		stream = g_mime_stream_mem_new_with_buffer (priv->rawbuf, priv->rawptr - priv->rawbuf);
+	
+	g_mime_header_list_set_stream (object->headers, stream);
+	g_object_unref (stream);
+	
 	raw_header_reset (priv);
 	
 	if (priv->state == GMIME_PARSER_STATE_HEADERS_END) {
@@ -1654,6 +1709,7 @@ parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int 
 	GMimeMultipart *multipart;
 	const char *boundary;
 	GMimeObject *object;
+	GMimeStream *stream;
 	HeaderRaw *header;
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
@@ -1668,7 +1724,15 @@ parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int 
 	
 	header_raw_clear (&priv->headers);
 	
-	g_mime_header_list_set_raw (object->headers, priv->rawbuf);
+	/* set the raw header stream on the header-list */
+	if (priv->persist_stream && priv->seekable)
+		stream = g_mime_stream_substream (priv->stream, priv->headers_begin, priv->headers_end);
+	else
+		stream = g_mime_stream_mem_new_with_buffer (priv->rawbuf, priv->rawptr - priv->rawbuf);
+	
+	g_mime_header_list_set_stream (object->headers, stream);
+	g_object_unref (stream);
+	
 	raw_header_reset (priv);
 	
 	multipart = (GMimeMultipart *) object;
@@ -1758,6 +1822,7 @@ parser_construct_message (GMimeParser *parser)
 	ContentType *content_type;
 	GMimeMessage *message;
 	GMimeObject *object;
+	GMimeStream *stream;
 	HeaderRaw *header;
 	char *endptr;
 	int found;
@@ -1801,6 +1866,10 @@ parser_construct_message (GMimeParser *parser)
 	
 	content_type_destroy (content_type);
 	message->mime_part = object;
+	
+	/* set the same raw header stream on the message's header-list */
+	if ((stream = g_mime_header_list_get_stream (object->headers)))
+		g_mime_header_list_set_stream (((GMimeObject *) message)->headers, stream);
 	
 	if (priv->scan_from) {
 		priv->state = GMIME_PARSER_STATE_FROM;
@@ -1896,7 +1965,7 @@ g_mime_parser_get_headers_begin (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
 	
-	return parser->priv->headers_begin;
+	return parser->priv->message_headers_begin;
 }
 
 
@@ -1915,5 +1984,5 @@ g_mime_parser_get_headers_end (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), -1);
 	
-	return parser->priv->headers_end;
+	return parser->priv->message_headers_end;
 }
