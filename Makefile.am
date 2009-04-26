@@ -14,12 +14,7 @@ endif
 
 SUBDIRS += tools .
 
-## We create gmimeConf.sh here and not from configure because we want
-## to get the paths expanded correctly.  Macros like srcdir are given
-## the value NONE in configure if the user doesn't specify them (this
-## is an autoconf feature, not a bug).
-
-DISTCLEANFILES = iconv-detect.h
+DISTCLEANFILES = iconv-detect.h gmime-$(GMIME_API_VERSION).pc
 
 EXTRA_DIST = 				\
 	PORTING				\
