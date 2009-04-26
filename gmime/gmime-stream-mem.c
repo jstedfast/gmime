@@ -164,7 +164,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	}
 	
 	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len) {
-		g_byte_array_set_size (mem->buffer, stream->position + len);
+		g_byte_array_set_size (mem->buffer, (guint) stream->position + len);
 		bound_end = mem->buffer->len;
 	} else
 		bound_end = stream->bound_end;
@@ -275,7 +275,7 @@ stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 			return -1;
 		}
 		
-		g_byte_array_set_size (mem->buffer, real);
+		g_byte_array_set_size (mem->buffer, (guint) real);
 	}
 	
 	stream->position = real;
