@@ -49,6 +49,7 @@
 #include <gmime/gmime-stream-file.h>
 #include <gmime/gmime-stream-filter.h>
 #include <gmime/gmime-stream-fs.h>
+#include <gmime/gmime-stream-gio.h>
 #include <gmime/gmime-stream-mem.h>
 #include <gmime/gmime-stream-mmap.h>
 #include <gmime/gmime-stream-null.h>

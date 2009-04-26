@@ -30,6 +30,7 @@
 <!ENTITY GMimeStreamCat SYSTEM "xml/gmime-stream-cat.xml">
 <!ENTITY GMimeStreamFile SYSTEM "xml/gmime-stream-file.xml">
 <!ENTITY GMimeStreamFs SYSTEM "xml/gmime-stream-fs.xml">
+<!ENTITY GMimeStreamGIO SYSTEM "xml/gmime-stream-gio.xml">
 <!ENTITY GMimeStreamMem SYSTEM "xml/gmime-stream-mem.xml">
 <!ENTITY GMimeStreamMmap SYSTEM "xml/gmime-stream-mmap.xml">
 <!ENTITY GMimeStreamNull SYSTEM "xml/gmime-stream-null.xml">

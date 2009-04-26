@@ -60,6 +60,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-stream-file.c		\
 	gmime-stream-filter.c		\
 	gmime-stream-fs.c		\
+	gmime-stream-gio.c		\
 	gmime-stream-mem.c		\
 	gmime-stream-mmap.c		\
 	gmime-stream-null.c		\
@@ -109,6 +110,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-file.h		\
 	gmime-stream-filter.h		\
 	gmime-stream-fs.h		\
+	gmime-stream-gio.h		\
 	gmime-stream-mem.h		\
 	gmime-stream-mmap.h		\
 	gmime-stream-null.h		\

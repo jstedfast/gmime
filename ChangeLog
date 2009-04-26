@@ -1,5 +1,12 @@
 2009-04-26  Jeffrey Stedfast  <fejj@novell.com>
 
+	* tests/test-streams.c: Updated to test GIO streams.
+
+	* gmime/gmime-stream-gio.c: New GMimeStream wrapper around GIO
+	streams.
+
+2009-04-26  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-session*.[c,h]: Removed.
 
 	* gmime/gmime-stream-pipe.[c,h]: New stream for pipes (where

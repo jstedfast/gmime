@@ -136,6 +136,27 @@ GMIME_STREAM_FS_GET_CLASS
 </SECTION>
 
 <SECTION>
+<FILE>gmime-stream-gio</FILE>
+GMimeStreamGIO
+g_mime_stream_gio_new
+g_mime_stream_gio_new_with_bounds
+g_mime_stream_gio_get_owner
+g_mime_stream_gio_set_owner
+
+<SUBSECTION Private>
+g_mime_stream_gio_get_type
+
+<SUBSECTION Standard>
+GMimeStreamGIOClass
+GMIME_TYPE_STREAM_GIO
+GMIME_STREAM_GIO
+GMIME_IS_STREAM_GIO
+GMIME_STREAM_GIO_CLASS
+GMIME_IS_STREAM_GIO_CLASS
+GMIME_STREAM_GIO_GET_CLASS
+</SECTION>
+
+<SECTION>
 <FILE>gmime-stream-mem</FILE>
 GMimeStreamMem
 g_mime_stream_mem_new

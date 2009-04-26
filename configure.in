@@ -236,10 +236,10 @@ if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
 fi
 
-dnl We need at *least* glib 2.12.0 for g_hash_table_remove_all()
+dnl We need at *least* glib 2.16.0 for GIO
 AM_PATH_GLIB_2_0(2.12.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
-		 gobject gmodule gthread)
+		 gobject gmodule gthread gio)
 
 dnl *****************************
 dnl *** Checks for zlib       ***

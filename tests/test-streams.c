@@ -408,6 +408,37 @@ check_stream_buffer_cache (const char *input, const char *output, const char *fi
 	return TRUE;
 }
 
+static gboolean
+check_stream_gio (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
+{
+	GMimeStream *streams[2];
+	Exception *ex = NULL;
+	GFile *file;
+	int fd;
+	
+	if (!(file = g_file_new_for_path (input)))
+		return FALSE;
+	
+	if ((fd = open (output, O_RDONLY)) == -1) {
+		g_object_unref (file);
+		return FALSE;
+	}
+	
+	streams[0] = g_mime_stream_gio_new_with_bounds (file, start, end);
+	streams[1] = g_mime_stream_fs_new (fd);
+	
+	if (!streams_match (streams, filename))
+		ex = exception_new ("GMimeStreamBuffer (Cache Mode) streams did not match for `%s'", filename);
+	
+	g_object_unref (streams[0]);
+	g_object_unref (streams[1]);
+	
+	if (ex != NULL)
+		throw (ex);
+	
+	return TRUE;
+}
+
 
 typedef gboolean (* checkFunc) (const char *, const char *, const char *, gint64, gint64);
 
@@ -420,6 +451,7 @@ static struct {
 	{ "GMimeStreamMmap",                check_stream_mmap         },
 	{ "GMimeStreamBuffer (block mode)", check_stream_buffer_block },
 	{ "GMimeStreamBuffer (cache mode)", check_stream_buffer_cache },
+	{ "GMimeStreamGIO",                 check_stream_gio          },
 };
 
 static void

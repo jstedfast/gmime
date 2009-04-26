@@ -2002,7 +2002,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 
 /**
  * g_mime_gpg_context_new:
- * @equest_passwd: a #GMimePasswordRequestFunc
+ * @request_passwd: a #GMimePasswordRequestFunc
  * @path: path to gpg binary
  *
  * Creates a new gpg cipher context object.
