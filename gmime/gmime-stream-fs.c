@@ -458,7 +458,7 @@ g_mime_stream_fs_new (int fd)
 
 /**
  * g_mime_stream_fs_new_with_bounds:
- * @fd: file descriptor
+ * @fd: a file descriptor
  * @start: start boundary
  * @end: end boundary
  *
@@ -484,7 +484,7 @@ g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
 
 /**
  * g_mime_stream_fs_get_owner:
- * @stream: fs stream
+ * @stream: a #GMimeStreamFs
  *
  * Gets whether or not @stream owns the backend file descriptor.
  *
@@ -502,10 +502,10 @@ g_mime_stream_fs_get_owner (GMimeStreamFs *stream)
 
 /**
  * g_mime_stream_fs_set_owner:
- * @stream: fs stream
+ * @stream: a #GMimeStreamFs
  * @owner: owner
  *
- * Sets whether or not @stream owns the backend FS pointer.
+ * Sets whether or not @stream owns the backend file descriptor.
  *
  * Note: @owner should be %TRUE if the stream should close() the
  * backend file descriptor when destroyed or %FALSE otherwise.
