@@ -19,7 +19,7 @@ GMime 2.6 Planning:
 
 - Get rid of GMimeSession and replace it with
   GMimePassphraseRequestFunc or something. See GpgMe's passphrase
-  request callback signature for ideas.
+  request callback signature for ideas. [ DONE ]
 
 - Consider optionally using GpgMe so that we can support S/MIME?
 

@@ -317,14 +317,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\gmime\gmime-session-simple.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\gmime\gmime-session.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\gmime\gmime-stream-buffer.h"
 				>
 			</File>
@@ -350,6 +342,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-stream-null.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-stream-pipe.h"
 				>
 			</File>
 			<File
@@ -545,14 +541,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\gmime\gmime-session-simple.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\gmime\gmime-session.c"
-				>
-			</File>
-			<File
 				RelativePath="..\..\gmime\gmime-stream-buffer.c"
 				>
 			</File>
@@ -578,6 +566,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-stream-null.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-stream-pipe.c"
 				>
 			</File>
 			<File
