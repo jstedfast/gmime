@@ -61,7 +61,7 @@ struct _GMimeStreamPipeClass {
 
 GType g_mime_stream_pipe_get_type (void);
 
-GMimeStream *g_mime_stream_pipe_new (int sockfd);
+GMimeStream *g_mime_stream_pipe_new (int fd);
 
 gboolean g_mime_stream_pipe_get_owner (GMimeStreamPipe *stream);
 void g_mime_stream_pipe_set_owner (GMimeStreamPipe *stream, gboolean owner);

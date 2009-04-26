@@ -89,6 +89,14 @@
       <member cname="GMIME_STREAM_BUFFER_BLOCK_READ" name="BlockRead" />
       <member cname="GMIME_STREAM_BUFFER_BLOCK_WRITE" name="BlockWrite" />
     </enum>
+    <callback name="EventCallback" cname="GMimeEventCallback">
+      <return-type type="void" />
+      <parameters>
+        <parameter type="GObject*" name="sender" />
+        <parameter type="gpointer" name="args" />
+        <parameter type="gpointer" name="user_data" />
+      </parameters>
+    </callback>
     <callback name="HeaderForeachFunc" cname="GMimeHeaderForeachFunc">
       <return-type type="void" />
       <parameters>
@@ -123,32 +131,19 @@
         <parameter type="gpointer" name="user_data" />
       </parameters>
     </callback>
-    <callback name="SimpleForgetPasswdFunc" cname="GMimeSimpleForgetPasswdFunc">
-      <return-type type="void" />
-      <parameters>
-        <parameter type="GMimeSession*" name="session" />
-        <parameter type="const-char*" name="item" />
-        <parameter type="GError**" name="err" />
-      </parameters>
-    </callback>
-    <callback name="SimpleIsOnlineFunc" cname="GMimeSimpleIsOnlineFunc">
+    <callback name="PasswordRequestFunc" cname="GMimePasswordRequestFunc">
       <return-type type="gboolean" />
       <parameters>
-        <parameter type="GMimeSession*" name="session" />
-      </parameters>
-    </callback>
-    <callback name="SimpleRequestPasswdFunc" cname="GMimeSimpleRequestPasswdFunc">
-      <return-type type="char*" />
-      <parameters>
-        <parameter type="GMimeSession*" name="session" />
-        <parameter type="const-char*" name="prompt" />
-        <parameter type="gboolean" name="secret" />
-        <parameter type="const-char*" name="item" />
+        <parameter type="GMimeCipherContext*" name="ctx" />
+        <parameter type="const-char*" name="user_id" />
+        <parameter type="const-char*" name="prompt_ctx" />
+        <parameter type="gboolean" name="reprompt" />
+        <parameter type="GMimeStream*" name="response" />
         <parameter type="GError**" name="err" />
       </parameters>
     </callback>
     <object name="CipherContext" cname="GMimeCipherContext" parent="GObject">
-      <field name="Session" cname="session" type="GMimeSession*" />
+      <field name="RequestPasswd" cname="request_passwd" type="GMimePasswordRequestFunc" />
       <field name="SignProtocol" cname="sign_protocol" type="const-char*" />
       <field name="EncryptProtocol" cname="encrypt_protocol" type="const-char*" />
       <field name="KeyProtocol" cname="key_protocol" type="const-char*" />
@@ -265,6 +260,12 @@
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="SetRequestPassword" cname="g_mime_cipher_context_set_request_password">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimePasswordRequestFunc" name="request_passwd" />
         </parameters>
       </method>
       <method name="Sign" cname="g_mime_cipher_context_sign">
@@ -622,9 +623,13 @@
       </method>
     </object>
     <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCipherContext">
+      <field name="AutoKeyRetrieve" cname="auto_key_retrieve" type="gboolean" />
       <field name="AlwaysTrust" cname="always_trust" type="gboolean" />
       <field name="Path" cname="path" type="char*" />
       <method name="GetAlwaysTrust" cname="g_mime_gpg_context_get_always_trust">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetAutoKeyRetrieve" cname="g_mime_gpg_context_get_auto_key_retrieve">
         <return-type type="gboolean" />
       </method>
       <method name="GetType" cname="g_mime_gpg_context_get_type" shared="true">
@@ -632,7 +637,7 @@
       </method>
       <constructor cname="g_mime_gpg_context_new">
         <parameters>
-          <parameter type="GMimeSession*" name="session" />
+          <parameter type="GMimePasswordRequestFunc" name="request_passwd" />
           <parameter type="const-char*" name="path" />
         </parameters>
       </constructor>
@@ -640,6 +645,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="always_trust" />
+        </parameters>
+      </method>
+      <method name="SetAutoKeyRetrieve" cname="g_mime_gpg_context_set_auto_key_retrieve">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="auto_key_retrieve" />
         </parameters>
       </method>
     </object>
@@ -1398,80 +1409,6 @@
         <return-type type="gboolean" />
       </method>
     </object>
-    <object name="Session" cname="GMimeSession" parent="GObject">
-      <virtual_method name="IsOnline" cname="is_online">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="GMimeSession*" name="session" />
-        </parameters>
-      </virtual_method>
-      <virtual_method name="RequestPasswd" cname="request_passwd">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="GMimeSession*" name="session" />
-          <parameter type="const-char*" name="prompt" />
-          <parameter type="gboolean" name="secret" />
-          <parameter type="const-char*" name="item" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </virtual_method>
-      <virtual_method name="ForgetPasswd" cname="forget_passwd">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSession*" name="session" />
-          <parameter type="const-char*" name="item" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </virtual_method>
-      <method name="ForgetPasswd" cname="g_mime_session_forget_passwd">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="item" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-      <method name="GetType" cname="g_mime_session_get_type" shared="true">
-        <return-type type="GType" />
-      </method>
-      <method name="IsOnline" cname="g_mime_session_is_online">
-        <return-type type="gboolean" />
-      </method>
-      <method name="RequestPasswd" cname="g_mime_session_request_passwd">
-        <return-type type="char*" />
-        <parameters>
-          <parameter type="const-char*" name="prompt" />
-          <parameter type="gboolean" name="secret" />
-          <parameter type="const-char*" name="item" />
-          <parameter type="GError**" name="err" />
-        </parameters>
-      </method>
-    </object>
-    <object name="SessionSimple" cname="GMimeSessionSimple" parent="GMimeSession">
-      <field name="IsOnline" cname="is_online" type="GMimeSimpleIsOnlineFunc" />
-      <field name="RequestPasswd" cname="request_passwd" type="GMimeSimpleRequestPasswdFunc" />
-      <field name="ForgetPasswd" cname="forget_passwd" type="GMimeSimpleForgetPasswdFunc" />
-      <method name="GetType" cname="g_mime_session_simple_get_type" shared="true">
-        <return-type type="GType" />
-      </method>
-      <method name="SetForgetPasswd" cname="g_mime_session_simple_set_forget_passwd">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSimpleForgetPasswdFunc" name="forget_passwd" />
-        </parameters>
-      </method>
-      <method name="SetIsOnline" cname="g_mime_session_simple_set_is_online">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSimpleIsOnlineFunc" name="is_online" />
-        </parameters>
-      </method>
-      <method name="SetRequestPasswd" cname="g_mime_session_simple_set_request_passwd">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSimpleRequestPasswdFunc" name="request_passwd" />
-        </parameters>
-      </method>
-    </object>
     <object name="Stream" cname="GMimeStream" parent="GObject">
       <field name="SuperStream" cname="super_stream" type="GMimeStream*" />
       <field name="Position" cname="position" type="gint64" />
@@ -1532,7 +1469,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="Length" cname="length">
-        <return-type type="ssize_t" />
+        <return-type type="gint64" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
         </parameters>
@@ -1565,7 +1502,7 @@
         <return-type type="GType" />
       </method>
       <method name="Length" cname="g_mime_stream_length">
-        <return-type type="ssize_t" />
+        <return-type type="gint64" />
       </method>
       <method name="Printf" cname="g_mime_stream_printf">
         <return-type type="ssize_t" />
@@ -1833,16 +1770,33 @@
       </method>
       <constructor cname="g_mime_stream_null_new" />
     </object>
+    <object name="StreamPipe" cname="GMimeStreamPipe" parent="GMimeStream">
+      <field name="Owner" cname="owner" type="gboolean" />
+      <field name="Eos" cname="eos" type="gboolean" />
+      <field name="Fd" cname="fd" type="int" />
+      <method name="GetOwner" cname="g_mime_stream_pipe_get_owner">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetType" cname="g_mime_stream_pipe_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="g_mime_stream_pipe_new">
+        <parameters>
+          <parameter type="int" name="fd" />
+        </parameters>
+      </constructor>
+      <method name="SetOwner" cname="g_mime_stream_pipe_set_owner">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="owner" />
+        </parameters>
+      </method>
+    </object>
     <object name="ContentDisposition" cname="GMimeContentDisposition" parent="GObject">
       <field name="ParamHash" cname="param_hash" type="GHashTable*" />
       <field name="Params" cname="params" type="GMimeParam*" />
+      <field name="Priv" cname="priv" type="gpointer" />
       <field name="Disposition" cname="disposition" type="char*" />
-      <signal name="Changed" cname="changed" when="LAST">
-        <return-type type="void" />
-        <parameters>
-          <parameter name="inst" type="GMimeContentDisposition*" />
-        </parameters>
-      </signal>
       <method name="GetDisposition" cname="g_mime_content_disposition_get_disposition">
         <return-type type="const-char*" />
       </method>
@@ -1893,14 +1847,9 @@
     <object name="ContentType" cname="GMimeContentType" parent="GObject">
       <field name="ParamHash" cname="param_hash" type="GHashTable*" />
       <field name="Params" cname="params" type="GMimeParam*" />
+      <field name="Priv" cname="priv" type="gpointer" />
       <field name="Type" cname="type" type="char*" />
       <field name="Subtype" cname="subtype" type="char*" />
-      <signal name="Changed" cname="changed" when="LAST">
-        <return-type type="void" />
-        <parameters>
-          <parameter name="inst" type="GMimeContentType*" />
-        </parameters>
-      </signal>
       <method name="GetMediaSubtype" cname="g_mime_content_type_get_media_subtype">
         <return-type type="const-char*" />
       </method>
@@ -2338,6 +2287,7 @@
         </parameters>
       </method>
     </struct>
+    <struct name="Event" cname="GMimeEvent" opaque="true" />
     <struct name="Header" cname="GMimeHeader" opaque="true" />
     <struct name="HeaderIter" cname="GMimeHeaderIter" opaque="true">
       <field name="Hdrlist" cname="hdrlist" type="GMimeHeaderList*" access="public" writeable="true" />
@@ -2423,8 +2373,8 @@
           <parameter type="GMimeHeaderIter*" name="iter" />
         </parameters>
       </method>
-      <method name="HasRaw" cname="g_mime_header_list_has_raw">
-        <return-type type="gboolean" />
+      <method name="GetStream" cname="g_mime_header_list_get_stream">
+        <return-type type="GMimeStream*" />
       </method>
       <constructor cname="g_mime_header_list_new" />
       <method name="Prepend" cname="g_mime_header_list_prepend">
@@ -2454,10 +2404,10 @@
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
-      <method name="SetRaw" cname="g_mime_header_list_set_raw">
+      <method name="SetStream" cname="g_mime_header_list_set_stream">
         <return-type type="void" />
         <parameters>
-          <parameter type="const-char*" name="raw" />
+          <parameter type="GMimeStream*" name="stream" />
         </parameters>
       </method>
       <method name="ToString" cname="g_mime_header_list_to_string">
@@ -2686,14 +2636,6 @@
           <parameter type="guint" name="micro" />
         </parameters>
       </method>
-      <method name="ParseContentType" cname="g_mime_parse_content_type" shared="true">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="const-char**" name="in" />
-          <parameter type="char**" name="type" />
-          <parameter type="char**" name="subtype" />
-        </parameters>
-      </method>
       <method name="SetUserCharsets" cname="g_mime_set_user_charsets" shared="true">
         <return-type type="void" />
         <parameters>
@@ -2726,27 +2668,6 @@
         <return-type type="const-char*" />
         <parameters>
           <parameter type="GMimeContentEncoding" name="encoding" />
-        </parameters>
-      </method>
-    </class>
-    <class name="Decode" cname="GMimeDecode_">
-      <method name="Domain" cname="g_mime_decode_domain" shared="true">
-        <return-type type="gboolean" />
-        <parameters>
-          <parameter type="const-char**" name="in" />
-          <parameter type="GString*" name="domain" />
-        </parameters>
-      </method>
-      <method name="Lwsp" cname="g_mime_decode_lwsp" shared="true">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char**" name="in" />
-        </parameters>
-      </method>
-      <method name="Word" cname="g_mime_decode_word" shared="true">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="const-char**" name="in" />
         </parameters>
       </method>
     </class>
@@ -2818,21 +2739,6 @@
       </method>
       <method name="Language" cname="g_mime_locale_language" shared="true">
         <return-type type="const-char*" />
-      </method>
-    </class>
-    <class name="Strcase" cname="GMimeStrcase_">
-      <method name="Equal" cname="g_mime_strcase_equal" shared="true">
-        <return-type type="int" />
-        <parameters>
-          <parameter type="gconstpointer" name="v" />
-          <parameter type="gconstpointer" name="v2" />
-        </parameters>
-      </method>
-      <method name="Hash" cname="g_mime_strcase_hash" shared="true">
-        <return-type type="guint" />
-        <parameters>
-          <parameter type="gconstpointer" name="key" />
-        </parameters>
       </method>
     </class>
     <class name="Utils" cname="GMimeUtils_">

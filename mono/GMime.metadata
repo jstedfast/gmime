@@ -12,20 +12,23 @@
   <!--<attr path="/api/namespace/*/*/*/parameter[@type='ssize_t*']" name="type">gint32*</attr>-->
 
   <!-- Global / Locale -->
-  <remove-node path="/api/namespace/class[@name='Global']/method[@name='ParseContentType']"/>
   <attr path="/api/namespace/class[@name='Global']/method[@name='UserCharsets']" name="name">GetUserCharsets</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Charset']" name="name">GetCharset</attr>
   <attr path="/api/namespace/class[@name='Locale']/method[@name='Language']" name="name">GetLanguage</attr>
 
   <!-- Callback Functions -->
   <remove-node path="/api/namespace/callback[@name='HeaderForeachFunc']"/>
-  <remove-node path="/api/namespace/callback[@name='PartFunc']"/>
 
   <!-- Charset -->
 
   <!-- Common -->
   <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
-  <remove-node path="/api/namespace/class[@name='Strcase']"/>
+  <!--<remove-node path="/api/namespace/class[@name='Strcase']"/>-->
+
+  <!-- Events -->
+  <!-- Remove the g_mime_event* functions - they don't need to be public -->
+  <remove-node path="/api/namespace/struct[@name='Event']"/>
+  <remove-node path="/api/namespace/callback[@name='EventCallback']"/>
 
   <!-- CipherContext -->
   <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='signers']"/>
@@ -36,14 +39,19 @@
   <!-- ContentDisposition -->
   <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='param_hash']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='params']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/signal[@name='Changed']"/>
+
+  <!-- ContentEncoding -->
+  <attr path="/api/namespace/class[@name='Content']/method[@name='EncodingFromString']" name="name">ContentEncodingFromString</attr>
+  <attr path="/api/namespace/class[@name='Content']/method[@name='EncodingToString']" name="name">ContentEncodingToString</attr>
+  <move-node path="/api/namespace/class[@name='Content']/method[@name='ContentEncodingFromString']">/api/namespace/class[@name='Utils']</move-node>
+  <move-node path="/api/namespace/class[@name='Content']/method[@name='ContentEncodingToString']">/api/namespace/class[@name='Utils']</move-node>
+  <remove-node path="/api/namespace/class[@name='Content']"/>
 
   <!-- ContentType -->
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='param_hash']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='params']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='subtype']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='type']"/>
-  <remove-node path="/api/namespace/object[@cname='GMimeContentType']/signal[@name='Changed']"/>
 
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
@@ -124,8 +132,8 @@
 
   <!-- HeaderList -->
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@cname='g_mime_header_list_foreach']"/>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetStream']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetStream']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Prepend']" name="name">PrependHeader</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Append']" name="name">AppendHeader</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Remove']" name="name">RemoveHeader</attr>
@@ -236,7 +244,8 @@
 
   <!-- Parse Utils -->
   <!-- Remove some utility parser functions: decode_word, decode_lwsp, etc -->
-  <remove-node path="/api/namespace/class[@name='Decode']"/>
+  <!--<remove-node path="/api/namespace/class[@name='Global']/method[@name='ParseContentType']"/>-->
+  <!--<remove-node path="/api/namespace/class[@name='Decode']"/>-->
 
   <!-- Part -->
 
@@ -244,14 +253,6 @@
   <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>
   <attr path="/api/namespace/struct[@name='References']/method[@name='Decode']" name="name">Parse</attr>
   <remove-node path="/api/namespace/struct[@name='References']/method[@name='Clear']"/>
-
-  <!-- Session -->
-
-  <!-- SessionSimple -->
-  <!-- Fix the GMimeSessionSimple properties which clash with GMimeSession's method names -->
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetIsOnline']" name="name">SetIsOnlineFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetRequestPasswd']" name="name">SetRequestPasswdFunc</attr>
-  <attr path="/api/namespace/object[@cname='GMimeSessionSimple']/method[@name='SetForgetPasswd']" name="name">SetForgetPasswdFunc</attr>
 
   <!-- Stream IOVectors -->
   <remove-node path="/api/namespace/object[@cname='GMimeStream']/method[@cname='g_mime_stream_writev']"/>
