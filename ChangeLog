@@ -1,5 +1,23 @@
 2009-04-26  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-session*.[c,h]: Removed.
+
+	* gmime/gmime-stream-pipe.[c,h]: New stream for pipes (where
+	seeking isn't allowed). Needed by GMimeGpgContext.
+
+	* gmime/gmime-gpg-context.c: Updated to use the new request_passwd
+	callback function instead of the GMimeSession.
+	(g_mime_gpg_context_set_auto_key_retrieve): New function for
+	disabling the auto-key-retrieve functionality of gpg.
+	(g_mime_gpg_context_get_auto_key_retrieve): New function to get
+	the state of auto-key-retrieve enabledness.
+
+	* gmime/gmime-cipher-context.[c,h]: No longer references a
+	GMimeSession. Instead, we now have a GMimePasswordRequestFunc used
+	for prompting the user.
+
+2009-04-26  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-multipart-encrypted.c: Removed stub virtual method
 	overloads that did nothing but call the base class'
 	implementation.

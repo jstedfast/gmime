@@ -52,6 +52,7 @@
 #include <gmime/gmime-stream-mem.h>
 #include <gmime/gmime-stream-mmap.h>
 #include <gmime/gmime-stream-null.h>
+#include <gmime/gmime-stream-pipe.h>
 #include <gmime/gmime-filter.h>
 #include <gmime/gmime-filter-basic.h>
 #include <gmime/gmime-filter-best.h>
@@ -65,8 +66,6 @@
 #include <gmime/gmime-filter-strip.h>
 #include <gmime/gmime-filter-windows.h>
 #include <gmime/gmime-filter-yenc.h>
-#include <gmime/gmime-session.h>
-#include <gmime/gmime-session-simple.h>
 #include <gmime/gmime-cipher-context.h>
 #include <gmime/gmime-gpg-context.h>
 

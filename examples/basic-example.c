@@ -40,68 +40,16 @@
 static const char *path = "/usr/bin/gpg";
 static const char *passphrase = "no.secret";
 
-typedef struct _ExampleSession ExampleSession;
-typedef struct _ExampleSessionClass ExampleSessionClass;
-
-struct _ExampleSession {
-	GMimeSession parent_object;
-	
-};
-
-struct _ExampleSessionClass {
-	GMimeSessionClass parent_class;
-	
-};
-
-static void example_session_class_init (ExampleSessionClass *klass);
-
-static char *request_passwd (GMimeSession *session, const char *prompt,
-			     gboolean secret, const char *item,
-			     GError **err);
-
-
-static GMimeSessionClass *parent_class = NULL;
-
-
-static GType
-example_session_get_type (void)
+static gboolean
+request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
-	static GType type = 0;
-	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (ExampleSessionClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) example_session_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (ExampleSession),
-			0,    /* n_preallocs */
-			NULL, /* object_init */
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_SESSION, "ExampleSession", &info, 0);
+	if (g_mime_stream_write_string (response, passphrase) == -1 ||
+	    g_mime_stream_write (response, "\n", 1) == -1) {
+		g_set_error (err, GMIME_ERROR, errno, "%s", g_strerror (errno));
+		return FALSE;
 	}
 	
-	return type;
-}
-
-
-static void
-example_session_class_init (ExampleSessionClass *klass)
-{
-	GMimeSessionClass *session_class = GMIME_SESSION_CLASS (klass);
-	
-	parent_class = g_type_class_ref (GMIME_TYPE_SESSION);
-	
-	session_class->request_passwd = request_passwd;
-}
-
-static char *
-request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
-{
-	return g_strdup (passphrase);
+	return TRUE;
 }
 #endif /* ! G_OS_WIN32 */
 
@@ -337,7 +285,6 @@ remove_a_mime_part (GMimeMessage *message)
 int main (int argc, char **argv)
 {
 #ifndef G_OS_WIN32
-	GMimeSession *session;
 	GMimeCipherContext *ctx;
 #endif
 	GMimeMessage *message;
@@ -363,10 +310,11 @@ int main (int argc, char **argv)
 	count_parts_in_message (message);
 	
 #ifndef G_OS_WIN32
-	/* create our cipher context (and session - which is used by the context to query the user) */
-	session = g_object_new (example_session_get_type (), NULL);
-	ctx = g_mime_gpg_context_new (session, path);
-	g_object_unref (session);
+	/* create our cipher context */
+	ctx = g_mime_gpg_context_new (request_passwd, path);
+	
+	/* don't allow auto key-retrival */
+	g_mime_gpg_context_set_auto_key_retrieve ((GMimeGpgContext *) ctx, FALSE);
 	
 	/* set the always_trust flag so that gpg will be spawned with `gpg --always-trust` */
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);

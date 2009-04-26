@@ -54,8 +54,6 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-parse-utils.c		\
 	gmime-parser.c			\
 	gmime-part.c			\
-	gmime-session.c			\
-	gmime-session-simple.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
 	gmime-stream-cat.c		\
@@ -65,6 +63,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-stream-mem.c		\
 	gmime-stream-mmap.c		\
 	gmime-stream-null.c		\
+	gmime-stream-pipe.c		\
 	gmime-utils.c			\
 	internet-address.c
 
@@ -104,8 +103,6 @@ gmimeinclude_HEADERS = 			\
 	gmime-param.h			\
 	gmime-parser.h			\
 	gmime-part.h			\
-	gmime-session.h			\
-	gmime-session-simple.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\
 	gmime-stream-cat.h		\
@@ -115,6 +112,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-mem.h		\
 	gmime-stream-mmap.h		\
 	gmime-stream-null.h		\
+	gmime-stream-pipe.h		\
 	gmime-utils.h			\
 	internet-address.h
 

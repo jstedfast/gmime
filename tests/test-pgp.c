@@ -35,73 +35,13 @@ extern int verbose;
 
 #define v(x) if (verbose > 3) x
 
-
-typedef struct _TestSession TestSession;
-typedef struct _TestSessionClass TestSessionClass;
-
-struct _TestSession {
-	GMimeSession parent_object;
-	
-};
-
-struct _TestSessionClass {
-	GMimeSessionClass parent_class;
-	
-};
-
-static void test_session_class_init (TestSessionClass *klass);
-
-static char *request_passwd (GMimeSession *session, const char *prompt,
-			     gboolean secret, const char *item,
-			     GError **err);
-
-
-static GMimeSessionClass *parent_class = NULL;
-
-
-static GType
-test_session_get_type (void)
+static gboolean
+request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
-	static GType type = 0;
+	g_mime_stream_write_string (response, "no.secret\n");
 	
-	if (!type) {
-		static const GTypeInfo info = {
-			sizeof (TestSessionClass),
-			NULL, /* base_class_init */
-			NULL, /* base_class_finalize */
-			(GClassInitFunc) test_session_class_init,
-			NULL, /* class_finalize */
-			NULL, /* class_data */
-			sizeof (TestSession),
-			0,    /* n_preallocs */
-			NULL, /* object_init */
-		};
-		
-		type = g_type_register_static (GMIME_TYPE_SESSION, "TestSession", &info, 0);
-	}
-	
-	return type;
+	return TRUE;
 }
-
-
-static void
-test_session_class_init (TestSessionClass *klass)
-{
-	GMimeSessionClass *session_class = GMIME_SESSION_CLASS (klass);
-	
-	parent_class = g_type_class_ref (GMIME_TYPE_SESSION);
-	
-	session_class->request_passwd = request_passwd;
-}
-
-
-static char *
-request_passwd (GMimeSession *session, const char *prompt, gboolean secret, const char *item, GError **err)
-{
-	return g_strdup ("no.secret");
-}
-
-
 
 static void
 test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
@@ -313,7 +253,6 @@ int main (int argc, char **argv)
 	const char *datadir = "data/pgp";
 	GMimeStream *istream, *ostream;
 	GMimeCipherContext *ctx;
-	GMimeSession *session;
 	const char *what;
 	struct stat st;
 	char *key;
@@ -341,9 +280,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("GnuPG cipher context");
 	
-	session = g_object_new (test_session_get_type (), NULL);
-	
-	ctx = g_mime_gpg_context_new (session, "/usr/bin/gpg");
+	ctx = g_mime_gpg_context_new (request_passwd, "/usr/bin/gpg");
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");
@@ -435,7 +372,6 @@ int main (int argc, char **argv)
 		testsuite_check_failed ("%s failed: %s", what, ex->message);
 	} finally;
 	
-	g_object_unref (session);
 	g_object_unref (istream);
 	g_object_unref (ostream);
 	g_object_unref (ctx);

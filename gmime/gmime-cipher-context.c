@@ -119,16 +119,13 @@ g_mime_cipher_context_class_init (GMimeCipherContextClass *klass)
 static void
 g_mime_cipher_context_init (GMimeCipherContext *ctx, GMimeCipherContextClass *klass)
 {
-	ctx->session = NULL;
+	ctx->request_passwd = NULL;
 }
 
 static void
 g_mime_cipher_context_finalize (GObject *object)
 {
 	GMimeCipherContext *ctx = (GMimeCipherContext *) object;
-	
-	if (ctx->session)
-		g_object_unref (ctx->session);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -138,6 +135,41 @@ static GMimeCipherHash
 cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
 {
 	return GMIME_CIPHER_HASH_DEFAULT;
+}
+
+
+/**
+ * g_mime_cipher_context_set_request_password:
+ * @ctx: a #GMimeCipherContext
+ * @request_passwd: a callback function for requesting a password
+ *
+ * Sets the function used by the @ctx for requesting a password from
+ * the user.
+ **/
+void
+g_mime_cipher_context_set_request_password (GMimeCipherContext *ctx, GMimePasswordRequestFunc request_passwd)
+{
+	g_return_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx));
+	
+	ctx->request_passwd = request_passwd;
+}
+
+
+/**
+ * g_mime_cipher_context_get_request_password:
+ * @ctx: a #GMimeCipherContext
+ *
+ * Gets the function used by the @ctx for requesting a password from
+ * the user.
+ *
+ * Returns: a #GMimePasswordRequestFunc or %NULL if not set.
+ **/
+GMimePasswordRequestFunc
+g_mime_cipher_context_get_request_password (GMimeCipherContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	
+	return ctx->request_passwd;
 }
 
 

@@ -28,7 +28,6 @@
 #include <time.h>
 
 #include <gmime/gmime-stream.h>
-#include <gmime/gmime-session.h>
 
 G_BEGIN_DECLS
 
@@ -44,6 +43,24 @@ typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
 
 typedef struct _GMimeSigner GMimeSigner;
 typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
+
+
+/**
+ * GMimePasswordRequestFunc:
+ * @ctx: the #GMimeCipherContext making the request
+ * @user_id: the user_id of the password being requested
+ * @prompt_ctx: a string containing some helpful context for the prompt
+ * @reprompt: %TRUE if this password request is a reprompt due to a previously bad password response
+ * @response: a stream for the application to write the password to (followed by a newline '\n' character)
+ * @err: a #GError for the callback to set if an error occurs
+ *
+ * A password request callback allowing a #GMimeCipherContext to
+ * prompt the user for a password for a given key.
+ *
+ * Returns: %TRUE on success or %FALSE on error.
+ **/
+typedef gboolean (* GMimePasswordRequestFunc) (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx,
+					       gboolean reprompt, GMimeStream *response, GError **err);
 
 
 /**
@@ -80,7 +97,7 @@ typedef enum {
 /**
  * GMimeCipherContext:
  * @parent_object: parent #GObject
- * @session: a #GMimeSession
+ * @request_passwd: a callback for requesting a password
  * @sign_protocol: signature protocol (must be set by subclass)
  * @encrypt_protocol: encryption protocol (must be set by subclass)
  * @key_protocol: key exchange protocol (must be set by subclass)
@@ -90,9 +107,9 @@ typedef enum {
 struct _GMimeCipherContext {
 	GObject parent_object;
 	
-	GMimeSession *session;
+	GMimePasswordRequestFunc request_passwd;
 	
-	/* these must be set by the subclass */
+	/* these must be set by the subclass in the instance_init() */
 	const char *sign_protocol;
 	const char *encrypt_protocol;
 	const char *key_protocol;
@@ -130,6 +147,8 @@ struct _GMimeCipherContextClass {
 
 
 GType g_mime_cipher_context_get_type (void);
+
+void g_mime_cipher_context_set_request_password (GMimeCipherContext *ctx, GMimePasswordRequestFunc request_passwd);
 
 /* hash routines */
 GMimeCipherHash      g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash);

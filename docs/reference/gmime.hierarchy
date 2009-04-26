@@ -30,8 +30,6 @@ GObject
     GMimeFilterWindows
     GMimeFilterYenc
   GMimeParser
-  GMimeSession
-    GMimeSessionSimple
   GMimeStream
     GMimeStreamBuffer
     GMimeStreamCat
@@ -41,5 +39,6 @@ GObject
     GMimeStreamMem
     GMimeStreamMmap
     GMimeStreamNull
+    GMimeStreamPipe
 GInterface
   GTypePlugin

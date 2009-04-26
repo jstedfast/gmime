@@ -2,8 +2,6 @@
 <!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
                "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
 <!ENTITY gmime-Init SYSTEM "xml/gmime.xml">
-<!ENTITY GMimeSession SYSTEM "xml/gmime-session.xml">
-<!ENTITY GMimeSessionSimple SYSTEM "xml/gmime-session-simple.xml">
 <!ENTITY GMimeParam SYSTEM "xml/gmime-param.xml">
 <!ENTITY GMimeHeader SYSTEM "xml/gmime-header.xml">
 <!ENTITY GMimeContentType SYSTEM "xml/gmime-content-type.xml">
@@ -35,6 +33,7 @@
 <!ENTITY GMimeStreamMem SYSTEM "xml/gmime-stream-mem.xml">
 <!ENTITY GMimeStreamMmap SYSTEM "xml/gmime-stream-mmap.xml">
 <!ENTITY GMimeStreamNull SYSTEM "xml/gmime-stream-null.xml">
+<!ENTITY GMimeStreamPipe SYSTEM "xml/gmime-stream-pipe.xml">
 <!ENTITY GMimeStreamFilter SYSTEM "xml/gmime-stream-filter.xml">
 <!ENTITY GMimeFilter SYSTEM "xml/gmime-filter.xml">
 <!ENTITY GMimeFilterBasic SYSTEM "xml/gmime-filter-basic.xml">
@@ -183,6 +182,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeStreamNull;
       &GMimeStreamFilter;
       &GMimeStreamBuffer;
+      &GMimeStreamPipe;
       &GMimeStreamCat;
     </chapter>
 
@@ -245,12 +245,6 @@ string utilities, file utilities, a main loop abstraction, and so on.
       <title>Cipher Contexts</title>
       &GMimeCipherContext;
       &GMimeGpgContext;
-    </chapter>
-
-    <chapter id="Sessions">
-      <title>Sessions</title>
-      &GMimeSession;
-      &GMimeSessionSimple;
     </chapter>
   </part>
 </book>

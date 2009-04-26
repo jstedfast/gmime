@@ -44,6 +44,7 @@
 #include "gmime-gpg-context.h"
 #include "gmime-filter-charset.h"
 #include "gmime-stream-filter.h"
+#include "gmime-stream-pipe.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
 #include "gmime-charset.h"
@@ -153,8 +154,9 @@ g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 {
 	GMimeCipherContext *cipher = (GMimeCipherContext *) ctx;
 	
-	ctx->path = NULL;
+	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
+	ctx->path = NULL;
 	
 	cipher->sign_protocol = "application/pgp-signature";
 	cipher->encrypt_protocol = "application/pgp-encrypted";
@@ -246,11 +248,10 @@ enum _GpgCtxMode {
 
 struct _GpgCtx {
 	enum _GpgCtxMode mode;
-	GMimeSession *session;
 	GHashTable *userid_hint;
+	GMimeGpgContext *ctx;
 	pid_t pid;
 	
-	char *path;
 	char *userid;
 	char *sigfile;
 	GPtrArray *recipients;
@@ -268,7 +269,6 @@ struct _GpgCtx {
 	guint statusleft;
 	
 	char *need_id;
-	char *passwd;
 	
 	GMimeStream *istream;
 	GMimeStream *ostream;
@@ -290,7 +290,6 @@ struct _GpgCtx {
 	unsigned int always_trust:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
-	unsigned int send_passwd:1;
 	
 	unsigned int bad_passwds:2;
 	
@@ -301,11 +300,11 @@ struct _GpgCtx {
 	unsigned int nopubkey:1;
 	unsigned int nodata:1;
 	
-	unsigned int padding:14;
+	unsigned int padding:15;
 };
 
 static struct _GpgCtx *
-gpg_ctx_new (GMimeSession *session, const char *path)
+gpg_ctx_new (GMimeGpgContext *ctx)
 {
 	struct _GpgCtx *gpg;
 	const char *charset;
@@ -313,8 +312,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	
 	gpg = g_slice_new (struct _GpgCtx);
 	gpg->mode = GPG_CTX_MODE_SIGN;
-	gpg->session = session;
-	g_object_ref (session);
+	gpg->ctx = ctx;
 	gpg->userid_hint = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	gpg->complete = FALSE;
 	gpg->seen_eof1 = TRUE;
@@ -324,7 +322,6 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	gpg->flushed = FALSE;
 	gpg->exited = FALSE;
 	
-	gpg->path = g_strdup (path);
 	gpg->userid = NULL;
 	gpg->sigfile = NULL;
 	gpg->recipients = NULL;
@@ -344,9 +341,7 @@ gpg_ctx_new (GMimeSession *session, const char *path)
 	
 	gpg->bad_passwds = 0;
 	gpg->need_passwd = FALSE;
-	gpg->send_passwd = FALSE;
 	gpg->need_id = NULL;
-	gpg->passwd = NULL;
 	
 	gpg->nodata = FALSE;
 	gpg->badsig = FALSE;
@@ -477,12 +472,7 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	GMimeSigner *signer, *next;
 	guint i;
 	
-	if (gpg->session)
-		g_object_unref (gpg->session);
-	
 	g_hash_table_destroy (gpg->userid_hint);
-	
-	g_free (gpg->path);
 	
 	g_free (gpg->userid);
 	
@@ -509,11 +499,6 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	g_free (gpg->statusbuf);
 	
 	g_free (gpg->need_id);
-	
-	if (gpg->passwd) {
-		memset (gpg->passwd, 0, strlen (gpg->passwd));
-		g_free (gpg->passwd);
-	}
 	
 	if (gpg->istream)
 		g_object_unref (gpg->istream);
@@ -609,12 +594,12 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 		g_ptr_array_add (argv, "-");
 		break;
 	case GPG_CTX_MODE_VERIFY:
-		if (!g_mime_session_is_online (gpg->session)) {
-			/* this is a deprecated flag to gpg since 1.0.7 */
-			/*g_ptr_array_add (argv, "--no-auto-key-retrieve");*/
+		if (!gpg->ctx->auto_key_retrieve) {
+			/* don't allow gpg to fetch keys from a server... */
 			g_ptr_array_add (argv, "--keyserver-options");
 			g_ptr_array_add (argv, "no-auto-key-retrieve");
 		}
+		
 		g_ptr_array_add (argv, "--verify");
 		if (gpg->sigfile)
 			g_ptr_array_add (argv, gpg->sigfile);
@@ -717,7 +702,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 		}
 		
 		/* run gpg */
-		execvp (gpg->path, (char **) argv->pdata);
+		execvp (gpg->ctx->path, (char **) argv->pdata);
 		_exit (255);
 	} else if (gpg->pid < 0) {
 		g_ptr_array_free (argv, TRUE);
@@ -1012,11 +997,22 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		g_free (gpg->need_id);
 		gpg->need_id = userid;
 	} else if (!strncmp (status, "GET_HIDDEN ", 11)) {
+		GMimeStream *filtered_stream, *passwd;
+		GMimeCipherContext *ctx;
+		GMimeFilter *filter;
+		const char *charset;
 		char *prompt = NULL;
-		char *passwd = NULL;
 		const char *name;
+		gboolean ok;
 		
 		status += 11;
+		
+		ctx = (GMimeCipherContext *) gpg->ctx;
+		if (!ctx->request_passwd) {
+			/* can't ask for a passwd w/o a way to request it from the user... */
+			g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
+			return -1;
+		}
 		
 		if (!(name = g_hash_table_lookup (gpg->userid_hint, gpg->need_id)))
 			name = gpg->userid;
@@ -1035,38 +1031,40 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			return -1;
 		}
 		
-		if ((passwd = g_mime_session_request_passwd (gpg->session, prompt, TRUE, gpg->need_id, err))) {
-			g_free (prompt);
+		/* create a stream for the application to write the passwd to */
+		passwd = g_mime_stream_pipe_new (gpg->passwd_fd);
+		g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) passwd, FALSE);
+		
+		if (!gpg->utf8) {
+			/* we'll need to transcode the UTF-8 password that the application
+			 * will write to our stream into the locale charset used by gpg */
+			filtered_stream = g_mime_stream_filter_new (passwd);
+			g_object_unref (passwd);
 			
-			if (!gpg->utf8) {
-				char *locale_passwd;
-				
-				if ((locale_passwd = g_locale_from_utf8 (passwd, -1, &nread, &nwritten, NULL))) {
-					memset (passwd, 0, strlen (passwd));
-					g_free (passwd);
-					passwd = locale_passwd;
-				}
-			}
+			charset = g_mime_locale_charset ();
+			filter = g_mime_filter_charset_new ("UTF-8", charset);
 			
-			gpg->passwd = g_strdup_printf ("%s\n", passwd);
-			memset (passwd, 0, strlen (passwd));
-			g_free (passwd);
+			g_mime_stream_filter_add ((GMimeStreamFilter *) filtered_stream, filter);
+			g_object_unref (filter);
 			
-			gpg->send_passwd = TRUE;
-		} else {
-			if (err && *err == NULL)
-				g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
-			
-			g_free (prompt);
-			
-			return -1;
+			passwd = filtered_stream;
 		}
+		
+		if ((ok = ctx->request_passwd (ctx, name, prompt, gpg->bad_passwds > 0, passwd, err))) {
+			if (g_mime_stream_flush (passwd) == -1) {
+				
+				ok = FALSE;
+			}
+		}
+		g_object_unref (passwd);
+		g_free (prompt);
+		
+		if (!ok)
+			return -1;
 	} else if (!strncmp (status, "GOOD_PASSPHRASE", 15)) {
 		gpg->bad_passwds = 0;
 	} else if (!strncmp (status, "BAD_PASSPHRASE", 14)) {
 		gpg->bad_passwds++;
-		
-		g_mime_session_forget_passwd (gpg->session, gpg->userid, NULL);
 		
 		if (gpg->bad_passwds == 3) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_BAD_PASSWORD,
@@ -1241,7 +1239,6 @@ enum {
 	GPG_STDOUT_FD,
 	GPG_STDERR_FD,
 	GPG_STATUS_FD,
-	GPG_PASSWD_FD,
 	GPG_N_FDS
 };
 
@@ -1353,9 +1350,6 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	pfds[GPG_STDIN_FD].fd = gpg->stdin_fd;
 	pfds[GPG_STDIN_FD].events = POLLOUT;
 	
-	pfds[GPG_PASSWD_FD].fd = gpg->passwd_fd;
-	pfds[GPG_PASSWD_FD].events = POLLOUT;
-	
 	do {
 		for (n = 0; n < GPG_N_FDS; n++)
 			pfds[n].revents = 0;
@@ -1436,34 +1430,6 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		} else {
 			gpg->seen_eof2 = TRUE;
 		}
-	}
-	
-	if ((pfds[GPG_PASSWD_FD].revents & (POLLOUT | POLLHUP)) && gpg->need_passwd && gpg->send_passwd) {
-		size_t n, nwritten = 0;
-		ssize_t w;
-		
-		d(printf ("sending gpg our passphrase...\n"));
-		
-		/* send the passphrase to gpg */
-		n = strlen (gpg->passwd);
-		do {
-			do {
-				w = write (gpg->passwd_fd, gpg->passwd + nwritten, n - nwritten);
-			} while (w == -1 && (errno == EINTR || errno == EAGAIN));
-			
-			if (w > 0)
-				nwritten += w;
-		} while (nwritten < n && w != -1);
-		
-		/* zero and free our passwd buffer */
-		memset (gpg->passwd, 0, n);
-		g_free (gpg->passwd);
-		gpg->passwd = NULL;
-		
-		if (w == -1)
-			goto exception;
-		
-		gpg->send_passwd = FALSE;
 	}
 	
 	if ((pfds[GPG_STDIN_FD].revents & (POLLOUT | POLLHUP)) && gpg->istream) {
@@ -1636,7 +1602,7 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN);
 	gpg_ctx_set_hash (gpg, hash);
 	gpg_ctx_set_armor (gpg, TRUE);
@@ -1738,7 +1704,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 		}
 	}
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_VERIFY);
 	gpg_ctx_set_hash (gpg, hash);
 	gpg_ctx_set_sigfile (gpg, sigfile);
@@ -1810,7 +1776,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	struct _GpgCtx *gpg;
 	guint i;
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	if (sign)
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN_ENCRYPT);
 	else
@@ -1872,7 +1838,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	struct _GpgCtx *gpg;
 	int save;
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_DECRYPT);
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
@@ -1939,7 +1905,7 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_IMPORT);
 	gpg_ctx_set_istream (gpg, istream);
 	
@@ -1987,7 +1953,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 	struct _GpgCtx *gpg;
 	guint i;
 	
-	gpg = gpg_ctx_new (context->session, ctx->path);
+	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_EXPORT);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_ostream (gpg, ostream);
@@ -2036,7 +2002,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 
 /**
  * g_mime_gpg_context_new:
- * @session: a #GMimeSession
+ * @equest_passwd: a #GMimePasswordRequestFunc
  * @path: path to gpg binary
  *
  * Creates a new gpg cipher context object.
@@ -2044,22 +2010,54 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
  * Returns: a new gpg cipher context object.
  **/
 GMimeCipherContext *
-g_mime_gpg_context_new (GMimeSession *session, const char *path)
+g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path)
 {
 	GMimeCipherContext *cipher;
 	GMimeGpgContext *ctx;
 	
-	g_return_val_if_fail (GMIME_IS_SESSION (session), NULL);
 	g_return_val_if_fail (path != NULL, NULL);
 	
 	ctx = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
 	ctx->path = g_strdup (path);
 	
 	cipher = (GMimeCipherContext *) ctx;
-	cipher->session = session;
-	g_object_ref (session);
+	cipher->request_passwd = request_passwd;
 	
 	return cipher;
+}
+
+
+/**
+ * g_mime_gpg_context_get_auto_key_retrieve:
+ * @ctx: a #GMimeGpgContext
+ *
+ * Gets the @auto_key_retrieve flag on the gpg context.
+ *
+ * Returns: the @auto_key_retrieve flag on the gpg context.
+ **/
+gboolean
+g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
+	
+	return ctx->auto_key_retrieve;
+}
+
+
+/**
+ * g_mime_gpg_context_set_auto_key_retrieve:
+ * @ctx: a #GMimeGpgContext
+ * @auto_key_retrieve: auto-retrieve keys from a keys server
+ *
+ * Sets the @auto_key_retrieve flag on the gpg context which is used
+ * for signature verification.
+ **/
+void
+g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve)
+{
+	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
+	
+	ctx->auto_key_retrieve = auto_key_retrieve;
 }
 
 
@@ -2083,7 +2081,7 @@ g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
 /**
  * g_mime_gpg_context_set_always_trust:
  * @ctx: a #GMimeGpgContext
- * @always_trust: always truct flag
+ * @always_trust: always trust flag
  *
  * Sets the @always_trust flag on the gpg context which is used for
  * encryption.

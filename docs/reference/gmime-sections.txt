@@ -19,46 +19,6 @@ GMIME_ERROR_IS_SYSTEM
 </SECTION>
 
 <SECTION>
-<FILE>gmime-session</FILE>
-GMimeSession
-g_mime_session_request_passwd
-g_mime_session_forget_passwd
-g_mime_session_is_online
-
-<SUBSECTION Private>
-g_mime_session_get_type
-
-<SUBSECTION Standard>
-GMimeSessionClass
-GMIME_TYPE_SESSION
-GMIME_SESSION
-GMIME_IS_SESSION
-GMIME_SESSION_CLASS
-GMIME_IS_SESSION_CLASS
-GMIME_SESSION_GET_CLASS
-</SECTION>
-
-<SECTION>
-<FILE>gmime-session-simple</FILE>
-GMimeSessionSimple
-g_mime_session_simple_set_request_passwd
-g_mime_session_simple_set_forget_passwd
-g_mime_session_simple_set_is_online
-
-<SUBSECTION Private>
-g_mime_session_simple_get_type
-
-<SUBSECTION Standard>
-GMimeSessionSimpleClass
-GMIME_TYPE_SESSION_SIMPLE
-GMIME_SESSION_SIMPLE
-GMIME_IS_SESSION_SIMPLE
-GMIME_SESSION_SIMPLE_CLASS
-GMIME_IS_SESSION_SIMPLE_CLASS
-GMIME_SESSION_SIMPLE_GET_CLASS
-</SECTION>
-
-<SECTION>
 <FILE>gmime-stream</FILE>
 GMimeSeekWhence
 GMimeStreamIOVector
@@ -234,6 +194,26 @@ GMIME_IS_STREAM_NULL
 GMIME_STREAM_NULL_CLASS
 GMIME_IS_STREAM_NULL_CLASS
 GMIME_STREAM_NULL_GET_CLASS
+</SECTION>
+
+<SECTION>
+<FILE>gmime-stream-pipe</FILE>
+GMimeStreamPipe
+g_mime_stream_pipe_new
+g_mime_stream_pipe_get_owner
+g_mime_stream_pipe_set_owner
+
+<SUBSECTION Private>
+g_mime_stream_pipe_get_type
+
+<SUBSECTION Standard>
+GMimeStreamPipeClass
+GMIME_TYPE_STREAM_PIPE
+GMIME_STREAM_PIPE
+GMIME_IS_STREAM_PIPE
+GMIME_STREAM_PIPE_CLASS
+GMIME_IS_STREAM_PIPE_CLASS
+GMIME_STREAM_PIPE_GET_CLASS
 </SECTION>
 
 <SECTION>
@@ -1128,6 +1108,7 @@ g_mime_iconv_locale_to_utf8_length
 
 <SECTION>
 <FILE>gmime-cipher-context</FILE>
+GMimePasswordRequestFunc
 GMimeCipherHash
 GMimeCipherContext
 GMimeSignatureValidity
@@ -1136,6 +1117,7 @@ GMimeSignerStatus
 GMimeSignerTrust
 GMimeSignerError
 GMimeSigner
+g_mime_cipher_context_set_request_password
 g_mime_cipher_context_hash_id
 g_mime_cipher_context_hash_name
 g_mime_cipher_context_sign
@@ -1191,6 +1173,8 @@ GMimeGpgContext
 g_mime_gpg_context_new
 g_mime_gpg_context_get_always_trust
 g_mime_gpg_context_set_always_trust
+g_mime_gpg_context_get_auto_key_retrieve
+g_mime_gpg_context_set_auto_key_retrieve
 
 <SUBSECTION Private>
 g_mime_gpg_context_get_type
