@@ -466,8 +466,8 @@ stream_seek_block_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 	    || (offset > 0 && offset <= buffer->buflen)) {
 		/* the position is within our pre-buffered region */
 		stream->position += offset;
-		buffer->bufptr += offset;
-		buffer->buflen -= offset;
+		buffer->bufptr += (size_t) offset;
+		buffer->buflen -= (size_t) offset;
 		
 		return stream->position;
 	}

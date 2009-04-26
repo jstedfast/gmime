@@ -151,7 +151,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	
 	/* don't allow our caller to read past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (!(current = cat->current))
 		return -1;
@@ -196,7 +196,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	
 	/* don't allow our caller to write past the end of the stream */
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	if (!(current = cat->current))
 		return -1;

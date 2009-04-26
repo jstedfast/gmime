@@ -144,7 +144,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	}
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	fseek (fstream->fp, (long) stream->position, SEEK_SET);
@@ -184,7 +184,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	}
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	fseek (fstream->fp, (long) stream->position, SEEK_SET);

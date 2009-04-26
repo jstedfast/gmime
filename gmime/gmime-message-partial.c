@@ -423,7 +423,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	GMimeDataWrapper *wrapper;
 	const unsigned char *buf;
 	GPtrArray *parts;
-	size_t len, end;
+	gint64 len, end;
 	const char *id;
 	gint64 start;
 	guint i;
@@ -462,7 +462,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 		/* Preferably, we'd split on whole-lines if we can,
 		 * but if that's not possible, split on max size */
 		if ((end = MIN (len, start + max_size)) < len) {
-			register size_t ebx; /* end boundary */
+			register gint64 ebx; /* end boundary */
 			
 			ebx = end;
 			while (ebx > (start + 1) && ebx[buf] != '\n')
