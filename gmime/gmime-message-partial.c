@@ -153,20 +153,12 @@ message_partial_set_header (GMimeObject *object, const char *header, const char 
 static const char *
 message_partial_get_header (GMimeObject *object, const char *header)
 {
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return NULL;
-	
 	return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 }
 
 static gboolean
 message_partial_remove_header (GMimeObject *object, const char *header)
 {
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return FALSE;
-	
 	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 

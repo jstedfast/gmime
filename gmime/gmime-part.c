@@ -257,11 +257,6 @@ mime_part_remove_header (GMimeObject *object, const char *header)
 	GMimePart *mime_part = (GMimePart *) object;
 	guint i;
 	
-	/* Make sure that the header is a Content-* header, else it
-	   doesn't belong on a mime part */
-	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
-		return FALSE;
-	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
 		if (!g_ascii_strcasecmp (content_headers[i], header))
 			break;

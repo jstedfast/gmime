@@ -125,6 +125,10 @@ g_mime_message_part_finalize (GObject *object)
 static void
 message_part_prepend_header (GMimeObject *object, const char *header, const char *value)
 {
+	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
+	if (!g_ascii_strcasecmp ("Content-MD5", header))
+		return;
+	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
@@ -134,6 +138,10 @@ message_part_prepend_header (GMimeObject *object, const char *header, const char
 static void
 message_part_append_header (GMimeObject *object, const char *header, const char *value)
 {
+	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
+	if (!g_ascii_strcasecmp ("Content-MD5", header))
+		return;
+	
 	/* Make sure that the header is a Content-* header, else it
            doesn't belong on a message part */
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
@@ -156,29 +164,18 @@ message_part_set_header (GMimeObject *object, const char *header, const char *va
 static const char *
 message_part_get_header (GMimeObject *object, const char *header)
 {
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a message part */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-	else
-		return NULL;
+	return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
 }
 
 static gboolean
 message_part_remove_header (GMimeObject *object, const char *header)
 {
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a message part */
-	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
-		return FALSE;
-	
 	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
 }
 
 static void
 message_part_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
-	/* nothing special here... */
 	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
 }
 

@@ -57,16 +57,6 @@ static void g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass 
 static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps, GMimeMultipartEncryptedClass *klass);
 static void g_mime_multipart_encrypted_finalize (GObject *object);
 
-/* GMimeObject class methods */
-static void multipart_encrypted_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void multipart_encrypted_append_header (GMimeObject *object, const char *header, const char *value);
-static void multipart_encrypted_set_header (GMimeObject *object, const char *header, const char *value);
-static const char *multipart_encrypted_get_header (GMimeObject *object, const char *header);
-static gboolean multipart_encrypted_remove_header (GMimeObject *object, const char *header);
-static void multipart_encrypted_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-static char *multipart_encrypted_get_headers (GMimeObject *object);
-static ssize_t multipart_encrypted_write_to_stream (GMimeObject *object, GMimeStream *stream);
-
 
 static GMimeMultipartClass *parent_class = NULL;
 
@@ -99,21 +89,11 @@ g_mime_multipart_encrypted_get_type (void)
 static void
 g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass)
 {
-	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_MULTIPART);
 	
 	gobject_class->finalize = g_mime_multipart_encrypted_finalize;
-	
-	object_class->prepend_header = multipart_encrypted_prepend_header;
-	object_class->append_header = multipart_encrypted_append_header;
-	object_class->remove_header = multipart_encrypted_remove_header;
-	object_class->set_header = multipart_encrypted_set_header;
-	object_class->get_header = multipart_encrypted_get_header;
-	object_class->set_content_type = multipart_encrypted_set_content_type;
-	object_class->get_headers = multipart_encrypted_get_headers;
-	object_class->write_to_stream = multipart_encrypted_write_to_stream;
 }
 
 static void
@@ -135,54 +115,6 @@ g_mime_multipart_encrypted_finalize (GObject *object)
 		g_mime_signature_validity_free (mpe->validity);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-static void
-multipart_encrypted_prepend_header (GMimeObject *object, const char *header, const char *value)
-{
-	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
-}
-
-static void
-multipart_encrypted_append_header (GMimeObject *object, const char *header, const char *value)
-{
-	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
-}
-
-static void
-multipart_encrypted_set_header (GMimeObject *object, const char *header, const char *value)
-{
-	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
-}
-
-static const char *
-multipart_encrypted_get_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-}
-
-static gboolean
-multipart_encrypted_remove_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
-}
-
-static void
-multipart_encrypted_set_content_type (GMimeObject *object, GMimeContentType *content_type)
-{
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
-}
-
-static char *
-multipart_encrypted_get_headers (GMimeObject *object)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
-}
-
-static ssize_t
-multipart_encrypted_write_to_stream (GMimeObject *object, GMimeStream *stream)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->write_to_stream (object, stream);
 }
 
 
