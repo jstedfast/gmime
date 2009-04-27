@@ -124,6 +124,8 @@
 
   <!-- HeaderList -->
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@cname='g_mime_header_list_foreach']"/>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetStream']" name="hidden">true</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetStream']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='HasRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetRaw']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Prepend']" name="name">PrependHeader</attr>

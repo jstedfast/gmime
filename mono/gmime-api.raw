@@ -2423,7 +2423,10 @@
           <parameter type="GMimeHeaderIter*" name="iter" />
         </parameters>
       </method>
-      <method name="HasRaw" cname="g_mime_header_list_has_raw">
+      <method name="GetStream" cname="g_mime_header_list_get_stream">
+        <return-type type="GMimeStream*" />
+      </method>
+      <method name="HasRaw" cname="g_mime_header_list_has_raw" deprecated="1">
         <return-type type="gboolean" />
       </method>
       <constructor cname="g_mime_header_list_new" />
@@ -2454,10 +2457,16 @@
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
-      <method name="SetRaw" cname="g_mime_header_list_set_raw">
+      <method name="SetRaw" cname="g_mime_header_list_set_raw" deprecated="1">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="raw" />
+        </parameters>
+      </method>
+      <method name="SetStream" cname="g_mime_header_list_set_stream">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeStream*" name="stream" />
         </parameters>
       </method>
       <method name="ToString" cname="g_mime_header_list_to_string">

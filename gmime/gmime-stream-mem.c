@@ -420,7 +420,7 @@ g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)
  * Sets the byte array on the memory stream.
  *
  * Note: The memory stream is not responsible for freeing the byte
- * array.
+ * array. Use g_mime_stream_mem_set_owner() to change this behavior.
  **/
 void
 g_mime_stream_mem_set_byte_array (GMimeStreamMem *mem, GByteArray *array)
@@ -465,7 +465,7 @@ g_mime_stream_mem_get_owner (GMimeStreamMem *mem)
 /**
  * g_mime_stream_mem_set_owner:
  * @mem: a #GMimeStreamMem
- * @owner: owner
+ * @owner: %TRUE if this stream should own the #GByteArray or %FALSE otherwise
  *
  * Sets whether or not @mem owns the backend memory buffer.
  *
