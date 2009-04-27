@@ -684,9 +684,9 @@ g_mime_stream_gio_new_with_bounds (GFile *file, gint64 start, gint64 end)
  * g_mime_stream_gio_get_owner:
  * @stream: a #GMimeStreamGIO stream
  *
- * Gets whether or not @stream owns the backend file descriptor.
+ * Gets whether or not @stream owns the backend #GFile.
  *
- * Returns: %TRUE if @stream owns the backend file descriptor or %FALSE
+ * Returns: %TRUE if @stream owns the backend #GFile or %FALSE
  * otherwise.
  **/
 gboolean
@@ -701,7 +701,7 @@ g_mime_stream_gio_get_owner (GMimeStreamGIO *stream)
 /**
  * g_mime_stream_gio_set_owner:
  * @stream: a #GMimeStreamGIO stream
- * @owner: owner
+ * @owner: %TRUE if this stream should own the #GFile or %FALSE otherwise
  *
  * Sets whether or not @stream owns the backend GIO pointer.
  *

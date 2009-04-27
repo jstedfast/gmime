@@ -26,7 +26,7 @@ GMime 2.6 Planning:
 - Consider GCancellable and GError for GMimeStreams and
   GMimeParser... GError being far more important than GCancellable.
 
-- Add GIO-based GMimeStream and bump glib dep to 2.16
+- Add GIO-based GMimeStream and bump glib dep to 2.16 [ DONE ]
 
 - Add a g_mime_part_set_best_encoding()?
 

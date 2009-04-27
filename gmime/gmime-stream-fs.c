@@ -503,7 +503,7 @@ g_mime_stream_fs_get_owner (GMimeStreamFs *stream)
 /**
  * g_mime_stream_fs_set_owner:
  * @stream: a #GMimeStreamFs
- * @owner: owner
+ * @owner: %TRUE if this stream should own the file descriptor or %FALSE otherwise
  *
  * Sets whether or not @stream owns the backend file descriptor.
  *

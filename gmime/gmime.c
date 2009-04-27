@@ -44,8 +44,8 @@ GQuark gmime_error_quark;
 const guint gmime_major_version = GMIME_MAJOR_VERSION;
 const guint gmime_minor_version = GMIME_MINOR_VERSION;
 const guint gmime_micro_version = GMIME_MICRO_VERSION;
-const guint gmime_interface_age = 0;
-const guint gmime_binary_age = 0;
+const guint gmime_interface_age = GMIME_INTERFACE_AGE;
+const guint gmime_binary_age = GMIME_BINARY_AGE;
 
 static unsigned int initialized = 0;
 static guint32 enable = 0;
