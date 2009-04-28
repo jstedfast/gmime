@@ -23,6 +23,7 @@
 #define __GMIME_H__
 
 #include <glib.h>
+#include <gmime/gmime-version.h>
 #include <gmime/gmime-error.h>
 #include <gmime/gmime-charset.h>
 #include <gmime/gmime-iconv.h>
@@ -108,17 +109,6 @@ extern const guint gmime_interface_age;
  * GMime's binary age.
  **/
 extern const guint gmime_binary_age;
-
-
-/**
- * GMIME_CHECK_VERSION:
- * @major: Minimum major version
- * @minor: Minimum minor version
- * @micro: Minimum micro version
- *
- * Macro that just calls g_mime_check_version()
- **/
-#define GMIME_CHECK_VERSION(major,minor,micro) g_mime_check_version (major, minor, micro)
 
 gboolean g_mime_check_version (guint major, guint minor, guint micro);
 

@@ -1,0 +1,47 @@
+/* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
+/*  GMime
+ *  Copyright (C) 2000-2009 Jeffrey Stedfast
+ *
+ *  This library is free software; you can redistribute it and/or
+ *  modify it under the terms of the GNU Lesser General Public License
+ *  as published by the Free Software Foundation; either version 2.1
+ *  of the License, or (at your option) any later version.
+ *
+ *  This library is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ *  Lesser General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Lesser General Public
+ *  License along with this library; if not, write to the Free
+ *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
+ *  02110-1301, USA.
+ */
+
+
+#ifndef __GMIME_VERSION_H__
+#define __GMIME_VERSION_H__
+
+#define GMIME_MAJOR_VERSION (@GMIME_MAJOR_VERSION@)
+#define GMIME_MINOR_VERSION (@GMIME_MINOR_VERSION@)
+#define GMIME_MICRO_VERSION (@GMIME_MICRO_VERSION@)
+#define GMIME_BINARY_AGE    (@GMIME_BINARY_AGE@)
+#define GMIME_INTERFACE_AGE (@GMIME_INTERFACE_AGE@)
+
+
+/**
+ * GMIME_CHECK_VERSION:
+ * @major: Minimum major version
+ * @minor: Minimum minor version
+ * @micro: Minimum micro version
+ *
+ * Check whether a GMime version equal to or greater than
+ * @major.@minor.@micro is present.
+ **/
+#define	GMIME_CHECK_VERSION(major,minor,micro)	\
+    (GMIME_MAJOR_VERSION > (major) || \
+     (GMIME_MAJOR_VERSION == (major) && GMIME_MINOR_VERSION > (minor)) || \
+     (GMIME_MAJOR_VERSION == (major) && GMIME_MINOR_VERSION == (minor) && \
+      GMIME_MICRO_VERSION >= (micro)))
+
+#endif /* __GMIME_VERSION_H__ */

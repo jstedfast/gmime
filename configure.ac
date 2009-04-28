@@ -19,6 +19,11 @@ m4_define([gmime_binary_age],
 m4_define([gmime_version],
           [gmime_major_version.gmime_minor_version.gmime_micro_version])
 
+# the API version is the major.minor since the last API breakage
+m4_define([gmime_api_major], [2])
+m4_define([gmime_api_minor], [6])
+m4_define([gmime_api_version], [gmime_api_major.gmime_api_minor])
+
 # libtool version related macros
 m4_define([gmime_lt_release], [gmime_major_version.gmime_minor_version])
 m4_define([gmime_lt_current],
@@ -32,12 +37,6 @@ m4_define([gmime_lt_current_minus_age],
 # we only want minimal debugging support.
 m4_define([gmime_debug_default],
           [m4_if(m4_eval(gmime_minor_version % 2), [1], [yes], [minimum])])
-
-# the API version is the major.minor where minor is always even
-m4_define([gmime_api_stable], [m4_eval(10 * gmime_major_version + gmime_minor_version + m4_eval(gmime_minor_version % 2))])
-m4_define([gmime_api_major], [m4_eval(gmime_api_stable / 10)])
-m4_define([gmime_api_minor], [m4_eval(gmime_api_stable % 10)])
-m4_define([gmime_api_version], [gmime_api_major.gmime_api_minor])
 
 
 AC_INIT(gmime, [gmime_version],
@@ -70,16 +69,6 @@ AC_SUBST(GMIME_VERSION)
 AC_SUBST(GMIME_INTERFACE_AGE)
 AC_SUBST(GMIME_BINARY_AGE)
 
-AC_DEFINE(GMIME_MAJOR_VERSION, [gmime_major_version],
-	  [Define to the GMime major version])
-AC_DEFINE(GMIME_MINOR_VERSION, [gmime_minor_version],
-	  [Define to the GMime minor version])
-AC_DEFINE(GMIME_MICRO_VERSION, [gmime_micro_version],
-	  [Define to the GMime micro version])
-AC_DEFINE(GMIME_INTERFACE_AGE, [gmime_interface_age],
-	  [Define to the GMime interface age])
-AC_DEFINE(GMIME_BINARY_AGE, [gmime_binary_age],
-	  [Define to the GMime binary age])
 AC_DEFINE(GMIME_VERSION, ["gmime_version"],
 	  [Define to the GMime version])
 
@@ -583,6 +572,7 @@ docs/tutorial/Makefile
 examples/Makefile
 util/Makefile
 gmime/Makefile
+gmime/gmime-version.h
 mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config

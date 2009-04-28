@@ -14,6 +14,8 @@ INCLUDES = 				\
 
 noinst_PROGRAMS = gen-table charset-map
 
+EXTRA_DIST = gmime-version.h.in gmime-version.h
+
 lib_LTLIBRARIES = libgmime-2.6.la
 
 libgmime_2_6_la_SOURCES = 		\
@@ -116,6 +118,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-null.h		\
 	gmime-stream-pipe.h		\
 	gmime-utils.h			\
+	gmime-version.h			\
 	internet-address.h
 
 noinst_HEADERS = 			\

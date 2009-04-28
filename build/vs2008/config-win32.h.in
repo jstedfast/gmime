@@ -4,21 +4,6 @@
 /* Define if GMime should enable warning output. */
 /* #undef ENABLE_WARNINGS */
 
-/* Define to the GMime binary age */
-#define GMIME_BINARY_AGE @GMIME_BINARY_AGE@
-
-/* Define to the GMime interface age */
-#define GMIME_INTERFACE_AGE @GMIME_INTERFACE_AGE@
-
-/* Define to the GMime major version */
-#define GMIME_MAJOR_VERSION @GMIME_MAJOR_VERSION@
-
-/* Define to the GMime micro version */
-#define GMIME_MICRO_VERSION @GMIME_MICRO_VERSION@
-
-/* Define to the GMime minor version */
-#define GMIME_MINOR_VERSION @GMIME_MINOR_VERSION@
-
 /* Define to the GMime version */
 #define GMIME_VERSION "@GMIME_VERSION@"
 

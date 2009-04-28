@@ -1,3 +1,16 @@
+2009-04-28  Jeffrey Stedfast  <fejj@novell.com>
+
+	* build/vs2008/config-win32.h.in: No longer has GMIME_*_VERSION
+	defines - these are all in gmime-version.h now.
+
+	* gmime/gmime-version.h.in: New template for generating
+	gmime-version.h
+
+	* configure.ac: Renamed from configure.in. Now generates a
+	gmime/gmime-version.h header which contains a macro for checking
+	the GMime version at compile-time. Requested feature from the
+	Balsa guys.
+
 2009-04-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* tests/test-streams.c: Updated to test GIO streams.

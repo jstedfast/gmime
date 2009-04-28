@@ -8,7 +8,7 @@ ORIGDIR=`pwd`
 cd $srcdir
 PROJECT=GMime
 TEST_TYPE=-f
-FILE=configure.in
+FILE=configure.ac
 
 DIE=0
 
