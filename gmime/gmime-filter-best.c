@@ -280,16 +280,17 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
 
 /**
  * g_mime_filter_best_encoding:
- * @best: best filter
- * @required: encoding that all data must fit within
+ * @best: a #GMimeFilterBest
+ * @constraint: a #GMimeBestEncoding
  *
- * Calculates the best Content-Transfer-Encoding for the stream
- * filtered through @best that fits within the @required encoding.
+ * Calculates the most efficient Content-Transfer-Encoding for the
+ * stream filtered through @best that fits within the encoding
+ * @constraint.
  *
  * Returns: the best encoding for the stream filtered by @best.
  **/
 GMimeContentEncoding
-g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)
+g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint)
 {
 	GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_DEFAULT;
 	
@@ -298,7 +299,7 @@ g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding required)
 	if (!(best->flags & GMIME_FILTER_BEST_ENCODING))
 		return GMIME_CONTENT_ENCODING_DEFAULT;
 	
-	switch (required) {
+	switch (constraint) {
 	case GMIME_BEST_ENCODING_7BIT:
 		if (best->count0 > 0) {
 			encoding = GMIME_CONTENT_ENCODING_BASE64;

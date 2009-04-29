@@ -476,7 +476,7 @@ g_mime_part_set_content_description (GMimePart *mime_part, const char *descripti
  * Returns: the content description for the specified mime part.
  **/
 const char *
-g_mime_part_get_content_description (const GMimePart *mime_part)
+g_mime_part_get_content_description (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
@@ -731,6 +731,45 @@ g_mime_part_get_content_encoding (GMimePart *mime_part)
 
 
 /**
+ * g_mime_part_get_best_content_encoding:
+ * @mime_part: a #GMimePart object
+ * @constraint: a #GMimeBestEncoding
+ *
+ * Calculates the most efficient content encoding for the @mime_part
+ * given the @constraint.
+ *
+ * Returns: the best content encoding for the specified mime part.
+ **/
+GMimeContentEncoding
+g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeBestEncoding constraint)
+{
+	GMimeStream *filtered, *stream;
+	GMimeContentEncoding encoding;
+	GMimeFilterBest *best;
+	GMimeFilter *filter;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), GMIME_CONTENT_ENCODING_DEFAULT);
+	
+	stream = g_mime_stream_null_new ();
+	filtered = g_mime_stream_filter_new (stream);
+	g_object_unref (stream);
+	
+	filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) filtered, filter);
+	best = (GMimeFilterBest *) filter;
+	
+	g_mime_data_wrapper_write_to_stream (mime_part->content, filtered);
+	g_mime_stream_flush (filtered);
+	g_object_unref (filtered);
+	
+	encoding = g_mime_filter_best_encoding (best, constraint);
+	g_object_unref (best);
+	
+	return encoding;
+}
+
+
+/**
  * g_mime_part_set_filename:
  * @mime_part: a #GMimePart object
  * @filename: the filename of the Mime Part's content
@@ -762,7 +801,7 @@ g_mime_part_set_filename (GMimePart *mime_part, const char *filename)
  * and if not then checks the "name" parameter in the Content-Type.
  **/
 const char *
-g_mime_part_get_filename (const GMimePart *mime_part)
+g_mime_part_get_filename (GMimePart *mime_part)
 {
 	GMimeObject *object = (GMimeObject *) mime_part;
 	const char *filename = NULL;
@@ -786,6 +825,7 @@ set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
 	mime_part->content = content;
 	g_object_ref (content);
 }
+
 
 /**
  * g_mime_part_set_content_object:
@@ -816,7 +856,7 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  * Returns: the data-wrapper for the mime part's contents.
  **/
 GMimeDataWrapper *
-g_mime_part_get_content_object (const GMimePart *mime_part)
+g_mime_part_get_content_object (GMimePart *mime_part)
 {
 	g_return_val_if_fail (GMIME_IS_PART (mime_part), NULL);
 	
