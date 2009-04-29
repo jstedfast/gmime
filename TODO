@@ -15,7 +15,7 @@ GMime 2.6 Planning:
   change, we need to unset the cached header stream on the
   GMimeMessage. (see the "Note:" comments in message_write_to_stream
   and message_get_headers, while this hack works, it'd be nicer if we
-  did it based on event callbacks)
+  did it based on event callbacks) [ DONE ]
 
 - Get rid of GMimeSession and replace it with
   GMimePassphraseRequestFunc or something. See GpgMe's passphrase
