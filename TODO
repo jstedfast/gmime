@@ -24,7 +24,9 @@ GMime 2.6 Planning:
 - Consider optionally using GpgMe so that we can support S/MIME?
 
 - Consider GCancellable and GError for GMimeStreams and
-  GMimeParser... GError being far more important than GCancellable.
+  GMimeParser... GError being far more important than
+  GCancellable. GCancellable could be nice to have for network
+  streams, though...
 
 - Add GIO-based GMimeStream and bump glib dep to 2.16 [ DONE ]
 
@@ -32,10 +34,12 @@ GMime 2.6 Planning:
 
 - Rename GMimeBestEncoding enum to GMimeEncodingConstraint? This might
   be a better name for the enum to reflect what it's actually meant
-  for. Maybe also move it to gmime-encodings.h?
+  for. Maybe also move it from gmime-filter-best.h to
+  gmime-encodings.h?
 
 - How about a g_mime_part_get_best_charset()? This one could be
-  awkward since it depends on the input text being UTF-8...
+  awkward since it depends on the content being text and also encoded
+  in UTF-8...
 
 - Should either rename g_mime_filter_best_encoding() to get_encoding()
   or else make sure that GMime.metadata 'fixes' the method name to be
