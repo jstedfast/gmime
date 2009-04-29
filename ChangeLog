@@ -1,3 +1,7 @@
+2009-04-29  Sankar P  <sankar.curiosity@gmail.com>
+
+	* gmime.doap: Added new doap file to describe the project.
+
 2009-04-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-events.[c,h]: Don't require a GObject owner.
