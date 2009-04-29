@@ -46,6 +46,7 @@
  * A #GMimeMessage represents an rfc822 message.
  **/
 
+extern GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
@@ -143,6 +144,13 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 }
 
 static void
+mime_part_headers_changed (GMimeHeaderList *headers, gpointer args, GMimeMessage *message)
+{
+	/* clear the message's header stream */
+	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
+}
+
+static void
 connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
 	InternetAddressList *list;
@@ -225,6 +233,7 @@ static void
 g_mime_message_finalize (GObject *object)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeEvent *changed;
 	guint i;
 	
 	g_free (message->from);
@@ -243,8 +252,11 @@ g_mime_message_finalize (GObject *object)
 	g_free (message->message_id);
 	
 	/* unref child mime part */
-	if (message->mime_part)
+	if (message->mime_part) {
+		changed = _g_mime_header_list_get_changed_event (message->mime_part->headers);
+		g_mime_event_remove (changed, (GMimeEventCallback) mime_part_headers_changed, message);
 		g_object_unref (message->mime_part);
+	}
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -943,11 +955,6 @@ message_get_headers (GMimeObject *object)
 		/* if the mime part has raw headers, then it contains the message headers as well */
 		g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
 	} else {
-		/* Note: if the user changed the mime_part's headers,
-		 * we need to unset our cached header stream or it
-		 * won't reflect the changes. */
-		g_mime_header_list_set_stream (object->headers, NULL);
-		
 		g_mime_header_list_write_to_stream (object->headers, stream);
 		if (message->mime_part) {
 			if (g_mime_object_get_header (message->mime_part, "Content-Type"))
@@ -972,11 +979,6 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	if (message->mime_part) {
 		if (!g_mime_header_list_get_stream (message->mime_part->headers)) {
-			/* Note: if the user changed the mime_part's headers,
-			 * we need to unset our cached header stream or it
-			 * won't reflect the changes. */
-			g_mime_header_list_set_stream (object->headers, NULL);
-			
 			if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
 				return -1;
 			
@@ -1442,15 +1444,27 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (GMIME_IS_OBJECT (mime_part));
+	GMimeEvent *changed;
 	
-	g_object_ref (mime_part);
-	g_mime_header_list_set_stream (mime_part->headers, NULL);
+	g_return_if_fail (mime_part == NULL || GMIME_IS_OBJECT (mime_part));
+	g_return_if_fail (GMIME_IS_MESSAGE (message));
+	
+	if (message->mime_part == mime_part)
+		return;
 	
 	if (message->mime_part) {
+		changed = _g_mime_header_list_get_changed_event (message->mime_part->headers);
+		g_mime_event_remove (changed, (GMimeEventCallback) mime_part_headers_changed, message);
+		
 		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 		g_object_unref (message->mime_part);
+	}
+	
+	if (mime_part) {
+		changed = _g_mime_header_list_get_changed_event (mime_part->headers);
+		g_mime_header_list_set_stream (mime_part->headers, NULL);
+		g_mime_event_add (changed, (GMimeEventCallback) mime_part_headers_changed, message);
+		g_object_ref (mime_part);
 	}
 	
 	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);

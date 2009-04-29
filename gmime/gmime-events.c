@@ -57,21 +57,21 @@ event_listener_free (EventListener *listener)
 
 
 struct _GMimeEvent {
-	GObject *owner;
+	gpointer owner;
 	List list;
 };
 
 
 /**
  * g_mime_event_new:
- * @owner: a #GObject; typically the one that will own this event
+ * @owner: a pointer to the object owning this event
  *
  * Creates a new #GMimeEvent context.
  *
  * Returns: a newly allocated #GMimeEvent context.
  **/
 GMimeEvent *
-g_mime_event_new (GObject *owner)
+g_mime_event_new (gpointer owner)
 {
 	GMimeEvent *event;
 	

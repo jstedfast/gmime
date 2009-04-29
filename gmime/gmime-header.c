@@ -26,10 +26,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "gmime-stream-mem.h"
 #include "gmime-common.h"
 #include "gmime-header.h"
+#include "gmime-events.h"
 #include "gmime-utils.h"
-#include "gmime-stream-mem.h"
 
 #include "list.h"
 
@@ -67,6 +68,7 @@ struct _GMimeHeader {
 struct _GMimeHeaderList {
 	GMimeStream *stream;
 	GHashTable *writers;
+	GMimeEvent *changed;
 	GHashTable *hash;
 	guint32 version;
 	List list;
@@ -534,6 +536,7 @@ g_mime_header_list_new (void)
 	headers->hash = g_hash_table_new (g_mime_strcase_hash,
 					  g_mime_strcase_equal);
 	list_init (&headers->list);
+	headers->changed = g_mime_event_new (headers);
 	headers->stream = NULL;
 	headers->version = 0;
 	
@@ -568,6 +571,8 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 	if (headers->stream)
 		g_object_unref (headers->stream);
 	
+	g_mime_event_destroy (headers->changed);
+	
 	g_slice_free (GMimeHeaderList, headers);
 }
 
@@ -594,10 +599,7 @@ g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const ch
 	list_append (&headers->list, (ListNode *) header);
 	g_hash_table_replace (headers->hash, header->name, header);
 	
-	if (headers->stream) {
-		g_object_unref (headers->stream);
-		headers->stream = NULL;
-	}
+	g_mime_header_list_set_stream (headers, NULL);
 }
 
 
@@ -625,10 +627,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
 	if (!g_hash_table_lookup (headers->hash, name))
 		g_hash_table_insert (headers->hash, header->name, header);
 	
-	if (headers->stream) {
-		g_object_unref (headers->stream);
-		headers->stream = NULL;
-	}
+	g_mime_header_list_set_stream (headers, NULL);
 }
 
 
@@ -702,10 +701,7 @@ g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *
 		g_hash_table_insert (headers->hash, header->name, header);
 	}
 	
-	if (headers->stream) {
-		g_object_unref (headers->stream);
-		headers->stream = NULL;
-	}
+	g_mime_header_list_set_stream (headers, NULL);
 }
 
 
@@ -749,10 +745,7 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 	list_unlink ((ListNode *) header);
 	g_mime_header_free (header);
 	
-	if (headers->stream) {
-		g_object_unref (headers->stream);
-		headers->stream = NULL;
-	}
+	g_mime_header_list_set_stream (headers, NULL);
 	
 	return TRUE;
 }
@@ -954,6 +947,9 @@ g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
 	g_return_if_fail (stream == NULL || GMIME_IS_STREAM (stream));
 	g_return_if_fail (headers != NULL);
 	
+	if (headers->stream == stream)
+		return;
+	
 	if (stream)
 		g_object_ref (stream);
 	
@@ -961,6 +957,8 @@ g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
 		g_object_unref (headers->stream);
 	
 	headers->stream = stream;
+	
+	g_mime_event_emit (headers->changed, NULL);
 }
 
 
@@ -978,4 +976,13 @@ g_mime_header_list_get_stream (GMimeHeaderList *headers)
 	g_return_val_if_fail (headers != NULL, NULL);
 	
 	return headers->stream;
+}
+
+
+GMimeEvent *
+_g_mime_header_list_get_changed_event (GMimeHeaderList *headers)
+{
+	g_return_val_if_fail (headers != NULL, NULL);
+	
+	return headers->changed;
 }

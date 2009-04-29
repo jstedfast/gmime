@@ -1,3 +1,22 @@
+2009-04-29  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (g_mime_message_set_mime_part): Add a
+	mime_part_headers_changed listener.
+	(g_mime_message_finalize): Remove the listener.
+	(mime_part_headers_changed): Uncache the message header stream.
+	(message_get_headers): Removed hack.
+	(message_write_to_stream): Same.
+
+	* gmime/gmime-header.c (g_mime_header_list_set_stream): Emit a
+	changed event.
+	(g_mime_header_iter_set_value): Call set_stream() instead of
+	setting the stream to NULL ourselves. Also causes a changed event
+	to be emitted.
+	(g_mime_header_list_prepend): Same.
+	(g_mime_header_list_append): Here too.
+	(g_mime_header_list_set): And here.
+	(g_mime_header_list_remove): Same.
+
 2009-04-28  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-part.c (g_mime_part_get_best_content_encoding): New
