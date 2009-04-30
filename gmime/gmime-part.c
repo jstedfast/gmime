@@ -733,7 +733,7 @@ g_mime_part_get_content_encoding (GMimePart *mime_part)
 /**
  * g_mime_part_get_best_content_encoding:
  * @mime_part: a #GMimePart object
- * @constraint: a #GMimeBestEncoding
+ * @constraint: a #GMimeEncodingConstraint
  *
  * Calculates the most efficient content encoding for the @mime_part
  * given the @constraint.
@@ -741,7 +741,7 @@ g_mime_part_get_content_encoding (GMimePart *mime_part)
  * Returns: the best content encoding for the specified mime part.
  **/
 GMimeContentEncoding
-g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeBestEncoding constraint)
+g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint)
 {
 	GMimeStream *filtered, *stream;
 	GMimeContentEncoding encoding;

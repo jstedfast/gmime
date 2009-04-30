@@ -55,20 +55,20 @@ typedef enum {
 
 
 /**
- * GMimeBestEncoding:
- * @GMIME_BEST_ENCODING_7BIT: The stream data must fit within the 7bit ASCII range.
- * @GMIME_BEST_ENCODING_8BIT: The stream data may have bytes with the high bit set, but no null bytes.
- * @GMIME_BEST_ENCODING_BINARY: The stream may contain any binary data.
+ * GMimeEncodingConstraint:
+ * @GMIME_ENCODING_CONSTRAINT_7BIT: The stream data must fit within the 7bit ASCII range.
+ * @GMIME_ENCODING_CONSTRAINT_8BIT: The stream data may have bytes with the high bit set, but no null bytes.
+ * @GMIME_ENCODING_CONSTRAINT_BINARY: The stream may contain any binary data.
  *
  * Used with g_mime_filter_best_encoding() as the 'constraint'
  * argument. These values provide a means of letting the filter know
  * what the encoding constraints are for the stream.
  **/
 typedef enum {
-	GMIME_BEST_ENCODING_7BIT,
-	GMIME_BEST_ENCODING_8BIT,
-	GMIME_BEST_ENCODING_BINARY
-} GMimeBestEncoding;
+	GMIME_ENCODING_CONSTRAINT_7BIT,
+	GMIME_ENCODING_CONSTRAINT_8BIT,
+	GMIME_ENCODING_CONSTRAINT_BINARY
+} GMimeEncodingConstraint;
 
 
 /**
@@ -126,7 +126,7 @@ GMimeFilter *g_mime_filter_best_new (GMimeFilterBestFlags flags);
 
 const char *g_mime_filter_best_charset (GMimeFilterBest *best);
 
-GMimeContentEncoding g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint);
+GMimeContentEncoding g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint constraint);
 
 G_END_DECLS
 

@@ -281,7 +281,7 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
 /**
  * g_mime_filter_best_encoding:
  * @best: a #GMimeFilterBest
- * @constraint: a #GMimeBestEncoding
+ * @constraint: a #GMimeEncodingConstraint
  *
  * Calculates the most efficient Content-Transfer-Encoding for the
  * stream filtered through @best that fits within the encoding
@@ -290,7 +290,7 @@ g_mime_filter_best_charset (GMimeFilterBest *best)
  * Returns: the best encoding for the stream filtered by @best.
  **/
 GMimeContentEncoding
-g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint)
+g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeEncodingConstraint constraint)
 {
 	GMimeContentEncoding encoding = GMIME_CONTENT_ENCODING_DEFAULT;
 	
@@ -300,11 +300,11 @@ g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint
 		return GMIME_CONTENT_ENCODING_DEFAULT;
 	
 	switch (constraint) {
-	case GMIME_BEST_ENCODING_7BIT:
+	case GMIME_ENCODING_CONSTRAINT_7BIT:
 		if (best->count0 > 0) {
 			encoding = GMIME_CONTENT_ENCODING_BASE64;
 		} else if (best->count8 > 0) {
-			if (best->count8 >= (best->total * 17 / 100))
+			if (best->count8 >= (unsigned int) (best->total * (17.0 / 100.0)))
 				encoding = GMIME_CONTENT_ENCODING_BASE64;
 			else
 				encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
@@ -312,14 +312,14 @@ g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint
 			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 		break;
-	case GMIME_BEST_ENCODING_8BIT:
+	case GMIME_ENCODING_CONSTRAINT_8BIT:
 		if (best->count0 > 0) {
 			encoding = GMIME_CONTENT_ENCODING_BASE64;
 		} else if (best->maxline > 998) {
 			encoding = GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE;
 		}
 		break;
-	case GMIME_BEST_ENCODING_BINARY:
+	case GMIME_ENCODING_CONSTRAINT_BINARY:
 		if (best->count0 + best->count8 > 0)
 			encoding = GMIME_CONTENT_ENCODING_BINARY;
 		break;
@@ -330,4 +330,3 @@ g_mime_filter_best_encoding (GMimeFilterBest *best, GMimeBestEncoding constraint
 	
 	return encoding;
 }
-

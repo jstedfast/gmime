@@ -32,9 +32,10 @@ GMime 2.6 Planning:
 
 - Add a g_mime_part_get_best_content_encoding()? [ DONE ]
 
-- Rename GMimeBestEncoding enum to GMimeEncodingConstraint? This might
-  be a better name for the enum to reflect what it's actually meant
-  for. Maybe also move it from gmime-filter-best.h to
+- Rename GMimeBestEncoding enum to GMimeEncodingConstraint? [ DONE ]
+
+  This might be a better name for the enum to reflect what it's
+  actually meant for. Maybe also move it from gmime-filter-best.h to
   gmime-encodings.h?
 
 - How about a g_mime_part_get_best_charset()? This one could be

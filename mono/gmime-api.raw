@@ -7,11 +7,6 @@
 
 -->
   <namespace name="GMime" library="gmime">
-    <enum name="BestEncoding" cname="GMimeBestEncoding" type="enum">
-      <member cname="GMIME_BEST_ENCODING_7BIT" name="7Bit" />
-      <member cname="GMIME_BEST_ENCODING_8BIT" name="8Bit" />
-      <member cname="GMIME_BEST_ENCODING_BINARY" name="Binary" />
-    </enum>
     <enum name="CipherHash" cname="GMimeCipherHash" type="enum">
       <member cname="GMIME_CIPHER_HASH_DEFAULT" name="Default" />
       <member cname="GMIME_CIPHER_HASH_MD2" name="Md2" />
@@ -33,6 +28,11 @@
       <member cname="GMIME_CONTENT_ENCODING_BASE64" name="Base64" />
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
+    </enum>
+    <enum name="EncodingConstraint" cname="GMimeEncodingConstraint" type="enum">
+      <member cname="GMIME_ENCODING_CONSTRAINT_7BIT" name="7Bit" />
+      <member cname="GMIME_ENCODING_CONSTRAINT_8BIT" name="8Bit" />
+      <member cname="GMIME_ENCODING_CONSTRAINT_BINARY" name="Binary" />
     </enum>
     <enum name="FilterBestFlags" cname="GMimeFilterBestFlags" type="flags">
       <member cname="GMIME_FILTER_BEST_CHARSET" name="Charset" value="1 &lt;&lt; 0" />
@@ -92,7 +92,7 @@
     <callback name="EventCallback" cname="GMimeEventCallback">
       <return-type type="void" />
       <parameters>
-        <parameter type="GObject*" name="sender" />
+        <parameter type="gpointer" name="sender" />
         <parameter type="gpointer" name="args" />
         <parameter type="gpointer" name="user_data" />
       </parameters>
@@ -456,7 +456,7 @@
       <method name="Encoding" cname="g_mime_filter_best_encoding">
         <return-type type="GMimeContentEncoding" />
         <parameters>
-          <parameter type="GMimeBestEncoding" name="required" />
+          <parameter type="GMimeEncodingConstraint" name="constraint" />
         </parameters>
       </method>
       <method name="GetType" cname="g_mime_filter_best_get_type" shared="true">
@@ -1332,6 +1332,12 @@
           <parameter type="GMimeDataWrapper*" name="content" />
         </parameters>
       </virtual_method>
+      <method name="GetBestContentEncoding" cname="g_mime_part_get_best_content_encoding">
+        <return-type type="GMimeContentEncoding" />
+        <parameters>
+          <parameter type="GMimeEncodingConstraint" name="constraint" />
+        </parameters>
+      </method>
       <method name="GetContentDescription" cname="g_mime_part_get_content_description">
         <return-type type="const-char*" />
       </method>
@@ -1693,6 +1699,37 @@
         </parameters>
       </constructor>
       <method name="SetOwner" cname="g_mime_stream_fs_set_owner">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="owner" />
+        </parameters>
+      </method>
+    </object>
+    <object name="StreamGIO" cname="GMimeStreamGIO" parent="GMimeStream">
+      <field name="Ostream" cname="ostream" type="GOutputStream*" />
+      <field name="Istream" cname="istream" type="GInputStream*" />
+      <field name="File" cname="file" type="GFile*" />
+      <field name="Owner" cname="owner" type="gboolean" />
+      <field name="Eos" cname="eos" type="gboolean" />
+      <method name="GetOwner" cname="g_mime_stream_gio_get_owner">
+        <return-type type="gboolean" />
+      </method>
+      <method name="GetType" cname="g_mime_stream_gio_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="g_mime_stream_gio_new">
+        <parameters>
+          <parameter type="GFile*" name="file" />
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_gio_new_with_bounds">
+        <parameters>
+          <parameter type="GFile*" name="file" />
+          <parameter type="gint64" name="start" />
+          <parameter type="gint64" name="end" />
+        </parameters>
+      </constructor>
+      <method name="SetOwner" cname="g_mime_stream_gio_set_owner">
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="owner" />

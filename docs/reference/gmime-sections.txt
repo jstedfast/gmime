@@ -301,8 +301,8 @@ GMIME_FILTER_BASIC_GET_CLASS
 <SECTION>
 <FILE>gmime-filter-best</FILE>
 GMimeFilterBest
-GMimeBestEncoding
 GMimeFilterBestFlags
+GMimeEncodingConstraint
 g_mime_filter_best_new
 g_mime_filter_best_charset
 g_mime_filter_best_encoding

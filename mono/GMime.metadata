@@ -91,8 +91,8 @@
   <move-node path="/api/namespace/class[@name='Global']/method[@name='yDecodeStep']">/api/namespace/struct[@name='Encoding']</move-node>
 
   <!-- Enumerations -->
-  <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_7BIT']" name="name">SevenBit</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_BEST_ENCODING_8BIT']" name="name">EightBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_ENCODING_CONSTRAINT_7BIT']" name="name">SevenBit</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_ENCODING_CONSTRAINT_8BIT']" name="name">EightBit</attr>
 
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_DEFAULT']" name="name">Default</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_CONTENT_ENCODING_7BIT']" name="name">SevenBit</attr>

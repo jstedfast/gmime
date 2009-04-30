@@ -1,3 +1,11 @@
+2009-04-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-filter-best.h: Renamed GMimeBestEncoding to
+	GMimeEncodingConstraint to make this enum more clear as to what
+	it's intended purpose is.
+
+	* gmime/gmime-part.c: Updated.
+
 2009-04-29  Sankar P  <sankar.curiosity@gmail.com>
 
 	* gmime.doap: Added new doap file to describe the project.
