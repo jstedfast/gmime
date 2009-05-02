@@ -489,7 +489,7 @@ static gint64
 stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	size_t len, total = 0;
+	gint64 len, total = 0;
 	gint64 pos, real;
 	ssize_t nread;
 	

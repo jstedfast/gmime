@@ -1,3 +1,8 @@
+2009-05-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-buffer.c (stream_seek_cache_read): Fixed a
+	64bit cleanlines issue.
+
 2009-04-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-filter-best.h: Renamed GMimeBestEncoding to
