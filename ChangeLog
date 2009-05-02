@@ -2,6 +2,7 @@
 
 	* gmime/gmime-stream-buffer.c (stream_seek_cache_read): Fixed a
 	64bit cleanlines issue.
+	(stream_seek_cache_read): Cap the max cache size to G_MAXSIZE.
 
 2009-04-30  Jeffrey Stedfast  <fejj@novell.com>
 

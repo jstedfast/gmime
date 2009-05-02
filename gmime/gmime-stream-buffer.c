@@ -489,7 +489,7 @@ static gint64
 stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamBuffer *buffer = (GMimeStreamBuffer *) stream;
-	gint64 len, total = 0;
+	gint64 buflen, len, total = 0;
 	gint64 pos, real;
 	ssize_t nread;
 	
@@ -538,7 +538,11 @@ stream_seek_cache_read (GMimeStream *stream, gint64 offset, GMimeSeekWhence when
 		
 		pos = buffer->bufptr - buffer->buffer;
 		
-		buffer->buflen = buffer->bufend - buffer->buffer + len;
+		buflen = (buffer->bufend - buffer->buffer) + len;
+		if (buflen < G_MAXSIZE)
+			buffer->buflen = (size_t) buflen;
+		else
+			buffer->buflen = G_MAXSIZE;
 		
 		buffer->buffer = g_realloc (buffer->buffer, buffer->buflen);
 		buffer->bufend = buffer->buffer + buffer->buflen;
