@@ -226,7 +226,7 @@ if test "x$enable_warnings" = "xyes"; then
 fi
 
 dnl We need at *least* glib 2.16.0 for GIO
-AM_PATH_GLIB_2_0(2.12.0, ,
+AM_PATH_GLIB_2_0(2.16.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread gio)
 

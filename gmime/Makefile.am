@@ -16,7 +16,7 @@ noinst_PROGRAMS = gen-table charset-map
 
 EXTRA_DIST = gmime-version.h.in gmime-version.h
 
-lib_LTLIBRARIES = libgmime-2.6.la
+lib_LTLIBRARIES = libgmime-$(GMIME_API_VERSION).la
 
 libgmime_2_6_la_SOURCES = 		\
 	gmime.c				\
