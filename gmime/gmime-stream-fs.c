@@ -172,18 +172,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	} while (nread == -1 && errno == EINTR);
 	
 	if (nread > 0) {
-#ifdef G_OS_WIN32
-		/* fucking Windows... sigh. Since it might decide to translate \r\n into \n,
-		 * we need to query the real position rather than using simple math. */
-		off_t pos;
-		
-		if ((pos = lseek (fs->fd, 0, SEEK_CUR)) == -1)
-			stream->position += nread;
-		else
-			stream->position = pos;
-#else
 		stream->position += nread;
-#endif
 	} else if (nread == 0) {
 		fs->eos = TRUE;
 	}
@@ -227,18 +216,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		fs->eos = TRUE;
 	
 	if (nwritten > 0) {
-#ifdef G_OS_WIN32
-		/* fucking Windows... sigh. Since it might decide to translate \n into \r\n,
-		 * we need to query the real position rather than using simple math. */
-		off_t pos;
-		
-		if ((pos = lseek (fs->fd, 0, SEEK_CUR)) == -1)
-			stream->position += nwritten;
-		else
-			stream->position = pos;
-#else
 		stream->position += nwritten;
-#endif
 	} else if (n == -1) {
 		/* error and nothing written */
 		return -1;
@@ -443,6 +421,10 @@ g_mime_stream_fs_new (int fd)
 	GMimeStreamFs *fs;
 	gint64 start;
 	
+#ifdef G_OS_WIN32
+	_setmode (fd, O_BINARY);
+#endif
+	
 	if ((start = lseek (fd, (off_t) 0, SEEK_CUR)) == -1)
 		start = 0;
 	
@@ -471,6 +453,10 @@ GMimeStream *
 g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end)
 {
 	GMimeStreamFs *fs;
+	
+#ifdef G_OS_WIN32
+	_setmode (fd, O_BINARY);
+#endif
 	
 	fs = g_object_newv (GMIME_TYPE_STREAM_FS, 0, NULL);
 	g_mime_stream_construct (GMIME_STREAM (fs), start, end);
