@@ -1,3 +1,13 @@
+2009-05-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-fs.c (stream_read): Removed gross hack.
+	(stream_write): Same.
+	(g_mime_stream_fs_new): On Windows systems, set the translation
+	mode to BINARY.
+	(g_mime_stream_fs_new_with_bounds): Same.
+
+	* gmime/gmime-stream-file.c: Same as GMimeStreamFs
+
 2009-05-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-buffer.c (stream_seek_cache_read): Fixed a
