@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <glib.h>
+
 #ifdef G_OS_WIN32
 #include <fcntl.h>
 #include <io.h>
