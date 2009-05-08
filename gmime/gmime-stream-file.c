@@ -371,7 +371,7 @@ g_mime_stream_file_new (FILE *fp)
 	gint64 start;
 	
 #ifdef G_OS_WIN32
-	_setmode (fileno (fp), O_BINARY);
+	_setmode (_fileno (fp), O_BINARY);
 #endif
 	
 	if ((start = ftell (fp)) == -1)
@@ -406,7 +406,7 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 	GMimeStreamFile *fstream;
 	
 #ifdef G_OS_WIN32
-	_setmode (fileno (fp), O_BINARY);
+	_setmode (_fileno (fp), O_BINARY);
 #endif
 	
 	fstream = g_object_newv (GMIME_TYPE_STREAM_FILE, 0, NULL);
