@@ -974,7 +974,7 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 				 header->offset, priv->user_data);
 #elif defined (HAVE_REGEX_H)
 	if (priv->have_regex &&
-	    !regexec (&priv->header_regex, header->name, 0, NULL, 0))
+	    !regexec (&priv->regex, header->name, 0, NULL, 0))
 		priv->header_cb (parser, header->name, header->value,
 				 header->offset, priv->user_data);
 #endif
