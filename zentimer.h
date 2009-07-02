@@ -25,7 +25,7 @@
 #ifdef ENABLE_ZENTIMER
 
 #include <stdio.h>
-#ifdef WINDOWS
+#ifdef WIN32
 #include <windows.h>
 #else
 #include <sys/time.h>
@@ -50,14 +50,14 @@ extern "C" {
 /* ztime_t represents usec */
 typedef uint64_t ztime_t;
 
-#ifdef WINDOWS
+#ifdef WIN32
 static uint64_t ztimer_freq = 0;
 #endif
 
 static void
 ztime (ztime_t *ztimep)
 {
-#ifdef WINDOWS
+#ifdef WIN32
 	QueryPerformanceCounter ((LARGE_INTEGER *) ztimep);
 #else
 	struct timeval tv;
@@ -74,15 +74,13 @@ enum {
 	ZTIMER_PAUSED   = (1 << 1),
 };
 
-typedef uint32_t zstate_t;
-
 typedef struct {
-	zstate_t state; /* 32bit for alignment reasons */
 	ztime_t start;
 	ztime_t stop;
+	int state;
 } ztimer_t;
 
-#define ZTIMER_INITIALIZER { ZTIMER_INACTIVE, 0, 0 }
+#define ZTIMER_INITIALIZER { 0, 0, 0 }
 
 /* default timer */
 static ztimer_t __ztimer = ZTIMER_INITIALIZER;
@@ -136,7 +134,7 @@ ZenTimerResume (ztimer_t *ztimer)
 static double
 ZenTimerElapsed (ztimer_t *ztimer, uint64_t *usec)
 {
-#ifdef WINDOWS
+#ifdef WIN32
 	static uint64_t freq = 0;
 	ztime_t delta, stop;
 	
