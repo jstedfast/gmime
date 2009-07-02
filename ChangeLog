@@ -1,3 +1,10 @@
+2009-07-02  Stanislav Brabec  <sbrabec@sue.cz>
+
+	* configure.in: Simplified configuring of gmime in a
+	cross-compilation environment. Make it possible to work-around
+	AC_TRY_RUN limitations by copying of target system iconv-detect.h
+	and setting ac_cv_have_iconv_detect_h=yes.
+
 2008-09-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
