@@ -244,14 +244,21 @@ CFLAGS="$CFLAGS -I$srcdir"
 LIBS_save="$LIBS"
 LIBS="$LIBS $LIBICONV"
 
-AC_MSG_CHECKING(preferred charset formats for system iconv)
-AC_TRY_RUN([
-#define CONFIGURE_IN
-#include "iconv-detect.c"
-],[
-	AC_MSG_RESULT(found)
+AC_CACHE_CHECK([preferred charset formats for system iconv], [ac_cv_have_iconv_detect_h], [
+	AC_RUN_IFELSE([AC_LANG_SOURCE([
+		#define CONFIGURE_IN
+		#include "iconv-detect.c"
+		])],
+	[ac_cv_have_iconv_detect_h=yes], [ac_cv_have_iconv_detect_h=no],
+	[
+		AC_MSG_RESULT([cannot run test program while cross compiling])
+		AC_MSG_ERROR([Please set ac_cv_have_iconv_detect_h to yes iconv-detect.h file.])
+	])
+])
+if test "x$ac_cv_have_iconv_detect_h" = xyes; then
+	AC_MSG_RESULT([found])
 	AC_DEFINE(HAVE_ICONV_DETECT_H, 1, [Define to 1 to use auto-detected iconv-friendly charset names.])
-],[
+else
 	AC_MSG_RESULT([not found
 	*** The iconv-detect program was unable to determine the
 	*** preferred charset formats recognized by your system
@@ -261,7 +268,7 @@ AC_TRY_RUN([
 	*** 
 	*** Default charset formats will be used.
 	])
-])
+fi
 
 CFLAGS="$CFLAGS_save"
 LIBS="$LIBS_save"

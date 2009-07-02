@@ -1,3 +1,10 @@
+2009-07-02  Stanislav Brabec  <sbrabec@sue.cz>
+
+	* configure.in: Simplified configuring of gmime in a
+	cross-compilation environment. Make it possible to work-around
+	AC_TRY_RUN limitations by copying of target system iconv-detect.h
+	and setting ac_cv_have_iconv_detect_h=yes.
+
 2009-05-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-fs.c (stream_read): Removed gross hack.
@@ -11,7 +18,7 @@
 2009-05-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-buffer.c (stream_seek_cache_read): Fixed a
-	64bit cleanlines issue.
+	64bit cleanliness issue.
 	(stream_seek_cache_read): Cap the max cache size to G_MAXSIZE.
 
 2009-04-30  Jeffrey Stedfast  <fejj@novell.com>
