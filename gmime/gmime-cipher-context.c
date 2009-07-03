@@ -658,9 +658,9 @@ g_mime_signer_set_name (GMimeSigner *signer, const char *name)
  * g_mime_signer_get_name:
  * @signer: a #GMimeSigner
  *
- * Get the signer trust.
+ * Get the signer's name.
  *
- * Returns: the signer trust.
+ * Returns: the signer's name.
  **/
 const char *
 g_mime_signer_get_name (GMimeSigner *signer)
