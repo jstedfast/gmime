@@ -1,5 +1,10 @@
 2009-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-pkcs7-context.[c,h]: New source files implementing
+	the pkcs7 cipher context using GpgMe.
+
+2009-07-04  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Updated
 	for API changes to the GMimeSigner stuff.
 
@@ -27,7 +32,7 @@
 
 2009-07-02  Stanislav Brabec  <sbrabec@suse.cz>
 
-	* configure.in: Simplified configuring of gmime in a
+	* configure.ac: Simplified configuring of gmime in a
 	cross-compilation environment. Make it possible to work-around
 	AC_TRY_RUN limitations by copying of target system iconv-detect.h
 	and setting ac_cv_have_iconv_detect_h=yes.
