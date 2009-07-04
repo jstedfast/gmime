@@ -1,4 +1,4 @@
-2009-07-02  Stanislav Brabec  <sbrabec@sue.cz>
+2009-07-02  Stanislav Brabec  <sbrabec@suse.cz>
 
 	* configure.in: Simplified configuring of gmime in a
 	cross-compilation environment. Make it possible to work-around
