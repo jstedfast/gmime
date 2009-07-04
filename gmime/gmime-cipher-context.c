@@ -748,7 +748,7 @@ g_mime_signer_get_key_id (GMimeSigner *signer)
 /**
  * g_mime_signer_set_email:
  * @signer: a #GMimeSigner
- * @name: signer's email
+ * @email: signer's email
  *
  * Set the signer's email.
  **/

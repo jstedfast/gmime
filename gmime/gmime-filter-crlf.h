@@ -41,7 +41,7 @@ typedef struct _GMimeFilterCRLFClass GMimeFilterCRLFClass;
  * @parent_object: parent #GMimeFilter
  * @encode: encoding vs decoding line endings/dots
  * @saw_cr: previous char was a CR
- * @saw_ld: previous char was a LF
+ * @saw_lf: previous char was a LF
  * @saw_dot: previous char was a period
  *
  * A filter to convert between line-ending formats and encode/decode
