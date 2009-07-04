@@ -1,5 +1,10 @@
 <SECTION>
 <FILE>gmime</FILE>
+GMIME_MAJOR_VERSION
+GMIME_MICRO_VERSION
+GMIME_MINOR_VERSION
+GMIME_BINARY_AGE
+GMIME_INTERFACE_AGE
 GMIME_CHECK_VERSION
 GMIME_ENABLE_RFC2047_WORKAROUNDS
 g_mime_init
@@ -1158,6 +1163,10 @@ g_mime_signer_get_errors
 g_mime_signer_set_errors
 g_mime_signer_get_trust
 g_mime_signer_set_trust
+g_mime_signer_get_issuer_serial
+g_mime_signer_set_issuer_serial
+g_mime_signer_get_issuer_name
+g_mime_signer_set_issuer_name
 g_mime_signer_get_fingerprint
 g_mime_signer_set_fingerprint
 g_mime_signer_get_sig_created

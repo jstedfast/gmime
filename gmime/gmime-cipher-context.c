@@ -612,7 +612,7 @@ g_mime_signer_get_trust (GMimeSigner *signer)
 /**
  * g_mime_signer_set_issuer_serial:
  * @signer: a #GMimeSigner
- * @name: signer's issuer serial
+ * @issuer_serial: signer's issuer serial
  *
  * Set the signer's issuer serial.
  **/
@@ -646,7 +646,7 @@ g_mime_signer_get_issuer_serial (GMimeSigner *signer)
 /**
  * g_mime_signer_set_issuer_name:
  * @signer: a #GMimeSigner
- * @name: signer's issuer name
+ * @issuer_name: signer's issuer name
  *
  * Set the signer's issuer name.
  **/
