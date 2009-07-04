@@ -1,5 +1,10 @@
 2009-07-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* configure.ac: Check for GpgME needed for S/MIME support.
+
+	* gmime/Makefile.am: Include gmime-pkcs7-context.[c,h] in the
+	build.
+
 	* gmime/gmime-pkcs7-context.[c,h]: New source files implementing
 	the pkcs7 cipher context using GpgMe.
 

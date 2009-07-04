@@ -225,7 +225,6 @@ typedef enum {
  * GMimeSignerError:
  * @GMIME_SIGNER_ERROR_NONE: No error.
  * @GMIME_SIGNER_ERROR_EXPSIG: Expired signature.
- * @GMIME_SIGNER_ERROR_REVSIG: Revoked signature.
  * @GMIME_SIGNER_ERROR_NO_PUBKEY: No public key found.
  * @GMIME_SIGNER_ERROR_EXPKEYSIG: Expired signature key.
  * @GMIME_SIGNER_ERROR_REVKEYSIG: Revoked signature key.
@@ -234,11 +233,10 @@ typedef enum {
  **/
 typedef enum {
 	GMIME_SIGNER_ERROR_NONE,
-	GMIME_SIGNER_ERROR_EXPSIG      = (1 << 0),  /* expire signature */
-	GMIME_SIGNER_ERROR_REVSIG      = (1 << 1),  /* revoked signature */
-	GMIME_SIGNER_ERROR_NO_PUBKEY   = (1 << 2),  /* no public key */
-	GMIME_SIGNER_ERROR_EXPKEYSIG   = (1 << 3),  /* expired key */
-	GMIME_SIGNER_ERROR_REVKEYSIG   = (1 << 4)   /* revoked key */
+	GMIME_SIGNER_ERROR_EXPSIG      = (1 << 0),  /* expired signature */
+	GMIME_SIGNER_ERROR_NO_PUBKEY   = (1 << 1),  /* no public key */
+	GMIME_SIGNER_ERROR_EXPKEYSIG   = (1 << 2),  /* expired key */
+	GMIME_SIGNER_ERROR_REVKEYSIG   = (1 << 3)   /* revoked key */
 } GMimeSignerError;
 
 
@@ -265,9 +263,9 @@ typedef enum {
 struct _GMimeSigner {
 	GMimeSigner *next;
 	unsigned int status:2;    /* GMimeSignerStatus */
-	unsigned int errors:5;    /* bitfield of GMimeSignerError's */
+	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
-	unsigned int unused:22;   /* unused expansion bits */
+	unsigned int unused:21;   /* unused expansion bits */
 	char *issuer_serial;
 	char *issuer_name;
 	char *fingerprint;

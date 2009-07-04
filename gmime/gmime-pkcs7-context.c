@@ -62,7 +62,6 @@ typedef struct _GMimePkcs7ContextPrivate {
 	gpgme_ctx_t ctx;
 } Pkcs7Ctx;
 
-
 static void g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass);
 static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass);
 static void g_mime_pkcs7_context_finalize (GObject *object);
@@ -293,9 +292,10 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 	gpgme_subkey_t subkey;
 	gboolean bad = FALSE;
 	gpgme_error_t error;
+	int errval = 0;
 	
-	if ((error = gpg_op_keylist_start (pkcs7->ctx, name, secret)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
+	if ((error = gpgme_op_keylist_start (pkcs7->ctx, name, secret)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
 		return NULL;
 	}
 	
@@ -311,8 +311,19 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 			if (subkey && KEY_IS_OK (subkey) && 
 			    (subkey->expires == 0 || subkey->expires > now))
 				break;
+			
+			if (subkey->expired)
+				errval = GPG_ERR_KEY_EXPIRED;
+			else
+				errval = GPG_ERR_BAD_KEY;
+		} else {
+			if (key->expired)
+				errval = GPG_ERR_KEY_EXPIRED;
+			else
+				errval = GPG_ERR_BAD_KEY;
 		}
 		
+		gpgme_key_unref (key);
 		bad = TRUE;
 		key = NULL;
 	}
@@ -320,26 +331,26 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 	gpgme_op_keylist_end (pkcs7->ctx);
 	
 	if (error != GPG_ERR_NO_ERROR && error != GPG_ERR_EOF) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
 		return NULL;
 	}
 	
 	if (!key) {
 		if (strchr (name, '@')) {
 			if (bad)
-				g_set_error (err, GPGME_ERROR, GPG_ERR_KEY_SELECTION,
+				g_set_error (err, GMIME_GPGME_ERROR, errval,
 					     _("A key for %s is present, but it is expired, disabled, revoked or invalid"),
 					     name);
 			else
-				g_set_error (err, GPGME_ERROR, GPG_ERR_KEY_SELECTION,
+				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
 					     _("Could not find a key for %s"), name);
 		} else {
 			if (bad)
-				g_set_error (err, GPGME_ERROR, GPG_ERR_KEY_SELECTION,
+				g_set_error (err, GMIME_GPGME_ERROR, errval,
 					     _("A key with id %s is present, but it is expired, disabled, revoked or invalid"),
 					     name);
 			else
-				g_set_error (err, GPGME_ERROR, GPG_ERR_KEY_SELECTION,
+				g_set_error (err, GMIME_GPGME_ERROR, GPG_ERR_NOT_FOUND,
 					     _("Could not find a key with id %s"), name);
 		}
 		
@@ -354,7 +365,7 @@ pkcs7_add_signer (Pkcs7Ctx *pkcs7, const char *signer, GError **err)
 {
 	gpgme_key_t key = NULL;
 	
-	if (!(key = pkcs7_get_key_by_name (ctx, signer, TRUE, err)))
+	if (!(key = pkcs7_get_key_by_name (pkcs7, signer, TRUE, err)))
 		return FALSE;
 	
 	/* set the key (the previous operation guaranteed that it exists, no need
@@ -381,19 +392,19 @@ pkcs7_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash has
 	gpgme_set_armor (pkcs7->ctx, FALSE);
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open output stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
 		gpgme_data_release (input);
 		return -1;
 	}
 	
 	/* sign the input stream */
-	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, GPG_SIG_MODE_DETACHED)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Signing failed"));
+	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, GPGME_SIG_MODE_DETACH)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed"));
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return -1;
@@ -428,7 +439,7 @@ pkcs7_trust (gpgme_validity_t trust)
 }
 
 static GMimeSignatureValidity *
-pkcs7_get_validity (Pkcs7Context *pkcs7, gboolean verify)
+pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 {
 	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
 	GMimeSignatureValidity *validity;
@@ -436,7 +447,7 @@ pkcs7_get_validity (Pkcs7Context *pkcs7, gboolean verify)
 	gpgme_verify_result_t result;
 	GMimeSignerError errors;
 	gpgme_subkey_t subkey;
-	gpgme_key_sig_t sig;
+	gpgme_signature_t sig;
 	gpgme_user_id_t uid;
 	gpgme_key_t key;
 	
@@ -460,18 +471,14 @@ pkcs7_get_validity (Pkcs7Context *pkcs7, gboolean verify)
 		signers->next = signer;
 		signers = signer;
 		
-		g_mime_signer_set_fingerprint (signer, sig->fpr);
+		g_mime_signer_set_sig_expires (signer, sig->exp_timestamp);
 		g_mime_signer_set_sig_created (signer, sig->timestamp);
-		g_mime_signer_set_sig_expires (signer, sig->expires);
-		g_mime_signer_set_key_id (signer, sig->keyid);
+		g_mime_signer_set_fingerprint (signer, sig->fpr);
 		
-		errors = GMimeSignerErrorNone;
+		errors = GMIME_SIGNER_ERROR_NONE;
 		
-		if (sig->expired)
+		if (sig->exp_timestamp != 0 && sig->exp_timestamp >= time (NULL))
 			errors |= GMIME_SIGNER_ERROR_EXPSIG;
-		
-		if (sig->revoked)
-			errors |= GMIME_SIGNER_ERROR_REVSIG;
 		
 		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
@@ -488,7 +495,10 @@ pkcs7_get_validity (Pkcs7Context *pkcs7, gboolean verify)
 				if (uid->email && *uid->email)
 					g_mime_signer_set_email (signer, uid->email);
 				
-				if (signer->name && signer->email)
+				if (uid->uid && *uid->uid)
+					g_mime_signer_set_key_id (signer, uid->uid);
+				
+				if (signer->name && signer->email && signer->keyid)
 					break;
 				
 				uid = uid->next;
@@ -556,14 +566,14 @@ pkcs7_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	gpgme_error_t error;
 	
 	if ((error = gpgme_data_new_from_cbs (&message, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
 		return NULL;
 	}
 	
 	/* if @sigstream is non-NULL, then it is a detached signature */
 	if (sigstream != NULL) {
 		if ((error = gpgme_data_new_from_cbs (&signature, &pkcs7_stream_funcs, sigstream)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GPGME_ERROR, error, _("Could not open signature stream"));
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open signature stream"));
 			gpgme_data_release (message);
 			return NULL;
 		}
@@ -572,7 +582,7 @@ pkcs7_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	}
 	
 	if ((error = gpgme_op_verify (pkcs7->ctx, signature, message, NULL)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not verify pkcs7 signature"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not verify pkcs7 signature"));
 		if (signature)
 			gpgme_data_release (signature);
 		gpgme_data_release (message);
@@ -633,15 +643,15 @@ pkcs7_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
-		key_list_free (rcpt);
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
+		key_list_free (rcpts);
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open output stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
 		gpgme_data_release (input);
-		key_list_free (rcpt);
+		key_list_free (rcpts);
 		return -1;
 	}
 	
@@ -652,7 +662,7 @@ pkcs7_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 	key_list_free (rcpts);
 	
 	if (error != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Encryption failed"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Encryption failed"));
 		return -1;
 	}
 	
@@ -670,19 +680,19 @@ pkcs7_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 	gpgme_error_t error;
 	
 	if ((error = gpgme_data_new_from_cbs (&input, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
 		return NULL;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open output stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
 		gpgme_data_release (input);
 		return NULL;
 	}
 	
 	/* decrypt the input stream */
 	if ((error = gpgme_op_decrypt_verify (pkcs7->ctx, input, output)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Decryption failed"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Decryption failed"));
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return NULL;
@@ -704,13 +714,13 @@ pkcs7_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **e
 	gpgme_error_t error;
 	
 	if ((error = gpgme_data_new_from_cbs (&keydata, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
 		return -1;
 	}
 	
 	/* import the key(s) */
 	if ((error = gpgme_op_import (pkcs7->ctx, keydata)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not import key data"));
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not import key data"));
 		gpgme_data_release (keydata);
 		return -1;
 	}
@@ -729,15 +739,15 @@ pkcs7_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *os
 	gpgme_error_t error;
 	guint i;
 	
-	if ((error = gpgme_data_new_from_cbs (&keydata, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GPGME_ERROR, error, _("Could not open input stream"));
+	if ((error = gpgme_data_new_from_cbs (&keydata, &pkcs7_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
 		return -1;
 	}
 	
 	/* export the key(s) */
 	for (i = 0; i < keys->len; i++) {
 		if ((error = gpgme_op_export (pkcs7->ctx, keys->pdata[i], 0, keydata)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GPGME_ERROR, error, _("Could not export key data"));
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data"));
 			gpgme_data_release (keydata);
 			return -1;
 		}

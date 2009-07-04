@@ -124,8 +124,6 @@ print_verify_results (const GMimeSignatureValidity *validity)
 			fprintf (stdout, "\tErrors: ");
 			if (signer->errors & GMIME_SIGNER_ERROR_EXPSIG)
 				fputs ("Expired, ", stdout);
-			if (signer->errors & GMIME_SIGNER_ERROR_REVSIG)
-				fputs ("Revoked, ", stdout);
 			if (signer->errors & GMIME_SIGNER_ERROR_NO_PUBKEY)
 				fputs ("No Pub Key, ", stdout);
 			if (signer->errors & GMIME_SIGNER_ERROR_EXPKEYSIG)

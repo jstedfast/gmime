@@ -422,29 +422,29 @@ if test "x$enable_largefile" != "xno"; then
     enable_largefile="no"
     
     if test "x$ac_cv_largefile64_source" = "xyes"; then
-        GMIME_CFLAGS="-D_LARGEFILE64_SOURCE"
+        LFS_CFLAGS="-D_LARGEFILE64_SOURCE"
         enable_largefile="yes"
     elif test "x$ac_cv_largefile64_source" = "xunknown"; then
         AC_DEFINE(O_LARGEFILE, 0, [Define to 0 if your system does not have the O_LARGEFILE flag])
     fi
     
     if test -n "$ac_cv_sys_large_files" -a "x$ac_cv_sys_large_files" != "xno"; then
-        GMIME_CFLAGS="$GMIME_CFLAGS -D_LARGE_FILES"
+        LFS_CFLAGS="$LFS_CFLAGS -D_LARGE_FILES"
         enable_largefile="yes"
     fi
     
     if test "x$ac_cv_sys_file_offset_bits" != "xno"; then
-        GMIME_CFLAGS="$GMIME_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
+        LFS_CFLAGS="$LFS_CFLAGS -D_FILE_OFFSET_BITS=$ac_cv_sys_file_offset_bits"
         enable_largefile="yes"
     fi
 else
-    GMIME_CFLAGS=""
+    LFS_CFLAGS=""
 fi
 AM_CONDITIONAL(ENABLE_LARGEFILE, test "x$enable_largefile" = "xyes")
 
 dnl Check type sizes
 CFLAGS_save="$CFLAGS"
-CFLAGS="$CFLAGS $GMIME_CFLAGS"
+CFLAGS="$CFLAGS $LFS_CFLAGS"
 AC_CHECK_SIZEOF(ssize_t)
 AC_CHECK_SIZEOF(size_t)
 AC_CHECK_SIZEOF(off_t)
@@ -464,6 +464,12 @@ dnl *** Checks for libnsl ***
 dnl *************************
 LIBNSL=""
 AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
+
+dnl ******************************************
+dnl *** Checks for GpgME needed for S/MIME ***
+dnl ******************************************
+AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
+
 
 dnl ****************************
 dnl *** Enable Mono bindings ***
@@ -552,12 +558,16 @@ fi
 if test "x$LIBICONV" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $LIBICONV"
 fi
-
-AC_SUBST(CFLAGS)
+if test "x$GPGME_PTHREAD_LIBS" != "x"; then
+	EXTRA_LIBS="$EXTRA_LIBS $GPGME_PTHREAD_LIBS"
+fi
 
 LIBS="$LIBS $EXTRA_LIBS"
+
+AC_SUBST(CFLAGS)
 AC_SUBST(LIBS)
 
+GMIME_CFLAGS="$LFS_CFLAGS $GPGME_PTHREAD_CFLAGS"
 GMIME_LIBDIR="-L${libdir}"
 GMIME_INCLUDEDIR="-I${includedir}/gmime-2.6"
 GMIME_LIBS="-lgmime-2.6 $EXTRA_LIBS"
@@ -603,6 +613,8 @@ Configuration:
 
   Large file support:   ${enable_largefile}
   Console warnings:     ${enable_warnings}
+  PGP/MIME support:     yes
+  S/MIME support:       ${enable_smime}
 
   Mono bindings:        ${enable_mono}
 "

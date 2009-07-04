@@ -56,6 +56,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-parse-utils.c		\
 	gmime-parser.c			\
 	gmime-part.c			\
+	gmime-pkcs7-context.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
 	gmime-stream-cat.c		\
@@ -106,6 +107,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-param.h			\
 	gmime-parser.h			\
 	gmime-part.h			\
+	gmime-pkcs7-context.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\
 	gmime-stream-cat.h		\

@@ -27,14 +27,13 @@
 G_BEGIN_DECLS
 
 extern GQuark gmime_error_quark;
-#define GMIME_ERROR_QUARK gmime_error_quark
 
 /**
  * GMIME_ERROR:
  *
  * The GMime error domain GQuark value.
  **/
-#define GMIME_ERROR GMIME_ERROR_QUARK
+#define GMIME_ERROR gmime_error_quark
 
 /**
  * GMIME_ERROR_IS_SYSTEM:
@@ -56,6 +55,16 @@ enum {
 	GMIME_ERROR_BAD_PASSWORD        = -4,
 	GMIME_ERROR_NO_VALID_RECIPIENTS = -5
 };
+
+
+extern GQuark gmime_gpgme_error_quark;
+
+/**
+ * GMIME_GPGME_ERROR:
+ *
+ * The GMime GpgMe error domain GQuark value.
+ **/
+#define GMIME_GPGME_ERROR gmime_gpgme_error_quark
 
 G_END_DECLS
 

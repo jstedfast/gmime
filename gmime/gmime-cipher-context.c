@@ -221,7 +221,7 @@ static int
 cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
 	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Signing is not supported by this cipher");
 	
 	return -1;
@@ -258,7 +258,7 @@ static GMimeSignatureValidity *
 cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
 	       GMimeStream *sigstream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Verifying is not supported by this cipher");
 	
 	return NULL;
@@ -297,7 +297,7 @@ static int
 cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
 		GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Encryption is not supported by this cipher");
 	
 	return -1;
@@ -335,7 +335,7 @@ static GMimeSignatureValidity *
 cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 		GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Decryption is not supported by this cipher");
 	
 	return NULL;
@@ -378,7 +378,7 @@ g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
 static int
 cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "You may not import keys with this cipher");
 	
 	return -1;
@@ -410,7 +410,7 @@ static int
 cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 		    GMimeStream *ostream, GError **err)
 {
-	g_set_error (err, GMIME_ERROR_QUARK, GMIME_ERROR_NOT_SUPPORTED,
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "You may not export keys with this cipher");
 	
 	return -1;

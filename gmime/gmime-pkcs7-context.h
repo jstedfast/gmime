@@ -58,7 +58,6 @@ struct _GMimePkcs7ContextClass {
 
 GType g_mime_pkcs7_context_get_type (void);
 
-
 GMimeCipherContext *g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd);
 
 gboolean g_mime_pkcs7_context_get_always_trust (GMimePkcs7Context *ctx);

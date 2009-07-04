@@ -39,6 +39,7 @@
 
 extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 
+GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
 
 const guint gmime_major_version = GMIME_MAJOR_VERSION;
@@ -106,6 +107,7 @@ g_mime_init (guint32 flags)
 	
 	g_mime_iconv_init ();
 	
+	gmime_gpgme_error_quark = g_quark_from_static_string ("gmime-gpgme");
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 	
 	/* register our GObject types with the GType system */
