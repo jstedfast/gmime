@@ -1,3 +1,30 @@
+2009-07-04  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Updated
+	for API changes to the GMimeSigner stuff.
+
+	* gmime/gmime-cipher-context.c (g_mime_signer_new): Initialize the
+	newly added fields.
+	(g_mime_signer_free): Free the newly added fields.
+	(g_mime_signer_set_issuer_serial): New field accessor.
+	(g_mime_signer_get_issuer_serial): Same.
+	(g_mime_signer_set_issuer_name): Another new accessor.
+	(g_mime_signer_get_issuer_name): Same.
+	(g_mime_signer_set_email): And another...
+	(g_mime_signer_get_email): Same.
+	(g_mime_signer_set_sig_created): Renamed from
+	g_mime_signer_set_created().
+	(g_mime_signer_get_sig_created): Renamed from
+	g_mime_signer_get_created().
+	(g_mime_signer_set_sig_expires): Renamed from
+	g_mime_signer_set_expires().
+	(g_mime_signer_get_sig_expires): Renamed from
+	g_mime_signer_get_expires().
+	(g_mime_signer_set_key_created): New field accesor.
+	(g_mime_signer_get_key_created): Same.
+	(g_mime_signer_set_key_expires): Same.
+	(g_mime_signer_get_key_expires): Same.
+
 2009-07-02  Stanislav Brabec  <sbrabec@sue.cz>
 
 	* configure.in: Simplified configuring of gmime in a

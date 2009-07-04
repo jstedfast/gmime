@@ -114,9 +114,9 @@ print_verify_results (const GMimeSignatureValidity *validity)
 			break;
 		}
 		
-		fprintf (stdout, "\tSignature made on %s", ctime (&signer->created));
-		if (signer->expires != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->expires));
+		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
+		if (signer->sig_expires != (time_t) 0)
+			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expires));
 		else
 			fprintf (stdout, "\tSignature never expires\n");
 		
@@ -124,6 +124,8 @@ print_verify_results (const GMimeSignatureValidity *validity)
 			fprintf (stdout, "\tErrors: ");
 			if (signer->errors & GMIME_SIGNER_ERROR_EXPSIG)
 				fputs ("Expired, ", stdout);
+			if (signer->errors & GMIME_SIGNER_ERROR_REVSIG)
+				fputs ("Revoked, ", stdout);
 			if (signer->errors & GMIME_SIGNER_ERROR_NO_PUBKEY)
 				fputs ("No Pub Key, ", stdout);
 			if (signer->errors & GMIME_SIGNER_ERROR_EXPKEYSIG)

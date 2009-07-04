@@ -225,6 +225,7 @@ typedef enum {
  * GMimeSignerError:
  * @GMIME_SIGNER_ERROR_NONE: No error.
  * @GMIME_SIGNER_ERROR_EXPSIG: Expired signature.
+ * @GMIME_SIGNER_ERROR_REVSIG: Revoked signature.
  * @GMIME_SIGNER_ERROR_NO_PUBKEY: No public key found.
  * @GMIME_SIGNER_ERROR_EXPKEYSIG: Expired signature key.
  * @GMIME_SIGNER_ERROR_REVKEYSIG: Revoked signature key.
@@ -233,10 +234,11 @@ typedef enum {
  **/
 typedef enum {
 	GMIME_SIGNER_ERROR_NONE,
-	GMIME_SIGNER_ERROR_EXPSIG     = (1 << 0),  /* expire signature */
-	GMIME_SIGNER_ERROR_NO_PUBKEY  = (1 << 1),  /* no public key */
-	GMIME_SIGNER_ERROR_EXPKEYSIG  = (1 << 2),  /* expired key */
-	GMIME_SIGNER_ERROR_REVKEYSIG  = (1 << 3)   /* revoked key */
+	GMIME_SIGNER_ERROR_EXPSIG      = (1 << 0),  /* expire signature */
+	GMIME_SIGNER_ERROR_REVSIG      = (1 << 1),  /* revoked signature */
+	GMIME_SIGNER_ERROR_NO_PUBKEY   = (1 << 2),  /* no public key */
+	GMIME_SIGNER_ERROR_EXPKEYSIG   = (1 << 3),  /* expired key */
+	GMIME_SIGNER_ERROR_REVKEYSIG   = (1 << 4)   /* revoked key */
 } GMimeSignerError;
 
 
@@ -247,10 +249,15 @@ typedef enum {
  * @errors: A bitfield of #GMimeSignerError values.
  * @trust: A #GMimeSignerTrust.
  * @unused: Unused expansion bits for future use; ignore this.
- * @created: The creation date of the signature.
- * @expires: The expiration date of the signature.
+ * @issuer_serial: The issuer of the certificate if known.
+ * @issuer_name: The issuer of the certificate if known.
  * @fingerprint: A hex string representing the signer's fingerprint.
+ * @sig_created: The creation date of the signature.
+ * @sig_expires: The expiration date of the signature.
+ * @key_created: The creation date of the signature key.
+ * @key_expires: The expiration date of the signature key.
  * @keyid: The signer's key id.
+ * @email: The email address of the person or entity.
  * @name: The name of the person or entity.
  *
  * A structure containing useful information about a signer.
@@ -258,13 +265,18 @@ typedef enum {
 struct _GMimeSigner {
 	GMimeSigner *next;
 	unsigned int status:2;    /* GMimeSignerStatus */
-	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
+	unsigned int errors:5;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
-	unsigned int unused:23;   /* unused expansion bits */
+	unsigned int unused:22;   /* unused expansion bits */
+	char *issuer_serial;
+	char *issuer_name;
 	char *fingerprint;
-	time_t created;
-	time_t expires;
+	time_t sig_created;
+	time_t sig_expires;
+	time_t key_created;
+	time_t key_expires;
 	char *keyid;
+	char *email;
 	char *name;
 };
 
@@ -283,21 +295,35 @@ GMimeSignerError g_mime_signer_get_errors (GMimeSigner *signer);
 void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
 GMimeSignerTrust g_mime_signer_get_trust (GMimeSigner *signer);
 
+void g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial);
+const char *g_mime_signer_get_issuer_serial (GMimeSigner *signer);
+
+void g_mime_signer_set_issuer_name (GMimeSigner *signer, const char *issuer_name);
+const char *g_mime_signer_get_issuer_name (GMimeSigner *signer);
+
 void g_mime_signer_set_fingerprint (GMimeSigner *signer, const char *fingerprint);
 const char *g_mime_signer_get_fingerprint (GMimeSigner *signer);
 
 void g_mime_signer_set_key_id (GMimeSigner *signer, const char *key_id);
 const char *g_mime_signer_get_key_id (GMimeSigner *signer);
 
+void g_mime_signer_set_email (GMimeSigner *signer, const char *email);
+const char *g_mime_signer_get_email (GMimeSigner *signer);
+
 void g_mime_signer_set_name (GMimeSigner *signer, const char *name);
 const char *g_mime_signer_get_name (GMimeSigner *signer);
 
-void g_mime_signer_set_created (GMimeSigner *signer, time_t created);
-time_t g_mime_signer_get_created (GMimeSigner *signer);
+void g_mime_signer_set_sig_created (GMimeSigner *signer, time_t created);
+time_t g_mime_signer_get_sig_created (GMimeSigner *signer);
 
-void g_mime_signer_set_expires (GMimeSigner *signer, time_t expires);
-time_t g_mime_signer_get_expires (GMimeSigner *signer);
+void g_mime_signer_set_sig_expires (GMimeSigner *signer, time_t expires);
+time_t g_mime_signer_get_sig_expires (GMimeSigner *signer);
 
+void g_mime_signer_set_key_created (GMimeSigner *signer, time_t created);
+time_t g_mime_signer_get_key_created (GMimeSigner *signer);
+
+void g_mime_signer_set_key_expires (GMimeSigner *signer, time_t expires);
+time_t g_mime_signer_get_key_expires (GMimeSigner *signer);
 
 
 /**

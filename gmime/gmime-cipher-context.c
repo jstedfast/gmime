@@ -457,10 +457,15 @@ g_mime_signer_new (void)
 	signer->status = GMIME_SIGNER_STATUS_NONE;
 	signer->errors = GMIME_SIGNER_ERROR_NONE;
 	signer->trust = GMIME_SIGNER_TRUST_NONE;
-	signer->created = (time_t) 0;
-	signer->expires = (time_t) 0;
+	signer->sig_created = (time_t) 0;
+	signer->sig_expires = (time_t) 0;
+	signer->key_created = (time_t) 0;
+	signer->key_expires = (time_t) 0;
+	signer->issuer_serial = NULL;
+	signer->issuer_name = NULL;
 	signer->fingerprint = NULL;
 	signer->keyid = NULL;
+	signer->email = NULL;
 	signer->name = NULL;
 	signer->next = NULL;
 	
@@ -477,8 +482,11 @@ g_mime_signer_new (void)
 void
 g_mime_signer_free (GMimeSigner *signer)
 {
+	g_free (signer->issuer_serial);
+	g_free (signer->issuer_name);
 	g_free (signer->fingerprint);
 	g_free (signer->keyid);
+	g_free (signer->email);
 	g_free (signer->name);
 	
 	g_slice_free (GMimeSigner, signer);
@@ -602,6 +610,74 @@ g_mime_signer_get_trust (GMimeSigner *signer)
 
 
 /**
+ * g_mime_signer_set_issuer_serial:
+ * @signer: a #GMimeSigner
+ * @name: signer's issuer serial
+ *
+ * Set the signer's issuer serial.
+ **/
+void
+g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial)
+{
+	g_return_if_fail (signer != NULL);
+	
+	g_free (signer->issuer_serial);
+	signer->issuer_serial = g_strdup (issuer_serial);
+}
+
+
+/**
+ * g_mime_signer_get_issuer_serial:
+ * @signer: a #GMimeSigner
+ *
+ * Get the signer's issuer serial.
+ *
+ * Returns: the signer's issuer serial.
+ **/
+const char *
+g_mime_signer_get_issuer_serial (GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, NULL);
+	
+	return signer->issuer_serial;
+}
+
+
+/**
+ * g_mime_signer_set_issuer_name:
+ * @signer: a #GMimeSigner
+ * @name: signer's issuer name
+ *
+ * Set the signer's issuer name.
+ **/
+void
+g_mime_signer_set_issuer_name (GMimeSigner *signer, const char *issuer_name)
+{
+	g_return_if_fail (signer != NULL);
+	
+	g_free (signer->issuer_name);
+	signer->issuer_name = g_strdup (issuer_name);
+}
+
+
+/**
+ * g_mime_signer_get_issuer_name:
+ * @signer: a #GMimeSigner
+ *
+ * Get the signer's issuer name.
+ *
+ * Returns: the signer's issuer name.
+ **/
+const char *
+g_mime_signer_get_issuer_name (GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, NULL);
+	
+	return signer->issuer_name;
+}
+
+
+/**
  * g_mime_signer_set_fingerprint:
  * @signer: a #GMimeSigner
  * @fingerprint: fingerprint string
@@ -670,6 +746,40 @@ g_mime_signer_get_key_id (GMimeSigner *signer)
 
 
 /**
+ * g_mime_signer_set_email:
+ * @signer: a #GMimeSigner
+ * @name: signer's email
+ *
+ * Set the signer's email.
+ **/
+void
+g_mime_signer_set_email (GMimeSigner *signer, const char *email)
+{
+	g_return_if_fail (signer != NULL);
+	
+	g_free (signer->email);
+	signer->email = g_strdup (email);
+}
+
+
+/**
+ * g_mime_signer_get_email:
+ * @signer: a #GMimeSigner
+ *
+ * Get the signer's email.
+ *
+ * Returns: the signer's email.
+ **/
+const char *
+g_mime_signer_get_email (GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, NULL);
+	
+	return signer->email;
+}
+
+
+/**
  * g_mime_signer_set_name:
  * @signer: a #GMimeSigner
  * @name: signer's name
@@ -690,9 +800,9 @@ g_mime_signer_set_name (GMimeSigner *signer, const char *name)
  * g_mime_signer_get_name:
  * @signer: a #GMimeSigner
  *
- * Get the signer trust.
+ * Get the signer's name.
  *
- * Returns: the signer trust.
+ * Returns: the signer's name.
  **/
 const char *
 g_mime_signer_get_name (GMimeSigner *signer)
@@ -704,23 +814,89 @@ g_mime_signer_get_name (GMimeSigner *signer)
 
 
 /**
- * g_mime_signer_set_created:
+ * g_mime_signer_set_sig_created:
  * @signer: a #GMimeSigner
  * @created: creation date
  *
- * Set the signer's key creation date.
+ * Set the creation date of the signer's signature.
  **/
 void
-g_mime_signer_set_created (GMimeSigner *signer, time_t created)
+g_mime_signer_set_sig_created (GMimeSigner *signer, time_t created)
 {
 	g_return_if_fail (signer != NULL);
 	
-	signer->created = created;
+	signer->sig_created = created;
 }
 
 
 /**
- * g_mime_signer_get_created:
+ * g_mime_signer_get_sig_created:
+ * @signer: a #GMimeSigner
+ *
+ * Get the creation date of the signer's signature.
+ *
+ * Returns: the creation date of the signer's signature.
+ **/
+time_t
+g_mime_signer_get_sig_created (GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, (time_t) -1);
+	
+	return signer->sig_created;
+}
+
+
+/**
+ * g_mime_signer_set_sig_expires:
+ * @signer: a #GMimeSigner
+ * @expires: expiration date
+ *
+ * Set the expiration date of the signer's signature.
+ **/
+void
+g_mime_signer_set_sig_expires (GMimeSigner *signer, time_t expires)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->sig_expires = expires;
+}
+
+
+/**
+ * g_mime_signer_get_sig_expires:
+ * @signer: a #GMimeSigner
+ *
+ * Get the expiration date of the signer's signature.
+ *
+ * Returns: the expiration date of the signer's signature.
+ **/
+time_t
+g_mime_signer_get_sig_expires (GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, (time_t) -1);
+	
+	return signer->sig_expires;
+}
+
+
+/**
+ * g_mime_signer_set_key_created:
+ * @signer: a #GMimeSigner
+ * @created: creation date
+ *
+ * Set the creation date of the signer's key.
+ **/
+void
+g_mime_signer_set_key_created (GMimeSigner *signer, time_t created)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->key_created = created;
+}
+
+
+/**
+ * g_mime_signer_get_key_created:
  * @signer: a #GMimeSigner
  *
  * Get the creation date of the signer's key.
@@ -728,32 +904,32 @@ g_mime_signer_set_created (GMimeSigner *signer, time_t created)
  * Returns: the creation date of the signer's key.
  **/
 time_t
-g_mime_signer_get_created (GMimeSigner *signer)
+g_mime_signer_get_key_created (GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
-	return signer->created;
+	return signer->key_created;
 }
 
 
 /**
- * g_mime_signer_set_expires:
+ * g_mime_signer_set_key_expires:
  * @signer: a #GMimeSigner
  * @expires: expiration date
  *
- * Set the signer's key expiration date.
+ * Set the expiration date of the signer's key.
  **/
 void
-g_mime_signer_set_expires (GMimeSigner *signer, time_t expires)
+g_mime_signer_set_key_expires (GMimeSigner *signer, time_t expires)
 {
 	g_return_if_fail (signer != NULL);
 	
-	signer->expires = expires;
+	signer->key_expires = expires;
 }
 
 
 /**
- * g_mime_signer_get_expires:
+ * g_mime_signer_get_key_expires:
  * @signer: a #GMimeSigner
  *
  * Get the expiration date of the signer's key.
@@ -761,11 +937,11 @@ g_mime_signer_set_expires (GMimeSigner *signer, time_t expires)
  * Returns: the expiration date of the signer's key.
  **/
 time_t
-g_mime_signer_get_expires (GMimeSigner *signer)
+g_mime_signer_get_key_expires (GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
-	return signer->expires;
+	return signer->key_expires;
 }
 
 
@@ -911,7 +1087,7 @@ g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)
  * Adds @signer to the list of signers on @validity.
  **/
 void
-g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer)
+g_mime_signature_validity_add_signer (GMimeSignatureValidity *validity, GMimeSigner *signer)
 {
 	GMimeSigner *s;
 	

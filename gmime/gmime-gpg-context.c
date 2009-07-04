@@ -841,7 +841,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* get the signature expiration date (or 0 for never) */
-		signer->expires = strtoul (status, NULL, 10);
+		signer->sig_expires = strtoul (status, NULL, 10);
 		status = next_token (status, NULL);
 		
 		/* the last token is the 'rc' which we don't care about */
@@ -871,14 +871,14 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* the third token is the signature creation date (or 0 for unknown?) */
-		signer->created = strtoul (status, &inend, 10);
+		signer->sig_created = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
 		/* the fourth token is the signature expiration date (or 0 for never) */
-		signer->expires = strtoul (status, NULL, 10);
+		signer->sig_expires = strtoul (status, NULL, 10);
 		
 		/* ignore the rest... */
 	} else if (!strncmp (status, "TRUST_", 6)) {
