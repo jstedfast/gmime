@@ -1509,15 +1509,18 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 				errno = E2BIG;
 #endif
 			
-			if (errno == E2BIG) {
+			if (errno == E2BIG || outleft == 0) {
 				/* need to grow the output buffer */
 				outlen += (inleft * 2) + 16;
 				rc = (size_t) (outbuf - out);
 				out = g_realloc (out, outlen + 1);
 				outleft = outlen - rc;
 				outbuf = out + rc;
-			} else {
-				/* invalid byte(-sequence) in the input buffer */
+			}
+			
+			if (errno == EINVAL || errno == EILSEQ) {
+				/* invalid or incomplete multibyte
+				 * sequence in the input buffer */
 				*outbuf++ = '?';
 				outleft--;
 				inleft--;

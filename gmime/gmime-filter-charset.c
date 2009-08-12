@@ -157,7 +157,8 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				 * EILSEQ An invalid multibyte sequence has been  encountered
 				 *        in the input.
 				 *
-				 * What we do here is eat the invalid bytes in the sequence and continue
+				 * What we do here is eat the invalid bytes in the sequence
+				 * and continue.
 				 */
 				
 				inbuf++;
@@ -167,9 +168,9 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				goto noop;
 			}
 		}
-	} while (((int) inleft) > 0);
+	} while (inleft > 0);
 	
-	if (((int) inleft) > 0) {
+	if (inleft > 0) {
 		/* We've either got an E2BIG or EINVAL. Save the
                    remainder of the buffer as we'll process this next
                    time through */
@@ -230,7 +231,8 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				 * EILSEQ An invalid multibyte sequence has been  encountered
 				 *        in the input.
 				 *
-				 * What we do here is eat the invalid bytes in the sequence and continue
+				 * What we do here is eat the invalid bytes in the sequence
+				 * and continue.
 				 */
 				
 				inbuf++;
@@ -245,10 +247,10 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 				 */
 				
 				break;
-			} else
+			} else {
 				goto noop;
-			
-		} while (((int) inleft) > 0);
+			}
+		} while (inleft > 0);
 	}
 	
 	/* flush the iconv conversion */
