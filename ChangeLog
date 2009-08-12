@@ -1,3 +1,10 @@
+2009-08-12  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (charset_convert): If iconv() fails, treat
+	conditions where outleft == 0 the same as if we had gotten an
+	E2BIG error (e.g. we need to grow the output buffer) so that we
+	don't overrun it while appending a '?' placeholder character.
+
 2009-07-02  Stanislav Brabec  <sbrabec@suse.cz>
 
 	* configure.in: Simplified configuring of gmime in a
