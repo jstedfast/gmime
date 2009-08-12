@@ -1,5 +1,9 @@
 2009-08-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.24
+
 	* gmime/gmime-utils.c (charset_convert): If iconv() fails, treat
 	conditions where outleft == 0 the same as if we had gotten an
 	E2BIG error (e.g. we need to grow the output buffer) so that we
