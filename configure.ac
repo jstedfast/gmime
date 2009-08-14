@@ -252,7 +252,7 @@ AC_CACHE_CHECK([preferred charset formats for system iconv], [ac_cv_have_iconv_d
 	[ac_cv_have_iconv_detect_h=yes], [ac_cv_have_iconv_detect_h=no],
 	[
 		AC_MSG_RESULT([cannot run test program while cross compiling])
-		AC_MSG_ERROR([Please set ac_cv_have_iconv_detect_h to yes iconv-detect.h file.])
+		AC_MSG_ERROR([Copy target system's iconv-detect.h to . and configure with ac_cv_have_iconv_detect_h=yes])
 	])
 ])
 if test "x$ac_cv_have_iconv_detect_h" = xyes; then
