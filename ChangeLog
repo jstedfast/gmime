@@ -1,5 +1,11 @@
 2009-09-03  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.8
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 	* mono/gmime-sharp.dll.config.in: Fixed the target library
 	version, thanks to MATSUURA Takanori <t.matsuu@gmail.com>.
 
