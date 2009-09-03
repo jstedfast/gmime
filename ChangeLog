@@ -1,3 +1,8 @@
+2009-09-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* mono/gmime-sharp.dll.config.in: Fixed the target library
+	version, thanks to MATSUURA Takanori <t.matsuu@gmail.com>.
+
 2009-08-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
