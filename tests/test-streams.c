@@ -158,7 +158,7 @@ test_stream_buffer_gets (const char *filename)
 	GMimeStream *stream, *buffered = NULL;
 	int fd;
 	
-	if ((fd = open (filename, O_RDONLY)) == -1) {
+	if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 		v(fprintf (stderr, "failed to open %s", filename));
 		return;
 	}
@@ -203,7 +203,7 @@ test_stream_mem (const char *filename)
 	GMimeStream *stream, *fstream;
 	int fd;
 	
-	if ((fd = open (filename, O_RDONLY)) == -1) {
+	if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 		v(fprintf (stderr, "failed to open %s: %s\n", filename, g_strerror (errno)));
 		return;
 	}
@@ -246,10 +246,10 @@ check_stream_fs (const char *input, const char *output, const char *filename, gi
 	Exception *ex = NULL;
 	int fd[2];
 	
-	if ((fd[0] = open (input, O_RDONLY)) == -1)
+	if ((fd[0] = open (input, O_RDONLY, 0)) == -1)
 		return FALSE;
 	
-	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+	if ((fd[1] = open (output, O_RDONLY, 0)) == -1) {
 		close (fd[0]);
 		return FALSE;
 	}
@@ -312,10 +312,10 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 	Exception *ex = NULL;
 	int fd[2];
 	
-	if ((fd[0] = open (input, O_RDONLY)) == -1)
+	if ((fd[0] = open (input, O_RDONLY, 0)) == -1)
 		return FALSE;
 	
-	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+	if ((fd[1] = open (output, O_RDONLY, 0)) == -1) {
 		close (fd[0]);
 		return FALSE;
 	}
@@ -345,10 +345,10 @@ check_stream_buffer_block (const char *input, const char *output, const char *fi
 	Exception *ex = NULL;
 	int fd[2];
 	
-	if ((fd[0] = open (input, O_RDONLY)) == -1)
+	if ((fd[0] = open (input, O_RDONLY, 0)) == -1)
 		return FALSE;
 	
-	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+	if ((fd[1] = open (output, O_RDONLY, 0)) == -1) {
 		close (fd[0]);
 		return FALSE;
 	}
@@ -380,10 +380,10 @@ check_stream_buffer_cache (const char *input, const char *output, const char *fi
 	Exception *ex = NULL;
 	int fd[2];
 	
-	if ((fd[0] = open (input, O_RDONLY)) == -1)
+	if ((fd[0] = open (input, O_RDONLY, 0)) == -1)
 		return FALSE;
 	
-	if ((fd[1] = open (output, O_RDONLY)) == -1) {
+	if ((fd[1] = open (output, O_RDONLY, 0)) == -1) {
 		close (fd[0]);
 		return FALSE;
 	}
@@ -419,7 +419,7 @@ check_stream_gio (const char *input, const char *output, const char *filename, g
 	if (!(file = g_file_new_for_path (input)))
 		return FALSE;
 	
-	if ((fd = open (output, O_RDONLY)) == -1) {
+	if ((fd = open (output, O_RDONLY, 0)) == -1) {
 		g_object_unref (file);
 		return FALSE;
 	}

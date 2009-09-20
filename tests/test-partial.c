@@ -79,7 +79,7 @@ int main (int argc, char **argv)
 	
 	partials = g_ptr_array_new ();
 	for (i = 1; i < argc; i++) {
-		if ((fd = open (argv[i], O_RDONLY)) == -1)
+		if ((fd = open (argv[i], O_RDONLY, 0)) == -1)
 			return -1;
 		
 		stream = g_mime_stream_fs_new (fd);

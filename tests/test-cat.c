@@ -225,7 +225,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	part = parts;
 	while (part != NULL) {
 		d(fprintf (stderr, "checking substream %s\n", part->filename));
-		if ((fd = open (part->filename, O_RDONLY)) == -1) {
+		if ((fd = open (part->filename, O_RDONLY, 0)) == -1) {
 			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			throw (ex);
 		}
@@ -271,7 +271,7 @@ test_cat_read (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
-		if ((fd = open (part->filename, O_RDONLY)) == -1) {
+		if ((fd = open (part->filename, O_RDONLY, 0)) == -1) {
 			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
@@ -318,7 +318,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
-		if ((fd = open (part->filename, O_RDONLY)) == -1) {
+		if ((fd = open (part->filename, O_RDONLY, 0)) == -1) {
 			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
@@ -379,7 +379,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 		d(fprintf (stderr, "adding %s start=%lld, end=%lld...\n",
 			   part->filename, part->pstart, part->pend));
 		
-		if ((fd = open (part->filename, O_RDONLY)) == -1) {
+		if ((fd = open (part->filename, O_RDONLY, 0)) == -1) {
 			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
@@ -482,7 +482,7 @@ int main (int argc, char **argv)
 		
 		if (S_ISREG (st.st_mode)) {
 			/* test a particular input file */
-			if ((fd = open (argv[i], O_RDONLY)) == -1)
+			if ((fd = open (argv[i], O_RDONLY, 0)) == -1)
 				return EXIT_FAILURE;
 			
 			filename = g_strdup (argv[i]);

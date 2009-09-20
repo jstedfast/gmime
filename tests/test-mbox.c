@@ -300,14 +300,14 @@ int main (int argc, char **argv)
 			
 			testsuite_check ("%s", dent->d_name);
 			try {
-				if ((fd = open (input, O_RDONLY)) == -1) {
+				if ((fd = open (input, O_RDONLY, 0)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
 							      input, g_strerror (errno)));
 				}
 				
 				istream = g_mime_stream_fs_new (fd);
 				
-				if ((fd = open (output, O_RDONLY)) == -1) {
+				if ((fd = open (output, O_RDONLY, 0)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
 							      output, g_strerror (errno)));
 				}
@@ -380,7 +380,7 @@ int main (int argc, char **argv)
 		closedir (dir);
 	} else if (S_ISREG (st.st_mode)) {
 		/* manually run test on a single file */
-		if ((fd = open (path, O_RDONLY)) == -1)
+		if ((fd = open (path, O_RDONLY, 0)) == -1)
 			goto exit;
 		
 		istream = g_mime_stream_fs_new (fd);

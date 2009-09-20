@@ -158,7 +158,6 @@ AC_CHECK_HEADERS(sys/param.h)
 AC_CHECK_HEADERS(winsock2.h)
 AC_CHECK_HEADERS(string.h)
 AC_CHECK_HEADERS(stdlib.h)
-AC_CHECK_HEADERS(unistd.h)
 AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(regex.h)
 AC_CHECK_HEADERS(time.h)
@@ -167,6 +166,7 @@ AC_CHECK_HEADERS(poll.h)
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
 AC_TYPE_SSIZE_T
+AC_TYPE_MODE_T
 
 dnl Check for nfds_t - used by poll()
 AC_MSG_CHECKING(for nfds_t)

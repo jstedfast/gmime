@@ -113,9 +113,6 @@
 /* Define if struct tm has a tm_gmtoff member */
 /* #undef HAVE_TM_GMTOFF */
 
-/* Define to 1 if you have the <unistd.h> header file. */
-/* #undef HAVE_UNISTD_H */
-
 /* Define if struct utsname has a domainname member */
 /* #undef HAVE_UTSNAME_DOMAINNAME */
 
@@ -179,6 +176,9 @@
 #ifndef __cplusplus
 /* #undef inline */
 #endif
+
+/* Define to `int' if <sys/types.h> does not define. */
+#define mode_t int
 
 /* Define to `unsigned long int' if <poll.h> does not define. */
 #define nfds_t unsigned long int

@@ -25,7 +25,7 @@
 			<Tool
 				Name="VCPreBuildEventTool"
 				Description="Generating config.h ..."
-				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
+				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;if exist ..\..\unistd.h goto DONE_UNISTD_H&#x0D;&#x0A;copy unistd.h ..\..\unistd.h&#x0D;&#x0A;:DONE_UNISTD_H&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
@@ -89,7 +89,7 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
-				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;"
+				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;if exist ..\..\unistd.h goto DONE_UNISTD_H&#x0D;&#x0A;copy unistd.h ..\..\unistd.h&#x0D;&#x0A;:DONE_UNISTD_H&#x0D;&#x0A;"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"

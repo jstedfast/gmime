@@ -377,7 +377,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 	Exception *ex;
 	int fd;
 	
-	if ((fd = open (path, O_RDONLY)) == -1)
+	if ((fd = open (path, O_RDONLY, 0)) == -1)
 		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);

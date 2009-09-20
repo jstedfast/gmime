@@ -27,14 +27,9 @@
 
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <fcntl.h>
 #include <errno.h>
-#ifdef G_OS_WIN32
-#include <io.h>
-#endif
 
 #include "gmime-stream-pipe.h"
 

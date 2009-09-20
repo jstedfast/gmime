@@ -39,14 +39,10 @@
 #include <sys/utsname.h>    /* for uname() */
 #endif
 #include <sys/types.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>         /* Unix header for getpid() */
-#endif
 #ifdef G_OS_WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-#include <process.h>
-#define getpid() _getpid()
 #endif
 #ifdef HAVE_NETDB_H
 #include <netdb.h>

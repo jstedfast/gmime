@@ -27,9 +27,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <fcntl.h>
 #include <errno.h>
 #include <time.h>
@@ -718,7 +716,7 @@ g_mime_multipart_get_count (GMimeMultipart *multipart)
 static void
 read_random_pool (unsigned char *buffer, size_t bytes)
 {
-#ifdef HAVE_UNISTD_H
+#ifdef __unix__
 	size_t nread = 0;
 	ssize_t n;
 	int fd;

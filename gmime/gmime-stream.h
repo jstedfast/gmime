@@ -83,7 +83,7 @@ typedef struct {
 struct _GMimeStream {
 	GObject parent_object;
 	
-	/* Note: these are private fields!! */
+	/* <private> */
 	GMimeStream *super_stream;
 	
 	gint64 position;
@@ -132,7 +132,7 @@ ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...)
 
 ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
 
-ssize_t    g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
+ssize_t   g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
 
 G_END_DECLS
 

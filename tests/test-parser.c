@@ -24,9 +24,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <time.h>
 
@@ -178,7 +178,7 @@ int main (int argc, char **argv)
 	else
 		return 0;
 	
-	if ((fd = open (filename, O_RDONLY)) == -1)
+	if ((fd = open (filename, O_RDONLY, 0)) == -1)
 		return 0;
 	
 #ifdef STREAM_MMAP
