@@ -64,7 +64,7 @@ random_whole_stream (const char *datadir, char **filename)
 	
 	g_mkdir_with_parents (datadir, 0755);
 	
-	snprintf (buf, sizeof (buf), "%s%cstream.%u", datadir, G_DIR_SEPARATOR, getpid ());
+	g_snprintf (buf, sizeof (buf), "%s%cstream.%u", datadir, G_DIR_SEPARATOR, getpid ());
 	if ((fd = open (buf, O_CREAT | O_TRUNC | O_RDWR, 0666)) == -1) {
 		fprintf (stderr, "Error: Cannot create `%s': %s\n", buf, g_strerror (errno));
 		exit (EXIT_FAILURE);

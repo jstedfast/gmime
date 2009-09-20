@@ -11,6 +11,8 @@
 #define read(fd,buf,n) _read(fd,buf,n)
 #define write(fd,buf,n) _write(fd,buf,n)
 #define lseek(fd,offset,whence) _lseek(fd,offset,whence)
+#define fdopen(fd,mode) _fdopen(fd,mode)
+#define unlink(path) _unlink(path)
 #define dup(fd) _dup(fd)
 #define getpid() _getpid()
 
