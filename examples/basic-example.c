@@ -30,11 +30,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #include <fcntl.h>
 #include <errno.h>
-#ifdef G_OS_WIN32
-#include <io.h>
-#endif
 
 #ifndef G_OS_WIN32
 static const char *path = "/usr/bin/gpg";
@@ -294,7 +292,7 @@ int main (int argc, char **argv)
 		printf ("Usage: a.out <message file>\n");
 		return 0;
 	} else {
-		if ((fd = open (argv[1], O_RDONLY)) == -1) {
+		if ((fd = open (argv[1], O_RDONLY, 0)) == -1) {
 			fprintf (stderr, "Cannot open message `%s': %s\n", argv[1], g_strerror (errno));
 			return 0;
 		}

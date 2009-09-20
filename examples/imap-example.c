@@ -30,14 +30,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <fcntl.h>
 #include <errno.h>
-#ifdef G_OS_WIN32
-#include <io.h>
-#endif
 
 static char *
 basename (char *path)
@@ -736,7 +731,7 @@ reconstruct_part_content (GMimePart *part, const char *uid, const char *spec)
 	int fd;
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	if ((fd = open (filename, O_RDONLY)) == -1) {
+	if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 		g_free (filename);
 		return;
 	}
@@ -761,7 +756,7 @@ reconstruct_message_part (GMimeMessagePart *msgpart, const char *uid, const char
 	int fd;
 	
 	filename = g_strdup_printf ("%s/%s.TEXT", uid, spec);
-	if ((fd = open (filename, O_RDONLY))) {
+	if ((fd = open (filename, O_RDONLY, 0))) {
 		g_mime_message_part_set_message (msgpart, NULL);
 		g_free (filename);
 		return;
@@ -817,7 +812,7 @@ reconstruct_multipart (GMimeMultipart *multipart, struct _bodystruct *body,
 		   manually rather than to do uber-fancy stuff */
 		
 		filename = g_strdup_printf ("%s/%s.HEADER", uid, subspec);
-		if ((fd = open (filename, O_RDONLY)) == -1) {
+		if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 			g_free (filename);
 			return;
 		}
@@ -857,7 +852,7 @@ reconstruct_message (const char *uid)
 	int fd;
 	
 	filename = g_strdup_printf ("%s/HEADER", uid);
-	if ((fd = open (filename, O_RDONLY)) == -1) {
+	if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 		g_free (filename);
 		return;
 	}
@@ -880,7 +875,7 @@ reconstruct_message (const char *uid)
 		GMimeStream *mem;
 		
 		filename = g_strdup_printf ("%s/BODYSTRUCTURE", uid);
-		if ((fd = open (filename, O_RDONLY)) == -1) {
+		if ((fd = open (filename, O_RDONLY, 0)) == -1) {
 			g_free (filename);
 			return;
 		}
@@ -938,7 +933,7 @@ int main (int argc, char **argv)
 		i++;
 	}
 	
-	if ((fd = open (argv[i], O_RDONLY)) == -1)
+	if ((fd = open (argv[i], O_RDONLY, 0)) == -1)
 		return 0;
 	
 	stream = g_mime_stream_fs_new (fd);
