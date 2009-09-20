@@ -139,7 +139,7 @@ uuencode (const char *progname, int argc, char **argv)
 	name = argv[optind];
 	
 	/* open our input file... */
-	if ((fd = filename ? open (filename, O_RDONLY) : dup (0)) == -1) {
+	if ((fd = filename ? open (filename, O_RDONLY, 0) : dup (0)) == -1) {
 		fprintf (stderr, "%s: %s: %s\n", progname,
 			 filename ? filename : "stdin",
 			 g_strerror (errno));
