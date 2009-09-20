@@ -302,14 +302,14 @@ int main (int argc, char **argv)
 			try {
 				if ((fd = open (input, O_RDONLY)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
-							      input, strerror (errno)));
+							      input, g_strerror (errno)));
 				}
 				
 				istream = g_mime_stream_fs_new (fd);
 				
 				if ((fd = open (output, O_RDONLY)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
-							      output, strerror (errno)));
+							      output, g_strerror (errno)));
 				}
 				
 				ostream = g_mime_stream_fs_new (fd);
@@ -318,7 +318,7 @@ int main (int argc, char **argv)
 				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent->d_name);
 				if ((fd = g_mkstemp (tmp)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
-							      tmp, strerror (errno)));
+							      tmp, g_strerror (errno)));
 				}
 				
 				mstream = g_mime_stream_fs_new (fd);

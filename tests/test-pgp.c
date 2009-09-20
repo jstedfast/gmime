@@ -17,6 +17,9 @@
  *  Foundation, 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  */
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -174,7 +177,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 	int fd;
 	
 	if ((fd = open (path, O_RDONLY)) == -1)
-		throw (exception_new ("open() failed: %s", strerror (errno)));
+		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	ostream = g_mime_stream_fs_new (fd);
 	istream = g_mime_stream_mem_new ();
@@ -234,7 +237,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 	int fd;
 	
 	if ((fd = open (path, O_RDONLY)) == -1)
-		throw (exception_new ("open() failed: %s", strerror (errno)));
+		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
 	g_mime_cipher_context_import_keys (ctx, stream, &err);

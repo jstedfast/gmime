@@ -66,7 +66,7 @@ random_whole_stream (const char *datadir, char **filename)
 	
 	snprintf (buf, sizeof (buf), "%s%cstream.%u", datadir, G_DIR_SEPARATOR, getpid ());
 	if ((fd = open (buf, O_CREAT | O_TRUNC | O_RDWR, 0666)) == -1) {
-		fprintf (stderr, "Error: Cannot create `%s': %s\n", buf, strerror (errno));
+		fprintf (stderr, "Error: Cannot create `%s': %s\n", buf, g_strerror (errno));
 		exit (EXIT_FAILURE);
 	}
 	
@@ -200,7 +200,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_CREAT | O_TRUNC | O_WRONLY, 0666)) == -1) {
-			ex = exception_new ("could not create `%s': %s", part->filename, strerror (errno));
+			ex = exception_new ("could not create `%s': %s", part->filename, g_strerror (errno));
 			throw (ex);
 		}
 		
@@ -213,7 +213,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	
 	g_mime_stream_reset (whole);
 	if (g_mime_stream_write_to_stream (whole, (GMimeStream *) cat) == -1) {
-		ex = exception_new ("%s", strerror (errno));
+		ex = exception_new ("%s", g_strerror (errno));
 		g_object_unref (cat);
 		throw (ex);
 	}
@@ -226,7 +226,7 @@ test_cat_write (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	while (part != NULL) {
 		d(fprintf (stderr, "checking substream %s\n", part->filename));
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
-			ex = exception_new ("could not open `%s': %s", part->filename, strerror (errno));
+			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			throw (ex);
 		}
 		
@@ -272,7 +272,7 @@ test_cat_read (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
-			ex = exception_new ("could not open `%s': %s", part->filename, strerror (errno));
+			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
 		}
@@ -319,7 +319,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
-			ex = exception_new ("could not open `%s': %s", part->filename, strerror (errno));
+			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
 		}
@@ -336,13 +336,13 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld in original stream: %s",
-				    offset, strerror (errno));
+				    offset, g_strerror (errno));
 		throw (ex);
 	}
 	
 	if (g_mime_stream_seek (cat, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld: %s",
-				    offset, strerror (errno));
+				    offset, g_strerror (errno));
 		throw (ex);
 	}
 	
@@ -380,7 +380,7 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 			   part->filename, part->pstart, part->pend));
 		
 		if ((fd = open (part->filename, O_RDONLY)) == -1) {
-			ex = exception_new ("could not open `%s': %s", part->filename, strerror (errno));
+			ex = exception_new ("could not open `%s': %s", part->filename, g_strerror (errno));
 			g_object_unref (cat);
 			throw (ex);
 		}
@@ -401,13 +401,13 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	
 	if (!(sub1 = g_mime_stream_substream (whole, start, end))) {
 		ex = exception_new ("could not substream the original stream: %s",
-				    strerror (errno));
+				    g_strerror (errno));
 		g_object_unref (cat);
 		throw (ex);
 	}
 	
 	if (!(sub2 = g_mime_stream_substream (cat, start, end))) {
-		ex = exception_new ("%s", strerror (errno));
+		ex = exception_new ("%s", g_strerror (errno));
 		g_object_unref (sub1);
 		g_object_unref (cat);
 		throw (ex);
