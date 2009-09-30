@@ -576,7 +576,7 @@ gen_test_data (const char *datadir, char **stream_name)
 	*name++ = G_DIR_SEPARATOR;
 	strcpy (name, "streamXXXXXX");
 	
-	if ((fd = mkstemp (input)) == -1)
+	if ((fd = g_mkstemp (input)) == -1)
 		return -1;
 	
 	*stream_name = g_strdup (name);
