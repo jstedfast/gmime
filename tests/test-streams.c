@@ -22,16 +22,15 @@
 #include <config.h>
 #endif
 
-#include <glib.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <unistd.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <errno.h>
 
@@ -305,6 +304,7 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 	return TRUE;
 }
 
+#ifdef HAVE_MMAP
 static gboolean
 check_stream_mmap (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
@@ -337,6 +337,7 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 	
 	return TRUE;
 }
+#endif /* HAVE_MMAP */
 
 static gboolean
 check_stream_buffer_block (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
@@ -448,17 +449,19 @@ static struct {
 } checks[] = {
 	{ "GMimeStreamFs",                  check_stream_fs           },
 	{ "GMimeStreamFile",                check_stream_file         },
+#ifdef HAVE_MMAP
 	{ "GMimeStreamMmap",                check_stream_mmap         },
+#endif /* HAVE_MMAP */
 	{ "GMimeStreamBuffer (block mode)", check_stream_buffer_block },
 	{ "GMimeStreamBuffer (cache mode)", check_stream_buffer_cache },
 	{ "GMimeStreamGIO",                 check_stream_gio          },
 };
 
 static void
-test_streams (DIR *dir, const char *datadir, const char *filename)
+test_streams (GDir *dir, const char *datadir, const char *filename)
 {
 	char inpath[256], outpath[256], *p, *q, *o;
-	struct dirent *dent;
+	const char *dent, *d;
 	gint64 start, end;
 	size_t n;
 	guint i;
@@ -477,38 +480,38 @@ test_streams (DIR *dir, const char *datadir, const char *filename)
 	
 	n = strlen (filename);
 	
-	while ((dent = readdir (dir))) {
-		if (strncmp (dent->d_name, filename, n) != 0 || dent->d_name[n] != ':')
+	while ((dent = g_dir_read_name (dir))) {
+		if (strncmp (dent, filename, n) != 0 || dent[n] != ':')
 			continue;
 		
-		p = dent->d_name + n + 1;
-		if ((start = strtol (p, &o, 10)) < 0 || *o != ',')
+		d = dent + n + 1;
+		if ((start = strtol (d, &o, 10)) < 0 || *o != ',')
 			continue;
 		
-		p = o + 1;
+		d = o + 1;
 		
-		if ((((end = strtol (p, &o, 10)) < start) && end != -1) || *o != '\0')
+		if ((((end = strtol (d, &o, 10)) < start) && end != -1) || *o != '\0')
 			continue;
 		
-		strcpy (q, dent->d_name);
+		strcpy (q, dent);
 		
 		for (i = 0; i < G_N_ELEMENTS (checks); i++) {
-			testsuite_check ("%s on `%s'", checks[i].what, dent->d_name);
+			testsuite_check ("%s on `%s'", checks[i].what, dent);
 			try {
-				if (!checks[i].check (inpath, outpath, dent->d_name, start, end)) {
+				if (!checks[i].check (inpath, outpath, dent, start, end)) {
 					testsuite_check_warn ("%s could not open `%s'",
-							      checks[i].what, dent->d_name);
+							      checks[i].what, dent);
 				} else {
 					testsuite_check_passed ();
 				}
 			} catch (ex) {
 				testsuite_check_failed ("%s on `%s' failed: %s", checks[i].what,
-							dent->d_name, ex->message);
+							dent, ex->message);
 			} finally;
 		}
 	}
 	
-	rewinddir (dir);
+	g_dir_rewind (dir);
 }
 
 
@@ -623,9 +626,9 @@ int main (int argc, char **argv)
 	const char *datadir = "data/streams";
 	gboolean gen_data = TRUE;
 	char *stream_name = NULL;
-	struct dirent *dent;
 	char path[256], *p;
-	DIR *dir, *outdir;
+	GDir *dir, *outdir;
+	const char *dent;
 	int i;
 	
 	g_mime_init (0);
@@ -645,9 +648,9 @@ int main (int argc, char **argv)
 	*p++ = G_DIR_SEPARATOR;
 	strcpy (p, "output");
 	
-	if (!(outdir = opendir (path))) {
+	if (!(outdir = g_dir_open (path, 0, NULL))) {
 		if (gen_test_data (datadir, &stream_name) == -1 ||
-		    !(outdir = opendir (path)))
+		    !(outdir = g_dir_open (path, 0, NULL)))
 			goto exit;
 		
 		gen_data = FALSE;
@@ -655,10 +658,10 @@ int main (int argc, char **argv)
 	
 	p = g_stpcpy (p, "input");
 	
-	if (!(dir = opendir (path))) {
+	if (!(dir = g_dir_open (path, 0, NULL))) {
 		if (!gen_data || gen_test_data (datadir, &stream_name) == -1 ||
-		    !(dir = opendir (path))) {
-			closedir (outdir);
+		    !(dir = g_dir_open (path, 0, NULL))) {
+			g_dir_close (outdir);
 			goto exit;
 		}
 		
@@ -666,15 +669,15 @@ int main (int argc, char **argv)
 	}
 	
 	if (gen_data) {
-		while ((dent = readdir (dir))) {
-			if (dent->d_name[0] == '.' || !strcmp (dent->d_name, "README"))
+		while ((dent = g_dir_read_name (dir))) {
+			if (dent[0] == '.' || !strcmp (dent, "README"))
 				continue;
 			
 			gen_data = FALSE;
 			break;
 		}
 		
-		rewinddir (dir);
+		g_dir_rewind (dir);
 		
 		if (gen_data && gen_test_data (datadir, &stream_name) == -1)
 			goto exit;
@@ -683,13 +686,13 @@ int main (int argc, char **argv)
 	*p++ = G_DIR_SEPARATOR;
 	*p = '\0';
 	
-	while ((dent = readdir (dir))) {
-		if (dent->d_name[0] == '.' || !strcmp (dent->d_name, "README"))
+	while ((dent = g_dir_read_name (dir))) {
+		if (dent[0] == '.' || !strcmp (dent, "README"))
 			continue;
 		
-		test_streams (outdir, datadir, dent->d_name);
+		test_streams (outdir, datadir, dent);
 		
-		strcpy (p, dent->d_name);
+		strcpy (p, dent);
 		test_stream_buffer_gets (path);
 	}
 	
@@ -703,10 +706,10 @@ int main (int argc, char **argv)
 		p = g_stpcpy (p, "output");
 		*p++ = G_DIR_SEPARATOR;
 		
-		rewinddir (outdir);
-		while ((dent = readdir (outdir))) {
-			if (!strncmp (dent->d_name, stream_name, strlen (stream_name))) {
-				strcpy (p, dent->d_name);
+		g_dir_rewind (outdir);
+		while ((dent = g_dir_read_name (outdir))) {
+			if (!strncmp (dent, stream_name, strlen (stream_name))) {
+				strcpy (p, dent);
 				unlink (path);
 			}
 		}
@@ -714,8 +717,8 @@ int main (int argc, char **argv)
 		g_free (stream_name);
 	}
 	
-	closedir (outdir);
-	closedir (dir);
+	g_dir_close (outdir);
+	g_dir_close (dir);
 	
 exit:
 	
