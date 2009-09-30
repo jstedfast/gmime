@@ -1,5 +1,7 @@
 2009-09-30  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-stream-gio.c (set_errno): Fixes to build on Windows.
+
 	* tests/test-streams.c: Use GDir instead of POSIX's dirent API and
 	also conditionally disable mmap tests.
 

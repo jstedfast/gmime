@@ -155,14 +155,20 @@ set_errno (GError *err)
 	case G_IO_ERROR_NOT_DIRECTORY: errno = ENOTDIR; break;
 	case G_IO_ERROR_NOT_EMPTY: errno = ENOTEMPTY; break;
 	case G_IO_ERROR_FILENAME_TOO_LONG: errno = ENAMETOOLONG; break;
-	case G_IO_ERROR_TOO_MANY_LINKS: errno = ELOOP; break;
+	case G_IO_ERROR_TOO_MANY_LINKS: errno = EMLINK; break;
 	case G_IO_ERROR_NO_SPACE: errno = ENOSPC; break; // or ENOMEM
 	case G_IO_ERROR_INVALID_ARGUMENT: errno = EINVAL; break;
 	case G_IO_ERROR_PERMISSION_DENIED: errno = EACCES; break; // or EPERM
+#ifdef ENOTSUP
 	case G_IO_ERROR_NOT_SUPPORTED: errno = ENOTSUP; break;
+#endif
+#ifdef ECANCELED
 	case G_IO_ERROR_CANCELLED: errno = ECANCELED; break;
+#endif
 	case G_IO_ERROR_READ_ONLY: errno = EROFS; break;
+#ifdef ETIMEDOUT
 	case G_IO_ERROR_TIMED_OUT: errno = ETIMEDOUT; break;
+#endif
 	case G_IO_ERROR_BUSY: errno = EBUSY; break;
 	case G_IO_ERROR_WOULD_BLOCK: errno = EAGAIN; break;
 	case G_IO_ERROR_FAILED:
