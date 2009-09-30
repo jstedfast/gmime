@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <fcntl.h>
 #include <time.h>
 
@@ -238,11 +237,11 @@ int main (int argc, char **argv)
 	char input[256], output[256], *tmp, *p, *q;
 	GMimeStream *istream, *ostream, *mstream, *pstream;
 	GMimeParser *parser;
-	struct dirent *dent;
+	const char *dent;
 	const char *path;
 	struct stat st;
+	GDir *dir;
 	int fd, i;
-	DIR *dir;
 	
 #ifdef ENABLE_MBOX_MATCH
 	if (g_mkdir ("./tmp", 0755) == -1 && errno != EEXIST)
@@ -272,7 +271,7 @@ int main (int argc, char **argv)
 		*p++ = G_DIR_SEPARATOR;
 		p = g_stpcpy (p, "input");
 		
-		if (!(dir = opendir (input)))
+		if (!(dir = g_dir_open (input, 0, NULL)))
 			goto exit;
 		
 		*p++ = G_DIR_SEPARATOR;
@@ -284,12 +283,12 @@ int main (int argc, char **argv)
 		*q++ = G_DIR_SEPARATOR;
 		*q = '\0';
 		
-		while ((dent = readdir (dir))) {
-			if (!g_str_has_suffix (dent->d_name, ".mbox"))
+		while ((dent = g_dir_read_name (dir))) {
+			if (!g_str_has_suffix (dent, ".mbox"))
 				continue;
 			
-			strcpy (p, dent->d_name);
-			strcpy (q, dent->d_name);
+			strcpy (p, dent);
+			strcpy (q, dent);
 			
 			tmp = NULL;
 			parser = NULL;
@@ -298,7 +297,7 @@ int main (int argc, char **argv)
 			mstream = NULL;
 			pstream = NULL;
 			
-			testsuite_check ("%s", dent->d_name);
+			testsuite_check ("%s", dent);
 			try {
 				if ((fd = open (input, O_RDONLY, 0)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
@@ -315,7 +314,7 @@ int main (int argc, char **argv)
 				ostream = g_mime_stream_fs_new (fd);
 				
 #ifdef ENABLE_MBOX_MATCH
-				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent->d_name);
+				tmp = g_strdup_printf ("./tmp/%s.XXXXXX", dent);
 				if ((fd = g_mkstemp (tmp)) == -1) {
 					throw (exception_new ("could not open `%s': %s",
 							      tmp, g_strerror (errno)));
@@ -328,7 +327,7 @@ int main (int argc, char **argv)
 				g_mime_parser_set_persist_stream (parser, TRUE);
 				g_mime_parser_set_scan_from (parser, TRUE);
 				
-				if (strstr (dent->d_name, "content-length") != NULL)
+				if (strstr (dent, "content-length") != NULL)
 					g_mime_parser_set_respect_content_length (parser, TRUE);
 				
 				pstream = g_mime_stream_mem_new ();
@@ -339,13 +338,13 @@ int main (int argc, char **argv)
 				g_mime_stream_reset (istream);
 				g_mime_stream_reset (mstream);
 				if (!streams_match (istream, mstream))
-					throw (exception_new ("mboxes do not match for `%s'", dent->d_name));
+					throw (exception_new ("mboxes do not match for `%s'", dent));
 #endif
 				
 				g_mime_stream_reset (ostream);
 				g_mime_stream_reset (pstream);
 				if (!streams_match (ostream, pstream))
-					throw (exception_new ("summaries do not match for `%s'", dent->d_name));
+					throw (exception_new ("summaries do not match for `%s'", dent));
 				
 				testsuite_check_passed ();
 				
@@ -354,9 +353,9 @@ int main (int argc, char **argv)
 #endif
 			} catch (ex) {
 				if (parser != NULL)
-					testsuite_check_failed ("%s: %s", dent->d_name, ex->message);
+					testsuite_check_failed ("%s: %s", dent, ex->message);
 				else
-					testsuite_check_warn ("%s: %s", dent->d_name, ex->message);
+					testsuite_check_warn ("%s: %s", dent, ex->message);
 			} finally;
 			
 			if (mstream != NULL)
@@ -377,7 +376,7 @@ int main (int argc, char **argv)
 			g_free (tmp);
 		}
 		
-		closedir (dir);
+		g_dir_close (dir);
 	} else if (S_ISREG (st.st_mode)) {
 		/* manually run test on a single file */
 		if ((fd = open (path, O_RDONLY, 0)) == -1)

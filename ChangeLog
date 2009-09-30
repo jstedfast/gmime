@@ -1,3 +1,8 @@
+2009-09-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* tests/test-mbox.c: Use GDir instead of POSIX's dirent API to aid
+	in portability to Windows.
+
 2009-09-03  Jeffrey Stedfast  <fejj@novell.com>
 
 	* mono/gmime-sharp.dll.config.in: Simply target
