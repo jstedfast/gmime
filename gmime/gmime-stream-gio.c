@@ -206,7 +206,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 	}
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	if (G_IS_SEEKABLE (gio->istream)) {
@@ -237,7 +237,6 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
 	size_t nwritten = 0;
 	GError *err = NULL;
-	ssize_t n;
 	
 	if (gio->file == NULL) {
 		errno = EBADF;
@@ -258,7 +257,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	}
 	
 	if (stream->bound_end != -1)
-		len = MIN (stream->bound_end - stream->position, (gint64) len);
+		len = (size_t) MIN (stream->bound_end - stream->position, (gint64) len);
 	
 	/* make sure we are at the right position */
 	if (G_IS_SEEKABLE (gio->ostream)) {
@@ -460,7 +459,6 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
-	GSeekable *seekable;
 	GError *err = NULL;
 	gint64 real;
 	
@@ -555,7 +553,7 @@ stream_tell (GMimeStream *stream)
 	return stream->position;
 }
 
-static ssize_t
+static gint64
 gio_seekable_bound_end (GMimeStream *stream, GSeekable *seekable)
 {
 	GError *err = NULL;
