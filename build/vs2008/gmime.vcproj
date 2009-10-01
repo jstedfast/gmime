@@ -127,8 +127,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib zdll.lib"
-				OutputFile="$(OutDir)\$(ProjectName)-2.4.dll"
+				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib gio-2.0.lib zdll.lib"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
@@ -268,8 +268,8 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib zdll.lib"
-				OutputFile="$(OutDir)\$(ProjectName)-2.4.dll"
+				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib gio-2.0.lib zdll.lib"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.dll"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="2"
