@@ -57,6 +57,9 @@ static void g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass
 static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass);
 static void g_mime_multipart_signed_finalize (GObject *object);
 
+/* GMimeObject class methods */
+static void multipart_signed_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
+
 
 static GMimeMultipartClass *parent_class = NULL;
 
@@ -89,11 +92,14 @@ g_mime_multipart_signed_get_type (void)
 static void
 g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass)
 {
+	GMimeObjectClass *object_class = GMIME_OBJECT_CLASS (klass);
 	GObjectClass *gobject_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (GMIME_TYPE_MULTIPART);
 	
 	gobject_class->finalize = g_mime_multipart_signed_finalize;
+	
+	object_class->encode = multipart_signed_encode;
 }
 
 static void
@@ -106,6 +112,13 @@ static void
 g_mime_multipart_signed_finalize (GObject *object)
 {
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+static void
+multipart_signed_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	/* Do NOT encode subparts of a multipart/signed */
+	return;
 }
 
 

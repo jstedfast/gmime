@@ -24,6 +24,7 @@
 
 #include <glib.h>
 
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-object.h>
 
 G_BEGIN_DECLS
@@ -104,6 +105,8 @@ int g_mime_multipart_get_count (GMimeMultipart *multipart);
 
 void g_mime_multipart_set_boundary (GMimeMultipart *multipart, const char *boundary);
 const char *g_mime_multipart_get_boundary (GMimeMultipart *multipart);
+
+/* convenience functions */
 
 void g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback,
 			       gpointer user_data);

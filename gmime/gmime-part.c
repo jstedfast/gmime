@@ -33,6 +33,7 @@
 #include "gmime-stream-null.h"
 #include "gmime-stream-filter.h"
 #include "gmime-filter-basic.h"
+#include "gmime-filter-best.h"
 #include "gmime-filter-crlf.h"
 #include "gmime-filter-md5.h"
 
@@ -62,6 +63,7 @@ static const char *mime_part_get_header (GMimeObject *object, const char *header
 static gboolean mime_part_remove_header (GMimeObject *object, const char *header);
 static char *mime_part_get_headers (GMimeObject *object);
 static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static void mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimePart class methods */
 static void set_content_object (GMimePart *mime_part, GMimeDataWrapper *content);
@@ -112,6 +114,7 @@ g_mime_part_class_init (GMimePartClass *klass)
 	object_class->get_header = mime_part_get_header;
 	object_class->get_headers = mime_part_get_headers;
 	object_class->write_to_stream = mime_part_write_to_stream;
+	object_class->encode = mime_part_encode;
 	
 	klass->set_content_object = set_content_object;
 }
@@ -392,6 +395,29 @@ mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	total += nwritten;
 	
 	return total;
+}
+
+static void
+mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	GMimePart *part = (GMimePart *) object;
+	GMimeContentEncoding encoding;
+	GMimeStream *stream, *null;
+	GMimeFilter *filter;
+	
+	filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
+	
+	null = g_mime_stream_null_new ();
+	stream = g_mime_stream_filter_new (null);
+	g_mime_stream_filter_add ((GMimeStreamFilter *) stream, filter);
+	g_object_unref (null);
+	
+	g_mime_object_write_to_stream (object, stream);
+	g_object_unref (stream);
+	
+	encoding = g_mime_filter_best_encoding ((GMimeFilterBest *) filter, constraint);
+	g_mime_part_set_content_encoding (part, encoding);
+	g_object_unref (filter);
 }
 
 

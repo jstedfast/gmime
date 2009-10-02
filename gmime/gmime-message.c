@@ -60,6 +60,7 @@ static const char *message_get_header (GMimeObject *object, const char *header);
 static gboolean message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
@@ -141,6 +142,7 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 	object_class->get_header = message_get_header;
 	object_class->get_headers = message_get_headers;
 	object_class->write_to_stream = message_write_to_stream;
+	object_class->encode = message_encode;
 }
 
 static void
@@ -1006,6 +1008,16 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	
 	return total;
 }
+
+static void
+message_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	GMimeMessage *message = (GMimeMessage *) object;
+	
+	if (message->mime_part != NULL)
+		g_mime_object_encode (message->mime_part, constraint);
+}
+
 
 
 /**

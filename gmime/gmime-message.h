@@ -25,10 +25,11 @@
 #include <stdarg.h>
 #include <time.h>
 
+#include <gmime/internet-address.h>
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-header.h>
 #include <gmime/gmime-stream.h>
-#include <gmime/internet-address.h>
 
 G_BEGIN_DECLS
 
@@ -119,6 +120,8 @@ const char *g_mime_message_get_message_id (GMimeMessage *message);
 
 GMimeObject *g_mime_message_get_mime_part (GMimeMessage *message);
 void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part);
+
+/* convenience functions */
 
 void g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback,
 			     gpointer user_data);

@@ -63,6 +63,7 @@ static gboolean multipart_remove_header (GMimeObject *object, const char *header
 static void multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *multipart_get_headers (GMimeObject *object);
 static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static void multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimeMultipart class methods */
 static void multipart_clear (GMimeMultipart *multipart);
@@ -124,6 +125,7 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	object_class->set_content_type = multipart_set_content_type;
 	object_class->get_headers = multipart_get_headers;
 	object_class->write_to_stream = multipart_write_to_stream;
+	object_class->encode = multipart_encode;
 	
 	klass->add = multipart_add;
 	klass->clear = multipart_clear;
@@ -300,6 +302,19 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	}
 	
 	return total;
+}
+
+static void
+multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	GMimeMultipart *multipart = (GMimeMultipart *) object;
+	GMimeObject *subpart;
+	int i;
+	
+	for (i = 0; i < g_mime_multipart_get_count (multipart); i++) {
+		subpart = g_mime_multipart_get_part (multipart, i);
+		g_mime_object_encode (subpart, constraint);
+	}
 }
 
 

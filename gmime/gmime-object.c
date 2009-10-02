@@ -62,14 +62,15 @@ static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
-static void prepend_header (GMimeObject *object, const char *name, const char *value);
-static void append_header (GMimeObject *object, const char *name, const char *value);
-static void set_header (GMimeObject *object, const char *name, const char *value);
-static const char *get_header (GMimeObject *object, const char *name);
-static gboolean remove_header (GMimeObject *object, const char *name);
-static void set_content_type (GMimeObject *object, GMimeContentType *content_type);
-static char *get_headers (GMimeObject *object);
-static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
+static void object_prepend_header (GMimeObject *object, const char *name, const char *value);
+static void object_append_header (GMimeObject *object, const char *name, const char *value);
+static void object_set_header (GMimeObject *object, const char *name, const char *value);
+static const char *object_get_header (GMimeObject *object, const char *name);
+static gboolean object_remove_header (GMimeObject *object, const char *name);
+static void object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
+static char *object_get_headers (GMimeObject *object);
+static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static void object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
@@ -120,14 +121,15 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	
 	object_class->finalize = g_mime_object_finalize;
 	
-	klass->prepend_header = prepend_header;
-	klass->append_header = append_header;
-	klass->remove_header = remove_header;
-	klass->set_header = set_header;
-	klass->get_header = get_header;
-	klass->set_content_type = set_content_type;
-	klass->get_headers = get_headers;
-	klass->write_to_stream = write_to_stream;
+	klass->prepend_header = object_prepend_header;
+	klass->append_header = object_append_header;
+	klass->remove_header = object_remove_header;
+	klass->set_header = object_set_header;
+	klass->get_header = object_get_header;
+	klass->set_content_type = object_set_content_type;
+	klass->get_headers = object_get_headers;
+	klass->write_to_stream = object_write_to_stream;
+	klass->encode = object_encode;
 	
 	type_registry_init ();
 }
@@ -402,7 +404,7 @@ g_mime_object_new_type (const char *type, const char *subtype)
 
 
 static void
-set_content_type (GMimeObject *object, GMimeContentType *content_type)
+object_set_content_type (GMimeObject *object, GMimeContentType *content_type)
 {
 	if (object->content_type) {
 		g_mime_event_remove (object->content_type->priv, (GMimeEventCallback) content_type_changed, object);
@@ -766,7 +768,7 @@ process_header (GMimeObject *object, const char *header, const char *value)
 }
 
 static void
-prepend_header (GMimeObject *object, const char *header, const char *value)
+object_prepend_header (GMimeObject *object, const char *header, const char *value)
 {
 	if (!process_header (object, header, value))
 		g_mime_header_list_prepend (object->headers, header, value);
@@ -792,7 +794,7 @@ g_mime_object_prepend_header (GMimeObject *object, const char *header, const cha
 }
 
 static void
-append_header (GMimeObject *object, const char *header, const char *value)
+object_append_header (GMimeObject *object, const char *header, const char *value)
 {
 	if (!process_header (object, header, value))
 		g_mime_header_list_append (object->headers, header, value);
@@ -819,7 +821,7 @@ g_mime_object_append_header (GMimeObject *object, const char *header, const char
 
 
 static void
-set_header (GMimeObject *object, const char *header, const char *value)
+object_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	if (!process_header (object, header, value))
 		g_mime_header_list_set (object->headers, header, value);
@@ -846,7 +848,7 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
 
 
 static const char *
-get_header (GMimeObject *object, const char *header)
+object_get_header (GMimeObject *object, const char *header)
 {
 	return g_mime_header_list_get (object->headers, header);
 }
@@ -874,7 +876,7 @@ g_mime_object_get_header (GMimeObject *object, const char *header)
 
 
 static gboolean
-remove_header (GMimeObject *object, const char *header)
+object_remove_header (GMimeObject *object, const char *header)
 {
 	guint i;
 	
@@ -927,7 +929,7 @@ g_mime_object_remove_header (GMimeObject *object, const char *header)
 
 
 static char *
-get_headers (GMimeObject *object)
+object_get_headers (GMimeObject *object)
 {
 	return g_mime_header_list_to_string (object->headers);
 }
@@ -952,7 +954,7 @@ g_mime_object_get_headers (GMimeObject *object)
 
 
 static ssize_t
-write_to_stream (GMimeObject *object, GMimeStream *stream)
+object_write_to_stream (GMimeObject *object, GMimeStream *stream)
 {
 	return -1;
 }
@@ -974,6 +976,31 @@ g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, stream);
+}
+
+
+static void
+object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	return;
+}
+
+
+/**
+ * g_mime_object_encode:
+ * @object: a #GMimeObject
+ * @constraint a #GMimeEncodingConstraint
+ *
+ * Calculates and sets the most efficient Content-Transfer-Encoding
+ * for this #GMimeObject and all child parts based on the @constraint
+ * provided.
+ **/
+void
+g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
+{
+	g_return_if_fail (GMIME_IS_OBJECT (object));
+	
+	return GMIME_OBJECT_GET_CLASS (object)->encode (object, constraint);
 }
 
 

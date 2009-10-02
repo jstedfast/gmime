@@ -27,6 +27,7 @@
 
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-disposition.h>
+#include <gmime/gmime-encodings.h>
 #include <gmime/gmime-stream.h>
 #include <gmime/gmime-header.h>
 
@@ -76,6 +77,8 @@ struct _GMimeObjectClass {
 	char *       (* get_headers)   (GMimeObject *object);
 	
 	ssize_t      (* write_to_stream) (GMimeObject *object, GMimeStream *stream);
+	
+	void         (* encode) (GMimeObject *object, GMimeEncodingConstraint constraint);
 };
 
 
@@ -127,6 +130,8 @@ char *g_mime_object_get_headers (GMimeObject *object);
 
 ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
 char *g_mime_object_to_string (GMimeObject *object);
+
+void g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 G_END_DECLS
 

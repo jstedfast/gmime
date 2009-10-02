@@ -1,3 +1,25 @@
+2009-10-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-filter-best.h: Moved GMimeEncodingConstraint to
+	gmime-encodings.h
+
+	* gmime/gmime-object.c (g_mime_object_encode): New method to
+	calculate and set the best Content-Transfer-Encoding on a mime
+	part and its children.
+
+	* gmime/gmime-part.c (mime_part_encode): Use a GMimeFilterBest to
+	make magic happen.
+
+	* gmime/gmime-message.c (message_encode): Encode our toplevel mime
+	part object.
+
+	* gmime/gmime-multipart.c (multipart_encode): Recurse over our
+	children and encode them.
+
+	* gmime/gmime-multipart-signed.c (multipart_signed_encode):
+	Prevent our base class implementation from iterating over our
+	children.
+
 2009-09-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* build/vs2008/*: Made the Project/Solution tree much nicer.
