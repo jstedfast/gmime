@@ -2,7 +2,7 @@
 
 	* README: Bumped version
 
-	* configure.in: Bumped version to 2.4.8
+	* configure.in: Bumped version to 2.4.9
 
 	* build/vs2008/gmime.vcproj: Bumped version.
 
