@@ -307,7 +307,6 @@ GMIME_FILTER_BASIC_GET_CLASS
 <FILE>gmime-filter-best</FILE>
 GMimeFilterBest
 GMimeFilterBestFlags
-GMimeEncodingConstraint
 g_mime_filter_best_new
 g_mime_filter_best_charset
 g_mime_filter_best_encoding
@@ -697,6 +696,7 @@ g_mime_object_get_headers
 g_mime_object_get_header_list
 g_mime_object_write_to_stream
 g_mime_object_to_string
+g_mime_object_encode
 
 <SUBSECTION Private>
 g_mime_object_get_type
@@ -937,6 +937,7 @@ g_mime_utils_unstructured_header_fold
 GMimeContentEncoding
 g_mime_content_encoding_from_string
 g_mime_content_encoding_to_string
+GMimeEncodingConstraint
 GMimeEncoding
 g_mime_encoding_init_encode
 g_mime_encoding_init_decode

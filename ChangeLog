@@ -1,5 +1,14 @@
 2009-10-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-part.c (mime_part_encode): Shortcut if the currently
+	set encoding is within the acceptable constraints.
+
+	* docs/reference/gmime-sections.txt: Updated.
+
+	* mono/gmime-api.raw: Updated.
+
+2009-10-01  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-filter-best.h: Moved GMimeEncodingConstraint to
 	gmime-encodings.h
 

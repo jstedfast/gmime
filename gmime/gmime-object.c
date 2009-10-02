@@ -989,7 +989,7 @@ object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 /**
  * g_mime_object_encode:
  * @object: a #GMimeObject
- * @constraint a #GMimeEncodingConstraint
+ * @constraint: a #GMimeEncodingConstraint
  *
  * Calculates and sets the most efficient Content-Transfer-Encoding
  * for this #GMimeObject and all child parts based on the @constraint

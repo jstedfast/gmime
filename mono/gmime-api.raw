@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<api>
+<api parser_version="1">
   <!--
 
         This file was automatically generated.
@@ -1109,11 +1109,24 @@
           <parameter type="GMimeStream*" name="stream" />
         </parameters>
       </virtual_method>
+      <virtual_method name="Encode" cname="encode">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeObject*" name="object" />
+          <parameter type="GMimeEncodingConstraint" name="constraint" />
+        </parameters>
+      </virtual_method>
       <method name="AppendHeader" cname="g_mime_object_append_header">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="header" />
           <parameter type="const-char*" name="value" />
+        </parameters>
+      </method>
+      <method name="Encode" cname="g_mime_object_encode">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeEncodingConstraint" name="constraint" />
         </parameters>
       </method>
       <method name="GetContentDisposition" cname="g_mime_object_get_content_disposition">

@@ -405,6 +405,31 @@ mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 	GMimeStream *stream, *null;
 	GMimeFilter *filter;
 	
+	switch (part->encoding) {
+	case GMIME_CONTENT_ENCODING_DEFAULT:
+		/* Unspecified encoding, we need to figure out the
+		 * best encoding no matter what */
+		break;
+	case GMIME_CONTENT_ENCODING_7BIT:
+		/* This encoding is always safe. */
+		return;
+	case GMIME_CONTENT_ENCODING_8BIT:
+		/* This encoding is safe unless the constraint is 7bit. */
+		if (constraint != GMIME_ENCODING_CONSTRAINT_7BIT)
+			return;
+		break;
+	case GMIME_CONTENT_ENCODING_BINARY:
+		/* This encoding is only safe if the constraint is binary. */
+		if (constraint == GMIME_ENCODING_CONSTRAINT_BINARY)
+			return;
+		break;
+	case GMIME_CONTENT_ENCODING_BASE64:
+	case GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE:
+	case GMIME_CONTENT_ENCODING_UUENCODE:
+		/* These encodings are always safe. */
+		return;
+	}
+	
 	filter = g_mime_filter_best_new (GMIME_FILTER_BEST_ENCODING);
 	
 	null = g_mime_stream_null_new ();
