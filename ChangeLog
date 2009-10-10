@@ -1,5 +1,11 @@
 2009-10-10  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.10
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 	* gmime/gmime-encodings.c (g_mime_encoding_uudecode_step): Fixed a
 	uudecoding bug when uulen % 3 is 2. Thanks to Peter Hartley. Fixes
 	bug #597794.
