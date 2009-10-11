@@ -122,26 +122,49 @@ static unsigned char gmime_datetok_table[256] = {
 	111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,111,
 };
 
-/* hrm, is there a library for this shit? */
+/* Timezone values defined in rfc5322 */
 static struct {
-	char *name;
+	const char *name;
 	int offset;
 } tz_offsets [] = {
-	{ "UT", 0 },
-	{ "GMT", 0 },
-	{ "EST", -500 },	/* these are all US timezones.  bloody yanks */
-	{ "EDT", -400 },
-	{ "CST", -600 },
-	{ "CDT", -500 },
-	{ "MST", -700 },
-	{ "MDT", -600 },
-	{ "PST", -800 },
-	{ "PDT", -700 },
-	{ "Z", 0 },
-	{ "A", -100 },
-	{ "M", -1200 },
-	{ "N", 100 },
-	{ "Y", 1200 },
+	{ "UT",       0 },
+	{ "GMT",      0 },
+	{ "EDT",   -400 },
+	{ "EST",   -500 },
+	{ "CDT",   -500 },
+	{ "CST",   -600 },
+	{ "MDT",   -600 },
+	{ "MST",   -700 },
+	{ "PDT",   -700 },
+	{ "PST",   -800 },
+	/* Note: rfc822 got the signs backwards for the military
+	 * timezones so some sending clients may mistakenly use the
+	 * wrong values. */
+	{ "A",      100 },
+	{ "B",      200 },
+	{ "C",      300 },
+	{ "D",      400 },
+	{ "E",      500 },
+	{ "F",      600 },
+	{ "G",      700 },
+	{ "H",      800 },
+	{ "I",      900 },
+	{ "K",     1000 },
+	{ "L",     1100 },
+	{ "M",     1200 },
+	{ "N",     -100 },
+	{ "O",     -200 },
+	{ "P",     -300 },
+	{ "Q",     -400 },
+	{ "R",     -500 },
+	{ "S",     -600 },
+	{ "T",     -700 },
+	{ "U",     -800 },
+	{ "V",     -900 },
+	{ "W",    -1000 },
+	{ "X",    -1100 },
+	{ "Y",    -1200 },
+	{ "Z",        0 },
 };
 
 static char *tm_months[] = {
