@@ -1,5 +1,9 @@
 2009-10-10  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c: Fixed the military timezone offsets.
+
+2009-10-10  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.4.10
