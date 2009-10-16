@@ -295,7 +295,10 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 	int errval = 0;
 	
 	if ((error = gpgme_op_keylist_start (pkcs7->ctx, name, secret)) != GPG_ERR_NO_ERROR) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
+		if (secret)
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\""), name);
+		else
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
 		return NULL;
 	}
 	
@@ -331,7 +334,11 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 	gpgme_op_keylist_end (pkcs7->ctx);
 	
 	if (error != GPG_ERR_NO_ERROR && error != GPG_ERR_EOF) {
-		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
+		if (secret)
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list secret keys for \"%s\""), name);
+		else
+			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not list keys for \"%s\""), name);
+		
 		return NULL;
 	}
 	
