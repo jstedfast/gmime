@@ -36,7 +36,7 @@ GMime 2.6 Planning:
 
   This might be a better name for the enum to reflect what it's
   actually meant for. Maybe also move it from gmime-filter-best.h to
-  gmime-encodings.h?
+  gmime-encodings.h? [ DONE ]
 
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded

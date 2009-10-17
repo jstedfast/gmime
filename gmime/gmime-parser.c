@@ -864,7 +864,7 @@ nearest_pow (size_t num)
 static inline size_t
 next_alloc_size (size_t n)
 {
-	return ((n + 63) / 64) * 64;
+	return (n + 63) & ~63;
 }
 #endif
 
