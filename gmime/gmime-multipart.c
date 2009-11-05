@@ -482,18 +482,20 @@ ptr_array_insert (GPtrArray *array, guint index, gpointer object)
 	unsigned char *dest, *src;
 	guint n;
 	
-	g_ptr_array_set_size (array, array->len + 1);
-	
-	if (index == array->len) {
-		/* need to move items down */
+	if (index < array->len) {
+		/* need to shift some items */
+		g_ptr_array_set_size (array, array->len + 1);
+		
 		dest = ((unsigned char *) array->pdata) + (sizeof (void *) * (index + 1));
 		src = ((unsigned char *) array->pdata) + (sizeof (void *) * index);
 		n = array->len - index - 1;
 		
 		g_memmove (dest, src, (sizeof (void *) * n));
+		array->pdata[index] = object;
+	} else {
+		/* the easy case */
+		g_ptr_array_add (array, object);
 	}
-	
-	array->pdata[index] = object;
 }
 
 static void
