@@ -1,3 +1,11 @@
+2009-11-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-multipart.c (ptr_array_insert): Fixed to handle an
+	index larger than the current array length as well as fixing the
+	true insert case to shift items when index is les than the current
+	array length (as opposed to when it is equal-to). Thanks to
+	harven@gingers.rulez.pl for finding this bug.
+
 2009-10-10  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-utils.c: Fixed the military timezone offsets.
