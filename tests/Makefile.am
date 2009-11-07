@@ -24,7 +24,9 @@ MANUAL_TESTS =		\
 	test-best	\
 	test-parser 	\
 	test-html 	\
-	test-partial
+	test-partial	\
+	test-pkcs7	\
+	test-smime
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
@@ -90,6 +92,16 @@ test_pgpmime_SOURCES = test-pgpmime.c testsuite.c testsuite.h
 test_pgpmime_LDFLAGS = 
 test_pgpmime_DEPENDENCIES = $(DEPS)
 test_pgpmime_LDADD = $(LDADDS)
+
+test_pkcs7_SOURCES = test-pkcs7.c testsuite.c testsuite.h
+test_pkcs7_LDFLAGS = 
+test_pkcs7_DEPENDENCIES = $(DEPS)
+test_pkcs7_LDADD = $(LDADDS)
+
+test_smime_SOURCES = test-smime.c testsuite.c testsuite.h
+test_smime_LDFLAGS = 
+test_smime_DEPENDENCIES = $(DEPS)
+test_smime_LDADD = $(LDADDS)
 
 EXTRA_DIST = test1.eml test2.eml test3.eml
 

@@ -35,6 +35,7 @@ following RFCs:
          Sets, Languages, and Continuations (Obsoletes rfc2184)
  * 2822: Internet Message Format (Obsoletes rfc822)
  * 3156: MIME Security with OpenPGP (Updates rfc2015)
+ * 5322: Internet Message Format (Obsoletes rfc2822)
 
 Other RFCs of interest:
 
