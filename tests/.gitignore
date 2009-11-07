@@ -15,4 +15,6 @@ test-parser
 test-partial
 test-pgp
 test-pgpmime
+test-pkcs7
+test-smime
 test-streams
