@@ -1,3 +1,11 @@
+2009-11-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.11
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2009-11-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart.c (ptr_array_insert): Fixed to handle an

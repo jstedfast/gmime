@@ -41,7 +41,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;10&quot;"
+				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;11&quot;"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
@@ -106,7 +106,7 @@
 			/>
 			<Tool
 				Name="VCCLCompilerTool"
-				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;10&quot;"
+				AdditionalOptions="/D &quot;GMIME_MAJOR_VERSION&quot;=&quot;2&quot; /D &quot;GMIME_MINOR_VERSION&quot;=&quot;4&quot; /D &quot;GMIME_MICRO_VERSION&quot;=&quot;11&quot;"
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
 				RuntimeLibrary="2"
