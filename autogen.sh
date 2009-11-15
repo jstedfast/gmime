@@ -54,9 +54,12 @@ elif automake-1.9 --version < /dev/null > /dev/null 2>&1 ; then
 elif automake-1.10 --version < /dev/null > /dev/null 2>&1 ; then
     AUTOMAKE=automake-1.10
     ACLOCAL=aclocal-1.10
+elif automake-1.11 --version < /dev/null > /dev/null 2>&1 ; then
+    AUTOMAKE=automake-1.11
+    ACLOCAL=aclocal-1.11
 else
 	echo
-	echo "You must have automake 1.8.x installed to compile $PROJECT."
+	echo "You must have automake >= 1.8.x installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
 	echo "or get the source tarball at http://ftp.gnu.org/gnu/automake/"
 	DIE=1
