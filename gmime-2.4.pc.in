@@ -8,5 +8,6 @@ Name: GMime
 Version: @VERSION@
 Description: MIME parser and utility library
 Requires: glib-2.0,gobject-2.0
+Libs.private: @GMIME_LIBS_PRIVATE@
 Libs: -L${libdir} @GMIME_LIBS@
 Cflags: -I${includedir}/gmime-@GMIME_API_VERSION@ @GMIME_CFLAGS@
