@@ -1,3 +1,12 @@
+2009-11-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.ac: Don't include EXTRA_LIBS in GMIME_LIBS, instead
+	add it to GMIME_LIBS_PRIVATE so that things properly expand in the
+	.pc file.
+
+	* gmime.pc.in: Moved -lz -lnsl, etc into Libs.private. Fixes bug
+	#603273.
+
 2009-11-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart.c (ptr_array_insert): Fixed to handle an
