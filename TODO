@@ -28,7 +28,7 @@ GMime 2.6 Planning:
   GCancellable. GCancellable could be nice to have for network
   streams, though...
 
-- Add GIO-based GMimeStream and bump glib dep to 2.16 [ DONE ]
+- Add a GIO-backed GMimeStream and bump glib dep to 2.16 [ DONE ]
 
 - Add a g_mime_part_get_best_content_encoding()? [ DONE ]
 
@@ -91,6 +91,9 @@ Ideas for GMime "3.0"
 - GMimeStream's should take GError args so apps don't have to rely on
   errno (really needed for apps that implement ssl streams or other
   stream types which might not map well to libc's errno values)
+
+  - Maybe even drop GMimeStreams and use GIO?
+  - If not, take GCancellables?
 
 - GMimeParser should also take a GError arg and/or return int error
   codes.
