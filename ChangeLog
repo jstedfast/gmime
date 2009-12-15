@@ -1,3 +1,8 @@
+2009-12-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* Released 2.5.0 - it's time to get this out there for people to
+	play with.
+
 2009-11-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.ac: Don't include EXTRA_LIBS in GMIME_LIBS, instead
