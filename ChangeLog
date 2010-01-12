@@ -1,5 +1,13 @@
 2010-01-12  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.12
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
+2010-01-12  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-utils.c (g_mime_utils_decode_8bit): Make sure to
 	always increment inptr as we force-convert it to ascii. Thanks to
 	Damian Pietras for finding this bug.
