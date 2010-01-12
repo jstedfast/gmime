@@ -1,6 +1,6 @@
 2010-01-12  Jeffrey Stedfast  <fejj@novell.com>
 
-	* gmime/gmime-utils.c (g_mime_utils_decode_8bit): Made sure to
+	* gmime/gmime-utils.c (g_mime_utils_decode_8bit): Make sure to
 	always increment inptr as we force-convert it to ascii. Thanks to
 	Damian Pietras for finding this bug.
 
