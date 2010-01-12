@@ -1666,9 +1666,11 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 		
 		while (inptr < inend) {
 			if (is_ascii (*inptr))
-				*outbuf++ = *inptr++;
+				*outbuf++ = *inptr;
 			else
 				*outbuf++ = '?';
+			
+			inptr++;
 		}
 		
 		*outbuf++ = '\0';
