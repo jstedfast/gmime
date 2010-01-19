@@ -1,3 +1,11 @@
+2010-01-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.13
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2010-01-17  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-filter-crlf.c (filter_filter): Fixed bug #606875 by
