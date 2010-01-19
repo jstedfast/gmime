@@ -151,6 +151,7 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 		outptr = filter->outbuf;
 		while (inptr < inend) {
 			if (*inptr == '\r') {
+				crlf->saw_dot = FALSE;
 				crlf->saw_cr = TRUE;
 			} else {
 				if (crlf->saw_cr) {
@@ -164,14 +165,13 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 						*outptr++ = '\r';
 				}
 				
-				*outptr++ = *inptr;
+				if (!(crlf->dots && crlf->saw_dot && *inptr == '.'))
+					*outptr++ = *inptr;
 			}
 			
 			if (crlf->dots && *inptr == '.') {
 				if (crlf->saw_lf) {
 					crlf->saw_dot = TRUE;
-					crlf->saw_lf = FALSE;
-					inptr++;
 				} else if (crlf->saw_dot) {
 					crlf->saw_dot = FALSE;
 				}
