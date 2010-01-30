@@ -1,31 +1,40 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  ZenTimer
- *  Copyright (C) 2001-2009 Jeffrey Stedfast
+ *  Copyright (C) 2009 Jeffrey Stedfast
  *
- *  This library is free software; you can redistribute it and/or
- *  modify it under the terms of the GNU Lesser General Public License
- *  as published by the Free Software Foundation; either version 2.1
- *  of the License, or (at your option) any later version.
+ *  Permission is hereby granted, free of charge, to any person
+ *  obtaining a copy of this software and associated documentation
+ *  files (the "Software"), to deal in the Software without
+ *  restriction, including without limitation the rights to use, copy,
+ *  modify, merge, publish, distribute, sublicense, and/or sell copies
+ *  of the Software, and to permit persons to whom the Software is
+ *  furnished to do so, subject to the following conditions:
  *
- *  This library is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  Lesser General Public License for more details.
+ *  The above copyright notice and this permission notice shall be
+ *  included in all copies or substantial portions of the Software.
  *
- *  You should have received a copy of the GNU Lesser General Public
- *  License along with this library; if not, write to the Free
- *  Software Foundation, 51 Franklin Street, Fifth Floor, Boston, MA
- *  02110-1301, USA.
+ *  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ *  EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ *  MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ *  NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ *  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ *  WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ *  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ *  DEALINGS IN THE SOFTWARE.
  */
 
 
-#ifndef __ZENTINER_H__
+#ifndef __ZENTIMER_H__
 #define __ZENTIMER_H__
 
 #ifdef ENABLE_ZENTIMER
 
 #include <stdio.h>
+#ifdef WIN32
+#include <windows.h>
+#else
 #include <sys/time.h>
+#endif
 #ifdef HAVE_STDINT_H
 #include <stdint.h>
 #elif HAVE_INTTYPES_H
@@ -46,14 +55,22 @@ extern "C" {
 /* ztime_t represents usec */
 typedef uint64_t ztime_t;
 
+#ifdef WIN32
+static uint64_t ztimer_freq = 0;
+#endif
+
 static void
 ztime (ztime_t *ztimep)
 {
+#ifdef WIN32
+	QueryPerformanceCounter ((LARGE_INTEGER *) ztimep);
+#else
 	struct timeval tv;
 	
 	gettimeofday (&tv, NULL);
 	
 	*ztimep = ((uint64_t) tv.tv_sec * ZTIME_USEC_PER_SEC) + tv.tv_usec;
+#endif
 }
 
 enum {
@@ -62,15 +79,13 @@ enum {
 	ZTIMER_PAUSED   = (1 << 1),
 };
 
-typedef uint32_t zstate_t;
-
 typedef struct {
-	zstate_t state; /* 32bit for alignment reasons */
 	ztime_t start;
 	ztime_t stop;
+	int state;
 } ztimer_t;
 
-#define ZTIMER_INITIALIZER { ZTIMER_INACTIVE, 0, 0 }
+#define ZTIMER_INITIALIZER { 0, 0, 0 }
 
 /* default timer */
 static ztimer_t __ztimer = ZTIMER_INITIALIZER;
@@ -121,28 +136,39 @@ ZenTimerResume (ztimer_t *ztimer)
 	ztimer->start += delta;
 }
 
-static void
-ZenTimerReport (ztimer_t *ztimer, const char *oper)
+static double
+ZenTimerElapsed (ztimer_t *ztimer, uint64_t *usec)
 {
-	ztime_t delta;
-	int paused;
+#ifdef WIN32
+	static uint64_t freq = 0;
+	ztime_t delta, stop;
+	
+	if (freq == 0)
+		QueryPerformanceFrequency ((LARGE_INTEGER *) &freq);
+#else
+	static uint64_t freq = ZTIME_USEC_PER_SEC;
+	ztime_t delta, stop;
+#endif
 	
 	ztimer = ztimer ? ztimer : &__ztimer;
 	
-	if (ztimer->state == ZTIMER_ACTIVE) {
-		ZenTimerPause (ztimer);
-		paused = 1;
-	} else {
-		paused = 0;
-	}
+	if (ztimer->state != ZTIMER_ACTIVE)
+		stop = ztimer->stop;
+	else
+		ztime (&stop);
 	
-	delta = ztimer->stop - ztimer->start;
+	delta = stop - ztimer->start;
 	
-	fprintf (stderr, "ZenTimer: %s took %.6f seconds\n", oper,
-		 (double) delta / (double) ZTIME_USEC_PER_SEC);
+	if (usec != NULL)
+		*usec = (uint64_t) (delta * ((double) ZTIME_USEC_PER_SEC / (double) freq));
 	
-	if (paused)
-		ZenTimerResume (ztimer);
+	return (double) delta / (double) freq;
+}
+
+static void
+ZenTimerReport (ztimer_t *ztimer, const char *oper)
+{
+	fprintf (stderr, "ZenTimer: %s took %.6f seconds\n", oper, ZenTimerElapsed (ztimer, NULL));
 }
 
 #ifdef __cplusplus
@@ -155,6 +181,7 @@ ZenTimerReport (ztimer_t *ztimer, const char *oper)
 #define ZenTimerStop(ztimerp)
 #define ZenTimerPause(ztimerp)
 #define ZenTimerResume(ztimerp)
+#define ZenTimerElapsed(ztimerp, usec)
 #define ZenTimerReport(ztimerp, oper)
 
 #endif /* ENABLE_ZENTIMER */
