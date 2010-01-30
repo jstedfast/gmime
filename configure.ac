@@ -562,6 +562,7 @@ if test "x$GPGME_PTHREAD_LIBS" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $GPGME_PTHREAD_LIBS"
 fi
 
+CFLAGS="$CFLAGS -fno-strict-aliasing"
 LIBS="$LIBS $EXTRA_LIBS"
 
 AC_SUBST(CFLAGS)
