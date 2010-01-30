@@ -123,9 +123,30 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 		outleft = outlen - converted;
 		
 		converted = iconv (cd, (char **) &inbuf, &inleft, &outbuf, &outleft);
-		if (converted == (size_t) -1) {
-			if (errno != E2BIG && errno != EINVAL)
-				goto fail;
+		if (converted != (size_t) -1 || errno == EINVAL) {
+			/*
+			 * EINVAL  An  incomplete  multibyte sequence has been encoun­
+			 *         tered in the input.
+			 *
+			 * We'll just have to ignore it...
+			 */
+			break;
+		}
+		
+		if (errno != E2BIG) {
+			errnosav = errno;
+			
+			w(g_warning ("g_mime_iconv_strndup: %s at byte %lu",
+				     strerror (errno), n - inleft));
+			
+			g_free (out);
+			
+			/* reset the cd */
+			iconv (cd, NULL, NULL, NULL, NULL);
+			
+			errno = errnosav;
+			
+			return NULL;
 		}
 		
 		/*
@@ -135,19 +156,10 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 		 */
 		
 		converted = outbuf - out;
-		if (errno == E2BIG) {
-			outlen += inleft * 2 + 16;
-			out = g_realloc (out, outlen + 4);
-			outbuf = out + converted;
-		}
-	} while (errno == E2BIG && inleft > 0);
-	
-	/*
-	 * EINVAL  An  incomplete  multibyte sequence has been encoun­
-	 *         tered in the input.
-	 *
-	 * We'll just have to ignore it...
-	 */
+		outlen += inleft * 2 + 16;
+		out = g_realloc (out, outlen + 4);
+		outbuf = out + converted;
+	} while (TRUE);
 	
 	/* flush the iconv conversion */
 	iconv (cd, NULL, NULL, &outbuf, &outleft);
@@ -164,21 +176,6 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 	iconv (cd, NULL, NULL, NULL, NULL);
 	
 	return out;
-	
- fail:
-	
-	errnosav = errno;
-	
-	w(g_warning ("g_mime_iconv_strndup: %s at byte %lu", strerror (errno), n - inleft));
-	
-	g_free (out);
-	
-	/* reset the cd */
-	iconv (cd, NULL, NULL, NULL, NULL);
-	
-	errno = errnosav;
-	
-	return NULL;
 }
 
 
