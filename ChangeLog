@@ -1,3 +1,12 @@
+2010-01-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.14 and disabled
+	strict-aliasing which causes bugs in GMime.
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2010-01-19  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
