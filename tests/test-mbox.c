@@ -140,7 +140,7 @@ static gboolean
 streams_match (GMimeStream *istream, GMimeStream *ostream)
 {
 	char buf[4096], dbuf[4096], errstr[1024], *bufptr, *bufend, *dbufptr;
-	size_t totalsize, totalread = 0;
+	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
 	gint64 offset = 0;
 	ssize_t n;
@@ -149,14 +149,14 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 	
 	if (istream->bound_end != -1) {
 		totalsize = istream->bound_end - istream->position;
-	} else if ((n = g_mime_stream_length (istream)) == -1) {
+	} else if ((len = g_mime_stream_length (istream)) == -1) {
 		sprintf (errstr, "Error: Unable to get length of original stream\n");
 		goto fail;
-	} else if (n < (istream->position - istream->bound_start)) {
+	} else if (len < (istream->position - istream->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
 		goto fail;
 	} else {
-		totalsize = n - (istream->position - istream->bound_start);
+		totalsize = len - (istream->position - istream->bound_start);
 	}
 	
 	while (totalread < totalsize) {
