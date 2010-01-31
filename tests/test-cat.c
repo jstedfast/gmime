@@ -111,7 +111,7 @@ static int
 check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, int check_overflow)
 {
 	char buf[4096], dbuf[4096], errstr[1024];
-	size_t totalsize, totalread = 0;
+	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
 	ssize_t n;
 	
@@ -120,14 +120,14 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	
 	if (orig->bound_end != -1) {
 		totalsize = orig->bound_end - orig->position;
-	} else if ((n = g_mime_stream_length (orig)) == -1) {
+	} else if ((len = g_mime_stream_length (orig)) == -1) {
 		sprintf (errstr, "Error: Unable to get length of original stream\n");
 		goto fail;
-	} else if (n < (orig->position - orig->bound_start)) {
+	} else if (len < (orig->position - orig->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
 		goto fail;
 	} else {
-		totalsize = n - (orig->position - orig->bound_start);
+		totalsize = len - (orig->position - orig->bound_start);
 	}
 	
 	while (totalread < totalsize) {
@@ -297,19 +297,15 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 {
 	struct _StreamPart *part = parts;
 	GMimeStream *stream, *cat;
+	gint64 offset, len;
 	Exception *ex;
-	gint64 offset;
-	size_t size;
-	ssize_t n;
 	int fd;
 	
 	if (whole->bound_end != -1) {
-		size = whole->bound_end - whole->bound_start;
-	} else if ((n = g_mime_stream_length (whole)) == -1) {
+		len = whole->bound_end - whole->bound_start;
+	} else if ((len = g_mime_stream_length (whole)) == -1) {
 		ex = exception_new ("unable to get original stream length");
 		throw (ex);
-	} else {
-		size = n;
 	}
 	
 	cat = g_mime_stream_cat_new ();
@@ -332,7 +328,7 @@ test_cat_seek (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random seek offset to compare at */
-	offset = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
+	offset = (gint64) (len * (rand () / (RAND_MAX + 1.0)));
 	
 	if (g_mime_stream_seek (whole, offset, GMIME_STREAM_SEEK_SET) == -1) {
 		ex = exception_new ("could not seek to %lld in original stream: %s",
@@ -358,19 +354,15 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 {
 	GMimeStream *stream, *cat, *sub1, *sub2;
 	struct _StreamPart *part = parts;
-	gint64 start, end;
+	gint64 start, end, len;
 	Exception *ex;
-	size_t size;
-	ssize_t n;
 	int fd;
 	
 	if (whole->bound_end != -1) {
-		size = whole->bound_end - whole->bound_start;
-	} else if ((n = g_mime_stream_length (whole)) == -1) {
+		len = whole->bound_end - whole->bound_start;
+	} else if ((len = g_mime_stream_length (whole)) == -1) {
 		ex = exception_new ("unable to get original stream length");
 		throw (ex);
-	} else {
-		size = n;
 	}
 	
 	cat = g_mime_stream_cat_new ();
@@ -393,9 +385,9 @@ test_cat_substream (GMimeStream *whole, struct _StreamPart *parts, int bounded)
 	}
 	
 	/* calculate a random start/end offsets */
-	start = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
+	start = (gint64) (len * (rand () / (RAND_MAX + 1.0)));
 	if (rand () % 2)
-		end = start + (gint64) ((size - start) * (rand () / (RAND_MAX + 1.0)));
+		end = start + (gint64) ((len - start) * (rand () / (RAND_MAX + 1.0)));
 	else
 		end = -1;
 	
@@ -448,13 +440,13 @@ int main (int argc, char **argv)
 	const char *datadir = "data/cat";
 	struct _StreamPart *list, *tail, *n;
 	gboolean failed = FALSE;
-	ssize_t wholelen, left;
+	gint64 wholelen, left;
 	GMimeStream *whole;
 	guint32 part = 0;
 	gint64 start = 0;
 	char *filename;
 	struct stat st;
-	size_t len;
+	gint64 len;
 	int fd, i;
 	
 	srand (time (NULL));
@@ -512,7 +504,7 @@ int main (int argc, char **argv)
 	
 	left = wholelen;
 	while (left > 0) {
-		len = 1 + (size_t) (left * (rand() / (RAND_MAX + 1.0)));
+		len = 1 + (gint64) (left * (rand () / (RAND_MAX + 1.0)));
 		n = g_new (struct _StreamPart, 1);
 		sprintf (n->filename, "%s.%u", filename, part++);
 		n->pstart = (gint64) 0; /* FIXME: we could make this a random offset */
