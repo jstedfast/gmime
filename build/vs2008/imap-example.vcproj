@@ -25,7 +25,7 @@
 			IntermediateDirectory="$(ConfigurationName)\imap-example"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\ImapExampleBuildLog.htm"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -176,7 +176,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\ImapExampleBuildLog.htm"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"

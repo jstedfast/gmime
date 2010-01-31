@@ -25,7 +25,7 @@
 			IntermediateDirectory="$(ConfigurationName)\test-mbox"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\TestMboxBuildLog.htm"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -176,7 +176,7 @@
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\TestMboxBuildLog.htm"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
