@@ -14,4 +14,5 @@ EXTRA_DIST = \
 	test-iconv.vcproj	\
 	test-mime.vcproj	\
 	test-mbox.vcproj	\
-	test-cat.vcproj
+	test-cat.vcproj		\
+	unistd.h
