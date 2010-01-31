@@ -48,7 +48,7 @@ static gboolean
 streams_match (GMimeStream **streams, const char *filename)
 {
 	char buf[4096], dbuf[4096], errstr[1024];
-	size_t totalsize, totalread = 0;
+	gint64 len, totalsize, totalread = 0;
 	size_t nread, size;
 	ssize_t n;
 	
@@ -58,14 +58,14 @@ streams_match (GMimeStream **streams, const char *filename)
 	
 	if (streams[0]->bound_end != -1) {
 		totalsize = streams[0]->bound_end - streams[0]->position;
-	} else if ((n = g_mime_stream_length (streams[0])) == -1) {
+	} else if ((len = g_mime_stream_length (streams[0])) == -1) {
 		sprintf (errstr, "Error: Unable to get length of original stream: %s\n", g_strerror (errno));
 		goto fail;
-	} else if (n < (streams[0]->position - streams[0]->bound_start)) {
+	} else if (len < (streams[0]->position - streams[0]->bound_start)) {
 		sprintf (errstr, "Error: Overflow on original stream?\n");
 		goto fail;
 	} else {
-		totalsize = n - (streams[0]->position - streams[0]->bound_start);
+		totalsize = len - (streams[0]->position - streams[0]->bound_start);
 	}
 	
 	while (totalread < totalsize) {
@@ -555,9 +555,8 @@ gen_test_data (const char *datadir, char **stream_name)
 {
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
-	gint64 start, end;
+	gint64 start, end, len;
 	struct stat st;
-	size_t len;
 	int fd, i;
 	
 	srand (time (NULL));
@@ -597,7 +596,7 @@ gen_test_data (const char *datadir, char **stream_name)
 	for (i = 0; i < 64; i++) {
 	retry:
 		start = (gint64) (st.st_size * (rand () / (RAND_MAX + 1.0)));
-		len = (size_t) (st.st_size * (rand () / (RAND_MAX + 1.0)));
+		len = (gint64) (st.st_size * (rand () / (RAND_MAX + 1.0)));
 		if (start + len > st.st_size) {
 			len = st.st_size - start;
 			end = -1;
