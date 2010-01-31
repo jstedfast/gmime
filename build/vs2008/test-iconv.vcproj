@@ -23,9 +23,9 @@
 			Name="Debug|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)\test-iconv"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -97,7 +97,8 @@
 		<Configuration
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			IntermediateDirectory="$(ConfigurationName)\test-iconv"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
@@ -173,10 +174,10 @@
 		<Configuration
 			Name="Debug|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\test-iconv"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			ConfigurationType="1"
 			CharacterSet="1"
-			BuildLogFile="$(IntDir)\BuildLog.htm"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
@@ -249,7 +250,8 @@
 		<Configuration
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
-			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)"
+			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\test-iconv"
+			BuildLogFile="$(IntDir)\BuildLog.htm"
 			ConfigurationType="1"
 			CharacterSet="1"
 			WholeProgramOptimization="1"
