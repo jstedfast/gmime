@@ -1000,7 +1000,7 @@ g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 {
 	g_return_if_fail (GMIME_IS_OBJECT (object));
 	
-	return GMIME_OBJECT_GET_CLASS (object)->encode (object, constraint);
+	GMIME_OBJECT_GET_CLASS (object)->encode (object, constraint);
 }
 
 
