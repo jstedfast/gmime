@@ -109,7 +109,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
  * Returns: the number of output bytes needed to uuencode an input
  * buffer of size @x.
  **/
-#define GMIME_UUENCODE_LEN(x)      ((size_t) (((((x) + 2) / 45) * 62) + 62))
+#define GMIME_UUENCODE_LEN(x)      ((size_t) (((((x) + 2) / 45) * 62) + 64))
 
 
 /**

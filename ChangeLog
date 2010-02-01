@@ -1,3 +1,8 @@
+2010-01-31  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-encodings.h (GMIME_UUENCODE_LEN): Fixed to prevent
+	possible buffer overflows.
+
 2010-01-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.ac: Disabled strict-aliasing to work around subtle
