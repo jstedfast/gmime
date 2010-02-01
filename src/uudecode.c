@@ -90,7 +90,7 @@ static int
 uudecode (const char *progname, int argc, char **argv)
 {
 	gboolean midline = FALSE, base64 = FALSE;
-	int fd, opt, longindex = 0, state = 0;
+	int opt, longindex = 0, state = 0;
 	register const char *p;
 	char inbuf[4096], *q;
 	GString *str = NULL;
@@ -130,7 +130,7 @@ uudecode (const char *progname, int argc, char **argv)
 	infile = optind < argc ? argv[optind] : DEFAULT_FILENAME;
 	
 	do {
-		if ((fin = uufopen (infile, "r", O_RDONLY, 0)) == NULL) {
+		if ((fin = uufopen (infile, "rt", O_RDONLY, 0)) == NULL) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
 				 infile, g_strerror (errno));
 			return -1;
@@ -196,21 +196,11 @@ uudecode (const char *progname, int argc, char **argv)
 		if (!outfile || outfile != optarg)
 			outfile = g_strchomp (str->str);
 		
-		if ((fd = open (outfile, O_CREAT | O_TRUNC | O_WRONLY, mode)) == -1) {
+		if (!(fout = fopen (outfile, "wb"))) {
 			fprintf (stderr, "%s: %s: %s\n", progname,
 				 outfile, g_strerror (errno));
 			g_string_free (str, TRUE);
 			fclose (fin);
-			
-			return -1;
-		}
-		
-		if (!(fout = fdopen (fd, "wb"))) {
-			fprintf (stderr, "%s: %s: %s\n", progname,
-				 outfile, g_strerror (errno));
-			g_string_free (str, TRUE);
-			fclose (fin);
-			close (fd);
 			
 			return -1;
 		}

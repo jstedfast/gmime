@@ -1,5 +1,9 @@
 2010-01-31  Jeffrey Stedfast  <fejj@novell.com>
 
+	* src/uudecode.c (uudecode): Just use fopen() to open fout instead
+	of using open() and then fdopen(). Fixes the code to work properly
+	on Windows.
+
 	* gmime/gmime-encodings.h (GMIME_UUENCODE_LEN): Fixed to prevent
 	possible buffer overflows.
 
