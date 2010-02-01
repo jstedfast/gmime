@@ -48,6 +48,7 @@
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
 				MinimalRebuild="true"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -67,6 +68,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -114,6 +116,7 @@
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
 				MinimalRebuild="true"
+				ExceptionHandling="0"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="0"
@@ -133,6 +136,7 @@
 			/>
 			<Tool
 				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -154,10 +158,11 @@
 			Name="Release|Win32"
 			OutputDirectory="$(SolutionDir)$(ConfigurationName)"
 			IntermediateDirectory="$(ConfigurationName)\gmime"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Generating config.h ..."
 				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;if exist ..\..\unistd.h goto DONE_UNISTD_H&#x0D;&#x0A;copy unistd.h ..\..\unistd.h&#x0D;&#x0A;:DONE_UNISTD_H&#x0D;&#x0A;"
 			/>
 			<Tool
@@ -176,6 +181,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -193,21 +199,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib gio-2.0.lib zdll.lib"
-				OutputFile="$(OutDir)\$(ProjectName)-2.6.dll"
-				LinkIncremental="2"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="1"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -219,9 +215,6 @@
 				Name="VCFxCopTool"
 			/>
 			<Tool
-				Name="VCAppVerifierTool"
-			/>
-			<Tool
 				Name="VCPostBuildEventTool"
 			/>
 		</Configuration>
@@ -229,10 +222,11 @@
 			Name="Release|x64"
 			OutputDirectory="$(SolutionDir)$(PlatformName)\$(ConfigurationName)"
 			IntermediateDirectory="$(PlatformName)\$(ConfigurationName)\gmime"
-			ConfigurationType="2"
+			ConfigurationType="4"
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Generating config.h ..."
 				CommandLine="if exist ..\..\config.h goto DONE_CONFIG_H&#x0D;&#x0A;copy config-win32.h ..\..\config.h&#x0D;&#x0A;:DONE_CONFIG_H&#x0D;&#x0A;if exist ..\..\unistd.h goto DONE_UNISTD_H&#x0D;&#x0A;copy unistd.h ..\..\unistd.h&#x0D;&#x0A;:DONE_UNISTD_H&#x0D;&#x0A;"
 			/>
 			<Tool
@@ -252,6 +246,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="&quot;..\..\&quot;; &quot;..\..\util&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN=\&quot;GMime\&quot;"
+				ExceptionHandling="0"
 				RuntimeLibrary="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -269,21 +264,11 @@
 				Name="VCPreLinkEventTool"
 			/>
 			<Tool
-				Name="VCLinkerTool"
-				AdditionalDependencies="ws2_32.lib libiconv.lib glib-2.0.lib gobject-2.0.lib gio-2.0.lib zdll.lib"
-				OutputFile="$(OutDir)\$(ProjectName)-2.6.dll"
-				LinkIncremental="2"
-				GenerateDebugInformation="true"
-				SubSystem="2"
-				OptimizeReferences="2"
-				EnableCOMDATFolding="2"
-				TargetMachine="17"
+				Name="VCLibrarianTool"
+				OutputFile="$(OutDir)\$(ProjectName)-2.6.lib"
 			/>
 			<Tool
 				Name="VCALinkTool"
-			/>
-			<Tool
-				Name="VCManifestTool"
 			/>
 			<Tool
 				Name="VCXDCMakeTool"
@@ -293,9 +278,6 @@
 			/>
 			<Tool
 				Name="VCFxCopTool"
-			/>
-			<Tool
-				Name="VCAppVerifierTool"
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
