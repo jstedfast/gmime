@@ -1,3 +1,11 @@
+2010-02-02  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.15
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2010-01-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-encodings.h (GMIME_UUENCODE_LEN): Fixed to prevent
