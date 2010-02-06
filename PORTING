@@ -9,6 +9,50 @@ will attempt to list the main things to watch out for when migrating
 to the new release from the prior version.
 
 
+Porting from GMime 2.4 to GMime 2.6
+-----------------------------------
+
+After releasing GMime 2.4, it was discovered that
+g_mime_stream_length() still returned ssize_t which, on 32bit systems,
+meant that the function was useless if the actual stream was larger
+than 2GB (which could happen if GMime was built with large file
+support).
+
+As I fixed this, I also found some API inconsistencies which I felt I
+might as well fix up since I had to break API/ABI compatibility with
+2.4 anyway.
+
+Most notable in GMime 2.6 is the lack of GMimeSession which has been
+dropped in favor of a much simpler callback
+mechanism. GMimeCipherContexts constructors now take a
+password_request callback function rather than forcing you to subclass
+GMimeSession to get this functionality.
+
+Other API changes include:
+
+- GMimeBestEncoding has been renamed to GMimeEncodingConstraint
+
+- g_mime_signer_get_created() has been renamed to
+  g_mime_signer_get_sig_created().
+
+- g_mime_signer_set_created() has been renamed to
+  g_mime_signer_set_sig_created().
+
+- g_mime_signer_get_expires() has been renamed to
+  g_mime_signer_get_sig_expires().
+
+- g_mime_signer_set_expires() has been renamed to
+  g_mime_signer_set_sig_expires().
+
+- GMimeSigner now has a number of new fields and accessors making it
+  much more complete.
+
+For convenience, GMime 2.6 source packages include a shell-script to
+aid in porting applications using GMime 2.4 to the 2.6 API. You can
+find this script under the tools/ directory, named
+`gmime-port-2-4-to-2-6.sh'.
+
+
 Porting from GMime 2.2 to GMime 2.4
 -----------------------------------
 
