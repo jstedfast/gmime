@@ -1,0 +1,44 @@
+<refentry id="gmime-changes-2-6" revision="06 Feb 2010">
+  <refmeta>
+    <refentrytitle>Changes from 2.4 to 2.6</refentrytitle>
+    <manvolnum>3</manvolnum>
+    <refmiscinfo>Changes from 2.4 to 2.6</refmiscinfo>
+  </refmeta>
+  <refnamediv>
+    <refname>Changes from 2.4 to 2.6</refname>
+    <refpurpose>Changes made between version 2.4 and version 2.6</refpurpose>
+  </refnamediv>
+  <refsect1>
+    <title>Changes from 2.4 to 2.6</title>
+    <para>After releasing GMime 2.4, it was discovered that
+g_mime_stream_length() still returned ssize_t which, on 32bit systems,
+meant that the function was useless if the actual stream was larger
+than 2GB (which could happen if GMime was built with large file
+support).</para>
+    <para>As I fixed this, I also found some API inconsistencies which I felt I
+might as well fix up since I had to break API/ABI compatibility with
+2.4 anyway.</para>
+    <para>Most notable in GMime 2.6 is the lack of GMimeSession which has been
+dropped in favor of a much simpler callback
+mechanism. GMimeCipherContexts constructors now take a
+password_request callback function rather than forcing you to subclass
+GMimeSession to get this functionality.</para>
+    <para>Other API changes include:</para>
+    <itemizedlist>
+      <listitem><para>GMimeBestEncoding has been renamed to
+      GMimeEncodingConstraint</para></listitem>
+      <listitem><para><function>g_mime_signer_get_created()</function>
+  has been renamed to <function>g_mime_signer_get_sig_created()</function>.
+      </para></listitem>
+      <listitem><para><function>g_mime_signer_set_created()</function>
+  has been renamed to <function>g_mime_signer_set_sig_created()</function>.
+      </para></listitem>
+      <listitem><para><function>g_mime_signer_get_expires()</function>
+  has been renamed to <function>g_mime_signer_get_sig_expires()</function>.
+      </para></listitem>
+      <listitem><para><function>g_mime_signer_set_expires()</function>
+  has been renamed to <function>g_mime_signer_set_sig_expires()</function>.
+      </para></listitem>
+    </itemizedlist>
+  </refsect1>
+</refentry>

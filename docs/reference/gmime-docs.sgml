@@ -61,6 +61,7 @@
 <!ENTITY gmime-Changes-2-0 SYSTEM "changes-2.0.sgml">
 <!ENTITY gmime-Changes-2-2 SYSTEM "changes-2.2.sgml">
 <!ENTITY gmime-Changes-2-4 SYSTEM "changes-2.4.sgml">
+<!ENTITY gmime-Changes-2-6 SYSTEM "changes-2.6.sgml">
 
 <!ENTITY gmime-Streams SYSTEM "streams.sgml">
 <!ENTITY gmime-Filters SYSTEM "filters.sgml">
@@ -69,7 +70,7 @@
 
 <book id="index">
   <bookinfo>
-    <title>GMime 2.4 Reference Manual</title>
+    <title>GMime 2.6 Reference Manual</title>
     <authorgroup>
       <author>
         <firstname>Jeffrey</firstname>
@@ -82,7 +83,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000-2009</year>
+      <year>2000-2010</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
 
@@ -145,6 +146,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
     &gmime-Changes-2-0;
     &gmime-Changes-2-2;
     &gmime-Changes-2-4;
+    &gmime-Changes-2-6;
     &gmime-Resources;
     &gmime-Questions;
   </part>
