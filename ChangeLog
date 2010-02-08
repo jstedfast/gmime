@@ -1,3 +1,9 @@
+2010-02-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.5.1
+
 2010-01-31  Jeffrey Stedfast  <fejj@novell.com>
 
 	* src/uudecode.c (uudecode): Just use fopen() to open fout instead
