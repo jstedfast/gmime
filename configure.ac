@@ -469,7 +469,9 @@ dnl ******************************************
 dnl *** Checks for GpgME needed for S/MIME ***
 dnl ******************************************
 AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
-
+if test "x$enable_smime" != "xno"; then
+  AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
+fi
 
 dnl ****************************
 dnl *** Enable Mono bindings ***
