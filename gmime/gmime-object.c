@@ -1056,6 +1056,7 @@ g_mime_object_type_registry_shutdown (void)
 {
 	g_hash_table_foreach (type_hash, type_bucket_foreach, NULL);
 	g_hash_table_destroy (type_hash);
+	type_hash = NULL;
 }
 
 void

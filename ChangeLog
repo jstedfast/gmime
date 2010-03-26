@@ -9,7 +9,8 @@
 	* gmime/gmime-object.c (g_mime_object_type_registry_init): Renamed
 	a bit and fixed to not use g_atexit(). Also made internal-public.
 	(g_mime_object_type_registry_shutdown): Renamed and made
-	internal-public.
+	internal-public. Also set type_hash to NULL after destroying it so
+	that a re-init will work.
 	(g_mime_object_register_type): Don't init the type system anymore.
 	(g_mime_object_new): Same.
 	(g_mime_object_new_type): Same here.
