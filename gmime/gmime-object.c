@@ -69,8 +69,6 @@ static ssize_t write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
 
-static void type_registry_init (void);
-
 
 static GHashTable *type_hash = NULL;
 
@@ -119,8 +117,6 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	klass->set_content_type = set_content_type;
 	klass->get_headers = get_headers;
 	klass->write_to_stream = write_to_stream;
-	
-	type_registry_init ();
 }
 
 static void
@@ -233,8 +229,6 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 	g_return_if_fail (subtype != NULL);
 	g_return_if_fail (type != NULL);
 	
-	type_registry_init ();
-	
 	if (!(bucket = g_hash_table_lookup (type_hash, type))) {
 		bucket = g_new (struct _type_bucket, 1);
 		bucket->type = g_strdup (type);
@@ -281,8 +275,6 @@ g_mime_object_new_type (const char *type, const char *subtype)
 	GType obj_type;
 	
 	g_return_val_if_fail (type != NULL, NULL);
-	
-	type_registry_init ();
 	
 	if ((bucket = g_hash_table_lookup (type_hash, type))) {
 		if (!(sub = g_hash_table_lookup (bucket->subtype_hash, subtype)))
@@ -724,20 +716,19 @@ type_bucket_foreach (gpointer key, gpointer value, gpointer user_data)
 	g_free (bucket);
 }
 
-static void
-type_registry_shutdown (void)
+void
+g_mime_object_type_registry_shutdown (void)
 {
 	g_hash_table_foreach (type_hash, type_bucket_foreach, NULL);
 	g_hash_table_destroy (type_hash);
+	type_hash = NULL;
 }
 
-static void
-type_registry_init (void)
+void
+g_mime_object_type_registry_init (void)
 {
 	if (type_hash)
 		return;
 	
 	type_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
-	
-	g_atexit (type_registry_shutdown);
 }

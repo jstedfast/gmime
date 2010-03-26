@@ -105,6 +105,7 @@ g_mime_init (guint32 flags)
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 	
 	/* register our default mime object types */
+	g_mime_object_type_registry_init ();
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
 	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
 	g_mime_object_register_type ("multipart", "encrypted", g_mime_multipart_encrypted_get_type ());
@@ -128,6 +129,7 @@ g_mime_shutdown (void)
 	if (--initialized)
 		return;
 	
+	g_mime_object_type_registry_shutdown ();
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_shutdown ();
 }

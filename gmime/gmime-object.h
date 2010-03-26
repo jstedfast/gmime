@@ -108,6 +108,10 @@ char *g_mime_object_get_headers (GMimeObject *object);
 ssize_t g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream);
 char *g_mime_object_to_string (GMimeObject *object);
 
+/* Internal API */
+G_GNUC_INTERNAL void g_mime_object_type_registry_init (void);
+G_GNUC_INTERNAL void g_mime_object_type_registry_shutdown (void);
+
 G_END_DECLS
 
 #endif /* __GMIME_OBJECT_H__ */
