@@ -133,6 +133,10 @@ char *g_mime_object_to_string (GMimeObject *object);
 
 void g_mime_object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
+/* Internal API */
+G_GNUC_INTERNAL void g_mime_object_type_registry_init (void);
+G_GNUC_INTERNAL void g_mime_object_type_registry_shutdown (void);
+
 G_END_DECLS
 
 #endif /* __GMIME_OBJECT_H__ */
