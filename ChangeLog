@@ -16,6 +16,8 @@
 
 2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fixes for bug #598855
+
 	* gmime/gmime-message.c (process_header): Return TRUE if we match
 	MIME-Version.
 	(message_prepend_header): Don't drop MIME-Version headers.
