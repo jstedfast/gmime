@@ -1,4 +1,20 @@
-2010-02-06  Jeffrey Stedfast  <fejj@novell.com>
+2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes for bug #613653
+
+	* gmime/gmime.c (g_mime_init): Initialize GMimeObject's type
+	registry.
+	(g_mime_shutdown): Shut it down here.
+
+	* gmime/gmime-object.c (g_mime_object_type_registry_init): Renamed
+	a bit and fixed to not use g_atexit(). Also made internal-public.
+	(g_mime_object_type_registry_shutdown): Renamed and made
+	internal-public.
+	(g_mime_object_register_type): Don't init the type system anymore.
+	(g_mime_object_new): Same.
+	(g_mime_object_new_type): Same here.
+
+2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-message.c (process_header): Return TRUE if we match
 	MIME-Version.
