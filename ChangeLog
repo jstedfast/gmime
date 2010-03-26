@@ -1,5 +1,11 @@
 2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.2.26
+
+2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes for bug #613653
 
 	* gmime/gmime.c (g_mime_init): Initialize GMimeObject's type
