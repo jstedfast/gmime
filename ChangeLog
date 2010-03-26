@@ -1,3 +1,18 @@
+2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-message.c (process_header): Return TRUE if we match
+	MIME-Version.
+	(message_prepend_header): Don't drop MIME-Version headers.
+	(message_append_header): Same.
+	(message_set_header): Here too.
+	(message_get_header): Only return the hard-coded "1.0" value for
+	MIME-Version if it is not set on the header object.
+	(message_remove_header): Allow the MIME-Version header to be
+	removed.
+	(message_get_headers): Only write our own MIME-Version header if
+	one isn't already set in the message headers.
+	(message_write_to_stream): Same here.
+
 2010-02-12  Jeffrey Stedfast  <fejj@novell.com>
 
 	Fixes bug #609700.

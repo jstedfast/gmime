@@ -669,6 +669,7 @@ enum {
 	HEADER_SUBJECT,
 	HEADER_DATE,
 	HEADER_MESSAGE_ID,
+	HEADER_MIME_VERSION,
 	HEADER_UNKNOWN
 };
 
@@ -681,6 +682,7 @@ static const char *message_headers[] = {
 	"Subject",
 	"Date",
 	"Message-Id",
+	"MIME-Version",
 };
 
 enum {
@@ -772,6 +774,8 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 		g_free (message->message_id);
 		message->message_id = g_mime_utils_decode_message_id (value);
 		break;
+	case HEADER_MIME_VERSION:
+		break;
 	default:
 		return FALSE;
 	}
@@ -783,9 +787,6 @@ static void
 message_prepend_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
-	
-	if (!g_ascii_strcasecmp ("MIME-Version", header))
-		return;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
@@ -806,9 +807,6 @@ message_append_header (GMimeObject *object, const char *header, const char *valu
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
-	if (!g_ascii_strcasecmp ("MIME-Version", header))
-		return;
-	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
@@ -828,9 +826,6 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
-	if (!g_ascii_strcasecmp ("MIME-Version", header))
-		return;
-	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
 	if (!g_ascii_strncasecmp ("Content-", header, 8))
@@ -849,18 +844,21 @@ static const char *
 message_get_header (GMimeObject *object, const char *header)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
-	
-	if (!g_ascii_strcasecmp ("MIME-Version", header))
-		return "1.0";
+	const char *value;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
-	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
-		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-	else if (message->mime_part)
+	if (g_ascii_strncasecmp ("Content-", header, 8) != 0) {
+		if ((value = GMIME_OBJECT_CLASS (parent_class)->get_header (object, header)))
+			return value;
+		
+		if (!g_ascii_strcasecmp ("MIME-Version", header))
+			return "1.0";
+	} else if (message->mime_part) {
 		return g_mime_object_get_header (message->mime_part, header);
-	else
-		return NULL;
+	}
+	
+	return NULL;
 }
 
 static gboolean
@@ -870,9 +868,6 @@ message_remove_header (GMimeObject *object, const char *header)
 	InternetAddressList *addrlist;
 	GMimeRecipientType type;
 	guint i;
-	
-	if (!g_ascii_strcasecmp ("MIME-Version", header))
-		return FALSE;
 	
 	/* Make sure that the header is not a Content-* header, else it
            doesn't belong on a message */
@@ -959,7 +954,8 @@ message_get_headers (GMimeObject *object)
 	} else {
 		g_mime_header_list_write_to_stream (object->headers, stream);
 		if (message->mime_part) {
-			if (g_mime_object_get_header (message->mime_part, "Content-Type"))
+			if (g_mime_object_get_header (message->mime_part, "Content-Type") &&
+			    !g_mime_header_list_get (object->headers, "MIME-Version"))
 				g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
 			g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
 		}
@@ -986,8 +982,10 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 			
 			total += nwritten;
 			
-			if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
-				return -1;
+			if (!g_mime_header_list_get (object->headers, "MIME-Version")) {
+				if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
+					return -1;
+			}
 			
 			total += nwritten;
 		}
