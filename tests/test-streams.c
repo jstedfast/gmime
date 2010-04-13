@@ -29,7 +29,9 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifdef HAVE_SYS_MMAN_H
 #include <sys/mman.h>
+#endif
 #include <unistd.h>
 #include <dirent.h>
 #include <fcntl.h>
@@ -305,6 +307,7 @@ check_stream_file (const char *input, const char *output, const char *filename, 
 	return TRUE;
 }
 
+#ifdef HAVE_SYS_MMAN_H
 static gboolean
 check_stream_mmap (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
 {
@@ -337,6 +340,7 @@ check_stream_mmap (const char *input, const char *output, const char *filename, 
 	
 	return TRUE;
 }
+#endif
 
 static gboolean
 check_stream_buffer_block (const char *input, const char *output, const char *filename, gint64 start, gint64 end)
@@ -417,7 +421,9 @@ static struct {
 } checks[] = {
 	{ "GMimeStreamFs",                  check_stream_fs           },
 	{ "GMimeStreamFile",                check_stream_file         },
+#ifdef HAVE_SYS_MMAN_H
 	{ "GMimeStreamMmap",                check_stream_mmap         },
+#endif
 	{ "GMimeStreamBuffer (block mode)", check_stream_buffer_block },
 	{ "GMimeStreamBuffer (cache mode)", check_stream_buffer_cache },
 };
@@ -541,7 +547,7 @@ gen_test_data (const char *datadir, char **stream_name)
 	*name++ = G_DIR_SEPARATOR;
 	strcpy (name, "streamXXXXXX");
 	
-	if ((fd = mkstemp (input)) == -1)
+	if ((fd = g_mkstemp (input)) == -1)
 		return -1;
 	
 	*stream_name = g_strdup (name);

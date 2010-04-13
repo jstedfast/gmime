@@ -34,7 +34,7 @@
 #endif
 #include <fcntl.h>
 #include <errno.h>
-#ifdef G_OS_WIN32
+#if defined (G_OS_WIN32) && !defined (__MINGW32__)
 #include <io.h>
 typedef int mode_t;
 #endif
