@@ -52,7 +52,7 @@ streams_match (GMimeStream **streams, const char *filename)
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (%lld -> %lld) with %s (%lld, %lld)... ",
+	v(fprintf (stdout, "Matching original stream (%" G_GINT64_FORMAT " -> %" G_GINT64_FORMAT ") with %s (%" G_GINT64_FORMAT ", %" G_GINT64_FORMAT ")... ",
 		   streams[0]->position, streams[0]->bound_end, filename,
 		   streams[1]->position, streams[1]->bound_end));
 	
@@ -76,19 +76,19 @@ streams_match (GMimeStream **streams, const char *filename)
 		nread = 0;
 		totalread += n;
 		
-		d(fprintf (stderr, "read %zu bytes from stream[0]\n", size));
+		d(fprintf (stderr, "read %" G_GSIZE_FORMAT " bytes from stream[0]\n", size));
 		
 		do {
 			if ((n = g_mime_stream_read (streams[1], dbuf + nread, size - nread)) <= 0) {
-				d(fprintf (stderr, "stream[1] read() returned %zd, EOF\n", n));
+				d(fprintf (stderr, "stream[1] read() returned %" G_GSSIZE_FORMAT ", EOF\n", n));
 				break;
 			}
-			d(fprintf (stderr, "read %zd bytes from stream[1]\n", n));
+			d(fprintf (stderr, "read %" G_GSSIZE_FORMAT " bytes from stream[1]\n", n));
 			nread += n;
 		} while (nread < size);
 		
 		if (nread < size) {
-			sprintf (errstr, "Error: `%s' appears to be truncated, short %zu+ bytes\n",
+			sprintf (errstr, "Error: `%s' appears to be truncated, short %" G_GSIZE_FORMAT "+ bytes\n",
 				 filename, size - nread);
 			goto fail;
 		}
@@ -97,7 +97,7 @@ streams_match (GMimeStream **streams, const char *filename)
 			sprintf (errstr, "Error: `%s': content does not match\n", filename);
 			goto fail;
 		} else {
-			d(fprintf (stderr, "%zu bytes identical\n", size));
+			d(fprintf (stderr, "%" G_GSIZE_FORMAT " bytes identical\n", size));
 		}
 	}
 	
@@ -129,8 +129,11 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	char sbuf[100], rbuf[100];
 	ssize_t slen;
 	FILE *fp;
-	
-	if (!(fp = fopen (filename, "r+")))
+
+	/* '0x1a' character is treated as EOF (Ctrl+Z) on Windows if file is opened in text mode,
+	 *  thus it's opened in binary mode.
+	 */
+	if (!(fp = fopen (filename, "r+b")))
 		throw (exception_new ("could not open `%s': %s", filename, g_strerror (errno)));
 	
 	while (!g_mime_stream_eos (stream)) {
@@ -145,8 +148,8 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	fclose (fp);
 	
 	if (strcmp (sbuf, rbuf) != 0) {
-		v(fprintf (stderr, "\tstream: \"%s\" (%zu)\n", sbuf, strlen (sbuf)));
-		v(fprintf (stderr, "\treal:   \"%s\" (%zu)\n", rbuf, strlen (rbuf)));
+		v(fprintf (stderr, "\tstream: \"%s\" (%" G_GSIZE_FORMAT ")\n", sbuf, strlen (sbuf)));
+		v(fprintf (stderr, "\treal:   \"%s\" (%" G_GSIZE_FORMAT ")\n", rbuf, strlen (rbuf)));
 		throw (exception_new ("streams did not match"));
 	}
 }
@@ -481,7 +484,7 @@ test_streams (GDir *dir, const char *datadir, const char *filename)
 	n = strlen (filename);
 	
 	while ((dent = g_dir_read_name (dir))) {
-		if (strncmp (dent, filename, n) != 0 || dent[n] != ':')
+		if (strncmp (dent, filename, n) != 0 || dent[n] != '_')
 			continue;
 		
 		d = dent + n + 1;
@@ -515,7 +518,7 @@ test_streams (GDir *dir, const char *datadir, const char *filename)
 }
 
 
-static void
+static size_t
 gen_random_stream (GMimeStream *stream)
 {
 	size_t nwritten, buflen, total = 0, size, i;
@@ -524,7 +527,7 @@ gen_random_stream (GMimeStream *stream)
 	
 	/* read between 4k and 14k bytes */
 	size = 4096 + (size_t) (10240.0 * (rand () / (RAND_MAX + 1.0)));
-	v(fprintf (stdout, "Generating %zu bytes of random data... ", size));
+	v(fprintf (stdout, "Generating %" G_GSIZE_FORMAT " bytes of random data... ", size));
 	v(fflush (stdout));
 	
 	while (total < size) {
@@ -548,6 +551,8 @@ gen_random_stream (GMimeStream *stream)
 	g_mime_stream_reset (stream);
 	
 	v(fputs ("done\n", stdout));
+
+	return size;
 }
 
 static int
@@ -555,8 +560,7 @@ gen_test_data (const char *datadir, char **stream_name)
 {
 	GMimeStream *istream, *ostream, *stream;
 	char input[256], output[256], *name, *p;
-	gint64 start, end, len;
-	struct stat st;
+	gint64 start, end, len, size;
 	int fd, i;
 	
 	srand (time (NULL));
@@ -582,29 +586,23 @@ gen_test_data (const char *datadir, char **stream_name)
 	
 	*p++ = G_DIR_SEPARATOR;
 	p = g_stpcpy (p, name);
-	*p++ = ':';
+	*p++ = '_';
 	
 	istream = g_mime_stream_fs_new (fd);
-	gen_random_stream (istream);
-	
-	if (stat (input, &st) == -1 || !S_ISREG (st.st_mode)) {
-		g_object_unref (istream);
-		unlink (input);
-		return -1;
-	}
+	size = gen_random_stream (istream);
 	
 	for (i = 0; i < 64; i++) {
 	retry:
-		start = (gint64) (st.st_size * (rand () / (RAND_MAX + 1.0)));
-		len = (gint64) (st.st_size * (rand () / (RAND_MAX + 1.0)));
-		if (start + len > st.st_size) {
-			len = st.st_size - start;
+		start = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
+		len = (gint64) (size * (rand () / (RAND_MAX + 1.0)));
+		if (start + len > size) {
+			len = size - start;
 			end = -1;
 		} else {
 			end = start + len;
 		}
 		
-		sprintf (p, "%lld,%lld", start, end);
+		sprintf (p, "%" G_GINT64_FORMAT ",%" G_GINT64_FORMAT, start, end);
 		
 		if ((fd = open (output, O_CREAT | O_EXCL | O_TRUNC | O_WRONLY, 0666)) == -1)
 			goto retry;
