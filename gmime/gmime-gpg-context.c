@@ -966,8 +966,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status = next_token (status, &hint);
 		if (!hint) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Failed to parse gpg userid hint."));
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Failed to parse gpg userid hint."));
 			return -1;
 		}
 		
@@ -990,8 +990,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status = next_token (status, &userid);
 		if (!userid) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Failed to parse gpg passphrase request."));
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Failed to parse gpg passphrase request."));
 			return -1;
 		}
 		
@@ -1004,8 +1004,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status = next_token (status, &userid);
 		if (!userid) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     _("Failed to parse gpg passphrase request."));
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+					     _("Failed to parse gpg passphrase request."));
 			return -1;
 		}
 		
@@ -1055,7 +1055,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			gpg->send_passwd = TRUE;
 		} else {
 			if (err && *err == NULL)
-				g_set_error (err, GMIME_ERROR, ECANCELED, _("Canceled."));
+				g_set_error_literal (err, GMIME_ERROR, ECANCELED, _("Canceled."));
 			
 			g_free (prompt);
 			
@@ -1069,8 +1069,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		g_mime_session_forget_passwd (gpg->session, gpg->userid, NULL);
 		
 		if (gpg->bad_passwds == 3) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_BAD_PASSWORD,
-				     _("Failed to unlock secret key: 3 bad passphrases given."));
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_BAD_PASSWORD,
+					     _("Failed to unlock secret key: 3 bad passphrases given."));
 			return -1;
 		}
 	} else if (!strncmp (status, "UNEXPECTED ", 11)) {
@@ -1094,11 +1094,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		if (diagnostics && *diagnostics)
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
-				     "%s", diagnostics);
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL, diagnostics);
 		else
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
-				     _("No data provided"));
+			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL, _("No data provided"));
 		
 		gpg->nodata = TRUE;
 		
@@ -1142,8 +1140,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			} else if (!strncmp (status, "END_ENCRYPTION", 14)) {
 				/* nothing to do, but we know the end is near? */
 			} else if (!strncmp (status, "NO_RECP", 7)) {
-				g_set_error (err, GMIME_ERROR, GMIME_ERROR_NO_VALID_RECIPIENTS,
-					     _("Failed to encrypt: No valid recipients specified."));
+				g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NO_VALID_RECIPIENTS,
+						     _("Failed to encrypt: No valid recipients specified."));
 				return -1;
 			}
 			break;
@@ -1670,7 +1668,7 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
 		
-		g_set_error (err, GMIME_ERROR, errno, diagnostics);
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1850,7 +1848,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
 		
-		g_set_error (err, GMIME_ERROR, errno, diagnostics);
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -1900,7 +1898,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
 		
-		g_set_error (err, GMIME_ERROR, errno, diagnostics);
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return NULL;
@@ -1969,7 +1967,7 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
 		
-		g_set_error (err, GMIME_ERROR, errno, diagnostics);
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
@@ -2022,7 +2020,7 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
 		
-		g_set_error (err, GMIME_ERROR, errno, diagnostics);
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
 		gpg_ctx_free (gpg);
 		
 		return -1;
