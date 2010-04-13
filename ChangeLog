@@ -1,5 +1,9 @@
 2010-04-13  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c: Use g_set_error_literal() when no
+	printf-style arguments are needed. Fixes bug #615594. Thanks to
+	Tobias Mueller and Christian Persch.
+
 	* Applied patch by pier11@operamail.com to fix the build for
 	MingW. Fixes bug #615068.
 
