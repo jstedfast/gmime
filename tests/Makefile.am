@@ -16,17 +16,25 @@ AUTOMATED_TESTS =	\
 	test-cat	\
 	test-headers	\
 	test-mbox	\
-	test-mime	\
+	test-mime
+
+if ENABLE_CRYPTOGRAPHY
+AUTOMATED_TESTS +=	\
 	test-pgp	\
 	test-pgpmime
+endif
 
 MANUAL_TESTS =		\
 	test-best	\
 	test-parser 	\
 	test-html 	\
-	test-partial	\
+	test-partial
+
+if ENABLE_CRYPTOGRAPHY
+MANUAL_TESTS +=		\
 	test-pkcs7	\
 	test-smime
+endif
 
 noinst_PROGRAMS = $(AUTOMATED_TESTS) $(MANUAL_TESTS)
 
@@ -83,6 +91,7 @@ test_partial_LDFLAGS =
 test_partial_DEPENDENCIES = $(DEPS)
 test_partial_LDADD = $(LDADDS)
 
+if ENABLE_CRYPTOGRAPHY
 test_pgp_SOURCES = test-pgp.c testsuite.c testsuite.h
 test_pgp_LDFLAGS = 
 test_pgp_DEPENDENCIES = $(DEPS)
@@ -102,6 +111,7 @@ test_smime_SOURCES = test-smime.c testsuite.c testsuite.h
 test_smime_LDFLAGS = 
 test_smime_DEPENDENCIES = $(DEPS)
 test_smime_LDADD = $(LDADDS)
+endif
 
 EXTRA_DIST = test1.eml test2.eml test3.eml
 

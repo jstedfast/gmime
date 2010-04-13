@@ -225,6 +225,17 @@ if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
 fi
 
+dnl Disable cryptography support
+AC_ARG_ENABLE(cryptography,
+              AC_HELP_STRING([--disable-cryptography],
+	      [disables cryptography support in GMIME [[default=no]]]),,
+	      enable_cryptography=yes)
+AM_CONDITIONAL(ENABLE_CRYPTOGRAPHY, test "x$enable_cryptography" = "xyes")
+if test "x$enable_cryptography" = "xyes"; then
+  AC_DEFINE(ENABLE_CRYPTOGRAPHY, 1, [Define if cryptography in GMime is enabled.])
+fi
+
+
 dnl We need at *least* glib 2.16.0 for GIO
 AM_PATH_GLIB_2_0(2.16.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
@@ -465,12 +476,15 @@ dnl *************************
 LIBNSL=""
 AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
 
+enable_smime="no"
+if test "x$enable_cryptography" = "xyes"; then
 dnl ******************************************
 dnl *** Checks for GpgME needed for S/MIME ***
 dnl ******************************************
 AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
 if test "x$enable_smime" != "xno"; then
   AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
+fi
 fi
 
 dnl ****************************
@@ -618,7 +632,7 @@ Configuration:
 
   Large file support:   ${enable_largefile}
   Console warnings:     ${enable_warnings}
-  PGP/MIME support:     yes
+  PGP/MIME support:     ${enable_cryptography}
   S/MIME support:       ${enable_smime}
 
   Mono bindings:        ${enable_mono}
