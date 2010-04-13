@@ -269,7 +269,7 @@ int main (int argc, char **argv)
 	/* reset .gnupg config directory */
 	system ("/bin/rm -rf ./tmp");
 	system ("/bin/mkdir ./tmp");
-	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {

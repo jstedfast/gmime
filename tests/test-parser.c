@@ -32,7 +32,7 @@
 
 #include <gmime/gmime.h>
 
-#ifndef G_OS_WIN32
+#if !defined (G_OS_WIN32) || defined (__MINGW32__)
 #define ENABLE_ZENTIMER
 #include "zentimer.h"
 #endif

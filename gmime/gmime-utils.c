@@ -472,7 +472,7 @@ mktime_utc (struct tm *tm)
 	tm->tm_isdst = -1;
 	tt = mktime (tm);
 	
-#if defined (G_OS_WIN32)
+#if defined (G_OS_WIN32) && !defined (__MINGW32__)
 	_get_timezone (&tz);
 	if (tm->tm_isdst > 0) {
 		int dst;
