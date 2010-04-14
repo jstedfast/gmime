@@ -157,6 +157,16 @@ if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
 fi
 
+dnl Disable cryptography support
+AC_ARG_ENABLE(cryptography,
+              AC_HELP_STRING([--disable-cryptography],
+              [disables cryptography support in GMIME [[default=no]]]),,
+              enable_cryptography=yes)
+AM_CONDITIONAL(ENABLE_CRYPTOGRAPHY, test "x$enable_cryptography" = "xyes")
+if test "x$enable_cryptography" = "xyes"; then
+  AC_DEFINE(ENABLE_CRYPTOGRAPHY, 1, [Define if cryptography in GMime is enabled.])
+fi
+
 dnl We need at *least* glib 2.12.0 for g_hash_table_remove_all()
 AM_PATH_GLIB_2_0(2.12.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
@@ -541,6 +551,7 @@ Configuration:
 
   Large file support:   ${enable_largefile}
   Console warnings:     ${enable_warnings}
+  PGP/MIME support:     ${enable_cryptography}
 
   Mono bindings:        ${enable_mono}
 "

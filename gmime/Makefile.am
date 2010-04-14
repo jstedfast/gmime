@@ -44,7 +44,6 @@ libgmime_2_4_la_SOURCES = 		\
 	gmime-filter-strip.c		\
 	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
-	gmime-gpg-context.c		\
 	gmime-header.c			\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
@@ -73,6 +72,11 @@ libgmime_2_4_la_SOURCES = 		\
 	gmime-utils.c			\
 	internet-address.c
 
+if ENABLE_CRYPTOGRAPHY
+libgmime_2_4_la_SOURCES += 		\
+	gmime-gpg-context.c
+endif
+
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
 	gmime-charset.h			\
@@ -95,7 +99,6 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-strip.h		\
 	gmime-filter-windows.h		\
 	gmime-filter-yenc.h		\
-	gmime-gpg-context.h		\
 	gmime-header.h			\
 	gmime-iconv.h			\
 	gmime-iconv-utils.h		\
@@ -123,6 +126,11 @@ gmimeinclude_HEADERS = 			\
 	gmime-stream-null.h		\
 	gmime-utils.h			\
 	internet-address.h
+
+if ENABLE_CRYPTOGRAPHY
+gmimeinclude_HEADERS +=			\
+	gmime-gpg-context.h
+endif
 
 noinst_HEADERS = 			\
 	gmime-common.h			\

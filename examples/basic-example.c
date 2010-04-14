@@ -363,6 +363,7 @@ int main (int argc, char **argv)
 	count_parts_in_message (message);
 	
 #ifndef G_OS_WIN32
+#ifdef ENABLE_CRYPTOGRAPHY
 	/* create our cipher context (and session - which is used by the context to query the user) */
 	session = g_object_new (example_session_get_type (), NULL);
 	ctx = g_mime_gpg_context_new (session, path);
@@ -374,6 +375,7 @@ int main (int argc, char **argv)
 	/* verify any signed parts */
 	verify_signed_parts (message, ctx);
 	g_object_unref (ctx);
+#endif
 #endif
 	
 	/* add and remove parts */

@@ -1,5 +1,9 @@
 2010-04-13  Jeffrey Stedfast  <fejj@novell.com>
 
+	* configure.ac: Added a --disable-cryptography flag to alloow
+	building without GnuPG or S/MIME support. Thanks to
+	pier11@operamail.com for this patch. Fixes bug #615685.
+
 	* tests/test-streams.c: Use glib's G_GINT64_FORMAT and
 	G_GSIZE_FORMAT macros for our various *printf needs to be more
 	portable. Thanks to pier11@operamail.com for this patch.
