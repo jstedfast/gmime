@@ -96,7 +96,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
  * Returns: the number of output bytes needed to encode an input buffer
  * of size @x using the quoted-printable encoding.
  **/
-#define GMIME_QP_ENCODE_LEN(x)     ((size_t) ((((x) + 1) * 3) + 1))
+#define GMIME_QP_ENCODE_LEN(x)     ((size_t) ((((x) / 24) * 73) + 74))
 
 
 /**
