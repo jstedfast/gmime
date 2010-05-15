@@ -1,3 +1,9 @@
+2010-05-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.5.2
+
 2010-05-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-encodings.h (GMIME_QP_ENCODE_LEN): Fixed to take
