@@ -1,3 +1,13 @@
+2010-05-18  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.5.3
+
+	* gmime/gmime-encodings.h (GMIME_QP_ENCODE_LEN): Since
+	force-wrapped lines use "=\n" instead of just "\n", lines will be
+	74 bytes, not 73.
+
 2010-05-15  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
