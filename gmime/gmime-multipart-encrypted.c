@@ -386,7 +386,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_CONTENT);
 	mime_type = g_mime_object_get_content_type (encrypted);
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
-		g_object_unref (encrypted);
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     "Failed to decrypt MIME part: unexpected content type");
+		
 		return NULL;
 	}
 	
