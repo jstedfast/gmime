@@ -1,3 +1,11 @@
+2010-06-20  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_decrypt):
+	Don't unref the encrypted content mime part object when the
+	content-type doesn't match application/octet-stream,
+	g_mime_multipart_get_part() does not ref parts it returns. We also
+	need to set an error when this happens.
+
 2010-05-18  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
