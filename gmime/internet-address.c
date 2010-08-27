@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2009 Jeffrey Stedfast
+ *  Copyright (C) 2000-2010 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -286,15 +286,9 @@ _internet_address_set_name (InternetAddress *ia, const char *name)
 {
 	char *buf;
 	
-	if (name) {
-		buf = g_mime_utils_header_decode_phrase (name);
-		g_mime_utils_unquote_string (buf);
-		g_free (ia->name);
-		ia->name = buf;
-	} else {
-		g_free (ia->name);
-		ia->name = NULL;
-	}
+	buf = g_strdup (name);
+	g_free (ia->name);
+	ia->name = buf;
 }
 
 /**
@@ -446,8 +440,7 @@ internet_address_mailbox_new (const char *name, const char *addr)
 	mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
 	mailbox->addr = g_strdup (addr);
 	
-	if (name != NULL)
-		_internet_address_set_name ((InternetAddress *) mailbox, name);
+	_internet_address_set_name ((InternetAddress *) mailbox, name);
 	
 	return (InternetAddress *) mailbox;
 }
@@ -1352,82 +1345,70 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 	_internet_address_list_to_string (list, flags, &linelen, str);
 }
 
+static void
+_internet_address_decode_name (InternetAddress *ia, GString *name)
+{
+	char *value, *buf = NULL;
+	char *phrase;
+	
+	if (!g_utf8_validate (name->str, name->len, NULL)) {
+		/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
+		buf = g_mime_utils_decode_8bit (name->str, name->len);
+		phrase = buf;
+	} else {
+		phrase = name->str;
+	}
+	
+	/* decode the phrase */
+	g_mime_utils_unquote_string (phrase);
+	value = g_mime_utils_header_decode_phrase (phrase);
+	g_free (ia->name);
+	ia->name = value;
+	g_free (buf);
+}
+
+static InternetAddress *decode_address (const char **in);
+
+static void
+skip_lwsp (const char **in)
+{
+	register const char *inptr = *in;
+	
+	while (*inptr && is_lwsp (*inptr))
+		inptr++;
+	
+	*in = inptr;
+}
+
 static InternetAddress *
-decode_mailbox (const char **in)
+decode_addrspec (const char **in)
 {
 	InternetAddress *mailbox = NULL;
-	const char *inptr, *word;
-	gboolean bracket = FALSE;
-	GString *name = NULL;
+	const char *start, *inptr, *word;
+	gboolean got_local = FALSE;
 	GString *addr;
-	size_t n = 0;
+	size_t len;
 	
 	addr = g_string_new ("");
-	
-	decode_lwsp (in);
 	inptr = *in;
 	
-	if ((word = decode_word (&inptr)))
-		n = inptr - word;
-	
 	decode_lwsp (&inptr);
-	if (*inptr && !strchr (",.@", *inptr)) {
-		gboolean retried = FALSE;
-		
-		/* this mailbox has a name part, so get the name */
-		name = g_string_new ("");
-		while (word) {
-			g_string_append_len (name, word, n);
-			retried = FALSE;
-		retry:
-			if ((word = decode_word (&inptr))) {
-				g_string_append_c (name, ' ');
-				n = inptr - word;
-			}
-		}
-		
+	
+	/* some spam bots set their addresses to stuff like: ).ORHH@em.ca */
+	while (*inptr && !(*inptr == '"' || is_atom (*inptr)))
+		inptr++;
+	
+	start = inptr;
+	
+	/* extract the first word of the local-part */
+	if ((word = decode_word (&inptr))) {
+		g_string_append_len (addr, word, (size_t) (inptr - word));
 		decode_lwsp (&inptr);
-		if (*inptr == '<') {
-			inptr++;
-			bracket = TRUE;
-			if ((word = decode_word (&inptr)))
-				n = inptr - word;
-		} else if (!retried && *inptr) {
-			w(g_warning ("Unexpected char '%c' in mailbox: %s: attempting recovery.",
-				     *inptr, *in));
-			/* chew up this bad char and then attempt 1 more pass at parsing */
-			g_string_append_c (name, *inptr++);
-			retried = TRUE;
-			goto retry;
-		} else {
-			g_string_free (name, TRUE);
-			g_string_free (addr, TRUE);
-			*in = inptr;
-			
-			return NULL;
-		}
+		got_local = TRUE;
 	}
 	
-	if (word) {
-		g_string_append_len (addr, word, n);
-	} else {
-		w(g_warning ("No local part for email address: %s", *in));
-		if (name)
-			g_string_free (name, TRUE);
-		g_string_free (addr, TRUE);
-		
-		/* comma will be eaten by our caller */
-		if (*inptr && *inptr != ',')
-			*in = inptr + 1;
-		else
-			*in = inptr;
-		
-		return NULL;
-	}
-	
-	/* get the rest of the local-part */
-	decode_lwsp (&inptr);
-	while (*inptr == '.' && word) {
+	/* extract the rest of the local-part */
+	while (word && *inptr == '.') {
 		/* Note: According to the spec, only a single '.' is
 		 * allowed between word tokens in the local-part of an
 		 * addr-spec token, but according to Evolution bug
@@ -1445,144 +1426,237 @@ decode_mailbox (const char **in)
 		decode_lwsp (&inptr);
 	}
 	
-	/* we should be at the '@' now... */
 	if (*inptr == '@') {
-		size_t len = addr->len;
+		len = addr->len;
 		
 		g_string_append_c (addr, '@');
 		inptr++;
 		
-		if (!decode_domain (&inptr, addr))
+		if (!decode_domain (&inptr, addr)) {
+			/* drop the @domain and continue as if it weren't there */
+			w(g_warning ("Missing domain in addr-spec: %.*s",
+				     inptr - start, start));
 			g_string_truncate (addr, len);
-	} else {
-		w(g_warning ("No domain in email address: %s", *in));
-	}
-	
-	if (bracket) {
-		decode_lwsp (&inptr);
-		if (*inptr == '>')
-			inptr++;
-		else
-			w(g_warning ("Missing closing '>' bracket for email address: %s", *in));
-	}
-	
-	if (!name || !name->len) {
-		/* look for a trailing comment to use as the name? */
-		char *comment;
-		
-		if (name) {
-			g_string_free (name, TRUE);
-			name = NULL;
 		}
-		
-		comment = (char *) inptr;
-		decode_lwsp (&inptr);
-		if (inptr > comment) {
-			if ((comment = memchr (comment, '(', inptr - comment))) {
-				const char *cend;
-				
-				/* find the end of the comment */
-				cend = inptr - 1;
-				while (cend > comment && is_lwsp (*cend))
-					cend--;
-				
-				if (*cend == ')')
-					cend--;
-				
-				comment = g_strndup (comment + 1, (size_t) (cend - comment));
-				g_strstrip (comment);
-				
-				name = g_string_new (comment);
-				g_free (comment);
-			}
-		}
+	} else if (got_local) {
+		w(g_warning ("Missing '@' and domain in addr-spec: %.*s",
+			     inptr - start, start));
 	}
 	
 	*in = inptr;
 	
-	if (addr->len) {
-		if (name && !g_utf8_validate (name->str, name->len, NULL)) {
-			/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
-			char *utf8 = g_mime_utils_decode_8bit (name->str, name->len);
-			
-			g_string_truncate (name, 0);
-			g_string_append (name, utf8);
-			g_free (utf8);
-		}
-		
-		mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
-		((InternetAddressMailbox *) mailbox)->addr = addr->str;
-		
-		if (name)
-			_internet_address_set_name (mailbox, name->str);
+	if (!got_local) {
+		w(g_warning ("Invalid addr-spec, missing local-part: %.*s",
+			     inptr - start, start));
+		g_string_free (addr, TRUE);
+		return NULL;
 	}
 	
-	g_string_free (addr, mailbox ? FALSE : TRUE);
-	if (name)
-		g_string_free (name, TRUE);
+	mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
+	((InternetAddressMailbox *) mailbox)->addr = addr->str;
+	g_string_free (addr, FALSE);
 	
 	return mailbox;
 }
 
 static InternetAddress *
-decode_address (const char **in)
+decode_group (const char **in)
 {
 	InternetAddressGroup *group;
+	InternetAddress *addr;
+	const char *inptr;
+	
+	inptr = *in;
+	
+	addr = internet_address_group_new (NULL);
+	group = (InternetAddressGroup *) addr;
+	
+	decode_lwsp (&inptr);
+	while (*inptr && *inptr != ';') {
+		InternetAddress *member;
+		
+		if ((member = decode_address (&inptr)))
+			_internet_address_group_add_member (group, member);
+		
+		decode_lwsp (&inptr);
+		while (*inptr == ',') {
+			inptr++;
+			decode_lwsp (&inptr);
+			if ((member = decode_address (&inptr)))
+				_internet_address_group_add_member (group, member);
+			
+			decode_lwsp (&inptr);
+		}
+	}
+	
+	*in = inptr;
+	
+	return addr;
+}
+
+static InternetAddress *
+decode_address (const char **in)
+{
+	const char *inptr, *start, *word, *comment = NULL;
 	InternetAddress *addr = NULL;
-	const char *inptr, *start;
-	const char *word;
+	gboolean has_lwsp = FALSE;
+	gboolean is_word;
 	GString *name;
 	
 	decode_lwsp (in);
 	start = inptr = *in;
 	
-	/* pre-scan */
 	name = g_string_new ("");
-	word = decode_word (&inptr);
 	
-	while (word) {
-		g_string_append_len (name, word, (size_t) (inptr - word));
+	/**
+	 * Both groups and mailboxes can begin with a phrase (denoting
+	 * the display name for the address). Collect all of the
+	 * tokens that make up this name phrase.
+	 **/
+	while (*inptr) {
 		if ((word = decode_word (&inptr)))
-			g_string_append_c (name, ' ');
-	}
-	
-	decode_lwsp (&inptr);
-	if (*inptr == ':') {
-		addr = internet_address_group_new (name->str);
-		group = (InternetAddressGroup *) addr;
-		inptr++;
+			g_string_append_len (name, word, (size_t) (inptr - word));
 		
-		decode_lwsp (&inptr);
-		while (*inptr && *inptr != ';') {
-			InternetAddress *member;
+		if (word) {
+		check_lwsp:
+			word = inptr;
+			skip_lwsp (&inptr);
 			
-			if ((member = decode_mailbox (&inptr)))
-				_internet_address_group_add_member (group, member);
+			/* is the next token a word token? */
+			is_word = *inptr == '"' || is_atom (*inptr);
 			
-			decode_lwsp (&inptr);
-			while (*inptr == ',') {
-				inptr++;
-				decode_lwsp (&inptr);
-				if ((member = decode_mailbox (&inptr)))
-					_internet_address_group_add_member (group, member);
-				
-				decode_lwsp (&inptr);
+			if (inptr > word && is_word) {
+				g_string_append_c (name, ' ');
+				has_lwsp = TRUE;
 			}
+			
+			if (is_word)
+				continue;
 		}
 		
-		if (*inptr == ';')
+		/**
+		 * specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
+		 *             /  "," / ";" / ":" / "\" / <">  ;  string, to use
+		 *             /  "." / "[" / "]"              ;  within a word.
+		 **/
+		if (*inptr == ':') {
+			/* group */
 			inptr++;
-		else
-			w(g_warning ("Invalid group spec, missing closing ';': %.*s",
-				     inptr - start, start));
-		
-		*in = inptr;
-	} else {
-		/* this is a mailbox */
-		addr = decode_mailbox (in);
+			addr = decode_group (&inptr);
+			decode_lwsp (&inptr);
+			if (*inptr != ';')
+				w(g_warning ("Invalid group spec, missing closing ';': %.*s",
+					     inptr - start, start));
+			else
+				inptr++;
+			break;
+		} else if (*inptr == '<') {
+			/* mailbox route-addr */
+			inptr++;
+			addr = decode_addrspec (&inptr);
+			decode_lwsp (&inptr);
+			if (*inptr != '>') {
+				w(g_warning ("Invalid route-addr, missing closing '>': %.*s",
+					     inptr - start, start));
+				
+				while (*inptr && *inptr != '>' && *inptr != ',')
+					inptr++;
+				
+				if (*inptr == '>')
+					inptr++;
+			} else
+				inptr++;
+			
+			/* if comment is non-NULL, we can check for a comment containing a name */
+			comment = inptr;
+			break;
+		} else if (*inptr == '(') {
+			/* comment suggests we are looking at an addr-spec */
+			goto addrspec;
+		} else if (strchr ("@,;", *inptr)) {
+			if (name->len == 0) {
+				if (*inptr == '@') {
+					GString *domain;
+					
+					w(g_warning ("Unexpected address: %s: skipping.", start));
+					
+					/* skip over @domain? */
+					inptr++;
+					domain = g_string_new ("");
+					decode_domain (&inptr, domain);
+					g_string_free (domain, TRUE);
+				} else {
+					/* empty address */
+				}
+				break;
+			} else if (has_lwsp) {
+				/* assume this is just an unquoted special that we should
+				   treat as part of the name */
+				w(g_warning ("Unquoted '%c' in address name: %s: ignoring.", *inptr, start));
+				g_string_append_c (name, *inptr);
+				inptr++;
+				
+				goto check_lwsp;
+			}
+			
+		addrspec:
+			/* what we thought was a name was actually an addrspec? */
+			g_string_truncate (name, 0);
+			inptr = start;
+			
+			addr = decode_addrspec (&inptr);
+			
+			/* if comment is non-NULL, we can check for a comment containing a name */
+			comment = inptr;
+			break;
+		} else if (*inptr == '.') {
+			/* This would normally signify that we are
+			 * decoding the local-part of an addr-spec,
+			 * but sadly, it is common for broken mailers
+			 * to forget to quote/encode .'s in the name
+			 * phrase. */
+			g_string_append_c (name, *inptr);
+			inptr++;
+			
+			goto check_lwsp;
+		} else if (*inptr) {
+			/* Technically, these are all invalid tokens
+			 * but in the interest of being liberal in
+			 * what we accept, we'll ignore them. */
+			w(g_warning ("Unexpected char '%c' in address: %s: ignoring.", *inptr, start));
+			g_string_append_c (name, *inptr);
+			inptr++;
+			
+			goto check_lwsp;
+		}
 	}
 	
+	/* Note: will also skip over any comments */
+	decode_lwsp (&inptr);
+	
+	if (name->len == 0 && comment && inptr > comment) {
+		/* missing a name, look for a trailing comment */
+		if ((comment = memchr (comment, '(', inptr - comment))) {
+			const char *cend;
+			
+			/* find the end of the comment */
+			cend = inptr - 1;
+			while (cend > comment && is_lwsp (*cend))
+				cend--;
+			
+			if (*cend == ')')
+				cend--;
+			
+			g_string_append_len (name, comment + 1, (size_t) (cend - comment));
+		}
+	}
+	
+	if (addr && name->len > 0)
+		_internet_address_decode_name (addr, name);
+	
 	g_string_free (name, TRUE);
+	
+	*in = inptr;
 	
 	return addr;
 }
@@ -1619,9 +1693,9 @@ internet_address_list_parse_string (const char *str)
 		}
 		
 		decode_lwsp (&inptr);
-		if (*inptr == ',')
+		if (*inptr == ',') {
 			inptr++;
-		else if (*inptr) {
+		} else if (*inptr) {
 			w(g_warning ("Parse error at '%s': expected ','", inptr));
 			/* try skipping to the next address */
 			if ((inptr = strchr (inptr, ',')))

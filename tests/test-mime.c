@@ -78,6 +78,9 @@ static struct {
 	{ "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
 	  "Jeffrey fejj Stedfast <fejj@helixcode.com>",
 	  "Jeffrey fejj Stedfast <fejj@helixcode.com>" },
+	{ "\"Jeffrey \\\"fejj\\\" Stedfast\" <fejj@helixcode.com>",
+	  "Jeffrey \"fejj\" Stedfast <fejj@helixcode.com>",
+	  "\"Jeffrey \\\"fejj\\\" Stedfast\" <fejj@helixcode.com>" },
 	{ "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>",
 	  "\"Stedfast, Jeffrey\" <fejj@helixcode.com>" },
@@ -166,6 +169,21 @@ static struct {
 	{ "Canonical Patch Queue Manager<pqm@pqm.ubuntu.com>",
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>",
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>" },
+	/* The following tests cases are meant to test forgivingness
+	 * of the parser when it encounters unquoted specials in the
+	 * name component */
+	{ "Warren Worthington, Jr. <warren@worthington.com>",
+	  "\"Warren Worthington, Jr.\" <warren@worthington.com>",
+	  "\"Warren Worthington, Jr.\" <warren@worthington.com>" },
+	{ "dot.com <dot.com>",
+	  "\"dot.com\" <dot.com>",
+	  "\"dot.com\" <dot.com>" },
+	{ "=?UTF-8?Q?agatest123_\"test\"?= <agatest123@o2.pl>",
+	  "agatest123 test <agatest123@o2.pl>",
+	  "agatest123 test <agatest123@o2.pl>" },
+	{ "\"=?ISO-8859-2?Q?TEST?=\" <p@p.org>",
+	  "TEST <p@p.org>",
+	  "TEST <p@p.org>" },
 };
 
 static void
@@ -186,12 +204,12 @@ test_addrspec (void)
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)
-				throw (exception_new ("display addr-spec does not match: %s", str));
+				throw (exception_new ("display addr-spec %s does not match: %s", addrspec[i].display, str));
 			g_free (str);
 			
 			str = internet_address_list_to_string (addrlist, TRUE);
 			if (strcmp (addrspec[i].encoded, str) != 0)
-				throw (exception_new ("encoded addr-spec does not match: %s", str));
+				throw (exception_new ("encoded addr-spec %s does not match: %s", addrspec[i].encoded, str));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
