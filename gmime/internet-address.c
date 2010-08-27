@@ -1571,8 +1571,8 @@ decode_address (const char **in)
 			comment = inptr;
 			break;
 		} else if (*inptr == '(') {
-			/* comment suggests we are looking at an addr-spec */
-			goto addrspec;
+			/* beginning of a comment, use decode_lwsp() to skip past it */
+			decode_lwsp (&inptr);
 		} else if (strchr ("@,;", *inptr)) {
 			if (name->len == 0) {
 				if (*inptr == '@') {
