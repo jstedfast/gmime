@@ -1,3 +1,13 @@
+2010-08-26  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/internet-address.c (_internet_address_set_name): Don't
+	decode/unquote the name. The docs for all the functions that call
+	this asume the name string is in its decoded form already.
+	(_internet_address_decode_name): New internal function that
+	decodes a string and sets it as the name on the InternetAddress.
+	(decode_address): Rewritten to be even more liberal in what it
+	accepts.
+
 2010-06-20  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_decrypt):
