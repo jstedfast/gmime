@@ -169,6 +169,13 @@ static struct {
 	{ "Canonical Patch Queue Manager<pqm@pqm.ubuntu.com>",
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>",
 	  "Canonical Patch Queue Manager <pqm@pqm.ubuntu.com>" },
+	/* Some examples pulled from rfc5322 */
+	{ "Pete(A nice \\) chap) <pete(his account)@silly.test(his host)>",
+	  "Pete <pete@silly.test>",
+	  "Pete <pete@silly.test>" },
+	{ "A Group(Some people):Chris Jones <c@(Chris's host.)public.example>, joe@example.org, John <jdoe@one.test> (my dear friend); (the end of the group)",
+	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;",
+	  "A Group: Chris Jones <c@public.example>, joe@example.org, John <jdoe@one.test>;" },
 	/* The following tests cases are meant to test forgivingness
 	 * of the parser when it encounters unquoted specials in the
 	 * name component */
