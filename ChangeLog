@@ -1,3 +1,9 @@
+2010-08-30  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-param.c (decode_token): Make less strict in order to
+	handle unquoted boundary values containing '=' (and other illegal
+	characters).
+
 2010-08-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (_internet_address_set_name): Don't
