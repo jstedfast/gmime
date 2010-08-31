@@ -173,8 +173,21 @@ decode_token (const char **in)
 	decode_lwsp (&inptr);
 	
 	start = inptr;
+#ifdef STRICT_PARSER
 	while (is_ttoken (*inptr))
 		inptr++;
+#else
+	/* Broken mail clients like to make our lives difficult. Scan
+	 * for a ';' instead of trusting that the client followed the
+	 * specification. */
+	while (*inptr && *inptr != ';')
+		inptr++;
+	
+	/* Scan backwards over any trailing lwsp */
+	while (inptr > start && is_lwsp (inptr[-1]))
+		inptr--;
+#endif
+	
 	if (inptr > start) {
 		*in = inptr;
 		return g_strndup (start, (size_t) (inptr - start));
