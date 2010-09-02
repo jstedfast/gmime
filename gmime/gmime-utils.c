@@ -1873,7 +1873,7 @@ g_mime_utils_header_decode_text (const char *text)
 			word = inptr;
 			ascii = TRUE;
 			
-			if (enable_rfc2047_workarounds) {
+			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
 				if (!strncmp (inptr, "=?", 2)) {
 					inptr += 2;
 					
@@ -1895,8 +1895,13 @@ g_mime_utils_header_decode_text (const char *text)
 						inptr++;
 					}
 					
-					if (!strncmp (inptr, "?=", 2))
-						inptr += 2;
+					if (*inptr == '\0') {
+						/* didn't find an end marker... */
+						inptr = text;
+						goto non_rfc2047;
+					}
+					
+					inptr += 2;
 				} else {
 				non_rfc2047:
 					/* stop if we encounter a possible rfc2047 encoded
@@ -1977,6 +1982,7 @@ g_mime_utils_header_decode_text (const char *text)
 char *
 g_mime_utils_header_decode_phrase (const char *phrase)
 {
+	gboolean enable_rfc2047_workarounds = _g_mime_enable_rfc2047_workarounds ();
 	register const char *inptr = phrase;
 	gboolean encoded = FALSE;
 	const char *lwsp, *text;
@@ -1999,8 +2005,47 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 		
 		text = inptr;
 		if (is_atom (*inptr)) {
-			while (is_atom (*inptr))
-				inptr++;
+			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
+				/* Make an extra effort to detect and
+				 * separate encoded-word tokens that
+				 * have been merged with other
+				 * words. */
+				
+				if (!strncmp (inptr, "=?", 2)) {
+					inptr += 2;
+					
+					/* skip past the charset (if one is even declared, sigh) */
+					while (*inptr && *inptr != '?')
+						inptr++;
+					
+					/* sanity check encoding type */
+					if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
+						goto non_rfc2047;
+					
+					inptr += 3;
+					
+					/* find the end of the rfc2047 encoded word token */
+					while (*inptr && strncmp (inptr, "?=", 2) != 0)
+						inptr++;
+					
+					if (*inptr == '\0') {
+						/* didn't find an end marker... */
+						inptr = text;
+						goto non_rfc2047;
+					}
+					
+					inptr += 2;
+				} else {
+				non_rfc2047:
+					/* stop if we encounter a possible rfc2047 encoded
+					 * token even if it's inside another word, sigh. */
+					while (is_atom (*inptr) && strncmp (inptr, "=?", 2) != 0)
+						inptr++;
+				}
+			} else {
+				while (is_atom (*inptr))
+					inptr++;
+			}
 			
 			n = (size_t) (inptr - text);
 			if (is_rfc2047_encoded_word (text, n)) {
@@ -2028,7 +2073,7 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 			g_string_append_len (out, lwsp, nlwsp);
 			
 			ascii = TRUE;
-			while (*inptr && !is_lwsp (*inptr)) {
+			while (*inptr && !is_lwsp (*inptr) && !is_atom (*inptr)) {
 				ascii = ascii && is_ascii (*inptr);
 				inptr++;
 			}
