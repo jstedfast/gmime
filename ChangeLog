@@ -1,5 +1,9 @@
 2010-09-01  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_phrase):
+	Implement the same rfc2047-workaround hack as the one found in
+	g_mime_utils_header_decode_text().
+
 	* gmime/gmime-encodings.c (g_mime_encoding_base64_decode_step):
 	Need to keep state to keep track of the number of ='s we've backd
 	out over in case it crosses buffer boundaries.

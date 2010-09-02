@@ -193,8 +193,19 @@ static struct {
 	  "TEST <p@p.org>" },
 };
 
+static struct {
+	const char *input;
+	const char *display;
+	const char *encoded;
+} broken_addrspec[] = {
+	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>",
+	  "\"Biznes INTERIA.PL \" <biuletyny@firma.interia.pl>",
+	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>",
+	},
+};
+
 static void
-test_addrspec (void)
+test_addrspec (gboolean test_broken)
 {
 	InternetAddressList *addrlist;
 	char *str;
@@ -226,6 +237,36 @@ test_addrspec (void)
 		g_free (str);
 		if (addrlist)
 			g_object_unref (addrlist);
+	}
+	
+	if (test_broken) {
+		for (i = 0; i < G_N_ELEMENTS (broken_addrspec); i++) {
+			addrlist = NULL;
+			str = NULL;
+			
+			testsuite_check ("broken_addrspec[%u]", i);
+			try {
+				if (!(addrlist = internet_address_list_parse_string (broken_addrspec[i].input)))
+					throw (exception_new ("could not parse addr-spec"));
+				
+				str = internet_address_list_to_string (addrlist, FALSE);
+				if (strcmp (broken_addrspec[i].display, str) != 0)
+					throw (exception_new ("display addr-spec %s does not match: %s", broken_addrspec[i].display, str));
+				g_free (str);
+				
+				str = internet_address_list_to_string (addrlist, TRUE);
+				if (strcmp (broken_addrspec[i].encoded, str) != 0)
+					throw (exception_new ("encoded addr-spec %s does not match: %s", broken_addrspec[i].encoded, str));
+				
+				testsuite_check_passed ();
+			} catch (ex) {
+				testsuite_check_failed ("broken_addrspec[%u]: %s", i, ex->message);
+			} finally;
+			
+			g_free (str);
+			if (addrlist)
+				g_object_unref (addrlist);
+		}
 	}
 }
 
@@ -550,7 +591,7 @@ int main (int argc, char **argv)
 	testsuite_init (argc, argv);
 	
 	testsuite_start ("addr-spec parser");
-	test_addrspec ();
+	test_addrspec (FALSE);
 	testsuite_end ();
 	
 	testsuite_start ("date parser");
@@ -573,6 +614,7 @@ int main (int argc, char **argv)
 	
 	g_mime_init (GMIME_ENABLE_RFC2047_WORKAROUNDS);
 	testsuite_start ("broken rfc2047 encoding/decoding");
+	test_addrspec (TRUE);
 	test_rfc2047 (TRUE);
 	testsuite_end ();
 	g_mime_shutdown ();
