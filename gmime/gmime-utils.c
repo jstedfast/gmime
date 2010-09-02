@@ -1990,7 +1990,6 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 	register const char *inptr = phrase;
 	gboolean encoded = FALSE;
 	const char *lwsp, *text;
-	gboolean encword;
 	size_t nlwsp, n;
 	gboolean ascii;
 	char *decoded;
