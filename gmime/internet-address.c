@@ -1269,18 +1269,21 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
 	InternetAddressGroup *group = (InternetAddressGroup *) ia;
 	gboolean encode = flags & INTERNET_ADDRESS_ENCODE;
 	gboolean fold = flags & INTERNET_ADDRESS_FOLD;
-	char *name;
-	size_t len;
+	char *name = NULL;
+	size_t len = 0;
 	
-	name = encoded_name (ia->name, encode);
-	len = strlen (name);
-	
-	if (fold && *linelen > 1 && (*linelen + len + 1) > GMIME_FOLD_LEN) {
-		linewrap (string);
-		*linelen = 1;
+	if (ia->name != NULL) {
+		name = encoded_name (ia->name, encode);
+		len = strlen (name);
+		
+		if (fold && *linelen > 1 && (*linelen + len + 1) > GMIME_FOLD_LEN) {
+			linewrap (string);
+			*linelen = 1;
+		}
+		
+		g_string_append_len (string, name, len);
 	}
 	
-	g_string_append_len (string, name, len);
 	g_string_append_len (string, ": ", 2);
 	*linelen += len + 2;
 	g_free (name);
