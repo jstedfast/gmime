@@ -506,45 +506,60 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 	const unsigned char *inend;
 	register guint32 saved;
 	unsigned char c;
-	int i;
+	int npad, n, i;
 	
 	inend = inbuf + inlen;
 	outptr = outbuf;
+	inptr = inbuf;
+	
+	npad = (*state >> 8) & 0xff;
+	n = *state & 0xff;
+	saved = *save;
 	
 	/* convert 4 base64 bytes to 3 normal bytes */
-	saved = *save;
-	i = *state;
-	inptr = inbuf;
 	while (inptr < inend) {
 		c = gmime_base64_rank[*inptr++];
 		if (c != 0xff) {
 			saved = (saved << 6) | c;
-			i++;
-			if (i == 4) {
+			n++;
+			if (n == 4) {
 				*outptr++ = saved >> 16;
 				*outptr++ = saved >> 8;
 				*outptr++ = saved;
-				i = 0;
+				n = 0;
+				
+				if (npad > 0) {
+					outptr -= npad;
+					npad = 0;
+				}
 			}
 		}
 	}
 	
-	*save = saved;
-	*state = i;
-	
-	/* quick scan back for '=' on the end somewhere */
-	/* fortunately we can drop 1 output char for each trailing = (upto 2) */
-	i = 2;
-	while (inptr > inbuf && i) {
+	/* quickly scan back for '=' on the end somewhere */
+	/* fortunately we can drop 1 output char for each trailing '=' (up to 2) */
+	for (i = 2; inptr > inbuf && i; ) {
 		inptr--;
 		if (gmime_base64_rank[*inptr] != 0xff) {
-			if (*inptr == '=' && outptr > outbuf)
-				outptr--;
+			if (*inptr == '=' && outptr > outbuf) {
+				if (n == 0) {
+					/* we've got a complete quartet so it's
+					   safe to drop an output character. */
+					outptr--;
+				} else if (npad < 2) {
+					/* keep a record of the number of ='s at
+					   the end of the input stream, up to 2 */
+					npad++;
+				}
+			}
+			
 			i--;
 		}
 	}
 	
-	/* if i != 0 then there is a truncation error! */
+	*state = (npad << 8) | n;
+	*save = saved;
+	
 	return (outptr - outbuf);
 }
 

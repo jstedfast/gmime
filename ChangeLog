@@ -1,3 +1,9 @@
+2010-09-01  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-encodings.c (g_mime_encoding_base64_decode_step):
+	Need to keep state to keep track of the number of ='s we've backd
+	out over in case it crosses buffer boundaries.
+
 2010-08-30  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-param.c (decode_token): Make less strict in order to
