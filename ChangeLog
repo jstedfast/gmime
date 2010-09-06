@@ -1,3 +1,11 @@
+2010-09-06  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (g_set_error_literal): glib 2.12
+	doesn't have this function, so in order to keep our current glib
+	requirements, we need to supply our own version if
+	GLIB_MINOR_VERSION < 2.18 (which is when this function was
+	introduced).
+
 2010-09-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (group_to_string): Don't crash if the

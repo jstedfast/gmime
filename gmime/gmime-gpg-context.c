@@ -103,6 +103,15 @@ static int gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
 static GMimeCipherContextClass *parent_class = NULL;
 
 
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 18
+static void
+g_set_error_literal (GError **err, GQuark domain, gint code, const gchar *message)
+{
+	g_set_error (err, domain, code, "%s", message);
+}
+#endif
+
+
 GType
 g_mime_gpg_context_get_type (void)
 {
