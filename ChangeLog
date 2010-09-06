@@ -1,3 +1,8 @@
+2010-09-06  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.ac: Bump glib version requirement for
+	g_set_error_literal().
+
 2010-09-02  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (group_to_string): Don't crash if the
