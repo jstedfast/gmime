@@ -1212,7 +1212,7 @@ mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString 
 				*linelen += len;
 			}
 		} else {
-			/* we can safly fit the name on this line */
+			/* we can safely fit the name on this line */
 			g_string_append_len (string, name, len);
 			*linelen += len;
 		}

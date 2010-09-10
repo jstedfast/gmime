@@ -18,7 +18,7 @@
 	g_mime_utils_header_decode_text().
 
 	* gmime/gmime-encodings.c (g_mime_encoding_base64_decode_step):
-	Need to keep state to keep track of the number of ='s we've backd
+	Need to keep state to keep track of the number of ='s we've backed
 	out over in case it crosses buffer boundaries.
 
 2010-08-30  Jeffrey Stedfast  <fejj@novell.com>
