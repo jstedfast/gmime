@@ -34,7 +34,7 @@
 
 	* gmime/internet-address.c (_internet_address_set_name): Don't
 	decode/unquote the name. The docs for all the functions that call
-	this asume the name string is in its decoded form already.
+	this assume the name string is in its decoded form already.
 	(_internet_address_decode_name): New internal function that
 	decodes a string and sets it as the name on the InternetAddress.
 	(decode_address): Rewritten to be even more liberal in what it
