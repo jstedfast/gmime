@@ -1,5 +1,11 @@
 2010-09-13  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-charset.c: Mark known_iconv_charsets[] as
+	static. Also mark string members of various private structs as
+	const.
+
+2010-09-13  Jeffrey Stedfast  <fejj@novell.com>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.4.19

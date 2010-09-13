@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2009 Jeffrey Stedfast
+ *  Copyright (C) 2000-2010 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -72,9 +72,9 @@
 /* a useful website on charset alaises:
  * http://www.li18nux.org/subgroups/sa/locnameguide/v1.1draft/CodesetAliasTable-V11.html */
 
-struct {
-	char *charset;
-	char *iconv_name;
+static struct {
+	const char *charset;
+	const char *iconv_name;
 } known_iconv_charsets[] = {
 	/* charset name, iconv-friendly name (sometimes case sensitive) */
 	{ "utf-8",           "UTF-8"      },
@@ -139,8 +139,8 @@ struct {
  * g_mime_charset_iconv_name() so that we don't have to keep track of
  * all the aliases too. */
 static struct {
-	char *charset;
-	char *lang;
+	const char *charset;
+	const char *lang;
 } cjkr_lang_map[] = {
 	{ "Big5",        "zh" },
 	{ "BIG5HKSCS",   "zh" },
