@@ -903,7 +903,12 @@ g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, u
 		}
 	}
 	
-	*outptr++ = '\n';
+	if (last != '\n') {
+		/* we end with =\n so that the \n isn't interpreted as a real
+		   \n when it gets decoded later */
+		*outptr++ = '=';
+		*outptr++ = '\n';
+	}
 	
 	*save = 0;
 	*state = -1;
