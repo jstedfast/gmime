@@ -1,3 +1,8 @@
+2010-09-16  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-encodings.c (g_mime_encoding_quoted_encode_close):
+	If the last input character is not a \n, append an "=\n" sequence.
+
 2010-09-13  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-charset.c: Mark known_iconv_charsets[] as
