@@ -200,8 +200,7 @@ static struct {
 } broken_addrspec[] = {
 	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>",
 	  "\"Biznes INTERIA.PL \" <biuletyny@firma.interia.pl>",
-	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>",
-	},
+	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>", },
 };
 
 static void

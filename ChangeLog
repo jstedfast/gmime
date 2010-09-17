@@ -1,3 +1,14 @@
+2010-09-17  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-utils.c (g_mime_utils_header_decode_text): In the
+	workaround case, if we don't find an end marker, reset our inptr
+	to the beginning of the most recent word *plus 2* (to skip over
+	the leading "=?"), not the beginning of the input text. Also need
+	to reset our ascii state.
+	(g_mime_utils_header_decode_phrase): In the workaround case, if we
+	don't find an end marker, reset our inptr to the beginning of the
+	most recent word *plus 2*, to skip over the leading "=?".
+
 2010-09-16  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-encodings.c (g_mime_encoding_quoted_encode_close):

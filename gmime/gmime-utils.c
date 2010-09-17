@@ -1897,7 +1897,9 @@ g_mime_utils_header_decode_text (const char *text)
 					
 					if (*inptr == '\0') {
 						/* didn't find an end marker... */
-						inptr = text;
+						inptr = word + 2;
+						ascii = TRUE;
+						
 						goto non_rfc2047;
 					}
 					
@@ -1985,7 +1987,7 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 	gboolean enable_rfc2047_workarounds = _g_mime_enable_rfc2047_workarounds ();
 	register const char *inptr = phrase;
 	gboolean encoded = FALSE;
-	const char *lwsp, *text;
+	const char *lwsp, *word;
 	size_t nlwsp, n;
 	gboolean ascii;
 	char *decoded;
@@ -2003,7 +2005,7 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 		
 		nlwsp = (size_t) (inptr - lwsp);
 		
-		text = inptr;
+		word = inptr;
 		if (is_atom (*inptr)) {
 			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
 				/* Make an extra effort to detect and
@@ -2030,7 +2032,7 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 					
 					if (*inptr == '\0') {
 						/* didn't find an end marker... */
-						inptr = text;
+						inptr = word + 2;
 						goto non_rfc2047;
 					}
 					
@@ -2047,9 +2049,10 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 					inptr++;
 			}
 			
-			n = (size_t) (inptr - text);
-			if (is_rfc2047_encoded_word (text, n)) {
-				if ((decoded = rfc2047_decode_word (text, n))) {
+			n = (size_t) (inptr - word);
+			printf ("decoding word: %.*s\n", n, word);
+			if (is_rfc2047_encoded_word (word, n)) {
+				if ((decoded = rfc2047_decode_word (word, n))) {
 					/* rfc2047 states that you must ignore all
 					 * whitespace between encoded words */
 					if (!encoded)
@@ -2078,15 +2081,15 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 				inptr++;
 			}
 			
-			n = (size_t) (inptr - text);
+			n = (size_t) (inptr - word);
 			
 			if (!ascii) {
 				/* *sigh* I hate broken mailers... */
-				decoded = g_mime_utils_decode_8bit (text, n);
+				decoded = g_mime_utils_decode_8bit (word, n);
 				g_string_append (out, decoded);
 				g_free (decoded);
 			} else {
-				g_string_append_len (out, text, n);
+				g_string_append_len (out, word, n);
 			}
 			
 			encoded = FALSE;
