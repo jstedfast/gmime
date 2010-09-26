@@ -2054,7 +2054,6 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 			}
 			
 			n = (size_t) (inptr - word);
-			printf ("decoding word: %.*s\n", n, word);
 			if (is_rfc2047_encoded_word (word, n)) {
 				if ((decoded = rfc2047_decode_word (word, n))) {
 					/* rfc2047 states that you must ignore all
