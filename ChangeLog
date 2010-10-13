@@ -1,3 +1,10 @@
+2010-09-25  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/charset-map.c: According to rfc1557, it is suggested that
+	euc-kr be used for headers since many Korean mailers cannot handle
+	base64 or quoted-printable encoded iso-2022-kr. Based on this and
+	bug #629235, I'm just going to drop iso-2022-kr.
+
 2010-09-17  Jeffrey Stedfast  <fejj@novell.com>
 
 	Based on a patch by Marek Łętowski

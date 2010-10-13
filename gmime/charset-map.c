@@ -74,7 +74,6 @@ static struct {
 	{ "Shift-JIS",    1, 0 },  /* Japanese as used by Windows and MacOS systems */
 	{ "euc-jp",       1, 0 },  /* Japanese traditionally used on Unix systems */
 	{ "euc-kr",       1, 0 },  /* Korean */
-	{ "iso-2022-kr",  1, 0 },  /* Korean (less popular than euc-kr) */
 	{ "gb2312",       1, 0 },  /* Simplified Chinese */
 	{ "Big5",         1, 0 },  /* Traditional Chinese */
 	{ "euc-tw",       1, 0 },
