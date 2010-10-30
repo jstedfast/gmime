@@ -1021,7 +1021,7 @@ message_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
 
 
 /**
- * g_mime_message_new: Create a new MIME Message object
+ * g_mime_message_new:
  * @pretty_headers: make pretty headers 
  *
  * If @pretty_headers is %TRUE, then the standard rfc822 headers are
@@ -1029,7 +1029,7 @@ message_encode (GMimeObject *object, GMimeEncodingConstraint constraint)
  * strictly a cosmetic thing, so if you are unsure, it is safe to say
  * no (%FALSE).
  *
- * Returns: an empty MIME Message object.
+ * Returns: an empty #GMimeMessage object.
  **/
 GMimeMessage *
 g_mime_message_new (gboolean pretty_headers)
@@ -1583,7 +1583,7 @@ multipart_guess_body (GMimeMultipart *multipart)
  * recommended that you traverse the MIME structure yourself.
  **/
 GMimeObject *
-g_mime_message_guess_body (GMimeMessage *message)
+g_mime_message_get_body (GMimeMessage *message)
 {
 	GMimeObject *mime_part;
 	

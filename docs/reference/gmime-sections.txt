@@ -846,6 +846,7 @@ g_mime_message_get_message_id
 g_mime_message_set_mime_part
 g_mime_message_get_mime_part
 g_mime_message_foreach
+g_mime_message_get_body
 
 <SUBSECTION Private>
 g_mime_message_get_type

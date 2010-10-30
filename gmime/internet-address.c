@@ -1387,11 +1387,10 @@ decode_address (const char **in)
 	
 	name = g_string_new ("");
 	
-	/**
-	 * Both groups and mailboxes can begin with a phrase (denoting
+	/* Both groups and mailboxes can begin with a phrase (denoting
 	 * the display name for the address). Collect all of the
 	 * tokens that make up this name phrase.
-	 **/
+	 */
 	while (*inptr) {
 		if ((word = decode_word (&inptr)))
 			g_string_append_len (name, word, (size_t) (inptr - word));
@@ -1413,11 +1412,10 @@ decode_address (const char **in)
 				continue;
 		}
 		
-		/**
-		 * specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
+		/* specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
 		 *             /  "," / ";" / ":" / "\" / <">  ;  string, to use
 		 *             /  "." / "[" / "]"              ;  within a word.
-		 **/
+		 */
 		if (*inptr == ':') {
 			/* group */
 			inptr++;

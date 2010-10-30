@@ -74,7 +74,7 @@ typedef struct {
  * GMimeStream:
  * @parent_object: parent #GObject
  * @super_stream: parent stream if this is a substream
- * @position: the current stream position (aka offset)
+ * @position: the current stream position
  * @bound_start: start boundary of the stream
  * @bound_end: end boundary of the stream
  *
