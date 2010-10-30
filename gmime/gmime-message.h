@@ -126,6 +126,8 @@ void g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part
 void g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback,
 			     gpointer user_data);
 
+GMimeObject *g_mime_message_get_body (GMimeMessage *message);
+
 G_END_DECLS
 
 #endif /* __GMIME_MESSAGE_H__ */

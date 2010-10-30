@@ -26,7 +26,7 @@ GMime 2.6 Planning:
 - Consider GCancellable and GError for GMimeStreams and
   GMimeParser... GError being far more important than
   GCancellable. GCancellable could be nice to have for network
-  streams, though...
+  streams, though... [ POSTPONED ]
 
 - Add a GIO-backed GMimeStream and bump glib dep to 2.16 [ DONE ]
 
@@ -36,7 +36,7 @@ GMime 2.6 Planning:
 
   This might be a better name for the enum to reflect what it's
   actually meant for. Maybe also move it from gmime-filter-best.h to
-  gmime-encodings.h? [ DONE ]
+  gmime-encodings.h?
 
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
@@ -45,6 +45,8 @@ GMime 2.6 Planning:
 - Should either rename g_mime_filter_best_encoding() to get_encoding()
   or else make sure that GMime.metadata 'fixes' the method name to be
   GetEncoding so that it will appear as a C# property getter.
+
+- Re-add a g_mime_message_get_body()?
 
 
 Other:

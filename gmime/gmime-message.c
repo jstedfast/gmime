@@ -29,6 +29,8 @@
 
 #include "gmime-message.h"
 #include "gmime-multipart.h"
+#include "gmime-multipart-signed.h"
+#include "gmime-multipart-encrypted.h"
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-stream-mem.h"
@@ -1501,4 +1503,99 @@ g_mime_message_foreach (GMimeMessage *message, GMimeObjectForeachFunc callback, 
 	
 	if (GMIME_IS_MULTIPART (message->mime_part))
 		g_mime_multipart_foreach ((GMimeMultipart *) message->mime_part, callback, user_data);
+}
+
+static gboolean
+part_is_textual (GMimeObject *mime_part)
+{
+	GMimeContentType *type;
+	
+	type = g_mime_object_get_content_type (mime_part);
+	
+	return g_mime_content_type_is_type (type, "text", "*");
+}
+
+static GMimeObject *
+multipart_guess_body (GMimeMultipart *multipart)
+{
+	GMimeContentType *type;
+	GMimeObject *mime_part;
+	int count, i;
+	
+	if (GMIME_IS_MULTIPART_ENCRYPTED (multipart)) {
+		/* check if this part has already been decrypted... */
+		if (!(mime_part = ((GMimeMultipartEncrypted *) multipart)->decrypted)) {
+			/* nothing more we can do */
+			return (GMimeObject *) multipart;
+		}
+		
+		if (GMIME_IS_MULTIPART (mime_part))
+			return multipart_guess_body ((GMimeMultipart *) mime_part);
+		else if (GMIME_IS_PART (mime_part) && part_is_textual (mime_part))
+			return mime_part;
+		else
+			return NULL;
+	}
+	
+	type = g_mime_object_get_content_type ((GMimeObject *) multipart);
+	if (g_mime_content_type_is_type (type, "multipart", "alternative")) {
+		/* very likely that this is the body - leave it up to
+		 * our caller to decide which format of the body it
+		 * wants to use. */
+		return (GMimeObject *) multipart;
+	}
+	
+	count = g_mime_multipart_get_count (multipart);
+	
+	if (!GMIME_IS_MULTIPART_SIGNED (mime_part)) {
+		/* if the body is in here, it has to be the first part */
+		count = 1;
+	}
+	
+	for (i = 0; i < count; i++) {
+		mime_part = g_mime_multipart_get_part (multipart, i);
+		
+		if (GMIME_IS_MULTIPART (mime_part)) {
+			if ((mime_part = multipart_guess_body ((GMimeMultipart *) mime_part)))
+				return mime_part;
+		} else if (GMIME_IS_PART (mime_part)) {
+			if (part_is_textual (mime_part))
+				return mime_part;
+		}
+	}
+	
+	return NULL;
+}
+
+
+/**
+ * g_mime_message_get_body:
+ * @message: MIME Message
+ *
+ * Attempts to identify the MIME part containing the body of the
+ * message.
+ *
+ * Returns: a #GMimeObject containing the textual content that appears
+ * to be the main body of the message.
+ *
+ * Note: This function is NOT guarenteed to always work as it
+ * makes some assumptions that are not necessarily true. It is
+ * recommended that you traverse the MIME structure yourself.
+ **/
+GMimeObject *
+g_mime_message_guess_body (GMimeMessage *message)
+{
+	GMimeObject *mime_part;
+	
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	if (!(mime_part = message->mime_part))
+		return NULL;
+	
+	if (GMIME_IS_MULTIPART (mime_part))
+		return multipart_guess_body ((GMimeMultipart *) mime_part);
+	else if (GMIME_IS_PART (mime_part) && part_is_textual (mime_part))
+		return mime_part;
+	
+	return NULL;
 }
