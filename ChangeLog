@@ -1,3 +1,25 @@
+2010-11-19  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes bug #635152
+
+	* gmime/gmime-gpg-context.c (GpgCtx): No longer has a sigfile
+	member. Instead contains a sigstream and passwd_fd is now renamed
+	to secret_fd and used for both sending gpg the user's passwd as
+	well as for sending gpg the digital signature when verifying.
+	(gpg_ctx_new): Updated for the new struct members.
+	(gpg_ctx_set_sigstream): Replaces gpg_ctx_set_sigfile().
+	(gpg_ctx_free): Updated for the new struct members.
+	(gpg_ctx_get_argv): Modify our --verify command-line so that we
+	can pas gpg the digital signature without first writing it to
+	disk. Also modified to return char** instead of a GPtrArray to
+	simplify things.
+	(gpg_ctx_op_start): Modified to also create more pipes in VERIFY
+	mode.
+	(gpg_ctx_op_step): Modified to stream the digital signature to
+	gpg.
+	(gpg_verify): Don't write the digital signature to disk - instead,
+	we now stream it directly to gpg.
+
 2010-10-13  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
