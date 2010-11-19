@@ -253,7 +253,6 @@ struct _GpgCtx {
 	pid_t pid;
 	
 	char *userid;
-	char *sigfile;
 	GPtrArray *recipients;
 	GMimeCipherHash hash;
 	
@@ -261,7 +260,7 @@ struct _GpgCtx {
 	int stdout_fd;
 	int stderr_fd;
 	int status_fd;
-	int passwd_fd;  /* only needed for sign/decrypt */
+	int secret_fd;  /* used for sign/decrypt/verify */
 	
 	/* status-fd buffer */
 	char *statusbuf;
@@ -270,6 +269,7 @@ struct _GpgCtx {
 	
 	char *need_id;
 	
+	GMimeStream *sigstream;
 	GMimeStream *istream;
 	GMimeStream *ostream;
 	
@@ -323,7 +323,6 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->exited = FALSE;
 	
 	gpg->userid = NULL;
-	gpg->sigfile = NULL;
 	gpg->recipients = NULL;
 	gpg->hash = GMIME_CIPHER_HASH_DEFAULT;
 	gpg->always_trust = FALSE;
@@ -333,7 +332,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->stdout_fd = -1;
 	gpg->stderr_fd = -1;
 	gpg->status_fd = -1;
-	gpg->passwd_fd = -1;
+	gpg->secret_fd = -1;
 	
 	gpg->statusbuf = g_malloc (128);
 	gpg->statusptr = gpg->statusbuf;
@@ -353,6 +352,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->signers = NULL;
 	gpg->signer = (GMimeSigner *) &gpg->signers;
 	
+	gpg->sigstream = NULL;
 	gpg->istream = NULL;
 	gpg->ostream = NULL;
 	
@@ -423,13 +423,6 @@ gpg_ctx_add_recipient (struct _GpgCtx *gpg, const char *keyid)
 }
 
 static void
-gpg_ctx_set_sigfile (struct _GpgCtx *gpg, const char *sigfile)
-{
-	g_free (gpg->sigfile);
-	gpg->sigfile = g_strdup (sigfile);
-}
-
-static void
 gpg_ctx_set_armor (struct _GpgCtx *gpg, gboolean armor)
 {
 	gpg->armor = armor;
@@ -454,6 +447,15 @@ gpg_ctx_set_ostream (struct _GpgCtx *gpg, GMimeStream *ostream)
 	gpg->seen_eof1 = FALSE;
 }
 
+static void
+gpg_ctx_set_sigstream (struct _GpgCtx *gpg, GMimeStream *sigstream)
+{
+	g_object_ref (sigstream);
+	if (gpg->sigstream)
+		g_object_unref (gpg->sigstream);
+	gpg->sigstream = sigstream;
+}
+
 static const char *
 gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 {
@@ -476,8 +478,6 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	
 	g_free (gpg->userid);
 	
-	g_free (gpg->sigfile);
-	
 	if (gpg->recipients) {
 		for (i = 0; i < gpg->recipients->len; i++)
 			g_free (gpg->recipients->pdata[i]);
@@ -493,12 +493,15 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 		close (gpg->stderr_fd);
 	if (gpg->status_fd != -1)
 		close (gpg->status_fd);
-	if (gpg->passwd_fd != -1)
-		close (gpg->passwd_fd);
+	if (gpg->secret_fd != -1)
+		close (gpg->secret_fd);
 	
 	g_free (gpg->statusbuf);
 	
 	g_free (gpg->need_id);
+	
+	if (gpg->sigstream)
+		g_object_unref (gpg->sigstream);
 	
 	if (gpg->istream)
 		g_object_unref (gpg->istream);
@@ -545,118 +548,132 @@ gpg_hash_str (GMimeCipherHash hash)
 	}
 }
 
-static GPtrArray *
-gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd, char **pfd)
+static char **
+gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***strv)
 {
 	const char *hash_str;
-	GPtrArray *argv;
-	char *buf;
+	char **argv, *buf;
+	GPtrArray *args;
+	int v = 0;
 	guint i;
 	
-	argv = g_ptr_array_new ();
-	g_ptr_array_add (argv, "gpg");
+	*strv = g_new (char *, 3);
 	
-	g_ptr_array_add (argv, "--verbose");
-	g_ptr_array_add (argv, "--no-secmem-warning");
-	g_ptr_array_add (argv, "--no-greeting");
-	g_ptr_array_add (argv, "--no-tty");
-	if (passwd_fd == -1) {
+	args = g_ptr_array_new ();
+	g_ptr_array_add (args, "gpg");
+	
+	g_ptr_array_add (args, "--verbose");
+	g_ptr_array_add (args, "--no-secmem-warning");
+	g_ptr_array_add (args, "--no-greeting");
+	g_ptr_array_add (args, "--no-tty");
+	
+	if (!gpg->need_passwd) {
 		/* only use batch mode if we don't intend on using the
-                   interactive --command-fd option */
-		g_ptr_array_add (argv, "--batch");
-		g_ptr_array_add (argv, "--yes");
+                   interactive --command-fd option to send it the
+                   user's password */
+		g_ptr_array_add (args, "--batch");
+		g_ptr_array_add (args, "--yes");
 	}
 	
-	g_ptr_array_add (argv, "--charset=UTF-8");
+	g_ptr_array_add (args, "--charset=UTF-8");
 	
-	*sfd = buf = g_strdup_printf ("--status-fd=%d", status_fd);
-	g_ptr_array_add (argv, buf);
+	(*strv)[v++] = buf = g_strdup_printf ("--status-fd=%d", status_fd);
+	g_ptr_array_add (args, buf);
 	
-	if (passwd_fd != -1) {
-		*pfd = buf = g_strdup_printf ("--command-fd=%d", passwd_fd);
-		g_ptr_array_add (argv, buf);
+	if (gpg->need_passwd) {
+		(*strv)[v++] = buf = g_strdup_printf ("--command-fd=%d", secret_fd);
+		g_ptr_array_add (args, buf);
 	}
 	
 	switch (gpg->mode) {
 	case GPG_CTX_MODE_SIGN:
-		g_ptr_array_add (argv, "--sign");
-		g_ptr_array_add (argv, "--detach");
+		g_ptr_array_add (args, "--sign");
+		g_ptr_array_add (args, "--detach");
 		if (gpg->armor)
-			g_ptr_array_add (argv, "--armor");
+			g_ptr_array_add (args, "--armor");
 		hash_str = gpg_hash_str (gpg->hash);
 		if (hash_str)
-			g_ptr_array_add (argv, (char *) hash_str);
+			g_ptr_array_add (args, (char *) hash_str);
 		if (gpg->userid) {
-			g_ptr_array_add (argv, "-u");
-			g_ptr_array_add (argv, (char *) gpg->userid);
+			g_ptr_array_add (args, "-u");
+			g_ptr_array_add (args, (char *) gpg->userid);
 		}
-		g_ptr_array_add (argv, "--output");
-		g_ptr_array_add (argv, "-");
+		g_ptr_array_add (args, "--output");
+		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_VERIFY:
 		if (!gpg->ctx->auto_key_retrieve) {
-			/* don't allow gpg to fetch keys from a server... */
-			g_ptr_array_add (argv, "--keyserver-options");
-			g_ptr_array_add (argv, "no-auto-key-retrieve");
+			g_ptr_array_add (args, "--keyserver-options");
+			g_ptr_array_add (args, "no-auto-key-retrieve");
 		}
 		
-		g_ptr_array_add (argv, "--verify");
-		if (gpg->sigfile)
-			g_ptr_array_add (argv, gpg->sigfile);
-		g_ptr_array_add (argv, "-");
+		g_ptr_array_add (args, "--enable-special-filenames");
+		g_ptr_array_add (args, "--verify");
+		g_ptr_array_add (args, "--");
+		
+		/* signature stream must come first */
+		(*strv)[v++] = buf = g_strdup_printf ("-&%d", secret_fd);
+		g_ptr_array_add (args, buf);
+		
+		/* followed by the content stream (in this case, stdin) */
+		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_SIGN_ENCRYPT:
-		g_ptr_array_add (argv,  "--sign");
+		g_ptr_array_add (args, "--sign");
 		
 		/* fall thru... */
 	case GPG_CTX_MODE_ENCRYPT:
-		g_ptr_array_add (argv,  "--encrypt");
+		g_ptr_array_add (args, "--encrypt");
 		
 		if (gpg->armor)
-			g_ptr_array_add (argv, "--armor");
+			g_ptr_array_add (args, "--armor");
 		
 		if (gpg->always_trust)
-			g_ptr_array_add (argv, "--always-trust");
+			g_ptr_array_add (args, "--always-trust");
 		
 		if (gpg->userid) {
-			g_ptr_array_add (argv, "-u");
-			g_ptr_array_add (argv, (char *) gpg->userid);
+			g_ptr_array_add (args, "-u");
+			g_ptr_array_add (args, (char *) gpg->userid);
 		}
 		
 		if (gpg->recipients) {
 			for (i = 0; i < gpg->recipients->len; i++) {
-				g_ptr_array_add (argv, "-r");
-				g_ptr_array_add (argv, gpg->recipients->pdata[i]);
+				g_ptr_array_add (args, "-r");
+				g_ptr_array_add (args, gpg->recipients->pdata[i]);
 			}
 		}
-		g_ptr_array_add (argv, "--output");
-		g_ptr_array_add (argv, "-");
+		g_ptr_array_add (args, "--output");
+		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_DECRYPT:
-		g_ptr_array_add (argv, "--decrypt");
-		g_ptr_array_add (argv, "--output");
-		g_ptr_array_add (argv, "-");
+		g_ptr_array_add (args, "--decrypt");
+		g_ptr_array_add (args, "--output");
+		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_IMPORT:
-		g_ptr_array_add (argv, "--import");
-		g_ptr_array_add (argv, "-");
+		g_ptr_array_add (args, "--import");
+		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_EXPORT:
 		if (gpg->armor)
-			g_ptr_array_add (argv, "--armor");
-		g_ptr_array_add (argv, "--export");
+			g_ptr_array_add (args, "--armor");
+		g_ptr_array_add (args, "--export");
 		for (i = 0; i < gpg->recipients->len; i++)
-			g_ptr_array_add (argv, gpg->recipients->pdata[i]);
+			g_ptr_array_add (args, gpg->recipients->pdata[i]);
 		break;
 	}
 	
 #if d(!)0
-	for (i = 0; i < argv->len; i++)
-		printf ("%s ", (char *) argv->pdata[i]);
+	for (i = 0; i < args->len; i++)
+		printf ("%s ", (char *) args->pdata[i]);
 	printf ("\n");
 #endif
 	
-	g_ptr_array_add (argv, NULL);
+	g_ptr_array_add (args, NULL);
+	(*strv)[v] = NULL;
+	
+	argv = (char **) args->pdata;
+	g_ptr_array_free (args, FALSE);
 	
 	return argv;
 }
@@ -664,28 +681,27 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, char **sfd, int passwd_fd,
 static int
 gpg_ctx_op_start (struct _GpgCtx *gpg)
 {
-	char *status_fd = NULL, *passwd_fd = NULL;
 	int i, maxfd, errnosave, fds[10];
-	GPtrArray *argv;
+	char **argv, **strv = NULL;
 	int flags;
 	
 	for (i = 0; i < 10; i++)
 		fds[i] = -1;
 	
-	maxfd = gpg->need_passwd ? 10 : 8;
+	maxfd = (gpg->need_passwd || gpg->sigstream) ? 10 : 8;
 	for (i = 0; i < maxfd; i += 2) {
 		if (pipe (fds + i) == -1)
 			goto exception;
 	}
 	
-	argv = gpg_ctx_get_argv (gpg, fds[7], &status_fd, fds[8], &passwd_fd);
+	argv = gpg_ctx_get_argv (gpg, fds[7], fds[8], &strv);
 	
 	if (!(gpg->pid = fork ())) {
 		/* child process */
 		
-		if ((dup2 (fds[0], STDIN_FILENO) < 0 ) ||
-		    (dup2 (fds[3], STDOUT_FILENO) < 0 ) ||
-		    (dup2 (fds[5], STDERR_FILENO) < 0 )) {
+		if ((dup2 (fds[0], STDIN_FILENO) < 0) ||
+		    (dup2 (fds[3], STDOUT_FILENO) < 0) ||
+		    (dup2 (fds[5], STDERR_FILENO) < 0)) {
 			_exit (255);
 		}
 		
@@ -702,20 +718,19 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 		}
 		
 		/* run gpg */
-		execvp (gpg->ctx->path, (char **) argv->pdata);
+		execvp (gpg->ctx->path, argv);
 		_exit (255);
 	} else if (gpg->pid < 0) {
-		g_ptr_array_free (argv, TRUE);
-		g_free (status_fd);
-		g_free (passwd_fd);
+		g_strfreev (strv);
+		g_free (argv);
 		goto exception;
 	}
 	
-	g_ptr_array_free (argv, TRUE);
-	g_free (status_fd);
-	g_free (passwd_fd);
+	/* parent process */
 	
-	/* Parent */
+	g_strfreev (strv);
+	g_free (argv);
+	
 	close (fds[0]);
 	gpg->stdin_fd = fds[1];
 	gpg->stdout_fd = fds[2];
@@ -724,11 +739,12 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	close (fds[5]);
 	gpg->status_fd = fds[6];
 	close (fds[7]);
-	if (gpg->need_passwd) {
+	
+	if (fds[8] != -1) {
+		flags = (flags = fcntl (fds[9], F_GETFL)) == -1 ? O_WRONLY : flags;
+		fcntl (fds[9], F_SETFL, flags | O_NONBLOCK);
+		gpg->secret_fd = fds[9];
 		close (fds[8]);
-		gpg->passwd_fd = fds[9];
-		flags = (flags = fcntl (gpg->passwd_fd, F_GETFL)) == -1 ? O_WRONLY : flags;
-		fcntl (gpg->passwd_fd, F_SETFL, flags | O_NONBLOCK);
 	}
 	
 	flags = (flags = fcntl (gpg->stdin_fd, F_GETFL)) == -1 ? O_WRONLY : flags;
@@ -749,7 +765,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	
 	errnosave = errno;
 	
-	for (i = 0; i < 10; i++) {
+	for (i = 0; i < maxfd; i++) {
 		if (fds[i] != -1)
 			close (fds[i]);
 	}
@@ -1032,7 +1048,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		}
 		
 		/* create a stream for the application to write the passwd to */
-		passwd = g_mime_stream_pipe_new (gpg->passwd_fd);
+		passwd = g_mime_stream_pipe_new (gpg->secret_fd);
 		g_mime_stream_pipe_set_owner ((GMimeStreamPipe *) passwd, FALSE);
 		
 		if (!gpg->utf8) {
@@ -1051,11 +1067,10 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		}
 		
 		if ((ok = ctx->request_passwd (ctx, name, prompt, gpg->bad_passwds > 0, passwd, err))) {
-			if (g_mime_stream_flush (passwd) == -1) {
-				
+			if (g_mime_stream_flush (passwd) == -1)
 				ok = FALSE;
-			}
 		}
+		
 		g_object_unref (passwd);
 		g_free (prompt);
 		
@@ -1237,6 +1252,7 @@ enum {
 	GPG_STDOUT_FD,
 	GPG_STDERR_FD,
 	GPG_STATUS_FD,
+	GPG_VERIFY_FD,
 	GPG_N_FDS
 };
 
@@ -1348,6 +1364,11 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 	pfds[GPG_STDIN_FD].fd = gpg->stdin_fd;
 	pfds[GPG_STDIN_FD].events = POLLOUT;
 	
+	if (gpg->mode == GPG_CTX_MODE_VERIFY) {
+		pfds[GPG_VERIFY_FD].fd = gpg->secret_fd;
+		pfds[GPG_VERIFY_FD].events = POLLOUT;
+	}
+	
 	do {
 		for (n = 0; n < GPG_N_FDS; n++)
 			pfds[n].revents = 0;
@@ -1400,6 +1421,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		do {
 			nread = read (gpg->stdout_fd, buffer, sizeof (buffer));
 		} while (nread == -1 && (errno == EINTR || errno == EAGAIN));
+		
 		if (nread == -1)
 			goto exception;
 		
@@ -1420,6 +1442,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		do {
 			nread = read (gpg->stderr_fd, buffer, sizeof (buffer));
 		} while (nread == -1 && (errno == EINTR || errno == EAGAIN));
+		
 		if (nread == -1)
 			goto exception;
 		
@@ -1427,6 +1450,36 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 			g_mime_stream_write (gpg->diagnostics, buffer, nread);
 		} else {
 			gpg->seen_eof2 = TRUE;
+		}
+	}
+	
+	if ((pfds[GPG_VERIFY_FD].revents & (POLLOUT | POLLHUP))) {
+		char buffer[4096];
+		ssize_t nread;
+		
+		d(printf ("streaming digital signature to gpg...\n"));
+		
+		/* write our signature stream to gpg's special fd */
+		nread = g_mime_stream_read (gpg->sigstream, buffer, sizeof (buffer));
+		if (nread > 0) {
+			ssize_t w, nwritten = 0;
+			
+			do {
+				do {
+					w = write (gpg->secret_fd, buffer + nwritten, nread - nwritten);
+				} while (w == -1 && (errno == EINTR || errno == EAGAIN));
+				
+				if (w > 0)
+					nwritten += w;
+			} while (nwritten < nread && w != -1);
+			
+			if (w == -1)
+				goto exception;
+		}
+		
+		if (g_mime_stream_eos (gpg->sigstream)) {
+			close (gpg->secret_fd);
+			gpg->secret_fd = -1;
 		}
 	}
 	
@@ -1649,35 +1702,6 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 }
 
 
-static char *
-swrite (GMimeStream *istream)
-{
-	GMimeStream *ostream;
-	char *template;
-	int fd, ret;
-	
-	template = g_build_filename (g_get_tmp_dir (), "gmime-pgp.XXXXXX", NULL);
-	if ((fd = mkstemp (template)) == -1) {
-		g_free (template);
-		return NULL;
-	}
-	
-	ostream = g_mime_stream_fs_new (fd);
-	if ((ret = g_mime_stream_write_to_stream (istream, ostream)) != -1) {
-		if ((ret = g_mime_stream_flush (ostream)) != -1)
-			ret = g_mime_stream_close (ostream);
-	}
-	g_object_unref (ostream);
-	
-	if (ret == -1) {
-		unlink (template);
-		g_free (template);
-		return NULL;
-	}
-	
-	return template;
-}
-
 static GMimeSignatureValidity *
 gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	    GMimeStream *istream, GMimeStream *sigstream,
@@ -1687,38 +1711,28 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	GMimeSignatureValidity *validity;
 	const char *diagnostics;
 	struct _GpgCtx *gpg;
-	char *sigfile = NULL;
 	gboolean valid;
-	
-	if (sigstream != NULL) {
-		/* We are going to verify a detached signature so save
-		   the signature to a temp file. */
-		if (!(sigfile = swrite (sigstream))) {
-			g_set_error (err, GMIME_ERROR, errno,
-				     _("Cannot verify message signature: "
-				       "could not create temp file: %s"),
-				     g_strerror (errno));
-			return NULL;
-		}
-	}
 	
 	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_VERIFY);
-	gpg_ctx_set_hash (gpg, hash);
-	gpg_ctx_set_sigfile (gpg, sigfile);
+	gpg_ctx_set_sigstream (gpg, sigstream);
 	gpg_ctx_set_istream (gpg, istream);
+	gpg_ctx_set_hash (gpg, hash);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
-		goto exception;
+		gpg_ctx_free (gpg);
+		
+		return NULL;
 	}
 	
 	while (!gpg_ctx_op_complete (gpg)) {
 		if (gpg_ctx_op_step (gpg, err) == -1) {
 			gpg_ctx_op_cancel (gpg);
-			goto exception;
+			gpg_ctx_free (gpg);
+			return NULL;
 		}
 	}
 	
@@ -1745,23 +1759,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 	
 	gpg_ctx_free (gpg);
 	
-	if (sigfile) {
-		unlink (sigfile);
-		g_free (sigfile);
-	}
-	
 	return validity;
-	
- exception:
-	
-	gpg_ctx_free (gpg);
-	
-	if (sigfile) {
-		unlink (sigfile);
-		g_free (sigfile);
-	}
-	
-	return NULL;
 }
 
 
