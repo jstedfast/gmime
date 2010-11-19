@@ -752,7 +752,8 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 		goto exception;
 	}
 	
-	/* Parent */
+	/* parent process */
+	
 	g_strfreev (strv);
 	g_free (argv);
 	
