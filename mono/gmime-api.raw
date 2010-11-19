@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<api parser_version="1">
+<api>
   <!--
 
         This file was automatically generated.
@@ -680,6 +680,9 @@
       </method>
       <method name="GetAllRecipients" cname="g_mime_message_get_all_recipients">
         <return-type type="InternetAddressList*" />
+      </method>
+      <method name="GetBody" cname="g_mime_message_get_body">
+        <return-type type="GMimeObject*" />
       </method>
       <method name="GetDate" cname="g_mime_message_get_date">
         <return-type type="void" />
