@@ -535,7 +535,7 @@ g_mime_signer_set_status (GMimeSigner *signer, GMimeSignerStatus status)
  * Returns: the signer status.
  **/
 GMimeSignerStatus
-g_mime_signer_get_status (GMimeSigner *signer)
+g_mime_signer_get_status (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_STATUS_NONE);
 	
@@ -568,7 +568,7 @@ g_mime_signer_set_errors (GMimeSigner *signer, GMimeSignerError errors)
  * Returns: the signer errors.
  **/
 GMimeSignerError
-g_mime_signer_get_errors (GMimeSigner *signer)
+g_mime_signer_get_errors (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_ERROR_NONE);
 	
@@ -601,7 +601,7 @@ g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust)
  * Returns: the signer trust.
  **/
 GMimeSignerTrust
-g_mime_signer_get_trust (GMimeSigner *signer)
+g_mime_signer_get_trust (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_TRUST_NONE);
 	
@@ -635,7 +635,7 @@ g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial)
  * Returns: the signer's issuer serial.
  **/
 const char *
-g_mime_signer_get_issuer_serial (GMimeSigner *signer)
+g_mime_signer_get_issuer_serial (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -669,7 +669,7 @@ g_mime_signer_set_issuer_name (GMimeSigner *signer, const char *issuer_name)
  * Returns: the signer's issuer name.
  **/
 const char *
-g_mime_signer_get_issuer_name (GMimeSigner *signer)
+g_mime_signer_get_issuer_name (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -703,7 +703,7 @@ g_mime_signer_set_fingerprint (GMimeSigner *signer, const char *fingerprint)
  * Returns: the signer's key fingerprint.
  **/
 const char *
-g_mime_signer_get_fingerprint (GMimeSigner *signer)
+g_mime_signer_get_fingerprint (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -737,7 +737,7 @@ g_mime_signer_set_key_id (GMimeSigner *signer, const char *key_id)
  * Returns: the signer's key id.
  **/
 const char *
-g_mime_signer_get_key_id (GMimeSigner *signer)
+g_mime_signer_get_key_id (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -771,7 +771,7 @@ g_mime_signer_set_email (GMimeSigner *signer, const char *email)
  * Returns: the signer's email.
  **/
 const char *
-g_mime_signer_get_email (GMimeSigner *signer)
+g_mime_signer_get_email (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -805,7 +805,7 @@ g_mime_signer_set_name (GMimeSigner *signer, const char *name)
  * Returns: the signer's name.
  **/
 const char *
-g_mime_signer_get_name (GMimeSigner *signer)
+g_mime_signer_get_name (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -838,7 +838,7 @@ g_mime_signer_set_sig_created (GMimeSigner *signer, time_t created)
  * Returns: the creation date of the signer's signature.
  **/
 time_t
-g_mime_signer_get_sig_created (GMimeSigner *signer)
+g_mime_signer_get_sig_created (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
@@ -871,7 +871,7 @@ g_mime_signer_set_sig_expires (GMimeSigner *signer, time_t expires)
  * Returns: the expiration date of the signer's signature.
  **/
 time_t
-g_mime_signer_get_sig_expires (GMimeSigner *signer)
+g_mime_signer_get_sig_expires (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
@@ -904,7 +904,7 @@ g_mime_signer_set_key_created (GMimeSigner *signer, time_t created)
  * Returns: the creation date of the signer's key.
  **/
 time_t
-g_mime_signer_get_key_created (GMimeSigner *signer)
+g_mime_signer_get_key_created (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
@@ -937,7 +937,7 @@ g_mime_signer_set_key_expires (GMimeSigner *signer, time_t expires)
  * Returns: the expiration date of the signer's key.
  **/
 time_t
-g_mime_signer_get_key_expires (GMimeSigner *signer)
+g_mime_signer_get_key_expires (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, (time_t) -1);
 	
