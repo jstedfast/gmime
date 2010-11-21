@@ -291,7 +291,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 		/* make sure the protocol matches the cipher encrypt protocol */
 		if (g_ascii_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-				     "Failed to decrypt MIME part: protocol error");
+				     "Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'.",
+				     protocol);
 			
 			return NULL;
 		}
@@ -305,8 +306,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
 	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     "Failed to decrypt MIME part: protocol error");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+				     "Cannot decrypt multipart/encrypted part: content-type does not match protocol.");
 		
 		g_free (content_type);
 		
@@ -318,8 +319,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_CONTENT);
 	mime_type = g_mime_object_get_content_type (encrypted);
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-			     "Failed to decrypt MIME part: unexpected content type");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+				     "Cannot decrypt multipart/encrypted part: unexpected content type");
 		
 		return NULL;
 	}
@@ -355,8 +356,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (parser);
 	
 	if (!decrypted) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-			     "Failed to decrypt MIME part: parse error");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Cannot decrypt multipart/encrypted part: failed to parse decrypted content");
 		
 		g_mime_signature_validity_free (sv);
 		

@@ -343,8 +343,8 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_return_val_if_fail (ctx->sign_protocol != NULL, NULL);
 	
 	if (g_mime_multipart_get_count ((GMimeMultipart *) mps) < 2) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR, "%s",
-			     "Cannot verify multipart/signed part due to missing subparts.");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Cannot verify multipart/signed part due to missing subparts.");
 		return NULL;
 	}
 	
@@ -353,8 +353,12 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	
 	if (protocol) {
 		/* make sure the protocol matches the cipher sign protocol */
-		if (g_ascii_strcasecmp (ctx->sign_protocol, protocol) != 0)
+		if (g_ascii_strcasecmp (ctx->sign_protocol, protocol) != 0) {
+			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Cannot verify multipart/signed part: unsupported signature protocol '%s'.",
+				     protocol);
 			return NULL;
+		}
 	} else {
 		/* *shrug* - I guess just go on as if they match? */
 		protocol = ctx->sign_protocol;
@@ -365,6 +369,8 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	/* make sure the protocol matches the signature content-type */
 	content_type = g_mime_content_type_to_string (signature->content_type);
 	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     "Cannot verify multipart/signed part: signature content-type does not match protocol.");
 		g_free (content_type);
 		
 		return NULL;
