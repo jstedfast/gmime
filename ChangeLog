@@ -1,3 +1,10 @@
+2010-11-21  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes bug #635405.
+
+	* gmime/gmime-cipher-context.c (g_mime_signer_get_*): These
+	functions all now take a const GMimeSigner *.
+
 2010-11-19  Jeffrey Stedfast  <fejj@novell.com>
 
 	Fixes bug #635152

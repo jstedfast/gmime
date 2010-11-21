@@ -256,28 +256,28 @@ void         g_mime_signer_free (GMimeSigner *signer);
 GMimeSigner *g_mime_signer_next (GMimeSigner *signer);
 
 void g_mime_signer_set_status (GMimeSigner *signer, GMimeSignerStatus status);
-GMimeSignerStatus g_mime_signer_get_status (GMimeSigner *signer);
+GMimeSignerStatus g_mime_signer_get_status (const GMimeSigner *signer);
 
 void g_mime_signer_set_errors (GMimeSigner *signer, GMimeSignerError error);
-GMimeSignerError g_mime_signer_get_errors (GMimeSigner *signer);
+GMimeSignerError g_mime_signer_get_errors (const GMimeSigner *signer);
 
 void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
-GMimeSignerTrust g_mime_signer_get_trust (GMimeSigner *signer);
+GMimeSignerTrust g_mime_signer_get_trust (const GMimeSigner *signer);
 
 void g_mime_signer_set_fingerprint (GMimeSigner *signer, const char *fingerprint);
-const char *g_mime_signer_get_fingerprint (GMimeSigner *signer);
+const char *g_mime_signer_get_fingerprint (const GMimeSigner *signer);
 
 void g_mime_signer_set_key_id (GMimeSigner *signer, const char *key_id);
-const char *g_mime_signer_get_key_id (GMimeSigner *signer);
+const char *g_mime_signer_get_key_id (const GMimeSigner *signer);
 
 void g_mime_signer_set_name (GMimeSigner *signer, const char *name);
-const char *g_mime_signer_get_name (GMimeSigner *signer);
+const char *g_mime_signer_get_name (const GMimeSigner *signer);
 
 void g_mime_signer_set_created (GMimeSigner *signer, time_t created);
-time_t g_mime_signer_get_created (GMimeSigner *signer);
+time_t g_mime_signer_get_created (const GMimeSigner *signer);
 
 void g_mime_signer_set_expires (GMimeSigner *signer, time_t expires);
-time_t g_mime_signer_get_expires (GMimeSigner *signer);
+time_t g_mime_signer_get_expires (const GMimeSigner *signer);
 
 
 
