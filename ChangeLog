@@ -1,5 +1,15 @@
 2010-11-21  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fixes bug #635407.
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_decrypt):
+	Updated error messages to be more consistent.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Make sure to set an error in all cases returning NULL.
+
+2010-11-21  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #635405.
 
 	* gmime/gmime-cipher-context.c (g_mime_signer_get_*): These
