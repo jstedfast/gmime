@@ -1136,25 +1136,25 @@ g_mime_iconv_locale_to_utf8_length
 </SECTION>
 
 <SECTION>
-<FILE>gmime-cipher-context</FILE>
+<FILE>gmime-crypto-context</FILE>
 GMimePasswordRequestFunc
-GMimeCipherHash
-GMimeCipherContext
+GMimeCryptoHash
+GMimeCryptoContext
 GMimeSignatureValidity
 GMimeSignatureStatus
 GMimeSignerStatus
 GMimeSignerTrust
 GMimeSignerError
 GMimeSigner
-g_mime_cipher_context_set_request_password
-g_mime_cipher_context_hash_id
-g_mime_cipher_context_hash_name
-g_mime_cipher_context_sign
-g_mime_cipher_context_verify
-g_mime_cipher_context_encrypt
-g_mime_cipher_context_decrypt
-g_mime_cipher_context_import_keys
-g_mime_cipher_context_export_keys
+g_mime_crypto_context_set_request_password
+g_mime_crypto_context_hash_id
+g_mime_crypto_context_hash_name
+g_mime_crypto_context_sign
+g_mime_crypto_context_verify
+g_mime_crypto_context_encrypt
+g_mime_crypto_context_decrypt
+g_mime_crypto_context_import_keys
+g_mime_crypto_context_export_keys
 <SUBSECTION>
 g_mime_signer_new
 g_mime_signer_free
@@ -1194,16 +1194,16 @@ g_mime_signature_validity_get_details
 g_mime_signature_validity_add_signer
 g_mime_signature_validity_get_signers
 <SUBSECTION Private>
-g_mime_cipher_context_get_type
+g_mime_crypto_context_get_type
 
 <SUBSECTION Standard>
-GMIME_CIPHER_CONTEXT
-GMIME_IS_CIPHER_CONTEXT
-GMIME_TYPE_CIPHER_CONTEXT
-GMIME_CIPHER_CONTEXT_CLASS
-GMIME_IS_CIPHER_CONTEXT_CLASS
-GMIME_CIPHER_CONTEXT_GET_CLASS
-GMimeCipherContextClass
+GMIME_CRYPTO_CONTEXT
+GMIME_IS_CRYPTO_CONTEXT
+GMIME_TYPE_CRYPTO_CONTEXT
+GMIME_CRYPTO_CONTEXT_CLASS
+GMIME_IS_CRYPTO_CONTEXT_CLASS
+GMIME_CRYPTO_CONTEXT_GET_CLASS
+GMimeCryptoContextClass
 </SECTION>
 
 <SECTION>

@@ -39,7 +39,7 @@ static const char *path = "/usr/bin/gpg";
 static const char *passphrase = "no.secret";
 
 static gboolean
-request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	if (g_mime_stream_write_string (response, passphrase) == -1 ||
 	    g_mime_stream_write (response, "\n", 1) == -1) {
@@ -139,7 +139,7 @@ count_parts_in_message (GMimeMessage *message)
 static void
 verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
-	GMimeCipherContext *ctx = user_data;
+	GMimeCryptoContext *ctx = user_data;
 	
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
@@ -185,7 +185,7 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 }
 
 static void
-verify_signed_parts (GMimeMessage *message, GMimeCipherContext *ctx)
+verify_signed_parts (GMimeMessage *message, GMimeCryptoContext *ctx)
 {
 	/* descend the mime tree and verify any signed parts */
 	g_mime_message_foreach (message, verify_foreach_callback, ctx);
@@ -283,7 +283,7 @@ remove_a_mime_part (GMimeMessage *message)
 int main (int argc, char **argv)
 {
 #ifndef G_OS_WIN32
-	GMimeCipherContext *ctx;
+	GMimeCryptoContext *ctx;
 #endif
 	GMimeMessage *message;
 	int fd;
@@ -309,7 +309,7 @@ int main (int argc, char **argv)
 	
 #ifndef G_OS_WIN32
 #ifdef ENABLE_CRYPTOGRAPHY
-	/* create our cipher context */
+	/* create our crypto context */
 	ctx = g_mime_gpg_context_new (request_passwd, path);
 	
 	/* don't allow auto key-retrival */

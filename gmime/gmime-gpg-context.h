@@ -22,7 +22,7 @@
 #ifndef __GMIME_GPG_CONTEXT_H__
 #define __GMIME_GPG_CONTEXT_H__
 
-#include <gmime/gmime-cipher-context.h>
+#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -39,21 +39,21 @@ typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 
 /**
  * GMimeGpgContext:
- * @parent_object: parent #GMimeCipherContext
+ * @parent_object: parent #GMimeCryptoContext
  * @always_trust: %TRUE if keys should always be trusted
  * @path: path to gpg
  *
- * A GnuPG cipher context.
+ * A GnuPG crypto context.
  **/
 struct _GMimeGpgContext {
-	GMimeCipherContext parent_object;
+	GMimeCryptoContext parent_object;
 	gboolean auto_key_retrieve;
 	gboolean always_trust;
 	char *path;
 };
 
 struct _GMimeGpgContextClass {
-	GMimeCipherContextClass parent_class;
+	GMimeCryptoContextClass parent_class;
 	
 };
 
@@ -61,7 +61,7 @@ struct _GMimeGpgContextClass {
 GType g_mime_gpg_context_get_type (void);
 
 
-GMimeCipherContext *g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path);
+GMimeCryptoContext *g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path);
 
 gboolean g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve);

@@ -49,7 +49,7 @@
 <!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
 <!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
 <!ENTITY GMimeFilterYenc SYSTEM "xml/gmime-filter-yenc.xml">
-<!ENTITY GMimeCipherContext SYSTEM "xml/gmime-cipher-context.xml">
+<!ENTITY GMimeCryptoContext SYSTEM "xml/gmime-crypto-context.xml">
 <!ENTITY GMimeGpgContext SYSTEM "xml/gmime-gpg-context.xml">
 
 <!ENTITY index-Class-Tree SYSTEM "tree_index.sgml">
@@ -244,9 +244,9 @@ string utilities, file utilities, a main loop abstraction, and so on.
       &GMimeParser;
     </chapter>
 
-    <chapter id="CipherContexts">
-      <title>Cipher Contexts</title>
-      &GMimeCipherContext;
+    <chapter id="CryptoContexts">
+      <title>Cryptography Contexts</title>
+      &GMimeCryptoContext;
       &GMimeGpgContext;
     </chapter>
   </part>

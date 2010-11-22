@@ -23,7 +23,7 @@
 #define __GMIME_MULTIPART_ENCRYPTED_H__
 
 #include <gmime/gmime-multipart.h>
-#include <gmime/gmime-cipher-context.h>
+#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -69,12 +69,12 @@ GType g_mime_multipart_encrypted_get_type (void);
 GMimeMultipartEncrypted *g_mime_multipart_encrypted_new (void);
 
 int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
-					GMimeCipherContext *ctx, gboolean sign,
+					GMimeCryptoContext *ctx, gboolean sign,
 					const char *userid, GPtrArray *recipients,
 					GError **err);
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
-						 GMimeCipherContext *ctx,
+						 GMimeCryptoContext *ctx,
 						 GError **err);
 
 const GMimeSignatureValidity *g_mime_multipart_encrypted_get_signature_validity (GMimeMultipartEncrypted *mpe);

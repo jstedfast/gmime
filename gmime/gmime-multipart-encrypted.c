@@ -145,7 +145,7 @@ g_mime_multipart_encrypted_new (void)
  * g_mime_multipart_encrypted_encrypt:
  * @mpe: multipart/encrypted object
  * @content: MIME part to encrypt
- * @ctx: encryption cipher context
+ * @ctx: encryption crypto context
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
  * @recipients: an array of recipients to encrypt to
@@ -162,7 +162,7 @@ g_mime_multipart_encrypted_new (void)
  **/
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
-				    GMimeCipherContext *ctx, gboolean sign,
+				    GMimeCryptoContext *ctx, gboolean sign,
 				    const char *userid, GPtrArray *recipients,
 				    GError **err)
 {
@@ -173,7 +173,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	GMimeFilter *crlf_filter;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), -1);
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (ctx->encrypt_protocol != NULL, -1);
 	g_return_val_if_fail (GMIME_IS_OBJECT (content), -1);
 	
@@ -194,7 +194,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_cipher_context_encrypt (ctx, sign, userid, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt (ctx, sign, userid, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return -1;
@@ -247,7 +247,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
- * @ctx: decryption cipher context
+ * @ctx: decryption crypto context
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
@@ -262,7 +262,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  * information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherContext *ctx,
+g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
 				    GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
@@ -277,7 +277,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), NULL);
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (ctx->encrypt_protocol != NULL, NULL);
 	
 	if (mpe->decrypted) {
@@ -288,7 +288,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mpe), "protocol");
 	
 	if (protocol) {
-		/* make sure the protocol matches the cipher encrypt protocol */
+		/* make sure the protocol matches the crypto encrypt protocol */
 		if (g_ascii_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     "Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'.",
@@ -337,7 +337,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherCon
 	g_object_unref (crlf_filter);
 	
 	/* get the cleartext */
-	if (!(sv = g_mime_cipher_context_decrypt (ctx, ciphertext, filtered_stream, err))) {
+	if (!(sv = g_mime_crypto_context_decrypt (ctx, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (stream);
 		

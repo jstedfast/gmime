@@ -54,10 +54,10 @@
 /**
  * SECTION: gmime-pkcs7-context
  * @title: GMimePkcs7Context
- * @short_description: PKCS7 cipher contexts
- * @see_also: #GMimeCipherContext
+ * @short_description: PKCS7 crypto contexts
+ * @see_also: #GMimeCryptoContext
  *
- * A #GMimePkcs7Context is a #GMimeCipherContext that uses GnuPG to do
+ * A #GMimePkcs7Context is a #GMimeCryptoContext that uses GnuPG to do
  * all of the encryption and digital signatures.
  **/
 
@@ -72,34 +72,34 @@ static void g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass);
 static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass);
 static void g_mime_pkcs7_context_finalize (GObject *object);
 
-static GMimeCipherHash pkcs7_hash_id (GMimeCipherContext *ctx, const char *hash);
+static GMimeCryptoHash pkcs7_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-static const char *pkcs7_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
+static const char *pkcs7_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
-static int pkcs7_sign (GMimeCipherContext *ctx, const char *userid,
-		       GMimeCipherHash hash, GMimeStream *istream,
+static int pkcs7_sign (GMimeCryptoContext *ctx, const char *userid,
+		       GMimeCryptoHash hash, GMimeStream *istream,
 		       GMimeStream *ostream, GError **err);
 	
-static GMimeSignatureValidity *pkcs7_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+static GMimeSignatureValidity *pkcs7_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 					     GMimeStream *istream, GMimeStream *sigstream,
 					     GError **err);
 
-static int pkcs7_encrypt (GMimeCipherContext *ctx, gboolean sign,
+static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			  const char *userid, GPtrArray *recipients,
 			  GMimeStream *istream, GMimeStream *ostream,
 			  GError **err);
 
-static GMimeSignatureValidity *pkcs7_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+static GMimeSignatureValidity *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					      GMimeStream *ostream, GError **err);
 
-static int pkcs7_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			      GError **err);
 
-static int pkcs7_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+static int pkcs7_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 			      GMimeStream *ostream, GError **err);
 
 
-static GMimeCipherContextClass *parent_class = NULL;
+static GMimeCryptoContextClass *parent_class = NULL;
 
 
 GType
@@ -120,7 +120,7 @@ g_mime_pkcs7_context_get_type (void)
 			(GInstanceInitFunc) g_mime_pkcs7_context_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_CIPHER_CONTEXT, "GMimePkcs7Context", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_CRYPTO_CONTEXT, "GMimePkcs7Context", &info, 0);
 	}
 	
 	return type;
@@ -131,26 +131,26 @@ static void
 g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	GMimeCipherContextClass *cipher_class = GMIME_CIPHER_CONTEXT_CLASS (klass);
+	GMimeCryptoContextClass *crypto_class = GMIME_CRYPTO_CONTEXT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = g_mime_pkcs7_context_finalize;
 	
-	cipher_class->hash_id = pkcs7_hash_id;
-	cipher_class->hash_name = pkcs7_hash_name;
-	cipher_class->sign = pkcs7_sign;
-	cipher_class->verify = pkcs7_verify;
-	cipher_class->encrypt = pkcs7_encrypt;
-	cipher_class->decrypt = pkcs7_decrypt;
-	cipher_class->import_keys = pkcs7_import_keys;
-	cipher_class->export_keys = pkcs7_export_keys;
+	crypto_class->hash_id = pkcs7_hash_id;
+	crypto_class->hash_name = pkcs7_hash_name;
+	crypto_class->sign = pkcs7_sign;
+	crypto_class->verify = pkcs7_verify;
+	crypto_class->encrypt = pkcs7_encrypt;
+	crypto_class->decrypt = pkcs7_decrypt;
+	crypto_class->import_keys = pkcs7_import_keys;
+	crypto_class->export_keys = pkcs7_export_keys;
 }
 
 static void
 g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass)
 {
-	GMimeCipherContext *cipher = (GMimeCipherContext *) ctx;
+	GMimeCryptoContext *crypto = (GMimeCryptoContext *) ctx;
 	
 	ctx->priv = g_slice_new (Pkcs7Ctx);
 	ctx->priv->always_trust = FALSE;
@@ -158,9 +158,9 @@ g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass
 	ctx->priv->ctx = NULL;
 #endif
 	
-	cipher->sign_protocol = "application/pkcs7-signature";
-	cipher->encrypt_protocol = "application/pkcs7-mime";
-	cipher->key_protocol = "application/pkcs7-keys";
+	crypto->sign_protocol = "application/pkcs7-signature";
+	crypto->encrypt_protocol = "application/pkcs7-mime";
+	crypto->key_protocol = "application/pkcs7-keys";
 }
 
 static void
@@ -178,59 +178,59 @@ g_mime_pkcs7_context_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-static GMimeCipherHash
-pkcs7_hash_id (GMimeCipherContext *ctx, const char *hash)
+static GMimeCryptoHash
+pkcs7_hash_id (GMimeCryptoContext *ctx, const char *hash)
 {
 	if (hash == NULL)
-		return GMIME_CIPHER_HASH_DEFAULT;
+		return GMIME_CRYPTO_HASH_DEFAULT;
 	
 	if (!g_ascii_strcasecmp (hash, "md2"))
-		return GMIME_CIPHER_HASH_MD2;
+		return GMIME_CRYPTO_HASH_MD2;
 	else if (!g_ascii_strcasecmp (hash, "md5"))
-		return GMIME_CIPHER_HASH_MD5;
+		return GMIME_CRYPTO_HASH_MD5;
 	else if (!g_ascii_strcasecmp (hash, "sha1"))
-		return GMIME_CIPHER_HASH_SHA1;
+		return GMIME_CRYPTO_HASH_SHA1;
 	else if (!g_ascii_strcasecmp (hash, "sha224"))
-		return GMIME_CIPHER_HASH_SHA224;
+		return GMIME_CRYPTO_HASH_SHA224;
 	else if (!g_ascii_strcasecmp (hash, "sha256"))
-		return GMIME_CIPHER_HASH_SHA256;
+		return GMIME_CRYPTO_HASH_SHA256;
 	else if (!g_ascii_strcasecmp (hash, "sha384"))
-		return GMIME_CIPHER_HASH_SHA384;
+		return GMIME_CRYPTO_HASH_SHA384;
 	else if (!g_ascii_strcasecmp (hash, "sha512"))
-		return GMIME_CIPHER_HASH_SHA512;
+		return GMIME_CRYPTO_HASH_SHA512;
 	else if (!g_ascii_strcasecmp (hash, "ripemd160"))
-		return GMIME_CIPHER_HASH_RIPEMD160;
+		return GMIME_CRYPTO_HASH_RIPEMD160;
 	else if (!g_ascii_strcasecmp (hash, "tiger192"))
-		return GMIME_CIPHER_HASH_TIGER192;
+		return GMIME_CRYPTO_HASH_TIGER192;
 	else if (!g_ascii_strcasecmp (hash, "haval-5-160"))
-		return GMIME_CIPHER_HASH_HAVAL5160;
+		return GMIME_CRYPTO_HASH_HAVAL5160;
 	
-	return GMIME_CIPHER_HASH_DEFAULT;
+	return GMIME_CRYPTO_HASH_DEFAULT;
 }
 
 static const char *
-pkcs7_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+pkcs7_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 {
 	switch (hash) {
-	case GMIME_CIPHER_HASH_MD2:
+	case GMIME_CRYPTO_HASH_MD2:
 		return "md2";
-	case GMIME_CIPHER_HASH_MD5:
+	case GMIME_CRYPTO_HASH_MD5:
 		return "md5";
-	case GMIME_CIPHER_HASH_SHA1:
+	case GMIME_CRYPTO_HASH_SHA1:
 		return "sha1";
-	case GMIME_CIPHER_HASH_SHA224:
+	case GMIME_CRYPTO_HASH_SHA224:
 		return "sha224";
-	case GMIME_CIPHER_HASH_SHA256:
+	case GMIME_CRYPTO_HASH_SHA256:
 		return "sha256";
-	case GMIME_CIPHER_HASH_SHA384:
+	case GMIME_CRYPTO_HASH_SHA384:
 		return "sha384";
-	case GMIME_CIPHER_HASH_SHA512:
+	case GMIME_CRYPTO_HASH_SHA512:
 		return "sha512";
-	case GMIME_CIPHER_HASH_RIPEMD160:
+	case GMIME_CRYPTO_HASH_RIPEMD160:
 		return "ripemd160";
-	case GMIME_CIPHER_HASH_TIGER192:
+	case GMIME_CRYPTO_HASH_TIGER192:
 		return "tiger192";
-	case GMIME_CIPHER_HASH_HAVAL5160:
+	case GMIME_CRYPTO_HASH_HAVAL5160:
 		return "haval-5-160";
 	default:
 		return "sha1";
@@ -241,7 +241,7 @@ pkcs7_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
 static gpgme_error_t
 pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
 {
-	GMimeCipherContext *context = (GMimeCipherContext *) hook;
+	GMimeCryptoContext *context = (GMimeCryptoContext *) hook;
 	GMimeStream *stream;
 	gpgme_error_t error;
 	GError *err = NULL;
@@ -396,7 +396,7 @@ pkcs7_add_signer (Pkcs7Ctx *pkcs7, const char *signer, GError **err)
 #endif /* ENABLE_SMIME */
 
 static int
-pkcs7_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
+pkcs7_sign (GMimeCryptoContext *context, const char *userid, GMimeCryptoHash hash,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_SMIME
@@ -583,7 +583,7 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 #endif /* ENABLE_SMIME */
 
 static GMimeSignatureValidity *
-pkcs7_verify (GMimeCipherContext *context, GMimeCipherHash hash,
+pkcs7_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 	      GMimeStream *istream, GMimeStream *sigstream,
 	      GError **err)
 {
@@ -648,7 +648,7 @@ key_list_free (gpgme_key_t *keys)
 #endif /* ENABLE_SMIME */
 
 static int
-pkcs7_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
+pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
 	       GError **err)
 {
@@ -712,7 +712,7 @@ pkcs7_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 
 
 static GMimeSignatureValidity *
-pkcs7_decrypt (GMimeCipherContext *context, GMimeStream *istream,
+pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	       GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_SMIME
@@ -753,7 +753,7 @@ pkcs7_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 }
 
 static int
-pkcs7_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err)
+pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err)
 {
 #ifdef ENABLE_SMIME
 	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
@@ -784,7 +784,7 @@ pkcs7_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **e
 }
 
 static int
-pkcs7_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
+pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_SMIME
 	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
@@ -822,15 +822,15 @@ pkcs7_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *os
  * g_mime_pkcs7_context_new:
  * @request_passwd: a #GMimePasswordRequestFunc
  *
- * Creates a new pkcs7 cipher context object.
+ * Creates a new pkcs7 crypto context object.
  *
- * Returns: a new pkcs7 cipher context object.
+ * Returns: a new pkcs7 crypto context object.
  **/
-GMimeCipherContext *
+GMimeCryptoContext *
 g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 {
 #ifdef ENABLE_SMIME
-	GMimeCipherContext *cipher;
+	GMimeCryptoContext *crypto;
 	GMimePkcs7Context *pkcs7;
 	gpgme_ctx_t ctx;
 	
@@ -847,10 +847,10 @@ g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	pkcs7->priv->ctx = ctx;
 	
-	cipher = (GMimeCipherContext *) pkcs7;
-	cipher->request_passwd = request_passwd;
+	crypto = (GMimeCryptoContext *) pkcs7;
+	crypto->request_passwd = request_passwd;
 	
-	return cipher;
+	return crypto;
 #else
 	return NULL;
 #endif /* ENABLE_SMIME */

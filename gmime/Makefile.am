@@ -21,9 +21,9 @@ lib_LTLIBRARIES = libgmime-2.6.la
 libgmime_2_6_la_SOURCES = 		\
 	gmime.c				\
 	gmime-charset.c			\
-	gmime-cipher-context.c		\
 	gmime-common.c			\
 	gmime-content-type.c		\
+	gmime-crypto-context.c		\
 	gmime-data-wrapper.c		\
 	gmime-disposition.c		\
 	gmime-encodings.c		\
@@ -78,8 +78,8 @@ endif
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
 	gmime-charset.h			\
-	gmime-cipher-context.h		\
 	gmime-content-type.h		\
+	gmime-crypto-context.h		\
 	gmime-data-wrapper.h		\
 	gmime-disposition.h		\
 	gmime-encodings.h		\

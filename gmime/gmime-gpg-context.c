@@ -62,10 +62,10 @@
 /**
  * SECTION: gmime-gpg-context
  * @title: GMimeGpgContext
- * @short_description: GnuPG cipher contexts
- * @see_also: #GMimeCipherContext
+ * @short_description: GnuPG crypto contexts
+ * @see_also: #GMimeCryptoContext
  *
- * A #GMimeGpgContext is a #GMimeCipherContext that uses GnuPG to do
+ * A #GMimeGpgContext is a #GMimeCryptoContext that uses GnuPG to do
  * all of the encryption and digital signatures.
  **/
 
@@ -74,34 +74,34 @@ static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_finalize (GObject *object);
 
-static GMimeCipherHash gpg_hash_id (GMimeCipherContext *ctx, const char *hash);
+static GMimeCryptoHash gpg_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-static const char *gpg_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
+static const char *gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
-static int gpg_sign (GMimeCipherContext *ctx, const char *userid,
-		     GMimeCipherHash hash, GMimeStream *istream,
+static int gpg_sign (GMimeCryptoContext *ctx, const char *userid,
+		     GMimeCryptoHash hash, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
 	
-static GMimeSignatureValidity *gpg_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+static GMimeSignatureValidity *gpg_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 					   GMimeStream *istream, GMimeStream *sigstream,
 					   GError **err);
 
-static int gpg_encrypt (GMimeCipherContext *ctx, gboolean sign,
+static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			const char *userid, GPtrArray *recipients,
 			GMimeStream *istream, GMimeStream *ostream,
 			GError **err);
 
-static GMimeSignatureValidity *gpg_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+static GMimeSignatureValidity *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					    GMimeStream *ostream, GError **err);
 
-static int gpg_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
 
-static int gpg_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+static int gpg_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 			    GMimeStream *ostream, GError **err);
 
 
-static GMimeCipherContextClass *parent_class = NULL;
+static GMimeCryptoContextClass *parent_class = NULL;
 
 
 GType
@@ -122,7 +122,7 @@ g_mime_gpg_context_get_type (void)
 			(GInstanceInitFunc) g_mime_gpg_context_init,
 		};
 		
-		type = g_type_register_static (GMIME_TYPE_CIPHER_CONTEXT, "GMimeGpgContext", &info, 0);
+		type = g_type_register_static (GMIME_TYPE_CRYPTO_CONTEXT, "GMimeGpgContext", &info, 0);
 	}
 	
 	return type;
@@ -133,34 +133,34 @@ static void
 g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
-	GMimeCipherContextClass *cipher_class = GMIME_CIPHER_CONTEXT_CLASS (klass);
+	GMimeCryptoContextClass *crypto_class = GMIME_CRYPTO_CONTEXT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = g_mime_gpg_context_finalize;
 	
-	cipher_class->hash_id = gpg_hash_id;
-	cipher_class->hash_name = gpg_hash_name;
-	cipher_class->sign = gpg_sign;
-	cipher_class->verify = gpg_verify;
-	cipher_class->encrypt = gpg_encrypt;
-	cipher_class->decrypt = gpg_decrypt;
-	cipher_class->import_keys = gpg_import_keys;
-	cipher_class->export_keys = gpg_export_keys;
+	crypto_class->hash_id = gpg_hash_id;
+	crypto_class->hash_name = gpg_hash_name;
+	crypto_class->sign = gpg_sign;
+	crypto_class->verify = gpg_verify;
+	crypto_class->encrypt = gpg_encrypt;
+	crypto_class->decrypt = gpg_decrypt;
+	crypto_class->import_keys = gpg_import_keys;
+	crypto_class->export_keys = gpg_export_keys;
 }
 
 static void
 g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 {
-	GMimeCipherContext *cipher = (GMimeCipherContext *) ctx;
+	GMimeCryptoContext *crypto = (GMimeCryptoContext *) ctx;
 	
 	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
 	ctx->path = NULL;
 	
-	cipher->sign_protocol = "application/pgp-signature";
-	cipher->encrypt_protocol = "application/pgp-encrypted";
-	cipher->key_protocol = "application/pgp-keys";
+	crypto->sign_protocol = "application/pgp-signature";
+	crypto->encrypt_protocol = "application/pgp-encrypted";
+	crypto->key_protocol = "application/pgp-keys";
 }
 
 static void
@@ -173,62 +173,62 @@ g_mime_gpg_context_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-static GMimeCipherHash
-gpg_hash_id (GMimeCipherContext *ctx, const char *hash)
+static GMimeCryptoHash
+gpg_hash_id (GMimeCryptoContext *ctx, const char *hash)
 {
 	if (hash == NULL)
-		return GMIME_CIPHER_HASH_DEFAULT;
+		return GMIME_CRYPTO_HASH_DEFAULT;
 	
 	if (!g_ascii_strcasecmp (hash, "pgp-"))
 		hash += 4;
 	
 	if (!g_ascii_strcasecmp (hash, "md2"))
-		return GMIME_CIPHER_HASH_MD2;
+		return GMIME_CRYPTO_HASH_MD2;
 	else if (!g_ascii_strcasecmp (hash, "md5"))
-		return GMIME_CIPHER_HASH_MD5;
+		return GMIME_CRYPTO_HASH_MD5;
 	else if (!g_ascii_strcasecmp (hash, "sha1"))
-		return GMIME_CIPHER_HASH_SHA1;
+		return GMIME_CRYPTO_HASH_SHA1;
 	else if (!g_ascii_strcasecmp (hash, "sha224"))
-		return GMIME_CIPHER_HASH_SHA224;
+		return GMIME_CRYPTO_HASH_SHA224;
 	else if (!g_ascii_strcasecmp (hash, "sha256"))
-		return GMIME_CIPHER_HASH_SHA256;
+		return GMIME_CRYPTO_HASH_SHA256;
 	else if (!g_ascii_strcasecmp (hash, "sha384"))
-		return GMIME_CIPHER_HASH_SHA384;
+		return GMIME_CRYPTO_HASH_SHA384;
 	else if (!g_ascii_strcasecmp (hash, "sha512"))
-		return GMIME_CIPHER_HASH_SHA512;
+		return GMIME_CRYPTO_HASH_SHA512;
 	else if (!g_ascii_strcasecmp (hash, "ripemd160"))
-		return GMIME_CIPHER_HASH_RIPEMD160;
+		return GMIME_CRYPTO_HASH_RIPEMD160;
 	else if (!g_ascii_strcasecmp (hash, "tiger192"))
-		return GMIME_CIPHER_HASH_TIGER192;
+		return GMIME_CRYPTO_HASH_TIGER192;
 	else if (!g_ascii_strcasecmp (hash, "haval-5-160"))
-		return GMIME_CIPHER_HASH_HAVAL5160;
+		return GMIME_CRYPTO_HASH_HAVAL5160;
 	
-	return GMIME_CIPHER_HASH_DEFAULT;
+	return GMIME_CRYPTO_HASH_DEFAULT;
 }
 
 static const char *
-gpg_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 {
 	switch (hash) {
-	case GMIME_CIPHER_HASH_MD2:
+	case GMIME_CRYPTO_HASH_MD2:
 		return "pgp-md2";
-	case GMIME_CIPHER_HASH_MD5:
+	case GMIME_CRYPTO_HASH_MD5:
 		return "pgp-md5";
-	case GMIME_CIPHER_HASH_SHA1:
+	case GMIME_CRYPTO_HASH_SHA1:
 		return "pgp-sha1";
-	case GMIME_CIPHER_HASH_SHA224:
+	case GMIME_CRYPTO_HASH_SHA224:
 		return "pgp-sha224";
-	case GMIME_CIPHER_HASH_SHA256:
+	case GMIME_CRYPTO_HASH_SHA256:
 		return "pgp-sha256";
-	case GMIME_CIPHER_HASH_SHA384:
+	case GMIME_CRYPTO_HASH_SHA384:
 		return "pgp-sha384";
-	case GMIME_CIPHER_HASH_SHA512:
+	case GMIME_CRYPTO_HASH_SHA512:
 		return "pgp-sha512";
-	case GMIME_CIPHER_HASH_RIPEMD160:
+	case GMIME_CRYPTO_HASH_RIPEMD160:
 		return "pgp-ripemd160";
-	case GMIME_CIPHER_HASH_TIGER192:
+	case GMIME_CRYPTO_HASH_TIGER192:
 		return "pgp-tiger192";
-	case GMIME_CIPHER_HASH_HAVAL5160:
+	case GMIME_CRYPTO_HASH_HAVAL5160:
 		return "pgp-haval-5-160";
 	default:
 		return "pgp-sha1";
@@ -254,7 +254,7 @@ struct _GpgCtx {
 	
 	char *userid;
 	GPtrArray *recipients;
-	GMimeCipherHash hash;
+	GMimeCryptoHash hash;
 	
 	int stdin_fd;
 	int stdout_fd;
@@ -324,7 +324,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	
 	gpg->userid = NULL;
 	gpg->recipients = NULL;
-	gpg->hash = GMIME_CIPHER_HASH_DEFAULT;
+	gpg->hash = GMIME_CRYPTO_HASH_DEFAULT;
 	gpg->always_trust = FALSE;
 	gpg->armor = FALSE;
 	
@@ -390,7 +390,7 @@ gpg_ctx_set_mode (struct _GpgCtx *gpg, enum _GpgCtxMode mode)
 }
 
 static void
-gpg_ctx_set_hash (struct _GpgCtx *gpg, GMimeCipherHash hash)
+gpg_ctx_set_hash (struct _GpgCtx *gpg, GMimeCryptoHash hash)
 {
 	gpg->hash = hash;
 }
@@ -522,26 +522,26 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 }
 
 static const char *
-gpg_hash_str (GMimeCipherHash hash)
+gpg_hash_str (GMimeCryptoHash hash)
 {
 	switch (hash) {
-	case GMIME_CIPHER_HASH_MD2:
+	case GMIME_CRYPTO_HASH_MD2:
 		return "--digest-algo=MD2";
-	case GMIME_CIPHER_HASH_MD5:
+	case GMIME_CRYPTO_HASH_MD5:
 		return "--digest-algo=MD5";
-	case GMIME_CIPHER_HASH_SHA1:
+	case GMIME_CRYPTO_HASH_SHA1:
 		return "--digest-algo=SHA1";
-	case GMIME_CIPHER_HASH_SHA224:
+	case GMIME_CRYPTO_HASH_SHA224:
 		return "--digest-algo=SHA224";
-	case GMIME_CIPHER_HASH_SHA256:
+	case GMIME_CRYPTO_HASH_SHA256:
 		return "--digest-algo=SHA256";
-	case GMIME_CIPHER_HASH_SHA384:
+	case GMIME_CRYPTO_HASH_SHA384:
 		return "--digest-algo=SHA384";
-	case GMIME_CIPHER_HASH_SHA512:
+	case GMIME_CRYPTO_HASH_SHA512:
 		return "--digest-algo=SHA512";
-	case GMIME_CIPHER_HASH_RIPEMD160:
+	case GMIME_CRYPTO_HASH_RIPEMD160:
 		return "--digest-algo=RIPEMD160";
-	case GMIME_CIPHER_HASH_TIGER192:
+	case GMIME_CRYPTO_HASH_TIGER192:
 		return "--digest-algo=TIGER192";
 	default:
 		return NULL;
@@ -1014,7 +1014,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		gpg->need_id = userid;
 	} else if (!strncmp (status, "GET_HIDDEN ", 11)) {
 		GMimeStream *filtered_stream, *passwd;
-		GMimeCipherContext *ctx;
+		GMimeCryptoContext *ctx;
 		GMimeFilter *filter;
 		const char *charset;
 		char *prompt = NULL;
@@ -1023,7 +1023,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status += 11;
 		
-		ctx = (GMimeCipherContext *) gpg->ctx;
+		ctx = (GMimeCryptoContext *) gpg->ctx;
 		if (!ctx->request_passwd) {
 			/* can't ask for a passwd w/o a way to request it from the user... */
 			g_set_error_literal (err, GMIME_ERROR, ECANCELED, _("Canceled."));
@@ -1130,16 +1130,16 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			
 			/* this token is the hash algorithm used */
 			switch (strtol (status, NULL, 10)) {
-			case 1: gpg->hash = GMIME_CIPHER_HASH_MD5; break;
-			case 2: gpg->hash = GMIME_CIPHER_HASH_SHA1; break;
-			case 3:	gpg->hash = GMIME_CIPHER_HASH_RIPEMD160; break;
-			case 5: gpg->hash = GMIME_CIPHER_HASH_MD2; break; /* ? */
-			case 6: gpg->hash = GMIME_CIPHER_HASH_TIGER192; break; /* ? */
-			case 7: gpg->hash = GMIME_CIPHER_HASH_HAVAL5160; break; /* ? */
-			case 8: gpg->hash = GMIME_CIPHER_HASH_SHA256; break;
-			case 9: gpg->hash = GMIME_CIPHER_HASH_SHA384; break;
-			case 10: gpg->hash = GMIME_CIPHER_HASH_SHA512; break;
-			case 11: gpg->hash = GMIME_CIPHER_HASH_SHA224; break;
+			case 1: gpg->hash = GMIME_CRYPTO_HASH_MD5; break;
+			case 2: gpg->hash = GMIME_CRYPTO_HASH_SHA1; break;
+			case 3:	gpg->hash = GMIME_CRYPTO_HASH_RIPEMD160; break;
+			case 5: gpg->hash = GMIME_CRYPTO_HASH_MD2; break; /* ? */
+			case 6: gpg->hash = GMIME_CRYPTO_HASH_TIGER192; break; /* ? */
+			case 7: gpg->hash = GMIME_CRYPTO_HASH_HAVAL5160; break; /* ? */
+			case 8: gpg->hash = GMIME_CRYPTO_HASH_SHA256; break;
+			case 9: gpg->hash = GMIME_CRYPTO_HASH_SHA384; break;
+			case 10: gpg->hash = GMIME_CRYPTO_HASH_SHA512; break;
+			case 11: gpg->hash = GMIME_CRYPTO_HASH_SHA224; break;
 			default: break;
 			}
 			break;
@@ -1647,7 +1647,7 @@ gpg_ctx_op_wait (struct _GpgCtx *gpg)
 
 
 static int
-gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
+gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeCryptoHash hash,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
@@ -1703,7 +1703,7 @@ gpg_sign (GMimeCipherContext *context, const char *userid, GMimeCipherHash hash,
 
 
 static GMimeSignatureValidity *
-gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
+gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 	    GMimeStream *istream, GMimeStream *sigstream,
 	    GError **err)
 {
@@ -1764,7 +1764,7 @@ gpg_verify (GMimeCipherContext *context, GMimeCipherHash hash,
 
 
 static int
-gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
+gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	     GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
 	     GError **err)
 {
@@ -1825,7 +1825,7 @@ gpg_encrypt (GMimeCipherContext *context, gboolean sign, const char *userid,
 
 
 static GMimeSignatureValidity *
-gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
+gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
@@ -1896,7 +1896,7 @@ gpg_decrypt (GMimeCipherContext *context, GMimeStream *istream,
 }
 
 static int
-gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err)
+gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1943,7 +1943,7 @@ gpg_import_keys (GMimeCipherContext *context, GMimeStream *istream, GError **err
 }
 
 static int
-gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
+gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -2001,14 +2001,14 @@ gpg_export_keys (GMimeCipherContext *context, GPtrArray *keys, GMimeStream *ostr
  * @request_passwd: a #GMimePasswordRequestFunc
  * @path: path to gpg binary
  *
- * Creates a new gpg cipher context object.
+ * Creates a new gpg crypto context object.
  *
- * Returns: a new gpg cipher context object.
+ * Returns: a new gpg crypto context object.
  **/
-GMimeCipherContext *
+GMimeCryptoContext *
 g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path)
 {
-	GMimeCipherContext *cipher;
+	GMimeCryptoContext *crypto;
 	GMimeGpgContext *ctx;
 	
 	g_return_val_if_fail (path != NULL, NULL);
@@ -2016,10 +2016,10 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *pat
 	ctx = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
 	ctx->path = g_strdup (path);
 	
-	cipher = (GMimeCipherContext *) ctx;
-	cipher->request_passwd = request_passwd;
+	crypto = (GMimeCryptoContext *) ctx;
+	crypto->request_passwd = request_passwd;
 	
-	return cipher;
+	return crypto;
 }
 
 

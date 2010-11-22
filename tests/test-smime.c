@@ -41,7 +41,7 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 static gboolean
-request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -152,7 +152,7 @@ that GMime properly treats MIME part content as opaque.\nIf this still verifies 
 then we have ourselves a winner I guess...\n"
 
 static void
-test_multipart_signed (GMimeCipherContext *ctx)
+test_multipart_signed (GMimeCryptoContext *ctx)
 {
 	GMimeSignatureValidity *validity;
 	GMimeMultipartSigned *mps;
@@ -189,7 +189,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 	
 	/* sign the part */
 	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "no.user@no.domain",
-				      GMIME_CIPHER_HASH_SHA1, &err);
+				      GMIME_CRYPTO_HASH_SHA1, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -247,7 +247,7 @@ test_multipart_signed (GMimeCipherContext *ctx)
 #define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
 
 static void
-test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
+test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 {
 	const GMimeSignatureValidity *sv;
 	GMimeStream *cleartext, *stream;
@@ -371,7 +371,7 @@ test_multipart_encrypted (GMimeCipherContext *ctx, gboolean sign)
 }
 
 static void
-import_key (GMimeCipherContext *ctx, const char *path)
+import_key (GMimeCryptoContext *ctx, const char *path)
 {
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -382,7 +382,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_cipher_context_import_keys (ctx, stream, &err);
+	g_mime_crypto_context_import_keys (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {
@@ -395,7 +395,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 int main (int argc, char *argv[])
 {
 	const char *datadir = "data/smime";
-	GMimeCipherContext *ctx;
+	GMimeCryptoContext *ctx;
 	struct stat st;
 	char *key;
 	int i;

@@ -19,8 +19,8 @@
  */
 
 
-#ifndef __GMIME_CIPHER_CONTEXT_H__
-#define __GMIME_CIPHER_CONTEXT_H__
+#ifndef __GMIME_CRYPTO_CONTEXT_H__
+#define __GMIME_CRYPTO_CONTEXT_H__
 
 #include <glib.h>
 #include <glib-object.h>
@@ -31,15 +31,15 @@
 
 G_BEGIN_DECLS
 
-#define GMIME_TYPE_CIPHER_CONTEXT            (g_mime_cipher_context_get_type ())
-#define GMIME_CIPHER_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContext))
-#define GMIME_CIPHER_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
-#define GMIME_IS_CIPHER_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CIPHER_CONTEXT))
-#define GMIME_IS_CIPHER_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CIPHER_CONTEXT))
-#define GMIME_CIPHER_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CIPHER_CONTEXT, GMimeCipherContextClass))
+#define GMIME_TYPE_CRYPTO_CONTEXT            (g_mime_crypto_context_get_type ())
+#define GMIME_CRYPTO_CONTEXT(obj)            (G_TYPE_CHECK_INSTANCE_CAST ((obj), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContext))
+#define GMIME_CRYPTO_CONTEXT_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContextClass))
+#define GMIME_IS_CRYPTO_CONTEXT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE ((obj), GMIME_TYPE_CRYPTO_CONTEXT))
+#define GMIME_IS_CRYPTO_CONTEXT_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), GMIME_TYPE_CRYPTO_CONTEXT))
+#define GMIME_CRYPTO_CONTEXT_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), GMIME_TYPE_CRYPTO_CONTEXT, GMimeCryptoContextClass))
 
-typedef struct _GMimeCipherContext GMimeCipherContext;
-typedef struct _GMimeCipherContextClass GMimeCipherContextClass;
+typedef struct _GMimeCryptoContext GMimeCryptoContext;
+typedef struct _GMimeCryptoContextClass GMimeCryptoContextClass;
 
 typedef struct _GMimeSigner GMimeSigner;
 typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
@@ -47,55 +47,55 @@ typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
 
 /**
  * GMimePasswordRequestFunc:
- * @ctx: the #GMimeCipherContext making the request
+ * @ctx: the #GMimeCryptoContext making the request
  * @user_id: the user_id of the password being requested
  * @prompt_ctx: a string containing some helpful context for the prompt
  * @reprompt: %TRUE if this password request is a reprompt due to a previously bad password response
  * @response: a stream for the application to write the password to (followed by a newline '\n' character)
  * @err: a #GError for the callback to set if an error occurs
  *
- * A password request callback allowing a #GMimeCipherContext to
+ * A password request callback allowing a #GMimeCryptoContext to
  * prompt the user for a password for a given key.
  *
  * Returns: %TRUE on success or %FALSE on error.
  **/
-typedef gboolean (* GMimePasswordRequestFunc) (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx,
+typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx,
 					       gboolean reprompt, GMimeStream *response, GError **err);
 
 
 /**
- * GMimeCipherHash:
- * @GMIME_CIPHER_HASH_DEFAULT: The default hash algorithm.
- * @GMIME_CIPHER_HASH_MD2: The MD2 hash algorithm.
- * @GMIME_CIPHER_HASH_MD5: The MD5 hash algorithm.
- * @GMIME_CIPHER_HASH_SHA1: The SHA-1 hash algorithm.
- * @GMIME_CIPHER_HASH_SHA224: The SHA-224 hash algorithm.
- * @GMIME_CIPHER_HASH_SHA256: The SHA-256 hash algorithm.
- * @GMIME_CIPHER_HASH_SHA384: The SHA-384 hash algorithm.
- * @GMIME_CIPHER_HASH_SHA512: The SHA-512 hash algorithm.
- * @GMIME_CIPHER_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
- * @GMIME_CIPHER_HASH_TIGER192: The TIGER-192 hash algorithm.
- * @GMIME_CIPHER_HASH_HAVAL5160: The HAVAL5-160 hash algorithm.
+ * GMimeCryptoHash:
+ * @GMIME_CRYPTO_HASH_DEFAULT: The default hash algorithm.
+ * @GMIME_CRYPTO_HASH_MD2: The MD2 hash algorithm.
+ * @GMIME_CRYPTO_HASH_MD5: The MD5 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA1: The SHA-1 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA224: The SHA-224 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA256: The SHA-256 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA384: The SHA-384 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA512: The SHA-512 hash algorithm.
+ * @GMIME_CRYPTO_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
+ * @GMIME_CRYPTO_HASH_TIGER192: The TIGER-192 hash algorithm.
+ * @GMIME_CRYPTO_HASH_HAVAL5160: The HAVAL5-160 hash algorithm.
  *
  * A hash algorithm.
  **/
 typedef enum {
-	GMIME_CIPHER_HASH_DEFAULT,
-	GMIME_CIPHER_HASH_MD2,
-	GMIME_CIPHER_HASH_MD5,
-	GMIME_CIPHER_HASH_SHA1,
-	GMIME_CIPHER_HASH_SHA224,
-	GMIME_CIPHER_HASH_SHA256,
-	GMIME_CIPHER_HASH_SHA384,
-	GMIME_CIPHER_HASH_SHA512,
-	GMIME_CIPHER_HASH_RIPEMD160,
-	GMIME_CIPHER_HASH_TIGER192,
-	GMIME_CIPHER_HASH_HAVAL5160
-} GMimeCipherHash;
+	GMIME_CRYPTO_HASH_DEFAULT,
+	GMIME_CRYPTO_HASH_MD2,
+	GMIME_CRYPTO_HASH_MD5,
+	GMIME_CRYPTO_HASH_SHA1,
+	GMIME_CRYPTO_HASH_SHA224,
+	GMIME_CRYPTO_HASH_SHA256,
+	GMIME_CRYPTO_HASH_SHA384,
+	GMIME_CRYPTO_HASH_SHA512,
+	GMIME_CRYPTO_HASH_RIPEMD160,
+	GMIME_CRYPTO_HASH_TIGER192,
+	GMIME_CRYPTO_HASH_HAVAL5160
+} GMimeCryptoHash;
 
 
 /**
- * GMimeCipherContext:
+ * GMimeCryptoContext:
  * @parent_object: parent #GObject
  * @request_passwd: a callback for requesting a password
  * @sign_protocol: signature protocol (must be set by subclass)
@@ -104,7 +104,7 @@ typedef enum {
  *
  * A crypto context for use with MIME.
  **/
-struct _GMimeCipherContext {
+struct _GMimeCryptoContext {
 	GObject parent_object;
 	
 	GMimePasswordRequestFunc request_passwd;
@@ -115,68 +115,68 @@ struct _GMimeCipherContext {
 	const char *key_protocol;
 };
 
-struct _GMimeCipherContextClass {
+struct _GMimeCryptoContextClass {
 	GObjectClass parent_class;
 	
-	GMimeCipherHash          (* hash_id)     (GMimeCipherContext *ctx, const char *hash);
+	GMimeCryptoHash          (* hash_id)     (GMimeCryptoContext *ctx, const char *hash);
 	
-	const char *             (* hash_name)   (GMimeCipherContext *ctx, GMimeCipherHash hash);
+	const char *             (* hash_name)   (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 	
-	int                      (* sign)        (GMimeCipherContext *ctx, const char *userid,
-						  GMimeCipherHash hash, GMimeStream *istream,
+	int                      (* sign)        (GMimeCryptoContext *ctx, const char *userid,
+						  GMimeCryptoHash hash, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
-	GMimeSignatureValidity * (* verify)      (GMimeCipherContext *ctx, GMimeCipherHash hash,
+	GMimeSignatureValidity * (* verify)      (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 						  GMimeStream *istream, GMimeStream *sigstream,
 						  GError **err);
 	
-	int                      (* encrypt)     (GMimeCipherContext *ctx, gboolean sign,
+	int                      (* encrypt)     (GMimeCryptoContext *ctx, gboolean sign,
 						  const char *userid, GPtrArray *recipients,
 						  GMimeStream *istream, GMimeStream *ostream,
 						  GError **err);
 	
-	GMimeSignatureValidity * (* decrypt)     (GMimeCipherContext *ctx, GMimeStream *istream,
+	GMimeSignatureValidity * (* decrypt)     (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
-	int                      (* import_keys) (GMimeCipherContext *ctx, GMimeStream *istream,
+	int                      (* import_keys) (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GError **err);
 	
-	int                      (* export_keys) (GMimeCipherContext *ctx, GPtrArray *keys,
+	int                      (* export_keys) (GMimeCryptoContext *ctx, GPtrArray *keys,
 						  GMimeStream *ostream, GError **err);
 };
 
 
-GType g_mime_cipher_context_get_type (void);
+GType g_mime_crypto_context_get_type (void);
 
-void g_mime_cipher_context_set_request_password (GMimeCipherContext *ctx, GMimePasswordRequestFunc request_passwd);
+void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd);
 
 /* hash routines */
-GMimeCipherHash      g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash);
+GMimeCryptoHash      g_mime_crypto_context_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-const char *         g_mime_cipher_context_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
+const char *         g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
-/* cipher routines */
-int                  g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid,
-						 GMimeCipherHash hash, GMimeStream *istream,
+/* crypto routines */
+int                  g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid,
+						 GMimeCryptoHash hash, GMimeStream *istream,
 						 GMimeStream *ostream, GError **err);
 
-GMimeSignatureValidity *g_mime_cipher_context_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+GMimeSignatureValidity *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 						      GMimeStream *istream, GMimeStream *sigstream,
 						      GError **err);
 
-int                  g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign,
+int                  g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 						    const char *userid, GPtrArray *recipients,
 						    GMimeStream *istream, GMimeStream *ostream,
 						    GError **err);
 
-GMimeSignatureValidity *g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+GMimeSignatureValidity *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 						       GMimeStream *ostream, GError **err);
 
 /* key/certificate routines */
-int                  g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+int                  g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 							GError **err);
 
-int                  g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+int                  g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 							GMimeStream *ostream, GError **err);
 
 
@@ -371,4 +371,4 @@ void                    g_mime_signature_validity_add_signer  (GMimeSignatureVal
 
 G_END_DECLS
 
-#endif /* __GMIME_CIPHER_CONTEXT_H__ */
+#endif /* __GMIME_CRYPTO_CONTEXT_H__ */

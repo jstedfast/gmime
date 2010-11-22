@@ -22,7 +22,7 @@
 #ifndef __GMIME_PKCS7_CONTEXT_H__
 #define __GMIME_PKCS7_CONTEXT_H__
 
-#include <gmime/gmime-cipher-context.h>
+#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -39,26 +39,26 @@ typedef struct _GMimePkcs7ContextClass GMimePkcs7ContextClass;
 
 /**
  * GMimePkcs7Context:
- * @parent_object: parent #GMimeCipherContext
+ * @parent_object: parent #GMimeCryptoContext
  * @priv: private context data
  *
- * A PKCS7 cipher context.
+ * A PKCS7 crypto context.
  **/
 struct _GMimePkcs7Context {
-	GMimeCipherContext parent_object;
+	GMimeCryptoContext parent_object;
 	
 	struct _GMimePkcs7ContextPrivate *priv;
 };
 
 struct _GMimePkcs7ContextClass {
-	GMimeCipherContextClass parent_class;
+	GMimeCryptoContextClass parent_class;
 	
 };
 
 
 GType g_mime_pkcs7_context_get_type (void);
 
-GMimeCipherContext *g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd);
+GMimeCryptoContext *g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd);
 
 gboolean g_mime_pkcs7_context_get_always_trust (GMimePkcs7Context *ctx);
 void g_mime_pkcs7_context_set_always_trust (GMimePkcs7Context *ctx, gboolean always_trust);

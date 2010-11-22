@@ -192,7 +192,7 @@ sign_prepare (GMimeObject *mime_part)
  * g_mime_multipart_signed_sign:
  * @mps: multipart/signed object
  * @content: MIME part to sign
- * @ctx: encryption cipher context
+ * @ctx: encryption crypto context
  * @userid: user id to sign with
  * @hash: preferred digest algorithm
  * @err: exception
@@ -208,8 +208,8 @@ sign_prepare (GMimeObject *mime_part)
  **/
 int
 g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
-			      GMimeCipherContext *ctx, const char *userid,
-			      GMimeCipherHash hash, GError **err)
+			      GMimeCryptoContext *ctx, const char *userid,
+			      GMimeCryptoHash hash, GError **err)
 {
 	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
@@ -221,7 +221,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	int rv;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), -1);
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (ctx->sign_protocol != NULL, -1);
 	g_return_val_if_fail (GMIME_IS_OBJECT (content), -1);
 	
@@ -257,7 +257,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if ((rv = g_mime_cipher_context_sign (ctx, userid, hash, filtered, sigstream, err)) == -1) {
+	if ((rv = g_mime_crypto_context_sign (ctx, userid, hash, filtered, sigstream, err)) == -1) {
 		g_object_unref (sigstream);
 		g_object_unref (filtered);
 		g_object_unref (stream);
@@ -271,7 +271,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* set the multipart/signed protocol and micalg */
 	content_type = g_mime_object_get_content_type (GMIME_OBJECT (mps));
 	g_mime_content_type_set_parameter (content_type, "protocol", ctx->sign_protocol);
-	micalg = g_strdup (g_mime_cipher_context_hash_name (ctx, (GMimeCipherHash) rv));
+	micalg = g_strdup (g_mime_crypto_context_hash_name (ctx, (GMimeCryptoHash) rv));
 	g_mime_content_type_set_parameter (content_type, "micalg", micalg);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mps), NULL);
 	
@@ -293,7 +293,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_object_unref (wrapper);
 	
 	/* FIXME: temporary hack, this info should probably be set in
-	 * the CipherContext class - maybe ::sign can take/output a
+	 * the CryptoContext class - maybe ::sign can take/output a
 	 * GMimePart instead. */
 	if (!g_ascii_strcasecmp (ctx->sign_protocol, "application/pkcs7-signature")) {
 		g_mime_part_set_content_encoding (signature, GMIME_CONTENT_ENCODING_BASE64);
@@ -314,18 +314,18 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 /**
  * g_mime_multipart_signed_verify:
  * @mps: multipart/signed object
- * @ctx: encryption cipher context
+ * @ctx: encryption crypto context
  * @err: exception
  *
  * Attempts to verify the signed MIME part contained within the
- * multipart/signed object @mps using the @ctx cipher context.
+ * multipart/signed object @mps using the @ctx crypto context.
  *
  * Returns: a new #GMimeSignatureValidity object on success or %NULL
  * on fail. If the signing fails, an exception will be set on @err to
  * provide information as to why the failure occured.
  **/
 GMimeSignatureValidity *
-g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *ctx,
+g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *ctx,
 				GError **err)
 {
 	GMimeObject *content, *signature;
@@ -335,11 +335,11 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	GMimeStream *stream, *sigstream;
 	const char *protocol, *micalg;
 	GMimeSignatureValidity *valid;
-	GMimeCipherHash hash;
+	GMimeCryptoHash hash;
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (ctx->sign_protocol != NULL, NULL);
 	
 	if (g_mime_multipart_get_count ((GMimeMultipart *) mps) < 2) {
@@ -352,7 +352,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	micalg = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "micalg");
 	
 	if (protocol) {
-		/* make sure the protocol matches the cipher sign protocol */
+		/* make sure the protocol matches the crypto sign protocol */
 		if (g_ascii_strcasecmp (ctx->sign_protocol, protocol) != 0) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     "Cannot verify multipart/signed part: unsupported signature protocol '%s'.",
@@ -410,8 +410,8 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCipherContext *c
 	g_mime_stream_reset (sigstream);
 	
 	/* verify the signature */
-	hash = g_mime_cipher_context_hash_id (ctx, micalg);
-	valid = g_mime_cipher_context_verify (ctx, hash, stream, sigstream, err);
+	hash = g_mime_crypto_context_hash_id (ctx, micalg);
+	valid = g_mime_crypto_context_verify (ctx, hash, stream, sigstream, err);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));

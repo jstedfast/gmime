@@ -23,7 +23,7 @@
 #define __GMIME_MULTIPART_SIGNED_H__
 
 #include <gmime/gmime-multipart.h>
-#include <gmime/gmime-cipher-context.h>
+#include <gmime/gmime-crypto-context.h>
 
 G_BEGIN_DECLS
 
@@ -65,11 +65,11 @@ GType g_mime_multipart_signed_get_type (void);
 GMimeMultipartSigned *g_mime_multipart_signed_new (void);
 
 int g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
-				  GMimeCipherContext *ctx, const char *userid,
-				  GMimeCipherHash hash, GError **err);
+				  GMimeCryptoContext *ctx, const char *userid,
+				  GMimeCryptoHash hash, GError **err);
 
 GMimeSignatureValidity *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps,
-							GMimeCipherContext *ctx,
+							GMimeCryptoContext *ctx,
 							GError **err);
 
 G_END_DECLS

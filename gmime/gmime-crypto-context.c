@@ -23,49 +23,49 @@
 #include <config.h>
 #endif
 
-#include "gmime-cipher-context.h"
+#include "gmime-crypto-context.h"
 #include "gmime-error.h"
 
 
 /**
- * SECTION: gmime-cipher-context
- * @title: GMimeCipherContext
+ * SECTION: gmime-crypto-context
+ * @title: GMimeCryptoContext
  * @short_description: Encryption/signing contexts
  * @see_also:
  *
- * A #GMimeCipherContext is used for encrypting, decrypting, signing
+ * A #GMimeCryptoContext is used for encrypting, decrypting, signing
  * and verifying cryptographic signatures.
  **/
 
 
-static void g_mime_cipher_context_class_init (GMimeCipherContextClass *klass);
-static void g_mime_cipher_context_init (GMimeCipherContext *ctx, GMimeCipherContextClass *klass);
-static void g_mime_cipher_context_finalize (GObject *object);
+static void g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass);
+static void g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *klass);
+static void g_mime_crypto_context_finalize (GObject *object);
 
-static GMimeCipherHash cipher_hash_id (GMimeCipherContext *ctx, const char *hash);
+static GMimeCryptoHash crypto_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-static const char *cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash);
+static const char *crypto_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
-static int cipher_sign (GMimeCipherContext *ctx, const char *userid,
-			GMimeCipherHash hash, GMimeStream *istream,
+static int crypto_sign (GMimeCryptoContext *ctx, const char *userid,
+			GMimeCryptoHash hash, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
 	
-static GMimeSignatureValidity *cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash,
+static GMimeSignatureValidity *crypto_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 					      GMimeStream *istream, GMimeStream *sigstream,
 					      GError **err);
 	
-static int cipher_encrypt (GMimeCipherContext *ctx, gboolean sign,
+static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			   const char *userid, GPtrArray *recipients,
 			   GMimeStream *istream, GMimeStream *ostream,
 			   GError **err);
 
-static GMimeSignatureValidity *cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+static GMimeSignatureValidity *crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					       GMimeStream *ostream, GError **err);
 
-static int cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream,
+static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GError **err);
 
-static int cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+static int crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 			       GMimeStream *ostream, GError **err);
 
 
@@ -73,24 +73,24 @@ static GObjectClass *parent_class = NULL;
 
 
 GType
-g_mime_cipher_context_get_type (void)
+g_mime_crypto_context_get_type (void)
 {
 	static GType type = 0;
 	
 	if (!type) {
 		static const GTypeInfo info = {
-			sizeof (GMimeCipherContextClass),
+			sizeof (GMimeCryptoContextClass),
 			NULL, /* base_class_init */
 			NULL, /* base_class_finalize */
-			(GClassInitFunc) g_mime_cipher_context_class_init,
+			(GClassInitFunc) g_mime_crypto_context_class_init,
 			NULL, /* class_finalize */
 			NULL, /* class_data */
-			sizeof (GMimeCipherContext),
+			sizeof (GMimeCryptoContext),
 			0,    /* n_preallocs */
-			(GInstanceInitFunc) g_mime_cipher_context_init,
+			(GInstanceInitFunc) g_mime_crypto_context_init,
 		};
 		
-		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCipherContext", &info, 0);
+		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCryptoContext", &info, 0);
 	}
 	
 	return type;
@@ -98,66 +98,66 @@ g_mime_cipher_context_get_type (void)
 
 
 static void
-g_mime_cipher_context_class_init (GMimeCipherContextClass *klass)
+g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
-	object_class->finalize = g_mime_cipher_context_finalize;
+	object_class->finalize = g_mime_crypto_context_finalize;
 	
-	klass->hash_id = cipher_hash_id;
-	klass->hash_name = cipher_hash_name;
-	klass->sign = cipher_sign;
-	klass->verify = cipher_verify;
-	klass->encrypt = cipher_encrypt;
-	klass->decrypt = cipher_decrypt;
-	klass->import_keys = cipher_import_keys;
-	klass->export_keys = cipher_export_keys;
+	klass->hash_id = crypto_hash_id;
+	klass->hash_name = crypto_hash_name;
+	klass->sign = crypto_sign;
+	klass->verify = crypto_verify;
+	klass->encrypt = crypto_encrypt;
+	klass->decrypt = crypto_decrypt;
+	klass->import_keys = crypto_import_keys;
+	klass->export_keys = crypto_export_keys;
 }
 
 static void
-g_mime_cipher_context_init (GMimeCipherContext *ctx, GMimeCipherContextClass *klass)
+g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *klass)
 {
 	ctx->request_passwd = NULL;
 }
 
 static void
-g_mime_cipher_context_finalize (GObject *object)
+g_mime_crypto_context_finalize (GObject *object)
 {
-	GMimeCipherContext *ctx = (GMimeCipherContext *) object;
+	GMimeCryptoContext *ctx = (GMimeCryptoContext *) object;
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
 
-static GMimeCipherHash
-cipher_hash_id (GMimeCipherContext *ctx, const char *hash)
+static GMimeCryptoHash
+crypto_hash_id (GMimeCryptoContext *ctx, const char *hash)
 {
-	return GMIME_CIPHER_HASH_DEFAULT;
+	return GMIME_CRYPTO_HASH_DEFAULT;
 }
 
 
 /**
- * g_mime_cipher_context_set_request_password:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_set_request_password:
+ * @ctx: a #GMimeCryptoContext
  * @request_passwd: a callback function for requesting a password
  *
  * Sets the function used by the @ctx for requesting a password from
  * the user.
  **/
 void
-g_mime_cipher_context_set_request_password (GMimeCipherContext *ctx, GMimePasswordRequestFunc request_passwd)
+g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd)
 {
-	g_return_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx));
+	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
 	
 	ctx->request_passwd = request_passwd;
 }
 
 
 /**
- * g_mime_cipher_context_get_request_password:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_get_request_password:
+ * @ctx: a #GMimeCryptoContext
  *
  * Gets the function used by the @ctx for requesting a password from
  * the user.
@@ -165,43 +165,43 @@ g_mime_cipher_context_set_request_password (GMimeCipherContext *ctx, GMimePasswo
  * Returns: a #GMimePasswordRequestFunc or %NULL if not set.
  **/
 GMimePasswordRequestFunc
-g_mime_cipher_context_get_request_password (GMimeCipherContext *ctx)
+g_mime_crypto_context_get_request_password (GMimeCryptoContext *ctx)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	
 	return ctx->request_passwd;
 }
 
 
 /**
- * g_mime_cipher_context_hash_id:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_hash_id:
+ * @ctx: a #GMimeCryptoContext
  * @hash: hash name
  *
  * Gets the hash id based on the hash name @hash.
  *
- * Returns: the equivalent hash id or #GMIME_CIPHER_HASH_DEFAULT on fail.
+ * Returns: the equivalent hash id or #GMIME_CRYPTO_HASH_DEFAULT on fail.
  **/
-GMimeCipherHash
-g_mime_cipher_context_hash_id (GMimeCipherContext *ctx, const char *hash)
+GMimeCryptoHash
+g_mime_crypto_context_hash_id (GMimeCryptoContext *ctx, const char *hash)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), GMIME_CIPHER_HASH_DEFAULT);
-	g_return_val_if_fail (hash != NULL, GMIME_CIPHER_HASH_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), GMIME_CRYPTO_HASH_DEFAULT);
+	g_return_val_if_fail (hash != NULL, GMIME_CRYPTO_HASH_DEFAULT);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->hash_id (ctx, hash);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->hash_id (ctx, hash);
 }
 
 
 static const char *
-cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+crypto_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 {
 	return NULL;
 }
 
 
 /**
- * g_mime_cipher_context_hash_name:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_hash_name:
+ * @ctx: a #GMimeCryptoContext
  * @hash: hash id
  *
  * Gets the hash name based on the hash id @hash.
@@ -209,28 +209,28 @@ cipher_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
  * Returns: the equivalent hash name or %NULL on fail.
  **/
 const char *
-g_mime_cipher_context_hash_name (GMimeCipherContext *ctx, GMimeCipherHash hash)
+g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->hash_name (ctx, hash);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->hash_name (ctx, hash);
 }
 
 
 static int
-cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
+crypto_sign (GMimeCryptoContext *ctx, const char *userid, GMimeCryptoHash hash,
 	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Signing is not supported by this cipher");
+		     "Signing is not supported by this crypto context");
 	
 	return -1;
 }
 
 
 /**
- * g_mime_cipher_context_sign:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_sign:
+ * @ctx: a #GMimeCryptoContext
  * @userid: private key to use to sign the stream
  * @hash: preferred Message-Integrity-Check hash algorithm
  * @istream: input stream
@@ -239,35 +239,35 @@ cipher_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
  *
  * Signs the input stream and writes the resulting signature to the output stream.
  *
- * Returns: the #GMimeCipherHash used on success (useful if @hash is
- * specified as #GMIME_CIPHER_HASH_DEFAULT) or %-1 on fail.
+ * Returns: the #GMimeCryptoHash used on success (useful if @hash is
+ * specified as #GMIME_CRYPTO_HASH_DEFAULT) or %-1 on fail.
  **/
 int
-g_mime_cipher_context_sign (GMimeCipherContext *ctx, const char *userid, GMimeCipherHash hash,
+g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid, GMimeCryptoHash hash,
 			    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->sign (ctx, userid, hash, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->sign (ctx, userid, hash, istream, ostream, err);
 }
 
 
 static GMimeSignatureValidity *
-cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
+crypto_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash, GMimeStream *istream,
 	       GMimeStream *sigstream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Verifying is not supported by this cipher");
+		     "Verifying is not supported by this crypto context");
 	
 	return NULL;
 }
 
 
 /**
- * g_mime_cipher_context_verify:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_verify:
+ * @ctx: a #GMimeCryptoContext
  * @hash: secure hash used
  * @istream: input stream
  * @sigstream: optional detached-signature stream
@@ -283,73 +283,73 @@ cipher_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istre
  * execute at all.
  **/
 GMimeSignatureValidity *
-g_mime_cipher_context_verify (GMimeCipherContext *ctx, GMimeCipherHash hash, GMimeStream *istream,
+g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash, GMimeStream *istream,
 			      GMimeStream *sigstream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->verify (ctx, hash, istream, sigstream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->verify (ctx, hash, istream, sigstream, err);
 }
 
 
 static int
-cipher_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
+crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
 		GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Encryption is not supported by this cipher");
+		     "Encryption is not supported by this crypto context");
 	
 	return -1;
 }
 
 
 /**
- * g_mime_cipher_context_encrypt:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_encrypt:
+ * @ctx: a #GMimeCryptoContext
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @recipients: an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
- * @ostream: ciphertext output stream
+ * @ostream: cryptotext output stream
  * @err: a #GError
  *
  * Encrypts (and optionally signs) the cleartext input stream and
- * writes the resulting ciphertext to the output stream.
+ * writes the resulting cryptotext to the output stream.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_context_encrypt (GMimeCipherContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
+g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
 			       GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, recipients, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, recipients, istream, ostream, err);
 }
 
 
 static GMimeSignatureValidity *
-cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 		GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Decryption is not supported by this cipher");
+		     "Decryption is not supported by this crypto context");
 	
 	return NULL;
 }
 
 
 /**
- * g_mime_cipher_context_decrypt:
- * @ctx: a #GMimeCipherContext
- * @istream: input/ciphertext stream
+ * g_mime_crypto_context_decrypt:
+ * @ctx: a #GMimeCryptoContext
+ * @istream: input/cryptotext stream
  * @ostream: output/cleartext stream
  * @err: a #GError
  *
- * Decrypts the ciphertext input stream and writes the resulting
+ * Decrypts the cryptotext input stream and writes the resulting
  * cleartext to the output stream.
  *
  * If the encrypted input stream was also signed, the returned
@@ -364,30 +364,30 @@ cipher_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
  * Returns: a #GMimeSignatureValidity on success or %NULL on error.
  **/
 GMimeSignatureValidity *
-g_mime_cipher_context_decrypt (GMimeCipherContext *ctx, GMimeStream *istream,
+g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GMimeStream *ostream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, istream, ostream, err);
 }
 
 
 static int
-cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
+crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "You may not import keys with this cipher");
+		     "You may not import keys with this crypto");
 	
 	return -1;
 }
 
 
 /**
- * g_mime_cipher_context_import_keys:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_import_keys:
+ * @ctx: a #GMimeCryptoContext
  * @istream: input stream (containing keys)
  * @err: a #GError
  *
@@ -397,29 +397,29 @@ cipher_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_context_import_keys (GMimeCipherContext *ctx, GMimeStream *istream, GError **err)
+g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->import_keys (ctx, istream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->import_keys (ctx, istream, err);
 }
 
 
 static int
-cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 		    GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "You may not export keys with this cipher");
+		     "You may not export keys with this crypto");
 	
 	return -1;
 }
 
 
 /**
- * g_mime_cipher_context_export_keys:
- * @ctx: a #GMimeCipherContext
+ * g_mime_crypto_context_export_keys:
+ * @ctx: a #GMimeCryptoContext
  * @keys: an array of key ids
  * @ostream: output stream
  * @err: a #GError
@@ -430,14 +430,14 @@ cipher_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_cipher_context_export_keys (GMimeCipherContext *ctx, GPtrArray *keys,
+g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 				   GMimeStream *ostream, GError **err)
 {
-	g_return_val_if_fail (GMIME_IS_CIPHER_CONTEXT (ctx), -1);
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	g_return_val_if_fail (keys != NULL, -1);
 	
-	return GMIME_CIPHER_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, err);
 }
 
 
@@ -1068,7 +1068,7 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
  * Gets the list of signers.
  *
  * Returns: a #GMimeSigner list which contain further information such
- * as trust and cipher keys.
+ * as trust and crypto keys.
  **/
 const GMimeSigner *
 g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)

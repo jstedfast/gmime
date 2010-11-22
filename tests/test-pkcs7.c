@@ -40,7 +40,7 @@ extern int verbose;
 #define v(x) if (verbose > 3) x
 
 static gboolean
-request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
+request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx, gboolean reprompt, GMimeStream *response, GError **err)
 {
 	g_mime_stream_write_string (response, "no.secret\n");
 	
@@ -48,14 +48,14 @@ request_passwd (GMimeCipherContext *ctx, const char *user_id, const char *prompt
 }
 
 static void
-test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GError *err = NULL;
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_cipher_context_sign (ctx, "no.user@no.domain",
-					 GMIME_CIPHER_HASH_SHA256,
+	rv = g_mime_crypto_context_sign (ctx, "no.user@no.domain",
+					 GMIME_CRYPTO_HASH_SHA256,
 					 cleartext, ciphertext, &err);
 	
 	if (rv == -1 || err != NULL) {
@@ -65,19 +65,19 @@ test_sign (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	}
 	
 	v(fprintf (stderr, "signature (%s):\n%.*s\n",
-		   g_mime_cipher_context_hash_name (ctx, rv),
+		   g_mime_crypto_context_hash_name (ctx, rv),
 		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
 		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
 
 static void
-test_verify (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GMimeSignatureValidity *validity;
 	GError *err = NULL;
 	Exception *ex;
 	
-	validity = g_mime_cipher_context_verify (ctx, GMIME_CIPHER_HASH_DEFAULT,
+	validity = g_mime_crypto_context_verify (ctx, GMIME_CRYPTO_HASH_DEFAULT,
 						 cleartext, ciphertext, &err);
 	
 	if (validity == NULL) {
@@ -95,7 +95,7 @@ test_verify (GMimeCipherContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 }
 
 static void
-test_encrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GPtrArray *recipients;
 	GError *err = NULL;
@@ -104,7 +104,7 @@ test_encrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_cipher_context_encrypt (ctx, sign, "no.user@no.domain", recipients,
+	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", recipients,
 				       cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
@@ -121,7 +121,7 @@ test_encrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 }
 
 static void
-test_decrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
+test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GMimeSignatureValidity *sv;
 	Exception *ex = NULL;
@@ -131,7 +131,7 @@ test_decrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	
 	stream = g_mime_stream_mem_new ();
 	
-	if (!(sv = g_mime_cipher_context_decrypt (ctx, ciphertext, stream, &err))) {
+	if (!(sv = g_mime_crypto_context_decrypt (ctx, ciphertext, stream, &err))) {
 		g_object_unref (stream);
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
@@ -166,7 +166,7 @@ test_decrypt (GMimeCipherContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 }
 
 static void
-test_export (GMimeCipherContext *ctx, const char *path)
+test_export (GMimeCryptoContext *ctx, const char *path)
 {
 	GMimeStream *istream, *ostream;
 	register const char *inptr;
@@ -191,7 +191,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 	
 	ostream = g_mime_stream_mem_new ();
 	
-	g_mime_cipher_context_export_keys (ctx, keys, ostream, &err);
+	g_mime_crypto_context_export_keys (ctx, keys, ostream, &err);
 	g_ptr_array_free (keys, TRUE);
 	if (err != NULL) {
 		ex = exception_new ("%s", err->message);
@@ -230,7 +230,7 @@ test_export (GMimeCipherContext *ctx, const char *path)
 }
 
 static void
-import_key (GMimeCipherContext *ctx, const char *path)
+import_key (GMimeCryptoContext *ctx, const char *path)
 {
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -241,7 +241,7 @@ import_key (GMimeCipherContext *ctx, const char *path)
 		throw (exception_new ("open() failed: %s", g_strerror (errno)));
 	
 	stream = g_mime_stream_fs_new (fd);
-	g_mime_cipher_context_import_keys (ctx, stream, &err);
+	g_mime_crypto_context_import_keys (ctx, stream, &err);
 	g_object_unref (stream);
 	
 	if (err != NULL) {
@@ -256,7 +256,7 @@ int main (int argc, char **argv)
 {
 	const char *datadir = "data/pkcs7";
 	GMimeStream *istream, *ostream;
-	GMimeCipherContext *ctx;
+	GMimeCryptoContext *ctx;
 	const char *what;
 	struct stat st;
 	char *key;
@@ -281,7 +281,7 @@ int main (int argc, char **argv)
 	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
 		return EXIT_FAILURE;
 	
-	testsuite_start ("Pkcs7 cipher context");
+	testsuite_start ("Pkcs7 crypto context");
 	
 	ctx = g_mime_pkcs7_context_new (request_passwd);
 	g_mime_pkcs7_context_set_always_trust ((GMimePkcs7Context *) ctx, TRUE);

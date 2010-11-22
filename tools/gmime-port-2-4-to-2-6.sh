@@ -7,6 +7,12 @@ do
 	-e "s/GMIME_BEST_ENCODING_8BIT/GMIME_ENCODING_CONSTRAINT_8BIT/g" \
 	-e "s/GMIME_BEST_ENCODING_BINARY/GMIME_ENCODING_CONSTRAINT_BINARY/g" \
 	-e "s/GMimeBestEncoding/GMimeEncodingConstraint/g" \
+	-e "s/GMimeCipher/GMimeCrypto/g" \
+	-e "s/GMIME_CIPHER_/GMIME_CRYPTO_/g" \
+	-e "s/GMIME_IS_CIPHER_/GMIME_IS_CRYPTO_/g" \
+	-e "s/g_mime_cipher_/g_mime_crypto_/g" \
+	-e "s/gmime-cipher-context.h/gmime-crypto-context.h/g" \
+	-e "s/GMIME_TYPE_CIPHER_CONTEXT/GMIME_TYPE_CRYPTO_CONTEXT/g" \
 	-e "s/g_mime_signer_get_created/g_mime_signer_get_sig_created/g" \
 	-e "s/g_mime_signer_set_created/g_mime_signer_set_sig_created/g" \
 	-e "s/g_mime_signer_get_expires/g_mime_signer_get_sig_expires/g" \
