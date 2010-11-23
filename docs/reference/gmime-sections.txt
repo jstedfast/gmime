@@ -1165,6 +1165,8 @@ g_mime_signer_get_errors
 g_mime_signer_set_errors
 g_mime_signer_get_trust
 g_mime_signer_set_trust
+g_mime_signer_get_hash
+g_mime_signer_set_hash
 g_mime_signer_get_issuer_serial
 g_mime_signer_set_issuer_serial
 g_mime_signer_get_issuer_name

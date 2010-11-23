@@ -1,5 +1,21 @@
 2010-11-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	Fixes bug #635492.
+
+	* gmime/gmime-gpg-context.c (gpg_hash_from_id): New function
+	mapping the numeric hash id's that gpg uses to GMimeCryptoHash
+	ids.
+	(gpg_ctx_parse_signer_info): Extract the hash algorithm used by
+	the signer.
+	(gpg_ctx_parse_status): Updated to use gpg_hash_from_id().
+
+	* gmime/gmime-crypto-context.c (g_mime_signer_set_hash): New
+	function to set the hash algorithm used by the signer.
+	(g_mime_signer_get_hash): New function to get the hash algorithm
+	used by the signer.
+
+2010-11-22  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #635491.
 
 	* gmime/gmime-crypto-context.[c,h]: Renamed from

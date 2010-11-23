@@ -610,6 +610,39 @@ g_mime_signer_get_trust (const GMimeSigner *signer)
 
 
 /**
+ * g_mime_signer_set_hash:
+ * @signer: a #GMimeSigner
+ * @hash: a #GMimeCryptoHash
+ *
+ * Set the hash algorithm used by the signer.
+ **/
+void
+g_mime_signer_set_hash (GMimeSigner *signer, GMimeCryptoHash hash)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->hash = hash;
+}
+
+
+/**
+ * g_mime_signer_get_hash:
+ * @signer: a #GMimeSigner
+ *
+ * Get the hash algorithm used by the signer.
+ *
+ * Returns: the hash algorithm used by the signer.
+ **/
+GMimeCryptoHash
+g_mime_signer_get_hash (const GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, GMIME_CRYPTO_HASH_DEFAULT);
+	
+	return signer->hash;
+}
+
+
+/**
  * g_mime_signer_set_issuer_serial:
  * @signer: a #GMimeSigner
  * @issuer_serial: signer's issuer serial

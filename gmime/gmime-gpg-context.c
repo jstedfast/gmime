@@ -235,7 +235,6 @@ gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	}
 }
 
-
 enum _GpgCtxMode {
 	GPG_CTX_MODE_SIGN,
 	GPG_CTX_MODE_VERIFY,
@@ -545,6 +544,24 @@ gpg_hash_str (GMimeCryptoHash hash)
 		return "--digest-algo=TIGER192";
 	default:
 		return NULL;
+	}
+}
+
+static GMimeCryptoHash
+gpg_hash_from_id (int id)
+{
+	switch (id) {
+	case 1: return GMIME_CRYPTO_HASH_MD5;
+	case 2: return GMIME_CRYPTO_HASH_SHA1;
+	case 3:	return GMIME_CRYPTO_HASH_RIPEMD160;
+	case 5: return GMIME_CRYPTO_HASH_MD2; /* ? */
+	case 6: return GMIME_CRYPTO_HASH_TIGER192; /* ? */
+	case 7: return GMIME_CRYPTO_HASH_HAVAL5160; /* ? */
+	case 8: return GMIME_CRYPTO_HASH_SHA256;
+	case 9: return GMIME_CRYPTO_HASH_SHA384;
+	case 10: return GMIME_CRYPTO_HASH_SHA512;
+	case 11: return GMIME_CRYPTO_HASH_SHA224;
+	default: return GMIME_CRYPTO_HASH_DEFAULT;
 	}
 }
 
@@ -896,6 +913,22 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		/* the fourth token is the signature expiration date (or 0 for never) */
 		signer->sig_expires = strtoul (status, NULL, 10);
 		
+		/* the fifth token is unknown 0 */
+		status = next_token (status, NULL);
+		
+		/* the sixth token is unknown 4 */
+		status = next_token (status, NULL);
+		
+		/* the seventh token is unknown 0 */
+		status = next_token (status, NULL);
+		
+		/* the eighth token is the public-key algorithm id */
+		status = next_token (status, NULL);
+		
+		/* the nineth token is the hash algorithm id */
+		status = next_token (status, NULL);
+		signer->hash = gpg_hash_from_id (strtol (status, NULL, 10));
+		
 		/* ignore the rest... */
 	} else if (!strncmp (status, "TRUST_", 6)) {
 		status += 6;
@@ -1125,23 +1158,11 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			/* skip the next single-char token ("D" for detached) */
 			status = next_token (status, NULL);
 			
-			/* skip the public-key algo token */
+			/* skip the public-key algorithm id token */
 			status = next_token (status, NULL);
 			
 			/* this token is the hash algorithm used */
-			switch (strtol (status, NULL, 10)) {
-			case 1: gpg->hash = GMIME_CRYPTO_HASH_MD5; break;
-			case 2: gpg->hash = GMIME_CRYPTO_HASH_SHA1; break;
-			case 3:	gpg->hash = GMIME_CRYPTO_HASH_RIPEMD160; break;
-			case 5: gpg->hash = GMIME_CRYPTO_HASH_MD2; break; /* ? */
-			case 6: gpg->hash = GMIME_CRYPTO_HASH_TIGER192; break; /* ? */
-			case 7: gpg->hash = GMIME_CRYPTO_HASH_HAVAL5160; break; /* ? */
-			case 8: gpg->hash = GMIME_CRYPTO_HASH_SHA256; break;
-			case 9: gpg->hash = GMIME_CRYPTO_HASH_SHA384; break;
-			case 10: gpg->hash = GMIME_CRYPTO_HASH_SHA512; break;
-			case 11: gpg->hash = GMIME_CRYPTO_HASH_SHA224; break;
-			default: break;
-			}
+			gpg->hash = gpg_hash_from_id (strtol (status, NULL, 10));
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);

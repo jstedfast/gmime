@@ -247,8 +247,9 @@ typedef enum {
  * @errors: A bitfield of #GMimeSignerError values.
  * @trust: A #GMimeSignerTrust.
  * @unused: Unused expansion bits for future use; ignore this.
- * @issuer_serial: The issuer of the certificate if known.
- * @issuer_name: The issuer of the certificate if known.
+ * @hash: The hash algorithm used by the signer, if known.
+ * @issuer_serial: The issuer of the certificate, if known.
+ * @issuer_name: The issuer of the certificate, if known.
  * @fingerprint: A hex string representing the signer's fingerprint.
  * @sig_created: The creation date of the signature.
  * @sig_expires: The expiration date of the signature.
@@ -266,6 +267,7 @@ struct _GMimeSigner {
 	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
 	unsigned int unused:21;   /* unused expansion bits */
+	GMimeCryptoHash hash;
 	char *issuer_serial;
 	char *issuer_name;
 	char *fingerprint;
@@ -292,6 +294,9 @@ GMimeSignerError g_mime_signer_get_errors (const GMimeSigner *signer);
 
 void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
 GMimeSignerTrust g_mime_signer_get_trust (const GMimeSigner *signer);
+
+void g_mime_signer_set_hash (GMimeSigner *signer, GMimeCryptoHash hash);
+GMimeCryptoHash g_mime_signer_get_hash (const GMimeSigner *signer);
 
 void g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial);
 const char *g_mime_signer_get_issuer_serial (const GMimeSigner *signer);
