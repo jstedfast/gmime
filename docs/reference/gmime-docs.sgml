@@ -51,6 +51,7 @@
 <!ENTITY GMimeFilterYenc SYSTEM "xml/gmime-filter-yenc.xml">
 <!ENTITY GMimeCryptoContext SYSTEM "xml/gmime-crypto-context.xml">
 <!ENTITY GMimeGpgContext SYSTEM "xml/gmime-gpg-context.xml">
+<!ENTITY GMimePkcs7Context SYSTEM "xml/gmime-pkcs7-context.xml">
 
 <!ENTITY index-Class-Tree SYSTEM "tree_index.sgml">
 
@@ -248,6 +249,7 @@ string utilities, file utilities, a main loop abstraction, and so on.
       <title>Cryptography Contexts</title>
       &GMimeCryptoContext;
       &GMimeGpgContext;
+      &GMimePkcs7Context;
     </chapter>
   </part>
 </book>

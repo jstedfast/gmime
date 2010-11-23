@@ -1229,3 +1229,23 @@ GMIME_IS_GPG_CONTEXT_CLASS
 GMIME_GPG_CONTEXT_GET_CLASS
 GMimeGpgContextClass
 </SECTION>
+
+<SECTION>
+<FILE>gmime-pkcs7-context</FILE>
+GMimePkcs7Context
+g_mime_pkcs7_context_new
+g_mime_pkcs7_context_get_always_trust
+g_mime_pkcs7_context_set_always_trust
+
+<SUBSECTION Private>
+g_mime_pkcs7_context_get_type
+
+<SUBSECTION Standard>
+GMIME_PKCS7_CONTEXT
+GMIME_IS_PKCS7_CONTEXT
+GMIME_TYPE_PKCS7_CONTEXT
+GMIME_PKCS7_CONTEXT_CLASS
+GMIME_IS_PKCS7_CONTEXT_CLASS
+GMIME_PKCS7_CONTEXT_GET_CLASS
+GMimePkcs7ContextClass
+</SECTION>
