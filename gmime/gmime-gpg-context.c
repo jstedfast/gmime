@@ -548,7 +548,7 @@ gpg_hash_str (GMimeCryptoHash hash)
 }
 
 static GMimeCryptoHash
-gpg_hash_from_id (int id)
+gpg_hash_from_id (unsigned long id)
 {
 	switch (id) {
 	case 1: return GMIME_CRYPTO_HASH_MD5;
@@ -911,23 +911,23 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = inend + 1;
 		
 		/* the fourth token is the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, NULL, 10);
+		signer->sig_expires = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ')
+			return;
 		
-		/* the fifth token is unknown 0 */
+		status = inend + 1;
+		
+		/* the fifth token is an unknown numeric value */
 		status = next_token (status, NULL);
 		
-		/* the sixth token is unknown 4 */
+		/* the sixth token is an unknown numeric value */
 		status = next_token (status, NULL);
 		
-		/* the seventh token is unknown 0 */
+		/* the seventh token is the public-key algorithm id */
 		status = next_token (status, NULL);
 		
-		/* the eighth token is the public-key algorithm id */
-		status = next_token (status, NULL);
-		
-		/* the nineth token is the hash algorithm id */
-		status = next_token (status, NULL);
-		signer->hash = gpg_hash_from_id (strtol (status, NULL, 10));
+		/* the eighth token is the hash algorithm id */
+		signer->hash = gpg_hash_from_id (strtoul (status, NULL, 10));
 		
 		/* ignore the rest... */
 	} else if (!strncmp (status, "TRUST_", 6)) {
@@ -1162,7 +1162,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			status = next_token (status, NULL);
 			
 			/* this token is the hash algorithm used */
-			gpg->hash = gpg_hash_from_id (strtol (status, NULL, 10));
+			gpg->hash = gpg_hash_from_id (strtoul (status, NULL, 10));
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
