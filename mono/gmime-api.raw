@@ -7,19 +7,6 @@
 
 -->
   <namespace name="GMime" library="gmime">
-    <enum name="CipherHash" cname="GMimeCipherHash" type="enum">
-      <member cname="GMIME_CIPHER_HASH_DEFAULT" name="Default" />
-      <member cname="GMIME_CIPHER_HASH_MD2" name="Md2" />
-      <member cname="GMIME_CIPHER_HASH_MD5" name="Md5" />
-      <member cname="GMIME_CIPHER_HASH_SHA1" name="Sha1" />
-      <member cname="GMIME_CIPHER_HASH_SHA224" name="Sha224" />
-      <member cname="GMIME_CIPHER_HASH_SHA256" name="Sha256" />
-      <member cname="GMIME_CIPHER_HASH_SHA384" name="Sha384" />
-      <member cname="GMIME_CIPHER_HASH_SHA512" name="Sha512" />
-      <member cname="GMIME_CIPHER_HASH_RIPEMD160" name="Ripemd160" />
-      <member cname="GMIME_CIPHER_HASH_TIGER192" name="Tiger192" />
-      <member cname="GMIME_CIPHER_HASH_HAVAL5160" name="Haval5160" />
-    </enum>
     <enum name="ContentEncoding" cname="GMimeContentEncoding" type="enum">
       <member cname="GMIME_CONTENT_ENCODING_DEFAULT" name="Default" />
       <member cname="GMIME_CONTENT_ENCODING_7BIT" name="7Bit" />
@@ -28,6 +15,19 @@
       <member cname="GMIME_CONTENT_ENCODING_BASE64" name="Base64" />
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
+    </enum>
+    <enum name="CryptoHash" cname="GMimeCryptoHash" type="enum">
+      <member cname="GMIME_CRYPTO_HASH_DEFAULT" name="Default" />
+      <member cname="GMIME_CRYPTO_HASH_MD2" name="Md2" />
+      <member cname="GMIME_CRYPTO_HASH_MD5" name="Md5" />
+      <member cname="GMIME_CRYPTO_HASH_SHA1" name="Sha1" />
+      <member cname="GMIME_CRYPTO_HASH_SHA224" name="Sha224" />
+      <member cname="GMIME_CRYPTO_HASH_SHA256" name="Sha256" />
+      <member cname="GMIME_CRYPTO_HASH_SHA384" name="Sha384" />
+      <member cname="GMIME_CRYPTO_HASH_SHA512" name="Sha512" />
+      <member cname="GMIME_CRYPTO_HASH_RIPEMD160" name="Ripemd160" />
+      <member cname="GMIME_CRYPTO_HASH_TIGER192" name="Tiger192" />
+      <member cname="GMIME_CRYPTO_HASH_HAVAL5160" name="Haval5160" />
     </enum>
     <enum name="EncodingConstraint" cname="GMimeEncodingConstraint" type="enum">
       <member cname="GMIME_ENCODING_CONSTRAINT_7BIT" name="7Bit" />
@@ -134,7 +134,7 @@
     <callback name="PasswordRequestFunc" cname="GMimePasswordRequestFunc">
       <return-type type="gboolean" />
       <parameters>
-        <parameter type="GMimeCipherContext*" name="ctx" />
+        <parameter type="GMimeCryptoContext*" name="ctx" />
         <parameter type="const-char*" name="user_id" />
         <parameter type="const-char*" name="prompt_ctx" />
         <parameter type="gboolean" name="reprompt" />
@@ -142,24 +142,24 @@
         <parameter type="GError**" name="err" />
       </parameters>
     </callback>
-    <object name="CipherContext" cname="GMimeCipherContext" parent="GObject">
+    <object name="CryptoContext" cname="GMimeCryptoContext" parent="GObject">
       <field name="RequestPasswd" cname="request_passwd" type="GMimePasswordRequestFunc" />
       <field name="SignProtocol" cname="sign_protocol" type="const-char*" />
       <field name="EncryptProtocol" cname="encrypt_protocol" type="const-char*" />
       <field name="KeyProtocol" cname="key_protocol" type="const-char*" />
       <virtual_method name="HashId" cname="hash_id">
-        <return-type type="GMimeCipherHash" />
+        <return-type type="GMimeCryptoHash" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="const-char*" name="hash" />
         </parameters>
       </virtual_method>
       <virtual_method name="Sign" cname="sign">
         <return-type type="int" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
@@ -168,8 +168,8 @@
       <virtual_method name="Verify" cname="verify">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="sigstream" />
           <parameter type="GError**" name="err" />
@@ -178,7 +178,7 @@
       <virtual_method name="Encrypt" cname="encrypt">
         <return-type type="int" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
           <parameter type="GPtrArray*" name="recipients" />
@@ -190,7 +190,7 @@
       <virtual_method name="Decrypt" cname="decrypt">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
@@ -199,7 +199,7 @@
       <virtual_method name="ImportKeys" cname="import_keys">
         <return-type type="int" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GError**" name="err" />
         </parameters>
@@ -207,13 +207,13 @@
       <virtual_method name="ExportKeys" cname="export_keys">
         <return-type type="int" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GPtrArray*" name="keys" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
         </parameters>
       </virtual_method>
-      <method name="Decrypt" cname="g_mime_cipher_context_decrypt">
+      <method name="Decrypt" cname="g_mime_crypto_context_decrypt">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
@@ -221,7 +221,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="Encrypt" cname="g_mime_cipher_context_encrypt">
+      <method name="Encrypt" cname="g_mime_crypto_context_encrypt">
         <return-type type="int" />
         <parameters>
           <parameter type="gboolean" name="sign" />
@@ -232,7 +232,7 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="ExportKeys" cname="g_mime_cipher_context_export_keys">
+      <method name="ExportKeys" cname="g_mime_crypto_context_export_keys">
         <return-type type="int" />
         <parameters>
           <parameter type="GPtrArray*" name="keys" />
@@ -240,48 +240,48 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="GetType" cname="g_mime_cipher_context_get_type" shared="true">
+      <method name="GetType" cname="g_mime_crypto_context_get_type" shared="true">
         <return-type type="GType" />
       </method>
-      <method name="HashId" cname="g_mime_cipher_context_hash_id">
-        <return-type type="GMimeCipherHash" />
+      <method name="HashId" cname="g_mime_crypto_context_hash_id">
+        <return-type type="GMimeCryptoHash" />
         <parameters>
           <parameter type="const-char*" name="hash" />
         </parameters>
       </method>
-      <method name="HashName" cname="g_mime_cipher_context_hash_name">
+      <method name="HashName" cname="g_mime_crypto_context_hash_name">
         <return-type type="const-char*" />
         <parameters>
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoHash" name="hash" />
         </parameters>
       </method>
-      <method name="ImportKeys" cname="g_mime_cipher_context_import_keys">
+      <method name="ImportKeys" cname="g_mime_crypto_context_import_keys">
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="SetRequestPassword" cname="g_mime_cipher_context_set_request_password">
+      <method name="SetRequestPassword" cname="g_mime_crypto_context_set_request_password">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimePasswordRequestFunc" name="request_passwd" />
         </parameters>
       </method>
-      <method name="Sign" cname="g_mime_cipher_context_sign">
+      <method name="Sign" cname="g_mime_crypto_context_sign">
         <return-type type="int" />
         <parameters>
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
-      <method name="Verify" cname="g_mime_cipher_context_verify">
+      <method name="Verify" cname="g_mime_crypto_context_verify">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="sigstream" />
           <parameter type="GError**" name="err" />
@@ -622,7 +622,7 @@
         </parameters>
       </method>
     </object>
-    <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCipherContext">
+    <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCryptoContext">
       <field name="AutoKeyRetrieve" cname="auto_key_retrieve" type="gboolean" />
       <field name="AlwaysTrust" cname="always_trust" type="gboolean" />
       <field name="Path" cname="path" type="char*" />
@@ -1010,7 +1010,7 @@
       <method name="Decrypt" cname="g_mime_multipart_encrypted_decrypt">
         <return-type type="GMimeObject*" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
@@ -1018,7 +1018,7 @@
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeObject*" name="content" />
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
           <parameter type="GPtrArray*" name="recipients" />
@@ -1042,16 +1042,16 @@
         <return-type type="int" />
         <parameters>
           <parameter type="GMimeObject*" name="content" />
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCipherHash" name="hash" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
       <method name="Verify" cname="g_mime_multipart_signed_verify">
         <return-type type="GMimeSignatureValidity*" />
         <parameters>
-          <parameter type="GMimeCipherContext*" name="ctx" />
+          <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
@@ -1431,7 +1431,7 @@
         <return-type type="gboolean" />
       </method>
     </object>
-    <object name="Pkcs7Context" cname="GMimePkcs7Context" parent="GMimeCipherContext">
+    <object name="Pkcs7Context" cname="GMimePkcs7Context" parent="GMimeCryptoContext">
       <field name="Priv" cname="priv" type="struct-_GMimePkcs7ContextPrivate*" />
       <method name="GetAlwaysTrust" cname="g_mime_pkcs7_context_get_always_trust">
         <return-type type="gboolean" />
@@ -2611,6 +2611,7 @@
       <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
       <field name="Unused" cname="unused" bits="21" type="unsigned int" access="public" writeable="true" />
+      <field name="Hash" cname="hash" type="GMimeCryptoHash" access="public" writeable="true" />
       <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />
       <field name="IssuerName" cname="issuer_name" type="char*" access="public" writeable="true" />
       <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
@@ -2632,6 +2633,9 @@
       </method>
       <method name="GetFingerprint" cname="g_mime_signer_get_fingerprint">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetHash" cname="g_mime_signer_get_hash">
+        <return-type type="GMimeCryptoHash" />
       </method>
       <method name="GetIssuerName" cname="g_mime_signer_get_issuer_name">
         <return-type type="const-char*" />
@@ -2683,6 +2687,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="fingerprint" />
+        </parameters>
+      </method>
+      <method name="SetHash" cname="g_mime_signer_set_hash">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoHash" name="hash" />
         </parameters>
       </method>
       <method name="SetIssuerName" cname="g_mime_signer_set_issuer_name">
