@@ -47,6 +47,16 @@ Other API changes include:
 - GMimeSigner now has a number of new fields and accessors making it
   much more complete.
 
+- GMimeCipherContext has been renamed to GMimeCryptoContext and the
+  method names for this class have also been renamed in a similar
+  fashion.
+
+- g_mime_crypto_context_encrypt() now takes a digest algorithm
+  argument which is used when the 'sign' argument is TRUE.
+
+- g_mime_multipart_encrypted() also now takes a sigest algorithm
+  argument which it passes along to g_mime_crypto_context_encrypt().
+
 For convenience, GMime 2.6 source packages include a shell-script to
 aid in porting applications using GMime 2.4 to the 2.6 API. You can
 find this script under the tools/ directory, named
