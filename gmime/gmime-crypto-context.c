@@ -55,9 +55,9 @@ static GMimeSignatureValidity *crypto_verify (GMimeCryptoContext *ctx, GMimeCryp
 					      GError **err);
 	
 static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-			   const char *userid, GPtrArray *recipients,
-			   GMimeStream *istream, GMimeStream *ostream,
-			   GError **err);
+			   const char *userid, GMimeCryptoHash hash,
+			   GPtrArray *recipients, GMimeStream *istream,
+			   GMimeStream *ostream, GError **err);
 
 static GMimeSignatureValidity *crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					       GMimeStream *ostream, GError **err);
@@ -232,7 +232,7 @@ crypto_sign (GMimeCryptoContext *ctx, const char *userid, GMimeCryptoHash hash,
  * g_mime_crypto_context_sign:
  * @ctx: a #GMimeCryptoContext
  * @userid: private key to use to sign the stream
- * @hash: preferred Message-Integrity-Check hash algorithm
+ * @hash: digest algorithm to use
  * @istream: input stream
  * @ostream: output stream
  * @err: a #GError
@@ -268,7 +268,7 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash, GMimeStream *istre
 /**
  * g_mime_crypto_context_verify:
  * @ctx: a #GMimeCryptoContext
- * @hash: secure hash used
+ * @hash: digest algorithm used, if known
  * @istream: input stream
  * @sigstream: optional detached-signature stream
  * @err: a #GError
@@ -294,8 +294,8 @@ g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash, GMi
 
 
 static int
-crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
-		GMimeStream *istream, GMimeStream *ostream, GError **err)
+crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeCryptoHash hash,
+		GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 		     "Encryption is not supported by this crypto context");
@@ -309,6 +309,7 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtr
  * @ctx: a #GMimeCryptoContext
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
+ * @hash: digest algorithm to use when signing
  * @recipients: an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
  * @ostream: cryptotext output stream
@@ -320,14 +321,14 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtr
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GPtrArray *recipients,
-			       GMimeStream *istream, GMimeStream *ostream, GError **err)
+g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMimeCryptoHash hash,
+			       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, recipients, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->encrypt (ctx, sign, userid, hash, recipients, istream, ostream, err);
 }
 
 

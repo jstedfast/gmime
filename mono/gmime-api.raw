@@ -181,6 +181,7 @@
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -226,6 +227,7 @@
         <parameters>
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -1021,6 +1023,7 @@
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
+          <parameter type="GMimeCryptoHash" name="hash" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GError**" name="err" />
         </parameters>

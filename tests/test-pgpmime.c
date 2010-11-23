@@ -285,7 +285,8 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
-					    "no.user@no.domain", recipients, &err);
+					    "no.user@no.domain", GMIME_CRYPTO_HASH_SHA256,
+					    recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	

@@ -148,6 +148,7 @@ g_mime_multipart_encrypted_new (void)
  * @ctx: encryption crypto context
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
+ * @hash: digest algorithm to use when signing
  * @recipients: an array of recipients to encrypt to
  * @err: a #GError
  *
@@ -163,8 +164,8 @@ g_mime_multipart_encrypted_new (void)
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 				    GMimeCryptoContext *ctx, gboolean sign,
-				    const char *userid, GPtrArray *recipients,
-				    GError **err)
+				    const char *userid, GMimeCryptoHash hash,
+				    GPtrArray *recipients, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimePart *version_part, *encrypted_part;
@@ -194,7 +195,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt (ctx, sign, userid, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt (ctx, sign, userid, hash, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return -1;

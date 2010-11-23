@@ -1,5 +1,18 @@
 2010-11-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):
+	Now takes a hash algorithm argument which it passes along to
+	g_mime_crypto_context_encrypt().
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): When signing and
+	encrypting, pass the digest algorithm to gpg on the command-line.
+	(gpg_encrypt): Set the hash id on the GpgCtx.
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_context_encrypt):
+	Now takes a hash algorithm argument.
+
+2010-11-22  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #635492.
 
 	* gmime/gmime-gpg-context.c (gpg_hash_from_id): New function

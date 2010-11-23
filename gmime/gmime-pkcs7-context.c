@@ -84,10 +84,9 @@ static GMimeSignatureValidity *pkcs7_verify (GMimeCryptoContext *ctx, GMimeCrypt
 					     GMimeStream *istream, GMimeStream *sigstream,
 					     GError **err);
 
-static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-			  const char *userid, GPtrArray *recipients,
-			  GMimeStream *istream, GMimeStream *ostream,
-			  GError **err);
+static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
+			  GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+			  GMimeStream *ostream, GError **err);
 
 static GMimeSignatureValidity *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					      GMimeStream *ostream, GError **err);
@@ -649,8 +648,8 @@ key_list_free (gpgme_key_t *keys)
 
 static int
 pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
-	       GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-	       GError **err)
+	       GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+	       GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_SMIME
 	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;

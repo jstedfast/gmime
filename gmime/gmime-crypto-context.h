@@ -131,9 +131,9 @@ struct _GMimeCryptoContextClass {
 						  GError **err);
 	
 	int                      (* encrypt)     (GMimeCryptoContext *ctx, gboolean sign,
-						  const char *userid, GPtrArray *recipients,
-						  GMimeStream *istream, GMimeStream *ostream,
-						  GError **err);
+						  const char *userid, GMimeCryptoHash hash,
+						  GPtrArray *recipients, GMimeStream *istream,
+						  GMimeStream *ostream, GError **err);
 	
 	GMimeSignatureValidity * (* decrypt)     (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
@@ -165,9 +165,9 @@ GMimeSignatureValidity *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, G
 						      GError **err);
 
 int                  g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-						    const char *userid, GPtrArray *recipients,
-						    GMimeStream *istream, GMimeStream *ostream,
-						    GError **err);
+						    const char *userid, GMimeCryptoHash hash,
+						    GPtrArray *recipients, GMimeStream *istream,
+						    GMimeStream *ostream, GError **err);
 
 GMimeSignatureValidity *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 						       GMimeStream *ostream, GError **err);

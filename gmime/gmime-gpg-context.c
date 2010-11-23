@@ -86,10 +86,9 @@ static GMimeSignatureValidity *gpg_verify (GMimeCryptoContext *ctx, GMimeCryptoH
 					   GMimeStream *istream, GMimeStream *sigstream,
 					   GError **err);
 
-static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-			const char *userid, GPtrArray *recipients,
-			GMimeStream *istream, GMimeStream *ostream,
-			GError **err);
+static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
+			GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+			GMimeStream *ostream, GError **err);
 
 static GMimeSignatureValidity *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					    GMimeStream *ostream, GError **err);
@@ -608,8 +607,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		g_ptr_array_add (args, "--detach");
 		if (gpg->armor)
 			g_ptr_array_add (args, "--armor");
-		hash_str = gpg_hash_str (gpg->hash);
-		if (hash_str)
+		if ((hash_str = gpg_hash_str (gpg->hash)))
 			g_ptr_array_add (args, (char *) hash_str);
 		if (gpg->userid) {
 			g_ptr_array_add (args, "-u");
@@ -637,6 +635,9 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		break;
 	case GPG_CTX_MODE_SIGN_ENCRYPT:
 		g_ptr_array_add (args, "--sign");
+		
+		if ((hash_str = gpg_hash_str (gpg->hash)))
+			g_ptr_array_add (args, (char *) hash_str);
 		
 		/* fall thru... */
 	case GPG_CTX_MODE_ENCRYPT:
@@ -1786,8 +1787,8 @@ gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 
 static int
 gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
-	     GPtrArray *recipients, GMimeStream *istream, GMimeStream *ostream,
-	     GError **err)
+	     GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
@@ -1798,6 +1799,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN_ENCRYPT);
 	else
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_ENCRYPT);
+	gpg_ctx_set_hash (gpg, hash);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
 	gpg_ctx_set_istream (gpg, istream);

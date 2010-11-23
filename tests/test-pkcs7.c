@@ -104,7 +104,8 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", recipients,
+	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain",
+				       GMIME_CRYPTO_HASH_SHA256, recipients,
 				       cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
