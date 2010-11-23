@@ -65,7 +65,7 @@ Cryptography related RFCs:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2009 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2010 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -119,7 +119,7 @@ REQUIREMENTS
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version >= 2.12.0
+  - Glib version >= 2.18.0
 
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
