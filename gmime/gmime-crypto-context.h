@@ -63,6 +63,30 @@ typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const ch
 					       gboolean reprompt, GMimeStream *response, GError **err);
 
 
+
+/**
+ * GMimeCryptoPubKeyAlgo:
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT: The default public-key algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
+ *
+ * A public-key algorithm.
+ **/
+typedef enum {
+	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_DSA
+} GMimeCryptoPubKeyAlgo;
+
+
 /**
  * GMimeCryptoHash:
  * @GMIME_CRYPTO_HASH_DEFAULT: The default hash algorithm.
@@ -75,7 +99,8 @@ typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const ch
  * @GMIME_CRYPTO_HASH_SHA512: The SHA-512 hash algorithm.
  * @GMIME_CRYPTO_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
  * @GMIME_CRYPTO_HASH_TIGER192: The TIGER-192 hash algorithm.
- * @GMIME_CRYPTO_HASH_HAVAL5160: The HAVAL5-160 hash algorithm.
+ * @GMIME_CRYPTO_HASH_HAVAL5160: The HAVAL-5-160 hash algorithm.
+ * @GMIME_CRYPTO_HASH_MD4: The MD4 hash algorithm.
  *
  * A hash algorithm.
  **/
@@ -90,7 +115,8 @@ typedef enum {
 	GMIME_CRYPTO_HASH_SHA512,
 	GMIME_CRYPTO_HASH_RIPEMD160,
 	GMIME_CRYPTO_HASH_TIGER192,
-	GMIME_CRYPTO_HASH_HAVAL5160
+	GMIME_CRYPTO_HASH_HAVAL5160,
+	GMIME_CRYPTO_HASH_MD4
 } GMimeCryptoHash;
 
 
@@ -247,7 +273,8 @@ typedef enum {
  * @errors: A bitfield of #GMimeSignerError values.
  * @trust: A #GMimeSignerTrust.
  * @unused: Unused expansion bits for future use; ignore this.
- * @hash: The hash algorithm used by the signer, if known.
+ * @pubkey_algo: The public-key algorithm used by the signer, if known.
+ * @hash_algo: The hash algorithm used by the signer, if known.
  * @issuer_serial: The issuer of the certificate, if known.
  * @issuer_name: The issuer of the certificate, if known.
  * @fingerprint: A hex string representing the signer's fingerprint.
@@ -267,7 +294,8 @@ struct _GMimeSigner {
 	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
 	unsigned int unused:21;   /* unused expansion bits */
-	GMimeCryptoHash hash;
+	GMimeCryptoPubKeyAlgo pubkey_algo;
+	GMimeCryptoHash hash_algo;
 	char *issuer_serial;
 	char *issuer_name;
 	char *fingerprint;
@@ -295,8 +323,11 @@ GMimeSignerError g_mime_signer_get_errors (const GMimeSigner *signer);
 void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
 GMimeSignerTrust g_mime_signer_get_trust (const GMimeSigner *signer);
 
-void g_mime_signer_set_hash (GMimeSigner *signer, GMimeCryptoHash hash);
-GMimeCryptoHash g_mime_signer_get_hash (const GMimeSigner *signer);
+void g_mime_signer_set_pubkey_algo (GMimeSigner *signer, GMimeCryptoPubKeyAlgo pubkey_algo);
+GMimeCryptoPubKeyAlgo g_mime_signer_get_pubkey_algo (const GMimeSigner *signer);
+
+void g_mime_signer_set_hash_algo (GMimeSigner *signer, GMimeCryptoHash hash);
+GMimeCryptoHash g_mime_signer_get_hash_algo (const GMimeSigner *signer);
 
 void g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial);
 const char *g_mime_signer_get_issuer_serial (const GMimeSigner *signer);

@@ -28,6 +28,16 @@
       <member cname="GMIME_CRYPTO_HASH_RIPEMD160" name="Ripemd160" />
       <member cname="GMIME_CRYPTO_HASH_TIGER192" name="Tiger192" />
       <member cname="GMIME_CRYPTO_HASH_HAVAL5160" name="Haval5160" />
+      <member cname="GMIME_CRYPTO_HASH_MD4" name="Md4" />
+    </enum>
+    <enum name="CryptoPubKeyAlgo" cname="GMimeCryptoPubKeyAlgo" type="enum">
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT" name="Default" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA" name="Rsa" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_E" name="RsaE" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_S" name="RsaS" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG" name="Elg" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG_E" name="ElgE" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DSA" name="Dsa" />
     </enum>
     <enum name="EncodingConstraint" cname="GMimeEncodingConstraint" type="enum">
       <member cname="GMIME_ENCODING_CONSTRAINT_7BIT" name="7Bit" />
@@ -2614,7 +2624,8 @@
       <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
       <field name="Unused" cname="unused" bits="21" type="unsigned int" access="public" writeable="true" />
-      <field name="Hash" cname="hash" type="GMimeCryptoHash" access="public" writeable="true" />
+      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
+      <field name="HashAlgo" cname="hash_algo" type="GMimeCryptoHash" access="public" writeable="true" />
       <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />
       <field name="IssuerName" cname="issuer_name" type="char*" access="public" writeable="true" />
       <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
@@ -2637,7 +2648,7 @@
       <method name="GetFingerprint" cname="g_mime_signer_get_fingerprint">
         <return-type type="const-char*" />
       </method>
-      <method name="GetHash" cname="g_mime_signer_get_hash">
+      <method name="GetHashAlgo" cname="g_mime_signer_get_hash_algo">
         <return-type type="GMimeCryptoHash" />
       </method>
       <method name="GetIssuerName" cname="g_mime_signer_get_issuer_name">
@@ -2657,6 +2668,9 @@
       </method>
       <method name="GetName" cname="g_mime_signer_get_name">
         <return-type type="const-char*" />
+      </method>
+      <method name="GetPubkeyAlgo" cname="g_mime_signer_get_pubkey_algo">
+        <return-type type="GMimeCryptoPubKeyAlgo" />
       </method>
       <method name="GetSigCreated" cname="g_mime_signer_get_sig_created">
         <return-type type="time_t" />
@@ -2692,7 +2706,7 @@
           <parameter type="const-char*" name="fingerprint" />
         </parameters>
       </method>
-      <method name="SetHash" cname="g_mime_signer_set_hash">
+      <method name="SetHashAlgo" cname="g_mime_signer_set_hash_algo">
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeCryptoHash" name="hash" />
@@ -2732,6 +2746,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="SetPubkeyAlgo" cname="g_mime_signer_set_pubkey_algo">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
         </parameters>
       </method>
       <method name="SetSigCreated" cname="g_mime_signer_set_sig_created">

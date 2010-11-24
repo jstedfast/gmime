@@ -1,3 +1,21 @@
+2010-11-24  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes bug #635661.
+
+	* gmime/gmime-crypto-context.c (g_mime_signer_new): Initialize
+	pubkey_algo and hash_algo.
+	(g_mime_signer_[g,s]et_pubkey_algo): Implemented.
+	(g_mime_signer_[g,s]et_hash_algo): Renamed from [g,s]_hash().
+
+	* gmime/gmime-crypto-context.h (GMimeCryptoPubKeyAlgo): Defined
+	enum.
+
+	* gmime/gmime-pkcs7-context.c (pkcs7_get_validity): Record the
+	hash and pubkey algorithms used in the GMimeSigner.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Record
+	the pubkey algorithm used by the signer.
+
 2010-11-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):

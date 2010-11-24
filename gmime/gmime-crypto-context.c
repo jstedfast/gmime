@@ -455,6 +455,8 @@ g_mime_signer_new (void)
 	GMimeSigner *signer;
 	
 	signer = g_slice_new (GMimeSigner);
+	signer->pubkey_algo = GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
+	signer->hash_algo = GMIME_CRYPTO_HASH_DEFAULT;
 	signer->status = GMIME_SIGNER_STATUS_NONE;
 	signer->errors = GMIME_SIGNER_ERROR_NONE;
 	signer->trust = GMIME_SIGNER_TRUST_NONE;
@@ -611,23 +613,56 @@ g_mime_signer_get_trust (const GMimeSigner *signer)
 
 
 /**
- * g_mime_signer_set_hash:
+ * g_mime_signer_set_pubkey_algo:
+ * @signer: a #GMimeSigner
+ * @pubkey_algo: a #GMimeCryptoPubKeyAlgo
+ *
+ * Set the public-key algorithm used by the signer.
+ **/
+void
+g_mime_signer_set_pubkey_algo (GMimeSigner *signer, GMimeCryptoPubKeyAlgo pubkey_algo)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->pubkey_algo = pubkey_algo;
+}
+
+
+/**
+ * g_mime_signer_get_pubkey_algo:
+ * @signer: a #GMimeSigner
+ *
+ * Get the public-key algorithm used by the signer.
+ *
+ * Returns: the public-key algorithm used by the signer.
+ **/
+GMimeCryptoPubKeyAlgo
+g_mime_signer_get_pubkey_algo (const GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT);
+	
+	return signer->pubkey_algo;
+}
+
+
+/**
+ * g_mime_signer_set_hash_algo:
  * @signer: a #GMimeSigner
  * @hash: a #GMimeCryptoHash
  *
  * Set the hash algorithm used by the signer.
  **/
 void
-g_mime_signer_set_hash (GMimeSigner *signer, GMimeCryptoHash hash)
+g_mime_signer_set_hash_algo (GMimeSigner *signer, GMimeCryptoHash hash)
 {
 	g_return_if_fail (signer != NULL);
 	
-	signer->hash = hash;
+	signer->hash_algo = hash;
 }
 
 
 /**
- * g_mime_signer_get_hash:
+ * g_mime_signer_get_hash_algo:
  * @signer: a #GMimeSigner
  *
  * Get the hash algorithm used by the signer.
@@ -635,11 +670,11 @@ g_mime_signer_set_hash (GMimeSigner *signer, GMimeCryptoHash hash)
  * Returns: the hash algorithm used by the signer.
  **/
 GMimeCryptoHash
-g_mime_signer_get_hash (const GMimeSigner *signer)
+g_mime_signer_get_hash_algo (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, GMIME_CRYPTO_HASH_DEFAULT);
 	
-	return signer->hash;
+	return signer->hash_algo;
 }
 
 

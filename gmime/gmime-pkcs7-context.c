@@ -185,6 +185,8 @@ pkcs7_hash_id (GMimeCryptoContext *ctx, const char *hash)
 	
 	if (!g_ascii_strcasecmp (hash, "md2"))
 		return GMIME_CRYPTO_HASH_MD2;
+	else if (!g_ascii_strcasecmp (hash, "md4"))
+		return GMIME_CRYPTO_HASH_MD4;
 	else if (!g_ascii_strcasecmp (hash, "md5"))
 		return GMIME_CRYPTO_HASH_MD5;
 	else if (!g_ascii_strcasecmp (hash, "sha1"))
@@ -213,6 +215,8 @@ pkcs7_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	switch (hash) {
 	case GMIME_CRYPTO_HASH_MD2:
 		return "md2";
+	case GMIME_CRYPTO_HASH_MD4:
+		return "md4";
 	case GMIME_CRYPTO_HASH_MD5:
 		return "md5";
 	case GMIME_CRYPTO_HASH_SHA1:
@@ -463,6 +467,39 @@ pkcs7_trust (gpgme_validity_t trust)
 	}
 }
 
+static GMimeCryptoPubKeyAlgo
+pkcs7_pubkey_algo (id)
+{
+	switch (id) {
+	case GPGME_PK_RSA: return GMIME_CRYPTO_PUBKEY_ALGO_RSA;
+	case GPGME_PK_RSA_E: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_E;
+	case GPGME_PK_RSA_S: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_S;
+	case GPGME_PK_ELG_E: return GMIME_CRYPTO_PUBKEY_ALGO_ELG_E;
+	case GPGME_PK_DSA: return GMIME_CRYPTO_PUBKEY_ALGO_DSA;
+	case GPGME_PK_ELG: return GMIME_CRYPTO_PUBKEY_ALGO_ELG;
+	default: return GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
+	}
+}
+
+static GMimeCryptoHash
+pkcs7_hash_algo (gpgme_hash_algo_t id)
+{
+	switch (id) {
+	case GPGME_MD_NONE: return GMIME_CRYPTO_HASH_DEFAULT;
+	case GPGME_MD_MD5: return GMIME_CRYPTO_HASH_MD5;
+	case GPGME_MD_SHA1: return GMIME_CRYPTO_HASH_SHA1;
+	case GPGME_MD_RMD160: return GMIME_CRYPTO_HASH_RIPEMD160;
+	case GPGME_MD_MD2: return GMIME_CRYPTO_HASH_MD2;
+	case GPGME_MD_TIGER: return GMIME_CRYPTO_HASH_TIGER192;
+	case GPGME_MD_HAVAL: return GMIME_CRYPTO_HASH_HAVAL5160;
+	case GPGME_MD_SHA256: return GMIME_CRYPTO_HASH_SHA256;
+	case GPGME_MD_SHA384: return GMIME_CRYPTO_HASH_SHA384;
+	case GPGME_MD_SHA512: return GMIME_CRYPTO_HASH_SHA512;
+	case GPGME_MD_MD4: return GMIME_CRYPTO_HASH_MD4;
+	default: return GMIME_CRYPTO_HASH_DEFAULT;
+	}
+}
+
 static GMimeSignatureValidity *
 pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 {
@@ -496,13 +533,15 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 		signers->next = signer;
 		signers = signer;
 		
+		g_mime_signer_set_pubkey_algo (signer, pkcs7_pubkey_algo (sig->pubkey_algo));
+		g_mime_signer_set_hash_algo (signer, pkcs7_hash_algo (sig->hash_algo));
 		g_mime_signer_set_sig_expires (signer, sig->exp_timestamp);
 		g_mime_signer_set_sig_created (signer, sig->timestamp);
 		g_mime_signer_set_fingerprint (signer, sig->fpr);
 		
 		errors = GMIME_SIGNER_ERROR_NONE;
 		
-		if (sig->exp_timestamp != 0 && sig->exp_timestamp >= time (NULL))
+		if (sig->exp_timestamp != 0 && sig->exp_timestamp <= time (NULL))
 			errors |= GMIME_SIGNER_ERROR_EXPSIG;
 		
 		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
@@ -511,7 +550,7 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 			g_mime_signer_set_issuer_serial (signer, key->issuer_serial);
 			g_mime_signer_set_issuer_name (signer, key->issuer_name);
 			
-			/* get the name and email address */
+			/* get the keyid, name, and email address */
 			uid = key->uids;
 			while (uid) {
 				if (uid->name && *uid->name)

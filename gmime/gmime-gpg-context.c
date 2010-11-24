@@ -183,6 +183,8 @@ gpg_hash_id (GMimeCryptoContext *ctx, const char *hash)
 	
 	if (!g_ascii_strcasecmp (hash, "md2"))
 		return GMIME_CRYPTO_HASH_MD2;
+	else if (!g_ascii_strcasecmp (hash, "md4"))
+		return GMIME_CRYPTO_HASH_MD4;
 	else if (!g_ascii_strcasecmp (hash, "md5"))
 		return GMIME_CRYPTO_HASH_MD5;
 	else if (!g_ascii_strcasecmp (hash, "sha1"))
@@ -211,6 +213,8 @@ gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	switch (hash) {
 	case GMIME_CRYPTO_HASH_MD2:
 		return "pgp-md2";
+	case GMIME_CRYPTO_HASH_MD4:
+		return "pgp-md4";
 	case GMIME_CRYPTO_HASH_MD5:
 		return "pgp-md5";
 	case GMIME_CRYPTO_HASH_SHA1:
@@ -541,25 +545,42 @@ gpg_hash_str (GMimeCryptoHash hash)
 		return "--digest-algo=RIPEMD160";
 	case GMIME_CRYPTO_HASH_TIGER192:
 		return "--digest-algo=TIGER192";
+	case GMIME_CRYPTO_HASH_MD4:
+		return "--digest-algo=MD4";
 	default:
 		return NULL;
 	}
 }
 
+static GMimeCryptoPubKeyAlgo
+gpg_pubkey_algo (unsigned long id)
+{
+	switch (id) {
+	case 1: return GMIME_CRYPTO_PUBKEY_ALGO_RSA;
+	case 2: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_E;
+	case 3: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_S;
+	case 16: return GMIME_CRYPTO_PUBKEY_ALGO_ELG_E;
+	case 17: return GMIME_CRYPTO_PUBKEY_ALGO_DSA;
+	case 20: return GMIME_CRYPTO_PUBKEY_ALGO_ELG;
+	default: return GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
+	}
+}
+
 static GMimeCryptoHash
-gpg_hash_from_id (unsigned long id)
+gpg_hash_algo (unsigned long id)
 {
 	switch (id) {
 	case 1: return GMIME_CRYPTO_HASH_MD5;
 	case 2: return GMIME_CRYPTO_HASH_SHA1;
 	case 3:	return GMIME_CRYPTO_HASH_RIPEMD160;
-	case 5: return GMIME_CRYPTO_HASH_MD2; /* ? */
-	case 6: return GMIME_CRYPTO_HASH_TIGER192; /* ? */
-	case 7: return GMIME_CRYPTO_HASH_HAVAL5160; /* ? */
+	case 5: return GMIME_CRYPTO_HASH_MD2;
+	case 6: return GMIME_CRYPTO_HASH_TIGER192;
+	case 7: return GMIME_CRYPTO_HASH_HAVAL5160;
 	case 8: return GMIME_CRYPTO_HASH_SHA256;
 	case 9: return GMIME_CRYPTO_HASH_SHA384;
 	case 10: return GMIME_CRYPTO_HASH_SHA512;
 	case 11: return GMIME_CRYPTO_HASH_SHA224;
+	case 301: return GMIME_CRYPTO_HASH_MD4;
 	default: return GMIME_CRYPTO_HASH_DEFAULT;
 	}
 }
@@ -906,31 +927,46 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		
 		/* the third token is the signature creation date (or 0 for unknown?) */
 		signer->sig_created = strtoul (status, &inend, 10);
-		if (inend == status || *inend != ' ')
+		if (inend == status || *inend != ' ') {
+			signer->sig_created = 0;
 			return;
+		}
 		
 		status = inend + 1;
 		
 		/* the fourth token is the signature expiration date (or 0 for never) */
 		signer->sig_expires = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ') {
+			signer->sig_expires = 0;
+			return;
+		}
+		
+		status = inend + 1;
+		
+		/* the fifth token is the signature version */
+		status = next_token (status, NULL);
+		
+		/* the sixth token is a reserved numeric value (ignore for now) */
+		status = next_token (status, NULL);
+		
+		/* the seventh token is the public-key algorithm id */
+		signer->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
-		/* the fifth token is an unknown numeric value */
-		status = next_token (status, NULL);
-		
-		/* the sixth token is an unknown numeric value */
-		status = next_token (status, NULL);
-		
-		/* the seventh token is the public-key algorithm id */
-		status = next_token (status, NULL);
-		
 		/* the eighth token is the hash algorithm id */
-		signer->hash = gpg_hash_from_id (strtoul (status, NULL, 10));
+		signer->hash_algo = gpg_hash_algo (strtoul (status, &inend, 10));
+		if (inend == status || *inend != ' ')
+			return;
 		
-		/* ignore the rest... */
+		status = inend + 1;
+		
+		/* the nineth token is the signature class */
+		status = next_token (status, NULL);
+		
+		/* the rest is the primary key fingerprint */
 	} else if (!strncmp (status, "TRUST_", 6)) {
 		status += 6;
 		
@@ -1163,7 +1199,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			status = next_token (status, NULL);
 			
 			/* this token is the hash algorithm used */
-			gpg->hash = gpg_hash_from_id (strtoul (status, NULL, 10));
+			gpg->hash = gpg_hash_algo (strtoul (status, NULL, 10));
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
