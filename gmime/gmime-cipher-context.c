@@ -425,8 +425,8 @@ g_mime_signer_new (void)
 	signer->status = GMIME_SIGNER_STATUS_NONE;
 	signer->errors = GMIME_SIGNER_ERROR_NONE;
 	signer->trust = GMIME_SIGNER_TRUST_NONE;
-	signer->created = (time_t) 0;
-	signer->expires = (time_t) 0;
+	signer->created = (time_t) -1;
+	signer->expires = (time_t) -1;
 	signer->fingerprint = NULL;
 	signer->keyid = NULL;
 	signer->name = NULL;
@@ -694,7 +694,7 @@ g_mime_signer_set_created (GMimeSigner *signer, time_t created)
  *
  * Get the creation date of the signer's key.
  *
- * Returns: the creation date of the signer's key.
+ * Returns: the creation date of the signer's key or %-1 if unknown.
  **/
 time_t
 g_mime_signer_get_created (const GMimeSigner *signer)
@@ -727,7 +727,7 @@ g_mime_signer_set_expires (GMimeSigner *signer, time_t expires)
  *
  * Get the expiration date of the signer's key.
  *
- * Returns: the expiration date of the signer's key.
+ * Returns: the expiration date of the signer's key or %-1 if unknown.
  **/
 time_t
 g_mime_signer_get_expires (const GMimeSigner *signer)
