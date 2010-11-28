@@ -312,11 +312,11 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * @hash: digest algorithm to use when signing
  * @recipients: an array of recipient key ids and/or email addresses
  * @istream: cleartext input stream
- * @ostream: cryptotext output stream
+ * @ostream: ciphertext output stream
  * @err: a #GError
  *
  * Encrypts (and optionally signs) the cleartext input stream and
- * writes the resulting cryptotext to the output stream.
+ * writes the resulting ciphertext to the output stream.
  *
  * Returns: %0 on success or %-1 on fail.
  **/
@@ -346,11 +346,11 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 /**
  * g_mime_crypto_context_decrypt:
  * @ctx: a #GMimeCryptoContext
- * @istream: input/cryptotext stream
+ * @istream: input/ciphertext stream
  * @ostream: output/cleartext stream
  * @err: a #GError
  *
- * Decrypts the cryptotext input stream and writes the resulting
+ * Decrypts the ciphertext input stream and writes the resulting
  * cleartext to the output stream.
  *
  * If the encrypted input stream was also signed, the returned
