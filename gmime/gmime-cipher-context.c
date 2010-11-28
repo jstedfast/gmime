@@ -440,7 +440,8 @@ g_mime_signer_new (void)
  * g_mime_signer_free:
  * @signer: signer
  *
- * Free's the singleton signer.
+ * Frees a singleton signer. Should NOT be used to free signers
+ * returned from g_mime_signature_validity_get_signers().
  **/
 void
 g_mime_signer_free (GMimeSigner *signer)
@@ -860,7 +861,8 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
  * Gets the list of signers.
  *
  * Returns: a #GMimeSigner list which contain further information such
- * as trust and cipher keys.
+ * as trust and cipher keys. These signers are part of the
+ * #GMimeSignatureValidity and should NOT be freed individually.
  **/
 const GMimeSigner *
 g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)
@@ -876,7 +878,8 @@ g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)
  * @validity: signature validity
  * @signer: signer
  *
- * Adds @signer to the list of signers on @validity.
+ * Adds @signer to the list of signers on @validity. Once the signer
+ * is added, it must NOT be freed.
  **/
 void
 g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer)
