@@ -445,7 +445,9 @@ g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 /**
  * g_mime_signer_new:
  *
- * Allocates an new #GMimeSigner.
+ * Allocates an new #GMimeSigner. This function is meant to be used in
+ * #GMimeCryptoContext subclasses when allocating signers to add to a
+ * #GMimeSignatureValidity.
  *
  * Returns: a new #GMimeSigner.
  **/
