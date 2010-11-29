@@ -503,11 +503,9 @@ pkcs7_hash_algo (gpgme_hash_algo_t id)
 static GMimeSignatureValidity *
 pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 {
-	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
 	GMimeSignatureValidity *validity;
 	GMimeSigner *signers, *signer;
 	gpgme_verify_result_t result;
-	GMimeSignerError errors;
 	gpgme_subkey_t subkey;
 	gpgme_signature_t sig;
 	gpgme_user_id_t uid;
@@ -517,19 +515,18 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 	validity = g_mime_signature_validity_new ();
 	
 	/* get the signature verification results from GpgMe */
-	if (!(result = gpgme_op_verify_result (pkcs7->ctx)) || !result->signatures) {
-		if (verify)
-			g_mime_signature_validity_set_status (validity, GMIME_SIGNATURE_STATUS_UNKNOWN);
-		
+	if (!(result = gpgme_op_verify_result (pkcs7->ctx)) || !result->signatures)
 		return validity;
-	}
 	
 	/* collect the signers for this signature */
 	signers = (GMimeSigner *) &validity->signers;
 	sig = result->signatures;
 	
 	while (sig != NULL) {
-		signer = g_mime_signer_new ();
+		if (sig->status != GPG_ERR_NO_ERROR)
+			signer = g_mime_signer_new (GMIME_SIGNER_STATUS_ERROR);
+		else
+			signer = g_mime_signer_new (GMIME_SIGNER_STATUS_GOOD);
 		signers->next = signer;
 		signers = signer;
 		
@@ -539,10 +536,11 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 		g_mime_signer_set_sig_created (signer, sig->timestamp);
 		g_mime_signer_set_fingerprint (signer, sig->fpr);
 		
-		errors = GMIME_SIGNER_ERROR_NONE;
-		
-		if (sig->exp_timestamp != 0 && sig->exp_timestamp <= time (NULL))
-			errors |= GMIME_SIGNER_ERROR_EXPSIG;
+		if (sig->exp_timestamp != 0 && sig->exp_timestamp <= time (NULL)) {
+			/* signature expired, automatically results in a BAD signature */
+			signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
+			signer->status = GMIME_SIGNER_STATUS_BAD;
+		}
 		
 		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
@@ -577,44 +575,39 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 				g_mime_signer_set_key_created (signer, subkey->timestamp);
 				g_mime_signer_set_key_expires (signer, subkey->expires);
 				
-				if (subkey->revoked)
-					errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
+				if (subkey->revoked) {
+					/* signer's key has been revoked, automatic BAD status */
+					signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
+					signer->status = GMIME_SIGNER_STATUS_BAD;
+				}
 				
-				if (subkey->expired)
-					errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+				if (subkey->expired) {
+					/* signer's key has expired, automatic BAD status */
+					signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+					signer->status = GMIME_SIGNER_STATUS_BAD;
+				}
 			} else {
-				errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
+				/* If we don't have the subkey used by the signer, then we can't
+				 * tell what the status is, so set to ERROR if it hasn't already
+				 * been designated as BAD. */
+				if (signer->status != GMIME_SIGNER_STATUS_BAD)
+					signer->status = GMIME_SIGNER_STATUS_ERROR;
+				signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
 			}
 			
 			gpgme_key_unref (key);
 		} else {
-			/* don't have any key information available... */
+			/* If we don't have the signer's public key, then we can't tell what
+			 * the status is, so set it to ERROR if it hasn't already been
+			 * designated as BAD. */
 			g_mime_signer_set_trust (signer, GMIME_SIGNER_TRUST_UNDEFINED);
-			errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
-		}
-		
-		/* set the accumulated signer errors */
-		g_mime_signer_set_errors (signer, errors);
-		
-		/* get the signer's status and update overall status */
-		if (sig->status != GPG_ERR_NO_ERROR) {
-			if (signer->errors && signer->errors != GMIME_SIGNER_ERROR_NO_PUBKEY) {
-				g_mime_signer_set_status (signer, GMIME_SIGNER_STATUS_ERROR);
-				if (status != GMIME_SIGNATURE_STATUS_BAD)
-					status = GMIME_SIGNATURE_STATUS_UNKNOWN;
-			} else {
-				g_mime_signer_set_status (signer, GMIME_SIGNER_STATUS_BAD);
-				status = GMIME_SIGNATURE_STATUS_BAD;
-			}
-		} else {
-			g_mime_signer_set_status (signer, GMIME_SIGNER_STATUS_GOOD);
+			if (signer->status != GMIME_SIGNER_STATUS_BAD)
+				signer->status = GMIME_SIGNER_STATUS_ERROR;
+			signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
 		}
 		
 		sig = sig->next;
 	}
-	
-	/* set the resulting overall signature status */
-	g_mime_signature_validity_set_status (validity, status);
 	
 	return validity;
 }

@@ -46,6 +46,23 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 	return TRUE;
 }
 
+static GMimeSignerStatus
+get_sig_status (GMimeSigner *signers)
+{
+	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
+	GMimeSigner *signer = signers;
+	
+	if (signers == NULL)
+		return GMIME_SIGNER_STATUS_ERROR;
+	
+	while (signer != NULL) {
+		status = MAX (status, signer->status);
+		signer = signer->next;
+	}
+	
+	return status;
+}
+
 static void
 test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
@@ -85,7 +102,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 		throw (ex);
 	}
 	
-	if (validity->status != GMIME_SIGNATURE_STATUS_GOOD) {
+	if (get_sig_status (validity->signers) != GMIME_SIGNER_STATUS_GOOD) {
 		g_mime_signature_validity_free (validity);
 		throw (exception_new ("signature BAD"));
 	}
@@ -138,10 +155,10 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	}
 	
 	if (sign) {
-		if (sv->status != GMIME_SIGNATURE_STATUS_GOOD)
+		if (get_sig_status (sv->signers) != GMIME_SIGNER_STATUS_GOOD)
 			ex = exception_new ("expected GOOD signature");
 	} else {
-		if (sv->status != GMIME_SIGNATURE_STATUS_NONE)
+		if (sv->signers != NULL)
 			ex = exception_new ("unexpected signature");
 	}
 	

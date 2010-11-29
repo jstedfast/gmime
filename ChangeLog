@@ -1,3 +1,26 @@
+2010-11-29  Jeffrey Stedfast  <fejj@novell.com>
+
+	Fixes bug #635409.
+
+	* gmime/gmime-pkcs7-context.c (pkcs7_get_validity): Reworked the
+	logic to calculate the signer status. Also dropped
+	GMimeSignatureStatus logic.
+
+	* gmime/gmime-gpg-context.c (gpg_verify): Removed the (broken)
+	logic of calculating a GMimeSignatureStatus.
+	(gpg_decrypt): Same.
+	(gpg_ctx_parse_signer_info): Updated for the g_mime_signer_new()
+	API change.
+
+	* gmime/gmime-crypto-context.c (g_mime_signature_validity_new): No
+	longer initializes a GMimeSignatureStatus member.
+	(g_mime_signature_validity_get_status): Removed.
+	(g_mime_signature_validity_set_status): Removed.
+	(g_mime_signer_new): Now takes a GMimeSignerStatus so that I could
+	get rid of the default NONE status.
+
+	* gmime/gmime-crypto-context.h (GMimeSignatureStatus): Removed.
+
 2010-11-24  Jeffrey Stedfast  <fejj@novell.com>
 
 	Fixes bug #635661.
@@ -5,7 +28,7 @@
 	* gmime/gmime-crypto-context.c (g_mime_signer_new): Initialize
 	pubkey_algo and hash_algo.
 	(g_mime_signer_[g,s]et_pubkey_algo): Implemented.
-	(g_mime_signer_[g,s]et_hash_algo): Renamed from [g,s]_hash().
+	(g_mime_signer_[g,s]et_hash_algo): Renamed from [g,s]et_hash().
 
 	* gmime/gmime-crypto-context.h (GMimeCryptoPubKeyAlgo): Defined
 	enum.

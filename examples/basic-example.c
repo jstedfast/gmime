@@ -136,6 +136,23 @@ count_parts_in_message (GMimeMessage *message)
 }
 
 #ifndef G_OS_WIN32
+static GMimeSignerStatus
+sig_status (GMimeSignatureValidity *validity)
+{
+	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
+	GMimeSigner *signer = validity->signers;
+	
+	if (signer == NULL)
+		return GMIME_SIGNER_STATUS_ERROR;
+	
+	while (signer != NULL) {
+		status = MAX (status, signer->status);
+		signer = signer->next;
+	}
+	
+	return status;
+}
+
 static void
 verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
@@ -145,7 +162,6 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 		/* this is a multipart/signed part, so we can verify the pgp signature */
 		GMimeMultipartSigned *mps = (GMimeMultipartSigned *) part;
 		GMimeSignatureValidity *validity;
-		GMimeSignatureStatus status;
 		GError *err = NULL;
 		const char *str;
 		
@@ -160,16 +176,15 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 			g_error_free (err);
 		} else {
 			/* print out validity info - GOOD vs BAD and "why" */
-			status = g_mime_signature_validity_get_status (validity);
-			switch (status) {
-			case GMIME_SIGNATURE_STATUS_GOOD:
+			switch (sig_status (validity)) {
+			case GMIME_SIGNER_STATUS_GOOD:
 				str = "Good";
 				break;
-			case GMIME_SIGNATURE_STATUS_BAD:
+			case GMIME_SIGNER_STATUS_BAD:
 				str = "Bad";
 				break;
-			case GMIME_SIGNATURE_STATUS_UNKNOWN:
-				str = "Unknown";
+			case GMIME_SIGNER_STATUS_ERROR:
+				str = "Error";
 				break;
 			default:
 				str = NULL;

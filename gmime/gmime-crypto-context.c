@@ -354,13 +354,11 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
  * cleartext to the output stream.
  *
  * If the encrypted input stream was also signed, the returned
- * #GMimeSignatureValidity will have signer information included and
- * the signature status will be one of #GMIME_SIGNATURE_STATUS_GOOD,
- * #GMIME_SIGNATURE_STATUS_BAD, or #GMIME_SIGNATURE_STATUS_UNKNOWN.
+ * #GMimeSignatureValidity will contain a list of signers, each with a
+ * #GMimeSignerStatus (among other details).
  *
- * If the encrypted input text was not signed, then the signature
- * status of the returned #GMimeSignatureValidity will be
- * #GMIME_SIGNATURE_STATUS_NONE.
+ * If the encrypted input text was not signed, then the
+ * #GMimeSignatureValidity will not contain any signers.
  *
  * Returns: a #GMimeSignatureValidity on success or %NULL on error.
  **/
@@ -444,22 +442,23 @@ g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 
 /**
  * g_mime_signer_new:
+ * @status: A #GMimeSignerStatus
  *
- * Allocates an new #GMimeSigner. This function is meant to be used in
- * #GMimeCryptoContext subclasses when allocating signers to add to a
- * #GMimeSignatureValidity.
+ * Allocates an new #GMimeSigner with the designated @status. This
+ * function is meant to be used in #GMimeCryptoContext subclasses when
+ * allocating signers to add to a #GMimeSignatureValidity.
  *
- * Returns: a new #GMimeSigner.
+ * Returns: a new #GMimeSigner with the designated @status.
  **/
 GMimeSigner *
-g_mime_signer_new (void)
+g_mime_signer_new (GMimeSignerStatus status)
 {
 	GMimeSigner *signer;
 	
 	signer = g_slice_new (GMimeSigner);
 	signer->pubkey_algo = GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
 	signer->hash_algo = GMIME_CRYPTO_HASH_DEFAULT;
-	signer->status = GMIME_SIGNER_STATUS_NONE;
+	signer->status = status;
 	signer->errors = GMIME_SIGNER_ERROR_NONE;
 	signer->trust = GMIME_SIGNER_TRUST_NONE;
 	signer->sig_created = (time_t) -1;
@@ -543,7 +542,7 @@ g_mime_signer_set_status (GMimeSigner *signer, GMimeSignerStatus status)
 GMimeSignerStatus
 g_mime_signer_get_status (const GMimeSigner *signer)
 {
-	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_STATUS_NONE);
+	g_return_val_if_fail (signer != NULL, GMIME_SIGNER_STATUS_BAD);
 	
 	return signer->status;
 }
@@ -569,7 +568,9 @@ g_mime_signer_set_errors (GMimeSigner *signer, GMimeSignerError errors)
  * g_mime_signer_get_errors:
  * @signer: a #GMimeSigner
  *
- * Get the signer errors.
+ * Get the signer errors. If the #GMimeSignerStatus returned from
+ * g_mime_signer_get_status() is not #GMIME_SIGNER_STATUS_GOOD, then
+ * the errors may provide a clue as to why.
  *
  * Returns: the signer errors.
  **/
@@ -1032,7 +1033,6 @@ g_mime_signature_validity_new (void)
 	GMimeSignatureValidity *validity;
 	
 	validity = g_slice_new (GMimeSignatureValidity);
-	validity->status = GMIME_SIGNATURE_STATUS_NONE;
 	validity->signers = NULL;
 	validity->details = NULL;
 	
@@ -1064,40 +1064,6 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
 	g_free (validity->details);
 	
 	g_slice_free (GMimeSignatureValidity, validity);
-}
-
-
-/**
- * g_mime_signature_validity_get_status:
- * @validity: signature validity
- *
- * Gets the signature status (GOOD, BAD, UNKNOWN).
- *
- * Returns: a #GMimeSignatureStatus value.
- **/
-GMimeSignatureStatus
-g_mime_signature_validity_get_status (const GMimeSignatureValidity *validity)
-{
-	g_return_val_if_fail (validity != NULL, GMIME_SIGNATURE_STATUS_NONE);
-	
-	return validity->status;
-}
-
-
-/**
- * g_mime_signature_validity_set_status:
- * @validity: signature validity
- * @status: GOOD, BAD or UNKNOWN
- *
- * Sets the status of the signature on @validity.
- **/
-void
-g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSignatureStatus status)
-{
-	g_return_if_fail (status != GMIME_SIGNATURE_STATUS_NONE);
-	g_return_if_fail (validity != NULL);
-	
-	validity->status = status;
 }
 
 

@@ -231,19 +231,17 @@ typedef enum {
 
 /**
  * GMimeSignerStatus:
- * @GMIME_SIGNER_STATUS_NONE: No status.
  * @GMIME_SIGNER_STATUS_GOOD: Good signature.
- * @GMIME_SIGNER_STATUS_BAD: Bad signature.
  * @GMIME_SIGNER_STATUS_ERROR: An error occurred.
+ * @GMIME_SIGNER_STATUS_BAD: Bad signature.
  *
  * A value representing the signature status for a particular
  * #GMimeSigner.
  **/
 typedef enum {
-	GMIME_SIGNER_STATUS_NONE,
 	GMIME_SIGNER_STATUS_GOOD,
-	GMIME_SIGNER_STATUS_BAD,
-	GMIME_SIGNER_STATUS_ERROR
+	GMIME_SIGNER_STATUS_ERROR,
+	GMIME_SIGNER_STATUS_BAD
 } GMimeSignerStatus;
 
 
@@ -309,7 +307,7 @@ struct _GMimeSigner {
 };
 
 
-GMimeSigner *g_mime_signer_new (void);
+GMimeSigner *g_mime_signer_new (GMimeSignerStatus status);
 void         g_mime_signer_free (GMimeSigner *signer);
 
 GMimeSigner *g_mime_signer_next (GMimeSigner *signer);
@@ -361,23 +359,6 @@ time_t g_mime_signer_get_key_expires (const GMimeSigner *signer);
 
 
 /**
- * GMimeSignatureStatus:
- * @GMIME_SIGNATURE_STATUS_NONE: No status.
- * @GMIME_SIGNATURE_STATUS_GOOD: Good signature.
- * @GMIME_SIGNATURE_STATUS_BAD: Bad signature.
- * @GMIME_SIGNATURE_STATUS_UNKNOWN: Unknown signature status.
- *
- * The status of a message signature.
- **/
-typedef enum {
-	GMIME_SIGNATURE_STATUS_NONE,
-	GMIME_SIGNATURE_STATUS_GOOD,
-	GMIME_SIGNATURE_STATUS_BAD,
-	GMIME_SIGNATURE_STATUS_UNKNOWN
-} GMimeSignatureStatus;
-
-
-/**
  * GMimeSignatureValidity:
  * @status: The overall signature status.
  * @signers: A list of #GMimeSigner structures.
@@ -387,7 +368,6 @@ typedef enum {
  * a signed stream.
  **/
 struct _GMimeSignatureValidity {
-	GMimeSignatureStatus status;
 	GMimeSigner *signers;
 	char *details;
 };
@@ -395,9 +375,6 @@ struct _GMimeSignatureValidity {
 
 GMimeSignatureValidity *g_mime_signature_validity_new (void);
 void                    g_mime_signature_validity_free (GMimeSignatureValidity *validity);
-
-GMimeSignatureStatus    g_mime_signature_validity_get_status (const GMimeSignatureValidity *validity);
-void                    g_mime_signature_validity_set_status (GMimeSignatureValidity *validity, GMimeSignatureStatus status);
 
 const char             *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
 void                    g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);

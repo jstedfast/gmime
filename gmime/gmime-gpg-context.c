@@ -292,17 +292,9 @@ struct _GpgCtx {
 	unsigned int always_trust:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
-	
 	unsigned int bad_passwds:2;
 	
-	unsigned int badsig:1;
-	unsigned int errsig:1;
-	unsigned int goodsig:1;
-	unsigned int validsig:1;
-	unsigned int nopubkey:1;
-	unsigned int nodata:1;
-	
-	unsigned int padding:15;
+	unsigned int padding:21;
 };
 
 static struct _GpgCtx *
@@ -343,13 +335,6 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->bad_passwds = 0;
 	gpg->need_passwd = FALSE;
 	gpg->need_id = NULL;
-	
-	gpg->nodata = FALSE;
-	gpg->badsig = FALSE;
-	gpg->errsig = FALSE;
-	gpg->goodsig = FALSE;
-	gpg->validsig = FALSE;
-	gpg->nopubkey = FALSE;
 	
 	gpg->signers = NULL;
 	gpg->signer = (GMimeSigner *) &gpg->signers;
@@ -846,11 +831,9 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	if (!strncmp (status, "SIG_ID ", 7)) {
 		/* not sure if this contains anything we care about... */
 	} else if (!strncmp (status, "GOODSIG ", 8)) {
-		gpg->goodsig = TRUE;
 		status += 8;
 		
-		signer = g_mime_signer_new ();
-		signer->status = GMIME_SIGNER_STATUS_GOOD;
+		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_GOOD);
 		gpg->signer->next = signer;
 		gpg->signer = signer;
 		
@@ -860,11 +843,9 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		/* the rest of the string is the signer's name */
 		signer->name = g_strdup (status);
 	} else if (!strncmp (status, "BADSIG ", 7)) {
-		gpg->badsig = TRUE;
 		status += 7;
 		
-		signer = g_mime_signer_new ();
-		signer->status = GMIME_SIGNER_STATUS_BAD;
+		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_BAD);
 		gpg->signer->next = signer;
 		gpg->signer = signer;
 		
@@ -875,11 +856,9 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		signer->name = g_strdup (status);
 	} else if (!strncmp (status, "ERRSIG ", 7)) {
 		/* Note: NO_PUBKEY often comes after an ERRSIG */
-		gpg->errsig = TRUE;
 		status += 7;
 		
-		signer = g_mime_signer_new ();
-		signer->status = GMIME_SIGNER_STATUS_ERROR;
+		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_ERROR);
 		gpg->signer->next = signer;
 		gpg->signer = signer;
 		
@@ -903,7 +882,6 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
 		/* the only token is the keyid, but we've already got it */
 		gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
-		gpg->nopubkey = TRUE;
 	} else if (!strncmp (status, "EXPSIG", 6)) {
 		/* FIXME: see what else we can glean from this... */
 		gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
@@ -914,7 +892,6 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "VALIDSIG ", 9)) {
 		char *inend;
 		
-		gpg->validsig = TRUE;
 		status += 9;
 		
 		signer = gpg->signer;
@@ -1180,8 +1157,6 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL, diagnostics);
 		else
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_GENERAL, _("No data provided"));
-		
-		gpg->nodata = TRUE;
 		
 		return -1;
 	} else {
@@ -1799,19 +1774,6 @@ gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 	
 	validity = g_mime_signature_validity_new ();
 	g_mime_signature_validity_set_details (validity, diagnostics);
-	
-	if (gpg->goodsig && !(gpg->badsig || gpg->errsig || gpg->nodata)) {
-		/* all signatures were good */
-		validity->status = GMIME_SIGNATURE_STATUS_GOOD;
-	} else if (gpg->badsig && !(gpg->goodsig && !gpg->errsig)) {
-		/* all signatures were bad */
-		validity->status = GMIME_SIGNATURE_STATUS_BAD;
-	} else if (!gpg->nodata) {
-		validity->status = GMIME_SIGNATURE_STATUS_UNKNOWN;
-	} else {
-		validity->status = GMIME_SIGNATURE_STATUS_BAD;
-	}
-	
 	validity->signers = gpg->signers;
 	gpg->signers = NULL;
 	
@@ -1931,23 +1893,8 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	
 	validity = g_mime_signature_validity_new ();
 	g_mime_signature_validity_set_details (validity, diagnostics);
-	
-	if (gpg->signers) {
-		if (gpg->goodsig && !(gpg->badsig || gpg->errsig || gpg->nodata)) {
-			/* all signatures were good */
-			validity->status = GMIME_SIGNATURE_STATUS_GOOD;
-		} else if (gpg->badsig && !(gpg->goodsig && !gpg->errsig)) {
-			/* all signatures were bad */
-			validity->status = GMIME_SIGNATURE_STATUS_BAD;
-		} else if (!gpg->nodata) {
-			validity->status = GMIME_SIGNATURE_STATUS_UNKNOWN;
-		} else {
-			validity->status = GMIME_SIGNATURE_STATUS_BAD;
-		}
-		
-		validity->signers = gpg->signers;
-		gpg->signers = NULL;
-	}
+	validity->signers = gpg->signers;
+	gpg->signers = NULL;
 	
 	gpg_ctx_free (gpg);
 	

@@ -47,23 +47,37 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 	return TRUE;
 }
 
+static GMimeSignerStatus
+get_sig_status (GMimeSigner *signers)
+{
+	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
+	GMimeSigner *signer = signers;
+	
+	if (signers == NULL)
+		return GMIME_SIGNER_STATUS_ERROR;
+	
+	while (signer != NULL) {
+		status = MAX (status, signer->status);
+		signer = signer->next;
+	}
+	
+	return status;
+}
+
 static void
 print_verify_results (const GMimeSignatureValidity *validity)
 {
 	GMimeSigner *signer;
 	
-	switch (validity->status) {
-	case GMIME_SIGNATURE_STATUS_NONE:
-		fputs ("NONE\n", stdout);
-		break;
-	case GMIME_SIGNATURE_STATUS_GOOD:
+	switch (get_sig_status (validity->signers)) {
+	case GMIME_SIGNER_STATUS_GOOD:
 		fputs ("GOOD\n", stdout);
 		break;
-	case GMIME_SIGNATURE_STATUS_BAD:
+	case GMIME_SIGNER_STATUS_BAD:
 		fputs ("BAD\n", stdout);
 		break;
-	case GMIME_SIGNATURE_STATUS_UNKNOWN:
-		fputs ("Unknown status\n", stdout);
+	case GMIME_SIGNER_STATUS_ERROR:
+		fputs ("ERROR status\n", stdout);
 		break;
 	default:
 		fputs ("Unknown enum value\n", stdout);
@@ -84,6 +98,7 @@ print_verify_results (const GMimeSignatureValidity *validity)
 			break;
 		case GMIME_SIGNER_TRUST_NEVER:
 			fputs ("Never\n", stdout);
+			break;
 		case GMIME_SIGNER_TRUST_UNDEFINED:
 			fputs ("Undefined\n", stdout);
 			break;
@@ -100,9 +115,6 @@ print_verify_results (const GMimeSignatureValidity *validity)
 		
 		fprintf (stdout, "\tStatus: ");
 		switch (signer->status) {
-		case GMIME_SIGNER_STATUS_NONE:
-			fputs ("None\n", stdout);
-			break;
 		case GMIME_SIGNER_STATUS_GOOD:
 			fputs ("GOOD\n", stdout);
 			break;
@@ -342,11 +354,11 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	v(print_verify_results (sv));
 	
 	if (sign) {
-		if (sv->status != GMIME_SIGNATURE_STATUS_GOOD)
-			ex = exception_new ("signature validity status expected to be GOOD");
+		if (get_sig_status (sv->signers) != GMIME_SIGNER_STATUS_GOOD)
+			ex = exception_new ("signature status expected to be GOOD");
 	} else {
-		if (sv->status != GMIME_SIGNATURE_STATUS_NONE)
-			ex = exception_new ("signature validity status expected to be NONE");
+		if (sv->signers != NULL)
+			ex = exception_new ("signature status expected to be NONE");
 	}
 	
 	if (ex != NULL) {
