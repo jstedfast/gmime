@@ -67,12 +67,6 @@
       <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" value="SEEK_CUR" />
       <member cname="GMIME_STREAM_SEEK_END" name="End" value="SEEK_END" />
     </enum>
-    <enum name="SignatureStatus" cname="GMimeSignatureStatus" type="enum">
-      <member cname="GMIME_SIGNATURE_STATUS_NONE" name="None" />
-      <member cname="GMIME_SIGNATURE_STATUS_GOOD" name="Good" />
-      <member cname="GMIME_SIGNATURE_STATUS_BAD" name="Bad" />
-      <member cname="GMIME_SIGNATURE_STATUS_UNKNOWN" name="Unknown" />
-    </enum>
     <enum name="SignerError" cname="GMimeSignerError" type="flags">
       <member cname="GMIME_SIGNER_ERROR_NONE" name="None" />
       <member cname="GMIME_SIGNER_ERROR_EXPSIG" name="Expsig" value="1 &lt;&lt; 0" />
@@ -81,10 +75,9 @@
       <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig" value="1 &lt;&lt; 3" />
     </enum>
     <enum name="SignerStatus" cname="GMimeSignerStatus" type="enum">
-      <member cname="GMIME_SIGNER_STATUS_NONE" name="None" />
       <member cname="GMIME_SIGNER_STATUS_GOOD" name="Good" />
-      <member cname="GMIME_SIGNER_STATUS_BAD" name="Bad" />
       <member cname="GMIME_SIGNER_STATUS_ERROR" name="Error" />
+      <member cname="GMIME_SIGNER_STATUS_BAD" name="Bad" />
     </enum>
     <enum name="SignerTrust" cname="GMimeSignerTrust" type="enum">
       <member cname="GMIME_SIGNER_TRUST_NONE" name="None" />
@@ -2583,7 +2576,6 @@
       </method>
     </struct>
     <struct name="SignatureValidity" cname="GMimeSignatureValidity" opaque="true">
-      <field name="Status" cname="status" type="GMimeSignatureStatus" access="public" writeable="true" />
       <field name="Signers" cname="signers" type="GMimeSigner*" access="public" writeable="true" />
       <field name="Details" cname="details" type="char*" access="public" writeable="true" />
       <method name="AddSigner" cname="g_mime_signature_validity_add_signer">
@@ -2601,20 +2593,11 @@
       <method name="GetSigners" cname="g_mime_signature_validity_get_signers">
         <return-type type="const-GMimeSigner*" />
       </method>
-      <method name="GetStatus" cname="g_mime_signature_validity_get_status">
-        <return-type type="GMimeSignatureStatus" />
-      </method>
       <constructor cname="g_mime_signature_validity_new" />
       <method name="SetDetails" cname="g_mime_signature_validity_set_details">
         <return-type type="void" />
         <parameters>
           <parameter type="const-char*" name="details" />
-        </parameters>
-      </method>
-      <method name="SetStatus" cname="g_mime_signature_validity_set_status">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSignatureStatus" name="status" />
         </parameters>
       </method>
     </struct>
@@ -2684,7 +2667,11 @@
       <method name="GetTrust" cname="g_mime_signer_get_trust">
         <return-type type="GMimeSignerTrust" />
       </method>
-      <constructor cname="g_mime_signer_new" />
+      <constructor cname="g_mime_signer_new">
+        <parameters>
+          <parameter type="GMimeSignerStatus" name="status" />
+        </parameters>
+      </constructor>
       <method name="Next" cname="g_mime_signer_next">
         <return-type type="GMimeSigner*" />
       </method>
