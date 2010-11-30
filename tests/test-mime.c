@@ -191,6 +191,9 @@ static struct {
 	{ "\"=?ISO-8859-2?Q?TEST?=\" <p@p.org>",
 	  "TEST <p@p.org>",
 	  "TEST <p@p.org>" },
+	{ "sdfasf@wp.pl,c tert@wp.pl,sffdg.rtre@op.pl",
+	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl",
+	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl" },
 };
 
 static struct {

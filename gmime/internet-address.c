@@ -1517,10 +1517,9 @@ decode_address (const char **in)
 	 * tokens that make up this name phrase.
 	 **/
 	while (*inptr) {
-		if ((word = decode_word (&inptr)))
+		if ((word = decode_word (&inptr))) {
 			g_string_append_len (name, word, (size_t) (inptr - word));
-		
-		if (word) {
+			
 		check_lwsp:
 			word = inptr;
 			skip_lwsp (&inptr);
@@ -1576,7 +1575,7 @@ decode_address (const char **in)
 		} else if (*inptr == '(') {
 			/* beginning of a comment, use decode_lwsp() to skip past it */
 			decode_lwsp (&inptr);
-		} else if (strchr ("@,;", *inptr)) {
+		} else if (*inptr && strchr ("@,;", *inptr)) {
 			if (name->len == 0) {
 				if (*inptr == '@') {
 					GString *domain;
@@ -1631,6 +1630,8 @@ decode_address (const char **in)
 			inptr++;
 			
 			goto check_lwsp;
+		} else {
+			goto addrspec;
 		}
 	}
 	
