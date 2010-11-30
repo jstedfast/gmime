@@ -1,5 +1,11 @@
 2010-11-29  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/internet-address.c (decode_address): Handle edge cases
+	where inptr reaches the end of the input string prematurely due to
+	a malformed address.
+
+2010-11-29  Jeffrey Stedfast  <fejj@novell.com>
+
 	Fixes bug #635409.
 
 	* gmime/gmime-pkcs7-context.c (pkcs7_get_validity): Reworked the
