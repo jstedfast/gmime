@@ -1,6 +1,8 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = build util gmime src 
+ACLOCAL_AMFLAGS = -I m4
+
+SUBDIRS = m4 build util gmime src 
 
 if ENABLE_MONO
 SUBDIRS += mono

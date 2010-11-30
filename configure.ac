@@ -42,15 +42,19 @@ m4_define([gmime_debug_default],
 AC_INIT(gmime, [gmime_version],
         [http://bugzilla.gnome.org/enter_bug.cgi?product=gmime])
 
-AC_CONFIG_SRCDIR([gmime/gmime.h])
+AC_CONFIG_SRCDIR([README])
+AC_CONFIG_MACRO_DIR([m4])
+AC_CANONICAL_SYSTEM
+AC_CANONICAL_HOST
 
 # Save this value here, since automake will set cflags later
 cflags_set=${CFLAGS+set}
 
-AM_INIT_AUTOMAKE([no-define])
-
-# Specify a configuration file
+AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign])
+AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
+dnl m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_CONFIG_HEADER([config.h])
+AM_MAINTAINER_MODE
 
 
 GMIME_MAJOR_VERSION=gmime_major_version
@@ -83,12 +87,6 @@ AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)
 AC_SUBST(LT_AGE)
 AC_SUBST(LT_CURRENT_MINUS_AGE)
-
-
-dnl Initialize maintainer mode
-AM_MAINTAINER_MODE
-
-AC_CANONICAL_HOST
 
 dnl Check for win32 platforms
 AC_MSG_CHECKING([if building for Win32])
@@ -599,6 +597,7 @@ AC_SUBST(GMIME_LIBS)
 
 AC_OUTPUT(
 Makefile
+m4/Makefile
 build/Makefile
 build/vs2008/Makefile
 build/vs2008/config-win32.h
