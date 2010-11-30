@@ -65,7 +65,7 @@ Cryptography related RFCs:
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2009 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2010 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
@@ -142,7 +142,7 @@ of GMime.
 
   AUTHORS               List of primary authors (source code developers)
 
-  COPYING               The GNU General Public License, version 2
+  COPYING               The GNU Lesser General Public License, version 2
 
   ChangeLog             Log of changes made to the source code
 
