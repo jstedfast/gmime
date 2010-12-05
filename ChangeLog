@@ -1,3 +1,9 @@
+2010-12-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.5.4
+
 2010-11-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (decode_address): Handle edge cases

@@ -16,7 +16,10 @@ endif
 
 SUBDIRS += tools .
 
-DISTCLEANFILES = iconv-detect.h gmime-$(GMIME_API_VERSION).pc
+# build documentation when doing distcheck
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
+
+DISTCLEANFILES = iconv-detect.h gmime-$(GMIME_API_VERSION).pc config.lt doltcompile doltlibtool
 
 EXTRA_DIST = 				\
 	PORTING				\
@@ -42,29 +45,3 @@ dist-hook: $(BUILD_EXTRA_DIST)
 
 gmime-$(GMIME_API_VERSION).pc: gmime.pc
 	-cp gmime.pc gmime-$(GMIME_API_VERSION).pc
-
-# This is a version of the automake-1.7 distcheck rule modified to
-# pass --enable-gtk-doc to ./configure and to not chmod distdir to
-# 0444 so that the gtk-docs can actually build.
-#
-mydistcheck: dist
-	-rm -rf $(distdir)
-	GZIP=$(GZIP_ENV) $(TAR) zxf $(distdir).tar.gz
-	mkdir $(distdir)/=build
-	mkdir $(distdir)/=inst
-	dc_install_base=`cd $(distdir)/=inst && pwd`; \
-	cd $(distdir)/=build \
-	  && ../configure --srcdir=.. --prefix=$$dc_install_base --enable-gtk-doc \
-	  && $(MAKE) $(AM_MAKEFLAGS) \
-	  && $(MAKE) $(AM_MAKEFLAGS) dvi \
-	  && $(MAKE) $(AM_MAKEFLAGS) check \
-	  && $(MAKE) $(AM_MAKEFLAGS) install \
-	  && $(MAKE) $(AM_MAKEFLAGS) installcheck \
-	  && $(MAKE) $(AM_MAKEFLAGS) uninstall \
-	  && $(MAKE) $(AM_MAKEFLAGS) dist
-	-rm -rf $(distdir)
-	@banner="$(distdir).tar.gz is ready for distribution"; \
-	dashes=`echo "$$banner" | sed s/./=/g`; \
-	echo "$$dashes"; \
-	echo "$$banner"; \
-	echo "$$dashes"

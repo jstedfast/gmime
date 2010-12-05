@@ -141,3 +141,6 @@ check-local: $(AUTOMATED_TESTS)
 	if [ $${failed} -ne 0 ]; then \
 		echo -e "Failed tests: $${failed_tests}"; \
 	fi
+
+distclean-local: 
+	rm -rf tmp data/streams/input data/streams/output
