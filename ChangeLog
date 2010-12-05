@@ -1,3 +1,11 @@
+2010-12-05  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.21
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2010-11-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/internet-address.c (decode_address): Handle edge cases
