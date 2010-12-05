@@ -5,5 +5,6 @@ Makefile
 *.la
 *.lo
 *.o
+gmime-version.h
 charset-map
 gen-table
