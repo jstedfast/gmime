@@ -1,3 +1,8 @@
+2011-01-22  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-stream-mem.c (stream_write): Correctly calculate the
+	end boundary of the stream when bound_end is -1.
+
 2010-12-05  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
