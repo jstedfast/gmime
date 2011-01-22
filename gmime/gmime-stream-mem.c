@@ -163,8 +163,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		return -1;
 	}
 	
-	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len) {
-		g_byte_array_set_size (mem->buffer, (guint) stream->position + len);
+	if (stream->bound_end == -1) {
+		if (stream->position + len > mem->buffer->len)
+			g_byte_array_set_size (mem->buffer, (guint) stream->position + len);
+		
 		bound_end = mem->buffer->len;
 	} else
 		bound_end = stream->bound_end;
