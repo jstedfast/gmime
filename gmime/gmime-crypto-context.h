@@ -260,7 +260,8 @@ typedef enum {
 	GMIME_SIGNER_ERROR_EXPSIG      = (1 << 0),  /* expired signature */
 	GMIME_SIGNER_ERROR_NO_PUBKEY   = (1 << 1),  /* no public key */
 	GMIME_SIGNER_ERROR_EXPKEYSIG   = (1 << 2),  /* expired key */
-	GMIME_SIGNER_ERROR_REVKEYSIG   = (1 << 3)   /* revoked key */
+	GMIME_SIGNER_ERROR_REVKEYSIG   = (1 << 3),  /* revoked key */
+	GMIME_SIGNER_ERROR_UNSUPP_ALGO = (1 << 4)   /* unsupported algorithm */
 } GMimeSignerError;
 
 
@@ -289,9 +290,9 @@ typedef enum {
 struct _GMimeSigner {
 	GMimeSigner *next;
 	unsigned int status:2;    /* GMimeSignerStatus */
-	unsigned int errors:4;    /* bitfield of GMimeSignerError's */
+	unsigned int errors:5;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
-	unsigned int unused:21;   /* unused expansion bits */
+	unsigned int unused:20;   /* unused expansion bits */
 	GMimeCryptoPubKeyAlgo pubkey_algo;
 	GMimeCryptoHash hash_algo;
 	char *issuer_serial;

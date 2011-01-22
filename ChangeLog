@@ -1,5 +1,12 @@
 2011-01-22  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Parse the
+	ERRSIG's return code, fixes bug #638605.
+
+	* gmime/gmime-crypto-context.h: Added UNSUPP_ALGO error value.
+
+2011-01-22  Jeffrey Stedfast  <fejj@novell.com>
+
 	* gmime/gmime-stream-mem.c (stream_write): Correctly calculate the
 	end boundary of the stream when bound_end is -1.
 

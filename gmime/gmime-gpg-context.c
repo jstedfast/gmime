@@ -827,6 +827,7 @@ static void
 gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 {
 	GMimeSigner *signer;
+	char *inend;
 	
 	if (!strncmp (status, "SIG_ID ", 7)) {
 		/* not sure if this contains anything we care about... */
@@ -875,10 +876,15 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* get the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, NULL, 10);
-		status = next_token (status, NULL);
+		signer->sig_expires = strtoul (status, &inend, 10);
+		status = inend + 1;
 		
-		/* the last token is the 'rc' which we don't care about */
+		/* get the return code */
+		switch (strtol (status, NULL, 10)) {
+		case 4: signer->errors |= GMIME_SIGNER_ERROR_UNSUPP_ALGO; break;
+		case 9: signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY; break;
+		default: break;
+		}
 	} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
 		/* the only token is the keyid, but we've already got it */
 		gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
@@ -890,11 +896,8 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "REVKEYSIG", 9)) {
 		gpg->signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
 	} else if (!strncmp (status, "VALIDSIG ", 9)) {
-		char *inend;
-		
-		status += 9;
-		
 		signer = gpg->signer;
+		status += 9;
 		
 		/* the first token is the fingerprint */
 		status = next_token (status, &signer->fingerprint);
