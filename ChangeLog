@@ -1,3 +1,11 @@
+2011-01-25  Jeffrey Stedfast  <fejj@novell.com>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.22
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2011-01-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-stream-mem.c (stream_write): Correctly calculate the
