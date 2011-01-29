@@ -213,7 +213,7 @@ g_mime_multipart_encrypted_new (void)
  * g_mime_multipart_encrypted_encrypt:
  * @mpe: multipart/encrypted object
  * @content: MIME part to encrypt
- * @ctx: encryption cipher context
+ * @ctx: encryption context
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
  * @recipients: an array of recipients to encrypt to
@@ -315,19 +315,23 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
- * @ctx: decryption cipher context
+ * @ctx: decryption context
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
- * multipart/encrypted object @mpe using the @ctx decryption context.
+ * multipart/encrypted object @mpe using the @ctx decryption
+ * context.
  *
- * If @validity is non-NULL, then on a successful decrypt operation,
- * it will be updated to point to a newly-allocated
- * #GMimeSignatureValidity with signature status information.
+ * For information regarding the signature status (in cases where the
+ * MIME part was both encrypted and signed), you may wish to check the
+ * results of g_mime_multipart_encrypted_get_signature_validity().
  *
- * Returns: the decrypted MIME part on success or %NULL on fail. If the
- * decryption fails, an exception will be set on @err to provide
+ * Returns: the decrypted MIME part on success or %NULL on fail. If
+ * the decryption fails, an exception will be set on @err to provide
  * information as to why the failure occured.
+ *
+ * Note: On success, the decrypted MIME part is cached internally and
+ * so the returned #GMimeObject must NOT be unreffed.
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCipherContext *ctx,
