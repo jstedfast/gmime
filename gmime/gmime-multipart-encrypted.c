@@ -42,7 +42,7 @@
 
 /**
  * SECTION: gmime-multipart-encrypted
- * @title: GMimeMultpartEncrypted
+ * @title: GMimeMultipartEncrypted
  * @short_description: Encrypted MIME multiparts
  * @see_also: #GMimeMultipart
  *

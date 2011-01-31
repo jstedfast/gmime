@@ -42,7 +42,7 @@
 
 /**
  * SECTION: gmime-multipart-signed
- * @title: GMimeMultpartSigned
+ * @title: GMimeMultipartSigned
  * @short_description: Signed MIME multiparts
  * @see_also: #GMimeMultipart
  *
