@@ -54,8 +54,14 @@ Other API changes include:
 - g_mime_crypto_context_encrypt() now takes a digest algorithm
   argument which is used when the 'sign' argument is TRUE.
 
-- g_mime_multipart_encrypted() also now takes a sigest algorithm
-  argument which it passes along to g_mime_crypto_context_encrypt().
+- g_mime_multipart_encrypted_encrypt() also now takes a digest
+  algorithm argument which it passes along to
+  g_mime_crypto_context_encrypt().
+
+- g_mime_multipart_encrypted_decrypt() no longer caches the decrypted
+  part and also now takes a GMimeSignatureValidity** output argument
+  which it sets in place of having to call
+  g_mime_multipart_encrypted_get_signature_validity() afterward.
 
 For convenience, GMime 2.6 source packages include a shell-script to
 aid in porting applications using GMime 2.4 to the 2.6 API. You can

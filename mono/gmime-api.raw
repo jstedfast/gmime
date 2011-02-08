@@ -73,6 +73,7 @@
       <member cname="GMIME_SIGNER_ERROR_NO_PUBKEY" name="NoPubkey" value="1 &lt;&lt; 1" />
       <member cname="GMIME_SIGNER_ERROR_EXPKEYSIG" name="Expkeysig" value="1 &lt;&lt; 2" />
       <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig" value="1 &lt;&lt; 3" />
+      <member cname="GMIME_SIGNER_ERROR_UNSUPP_ALGO" name="UnsuppAlgo" value="1 &lt;&lt; 4" />
     </enum>
     <enum name="SignerStatus" cname="GMimeSignerStatus" type="enum">
       <member cname="GMIME_SIGNER_STATUS_GOOD" name="Good" />
@@ -1010,12 +1011,11 @@
       </method>
     </object>
     <object name="MultipartEncrypted" cname="GMimeMultipartEncrypted" parent="GMimeMultipart">
-      <field name="Validity" cname="validity" type="GMimeSignatureValidity*" />
-      <field name="Decrypted" cname="decrypted" type="GMimeObject*" />
       <method name="Decrypt" cname="g_mime_multipart_encrypted_decrypt">
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
+          <parameter type="GMimeSignatureValidity**" name="validity" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
@@ -1030,9 +1030,6 @@
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GError**" name="err" />
         </parameters>
-      </method>
-      <method name="GetSignatureValidity" cname="g_mime_multipart_encrypted_get_signature_validity">
-        <return-type type="const-GMimeSignatureValidity*" />
       </method>
       <method name="GetType" cname="g_mime_multipart_encrypted_get_type" shared="true">
         <return-type type="GType" />
@@ -2604,9 +2601,9 @@
     <struct name="Signer" cname="GMimeSigner" opaque="true">
       <field name="Next" cname="next" type="GMimeSigner*" access="public" writeable="true" />
       <field name="Status" cname="status" bits="2" type="unsigned int" access="public" writeable="true" />
-      <field name="Errors" cname="errors" bits="4" type="unsigned int" access="public" writeable="true" />
+      <field name="Errors" cname="errors" bits="5" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
-      <field name="Unused" cname="unused" bits="21" type="unsigned int" access="public" writeable="true" />
+      <field name="Unused" cname="unused" bits="20" type="unsigned int" access="public" writeable="true" />
       <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
       <field name="HashAlgo" cname="hash_algo" type="GMimeCryptoHash" access="public" writeable="true" />
       <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />

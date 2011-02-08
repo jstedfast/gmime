@@ -42,7 +42,7 @@
 
 /**
  * SECTION: gmime-multipart-encrypted
- * @title: GMimeMultpartEncrypted
+ * @title: GMimeMultipartEncrypted
  * @short_description: Encrypted MIME multiparts
  * @see_also: #GMimeMultipart
  *
@@ -99,21 +99,12 @@ g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass)
 static void
 g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mpe, GMimeMultipartEncryptedClass *klass)
 {
-	mpe->decrypted = NULL;
-	mpe->validity = NULL;
+	
 }
 
 static void
 g_mime_multipart_encrypted_finalize (GObject *object)
 {
-	GMimeMultipartEncrypted *mpe = (GMimeMultipartEncrypted *) object;
-	
-	if (mpe->decrypted)
-		g_object_unref (mpe->decrypted);
-	
-	if (mpe->validity)
-		g_mime_signature_validity_free (mpe->validity);
-	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -145,7 +136,7 @@ g_mime_multipart_encrypted_new (void)
  * g_mime_multipart_encrypted_encrypt:
  * @mpe: multipart/encrypted object
  * @content: MIME part to encrypt
- * @ctx: encryption crypto context
+ * @ctx: encryption context
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
  * @hash: digest algorithm to use when signing
@@ -218,9 +209,6 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_object_unref (wrapper);
 	g_object_unref (stream);
 	
-	mpe->decrypted = content;
-	g_object_ref (content);
-	
 	/* construct the encrypted mime part */
 	encrypted_part = g_mime_part_new_with_type ("application", "octet-stream");
 	g_mime_part_set_content_encoding (encrypted_part, GMIME_CONTENT_ENCODING_7BIT);
@@ -248,7 +236,8 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
- * @ctx: decryption crypto context
+ * @ctx: decryption context
+ * @validity: a #GMimeSignatureValidity
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
@@ -264,7 +253,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
-				    GError **err)
+				    GMimeSignatureValidity **validity, GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
@@ -281,10 +270,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	g_return_val_if_fail (ctx->encrypt_protocol != NULL, NULL);
 	
-	if (mpe->decrypted) {
-		/* we seem to have already decrypted the part */
-		return mpe->decrypted;
-	}
+	if (validity)
+		*validity = NULL;
 	
 	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mpe), "protocol");
 	
@@ -365,29 +352,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 		return NULL;
 	}
 	
-	/* cache the decrypted part */
-	mpe->decrypted = decrypted;
-	mpe->validity = sv;
+	if (validity)
+		*validity = sv;
 	
 	return decrypted;
-}
-
-
-/**
- * g_mime_multipart_encrypted_get_signature_validity:
- * @mpe: a #GMimeMultipartEncrypted
- *
- * Gets the signature validity of the encrypted MIME part.
- *
- * Note: This is only useful after calling
- * g_mime_multipart_encrypted_decrypt().
- *
- * Returns: a #GMimeSignatureValidity.
- **/
-const GMimeSignatureValidity *
-g_mime_multipart_encrypted_get_signature_validity (GMimeMultipartEncrypted *mpe)
-{
-	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), NULL);
-	
-	return mpe->validity;
 }

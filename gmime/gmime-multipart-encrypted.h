@@ -54,8 +54,6 @@ enum {
 struct _GMimeMultipartEncrypted {
 	GMimeMultipart parent_object;
 	
-	GMimeSignatureValidity *validity;
-	GMimeObject *decrypted;
 };
 
 struct _GMimeMultipartEncryptedClass {
@@ -75,9 +73,8 @@ int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObjec
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeCryptoContext *ctx,
+						 GMimeSignatureValidity **validity,
 						 GError **err);
-
-const GMimeSignatureValidity *g_mime_multipart_encrypted_get_signature_validity (GMimeMultipartEncrypted *mpe);
 
 G_END_DECLS
 

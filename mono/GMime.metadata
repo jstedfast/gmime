@@ -30,12 +30,6 @@
   <remove-node path="/api/namespace/struct[@name='Event']"/>
   <remove-node path="/api/namespace/callback[@name='EventCallback']"/>
 
-  <!-- CipherContext -->
-  <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='signers']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='next']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='unused']"/>
-  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='keyid']"/>
-
   <!-- ContentDisposition -->
   <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='param_hash']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentDisposition']/field[@cname='params']"/>
@@ -52,6 +46,12 @@
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='params']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='subtype']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='type']"/>
+
+  <!-- CryptoContext -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='signers']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='next']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='unused']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='keyid']"/>
 
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
@@ -223,6 +223,7 @@
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']"/>
 
   <!-- MultipartEncrypted -->
+  <attr path="/api/namespace/object[@cname='GMimeMultipartEncrypted']/method[@name='Decrypt']/*/parameter[@name='validity']" name="pass_as">out</attr>
   
   <!-- MultipartSigned -->
   

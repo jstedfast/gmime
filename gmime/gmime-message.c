@@ -1523,18 +1523,8 @@ multipart_guess_body (GMimeMultipart *multipart)
 	int count, i;
 	
 	if (GMIME_IS_MULTIPART_ENCRYPTED (multipart)) {
-		/* check if this part has already been decrypted... */
-		if (!(mime_part = ((GMimeMultipartEncrypted *) multipart)->decrypted)) {
-			/* nothing more we can do */
-			return (GMimeObject *) multipart;
-		}
-		
-		if (GMIME_IS_MULTIPART (mime_part))
-			return multipart_guess_body ((GMimeMultipart *) mime_part);
-		else if (GMIME_IS_PART (mime_part) && part_is_textual (mime_part))
-			return mime_part;
-		else
-			return NULL;
+		/* nothing more we can do */
+		return (GMimeObject *) multipart;
 	}
 	
 	type = g_mime_object_get_content_type ((GMimeObject *) multipart);

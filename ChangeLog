@@ -1,3 +1,20 @@
+2011-02-08  Jeffrey Stedfast  <fejj@novell.com>
+
+	* PORTING: Updated docs.
+
+	* mono/GMime.metadata: Fixed up for the new decrypt API.
+
+	* gmime/gmime-message.c (multipart_guess_body): Updated. We can no
+	longer descend into the decrypted part because it is no longer
+	cached.
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_decrypt):
+	Now takes a GMimeSignatureValidity argument and no longer caches
+	the decrypted mime part/validity.
+	(g_mime_multipart_encrypted_get_signature_validity): Removed.
+	(g_mime_multipart_encrypted_encrypt): Don't cache the input part
+	as the decrypted part.
+
 2011-01-22  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Parse the
