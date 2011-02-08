@@ -256,7 +256,7 @@ typedef enum {
  * Possible errors that a #GMimeSigner could have.
  **/
 typedef enum {
-	GMIME_SIGNER_ERROR_NONE,
+	GMIME_SIGNER_ERROR_NONE        = 0,
 	GMIME_SIGNER_ERROR_EXPSIG      = (1 << 0),  /* expired signature */
 	GMIME_SIGNER_ERROR_NO_PUBKEY   = (1 << 1),  /* no public key */
 	GMIME_SIGNER_ERROR_EXPKEYSIG   = (1 << 2),  /* expired key */
@@ -272,6 +272,8 @@ typedef enum {
  * @errors: A bitfield of #GMimeSignerError values.
  * @trust: A #GMimeSignerTrust.
  * @unused: Unused expansion bits for future use; ignore this.
+ * @sig_class: Crypto-specific signature class.
+ * @sig_ver: Crypto-specific signature version.
  * @pubkey_algo: The public-key algorithm used by the signer, if known.
  * @hash_algo: The hash algorithm used by the signer, if known.
  * @issuer_serial: The issuer of the certificate, if known.
@@ -290,9 +292,11 @@ typedef enum {
 struct _GMimeSigner {
 	GMimeSigner *next;
 	unsigned int status:2;    /* GMimeSignerStatus */
-	unsigned int errors:5;    /* bitfield of GMimeSignerError's */
+	unsigned int errors:6;    /* bitfield of GMimeSignerError's */
 	unsigned int trust:3;     /* GMimeSignerTrust */
-	unsigned int unused:20;   /* unused expansion bits */
+	unsigned int unused:5;    /* unused expansion bits */
+	unsigned int sig_class:8; /* crypto-specific signature class */
+	unsigned int sig_ver:8;   /* crypto-specific signature version */
 	GMimeCryptoPubKeyAlgo pubkey_algo;
 	GMimeCryptoHash hash_algo;
 	char *issuer_serial;
@@ -321,6 +325,12 @@ GMimeSignerError g_mime_signer_get_errors (const GMimeSigner *signer);
 
 void g_mime_signer_set_trust (GMimeSigner *signer, GMimeSignerTrust trust);
 GMimeSignerTrust g_mime_signer_get_trust (const GMimeSigner *signer);
+
+void g_mime_signer_set_sig_class (GMimeSigner *signer, int sig_class);
+int g_mime_signer_get_sig_class (const GMimeSigner *signer);
+
+void g_mime_signer_set_sig_version (GMimeSigner *signer, int version);
+int g_mime_signer_get_sig_version (const GMimeSigner *signer);
 
 void g_mime_signer_set_pubkey_algo (GMimeSigner *signer, GMimeCryptoPubKeyAlgo pubkey_algo);
 GMimeCryptoPubKeyAlgo g_mime_signer_get_pubkey_algo (const GMimeSigner *signer);

@@ -617,6 +617,72 @@ g_mime_signer_get_trust (const GMimeSigner *signer)
 
 
 /**
+ * g_mime_signer_set_sig_class:
+ * @signer: a #GMimeSigner
+ * @sig_class: signature class
+ *
+ * Set the signer's signature class.
+ **/
+void
+g_mime_signer_set_sig_class (GMimeSigner *signer, int sig_class)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->sig_class = (unsigned int) (sig_class & 0xff);
+}
+
+
+/**
+ * g_mime_signer_get_sig_class:
+ * @signer: a #GMimeSigner
+ *
+ * Get the signer's signature class.
+ *
+ * Returns: the signer's signature class.
+ **/
+int
+g_mime_signer_get_sig_class (const GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, 0);
+	
+	return signer->sig_class;
+}
+
+
+/**
+ * g_mime_signer_set_sig_version:
+ * @signer: a #GMimeSigner
+ * @sig_class: signature version
+ *
+ * Set the signer's signature version.
+ **/
+void
+g_mime_signer_set_sig_version (GMimeSigner *signer, int version)
+{
+	g_return_if_fail (signer != NULL);
+	
+	signer->sig_ver = (unsigned int) (version & 0xff);
+}
+
+
+/**
+ * g_mime_signer_get_sig_version:
+ * @signer: a #GMimeSigner
+ *
+ * Get the signer's signature version.
+ *
+ * Returns: the signer's signature version.
+ **/
+int
+g_mime_signer_get_sig_version (const GMimeSigner *signer)
+{
+	g_return_val_if_fail (signer != NULL, 0);
+	
+	return signer->sig_ver;
+}
+
+
+/**
  * g_mime_signer_set_pubkey_algo:
  * @signer: a #GMimeSigner
  * @pubkey_algo: a #GMimeCryptoPubKeyAlgo

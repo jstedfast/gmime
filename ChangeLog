@@ -1,5 +1,17 @@
 2011-02-08  Jeffrey Stedfast  <fejj@novell.com>
 
+	Implements feature request in bug #635663.
+
+	* gmime/gmime-crypto-context.c (g_mime_signer_[g,s]et_sig_version):
+	New functions to access new signature version member.
+	(g_mime_signer_[g,s]et_sig_class): New functions to access new
+	signature class member.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Extract
+	the signature class and version tokens.
+
+2011-02-08  Jeffrey Stedfast  <fejj@novell.com>
+
 	* PORTING: Updated docs.
 
 	* mono/GMime.metadata: Fixed up for the new decrypt API.

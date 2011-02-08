@@ -924,7 +924,13 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = inend + 1;
 		
 		/* the fifth token is the signature version */
-		status = next_token (status, NULL);
+		signer->sig_ver = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ') {
+			signer->sig_ver = 0;
+			return;
+		}
+		
+		status = inend + 1;
 		
 		/* the sixth token is a reserved numeric value (ignore for now) */
 		status = next_token (status, NULL);
@@ -944,7 +950,13 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = inend + 1;
 		
 		/* the nineth token is the signature class */
-		status = next_token (status, NULL);
+		signer->sig_class = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ') {
+			signer->sig_class = 0;
+			return;
+		}
+		
+		status = inend + 1;
 		
 		/* the rest is the primary key fingerprint */
 	} else if (!strncmp (status, "TRUST_", 6)) {

@@ -2601,9 +2601,11 @@
     <struct name="Signer" cname="GMimeSigner" opaque="true">
       <field name="Next" cname="next" type="GMimeSigner*" access="public" writeable="true" />
       <field name="Status" cname="status" bits="2" type="unsigned int" access="public" writeable="true" />
-      <field name="Errors" cname="errors" bits="5" type="unsigned int" access="public" writeable="true" />
+      <field name="Errors" cname="errors" bits="6" type="unsigned int" access="public" writeable="true" />
       <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
-      <field name="Unused" cname="unused" bits="20" type="unsigned int" access="public" writeable="true" />
+      <field name="Unused" cname="unused" bits="5" type="unsigned int" access="public" writeable="true" />
+      <field name="SigClass" cname="sig_class" bits="8" type="unsigned int" access="public" writeable="true" />
+      <field name="SigVer" cname="sig_ver" bits="8" type="unsigned int" access="public" writeable="true" />
       <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
       <field name="HashAlgo" cname="hash_algo" type="GMimeCryptoHash" access="public" writeable="true" />
       <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />
@@ -2652,11 +2654,17 @@
       <method name="GetPubkeyAlgo" cname="g_mime_signer_get_pubkey_algo">
         <return-type type="GMimeCryptoPubKeyAlgo" />
       </method>
+      <method name="GetSigClass" cname="g_mime_signer_get_sig_class">
+        <return-type type="int" />
+      </method>
       <method name="GetSigCreated" cname="g_mime_signer_get_sig_created">
         <return-type type="time_t" />
       </method>
       <method name="GetSigExpires" cname="g_mime_signer_get_sig_expires">
         <return-type type="time_t" />
+      </method>
+      <method name="GetSigVersion" cname="g_mime_signer_get_sig_version">
+        <return-type type="int" />
       </method>
       <method name="GetStatus" cname="g_mime_signer_get_status">
         <return-type type="GMimeSignerStatus" />
@@ -2738,6 +2746,12 @@
           <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
         </parameters>
       </method>
+      <method name="SetSigClass" cname="g_mime_signer_set_sig_class">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="sig_class" />
+        </parameters>
+      </method>
       <method name="SetSigCreated" cname="g_mime_signer_set_sig_created">
         <return-type type="void" />
         <parameters>
@@ -2748,6 +2762,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="time_t" name="expires" />
+        </parameters>
+      </method>
+      <method name="SetSigVersion" cname="g_mime_signer_set_sig_version">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="version" />
         </parameters>
       </method>
       <method name="SetStatus" cname="g_mime_signer_set_status">
