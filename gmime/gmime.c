@@ -25,6 +25,10 @@
 
 #include <time.h>
 
+#ifdef ENABLE_SMIME
+#include <gpgme.h>
+#endif
+
 #include "gmime.h"
 
 
@@ -106,6 +110,11 @@ g_mime_init (guint32 flags)
 	g_mime_charset_map_init ();
 	
 	g_mime_iconv_init ();
+	
+#ifdef ENABLE_SMIME
+	/* gpgme_check_version() initializes GpgMe */
+	gpgme_check_version (NULL);
+#endif /* ENABLE_SMIME */
 	
 	gmime_gpgme_error_quark = g_quark_from_static_string ("gmime-gpgme");
 	gmime_error_quark = g_quark_from_static_string ("gmime");

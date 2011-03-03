@@ -1,3 +1,9 @@
+2011-03-03  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-pkcs7-context.c (pkcs7_stream_seek): Added.
+
+	* gmime/gmime.c (g_mime_init): Initialize gpgme.
+
 2011-02-08  Jeffrey Stedfast  <fejj@novell.com>
 
 	Implements feature request in bug #635663.

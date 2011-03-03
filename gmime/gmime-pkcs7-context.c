@@ -271,25 +271,42 @@ pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_in
 static ssize_t
 pkcs7_stream_read (void *stream, void *buffer, size_t size)
 {
+	//printf ("reading...\n"); fflush (stdout);
 	return g_mime_stream_read ((GMimeStream *) stream, (char *) buffer, size);
 }
 
 static ssize_t
 pkcs7_stream_write (void *stream, const void *buffer, size_t size)
 {
+	//printf ("writing...\n"); fflush (stdout);
 	return g_mime_stream_write ((GMimeStream *) stream, (const char *) buffer, size);
+}
+
+static off_t
+pkcs7_stream_seek (void *stream, off_t offset, int whence)
+{
+	//printf ("seeking...\n"); fflush (stdout);
+	switch (whence) {
+	case SEEK_SET:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_SET);
+	case SEEK_CUR:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_CUR);
+	case SEEK_END:
+		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_END);
+	}
 }
 
 static void
 pkcs7_stream_free (void *stream)
 {
 	/* no-op */
+	//printf ("releasing stream handle\n");
 }
 
 static struct gpgme_data_cbs pkcs7_stream_funcs = {
 	pkcs7_stream_read,
 	pkcs7_stream_write,
-	NULL,
+	pkcs7_stream_seek,
 	pkcs7_stream_free
 };
 
@@ -799,6 +816,7 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 	
 	/* import the key(s) */
 	if ((error = gpgme_op_import (pkcs7->ctx, keydata)) != GPG_ERR_NO_ERROR) {
+		//printf ("import error (%d): %s\n", error & GPG_ERR_CODE_MASK, gpg_strerror (error));
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not import key data"));
 		gpgme_data_release (keydata);
 		return -1;

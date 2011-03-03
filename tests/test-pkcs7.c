@@ -71,7 +71,7 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_crypto_context_sign (ctx, "no.user@no.domain",
+	rv = g_mime_crypto_context_sign (ctx, "alice@example.net",
 					 GMIME_CRYPTO_HASH_SHA256,
 					 cleartext, ciphertext, &err);
 	
@@ -119,9 +119,9 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	Exception *ex;
 	
 	recipients = g_ptr_array_new ();
-	g_ptr_array_add (recipients, "no.user@no.domain");
+	g_ptr_array_add (recipients, "alice@example.net");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain",
+	g_mime_crypto_context_encrypt (ctx, sign, "alice@example.net",
 				       GMIME_CRYPTO_HASH_SHA256, recipients,
 				       cleartext, ciphertext, &err);
 	
@@ -205,7 +205,7 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	g_object_unref (ostream);
 	
 	keys = g_ptr_array_new ();
-	g_ptr_array_add (keys, "no.user@no.domain");
+	g_ptr_array_add (keys, "alice@example.net");
 	
 	ostream = g_mime_stream_mem_new ();
 	
@@ -306,11 +306,13 @@ int main (int argc, char **argv)
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {
-		key = g_build_filename (datadir, "gmime-cert.p7", NULL);
+		key = g_build_filename (datadir, "alice.pem", NULL);
+		//printf ("importing key: %s\n", key);
 		import_key (ctx, key);
 		g_free (key);
 		
-		key = g_build_filename (datadir, "gmime-cert.p12", NULL);
+		key = g_build_filename (datadir, "alice.p12", NULL);
+		//printf ("importing key: %s\n", key);
 		import_key (ctx, key);
 		g_free (key);
 		
@@ -320,7 +322,7 @@ int main (int argc, char **argv)
 		return EXIT_FAILURE;
 	} finally;
 	
-	key = g_build_filename (datadir, "gmime-cert.p7", NULL);
+	key = g_build_filename (datadir, "alice.pem", NULL);
 	testsuite_check ("GMimePkcs7Context::export");
 	try {
 		test_export (ctx, key);
