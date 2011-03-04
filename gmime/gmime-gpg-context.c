@@ -903,20 +903,39 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		/* get the key id of the signer */
 		status = next_token (status, &signer->keyid);
 		
-		/* skip the pubkey_algo */
-		status = next_token (status, NULL);
+		/* the second token is the public-key algorithm id */
+		signer->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+		if (inend == status || *inend != ' ')
+			return;
 		
-		/* skip the digest_algo */
-		status = next_token (status, NULL);
-		
-		/* skip the class */
-		status = next_token (status, NULL);
-		
-		/* get the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, &inend, 10);
 		status = inend + 1;
 		
-		/* get the return code */
+		/* the third token is the hash algorithm id */
+		signer->hash_algo = gpg_hash_algo (strtoul (status, &inend, 10));
+		if (inend == status || *inend != ' ')
+			return;
+		
+		status = inend + 1;
+		
+		/* the fourth token is the signature class */
+		signer->sig_class = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ') {
+			signer->sig_class = 0;
+			return;
+		}
+		
+		status = inend + 1;
+		
+		/* the fifth token is the signature expiration date (or 0 for never) */
+		signer->sig_expires = strtoul (status, &inend, 10);
+		if (inend == status || *inend != ' ') {
+			signer->sig_expires = 0;
+			return;
+		}
+		
+		status = inend + 1;
+		
+		/* the sixth token is the return code */
 		switch (strtol (status, NULL, 10)) {
 		case 4: signer->errors |= GMIME_SIGNER_ERROR_UNSUPP_ALGO; break;
 		case 9: signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY; break;

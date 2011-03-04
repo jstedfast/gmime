@@ -1,5 +1,11 @@
 2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Make sure
+	to extract the pubkey_algo, hash_algo, sig_class, sig_expires, and
+	return-code values for ERRSIG.
+
+2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
+
 	Implemented bug #641319.
 
 	* gmime/gmime-crypto-context.c (g_mime_crypto_recipient_*): New
