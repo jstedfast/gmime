@@ -88,9 +88,9 @@ print_verify_results (const GMimeSignatureValidity *validity)
 	fputs ("\nSigners:\n", stdout);
 	signer = validity->signers;
 	while (signer != NULL) {
-		fprintf (stdout, "\tName: %s\n", signer->key->name ? signer->key->name : "(null)");
-		fprintf (stdout, "\tKeyId: %s\n", signer->key->keyid ? signer->key->keyid : "(null)");
-		fprintf (stdout, "\tFingerprint: %s\n", signer->key->fingerprint ? signer->key->fingerprint : "(null)");
+		fprintf (stdout, "\tName: %s\n", signer->name ? signer->name : "(null)");
+		fprintf (stdout, "\tKeyId: %s\n", signer->keyid ? signer->keyid : "(null)");
+		fprintf (stdout, "\tFingerprint: %s\n", signer->fingerprint ? signer->fingerprint : "(null)");
 		fprintf (stdout, "\tTrust: ");
 		
 		switch (signer->trust) {
@@ -127,9 +127,9 @@ print_verify_results (const GMimeSignatureValidity *validity)
 			break;
 		}
 		
-		fprintf (stdout, "\tSignature made on %s", ctime (&signer->created));
-		if (signer->expires != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->expires));
+		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
+		if (signer->sig_expires != (time_t) 0)
+			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expires));
 		else
 			fprintf (stdout, "\tSignature never expires\n");
 		

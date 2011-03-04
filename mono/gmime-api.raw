@@ -2238,98 +2238,6 @@
         </parameters>
       </method>
     </struct>
-    <struct name="CryptoKey" cname="GMimeCryptoKey">
-      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" />
-      <field name="IssuerSerial" cname="issuer_serial" type="char*" />
-      <field name="IssuerName" cname="issuer_name" type="char*" />
-      <field name="Fingerprint" cname="fingerprint" type="char*" />
-      <field name="Created" cname="created" type="time_t" />
-      <field name="Expires" cname="expires" type="time_t" />
-      <field name="Keyid" cname="keyid" type="char*" />
-      <field name="Email" cname="email" type="char*" />
-      <field name="Name" cname="name" type="char*" />
-      <method name="GetCreationDate" cname="g_mime_crypto_key_get_creation_date">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetEmail" cname="g_mime_crypto_key_get_email">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetExpirationDate" cname="g_mime_crypto_key_get_expiration_date">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetFingerprint" cname="g_mime_crypto_key_get_fingerprint">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetIssuerName" cname="g_mime_crypto_key_get_issuer_name">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetIssuerSerial" cname="g_mime_crypto_key_get_issuer_serial">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetKeyId" cname="g_mime_crypto_key_get_key_id">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetName" cname="g_mime_crypto_key_get_name">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetPubkeyAlgo" cname="g_mime_crypto_key_get_pubkey_algo">
-        <return-type type="GMimeCryptoPubKeyAlgo" />
-      </method>
-      <method name="SetCreationDate" cname="g_mime_crypto_key_set_creation_date">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="created" />
-        </parameters>
-      </method>
-      <method name="SetEmail" cname="g_mime_crypto_key_set_email">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="email" />
-        </parameters>
-      </method>
-      <method name="SetExpirationDate" cname="g_mime_crypto_key_set_expiration_date">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="expires" />
-        </parameters>
-      </method>
-      <method name="SetFingerprint" cname="g_mime_crypto_key_set_fingerprint">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="fingerprint" />
-        </parameters>
-      </method>
-      <method name="SetIssuerName" cname="g_mime_crypto_key_set_issuer_name">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="issuer_name" />
-        </parameters>
-      </method>
-      <method name="SetIssuerSerial" cname="g_mime_crypto_key_set_issuer_serial">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="issuer_serial" />
-        </parameters>
-      </method>
-      <method name="SetKeyId" cname="g_mime_crypto_key_set_key_id">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="key_id" />
-        </parameters>
-      </method>
-      <method name="SetName" cname="g_mime_crypto_key_set_name">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="name" />
-        </parameters>
-      </method>
-      <method name="SetPubkeyAlgo" cname="g_mime_crypto_key_set_pubkey_algo">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
-        </parameters>
-      </method>
-    </struct>
     <struct name="Encoding" cname="GMimeEncoding" opaque="true">
       <method name="Base64DecodeStep" cname="g_mime_encoding_base64_decode_step" shared="true">
         <return-type type="size_t" />
@@ -2704,30 +2612,62 @@
       <field name="Unused" cname="unused" bits="5" type="unsigned int" access="public" writeable="true" />
       <field name="SigClass" cname="sig_class" bits="8" type="unsigned int" access="public" writeable="true" />
       <field name="SigVer" cname="sig_ver" bits="8" type="unsigned int" access="public" writeable="true" />
+      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
       <field name="HashAlgo" cname="hash_algo" type="GMimeCryptoHash" access="public" writeable="true" />
-      <field name="Key" cname="key" type="GMimeCryptoKey*" access="public" writeable="true" />
-      <field name="Created" cname="created" type="time_t" access="public" writeable="true" />
-      <field name="Expires" cname="expires" type="time_t" access="public" writeable="true" />
+      <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />
+      <field name="IssuerName" cname="issuer_name" type="char*" access="public" writeable="true" />
+      <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
+      <field name="SigCreated" cname="sig_created" type="time_t" access="public" writeable="true" />
+      <field name="SigExpires" cname="sig_expires" type="time_t" access="public" writeable="true" />
+      <field name="KeyCreated" cname="key_created" type="time_t" access="public" writeable="true" />
+      <field name="KeyExpires" cname="key_expires" type="time_t" access="public" writeable="true" />
+      <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
+      <field name="Email" cname="email" type="char*" access="public" writeable="true" />
+      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
       <method name="Free" cname="g_mime_signer_free">
         <return-type type="void" />
       </method>
-      <method name="GetCreationDate" cname="g_mime_signer_get_creation_date">
-        <return-type type="time_t" />
+      <method name="GetEmail" cname="g_mime_signer_get_email">
+        <return-type type="const-char*" />
       </method>
       <method name="GetErrors" cname="g_mime_signer_get_errors">
         <return-type type="GMimeSignerError" />
       </method>
-      <method name="GetExpirationDate" cname="g_mime_signer_get_expiration_date">
-        <return-type type="time_t" />
+      <method name="GetFingerprint" cname="g_mime_signer_get_fingerprint">
+        <return-type type="const-char*" />
       </method>
       <method name="GetHashAlgo" cname="g_mime_signer_get_hash_algo">
         <return-type type="GMimeCryptoHash" />
       </method>
-      <method name="GetKey" cname="g_mime_signer_get_key">
-        <return-type type="const-GMimeCryptoKey*" />
+      <method name="GetIssuerName" cname="g_mime_signer_get_issuer_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetIssuerSerial" cname="g_mime_signer_get_issuer_serial">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetKeyCreated" cname="g_mime_signer_get_key_created">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetKeyExpires" cname="g_mime_signer_get_key_expires">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetKeyId" cname="g_mime_signer_get_key_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetName" cname="g_mime_signer_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPubkeyAlgo" cname="g_mime_signer_get_pubkey_algo">
+        <return-type type="GMimeCryptoPubKeyAlgo" />
       </method>
       <method name="GetSigClass" cname="g_mime_signer_get_sig_class">
         <return-type type="int" />
+      </method>
+      <method name="GetSigCreated" cname="g_mime_signer_get_sig_created">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetSigExpires" cname="g_mime_signer_get_sig_expires">
+        <return-type type="time_t" />
       </method>
       <method name="GetSigVersion" cname="g_mime_signer_get_sig_version">
         <return-type type="int" />
@@ -2746,10 +2686,10 @@
       <method name="Next" cname="g_mime_signer_next">
         <return-type type="GMimeSigner*" />
       </method>
-      <method name="SetCreationDate" cname="g_mime_signer_set_creation_date">
+      <method name="SetEmail" cname="g_mime_signer_set_email">
         <return-type type="void" />
         <parameters>
-          <parameter type="time_t" name="created" />
+          <parameter type="const-char*" name="email" />
         </parameters>
       </method>
       <method name="SetErrors" cname="g_mime_signer_set_errors">
@@ -2758,10 +2698,10 @@
           <parameter type="GMimeSignerError" name="error" />
         </parameters>
       </method>
-      <method name="SetExpirationDate" cname="g_mime_signer_set_expiration_date">
+      <method name="SetFingerprint" cname="g_mime_signer_set_fingerprint">
         <return-type type="void" />
         <parameters>
-          <parameter type="time_t" name="expires" />
+          <parameter type="const-char*" name="fingerprint" />
         </parameters>
       </method>
       <method name="SetHashAlgo" cname="g_mime_signer_set_hash_algo">
@@ -2770,10 +2710,64 @@
           <parameter type="GMimeCryptoHash" name="hash" />
         </parameters>
       </method>
+      <method name="SetIssuerName" cname="g_mime_signer_set_issuer_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="issuer_name" />
+        </parameters>
+      </method>
+      <method name="SetIssuerSerial" cname="g_mime_signer_set_issuer_serial">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="issuer_serial" />
+        </parameters>
+      </method>
+      <method name="SetKeyCreated" cname="g_mime_signer_set_key_created">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="created" />
+        </parameters>
+      </method>
+      <method name="SetKeyExpires" cname="g_mime_signer_set_key_expires">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="expires" />
+        </parameters>
+      </method>
+      <method name="SetKeyId" cname="g_mime_signer_set_key_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="key_id" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="g_mime_signer_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="SetPubkeyAlgo" cname="g_mime_signer_set_pubkey_algo">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
+        </parameters>
+      </method>
       <method name="SetSigClass" cname="g_mime_signer_set_sig_class">
         <return-type type="void" />
         <parameters>
           <parameter type="int" name="sig_class" />
+        </parameters>
+      </method>
+      <method name="SetSigCreated" cname="g_mime_signer_set_sig_created">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="created" />
+        </parameters>
+      </method>
+      <method name="SetSigExpires" cname="g_mime_signer_set_sig_expires">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="expires" />
         </parameters>
       </method>
       <method name="SetSigVersion" cname="g_mime_signer_set_sig_version">

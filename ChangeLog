@@ -1,15 +1,5 @@
 2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
 
-	* gmime/gmime-crypto-context.c: Moved GMimeSigner's key info out
-	of GMimeSigner and into a new struct, GMimeCryptoKey. This is the
-	first step in solving bug #641319.
-
-	* gmime/gmime-pkcs7-context.c: Updated for above changes.
-
-	* gmime/gmime-gpg-context.c: Updated for above changes.
-
-2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
-
 	API cleanup as well as preparing for the possibility of a
 	multi-protocol CryptoContext.
 
