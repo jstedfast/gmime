@@ -320,7 +320,7 @@ struct _GMimeSigner {
 GMimeSigner *g_mime_signer_new (GMimeSignerStatus status);
 void         g_mime_signer_free (GMimeSigner *signer);
 
-GMimeSigner *g_mime_signer_next (GMimeSigner *signer);
+const GMimeSigner *g_mime_signer_next (const GMimeSigner *signer);
 
 void g_mime_signer_set_status (GMimeSigner *signer, GMimeSignerStatus status);
 GMimeSignerStatus g_mime_signer_get_status (const GMimeSigner *signer);

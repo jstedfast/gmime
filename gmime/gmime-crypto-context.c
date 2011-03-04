@@ -560,7 +560,7 @@ g_mime_signer_new (GMimeSignerStatus status)
 
 /**
  * g_mime_signer_free:
- * @signer: signer
+ * @signer: a #GMimeSigner
  *
  * Frees the singleton signer. Should NOT be used to free signers
  * returned from g_mime_signature_validity_get_signers().
@@ -587,8 +587,8 @@ g_mime_signer_free (GMimeSigner *signer)
  *
  * Returns: the next #GMimeSigner or %NULL when complete.
  **/
-GMimeSigner *
-g_mime_signer_next (GMimeSigner *signer)
+const GMimeSigner *
+g_mime_signer_next (const GMimeSigner *signer)
 {
 	g_return_val_if_fail (signer != NULL, NULL);
 	
@@ -1189,7 +1189,7 @@ g_mime_signature_validity_new (void)
 
 /**
  * g_mime_signature_validity_free:
- * @validity: signature validity
+ * @validity: a #GMimeSignatureValidity
  *
  * Frees the memory used by @validity back to the system.
  **/
@@ -1216,7 +1216,7 @@ g_mime_signature_validity_free (GMimeSignatureValidity *validity)
 
 /**
  * g_mime_signature_validity_get_details:
- * @validity: signature validity
+ * @validity: a #GMimeSignatureValidity
  *
  * Gets any user-readable status details.
  *
@@ -1233,7 +1233,7 @@ g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity)
 
 /**
  * g_mime_signature_validity_set_details:
- * @validity: signature validity
+ * @validity: a #GMimeSignatureValidity
  * @details: details string
  *
  * Sets @details as the status details string on @validity.
@@ -1250,7 +1250,7 @@ g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const c
 
 /**
  * g_mime_signature_validity_get_signers:
- * @validity: signature validity
+ * @validity: a #GMimeSignatureValidity
  *
  * Gets the list of signers.
  *
@@ -1269,8 +1269,8 @@ g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity)
 
 /**
  * g_mime_signature_validity_add_signer:
- * @validity: signature validity
- * @signer: signer
+ * @validity: a #GMimeSignatureValidity
+ * @signer: a #GMimeSigner
  *
  * Adds @signer to the list of signers on @validity. Once the signer
  * is added, it must NOT be freed.
