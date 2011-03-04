@@ -862,10 +862,10 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		gpg->signer = signer;
 		
 		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
+		status = next_token (status, &signer->key->keyid);
 		
 		/* the rest of the string is the signer's name */
-		signer->name = g_strdup (status);
+		signer->key->name = g_strdup (status);
 	} else if (!strncmp (status, "BADSIG ", 7)) {
 		status += 7;
 		
@@ -874,10 +874,10 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		gpg->signer = signer;
 		
 		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
+		status = next_token (status, &signer->key->keyid);
 		
 		/* the rest of the string is the signer's name */
-		signer->name = g_strdup (status);
+		signer->key->name = g_strdup (status);
 	} else if (!strncmp (status, "ERRSIG ", 7)) {
 		/* Note: NO_PUBKEY often comes after an ERRSIG */
 		status += 7;
@@ -887,7 +887,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		gpg->signer = signer;
 		
 		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
+		status = next_token (status, &signer->key->keyid);
 		
 		/* skip the pubkey_algo */
 		status = next_token (status, NULL);
@@ -899,7 +899,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* get the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, &inend, 10);
+		signer->expires = strtoul (status, &inend, 10);
 		status = inend + 1;
 		
 		/* get the return code */
@@ -923,24 +923,24 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status += 9;
 		
 		/* the first token is the fingerprint */
-		status = next_token (status, &signer->fingerprint);
+		status = next_token (status, &signer->key->fingerprint);
 		
 		/* the second token is the date the stream was signed YYYY-MM-DD */
 		status = next_token (status, NULL);
 		
 		/* the third token is the signature creation date (or 0 for unknown?) */
-		signer->sig_created = strtoul (status, &inend, 10);
+		signer->created = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_created = 0;
+			signer->created = 0;
 			return;
 		}
 		
 		status = inend + 1;
 		
 		/* the fourth token is the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, &inend, 10);
+		signer->expires = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_expires = 0;
+			signer->expires = 0;
 			return;
 		}
 		
@@ -959,7 +959,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* the seventh token is the public-key algorithm id */
-		signer->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+		signer->key->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
 		if (inend == status || *inend != ' ')
 			return;
 		

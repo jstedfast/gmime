@@ -566,11 +566,12 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 		signers->next = signer;
 		signers = signer;
 		
-		g_mime_signer_set_pubkey_algo (signer, pkcs7_pubkey_algo (sig->pubkey_algo));
+		g_mime_crypto_key_set_pubkey_algo (signer->key, pkcs7_pubkey_algo (sig->pubkey_algo));
+		g_mime_crypto_key_set_fingerprint (signer->key, sig->fpr);
+		
 		g_mime_signer_set_hash_algo (signer, pkcs7_hash_algo (sig->hash_algo));
-		g_mime_signer_set_sig_expires (signer, sig->exp_timestamp);
-		g_mime_signer_set_sig_created (signer, sig->timestamp);
-		g_mime_signer_set_fingerprint (signer, sig->fpr);
+		g_mime_signer_set_expiration_date (signer, sig->exp_timestamp);
+		g_mime_signer_set_creation_date (signer, sig->timestamp);
 		
 		if (sig->exp_timestamp != 0 && sig->exp_timestamp <= time (NULL)) {
 			/* signature expired, automatically results in a BAD signature */
@@ -580,23 +581,23 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 		
 		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
+			g_mime_crypto_key_set_issuer_serial (signer->key, key->issuer_serial);
+			g_mime_crypto_key_set_issuer_name (signer->key, key->issuer_name);
 			g_mime_signer_set_trust (signer, pkcs7_trust (key->owner_trust));
-			g_mime_signer_set_issuer_serial (signer, key->issuer_serial);
-			g_mime_signer_set_issuer_name (signer, key->issuer_name);
 			
 			/* get the keyid, name, and email address */
 			uid = key->uids;
 			while (uid) {
 				if (uid->name && *uid->name)
-					g_mime_signer_set_name (signer, uid->name);
+					g_mime_crypto_key_set_name (signer->key, uid->name);
 				
 				if (uid->email && *uid->email)
-					g_mime_signer_set_email (signer, uid->email);
+					g_mime_crypto_key_set_email (signer->key, uid->email);
 				
 				if (uid->uid && *uid->uid)
-					g_mime_signer_set_key_id (signer, uid->uid);
+					g_mime_crypto_key_set_key_id (signer->key, uid->uid);
 				
-				if (signer->name && signer->email && signer->keyid)
+				if (signer->key->name && signer->key->email && signer->key->keyid)
 					break;
 				
 				uid = uid->next;
@@ -608,8 +609,8 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 				subkey = subkey->next;
 			
 			if (subkey) {
-				g_mime_signer_set_key_created (signer, subkey->timestamp);
-				g_mime_signer_set_key_expires (signer, subkey->expires);
+				g_mime_crypto_key_set_creation_date (signer->key, subkey->timestamp);
+				g_mime_crypto_key_set_expiration_date (signer->key, subkey->expires);
 				
 				if (subkey->revoked) {
 					/* signer's key has been revoked, automatic BAD status */

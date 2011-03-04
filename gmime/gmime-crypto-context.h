@@ -42,6 +42,7 @@ typedef struct _GMimeCryptoContext GMimeCryptoContext;
 typedef struct _GMimeCryptoContextClass GMimeCryptoContextClass;
 
 typedef struct _GMimeSigner GMimeSigner;
+typedef struct _GMimeCryptoKey GMimeCryptoKey;
 typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
 
 
@@ -61,30 +62,6 @@ typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
  **/
 typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx,
 					       gboolean reprompt, GMimeStream *response, GError **err);
-
-
-
-/**
- * GMimeCryptoPubKeyAlgo:
- * @GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT: The default public-key algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
- *
- * A public-key algorithm.
- **/
-typedef enum {
-	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_DSA
-} GMimeCryptoPubKeyAlgo;
 
 
 /**
@@ -211,6 +188,89 @@ int                  g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx,
 							GMimeStream *ostream, GError **err);
 
 
+/* crypto key structures and functions */
+
+/**
+ * GMimeCryptoPubKeyAlgo:
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT: The default public-key algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
+ *
+ * A public-key algorithm.
+ **/
+typedef enum {
+	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_DSA
+} GMimeCryptoPubKeyAlgo;
+
+
+/**
+ * GMimeCryptoKey:
+ * @pubkey_algo: The public-key algorithm associated with the key.
+ * @issuer_serial: The issuer of the certificate, if known.
+ * @issuer_name: The issuer of the certificate, if known.
+ * @fingerprint: A hex string representing the key's fingerprint.
+ * @created: The creation date of the key.
+ * @expires: The expiration date of the key.
+ * @keyid: The key id.
+ * @email: The email address of the person or entity.
+ * @name: The name of the person or entity.
+ *
+ * A structure containing useful information about a key.
+ **/
+struct _GMimeCryptoKey {
+	GMimeCryptoPubKeyAlgo pubkey_algo;
+	char *issuer_serial;
+	char *issuer_name;
+	char *fingerprint;
+	time_t created;
+	time_t expires;
+	char *keyid;
+	char *email;
+	char *name;
+};
+
+
+/*GMimeCryptoKey *g_mime_crypto_key_new (const char *key_id);*/
+/*void g_mime_crypto_key_free (GMimeCryptoKey *key);*/
+
+void g_mime_crypto_key_set_pubkey_algo (GMimeCryptoKey *key, GMimeCryptoPubKeyAlgo pubkey_algo);
+GMimeCryptoPubKeyAlgo g_mime_crypto_key_get_pubkey_algo (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_issuer_serial (GMimeCryptoKey *key, const char *issuer_serial);
+const char *g_mime_crypto_key_get_issuer_serial (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_issuer_name (GMimeCryptoKey *key, const char *issuer_name);
+const char *g_mime_crypto_key_get_issuer_name (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_fingerprint (GMimeCryptoKey *key, const char *fingerprint);
+const char *g_mime_crypto_key_get_fingerprint (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_key_id (GMimeCryptoKey *key, const char *key_id);
+const char *g_mime_crypto_key_get_key_id (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_email (GMimeCryptoKey *key, const char *email);
+const char *g_mime_crypto_key_get_email (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_name (GMimeCryptoKey *key, const char *name);
+const char *g_mime_crypto_key_get_name (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_creation_date (GMimeCryptoKey *key, time_t created);
+time_t g_mime_crypto_key_get_creation_date (const GMimeCryptoKey *key);
+
+void g_mime_crypto_key_set_expiration_date (GMimeCryptoKey *key, time_t expires);
+time_t g_mime_crypto_key_get_expiration_date (const GMimeCryptoKey *key);
+
+
 /* signature status structures and functions */
 
 /**
@@ -279,41 +339,25 @@ typedef enum {
  * @unused: Unused expansion bits for future use; ignore this.
  * @sig_class: Crypto-specific signature class.
  * @sig_ver: Crypto-specific signature version.
- * @pubkey_algo: The public-key algorithm used by the signer, if known.
  * @hash_algo: The hash algorithm used by the signer, if known.
- * @issuer_serial: The issuer of the certificate, if known.
- * @issuer_name: The issuer of the certificate, if known.
- * @fingerprint: A hex string representing the signer's fingerprint.
- * @sig_created: The creation date of the signature.
- * @sig_expires: The expiration date of the signature.
- * @key_created: The creation date of the signature key.
- * @key_expires: The expiration date of the signature key.
- * @keyid: The signer's key id.
- * @email: The email address of the person or entity.
- * @name: The name of the person or entity.
+ * @key: The #GMimeCryptoKey used by the signer.
+ * @created: The creation date of the signature.
+ * @expires: The expiration date of the signature.
  *
  * A structure containing useful information about a signer.
  **/
 struct _GMimeSigner {
 	GMimeSigner *next;
-	unsigned int status:2;    /* GMimeSignerStatus */
-	unsigned int errors:6;    /* bitfield of GMimeSignerError's */
-	unsigned int trust:3;     /* GMimeSignerTrust */
-	unsigned int unused:5;    /* unused expansion bits */
-	unsigned int sig_class:8; /* crypto-specific signature class */
-	unsigned int sig_ver:8;   /* crypto-specific signature version */
-	GMimeCryptoPubKeyAlgo pubkey_algo;
+	unsigned int status:2;     /* GMimeSignerStatus */
+	unsigned int errors:6;     /* bitfield of GMimeSignerError's */
+	unsigned int trust:3;      /* GMimeSignerTrust */
+	unsigned int unused:5;     /* unused expansion bits */
+	unsigned int sig_class:8;  /* crypto-specific signature class */
+	unsigned int sig_ver:8;    /* crypto-specific signature version */
 	GMimeCryptoHash hash_algo;
-	char *issuer_serial;
-	char *issuer_name;
-	char *fingerprint;
-	time_t sig_created;
-	time_t sig_expires;
-	time_t key_created;
-	time_t key_expires;
-	char *keyid;
-	char *email;
-	char *name;
+	GMimeCryptoKey *key;
+	time_t created;
+	time_t expires;
 };
 
 
@@ -337,41 +381,17 @@ int g_mime_signer_get_sig_class (const GMimeSigner *signer);
 void g_mime_signer_set_sig_version (GMimeSigner *signer, int version);
 int g_mime_signer_get_sig_version (const GMimeSigner *signer);
 
-void g_mime_signer_set_pubkey_algo (GMimeSigner *signer, GMimeCryptoPubKeyAlgo pubkey_algo);
-GMimeCryptoPubKeyAlgo g_mime_signer_get_pubkey_algo (const GMimeSigner *signer);
-
 void g_mime_signer_set_hash_algo (GMimeSigner *signer, GMimeCryptoHash hash);
 GMimeCryptoHash g_mime_signer_get_hash_algo (const GMimeSigner *signer);
 
-void g_mime_signer_set_issuer_serial (GMimeSigner *signer, const char *issuer_serial);
-const char *g_mime_signer_get_issuer_serial (const GMimeSigner *signer);
+/*void g_mime_signer_set_key (GMimeSigner *signer, GMimeCryptoKey *key);*/
+const GMimeCryptoKey *g_mime_signer_get_key (const GMimeSigner *signer);
 
-void g_mime_signer_set_issuer_name (GMimeSigner *signer, const char *issuer_name);
-const char *g_mime_signer_get_issuer_name (const GMimeSigner *signer);
+void g_mime_signer_set_creation_date (GMimeSigner *signer, time_t created);
+time_t g_mime_signer_get_creation_date (const GMimeSigner *signer);
 
-void g_mime_signer_set_fingerprint (GMimeSigner *signer, const char *fingerprint);
-const char *g_mime_signer_get_fingerprint (const GMimeSigner *signer);
-
-void g_mime_signer_set_key_id (GMimeSigner *signer, const char *key_id);
-const char *g_mime_signer_get_key_id (const GMimeSigner *signer);
-
-void g_mime_signer_set_email (GMimeSigner *signer, const char *email);
-const char *g_mime_signer_get_email (const GMimeSigner *signer);
-
-void g_mime_signer_set_name (GMimeSigner *signer, const char *name);
-const char *g_mime_signer_get_name (const GMimeSigner *signer);
-
-void g_mime_signer_set_sig_created (GMimeSigner *signer, time_t created);
-time_t g_mime_signer_get_sig_created (const GMimeSigner *signer);
-
-void g_mime_signer_set_sig_expires (GMimeSigner *signer, time_t expires);
-time_t g_mime_signer_get_sig_expires (const GMimeSigner *signer);
-
-void g_mime_signer_set_key_created (GMimeSigner *signer, time_t created);
-time_t g_mime_signer_get_key_created (const GMimeSigner *signer);
-
-void g_mime_signer_set_key_expires (GMimeSigner *signer, time_t expires);
-time_t g_mime_signer_get_key_expires (const GMimeSigner *signer);
+void g_mime_signer_set_expiration_date (GMimeSigner *signer, time_t expires);
+time_t g_mime_signer_get_expiration_date (const GMimeSigner *signer);
 
 
 /**
