@@ -734,7 +734,7 @@ g_mime_signer_get_sig_class (const GMimeSigner *signer)
 /**
  * g_mime_signer_set_sig_version:
  * @signer: a #GMimeSigner
- * @sig_class: signature version
+ * @version: signature version
  *
  * Set the signer's signature version.
  **/

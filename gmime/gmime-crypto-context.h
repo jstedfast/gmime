@@ -257,6 +257,7 @@ typedef enum {
  * @GMIME_SIGNER_ERROR_NO_PUBKEY: No public key found.
  * @GMIME_SIGNER_ERROR_EXPKEYSIG: Expired signature key.
  * @GMIME_SIGNER_ERROR_REVKEYSIG: Revoked signature key.
+ * @GMIME_SIGNER_ERROR_UNSUPP_ALGO: Unsupported algorithm.
  *
  * Possible errors that a #GMimeSigner could have.
  **/
@@ -376,7 +377,6 @@ time_t g_mime_signer_get_key_expires (const GMimeSigner *signer);
 
 /**
  * GMimeSignatureValidity:
- * @status: The overall signature status.
  * @signers: A list of #GMimeSigner structures.
  * @details: A string containing more user-readable details.
  *
