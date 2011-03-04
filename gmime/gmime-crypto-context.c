@@ -65,8 +65,8 @@ static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 			   GPtrArray *recipients, GMimeStream *istream,
 			   GMimeStream *ostream, GError **err);
 
-static GMimeSignatureValidity *crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					       GMimeStream *ostream, GError **err);
+static GMimeDecryptionResult *crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
+					      GMimeStream *ostream, GError **err);
 
 static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GError **err);
@@ -413,7 +413,7 @@ g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign, const cha
 }
 
 
-static GMimeSignatureValidity *
+static GMimeDecryptionResult *
 crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 		GMimeStream *ostream, GError **err)
 {
@@ -435,15 +435,16 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
  * cleartext to the output stream.
  *
  * If the encrypted input stream was also signed, the returned
- * #GMimeSignatureValidity will contain a list of signers, each with a
- * #GMimeSignerStatus (among other details).
+ * #GMimeDecryptionResult will have a non-%NULL #GMimeSignatureValidity which
+ * will contain a list of signers, each with a #GMimeSignerStatus (among other
+ * details about each signer).
  *
- * If the encrypted input text was not signed, then the
- * #GMimeSignatureValidity will not contain any signers.
+ * On success, the returned #GMimeDecryptionResult will contain a list of
+ * recipient keys that the original encrypted stream was encrypted to.
  *
- * Returns: a #GMimeSignatureValidity on success or %NULL on error.
+ * Returns: a #GMimeDecryptionResult on success or %NULL on error.
  **/
-GMimeSignatureValidity *
+GMimeDecryptionResult *
 g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GMimeStream *ostream, GError **err)
 {
@@ -1291,5 +1292,256 @@ g_mime_signature_validity_add_signer (GMimeSignatureValidity *validity, GMimeSig
 			s = s->next;
 		
 		s->next = signer;
+	}
+}
+
+
+/**
+ * g_mime_crypto_recipient_new:
+ *
+ * Allocates an new #GMimeCryptoRecipient. This function is meant to be used
+ * in #GMimeCryptoContext subclasses when allocating recipients to add to a
+ * #GMimeDecryptionResult.
+ *
+ * Returns: a new #GMimeCryptoRecipient.
+ **/
+GMimeCryptoRecipient *
+g_mime_crypto_recipient_new (void)
+{
+	GMimeCryptoRecipient *recipient;
+	
+	recipient = g_slice_new (GMimeCryptoRecipient);
+	recipient->pubkey_algo = GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
+	recipient->keyid = NULL;
+	recipient->next = NULL;
+	
+	return recipient;
+}
+
+
+/**
+ * g_mime_crypto_recipient_free:
+ * @recipient: a #GMimeCryptoRecipient
+ *
+ * Frees the singleton recipient. Should NOT be used to free recipients
+ * returned from g_mime_signature_validity_get_recipients().
+ **/
+void
+g_mime_crypto_recipient_free (GMimeCryptoRecipient *recipient)
+{
+	g_free (recipient->keyid);
+	
+	g_slice_free (GMimeCryptoRecipient, recipient);
+}
+
+
+/**
+ * g_mime_crypto_recipient_next:
+ * @recipient: a #GMimeCryptoRecipient
+ *
+ * Advance to the next recipient.
+ *
+ * Returns: the next #GMimeCryptoRecipient or %NULL when complete.
+ **/
+const GMimeCryptoRecipient *
+g_mime_crypto_recipient_next (const GMimeCryptoRecipient *recipient)
+{
+	g_return_val_if_fail (recipient != NULL, NULL);
+	
+	return recipient->next;
+}
+
+
+/**
+ * g_mime_crypto_recipient_set_pubkey_algo:
+ * @recipient: a #GMimeCryptoRecipient
+ * @pubkey_algo: a #GMimeCryptoPubKeyAlgo
+ *
+ * Set the public-key algorithm used by the recipient.
+ **/
+void
+g_mime_crypto_recipient_set_pubkey_algo (GMimeCryptoRecipient *recipient, GMimeCryptoPubKeyAlgo pubkey_algo)
+{
+	g_return_if_fail (recipient != NULL);
+	
+	recipient->pubkey_algo = pubkey_algo;
+}
+
+
+/**
+ * g_mime_crypto_recipient_get_pubkey_algo:
+ * @recipient: a #GMimeCryptoRecipient
+ *
+ * Get the public-key algorithm used by the recipient.
+ *
+ * Returns: the public-key algorithm used by the recipient.
+ **/
+GMimeCryptoPubKeyAlgo
+g_mime_crypto_recipient_get_pubkey_algo (const GMimeCryptoRecipient *recipient)
+{
+	g_return_val_if_fail (recipient != NULL, GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT);
+	
+	return recipient->pubkey_algo;
+}
+
+
+/**
+ * g_mime_crypto_recipient_set_key_id:
+ * @recipient: a #GMimeCryptoRecipient
+ * @key_id: key id
+ *
+ * Set the recipient's key id.
+ **/
+void
+g_mime_crypto_recipient_set_key_id (GMimeCryptoRecipient *recipient, const char *key_id)
+{
+	g_return_if_fail (recipient != NULL);
+	
+	g_free (recipient->keyid);
+	recipient->keyid = g_strdup (key_id);
+}
+
+
+/**
+ * g_mime_crypto_recipient_get_key_id:
+ * @recipient: a #GMimeCryptoRecipient
+ *
+ * Get the recipient's key id.
+ *
+ * Returns: the recipient's key id.
+ **/
+const char *
+g_mime_crypto_recipient_get_key_id (const GMimeCryptoRecipient *recipient)
+{
+	g_return_val_if_fail (recipient != NULL, NULL);
+	
+	return recipient->keyid;
+}
+
+
+/**
+ * g_mime_decryption_result_new:
+ *
+ * Creates a new #GMimeDecryptionResult.
+ *
+ * Returns: a new #GMimeDecryptionResult.
+ **/
+GMimeDecryptionResult *
+g_mime_decryption_result_new (void)
+{
+	GMimeDecryptionResult *result;
+	
+	result = g_slice_new (GMimeDecryptionResult);
+	result->recipients = NULL;
+	result->validity = NULL;
+	
+	return result;
+}
+
+
+/**
+ * g_mime_decryption_result_free:
+ * @result: a #GMimeDecryptionResult
+ *
+ * Frees the memory used by @result back to the system.
+ **/
+void
+g_mime_decryption_result_free (GMimeDecryptionResult *result)
+{
+	GMimeCryptoRecipient *recipient, *next;
+	
+	if (result == NULL)
+		return;
+	
+	recipient = result->recipients;
+	while (recipient != NULL) {
+		next = recipient->next;
+		g_mime_crypto_recipient_free (recipient);
+		recipient = next;
+	}
+	
+	g_mime_signature_validity_free (result->validity);
+	
+	g_slice_free (GMimeDecryptionResult, result);
+}
+
+
+/**
+ * g_mime_decryption_result_get_validity:
+ * @result: a #GMimeDecryptionResult
+ *
+ * Gets the signature validity if the decrypted stream was also signed.
+ *
+ * Returns: a #GMimeSignatureValidity or %NULL if the stream was not signed.
+ **/
+const GMimeSignatureValidity *
+g_mime_decryption_result_get_validity (const GMimeDecryptionResult *result)
+{
+	g_return_val_if_fail (result != NULL, NULL);
+	
+	return result->validity;
+}
+
+
+/**
+ * g_mime_decryption_result_set_validity:
+ * @result: a #GMimeDecryptionResult
+ * @validity: a #GMimeSignatureValidity
+ *
+ * Sets @validity as the #GMimeDecryptionResult.
+ **/
+void
+g_mime_decryption_result_set_validity (GMimeDecryptionResult *result, GMimeSignatureValidity *validity)
+{
+	g_return_if_fail (result != NULL);
+	
+	g_mime_signature_validity_free (result->validity);
+	result->validity = validity;
+}
+
+
+/**
+ * g_mime_decryption_result_get_recipients:
+ * @result: signature result
+ *
+ * Gets the list of recipients.
+ *
+ * Returns: a #GMimeCryptoRecipient list which contain further information such
+ * as trust and crypto keys. These recipients are part of the
+ * #GMimeDecryptionResult and should NOT be freed individually.
+ **/
+const GMimeCryptoRecipient *
+g_mime_decryption_result_get_recipients (const GMimeDecryptionResult *result)
+{
+	g_return_val_if_fail (result != NULL, NULL);
+	
+	return result->recipients;
+}
+
+
+/**
+ * g_mime_decryption_result_add_recipient:
+ * @result: a #GMimeDecryptionResult
+ * @recipient: a #GMimeCryptoRecipient
+ *
+ * Adds @recipient to the list of recipients on @result. Once the recipient
+ * is added, it must NOT be freed.
+ **/
+void
+g_mime_decryption_result_add_recipient (GMimeDecryptionResult *result, GMimeCryptoRecipient *recipient)
+{
+	GMimeCryptoRecipient *r;
+	
+	g_return_if_fail (result != NULL);
+	g_return_if_fail (recipient != NULL);
+	
+	if (result->recipients == NULL) {
+		result->recipients = recipient;
+	} else {
+		r = result->recipients;
+		while (r->next != NULL)
+			r = r->next;
+		
+		r->next = recipient;
 	}
 }

@@ -141,7 +141,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 static void
 test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeSignatureValidity *sv;
+	GMimeDecryptionResult *result;
 	Exception *ex = NULL;
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -149,7 +149,7 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	
 	stream = g_mime_stream_mem_new ();
 	
-	if (!(sv = g_mime_crypto_context_decrypt (ctx, ciphertext, stream, &err))) {
+	if (!(result = g_mime_crypto_context_decrypt (ctx, ciphertext, stream, &err))) {
 		g_object_unref (stream);
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
@@ -157,14 +157,14 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	}
 	
 	if (sign) {
-		if (get_sig_status (sv->signers) != GMIME_SIGNER_STATUS_GOOD)
+		if (!result->validity || get_sig_status (result->validity->signers) != GMIME_SIGNER_STATUS_GOOD)
 			ex = exception_new ("expected GOOD signature");
 	} else {
-		if (sv->signers != NULL)
+		if (result->validity && result->validity->signers != NULL)
 			ex = exception_new ("unexpected signature");
 	}
 	
-	g_mime_signature_validity_free (sv);
+	g_mime_decryption_result_free (result);
 	
 	if (ex != NULL) {
 		g_object_unref (stream);

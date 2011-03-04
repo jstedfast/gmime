@@ -73,7 +73,7 @@ int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObjec
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeCryptoContext *ctx,
-						 GMimeSignatureValidity **validity,
+						 GMimeDecryptionResult **result,
 						 GError **err);
 
 G_END_DECLS

@@ -262,7 +262,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 {
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
-	GMimeSignatureValidity *sv;
+	GMimeDecryptionResult *result;
 	GMimeDataWrapper *content;
 	GMimeObject *decrypted;
 	GPtrArray *recipients;
@@ -342,26 +342,27 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &sv, &err);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
-		g_mime_signature_validity_free (sv);
+		g_mime_decryption_result_free (result);
 		g_object_unref (cleartext);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	v(print_verify_results (sv));
+	if (result->validity)
+		v(print_verify_results (result->validity));
 	
 	if (sign) {
-		if (get_sig_status (sv->signers) != GMIME_SIGNER_STATUS_GOOD)
+		if (!result->validity || get_sig_status (result->validity->signers) != GMIME_SIGNER_STATUS_GOOD)
 			ex = exception_new ("signature status expected to be GOOD");
 	} else {
-		if (sv->signers != NULL)
+		if (result->validity && result->validity->signers != NULL)
 			ex = exception_new ("signature status expected to be NONE");
 	}
 	
-	g_mime_signature_validity_free (sv);
+	g_mime_decryption_result_free (result);
 	
 	if (ex != NULL) {
 		g_object_unref (cleartext);

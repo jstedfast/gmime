@@ -96,8 +96,8 @@ static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *user
 			GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
 
-static GMimeSignatureValidity *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					    GMimeStream *ostream, GError **err);
+static GMimeDecryptionResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
+					   GMimeStream *ostream, GError **err);
 
 static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
@@ -301,6 +301,9 @@ struct _GpgCtx {
 	GByteArray *diag;
 	GMimeStream *diagnostics;
 	
+	GMimeCryptoRecipient *encrypted_to;  /* full list of encrypted-to recipients */
+	GMimeCryptoRecipient *enc_to;        /* most recent recipient (tail pointer) */
+	
 	GMimeSigner *signers;
 	GMimeSigner *signer;
 	
@@ -358,6 +361,9 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->bad_passwds = 0;
 	gpg->need_passwd = FALSE;
 	gpg->need_id = NULL;
+	
+	gpg->encrypted_to = NULL;
+	gpg->enc_to = (GMimeCryptoRecipient *) &gpg->encrypted_to;
 	
 	gpg->signers = NULL;
 	gpg->signer = (GMimeSigner *) &gpg->signers;
@@ -481,7 +487,8 @@ gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 static void
 gpg_ctx_free (struct _GpgCtx *gpg)
 {
-	GMimeSigner *signer, *next;
+	GMimeCryptoRecipient *recipient, *nr;
+	GMimeSigner *signer, *ns;
 	guint i;
 	
 	g_hash_table_destroy (gpg->userid_hint);
@@ -521,11 +528,18 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	
 	g_object_unref (gpg->diagnostics);
 	
+	recipient = gpg->encrypted_to;
+	while (recipient != NULL) {
+		nr = recipient->next;
+		g_mime_crypto_recipient_free (recipient);
+		recipient = nr;
+	}
+	
 	signer = gpg->signers;
 	while (signer != NULL) {
-		next = signer->next;
+		ns = signer->next;
 		g_mime_signer_free (signer);
-		signer = next;
+		signer = ns;
 	}
 	
 	g_slice_free (struct _GpgCtx, gpg);
@@ -1198,6 +1212,9 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		return -1;
 	} else {
+		GMimeCryptoRecipient *recipient;
+		char *inend;
+		
 		switch (gpg->mode) {
 		case GPG_CTX_MODE_SIGN:
 			if (strncmp (status, "SIG_CREATED ", 12) != 0)
@@ -1234,6 +1251,25 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				/* nothing to do... but we know to expect data on stdout soon */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
 				/* nothing to do, but we know we're done */
+			} else if (!strncmp (status, "ENC_TO ", 7)) {
+				/* parse the recipient info */
+				recipient = g_mime_crypto_recipient_new ();
+				gpg->enc_to->next = recipient;
+				gpg->enc_to = recipient;
+				
+				status += 7;
+				
+				/* first token is the recipient's keyid */
+				status = next_token (status, &recipient->keyid);
+				
+				/* second token is the recipient's pubkey algo */
+				recipient->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+				if (inend == status || *inend != ' ')
+					return;
+				
+				status = inend + 1;
+				
+				/* third token is the status code, ignore for now */
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
 			}
@@ -1883,12 +1919,12 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 }
 
 
-static GMimeSignatureValidity *
+static GMimeDecryptionResult *
 gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	GMimeSignatureValidity *validity;
+	GMimeDecryptionResult *result;
 	const char *diagnostics;
 	struct _GpgCtx *gpg;
 	int save;
@@ -1927,16 +1963,18 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 		return NULL;
 	}
 	
+	result = g_mime_decryption_result_new ();
+	result->validity = g_mime_signature_validity_new ();
 	diagnostics = gpg_ctx_get_diagnostics (gpg);
-	
-	validity = g_mime_signature_validity_new ();
-	g_mime_signature_validity_set_details (validity, diagnostics);
-	validity->signers = gpg->signers;
+	g_mime_signature_validity_set_details (result->validity, diagnostics);
+	result->validity->signers = gpg->signers;
+	result->recipients = gpg->encrypted_to;
+	gpg->encrypted_to = NULL;
 	gpg->signers = NULL;
 	
 	gpg_ctx_free (gpg);
 	
-	return validity;
+	return result;
 }
 
 static int

@@ -94,8 +94,8 @@ static int pkcs7_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *us
 			  GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
 			  GMimeStream *ostream, GError **err);
 
-static GMimeSignatureValidity *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					      GMimeStream *ostream, GError **err);
+static GMimeDecryptionResult *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
+					     GMimeStream *ostream, GError **err);
 
 static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			      GError **err);
@@ -547,12 +547,12 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 	gpgme_user_id_t uid;
 	gpgme_key_t key;
 	
-	/* create a new signature validity to return */
-	validity = g_mime_signature_validity_new ();
-	
 	/* get the signature verification results from GpgMe */
 	if (!(result = gpgme_op_verify_result (pkcs7->ctx)) || !result->signatures)
-		return validity;
+		return verify ? g_mime_signature_validity_new () : NULL;
+	
+	/* create a new signature validity to return */
+	validity = g_mime_signature_validity_new ();
 	
 	/* collect the signers for this signature */
 	signers = (GMimeSigner *) &validity->signers;
@@ -778,13 +778,46 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 }
 
 
-static GMimeSignatureValidity *
+static GMimeDecryptionResult *
+pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
+{
+	GMimeCryptoRecipient *recipient, *recipients;
+	GMimeDecryptionResult *result;
+	gpgme_decrypt_result_t res;
+	gpgme_recipient_t recip;
+	
+	result = g_mime_decryption_result_new ();
+	result->validity = pkcs7_get_validity (pkcs7, FALSE);
+	
+	if (!(res = gpgme_op_decrypt_result (pkcs7->ctx)) || !res->recipients)
+		return result;
+	
+	recipients = (GMimeCryptoRecipient *) &result->recipients;
+	
+	recip = res->recipients;
+	while (recip != NULL) {
+		recipient = g_mime_crypto_recipient_new ();
+		recipients->next = recipient;
+		recipients = recipient;
+		
+		g_mime_crypto_recipient_set_pubkey_algo (recipient, pkcs7_pubkey_algo (recip->pubkey_algo));
+		g_mime_crypto_recipient_set_key_id (recipient, recip->keyid);
+		
+		recip = recip->next;
+	}
+	
+	return result;
+}
+
+static GMimeDecryptionResult *
 pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	       GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_SMIME
 	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
+	GMimeDecryptionResult *result;
 	Pkcs7Ctx *pkcs7 = ctx->priv;
+	gpgme_decrypt_result_t res;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	
@@ -810,8 +843,7 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
-	/* get/return the pkcs7 signature validity */
-	return pkcs7_get_validity (pkcs7, FALSE);
+	return pkcs7_get_decrypt_result (pkcs7);
 #else
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	

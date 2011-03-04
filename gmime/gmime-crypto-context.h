@@ -42,6 +42,8 @@ typedef struct _GMimeCryptoContext GMimeCryptoContext;
 typedef struct _GMimeCryptoContextClass GMimeCryptoContextClass;
 
 typedef struct _GMimeSigner GMimeSigner;
+typedef struct _GMimeCryptoRecipient GMimeCryptoRecipient;
+typedef struct _GMimeDecryptionResult GMimeDecryptionResult;
 typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
 
 
@@ -61,30 +63,6 @@ typedef struct _GMimeSignatureValidity GMimeSignatureValidity;
  **/
 typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const char *user_id, const char *prompt_ctx,
 					       gboolean reprompt, GMimeStream *response, GError **err);
-
-
-
-/**
- * GMimeCryptoPubKeyAlgo:
- * @GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT: The default public-key algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
- *
- * A public-key algorithm.
- **/
-typedef enum {
-	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_DSA
-} GMimeCryptoPubKeyAlgo;
 
 
 /**
@@ -159,7 +137,7 @@ struct _GMimeCryptoContextClass {
 						  GPtrArray *recipients, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
-	GMimeSignatureValidity * (* decrypt)     (GMimeCryptoContext *ctx, GMimeStream *istream,
+	GMimeDecryptionResult *  (* decrypt)     (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GMimeStream *ostream, GError **err);
 	
 	int                      (* import_keys) (GMimeCryptoContext *ctx, GMimeStream *istream,
@@ -175,43 +153,65 @@ GType g_mime_crypto_context_get_type (void);
 void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd);
 
 /* hash routines */
-GMimeCryptoHash      g_mime_crypto_context_hash_id (GMimeCryptoContext *ctx, const char *hash);
+GMimeCryptoHash g_mime_crypto_context_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-const char          *g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
+const char *g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
 /* protocol routines */
-const char          *g_mime_crypto_context_get_signature_protocol (GMimeCryptoContext *ctx);
+const char *g_mime_crypto_context_get_signature_protocol (GMimeCryptoContext *ctx);
 
-const char          *g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *ctx);
+const char *g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *ctx);
 
-const char          *g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx);
+const char *g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 /* crypto routines */
-int                  g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid,
-						 GMimeCryptoHash hash, GMimeStream *istream,
-						 GMimeStream *ostream, GError **err);
+int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid,
+				GMimeCryptoHash hash, GMimeStream *istream,
+				GMimeStream *ostream, GError **err);
 
 GMimeSignatureValidity *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 						      GMimeStream *istream, GMimeStream *sigstream,
 						      GError **err);
 
-int                  g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
-						    const char *userid, GMimeCryptoHash hash,
-						    GPtrArray *recipients, GMimeStream *istream,
-						    GMimeStream *ostream, GError **err);
+int g_mime_crypto_context_encrypt (GMimeCryptoContext *ctx, gboolean sign,
+				   const char *userid, GMimeCryptoHash hash,
+				   GPtrArray *recipients, GMimeStream *istream,
+				   GMimeStream *ostream, GError **err);
 
-GMimeSignatureValidity *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-						       GMimeStream *ostream, GError **err);
+GMimeDecryptionResult *g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
+						      GMimeStream *ostream, GError **err);
 
 /* key/certificate routines */
-int                  g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
-							GError **err);
+int g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err);
 
-int                  g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
-							GMimeStream *ostream, GError **err);
+int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+				       GMimeStream *ostream, GError **err);
 
 
 /* signature status structures and functions */
+
+/**
+ * GMimeCryptoPubKeyAlgo:
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT: The default public-key algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
+ *
+ * A public-key algorithm.
+ **/
+typedef enum {
+	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
+	GMIME_CRYPTO_PUBKEY_ALGO_DSA
+} GMimeCryptoPubKeyAlgo;
+
 
 /**
  * GMimeSignerTrust:
@@ -390,13 +390,64 @@ struct _GMimeSignatureValidity {
 
 
 GMimeSignatureValidity *g_mime_signature_validity_new (void);
-void                    g_mime_signature_validity_free (GMimeSignatureValidity *validity);
+void g_mime_signature_validity_free (GMimeSignatureValidity *validity);
 
-const char             *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
-void                    g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);
+const char *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
+void g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);
 
-const GMimeSigner      *g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity);
-void                    g_mime_signature_validity_add_signer  (GMimeSignatureValidity *validity, GMimeSigner *signer);
+const GMimeSigner *g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity);
+void g_mime_signature_validity_add_signer (GMimeSignatureValidity *validity, GMimeSigner *signer);
+
+
+
+/**
+ * GMimeCryptoRecipient:
+ * @next: Pointer to the next #GMimeCryptoRecipient.
+ * @pubkey_algo: The public-key algorithm used by the recipient, if known.
+ * @keyid: The recipient's key id.
+ *
+ * A structure containing useful information about a recipient.
+ **/
+struct _GMimeCryptoRecipient {
+	GMimeCryptoRecipient *next;
+	GMimeCryptoPubKeyAlgo pubkey_algo;
+	char *keyid;
+};
+
+
+GMimeCryptoRecipient *g_mime_crypto_recipient_new (void);
+void g_mime_crypto_recipient_free (GMimeCryptoRecipient *recipient);
+
+const GMimeCryptoRecipient *g_mime_crypto_recipient_next (const GMimeCryptoRecipient *recipient);
+
+void g_mime_crypto_recipient_set_pubkey_algo (GMimeCryptoRecipient *recipient, GMimeCryptoPubKeyAlgo pubkey_algo);
+GMimeCryptoPubKeyAlgo g_mime_crypto_recipient_get_pubkey_algo (const GMimeCryptoRecipient *recipient);
+
+void g_mime_crypto_recipient_set_key_id (GMimeCryptoRecipient *recipient, const char *key_id);
+const char *g_mime_crypto_recipient_get_key_id (const GMimeCryptoRecipient *recipient);
+
+
+/**
+ * GMimeDecryptionResult:
+ * @validity: A #GMimeSignatureValidity if signed or %NULL otherwise.
+ * @recipients: A list of #GMimeCryptoRecipient structures.
+ *
+ * A structure containing the results from decrypting an encrypted stream.
+ **/
+struct _GMimeDecryptionResult {
+	GMimeSignatureValidity *validity;
+	GMimeCryptoRecipient *recipients;
+};
+
+
+GMimeDecryptionResult *g_mime_decryption_result_new (void);
+void g_mime_decryption_result_free (GMimeDecryptionResult *result);
+
+const GMimeSignatureValidity *g_mime_decryption_result_get_validity (const GMimeDecryptionResult *result);
+void g_mime_decryption_result_set_validity (GMimeDecryptionResult *result, GMimeSignatureValidity *validity);
+
+const GMimeCryptoRecipient *g_mime_decryption_result_get_recipients (const GMimeDecryptionResult *result);
+void g_mime_decryption_result_add_recipient (GMimeDecryptionResult *result, GMimeCryptoRecipient *recipient);
 
 G_END_DECLS
 

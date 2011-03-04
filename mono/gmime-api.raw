@@ -190,7 +190,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="Decrypt" cname="decrypt">
-        <return-type type="GMimeSignatureValidity*" />
+        <return-type type="GMimeDecryptionResult*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GMimeStream*" name="istream" />
@@ -216,7 +216,7 @@
         </parameters>
       </virtual_method>
       <method name="Decrypt" cname="g_mime_crypto_context_decrypt">
-        <return-type type="GMimeSignatureValidity*" />
+        <return-type type="GMimeDecryptionResult*" />
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -1021,7 +1021,7 @@
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
-          <parameter type="GMimeSignatureValidity**" name="validity" />
+          <parameter type="GMimeDecryptionResult**" name="result" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
@@ -2238,6 +2238,62 @@
         </parameters>
       </method>
     </struct>
+    <struct name="CryptoRecipient" cname="GMimeCryptoRecipient" opaque="true">
+      <field name="Next" cname="next" type="GMimeCryptoRecipient*" access="public" writeable="true" />
+      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
+      <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
+      <method name="Free" cname="g_mime_crypto_recipient_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetKeyId" cname="g_mime_crypto_recipient_get_key_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPubkeyAlgo" cname="g_mime_crypto_recipient_get_pubkey_algo">
+        <return-type type="GMimeCryptoPubKeyAlgo" />
+      </method>
+      <constructor cname="g_mime_crypto_recipient_new" />
+      <method name="Next" cname="g_mime_crypto_recipient_next">
+        <return-type type="const-GMimeCryptoRecipient*" />
+      </method>
+      <method name="SetKeyId" cname="g_mime_crypto_recipient_set_key_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="key_id" />
+        </parameters>
+      </method>
+      <method name="SetPubkeyAlgo" cname="g_mime_crypto_recipient_set_pubkey_algo">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
+        </parameters>
+      </method>
+    </struct>
+    <struct name="DecryptionResult" cname="GMimeDecryptionResult" opaque="true">
+      <field name="Validity" cname="validity" type="GMimeSignatureValidity*" access="public" writeable="true" />
+      <field name="Recipients" cname="recipients" type="GMimeCryptoRecipient*" access="public" writeable="true" />
+      <method name="AddRecipient" cname="g_mime_decryption_result_add_recipient">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoRecipient*" name="recipient" />
+        </parameters>
+      </method>
+      <method name="Free" cname="g_mime_decryption_result_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetRecipients" cname="g_mime_decryption_result_get_recipients">
+        <return-type type="const-GMimeCryptoRecipient*" />
+      </method>
+      <method name="GetValidity" cname="g_mime_decryption_result_get_validity">
+        <return-type type="const-GMimeSignatureValidity*" />
+      </method>
+      <constructor cname="g_mime_decryption_result_new" />
+      <method name="SetValidity" cname="g_mime_decryption_result_set_validity">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignatureValidity*" name="validity" />
+        </parameters>
+      </method>
+    </struct>
     <struct name="Encoding" cname="GMimeEncoding" opaque="true">
       <method name="Base64DecodeStep" cname="g_mime_encoding_base64_decode_step" shared="true">
         <return-type type="size_t" />
@@ -2684,7 +2740,7 @@
         </parameters>
       </constructor>
       <method name="Next" cname="g_mime_signer_next">
-        <return-type type="GMimeSigner*" />
+        <return-type type="const-GMimeSigner*" />
       </method>
       <method name="SetEmail" cname="g_mime_signer_set_email">
         <return-type type="void" />

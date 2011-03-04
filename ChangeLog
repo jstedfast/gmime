@@ -1,5 +1,25 @@
 2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	Implemented bug #641319.
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_recipient_*): New
+	set of functions for manipulating a GMimeCryptoRecipient.
+	(g_mime_decryption_result_*): New set of functions to manipulate a
+	GMimeDecryptionResult
+	(g_mime_crypto_context_decrypt): Now returns a
+	GMimeDecryptionResult.
+
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_decrypt): Updated for API changes.
+
+	* gmime/gmime-pkcs7-context.c (pkcs7_decrypt): Updated for API
+	changes.
+
+	* gmime/gmime-gpg-context.c (gpg_decrypt): Updated for API
+	changes.
+
+2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
+
 	API cleanup as well as preparing for the possibility of a
 	multi-protocol CryptoContext.
 
