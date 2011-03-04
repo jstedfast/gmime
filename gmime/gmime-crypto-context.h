@@ -318,7 +318,7 @@ struct _GMimeSigner {
 
 
 GMimeSigner *g_mime_signer_new (GMimeSignerStatus status);
-void         g_mime_signer_free (GMimeSigner *signer);
+void g_mime_signer_free (GMimeSigner *signer);
 
 const GMimeSigner *g_mime_signer_next (const GMimeSigner *signer);
 
