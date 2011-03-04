@@ -1139,11 +1139,6 @@ g_mime_iconv_locale_to_utf8_length
 GMimePasswordRequestFunc
 GMimeCryptoHash
 GMimeCryptoContext
-GMimeSignatureValidity
-GMimeSignerStatus
-GMimeSignerTrust
-GMimeSignerError
-GMimeSigner
 g_mime_crypto_context_set_request_password
 g_mime_crypto_context_get_signature_protocol
 g_mime_crypto_context_get_encryption_protocol
@@ -1157,6 +1152,11 @@ g_mime_crypto_context_decrypt
 g_mime_crypto_context_import_keys
 g_mime_crypto_context_export_keys
 <SUBSECTION>
+GMimeCryptoPubKeyAlgo
+GMimeSignerStatus
+GMimeSignerTrust
+GMimeSignerError
+GMimeSigner
 g_mime_signer_new
 g_mime_signer_free
 g_mime_signer_next
@@ -1194,6 +1194,8 @@ g_mime_signer_get_email
 g_mime_signer_set_email
 g_mime_signer_get_name
 g_mime_signer_set_name
+<SUBSECTION>
+GMimeSignatureValidity
 g_mime_signature_validity_new
 g_mime_signature_validity_free
 g_mime_signature_validity_set_details
