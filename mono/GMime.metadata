@@ -223,7 +223,7 @@
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']"/>
 
   <!-- MultipartEncrypted -->
-  <attr path="/api/namespace/object[@cname='GMimeMultipartEncrypted']/method[@name='Decrypt']/*/parameter[@name='validity']" name="pass_as">out</attr>
+  <attr path="/api/namespace/object[@cname='GMimeMultipartEncrypted']/method[@name='Decrypt']/*/parameter[@name='result']" name="pass_as">out</attr>
   
   <!-- MultipartSigned -->
   
