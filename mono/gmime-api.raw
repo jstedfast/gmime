@@ -148,9 +148,6 @@
     </callback>
     <object name="CryptoContext" cname="GMimeCryptoContext" parent="GObject">
       <field name="RequestPasswd" cname="request_passwd" type="GMimePasswordRequestFunc" />
-      <field name="SignProtocol" cname="sign_protocol" type="const-char*" />
-      <field name="EncryptProtocol" cname="encrypt_protocol" type="const-char*" />
-      <field name="KeyProtocol" cname="key_protocol" type="const-char*" />
       <virtual_method name="HashId" cname="hash_id">
         <return-type type="GMimeCryptoHash" />
         <parameters>
@@ -245,6 +242,15 @@
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
         </parameters>
+      </method>
+      <method name="GetEncryptionProtocol" cname="g_mime_crypto_context_get_encryption_protocol">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetKeyExchangeProtocol" cname="g_mime_crypto_context_get_key_exchange_protocol">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetSignatureProtocol" cname="g_mime_crypto_context_get_signature_protocol">
+        <return-type type="const-char*" />
       </method>
       <method name="GetType" cname="g_mime_crypto_context_get_type" shared="true">
         <return-type type="GType" />
