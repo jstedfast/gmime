@@ -76,6 +76,12 @@ static GMimeCryptoHash pkcs7_hash_id (GMimeCryptoContext *ctx, const char *hash)
 
 static const char *pkcs7_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
+static const char *pkcs7_get_signature_protocol (GMimeCryptoContext *ctx);
+
+static const char *pkcs7_get_encryption_protocol (GMimeCryptoContext *ctx);
+
+static const char *pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx);
+
 static int pkcs7_sign (GMimeCryptoContext *ctx, const char *userid,
 		       GMimeCryptoHash hash, GMimeStream *istream,
 		       GMimeStream *ostream, GError **err);
@@ -144,6 +150,9 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 	crypto_class->decrypt = pkcs7_decrypt;
 	crypto_class->import_keys = pkcs7_import_keys;
 	crypto_class->export_keys = pkcs7_export_keys;
+	crypto_class->get_signature_protocol = pkcs7_get_signature_protocol;
+	crypto_class->get_encryption_protocol = pkcs7_get_encryption_protocol;
+	crypto_class->get_key_exchange_protocol = pkcs7_get_key_exchange_protocol;
 }
 
 static void
@@ -156,10 +165,6 @@ g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass
 #ifdef ENABLE_SMIME
 	ctx->priv->ctx = NULL;
 #endif
-	
-	crypto->sign_protocol = "application/pkcs7-signature";
-	crypto->encrypt_protocol = "application/pkcs7-mime";
-	crypto->key_protocol = "application/pkcs7-keys";
 }
 
 static void
@@ -240,6 +245,24 @@ pkcs7_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	}
 }
 
+static const char *
+pkcs7_get_signature_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pkcs7-signature";
+}
+
+static const char *
+pkcs7_get_encryption_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pkcs7-mime";
+}
+
+static const char *
+pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pkcs7-keys";
+}
+
 #ifdef ENABLE_SMIME
 static gpgme_error_t
 pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
@@ -271,21 +294,18 @@ pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_in
 static ssize_t
 pkcs7_stream_read (void *stream, void *buffer, size_t size)
 {
-	//printf ("reading...\n"); fflush (stdout);
 	return g_mime_stream_read ((GMimeStream *) stream, (char *) buffer, size);
 }
 
 static ssize_t
 pkcs7_stream_write (void *stream, const void *buffer, size_t size)
 {
-	//printf ("writing...\n"); fflush (stdout);
 	return g_mime_stream_write ((GMimeStream *) stream, (const char *) buffer, size);
 }
 
 static off_t
 pkcs7_stream_seek (void *stream, off_t offset, int whence)
 {
-	//printf ("seeking...\n"); fflush (stdout);
 	switch (whence) {
 	case SEEK_SET:
 		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_SET);
@@ -300,7 +320,6 @@ static void
 pkcs7_stream_free (void *stream)
 {
 	/* no-op */
-	//printf ("releasing stream handle\n");
 }
 
 static struct gpgme_data_cbs pkcs7_stream_funcs = {

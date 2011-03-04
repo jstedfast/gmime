@@ -46,6 +46,12 @@ static GMimeCryptoHash crypto_hash_id (GMimeCryptoContext *ctx, const char *hash
 
 static const char *crypto_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
 
+static const char *crypto_get_signature_protocol (GMimeCryptoContext *ctx);
+
+static const char *crypto_get_encryption_protocol (GMimeCryptoContext *ctx);
+
+static const char *crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx);
+
 static int crypto_sign (GMimeCryptoContext *ctx, const char *userid,
 			GMimeCryptoHash hash, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
@@ -114,6 +120,9 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 	klass->decrypt = crypto_decrypt;
 	klass->import_keys = crypto_import_keys;
 	klass->export_keys = crypto_export_keys;
+	klass->get_signature_protocol = crypto_get_signature_protocol;
+	klass->get_encryption_protocol = crypto_get_encryption_protocol;
+	klass->get_key_exchange_protocol = crypto_get_key_exchange_protocol;
 }
 
 static void
@@ -214,6 +223,78 @@ g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->hash_name (ctx, hash);
+}
+
+
+static const char *
+crypto_get_signature_protocol (GMimeCryptoContext *ctx)
+{
+	return NULL;
+}
+
+
+/**
+ * g_mime_crypto_context_get_signature_protocol:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Gets the signature protocol for the crypto context.
+ *
+ * Returns: the signature protocol or %NULL if not supported.
+ **/
+const char *
+g_mime_crypto_context_get_signature_protocol (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_signature_protocol (ctx);
+}
+
+
+static const char *
+crypto_get_encryption_protocol (GMimeCryptoContext *ctx)
+{
+	return NULL;
+}
+
+
+/**
+ * g_mime_crypto_context_get_encryption_protocol:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Gets the encryption protocol for the crypto context.
+ *
+ * Returns: the encryption protocol or %NULL if not supported.
+ **/
+const char *
+g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_encryption_protocol (ctx);
+}
+
+
+static const char *
+crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx)
+{
+	return NULL;
+}
+
+
+/**
+ * g_mime_crypto_context_get_key_exchange_protocol:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Gets the key exchange protocol for the crypto context.
+ *
+ * Returns: the key exchange protocol or %NULL if not supported.
+ **/
+const char *
+g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_key_exchange_protocol (ctx);
 }
 
 

@@ -37,7 +37,13 @@
 #include "gmime-error.h"
 #include "gmime-part.h"
 
+#ifdef ENABLE_DEBUG
+#define d(x) x
+#else
 #define d(x)
+#endif
+
+#define _(x) x
 
 
 /**
@@ -217,13 +223,18 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	GMimePart *signature;
 	GMimeFilter *filter;
 	GMimeParser *parser;
+	const char *protocol;
 	const char *micalg;
 	int rv;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), -1);
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
-	g_return_val_if_fail (ctx->sign_protocol != NULL, -1);
 	g_return_val_if_fail (GMIME_IS_OBJECT (content), -1);
+	
+	if (!(protocol = g_mime_crypto_context_get_signature_protocol (ctx))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("Signing not supported."));
+		return -1;
+	}
 	
 	/* Prepare all the parts for signing... */
 	sign_prepare (content);
@@ -270,7 +281,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	
 	/* set the multipart/signed protocol and micalg */
 	content_type = g_mime_object_get_content_type (GMIME_OBJECT (mps));
-	g_mime_content_type_set_parameter (content_type, "protocol", ctx->sign_protocol);
+	g_mime_content_type_set_parameter (content_type, "protocol", protocol);
 	micalg = g_strdup (g_mime_crypto_context_hash_name (ctx, (GMimeCryptoHash) rv));
 	g_mime_content_type_set_parameter (content_type, "micalg", micalg);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mps), NULL);
@@ -282,7 +293,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_object_unref (parser);
 	
 	/* construct the signature part */
-	content_type = g_mime_content_type_new_from_string (ctx->sign_protocol);
+	content_type = g_mime_content_type_new_from_string (protocol);
 	signature = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
@@ -295,7 +306,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* FIXME: temporary hack, this info should probably be set in
 	 * the CryptoContext class - maybe ::sign can take/output a
 	 * GMimePart instead. */
-	if (!g_ascii_strcasecmp (ctx->sign_protocol, "application/pkcs7-signature")) {
+	if (!g_ascii_strcasecmp (protocol, "application/pkcs7-signature")) {
 		g_mime_part_set_content_encoding (signature, GMIME_CONTENT_ENCODING_BASE64);
 		g_mime_part_set_filename (signature, "smime.p7m");
 	}
@@ -328,40 +339,46 @@ GMimeSignatureValidity *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *ctx,
 				GError **err)
 {
+	const char *supported, *protocol, *micalg;
 	GMimeObject *content, *signature;
-	GMimeDataWrapper *wrapper;
-	GMimeStream *filtered_stream;
-	GMimeFilter *crlf_filter;
 	GMimeStream *stream, *sigstream;
-	const char *protocol, *micalg;
 	GMimeSignatureValidity *valid;
+	GMimeStream *filtered_stream;
+	GMimeDataWrapper *wrapper;
+	GMimeFilter *crlf_filter;
 	GMimeCryptoHash hash;
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
-	g_return_val_if_fail (ctx->sign_protocol != NULL, NULL);
 	
 	if (g_mime_multipart_get_count ((GMimeMultipart *) mps) < 2) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     "Cannot verify multipart/signed part due to missing subparts.");
+				     _("Cannot verify multipart/signed part due to missing subparts."));
 		return NULL;
 	}
 	
 	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "protocol");
 	micalg = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mps), "micalg");
 	
+	supported = g_mime_crypto_context_get_signature_protocol (ctx);
+	
 	if (protocol) {
 		/* make sure the protocol matches the crypto sign protocol */
-		if (g_ascii_strcasecmp (ctx->sign_protocol, protocol) != 0) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     "Cannot verify multipart/signed part: unsupported signature protocol '%s'.",
+		if (!supported || g_ascii_strcasecmp (supported, protocol) != 0) {
+			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+				     _("Cannot verify multipart/signed part: unsupported signature protocol '%s'."),
 				     protocol);
 			return NULL;
 		}
-	} else {
+	} else if (supported != NULL) {
 		/* *shrug* - I guess just go on as if they match? */
-		protocol = ctx->sign_protocol;
+		protocol = supported;
+	} else {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+				     _("Cannot verify multipart/signed part: unspecified signature protocol."));
+		
+		return NULL;
 	}
 	
 	signature = g_mime_multipart_get_part (GMIME_MULTIPART (mps), GMIME_MULTIPART_SIGNED_SIGNATURE);
@@ -370,7 +387,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *c
 	content_type = g_mime_content_type_to_string (signature->content_type);
 	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     "Cannot verify multipart/signed part: signature content-type does not match protocol.");
+				     _("Cannot verify multipart/signed part: signature content-type does not match protocol."));
 		g_free (content_type);
 		
 		return NULL;

@@ -1,3 +1,24 @@
+2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
+
+	API cleanup as well as preparing for the possibility of a
+	multi-protocol CryptoContext.
+
+	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_encrypt):
+	Updated to use new APIs for getting the encryption protocol.
+	(g_mime_multipart_encrypted_decrypt): Same.
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_sign):
+	Updated to use new APIs for getting the signature protocol.
+	(g_mime_multipart_signed_verify): Same.
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_context_get_*_protocol):
+	New methods for getting the crypto protocol strings used by
+	multipart/encrypted and multipart/signed parts.
+
+	* gmime/gmime-pkcs7-context.c (pkcs7_get_*_protocol): Implemented.
+
+	* gmime/gmime-gpg-context.c (gpg_get_*_protocol): Implemented.
+
 2011-03-03  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-pkcs7-context.c (pkcs7_stream_seek): Added.

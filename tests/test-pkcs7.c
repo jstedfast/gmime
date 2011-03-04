@@ -263,7 +263,7 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 	g_object_unref (stream);
 	
 	if (err != NULL) {
-		ex = exception_new ("%s", err->message);
+		ex = exception_new ("%s: %s", err->message, gpg_strerror (err->code));
 		g_error_free (err);
 		throw (ex);
 	}

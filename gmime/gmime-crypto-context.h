@@ -124,9 +124,6 @@ typedef enum {
  * GMimeCryptoContext:
  * @parent_object: parent #GObject
  * @request_passwd: a callback for requesting a password
- * @sign_protocol: signature protocol (must be set by subclass)
- * @encrypt_protocol: encryption protocol (must be set by subclass)
- * @key_protocol: key exchange protocol (must be set by subclass)
  *
  * A crypto context for use with MIME.
  **/
@@ -134,11 +131,6 @@ struct _GMimeCryptoContext {
 	GObject parent_object;
 	
 	GMimePasswordRequestFunc request_passwd;
-	
-	/* these must be set by the subclass in the instance_init() */
-	const char *sign_protocol;
-	const char *encrypt_protocol;
-	const char *key_protocol;
 };
 
 struct _GMimeCryptoContextClass {
@@ -147,6 +139,12 @@ struct _GMimeCryptoContextClass {
 	GMimeCryptoHash          (* hash_id)     (GMimeCryptoContext *ctx, const char *hash);
 	
 	const char *             (* hash_name)   (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
+	
+	const char *             (* get_signature_protocol) (GMimeCryptoContext *ctx);
+	
+	const char *             (* get_encryption_protocol) (GMimeCryptoContext *ctx);
+	
+	const char *             (* get_key_exchange_protocol) (GMimeCryptoContext *ctx);
 	
 	int                      (* sign)        (GMimeCryptoContext *ctx, const char *userid,
 						  GMimeCryptoHash hash, GMimeStream *istream,
@@ -179,7 +177,14 @@ void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimeP
 /* hash routines */
 GMimeCryptoHash      g_mime_crypto_context_hash_id (GMimeCryptoContext *ctx, const char *hash);
 
-const char *         g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
+const char          *g_mime_crypto_context_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
+
+/* protocol routines */
+const char          *g_mime_crypto_context_get_signature_protocol (GMimeCryptoContext *ctx);
+
+const char          *g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *ctx);
+
+const char          *g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 /* crypto routines */
 int                  g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid,

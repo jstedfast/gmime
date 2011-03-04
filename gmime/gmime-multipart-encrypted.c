@@ -36,8 +36,13 @@
 #include "gmime-part.h"
 #include "gmime-error.h"
 
-
+#ifdef ENABLE_DEBUG
+#define d(x) x
+#else
 #define d(x)
+#endif
+
+#define _(x) x
 
 
 /**
@@ -163,11 +168,16 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	GMimeContentType *content_type;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
+	const char *protocol;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), -1);
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
-	g_return_val_if_fail (ctx->encrypt_protocol != NULL, -1);
 	g_return_val_if_fail (GMIME_IS_OBJECT (content), -1);
+	
+	if (!(protocol = g_mime_crypto_context_get_encryption_protocol (ctx))) {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("Encryption not supported."));
+		return -1;
+	}
 	
 	/* get the cleartext */
 	stream = g_mime_stream_mem_new ();
@@ -196,11 +206,11 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_stream_reset (ciphertext);
 	
 	/* construct the version part */
-	content_type = g_mime_content_type_new_from_string (ctx->encrypt_protocol);
+	content_type = g_mime_content_type_new_from_string (protocol);
 	version_part = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
-	content_type = g_mime_content_type_new_from_string (ctx->encrypt_protocol);
+	content_type = g_mime_content_type_new_from_string (protocol);
 	g_mime_object_set_content_type (GMIME_OBJECT (version_part), content_type);
 	g_mime_part_set_content_encoding (version_part, GMIME_CONTENT_ENCODING_7BIT);
 	stream = g_mime_stream_mem_new_with_buffer ("Version: 1\n", strlen ("Version: 1\n"));
@@ -225,8 +235,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_object_unref (version_part);
 	
 	/* set the content-type params for this multipart/encrypted part */
-	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mpe), "protocol",
-						  ctx->encrypt_protocol);
+	g_mime_object_set_content_type_parameter (GMIME_OBJECT (mpe), "protocol", protocol);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mpe), NULL);
 	
 	return 0;
@@ -257,36 +266,41 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
+	const char *protocol, *supported;
 	GMimeStream *filtered_stream;
 	GMimeContentType *mime_type;
 	GMimeSignatureValidity *sv;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
 	GMimeParser *parser;
-	const char *protocol;
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), NULL);
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
-	g_return_val_if_fail (ctx->encrypt_protocol != NULL, NULL);
 	
 	if (validity)
 		*validity = NULL;
 	
 	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mpe), "protocol");
+	supported = g_mime_crypto_context_get_encryption_protocol (ctx);
 	
 	if (protocol) {
 		/* make sure the protocol matches the crypto encrypt protocol */
-		if (g_ascii_strcasecmp (ctx->encrypt_protocol, protocol) != 0) {
+		if (!supported || g_ascii_strcasecmp (supported, protocol) != 0) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-				     "Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'.",
+				     _("Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'."),
 				     protocol);
 			
 			return NULL;
 		}
-	} else {
+	} else if (supported != NULL) {
 		/* *shrug* - I guess just go on as if they match? */
-		protocol = ctx->encrypt_protocol;
+		protocol = supported;
+	} else {
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+				     _("Cannot decrypt multipart/encrypted part: unspecified encryption protocol."));
+		
+		return NULL;
 	}
 	
 	version = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_VERSION);
@@ -294,8 +308,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	/* make sure the protocol matches the version part's content-type */
 	content_type = g_mime_content_type_to_string (version->content_type);
 	if (g_ascii_strcasecmp (content_type, protocol) != 0) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-				     "Cannot decrypt multipart/encrypted part: content-type does not match protocol.");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot decrypt multipart/encrypted part: content-type does not match protocol."));
 		
 		g_free (content_type);
 		
@@ -307,8 +321,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	encrypted = g_mime_multipart_get_part (GMIME_MULTIPART (mpe), GMIME_MULTIPART_ENCRYPTED_CONTENT);
 	mime_type = g_mime_object_get_content_type (encrypted);
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
-		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-				     "Cannot decrypt multipart/encrypted part: unexpected content type");
+		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
+				     _("Cannot decrypt multipart/encrypted part: unexpected content type."));
 		
 		return NULL;
 	}
@@ -345,7 +359,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	
 	if (!decrypted) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
-				     "Cannot decrypt multipart/encrypted part: failed to parse decrypted content");
+				     _("Cannot decrypt multipart/encrypted part: failed to parse decrypted content."));
 		
 		g_mime_signature_validity_free (sv);
 		

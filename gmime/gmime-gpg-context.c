@@ -81,7 +81,13 @@ static const char *gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 static int gpg_sign (GMimeCryptoContext *ctx, const char *userid,
 		     GMimeCryptoHash hash, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
-	
+
+static const char *gpg_get_signature_protocol (GMimeCryptoContext *ctx);
+
+static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
+
+static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
+
 static GMimeSignatureValidity *gpg_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
 					   GMimeStream *istream, GMimeStream *sigstream,
 					   GError **err);
@@ -146,6 +152,9 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->decrypt = gpg_decrypt;
 	crypto_class->import_keys = gpg_import_keys;
 	crypto_class->export_keys = gpg_export_keys;
+	crypto_class->get_signature_protocol = gpg_get_signature_protocol;
+	crypto_class->get_encryption_protocol = gpg_get_encryption_protocol;
+	crypto_class->get_key_exchange_protocol = gpg_get_key_exchange_protocol;
 }
 
 static void
@@ -156,10 +165,6 @@ g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
 	ctx->path = NULL;
-	
-	crypto->sign_protocol = "application/pgp-signature";
-	crypto->encrypt_protocol = "application/pgp-encrypted";
-	crypto->key_protocol = "application/pgp-keys";
 }
 
 static void
@@ -236,6 +241,24 @@ gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
 	default:
 		return "pgp-sha1";
 	}
+}
+
+static const char *
+gpg_get_signature_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pgp-signature";
+}
+
+static const char *
+gpg_get_encryption_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pgp-encrypted";
+}
+
+static const char *
+gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
+{
+	return "application/pgp-keys";
 }
 
 enum _GpgCtxMode {
