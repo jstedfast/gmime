@@ -68,33 +68,33 @@ typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const ch
 /**
  * GMimeCryptoHash:
  * @GMIME_CRYPTO_HASH_DEFAULT: The default hash algorithm.
- * @GMIME_CRYPTO_HASH_MD2: The MD2 hash algorithm.
  * @GMIME_CRYPTO_HASH_MD5: The MD5 hash algorithm.
  * @GMIME_CRYPTO_HASH_SHA1: The SHA-1 hash algorithm.
- * @GMIME_CRYPTO_HASH_SHA224: The SHA-224 hash algorithm.
+ * @GMIME_CRYPTO_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
+ * @GMIME_CRYPTO_HASH_MD2: The MD2 hash algorithm.
+ * @GMIME_CRYPTO_HASH_TIGER192: The TIGER-192 hash algorithm.
+ * @GMIME_CRYPTO_HASH_HAVAL5160: The HAVAL-5-160 hash algorithm.
  * @GMIME_CRYPTO_HASH_SHA256: The SHA-256 hash algorithm.
  * @GMIME_CRYPTO_HASH_SHA384: The SHA-384 hash algorithm.
  * @GMIME_CRYPTO_HASH_SHA512: The SHA-512 hash algorithm.
- * @GMIME_CRYPTO_HASH_RIPEMD160: The RIPEMD-160 hash algorithm.
- * @GMIME_CRYPTO_HASH_TIGER192: The TIGER-192 hash algorithm.
- * @GMIME_CRYPTO_HASH_HAVAL5160: The HAVAL-5-160 hash algorithm.
+ * @GMIME_CRYPTO_HASH_SHA224: The SHA-224 hash algorithm.
  * @GMIME_CRYPTO_HASH_MD4: The MD4 hash algorithm.
  *
  * A hash algorithm.
  **/
 typedef enum {
-	GMIME_CRYPTO_HASH_DEFAULT,
-	GMIME_CRYPTO_HASH_MD2,
-	GMIME_CRYPTO_HASH_MD5,
-	GMIME_CRYPTO_HASH_SHA1,
-	GMIME_CRYPTO_HASH_SHA224,
-	GMIME_CRYPTO_HASH_SHA256,
-	GMIME_CRYPTO_HASH_SHA384,
-	GMIME_CRYPTO_HASH_SHA512,
-	GMIME_CRYPTO_HASH_RIPEMD160,
-	GMIME_CRYPTO_HASH_TIGER192,
-	GMIME_CRYPTO_HASH_HAVAL5160,
-	GMIME_CRYPTO_HASH_MD4
+	GMIME_CRYPTO_HASH_DEFAULT     = 0,
+	GMIME_CRYPTO_HASH_MD5         = 1,
+	GMIME_CRYPTO_HASH_SHA1        = 2,
+	GMIME_CRYPTO_HASH_RIPEMD160   = 3,
+	GMIME_CRYPTO_HASH_MD2         = 5,
+	GMIME_CRYPTO_HASH_TIGER192    = 6,
+	GMIME_CRYPTO_HASH_HAVAL5160   = 7,
+	GMIME_CRYPTO_HASH_SHA256      = 8,
+	GMIME_CRYPTO_HASH_SHA384      = 9,
+	GMIME_CRYPTO_HASH_SHA512      = 10,
+	GMIME_CRYPTO_HASH_SHA224      = 11,
+	GMIME_CRYPTO_HASH_MD4         = 301,
 } GMimeCryptoHash;
 
 
@@ -196,20 +196,20 @@ int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
  * @GMIME_CRYPTO_PUBKEY_ALGO_RSA: The RSA algorithm.
  * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_E: An encryption-only RSA algorithm.
  * @GMIME_CRYPTO_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
- * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
  * @GMIME_CRYPTO_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
  * @GMIME_CRYPTO_PUBKEY_ALGO_DSA: The DSA algorithm.
+ * @GMIME_CRYPTO_PUBKEY_ALGO_ELG: The ElGamal algorithm.
  *
  * A public-key algorithm.
  **/
 typedef enum {
-	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG,
-	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E,
-	GMIME_CRYPTO_PUBKEY_ALGO_DSA
+	GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT  = 0,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA      = 1,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_E    = 2,
+	GMIME_CRYPTO_PUBKEY_ALGO_RSA_S    = 3,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG_E    = 16,
+	GMIME_CRYPTO_PUBKEY_ALGO_DSA      = 17,
+	GMIME_CRYPTO_PUBKEY_ALGO_ELG      = 20
 } GMimeCryptoPubKeyAlgo;
 
 
@@ -392,8 +392,8 @@ struct _GMimeSignatureValidity {
 GMimeSignatureValidity *g_mime_signature_validity_new (void);
 void g_mime_signature_validity_free (GMimeSignatureValidity *validity);
 
-const char *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
 void g_mime_signature_validity_set_details (GMimeSignatureValidity *validity, const char *details);
+const char *g_mime_signature_validity_get_details (const GMimeSignatureValidity *validity);
 
 const GMimeSigner *g_mime_signature_validity_get_signers (const GMimeSignatureValidity *validity);
 void g_mime_signature_validity_add_signer (GMimeSignatureValidity *validity, GMimeSigner *signer);
@@ -428,26 +428,68 @@ const char *g_mime_crypto_recipient_get_key_id (const GMimeCryptoRecipient *reci
 
 
 /**
+ * GMimeCryptoCipherAlgo:
+ * @GMIME_CRYPTO_CIPHER_ALGO_DEFAULT: The default (or unknown) cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_IDEA: The IDEA cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_3DES: The 3DES cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_CAST5: The CAST5 cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_BLOWFISH: The Blowfish cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_AES: The AES (aka RIJANDALE) cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_AES192: The AES-192 cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_AES256: The AES-256 cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_TWOFISH: The Twofish cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA128: The Camellia-128 cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA196: The Camellia-196 cipher.
+ * @GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA256: The Camellia-256 cipher.
+ *
+ * A cipher algorithm.
+ **/
+typedef enum {
+	GMIME_CRYPTO_CIPHER_ALGO_DEFAULT     = 0,
+	GMIME_CRYPTO_CIPHER_ALGO_IDEA        = 1,
+	GMIME_CRYPTO_CIPHER_ALGO_3DES        = 2,
+	GMIME_CRYPTO_CIPHER_ALGO_CAST5       = 3,
+	GMIME_CRYPTO_CIPHER_ALGO_BLOWFISH    = 4,
+	GMIME_CRYPTO_CIPHER_ALGO_AES         = 7,
+	GMIME_CRYPTO_CIPHER_ALGO_AES192      = 8,
+	GMIME_CRYPTO_CIPHER_ALGO_AES256      = 9,
+	GMIME_CRYPTO_CIPHER_ALGO_TWOFISH     = 10,
+	GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA128 = 11,
+	GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA196 = 12,
+	GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA256 = 13
+} GMimeCryptoCipherAlgo;
+
+/**
  * GMimeDecryptionResult:
  * @validity: A #GMimeSignatureValidity if signed or %NULL otherwise.
  * @recipients: A list of #GMimeCryptoRecipient structures.
+ * @cipher: The cipher algorithm used to encrypt the stream.
+ * @mdc: The MDC digest algorithm used, if any.
  *
  * A structure containing the results from decrypting an encrypted stream.
  **/
 struct _GMimeDecryptionResult {
 	GMimeSignatureValidity *validity;
 	GMimeCryptoRecipient *recipients;
+	GMimeCryptoCipherAlgo cipher;
+	GMimeCryptoHash mdc;
 };
 
 
 GMimeDecryptionResult *g_mime_decryption_result_new (void);
 void g_mime_decryption_result_free (GMimeDecryptionResult *result);
 
-const GMimeSignatureValidity *g_mime_decryption_result_get_validity (const GMimeDecryptionResult *result);
 void g_mime_decryption_result_set_validity (GMimeDecryptionResult *result, GMimeSignatureValidity *validity);
+const GMimeSignatureValidity *g_mime_decryption_result_get_validity (const GMimeDecryptionResult *result);
 
-const GMimeCryptoRecipient *g_mime_decryption_result_get_recipients (const GMimeDecryptionResult *result);
 void g_mime_decryption_result_add_recipient (GMimeDecryptionResult *result, GMimeCryptoRecipient *recipient);
+const GMimeCryptoRecipient *g_mime_decryption_result_get_recipients (const GMimeDecryptionResult *result);
+
+void g_mime_decryption_result_set_cipher (GMimeDecryptionResult *result, GMimeCryptoCipherAlgo cipher);
+GMimeCryptoCipherAlgo g_mime_decryption_result_get_cipher (const GMimeDecryptionResult *result);
+
+void g_mime_decryption_result_set_mdc (GMimeDecryptionResult *result, GMimeCryptoHash mdc);
+GMimeCryptoHash g_mime_decryption_result_get_mdc (const GMimeDecryptionResult *result);
 
 G_END_DECLS
 

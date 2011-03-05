@@ -503,39 +503,6 @@ pkcs7_trust (gpgme_validity_t trust)
 	}
 }
 
-static GMimeCryptoPubKeyAlgo
-pkcs7_pubkey_algo (id)
-{
-	switch (id) {
-	case GPGME_PK_RSA: return GMIME_CRYPTO_PUBKEY_ALGO_RSA;
-	case GPGME_PK_RSA_E: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_E;
-	case GPGME_PK_RSA_S: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_S;
-	case GPGME_PK_ELG_E: return GMIME_CRYPTO_PUBKEY_ALGO_ELG_E;
-	case GPGME_PK_DSA: return GMIME_CRYPTO_PUBKEY_ALGO_DSA;
-	case GPGME_PK_ELG: return GMIME_CRYPTO_PUBKEY_ALGO_ELG;
-	default: return GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
-	}
-}
-
-static GMimeCryptoHash
-pkcs7_hash_algo (gpgme_hash_algo_t id)
-{
-	switch (id) {
-	case GPGME_MD_NONE: return GMIME_CRYPTO_HASH_DEFAULT;
-	case GPGME_MD_MD5: return GMIME_CRYPTO_HASH_MD5;
-	case GPGME_MD_SHA1: return GMIME_CRYPTO_HASH_SHA1;
-	case GPGME_MD_RMD160: return GMIME_CRYPTO_HASH_RIPEMD160;
-	case GPGME_MD_MD2: return GMIME_CRYPTO_HASH_MD2;
-	case GPGME_MD_TIGER: return GMIME_CRYPTO_HASH_TIGER192;
-	case GPGME_MD_HAVAL: return GMIME_CRYPTO_HASH_HAVAL5160;
-	case GPGME_MD_SHA256: return GMIME_CRYPTO_HASH_SHA256;
-	case GPGME_MD_SHA384: return GMIME_CRYPTO_HASH_SHA384;
-	case GPGME_MD_SHA512: return GMIME_CRYPTO_HASH_SHA512;
-	case GPGME_MD_MD4: return GMIME_CRYPTO_HASH_MD4;
-	default: return GMIME_CRYPTO_HASH_DEFAULT;
-	}
-}
-
 static GMimeSignatureValidity *
 pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 {
@@ -566,8 +533,8 @@ pkcs7_get_validity (Pkcs7Ctx *pkcs7, gboolean verify)
 		signers->next = signer;
 		signers = signer;
 		
-		g_mime_signer_set_pubkey_algo (signer, pkcs7_pubkey_algo (sig->pubkey_algo));
-		g_mime_signer_set_hash_algo (signer, pkcs7_hash_algo (sig->hash_algo));
+		g_mime_signer_set_pubkey_algo (signer, sig->pubkey_algo);
+		g_mime_signer_set_hash_algo (signer, sig->hash_algo);
 		g_mime_signer_set_sig_expires (signer, sig->exp_timestamp);
 		g_mime_signer_set_sig_created (signer, sig->timestamp);
 		g_mime_signer_set_fingerprint (signer, sig->fpr);
@@ -800,7 +767,7 @@ pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
 		recipients->next = recipient;
 		recipients = recipient;
 		
-		g_mime_crypto_recipient_set_pubkey_algo (recipient, pkcs7_pubkey_algo (recip->pubkey_algo));
+		g_mime_crypto_recipient_set_pubkey_algo (recipient, recip->pubkey_algo);
 		g_mime_crypto_recipient_set_key_id (recipient, recip->keyid);
 		
 		recip = recip->next;

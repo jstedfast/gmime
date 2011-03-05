@@ -279,6 +279,7 @@ struct _GpgCtx {
 	
 	char *userid;
 	GPtrArray *recipients;
+	GMimeCryptoCipherAlgo cipher;
 	GMimeCryptoHash hash;
 	
 	int stdin_fd;
@@ -344,6 +345,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	
 	gpg->userid = NULL;
 	gpg->recipients = NULL;
+	gpg->cipher = GMIME_CRYPTO_CIPHER_ALGO_DEFAULT;
 	gpg->hash = GMIME_CRYPTO_HASH_DEFAULT;
 	gpg->always_trust = FALSE;
 	gpg->armor = FALSE;
@@ -571,39 +573,6 @@ gpg_hash_str (GMimeCryptoHash hash)
 		return "--digest-algo=MD4";
 	default:
 		return NULL;
-	}
-}
-
-static GMimeCryptoPubKeyAlgo
-gpg_pubkey_algo (unsigned long id)
-{
-	switch (id) {
-	case 1: return GMIME_CRYPTO_PUBKEY_ALGO_RSA;
-	case 2: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_E;
-	case 3: return GMIME_CRYPTO_PUBKEY_ALGO_RSA_S;
-	case 16: return GMIME_CRYPTO_PUBKEY_ALGO_ELG_E;
-	case 17: return GMIME_CRYPTO_PUBKEY_ALGO_DSA;
-	case 20: return GMIME_CRYPTO_PUBKEY_ALGO_ELG;
-	default: return GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT;
-	}
-}
-
-static GMimeCryptoHash
-gpg_hash_algo (unsigned long id)
-{
-	switch (id) {
-	case 1: return GMIME_CRYPTO_HASH_MD5;
-	case 2: return GMIME_CRYPTO_HASH_SHA1;
-	case 3:	return GMIME_CRYPTO_HASH_RIPEMD160;
-	case 5: return GMIME_CRYPTO_HASH_MD2;
-	case 6: return GMIME_CRYPTO_HASH_TIGER192;
-	case 7: return GMIME_CRYPTO_HASH_HAVAL5160;
-	case 8: return GMIME_CRYPTO_HASH_SHA256;
-	case 9: return GMIME_CRYPTO_HASH_SHA384;
-	case 10: return GMIME_CRYPTO_HASH_SHA512;
-	case 11: return GMIME_CRYPTO_HASH_SHA224;
-	case 301: return GMIME_CRYPTO_HASH_MD4;
-	default: return GMIME_CRYPTO_HASH_DEFAULT;
 	}
 }
 
@@ -904,14 +873,14 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, &signer->keyid);
 		
 		/* the second token is the public-key algorithm id */
-		signer->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+		signer->pubkey_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
 		/* the third token is the hash algorithm id */
-		signer->hash_algo = gpg_hash_algo (strtoul (status, &inend, 10));
+		signer->hash_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
@@ -992,14 +961,14 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* the seventh token is the public-key algorithm id */
-		signer->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+		signer->pubkey_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
 		/* the eighth token is the hash algorithm id */
-		signer->hash_algo = gpg_hash_algo (strtoul (status, &inend, 10));
+		signer->hash_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
@@ -1248,7 +1217,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			status = next_token (status, NULL);
 			
 			/* this token is the hash algorithm used */
-			gpg->hash = gpg_hash_algo (strtoul (status, NULL, 10));
+			gpg->hash = strtoul (status, NULL, 10);
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
@@ -1268,6 +1237,23 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		case GPG_CTX_MODE_DECRYPT:
 			if (!strncmp (status, "BEGIN_DECRYPTION", 16)) {
 				/* nothing to do... but we know to expect data on stdout soon */
+			} else if (!strncmp (status, "DECRYPTION_INFO ", 16)) {
+				/* new feature added in gnupg-2.1.x which gives mdc and cipher algorithms used */
+				status += 16;
+				
+				/* first token is the mdc algorithm (or 0 if not used) */
+				gpg->hash = strtoul (status, &inend, 10);
+				if (inend == status || *inend != ' ')
+					return;
+				
+				status = inend + 1;
+				
+				/* second token is the cipher algorithm */
+				gpg->cipher = strtoul (status, &inend, 10);
+			} else if (!strncmp (status, "DECRYPTION_OKAY", 15)) {
+				/* nothing to do... but good to know gpg decrypted the data successfully */
+			} else if (!strncmp (status, "DECRYPTION_FAILED", 17)) {
+				/* nothing to do... but we know gpg failed to decrypt :-( */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
 				/* nothing to do, but we know we're done */
 			} else if (!strncmp (status, "ENC_TO ", 7)) {
@@ -1282,13 +1268,17 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status = next_token (status, &recipient->keyid);
 				
 				/* second token is the recipient's pubkey algo */
-				recipient->pubkey_algo = gpg_pubkey_algo (strtoul (status, &inend, 10));
+				recipient->pubkey_algo = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ')
 					return;
 				
 				status = inend + 1;
 				
 				/* third token is a dummy value which is always '0' */
+			} else if (!strncmp (status, "GOODMDC", 7)) {
+				/* nothing to do... we'll grab the MDC used in DECRYPTION_INFO */
+			} else if (!strncmp (status, "BADMDC", 6)) {
+				/* nothing to do, this will only be sent after DECRYPTION_FAILED */
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
 			}
@@ -1988,6 +1978,8 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	g_mime_signature_validity_set_details (result->validity, diagnostics);
 	result->validity->signers = gpg->signers;
 	result->recipients = gpg->encrypted_to;
+	result->cipher = gpg->cipher;
+	result->mdc = gpg->hash;
 	gpg->encrypted_to = NULL;
 	gpg->signers = NULL;
 	

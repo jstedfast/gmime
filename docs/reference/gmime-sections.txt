@@ -1212,6 +1212,7 @@ g_mime_crypto_recipient_get_key_id
 g_mime_crypto_recipient_set_pubkey_algo
 g_mime_crypto_recipient_get_pubkey_algo
 <SUBSECTION>
+GMimeCryptoCipherAlgo
 GMimeDecryptionResult
 g_mime_decryption_result_new
 g_mime_decryption_result_free
@@ -1219,6 +1220,10 @@ g_mime_decryption_result_set_validity
 g_mime_decryption_result_get_validity
 g_mime_decryption_result_add_recipient
 g_mime_decryption_result_get_recipients
+g_mime_decryption_result_set_cipher
+g_mime_decryption_result_get_cipher
+g_mime_decryption_result_set_mdc
+g_mime_decryption_result_get_mdc
 <SUBSECTION Private>
 g_mime_crypto_context_get_type
 

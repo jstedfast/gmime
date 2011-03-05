@@ -1432,6 +1432,8 @@ g_mime_decryption_result_new (void)
 	GMimeDecryptionResult *result;
 	
 	result = g_slice_new (GMimeDecryptionResult);
+	result->cipher = GMIME_CRYPTO_CIPHER_ALGO_DEFAULT;
+	result->mdc = GMIME_CRYPTO_HASH_DEFAULT;
 	result->recipients = NULL;
 	result->validity = NULL;
 	
@@ -1544,4 +1546,70 @@ g_mime_decryption_result_add_recipient (GMimeDecryptionResult *result, GMimeCryp
 		
 		r->next = recipient;
 	}
+}
+
+
+/**
+ * g_mime_decryption_result_set_cipher:
+ * @result: a #GMimeDecryptionResult
+ * @cipher: a #GMimeCryptoCipherAlgo
+ *
+ * Set the cipher algorithm used.
+ **/
+void
+g_mime_decryption_result_set_cipher (GMimeDecryptionResult *result, GMimeCryptoCipherAlgo cipher)
+{
+	g_return_if_fail (result != NULL);
+	
+	result->cipher = cipher;
+}
+
+
+/**
+ * g_mime_decryption_result_get_cipher:
+ * @result: a #GMimeDecryptionResult
+ *
+ * Get the cipher algorithm used.
+ *
+ * Returns: the cipher algorithm used.
+ **/
+GMimeCryptoCipherAlgo
+g_mime_decryption_result_get_cipher (const GMimeDecryptionResult *result)
+{
+	g_return_val_if_fail (result != NULL, GMIME_CRYPTO_CIPHER_ALGO_DEFAULT);
+	
+	return result->cipher;
+}
+
+
+/**
+ * g_mime_decryption_result_set_mdc:
+ * @result: a #GMimeDecryptionResult
+ * @mdc: a #GMimeCryptoHash
+ *
+ * Set the mdc digest algorithm used.
+ **/
+void
+g_mime_decryption_result_set_mdc (GMimeDecryptionResult *result, GMimeCryptoHash mdc)
+{
+	g_return_if_fail (result != NULL);
+	
+	result->mdc = mdc;
+}
+
+
+/**
+ * g_mime_decryption_result_get_mdc:
+ * @result: a #GMimeDecryptionResult
+ *
+ * Get the mdc digest algorithm used.
+ *
+ * Returns: the mdc digest algorithm used.
+ **/
+GMimeCryptoHash
+g_mime_decryption_result_get_mdc (const GMimeDecryptionResult *result)
+{
+	g_return_val_if_fail (result != NULL, GMIME_CRYPTO_HASH_DEFAULT);
+	
+	return result->mdc;
 }

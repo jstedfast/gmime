@@ -16,28 +16,42 @@
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
     </enum>
+    <enum name="CryptoCipherAlgo" cname="GMimeCryptoCipherAlgo" type="enum">
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_DEFAULT" name="Default" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_IDEA" name="Idea" value="1" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_3DES" name="ThreeDes" value="2" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAST5" name="Cast5" value="3" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_BLOWFISH" name="Blowfish" value="4" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES" name="Aes" value="7" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES192" name="Aes192" value="8" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES256" name="Aes256" value="9" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_TWOFISH" name="Twofish" value="10" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA128" name="Camellia128" value="11" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA196" name="Camellia196" value="12" />
+      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA256" name="Camellia256" value="13" />
+    </enum>
     <enum name="CryptoHash" cname="GMimeCryptoHash" type="enum">
       <member cname="GMIME_CRYPTO_HASH_DEFAULT" name="Default" />
-      <member cname="GMIME_CRYPTO_HASH_MD2" name="Md2" />
-      <member cname="GMIME_CRYPTO_HASH_MD5" name="Md5" />
-      <member cname="GMIME_CRYPTO_HASH_SHA1" name="Sha1" />
-      <member cname="GMIME_CRYPTO_HASH_SHA224" name="Sha224" />
-      <member cname="GMIME_CRYPTO_HASH_SHA256" name="Sha256" />
-      <member cname="GMIME_CRYPTO_HASH_SHA384" name="Sha384" />
-      <member cname="GMIME_CRYPTO_HASH_SHA512" name="Sha512" />
-      <member cname="GMIME_CRYPTO_HASH_RIPEMD160" name="Ripemd160" />
-      <member cname="GMIME_CRYPTO_HASH_TIGER192" name="Tiger192" />
-      <member cname="GMIME_CRYPTO_HASH_HAVAL5160" name="Haval5160" />
-      <member cname="GMIME_CRYPTO_HASH_MD4" name="Md4" />
+      <member cname="GMIME_CRYPTO_HASH_MD5" name="Md5" value="1" />
+      <member cname="GMIME_CRYPTO_HASH_SHA1" name="Sha1" value="2" />
+      <member cname="GMIME_CRYPTO_HASH_RIPEMD160" name="Ripemd160" value="3" />
+      <member cname="GMIME_CRYPTO_HASH_MD2" name="Md2" value="5" />
+      <member cname="GMIME_CRYPTO_HASH_TIGER192" name="Tiger192" value="6" />
+      <member cname="GMIME_CRYPTO_HASH_HAVAL5160" name="Haval5160" value="7" />
+      <member cname="GMIME_CRYPTO_HASH_SHA256" name="Sha256" value="8" />
+      <member cname="GMIME_CRYPTO_HASH_SHA384" name="Sha384" value="9" />
+      <member cname="GMIME_CRYPTO_HASH_SHA512" name="Sha512" value="10" />
+      <member cname="GMIME_CRYPTO_HASH_SHA224" name="Sha224" value="11" />
+      <member cname="GMIME_CRYPTO_HASH_MD4" name="Md4" value="301" />
     </enum>
     <enum name="CryptoPubKeyAlgo" cname="GMimeCryptoPubKeyAlgo" type="enum">
       <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT" name="Default" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA" name="Rsa" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_E" name="RsaE" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_S" name="RsaS" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG" name="Elg" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG_E" name="ElgE" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DSA" name="Dsa" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA" name="Rsa" value="1" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_E" name="RsaE" value="2" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_S" name="RsaS" value="3" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG_E" name="ElgE" value="16" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DSA" name="Dsa" value="17" />
+      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG" name="Elg" value="20" />
     </enum>
     <enum name="EncodingConstraint" cname="GMimeEncodingConstraint" type="enum">
       <member cname="GMIME_ENCODING_CONSTRAINT_7BIT" name="7Bit" />
@@ -2271,6 +2285,8 @@
     <struct name="DecryptionResult" cname="GMimeDecryptionResult" opaque="true">
       <field name="Validity" cname="validity" type="GMimeSignatureValidity*" access="public" writeable="true" />
       <field name="Recipients" cname="recipients" type="GMimeCryptoRecipient*" access="public" writeable="true" />
+      <field name="Cipher" cname="cipher" type="GMimeCryptoCipherAlgo" access="public" writeable="true" />
+      <field name="Mdc" cname="mdc" type="GMimeCryptoHash" access="public" writeable="true" />
       <method name="AddRecipient" cname="g_mime_decryption_result_add_recipient">
         <return-type type="void" />
         <parameters>
@@ -2280,6 +2296,12 @@
       <method name="Free" cname="g_mime_decryption_result_free">
         <return-type type="void" />
       </method>
+      <method name="GetCipher" cname="g_mime_decryption_result_get_cipher">
+        <return-type type="GMimeCryptoCipherAlgo" />
+      </method>
+      <method name="GetMdc" cname="g_mime_decryption_result_get_mdc">
+        <return-type type="GMimeCryptoHash" />
+      </method>
       <method name="GetRecipients" cname="g_mime_decryption_result_get_recipients">
         <return-type type="const-GMimeCryptoRecipient*" />
       </method>
@@ -2287,6 +2309,18 @@
         <return-type type="const-GMimeSignatureValidity*" />
       </method>
       <constructor cname="g_mime_decryption_result_new" />
+      <method name="SetCipher" cname="g_mime_decryption_result_set_cipher">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoCipherAlgo" name="cipher" />
+        </parameters>
+      </method>
+      <method name="SetMdc" cname="g_mime_decryption_result_set_mdc">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCryptoHash" name="mdc" />
+        </parameters>
+      </method>
       <method name="SetValidity" cname="g_mime_decryption_result_set_validity">
         <return-type type="void" />
         <parameters>
