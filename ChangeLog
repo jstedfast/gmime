@@ -1,5 +1,11 @@
 2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.5.5
+
+2011-03-04  Jeffrey Stedfast  <fejj@novell.com>
+
 	Implements features requested in bug #641841 and #641320.
 
 	* gmime/gmime-crypto-context.h (GMimeCryptoHash): Reordered to be
