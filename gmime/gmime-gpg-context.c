@@ -1288,7 +1288,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				
 				status = inend + 1;
 				
-				/* third token is the status code, ignore for now */
+				/* third token is a dummy value which is always '0' */
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
 			}
