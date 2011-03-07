@@ -866,7 +866,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "BADSIG ", 7)) {
 		signer = gpg_ctx_add_signer (gpg, status + 7);
 		gpg->badsig = TRUE;
-	}  else if (!strncmp (status, "EXPSIG ", 7)) {
+	} else if (!strncmp (status, "EXPSIG ", 7)) {
 		signer = gpg_ctx_add_signer (gpg, status + 7);
 		signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
 	} else if (!strncmp (status, "EXPKEYSIG ", 10)) {
