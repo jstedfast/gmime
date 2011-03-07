@@ -801,10 +801,10 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	return -1;
 }
 
-static const char *
+static char *
 next_token (char *in, char **token)
 {
-	const char *start, *inptr = in;
+	char *start, *inptr = in;
 	
 	while (*inptr == ' ')
 		inptr++;
@@ -836,7 +836,7 @@ next_token (char *in, char **token)
  * Returns: the newly allocated signer for the caller to add more info to.
  **/
 static GMimeSigner *
-gpg_ctx_new_signer (struct _GpgCtx *gpg, const char *status)
+gpg_ctx_new_signer (struct _GpgCtx *gpg, char *status)
 {
 	GMimeSigner *signer;
 	
@@ -854,7 +854,7 @@ gpg_ctx_new_signer (struct _GpgCtx *gpg, const char *status)
 }
 
 static void
-gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, const char *status)
+gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 {
 	GMimeSigner *signer;
 	
