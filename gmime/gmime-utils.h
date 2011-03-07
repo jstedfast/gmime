@@ -93,7 +93,7 @@ struct _GMimeReferences {
  * Returns the number of output bytes needed to encode an input buffer
  * of size @x using the quoted-printable encoding.
  **/
-#define GMIME_QP_ENCODE_LEN(x)     ((size_t) ((((x) + 1) * 3) + 1))
+#define GMIME_QP_ENCODE_LEN(x)     ((size_t) ((((x) / 24) * 74) + 74))
 
 
 /**
@@ -106,7 +106,7 @@ struct _GMimeReferences {
  * Returns the number of output bytes needed to uuencode an input
  * buffer of size @x.
  **/
-#define GMIME_UUENCODE_LEN(x)      ((size_t) (((((x) + 2) / 45) * 62) + 62))
+#define GMIME_UUENCODE_LEN(x)      ((size_t) (((((x) + 2) / 45) * 62) + 64))
 
 
 /**

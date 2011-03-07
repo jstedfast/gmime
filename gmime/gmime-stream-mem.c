@@ -24,6 +24,7 @@
 #endif
 
 #include <string.h>
+#include <errno.h>
 
 #include "gmime-stream-mem.h"
 
@@ -156,8 +157,10 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 	
 	g_return_val_if_fail (mem->buffer != NULL, -1);
 	
-	if (stream->bound_end == -1 && stream->position + len > mem->buffer->len) {
-		g_byte_array_set_size (mem->buffer, stream->position + len);
+	if (stream->bound_end == -1) {
+		if (stream->position + len > mem->buffer->len)
+			g_byte_array_set_size (mem->buffer, stream->position + len);
+		
 		bound_end = mem->buffer->len;
 	} else
 		bound_end = stream->bound_end;
@@ -167,7 +170,7 @@ stream_write (GMimeStream *stream, const char *buf, size_t len)
 		memcpy (mem->buffer->data + stream->position, buf, n);
 		stream->position += n;
 	} else if (n < 0) {
-		/* FIXME: set errno?? */
+		errno = EINVAL;
 		n = -1;
 	}
 	

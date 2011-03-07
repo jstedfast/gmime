@@ -1,3 +1,17 @@
+2011-03-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Treat EXPSIG,
+	EXPKEYSIG, and REVKEYSIG the same as GOODSIG/BADSIG status
+	messages in that all of them denote a new signer info.
+
+	* gmime/gmime-stream-mem.c (stream_write): Correctly calculate the
+	end boundary of the stream when bound_end is -1.
+
+	* gmime/gmime-utils.h (GMIME_QP_ENCODE_LEN): Fixed to take into
+	acount the possibility of having to force-wrap lines at 72+
+	characters.
+	(GMIME_UUENCODE_LEN): Fixed to prevent possible buffer overflows.
+
 2010-03-26  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
