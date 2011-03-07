@@ -1,3 +1,9 @@
+2011-03-07  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Treat
+	EXPSIG, EXPKEYSIG, and REVKEYSIG the same as GOODSIG/BADSIG status
+	messages in that all of them denote a new signer info.
+
 2011-01-29  Jeffrey Stedfast  <fejj@novell.com>
 
 	* gmime/gmime-multipart-encrypted.c (g_mime_multipart_encrypted_decrypt):
