@@ -829,6 +829,35 @@ next_token (char *in, char **token)
 	return inptr;
 }
 
+/**
+ * gpg_ctx_add_signer:
+ * @gpg: GnuPG context
+ * @status: a #GMimeSignerStatus
+ * @info: a string with the signer's info
+ *
+ * Parses GOODSIG, BADSIG, EXPSIG, EXPKEYSIG, and REVKEYSIG status messages
+ * into a newly allocated #GMimeSigner and adds it to @gpg's signer list.
+ *
+ * Returns: the newly added signer for the caller to add more info to.
+ **/
+static GMimeSigner *
+gpg_ctx_add_signer (struct _GpgCtx *gpg, GMimeSignerStatus status, char *info)
+{
+	GMimeSigner *signer;
+	
+	signer = g_mime_signer_new (status);
+	gpg->signer->next = signer;
+	gpg->signer = signer;
+	
+	/* get the key id of the signer */
+	info = next_token (info, &signer->keyid);
+	
+	/* the rest of the string is the signer's name */
+	signer->name = g_strdup (info);
+	
+	return signer;
+}
+
 static void
 gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 {
@@ -838,29 +867,18 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	if (!strncmp (status, "SIG_ID ", 7)) {
 		/* not sure if this contains anything we care about... */
 	} else if (!strncmp (status, "GOODSIG ", 8)) {
-		status += 8;
-		
-		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_GOOD);
-		gpg->signer->next = signer;
-		gpg->signer = signer;
-		
-		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
-		
-		/* the rest of the string is the signer's name */
-		signer->name = g_strdup (status);
+		gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_GOOD, status + 8);
 	} else if (!strncmp (status, "BADSIG ", 7)) {
-		status += 7;
-		
-		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_BAD);
-		gpg->signer->next = signer;
-		gpg->signer = signer;
-		
-		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
-		
-		/* the rest of the string is the signer's name */
-		signer->name = g_strdup (status);
+		gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_BAD, status + 7);
+	}  else if (!strncmp (status, "EXPSIG ", 7)) {
+		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 7);
+		signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
+	} else if (!strncmp (status, "EXPKEYSIG ", 10)) {
+		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 10);
+		signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+	} else if (!strncmp (status, "REVKEYSIG ", 10)) {
+		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 10);
+		signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
 	} else if (!strncmp (status, "ERRSIG ", 7)) {
 		/* Note: NO_PUBKEY often comes after an ERRSIG */
 		status += 7;
@@ -913,13 +931,6 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
 		/* the only token is the keyid, but we've already got it */
 		gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
-	} else if (!strncmp (status, "EXPSIG", 6)) {
-		/* FIXME: see what else we can glean from this... */
-		gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
-	} else if (!strncmp (status, "EXPKEYSIG", 9)) {
-		gpg->signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
-	} else if (!strncmp (status, "REVKEYSIG", 9)) {
-		gpg->signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
 	} else if (!strncmp (status, "VALIDSIG ", 9)) {
 		signer = gpg->signer;
 		status += 9;
