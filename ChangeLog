@@ -1,5 +1,11 @@
 2011-03-07  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.23
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Treat
 	EXPSIG, EXPKEYSIG, and REVKEYSIG the same as GOODSIG/BADSIG status
 	messages in that all of them denote a new signer info.
