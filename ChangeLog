@@ -1,3 +1,12 @@
+2011-03-14  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.in: Check for glib-sharp-2.0 instead of gtk-sharp-2.0
+	since we really only depend on glib-sharp. Also check for gapi-2.0
+	via pkgconfig.
+
+	* mono/gmime-sharp.dll.config.in: Dll map the .so.MajorVersion
+	instead of .so.Version.
+
 2011-03-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version
