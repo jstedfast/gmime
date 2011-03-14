@@ -2,7 +2,7 @@ API = gmime-api.xml
 RAW_API = gmime-api.raw
 METADATA = GMime.metadata
 ASSEMBLY_NAME = gmime-sharp
-references = $(GTK_SHARP_LIBS)
+references = $(GLIB_SHARP_LIBS)
 SOURCES_XML = sources.xml
 
 PACKAGE_SHARP = $(PACKAGE)-sharp-$(GMIME_API_VERSION)

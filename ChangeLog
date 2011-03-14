@@ -1,3 +1,9 @@
+2011-03-14  Jeffrey Stedfast  <fejj@novell.com>
+
+	* configure.ac: Check for glib-sharp-2.0 instead of gtk-sharp-2.0
+	since we really only depend on glib-sharp. Also check for gapi-2.0
+	via pkgconfig.
+
 2011-03-07  Jeffrey Stedfast  <fejj@novell.com>
 
 	* README: Bumped version

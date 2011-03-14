@@ -533,9 +533,10 @@ if test "x$enable_mono" = "xyes"; then
 	AC_SUBST(CSC)
 	AC_SUBST(GACUTIL)
 	
-	PKG_CHECK_MODULES(GTK_SHARP, gtk-sharp-2.0 >= 2.4.0)
-	AC_SUBST(GTK_SHARP_LIBS)
+	PKG_CHECK_MODULES(GLIB_SHARP, glib-sharp-2.0 >= 2.4.0)
+	AC_SUBST(GLIB_SHARP_LIBS)
 	
+	PKG_CHECK_MODULES(GAPI_TOOLS, gapi-2.0)
 	AC_PATH_PROG(GAPI_CODEGEN, gapi2-codegen, no)
 	if test "x$GAPI_CODEGEN" = "xno"; then
         	AC_MSG_ERROR([You need to install gtk-sharp2-gapi])
