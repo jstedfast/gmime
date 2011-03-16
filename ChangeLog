@@ -1,3 +1,11 @@
+2011-03-15  Jeffrey Stedfast  <fejj@novell.com>
+
+	* mono/SignatureValidity.custom: 
+	* mono/DecryptionResult.custom:
+	* mono/CryptoRecipient.custom: 
+	* mono/Signer.custom: New custom sources implementing enumerators
+	for Signers and Recipients.
+
 2011-03-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.ac: Check for glib-sharp-2.0 instead of gtk-sharp-2.0

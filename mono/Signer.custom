@@ -1,0 +1,8 @@
+		[DllImport("gmime")]
+		static extern IntPtr g_mime_signer_next(IntPtr raw);
+
+		internal GMime.Signer Next() {
+			IntPtr raw_ret = g_mime_signer_next(Handle);
+			GMime.Signer ret = raw_ret == IntPtr.Zero ? null : (GMime.Signer) GLib.Opaque.GetOpaque (raw_ret, typeof (GMime.Signer), false);
+			return ret;
+		}

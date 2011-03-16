@@ -48,14 +48,19 @@
   <remove-node path="/api/namespace/object[@cname='GMimeContentType']/field[@cname='type']"/>
 
   <!-- CryptoContext -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeDecryptionResult']/method[@name='GetRecipients']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeDecryptionResult']/field[@cname='recipients']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/method[@name='GetSigners']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/method[@name='AddSigner']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/field[@cname='signers']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeCryptoRecipient']/field[@cname='keyid']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeCryptoRecipient']/field[@cname='next']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeCryptoRecipient']/method[@name='Next']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='sig_ver']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='unused']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='keyid']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/field[@cname='next']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeSigner']/method[@name='Next']"/>
 
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>

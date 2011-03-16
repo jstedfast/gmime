@@ -1,8 +1,8 @@
-public StreamWrapper Stream {
-	get {
-		GMime.StreamMem mem_stream = new GMime.StreamMem ();
-		this.WriteToStream (mem_stream);
-		mem_stream.Seek (0);
-		return new StreamWrapper (mem_stream);
-	}
-}
+		public StreamWrapper Stream {
+			get {
+				GMime.StreamMem mem_stream = new GMime.StreamMem ();
+				this.WriteToStream (mem_stream);
+				mem_stream.Seek (0);
+				return new StreamWrapper (mem_stream);
+			}
+		}

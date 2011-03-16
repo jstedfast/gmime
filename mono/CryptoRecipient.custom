@@ -1,0 +1,8 @@
+		[DllImport("gmime")]
+		static extern IntPtr g_mime_crypto_recipient_next(IntPtr raw);
+
+		internal GMime.CryptoRecipient Next() {
+			IntPtr raw_ret = g_mime_crypto_recipient_next(Handle);
+			GMime.CryptoRecipient ret = raw_ret == IntPtr.Zero ? null : (GMime.CryptoRecipient) GLib.Opaque.GetOpaque (raw_ret, typeof (GMime.CryptoRecipient), false);
+			return ret;
+		}
