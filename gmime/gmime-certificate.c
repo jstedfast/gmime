@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-certificate.h"
 
 
@@ -134,7 +136,7 @@ g_mime_certificate_new (void)
 void
 g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeCertificateTrust trust)
 {
-	g_return_if_fail (certificate != NULL);
+	g_return_if_fail (GMIME_IS_CERTIFICATE (cert));
 	
 	cert->trust = trust;
 }
@@ -587,7 +589,7 @@ g_mime_certificate_list_new (void)
 int
 g_mime_certificate_list_length (GMimeCertificateList *list)
 {
-	g_return_val_if_fail (IS_G_MIME_CERTIFICATE_LIST (list), -1);
+	g_return_val_if_fail (GMIME_IS_CERTIFICATE_LIST (list), -1);
 	
 	return list->array->len;
 }
@@ -605,7 +607,7 @@ g_mime_certificate_list_clear (GMimeCertificateList *list)
 	GMimeCertificate *cert;
 	guint i;
 	
-	g_return_if_fail (IS_G_MIME_CERTIFICATE_LIST (list));
+	g_return_if_fail (GMIME_IS_CERTIFICATE_LIST (list));
 	
 	for (i = 0; i < list->array->len; i++) {
 		cert = (GMimeCertificate *) list->array->pdata[i];

@@ -169,10 +169,10 @@ void g_mime_certificate_set_trust (GMimeCertificate *cert, GMimeCertificateTrust
 GMimeCertificateTrust g_mime_certificate_get_trust (GMimeCertificate *cert);
 
 void g_mime_certificate_set_pubkey_algo (GMimeCertificate *cert, GMimePubKeyAlgo algo);
-GMimeCryptoPubKeyAlgo g_mime_certificate_get_pubkey_algo (GMimeCertificate *cert);
+GMimePubKeyAlgo g_mime_certificate_get_pubkey_algo (GMimeCertificate *cert);
 
 void g_mime_certificate_set_digest_algo (GMimeCertificate *cert, GMimeDigestAlgo algo);
-GMimeCryptoHash g_mime_certificate_get_digest_algo (GMimeCertificate *cert);
+GMimeDigestAlgo g_mime_certificate_get_digest_algo (GMimeCertificate *cert);
 
 void g_mime_certificate_set_issuer_serial (GMimeCertificate *cert, const char *issuer_serial);
 const char *g_mime_certificate_get_issuer_serial (GMimeCertificate *cert);

@@ -74,12 +74,12 @@ static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_finalize (GObject *object);
 
-static GMimeCryptoHash gpg_hash_id (GMimeCryptoContext *ctx, const char *hash);
+static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name);
 
-static const char *gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash);
+static const char *gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
 static int gpg_sign (GMimeCryptoContext *ctx, const char *userid,
-		     GMimeCryptoHash hash, GMimeStream *istream,
+		     GMimeDigestAlgo digest, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
 
 static const char *gpg_get_signature_protocol (GMimeCryptoContext *ctx);
@@ -88,16 +88,16 @@ static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
 
 static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static GMimeSignatureValidity *gpg_verify (GMimeCryptoContext *ctx, GMimeCryptoHash hash,
-					   GMimeStream *istream, GMimeStream *sigstream,
-					   GError **err);
+static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
+				       GMimeStream *istream, GMimeStream *sigstream,
+				       GError **err);
 
 static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid,
-			GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+			GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
 
-static GMimeDecryptionResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
-					   GMimeStream *ostream, GError **err);
+static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
+					GMimeStream *ostream, GError **err);
 
 static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
@@ -144,8 +144,8 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	
 	object_class->finalize = g_mime_gpg_context_finalize;
 	
-	crypto_class->hash_id = gpg_hash_id;
-	crypto_class->hash_name = gpg_hash_name;
+	crypto_class->digest_id = gpg_digest_id;
+	crypto_class->digest_name = gpg_digest_name;
 	crypto_class->sign = gpg_sign;
 	crypto_class->verify = gpg_verify;
 	crypto_class->encrypt = gpg_encrypt;
@@ -177,66 +177,66 @@ g_mime_gpg_context_finalize (GObject *object)
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
-static GMimeCryptoHash
-gpg_hash_id (GMimeCryptoContext *ctx, const char *hash)
+static GMimeDigestAlgo
+gpg_digest_id (GMimeCryptoContext *ctx, const char *name)
 {
-	if (hash == NULL)
-		return GMIME_CRYPTO_HASH_DEFAULT;
+	if (name == NULL)
+		return GMIME_DIGEST_ALGO_DEFAULT;
 	
-	if (!g_ascii_strcasecmp (hash, "pgp-"))
-		hash += 4;
+	if (!g_ascii_strcasecmp (name, "pgp-"))
+		name += 4;
 	
-	if (!g_ascii_strcasecmp (hash, "md2"))
-		return GMIME_CRYPTO_HASH_MD2;
-	else if (!g_ascii_strcasecmp (hash, "md4"))
-		return GMIME_CRYPTO_HASH_MD4;
-	else if (!g_ascii_strcasecmp (hash, "md5"))
-		return GMIME_CRYPTO_HASH_MD5;
-	else if (!g_ascii_strcasecmp (hash, "sha1"))
-		return GMIME_CRYPTO_HASH_SHA1;
-	else if (!g_ascii_strcasecmp (hash, "sha224"))
-		return GMIME_CRYPTO_HASH_SHA224;
-	else if (!g_ascii_strcasecmp (hash, "sha256"))
-		return GMIME_CRYPTO_HASH_SHA256;
-	else if (!g_ascii_strcasecmp (hash, "sha384"))
-		return GMIME_CRYPTO_HASH_SHA384;
-	else if (!g_ascii_strcasecmp (hash, "sha512"))
-		return GMIME_CRYPTO_HASH_SHA512;
-	else if (!g_ascii_strcasecmp (hash, "ripemd160"))
-		return GMIME_CRYPTO_HASH_RIPEMD160;
-	else if (!g_ascii_strcasecmp (hash, "tiger192"))
-		return GMIME_CRYPTO_HASH_TIGER192;
-	else if (!g_ascii_strcasecmp (hash, "haval-5-160"))
-		return GMIME_CRYPTO_HASH_HAVAL5160;
+	if (!g_ascii_strcasecmp (name, "md2"))
+		return GMIME_DIGEST_ALGO_MD2;
+	else if (!g_ascii_strcasecmp (name, "md4"))
+		return GMIME_DIGEST_ALGO_MD4;
+	else if (!g_ascii_strcasecmp (name, "md5"))
+		return GMIME_DIGEST_ALGO_MD5;
+	else if (!g_ascii_strcasecmp (name, "sha1"))
+		return GMIME_DIGEST_ALGO_SHA1;
+	else if (!g_ascii_strcasecmp (name, "sha224"))
+		return GMIME_DIGEST_ALGO_SHA224;
+	else if (!g_ascii_strcasecmp (name, "sha256"))
+		return GMIME_DIGEST_ALGO_SHA256;
+	else if (!g_ascii_strcasecmp (name, "sha384"))
+		return GMIME_DIGEST_ALGO_SHA384;
+	else if (!g_ascii_strcasecmp (name, "sha512"))
+		return GMIME_DIGEST_ALGO_SHA512;
+	else if (!g_ascii_strcasecmp (name, "ripemd160"))
+		return GMIME_DIGEST_ALGO_RIPEMD160;
+	else if (!g_ascii_strcasecmp (name, "tiger192"))
+		return GMIME_DIGEST_ALGO_TIGER192;
+	else if (!g_ascii_strcasecmp (name, "haval-5-160"))
+		return GMIME_DIGEST_ALGO_HAVAL5160;
 	
-	return GMIME_CRYPTO_HASH_DEFAULT;
+	return GMIME_DIGEST_ALGO_DEFAULT;
 }
 
 static const char *
-gpg_hash_name (GMimeCryptoContext *ctx, GMimeCryptoHash hash)
+gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest)
 {
-	switch (hash) {
-	case GMIME_CRYPTO_HASH_MD2:
+	switch (digest) {
+	case GMIME_DIGEST_ALGO_MD2:
 		return "pgp-md2";
-	case GMIME_CRYPTO_HASH_MD4:
+	case GMIME_DIGEST_ALGO_MD4:
 		return "pgp-md4";
-	case GMIME_CRYPTO_HASH_MD5:
+	case GMIME_DIGEST_ALGO_MD5:
 		return "pgp-md5";
-	case GMIME_CRYPTO_HASH_SHA1:
+	case GMIME_DIGEST_ALGO_SHA1:
 		return "pgp-sha1";
-	case GMIME_CRYPTO_HASH_SHA224:
+	case GMIME_DIGEST_ALGO_SHA224:
 		return "pgp-sha224";
-	case GMIME_CRYPTO_HASH_SHA256:
+	case GMIME_DIGEST_ALGO_SHA256:
 		return "pgp-sha256";
-	case GMIME_CRYPTO_HASH_SHA384:
+	case GMIME_DIGEST_ALGO_SHA384:
 		return "pgp-sha384";
-	case GMIME_CRYPTO_HASH_SHA512:
+	case GMIME_DIGEST_ALGO_SHA512:
 		return "pgp-sha512";
-	case GMIME_CRYPTO_HASH_RIPEMD160:
+	case GMIME_DIGEST_ALGO_RIPEMD160:
 		return "pgp-ripemd160";
-	case GMIME_CRYPTO_HASH_TIGER192:
+	case GMIME_DIGEST_ALGO_TIGER192:
 		return "pgp-tiger192";
-	case GMIME_CRYPTO_HASH_HAVAL5160:
+	case GMIME_DIGEST_ALGO_HAVAL5160:
 		return "pgp-haval-5-160";
 	default:
 		return "pgp-sha1";
@@ -279,8 +279,8 @@ struct _GpgCtx {
 	
 	char *userid;
 	GPtrArray *recipients;
-	GMimeCryptoCipherAlgo cipher;
-	GMimeCryptoHash hash;
+	GMimeCipherAlgo cipher;
+	GMimeDigestAlgo digest;
 	
 	int stdin_fd;
 	int stdout_fd;
@@ -302,11 +302,9 @@ struct _GpgCtx {
 	GByteArray *diag;
 	GMimeStream *diagnostics;
 	
-	GMimeCryptoRecipient *encrypted_to;  /* full list of encrypted-to recipients */
-	GMimeCryptoRecipient *enc_to;        /* most recent recipient (tail pointer) */
-	
-	GMimeSigner *signers;
-	GMimeSigner *signer;
+	GMimeCertificateList *encrypted_to;  /* full list of encrypted-to recipients */
+	GMimeSignatureList *signatures;
+	GMimeSignature *signature;
 	
 	int exit_status;
 	
@@ -345,8 +343,8 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	
 	gpg->userid = NULL;
 	gpg->recipients = NULL;
-	gpg->cipher = GMIME_CRYPTO_CIPHER_ALGO_DEFAULT;
-	gpg->hash = GMIME_CRYPTO_HASH_DEFAULT;
+	gpg->cipher = GMIME_CIPHER_ALGO_DEFAULT;
+	gpg->digest = GMIME_DIGEST_ALGO_DEFAULT;
 	gpg->always_trust = FALSE;
 	gpg->armor = FALSE;
 	
@@ -365,10 +363,8 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->need_id = NULL;
 	
 	gpg->encrypted_to = NULL;
-	gpg->enc_to = (GMimeCryptoRecipient *) &gpg->encrypted_to;
-	
-	gpg->signers = NULL;
-	gpg->signer = (GMimeSigner *) &gpg->signers;
+	gpg->signatures = NULL;
+	gpg->signature = NULL;
 	
 	gpg->sigstream = NULL;
 	gpg->istream = NULL;
@@ -408,9 +404,9 @@ gpg_ctx_set_mode (struct _GpgCtx *gpg, enum _GpgCtxMode mode)
 }
 
 static void
-gpg_ctx_set_hash (struct _GpgCtx *gpg, GMimeCryptoHash hash)
+gpg_ctx_set_digest (struct _GpgCtx *gpg, GMimeDigestAlgo digest)
 {
-	gpg->hash = hash;
+	gpg->digest = digest;
 }
 
 static void
@@ -489,8 +485,6 @@ gpg_ctx_get_diagnostics (struct _GpgCtx *gpg)
 static void
 gpg_ctx_free (struct _GpgCtx *gpg)
 {
-	GMimeCryptoRecipient *recipient, *nr;
-	GMimeSigner *signer, *ns;
 	guint i;
 	
 	g_hash_table_destroy (gpg->userid_hint);
@@ -530,46 +524,38 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	
 	g_object_unref (gpg->diagnostics);
 	
-	recipient = gpg->encrypted_to;
-	while (recipient != NULL) {
-		nr = recipient->next;
-		g_mime_crypto_recipient_free (recipient);
-		recipient = nr;
-	}
+	if (gpg->encrypted_to)
+		g_object_unref (gpg->encrypted_to);
 	
-	signer = gpg->signers;
-	while (signer != NULL) {
-		ns = signer->next;
-		g_mime_signer_free (signer);
-		signer = ns;
-	}
+	if (gpg->signatures)
+		g_object_unref (gpg->signatures);
 	
 	g_slice_free (struct _GpgCtx, gpg);
 }
 
 static const char *
-gpg_hash_str (GMimeCryptoHash hash)
+gpg_digest_str (GMimeDigestAlgo digest)
 {
-	switch (hash) {
-	case GMIME_CRYPTO_HASH_MD2:
+	switch (digest) {
+	case GMIME_DIGEST_ALGO_MD2:
 		return "--digest-algo=MD2";
-	case GMIME_CRYPTO_HASH_MD5:
+	case GMIME_DIGEST_ALGO_MD5:
 		return "--digest-algo=MD5";
-	case GMIME_CRYPTO_HASH_SHA1:
+	case GMIME_DIGEST_ALGO_SHA1:
 		return "--digest-algo=SHA1";
-	case GMIME_CRYPTO_HASH_SHA224:
+	case GMIME_DIGEST_ALGO_SHA224:
 		return "--digest-algo=SHA224";
-	case GMIME_CRYPTO_HASH_SHA256:
+	case GMIME_DIGEST_ALGO_SHA256:
 		return "--digest-algo=SHA256";
-	case GMIME_CRYPTO_HASH_SHA384:
+	case GMIME_DIGEST_ALGO_SHA384:
 		return "--digest-algo=SHA384";
-	case GMIME_CRYPTO_HASH_SHA512:
+	case GMIME_DIGEST_ALGO_SHA512:
 		return "--digest-algo=SHA512";
-	case GMIME_CRYPTO_HASH_RIPEMD160:
+	case GMIME_DIGEST_ALGO_RIPEMD160:
 		return "--digest-algo=RIPEMD160";
-	case GMIME_CRYPTO_HASH_TIGER192:
+	case GMIME_DIGEST_ALGO_TIGER192:
 		return "--digest-algo=TIGER192";
-	case GMIME_CRYPTO_HASH_MD4:
+	case GMIME_DIGEST_ALGO_MD4:
 		return "--digest-algo=MD4";
 	default:
 		return NULL;
@@ -579,7 +565,7 @@ gpg_hash_str (GMimeCryptoHash hash)
 static char **
 gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***strv)
 {
-	const char *hash_str;
+	const char *digest_str;
 	char **argv, *buf;
 	GPtrArray *args;
 	int v = 0;
@@ -619,8 +605,8 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		g_ptr_array_add (args, "--detach");
 		if (gpg->armor)
 			g_ptr_array_add (args, "--armor");
-		if ((hash_str = gpg_hash_str (gpg->hash)))
-			g_ptr_array_add (args, (char *) hash_str);
+		if ((digest_str = gpg_digest_str (gpg->digest)))
+			g_ptr_array_add (args, (char *) digest_str);
 		if (gpg->userid) {
 			g_ptr_array_add (args, "-u");
 			g_ptr_array_add (args, (char *) gpg->userid);
@@ -648,8 +634,8 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	case GPG_CTX_MODE_SIGN_ENCRYPT:
 		g_ptr_array_add (args, "--sign");
 		
-		if ((hash_str = gpg_hash_str (gpg->hash)))
-			g_ptr_array_add (args, (char *) hash_str);
+		if ((digest_str = gpg_digest_str (gpg->digest)))
+			g_ptr_array_add (args, (char *) digest_str);
 		
 		/* fall thru... */
 	case GPG_CTX_MODE_ENCRYPT:
@@ -830,93 +816,97 @@ next_token (char *in, char **token)
 }
 
 /**
- * gpg_ctx_add_signer:
+ * gpg_ctx_add_signature:
  * @gpg: GnuPG context
- * @status: a #GMimeSignerStatus
- * @info: a string with the signer's info
+ * @status: a #GMimeSignatureStatus
+ * @info: a string with the signature info
  *
  * Parses GOODSIG, BADSIG, EXPSIG, EXPKEYSIG, and REVKEYSIG status messages
- * into a newly allocated #GMimeSigner and adds it to @gpg's signer list.
- *
- * Returns: the newly added signer for the caller to add more info to.
+ * into a newly allocated #GMimeSignature and adds it to @gpg's signature list.
  **/
-static GMimeSigner *
-gpg_ctx_add_signer (struct _GpgCtx *gpg, GMimeSignerStatus status, char *info)
+static void
+gpg_ctx_add_signature (struct _GpgCtx *gpg, GMimeSignatureStatus status, char *info)
 {
-	GMimeSigner *signer;
+	GMimeSignature *sig;
 	
-	signer = g_mime_signer_new (status);
-	gpg->signer->next = signer;
-	gpg->signer = signer;
+	if (!gpg->signatures)
+		gpg->signatures = g_mime_signature_list_new ();
+	
+	gpg->signature = sig = g_mime_signature_new ();
+	g_mime_signature_set_status (sig, status);
+	g_mime_signature_list_add (gpg->signatures, sig);
+	g_object_unref (sig);
 	
 	/* get the key id of the signer */
-	info = next_token (info, &signer->keyid);
+	info = next_token (info, &sig->cert->keyid);
 	
 	/* the rest of the string is the signer's name */
-	signer->name = g_strdup (info);
-	
-	return signer;
+	sig->cert->name = g_strdup (info);
 }
 
 static void
 gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 {
-	GMimeSigner *signer;
+	GMimeSignature *sig;
 	char *inend;
 	
 	if (!strncmp (status, "SIG_ID ", 7)) {
 		/* not sure if this contains anything we care about... */
 	} else if (!strncmp (status, "GOODSIG ", 8)) {
-		gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_GOOD, status + 8);
+		gpg_ctx_add_signature (gpg, GMIME_SIGNATURE_STATUS_GOOD, status + 8);
 	} else if (!strncmp (status, "BADSIG ", 7)) {
-		gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_BAD, status + 7);
+		gpg_ctx_add_signature (gpg, GMIME_SIGNATURE_STATUS_BAD, status + 7);
 	} else if (!strncmp (status, "EXPSIG ", 7)) {
-		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 7);
-		signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
+		gpg_ctx_add_signature (gpg, GMIME_SIGNATURE_STATUS_ERROR, status + 7);
+		gpg->signature->errors |= GMIME_SIGNATURE_ERROR_EXPSIG;
 	} else if (!strncmp (status, "EXPKEYSIG ", 10)) {
-		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 10);
-		signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+		gpg_ctx_add_signature (gpg, GMIME_SIGNATURE_STATUS_ERROR, status + 10);
+		gpg->signature->errors |= GMIME_SIGNATURE_ERROR_EXPKEYSIG;
 	} else if (!strncmp (status, "REVKEYSIG ", 10)) {
-		signer = gpg_ctx_add_signer (gpg, GMIME_SIGNER_STATUS_ERROR, status + 10);
-		signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
+		gpg_ctx_add_signature (gpg, GMIME_SIGNATURE_STATUS_ERROR, status + 10);
+		gpg->signature->errors |= GMIME_SIGNATURE_ERROR_REVKEYSIG;
 	} else if (!strncmp (status, "ERRSIG ", 7)) {
 		/* Note: NO_PUBKEY often comes after an ERRSIG */
 		status += 7;
 		
-		signer = g_mime_signer_new (GMIME_SIGNER_STATUS_ERROR);
-		gpg->signer->next = signer;
-		gpg->signer = signer;
+		if (!gpg->signatures)
+			gpg->signatures = g_mime_signature_list_new ();
+		
+		gpg->signature = sig = g_mime_signature_new ();
+		g_mime_signature_set_status (sig, GMIME_SIGNATURE_STATUS_ERROR);
+		g_mime_signature_list_add (gpg->signatures, sig);
+		g_object_unref (sig);
 		
 		/* get the key id of the signer */
-		status = next_token (status, &signer->keyid);
+		status = next_token (status, &sig->cert->keyid);
 		
 		/* the second token is the public-key algorithm id */
-		signer->pubkey_algo = strtoul (status, &inend, 10);
+		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
-		/* the third token is the hash algorithm id */
-		signer->hash_algo = strtoul (status, &inend, 10);
+		/* the third token is the digest algorithm id */
+		sig->cert->digest_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
 		/* the fourth token is the signature class */
-		signer->sig_class = strtoul (status, &inend, 10);
+		/*sig->sig_class =*/ strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_class = 0;
+			/*signer->sig_class = 0;*/
 			return;
 		}
 		
 		status = inend + 1;
 		
 		/* the fifth token is the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, &inend, 10);
+		sig->expires = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_expires = 0;
+			sig->expires = 0;
 			return;
 		}
 		
@@ -924,45 +914,45 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		
 		/* the sixth token is the return code */
 		switch (strtol (status, NULL, 10)) {
-		case 4: signer->errors |= GMIME_SIGNER_ERROR_UNSUPP_ALGO; break;
-		case 9: signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY; break;
+		case 4: sig->errors |= GMIME_SIGNATURE_ERROR_UNSUPP_ALGO; break;
+		case 9: sig->errors |= GMIME_SIGNATURE_ERROR_NO_PUBKEY; break;
 		default: break;
 		}
 	} else if (!strncmp (status, "NO_PUBKEY ", 10)) {
 		/* the only token is the keyid, but we've already got it */
-		gpg->signer->errors |= GMIME_SIGNER_ERROR_NO_PUBKEY;
+		gpg->signature->errors |= GMIME_SIGNATURE_ERROR_NO_PUBKEY;
 	} else if (!strncmp (status, "VALIDSIG ", 9)) {
-		signer = gpg->signer;
+		sig = gpg->signature;
 		status += 9;
 		
 		/* the first token is the fingerprint */
-		status = next_token (status, &signer->fingerprint);
+		status = next_token (status, &sig->cert->fingerprint);
 		
 		/* the second token is the date the stream was signed YYYY-MM-DD */
 		status = next_token (status, NULL);
 		
 		/* the third token is the signature creation date (or 0 for unknown?) */
-		signer->sig_created = strtoul (status, &inend, 10);
+		sig->created = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_created = 0;
+			sig->created = 0;
 			return;
 		}
 		
 		status = inend + 1;
 		
 		/* the fourth token is the signature expiration date (or 0 for never) */
-		signer->sig_expires = strtoul (status, &inend, 10);
+		sig->expires = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_expires = 0;
+			sig->expires = 0;
 			return;
 		}
 		
 		status = inend + 1;
 		
 		/* the fifth token is the signature version */
-		signer->sig_ver = strtoul (status, &inend, 10);
+		/*sig->sig_ver =*/ strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_ver = 0;
+			/*signer->sig_ver = 0;*/
 			return;
 		}
 		
@@ -972,23 +962,23 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = next_token (status, NULL);
 		
 		/* the seventh token is the public-key algorithm id */
-		signer->pubkey_algo = strtoul (status, &inend, 10);
+		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
-		/* the eighth token is the hash algorithm id */
-		signer->hash_algo = strtoul (status, &inend, 10);
+		/* the eighth token is the digest algorithm id */
+		sig->cert->digest_algo = strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ')
 			return;
 		
 		status = inend + 1;
 		
 		/* the nineth token is the signature class */
-		signer->sig_class = strtoul (status, &inend, 10);
+		/*sig->sig_class =*/ strtoul (status, &inend, 10);
 		if (inend == status || *inend != ' ') {
-			signer->sig_class = 0;
+			/*sig->sig_class = 0;*/
 			return;
 		}
 		
@@ -998,17 +988,17 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 	} else if (!strncmp (status, "TRUST_", 6)) {
 		status += 6;
 		
-		signer = gpg->signer;
+		sig = gpg->signature;
 		if (!strncmp (status, "NEVER", 5)) {
-			signer->trust = GMIME_SIGNER_TRUST_NEVER;
+			sig->cert->trust = GMIME_CERTIFICATE_TRUST_NEVER;
 		} else if (!strncmp (status, "MARGINAL", 8)) {
-			signer->trust = GMIME_SIGNER_TRUST_MARGINAL;
+			sig->cert->trust = GMIME_CERTIFICATE_TRUST_MARGINAL;
 		} else if (!strncmp (status, "FULLY", 5)) {
-			signer->trust = GMIME_SIGNER_TRUST_FULLY;
+			sig->cert->trust = GMIME_CERTIFICATE_TRUST_FULLY;
 		} else if (!strncmp (status, "ULTIMATE", 8)) {
-			signer->trust = GMIME_SIGNER_TRUST_ULTIMATE;
+			sig->cert->trust = GMIME_CERTIFICATE_TRUST_ULTIMATE;
 		} else if (!strncmp (status, "UNDEFINED", 9)) {
-			signer->trust = GMIME_SIGNER_TRUST_UNDEFINED;
+			sig->cert->trust = GMIME_CERTIFICATE_TRUST_UNDEFINED;
 		}
 	}
 }
@@ -1211,7 +1201,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		return -1;
 	} else {
-		GMimeCryptoRecipient *recipient;
+		GMimeCertificate *cert;
 		char *inend;
 		
 		switch (gpg->mode) {
@@ -1227,8 +1217,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			/* skip the public-key algorithm id token */
 			status = next_token (status, NULL);
 			
-			/* this token is the hash algorithm used */
-			gpg->hash = strtoul (status, NULL, 10);
+			/* this token is the digest algorithm used */
+			gpg->digest = strtoul (status, NULL, 10);
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
@@ -1253,7 +1243,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status += 16;
 				
 				/* first token is the mdc algorithm (or 0 if not used) */
-				gpg->hash = strtoul (status, &inend, 10);
+				gpg->digest = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ')
 					return;
 				
@@ -1269,17 +1259,19 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				/* nothing to do, but we know we're done */
 			} else if (!strncmp (status, "ENC_TO ", 7)) {
 				/* parse the recipient info */
-				recipient = g_mime_crypto_recipient_new ();
-				gpg->enc_to->next = recipient;
-				gpg->enc_to = recipient;
+				if (!gpg->encrypted_to)
+					gpg->encrypted_to = g_mime_certificate_list_new ();
+				
+				cert = g_mime_certificate_new ();
+				g_mime_certificate_list_add (gpg->encrypted_to, cert);
 				
 				status += 7;
 				
 				/* first token is the recipient's keyid */
-				status = next_token (status, &recipient->keyid);
+				status = next_token (status, &cert->keyid);
 				
 				/* second token is the recipient's pubkey algo */
-				recipient->pubkey_algo = strtoul (status, &inend, 10);
+				cert->pubkey_algo = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ')
 					return;
 				
@@ -1774,7 +1766,7 @@ gpg_ctx_op_wait (struct _GpgCtx *gpg)
 
 
 static int
-gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeCryptoHash hash,
+gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo digest,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
@@ -1782,7 +1774,7 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeCryptoHash hash,
 	
 	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN);
-	gpg_ctx_set_hash (gpg, hash);
+	gpg_ctx_set_digest (gpg, digest);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
 	gpg_ctx_set_istream (gpg, istream);
@@ -1820,22 +1812,22 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeCryptoHash hash,
 		return -1;
 	}
 	
-	/* save the hash used */
-	hash = gpg->hash;
+	/* save the digest used */
+	digest = gpg->digest;
 	
 	gpg_ctx_free (gpg);
 	
-	return hash;
+	return digest;
 }
 
 
-static GMimeSignatureValidity *
-gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
+static GMimeSignatureList *
+gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	    GMimeStream *istream, GMimeStream *sigstream,
 	    GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	GMimeSignatureValidity *validity;
+	GMimeSignatureList *signatures;
 	const char *diagnostics;
 	struct _GpgCtx *gpg;
 	gboolean valid;
@@ -1844,7 +1836,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_VERIFY);
 	gpg_ctx_set_sigstream (gpg, sigstream);
 	gpg_ctx_set_istream (gpg, istream);
-	gpg_ctx_set_hash (gpg, hash);
+	gpg_ctx_set_digest (gpg, digest);
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
@@ -1864,22 +1856,18 @@ gpg_verify (GMimeCryptoContext *context, GMimeCryptoHash hash,
 	}
 	
 	valid = gpg_ctx_op_wait (gpg) == 0;
-	diagnostics = gpg_ctx_get_diagnostics (gpg);
 	
-	validity = g_mime_signature_validity_new ();
-	g_mime_signature_validity_set_details (validity, diagnostics);
-	validity->signers = gpg->signers;
-	gpg->signers = NULL;
-	
+	signatures = gpg->signatures;
+	gpg->signatures = NULL;
 	gpg_ctx_free (gpg);
 	
-	return validity;
+	return signatures;
 }
 
 
 static int
 gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
-	     GMimeCryptoHash hash, GPtrArray *recipients, GMimeStream *istream,
+	     GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
@@ -1891,7 +1879,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN_ENCRYPT);
 	else
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_ENCRYPT);
-	gpg_ctx_set_hash (gpg, hash);
+	gpg_ctx_set_digest (gpg, digest);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
 	gpg_ctx_set_istream (gpg, istream);
@@ -1939,12 +1927,12 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 }
 
 
-static GMimeDecryptionResult *
+static GMimeDecryptResult *
 gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	GMimeDecryptionResult *result;
+	GMimeDecryptResult *result;
 	const char *diagnostics;
 	struct _GpgCtx *gpg;
 	int save;
@@ -1983,16 +1971,13 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 		return NULL;
 	}
 	
-	result = g_mime_decryption_result_new ();
-	result->validity = g_mime_signature_validity_new ();
-	diagnostics = gpg_ctx_get_diagnostics (gpg);
-	g_mime_signature_validity_set_details (result->validity, diagnostics);
-	result->validity->signers = gpg->signers;
+	result = g_mime_decrypt_result_new ();
 	result->recipients = gpg->encrypted_to;
+	result->signatures = gpg->signatures;
 	result->cipher = gpg->cipher;
-	result->mdc = gpg->hash;
+	result->mdc = gpg->digest;
 	gpg->encrypted_to = NULL;
-	gpg->signers = NULL;
+	gpg->signatures = NULL;
 	
 	gpg_ctx_free (gpg);
 	

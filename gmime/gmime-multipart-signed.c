@@ -200,11 +200,11 @@ sign_prepare (GMimeObject *mime_part)
  * @content: MIME part to sign
  * @ctx: encryption crypto context
  * @userid: user id to sign with
- * @hash: preferred digest algorithm
+ * @digest: preferred digest algorithm
  * @err: exception
  *
  * Attempts to sign the @content MIME part with @userid's private key
- * using the @ctx signing context with the @hash algorithm. If
+ * using the @ctx signing context with the @digest algorithm. If
  * successful, the signed #GMimeObject is set as the signed part of
  * the multipart/signed object @mps.
  *
@@ -215,7 +215,7 @@ sign_prepare (GMimeObject *mime_part)
 int
 g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCryptoContext *ctx, const char *userid,
-			      GMimeCryptoHash hash, GError **err)
+			      GMimeDigestAlgo digest, GError **err)
 {
 	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
@@ -268,7 +268,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if ((rv = g_mime_crypto_context_sign (ctx, userid, hash, filtered, sigstream, err)) == -1) {
+	if ((rv = g_mime_crypto_context_sign (ctx, userid, digest, filtered, sigstream, err)) == -1) {
 		g_object_unref (sigstream);
 		g_object_unref (filtered);
 		g_object_unref (stream);
@@ -282,7 +282,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	/* set the multipart/signed protocol and micalg */
 	content_type = g_mime_object_get_content_type (GMIME_OBJECT (mps));
 	g_mime_content_type_set_parameter (content_type, "protocol", protocol);
-	micalg = g_strdup (g_mime_crypto_context_hash_name (ctx, (GMimeCryptoHash) rv));
+	micalg = g_strdup (g_mime_crypto_context_digest_name (ctx, (GMimeDigestAlgo) rv));
 	g_mime_content_type_set_parameter (content_type, "micalg", micalg);
 	g_mime_multipart_set_boundary (GMIME_MULTIPART (mps), NULL);
 	
@@ -331,22 +331,22 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
  * Attempts to verify the signed MIME part contained within the
  * multipart/signed object @mps using the @ctx crypto context.
  *
- * Returns: a new #GMimeSignatureValidity object on success or %NULL
- * on fail. If the signing fails, an exception will be set on @err to
- * provide information as to why the failure occured.
+ * Returns: a new #GMimeSignatureList object on success or %NULL on fail. If
+ * the verification fails, an exception will be set on @err to provide
+ * information as to why the failure occured.
  **/
-GMimeSignatureValidity *
+GMimeSignatureList *
 g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *ctx,
 				GError **err)
 {
 	const char *supported, *protocol, *micalg;
 	GMimeObject *content, *signature;
 	GMimeStream *stream, *sigstream;
-	GMimeSignatureValidity *valid;
+	GMimeSignatureList *signatures;
 	GMimeStream *filtered_stream;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
-	GMimeCryptoHash hash;
+	GMimeDigestAlgo digest;
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_SIGNED (mps), NULL);
@@ -427,13 +427,13 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *c
 	g_mime_stream_reset (sigstream);
 	
 	/* verify the signature */
-	hash = g_mime_crypto_context_hash_id (ctx, micalg);
-	valid = g_mime_crypto_context_verify (ctx, hash, stream, sigstream, err);
+	digest = g_mime_crypto_context_digest_id (ctx, micalg);
+	signatures = g_mime_crypto_context_verify (ctx, digest, stream, sigstream, err);
 	
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
 	g_object_unref (stream);
 	
-	return valid;
+	return signatures;
 }

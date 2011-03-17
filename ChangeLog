@@ -1,5 +1,19 @@
 2011-03-17  Jeffrey Stedfast  <fejj@novell.com>
 
+	* gmime/gmime-multipart-encrypted.c: Updated for crypto API
+	changes.
+
+	* gmime/gmime-multipart-signed.c: Updated for crypto API changes.
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_context_verify): Now
+	returns a GMimeSignatureList, the 'details' string was worthless
+	for GpgMe backend.
+	(GMimeDecryptResult): This is now a GObject.
+
+	* gmime/gmime-pkcs7-context.c: Updated for crypto API changes.
+
+	* gmime/gmime-gpg-context.c: Updated for crypto API changes.
+
 	* gmime/gmime-certificate.[c,h]: New source files implementing
 	Certificate and CertificateList classes.
 

@@ -144,7 +144,7 @@ g_mime_multipart_encrypted_new (void)
  * @ctx: encryption context
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
- * @hash: digest algorithm to use when signing
+ * @digest: digest algorithm to use when signing
  * @recipients: an array of recipients to encrypt to
  * @err: a #GError
  *
@@ -160,7 +160,7 @@ g_mime_multipart_encrypted_new (void)
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 				    GMimeCryptoContext *ctx, gboolean sign,
-				    const char *userid, GMimeCryptoHash hash,
+				    const char *userid, GMimeDigestAlgo digest,
 				    GPtrArray *recipients, GError **err)
 {
 	GMimeStream *filtered_stream, *ciphertext, *stream;
@@ -196,7 +196,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	
 	/* encrypt the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_encrypt (ctx, sign, userid, hash, recipients, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_encrypt (ctx, sign, userid, digest, recipients, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return -1;
@@ -252,8 +252,8 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  * Attempts to decrypt the encrypted MIME part contained within the
  * multipart/encrypted object @mpe using the @ctx decryption context.
  *
- * If @result is non-NULL, then on a successful decrypt operation, it will be
- * updated to point to a newly-allocated #GMimeDecryptionResult with signature
+ * If @result is non-%NULL, then on a successful decrypt operation, it will be
+ * updated to point to a newly-allocated #GMimeDecryptResult with signature
  * status information as well as a list of recipients that the part was
  * encrypted to.
  *
@@ -263,16 +263,16 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
-				    GMimeDecryptionResult **result, GError **err)
+				    GMimeDecryptResult **result, GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
 	const char *protocol, *supported;
 	GMimeStream *filtered_stream;
 	GMimeContentType *mime_type;
-	GMimeDecryptionResult *res;
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
+	GMimeDecryptResult *res;
 	GMimeParser *parser;
 	char *content_type;
 	
@@ -362,7 +362,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: failed to parse decrypted content."));
 		
-		g_mime_decryption_result_free (res);
+		g_object_unref (res);
 		
 		return NULL;
 	}

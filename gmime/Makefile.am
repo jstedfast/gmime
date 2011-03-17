@@ -20,6 +20,7 @@ lib_LTLIBRARIES = libgmime-2.6.la
 
 libgmime_2_6_la_SOURCES = 		\
 	gmime.c				\
+	gmime-certificate.c		\
 	gmime-charset.c			\
 	gmime-common.c			\
 	gmime-content-type.c		\
@@ -55,6 +56,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-parse-utils.c		\
 	gmime-parser.c			\
 	gmime-part.c			\
+	gmime-signature.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
 	gmime-stream-cat.c		\
@@ -77,6 +79,7 @@ endif
 
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
+	gmime-certificate.h		\
 	gmime-charset.h			\
 	gmime-content-type.h		\
 	gmime-crypto-context.h		\
@@ -110,6 +113,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-param.h			\
 	gmime-parser.h			\
 	gmime-part.h			\
+	gmime-signature.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\
 	gmime-stream-cat.h		\

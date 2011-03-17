@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-signature.h"
 
 
@@ -83,9 +85,9 @@ g_mime_signature_init (GMimeSignature *sig, GMimeSignatureClass *klass)
 {
 	sig->status = GMIME_SIGNATURE_STATUS_GOOD;
 	sig->errors = GMIME_SIGNATURE_ERROR_NONE;
+	sig->cert = g_mime_certificate_new ();
 	sig->created = (time_t) -1;
 	sig->expires = (time_t) -1;
-	sig->cert = NULL;
 }
 
 static void
@@ -383,7 +385,7 @@ g_mime_signature_list_new (void)
 int
 g_mime_signature_list_length (GMimeSignatureList *list)
 {
-	g_return_val_if_fail (IS_G_MIME_SIGNATURE_LIST (list), -1);
+	g_return_val_if_fail (GMIME_IS_SIGNATURE_LIST (list), -1);
 	
 	return list->array->len;
 }
@@ -401,7 +403,7 @@ g_mime_signature_list_clear (GMimeSignatureList *list)
 	GMimeSignature *sig;
 	guint i;
 	
-	g_return_if_fail (IS_G_MIME_SIGNATURE_LIST (list));
+	g_return_if_fail (GMIME_IS_SIGNATURE_LIST (list));
 	
 	for (i = 0; i < list->array->len; i++) {
 		sig = (GMimeSignature *) list->array->pdata[i];
