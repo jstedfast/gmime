@@ -15,22 +15,27 @@ DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs gmime-sharp-$(GMIME_API_VERS
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
 
-sources = 				\
+sources = 					\
+	CryptoRecipientCollection.cs		\
+	SignerCollection.cs			\
 	StreamWrapper.cs
 
-build_sources =  			\
-	$(srcdir)/StreamWrapper.cs	\
+build_sources =  				\
+	$(srcdir)/CryptoRecipientCollection.cs	\
+	$(srcdir)/SignerCollection.cs		\
+	$(srcdir)/StreamWrapper.cs		\
 	AssemblyInfo.cs
 
-customs = 				\
-	DataWrapper.custom		\
-	Global.custom			\
-	HeaderList.custom		\
-	InternetAddress.custom		\
-	InternetAddressList.custom	\
-	Message.custom			\
-	Multipart.custom		\
-	Object.custom			\
+customs = 					\
+	DataWrapper.custom			\
+	Global.custom				\
+	HeaderList.custom			\
+	InternetAddress.custom			\
+	InternetAddressList.custom		\
+	Message.custom				\
+	Multipart.custom			\
+	Object.custom				\
+	SignatureValididty.custom		\
 	Stream.custom
 
 build_customs = 				\
@@ -42,17 +47,18 @@ build_customs = 				\
 	$(srcdir)/Message.custom		\
 	$(srcdir)/Multipart.custom		\
 	$(srcdir)/Object.custom			\
+	$(srcdir)/SignatureValidity.custom	\
 	$(srcdir)/Stream.custom
 
-EXTRA_DIST =			\
-	$(ASSEMBLY).config.in	\
-	$(ASSEMBLY_NAME).snk	\
-	AssemblyInfo.cs.in	\
-	$(METADATA)		\
-	$(RAW_API)		\
-	$(customs)		\
-	$(sources)		\
-	$(SOURCES_XML)		\
+EXTRA_DIST =					\
+	$(ASSEMBLY).config.in			\
+	$(ASSEMBLY_NAME).snk			\
+	AssemblyInfo.cs.in			\
+	$(METADATA)				\
+	$(RAW_API)				\
+	$(customs)				\
+	$(sources)				\
+	$(SOURCES_XML)				\
 	gmime-sharp.pc.in
 
 $(PACKAGE_SHARP).pc: gmime-sharp.pc

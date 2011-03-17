@@ -83,7 +83,7 @@
 			return new InvalidOperationException (message);
 		}
 		
-		public int Count { 
+		public int Count {
 			get { return internet_address_list_length (Handle); }
 		}
 		

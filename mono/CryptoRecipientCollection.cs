@@ -4,30 +4,22 @@ using System.Runtime.InteropServices;
 
 namespace GMime {
 	public class CryptoRecipientCollection : IList {
-		CryptoRecipient[] recipients;
+		ArrayList recipients;
 		
 		internal CryptoRecipientCollection (DecryptionResult result)
 		{
 			CryptoRecipient recipient;
-			int count = 0;
-			int i = 0;
 			
+			recipients = new ArrayList ();
 			recipient = GetFirstRecipient (result);
 			while (recipient != null) {
-				recipient = recipient.Next ();
-				count++;
-			}
-			
-			recipients = new CryptoRecipient [count];
-			recipient = GetFirstRecipient (result);
-			while (recipient != null) {
-				recipients[i++] = recipient;
+				recipients.Add (recipient);
 				recipient = recipient.Next ();
 			}
 		}
 		
 		public int Count {
-			get { return recipients.Length; }
+			get { return recipients.Count; }
 		}
 		
 		public bool IsFixedSize {
@@ -58,55 +50,32 @@ namespace GMime {
 		
 		public bool Contains (CryptoRecipient recipient)
 		{
-			if (recipient == null)
-				return false;
-			
-			for (int i = 0; i < Count; i++) {
-				if (recipients[i] == recipient)
-					return true;
-			}
-			
-			return false;
+			return recipients.Contains (recipient);
 		}
 		
 		bool IList.Contains (object value)
 		{
-			return Contains (value as CryptoRecipient);
+			return recipients.Contains (value);
 		}
 		
 		public void CopyTo (Array array, int index)
 		{
-			if (array == null)
-				throw new ArgumentNullException ("array");
-			
-			if (index < 0)
-				throw new ArgumentOutOfRangeException ("index");
-			
-			for (int i = 0; i < Count; i++)
-				array.SetValue (((IList) this)[i], index + i);
+			recipients.CopyTo (array, index);
 		}
 		
 		public IEnumerator GetEnumerator ()
 		{
-			return new CryptoRecipientIterator (this);
+			return recipients.GetEnumerator ();
 		}
 		
 		public int IndexOf (CryptoRecipient recipient)
 		{
-			if (recipient == null)
-				return -1;
-			
-			for (int i = 0; i < Count; i++) {
-				if (recipients[i] == recipient)
-					return i;
-			}
-			
-			return -1;
+			return recipients.IndexOf (recipient);
 		}
 		
 		int IList.IndexOf (object value)
 		{
-			return IndexOf (value as CryptoRecipient);
+			return recipients.IndexOf (value);
 		}
 		
 		void IList.Insert (int index, object value)
@@ -126,10 +95,7 @@ namespace GMime {
 		
 		public CryptoRecipient this[int index] {
 			get {
-				if (index > Count)
-					throw new ArgumentOutOfRangeException ("index");
-				
-				return recipients[index];
+				return recipients[index] as CryptoRecipient;
 			}
 			
 			set {
@@ -139,7 +105,7 @@ namespace GMime {
 		
 		object IList.this[int index] {
 			get {
-				return this[index];
+				return recipients[index];
 			}
 			
 			set {
@@ -158,32 +124,6 @@ namespace GMime {
 				return null;
 			
 			return (CryptoRecipient) GLib.Opaque.GetOpaque (rv, typeof (CryptoRecipient), false);
-		}
-		
-		internal class CryptoRecipientIterator : IEnumerator {
-			CryptoRecipientCollection recipients;
-			int index = -1;
-			
-			public CryptoRecipientIterator (CryptoRecipientCollection recipients)
-			{
-				this.recipients = recipients;
-			}
-			
-			public object Current {
-				get { return index >= 0 ? recipients[index] : null; }
-			}
-			
-			public void Reset ()
-			{
-				index = -1;
-			}
-			
-			public bool MoveNext ()
-			{
-				index++;
-				
-				return index < recipients.Count;
-			}
 		}
 	}
 }

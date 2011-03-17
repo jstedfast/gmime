@@ -4,30 +4,23 @@ using System.Runtime.InteropServices;
 
 namespace GMime {
 	public class SignerCollection : IList {
-		Signer[] signers;
+		ArrayList signers;
 		
 		internal SignerCollection (SignatureValidity validity)
 		{
 			Signer signer;
-			int count = 0;
-			int i = 0;
+			
+			signers = new ArrayList ();
 			
 			signer = GetFirstSigner (validity);
 			while (signer != null) {
-				signer = signer.Next ();
-				count++;
-			}
-			
-			signers = new Signer [count];
-			signer = GetFirstSigner (validity);
-			while (signer != null) {
-				signers[i++] = signer;
+				signers.Add (signer);
 				signer = signer.Next ();
 			}
 		}
 		
 		public int Count {
-			get { return signers.Length; }
+			get { return signers.Count; }
 		}
 		
 		public bool IsFixedSize {
@@ -58,55 +51,32 @@ namespace GMime {
 		
 		public bool Contains (Signer signer)
 		{
-			if (signer == null)
-				return false;
-			
-			for (int i = 0; i < Count; i++) {
-				if (signers[i] == signer)
-					return true;
-			}
-			
-			return false;
+			return signers.Contains (signer);
 		}
 		
 		bool IList.Contains (object value)
 		{
-			return Contains (value as Signer);
+			return signers.Contains (value);
 		}
 		
 		public void CopyTo (Array array, int index)
 		{
-			if (array == null)
-				throw new ArgumentNullException ("array");
-			
-			if (index < 0)
-				throw new ArgumentOutOfRangeException ("index");
-			
-			for (int i = 0; i < Count; i++)
-				array.SetValue (((IList) this)[i], index + i);
+			signers.CopyTo (array, index);
 		}
 		
 		public IEnumerator GetEnumerator ()
 		{
-			return new SignerIterator (this);
+			return signers.GetEnumerator ();
 		}
 		
 		public int IndexOf (Signer signer)
 		{
-			if (signer == null)
-				return -1;
-			
-			for (int i = 0; i < Count; i++) {
-				if (signers[i] == signer)
-					return i;
-			}
-			
-			return -1;
+			return signers.IndexOf (signer);
 		}
 		
 		int IList.IndexOf (object value)
 		{
-			return IndexOf (value as Signer);
+			return signers.IndexOf (value);
 		}
 		
 		void IList.Insert (int index, object value)
@@ -126,10 +96,7 @@ namespace GMime {
 		
 		public Signer this[int index] {
 			get {
-				if (index > Count)
-					throw new ArgumentOutOfRangeException ("index");
-				
-				return signers[index];
+				return signers[index] as Signer;
 			}
 			
 			set {
@@ -139,7 +106,7 @@ namespace GMime {
 		
 		object IList.this[int index] {
 			get {
-				return this[index];
+				return signers[index];
 			}
 			
 			set {
@@ -158,32 +125,6 @@ namespace GMime {
 				return null;
 			
 			return (Signer) GLib.Opaque.GetOpaque (rv, typeof (Signer), false);
-		}
-		
-		internal class SignerIterator : IEnumerator {
-			SignerCollection signers;
-			int index = -1;
-			
-			public SignerIterator (SignerCollection signers)
-			{
-				this.signers = signers;
-			}
-			
-			public object Current {
-				get { return index >= 0 ? signers[index] : null; }
-			}
-			
-			public void Reset ()
-			{
-				index = -1;
-			}
-			
-			public bool MoveNext ()
-			{
-				index++;
-				
-				return index < signers.Count;
-			}
 		}
 	}
 }

@@ -49,6 +49,7 @@
 
   <!-- CryptoContext -->
   <remove-node path="/api/namespace/struct[@cname='GMimeDecryptionResult']/method[@name='GetRecipients']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeDecryptionResult']/method[@name='AddRecipient']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeDecryptionResult']/field[@cname='recipients']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/method[@name='GetSigners']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeSignatureValidity']/method[@name='AddSigner']"/>
