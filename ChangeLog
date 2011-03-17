@@ -1,3 +1,11 @@
+2011-03-17  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-certificate.[c,h]: New source files implementing
+	Certificate and CertificateList classes.
+
+	* gmime/gmime-signature.[c,h]: New source files implementing
+	Signature and SignatureList classes.
+
 2011-03-16  Jeffrey Stedfast  <fejj@novell.com>
 
 	* mono/StreamWrapper.cs (Write): Implemented.
