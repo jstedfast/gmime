@@ -41,9 +41,8 @@ namespace GMime {
 			get { return stream == null || stream is StreamFilter ? false : true; }
 		}
 		
-		// FIXME: Support writing?
 		public override bool CanWrite {
-			get { return false; }
+			get { return stream == null ? false : true; }
 		}
 		
 		public override long Length {
@@ -85,24 +84,65 @@ namespace GMime {
 		
 		public override int Read (byte[] buffer, int offset, int count)
 		{
+			byte[] buf;
+			int nread;
+			
 			if (stream == null)
-				throw new ObjectDisposedException ("GMimeStream", "The stream has been closed");
+				throw new ObjectDisposedException ("GMimeStream", "The backing stream has been closed.");
+			
+			if (offset > buffer.Length)
+				throw new ArgumentOutOfRangeException ("offset");
+			
+			if (offset + count > buffer.Length)
+				throw new ArgumentOutOfRangeException ("count");
 			
 			if (offset != 0)
-				throw new ArgumentOutOfRangeException ("offset must be 0");
-			
-			int nread = (int) stream.Read (buffer, (uint) count);
+				buf = new byte [count];
+			else
+				buf = buffer;
+				
+			nread = (int) stream.Read (buf, (uint) count);
 			
 			if (nread < 0)
-				return 0;
+				throw new IOException ();
+			
+			if (buf != buffer && nread > 0)
+				Array.Copy (buf, 0, buffer, offset, nread);
 			
 			return nread;
+		}
+
+		public override void Write (byte[] buffer, int offset, int count)
+		{
+			int nwritten;
+			byte[] buf;
+			
+			if (stream == null)
+				throw new ObjectDisposedException ("GMimeStream", "The backing stream has been closed.");
+			
+			if (offset > buffer.Length)
+				throw new ArgumentOutOfRangeException ("offset");
+			
+			if (offset + count > buffer.Length)
+				throw new ArgumentOutOfRangeException ("count");
+			
+			if (offset != 0) {
+				buf = new byte [count];
+				Array.Copy (buffer, offset, buf, 0, count);
+			} else {
+				buf = buffer;
+			}
+			
+			nwritten = (int) stream.Write (buf, (uint) count);
+			
+			if (nwritten < 0)
+				throw new IOException ();
 		}
 
 		public override long Seek (long offset, SeekOrigin origin)
 		{
 			if (stream == null)
-				throw new ObjectDisposedException ("GMimeStream", "The stream has been closed");
+				throw new ObjectDisposedException ("GMimeStream", "The backing stream has been closed.");
 			
 			if (stream is StreamFilter) {
 				if (offset != 0 || origin != SeekOrigin.Begin)
@@ -140,11 +180,6 @@ namespace GMime {
 		}
 		
  		public override void SetLength (long value)
-		{
-			throw new NotSupportedException ();
-		}
-		
-		public override void Write (byte[] buffer, int offset, int count)
 		{
 			throw new NotSupportedException ();
 		}
