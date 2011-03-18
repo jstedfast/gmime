@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
@@ -297,6 +297,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\gmime\gmime-certificate.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\gmime\gmime-charset-map-private.h"
 				>
 			</File>
@@ -305,15 +309,15 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\gmime\gmime-cipher-context.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\gmime\gmime-common.h"
 				>
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-content-type.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-crypto-context.h"
 				>
 			</File>
 			<File
@@ -445,6 +449,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\gmime\gmime-signature.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\gmime\gmime-stream-buffer.h"
 				>
 			</File>
@@ -533,11 +541,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\gmime\gmime-charset.c"
+				RelativePath="..\..\gmime\gmime-certificate.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\gmime\gmime-cipher-context.c"
+				RelativePath="..\..\gmime\gmime-charset.c"
 				>
 			</File>
 			<File
@@ -546,6 +554,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-content-type.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-crypto-context.c"
 				>
 			</File>
 			<File
@@ -670,6 +682,10 @@
 			</File>
 			<File
 				RelativePath="..\..\gmime\gmime-part.c"
+				>
+			</File>
+			<File
+				RelativePath="..\..\gmime\gmime-signature.c"
 				>
 			</File>
 			<File
