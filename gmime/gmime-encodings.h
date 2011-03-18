@@ -97,7 +97,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
 /**
  * GMIME_UUDECODE_STATE_INIT:
  *
- * Initial state for the g_mime_utils_uudecode_step() function.
+ * Initial state for the g_mime_encoding_uudecode_step() function.
  **/
 #define GMIME_UUDECODE_STATE_INIT   (0)
 
@@ -105,7 +105,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
 /**
  * GMIME_UUDECODE_STATE_BEGIN:
  *
- * State for the g_mime_utils_uudecode_step() function, denoting that
+ * State for the g_mime_encoding_uudecode_step() function, denoting that
  * the 'begin' line has been found.
  **/
 #define GMIME_UUDECODE_STATE_BEGIN  (1 << 16)
@@ -114,7 +114,7 @@ const char *g_mime_content_encoding_to_string (GMimeContentEncoding encoding);
 /**
  * GMIME_UUDECODE_STATE_END:
  *
- * State for the g_mime_utils_uudecode_step() function, denoting that
+ * State for the g_mime_encoding_uudecode_step() function, denoting that
  * the end of the UU encoded block has been found.
  **/
 #define GMIME_UUDECODE_STATE_END    (1 << 17)

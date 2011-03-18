@@ -242,8 +242,8 @@ filter_reset (GMimeFilter *filter)
  * will be escaped to ">From ".
  *
  * Note: If you plan on using a from-filter in mode ARMOR, you should
- * remember to also use a #GMimeFilterBasic filter with mode
- * #GMIME_FILTER_BASIC_QP_ENC.
+ * remember to also use a #GMimeFilterBasic filter with an encoding of
+ * #GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE.
  *
  * Returns: a new from filter with mode @mode.
  **/
