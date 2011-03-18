@@ -32,20 +32,12 @@ Other API changes include:
 
 - GMimeBestEncoding has been renamed to GMimeEncodingConstraint
 
-- g_mime_signer_get_created() has been renamed to
-  g_mime_signer_get_sig_created().
+- GMimeSignatureValidity has been dropped in favor of
+  GMimeSignatureList which is simply a collection of signatures.
 
-- g_mime_signer_set_created() has been renamed to
-  g_mime_signer_set_sig_created().
-
-- g_mime_signer_get_expires() has been renamed to
-  g_mime_signer_get_sig_expires().
-
-- g_mime_signer_set_expires() has been renamed to
-  g_mime_signer_set_sig_expires().
-
-- GMimeSigner now has a number of new fields and accessors making it
-  much more complete.
+- GMimeSigner has been replaced by GMimeSignature and GMimeCertificate
+  which added a number of new fields and accessors making it much more
+  complete.
 
 - GMimeCipherContext has been renamed to GMimeCryptoContext and the
   method names for this class have also been renamed in a similar
@@ -58,8 +50,13 @@ Other API changes include:
   algorithm argument which it passes along to
   g_mime_crypto_context_encrypt().
 
+- g_mime_crypto_context_decrypt() now returns a GMimeDecryptResult
+  which contains a list of signatures (if signed), a list of
+  recipients that the stream had been encrypted to, and also the
+  cipher and digest algorithms used.
+
 - g_mime_multipart_encrypted_decrypt() no longer caches the decrypted
-  part and also now takes a GMimeSignatureValidity** output argument
+  part and also now takes a GMimeSignatureList** output argument
   which it sets in place of having to call
   g_mime_multipart_encrypted_get_signature_validity() afterward.
 

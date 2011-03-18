@@ -27,17 +27,38 @@ GMimeSession to get this functionality.</para>
     <itemizedlist>
       <listitem><para>GMimeBestEncoding has been renamed to
       GMimeEncodingConstraint</para></listitem>
-      <listitem><para><function>g_mime_signer_get_created()</function>
-  has been renamed to <function>g_mime_signer_get_sig_created()</function>.
+      <listitem><para>GMimeSignatureValidity has been dropped in favor
+      of GMimeSignatureList which is simply a collection of
+      signatures.
       </para></listitem>
-      <listitem><para><function>g_mime_signer_set_created()</function>
-  has been renamed to <function>g_mime_signer_set_sig_created()</function>.
+      <listitem><para>GMimeSigner has been replaced by GMimeSignature
+      and GMimeCertificate which added a number of new fields and
+      accessors making it much more complete.
       </para></listitem>
-      <listitem><para><function>g_mime_signer_get_expires()</function>
-  has been renamed to <function>g_mime_signer_get_sig_expires()</function>.
+      <listitem><para>GMimeCipherContext has been renamed to
+      GMimeCryptoContext and the method names for this class have also
+      been renamed in a similar fashion.
       </para></listitem>
-      <listitem><para><function>g_mime_signer_set_expires()</function>
-  has been renamed to <function>g_mime_signer_set_sig_expires()</function>.
+      <listitem><para><function>g_mime_crypto_context_encrypt()</function>
+      now takes a digest algorithm argument which is used when the
+      'sign' argument is TRUE.
+      </para></listitem>
+      <listitem><para><function>g_mime_multipart_encrypted_encrypt()</function>
+      also now takes a digest algorithm argument which it passes along
+      to <function>g_mime_crypto_context_encrypt()</function>.
+      </para></listitem>
+      <listitem><para><function>g_mime_crypto_context_decrypt()</function>
+      now returns a GMimeDecryptResult which contains a list of
+      signatures (if signed), a list of recipients that the stream had
+      been encrypted to, and also the cipher and digest algorithms
+      used.
+      </para></listitem>
+      <listitem><para><function>g_mime_multipart_encrypted_decrypt()</function>
+      no longer caches the decrypted part and also now takes a
+      GMimeSignatureList** output argument which it sets in place of
+      having to call
+      <function>g_mime_multipart_encrypted_get_signature_validity()</function>
+      afterward.
       </para></listitem>
     </itemizedlist>
   </refsect1>
