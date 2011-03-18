@@ -136,18 +136,19 @@ count_parts_in_message (GMimeMessage *message)
 }
 
 #ifndef G_OS_WIN32
-static GMimeSignerStatus
-sig_status (GMimeSignatureValidity *validity)
+static GMimeSignatureStatus
+sig_status (GMimeSignatureList *signatures)
 {
-	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
-	GMimeSigner *signer = validity->signers;
+	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
+	GMimeSignature *sig;
+	int i;
 	
-	if (signer == NULL)
-		return GMIME_SIGNER_STATUS_ERROR;
+	if (!signatures || signatures->array->len == 0)
+		return GMIME_SIGNATURE_STATUS_ERROR;
 	
-	while (signer != NULL) {
-		status = MAX (status, signer->status);
-		signer = signer->next;
+	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
+		sig = g_mime_signature_list_get_signature (signatures, i);
+		status = MAX (status, sig->status);
 	}
 	
 	return status;
@@ -161,11 +162,11 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
 		GMimeMultipartSigned *mps = (GMimeMultipartSigned *) part;
-		GMimeSignatureValidity *validity;
+		GMimeSignatureList *signatures;
 		GError *err = NULL;
 		const char *str;
 		
-		if (!(validity = g_mime_multipart_signed_verify (mps, ctx, &err))) {
+		if (!(signatures = g_mime_multipart_signed_verify (mps, ctx, &err))) {
 			/* an error occured - probably couldn't start gpg? */
 			
 			/* for more information about GError, see:
@@ -176,14 +177,14 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 			g_error_free (err);
 		} else {
 			/* print out validity info - GOOD vs BAD and "why" */
-			switch (sig_status (validity)) {
-			case GMIME_SIGNER_STATUS_GOOD:
+			switch (sig_status (signatures)) {
+			case GMIME_SIGNATURE_STATUS_GOOD:
 				str = "Good";
 				break;
-			case GMIME_SIGNER_STATUS_BAD:
+			case GMIME_SIGNATURE_STATUS_BAD:
 				str = "Bad";
 				break;
-			case GMIME_SIGNER_STATUS_ERROR:
+			case GMIME_SIGNATURE_STATUS_ERROR:
 				str = "Error";
 				break;
 			default:
@@ -191,10 +192,7 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 				break;
 			}
 			
-			printf ("PGP signature is %s:\n%s\n", str,
-				g_mime_signature_validity_get_details (validity));
-			
-			g_mime_signature_validity_free (validity);
+			g_object_unref (signatures);
 		}
 	}
 }

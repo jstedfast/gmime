@@ -1,3 +1,0 @@
-		public CryptoRecipientCollection Recipients {
-			get { return new CryptoRecipientCollection (this); }
-		}

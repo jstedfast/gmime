@@ -126,8 +126,10 @@ typedef enum {
 
 /**
  * GMimeCertificate:
+ * @parent_object: parent #GObject
  * @pubkey_algo: The public-key algorithm used by the certificate, if known.
  * @digest_algo: The digest algorithm used by the certificate, if known.
+ * @trust: The level of trust assigned to this certificate.
  * @issuer_serial: The issuer of the certificate, if known.
  * @issuer_name: The issuer of the certificate, if known.
  * @fingerprint: A hex string representing the certificate's fingerprint.
@@ -233,8 +235,8 @@ gboolean g_mime_certificate_list_remove_at (GMimeCertificateList *list, int inde
 gboolean g_mime_certificate_list_contains (GMimeCertificateList *list, GMimeCertificate *cert);
 int g_mime_certificate_list_index_of (GMimeCertificateList *list, GMimeCertificate *cert);
 
-GMimeCertificate *g_mime_certificate_list_get_cert (GMimeCertificateList *list, int index);
-void g_mime_certificate_list_set_cert (GMimeCertificateList *list, int index, GMimeCertificate *cert);
+GMimeCertificate *g_mime_certificate_list_get_certificate (GMimeCertificateList *list, int index);
+void g_mime_certificate_list_set_certificate (GMimeCertificateList *list, int index, GMimeCertificate *cert);
 
 G_END_DECLS
 

@@ -557,7 +557,7 @@ g_mime_decrypt_result_class_init (GMimeDecryptResultClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
-	parent_class = g_type_class_ref (G_TYPE_OBJECT);
+	result_parent_class = g_type_class_ref (G_TYPE_OBJECT);
 	
 	object_class->finalize = g_mime_decrypt_result_finalize;
 }

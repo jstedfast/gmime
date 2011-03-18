@@ -7,6 +7,28 @@
 
 -->
   <namespace name="GMime" library="gmime">
+    <enum name="CertificateTrust" cname="GMimeCertificateTrust" type="enum">
+      <member cname="GMIME_CERTIFICATE_TRUST_NONE" name="None" />
+      <member cname="GMIME_CERTIFICATE_TRUST_NEVER" name="Never" />
+      <member cname="GMIME_CERTIFICATE_TRUST_UNDEFINED" name="Undefined" />
+      <member cname="GMIME_CERTIFICATE_TRUST_MARGINAL" name="Marginal" />
+      <member cname="GMIME_CERTIFICATE_TRUST_FULLY" name="Fully" />
+      <member cname="GMIME_CERTIFICATE_TRUST_ULTIMATE" name="Ultimate" />
+    </enum>
+    <enum name="CipherAlgo" cname="GMimeCipherAlgo" type="enum">
+      <member cname="GMIME_CIPHER_ALGO_DEFAULT" name="Default" />
+      <member cname="GMIME_CIPHER_ALGO_IDEA" name="Idea" value="1" />
+      <member cname="GMIME_CIPHER_ALGO_3DES" name="ThreeDes" value="2" />
+      <member cname="GMIME_CIPHER_ALGO_CAST5" name="Cast5" value="3" />
+      <member cname="GMIME_CIPHER_ALGO_BLOWFISH" name="Blowfish" value="4" />
+      <member cname="GMIME_CIPHER_ALGO_AES" name="Aes" value="7" />
+      <member cname="GMIME_CIPHER_ALGO_AES192" name="Aes192" value="8" />
+      <member cname="GMIME_CIPHER_ALGO_AES256" name="Aes256" value="9" />
+      <member cname="GMIME_CIPHER_ALGO_TWOFISH" name="Twofish" value="10" />
+      <member cname="GMIME_CIPHER_ALGO_CAMELLIA128" name="Camellia128" value="11" />
+      <member cname="GMIME_CIPHER_ALGO_CAMELLIA196" name="Camellia196" value="12" />
+      <member cname="GMIME_CIPHER_ALGO_CAMELLIA256" name="Camellia256" value="13" />
+    </enum>
     <enum name="ContentEncoding" cname="GMimeContentEncoding" type="enum">
       <member cname="GMIME_CONTENT_ENCODING_DEFAULT" name="Default" />
       <member cname="GMIME_CONTENT_ENCODING_7BIT" name="7Bit" />
@@ -16,42 +38,19 @@
       <member cname="GMIME_CONTENT_ENCODING_QUOTEDPRINTABLE" name="Quotedprintable" />
       <member cname="GMIME_CONTENT_ENCODING_UUENCODE" name="Uuencode" />
     </enum>
-    <enum name="CryptoCipherAlgo" cname="GMimeCryptoCipherAlgo" type="enum">
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_DEFAULT" name="Default" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_IDEA" name="Idea" value="1" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_3DES" name="ThreeDes" value="2" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAST5" name="Cast5" value="3" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_BLOWFISH" name="Blowfish" value="4" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES" name="Aes" value="7" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES192" name="Aes192" value="8" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_AES256" name="Aes256" value="9" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_TWOFISH" name="Twofish" value="10" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA128" name="Camellia128" value="11" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA196" name="Camellia196" value="12" />
-      <member cname="GMIME_CRYPTO_CIPHER_ALGO_CAMELLIA256" name="Camellia256" value="13" />
-    </enum>
-    <enum name="CryptoHash" cname="GMimeCryptoHash" type="enum">
-      <member cname="GMIME_CRYPTO_HASH_DEFAULT" name="Default" />
-      <member cname="GMIME_CRYPTO_HASH_MD5" name="Md5" value="1" />
-      <member cname="GMIME_CRYPTO_HASH_SHA1" name="Sha1" value="2" />
-      <member cname="GMIME_CRYPTO_HASH_RIPEMD160" name="Ripemd160" value="3" />
-      <member cname="GMIME_CRYPTO_HASH_MD2" name="Md2" value="5" />
-      <member cname="GMIME_CRYPTO_HASH_TIGER192" name="Tiger192" value="6" />
-      <member cname="GMIME_CRYPTO_HASH_HAVAL5160" name="Haval5160" value="7" />
-      <member cname="GMIME_CRYPTO_HASH_SHA256" name="Sha256" value="8" />
-      <member cname="GMIME_CRYPTO_HASH_SHA384" name="Sha384" value="9" />
-      <member cname="GMIME_CRYPTO_HASH_SHA512" name="Sha512" value="10" />
-      <member cname="GMIME_CRYPTO_HASH_SHA224" name="Sha224" value="11" />
-      <member cname="GMIME_CRYPTO_HASH_MD4" name="Md4" value="301" />
-    </enum>
-    <enum name="CryptoPubKeyAlgo" cname="GMimeCryptoPubKeyAlgo" type="enum">
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DEFAULT" name="Default" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA" name="Rsa" value="1" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_E" name="RsaE" value="2" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_RSA_S" name="RsaS" value="3" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG_E" name="ElgE" value="16" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_DSA" name="Dsa" value="17" />
-      <member cname="GMIME_CRYPTO_PUBKEY_ALGO_ELG" name="Elg" value="20" />
+    <enum name="DigestAlgo" cname="GMimeDigestAlgo" type="enum">
+      <member cname="GMIME_DIGEST_ALGO_DEFAULT" name="Default" />
+      <member cname="GMIME_DIGEST_ALGO_MD5" name="Md5" value="1" />
+      <member cname="GMIME_DIGEST_ALGO_SHA1" name="Sha1" value="2" />
+      <member cname="GMIME_DIGEST_ALGO_RIPEMD160" name="Ripemd160" value="3" />
+      <member cname="GMIME_DIGEST_ALGO_MD2" name="Md2" value="5" />
+      <member cname="GMIME_DIGEST_ALGO_TIGER192" name="Tiger192" value="6" />
+      <member cname="GMIME_DIGEST_ALGO_HAVAL5160" name="Haval5160" value="7" />
+      <member cname="GMIME_DIGEST_ALGO_SHA256" name="Sha256" value="8" />
+      <member cname="GMIME_DIGEST_ALGO_SHA384" name="Sha384" value="9" />
+      <member cname="GMIME_DIGEST_ALGO_SHA512" name="Sha512" value="10" />
+      <member cname="GMIME_DIGEST_ALGO_SHA224" name="Sha224" value="11" />
+      <member cname="GMIME_DIGEST_ALGO_MD4" name="Md4" value="301" />
     </enum>
     <enum name="EncodingConstraint" cname="GMimeEncodingConstraint" type="enum">
       <member cname="GMIME_ENCODING_CONSTRAINT_7BIT" name="7Bit" />
@@ -71,6 +70,15 @@
       <member cname="GMIME_FILTER_GZIP_MODE_ZIP" name="Zip" />
       <member cname="GMIME_FILTER_GZIP_MODE_UNZIP" name="Unzip" />
     </enum>
+    <enum name="PubKeyAlgo" cname="GMimePubKeyAlgo" type="enum">
+      <member cname="GMIME_PUBKEY_ALGO_DEFAULT" name="Default" />
+      <member cname="GMIME_PUBKEY_ALGO_RSA" name="Rsa" value="1" />
+      <member cname="GMIME_PUBKEY_ALGO_RSA_E" name="RsaE" value="2" />
+      <member cname="GMIME_PUBKEY_ALGO_RSA_S" name="RsaS" value="3" />
+      <member cname="GMIME_PUBKEY_ALGO_ELG_E" name="ElgE" value="16" />
+      <member cname="GMIME_PUBKEY_ALGO_DSA" name="Dsa" value="17" />
+      <member cname="GMIME_PUBKEY_ALGO_ELG" name="Elg" value="20" />
+    </enum>
     <enum name="RecipientType" cname="GMimeRecipientType" type="enum">
       <member cname="GMIME_RECIPIENT_TYPE_TO" name="To" />
       <member cname="GMIME_RECIPIENT_TYPE_CC" name="Cc" />
@@ -81,26 +89,18 @@
       <member cname="GMIME_STREAM_SEEK_CUR" name="Cur" value="SEEK_CUR" />
       <member cname="GMIME_STREAM_SEEK_END" name="End" value="SEEK_END" />
     </enum>
-    <enum name="SignerError" cname="GMimeSignerError" type="flags">
-      <member cname="GMIME_SIGNER_ERROR_NONE" name="None" />
-      <member cname="GMIME_SIGNER_ERROR_EXPSIG" name="Expsig" value="1 &lt;&lt; 0" />
-      <member cname="GMIME_SIGNER_ERROR_NO_PUBKEY" name="NoPubkey" value="1 &lt;&lt; 1" />
-      <member cname="GMIME_SIGNER_ERROR_EXPKEYSIG" name="Expkeysig" value="1 &lt;&lt; 2" />
-      <member cname="GMIME_SIGNER_ERROR_REVKEYSIG" name="Revkeysig" value="1 &lt;&lt; 3" />
-      <member cname="GMIME_SIGNER_ERROR_UNSUPP_ALGO" name="UnsuppAlgo" value="1 &lt;&lt; 4" />
+    <enum name="SignatureError" cname="GMimeSignatureError" type="flags">
+      <member cname="GMIME_SIGNATURE_ERROR_NONE" name="None" />
+      <member cname="GMIME_SIGNATURE_ERROR_EXPSIG" name="Expsig" value="1 &lt;&lt; 0" />
+      <member cname="GMIME_SIGNATURE_ERROR_NO_PUBKEY" name="NoPubkey" value="1 &lt;&lt; 1" />
+      <member cname="GMIME_SIGNATURE_ERROR_EXPKEYSIG" name="Expkeysig" value="1 &lt;&lt; 2" />
+      <member cname="GMIME_SIGNATURE_ERROR_REVKEYSIG" name="Revkeysig" value="1 &lt;&lt; 3" />
+      <member cname="GMIME_SIGNATURE_ERROR_UNSUPP_ALGO" name="UnsuppAlgo" value="1 &lt;&lt; 4" />
     </enum>
-    <enum name="SignerStatus" cname="GMimeSignerStatus" type="enum">
-      <member cname="GMIME_SIGNER_STATUS_GOOD" name="Good" />
-      <member cname="GMIME_SIGNER_STATUS_ERROR" name="Error" />
-      <member cname="GMIME_SIGNER_STATUS_BAD" name="Bad" />
-    </enum>
-    <enum name="SignerTrust" cname="GMimeSignerTrust" type="enum">
-      <member cname="GMIME_SIGNER_TRUST_NONE" name="None" />
-      <member cname="GMIME_SIGNER_TRUST_NEVER" name="Never" />
-      <member cname="GMIME_SIGNER_TRUST_UNDEFINED" name="Undefined" />
-      <member cname="GMIME_SIGNER_TRUST_MARGINAL" name="Marginal" />
-      <member cname="GMIME_SIGNER_TRUST_FULLY" name="Fully" />
-      <member cname="GMIME_SIGNER_TRUST_ULTIMATE" name="Ultimate" />
+    <enum name="SignatureStatus" cname="GMimeSignatureStatus" type="enum">
+      <member cname="GMIME_SIGNATURE_STATUS_GOOD" name="Good" />
+      <member cname="GMIME_SIGNATURE_STATUS_ERROR" name="Error" />
+      <member cname="GMIME_SIGNATURE_STATUS_BAD" name="Bad" />
     </enum>
     <enum name="StreamBufferMode" cname="GMimeStreamBufferMode" type="enum">
       <member cname="GMIME_STREAM_BUFFER_CACHE_READ" name="CacheRead" />
@@ -160,13 +160,192 @@
         <parameter type="GError**" name="err" />
       </parameters>
     </callback>
+    <object name="Certificate" cname="GMimeCertificate" parent="GObject">
+      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimePubKeyAlgo" />
+      <field name="DigestAlgo" cname="digest_algo" type="GMimeDigestAlgo" />
+      <field name="Trust" cname="trust" type="GMimeCertificateTrust" />
+      <field name="IssuerSerial" cname="issuer_serial" type="char*" />
+      <field name="IssuerName" cname="issuer_name" type="char*" />
+      <field name="Fingerprint" cname="fingerprint" type="char*" />
+      <field name="Created" cname="created" type="time_t" />
+      <field name="Expires" cname="expires" type="time_t" />
+      <field name="Keyid" cname="keyid" type="char*" />
+      <field name="Email" cname="email" type="char*" />
+      <field name="Name" cname="name" type="char*" />
+      <method name="GetCreated" cname="g_mime_certificate_get_created">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetDigestAlgo" cname="g_mime_certificate_get_digest_algo">
+        <return-type type="GMimeDigestAlgo" />
+      </method>
+      <method name="GetEmail" cname="g_mime_certificate_get_email">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetExpires" cname="g_mime_certificate_get_expires">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetFingerprint" cname="g_mime_certificate_get_fingerprint">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetIssuerName" cname="g_mime_certificate_get_issuer_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetIssuerSerial" cname="g_mime_certificate_get_issuer_serial">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetKeyId" cname="g_mime_certificate_get_key_id">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetName" cname="g_mime_certificate_get_name">
+        <return-type type="const-char*" />
+      </method>
+      <method name="GetPubkeyAlgo" cname="g_mime_certificate_get_pubkey_algo">
+        <return-type type="GMimePubKeyAlgo" />
+      </method>
+      <method name="GetTrust" cname="g_mime_certificate_get_trust">
+        <return-type type="GMimeCertificateTrust" />
+      </method>
+      <method name="GetType" cname="g_mime_certificate_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="g_mime_certificate_new" />
+      <method name="SetCreated" cname="g_mime_certificate_set_created">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="created" />
+        </parameters>
+      </method>
+      <method name="SetDigestAlgo" cname="g_mime_certificate_set_digest_algo">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeDigestAlgo" name="algo" />
+        </parameters>
+      </method>
+      <method name="SetEmail" cname="g_mime_certificate_set_email">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="email" />
+        </parameters>
+      </method>
+      <method name="SetExpires" cname="g_mime_certificate_set_expires">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="expires" />
+        </parameters>
+      </method>
+      <method name="SetFingerprint" cname="g_mime_certificate_set_fingerprint">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="fingerprint" />
+        </parameters>
+      </method>
+      <method name="SetIssuerName" cname="g_mime_certificate_set_issuer_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="issuer_name" />
+        </parameters>
+      </method>
+      <method name="SetIssuerSerial" cname="g_mime_certificate_set_issuer_serial">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="issuer_serial" />
+        </parameters>
+      </method>
+      <method name="SetKeyId" cname="g_mime_certificate_set_key_id">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="key_id" />
+        </parameters>
+      </method>
+      <method name="SetName" cname="g_mime_certificate_set_name">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="SetPubkeyAlgo" cname="g_mime_certificate_set_pubkey_algo">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimePubKeyAlgo" name="algo" />
+        </parameters>
+      </method>
+      <method name="SetTrust" cname="g_mime_certificate_set_trust">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCertificateTrust" name="trust" />
+        </parameters>
+      </method>
+    </object>
+    <object name="CertificateList" cname="GMimeCertificateList" parent="GObject">
+      <field name="Array" cname="array" type="GPtrArray*" />
+      <method name="Add" cname="g_mime_certificate_list_add">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="Clear" cname="g_mime_certificate_list_clear">
+        <return-type type="void" />
+      </method>
+      <method name="Contains" cname="g_mime_certificate_list_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="GetCertificate" cname="g_mime_certificate_list_get_certificate">
+        <return-type type="GMimeCertificate*" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_certificate_list_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="IndexOf" cname="g_mime_certificate_list_index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="Insert" cname="g_mime_certificate_list_insert">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="Length" cname="g_mime_certificate_list_length">
+        <return-type type="int" />
+      </method>
+      <constructor cname="g_mime_certificate_list_new" />
+      <method name="Remove" cname="g_mime_certificate_list_remove">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="RemoveAt" cname="g_mime_certificate_list_remove_at">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="SetCertificate" cname="g_mime_certificate_list_set_certificate">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+    </object>
     <object name="CryptoContext" cname="GMimeCryptoContext" parent="GObject">
       <field name="RequestPasswd" cname="request_passwd" type="GMimePasswordRequestFunc" />
-      <virtual_method name="HashId" cname="hash_id">
-        <return-type type="GMimeCryptoHash" />
+      <virtual_method name="DigestId" cname="digest_id">
+        <return-type type="GMimeDigestAlgo" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
-          <parameter type="const-char*" name="hash" />
+          <parameter type="const-char*" name="name" />
         </parameters>
       </virtual_method>
       <virtual_method name="Sign" cname="sign">
@@ -174,17 +353,17 @@
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
         </parameters>
       </virtual_method>
       <virtual_method name="Verify" cname="verify">
-        <return-type type="GMimeSignatureValidity*" />
+        <return-type type="GMimeSignatureList*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="sigstream" />
           <parameter type="GError**" name="err" />
@@ -196,7 +375,7 @@
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -204,7 +383,7 @@
         </parameters>
       </virtual_method>
       <virtual_method name="Decrypt" cname="decrypt">
-        <return-type type="GMimeDecryptionResult*" />
+        <return-type type="GMimeDecryptResult*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GMimeStream*" name="istream" />
@@ -230,11 +409,23 @@
         </parameters>
       </virtual_method>
       <method name="Decrypt" cname="g_mime_crypto_context_decrypt">
-        <return-type type="GMimeDecryptionResult*" />
+        <return-type type="GMimeDecryptResult*" />
         <parameters>
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="DigestId" cname="g_mime_crypto_context_digest_id">
+        <return-type type="GMimeDigestAlgo" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
+      <method name="DigestName" cname="g_mime_crypto_context_digest_name">
+        <return-type type="const-char*" />
+        <parameters>
+          <parameter type="GMimeDigestAlgo" name="digest" />
         </parameters>
       </method>
       <method name="Encrypt" cname="g_mime_crypto_context_encrypt">
@@ -242,7 +433,7 @@
         <parameters>
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
@@ -269,18 +460,6 @@
       <method name="GetType" cname="g_mime_crypto_context_get_type" shared="true">
         <return-type type="GType" />
       </method>
-      <method name="HashId" cname="g_mime_crypto_context_hash_id">
-        <return-type type="GMimeCryptoHash" />
-        <parameters>
-          <parameter type="const-char*" name="hash" />
-        </parameters>
-      </method>
-      <method name="HashName" cname="g_mime_crypto_context_hash_name">
-        <return-type type="const-char*" />
-        <parameters>
-          <parameter type="GMimeCryptoHash" name="hash" />
-        </parameters>
-      </method>
       <method name="ImportKeys" cname="g_mime_crypto_context_import_keys">
         <return-type type="int" />
         <parameters>
@@ -298,16 +477,16 @@
         <return-type type="int" />
         <parameters>
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
       <method name="Verify" cname="g_mime_crypto_context_verify">
-        <return-type type="GMimeSignatureValidity*" />
+        <return-type type="GMimeSignatureList*" />
         <parameters>
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="sigstream" />
           <parameter type="GError**" name="err" />
@@ -356,6 +535,52 @@
         <return-type type="ssize_t" />
         <parameters>
           <parameter type="GMimeStream*" name="stream" />
+        </parameters>
+      </method>
+    </object>
+    <object name="DecryptResult" cname="GMimeDecryptResult" parent="GObject">
+      <field name="Recipients" cname="recipients" type="GMimeCertificateList*" />
+      <field name="Signatures" cname="signatures" type="GMimeSignatureList*" />
+      <field name="Cipher" cname="cipher" type="GMimeCipherAlgo" />
+      <field name="Mdc" cname="mdc" type="GMimeDigestAlgo" />
+      <method name="GetCipher" cname="g_mime_decrypt_result_get_cipher">
+        <return-type type="GMimeCipherAlgo" />
+      </method>
+      <method name="GetMdc" cname="g_mime_decrypt_result_get_mdc">
+        <return-type type="GMimeDigestAlgo" />
+      </method>
+      <method name="GetRecipients" cname="g_mime_decrypt_result_get_recipients">
+        <return-type type="GMimeCertificateList*" />
+      </method>
+      <method name="GetSignatures" cname="g_mime_decrypt_result_get_signatures">
+        <return-type type="GMimeSignatureList*" />
+      </method>
+      <method name="GetType" cname="g_mime_decrypt_result_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="g_mime_decrypt_result_new" />
+      <method name="SetCipher" cname="g_mime_decrypt_result_set_cipher">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCipherAlgo" name="cipher" />
+        </parameters>
+      </method>
+      <method name="SetMdc" cname="g_mime_decrypt_result_set_mdc">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeDigestAlgo" name="mdc" />
+        </parameters>
+      </method>
+      <method name="SetRecipients" cname="g_mime_decrypt_result_set_recipients">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCertificateList*" name="recipients" />
+        </parameters>
+      </method>
+      <method name="SetSignatures" cname="g_mime_decrypt_result_set_signatures">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignatureList*" name="signatures" />
         </parameters>
       </method>
     </object>
@@ -1035,7 +1260,7 @@
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
-          <parameter type="GMimeDecryptionResult**" name="result" />
+          <parameter type="GMimeDecryptResult**" name="result" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
@@ -1046,7 +1271,7 @@
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="gboolean" name="sign" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GPtrArray*" name="recipients" />
           <parameter type="GError**" name="err" />
         </parameters>
@@ -1067,12 +1292,12 @@
           <parameter type="GMimeObject*" name="content" />
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="const-char*" name="userid" />
-          <parameter type="GMimeCryptoHash" name="hash" />
+          <parameter type="GMimeDigestAlgo" name="digest" />
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
       <method name="Verify" cname="g_mime_multipart_signed_verify">
-        <return-type type="GMimeSignatureValidity*" />
+        <return-type type="GMimeSignatureList*" />
         <parameters>
           <parameter type="GMimeCryptoContext*" name="ctx" />
           <parameter type="GError**" name="err" />
@@ -1471,6 +1696,125 @@
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="always_trust" />
+        </parameters>
+      </method>
+    </object>
+    <object name="Signature" cname="GMimeSignature" parent="GObject">
+      <field name="Status" cname="status" type="GMimeSignatureStatus" />
+      <field name="Errors" cname="errors" type="GMimeSignatureError" />
+      <field name="Cert" cname="cert" type="GMimeCertificate*" />
+      <field name="Created" cname="created" type="time_t" />
+      <field name="Expires" cname="expires" type="time_t" />
+      <method name="GetCertificate" cname="g_mime_signature_get_certificate">
+        <return-type type="GMimeCertificate*" />
+      </method>
+      <method name="GetCreated" cname="g_mime_signature_get_created">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetErrors" cname="g_mime_signature_get_errors">
+        <return-type type="GMimeSignatureError" />
+      </method>
+      <method name="GetExpires" cname="g_mime_signature_get_expires">
+        <return-type type="time_t" />
+      </method>
+      <method name="GetStatus" cname="g_mime_signature_get_status">
+        <return-type type="GMimeSignatureStatus" />
+      </method>
+      <method name="GetType" cname="g_mime_signature_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <constructor cname="g_mime_signature_new" />
+      <method name="SetCertificate" cname="g_mime_signature_set_certificate">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeCertificate*" name="cert" />
+        </parameters>
+      </method>
+      <method name="SetCreated" cname="g_mime_signature_set_created">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="created" />
+        </parameters>
+      </method>
+      <method name="SetErrors" cname="g_mime_signature_set_errors">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignatureError" name="errors" />
+        </parameters>
+      </method>
+      <method name="SetExpires" cname="g_mime_signature_set_expires">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="time_t" name="expires" />
+        </parameters>
+      </method>
+      <method name="SetStatus" cname="g_mime_signature_set_status">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="GMimeSignatureStatus" name="status" />
+        </parameters>
+      </method>
+    </object>
+    <object name="SignatureList" cname="GMimeSignatureList" parent="GObject">
+      <field name="Array" cname="array" type="GPtrArray*" />
+      <method name="Add" cname="g_mime_signature_list_add">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeSignature*" name="sig" />
+        </parameters>
+      </method>
+      <method name="Clear" cname="g_mime_signature_list_clear">
+        <return-type type="void" />
+      </method>
+      <method name="Contains" cname="g_mime_signature_list_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeSignature*" name="sig" />
+        </parameters>
+      </method>
+      <method name="GetSignature" cname="g_mime_signature_list_get_signature">
+        <return-type type="GMimeSignature*" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="GetType" cname="g_mime_signature_list_get_type" shared="true">
+        <return-type type="GType" />
+      </method>
+      <method name="IndexOf" cname="g_mime_signature_list_index_of">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeSignature*" name="sig" />
+        </parameters>
+      </method>
+      <method name="Insert" cname="g_mime_signature_list_insert">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeSignature*" name="sig" />
+        </parameters>
+      </method>
+      <method name="Length" cname="g_mime_signature_list_length">
+        <return-type type="int" />
+      </method>
+      <constructor cname="g_mime_signature_list_new" />
+      <method name="Remove" cname="g_mime_signature_list_remove">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeSignature*" name="sig" />
+        </parameters>
+      </method>
+      <method name="RemoveAt" cname="g_mime_signature_list_remove_at">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="SetSignature" cname="g_mime_signature_list_set_signature">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeSignature*" name="sig" />
         </parameters>
       </method>
     </object>
@@ -2252,82 +2596,6 @@
         </parameters>
       </method>
     </struct>
-    <struct name="CryptoRecipient" cname="GMimeCryptoRecipient" opaque="true">
-      <field name="Next" cname="next" type="GMimeCryptoRecipient*" access="public" writeable="true" />
-      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
-      <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
-      <method name="Free" cname="g_mime_crypto_recipient_free">
-        <return-type type="void" />
-      </method>
-      <method name="GetKeyId" cname="g_mime_crypto_recipient_get_key_id">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetPubkeyAlgo" cname="g_mime_crypto_recipient_get_pubkey_algo">
-        <return-type type="GMimeCryptoPubKeyAlgo" />
-      </method>
-      <constructor cname="g_mime_crypto_recipient_new" />
-      <method name="Next" cname="g_mime_crypto_recipient_next">
-        <return-type type="const-GMimeCryptoRecipient*" />
-      </method>
-      <method name="SetKeyId" cname="g_mime_crypto_recipient_set_key_id">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="key_id" />
-        </parameters>
-      </method>
-      <method name="SetPubkeyAlgo" cname="g_mime_crypto_recipient_set_pubkey_algo">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
-        </parameters>
-      </method>
-    </struct>
-    <struct name="DecryptionResult" cname="GMimeDecryptionResult" opaque="true">
-      <field name="Validity" cname="validity" type="GMimeSignatureValidity*" access="public" writeable="true" />
-      <field name="Recipients" cname="recipients" type="GMimeCryptoRecipient*" access="public" writeable="true" />
-      <field name="Cipher" cname="cipher" type="GMimeCryptoCipherAlgo" access="public" writeable="true" />
-      <field name="Mdc" cname="mdc" type="GMimeCryptoHash" access="public" writeable="true" />
-      <method name="AddRecipient" cname="g_mime_decryption_result_add_recipient">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoRecipient*" name="recipient" />
-        </parameters>
-      </method>
-      <method name="Free" cname="g_mime_decryption_result_free">
-        <return-type type="void" />
-      </method>
-      <method name="GetCipher" cname="g_mime_decryption_result_get_cipher">
-        <return-type type="GMimeCryptoCipherAlgo" />
-      </method>
-      <method name="GetMdc" cname="g_mime_decryption_result_get_mdc">
-        <return-type type="GMimeCryptoHash" />
-      </method>
-      <method name="GetRecipients" cname="g_mime_decryption_result_get_recipients">
-        <return-type type="const-GMimeCryptoRecipient*" />
-      </method>
-      <method name="GetValidity" cname="g_mime_decryption_result_get_validity">
-        <return-type type="const-GMimeSignatureValidity*" />
-      </method>
-      <constructor cname="g_mime_decryption_result_new" />
-      <method name="SetCipher" cname="g_mime_decryption_result_set_cipher">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoCipherAlgo" name="cipher" />
-        </parameters>
-      </method>
-      <method name="SetMdc" cname="g_mime_decryption_result_set_mdc">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoHash" name="mdc" />
-        </parameters>
-      </method>
-      <method name="SetValidity" cname="g_mime_decryption_result_set_validity">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSignatureValidity*" name="validity" />
-        </parameters>
-      </method>
-    </struct>
     <struct name="Encoding" cname="GMimeEncoding" opaque="true">
       <method name="Base64DecodeStep" cname="g_mime_encoding_base64_decode_step" shared="true">
         <return-type type="size_t" />
@@ -2666,217 +2934,6 @@
       </method>
       <method name="GetNext" cname="g_mime_references_get_next">
         <return-type type="const-GMimeReferences*" />
-      </method>
-    </struct>
-    <struct name="SignatureValidity" cname="GMimeSignatureValidity" opaque="true">
-      <field name="Signers" cname="signers" type="GMimeSigner*" access="public" writeable="true" />
-      <field name="Details" cname="details" type="char*" access="public" writeable="true" />
-      <method name="AddSigner" cname="g_mime_signature_validity_add_signer">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSigner*" name="signer" />
-        </parameters>
-      </method>
-      <method name="Free" cname="g_mime_signature_validity_free">
-        <return-type type="void" />
-      </method>
-      <method name="GetDetails" cname="g_mime_signature_validity_get_details">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetSigners" cname="g_mime_signature_validity_get_signers">
-        <return-type type="const-GMimeSigner*" />
-      </method>
-      <constructor cname="g_mime_signature_validity_new" />
-      <method name="SetDetails" cname="g_mime_signature_validity_set_details">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="details" />
-        </parameters>
-      </method>
-    </struct>
-    <struct name="Signer" cname="GMimeSigner" opaque="true">
-      <field name="Next" cname="next" type="GMimeSigner*" access="public" writeable="true" />
-      <field name="Status" cname="status" bits="2" type="unsigned int" access="public" writeable="true" />
-      <field name="Errors" cname="errors" bits="6" type="unsigned int" access="public" writeable="true" />
-      <field name="Trust" cname="trust" bits="3" type="unsigned int" access="public" writeable="true" />
-      <field name="Unused" cname="unused" bits="5" type="unsigned int" access="public" writeable="true" />
-      <field name="SigClass" cname="sig_class" bits="8" type="unsigned int" access="public" writeable="true" />
-      <field name="SigVer" cname="sig_ver" bits="8" type="unsigned int" access="public" writeable="true" />
-      <field name="PubkeyAlgo" cname="pubkey_algo" type="GMimeCryptoPubKeyAlgo" access="public" writeable="true" />
-      <field name="HashAlgo" cname="hash_algo" type="GMimeCryptoHash" access="public" writeable="true" />
-      <field name="IssuerSerial" cname="issuer_serial" type="char*" access="public" writeable="true" />
-      <field name="IssuerName" cname="issuer_name" type="char*" access="public" writeable="true" />
-      <field name="Fingerprint" cname="fingerprint" type="char*" access="public" writeable="true" />
-      <field name="SigCreated" cname="sig_created" type="time_t" access="public" writeable="true" />
-      <field name="SigExpires" cname="sig_expires" type="time_t" access="public" writeable="true" />
-      <field name="KeyCreated" cname="key_created" type="time_t" access="public" writeable="true" />
-      <field name="KeyExpires" cname="key_expires" type="time_t" access="public" writeable="true" />
-      <field name="Keyid" cname="keyid" type="char*" access="public" writeable="true" />
-      <field name="Email" cname="email" type="char*" access="public" writeable="true" />
-      <field name="Name" cname="name" type="char*" access="public" writeable="true" />
-      <method name="Free" cname="g_mime_signer_free">
-        <return-type type="void" />
-      </method>
-      <method name="GetEmail" cname="g_mime_signer_get_email">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetErrors" cname="g_mime_signer_get_errors">
-        <return-type type="GMimeSignerError" />
-      </method>
-      <method name="GetFingerprint" cname="g_mime_signer_get_fingerprint">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetHashAlgo" cname="g_mime_signer_get_hash_algo">
-        <return-type type="GMimeCryptoHash" />
-      </method>
-      <method name="GetIssuerName" cname="g_mime_signer_get_issuer_name">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetIssuerSerial" cname="g_mime_signer_get_issuer_serial">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetKeyCreated" cname="g_mime_signer_get_key_created">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetKeyExpires" cname="g_mime_signer_get_key_expires">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetKeyId" cname="g_mime_signer_get_key_id">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetName" cname="g_mime_signer_get_name">
-        <return-type type="const-char*" />
-      </method>
-      <method name="GetPubkeyAlgo" cname="g_mime_signer_get_pubkey_algo">
-        <return-type type="GMimeCryptoPubKeyAlgo" />
-      </method>
-      <method name="GetSigClass" cname="g_mime_signer_get_sig_class">
-        <return-type type="int" />
-      </method>
-      <method name="GetSigCreated" cname="g_mime_signer_get_sig_created">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetSigExpires" cname="g_mime_signer_get_sig_expires">
-        <return-type type="time_t" />
-      </method>
-      <method name="GetSigVersion" cname="g_mime_signer_get_sig_version">
-        <return-type type="int" />
-      </method>
-      <method name="GetStatus" cname="g_mime_signer_get_status">
-        <return-type type="GMimeSignerStatus" />
-      </method>
-      <method name="GetTrust" cname="g_mime_signer_get_trust">
-        <return-type type="GMimeSignerTrust" />
-      </method>
-      <constructor cname="g_mime_signer_new">
-        <parameters>
-          <parameter type="GMimeSignerStatus" name="status" />
-        </parameters>
-      </constructor>
-      <method name="Next" cname="g_mime_signer_next">
-        <return-type type="const-GMimeSigner*" />
-      </method>
-      <method name="SetEmail" cname="g_mime_signer_set_email">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="email" />
-        </parameters>
-      </method>
-      <method name="SetErrors" cname="g_mime_signer_set_errors">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSignerError" name="error" />
-        </parameters>
-      </method>
-      <method name="SetFingerprint" cname="g_mime_signer_set_fingerprint">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="fingerprint" />
-        </parameters>
-      </method>
-      <method name="SetHashAlgo" cname="g_mime_signer_set_hash_algo">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoHash" name="hash" />
-        </parameters>
-      </method>
-      <method name="SetIssuerName" cname="g_mime_signer_set_issuer_name">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="issuer_name" />
-        </parameters>
-      </method>
-      <method name="SetIssuerSerial" cname="g_mime_signer_set_issuer_serial">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="issuer_serial" />
-        </parameters>
-      </method>
-      <method name="SetKeyCreated" cname="g_mime_signer_set_key_created">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="created" />
-        </parameters>
-      </method>
-      <method name="SetKeyExpires" cname="g_mime_signer_set_key_expires">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="expires" />
-        </parameters>
-      </method>
-      <method name="SetKeyId" cname="g_mime_signer_set_key_id">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="key_id" />
-        </parameters>
-      </method>
-      <method name="SetName" cname="g_mime_signer_set_name">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="const-char*" name="name" />
-        </parameters>
-      </method>
-      <method name="SetPubkeyAlgo" cname="g_mime_signer_set_pubkey_algo">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeCryptoPubKeyAlgo" name="pubkey_algo" />
-        </parameters>
-      </method>
-      <method name="SetSigClass" cname="g_mime_signer_set_sig_class">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="int" name="sig_class" />
-        </parameters>
-      </method>
-      <method name="SetSigCreated" cname="g_mime_signer_set_sig_created">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="created" />
-        </parameters>
-      </method>
-      <method name="SetSigExpires" cname="g_mime_signer_set_sig_expires">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="time_t" name="expires" />
-        </parameters>
-      </method>
-      <method name="SetSigVersion" cname="g_mime_signer_set_sig_version">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="int" name="version" />
-        </parameters>
-      </method>
-      <method name="SetStatus" cname="g_mime_signer_set_status">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSignerStatus" name="status" />
-        </parameters>
-      </method>
-      <method name="SetTrust" cname="g_mime_signer_set_trust">
-        <return-type type="void" />
-        <parameters>
-          <parameter type="GMimeSignerTrust" name="trust" />
-        </parameters>
       </method>
     </struct>
     <struct name="StreamIOVector" cname="GMimeStreamIOVector">

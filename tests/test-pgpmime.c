@@ -47,36 +47,38 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 	return TRUE;
 }
 
-static GMimeSignerStatus
-get_sig_status (GMimeSigner *signers)
+static GMimeSignatureStatus
+get_sig_status (GMimeSignatureList *signatures)
 {
-	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
-	GMimeSigner *signer = signers;
+	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
+	GMimeSignature *sig;
+	int i;
 	
-	if (signers == NULL)
-		return GMIME_SIGNER_STATUS_ERROR;
+	if (!signatures || signatures->array->len == 0)
+		return GMIME_SIGNATURE_STATUS_ERROR;
 	
-	while (signer != NULL) {
-		status = MAX (status, signer->status);
-		signer = signer->next;
+	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
+		sig = g_mime_signature_list_get_signature (signatures, i);
+		status = MAX (status, sig->status);
 	}
 	
 	return status;
 }
 
 static void
-print_verify_results (const GMimeSignatureValidity *validity)
+print_verify_results (GMimeSignatureList *signatures)
 {
-	GMimeSigner *signer;
+	GMimeSignature *sig;
+	int count, i;
 	
-	switch (get_sig_status (validity->signers)) {
-	case GMIME_SIGNER_STATUS_GOOD:
+	switch (get_sig_status (signatures)) {
+	case GMIME_SIGNATURE_STATUS_GOOD:
 		fputs ("GOOD\n", stdout);
 		break;
-	case GMIME_SIGNER_STATUS_BAD:
+	case GMIME_SIGNATURE_STATUS_BAD:
 		fputs ("BAD\n", stdout);
 		break;
-	case GMIME_SIGNER_STATUS_ERROR:
+	case GMIME_SIGNATURE_STATUS_ERROR:
 		fputs ("ERROR status\n", stdout);
 		break;
 	default:
@@ -84,75 +86,74 @@ print_verify_results (const GMimeSignatureValidity *validity)
 		break;
 	}
 	
-	fputs ("\nSigners:\n", stdout);
-	signer = validity->signers;
-	while (signer != NULL) {
-		fprintf (stdout, "\tName: %s\n", signer->name ? signer->name : "(null)");
-		fprintf (stdout, "\tKeyId: %s\n", signer->keyid ? signer->keyid : "(null)");
-		fprintf (stdout, "\tFingerprint: %s\n", signer->fingerprint ? signer->fingerprint : "(null)");
+	fputs ("\nSignatures:\n", stdout);
+	count = g_mime_signature_list_length (signatures);
+	for (i = 0; i < count; i++) {
+		sig = g_mime_signature_list_get_signature (signatures, i);
+		
+		fprintf (stdout, "\tName: %s\n", sig->cert->name ? sig->cert->name : "(null)");
+		fprintf (stdout, "\tKeyId: %s\n", sig->cert->keyid ? sig->cert->keyid : "(null)");
+		fprintf (stdout, "\tFingerprint: %s\n", sig->cert->fingerprint ? sig->cert->fingerprint : "(null)");
 		fprintf (stdout, "\tTrust: ");
 		
-		switch (signer->trust) {
-		case GMIME_SIGNER_TRUST_NONE:
+		switch (sig->cert->trust) {
+		case GMIME_CERTIFICATE_TRUST_NONE:
 			fputs ("None\n", stdout);
 			break;
-		case GMIME_SIGNER_TRUST_NEVER:
+		case GMIME_CERTIFICATE_TRUST_NEVER:
 			fputs ("Never\n", stdout);
 			break;
-		case GMIME_SIGNER_TRUST_UNDEFINED:
+		case GMIME_CERTIFICATE_TRUST_UNDEFINED:
 			fputs ("Undefined\n", stdout);
 			break;
-		case GMIME_SIGNER_TRUST_MARGINAL:
+		case GMIME_CERTIFICATE_TRUST_MARGINAL:
 			fputs ("Marginal\n", stdout);
 			break;
-		case GMIME_SIGNER_TRUST_FULLY:
+		case GMIME_CERTIFICATE_TRUST_FULLY:
 			fputs ("Fully\n", stdout);
 			break;
-		case GMIME_SIGNER_TRUST_ULTIMATE:
+		case GMIME_CERTIFICATE_TRUST_ULTIMATE:
 			fputs ("Ultimate\n", stdout);
 			break;
 		}
 		
 		fprintf (stdout, "\tStatus: ");
-		switch (signer->status) {
-		case GMIME_SIGNER_STATUS_GOOD:
+		switch (sig->status) {
+		case GMIME_SIGNATURE_STATUS_GOOD:
 			fputs ("GOOD\n", stdout);
 			break;
-		case GMIME_SIGNER_STATUS_BAD:
+		case GMIME_SIGNATURE_STATUS_BAD:
 			fputs ("BAD\n", stdout);
 			break;
-		case GMIME_SIGNER_STATUS_ERROR:
+		case GMIME_SIGNATURE_STATUS_ERROR:
 			fputs ("ERROR\n", stdout);
 			break;
 		}
 		
-		fprintf (stdout, "\tSignature made on %s", ctime (&signer->sig_created));
-		if (signer->sig_expires != (time_t) 0)
-			fprintf (stdout, "\tSignature expires on %s", ctime (&signer->sig_expires));
+		fprintf (stdout, "\tSignature made on %s", ctime (&sig->created));
+		if (sig->expires != (time_t) 0)
+			fprintf (stdout, "\tSignature expires on %s", ctime (&sig->expires));
 		else
 			fprintf (stdout, "\tSignature never expires\n");
 		
-		if (signer->errors) {
+		if (sig->errors) {
 			fprintf (stdout, "\tErrors: ");
-			if (signer->errors & GMIME_SIGNER_ERROR_EXPSIG)
+			if (sig->errors & GMIME_SIGNATURE_ERROR_EXPSIG)
 				fputs ("Expired, ", stdout);
-			if (signer->errors & GMIME_SIGNER_ERROR_NO_PUBKEY)
+			if (sig->errors & GMIME_SIGNATURE_ERROR_NO_PUBKEY)
 				fputs ("No Pub Key, ", stdout);
-			if (signer->errors & GMIME_SIGNER_ERROR_EXPKEYSIG)
+			if (sig->errors & GMIME_SIGNATURE_ERROR_EXPKEYSIG)
 				fputs ("Key Expired, ", stdout);
-			if (signer->errors & GMIME_SIGNER_ERROR_REVKEYSIG)
+			if (sig->errors & GMIME_SIGNATURE_ERROR_REVKEYSIG)
 				fputs ("Key Revoked", stdout);
 			fputc ('\n', stdout);
 		} else {
 			fprintf (stdout, "\tNo errors for this signer\n");
 		}
 		
-		if ((signer = signer->next))
+		if (i + 1 < count)
 			fputc ('\n', stdout);
 	}
-	
-	fprintf (stdout, "\nValidity diagnostics: \n%s\n",
-		 g_mime_signature_validity_get_details (validity));
 }
 
 #define MULTIPART_SIGNED_CONTENT "This is a test of the emergency broadcast system \
@@ -165,7 +166,7 @@ then we have ourselves a winner I guess...\n"
 static void
 test_multipart_signed (GMimeCryptoContext *ctx)
 {
-	GMimeSignatureValidity *validity;
+	GMimeSignatureList *signatures;
 	GMimeMultipartSigned *mps;
 	GMimeDataWrapper *content;
 	GMimeMessage *message;
@@ -200,7 +201,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	
 	/* sign the part */
 	g_mime_multipart_signed_sign (mps, GMIME_OBJECT (part), ctx, "no.user@no.domain",
-				      GMIME_CRYPTO_HASH_SHA1, &err);
+				      GMIME_DIGEST_ALGO_SHA1, &err);
 	g_object_unref (part);
 	
 	if (err != NULL) {
@@ -242,15 +243,15 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
 	v(fputs ("Trying to verify signature... ", stdout));
-	if (!(validity = g_mime_multipart_signed_verify (mps, ctx, &err))) {
+	if (!(signatures = g_mime_multipart_signed_verify (mps, ctx, &err))) {
 		ex = exception_new ("%s", err->message);
 		v(fputs ("failed.\n", stdout));
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	v(print_verify_results (validity));
-	g_mime_signature_validity_free (validity);
+	v(print_verify_results (signatures));
+	g_object_unref (signatures);
 	
 	g_object_unref (message);
 }
@@ -262,7 +263,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 {
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
-	GMimeDecryptionResult *result;
+	GMimeDecryptResult *result;
 	GMimeDataWrapper *content;
 	GMimeObject *decrypted;
 	GPtrArray *recipients;
@@ -297,7 +298,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
-					    "no.user@no.domain", GMIME_CRYPTO_HASH_SHA256,
+					    "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
 					    recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
@@ -345,24 +346,23 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
-		g_mime_decryption_result_free (result);
 		g_object_unref (cleartext);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	if (result->validity)
-		v(print_verify_results (result->validity));
+	if (result->signatures)
+		v(print_verify_results (result->signatures));
 	
 	if (sign) {
-		if (!result->validity || get_sig_status (result->validity->signers) != GMIME_SIGNER_STATUS_GOOD)
+		if (!result->signatures || get_sig_status (result->signatures) != GMIME_SIGNATURE_STATUS_GOOD)
 			ex = exception_new ("signature status expected to be GOOD");
 	} else {
-		if (result->validity && result->validity->signers != NULL)
+		if (result->signatures)
 			ex = exception_new ("signature status expected to be NONE");
 	}
 	
-	g_mime_decryption_result_free (result);
+	g_object_unref (result);
 	
 	if (ex != NULL) {
 		g_object_unref (cleartext);

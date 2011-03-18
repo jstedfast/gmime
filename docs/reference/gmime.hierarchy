@@ -13,8 +13,13 @@ GObject
     InternetAddressGroup
     InternetAddressMailbox
   InternetAddressList
+  GMimeCertificate
+  GMimeCertificateList
+  GMimeSignature
+  GMimeSignatureList
   GMimeCipherContext
     GMimeGpgContext
+    GMimePkcs7Context
   GMimeDataWrapper
   GMimeFilter
     GMimeFilterBasic

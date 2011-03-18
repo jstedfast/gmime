@@ -16,17 +16,14 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
 
 sources = 					\
-	CryptoRecipientCollection.cs		\
-	SignerCollection.cs			\
 	StreamWrapper.cs
 
 build_sources =  				\
-	$(srcdir)/CryptoRecipientCollection.cs	\
-	$(srcdir)/SignerCollection.cs		\
 	$(srcdir)/StreamWrapper.cs		\
 	AssemblyInfo.cs
 
 customs = 					\
+	CertificateCollection.custom		\
 	DataWrapper.custom			\
 	Global.custom				\
 	HeaderList.custom			\
@@ -35,10 +32,11 @@ customs = 					\
 	Message.custom				\
 	Multipart.custom			\
 	Object.custom				\
-	SignatureValididty.custom		\
+	SignatureCollection.custom		\
 	Stream.custom
 
 build_customs = 				\
+	$(srcdir)/CertificateCollection.custom	\
 	$(srcdir)/DataWrapper.custom		\
 	$(srcdir)/Global.custom			\
 	$(srcdir)/HeaderList.custom		\
@@ -47,7 +45,7 @@ build_customs = 				\
 	$(srcdir)/Message.custom		\
 	$(srcdir)/Multipart.custom		\
 	$(srcdir)/Object.custom			\
-	$(srcdir)/SignatureValidity.custom	\
+	$(srcdir)/SignatureCollection.custom	\
 	$(srcdir)/Stream.custom
 
 EXTRA_DIST =					\

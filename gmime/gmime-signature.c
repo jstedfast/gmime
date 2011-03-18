@@ -152,7 +152,7 @@ g_mime_signature_get_status (GMimeSignature *sig)
 /**
  * g_mime_signature_set_errors:
  * @sig: a #GMimeSignature
- * @error: a #GMimeSignatureError
+ * @errors: a #GMimeSignatureError
  *
  * Set the errors on the signature.
  **/

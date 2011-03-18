@@ -784,7 +784,7 @@ g_mime_certificate_list_index_of (GMimeCertificateList *list, GMimeCertificate *
 
 
 /**
- * g_mime_certificate_list_get_cert:
+ * g_mime_certificate_list_get_certificate:
  * @list: a #GMimeCertificateList
  * @index: index of #GMimeCertificate to get
  *
@@ -794,7 +794,7 @@ g_mime_certificate_list_index_of (GMimeCertificateList *list, GMimeCertificate *
  * the index is out of range.
  **/
 GMimeCertificate *
-g_mime_certificate_list_get_cert (GMimeCertificateList *list, int index)
+g_mime_certificate_list_get_certificate (GMimeCertificateList *list, int index)
 {
 	g_return_val_if_fail (GMIME_IS_CERTIFICATE_LIST (list), NULL);
 	g_return_val_if_fail (index >= 0, NULL);
@@ -807,7 +807,7 @@ g_mime_certificate_list_get_cert (GMimeCertificateList *list, int index)
 
 
 /**
- * g_mime_certificate_list_set_cert:
+ * g_mime_certificate_list_set_certificate:
  * @list: a #GMimeCertificateList
  * @index: index of #GMimeCertificate to set
  * @cert: a #GMimeCertificate
@@ -815,7 +815,7 @@ g_mime_certificate_list_get_cert (GMimeCertificateList *list, int index)
  * Sets the #GMimeCertificate at the specified index to @cert.
  **/
 void
-g_mime_certificate_list_set_cert (GMimeCertificateList *list, int index, GMimeCertificate *cert)
+g_mime_certificate_list_set_certificate (GMimeCertificateList *list, int index, GMimeCertificate *cert)
 {
 	GMimeCertificate *old;
 	

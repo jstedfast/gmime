@@ -1855,7 +1855,19 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 		}
 	}
 	
-	valid = gpg_ctx_op_wait (gpg) == 0;
+	if (gpg_ctx_op_wait (gpg) != 0) {
+		const char *diagnostics;
+		int save;
+		
+		save = errno;
+		diagnostics = gpg_ctx_get_diagnostics (gpg);
+		errno = save;
+		
+		g_set_error_literal (err, GMIME_ERROR, errno, diagnostics);
+		gpg_ctx_free (gpg);
+		
+		return NULL;
+	}
 	
 	signatures = gpg->signatures;
 	gpg->signatures = NULL;

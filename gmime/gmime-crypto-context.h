@@ -191,6 +191,7 @@ typedef enum {
 
 /**
  * GMimeDecryptResult:
+ * @parent_object: parent #GObject
  * @recipients: A #GMimeCertificateList
  * @signatures: A #GMimeSignatureList if signed or %NULL otherwise.
  * @cipher: The cipher algorithm used to encrypt the stream.

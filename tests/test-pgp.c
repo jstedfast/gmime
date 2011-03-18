@@ -46,18 +46,19 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 	return TRUE;
 }
 
-static GMimeSignerStatus
-get_sig_status (GMimeSigner *signers)
+static GMimeSignatureStatus
+get_sig_status (GMimeSignatureList *signatures)
 {
-	GMimeSignerStatus status = GMIME_SIGNER_STATUS_GOOD;
-	GMimeSigner *signer = signers;
+	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
+	GMimeSignature *sig;
+	int i;
 	
-	if (signers == NULL)
-		return GMIME_SIGNER_STATUS_ERROR;
+	if (!signatures || signatures->array->len == 0)
+		return GMIME_SIGNATURE_STATUS_ERROR;
 	
-	while (signer != NULL) {
-		status = MAX (status, signer->status);
-		signer = signer->next;
+	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
+		sig = g_mime_signature_list_get_signature (signatures, i);
+		status = MAX (status, sig->status);
 	}
 	
 	return status;
@@ -71,7 +72,7 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	int rv;
 	
 	rv = g_mime_crypto_context_sign (ctx, "no.user@no.domain",
-					 GMIME_CRYPTO_HASH_SHA256,
+					 GMIME_DIGEST_ALGO_SHA256,
 					 cleartext, ciphertext, &err);
 	
 	if (rv == -1 || err != NULL) {
@@ -81,7 +82,7 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	}
 	
 	v(fprintf (stderr, "signature (%s):\n%.*s\n",
-		   g_mime_crypto_context_hash_name (ctx, rv),
+		   g_mime_crypto_context_digest_name (ctx, rv),
 		   GMIME_STREAM_MEM (ciphertext)->buffer->len,
 		   GMIME_STREAM_MEM (ciphertext)->buffer->data));
 }
@@ -89,25 +90,25 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 static void
 test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeSignatureValidity *validity;
+	GMimeSignatureList *signatures;
 	GError *err = NULL;
 	Exception *ex;
 	
-	validity = g_mime_crypto_context_verify (ctx, GMIME_CRYPTO_HASH_DEFAULT,
-						 cleartext, ciphertext, &err);
+	signatures = g_mime_crypto_context_verify (ctx, GMIME_DIGEST_ALGO_DEFAULT,
+						   cleartext, ciphertext, &err);
 	
-	if (validity == NULL) {
+	if (signatures == NULL) {
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
 		throw (ex);
 	}
 	
-	if (get_sig_status (validity->signers) != GMIME_SIGNER_STATUS_GOOD) {
-		g_mime_signature_validity_free (validity);
+	if (get_sig_status (signatures) != GMIME_SIGNATURE_STATUS_GOOD) {
+		g_object_unref (signatures);
 		throw (exception_new ("signature BAD"));
 	}
 	
-	g_mime_signature_validity_free (validity);
+	g_object_unref (signatures);
 }
 
 static void
@@ -120,7 +121,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	recipients = g_ptr_array_new ();
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
-	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", GMIME_CRYPTO_HASH_SHA256,
+	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
 				       recipients, cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
@@ -139,7 +140,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 static void
 test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
-	GMimeDecryptionResult *result;
+	GMimeDecryptResult *result;
 	Exception *ex = NULL;
 	GMimeStream *stream;
 	GError *err = NULL;
@@ -155,14 +156,14 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	}
 	
 	if (sign) {
-		if (!result->validity || get_sig_status (result->validity->signers) != GMIME_SIGNER_STATUS_GOOD)
+		if (!result->signatures || get_sig_status (result->signatures) != GMIME_SIGNATURE_STATUS_GOOD)
 			ex = exception_new ("expected GOOD signature");
 	} else {
-		if (result->validity && result->validity->signers != NULL)
+		if (result->signatures != NULL)
 			ex = exception_new ("unexpected signature");
 	}
 	
-	g_mime_decryption_result_free (result);
+	g_object_unref (result);
 	
 	if (ex != NULL) {
 		g_object_unref (stream);

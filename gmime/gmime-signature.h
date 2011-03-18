@@ -86,6 +86,7 @@ typedef enum {
 
 /**
  * GMimeSignature:
+ * @parent_object: parent #GObject
  * @status: A #GMimeSignatureStatus.
  * @errors: A bitfield of #GMimeSignatureError values.
  * @cert: The #GMimeCertificate used in the signature.

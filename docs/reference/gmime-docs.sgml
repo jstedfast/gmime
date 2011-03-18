@@ -49,6 +49,8 @@
 <!ENTITY GMimeFilterStrip SYSTEM "xml/gmime-filter-strip.xml">
 <!ENTITY GMimeFilterWindows SYSTEM "xml/gmime-filter-windows.xml">
 <!ENTITY GMimeFilterYenc SYSTEM "xml/gmime-filter-yenc.xml">
+<!ENTITY GMimeCertificate SYSTEM "xml/gmime-certificate.xml">
+<!ENTITY GMimeSignature SYSTEM "xml/gmime-signature.xml">
 <!ENTITY GMimeCryptoContext SYSTEM "xml/gmime-crypto-context.xml">
 <!ENTITY GMimeGpgContext SYSTEM "xml/gmime-gpg-context.xml">
 <!ENTITY GMimePkcs7Context SYSTEM "xml/gmime-pkcs7-context.xml">
@@ -84,7 +86,7 @@
       </author>
     </authorgroup>
     <copyright>
-      <year>2000-2010</year>
+      <year>2000-2011</year>
       <holder>Jeffrey Stedfast</holder>
     </copyright>
 
@@ -247,6 +249,8 @@ string utilities, file utilities, a main loop abstraction, and so on.
 
     <chapter id="CryptoContexts">
       <title>Cryptography Contexts</title>
+      &GMimeCertificate;
+      &GMimeSignature;
       &GMimeCryptoContext;
       &GMimeGpgContext;
       &GMimePkcs7Context;

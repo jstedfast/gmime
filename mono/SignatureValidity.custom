@@ -1,3 +1,0 @@
-		public SignerCollection Signers {
-			get { return new SignerCollection (this); }
-		}
