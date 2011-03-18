@@ -98,7 +98,7 @@ gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
  * @value: The field value.
  *
  * Function signature for the callback to
- * g_mime_header_register_writer().
+ * g_mime_header_list_register_writer().
  *
  * Returns: the number of bytes written or %-1 on error.
  **/

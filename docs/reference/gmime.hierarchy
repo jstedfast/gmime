@@ -17,7 +17,7 @@ GObject
   GMimeCertificateList
   GMimeSignature
   GMimeSignatureList
-  GMimeCipherContext
+  GMimeCryptoContext
     GMimeGpgContext
     GMimePkcs7Context
   GMimeDataWrapper
