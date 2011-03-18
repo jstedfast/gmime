@@ -156,11 +156,12 @@
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_CUR']" name="value">1</attr>
   <attr path="/api/namespace/enum/member[@cname='GMIME_STREAM_SEEK_END']" name="value">2</attr>
 
-  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_NONE']" name="name">None</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_EXPSIG']" name="name">ExpiredSignature</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_NO_PUBKEY']" name="name">NoPublicKey</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_EXPKEYSIG']" name="name">ExpiredSignatureKey</attr>
-  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNER_ERROR_REVKEYSIG']" name="name">RevokedSignatureKey</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_NONE']" name="name">None</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_EXPSIG']" name="name">ExpiredSignature</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_NO_PUBKEY']" name="name">NoPublicKey</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_EXPKEYSIG']" name="name">ExpiredSignatureKey</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_REVKEYSIG']" name="name">RevokedSignatureKey</attr>
+  <attr path="/api/namespace/enum/member[@cname='GMIME_SIGNATURE_ERROR_UNSUPP_ALGO']" name="name">UnsupportedAlgorithm</attr>
 
   <!-- Filter -->
   <attr path="/api/namespace/object[@cname='GMimeFilter']" name="abstract">1</attr>
@@ -175,7 +176,7 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="array">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='length']" name="name">n_buf</attr>
 
-  <!-- GPGContext -->
+  <!-- GpgContext -->
   
   <!-- Header -->
   <remove-node path="/api/namespace/struct[@cname='GMimeHeader']"/>
@@ -278,6 +279,7 @@
   <!-- MultipartSigned -->
   
   <!-- Object -->
+  <attr path="/api/namespace/object[@cname='GMimeObject']" name="name">PartBase</attr>
   <!-- Clean up some unnecessary helper methods from GMimeObject -->
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
