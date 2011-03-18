@@ -1,4 +1,4 @@
-                            GMime, version 2.5.6
+                            GMime, version 2.5.7
                    by Jeffrey Stedfast <fejj@gnome.org>
 
 
@@ -110,7 +110,7 @@ Information regarding GMime may be obtained from the Spruce home page:
 Experimental versions of GMime may be obtained by following the
 directions at http://developer.gnome.org/tools/svn.html
 
-  svn co http://svn.gnome.org/svn/gmime/trunk gmime
+  git clone git://git.gnome.org/gmime
 
 
 REQUIREMENTS
