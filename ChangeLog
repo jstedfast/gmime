@@ -1,3 +1,9 @@
+2011-03-26  Jeffrey Stedfast  <fejj@novell.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Fixed to
+	actually set the signer status. Fixes bug #645787, based on an
+	initial patch by Thomas Jost.
+
 2011-03-14  Jeffrey Stedfast  <fejj@novell.com>
 
 	* configure.in: Check for glib-sharp-2.0 instead of gtk-sharp-2.0

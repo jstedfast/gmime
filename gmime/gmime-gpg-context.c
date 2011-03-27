@@ -862,19 +862,24 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		/* not sure if this contains anything we care about... */
 	} else if (!strncmp (status, "GOODSIG ", 8)) {
 		signer = gpg_ctx_add_signer (gpg, status + 8);
+		signer->status = GMIME_SIGNER_STATUS_GOOD;
 		gpg->goodsig = TRUE;
 	} else if (!strncmp (status, "BADSIG ", 7)) {
 		signer = gpg_ctx_add_signer (gpg, status + 7);
+		signer->status = GMIME_SIGNER_STATUS_BAD;
 		gpg->badsig = TRUE;
 	} else if (!strncmp (status, "EXPSIG ", 7)) {
 		signer = gpg_ctx_add_signer (gpg, status + 7);
-		signer->errors |= GMIME_SIGNER_ERROR_EXPSIG;
+		signer->status = GMIME_SIGNER_STATUS_ERROR;
+		signer->errors = GMIME_SIGNER_ERROR_EXPSIG;
 	} else if (!strncmp (status, "EXPKEYSIG ", 10)) {
 		signer = gpg_ctx_add_signer (gpg, status + 10);
-		signer->errors |= GMIME_SIGNER_ERROR_EXPKEYSIG;
+		signer->status = GMIME_SIGNER_STATUS_ERROR;
+		signer->errors = GMIME_SIGNER_ERROR_EXPKEYSIG;
 	} else if (!strncmp (status, "REVKEYSIG ", 10)) {
 		signer = gpg_ctx_add_signer (gpg, status + 10);
-		signer->errors |= GMIME_SIGNER_ERROR_REVKEYSIG;
+		signer->status = GMIME_SIGNER_STATUS_ERROR;
+		signer->errors = GMIME_SIGNER_ERROR_REVKEYSIG;
 	} else if (!strncmp (status, "ERRSIG ", 7)) {
 		/* Note: NO_PUBKEY often comes after an ERRSIG */
 		gpg->errsig = TRUE;
