@@ -1,5 +1,11 @@
 2011-03-26  Jeffrey Stedfast  <fejj@novell.com>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.24
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_signer_info): Fixed to
 	actually set the signer status. Fixes bug #645787, based on an
 	initial patch by Thomas Jost.
