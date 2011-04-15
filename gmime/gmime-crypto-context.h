@@ -169,7 +169,7 @@ int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
  * @GMIME_CIPHER_ALGO_AES256: The AES-256 cipher.
  * @GMIME_CIPHER_ALGO_TWOFISH: The Twofish cipher.
  * @GMIME_CIPHER_ALGO_CAMELLIA128: The Camellia-128 cipher.
- * @GMIME_CIPHER_ALGO_CAMELLIA196: The Camellia-196 cipher.
+ * @GMIME_CIPHER_ALGO_CAMELLIA192: The Camellia-192 cipher.
  * @GMIME_CIPHER_ALGO_CAMELLIA256: The Camellia-256 cipher.
  *
  * A cipher algorithm.
@@ -185,7 +185,7 @@ typedef enum {
 	GMIME_CIPHER_ALGO_AES256      = 9,
 	GMIME_CIPHER_ALGO_TWOFISH     = 10,
 	GMIME_CIPHER_ALGO_CAMELLIA128 = 11,
-	GMIME_CIPHER_ALGO_CAMELLIA196 = 12,
+	GMIME_CIPHER_ALGO_CAMELLIA192 = 12,
 	GMIME_CIPHER_ALGO_CAMELLIA256 = 13
 } GMimeCipherAlgo;
 
