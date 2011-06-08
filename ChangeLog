@@ -1,5 +1,10 @@
 2011-06-08  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-session.c: Don't crash if the request_passwd()
+	virtual method is set to NULL. Fixes bug #651825.
+
+2011-06-08  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-gpg-context.c: If building on Apple, force the use
 	of our own implementation of poll() because Apple's poll() is
 	broken on some versions of MacOS.

@@ -160,7 +160,10 @@ g_mime_session_request_passwd (GMimeSession *session, const char *prompt,
 {
 	g_return_val_if_fail (GMIME_IS_SESSION (session), NULL);
 	
-	return GMIME_SESSION_GET_CLASS (session)->request_passwd (session, prompt, secret, item, err);
+	if (GMIME_SESSION_GET_CLASS (session)->request_passwd)
+		return GMIME_SESSION_GET_CLASS (session)->request_passwd (session, prompt, secret, item, err);
+	else
+		return session_request_passwd (session, prompt, secret, item, err);
 }
 
 
@@ -185,5 +188,6 @@ g_mime_session_forget_passwd (GMimeSession *session, const char *item, GError **
 {
 	g_return_if_fail (GMIME_IS_SESSION (session));
 	
-	GMIME_SESSION_GET_CLASS (session)->forget_passwd (session, item, err);
+	if (GMIME_SESSION_GET_CLASS (session)->forget_passwd)
+		GMIME_SESSION_GET_CLASS (session)->forget_passwd (session, item, err);
 }
