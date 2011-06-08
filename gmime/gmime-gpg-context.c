@@ -23,6 +23,11 @@
 #include <config.h>
 #endif
 
+#ifdef __APPLE__
+#undef HAVE_POLL_H
+#undef HAVE_POLL
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -1412,15 +1417,18 @@ poll (struct pollfd *pfds, nfds_t nfds, int timeout)
 	FD_ZERO (&xset);
 	
 	for (i = 0; i < nfds; i++) {
+		pfds[i].revents = 0;
+		if (pfds[i].fd < 0)
+			continue;
+		
 		if (pfds[i].events & POLLIN)
 			FD_SET (pfds[i].fd, &rset);
 		if (pfds[i].events & POLLOUT)
 			FD_SET (pfds[i].fd, &wset);
-		if (pfds[i].events & POLLPRI)
+		if (pfds[i].events != 0)
 			FD_SET (pfds[i].fd, &xset);
-		if (pfds[i].fd > maxfd && (pfds[i].events & (POLLIN | POLLOUT | POLLPRI)))
+		if (pfds[i].fd > maxfd)
 			maxfd = pfds[i].fd;
-		pfds[i].revents = 0;
 	}
 	
 	/* poll our fds... */
@@ -1428,12 +1436,15 @@ poll (struct pollfd *pfds, nfds_t nfds, int timeout)
 		ready = 0;
 		
 		for (i = 0; i < nfds; i++) {
+			if (pfds[i].fd < 0)
+				continue;
+			
 			if (FD_ISSET (pfds[i].fd, &rset))
 				pfds[i].revents |= POLLIN;
 			if (FD_ISSET (pfds[i].fd, &wset))
 				pfds[i].revents |= POLLOUT;
 			if (FD_ISSET (pfds[i].fd, &xset))
-				pfds[i].revents |= POLLPRI;
+				pfds[i].revents |= POLLERR | POLLHUP;
 			
 			if (pfds[i].revents != 0)
 				ready++;
