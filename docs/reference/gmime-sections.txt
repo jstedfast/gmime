@@ -1304,6 +1304,8 @@ g_mime_gpg_context_get_always_trust
 g_mime_gpg_context_set_always_trust
 g_mime_gpg_context_get_auto_key_retrieve
 g_mime_gpg_context_set_auto_key_retrieve
+g_mime_gpg_context_get_use_agent
+g_mime_gpg_context_set_use_agent
 
 <SUBSECTION Private>
 g_mime_gpg_context_get_type

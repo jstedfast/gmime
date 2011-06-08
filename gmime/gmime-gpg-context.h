@@ -49,6 +49,7 @@ struct _GMimeGpgContext {
 	GMimeCryptoContext parent_object;
 	gboolean auto_key_retrieve;
 	gboolean always_trust;
+	gboolean use_agent;
 	char *path;
 };
 
@@ -68,6 +69,9 @@ void g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean au
 
 gboolean g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust);
+
+gboolean g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx);
+void g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent);
 
 G_END_DECLS
 

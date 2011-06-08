@@ -1,3 +1,12 @@
+2011-06-08  Daniel Kahn Gillmor  <dkg@fifthhorseman.net>
+
+	Fix for bug #651826
+
+	* gmime/gmime-gpg-context.c
+	(g_mime_gpg_context_[g,s]_set_use_agent): New functions to allow
+	the invoker to declare that they expect there to be a functioning
+	gpg-agent, and want gpg to talk to it for any needed credentials.
+
 2011-06-08  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-gpg-context.c: If building on Apple, force the use

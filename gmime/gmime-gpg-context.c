@@ -169,6 +169,7 @@ g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 	
 	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
+	ctx->use_agent = FALSE;
 	ctx->path = NULL;
 }
 
@@ -320,11 +321,12 @@ struct _GpgCtx {
 	unsigned int seen_eof2:1;
 	unsigned int flushed:1;      /* flushed the diagnostics stream (aka stderr) */
 	unsigned int always_trust:1;
+	unsigned int use_agent:1;
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
 	unsigned int bad_passwds:2;
 	
-	unsigned int padding:21;
+	unsigned int padding:20;
 };
 
 static struct _GpgCtx *
@@ -351,6 +353,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->cipher = GMIME_CIPHER_ALGO_DEFAULT;
 	gpg->digest = GMIME_DIGEST_ALGO_DEFAULT;
 	gpg->always_trust = FALSE;
+	gpg->use_agent = FALSE;
 	gpg->armor = FALSE;
 	
 	gpg->stdin_fd = -1;
@@ -418,6 +421,12 @@ static void
 gpg_ctx_set_always_trust (struct _GpgCtx *gpg, gboolean trust)
 {
 	gpg->always_trust = trust;
+}
+
+static void
+gpg_ctx_set_use_agent (struct _GpgCtx *gpg, gboolean use_agent)
+{
+	gpg->use_agent = use_agent;
 }
 
 static void
@@ -606,6 +615,9 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	
 	switch (gpg->mode) {
 	case GPG_CTX_MODE_SIGN:
+		if (gpg->use_agent)
+			g_ptr_array_add (args, "--use-agent");
+		
 		g_ptr_array_add (args, "--sign");
 		g_ptr_array_add (args, "--detach");
 		if (gpg->armor)
@@ -637,6 +649,9 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_SIGN_ENCRYPT:
+		if (gpg->use_agent)
+			g_ptr_array_add (args, "--use-agent");
+		
 		g_ptr_array_add (args, "--sign");
 		
 		if ((digest_str = gpg_digest_str (gpg->digest)))
@@ -667,6 +682,9 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		g_ptr_array_add (args, "-");
 		break;
 	case GPG_CTX_MODE_DECRYPT:
+		if (gpg->use_agent)
+			g_ptr_array_add (args, "--use-agent");
+		
 		g_ptr_array_add (args, "--decrypt");
 		g_ptr_array_add (args, "--output");
 		g_ptr_array_add (args, "-");
@@ -1785,6 +1803,7 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo diges
 	
 	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN);
+	gpg_ctx_set_use_agent (gpg, ctx->use_agent);
 	gpg_ctx_set_digest (gpg, digest);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
@@ -1898,16 +1917,19 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	guint i;
 	
 	gpg = gpg_ctx_new (ctx);
-	if (sign)
+	if (sign) {
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_SIGN_ENCRYPT);
-	else
+		gpg_ctx_set_use_agent (gpg, ctx->use_agent);
+	} else {
 		gpg_ctx_set_mode (gpg, GPG_CTX_MODE_ENCRYPT);
+	}
+	
+	gpg_ctx_set_always_trust (gpg, ctx->always_trust);
 	gpg_ctx_set_digest (gpg, digest);
 	gpg_ctx_set_armor (gpg, TRUE);
 	gpg_ctx_set_userid (gpg, userid);
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
-	gpg_ctx_set_always_trust (gpg, ctx->always_trust);
 	
 	for (i = 0; i < recipients->len; i++)
 		gpg_ctx_add_recipient (gpg, recipients->pdata[i]);
@@ -1962,6 +1984,7 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	
 	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_DECRYPT);
+	gpg_ctx_set_use_agent (gpg, ctx->use_agent);
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
 	
@@ -2173,9 +2196,9 @@ g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_ke
  * g_mime_gpg_context_get_always_trust:
  * @ctx: a #GMimeGpgContext
  *
- * Gets the @always_trust flag on the gpg context.
+ * Gets the always_trust flag on the gpg context.
  *
- * Returns: the @always_trust flag on the gpg context.
+ * Returns: the always_trust flag on the gpg context.
  **/
 gboolean
 g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
@@ -2200,4 +2223,39 @@ g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust
 	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
 	
 	ctx->always_trust = always_trust;
+}
+
+
+/**
+ * g_mime_gpg_context_get_use_agent:
+ * @ctx: a #GMimeGpgContext
+ *
+ * Gets the use_agent flag on the gpg context.
+ *
+ * Returns: the use_agent flag on the gpg context, which indicates
+ * that GnuPG should attempt to use gpg-agent for credentials.
+ **/
+gboolean
+g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
+	
+	return ctx->use_agent;
+}
+
+
+/**
+ * g_mime_gpg_context_set_use_agent:
+ * @ctx: a #GMimeGpgContext
+ * @use_agent: always trust flag
+ *
+ * Sets the @use_agent flag on the gpg context, which indicates that
+ * GnuPG should attempt to use gpg-agent for credentials.
+ **/
+void
+g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent)
+{
+	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
+	
+	ctx->use_agent = use_agent;
 }
