@@ -1,3 +1,10 @@
+2011-06-09  Jeffrey Stedfast  <fejj@gnome.org>
+
+	Fix for bug #652056
+
+	* gmime/gmime-param.c (decode_value): If STRICT_PARSER isn't
+	defined, don't require the value to start with a valid character.
+
 2011-06-08  Daniel Kahn Gillmor  <dkg@fifthhorseman.net>
 
 	Fix for bug #651826
