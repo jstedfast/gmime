@@ -202,6 +202,7 @@ decode_value (const char **in)
 	const char *inptr = *in;
 	
 	decode_lwsp (&inptr);
+	*in = inptr;
 	
 	if (*inptr == '"') {
 		return decode_quoted_string (in);
@@ -209,7 +210,11 @@ decode_value (const char **in)
 		return decode_token (in);
 	}
 	
+#ifndef STRICT_PARSER
+	return decode_token (in);
+#else
 	return NULL;
+#endif
 }
 
 /* This function is basically the same as decode_token()
