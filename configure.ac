@@ -12,7 +12,7 @@ AC_PREREQ(2.54)
 #
 m4_define([gmime_major_version], [2])
 m4_define([gmime_minor_version], [5])
-m4_define([gmime_micro_version], [7])
+m4_define([gmime_micro_version], [8])
 m4_define([gmime_interface_age], [0])
 m4_define([gmime_binary_age],
           [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
@@ -221,6 +221,15 @@ AC_ARG_ENABLE(warnings,
 	      enable_warnings=no)
 if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
+fi
+
+dnl Enable stricter MIME parsing rules
+AC_ARG_ENABLE(strict-parser,
+              AC_HELP_STRING([--enable-strict-parser],
+	      [enables stricter MIME parser rules [[default=no]]]),,
+	      enable_strict_parser=no)
+if test "x$enable_strict_parser" = "xyes"; then
+  AC_DEFINE(STRICT_PARSER, 1, [Define if GMime should enable stricter parsing rules.])
 fi
 
 dnl Disable cryptography support
@@ -634,6 +643,7 @@ Configuration:
   Console warnings:     ${enable_warnings}
   PGP/MIME support:     ${enable_cryptography}
   S/MIME support:       ${enable_smime}
+  Strict parser:        ${enable_strict_parser}
 
   Mono bindings:        ${enable_mono}
 "
