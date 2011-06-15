@@ -1,5 +1,15 @@
 2011-06-15  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-parser.c: Added new state, MESSAGE_HEADERS, which
+	behaves the same as HEADERS but is only ever set when we are
+	parsing the toplevel GMimeMessage object.
+	(parser_step_headers): Be slightly more strict in handling
+	malformed headers in the MESSAGE_HEADERS state so that trying to
+	parse non-message streams fails (e.g. if someone tries to parse a
+	jpeg stream).
+
+2011-06-15  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-gpg-context.c: Define nfds_t on OSX.
 
 2011-06-10  Jeffrey Stedfast  <fejj@gnome.org>
