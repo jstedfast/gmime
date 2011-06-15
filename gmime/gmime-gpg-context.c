@@ -26,6 +26,7 @@
 #ifdef __APPLE__
 #undef HAVE_POLL_H
 #undef HAVE_POLL
+typedef unsigned int nfds_t;
 #endif
 
 #include <stdio.h>

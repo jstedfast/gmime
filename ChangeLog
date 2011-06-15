@@ -1,3 +1,7 @@
+2011-06-15  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c: Define nfds_t on OSX.
+
 2011-06-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	Fix for bug #652056
