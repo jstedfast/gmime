@@ -1814,10 +1814,10 @@ rfc2047_decode_word (const char *in, size_t inlen)
 		p = (char *) decoded;
 		len = declen;
 		
-		//while (!g_utf8_validate (p, len, (const char **) &p)) {
-		//	len = declen - (p - (char *) decoded);
-		//	*p = '?';
-		//}
+		while (!g_utf8_validate (p, len, (const char **) &p)) {
+			len = declen - (p - (char *) decoded);
+			*p = '?';
+		}
 		
 		return g_strndup ((char *) decoded, declen);
 	}
