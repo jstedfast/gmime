@@ -35,6 +35,11 @@
 #include <langinfo.h>
 #endif
 
+#if defined (WIN32) || defined (__CYGWIN__)
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#endif
+
 #include "gmime-charset-map-private.h"
 #include "gmime-table-private.h"
 #include "gmime-charset.h"
@@ -240,9 +245,7 @@ locale_parse_lang (const char *locale)
 /**
  * g_mime_charset_map_init:
  *
- * Initializes the locale charset variable for later calls to
- * g_mime_locale_charset(). Only really needs to be called for non-
- * iso-8859-1 locales.
+ * Initializes character set maps.
  *
  * Note: g_mime_init() calls this routine for you.
  **/
@@ -263,16 +266,34 @@ g_mime_charset_map_init (void)
 		g_hash_table_insert (iconv_charsets, charset, iconv_name);
 	}
 	
+#ifndef WIN32
 #ifdef HAVE_CODESET
-	if ((locale_charset = nl_langinfo (CODESET)) && locale_charset[0])
+	if ((locale_charset = nl_langinfo (CODESET)) && locale_charset[0]) {
+#ifdef __CYGWIN__
+		/* Apparently some versions of Cygwin, nl_langinfo(CODESET)
+		 * always reports US-ASCII no matter what. */
+		if (strcmp (locale_charset, "US-ASCII") != 0) {
+			/* Guess this version of Cygwin is fixed. */
+			locale_charset = g_ascii_strdown (locale_charset, -1);
+		} else {
+			/* Cannot rely on US-ASCII being accurate. */
+			locale_charset = NULL;
+		}
+#else
 		locale_charset = g_ascii_strdown (locale_charset, -1);
-	else
+#endif
+	} else
 		locale_charset = NULL;
 #endif
+
+	/* Apparently setlocale() is not reliable either... use getenv() instead. */
+	/*locale = setlocale (LC_ALL, NULL);*/
 	
-	locale = setlocale (LC_ALL, NULL);
+	if (!(locale = getenv ("LC_ALL")) || !locale[0])
+		if (!(locale = getenv ("LC_CTYPE")) || !locale[0])
+			locale = getenv ("LANG");
 	
-	if (!locale || !strcmp (locale, "C") || !strcmp (locale, "POSIX")) {
+	if (!locale || !locale[0] || !strcmp (locale, "C") || !strcmp (locale, "POSIX")) {
 		/* The locale "C"  or  "POSIX"  is  a  portable  locale;  its
 		 * LC_CTYPE  part  corresponds  to  the 7-bit ASCII character
 		 * set.  */
@@ -307,6 +328,9 @@ g_mime_charset_map_init (void)
 		
 		locale_parse_lang (locale);
 	}
+#else /* WIN32 */
+	locale_charset = g_strdup_printf ("cp%u", GetACP ());
+#endif
 }
 
 

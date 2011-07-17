@@ -1,3 +1,14 @@
+2011-07-17  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (charset_convert): Handle ERANGE the same as
+	EILSEQ.
+
+	* gmime/gmime-filter-charset.c (filter_filter): Handle ERANGE the
+	same as EILSEQ.
+
+	* gmime/gmime-charset.c (g_mime_charset_map_init): Improved logic
+	for Win32 (and even Linux) systems. Don't rely on setlocale().
+
 2011-06-15  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-parser.c: Added new state, MESSAGE_HEADERS, which
