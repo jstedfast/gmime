@@ -152,7 +152,11 @@ filter_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			if (errno == E2BIG || errno == EINVAL)
 				break;
 			
-			if (errno == EILSEQ) {
+			/* Note: GnuWin32's libiconv 1.9 can also set errno to ERANGE
+			 * which seems to mean that it encountered a character that
+			 * does not fit the specified 'from' charset. We'll handle
+			 * that the same way we handle EILSEQ. */
+			if (errno == EILSEQ || errno == ERANGE) {
 				/*
 				 * EILSEQ An invalid multibyte sequence has been  encountered
 				 *        in the input.

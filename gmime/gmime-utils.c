@@ -1541,7 +1541,11 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 				outbuf = out + rc;
 			}
 			
-			if (errno == EINVAL || errno == EILSEQ) {
+			/* Note: GnuWin32's libiconv 1.9 can also set errno to ERANGE
+			 * which seems to mean that it encountered a character that
+			 * does not fit the specified 'from' charset. We'll handle
+			 * that the same way we handle EILSEQ. */
+			if (errno == EILSEQ || errno == ERANGE) {
 				/* invalid or incomplete multibyte
 				 * sequence in the input buffer */
 				*outbuf++ = '?';
@@ -1566,6 +1570,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 
 #define USER_CHARSETS_INCLUDE_UTF8    (1 << 0)
 #define USER_CHARSETS_INCLUDE_LOCALE  (1 << 1)
+#define USER_CHARSETS_INCLUDE_LATIN1  (1 << 2)
 
 
 /**
@@ -1594,30 +1599,38 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 	g_return_val_if_fail (text != NULL, NULL);
 	
 	locale = g_mime_locale_charset ();
-	if (locale && !g_ascii_strcasecmp (locale, "UTF-8"))
+	if (!g_ascii_strcasecmp (locale, "iso-8859-1") ||
+	    !g_ascii_strcasecmp (locale, "UTF-8")) {
+		/* If the user's locale charset is either of these, we
+		 * don't need to include the locale charset in our list
+		 * of fallback charsets. */
 		included |= USER_CHARSETS_INCLUDE_LOCALE;
+	}
 	
 	if ((user_charsets = g_mime_user_charsets ())) {
 		while (user_charsets[i])
 			i++;
 	}
 	
-	charsets = g_alloca (sizeof (char *) * (i + 3));
+	charsets = g_alloca (sizeof (char *) * (i + 4));
 	i = 0;
 	
 	if (user_charsets) {
 		while (user_charsets[i]) {
 			/* keep a record of whether or not the user-supplied
-			 * charsets include UTF-8 and/or the default fallback
+			 * charsets include UTF-8, Latin1, or the user's locale
 			 * charset so that we avoid doubling our efforts for
-			 * these 2 charsets. We could have used a hash table
+			 * these 3 charsets. We could have used a hash table
 			 * to keep track of unique charsets, but we can
 			 * (hopefully) assume that user_charsets is a unique
 			 * list of charsets with no duplicates. */
+			if (!g_ascii_strcasecmp (user_charsets[i], "iso-8859-1"))
+				included |= USER_CHARSETS_INCLUDE_LATIN1;
+			
 			if (!g_ascii_strcasecmp (user_charsets[i], "UTF-8"))
 				included |= USER_CHARSETS_INCLUDE_UTF8;
 			
-			if (locale && !g_ascii_strcasecmp (user_charsets[i], locale))
+			if (!g_ascii_strcasecmp (user_charsets[i], locale))
 				included |= USER_CHARSETS_INCLUDE_LOCALE;
 			
 			charsets[i] = user_charsets[i];
@@ -1630,6 +1643,9 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 	
 	if (!(included & USER_CHARSETS_INCLUDE_LOCALE))
 		charsets[i++] = locale;
+	
+	if (!(included & USER_CHARSETS_INCLUDE_LATIN1))
+		charsets[i++] = "iso-8859-1";
 	
 	charsets[i] = NULL;
 	
