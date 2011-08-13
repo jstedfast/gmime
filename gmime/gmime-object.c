@@ -39,7 +39,7 @@
  * @short_description: Abstract MIME objects
  * @see_also:
  *
- * #GMimeObject is an abstract class from which all Message and Mime
+ * #GMimeObject is an abstract class from which all message and MIME
  * parts are derived.
  **/
 
