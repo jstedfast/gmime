@@ -571,7 +571,9 @@ g_mime_part_iter_replace (GMimePartIter *iter, GMimeObject *replacement)
  * g_mime_part_iter_remove:
  * @iter: a #GMimePartIter
  *
- * Removes the #GMimeObject at the current position from its parent.
+ * Removes the #GMimeObject at the current position from its
+ * parent. If successful, @iter is advanced to the next position
+ * (since the current position will become invalid).
  *
  * Returns: %TRUE if the part at the current position was removed or
  * %FALSE otherwise.
