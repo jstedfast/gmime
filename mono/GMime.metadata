@@ -302,6 +302,9 @@
   <!--<remove-node path="/api/namespace/class[@name='Decode']"/>-->
 
   <!-- Part -->
+  
+  <!-- PartIter -->
+  <remove-node path="/api/namespace/struct[@name='PartIter']"/>
 
   <!-- References -->
   <attr path="/api/namespace/struct[@name='References']" name="opaque">true</attr>

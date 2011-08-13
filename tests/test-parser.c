@@ -37,11 +37,12 @@
 #include "zentimer.h"
 #endif
 
-/*#define TEST_RAW_HEADER*/
+//#define TEST_RAW_HEADER
 #define TEST_PRESERVE_HEADERS
 #define PRINT_MIME_STRUCT
-/*#define TEST_WRITE_TO_STREAM*/
+//#define TEST_WRITE_TO_STREAM
 
+#ifdef PRINT_MIME_STRUCT
 static void
 print_depth (int depth)
 {
@@ -90,6 +91,74 @@ print_mime_struct (GMimeObject *part, int depth)
 }
 
 static void
+print_mime_struct_iter (GMimeMessage *message)
+{
+	const GMimeContentType *type;
+	GMimePartIter *iter;
+	GMimeObject *part;
+	gboolean has_md5;
+	char *path;
+	
+	iter = g_mime_part_iter_new ((GMimeObject *) message);
+	
+	do {
+		part = g_mime_part_iter_get_current (iter);
+		type = g_mime_object_get_content_type (part);
+		path = g_mime_part_iter_get_path (iter);
+		
+		if (GMIME_IS_PART (part))
+			has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
+		else
+			has_md5 = FALSE;
+		
+		fprintf (stdout, "%s\tContent-Type: %s/%s%s", path,
+			 type->type, type->subtype, has_md5 ? "; md5sum=" : "\n");
+		
+		if (has_md5) {
+			/* validate the Md5 sum */
+			if (g_mime_part_verify_content_md5 ((GMimePart *) part))
+				fprintf (stdout, "GOOD\n");
+			else
+				fprintf (stdout, "BAD\n");
+		}
+		
+		g_free (path);
+	} while (g_mime_part_iter_next (iter));
+
+#if 0
+	fprintf (stdout, "Jumping to 1.1.2\n");
+	if (g_mime_part_iter_jump_to (iter, "1.1.2")) {
+		part = g_mime_part_iter_get_current (iter);
+		type = g_mime_object_get_content_type (part);
+		path = g_mime_part_iter_get_path (iter);
+		
+		if (GMIME_IS_PART (part))
+			has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
+		else
+			has_md5 = FALSE;
+		
+		fprintf (stdout, "%s\tContent-Type: %s/%s%s", path,
+			 type->type, type->subtype, has_md5 ? "; md5sum=" : "\n");
+		
+		if (has_md5) {
+			/* validate the Md5 sum */
+			if (g_mime_part_verify_content_md5 ((GMimePart *) part))
+				fprintf (stdout, "GOOD\n");
+			else
+				fprintf (stdout, "BAD\n");
+		}
+		
+		g_free (path);
+	} else {
+		fprintf (stdout, "Failed to jump to 1.1.2\n");
+	}
+#endif
+	
+	g_mime_part_iter_free (iter);
+}
+#endif /* PRINT_MIME_STRUCT */
+
+static void
 test_parser (GMimeStream *stream)
 {
 	GMimeParser *parser;
@@ -119,7 +188,7 @@ test_parser (GMimeStream *stream)
 	{
 		char *raw;
 		
-		raw = g_mime_message_get_headers (message);
+		raw = g_mime_object_get_headers ((GMimeObject *) message);
 		fprintf (stdout, "\nTesting raw headers...\n\n%s\n", raw);
 		g_free (raw);
 	}
@@ -152,7 +221,8 @@ test_parser (GMimeStream *stream)
 	
 #ifdef PRINT_MIME_STRUCT
 	/* print mime structure */
-	print_mime_struct (message->mime_part, 0);
+	//print_mime_struct (message->mime_part, 0);
+	print_mime_struct_iter (message);
 #endif
 	
 	g_object_unref (message);

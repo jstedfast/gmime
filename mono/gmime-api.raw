@@ -2925,6 +2925,52 @@
         </parameters>
       </method>
     </struct>
+    <struct name="PartIter" cname="GMimePartIter" opaque="true">
+      <method name="Free" cname="g_mime_part_iter_free">
+        <return-type type="void" />
+      </method>
+      <method name="GetCurrent" cname="g_mime_part_iter_get_current">
+        <return-type type="GMimeObject*" />
+      </method>
+      <method name="GetParent" cname="g_mime_part_iter_get_parent">
+        <return-type type="GMimeObject*" />
+      </method>
+      <method name="GetPath" cname="g_mime_part_iter_get_path">
+        <return-type type="char*" />
+      </method>
+      <method name="IsValid" cname="g_mime_part_iter_is_valid">
+        <return-type type="gboolean" />
+      </method>
+      <method name="JumpTo" cname="g_mime_part_iter_jump_to">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="path" />
+        </parameters>
+      </method>
+      <constructor cname="g_mime_part_iter_new">
+        <parameters>
+          <parameter type="GMimeObject*" name="toplevel" />
+        </parameters>
+      </constructor>
+      <method name="Next" cname="g_mime_part_iter_next">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Prev" cname="g_mime_part_iter_prev">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Remove" cname="g_mime_part_iter_remove">
+        <return-type type="gboolean" />
+      </method>
+      <method name="Replace" cname="g_mime_part_iter_replace">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeObject*" name="replacement" />
+        </parameters>
+      </method>
+      <method name="Reset" cname="g_mime_part_iter_reset">
+        <return-type type="void" />
+      </method>
+    </struct>
     <struct name="References" cname="GMimeReferences">
       <field name="Next" cname="next" type="GMimeReferences*" />
       <field name="Msgid" cname="msgid" type="char*" />

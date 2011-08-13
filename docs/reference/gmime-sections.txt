@@ -747,6 +747,23 @@ GMimePartClass
 </SECTION>
 
 <SECTION>
+<FILE>gmime-part-iter</FILE>
+GMimePartIter
+g_mime_part_iter_new
+g_mime_part_iter_free
+g_mime_part_iter_reset
+g_mime_part_iter_jump_to
+g_mime_part_iter_is_valid
+g_mime_part_iter_next
+g_mime_part_iter_prev
+g_mime_part_iter_get_current
+g_mime_part_iter_get_parent
+g_mime_part_iter_get_path
+g_mime_part_iter_replace
+g_mime_part_iter_remove
+</SECTION>
+
+<SECTION>
 <FILE>gmime-multipart</FILE>
 GMimeMultipart
 g_mime_multipart_new
