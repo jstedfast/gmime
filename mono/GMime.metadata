@@ -271,6 +271,7 @@
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Insert']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Remove']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='RemoveAt']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='Replace']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeMultipart']/method[@name='GetPart']"/>
 
   <!-- MultipartEncrypted -->

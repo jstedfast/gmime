@@ -1,3 +1,9 @@
+2011-08-13  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-multipart.c (g_mime_multipart_replace): New
+	convenience function to replace a mime part at a specified
+	position.
+
 2011-08-08  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

@@ -26,7 +26,7 @@
       <member cname="GMIME_CIPHER_ALGO_AES256" name="Aes256" value="9" />
       <member cname="GMIME_CIPHER_ALGO_TWOFISH" name="Twofish" value="10" />
       <member cname="GMIME_CIPHER_ALGO_CAMELLIA128" name="Camellia128" value="11" />
-      <member cname="GMIME_CIPHER_ALGO_CAMELLIA196" name="Camellia196" value="12" />
+      <member cname="GMIME_CIPHER_ALGO_CAMELLIA192" name="Camellia192" value="12" />
       <member cname="GMIME_CIPHER_ALGO_CAMELLIA256" name="Camellia256" value="13" />
     </enum>
     <enum name="ContentEncoding" cname="GMimeContentEncoding" type="enum">
@@ -876,6 +876,7 @@
     <object name="GpgContext" cname="GMimeGpgContext" parent="GMimeCryptoContext">
       <field name="AutoKeyRetrieve" cname="auto_key_retrieve" type="gboolean" />
       <field name="AlwaysTrust" cname="always_trust" type="gboolean" />
+      <field name="UseAgent" cname="use_agent" type="gboolean" />
       <field name="Path" cname="path" type="char*" />
       <method name="GetAlwaysTrust" cname="g_mime_gpg_context_get_always_trust">
         <return-type type="gboolean" />
@@ -885,6 +886,9 @@
       </method>
       <method name="GetType" cname="g_mime_gpg_context_get_type" shared="true">
         <return-type type="GType" />
+      </method>
+      <method name="GetUseAgent" cname="g_mime_gpg_context_get_use_agent">
+        <return-type type="gboolean" />
       </method>
       <constructor cname="g_mime_gpg_context_new">
         <parameters>
@@ -902,6 +906,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="gboolean" name="auto_key_retrieve" />
+        </parameters>
+      </method>
+      <method name="SetUseAgent" cname="g_mime_gpg_context_set_use_agent">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="gboolean" name="use_agent" />
         </parameters>
       </method>
     </object>
@@ -1234,6 +1244,13 @@
         <return-type type="GMimeObject*" />
         <parameters>
           <parameter type="int" name="index" />
+        </parameters>
+      </method>
+      <method name="Replace" cname="g_mime_multipart_replace">
+        <return-type type="GMimeObject*" />
+        <parameters>
+          <parameter type="int" name="index" />
+          <parameter type="GMimeObject*" name="replacement" />
         </parameters>
       </method>
       <method name="SetBoundary" cname="g_mime_multipart_set_boundary">

@@ -606,6 +606,38 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 }
 
 
+/**
+ * g_mime_multipart_replace:
+ * @multipart: a #GMimeMultipart object
+ * @index: position of the mime part to replace
+ * @replacement: a #GMimeObject to use as the replacement
+ *
+ * Replaces the mime part at position @index within @multipart with
+ * @replacement.
+ *
+ * Returns: the mime part that was replaced or %NULL if the part was
+ * not contained within the multipart.
+ **/
+GMimeObject *
+g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *replacement)
+{
+	GMimeObject *replaced;
+	
+	g_return_val_if_fail (GMIME_IS_MULTIPART (multipart), NULL);
+	g_return_val_if_fail (GMIME_IS_OBJECT (replacement), NULL);
+	g_return_val_if_fail (index >= 0, NULL);
+	
+	if ((guint) index >= multipart->children->len)
+		return NULL;
+	
+	replaced = multipart->children->pdata[index];
+	multipart->children->pdata[index] = replacement;
+	g_object_ref (replacement);
+	
+	return replaced;
+}
+
+
 static GMimeObject *
 multipart_get_part (GMimeMultipart *multipart, int index)
 {

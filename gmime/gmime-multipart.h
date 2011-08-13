@@ -96,6 +96,7 @@ void g_mime_multipart_add (GMimeMultipart *multipart, GMimeObject *part);
 void g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part);
 gboolean g_mime_multipart_remove (GMimeMultipart *multipart, GMimeObject *part);
 GMimeObject *g_mime_multipart_remove_at (GMimeMultipart *multipart, int index);
+GMimeObject *g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *replacement);
 GMimeObject *g_mime_multipart_get_part (GMimeMultipart *multipart, int index);
 
 gboolean g_mime_multipart_contains (GMimeMultipart *multipart, GMimeObject *part);
