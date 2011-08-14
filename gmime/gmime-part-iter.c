@@ -236,13 +236,16 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 			return FALSE;
 		}
 		
-		if (*dot != '.')
+		if (*dot == '\0')
 			break;
 		
 		g_mime_part_iter_push (iter, current, iter->index);
 		parent = current;
 		current = NULL;
 		index = -1;
+		
+		if (*dot != '.')
+			break;
 		
 		inptr = dot + 1;
 	}

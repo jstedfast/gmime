@@ -1,5 +1,11 @@
 2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.5.10
+
+2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* mono/GMime.metadata (PartBase): Rename to Entity to be more
 	consistent with MIME terminology and removed more convenience
 	methods that really only make sense in the C API.

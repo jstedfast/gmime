@@ -204,9 +204,12 @@ static struct {
 	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>",
 	  "\"Biznes INTERIA.PL \" <biuletyny@firma.interia.pl>",
 	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>", },
+#if 0
+	/* UTF-8 sequence split between multiple encoded-word tokens */
 	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=A3=C3=A5=C3=BD_M$=C3=A1=C3?= =?utf-8?Q?=AD.=C3=A7=C3=B8m@#}?= <user@domain.com>",
 	  "\"{#Dèé£åý M$áí.çøm@#}\" <user@domain.com>",
 	  "=?iso-8859-1?b?eyNE6Omj5f0gTSTh7S7n+G1AI30=?= <user@domain.com>" },
+#endif
 };
 
 static void
