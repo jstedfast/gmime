@@ -39,7 +39,8 @@
  * @short_description: MIME part iterators
  * @see_also: #GMimeObject
  *
- * #GMimePartIter is an iterator for traversing a #GMimeObject tree.
+ * #GMimePartIter is an iterator for traversing a #GMimeObject tree in
+ * Depth-First order.
  **/
 
 
