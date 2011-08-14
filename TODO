@@ -22,6 +22,7 @@ GMime 2.6 Planning:
   request callback signature for ideas. [ DONE ]
 
 - Consider optionally using GpgMe so that we can support S/MIME?
+  [ DONE: but needs testing ]
 
 - Consider GCancellable and GError for GMimeStreams and
   GMimeParser... GError being far more important than
@@ -40,13 +41,9 @@ GMime 2.6 Planning:
 
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
-  in UTF-8...
+  in UTF-8... [ CONSIDERING ]
 
-- Should either rename g_mime_filter_best_encoding() to get_encoding()
-  or else make sure that GMime.metadata 'fixes' the method name to be
-  GetEncoding so that it will appear as a C# property getter.
-
-- Re-add a g_mime_message_get_body()?
+- Re-add a g_mime_message_get_body()? [ DONE ]
 
 
 Other:
@@ -86,10 +83,6 @@ InternetAddress with a name of "Joe Bob" and a NULL addr
 Ideas for GMime "3.0"
 =====================
 
-- Add internet_address_new_name_static() which would take static
-  strings (e.g. strings which should not be free'd on destroy) so that
-  apps can save string memory by reusing strings.
-
 - GMimeStream's should take GError args so apps don't have to rely on
   errno (really needed for apps that implement ssl streams or other
   stream types which might not map well to libc's errno values)
@@ -100,6 +93,16 @@ Ideas for GMime "3.0"
 - GMimeParser should also take a GError arg and/or return int error
   codes.
 
+- Would be nice if gmime-sharp could take System.IO.Stream in addition
+  to GMime.Stream.
+
+- Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
+  both. This could allow g_mime_multipart_encrypted_decrypt() and
+  g_mime_multipart_signed_verify() to set the appropriate protocol on
+  the CryptoContext so that the caller wouldn't have to figure that
+  out themselves. We'd actually be able to get rid of the need for
+  a GMimeCryptoContext parameter altogether if we could rely on
+  the backend using a gpg-agent for password requests.
 
 
 All questions and comments should be directed toward the author,

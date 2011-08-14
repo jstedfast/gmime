@@ -176,6 +176,10 @@
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='buf']" name="array">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeFilter']/method[@name='Backup']/*/parameter[@name='length']" name="name">n_buf</attr>
 
+  <!-- FilterBest -->
+  <attr path="/api/namespace/object[@cname='GMimeFilterBest']/method[@cname='g_mime_filter_best_charset']" name="name">GetBestCharset</attr>
+  <attr path="/api/namespace/object[@cname='GMimeFilterBest']/method[@cname='g_mime_filter_best_encoding']" name="name">GetBestEncoding</attr>
+
   <!-- GpgContext -->
   
   <!-- Header -->
