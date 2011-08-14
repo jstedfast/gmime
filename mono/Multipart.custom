@@ -91,7 +91,7 @@
 			get { return this; }
 		}
 		
-		public int Add (GMime.PartBase part)
+		public int Add (GMime.Entity part)
 		{
 			if (part == null)
 				throw CannotAdd (part);
@@ -101,7 +101,7 @@
 		
 		int IList.Add (object value)
 		{
-			GMime.PartBase part = value as GMime.PartBase;
+			GMime.Entity part = value as GMime.Entity;
 			
 			if (part == null)
 				throw CannotAdd (value);
@@ -114,7 +114,7 @@
 			g_mime_multipart_clear (Handle);
 		}
 		
-		public bool Contains (GMime.PartBase part)
+		public bool Contains (GMime.Entity part)
 		{
 			if (part == null)
 				return false;
@@ -124,7 +124,7 @@
 		
 		bool IList.Contains (object value)
 		{
-			return Contains (value as GMime.PartBase);
+			return Contains (value as GMime.Entity);
 		}
 		
 		public void CopyTo (Array array, int index)
@@ -146,7 +146,7 @@
 			return new GMimeMultipartIterator (this);
 		}
 		
-		public int IndexOf (GMime.PartBase part)
+		public int IndexOf (GMime.Entity part)
 		{
 			if (part == null)
 				return -1;
@@ -156,10 +156,10 @@
 		
 		int IList.IndexOf (object value)
 		{
-			return IndexOf (value as GMime.PartBase);
+			return IndexOf (value as GMime.Entity);
 		}
 		
-		public void Insert (int index, GMime.PartBase part)
+		public void Insert (int index, GMime.Entity part)
 		{
 			if (part == null)
 				throw CannotInsert (part);
@@ -172,7 +172,7 @@
 		
 		void IList.Insert (int index, object value)
 		{
-			GMime.PartBase part = value as GMime.PartBase;
+			GMime.Entity part = value as GMime.Entity;
 			
 			if (part == null)
 				throw CannotInsert (value);
@@ -180,7 +180,7 @@
 			Insert (index, part);
 		}
 		
-		public void Remove (GMime.PartBase part)
+		public void Remove (GMime.Entity part)
 		{
 			if (part == null)
 				throw CannotRemove (part);
@@ -190,7 +190,7 @@
 		
 		void IList.Remove (object value)
 		{
-			GMime.PartBase part = value as GMime.PartBase;
+			GMime.Entity part = value as GMime.Entity;
 			
 			if (part == null)
 				throw CannotRemove (value);
@@ -206,14 +206,14 @@
 			g_mime_multipart_remove_at (Handle, index);
 		}
 		
-		public GMime.PartBase this[int index] {
+		public GMime.Entity this[int index] {
 			get {
 				IntPtr raw = g_mime_multipart_get_part (Handle, index);
 				
 				if (raw == IntPtr.Zero)
 					return null;
 				
-				return GLib.Object.GetObject (raw) as GMime.PartBase;
+				return GLib.Object.GetObject (raw) as GMime.Entity;
 			}
 			
 			set {
@@ -238,7 +238,7 @@
 			}
 			
 			set {
-				this[index] = value as GMime.PartBase;
+				this[index] = value as GMime.Entity;
 			}
 		}
 		

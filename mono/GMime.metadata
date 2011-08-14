@@ -280,12 +280,21 @@
   <!-- MultipartSigned -->
   
   <!-- Object -->
-  <attr path="/api/namespace/object[@cname='GMimeObject']" name="name">PartBase</attr>
+  <attr path="/api/namespace/object[@cname='GMimeObject']" name="name">Entity</attr>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/constructor[@cname='g_mime_object_new']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/constructor[@cname='g_mime_object_new_type']"/>
   <!-- Clean up some unnecessary helper methods from GMimeObject -->
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_disposition']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_disposition']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_type_parameter']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_type_parameter']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_content_disposition_parameter']"/>
   <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_content_disposition_parameter']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_prepend_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_append_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_remove_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_get_header']"/>
+  <remove-node path="/api/namespace/object[@cname='GMimeObject']/method[@cname='g_mime_object_set_header']"/>
 
   <!-- Param -->
   <remove-node path="/api/namespace/struct[@cname='GMimeParam']/field[@cname='value']"/>

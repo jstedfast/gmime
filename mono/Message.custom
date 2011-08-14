@@ -22,7 +22,12 @@
 		
 		public System.Collections.IEnumerable References {
 			get {
-				string references = GetHeader ("References");
+				GMime.HeaderList headers = HeaderList;
+				
+				if (headers == null)
+					yield break;
+				
+				string references = headers.GetHeader ("References");
 				
 				if (references == null)
 					yield break;

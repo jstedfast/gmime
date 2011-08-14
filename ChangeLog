@@ -1,5 +1,15 @@
 2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/GMime.metadata (PartBase): Rename to Entity to be more
+	consistent with MIME terminology and removed more convenience
+	methods that really only make sense in the C API.
+	(g_mime_object_new_type): Removed, there's no easy way to map this
+	to managed.
+	(g_mime_object_new): Removed, there's no easy way to map this
+	to managed.
+
+2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-part-iter.c: Updated to be more consistent with IMAP
 	part specifiers.
 
