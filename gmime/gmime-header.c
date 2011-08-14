@@ -578,6 +578,56 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 
 
 /**
+ * g_mime_header_list_clear:
+ * @headers: a #GMimeHeaderList
+ *
+ * Removes all of the headers from the #GMimeHeaderList.
+ **/
+void
+g_mime_header_list_clear (GMimeHeaderList *headers)
+{
+	GMimeHeader *header, *next;
+	
+	g_return_if_fail (headers != NULL);
+	
+	header = (GMimeHeader *) headers->list.head;
+	while (header->next) {
+		next = header->next;
+		g_mime_header_free (header);
+		header = next;
+	}
+	
+	g_hash_table_remove_all (headers->hash);
+	
+	g_mime_header_list_set_stream (headers, NULL);
+}
+
+
+/**
+ * g_mime_header_list_contains:
+ * @headers: a #GMimeHeaderList
+ * @name: header name
+ *
+ * Checks whether or not a header exists.
+ *
+ * Returns: %TRUE if the specified header exists or %FALSE otherwise.
+ **/
+gboolean
+g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name)
+{
+	const GMimeHeader *header;
+	
+	g_return_val_if_fail (headers != NULL, FALSE);
+	g_return_val_if_fail (name != NULL, FALSE);
+	
+	if (!(header = g_hash_table_lookup (headers->hash, name)))
+		return FALSE;
+	
+	return TRUE;
+}
+
+
+/**
  * g_mime_header_list_prepend:
  * @headers: a #GMimeHeaderList
  * @name: header name

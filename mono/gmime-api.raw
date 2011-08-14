@@ -2808,6 +2808,15 @@
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
+      <method name="Clear" cname="g_mime_header_list_clear">
+        <return-type type="void" />
+      </method>
+      <method name="Contains" cname="g_mime_header_list_contains">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="const-char*" name="name" />
+        </parameters>
+      </method>
       <method name="Destroy" cname="g_mime_header_list_destroy">
         <return-type type="void" />
       </method>
@@ -2937,6 +2946,9 @@
       </method>
       <method name="GetPath" cname="g_mime_part_iter_get_path">
         <return-type type="char*" />
+      </method>
+      <method name="GetToplevel" cname="g_mime_part_iter_get_toplevel">
+        <return-type type="GMimeObject*" />
       </method>
       <method name="IsValid" cname="g_mime_part_iter_is_valid">
         <return-type type="gboolean" />

@@ -189,11 +189,8 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@cname='g_mime_header_list_foreach']"/>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetStream']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetStream']" name="hidden">true</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Prepend']" name="name">PrependHeader</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Append']" name="name">AppendHeader</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Remove']" name="name">RemoveHeader</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Set']" name="name">SetHeader</attr>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Get']" name="name">GetHeader</attr>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Get']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Set']"/>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetIter']/*/parameter[@name='iter']" name="pass_as">out</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='SetValue']/return-type" name="type">void</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']" name="opaque">true</attr>

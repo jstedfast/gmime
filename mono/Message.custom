@@ -27,7 +27,7 @@
 				if (headers == null)
 					yield break;
 				
-				string references = headers.GetHeader ("References");
+				string references = headers["References"];
 				
 				if (references == null)
 					yield break;

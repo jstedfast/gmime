@@ -1,3 +1,34 @@
+		[DllImport ("gmime")]
+		static extern IntPtr g_mime_header_list_set (IntPtr raw, IntPtr name, IntPtr value);
+		
+		[DllImport ("gmime")]
+		static extern IntPtr g_mime_header_list_get (IntPtr raw, IntPtr name);
+		
+		public string this[string name] {
+			get {
+				if (name == null)
+					throw new ArgumentNullException ("name");
+				
+				IntPtr native_name = GLib.Marshaller.StringToPtrGStrdup (name);
+				IntPtr raw_ret = g_mime_header_list_get (Handle, native_name);
+				string ret = GLib.Marshaller.Utf8PtrToString (raw_ret);
+				GLib.Marshaller.Free (native_name);
+				
+				return ret;
+			}
+			
+			set {
+				if (name == null)
+					throw new ArgumentNullException ("name");
+				
+				IntPtr native_name = GLib.Marshaller.StringToPtrGStrdup (name);
+				IntPtr native_value = GLib.Marshaller.StringToPtrGStrdup (value);
+				g_mime_header_list_set (Handle, native_name, native_value);
+				GLib.Marshaller.Free (native_value);
+				GLib.Marshaller.Free (native_name);
+			}
+		}
+		
 		public StreamWrapper Stream {
 			get {
 				GMime.StreamMem mem_stream = new GMime.StreamMem ();

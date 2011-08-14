@@ -1,5 +1,18 @@
 2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/GMime.metadata: Rename AppendHeader() to Append(),
+	PrependHeader() to Prepend(), RemoveHeader() to Remove(), etc.
+
+	* mono/HeaderList.custom: Instead of having
+	GetHeader()/SetHeader(), manually bind this as an indexer.
+
+	* gmime/gmime-header.c (g_mime_header_list_clear): New function
+	to clear all headers.
+	(g_mime_header_list_contains): New function added mostly for
+	completeness in the C# binding.
+
+2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* README: Bumped version
 
 	* configure.ac: Bumped version to 2.5.10

@@ -597,6 +597,8 @@ g_mime_header_iter_set_value
 g_mime_header_iter_remove
 g_mime_header_list_new
 g_mime_header_list_destroy
+g_mime_header_list_clear
+g_mime_header_list_contains
 g_mime_header_list_prepend
 g_mime_header_list_append
 g_mime_header_list_remove
