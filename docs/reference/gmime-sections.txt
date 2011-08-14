@@ -756,6 +756,7 @@ g_mime_part_iter_jump_to
 g_mime_part_iter_is_valid
 g_mime_part_iter_next
 g_mime_part_iter_prev
+g_mime_part_iter_get_toplevel
 g_mime_part_iter_get_current
 g_mime_part_iter_get_parent
 g_mime_part_iter_get_path

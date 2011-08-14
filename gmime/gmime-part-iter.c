@@ -72,11 +72,14 @@ g_mime_part_iter_push (GMimePartIter *iter, GMimeObject *object, int index)
 	iter->parent = node;
 }
 
-static void
+static gboolean
 g_mime_part_iter_pop (GMimePartIter *iter)
 {
 	GMimeObjectStack *node;
 	GMimeObject *object;
+	
+	if (!iter->parent || !iter->parent->parent)
+		return FALSE;
 	
 	iter->index = g_array_index (iter->path, int, iter->path->len - 1);
 	g_array_set_size (iter->path, iter->path->len - 1);
@@ -86,6 +89,8 @@ g_mime_part_iter_pop (GMimePartIter *iter)
 	node = iter->parent;
 	iter->parent = node->parent;
 	g_slice_free (GMimeObjectStack, node);
+	
+	return TRUE;
 }
 
 
@@ -155,7 +160,10 @@ g_mime_part_iter_reset (GMimePartIter *iter)
 	g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
 	g_array_set_size (iter->path, 0);
 	iter->parent = NULL;
-	iter->index = 0;
+	iter->index = -1;
+	
+	/* set our initial 'current' part to our first child */
+	g_mime_part_iter_next (iter);
 }
 
 
@@ -177,8 +185,9 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 	GMimeMultipart *multipart;
 	GMimeMessage *message;
 	GMimeObject *current;
+	GMimeObject *parent;
 	const char *inptr;
-	long int index;
+	int index;
 	char *dot;
 	
 	g_return_val_if_fail (iter != NULL, FALSE);
@@ -188,57 +197,51 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 	if (!path || !path[0])
 		return TRUE;
 	
-	current = iter->toplevel;
+	parent = iter->parent->object;
 	iter->current = NULL;
+	current = NULL;
 	inptr = path;
+	index = -1;
 	
 	while (*inptr) {
 		/* Note: path components are 1-based instead of 0-based */
 		if ((index = strtol (inptr, &dot, 10)) <= 0 || errno == ERANGE ||
-		    index > G_MAXINT || !(*dot == '.' || *dot == '\0'))
+		    index == G_MAXINT || !(*dot == '.' || *dot == '\0'))
 			return FALSE;
 		
 		/* normalize to a 0-based index */
 		index--;
 		
-		if (GMIME_IS_MESSAGE_PART (current)) {
+		if (GMIME_IS_MESSAGE_PART (parent)) {
 			if (index != 0)
 				return FALSE;
 			
-			message_part = (GMimeMessagePart *) current;
+			message_part = (GMimeMessagePart *) parent;
 			if (!(message = g_mime_message_part_get_message (message_part)))
 				return FALSE;
-			
-			g_mime_part_iter_push (iter, current, iter->index);
 			
 			if (!(current = g_mime_message_get_mime_part (message)))
 				return FALSE;
 			
 			iter->index = 0;
-		} else if (GMIME_IS_MULTIPART (current)) {
-			multipart = (GMimeMultipart *) current;
+		} else if (GMIME_IS_MULTIPART (parent)) {
+			multipart = (GMimeMultipart *) parent;
 			if (index >= g_mime_multipart_get_count (multipart))
 				return FALSE;
 			
-			g_mime_part_iter_push (iter, current, iter->index);
-			
 			current = g_mime_multipart_get_part (multipart, index);
 			iter->index = index;
-		} else if (GMIME_IS_MESSAGE (current)) {
-			/* Note: it should only be possible to get here on the first iteration */
-			if (index != 0)
-				return FALSE;
-			
-			if (!(current = g_mime_message_get_mime_part ((GMimeMessage *) current)))
-				return FALSE;
-			
-			iter->index = 0;
 		} else {
 			return FALSE;
 		}
 		
 		if (*dot != '.')
 			break;
+		
+		g_mime_part_iter_push (iter, current, iter->index);
+		parent = current;
+		current = NULL;
+		index = -1;
 		
 		inptr = dot + 1;
 	}
@@ -261,70 +264,9 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 gboolean
 g_mime_part_iter_is_valid (GMimePartIter *iter)
 {
-	GMimeMessagePart *message_part;
-	GMimeMultipart *multipart;
-	GMimeMessage *message;
-	GMimeObject *current;
-	int i, index;
-	
 	g_return_val_if_fail (iter != NULL, FALSE);
 	
-	/* quick check */
-	if (iter->current == NULL)
-		return FALSE;
-
-#ifdef EXPENSIVE_ITER_VALIDATION
-	/* find our root part */
-	if (GMIME_IS_MESSAGE (iter->toplevel)) {
-		message = (GMimeMessage *) iter->toplevel;
-		current = g_mime_message_get_mime_part (message);
-	} else {
-		current = iter->toplevel;
-	}
-	
-	for (i = 0; i < iter->path->len; i++) {
-		index = g_array_index (iter->path, int, i);
-		if (GMIME_IS_MESSAGE_PART (current)) {
-			if (index != 0)
-				return FALSE;
-			
-			message_part = (GMimeMessagePart *) current;
-			message = g_mime_message_part_get_message (message_part);
-			current = g_mime_message_get_mime_part (message);
-		} else if (GMIME_IS_MULTIPART (current)) {
-			multipart = (GMimeMultipart *) current;
-			if (index >= g_mime_multipart_get_count (multipart))
-				return FALSE;
-			
-			current = g_mime_multipart_get_part (multipart, index);
-		} else {
-			return FALSE;
-		}
-	}
-	
-	index = iter->index;
-	if (GMIME_IS_MESSAGE_PART (current)) {
-		if (index != 0)
-			return FALSE;
-		
-		message_part = (GMimeMessagePart *) current;
-		message = g_mime_message_part_get_message (message_part);
-		current = g_mime_message_get_mime_part (message);
-	} else if (GMIME_IS_MULTIPART (current)) {
-		multipart = (GMimeMultipart *) current;
-		if (index >= g_mime_multipart_get_count (multipart))
-			return FALSE;
-		
-		current = g_mime_multipart_get_part (multipart, index);
-	} else if (index != 0) {
-		return FALSE;
-	}
-	
-	if (current != iter->current)
-		return FALSE;
-#endif /* EXPENSIVE_ITER_VALIDATION */
-	
-	return TRUE;
+	return iter->current != NULL;
 }
 
 
@@ -383,7 +325,8 @@ g_mime_part_iter_next (GMimePartIter *iter)
 			}
 		}
 		
-		g_mime_part_iter_pop (iter);
+		if (!g_mime_part_iter_pop (iter))
+			break;
 	}
 	
 	iter->current = NULL;
@@ -428,9 +371,24 @@ g_mime_part_iter_prev (GMimePartIter *iter)
 		}
 	}
 	
-	g_mime_part_iter_pop (iter);
+	return g_mime_part_iter_pop (iter);
+}
+
+
+/**
+ * g_mime_part_iter_get_toplevel:
+ * @iter: a #GMimePartIter
+ *
+ * Gets the toplevel #GMimeObject used to initialize @iter.
+ *
+ * Returns: the toplevel #GMimeObject.
+ **/
+GMimeObject *
+g_mime_part_iter_get_toplevel (GMimePartIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, NULL);
 	
-	return TRUE;
+	return iter->toplevel;
 }
 
 
@@ -446,8 +404,7 @@ g_mime_part_iter_prev (GMimePartIter *iter)
 GMimeObject *
 g_mime_part_iter_get_current (GMimePartIter *iter)
 {
-	if (!g_mime_part_iter_is_valid (iter))
-		return NULL;
+	g_return_val_if_fail (iter != NULL, NULL);
 	
 	return iter->current;
 }
@@ -466,10 +423,9 @@ g_mime_part_iter_get_current (GMimePartIter *iter)
 GMimeObject *
 g_mime_part_iter_get_parent (GMimePartIter *iter)
 {
-	if (!g_mime_part_iter_is_valid (iter))
-		return NULL;
+	g_return_val_if_fail (iter != NULL, NULL);
 	
-	return iter->parent ? iter->parent->object : iter->toplevel;
+	return iter->parent->object;
 }
 
 

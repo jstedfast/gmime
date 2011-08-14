@@ -91,66 +91,58 @@ print_mime_struct (GMimeObject *part, int depth)
 }
 
 static void
-print_mime_struct_iter (GMimeMessage *message)
+print_mime_part_info (const char *path, GMimeObject *object)
 {
 	const GMimeContentType *type;
+	gboolean has_md5;
+	
+	type = g_mime_object_get_content_type (object);
+	
+	if (GMIME_IS_PART (object))
+		has_md5 = g_mime_object_get_header (object, "Content-Md5") != NULL;
+	else
+		has_md5 = FALSE;
+	
+	fprintf (stdout, "%s\tContent-Type: %s/%s%s", path,
+		 type->type, type->subtype, has_md5 ? "; md5sum=" : "\n");
+	
+	if (has_md5) {
+		/* validate the Md5 sum */
+		if (g_mime_part_verify_content_md5 ((GMimePart *) object))
+			fprintf (stdout, "GOOD\n");
+		else
+			fprintf (stdout, "BAD\n");
+	}
+}
+
+static void
+print_mime_struct_iter (GMimeMessage *message)
+{
 	GMimePartIter *iter;
 	GMimeObject *part;
-	gboolean has_md5;
 	char *path;
 	
 	iter = g_mime_part_iter_new ((GMimeObject *) message);
 	
+	part = g_mime_part_iter_get_parent (iter);
+	print_mime_part_info ("", part);
+	
 	do {
 		part = g_mime_part_iter_get_current (iter);
-		type = g_mime_object_get_content_type (part);
 		path = g_mime_part_iter_get_path (iter);
-		
-		if (GMIME_IS_PART (part))
-			has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
-		else
-			has_md5 = FALSE;
-		
-		fprintf (stdout, "%s\tContent-Type: %s/%s%s", path,
-			 type->type, type->subtype, has_md5 ? "; md5sum=" : "\n");
-		
-		if (has_md5) {
-			/* validate the Md5 sum */
-			if (g_mime_part_verify_content_md5 ((GMimePart *) part))
-				fprintf (stdout, "GOOD\n");
-			else
-				fprintf (stdout, "BAD\n");
-		}
-		
+		print_mime_part_info (path, part);
 		g_free (path);
 	} while (g_mime_part_iter_next (iter));
 
 #if 0
-	fprintf (stdout, "Jumping to 1.1.2\n");
-	if (g_mime_part_iter_jump_to (iter, "1.1.2")) {
+	fprintf (stdout, "Jumping to 1.2\n");
+	if (g_mime_part_iter_jump_to (iter, "1.2")) {
 		part = g_mime_part_iter_get_current (iter);
-		type = g_mime_object_get_content_type (part);
 		path = g_mime_part_iter_get_path (iter);
-		
-		if (GMIME_IS_PART (part))
-			has_md5 = g_mime_object_get_header (part, "Content-Md5") != NULL;
-		else
-			has_md5 = FALSE;
-		
-		fprintf (stdout, "%s\tContent-Type: %s/%s%s", path,
-			 type->type, type->subtype, has_md5 ? "; md5sum=" : "\n");
-		
-		if (has_md5) {
-			/* validate the Md5 sum */
-			if (g_mime_part_verify_content_md5 ((GMimePart *) part))
-				fprintf (stdout, "GOOD\n");
-			else
-				fprintf (stdout, "BAD\n");
-		}
-		
+		print_mime_part_info (path, part);
 		g_free (path);
 	} else {
-		fprintf (stdout, "Failed to jump to 1.1.2\n");
+		fprintf (stdout, "Failed to jump to 1.2\n");
 	}
 #endif
 	

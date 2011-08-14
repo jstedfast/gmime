@@ -45,6 +45,7 @@ gboolean g_mime_part_iter_is_valid (GMimePartIter *iter);
 gboolean g_mime_part_iter_next (GMimePartIter *iter);
 gboolean g_mime_part_iter_prev (GMimePartIter *iter);
 
+GMimeObject *g_mime_part_iter_get_toplevel (GMimePartIter *iter);
 GMimeObject *g_mime_part_iter_get_current (GMimePartIter *iter);
 GMimeObject *g_mime_part_iter_get_parent (GMimePartIter *iter);
 char *g_mime_part_iter_get_path (GMimePartIter *iter);

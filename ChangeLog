@@ -1,3 +1,8 @@
+2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-part-iter.c: Updated to be more consistent with IMAP
+	part specifiers.
+
 2011-08-13  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-part-iter.c: New class for iterating over a tree of
