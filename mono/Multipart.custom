@@ -143,7 +143,12 @@
 		
 		public IEnumerator GetEnumerator ()
 		{
-			return new GMimeMultipartIterator (this);
+			int n = Count;
+			
+			for (int i = 0; i < n; i++)
+				yield return this[i];
+			
+			yield break;
 		}
 		
 		public int IndexOf (GMime.Entity part)
@@ -239,31 +244,5 @@
 			
 			set {
 				this[index] = value as GMime.Entity;
-			}
-		}
-		
-		internal class GMimeMultipartIterator : IEnumerator {
-			GMime.Multipart multipart;
-			int index = -1;
-			
-			public GMimeMultipartIterator (GMime.Multipart multipart)
-			{
-				this.multipart = multipart;
-			}
-			
-			public object Current {
-				get { return multipart[index]; }
-			}
-			
-			public void Reset ()
-			{
-				index = -1;
-			}
-			
-			public bool MoveNext ()
-			{
-				index++;
-				
-				return index < multipart.Count;
 			}
 		}
