@@ -29,6 +29,23 @@
 			}
 		}
 		
+		[DllImport ("gmime")]
+		static extern bool g_mime_header_list_get_iter (IntPtr raw, IntPtr iter);
+		
+		internal HeaderIter GetIter ()
+		{
+			HeaderIter iter = new HeaderIter ();
+			
+			g_mime_header_list_get_iter (Handle, iter.Handle);
+			
+			return iter;
+		}
+		
+		public IEnumerator GetEnumerator ()
+		{
+			return new HeaderEnumerator (this);
+		}
+		
 		public StreamWrapper Stream {
 			get {
 				GMime.StreamMem mem_stream = new GMime.StreamMem ();

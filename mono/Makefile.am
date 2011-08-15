@@ -16,10 +16,14 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
 
 sources = 					\
-	StreamWrapper.cs
+	StreamWrapper.cs			\
+	HeaderEnumerator.cs			\
+	Header.cs
 
 build_sources =  				\
 	$(srcdir)/StreamWrapper.cs		\
+	$(srcdir)/HeaderEnumerator.cs		\
+	$(srcdir)/Header.cs			\
 	AssemblyInfo.cs
 
 customs = 					\

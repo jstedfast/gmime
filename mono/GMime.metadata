@@ -186,13 +186,26 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeHeader']"/>
 
   <!-- HeaderList -->
+  <!-- We're going to implement the IEnumerable interface -->
+  <add-node path="/api/namespace/object[@cname='GMimeHeaderList']">
+    <implements>
+      <interface name="IEnumerable"/>
+    </implements>
+  </add-node>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@cname='g_mime_header_list_foreach']"/>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='SetStream']" name="hidden">true</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetStream']" name="hidden">true</attr>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Get']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Set']"/>
-  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetIter']/*/parameter[@name='iter']" name="pass_as">out</attr>
+  <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetIter']"/>
+  
+  <!-- HeaderIter -->
+  <!-- This should really be made to be internal, but I don't know how to do that... -->
   <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='SetValue']/return-type" name="type">void</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='First']" name="name">MoveFirst</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='Last']" name="name">MoveLast</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='Next']" name="name">MoveNext</attr>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']/method[@name='Prev']" name="name">MovePrev</attr>
   <attr path="/api/namespace/struct[@cname='GMimeHeaderIter']" name="opaque">true</attr>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='hdrlist']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='version']"/>

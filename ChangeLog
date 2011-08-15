@@ -1,5 +1,11 @@
 2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/HeaderEnumerator.cs: New IEnumerator class returned by
+	HeaderList.GetEnumerator(). Wraps HeaderIter, providing a more
+	C#-like experience.
+
+2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* mono/GMime.metadata: Rename AppendHeader() to Append(),
 	PrependHeader() to Prepend(), RemoveHeader() to Remove(), etc.
 
