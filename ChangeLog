@@ -1,5 +1,7 @@
 2011-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/*.custom: Simplified the GetEnumerator() methods.
+
 	* mono/HeaderEnumerator.cs: New IEnumerator class returned by
 	HeaderList.GetEnumerator(). Wraps HeaderIter, providing a more
 	C#-like experience.

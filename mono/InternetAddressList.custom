@@ -155,7 +155,12 @@
 		
 		public IEnumerator GetEnumerator ()
 		{
-			return new InternetAddressListIterator (this);
+			int n = Count;
+			
+			for (int i = 0; i < n; i++)
+				yield return this[i];
+			
+			yield break;
 		}
 		
 		public int IndexOf (InternetAddress addr)
@@ -273,30 +278,4 @@
 		public override string ToString ()
 		{
 			return ToString (false);
-		}
-		
-		internal class InternetAddressListIterator : IEnumerator {
-			InternetAddressList list;
-			int index = -1;
-			
-			public InternetAddressListIterator (InternetAddressList list)
-			{
-				this.list = list;
-			}
-			
-			public object Current {
-				get { return list[index]; }
-			}
-			
-			public void Reset ()
-			{
-				index = -1;
-			}
-			
-			public bool MoveNext ()
-			{
-				index++;
-				
-				return index < list.Count;
-			}
 		}

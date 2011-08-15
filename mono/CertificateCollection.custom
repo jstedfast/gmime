@@ -146,7 +146,12 @@
 		
 		public IEnumerator GetEnumerator ()
 		{
-			return new CertificateCollectionIterator (this);
+			int n = Count;
+			
+			for (int i = 0; i < n; i++)
+				yield return this[i];
+			
+			yield break;
 		}
 		
 		public int IndexOf (Certificate cert)
@@ -234,31 +239,5 @@
 			
 			set {
 				this[index] = value as Certificate;
-			}
-		}
-		
-		internal class CertificateCollectionIterator : IEnumerator {
-			CertificateCollection list;
-			int index = -1;
-			
-			public CertificateCollectionIterator (CertificateCollection list)
-			{
-				this.list = list;
-			}
-			
-			public object Current {
-				get { return list[index]; }
-			}
-			
-			public void Reset ()
-			{
-				index = -1;
-			}
-			
-			public bool MoveNext ()
-			{
-				index++;
-				
-				return index < list.Count;
 			}
 		}
