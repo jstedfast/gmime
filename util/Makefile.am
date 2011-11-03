@@ -7,7 +7,6 @@ noinst_LTLIBRARIES = libutil.la
 INCLUDES = -I$(top_srcdir) 		\
 	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"util\"		\
-	-DG_DISABLE_DEPRECATED		\
 	$(GMIME_CFLAGS)			\
 	$(GLIB_CFLAGS)
 

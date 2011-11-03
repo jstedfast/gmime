@@ -6,7 +6,6 @@ INCLUDES = 				\
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/util		\
 	-DG_LOG_DOMAIN=\"gmime-tests\"	\
-	-DG_DISABLE_DEPRECATED		\
 	$(GMIME_CFLAGS)			\
 	$(GLIB_CFLAGS)
 
