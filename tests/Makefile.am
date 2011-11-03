@@ -104,7 +104,7 @@ test_pgpmime_LDADD = $(LDADDS)
 test_pkcs7_SOURCES = test-pkcs7.c testsuite.c testsuite.h
 test_pkcs7_LDFLAGS = 
 test_pkcs7_DEPENDENCIES = $(DEPS)
-test_pkcs7_LDADD = $(LDADDS)
+test_pkcs7_LDADD = $(LDADDS) $(GPGME_PTHREAD_LIBS) -lgpg-error
 
 test_smime_SOURCES = test-smime.c testsuite.c testsuite.h
 test_smime_LDFLAGS = 
