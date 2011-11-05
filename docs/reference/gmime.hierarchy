@@ -1,4 +1,29 @@
 GObject
+  GMimeCipherContext
+    GMimeGpgContext
+  GMimeFilter
+    GMimeFilterBasic
+    GMimeFilterBest
+    GMimeFilterCharset
+    GMimeFilterCRLF
+    GMimeFilterEnriched
+    GMimeFilterFrom
+    GMimeFilterGZip
+    GMimeFilterHTML
+    GMimeFilterMd5
+    GMimeFilterStrip
+    GMimeFilterWindows
+    GMimeFilterYenc
+  GMimeStream
+    GMimeStreamBuffer
+    GMimeStreamCat
+    GMimeStreamFile
+    GMimeStreamFilter
+    GMimeStreamFs
+    GMimeStreamMem
+    GMimeStreamMmap
+    GMimeStreamNull
+  GMimeParser
   GMimeObject
     GMimeMessage
     GMimePart
@@ -13,33 +38,8 @@ GObject
     InternetAddressGroup
     InternetAddressMailbox
   InternetAddressList
-  GMimeCipherContext
-    GMimeGpgContext
   GMimeDataWrapper
-  GMimeFilter
-    GMimeFilterBasic
-    GMimeFilterBest
-    GMimeFilterCharset
-    GMimeFilterCRLF
-    GMimeFilterEnriched
-    GMimeFilterFrom
-    GMimeFilterGZip
-    GMimeFilterHTML
-    GMimeFilterMd5
-    GMimeFilterStrip
-    GMimeFilterWindows
-    GMimeFilterYenc
-  GMimeParser
   GMimeSession
     GMimeSessionSimple
-  GMimeStream
-    GMimeStreamBuffer
-    GMimeStreamCat
-    GMimeStreamFile
-    GMimeStreamFilter
-    GMimeStreamFs
-    GMimeStreamMem
-    GMimeStreamMmap
-    GMimeStreamNull
 GInterface
   GTypePlugin
