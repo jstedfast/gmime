@@ -1,5 +1,12 @@
 2011-11-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_decrypt): Need to decode the content
+	of the application/octet-stream part containing the encrypted
+	payload as it may have a non-7bit Content-Transfer-Encoding.
+
+2011-11-05  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* README: Bumped version
 
 	* configure.in: Bumped version to 2.4.27
