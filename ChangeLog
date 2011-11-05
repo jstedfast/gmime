@@ -1,3 +1,8 @@
+2011-11-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime.c (g_mime_init): Register all GObject-based types
+	to prevent race conditions in multi-threaded apps.
+
 2011-08-27  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
