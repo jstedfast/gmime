@@ -138,6 +138,7 @@ g_mime_init (guint32 flags)
 	
 	g_mime_parser_get_type ();
 	g_mime_message_get_type ();
+	g_mime_data_wrapper_get_type ();
 	g_mime_content_type_get_type ();
 	g_mime_content_disposition_get_type ();
 	

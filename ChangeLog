@@ -1,5 +1,8 @@
 2011-11-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime.c (g_mime_init): Oops, don't forget to register
+	GMimeDataWrapper as well.
+
 	* gmime/gmime-multipart-encrypted.c
 	(g_mime_multipart_encrypted_decrypt): Need to decode the content
 	of the application/octet-stream part containing the encrypted
