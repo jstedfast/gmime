@@ -1,3 +1,11 @@
+2011-11-06  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.28
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
 2011-11-05  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime.c (g_mime_init): Oops, don't forget to register
