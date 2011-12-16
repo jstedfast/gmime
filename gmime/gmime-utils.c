@@ -1553,7 +1553,17 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 		}
 	} while (inleft > 0);
 	
-	iconv (cd, NULL, NULL, &outbuf, &outleft);
+	while (iconv (cd, NULL, NULL, &outbuf, &outleft) == (size_t) -1) {
+		if (errno != E2BIG)
+			break;
+		
+		outlen += 16;
+		rc = (size_t) (outbuf - out);
+		out = g_realloc (out, outlen + 1);
+		outleft = outlen - rc;
+		outbuf = out + rc;
+	}
+	
 	*outbuf++ = '\0';
 	
 	*outlenp = outlen;
