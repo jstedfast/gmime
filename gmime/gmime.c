@@ -120,6 +120,7 @@ g_mime_init (guint32 flags)
 	gmime_error_quark = g_quark_from_static_string ("gmime");
 	
 	/* register our GObject types with the GType system */
+#ifdef ENABLE_CRYPTOGRAPHY
 	g_mime_crypto_context_get_type ();
 	g_mime_decrypt_result_get_type ();
 	g_mime_certificate_list_get_type ();
@@ -128,6 +129,7 @@ g_mime_init (guint32 flags)
 	g_mime_signature_get_type ();
 	g_mime_gpg_context_get_type ();
 	g_mime_pkcs7_context_get_type ();
+#endif
 	
 	g_mime_filter_get_type ();
 	g_mime_filter_basic_get_type ();
