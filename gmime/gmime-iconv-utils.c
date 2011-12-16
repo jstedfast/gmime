@@ -150,7 +150,16 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 	 */
 	
 	/* flush the iconv conversion */
-	iconv (cd, NULL, NULL, &outbuf, &outleft);
+	while (iconv (cd, NULL, NULL, &outbuf, &outleft) == (size_t) -1) {
+		if (errno != E2BIG)
+			break;
+		
+		outlen += 16;
+		converted = outbuf - out;
+		out = g_realloc (out, outlen + 4);
+		outleft = outlen - converted;
+		outbuf = out + converted;
+	}
 	
 	/* Note: not all charsets can be nul-terminated with a single
            nul byte. UCS2, for example, needs 2 nul bytes and UCS4
