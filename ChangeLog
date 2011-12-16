@@ -1,5 +1,7 @@
 2011-12-15  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-iconv-utils.c (g_mime_iconv_strndup): Same.
+
 	* gmime/gmime-filter-charset.c (flter_complete): Same as
 	charset_convert().
 
