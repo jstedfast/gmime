@@ -258,7 +258,15 @@ filter_complete (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	}
 	
 	/* flush the iconv conversion */
-	iconv (charset->cd, NULL, NULL, &outbuf, &outleft);
+	while (iconv (charset->cd, NULL, NULL, &outbuf, &outleft) == (size_t) -1) {
+		if (errno != E2BIG)
+			break;
+		
+		converted = outbuf - filter->outbuf;
+		g_mime_filter_set_size (filter, filter->outsize + 16, TRUE);
+		outbuf = filter->outbuf + converted;
+		outleft = filter->outsize - converted;
+	}
 	
 	*out = filter->outbuf;
 	*outlen = outbuf - filter->outbuf;

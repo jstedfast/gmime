@@ -1,5 +1,8 @@
 2011-12-15  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-filter-charset.c (flter_complete): Same as
+	charset_convert().
+
 	* gmime/gmime-utils.c (charset_convert): Make sure the output
 	buffer is large enough when flushing the conversion descriptor.
 
