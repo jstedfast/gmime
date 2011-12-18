@@ -1564,7 +1564,7 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 		outbuf = out + rc;
 	}
 	
-	*outbuf++ = '\0';
+	*outbuf = '\0';
 	
 	*outlenp = outlen;
 	*outp = out;
