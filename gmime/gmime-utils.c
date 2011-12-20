@@ -1723,8 +1723,8 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	unsigned char c, c1;
-	size_t need, i;
 	guint32 saved;
+	int need;
 	
 	if (len == 0)
 		return 0;
@@ -1733,7 +1733,7 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
 	outptr = out;
 	inptr = in;
 	
-	need = (size_t) *state;
+	need = *state;
 	saved = *save;
 	
 	if (need > 0) {
@@ -1803,7 +1803,7 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
 		}
 	}
 	
-	*state = (int) need;
+	*state = need;
 	*save = saved;
 	
 	return (size_t) (outptr - out);
