@@ -1949,8 +1949,10 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 					inptr += 2;
 					
 					/* skip past the charset (if one is even declared, sigh) */
-					while (*inptr && *inptr != '?')
+					while (*inptr && *inptr != '?') {
+						ascii = ascii && is_ascii (*inptr);
 						inptr++;
+					}
 					
 					/* sanity check encoding type */
 					if (inptr[0] != '?' || !strchr ("BbQq", inptr[1]) || inptr[2] != '?')
@@ -1959,12 +1961,16 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 					inptr += 3;
 					
 					/* find the end of the rfc2047 encoded word token */
-					while (*inptr && strncmp (inptr, "?=", 2) != 0)
+					while (*inptr && strncmp (inptr, "?=", 2) != 0) {
+						ascii = ascii && is_ascii (*inptr);
 						inptr++;
+					}
 					
 					if (*inptr == '\0') {
 						/* didn't find an end marker... */
 						inptr = word + 2;
+						ascii = TRUE;
+						
 						goto non_rfc2047;
 					}
 					
@@ -2004,6 +2010,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 				}
 				
 				token = rfc2047_token_new (word, n);
+				token->is_8bit = ascii ? 0 : 1;
 				tail->next = token;
 				tail = token;
 				
@@ -2024,10 +2031,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 			
 			n = (size_t) (inptr - word);
 			token = rfc2047_token_new (word, n);
-			if (!ascii) {
-				/* *sigh* I hate broken mailers... */
-				token->is_8bit = 1;
-			}
+			token->is_8bit = ascii ? 0 : 1;
 			
 			tail->next = token;
 			tail = token;
@@ -2141,6 +2145,7 @@ tokenize_rfc2047_text (const char *in, size_t *len)
 				}
 				
 				token = rfc2047_token_new (word, n);
+				token->is_8bit = ascii ? 0 : 1;
 				tail->next = token;
 				tail = token;
 				
