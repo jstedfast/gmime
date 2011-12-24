@@ -1,3 +1,9 @@
+2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.3
+
 2011-12-18  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-utils.c (quoted_decode): Made more robust and also
