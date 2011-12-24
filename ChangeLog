@@ -1,5 +1,13 @@
 2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.30
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
+2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-utils.c (quoted_decode): Made more robust and also
 	modified to keep state (e.g. for use when triplets span across
 	multiple encoded-word tokens).
