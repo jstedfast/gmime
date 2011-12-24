@@ -1,5 +1,20 @@
 2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-utils.c (quoted_decode): Made more robust and also
+	modified to keep state (e.g. for use when triplets span across
+	multiple encoded-word tokens).
+	(tokenize_rfc2047_phrase): Tokenizes a rfc822 phrase header for
+	later processing.
+	(tokenize_rfc2047_text): Tokenizes a rfc822 unstructured text
+	header for later processing.
+	(rfc2047_decode_tokens): Merge and decode rfc2047 tokens,
+	converting the decoded text into UTF-8.
+	(g_mime_utils_header_decode_phrase): Rewritten to use the above
+	functions.
+	(g_mime_utils_header_decode_text): Same.
+
+2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-utils.c (charset_convert): Don't count the
 	terminating nul character in the returned string length.
 

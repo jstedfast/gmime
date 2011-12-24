@@ -558,7 +558,7 @@ g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, un
 	}
 	
 	*state = (npad << 8) | n;
-	*save = saved;
+	*save = n ? saved : 0;
 	
 	return (outptr - outbuf);
 }
