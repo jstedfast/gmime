@@ -1,3 +1,8 @@
+2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (charset_convert): Don't count the
+	terminating nul character in the returned string length.
+
 2011-12-15  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
