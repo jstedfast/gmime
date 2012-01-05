@@ -112,12 +112,7 @@ testsuite_init (int argc, char **argv)
 int
 testsuite_exit (void)
 {
-	if (total_errors > 0)
-		return total_errors;
-	else if (total_tests > 0)
-		return 0;
-	
-	return EXIT_FAILURE;
+	return total_errors;
 }
 
 
