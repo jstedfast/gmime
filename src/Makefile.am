@@ -4,7 +4,7 @@ SUBDIRS = .
 
 INCLUDES = -I$(top_srcdir) $(GMIME_CFLAGS) $(GLIB_CFLAGS)
 
-bin_PROGRAMS = uuencode uudecode
+bin_PROGRAMS = gmime-uuencode gmime-uudecode
 
 DEPS = 						\
 	$(top_builddir)/util/libutil.la		\
@@ -21,12 +21,12 @@ else
 GETOPT_SOURCES = getopt.c getopt.h getopt1.c
 endif
 
-uuencode_SOURCES = $(GETOPT_SOURCES) uuencode.c
-uuencode_LDFLAGS = 
-uuencode_DEPENDENCIES = $(DEPS)
-uuencode_LDADD = $(LDADDS)
+gmime_uuencode_SOURCES = $(GETOPT_SOURCES) uuencode.c
+gmime_uuencode_LDFLAGS = 
+gmime_uuencode_DEPENDENCIES = $(DEPS)
+gmime_uuencode_LDADD = $(LDADDS)
 
-uudecode_SOURCES = $(GETOPT_SOURCES) uudecode.c
-uudecode_LDFLAGS = 
-uudecode_DEPENDENCIES = $(DEPS)
-uudecode_LDADD = $(LDADDS)
+gmime_uudecode_SOURCES = $(GETOPT_SOURCES) uudecode.c
+gmime_uudecode_LDFLAGS = 
+gmime_uudecode_DEPENDENCIES = $(DEPS)
+gmime_uudecode_LDADD = $(LDADDS)
