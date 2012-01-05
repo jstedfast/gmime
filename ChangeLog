@@ -1,3 +1,7 @@
+2012-01-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (rfc2047_decode_tokens): Fixed a memory leak.
+
 2011-12-23  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
