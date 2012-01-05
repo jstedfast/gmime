@@ -1,5 +1,5 @@
-prefix=@prefix@
-libdir=${prefix}/lib
+exec_prefix=@prefix@
+libdir=@libdir@
 
 Name: gmime-sharp 
 Version: @VERSION@
