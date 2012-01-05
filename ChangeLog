@@ -1,5 +1,13 @@
 2012-01-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	Fixes for bug #667072.
+
+	* mono/Makefile.am: Install to $(libdir) instead of $(prefix)/libdir.
+
+	* mono/gmime-sharp.pc.in: Set libdir to @libdir@
+
+2012-01-05  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* src/Makefile.am: Rename uuencode/uudecode to
 	gmime-uuencode/decode to prevent naming collisions with the GNU
 	Sharutils tools. Fixes bug #667073.
