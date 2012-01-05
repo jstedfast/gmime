@@ -906,15 +906,19 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		
 		/* the second token is the public-key algorithm id */
 		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
-		if (inend == status || *inend != ' ')
+		if (inend == status || *inend != ' ') {
+			sig->cert->pubkey_algo = 0;
 			return;
+		}
 		
 		status = inend + 1;
 		
 		/* the third token is the digest algorithm id */
 		sig->cert->digest_algo = strtoul (status, &inend, 10);
-		if (inend == status || *inend != ' ')
+		if (inend == status || *inend != ' ') {
+			sig->cert->digest_algo = 0;
 			return;
+		}
 		
 		status = inend + 1;
 		
@@ -987,15 +991,19 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		
 		/* the seventh token is the public-key algorithm id */
 		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
-		if (inend == status || *inend != ' ')
+		if (inend == status || *inend != ' ') {
+			sig->cert->pubkey_algo = 0;
 			return;
+		}
 		
 		status = inend + 1;
 		
 		/* the eighth token is the digest algorithm id */
 		sig->cert->digest_algo = strtoul (status, &inend, 10);
-		if (inend == status || *inend != ' ')
+		if (inend == status || *inend != ' ') {
+			sig->cert->digest_algo = 0;
 			return;
+		}
 		
 		status = inend + 1;
 		
@@ -1268,8 +1276,10 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				
 				/* first token is the mdc algorithm (or 0 if not used) */
 				gpg->digest = strtoul (status, &inend, 10);
-				if (inend == status || *inend != ' ')
-					return;
+				if (inend == status || *inend != ' ') {
+					gpg->digest = 0;
+					break;
+				}
 				
 				status = inend + 1;
 				
@@ -1296,8 +1306,10 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				
 				/* second token is the recipient's pubkey algo */
 				cert->pubkey_algo = strtoul (status, &inend, 10);
-				if (inend == status || *inend != ' ')
-					return;
+				if (inend == status || *inend != ' ') {
+					cert->pubkey_algo = 0;
+					break;
+				}
 				
 				status = inend + 1;
 				
