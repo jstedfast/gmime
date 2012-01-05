@@ -2265,6 +2265,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 				g_mime_iconv_close (cd);
 				
 				g_string_append_len (decoded, str, len);
+				g_free (str);
 				
 #if w(!)0
 				if (ninval > 0) {
