@@ -433,7 +433,7 @@ int main (int argc, char *argv[])
 	}
 	
 	if (i < argc && (stat (datadir, &st) == -1 || !S_ISDIR (st.st_mode)))
-		return EXIT_FAILURE;
+		return 0;
 	
 	testsuite_start ("PGP/MIME implementation");
 	
