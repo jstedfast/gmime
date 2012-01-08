@@ -1,8 +1,8 @@
 #!/bin/sh
 # Run this to generate all the initial makefiles, etc.
 
-srcdir=`dirname $0`
-test -z "$srcdir" && srcdir=.
+test -n "$srcdir" || srcdir=`dirname $0`
+test -n "$srcdir" || srcdir=.
 
 ORIGDIR=`pwd`
 cd $srcdir
@@ -84,7 +84,7 @@ fi
 $ACLOCAL $ACLOCAL_FLAGS || exit $?
 
 libtoolize --force || exit $?
-#gtkdocize || exit $?
+gtkdocize || exit $?
 
 autoheader || exit $?
 
