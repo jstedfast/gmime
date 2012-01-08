@@ -1,4 +1,4 @@
-.PHONY: html pdf
+.PHONY: html
 
 EXTRA_DIST = gmime-tut.sgml
 
@@ -12,18 +12,7 @@ if HAVE_DOCBOOK
 	fi
 else
 	echo "***"
-	echo "*** Warning: HTML version of the tutorial not built"
-	echo "***"
-endif
-
-pdf:
-if HAVE_DOCBOOK
-	if test -w $(srcdir); then \
-	  (cd $(srcdir); $(DB2PDF) gmime-tut.sgml); \
-	fi
-else
-	echo "***"
-	echo "*** Warning: Pdf version of the tutorial not built"
+	echo "*** Warning: Tutorial not built"
 	echo "***"
 endif
 

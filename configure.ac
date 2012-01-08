@@ -198,8 +198,7 @@ dnl ************************************
 
 GTK_DOC_CHECK([1.8])
 
-AC_CHECK_PROG([DB2HTML], [db2html docbook2html], true, false)
-AC_CHECK_PROG([DB2PDF], [db2pdf docbook2pdf], true, false)
+AC_PATH_PROGS([DB2HTML], [db2html docbook2html])
 AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
 
 dnl NOTE: We need to use a separate automake conditional for this
