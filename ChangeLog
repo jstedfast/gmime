@@ -1,8 +1,17 @@
+2012-01-08  Jeffrey Stedfast  <fejj@gnome.org>
+
+	Fix for bug #667070
+
+	* configure.ac: Fixed Docbook checks for the html and pdf converters.
+
+	* docs/tutorial/Makefile.am: Use the DB2HTML and DB2PDF variables.
+
 2012-01-05  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	Fixes for bug #667137.
 
-	* tests/Makefile.am: If any tests fail, exit with an error to abort make.
+	* tests/Makefile.am: If any tests fail, exit with an error to
+	abort make.
 
 	* tests/testsuite.c (testsuite_exit): Simply return
 	total_errors.
