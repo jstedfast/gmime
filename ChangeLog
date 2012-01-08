@@ -1,5 +1,13 @@
 2012-01-08  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.31
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
+2012-01-08  Jeffrey Stedfast  <fejj@gnome.org>
+
 	Fix for bug #667070
 
 	* configure.in: Fixed Docbook checks for the html and pdf converters.
