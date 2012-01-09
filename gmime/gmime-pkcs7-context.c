@@ -743,7 +743,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 #endif /* ENABLE_SMIME */
 }
 
-
+#ifdef ENABLE_SMIME
 static GMimeDecryptResult *
 pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
 {
@@ -772,6 +772,7 @@ pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
 	
 	return result;
 }
+#endif /* ENABLE_SMIME */
 
 static GMimeDecryptResult *
 pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
