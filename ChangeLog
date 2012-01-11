@@ -1,6 +1,13 @@
+2012-01-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-pkcs7-context.c: Fixed some switch statements to
+	include a 'default' code path, fixing some compiler
+	warnings. Fixes bug #667684.
+
 2012-01-09  Ionut Biru  <ibiru@archlinux.org>
 
-	* gmime/gmime-pkcs7-context.c: Fix compilation when S/MIME is not enabled.
+	* gmime/gmime-pkcs7-context.c: Fix compilation when S/MIME is not
+	enabled.
 
 2012-01-08  Jeffrey Stedfast  <fejj@gnome.org>
 

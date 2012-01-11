@@ -313,6 +313,8 @@ pkcs7_stream_seek (void *stream, off_t offset, int whence)
 		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_CUR);
 	case SEEK_END:
 		return (off_t) g_mime_stream_seek ((GMimeStream *) stream, (gint64) offset, GMIME_STREAM_SEEK_END);
+	default:
+		return -1;
 	}
 }
 
@@ -489,6 +491,7 @@ pkcs7_trust (gpgme_validity_t trust)
 {
 	switch (trust) {
 	case GPGME_VALIDITY_UNKNOWN:
+	default:
 		return GMIME_CERTIFICATE_TRUST_NONE;
 	case GPGME_VALIDITY_UNDEFINED:
 		return GMIME_CERTIFICATE_TRUST_UNDEFINED;
