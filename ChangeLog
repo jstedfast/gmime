@@ -1,5 +1,12 @@
 2012-01-11  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/Makefile.am: Fixed up to more closely match the gtk-sharp
+	build.
+
+	* mono/gmime-sharp.pc.in: Fixed to more closely match gtk-sharp.
+
+2012-01-11  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-pkcs7-context.c: Fixed some switch statements to
 	include a 'default' code path, fixing some compiler
 	warnings. Fixes bug #667684.

@@ -1,7 +1,11 @@
-exec_prefix=@prefix@
-libdir=@libdir@
+prefix=${pcfiledir}/../..
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+gapidir=${prefix}/share/gapi-2.0
 
 Name: gmime-sharp 
 Version: @VERSION@
 Description: .NET bindings for GMime
+Cflags: -I:${gapidir}/gmime-api.xml
 Libs: -r:${libdir}/mono/gmime-sharp-@GMIME_API_VERSION@/gmime-sharp.dll
+Requires: glib-sharp-2.0

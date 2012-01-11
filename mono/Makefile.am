@@ -1,4 +1,5 @@
 API = gmime-api.xml
+SNK = gmime-sharp.snk
 RAW_API = gmime-api.raw
 METADATA = GMime.metadata
 ASSEMBLY_NAME = gmime-sharp
@@ -6,14 +7,18 @@ references = $(GLIB_SHARP_LIBS)
 SOURCES_XML = sources.xml
 
 PACKAGE_SHARP = $(PACKAGE)-sharp-$(GMIME_API_VERSION)
-TARGET = $(ASSEMBLY)
 ASSEMBLY = $(ASSEMBLY_NAME).dll
+TARGET = $(ASSEMBLY) $(ASSEMBLY).config
+TARGET_API = $(API)
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs gmime-sharp-$(GMIME_API_VERSION).pc
+GACUTIL_FLAGS = -package $(PACKAGE_VERSION) -gacdir $(DESTDIR)$(prefix)/lib
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
+gapidir = $(datadir)/gapi-2.0
+gapi_DATA = $(TARGET_API)
 
 sources = 					\
 	StreamWrapper.cs			\
@@ -54,8 +59,8 @@ build_customs = 				\
 
 EXTRA_DIST =					\
 	$(ASSEMBLY).config.in			\
-	$(ASSEMBLY_NAME).snk			\
 	AssemblyInfo.cs.in			\
+	$(SNK)					\
 	$(METADATA)				\
 	$(RAW_API)				\
 	$(customs)				\
@@ -76,31 +81,28 @@ generated-stamp: $(API) $(build_customs)
 	$(GAPI_CODEGEN) --generate $(API) --outdir=generated --customdir=$(srcdir) --assembly-name=$(ASSEMBLY_NAME) \
 	&& touch generated-stamp
 
+if PLATFORM_WIN32
+GAPI_CDECL_INSERT=$(top_srcdir)/gapi-cdecl-insert --keyfile=$(SNK) $(ASSEMBLY)
+else
+GAPI_CDECL_INSERT=
+endif
+
 $(ASSEMBLY): $(build_sources) generated-stamp $(srcdir)/$(ASSEMBLY_NAME).snk
 	$(CSC) -unsafe /out:$(ASSEMBLY) /target:library $(references) \
 	-keyfile:$(srcdir)/$(ASSEMBLY_NAME).snk $(build_sources) generated/*.cs
-	sn -q -R $(ASSEMBLY) $(srcdir)/$(ASSEMBLY_NAME).snk
+	$(GAPI_CDECL_INSERT)
+	sn -q -R $(ASSEMBLY) $(srcdir)/$(SNK)
 
-install-data-hook:
-	@if test -n '$(TARGET)'; then									\
-	  if test -n '$(DESTDIR)'; then									\
-	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir)";	\
-	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir) || exit 1;	\
-	  else												\
-	    echo "$(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /gacdir $(libdir)";		\
-	    $(GACUTIL) /i $(ASSEMBLY) /f /package $(PACKAGE_SHARP) /gacdir $(libdir) || exit 1;		\
-	  fi;												\
+install-data-local:
+	@if test -n '$(TARGET)'; then						\
+	  echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS)"			\
+	  $(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS) || exit 1;		\
 	fi
 
 uninstall-local:
-	@if test -n '$(TARGET)'; then									\
-	  if test -n '$(DESTDIR)'; then									\
-	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir)";	\
-	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /root $(DESTDIR)$(libdir) || exit 1;  \
-	  else												\
-	    echo "$(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /gacdir $(libdir)";		\
-	    $(GACUTIL) /u $(ASSEMBLY_NAME) /package $(PACKAGE_SHARP) /gacdir $(libdir) || exit 1;	\
-	  fi;												\
+	@if test -n '$(TARGET)'; then						\
+	  echo "$(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS)"			\
+	  $(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS) || exit 1;			\
 	fi
 
 parse:
