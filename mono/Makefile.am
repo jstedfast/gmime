@@ -13,7 +13,7 @@ TARGET_API = $(API)
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs gmime-sharp-$(GMIME_API_VERSION).pc
-GACUTIL_FLAGS = -package $(PACKAGE_VERSION) -gacdir $(DESTDIR)$(prefix)/lib
+GACUTIL_FLAGS = -package $(PACKAGE_SHARP) -gacdir $(DESTDIR)$(prefix)/lib
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
@@ -95,13 +95,13 @@ $(ASSEMBLY): $(build_sources) generated-stamp $(srcdir)/$(ASSEMBLY_NAME).snk
 
 install-data-local:
 	@if test -n '$(TARGET)'; then						\
-	  echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS)"			\
+	  echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS)";			\
 	  $(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS) || exit 1;		\
 	fi
 
 uninstall-local:
 	@if test -n '$(TARGET)'; then						\
-	  echo "$(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS)"			\
+	  echo "$(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS)";			\
 	  $(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS) || exit 1;			\
 	fi
 
