@@ -6,7 +6,7 @@ html:
 if HAVE_DOCBOOK
 	if test -w $(srcdir); then \
 	  (cd $(srcdir); \
-	   $(DB2HTML) gmime-tut.sgml; \
+	   $(DB2HTML) -o html gmime-tut.sgml; \
 	   test -d html && rm -r html; \
 	   mv gmime-tut html); \
 	fi

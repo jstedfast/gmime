@@ -199,7 +199,7 @@ dnl ************************************
 GTK_DOC_CHECK([1.8])
 
 AC_PATH_PROGS([DB2HTML], [db2html docbook2html])
-AM_CONDITIONAL(HAVE_DOCBOOK, $DB2HTML)
+AM_CONDITIONAL(HAVE_DOCBOOK, [test -n "$DB2HTML"])
 
 dnl NOTE: We need to use a separate automake conditional for this
 dnl       to make this work with the tarballs.
