@@ -571,6 +571,11 @@ if test "x$enable_mono" = "xyes"; then
 	AC_SUBST(API_VERSION)
 fi
 
+AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assembly Cache root directory]),,
+            [with_gacdir=$prefix/lib])
+gacdir=$(cd "$with_gacdir" && pwd)
+AC_SUBST(gacdir)
+
 dnl Extra libs
 EXTRA_LIBS="$ZLIB"
 if test "x$LIBSOCKET" != "x"; then

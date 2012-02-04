@@ -13,7 +13,7 @@ TARGET_API = $(API)
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs gmime-sharp-$(GMIME_API_VERSION).pc
-GACUTIL_FLAGS = -package $(PACKAGE_SHARP) -gacdir $(DESTDIR)$(prefix)/lib
+GACUTIL_FLAGS = -package $(PACKAGE_SHARP) -gacdir $(DESTDIR)$(gacdir)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
