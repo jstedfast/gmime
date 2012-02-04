@@ -1,3 +1,7 @@
+2012-02-04  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* configure.in: Added --with-gacdir to fix bug #667072
+
 2012-01-08  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

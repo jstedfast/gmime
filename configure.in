@@ -425,7 +425,7 @@ if test "x$enable_mono" != "xno"; then
 	# mcs, such as Tru64's /usr/bin/mcs, for manipulating object file
 	# comment sections of eCOFF object files.
 	if test "x$CSC" != "xno"; then
-		AC_MSG_CHECKING([whether $CSC is GNU Mono])
+		AC_MSG_CHECKING([whether $CSC is Mono])
 		$CSC --version > /dev/null 2>&1
 		if test $? -ne 0; then
 			CSC=no
@@ -488,6 +488,11 @@ if test "x$enable_mono" = "xyes"; then
 	API_VERSION="$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.0.$MONO_INTERFACE_VERSION"
 	AC_SUBST(API_VERSION)
 fi
+
+AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assembly Cache root directory]),,
+            [with_gacdir=$prefix/lib])
+gacdir=$(cd "$with_gacdir" && pwd)
+AC_SUBST(gacdir)
 
 dnl Extra libs
 EXTRA_LIBS="$ZLIB"
