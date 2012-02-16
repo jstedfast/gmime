@@ -1,6 +1,6 @@
 #region Native Methods
 		[DllImport("gmime")]
-		static extern int g_mime_multipart_count (IntPtr multipart);
+		static extern int g_mime_multipart_get_count (IntPtr multipart);
 		
 		[DllImport("gmime")]
 		static extern void g_mime_multipart_clear (IntPtr multipart);
