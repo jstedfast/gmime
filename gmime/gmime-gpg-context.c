@@ -1898,7 +1898,8 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 		}
 	}
 	
-	if (gpg_ctx_op_wait (gpg) != 0) {
+	/* Only set the GError if we got no signature information from gpg */
+	if (gpg_ctx_op_wait (gpg) != 0 && !gpg->signatures) {
 		const char *diagnostics;
 		int save;
 		

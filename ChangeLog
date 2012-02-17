@@ -1,5 +1,13 @@
 2012-02-17  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-gpg-context.c (gpg_verify): In cases where gpg does
+	not exit with code 0, only set the GError when we've gotten no
+	signer information from gpg (otherwise we return the list of
+	signers, which will presumably include why the verification failed
+	in the status of each signer). Fixes bug #668085.
+
+2012-02-17  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-part-iter.c: Fixed to behave the same as IMAP and
 	also to actually work.
 

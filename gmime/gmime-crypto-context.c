@@ -360,7 +360,7 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *ist
  * verify the integirity of the @istream.
  *
  * Returns: a #GMimeSignatureList object containing the status of each
- * signature.
+ * signature or %NULL on error.
  **/
 GMimeSignatureList *
 g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *istream,
