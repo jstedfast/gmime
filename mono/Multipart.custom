@@ -72,7 +72,7 @@
 		}
 		
 		public int Count { 
-			get { return g_mime_multipart_count (Handle); }
+			get { return g_mime_multipart_get_count (Handle); }
 		}
 		
 		public bool IsFixedSize {
