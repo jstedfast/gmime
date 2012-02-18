@@ -5,3 +5,5 @@ Makefile
 *.o
 basic-example
 imap-example
+uuencode
+uudecode

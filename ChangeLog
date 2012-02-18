@@ -1,3 +1,8 @@
+2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* src/uuencode.c:
+	* src/uudecode.c: Moved to examples/
+
 2012-02-04  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* configure.in: Added --with-gacdir to fix bug #667072

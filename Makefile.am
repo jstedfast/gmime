@@ -1,6 +1,6 @@
 ## Process this file with automake to produce Makefile.in
 
-SUBDIRS = build util gmime src 
+SUBDIRS = build util gmime
 
 if ENABLE_MONO
 SUBDIRS += mono

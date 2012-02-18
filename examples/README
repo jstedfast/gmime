@@ -25,6 +25,23 @@ I think you'll find this example is worth looking at if you plan on
 using GMime with your IMAP library.
 
 
+Example: uuencode.c
+-------------------
+
+This program illustrates how to use the low-level MIME encoding
+routines (specifically the uuencode and base64 encoding
+routines). You'll likely find that this program outperforms GNU's
+implementation of uuencode.
+
+
+Example: uudecode.c
+-------------------
+
+This program illustrates how to use the low-level MIME decoding
+routines (specifically the uudecode and base64 decoding
+routines). You'll likely find that this program outperforms GNU's
+implementation of uudecode.
+
 
 Don't forget to take a look at any test programs that came bundled
 with this distribution (they will be in tests/), as they will also
