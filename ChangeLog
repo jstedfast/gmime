@@ -1,5 +1,13 @@
 2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.in: Bumped version to 2.4.32
+
+	* build/vs2008/gmime.vcproj: Bumped version.
+
+2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* src/uuencode.c:
 	* src/uudecode.c: Moved to examples/
 

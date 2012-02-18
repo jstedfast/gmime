@@ -12,7 +12,7 @@ AM_CONFIG_HEADER(config.h)
 
 GMIME_MAJOR_VERSION=2
 GMIME_MINOR_VERSION=4
-GMIME_MICRO_VERSION=31
+GMIME_MICRO_VERSION=32
 GMIME_VERSION=$GMIME_MAJOR_VERSION.$GMIME_MINOR_VERSION.$GMIME_MICRO_VERSION
 GMIME_VERSION_INFO=`expr $GMIME_MAJOR_VERSION + $GMIME_MINOR_VERSION`:$GMIME_MICRO_VERSION:$GMIME_MINOR_VERSION
 
@@ -489,9 +489,10 @@ if test "x$enable_mono" = "xyes"; then
 	AC_SUBST(API_VERSION)
 fi
 
-AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assembly Cache root directory]),,
-            [with_gacdir=$prefix/lib])
-gacdir=$(cd "$with_gacdir" && pwd)
+AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assembly Cache root directory]),
+            [[with_gacdir=$withval]],
+            [[with_gacdir=\${prefix}/lib]])
+gacdir=$with_gacdir
 AC_SUBST(gacdir)
 
 dnl Extra libs
@@ -538,7 +539,6 @@ mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config
 mono/gmime-sharp-2.4.pc
-src/Makefile
 tests/Makefile
 tools/Makefile
 gmime-2.4.pc
