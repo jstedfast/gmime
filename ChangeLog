@@ -1,5 +1,11 @@
 2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-parser.c (parser_scan_message_part): Make sure that
+	a boundary doesn't appear before we start scanning for the
+	headers.
+
+2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* src/uuencode.c:
 	* src/uudecode.c: Moved to examples/
 

@@ -1350,6 +1350,16 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 	return FOUND_NOTHING;
 }
 
+static gboolean
+found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
+{
+	BoundaryStack *s = priv->bounds;
+	size_t len = end ? s->boundarylenfinal : s->boundarylen;
+	
+	return !strncmp (priv->inptr, s->boundary, len)
+		&& (priv->inptr[len] == '\n' || priv->inptr[len] == '\r');
+}
+
 /* Optimization Notes:
  *
  * 1. By making the priv->realbuf char array 1 extra char longer, we
@@ -1514,6 +1524,40 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	
 	g_assert (priv->state == GMIME_PARSER_STATE_CONTENT);
 	
+	if (priv->bounds != NULL) {
+		/* Check for the possibility of an empty message/rfc822 part. */
+		register char *inptr;
+		size_t atleast;
+		char *inend;
+		
+		/* figure out minimum amount of data we need */
+		atleast = MAX (SCAN_HEAD, MAX_BOUNDARY_LEN (priv->bounds));
+		
+		if (parser_fill (parser, atleast) <= 0) {
+			*found = FOUND_EOS;
+			return;
+		}
+		
+		inptr = priv->inptr;
+		inend = priv->inend;
+		/* Note: see optimization comment [1] */
+		*inend = '\n';
+		
+		while (*inptr != '\n')
+			inptr++;
+		
+		*found = check_boundary (priv, priv->inptr, inptr - priv->inptr);
+		switch (*found) {
+		case FOUND_END_BOUNDARY:
+			/* ignore "From " boundaries, boken mailers tend to include these lines... */
+			if (strncmp (priv->inptr, "From ", 5) != 0)
+				return;
+			break;
+		case FOUND_BOUNDARY:
+			return;
+		}
+	}
+	
 	/* get the headers */
 	priv->state = GMIME_PARSER_STATE_HEADERS;
 	if (parser_step (parser) == GMIME_PARSER_STATE_ERROR) {
@@ -1658,16 +1702,6 @@ parser_scan_multipart_face (GMimeParser *parser, GMimeMultipart *multipart, gboo
 
 #define parser_scan_multipart_preface(parser, multipart) parser_scan_multipart_face (parser, multipart, TRUE)
 #define parser_scan_multipart_postface(parser, multipart) parser_scan_multipart_face (parser, multipart, FALSE)
-
-static gboolean
-found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
-{
-	BoundaryStack *s = priv->bounds;
-	size_t len = end ? s->boundarylenfinal : s->boundarylen;
-	
-	return !strncmp (priv->inptr, s->boundary, len)
-		&& (priv->inptr[len] == '\n' || priv->inptr[len] == '\r');
-}
 
 static int
 parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
