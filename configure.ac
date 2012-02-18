@@ -627,7 +627,6 @@ mono/Makefile
 mono/AssemblyInfo.cs
 mono/gmime-sharp.dll.config
 mono/gmime-sharp.pc
-src/Makefile
 tests/Makefile
 tools/Makefile
 gmime.spec
