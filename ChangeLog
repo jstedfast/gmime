@@ -1,5 +1,9 @@
 2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* configure.ac: Add a --enable-smime flag which defaults to "no".
+
+2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* README: Bumped version
 
 	* configure.ac: Bumped version to 2.6.5

@@ -206,19 +206,20 @@ dnl       to make this work with the tarballs.
 AM_CONDITIONAL(ENABLE_GTK_DOC, test "x$enable_gtk_doc" = "xyes")
 
 dnl Check for profiling options
-AC_ARG_ENABLE(profiling,
-              AC_HELP_STRING([--enable-profiling],[enable profiling compile flags [[default=no]]]),,
-              enable_profiling=no)
+AC_ARG_ENABLE([profiling],
+              AC_HELP_STRING([--enable-profiling],
+	      [enable profiling compile flags [[default=no]]]),,
+              [enable_profiling="no"])
 if test "x$enable_profiling" = "xyes"; then
 # CFLAGS="-O0 -g -pg -fprofile-arcs -ftest-coverage"
   CFLAGS="-O0 -g -pg"
 fi
 
 dnl Enable warning spewage on the console
-AC_ARG_ENABLE(warnings,
+AC_ARG_ENABLE([warnings],
               AC_HELP_STRING([--enable-warnings],
 	      [enable g_warning output when invalid MIME is encountered [[default=no]]]),,
-	      enable_warnings=no)
+	      [enable_warnings="no"])
 if test "x$enable_warnings" = "xyes"; then
   AC_DEFINE(ENABLE_WARNINGS, 1, [Define if GMime should enable warning output.])
 fi
@@ -226,17 +227,17 @@ fi
 dnl Enable stricter MIME parsing rules
 AC_ARG_ENABLE(strict-parser,
               AC_HELP_STRING([--enable-strict-parser],
-	      [enables stricter MIME parser rules [[default=no]]]),,
-	      enable_strict_parser=no)
+	      [enable stricter MIME parser rules [[default=no]]]),,
+	      [enable_strict_parser="no"])
 if test "x$enable_strict_parser" = "xyes"; then
   AC_DEFINE(STRICT_PARSER, 1, [Define if GMime should enable stricter parsing rules.])
 fi
 
 dnl Disable cryptography support
 AC_ARG_ENABLE(cryptography,
-              AC_HELP_STRING([--disable-cryptography],
-	      [disables cryptography support in GMIME [[default=no]]]),,
-	      enable_cryptography=yes)
+              AC_HELP_STRING([--enable-cryptography],
+	      [enable cryptography support [[default=yes]]]),,
+	      [enable_cryptography="yes"])
 AM_CONDITIONAL(ENABLE_CRYPTOGRAPHY, test "x$enable_cryptography" = "xyes")
 if test "x$enable_cryptography" = "xyes"; then
   AC_DEFINE(ENABLE_CRYPTOGRAPHY, 1, [Define if cryptography in GMime is enabled.])
@@ -405,10 +406,10 @@ fi
 dnl *************************************
 dnl *** Checks for large file support ***
 dnl *************************************
-AC_ARG_ENABLE(largefile,
+AC_ARG_ENABLE([largefile],
 	      AC_HELP_STRING([--enable-largefile],
 	      [enable support for large files [[default=yes]]]),,
-	      enable_largefile="yes")
+	      [enable_largefile="yes"])
 if test "x$enable_largefile" != "xno"; then
     AC_SYS_LARGEFILE
     AC_CACHE_CHECK([for _LARGEFILE64_SOURCE value needed for large files], ac_cv_largefile64_source,
@@ -483,24 +484,32 @@ dnl *************************
 LIBNSL=""
 AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
 
-enable_smime="no"
-if test "x$enable_cryptography" = "xyes"; then
 dnl ******************************************
 dnl *** Checks for GpgME needed for S/MIME ***
 dnl ******************************************
-AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
-if test "x$enable_smime" != "xno"; then
-  AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
+AC_ARG_ENABLE([smime], 
+	      AC_HELP_STRING([--enable-smime],
+	      [enable S/MIME support [[default=no]]]),,
+	      [enable_smime="no"])
+
+if test "x$enable_cryptography" != "xyes"; then
+   enable_smime="no"
 fi
+
+if test "x$enable_smime" = "xyes"; then
+   AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
+   if test "x$enable_smime" != "xno"; then
+      AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
+   fi
 fi
 
 dnl ****************************
 dnl *** Enable Mono bindings ***
 dnl ****************************
-AC_ARG_ENABLE(mono,
+AC_ARG_ENABLE([mono], 
 	      AC_HELP_STRING([--enable-mono],
 	      [enable Mono bindings [[default=auto]]]),,
-	      enable_mono="auto")
+	      [enable_mono="auto"])
 if test "x$enable_mono" != "xno"; then
 	AC_PATH_PROG(CSC, mcs, no)
 	# if we found mcs, make sure it's mono and not something else named
