@@ -13,7 +13,8 @@ TARGET_API = $(API)
 noinst_DATA = $(API) $(ASSEMBLY) $(ASSEMBLY).config
 CLEANFILES = $(ASSEMBLY) generated-stamp generated/*.cs $(API)
 DISTCLEANFILES = $(ASSEMBLY).config AssemblyInfo.cs gmime-sharp-$(GMIME_API_VERSION).pc
-GACUTIL_FLAGS = -package $(PACKAGE_SHARP) -gacdir $(DESTDIR)$(gacdir)
+GACUTIL_DESTDIR_FLAGS = -package $(PACKAGE_SHARP) -root $(DESTDIR)$(gacdir)
+GACUTIL_FLAGS = -package $(PACKAGE_SHARP) -gacdir $(gacdir)
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(PACKAGE_SHARP).pc
@@ -95,14 +96,24 @@ $(ASSEMBLY): $(build_sources) generated-stamp $(srcdir)/$(ASSEMBLY_NAME).snk
 
 install-data-local:
 	@if test -n '$(TARGET)'; then						\
-	  echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS)";			\
-	  $(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS) || exit 1;		\
+	  if test -n '$(DESTDIR)'; then						\
+	    echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_DESTDIR_FLAGS)";	\
+	    $(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_DESTDIR_FLAGS) || exit 1;	\
+	  else									\
+	    echo "$(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS)";		\
+	    $(GACUTIL) -i $(ASSEMBLY) -f $(GACUTIL_FLAGS) || exit 1;		\
+	  fi;									\
 	fi
 
 uninstall-local:
 	@if test -n '$(TARGET)'; then						\
-	  echo "$(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS)";			\
-	  $(GACUTIL) -u $(ASSEMBLY) $(GACUTIL_FLAGS) || exit 1;			\
+	  if test -n '$(DESTDIR)'; then						\
+	    echo "$(GACUTIL) -u $(ASSEMBLY_NAME) $(GACUTIL_DESTDIR_FLAGS)";	\
+	    $(GACUTIL) -u $(ASSEMBLY_NAME) $(GACUTIL_DESTDIR_FLAGS) || exit 1;	\
+	  else									\
+	    echo "$(GACUTIL) -u $(ASSEMBLY_NAME) $(GACUTIL_FLAGS)";		\
+	    $(GACUTIL) -u $(ASSEMBLY_NAME) $(GACUTIL_FLAGS) || exit 1;		\
+	  fi;									\
 	fi
 
 parse:
