@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="9.00"
@@ -341,15 +341,15 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath="..\..\src\getopt.c"
+				RelativePath="..\..\examples\getopt.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\getopt1.c"
+				RelativePath="..\..\examples\getopt1.c"
 				>
 			</File>
 			<File
-				RelativePath="..\..\src\uudecode.c"
+				RelativePath="..\..\examples\uudecode.c"
 				>
 			</File>
 		</Filter>
@@ -359,7 +359,7 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath="..\..\src\getopt.h"
+				RelativePath="..\..\examples\getopt.h"
 				>
 			</File>
 		</Filter>
