@@ -60,7 +60,7 @@ This part specifier should be: 4.2.1
 Content-Type: MULTIPART/ALTERNATIVE; boundary="4.2.2.x"
 
 --4.2.2.x
-Content-Type: TEXT/PLAIN-4.2.2.1
+Content-Type: TEXT/PLAIN
 
 This part specifier should be: 4.2.2.1
 
