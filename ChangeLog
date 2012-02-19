@@ -1,3 +1,10 @@
+2012-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-common.c (g_mime_strdup_trim): New function that
+	optimizes g_strstrip combined with g_strdup in both speed and
+	memory usage (g_strstrip won't shrink the size of the dup'd
+	memory).
+
 2012-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
