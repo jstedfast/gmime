@@ -30,6 +30,8 @@ G_GNUC_INTERNAL int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
 
 G_GNUC_INTERNAL guint g_mime_strcase_hash (gconstpointer key);
 
+G_GNUC_INTERNAL char *g_mime_strdup_trim (const char *str);
+
 G_END_DECLS
 
 #endif /* __GMIME_COMMON_H__ */

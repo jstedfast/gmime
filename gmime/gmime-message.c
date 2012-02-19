@@ -33,6 +33,7 @@
 #include "gmime-multipart-encrypted.h"
 #include "gmime-part.h"
 #include "gmime-utils.h"
+#include "gmime-common.h"
 #include "gmime-stream-mem.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
@@ -1114,7 +1115,7 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 	g_return_if_fail (reply_to != NULL);
 	
 	g_free (message->reply_to);
-	message->reply_to = g_strstrip (g_strdup (reply_to));
+	message->reply_to = g_mime_strdup_trim (reply_to);
 	
 	g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", message->reply_to);
 }
@@ -1270,7 +1271,7 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	g_return_if_fail (subject != NULL);
 	
 	g_free (message->subject);
-	message->subject = g_strstrip (g_strdup (subject));
+	message->subject = g_mime_strdup_trim (subject);
 	
 	encoded = g_mime_utils_header_encode_text (message->subject);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", encoded);
@@ -1401,7 +1402,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	g_return_if_fail (message_id != NULL);
 	
 	g_free (message->message_id);
-	message->message_id = g_strstrip (g_strdup (message_id));
+	message->message_id = g_mime_strdup_trim (message_id);
 	
 	msgid = g_strdup_printf ("<%s>", message_id);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Message-Id", msgid);

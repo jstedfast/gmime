@@ -29,6 +29,7 @@
 
 #include "gmime-part.h"
 #include "gmime-utils.h"
+#include "gmime-common.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-null.h"
 #include "gmime-stream-filter.h"
@@ -175,23 +176,22 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	
 	switch (i) {
 	case HEADER_CONTENT_TRANSFER_ENCODING:
-		text = g_alloca (strlen (value) + 1);
-		strcpy (text, value);
-		g_strstrip (text);
+		text = g_mime_strdup_trim (value);
 		mime_part->encoding = g_mime_content_encoding_from_string (text);
+		g_free (text);
 		break;
 	case HEADER_CONTENT_DESCRIPTION:
 		/* FIXME: we should decode this */
 		g_free (mime_part->content_description);
-		mime_part->content_description = g_strstrip (g_strdup (value));
+		mime_part->content_description = g_mime_strdup_trim (value);
 		break;
 	case HEADER_CONTENT_LOCATION:
 		g_free (mime_part->content_location);
-		mime_part->content_location = g_strstrip (g_strdup (value));
+		mime_part->content_location = g_mime_strdup_trim (value);
 		break;
 	case HEADER_CONTENT_MD5:
 		g_free (mime_part->content_md5);
-		mime_part->content_md5 = g_strstrip (g_strdup (value));
+		mime_part->content_md5 = g_mime_strdup_trim (value);
 		break;
 	default:
 		return FALSE;
