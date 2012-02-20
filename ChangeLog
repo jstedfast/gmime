@@ -1,5 +1,12 @@
 2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-common.c (g_mime_strdup_trim): Optimized.
+
+	* gmime/gmime-parser.c (header_parse): Use g_mime_strdup_trim()
+	instead of reimplementing the same logic here.
+
+2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-parser.c: Instead of filtering Content-* headers
 	inside GMimeObject subclasses, filter them in the parser. This way
 	header fetching works as expected in subparts which might have

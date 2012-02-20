@@ -34,6 +34,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-stream-mem.h"
 #include "gmime-multipart.h"
+#include "gmime-common.h"
 #include "gmime-part.h"
 
 #if GLIB_MAJOR_VERSION > 2 || (GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 14)
@@ -916,10 +917,8 @@ static void
 header_parse (GMimeParser *parser, HeaderRaw **tail)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
-	register char *inptr, *end;
+	register char *inptr;
 	HeaderRaw *header;
-	char *start;
-	size_t hlen;
 	
 	*priv->headerptr = '\0';
 	inptr = priv->headerbuf;
@@ -938,28 +937,11 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 		return;
 	}
 	
-	hlen = inptr - priv->headerbuf;
-	
 	header = g_slice_new (HeaderRaw);
 	header->next = NULL;
 	
-	header->name = g_strndup (priv->headerbuf, hlen);
-	
-	/* skip over leading lwsp */
-	inptr++;
-	while (is_lwsp (*inptr))
-		inptr++;
-	
-	/* cut trailing lwsp */
-	start = inptr;
-	end = inptr;
-	
-	while (*inptr) {
-		if (!is_lwsp (*inptr++))
-			end = inptr;
-	}
-	
-	header->value = g_strndup (start, (size_t) (end - start));
+	header->name = g_strndup (priv->headerbuf, (size_t) (inptr - priv->headerbuf));
+	header->value = g_mime_strdup_trim (inptr + 1);
 	
 	header->offset = priv->header_offset;
 	
