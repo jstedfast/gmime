@@ -192,7 +192,6 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		break;
 	default:
 		return FALSE;
-		break;
 	}
 	
 	return TRUE;
