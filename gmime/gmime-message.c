@@ -1542,7 +1542,7 @@ multipart_guess_body (GMimeMultipart *multipart)
 	
 	count = g_mime_multipart_get_count (multipart);
 	
-	if (!GMIME_IS_MULTIPART_SIGNED (mime_part)) {
+	if (count >= 1 && GMIME_IS_MULTIPART_SIGNED (multipart)) {
 		/* if the body is in here, it has to be the first part */
 		count = 1;
 	}

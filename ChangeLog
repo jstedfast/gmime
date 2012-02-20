@@ -1,5 +1,10 @@
 2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-message.c (multipart_guess_body): Fixed
+	multipart/signed logic.
+
+2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-common.c (g_mime_strdup_trim): Optimized.
 
 	* gmime/gmime-parser.c (header_parse): Use g_mime_strdup_trim()
