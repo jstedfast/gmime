@@ -79,7 +79,6 @@ static gboolean
 g_mime_part_iter_pop (GMimePartIter *iter)
 {
 	GMimeObjectStack *node;
-	GMimeObject *object;
 	
 	if (!iter->parent || !iter->parent->parent)
 		return FALSE;
@@ -238,6 +237,7 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 			current = g_mime_multipart_get_part (multipart, index);
 			iter->index = index;
 		} else if (GMIME_IS_MESSAGE (parent)) {
+			message = (GMimeMessage *) parent;
 			if (!(current = g_mime_message_get_mime_part (message)))
 				return FALSE;
 			
@@ -370,7 +370,6 @@ g_mime_part_iter_next (GMimePartIter *iter)
 gboolean
 g_mime_part_iter_prev (GMimePartIter *iter)
 {
-	GMimeMessagePart *message_part;
 	GMimeMultipart *multipart;
 	
 	if (!g_mime_part_iter_is_valid (iter))

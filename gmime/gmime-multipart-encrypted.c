@@ -300,7 +300,6 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
 	GMimeDecryptResult *res;
-	GMimeFilter *decoder;
 	GMimeParser *parser;
 	char *content_type;
 	

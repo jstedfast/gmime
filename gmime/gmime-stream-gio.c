@@ -459,7 +459,6 @@ static gint64
 stream_seek (GMimeStream *stream, gint64 offset, GMimeSeekWhence whence)
 {
 	GMimeStreamGIO *gio = (GMimeStreamGIO *) stream;
-	GError *err = NULL;
 	gint64 real;
 	
 	if (gio->file == NULL) {

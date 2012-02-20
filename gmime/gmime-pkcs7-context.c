@@ -158,8 +158,6 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 static void
 g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass)
 {
-	GMimeCryptoContext *crypto = (GMimeCryptoContext *) ctx;
-	
 	ctx->priv = g_slice_new (Pkcs7Ctx);
 	ctx->priv->always_trust = FALSE;
 #ifdef ENABLE_SMIME

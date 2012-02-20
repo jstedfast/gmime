@@ -31,6 +31,11 @@
 
 #include "gmime.h"
 
+#ifdef ENABLE_CRYPTOGRAPHY
+#include "gmime-pkcs7-context.h"
+#include "gmime-gpg-context.h"
+#endif
+
 
 /**
  * SECTION: gmime

@@ -134,8 +134,6 @@ g_mime_crypto_context_init (GMimeCryptoContext *ctx, GMimeCryptoContextClass *kl
 static void
 g_mime_crypto_context_finalize (GObject *object)
 {
-	GMimeCryptoContext *ctx = (GMimeCryptoContext *) object;
-	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 

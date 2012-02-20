@@ -166,8 +166,6 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 static void
 g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 {
-	GMimeCryptoContext *crypto = (GMimeCryptoContext *) ctx;
-	
 	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
 	ctx->use_agent = FALSE;
@@ -1871,9 +1869,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 {
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeSignatureList *signatures;
-	const char *diagnostics;
 	struct _GpgCtx *gpg;
-	gboolean valid;
 	
 	gpg = gpg_ctx_new (ctx);
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_VERIFY);
