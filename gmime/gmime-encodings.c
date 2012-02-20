@@ -102,7 +102,7 @@ static unsigned char tohex[16] = {
 
 /**
  * g_mime_content_encoding_from_string:
- * @str: string representing a Content-Transfer-Encoding value
+ * @str: a string representing a Content-Transfer-Encoding value
  *
  * Gets the appropriate #GMimeContentEncoding enumeration value based
  * on the input string.
@@ -117,6 +117,10 @@ g_mime_content_encoding_from_string (const char *str)
 		return GMIME_CONTENT_ENCODING_7BIT;
 	else if (!g_ascii_strcasecmp (str, "8bit"))
 		return GMIME_CONTENT_ENCODING_8BIT;
+	else if (!g_ascii_strcasecmp (str, "7-bit"))
+		return GMIME_CONTENT_ENCODING_7BIT;
+	else if (!g_ascii_strcasecmp (str, "8-bit"))
+		return GMIME_CONTENT_ENCODING_8BIT;
 	else if (!g_ascii_strcasecmp (str, "binary"))
 		return GMIME_CONTENT_ENCODING_BINARY;
 	else if (!g_ascii_strcasecmp (str, "base64"))
@@ -126,6 +130,8 @@ g_mime_content_encoding_from_string (const char *str)
 	else if (!g_ascii_strcasecmp (str, "uuencode"))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
 	else if (!g_ascii_strcasecmp (str, "x-uuencode"))
+		return GMIME_CONTENT_ENCODING_UUENCODE;
+	else if (!g_ascii_strcasecmp (str, "x-uue"))
 		return GMIME_CONTENT_ENCODING_UUENCODE;
 	else
 		return GMIME_CONTENT_ENCODING_DEFAULT;

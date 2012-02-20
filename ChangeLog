@@ -1,5 +1,11 @@
 2012-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-encodings.c (g_mime_content_encoding_from_string):
+	Match non-standard encodings: 7-bit, 8-bit, and x-uue (the
+	standard names for these are 7bit, 8bit, and x-uuencode).
+
+2012-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-common.c (g_mime_strdup_trim): New function that
 	optimizes g_strstrip combined with g_strdup in both speed and
 	memory usage (g_strstrip won't shrink the size of the dup'd
