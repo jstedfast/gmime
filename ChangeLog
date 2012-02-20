@@ -1,3 +1,10 @@
+2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-common.c (g_mime_strdup_trim): Optimized.
+
+	* gmime/gmime-parser.c (header_parse): Use g_mime_strdup_trim()
+	instead of reimplementing the same logic here.
+
 2012-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-encodings.c (g_mime_content_encoding_from_string):

@@ -68,7 +68,8 @@ char *
 g_mime_strdup_trim (const char *str)
 {
 	register const char *inptr = str;
-	const char *start, *end;
+	register const char *end;
+	const char *start;
 	
 	while (is_lwsp (*inptr))
 		inptr++;
@@ -77,13 +78,8 @@ g_mime_strdup_trim (const char *str)
 	end = inptr;
 	
 	while (*inptr) {
-		while (*inptr && !is_lwsp (*inptr))
-			inptr++;
-		
-		end = inptr;
-		
-		while (is_lwsp (*inptr))
-			inptr++;
+		if (!is_lwsp (*inptr++))
+			end = inptr;
 	}
 	
 	return g_strndup (start, (size_t) (end - start));
