@@ -728,8 +728,11 @@ process_header (GMimeObject *object, const char *header, const char *value)
 	GMimeContentType *content_type;
 	guint i;
 	
+	if (g_ascii_strncasecmp (header, "Content-", 8) != 0)
+		return FALSE;
+	
 	for (i = 0; i < G_N_ELEMENTS (content_headers); i++) {
-		if (!g_ascii_strcasecmp (content_headers[i], header))
+		if (!g_ascii_strcasecmp (content_headers[i] + 8, header + 8))
 			break;
 	}
 	

@@ -47,13 +47,6 @@ static void g_mime_message_part_init (GMimeMessagePart *message_part, GMimeMessa
 static void g_mime_message_part_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_part_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void message_part_append_header (GMimeObject *object, const char *header, const char *value);
-static void message_part_set_header (GMimeObject *object, const char *header, const char *value);
-static const char *message_part_get_header (GMimeObject *object, const char *header);
-static gboolean message_part_remove_header (GMimeObject *object, const char *header);
-static void message_part_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-static char *message_part_get_headers (GMimeObject *object);
 static ssize_t message_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
 
 
@@ -95,13 +88,6 @@ g_mime_message_part_class_init (GMimeMessagePartClass *klass)
 	
 	gobject_class->finalize = g_mime_message_part_finalize;
 	
-	object_class->prepend_header = message_part_prepend_header;
-	object_class->append_header = message_part_append_header;
-	object_class->remove_header = message_part_remove_header;
-	object_class->set_header = message_part_set_header;
-	object_class->get_header = message_part_get_header;
-	object_class->set_content_type = message_part_set_content_type;
-	object_class->get_headers = message_part_get_headers;
 	object_class->write_to_stream = message_part_write_to_stream;
 }
 
@@ -120,69 +106,6 @@ g_mime_message_part_finalize (GObject *object)
 		g_object_unref (part->message);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-static void
-message_part_prepend_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a message part */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
-}
-
-static void
-message_part_append_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a message part */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
-}
-
-static void
-message_part_set_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a message part */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
-}
-
-static const char *
-message_part_get_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-}
-
-static gboolean
-message_part_remove_header (GMimeObject *object, const char *header)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
-}
-
-static void
-message_part_set_content_type (GMimeObject *object, GMimeContentType *content_type)
-{
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
-}
-
-static char *
-message_part_get_headers (GMimeObject *object)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
 }
 
 static ssize_t

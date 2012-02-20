@@ -55,13 +55,6 @@ static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClas
 static void g_mime_multipart_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void multipart_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void multipart_append_header (GMimeObject *object, const char *header, const char *value);
-static void multipart_set_header (GMimeObject *object, const char *header, const char *value);
-static const char *multipart_get_header (GMimeObject *object, const char *header);
-static gboolean multipart_remove_header (GMimeObject *object, const char *header);
-static void multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type);
-static char *multipart_get_headers (GMimeObject *object);
 static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
 static void multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
@@ -117,13 +110,6 @@ g_mime_multipart_class_init (GMimeMultipartClass *klass)
 	
 	gobject_class->finalize = g_mime_multipart_finalize;
 	
-	object_class->prepend_header = multipart_prepend_header;
-	object_class->append_header = multipart_append_header;
-	object_class->remove_header = multipart_remove_header;
-	object_class->set_header = multipart_set_header;
-	object_class->get_header = multipart_get_header;
-	object_class->set_content_type = multipart_set_content_type;
-	object_class->get_headers = multipart_get_headers;
 	object_class->write_to_stream = multipart_write_to_stream;
 	object_class->encode = multipart_encode;
 	
@@ -163,71 +149,6 @@ g_mime_multipart_finalize (GObject *object)
 	g_ptr_array_free (multipart->children, TRUE);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
-}
-
-static void
-multipart_prepend_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
-}
-
-static void
-multipart_append_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
-}
-
-static void
-multipart_set_header (GMimeObject *object, const char *header, const char *value)
-{
-	/* RFC 1864 states that you cannot set a Content-MD5 on a multipart */
-	if (!g_ascii_strcasecmp ("Content-MD5", header))
-		return;
-	
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
-}
-
-static const char *
-multipart_get_header (GMimeObject *object, const char *header)
-{
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
-		return GMIME_OBJECT_CLASS (parent_class)->get_header (object, header);
-	else
-		return NULL;
-}
-
-static gboolean
-multipart_remove_header (GMimeObject *object, const char *header)
-{
-	/* Make sure that the header is a Content-* header, else it
-           doesn't belong on a multipart */
-	if (g_ascii_strncasecmp ("Content-", header, 8) != 0)
-		return FALSE;
-	
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
-}
-
-static void
-multipart_set_content_type (GMimeObject *object, GMimeContentType *content_type)
-{
-	GMIME_OBJECT_CLASS (parent_class)->set_content_type (object, content_type);
-}
-
-static char *
-multipart_get_headers (GMimeObject *object)
-{
-	return GMIME_OBJECT_CLASS (parent_class)->get_headers (object);
 }
 
 static ssize_t

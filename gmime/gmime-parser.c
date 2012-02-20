@@ -92,9 +92,9 @@ static void parser_init (GMimeParser *parser, GMimeStream *stream);
 static void parser_close (GMimeParser *parser);
 
 static GMimeObject *parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type,
-						int *found);
+						gboolean toplevel, int *found);
 static GMimeObject *parser_construct_multipart (GMimeParser *parser, ContentType *content_type,
-						int *found);
+						gboolean toplevel, int *found);
 
 static GObjectClass *parent_class = NULL;
 
@@ -1570,15 +1570,16 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 	message = g_mime_message_new (FALSE);
 	header = priv->headers;
 	while (header) {
-		g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
+		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0)
+			g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	
 	content_type = parser_content_type (parser);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, content_type, found);
+		object = parser_construct_multipart (parser, content_type, TRUE, found);
 	else
-		object = parser_construct_leaf_part (parser, content_type, found);
+		object = parser_construct_leaf_part (parser, content_type, TRUE, found);
 	
 	content_type_destroy (content_type);
 	message->mime_part = object;
@@ -1592,7 +1593,7 @@ parser_scan_message_part (GMimeParser *parser, GMimeMessagePart *mpart, int *fou
 }
 
 static GMimeObject *
-parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int *found)
+parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, gboolean toplevel, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeObject *object;
@@ -1613,7 +1614,8 @@ parser_construct_leaf_part (GMimeParser *parser, ContentType *content_type, int 
 	
 	header = priv->headers;
 	while (header) {
-		g_mime_object_append_header (object, header->name, header->value);
+		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8))
+			g_mime_object_append_header (object, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1732,9 +1734,9 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 		
 		content_type = parser_content_type (parser);
 		if (content_type_is_type (content_type, "multipart", "*"))
-			subpart = parser_construct_multipart (parser, content_type, &found);
+			subpart = parser_construct_multipart (parser, content_type, FALSE, &found);
 		else
-			subpart = parser_construct_leaf_part (parser, content_type, &found);
+			subpart = parser_construct_leaf_part (parser, content_type, FALSE, &found);
 		
 		g_mime_multipart_add (multipart, subpart);
 		content_type_destroy (content_type);
@@ -1745,7 +1747,7 @@ parser_scan_multipart_subparts (GMimeParser *parser, GMimeMultipart *multipart)
 }
 
 static GMimeObject *
-parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int *found)
+parser_construct_multipart (GMimeParser *parser, ContentType *content_type, gboolean toplevel, int *found)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
 	GMimeMultipart *multipart;
@@ -1760,7 +1762,8 @@ parser_construct_multipart (GMimeParser *parser, ContentType *content_type, int 
 	
 	header = priv->headers;
 	while (header) {
-		g_mime_object_append_header (object, header->name, header->value);
+		if (!toplevel || !g_ascii_strncasecmp (header->name, "Content-", 8))
+			g_mime_object_append_header (object, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1830,9 +1833,9 @@ parser_construct_part (GMimeParser *parser)
 	
 	content_type = parser_content_type (parser);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, content_type, &found);
+		object = parser_construct_multipart (parser, content_type, TRUE, &found);
 	else
-		object = parser_construct_leaf_part (parser, content_type, &found);
+		object = parser_construct_leaf_part (parser, content_type, TRUE, &found);
 	
 	content_type_destroy (content_type);
 	
@@ -1891,7 +1894,8 @@ parser_construct_message (GMimeParser *parser)
 				content_length = ULONG_MAX;
 		}
 		
-		g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
+		if (g_ascii_strncasecmp (header->name, "Content-", 8) != 0)
+			g_mime_object_append_header ((GMimeObject *) message, header->name, header->value);
 		header = header->next;
 	}
 	
@@ -1903,9 +1907,9 @@ parser_construct_message (GMimeParser *parser)
 	
 	content_type = parser_content_type (parser);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, content_type, &found);
+		object = parser_construct_multipart (parser, content_type, TRUE, &found);
 	else
-		object = parser_construct_leaf_part (parser, content_type, &found);
+		object = parser_construct_leaf_part (parser, content_type, TRUE, &found);
 	
 	content_type_destroy (content_type);
 	message->mime_part = object;
