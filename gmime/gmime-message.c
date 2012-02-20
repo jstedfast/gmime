@@ -791,10 +791,12 @@ message_prepend_header (GMimeObject *object, const char *header, const char *val
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
-	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a message */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
+	/* Content-* headers don't belong on the message, they belong on the part. */
+	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
+		if (message->mime_part)
+			g_mime_object_prepend_header (message->mime_part, header, value);
 		return;
+	}
 	
 	if (!process_header (object, PREPEND, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
@@ -810,10 +812,12 @@ message_append_header (GMimeObject *object, const char *header, const char *valu
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
-	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a message */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
+	/* Content-* headers don't belong on the message, they belong on the part. */
+	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
+		if (message->mime_part)
+			g_mime_object_append_header (message->mime_part, header, value);
 		return;
+	}
 	
 	if (!process_header (object, APPEND, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
@@ -829,10 +833,12 @@ message_set_header (GMimeObject *object, const char *header, const char *value)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
-	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a message */
-	if (!g_ascii_strncasecmp ("Content-", header, 8))
+	/* Content-* headers don't belong on the message, they belong on the part. */
+	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
+		if (message->mime_part)
+			g_mime_object_set_header (message->mime_part, header, value);
 		return;
+	}
 	
 	if (!process_header (object, SET, header, value))
 		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
@@ -849,8 +855,7 @@ message_get_header (GMimeObject *object, const char *header)
 	GMimeMessage *message = (GMimeMessage *) object;
 	const char *value;
 	
-	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a message */
+	/* Content-* headers don't belong on the message, they belong on the part. */
 	if (g_ascii_strncasecmp ("Content-", header, 8) != 0) {
 		if ((value = GMIME_OBJECT_CLASS (parent_class)->get_header (object, header)))
 			return value;
@@ -872,8 +877,7 @@ message_remove_header (GMimeObject *object, const char *header)
 	GMimeRecipientType type;
 	guint i;
 	
-	/* Make sure that the header is not a Content-* header, else it
-           doesn't belong on a message */
+	/* Content-* headers don't belong on the message, they belong on the part. */
 	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (message->mime_part)
 			return g_mime_object_remove_header (message->mime_part, header);
