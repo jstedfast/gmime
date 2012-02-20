@@ -244,7 +244,7 @@ int main (int argc, char **argv)
 	int fd, i;
 	
 #ifdef ENABLE_MBOX_MATCH
-	if (g_mkdir ("./tmp", 0755) == -1 && errno != EEXIST)
+	if (mkdir ("./tmp", 0755) == -1 && errno != EEXIST)
 		return 0;
 #endif
 	
@@ -436,7 +436,19 @@ int main (int argc, char **argv)
  exit:
 	
 #ifdef ENABLE_MBOX_MATCH
-	g_rmdir ("./tmp");
+	if ((dir = g_dir_open ("./tmp", 0, NULL))) {
+		p = g_stpcpy (input, "./tmp");
+		*p++ = G_DIR_SEPARATOR;
+		
+		while ((dent = g_dir_read_name (dir))) {
+			strcpy (p, dent);
+			unlink (input);
+		}
+		
+		g_dir_close (dir);
+	}
+	
+	rmdir ("./tmp");
 #endif
 	
 	testsuite_end ();
