@@ -102,7 +102,7 @@ static unsigned char tohex[16] = {
 
 /**
  * g_mime_content_encoding_from_string:
- * @str: string representing a Content-Transfer-Encoding value
+ * @str: a string representing a Content-Transfer-Encoding value
  *
  * Gets the appropriate #GMimeContentEncoding enumeration value based
  * on the input string.
