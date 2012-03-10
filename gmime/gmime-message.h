@@ -55,7 +55,7 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
 typedef enum _GMimeRecipientType {
 	GMIME_RECIPIENT_TYPE_TO,
 	GMIME_RECIPIENT_TYPE_CC,
-	GMIME_RECIPIENT_TYPE_BCC,
+	GMIME_RECIPIENT_TYPE_BCC
 } GMimeRecipientType;
 
 

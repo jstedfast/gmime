@@ -80,7 +80,7 @@ typedef enum {
 	GMIME_DIGEST_ALGO_SHA384      = 9,
 	GMIME_DIGEST_ALGO_SHA512      = 10,
 	GMIME_DIGEST_ALGO_SHA224      = 11,
-	GMIME_DIGEST_ALGO_MD4         = 301,
+	GMIME_DIGEST_ALGO_MD4         = 301
 } GMimeDigestAlgo;
 
 /**

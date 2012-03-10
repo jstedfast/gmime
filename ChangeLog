@@ -1,3 +1,10 @@
+2012-03-09  Daniel Gillmor  <dkg@fifthhorseman.net>
+
+	* gmime/gmime-certificate.h: Remove the trailing comma from the
+	last enum item to silence gcc -pedantic warnings.
+
+	* gmime/gmime-message.h: Same.
+
 2012-03-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-parser.c (parser_step_headers): Be lenient from
