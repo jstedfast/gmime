@@ -1,3 +1,9 @@
+2012-03-10  Daniel Gillmor  <dkg@fifthhorseman.net>
+
+	* mono/gmime-sharp.dll.config.in: Fixed missing .so number.
+
+	Fixes bug #671785.
+
 2012-03-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
@@ -13,7 +19,7 @@
 
 2012-03-09  Jeffrey Stedfast  <fejj@gnome.org>
 
-	* gmime/gmime-parser.c (parser_step_headers): Be lenient from
+	* gmime/gmime-parser.c (parser_step_headers): Be lenient with
 	"From " lines found in message headers. Fixes bug #671680.
 
 2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
