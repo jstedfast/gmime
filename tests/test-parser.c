@@ -118,7 +118,7 @@ print_mime_part_info (const char *path, GMimeObject *object)
 static void
 print_mime_struct_iter (GMimeMessage *message)
 {
-	const char *jump_to = "4.2.2.2";
+	//const char *jump_to = "4.2.2.2";
 	GMimePartIter *iter;
 	GMimeObject *part;
 	char *path;

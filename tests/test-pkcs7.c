@@ -33,6 +33,8 @@
 #include <gmime/gmime.h>
 #include <gmime/gmime-pkcs7-context.h>
 
+#include <gpg-error.h>
+
 #include "testsuite.h"
 
 extern int verbose;
