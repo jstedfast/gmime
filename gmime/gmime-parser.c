@@ -1051,9 +1051,12 @@ parser_step_headers (GMimeParser *parser)
 					}
 					
 					if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
-						/* Be a little more strict when scanning toplevel message headers. */
-						priv->state = GMIME_PARSER_STATE_ERROR;
-						return -1;
+						/* Be a little more strict when scanning toplevel message
+						 * headers, but remain lenient with From-lines. */
+						if ((inptr - start) != 4 || strncmp (start, "From ", 5) != 0) {
+							priv->state = GMIME_PARSER_STATE_ERROR;
+							return -1;
+						}
 					}
 				}
 			}

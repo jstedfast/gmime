@@ -1,3 +1,8 @@
+2012-03-09  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-parser.c (parser_step_headers): Be lenient from
+	"From " lines found in message headers. Fixes bug #671680.
+
 2012-02-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
