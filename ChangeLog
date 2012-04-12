@@ -1,3 +1,11 @@
+2012-04-12  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-parser.c (parser_scan_headers): Make sure to
+	initialize 'start' before using it to calculate headers_end in the
+	case where parser_fill() failed.
+
+	Fixes bug #673493.
+
 2012-03-10  Daniel Gillmor  <dkg@fifthhorseman.net>
 
 	* mono/gmime-sharp.dll.config.in: Fixed missing .so number.

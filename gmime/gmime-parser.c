@@ -1110,6 +1110,7 @@ parser_step_headers (GMimeParser *parser)
 	
 	inptr = priv->inptr;
 	inend = priv->inend;
+	start = inptr;
 	
 	len = (size_t) (inend - inptr);
 	header_append (priv, inptr, len);
