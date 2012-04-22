@@ -1,3 +1,10 @@
+2012-04-22  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify):
+	Match protocols like application/x-pkcs7-signature, too.
+
+	Fixes bug #674032.
+
 2012-04-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

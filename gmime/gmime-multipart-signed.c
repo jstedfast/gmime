@@ -321,6 +321,40 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	return 0;
 }
 
+static gboolean
+check_protocol_supported (const char *protocol, const char *supported)
+{
+	const char *subtype;
+	char *xsupported;
+	gboolean rv;
+	
+	if (!supported)
+		return FALSE;
+	
+	if (!g_ascii_strcasecmp (protocol, supported))
+		return TRUE;
+	
+	if (!(subtype = strrchr (supported, '/')))
+		return FALSE;
+	
+	subtype++;
+	
+	/* If the subtype already begins with "x-", then there's
+	 * nothing else to check. */
+	if (!g_ascii_strncasecmp (subtype, "x-", 2))
+		return FALSE;
+	
+	/* Check if the "x-" version of the subtype matches the
+	 * protocol. For example, if the supported protocol is
+	 * "application/pkcs7-signature", then we also want to
+	 * match "application/x-pkcs7-signature". */
+	xsupported = g_strdup_printf ("%.*sx-%s", subtype - supported, supported, subtype);
+	rv = !g_ascii_strcasecmp (protocol, supported);
+	g_free (xsupported);
+	
+	return rv;
+}
+
 
 /**
  * g_mime_multipart_signed_verify:
@@ -365,7 +399,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *c
 	
 	if (protocol) {
 		/* make sure the protocol matches the crypto sign protocol */
-		if (!supported || g_ascii_strcasecmp (supported, protocol) != 0) {
+		if (!check_protocol_supported (protocol, supported)) {
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot verify multipart/signed part: unsupported signature protocol '%s'."),
 				     protocol);
