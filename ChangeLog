@@ -1,5 +1,14 @@
 2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Keep track of
+	DECRYPTION_OKAY status.
+	(gpg_decrypt): Only return NULL if decryption failed (e.g. we
+	didn't get a DECRYPTION_OKAY status).
+
+	Fixes bug #677088.
+
+2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* docs/reference/building.sgml: Updated docs.
 
 	Fixes bug #676341

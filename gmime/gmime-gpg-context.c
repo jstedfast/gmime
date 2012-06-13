@@ -324,8 +324,9 @@ struct _GpgCtx {
 	unsigned int armor:1;
 	unsigned int need_passwd:1;
 	unsigned int bad_passwds:2;
+	unsigned int decrypt_okay:1;
 	
-	unsigned int padding:20;
+	unsigned int padding:19;
 };
 
 static struct _GpgCtx *
@@ -339,6 +340,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->mode = GPG_CTX_MODE_SIGN;
 	gpg->ctx = ctx;
 	gpg->userid_hint = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
+	gpg->decrypt_okay = FALSE;
 	gpg->complete = FALSE;
 	gpg->seen_eof1 = TRUE;
 	gpg->seen_eof2 = FALSE;
@@ -1284,7 +1286,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				/* second token is the cipher algorithm */
 				gpg->cipher = strtoul (status, &inend, 10);
 			} else if (!strncmp (status, "DECRYPTION_OKAY", 15)) {
-				/* nothing to do... but good to know gpg decrypted the data successfully */
+				/* decryption succeeded */
+				gpg->decrypt_okay = TRUE;
 			} else if (!strncmp (status, "DECRYPTION_FAILED", 17)) {
 				/* nothing to do... but we know gpg failed to decrypt :-( */
 			} else if (!strncmp (status, "END_DECRYPTION", 14)) {
@@ -2016,7 +2019,7 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 		}
 	}
 	
-	if (gpg_ctx_op_wait (gpg) != 0) {
+	if (gpg_ctx_op_wait (gpg) != 0 && !gpg->decrypt_okay) {
 		save = errno;
 		diagnostics = gpg_ctx_get_diagnostics (gpg);
 		errno = save;
