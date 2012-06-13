@@ -507,7 +507,12 @@ rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
 	rfc2184->parts = g_ptr_array_new ();
 	rfc2184->next = NULL;
 	
-	rfc2184->charset = rfc2184_param_charset (&inptr, &rfc2184->lang);
+	if (encoded) {
+		rfc2184->charset = rfc2184_param_charset (&inptr, &rfc2184->lang);
+	} else {
+		rfc2184->charset = NULL;
+		rfc2184->lang = NULL;
+	}
 	
 	if (inptr == value) {
 		rfc2184_param_add_part (rfc2184, value, id, encoded);
