@@ -1181,7 +1181,7 @@ header_fold (const char *in, gboolean structured)
 		len = strcspn (inptr, " \t\n");
 		
 		if (len > 1 && outlen + len > GMIME_FOLD_LEN) {
-			if (outlen > 1 && out->len > fieldlen + 2) {
+			if (outlen > 1 && out->len >= fieldlen + 2) {
 				if (last_was_lwsp) {
 					if (structured)
 						out->str[out->len - 1] = '\t';
@@ -1189,6 +1189,7 @@ header_fold (const char *in, gboolean structured)
 					g_string_insert_c (out, out->len - 1, '\n');
 				} else
 					g_string_append (out, "\n\t");
+				
 				outlen = 1;
 			}
 			
@@ -1746,7 +1747,7 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
 				
 				goto decode;
 			}
-
+			
 			saved = 0;
 			need = 0;
 			
@@ -2529,6 +2530,9 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 			}
 			
 			if (count >= GMIME_FOLD_PREENCODED) {
+				if (type == WORD_ATOM)
+					type = WORD_2047;
+				
 				word = rfc822_word_new ();
 				word->next = NULL;
 				word->start = start;
