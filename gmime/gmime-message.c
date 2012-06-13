@@ -1071,6 +1071,9 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "From", "");
 		message->from = NULL;
 	}
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1108,6 +1111,9 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 	message->reply_to = g_mime_strdup_trim (reply_to);
 	
 	g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", message->reply_to);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1145,6 +1151,9 @@ sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 		/* list should never be NULL... */
 		g_mime_header_list_set (object->headers, name, NULL);
 	}
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 static void
@@ -1189,6 +1198,11 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 	ia = internet_address_mailbox_new (name, addr);
 	internet_address_list_add (recipients, ia);
 	g_object_unref (ia);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+	
+	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
 }
 
 
@@ -1266,6 +1280,9 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	encoded = g_mime_utils_header_encode_text (message->subject);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", encoded);
 	g_free (encoded);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1307,6 +1324,9 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 	str = g_mime_utils_header_format_date (date, tz_offset);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Date", str);
 	g_free (str);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1373,6 +1393,9 @@ g_mime_message_set_date_as_string (GMimeMessage *message, const char *str)
 	buf = g_mime_utils_header_format_date (date, tz_offset);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Date", buf);
 	g_free (buf);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1397,6 +1420,9 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	msgid = g_strdup_printf ("<%s>", message_id);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Message-Id", msgid);
 	g_free (msgid);
+	
+	if (message->mime_part)
+		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
