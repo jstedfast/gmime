@@ -855,7 +855,7 @@ object_get_header (GMimeObject *object, const char *header)
  * Gets the raw, unprocessed value of the requested header if it
  * exists or %NULL otherwise.
  *
- * Returns: the raw, unprocessed value of the header @header if it
+ * Returns: the raw, unprocessed value of the requested header if it
  * exists or %NULL otherwise.
  **/
 const char *
