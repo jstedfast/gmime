@@ -41,6 +41,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-filter-strip.c		\
 	gmime-filter-windows.c		\
 	gmime-filter-yenc.c		\
+	gmime-gpg-context.c		\
 	gmime-header.c			\
 	gmime-iconv.c			\
 	gmime-iconv-utils.c		\
@@ -56,6 +57,7 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-parser.c			\
 	gmime-part.c			\
 	gmime-part-iter.c		\
+	gmime-pkcs7-context.c		\
 	gmime-signature.c		\
 	gmime-stream.c			\
 	gmime-stream-buffer.c		\
@@ -70,12 +72,6 @@ libgmime_2_6_la_SOURCES = 		\
 	gmime-stream-pipe.c		\
 	gmime-utils.c			\
 	internet-address.c
-
-if ENABLE_CRYPTOGRAPHY
-libgmime_2_6_la_SOURCES += 		\
-	gmime-gpg-context.c		\
-	gmime-pkcs7-context.c
-endif
 
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
@@ -100,6 +96,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-filter-strip.h		\
 	gmime-filter-windows.h		\
 	gmime-filter-yenc.h		\
+	gmime-gpg-context.h		\
 	gmime-header.h			\
 	gmime-iconv.h			\
 	gmime-iconv-utils.h		\
@@ -114,6 +111,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-parser.h			\
 	gmime-part.h			\
 	gmime-part-iter.h		\
+	gmime-pkcs7-context.h		\
 	gmime-signature.h		\
 	gmime-stream.h			\
 	gmime-stream-buffer.h		\
@@ -129,12 +127,6 @@ gmimeinclude_HEADERS = 			\
 	gmime-utils.h			\
 	gmime-version.h			\
 	internet-address.h
-
-if ENABLE_CRYPTOGRAPHY
-gmimeinclude_HEADERS +=			\
-	gmime-gpg-context.h		\
-	gmime-pkcs7-context.h
-endif
 
 noinst_HEADERS = 			\
 	gmime-charset-map-private.h	\

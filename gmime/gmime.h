@@ -70,6 +70,7 @@
 #include <gmime/gmime-filter-windows.h>
 #include <gmime/gmime-filter-yenc.h>
 #include <gmime/gmime-crypto-context.h>
+#include <gmime/gmime-pkcs7-context.h>
 #include <gmime/gmime-gpg-context.h>
 
 G_BEGIN_DECLS
