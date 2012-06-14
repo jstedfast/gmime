@@ -1,5 +1,11 @@
 2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.10
+
+2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/Makefile.am: Always build gmime-gpg-context.[c,h] and
 	gmime-pkcs7-context.[c,h]
 
