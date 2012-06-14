@@ -1,5 +1,13 @@
 2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Use
+	is_blank() instead of is_lwsp() so that we only treat space and
+	tab as word delimiters (we want to rfc2047 encode \r's and
+	\n's). Check for ctrl characters when deciding what the type and
+	encoding of the word is.
+
+2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): When
 	breaking up really long atom tokens, change the word type to
 	RFC2047 so that we encode them, thus preventing forced header

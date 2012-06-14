@@ -2498,7 +2498,7 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 		
 		inptr = newinptr;
 		
-		if (c < 256 && is_lwsp (c)) {
+		if (c < 256 && is_blank (c)) {
 			if (count > 0) {
 				word = rfc822_word_new ();
 				word->next = NULL;
@@ -2517,14 +2517,18 @@ rfc2047_encode_get_rfc822_words (const char *in, gboolean phrase)
 			encoding = 0;
 		} else {
 			count++;
-			if (phrase && c < 128) {
-				/* phrases can have qstring words */
-				if (!is_atom (c))
+			if (c < 128) {
+				if (is_ctrl (c)) {
+					type = WORD_2047;
+					encoding = MAX (encoding, 1);
+				} else if (phrase && !is_atom (c)) {
+					/* phrases can have qstring words */
 					type = MAX (type, WORD_QSTRING);
-			} else if (c > 127 && c < 256) {
+				}
+			} else if (c < 256) {
 				type = WORD_2047;
 				encoding = MAX (encoding, 1);
-			} else if (c >= 256) {
+			} else {
 				type = WORD_2047;
 				encoding = 2;
 			}
