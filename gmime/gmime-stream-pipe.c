@@ -33,10 +33,6 @@
 
 #include "gmime-stream-pipe.h"
 
-#ifndef HAVE_FSYNC
-static int fsync (int fd) { return 0; }
-#endif
-
 
 /**
  * SECTION: gmime-stream-pipe
@@ -218,7 +214,7 @@ stream_flush (GMimeStream *stream)
 		return -1;
 	}
 	
-	return fsync (pipes->fd);
+	return 0;
 }
 
 static int
