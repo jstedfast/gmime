@@ -1,3 +1,10 @@
+2012-08-05  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-multipart-signed.c (check_protocol_supported): Oops,
+	need to compare against xsupported in the second string compare.
+
+	Fixes bug #674032
+
 2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

@@ -349,7 +349,7 @@ check_protocol_supported (const char *protocol, const char *supported)
 	 * "application/pkcs7-signature", then we also want to
 	 * match "application/x-pkcs7-signature". */
 	xsupported = g_strdup_printf ("%.*sx-%s", subtype - supported, supported, subtype);
-	rv = !g_ascii_strcasecmp (protocol, supported);
+	rv = !g_ascii_strcasecmp (protocol, xsupported);
 	g_free (xsupported);
 	
 	return rv;
