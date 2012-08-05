@@ -1,3 +1,11 @@
+2012-08-05  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-utils.c (rfc2047_token_new_encoded_word): Make sure
+	to properly handle broken encoded-word tokens in the form:
+	=?charset?q?=.
+
+	Fixes the g_malloc abort() in bug #679388
+
 2012-06-13  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-utils.c (rfc2047_encode_get_rfc822_words): Use

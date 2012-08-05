@@ -1907,6 +1907,10 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 	/* find the end of the payload */
 	inptr = word + len - 2;
 	
+	/* make sure that we don't have something like: =?iso-8859-1?Q?= */
+	if (payload > inptr)
+		return NULL;
+	
 	token = rfc2047_token_new (payload, inptr - payload);
 	token->charset = g_mime_charset_iconv_name (charset);
 	token->encoding = encoding;
