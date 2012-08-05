@@ -384,7 +384,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	
 	stream = g_mime_stream_mem_new ();
 	gpg->diag = GMIME_STREAM_MEM (stream)->buffer;
-	charset = g_mime_locale_charset ();
+	charset = g_mime_charset_iconv_name (g_mime_locale_charset ());
 	if (g_ascii_strcasecmp (charset, "UTF-8") != 0) {
 		GMimeStream *fstream;
 		GMimeFilter *filter;

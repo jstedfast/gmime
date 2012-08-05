@@ -285,7 +285,7 @@ g_mime_charset_map_init (void)
 	} else
 		locale_charset = NULL;
 #endif
-
+	
 	/* Apparently setlocale() is not reliable either... use getenv() instead. */
 	/*locale = setlocale (LC_ALL, NULL);*/
 	
