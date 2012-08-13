@@ -1944,6 +1944,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 			lwsp = NULL;
 		
 		word = inptr;
+		ascii = TRUE;
 		if (is_atom (*inptr)) {
 			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
 				/* Make an extra effort to detect and
