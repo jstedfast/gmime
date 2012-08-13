@@ -1,3 +1,8 @@
+2012-08-13  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-utils.c (tokenize_rfc2047_phrase): Don't forget to
+	initialize 'ascii' to TRUE.
+
 2012-08-05  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-stream-pipe.c (stream_flush): Pipes and sockets
