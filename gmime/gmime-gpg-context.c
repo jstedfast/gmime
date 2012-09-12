@@ -1312,9 +1312,11 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				cert->pubkey_algo = strtoul (status, &inend, 10);
 				if (inend == status || *inend != ' ') {
 					cert->pubkey_algo = 0;
+					g_object_unref (cert);
 					break;
 				}
 				
+				g_object_unref (cert);
 				status = inend + 1;
 				
 				/* third token is a dummy value which is always '0' */

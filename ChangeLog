@@ -1,3 +1,13 @@
+2012-09-12  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Unref the
+	certificate after adding it to the list (adding it to the list
+	refs it).
+
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_decrypt): If the 'result' out param is
+	null, unref the GMimeDecryptResult to avoid leaking.
+
 2012-08-13  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-utils.c (tokenize_rfc2047_phrase): Don't forget to

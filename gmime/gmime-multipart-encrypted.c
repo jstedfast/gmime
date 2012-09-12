@@ -396,7 +396,9 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 		return NULL;
 	}
 	
-	if (result)
+	if (!result)
+		g_object_unref (res);
+	else
 		*result = res;
 	
 	return decrypted;
