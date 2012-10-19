@@ -1,3 +1,9 @@
+2012-10-18  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.11
+
 2012-09-12  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Unref the
