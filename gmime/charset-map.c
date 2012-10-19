@@ -115,11 +115,11 @@ int main (int argc, char **argv)
 	size_t inleft, outleft;
 	char *inbuf, *outbuf;
 	guint32 out[128], c;
+	unsigned int i;
 	char in[128];
 	iconv_t cd;
 	int bytes;
 	int j, k;
-	size_t i;
 	
 	/* dont count the terminator */
 	bytes = ((sizeof (tables) / sizeof (tables[0])) + 7 - 1) / 8;
@@ -139,7 +139,7 @@ int main (int argc, char **argv)
 				inbuf++;
 				inleft--;
 			} else {
-				g_warning ("iconv (%s->UCS4, ..., %d, ..., %d): %s",
+				g_warning ("iconv (%s->UCS4, ..., %zu, ..., %zu): %s",
 					   tables[j].name, inleft, outleft,
 					   g_strerror (errno));
 				exit (1);
