@@ -963,6 +963,39 @@ header_parse (GMimeParser *parser, HeaderRaw **tail)
 #endif
 }
 
+enum {
+	SUBJECT = 1 << 0,
+	FROM    = 1 << 1,
+	DATE    = 1 << 2,
+	TO      = 1 << 3,
+	CC      = 1 << 4
+};
+
+static gboolean
+has_basic_headers (HeaderRaw *headers)
+{
+	unsigned int found = 0;
+	HeaderRaw *header;
+	
+	header = headers;
+	while (header != NULL) {
+		if (!g_ascii_strcasecmp (header->name, "Subject"))
+			found |= SUBJECT;
+		else if (!g_ascii_strcasecmp (header->name, "From"))
+			found |= FROM;
+		else if (!g_ascii_strcasecmp (header->name, "Date"))
+			found |= DATE;
+		else if (!g_ascii_strcasecmp (header->name, "To"))
+			found |= TO;
+		else if (!g_ascii_strcasecmp (header->name, "Cc"))
+			found |= CC;
+		
+		header = header->next;
+	}
+	
+	return found != 0;
+}
+
 static int
 parser_step_headers (GMimeParser *parser)
 {
@@ -1044,13 +1077,13 @@ parser_step_headers (GMimeParser *parser)
 						goto next_message;
 					
 					if (priv->headers != NULL) {
-						/* probably the start of the content,
-						 * a broken mailer didn't terminate the
-						 * headers with an empty line. *sigh* */
-						goto content_start;
-					}
-					
-					if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
+						if (has_basic_headers (priv->headers)) {
+							/* probably the start of the content,
+							 * a broken mailer didn't terminate the
+							 * headers with an empty line. *sigh* */
+							goto content_start;
+						}
+					} else if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
 						/* Be a little more strict when scanning toplevel message
 						 * headers, but remain lenient with From-lines. */
 						if ((inptr - start) != 4 || strncmp (start, "From ", 5) != 0) {
