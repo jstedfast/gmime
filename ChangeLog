@@ -1,3 +1,11 @@
+2012-10-19  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-parser.c (parser_step_headers): Don't assume that
+	the first non-header line we find indicates the start of the
+	content unless we've already gotten some basic headers.
+
+	Fix for bug #686223.
+
 2012-10-18  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* README: Bumped version
