@@ -92,30 +92,31 @@ header_cb (GMimeParser *parser, const char *header, const char *value, gint64 of
 {
 	GMimeStream *stream = user_data;
 	
-	g_mime_stream_printf (stream, "%lld: %s: %s\n", offset, header, value);
+	g_mime_stream_printf (stream, "%" G_GINT64_FORMAT ": %s: %s\n", offset, header, value);
 }
 
 static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
-	gint64 headers_begin, headers_end, start, end;
+	gint64 message_begin, message_end, headers_begin, headers_end;
 	GMimeMessage *message;
 	const char *exev;
 	int nmsg = 0;
 	char *from;
 	
 	while (!g_mime_parser_eos (parser)) {
-		start = g_mime_parser_tell (parser);
+		message_begin = g_mime_parser_tell (parser);
 		if (!(message = g_mime_parser_construct_message (parser)))
 			throw (exception_new ("failed to parse message #%d", nmsg));
 		
-		end = g_mime_parser_tell (parser);
+		message_end = g_mime_parser_tell (parser);
 		
 		headers_begin = g_mime_parser_get_headers_begin (parser);
 		headers_end = g_mime_parser_get_headers_end (parser);
 		
-		g_mime_stream_printf (summary, "message offsets: %lld, %lld\n", start, end);
-		g_mime_stream_printf (summary, "header offsets: %lld, %lld\n",
+		g_mime_stream_printf (summary, "message offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
+				      message_begin, message_end);
+		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
 		
 		from = g_mime_parser_get_from (parser);
@@ -197,7 +198,7 @@ streams_match (GMimeStream *istream, GMimeStream *ostream)
 		}
 		
 		if (bufptr < bufend) {
-			sprintf (errstr, "Error: content does not match at offset %lld\n",
+			sprintf (errstr, "Error: content does not match at offset %" G_GINT64_FORMAT "\n",
 				 offset + (bufptr - buf));
 			/*fprintf (stderr, "-->'%.*s'<--\nvs\n-->'%.*s'<--\n",
 			  bufend - bufptr, bufptr, bufend - bufptr, dbufptr);*/

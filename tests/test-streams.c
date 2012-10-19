@@ -139,7 +139,8 @@ test_stream_gets (GMimeStream *stream, const char *filename)
 	while (!g_mime_stream_eos (stream)) {
 		rbuf[0] = '\0';
 		slen = g_mime_stream_buffer_gets (stream, sbuf, sizeof (sbuf));
-		fgets (rbuf, sizeof (rbuf), fp);
+		if (!fgets (rbuf, sizeof (rbuf), fp))
+			break;
 		
 		if (strcmp (sbuf, rbuf) != 0)
 			break;

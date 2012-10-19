@@ -420,10 +420,13 @@ int main (int argc, char *argv[])
 	testsuite_init (argc, argv);
 	
 	/* reset .gnupg config directory */
-	system ("/bin/rm -rf ./tmp");
-	system ("/bin/mkdir ./tmp");
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
+	if (system ("/bin/mkdir ./tmp") != 0)
+		return EXIT_FAILURE;
 	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
-	system ("/usr/bin/gpg --list-keys > /dev/null 2>&1");
+	if (system ("/usr/bin/gpg --list-keys > /dev/null 2>&1") != 0)
+		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
 		if (argv[i][0] != '-') {
@@ -486,7 +489,8 @@ int main (int argc, char *argv[])
 	
 	g_mime_shutdown ();
 	
-	system ("/bin/rm -rf ./tmp");
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
 	
 	return testsuite_exit ();
 }

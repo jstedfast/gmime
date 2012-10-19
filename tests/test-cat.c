@@ -115,7 +115,7 @@ check_streams_match (GMimeStream *orig, GMimeStream *dup, const char *filename, 
 	size_t nread, size;
 	ssize_t n;
 	
-	v(fprintf (stdout, "Matching original stream (%lld -> %lld) with %s (%lld, %lld)... ",
+	v(fprintf (stdout, "Matching original stream (%" G_GINT64_FORMAT " -> %" G_GINT64_FORMAT ") with %s (%" G_GINT64_FORMAT ", %" G_GINT64_FORMAT ")... ",
 		   orig->position, orig->bound_end, filename, dup->position, dup->bound_end));
 	
 	if (orig->bound_end != -1) {
