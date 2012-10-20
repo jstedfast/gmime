@@ -972,7 +972,7 @@ enum {
 };
 
 static gboolean
-has_basic_headers (HeaderRaw *headers)
+has_message_headers (HeaderRaw *headers)
 {
 	unsigned int found = 0;
 	HeaderRaw *header;
@@ -994,6 +994,22 @@ has_basic_headers (HeaderRaw *headers)
 	}
 	
 	return found != 0;
+}
+
+static gboolean
+has_content_headers (HeaderRaw *headers)
+{
+	HeaderRaw *header;
+	
+	header = headers;
+	while (header != NULL) {
+		if (!g_ascii_strcasecmp (header->name, "Content-Type"))
+			return TRUE;
+		
+		header = header->next;
+	}
+	
+	return FALSE;
 }
 
 static int
@@ -1077,7 +1093,14 @@ parser_step_headers (GMimeParser *parser)
 						goto next_message;
 					
 					if (priv->headers != NULL) {
-						if (has_basic_headers (priv->headers)) {
+						if (priv->state == GMIME_PARSER_STATE_MESSAGE_HEADERS) {
+							if (has_message_headers (priv->headers)) {
+								/* probably the start of the content,
+								 * a broken mailer didn't terminate the
+								 * headers with an empty line. *sigh* */
+								goto content_start;
+							}
+						} else if (has_content_headers (priv->headers)) {
 							/* probably the start of the content,
 							 * a broken mailer didn't terminate the
 							 * headers with an empty line. *sigh* */
