@@ -1,3 +1,10 @@
+2012-10-19  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-parser.c (parser_push_boundary): Don't use strcmp to
+	check if the boundary is an mbox boundary, use a direct pointer
+	comparison so that we can handle Content-Type boundary parameters
+	with a value of "From "
+
 2012-10-19  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-parser.c (parser_step_headers): Don't assume that

@@ -180,6 +180,8 @@ struct _GMimeParserPrivate {
 	BoundaryStack *bounds;
 };
 
+#define MBOX_BOUNDARY "From "
+#define MBOX_BOUNDARY_LEN 5
 
 static void
 parser_push_boundary (GMimeParser *parser, const char *boundary)
@@ -194,10 +196,10 @@ parser_push_boundary (GMimeParser *parser, const char *boundary)
 	s->parent = priv->bounds;
 	priv->bounds = s;
 	
-	if (!strcmp (boundary, "From ")) {
-		s->boundary = g_strdup ("From ");
-		s->boundarylen = 5;
-		s->boundarylenfinal = 5;
+	if (boundary == MBOX_BOUNDARY) {
+		s->boundary = g_strdup (boundary);
+		s->boundarylen = MBOX_BOUNDARY_LEN;
+		s->boundarylenfinal = MBOX_BOUNDARY_LEN;
 	} else {
 		s->boundary = g_strdup_printf ("--%s--", boundary);
 		s->boundarylen = strlen (boundary) + 2;
@@ -1942,7 +1944,7 @@ parser_construct_message (GMimeParser *parser)
 	}
 	
 	if (priv->scan_from) {
-		parser_push_boundary (parser, "From ");
+		parser_push_boundary (parser, MBOX_BOUNDARY);
 		if (priv->respect_content_length && content_length < ULONG_MAX)
 			priv->bounds->content_end = parser_offset (priv, NULL) + content_length;
 	}
