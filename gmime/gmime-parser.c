@@ -180,7 +180,7 @@ struct _GMimeParserPrivate {
 	BoundaryStack *bounds;
 };
 
-#define MBOX_BOUNDARY "From "
+static const char MBOX_BOUNDARY[6] = "From ";
 #define MBOX_BOUNDARY_LEN 5
 
 static void
