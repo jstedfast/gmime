@@ -1,3 +1,9 @@
+2012-10-20  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-filter-gzip.c (gunzip_filter): Apparently
+	Z_BUF_ERROR isn't actually an error unless there is input
+	available. Thanks to Pavlo <devgs@ukr.net> for this patch.
+
 2012-08-13  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-utils.c (tokenize_rfc2047_phrase): Don't forget to

@@ -30,6 +30,12 @@
 
 #include "gmime-filter-gzip.h"
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 
 /**
  * SECTION: gmime-filter-gzip
@@ -231,7 +237,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	do {
 		/* FIXME: handle error cases? */
 		if ((retval = deflate (priv->stream, flush)) != Z_OK)
-			fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg);
+			w(fprintf (stderr, "gzip: %d: %s\n", retval, priv->stream->msg));
 		
 		if (flush == Z_FULL_FLUSH) {
 			size_t outlen;
@@ -384,8 +390,10 @@ gunzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 	
 	do {
 		/* FIXME: handle error cases? */
-		if ((retval = inflate (priv->stream, flush)) != Z_OK)
-			fprintf (stderr, "gunzip: %d: %s\n", retval, priv->stream->msg);
+		/* Note: Z_BUF_ERROR is not really an error unless there is input available */
+		if ((retval = inflate (priv->stream, flush)) != Z_OK &&
+		    !(retval == Z_BUF_ERROR && !priv->stream->avail_in))
+			w(fprintf (stderr, "gunzip: %d: %s\n", retval, priv->stream->msg));
 		
 		if (flush == Z_FULL_FLUSH) {
 			size_t outlen;
