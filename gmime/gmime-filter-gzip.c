@@ -61,8 +61,27 @@ enum {
 	GZIP_FLAG_RESERVED2 = (1 << 7),
 };
 
+enum {
+	GZIP_OS_FAT,
+	GZIP_OS_AMIGA,
+	GZIP_OS_VMS,
+	GZIP_OS_UNIX,
+	GZIP_OS_VM_CMS,
+	GZIP_OS_ATARI_TOS,
+	GZIP_OS_HPFS,
+	GZIP_OS_MACINTOSH,
+	GZIP_OS_ZSYSTEM,
+	GZIP_OS_CPM,
+	GZIP_OS_TOPS20,
+	GZIP_OS_NTFS,
+	GZIP_OS_QDOS,
+	GZIP_OS_ACORN_RISCOS,
+	GZIP_OS_UNKNOWN = 255
+};
+
 #define GZIP_FLAG_RESERVED (GZIP_FLAG_RESERVED0 | GZIP_FLAG_RESERVED1 | GZIP_FLAG_RESERVED2)
 
+/* http://www.gzip.org/zlib/rfc-gzip.html */
 typedef union {
 	unsigned char buf[10];
 	struct {
@@ -214,7 +233,7 @@ gzip_filter (GMimeFilter *filter, char *in, size_t len, size_t prespace,
 			priv->hdr.v.xfl = 4;
 		else
 			priv->hdr.v.xfl = 0;
-		priv->hdr.v.os = 255;
+		priv->hdr.v.os = GZIP_OS_UNKNOWN;
 		
 		g_mime_filter_set_size (filter, (len * 2) + 22, FALSE);
 		
