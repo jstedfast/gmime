@@ -185,7 +185,7 @@ stream_read (GMimeStream *stream, char *buf, size_t n)
 	priv->last_was_read = TRUE;
 	
 	if (priv->filteredlen <= 0) {
-		size_t presize = READ_SIZE;
+		size_t presize = READ_PAD;
 		
 		nread = g_mime_stream_read (filter->source, priv->buffer, READ_SIZE);
 		if (nread <= 0) {
