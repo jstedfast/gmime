@@ -1,3 +1,9 @@
+2012-10-27  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-filter.c (stream_read): Initialize presize to
+	READ_PAD instead of READ_SIZE to prevent potential buffer
+	underruns.
+
 2012-10-20  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-filter-gzip.c (gunzip_filter): Apparently
