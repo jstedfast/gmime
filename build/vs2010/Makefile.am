@@ -3,16 +3,16 @@
 EXTRA_DIST = \
 	config-win32.h.in	\
 	config-win32.h		\
-	gmime.vcproj		\
-	uuencode.vcproj		\
-	uudecode.vcproj		\
+	gmime.vcxproj		\
+	uuencode.vcxproj	\
+	uudecode.vcxproj	\
 	gmime.sln		\
-	basic-example.vcproj	\
-	imap-example.vcproj	\
-	test-headers.vcproj	\
-	test-streams.vcproj	\
-	test-iconv.vcproj	\
-	test-mime.vcproj	\
-	test-mbox.vcproj	\
-	test-cat.vcproj		\
+	basic-example.vcxproj	\
+	imap-example.vcxproj	\
+	test-headers.vcxproj	\
+	test-streams.vcxproj	\
+	test-iconv.vcxproj	\
+	test-mime.vcxproj	\
+	test-mbox.vcxproj	\
+	test-cat.vcxproj	\
 	unistd.h

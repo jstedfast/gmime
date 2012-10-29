@@ -626,6 +626,8 @@ m4/Makefile
 build/Makefile
 build/vs2008/Makefile
 build/vs2008/config-win32.h
+build/vs2010/Makefile
+build/vs2010/config-win32.h
 docs/Makefile
 docs/reference/Makefile
 docs/tutorial/Makefile
