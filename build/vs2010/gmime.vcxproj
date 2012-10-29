@@ -1,0 +1,331 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{F281AAC0-61AB-4E5C-849D-34FDB3687675}</ProjectGuid>
+    <RootNamespace>gmime</RootNamespace>
+    <Keyword>Win32Proj</Keyword>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>StaticLibrary</ConfigurationType>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.30319.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\gmime\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(Platform)\$(Configuration)\gmime\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\gmime\</IntDir>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(Platform)\$(Configuration)\gmime\</IntDir>
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" />
+    <CodeAnalysisRuleSet Condition="'$(Configuration)|$(Platform)'=='Release|x64'">AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRules Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+    <CodeAnalysisRuleAssemblies Condition="'$(Configuration)|$(Platform)'=='Release|x64'" />
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <PreBuildEvent>
+      <Message>Generating config.h ...</Message>
+      <Command>if exist ..\..\config.h goto DONE_CONFIG_H
+copy config-win32.h ..\..\config.h
+:DONE_CONFIG_H
+if exist ..\..\unistd.h goto DONE_UNISTD_H
+copy unistd.h ..\..\unistd.h
+:DONE_UNISTD_H
+</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\; ..\..\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN="GMime";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <PreBuildEvent>
+      <Message>Generating config.h ...</Message>
+      <Command>if exist ..\..\config.h goto DONE_CONFIG_H
+copy config-win32.h ..\..\config.h
+:DONE_CONFIG_H
+if exist ..\..\unistd.h goto DONE_UNISTD_H
+copy unistd.h ..\..\unistd.h
+:DONE_UNISTD_H
+</Command>
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <Optimization>Disabled</Optimization>
+      <AdditionalIncludeDirectories>..\..\; ..\..\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN="GMime";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <MinimalRebuild>true</MinimalRebuild>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <PreBuildEvent>
+      <Message>Generating config.h ...</Message>
+      <Command>if exist ..\..\config.h goto DONE_CONFIG_H
+copy config-win32.h ..\..\config.h
+:DONE_CONFIG_H
+if exist ..\..\unistd.h goto DONE_UNISTD_H
+copy unistd.h ..\..\unistd.h
+:DONE_UNISTD_H
+</Command>
+    </PreBuildEvent>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\; ..\..\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN="GMime";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <PreBuildEvent>
+      <Message>Generating config.h ...</Message>
+      <Command>if exist ..\..\config.h goto DONE_CONFIG_H
+copy config-win32.h ..\..\config.h
+:DONE_CONFIG_H
+if exist ..\..\unistd.h goto DONE_UNISTD_H
+copy unistd.h ..\..\unistd.h
+:DONE_UNISTD_H
+</Command>
+    </PreBuildEvent>
+    <Midl>
+      <TargetEnvironment>X64</TargetEnvironment>
+    </Midl>
+    <ClCompile>
+      <AdditionalIncludeDirectories>..\..\; ..\..\util;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;GMIME_EXPORTS;HAVE_CONFIG_H;G_DISABLE_DEPRECATED;G_LOG_DOMAIN="GMime";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ExceptionHandling>
+      </ExceptionHandling>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <PrecompiledHeader>
+      </PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <CompileAs>CompileAsC</CompileAs>
+    </ClCompile>
+    <Lib>
+      <OutputFile>$(OutDir)$(ProjectName)-2.6.lib</OutputFile>
+    </Lib>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\util\cache.h" />
+    <ClInclude Include="..\..\gmime\gmime-certificate.h" />
+    <ClInclude Include="..\..\gmime\gmime-charset-map-private.h" />
+    <ClInclude Include="..\..\gmime\gmime-charset.h" />
+    <ClInclude Include="..\..\gmime\gmime-common.h" />
+    <ClInclude Include="..\..\gmime\gmime-content-type.h" />
+    <ClInclude Include="..\..\gmime\gmime-crypto-context.h" />
+    <ClInclude Include="..\..\gmime\gmime-data-wrapper.h" />
+    <ClInclude Include="..\..\gmime\gmime-disposition.h" />
+    <ClInclude Include="..\..\gmime\gmime-encodings.h" />
+    <ClInclude Include="..\..\gmime\gmime-error.h" />
+    <ClInclude Include="..\..\gmime\gmime-events.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-basic.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-best.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-charset.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-crlf.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-enriched.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-from.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-gzip.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-html.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-md5.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-strip.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-windows.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter-yenc.h" />
+    <ClInclude Include="..\..\gmime\gmime-filter.h" />
+    <ClInclude Include="..\..\gmime\gmime-header.h" />
+    <ClInclude Include="..\..\gmime\gmime-iconv-utils.h" />
+    <ClInclude Include="..\..\gmime\gmime-iconv.h" />
+    <ClInclude Include="..\..\gmime\gmime-message-part.h" />
+    <ClInclude Include="..\..\gmime\gmime-message-partial.h" />
+    <ClInclude Include="..\..\gmime\gmime-message.h" />
+    <ClInclude Include="..\..\gmime\gmime-multipart-encrypted.h" />
+    <ClInclude Include="..\..\gmime\gmime-multipart-signed.h" />
+    <ClInclude Include="..\..\gmime\gmime-multipart.h" />
+    <ClInclude Include="..\..\gmime\gmime-object.h" />
+    <ClInclude Include="..\..\gmime\gmime-param.h" />
+    <ClInclude Include="..\..\gmime\gmime-parse-utils.h" />
+    <ClInclude Include="..\..\gmime\gmime-parser.h" />
+    <ClInclude Include="..\..\gmime\gmime-part.h" />
+    <ClInclude Include="..\..\gmime\gmime-signature.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-buffer.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-cat.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-file.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-filter.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-fs.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-gio.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-mem.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-null.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream-pipe.h" />
+    <ClInclude Include="..\..\gmime\gmime-stream.h" />
+    <ClInclude Include="..\..\gmime\gmime-table-private.h" />
+    <ClInclude Include="..\..\gmime\gmime-utils.h" />
+    <ClInclude Include="..\..\gmime\gmime.h" />
+    <ClInclude Include="..\..\util\gtrie.h" />
+    <ClInclude Include="..\..\gmime\internet-address.h" />
+    <ClInclude Include="..\..\util\list.h" />
+    <ClInclude Include="..\..\util\md5-utils.h" />
+    <ClInclude Include="..\..\util\url-scanner.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\util\cache.c" />
+    <ClCompile Include="..\..\gmime\gmime-certificate.c" />
+    <ClCompile Include="..\..\gmime\gmime-charset.c" />
+    <ClCompile Include="..\..\gmime\gmime-common.c" />
+    <ClCompile Include="..\..\gmime\gmime-content-type.c" />
+    <ClCompile Include="..\..\gmime\gmime-crypto-context.c" />
+    <ClCompile Include="..\..\gmime\gmime-data-wrapper.c" />
+    <ClCompile Include="..\..\gmime\gmime-disposition.c" />
+    <ClCompile Include="..\..\gmime\gmime-encodings.c" />
+    <ClCompile Include="..\..\gmime\gmime-events.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-basic.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-best.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-charset.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-crlf.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-enriched.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-from.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-gzip.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-html.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-md5.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-strip.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-windows.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter-yenc.c" />
+    <ClCompile Include="..\..\gmime\gmime-filter.c" />
+    <ClCompile Include="..\..\gmime\gmime-header.c" />
+    <ClCompile Include="..\..\gmime\gmime-iconv-utils.c" />
+    <ClCompile Include="..\..\gmime\gmime-iconv.c" />
+    <ClCompile Include="..\..\gmime\gmime-message-part.c" />
+    <ClCompile Include="..\..\gmime\gmime-message-partial.c" />
+    <ClCompile Include="..\..\gmime\gmime-message.c" />
+    <ClCompile Include="..\..\gmime\gmime-multipart-encrypted.c" />
+    <ClCompile Include="..\..\gmime\gmime-multipart-signed.c" />
+    <ClCompile Include="..\..\gmime\gmime-multipart.c" />
+    <ClCompile Include="..\..\gmime\gmime-object.c" />
+    <ClCompile Include="..\..\gmime\gmime-param.c" />
+    <ClCompile Include="..\..\gmime\gmime-parse-utils.c" />
+    <ClCompile Include="..\..\gmime\gmime-parser.c" />
+    <ClCompile Include="..\..\gmime\gmime-part.c" />
+    <ClCompile Include="..\..\gmime\gmime-signature.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-buffer.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-cat.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-file.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-filter.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-fs.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-gio.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-mem.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-null.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream-pipe.c" />
+    <ClCompile Include="..\..\gmime\gmime-stream.c" />
+    <ClCompile Include="..\..\gmime\gmime-utils.c" />
+    <ClCompile Include="..\..\gmime\gmime.c" />
+    <ClCompile Include="..\..\util\gtrie.c" />
+    <ClCompile Include="..\..\gmime\internet-address.c" />
+    <ClCompile Include="..\..\util\list.c" />
+    <ClCompile Include="..\..\util\md5-utils.c" />
+    <ClCompile Include="..\..\util\url-scanner.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="..\..\AUTHORS" />
+    <None Include="..\..\ChangeLog" />
+    <None Include="..\..\COPYING" />
+    <None Include="..\..\HACKING" />
+    <None Include="..\..\INSTALL" />
+    <None Include="..\..\LICENSE" />
+    <None Include="..\..\MAINTAINERS" />
+    <None Include="..\..\NEWS" />
+    <None Include="..\..\PORTING" />
+    <None Include="..\..\README" />
+    <None Include="..\..\TODO" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

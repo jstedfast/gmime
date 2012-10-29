@@ -1,0 +1,8 @@
+Makefile.in
+Makefile
+config-win32.h
+Release
+Debug
+*.user
+*.ncb
+*.suo
