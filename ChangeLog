@@ -1,3 +1,9 @@
+2012-11-02  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.12
+
 2012-10-27  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-stream-filter.c (stream_read): Initialize presize to
