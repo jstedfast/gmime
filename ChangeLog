@@ -1,3 +1,10 @@
+2012-11-23  Jeffrey Stedfast  <jeff@xamarin.com>
+
+	* gmime/gmime-header.c (g_mime_header_list_prepend): Prepend the
+	header to the list, don't *append* it. Oops.
+	(g_mime_header_list_clear): Don't forget to reset the linked list
+	so that it doesn't contained free'd nodes.
+
 2012-11-02  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
