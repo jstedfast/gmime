@@ -1,4 +1,10 @@
-2012-11-23  Jeffrey Stedfast  <jeff@xamarin.com>
+2012-11-26  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-header.c (g_mime_header_iter_first): Make sure the
+	list isn't empty.
+	(g_mime_header_iter_last): Same.
+
+2012-11-23  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-header.c (g_mime_header_list_prepend): Prepend the
 	header to the list, don't *append* it. Oops.

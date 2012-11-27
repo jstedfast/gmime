@@ -264,12 +264,10 @@ g_mime_header_iter_first (GMimeHeaderIter *iter)
 	g_return_val_if_fail (iter != NULL, FALSE);
 	
 	/* make sure we can actually do as requested */
-	if (!iter->hdrlist)
+	if (!iter->hdrlist || list_is_empty (&iter->hdrlist->list))
 		return FALSE;
 	
 	first = (GMimeHeader *) iter->hdrlist->list.head;
-	if (!first->next)
-		return FALSE;
 	
 	iter->version = iter->hdrlist->version;
 	iter->cursor = first;
@@ -294,12 +292,10 @@ g_mime_header_iter_last (GMimeHeaderIter *iter)
 	g_return_val_if_fail (iter != NULL, FALSE);
 	
 	/* make sure we can actually do as requested */
-	if (!iter->hdrlist)
+	if (!iter->hdrlist || list_is_empty (&iter->hdrlist->list))
 		return FALSE;
 	
 	last = (GMimeHeader *) iter->hdrlist->list.tailpred;
-	if (!last->next)
-		return FALSE;
 	
 	iter->version = iter->hdrlist->version;
 	iter->cursor = last;
