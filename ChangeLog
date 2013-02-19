@@ -1,3 +1,8 @@
+2013-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-filter-html.c (html_convert): Fixed to convert the
+	last line of input even if it doesn't end with a \n.
+
 2013-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

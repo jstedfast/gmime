@@ -321,7 +321,7 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	
 	g_mime_filter_set_size (filter, inlen * 2 + 6, FALSE);
 	
-	inptr = in;
+	start = inptr = in;
 	inend = in + inlen;
 	outptr = filter->outbuf;
 	outend = filter->outbuf + filter->outsize;
@@ -331,11 +331,13 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		html->pre_open = TRUE;
 	}
 	
-	start = inptr;
-	while (inptr < inend && *inptr != '\n')
-		inptr++;
-	
-	while (inptr < inend) {
+	do {
+		while (inptr < inend && *inptr != '\n')
+			inptr++;
+		
+		if (inptr == inend && !flush)
+			break;
+		
 		html->column = 0;
 		depth = 0;
 		
@@ -416,18 +418,13 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			outptr = g_stpcpy (outptr, "<br>");
 		}
 		
-		*outptr++ = '\n';
+		if (inptr < inend)
+			*outptr++ = '\n';
 		
 		start = ++inptr;
-		while (inptr < inend && *inptr != '\n')
-			inptr++;
-	}
+	} while (inptr < inend);
 	
 	if (flush) {
-		/* flush the rest of our input buffer */
-		if (start < inend)
-			outptr = writeln (filter, start, inend, outptr, &outend);
-		
 		if (html->pre_open) {
 			/* close the pre-tag */
 			outptr = check_size (filter, outptr, &outend, 10);
