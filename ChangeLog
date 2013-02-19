@@ -1,5 +1,11 @@
 2013-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.15
+
+2013-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-filter-html.c (html_convert): Fixed to convert the
 	last line of input even if it doesn't end with a \n.
 
