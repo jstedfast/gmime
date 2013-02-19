@@ -1,3 +1,8 @@
+2013-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* util/url-scanner.c (url_addrspec_start): Fixed the logic to
+	actually scan for the beginning of the mailbox.
+
 2012-12-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

@@ -188,6 +188,8 @@ url_addrspec_start (const char *in, const char *pos, const char *inend, urlmatch
 	if (inptr == in)
 		return FALSE;
 	
+	inptr--;
+	
 	while (inptr > in) {
 		if (is_atom (*inptr))
 			inptr--;
