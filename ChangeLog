@@ -1,5 +1,11 @@
 2013-02-18  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.14
+
+2013-02-18  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* util/url-scanner.c (url_addrspec_start): Fixed the logic to
 	actually scan for the beginning of the mailbox.
 
