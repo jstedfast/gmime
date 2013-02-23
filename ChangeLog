@@ -1,3 +1,8 @@
+2013-02-23  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-filter-html.c: Disable g_warnings unless warnings
+	are enabled in the build.
+
 2013-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

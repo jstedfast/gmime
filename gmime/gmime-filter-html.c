@@ -29,6 +29,12 @@
 #include "url-scanner.h"
 #include "gmime-filter-html.h"
 
+#ifdef ENABLE_WARNINGS
+#define w(x) x
+#else
+#define w(x)
+#endif /* ENABLE_WARNINGS */
+
 #define d(x)
 
 
@@ -254,7 +260,7 @@ writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, cha
 		u = html_utf8_getc (&inptr, inend);
 		switch (u) {
 		case 0xffff:
-			g_warning ("Invalid UTF-8 sequence encountered");
+			w(g_warning ("Invalid UTF-8 sequence encountered"));
 			return outptr;
 			break;
 		case '<':
