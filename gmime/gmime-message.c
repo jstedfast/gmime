@@ -50,6 +50,8 @@
  **/
 
 extern GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
+extern char *_g_mime_utils_unstructured_header_fold (const char *field, const char *value);
+extern char *_g_mime_utils_structured_header_fold (const char *field, const char *value);
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
@@ -603,13 +605,10 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 static ssize_t
 write_subject (GMimeStream *stream, const char *name, const char *value)
 {
-	char *unfolded, *folded;
+	char *folded;
 	ssize_t n;
 	
-	unfolded = g_strdup_printf ("%s: %s\n", name, value);
-	folded = g_mime_utils_unstructured_header_fold (unfolded);
-	g_free (unfolded);
-	
+	folded = _g_mime_utils_unstructured_header_fold (name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	
@@ -627,13 +626,10 @@ write_msgid (GMimeStream *stream, const char *name, const char *value)
 static ssize_t
 write_structured (GMimeStream *stream, const char *name, const char *value)
 {
-	char *unfolded, *folded;
+	char *folded;
 	ssize_t n;
 	
-	unfolded = g_strdup_printf ("%s: %s\n", name, value);
-	folded = g_mime_utils_structured_header_fold (unfolded);
-	g_free (unfolded);
-	
+	folded = _g_mime_utils_structured_header_fold (name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	

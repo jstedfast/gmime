@@ -490,6 +490,36 @@ test_rfc2047 (gboolean test_broken)
 #endif
 }
 
+static struct {
+	const char *input;
+	const char *folded;
+} header_folding[] = {
+	{ "Subject: qqqq wwwwwww [eee 1234]=?UTF-8?Q?=20=D0=95=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC?=",
+	  "Subject: qqqq wwwwwww [eee 1234]\n =?UTF-8?Q?=20=D0=95=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=20=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC=D0=BC?=\n" },
+};
+
+static void
+test_header_folding (void)
+{
+	char *folded;
+	guint i;
+	
+	for (i = 0; i < G_N_ELEMENTS (header_folding); i++) {
+	        folded = NULL;
+		testsuite_check ("header_folding[%u]", i);
+		try {
+			folded = g_mime_utils_unstructured_header_fold (header_folding[i].input);
+			if (strcmp (header_folding[i].folded, folded) != 0)
+				throw (exception_new ("folded text does not match: -->%s<-- vs -->%s<--", header_folding[i].folded, folded));
+			
+			testsuite_check_passed ();
+		} catch (ex) {
+			testsuite_check_failed ("header_folding[%u]: %s", i, ex->message);
+		} finally;
+		
+		g_free (folded);
+	}
+}
 
 static struct {
 	const char *input;
@@ -628,6 +658,7 @@ int main (int argc, char **argv)
 	
 	g_mime_init (GMIME_ENABLE_RFC2047_WORKAROUNDS);
 	testsuite_start ("broken rfc2047 encoding/decoding");
+	test_header_folding ();
 	test_addrspec (TRUE);
 	test_rfc2047 (TRUE);
 	testsuite_end ();

@@ -1,3 +1,12 @@
+2013-04-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (header_fold_tokens): New internal function
+	that replaces the older header_fold() function. This new one uses
+	the rfc2047 tokenizer so that we share the same rfc2047 workaround
+	logic in the tokenizer.
+
+	Fixes bug #697407
+
 2013-02-23  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-filter-html.c: Disable g_warnings unless warnings

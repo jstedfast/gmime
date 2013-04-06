@@ -1127,193 +1127,6 @@ g_mime_references_get_message_id (const GMimeReferences *ref)
 
 
 static gboolean
-is_rfc2047_token (const char *inptr, size_t len)
-{
-	if (len < 8 || strncmp (inptr, "=?", 2) != 0 || strncmp (inptr + len - 2, "?=", 2) != 0)
-		return FALSE;
-	
-	inptr += 2;
-	len -= 2;
-	
-	/* skip past the charset */
-	while (*inptr != '?' && len > 0) {
-		inptr++;
-		len--;
-	}
-	
-	if (*inptr != '?' || len < 4)
-		return FALSE;
-	
-	if (inptr[1] != 'q' && inptr[1] != 'Q' && inptr[1] != 'b' && inptr[1] != 'B')
-		return FALSE;
-	
-	inptr += 2;
-	len -= 2;
-	
-	if (*inptr != '?')
-		return FALSE;
-	
-	return TRUE;
-}
-
-static char *
-header_fold (const char *in, gboolean structured)
-{
-	gboolean last_was_lwsp = FALSE;
-	register const char *inptr;
-	size_t len, outlen, i;
-	size_t fieldlen;
-	GString *out;
-	char *ret;
-	
-	inptr = in;
-	len = strlen (in);
-	if (len <= GMIME_FOLD_LEN + 1)
-		return g_strdup (in);
-	
-	out = g_string_new ("");
-	fieldlen = strcspn (inptr, ": \t\n");
-	g_string_append_len (out, inptr, fieldlen);
-	outlen = fieldlen;
-	inptr += fieldlen;
-	
-	while (*inptr && *inptr != '\n') {
-		len = strcspn (inptr, " \t\n");
-		
-		if (len > 1 && outlen + len > GMIME_FOLD_LEN) {
-			if (outlen > 1 && out->len >= fieldlen + 2) {
-				if (last_was_lwsp) {
-					if (structured)
-						out->str[out->len - 1] = '\t';
-					
-					g_string_insert_c (out, out->len - 1, '\n');
-				} else
-					g_string_append (out, "\n\t");
-				
-				outlen = 1;
-			}
-			
-			if (!structured && !is_rfc2047_token (inptr, len)) {
-				/* check for very long words, just cut them up */
-				while (outlen + len > GMIME_FOLD_LEN) {
-					for (i = 0; i < GMIME_FOLD_LEN - outlen; i++)
-						g_string_append_c (out, inptr[i]);
-					inptr += GMIME_FOLD_LEN - outlen;
-					len -= GMIME_FOLD_LEN - outlen;
-					g_string_append (out, "\n\t");
-					outlen = 1;
-				}
-			} else {
-				g_string_append_len (out, inptr, len);
-				outlen += len;
-				inptr += len;
-			}
-			last_was_lwsp = FALSE;
-		} else if (len > 0) {
-			g_string_append_len (out, inptr, len);
-			outlen += len;
-			inptr += len;
-			last_was_lwsp = FALSE;
-		} else {
-			last_was_lwsp = TRUE;
-			if (*inptr == '\t') {
-				/* tabs are a good place to fold, odds
-				   are that this is where the previous
-				   mailer folded it */
-				g_string_append (out, "\n\t");
-				outlen = 1;
-				while (is_blank (*inptr))
-					inptr++;
-			} else {
-				g_string_append_c (out, *inptr++);
-				outlen++;
-			}
-		}
-	}
-	
-	if (*inptr == '\n' && out->str[out->len - 1] != '\n')
-		g_string_append_c (out, '\n');
-	
-	ret = out->str;
-	g_string_free (out, FALSE);
-	
-	return ret;
-}
-
-
-/**
- * g_mime_utils_structured_header_fold:
- * @str: input string
- *
- * Folds a structured header according to the rules in rfc822.
- *
- * Returns: an allocated string containing the folded header.
- **/
-char *
-g_mime_utils_structured_header_fold (const char *str)
-{
-	return header_fold (str, TRUE);
-}
-
-
-/**
- * g_mime_utils_unstructured_header_fold:
- * @str: input string
- *
- * Folds an unstructured header according to the rules in rfc822.
- *
- * Returns: an allocated string containing the folded header.
- **/
-char *
-g_mime_utils_unstructured_header_fold (const char *str)
-{
-	return header_fold (str, FALSE);
-}
-
-
-/**
- * g_mime_utils_header_fold:
- * @str: input string
- *
- * Folds a structured header according to the rules in rfc822.
- *
- * Returns: an allocated string containing the folded header.
- **/
-char *
-g_mime_utils_header_fold (const char *str)
-{
-	return header_fold (str, TRUE);
-}
-
-
-/**
- * g_mime_utils_header_printf:
- * @format: string format
- * @Varargs: arguments
- *
- * Allocates a buffer containing a formatted header specified by the
- * @Varargs.
- *
- * Returns: an allocated string containing the folded header specified
- * by @format and the following arguments.
- **/
-char *
-g_mime_utils_header_printf (const char *format, ...)
-{
-	char *buf, *ret;
-	va_list ap;
-	
-	va_start (ap, format);
-	buf = g_strdup_vprintf (format, ap);
-	va_end (ap);
-	
-	ret = header_fold (buf, TRUE);
-	g_free (buf);
-	
-	return ret;
-}
-
-static gboolean
 need_quotes (const char *string)
 {
 	gboolean quoted = FALSE;
@@ -1810,7 +1623,39 @@ quoted_decode (const unsigned char *in, size_t len, unsigned char *out, int *sta
 	return (size_t) (outptr - out);
 }
 
-#define is_rfc2047_encoded_word(atom, len) (len >= 7 && !strncmp (atom, "=?", 2) && !strncmp (atom + len - 2, "?=", 2))
+
+#if 0
+static gboolean
+is_rfc2047_token (const char *inptr, size_t len)
+{
+	if (len < 8 || strncmp (inptr, "=?", 2) != 0 || strncmp (inptr + len - 2, "?=", 2) != 0)
+		return FALSE;
+	
+	inptr += 2;
+	len -= 2;
+	
+	/* skip past the charset */
+	while (*inptr != '?' && len > 0) {
+		inptr++;
+		len--;
+	}
+	
+	if (*inptr != '?' || len < 4)
+		return FALSE;
+	
+	if (inptr[1] != 'q' && inptr[1] != 'Q' && inptr[1] != 'b' && inptr[1] != 'B')
+		return FALSE;
+	
+	inptr += 2;
+	len -= 2;
+	
+	if (*inptr != '?')
+		return FALSE;
+	
+	return TRUE;
+}
+#endif
+
 
 typedef struct _rfc2047_token {
 	struct _rfc2047_token *next;
@@ -2842,4 +2687,302 @@ g_mime_utils_header_encode_text (const char *text)
 		return NULL;
 	
 	return rfc2047_encode (text, IS_ESAFE);
+}
+
+
+static char *
+header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_token *tokens, gboolean structured)
+{
+	rfc2047_token *token, *next;
+	size_t lwsp, tab, len, n;
+	GString *output;
+	
+	len = strlen (field) + 2;
+	output = g_string_sized_new (len + vlen + 1);
+	g_string_append (output, field);
+	g_string_append (output, ": ");
+	lwsp = 0;
+	tab = 0;
+	
+	token = tokens;
+	while (token != NULL) {
+		if (is_lwsp (token->text[0])) {
+			for (n = 0; n < token->length; n++) {
+				if (token->text[n] == '\r')
+					continue;
+				
+				lwsp = output->len;
+				if (token->text[n] == '\t')
+					tab = output->len;
+				
+				g_string_append_c (output, token->text[n]);
+				if (token->text[n] == '\n') {
+					lwsp = tab = 0;
+					len = 0;
+				} else {
+					len++;
+				}
+			}
+			
+			if (len == 0 && token->next) {
+				g_string_append_c (output, structured ? '\t' : ' ');
+				len = 1;
+			}
+		} else if (token->encoding != 0) {
+			n = strlen (token->charset) + 7;
+			
+			if (len + token->length + n > GMIME_FOLD_LEN) {
+				if (tab != 0) {
+					/* tabs are the perfect breaking opportunity... */
+					g_string_insert_c (output, tab, '\n');
+					len = (lwsp - tab) + 1;
+				} else if (lwsp != 0) {
+					/* break just before the last lwsp character i*/
+					g_string_insert_c (output, lwsp, '\n');
+					len = 1;
+				} else if (len > 1) {
+					/* force a line break... */
+					g_string_append (output, structured ? "\n\t" : "\n ");
+					len = 1;
+				}
+			}
+			
+			/* Note: if the encoded-word token is longer than the fold length, oh well...
+			 * it probably just means that we are folding a header written by a user-agent
+			 * with a different max line length than ours. */
+			
+			g_string_append_printf (output, "=?%s?%c?", token->charset, token->encoding);
+			g_string_append_len (output, token->text, token->length);
+			g_string_append (output, "?=");
+			len += token->length + n;
+			lwsp = 0;
+			tab = 0;
+		} else if (len + token->length > GMIME_FOLD_LEN) {
+			if (tab != 0) {
+				/* tabs are the perfect breaking opportunity... */
+				g_string_insert_c (output, tab, '\n');
+				len = (lwsp - tab) + 1;
+			} else if (lwsp != 0) {
+				/* break just before the last lwsp character i*/
+				g_string_insert_c (output, lwsp, '\n');
+				len = 1;
+			} else if (len > 1) {
+				/* force a line break... */
+				g_string_append (output, structured ? "\n\t" : "\n ");
+				len = 1;
+			}
+			
+			if (token->length >= GMIME_FOLD_LEN) {
+				/* the token is longer than the allowable line length,
+				 * so we'll have to break it apart... */
+				n = GMIME_FOLD_LEN - len;
+				g_string_append_len (output, token->text, n);
+				g_string_append (output, "\n\t");
+				g_string_append_len (output, token->text + n, token->length - n);
+				len = (token->length - n) + 1;
+			} else {
+				g_string_append_len (output, token->text, token->length);
+				len += token->length;
+			}
+			
+			lwsp = 0;
+			tab = 0;
+		} else {
+			g_string_append_len (output, token->text, token->length);
+			len += token->length;
+			lwsp = 0;
+			tab = 0;
+		}
+		
+		next = token->next;
+		rfc2047_token_free (token);
+		token = next;
+	}
+	
+	if (output->str[output->len - 1] != '\n')
+		g_string_append_c (output, '\n');
+	
+	return g_string_free (output, FALSE);
+}
+
+
+/**
+ * g_mime_utils_structured_header_fold:
+ * @header: header field and value string
+ *
+ * Folds a structured header according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the folded header.
+ **/
+char *
+g_mime_utils_structured_header_fold (const char *header)
+{
+	rfc2047_token *tokens;
+	const char *value;
+	char *folded;
+	char *field;
+	size_t len;
+	
+	if (header == NULL)
+		return NULL;
+	
+	value = header;
+	while (*value && *value != ':')
+		value++;
+	
+	if (*value == '\0')
+		return NULL;
+	
+	field = g_strndup (header, value - header);
+	
+	value++;
+	while (*value && is_lwsp (*value))
+		value++;
+	
+	tokens = tokenize_rfc2047_phrase (value, &len);
+	folded = header_fold_tokens (field, value, len, tokens, TRUE);
+	g_free (field);
+	
+	return folded;
+}
+
+
+/**
+ * _g_mime_utils_structured_header_fold:
+ * @field: header field
+ * @value: header value
+ *
+ * Folds an structured header according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the folded header.
+ **/
+char *
+_g_mime_utils_structured_header_fold (const char *field, const char *value)
+{
+	rfc2047_token *tokens;
+	size_t len;
+	
+	if (field == NULL)
+		return NULL;
+	
+	if (value == NULL)
+		return g_strdup_printf ("%s: \n", field);
+	
+	tokens = tokenize_rfc2047_phrase (value, &len);
+	
+	return header_fold_tokens (field, value, len, tokens, TRUE);
+}
+
+
+/**
+ * g_mime_utils_unstructured_header_fold:
+ * @header: header field and value string
+ *
+ * Folds an unstructured header according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the folded header.
+ **/
+char *
+g_mime_utils_unstructured_header_fold (const char *header)
+{
+	rfc2047_token *tokens;
+	const char *value;
+	char *folded;
+	char *field;
+	size_t len;
+	
+	if (header == NULL)
+		return NULL;
+	
+	value = header;
+	while (*value && *value != ':')
+		value++;
+	
+	if (*value == '\0')
+		return NULL;
+	
+	field = g_strndup (header, value - header);
+	
+	value++;
+	while (*value && is_lwsp (*value))
+		value++;
+	
+	tokens = tokenize_rfc2047_text (value, &len);
+	folded = header_fold_tokens (field, value, len, tokens, FALSE);
+	g_free (field);
+	
+	return folded;
+}
+
+
+/**
+ * _g_mime_utils_unstructured_header_fold:
+ * @field: header field
+ * @value: header value
+ *
+ * Folds an unstructured header according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the folded header.
+ **/
+char *
+_g_mime_utils_unstructured_header_fold (const char *field, const char *value)
+{
+	rfc2047_token *tokens;
+	size_t len;
+	
+	if (field == NULL)
+		return NULL;
+	
+	if (value == NULL)
+		return g_strdup_printf ("%s: \n", field);
+	
+	tokens = tokenize_rfc2047_text (value, &len);
+	
+	return header_fold_tokens (field, value, len, tokens, FALSE);
+}
+
+
+/**
+ * g_mime_utils_header_fold:
+ * @header: header field and value string
+ *
+ * Folds a structured header according to the rules in rfc822.
+ *
+ * Returns: an allocated string containing the folded header.
+ *
+ * WARNING: This function is obsolete. Use
+ * g_mime_utils_structured_header_fold() instead.
+ **/
+char *
+g_mime_utils_header_fold (const char *header)
+{
+	return g_mime_utils_structured_header_fold (header);
+}
+
+
+/**
+ * g_mime_utils_header_printf:
+ * @format: string format
+ * @Varargs: arguments
+ *
+ * Allocates a buffer containing a formatted header specified by the
+ * @Varargs.
+ *
+ * Returns: an allocated string containing the folded header specified
+ * by @format and the following arguments.
+ **/
+char *
+g_mime_utils_header_printf (const char *format, ...)
+{
+	char *buf, *ret;
+	va_list ap;
+	
+	va_start (ap, format);
+	buf = g_strdup_vprintf (format, ap);
+	va_end (ap);
+	
+	ret = g_mime_utils_unstructured_header_fold (buf);
+	g_free (buf);
+	
+	return ret;
 }
