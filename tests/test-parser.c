@@ -120,18 +120,19 @@ print_mime_struct_iter (GMimeMessage *message)
 {
 	//const char *jump_to = "4.2.2.2";
 	GMimePartIter *iter;
+	GMimeObject *parent;
 	GMimeObject *part;
 	char *path;
 	
 	iter = g_mime_part_iter_new ((GMimeObject *) message);
 	if (g_mime_part_iter_is_valid (iter)) {
-		part = g_mime_part_iter_get_parent (iter);
-		print_mime_part_info ("TEXT", part);
+		if ((parent = g_mime_part_iter_get_parent (iter)))
+			print_mime_part_info ("TEXT", parent);
 		
 		do {
 			part = g_mime_part_iter_get_current (iter);
 			path = g_mime_part_iter_get_path (iter);
-			print_mime_part_info (path, part);
+			print_mime_part_info (parent ? path : "TEXT", part);
 			g_free (path);
 		} while (g_mime_part_iter_next (iter));
 		
@@ -146,9 +147,6 @@ print_mime_struct_iter (GMimeMessage *message)
 			fprintf (stdout, "Failed to jump to %s\n", jump_to);
 		}
 #endif
-	} else {
-		part = g_mime_message_get_mime_part (message);
-		print_mime_part_info ("TEXT", part);
 	}
 	
 	g_mime_part_iter_free (iter);

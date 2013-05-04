@@ -1,5 +1,10 @@
 2013-05-04  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-part-iter.c: Modified to work for non-multipart
+	messages.
+
+2013-05-04  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-utils.c (rfc2047_encode): Respect the new
 	GMIME_ENABLE_USE_ONLY_USER_CHARSETS initialization flag.
 

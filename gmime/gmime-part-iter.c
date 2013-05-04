@@ -140,7 +140,8 @@ g_mime_part_iter_free (GMimePartIter *iter)
 	
 	g_object_unref (iter->toplevel);
 	g_array_free (iter->path, TRUE);
-	g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
+	if (iter->parent != NULL)
+		g_slice_free_chain (GMimeObjectStack, iter->parent, parent);
 	g_slice_free (GMimePartIter, iter);
 }
 
@@ -166,8 +167,10 @@ g_mime_part_iter_reset (GMimePartIter *iter)
 	iter->parent = NULL;
 	iter->index = -1;
 	
-	/* set our initial 'current' part to our first child */
-	g_mime_part_iter_next (iter);
+	if (!GMIME_IS_PART (iter->current)) {
+		/* set our initial 'current' part to our first child */
+		g_mime_part_iter_next (iter);
+	}
 }
 
 
@@ -196,9 +199,12 @@ g_mime_part_iter_jump_to (GMimePartIter *iter, const char *path)
 	
 	g_return_val_if_fail (iter != NULL, FALSE);
 	
+	if (!path || !path[0])
+		return FALSE;
+	
 	g_mime_part_iter_reset (iter);
 	
-	if (!path || !path[0])
+	if (!strcmp (path, "0"))
 		return TRUE;
 	
 	parent = iter->parent->object;
@@ -449,7 +455,7 @@ g_mime_part_iter_get_parent (GMimePartIter *iter)
 	if (!g_mime_part_iter_is_valid (iter))
 		return NULL;
 	
-	return iter->parent->object;
+	return iter->parent ? iter->parent->object : NULL;
 }
 
 
