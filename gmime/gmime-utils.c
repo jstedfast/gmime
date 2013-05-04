@@ -78,6 +78,7 @@
  **/
 
 extern gboolean _g_mime_enable_rfc2047_workarounds (void);
+extern gboolean _g_mime_use_only_user_charsets (void);
 
 #define GMIME_FOLD_PREENCODED  (GMIME_FOLD_LEN / 2)
 
@@ -2613,8 +2614,10 @@ rfc2047_encode (const char *in, gushort safemask)
 				rfc2047_encode_word (out, start, len, "us-ascii", safemask);
 				break;
 			case 1: /* iso-8859-1 */
-				rfc2047_encode_word (out, start, len, "iso-8859-1", safemask);
-				break;
+				if (!_g_mime_use_only_user_charsets ()) {
+					rfc2047_encode_word (out, start, len, "iso-8859-1", safemask);
+					break;
+				}
 			default:
 				charset = NULL;
 				g_mime_charset_init (&mask);

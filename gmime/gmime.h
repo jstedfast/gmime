@@ -121,7 +121,16 @@ gboolean g_mime_check_version (guint major, guint minor, guint micro);
  * Initialization flag to enable workarounds for badly formed rfc2047
  * encoded-words.
  **/
-#define GMIME_ENABLE_RFC2047_WORKAROUNDS  (1 << 0)
+#define GMIME_ENABLE_RFC2047_WORKAROUNDS     (1 << 0)
+
+/**
+ * GMIME_ENABLE_USE_ONLY_USER_CHARSETS:
+ *
+ * Initialization flag that hints to the rfc2047 encoder to use only
+ * the configured user-charsets (set via g_mime_set_user_charsets())
+ * instead of trying to first use iso-8859-1.
+ **/
+#define GMIME_ENABLE_USE_ONLY_USER_CHARSETS  (1 << 1)
 
 void g_mime_init (guint32 flags);
 void g_mime_shutdown (void);

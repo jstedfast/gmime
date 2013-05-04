@@ -47,6 +47,7 @@
  **/
 
 extern gboolean _g_mime_enable_rfc2047_workarounds (void);
+extern gboolean _g_mime_use_only_user_charsets (void);
 
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
@@ -208,4 +209,10 @@ gboolean
 _g_mime_enable_rfc2047_workarounds (void)
 {
 	return (enable & GMIME_ENABLE_RFC2047_WORKAROUNDS);
+}
+
+gboolean
+_g_mime_use_only_user_charsets (void)
+{
+	return (enable & GMIME_ENABLE_USE_ONLY_USER_CHARSETS);
 }

@@ -1,3 +1,11 @@
+2013-05-04  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-utils.c (rfc2047_encode): Respect the new
+	GMIME_ENABLE_USE_ONLY_USER_CHARSETS initialization flag.
+
+	* gmime/gmime.h: Define a new GMIME_ENABLE_USE_ONLY_USER_CHARSETS
+	initialization flag.
+
 2013-04-05  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-utils.c (header_fold_tokens): New internal function
