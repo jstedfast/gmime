@@ -1,6 +1,6 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
- *  Copyright (C) 2000-2012 Jeffrey Stedfast
+ *  Copyright (C) 2000-2013 Jeffrey Stedfast
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -62,9 +62,9 @@ void g_mime_references_free (GMimeReferences *refs);
 const GMimeReferences *g_mime_references_get_next (const GMimeReferences *ref);
 const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 
-char  *g_mime_utils_structured_header_fold (const char *str);
-char  *g_mime_utils_unstructured_header_fold (const char *str);
-char  *g_mime_utils_header_fold (const char *str);
+char  *g_mime_utils_structured_header_fold (const char *header);
+char  *g_mime_utils_unstructured_header_fold (const char *header);
+char  *g_mime_utils_header_fold (const char *header);
 char  *g_mime_utils_header_printf (const char *format, ...);
 
 char  *g_mime_utils_quote_string (const char *str);
