@@ -155,6 +155,7 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 					best->maxline = MAX (best->maxline, best->linelen);
 					best->startline = TRUE;
 					best->midline = FALSE;
+					best->linelen = 0;
 				}
 			}
 			

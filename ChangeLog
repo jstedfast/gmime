@@ -1,3 +1,8 @@
+2013-05-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-filter-best.c (filter_filter): Reset the linelen
+	state to 0 when we encounter a '\n'.
+
 2013-05-04  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-part-iter.c: Modified to work for non-multipart
