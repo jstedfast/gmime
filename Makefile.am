@@ -17,7 +17,7 @@ endif
 SUBDIRS += tools .
 
 # build documentation when doing distcheck
-DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc
+DISTCHECK_CONFIGURE_FLAGS = --enable-gtk-doc --enable-introspection
 
 DISTCLEANFILES = iconv-detect.h gmime-$(GMIME_API_VERSION).pc config.lt doltcompile doltlibtool
 

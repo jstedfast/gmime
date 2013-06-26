@@ -168,3 +168,29 @@ charset_map_SOURCES = charset-map.c
 charset_map_LDFLAGS = 
 charset_map_DEPENDENCIES = 
 charset_map_LDADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+
+CLEANFILES =
+
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+
+if HAVE_INTROSPECTION
+GMime-2.6.gir: libgmime-2.6.la
+GMime_2_6_gir_INCLUDES = GObject-2.0 Gio-2.0
+GMime_2_6_gir_CFLAGS = $(INCLUDES)
+GMime_2_6_gir_LIBS = libgmime-2.6.la
+GMime_2_6_gir_FILES = $(gmimeinclude_HEADERS) $(libgmime_2_6_la_SOURCES)
+GMime_2_6_gir_EXPORT_PACKAGES = gmime-2.6
+GMime_2_6_gir_SCANNERFLAGS = --c-include="gmime/gmime.h" --accept-unprefixed
+INTROSPECTION_GIRS += GMime-2.6.gir
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+CLEANFILES += $(gir_DATA) $(typelib_DATA)
+endif

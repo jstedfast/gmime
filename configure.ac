@@ -50,7 +50,7 @@ AC_CANONICAL_HOST
 # Save this value here, since automake will set cflags later
 cflags_set=${CFLAGS+set}
 
-AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign])
+AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign -Wno-portability])
 AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
 dnl m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_CONFIG_HEADER([config.h])
@@ -619,6 +619,7 @@ AC_SUBST(GMIME_LIBS_PRIVATE)
 AC_SUBST(GMIME_CFLAGS)
 AC_SUBST(GMIME_LIBS)
 
+GOBJECT_INTROSPECTION_CHECK([1.30.0])
 
 AC_OUTPUT(
 Makefile

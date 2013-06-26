@@ -8,3 +8,5 @@ Makefile
 gmime-version.h
 charset-map
 gen-table
+GMime-2.6.gir
+GMime-2.6.typelib
