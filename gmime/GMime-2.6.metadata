@@ -1,0 +1,23 @@
+InternetAddress
+  .to_string#method name="to_new_string"
+References struct=false
+
+// G-I can't handle non-boxed types
+HeaderIter struct=false
+PartIter struct=false
+Param struct=false
+  .next#method name="get_next" nullable
+
+// G-I doesn't allow non-nullable return values (bug #660879)
+Message
+  .get_mime_part nullable
+Object
+  .get_content_type_parameter nullable
+Parser
+  .construct_message nullable
+
+// G-I doesn't allow non-GObject inheritance
+utils_header_decode_date type="time_t"
+
+// g_mime_utils_header_decode_phrase transfer_ownership="1"
+// g_mime_utils_header_decode_text transfer_ownership="1"

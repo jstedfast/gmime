@@ -10,3 +10,5 @@ charset-map
 gen-table
 GMime-2.6.gir
 GMime-2.6.typelib
+gmime-2.6.vapi
+gmime-2.6.deps

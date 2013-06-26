@@ -194,3 +194,25 @@ typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
 
 CLEANFILES += $(gir_DATA) $(typelib_DATA)
 endif
+
+if ENABLE_VAPIGEN
+-include $(VAPIGEN_MAKEFILE)
+
+gmime-2.6.vapi: GMime-2.6.gir GMime-2.6.metadata
+
+VAPIGEN_VAPIS = gmime-2.6.vapi
+gmime_2_6_vapi_DEPS = gio-2.0
+gmime_2_6_vapi_METADATADIRS = $(srcdir)
+gmime_2_6_vapi_FILES = GMime-2.6.gir
+
+gmime-2.6.deps:
+	$(AM_V_GEN) for pkg in $(gmime_2_6_vapi_DEPS); do \
+		echo $$pkg >> $@; \
+	done
+
+vapidir = $(datadir)/vala/vapi
+vapi_DATA = $(VAPIGEN_VAPIS) $(VAPIGEN_VAPIS:.vapi=.deps)
+
+EXTRA_DIST += GMime-2.6.metadata
+CLEANFILES += $(vapi_DATA)
+endif
