@@ -454,7 +454,8 @@ g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_t
  * Gets the #GMimeContentType object for the given MIME object or
  * %NULL on fail.
  *
- * Returns: the content-type object for the specified MIME object.
+ * Returns: (transfer none): the content-type object for the specified
+ * MIME object.
  **/
 GMimeContentType *
 g_mime_object_get_content_type (GMimeObject *object)
@@ -510,7 +511,8 @@ g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
  *
  * Gets the #GMimeContentDisposition for the specified MIME object.
  *
- * Returns: the #GMimeContentDisposition set on the MIME object.
+ * Returns: (transfer none): the #GMimeContentDisposition set on the
+ * MIME object.
  **/
 GMimeContentDisposition *
 g_mime_object_get_content_disposition (GMimeObject *object)
@@ -1035,8 +1037,8 @@ g_mime_object_to_string (GMimeObject *object)
  *
  * Get the header list for @object.
  *
- * Returns: the #GMimeHeaderList for @object. Do not free this pointer
- * when you are done with it.
+ * Returns: (transfer none): the #GMimeHeaderList for @object. Do not
+ * free this pointer when you are done with it.
  **/
 GMimeHeaderList *
 g_mime_object_get_header_list (GMimeObject *object)

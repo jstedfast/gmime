@@ -1223,8 +1223,8 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
  *
  * Gets a list of recipients of type @type from @message.
  *
- * Returns: a list of recipients of a chosen type from the MIME
- * Message.
+ * Returns: (transfer none): a list of recipients of a chosen type
+ * from the MIME Message.
  **/
 InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
@@ -1242,8 +1242,9 @@ g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
  *
  * Gets the complete list of recipients for @message.
  *
- * Returns: a newly allocated #InternetAddressList containing all
- * recipients of the message or %NULL if no recipients are set.
+ * Returns: (transfer full): a newly allocated #InternetAddressList
+ * containing all recipients of the message or %NULL if no recipients
+ * are set.
  **/
 InternetAddressList *
 g_mime_message_get_all_recipients (GMimeMessage *message)
@@ -1343,8 +1344,8 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 /**
  * g_mime_message_get_date:
  * @message: MIME Message
- * @date: pointer to a date in time_t
- * @tz_offset: pointer to timezone offset (in +/- hours)
+ * @date: (out): pointer to a date in time_t
+ * @tz_offset: (out): pointer to timezone offset (in +/- hours)
  * 
  * Stores the date in time_t format in @date. If @tz_offset is
  * non-%NULL, then the timezone offset in will be stored in
@@ -1459,7 +1460,7 @@ g_mime_message_get_message_id (GMimeMessage *message)
  *
  * Gets the toplevel MIME part contained within @message.
  *
- * Returns: the toplevel MIME part of @message.
+ * Returns: (transfer none): the toplevel MIME part of @message.
  **/
 GMimeObject *
 g_mime_message_get_mime_part (GMimeMessage *message)
@@ -1515,7 +1516,8 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 /**
  * g_mime_message_foreach:
  * @message: a #GMimeMessage
- * @callback: function to call on each of the mime parts contained by the mime message
+ * @callback: (scope call): function to call on each of the mime parts
+ *   contained by the mime message
  * @user_data: user-supplied callback data
  *
  * Recursively calls @callback on each of the mime parts in the mime message.
@@ -1592,8 +1594,8 @@ multipart_guess_body (GMimeMultipart *multipart)
  * Attempts to identify the MIME part containing the body of the
  * message.
  *
- * Returns: a #GMimeObject containing the textual content that appears
- * to be the main body of the message.
+ * Returns: (transfer none): a #GMimeObject containing the textual
+ * content that appears to be the main body of the message.
  *
  * Note: This function is NOT guarenteed to always work as it
  * makes some assumptions that are not necessarily true. It is

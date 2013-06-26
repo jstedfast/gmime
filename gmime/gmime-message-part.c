@@ -216,7 +216,7 @@ g_mime_message_part_set_message (GMimeMessagePart *part, GMimeMessage *message)
  *
  * Gets the message object on the message part object @part.
  *
- * Returns: the message part contained within @part.
+ * Returns: (transfer none): the message part contained within @part.
  **/
 GMimeMessage *
 g_mime_message_part_get_message (GMimeMessagePart *part)

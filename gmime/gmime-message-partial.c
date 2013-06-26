@@ -298,7 +298,8 @@ partial_compare (const void *v1, const void *v2)
  * Reconstructs the GMimeMessage from the given message/partial parts
  * in @partials.
  *
- * Returns: a GMimeMessage object on success or %NULL on fail.
+ * Returns: (transfer full): a GMimeMessage object on success or %NULL
+ * on fail.
  **/
 GMimeMessage *
 g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size_t num)
@@ -403,8 +404,8 @@ message_partial_message_new (GMimeMessage *base)
  * @max_size bytes or fewer. @nparts is set to the number of
  * #GMimeMessagePartial objects created.
  *
- * Returns: an array of #GMimeMessage objects and sets @nparts to th
- * number of messages returned or %NULL on fail.
+ * Returns: (transfer full): an array of #GMimeMessage objects and
+ * sets @nparts to the number of messages returned or %NULL on fail.
  **/
 GMimeMessage **
 g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, size_t *nparts)

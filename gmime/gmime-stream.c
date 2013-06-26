@@ -159,7 +159,7 @@ stream_read (GMimeStream *stream, char *buf, size_t len)
 /**
  * g_mime_stream_read:
  * @stream: a #GMimeStream
- * @buf: buffer
+ * @buf: (array length=len) (element-type guint8): buffer
  * @len: buffer length
  *
  * Attempts to read up to @len bytes from @stream into @buf.
@@ -433,7 +433,8 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
  *
  * Creates a new substream of @stream with bounds @start and @end.
  *
- * Returns: a substream of @stream with bounds @start and @end.
+ * Returns: (transfer full): a substream of @stream with bounds @start
+ * and @end.
  **/
 GMimeStream *
 g_mime_stream_substream (GMimeStream *stream, gint64 start, gint64 end)

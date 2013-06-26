@@ -86,7 +86,7 @@ iconv_utils_init (void)
 
 
 /**
- * g_mime_iconv_strndup:
+ * g_mime_iconv_strndup: (skip)
  * @cd: conversion descriptor
  * @str: string in source charset
  * @n: number of bytes to convert
@@ -189,7 +189,7 @@ g_mime_iconv_strndup (iconv_t cd, const char *str, size_t n)
 
 
 /**
- * g_mime_iconv_strdup:
+ * g_mime_iconv_strdup: (skip)
  * @cd: conversion descriptor
  * @str: string in source charset
  *

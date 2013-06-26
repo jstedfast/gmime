@@ -93,7 +93,7 @@ static GStaticMutex iconv_cache_lock = G_STATIC_MUTEX_INIT;
 
 
 /**
- * iconv_cache_node_new:
+ * iconv_cache_node_new: (skip)
  * @key: cache key
  * @cd: iconv descriptor
  *
@@ -221,7 +221,7 @@ g_mime_iconv_init (void)
 
 
 /**
- * g_mime_iconv_open:
+ * g_mime_iconv_open: (skip)
  * @to: charset to convert to
  * @from: charset to convert from
  *
@@ -308,7 +308,7 @@ g_mime_iconv_open (const char *to, const char *from)
 
 
 /**
- * g_mime_iconv_close:
+ * g_mime_iconv_close: (skip)
  * @cd: iconv conversion descriptor
  *
  * Closes the iconv descriptor @cd.

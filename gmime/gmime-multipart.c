@@ -514,8 +514,8 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
  *
  * Removes the mime part at position @index from the multipart.
  *
- * Returns: the mime part that was removed or %NULL if the part was
- * not contained within the multipart.
+ * Returns: (transfer full): the mime part that was removed or %NULL
+ * if the part was not contained within the multipart.
  **/
 GMimeObject *
 g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
@@ -536,8 +536,8 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
  * Replaces the mime part at position @index within @multipart with
  * @replacement.
  *
- * Returns: the mime part that was replaced or %NULL if the part was
- * not contained within the multipart.
+ * Returns: (transfer full): the mime part that was replaced or %NULL
+ * if the part was not contained within the multipart.
  **/
 GMimeObject *
 g_mime_multipart_replace (GMimeMultipart *multipart, int index, GMimeObject *replacement)
@@ -580,7 +580,7 @@ multipart_get_part (GMimeMultipart *multipart, int index)
  *
  * Gets the mime part at position @index within the multipart.
  *
- * Returns: the mime part at position @index.
+ * Returns: (transfer none): the mime part at position @index.
  **/
 GMimeObject *
 g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
@@ -813,7 +813,8 @@ multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc callback, g
 /**
  * g_mime_multipart_foreach: 
  * @multipart: a #GMimeMultipart
- * @callback: function to call for each of @multipart's subparts.
+ * @callback: (scope call): function to call for each of @multipart's
+ *   subparts.
  * @user_data: user-supplied callback data
  * 
  * Recursively calls @callback on each of @multipart's subparts.
@@ -836,8 +837,8 @@ g_mime_multipart_foreach (GMimeMultipart *multipart, GMimeObjectForeachFunc call
  * Gets the mime part with the content-id @content_id from the
  * multipart @multipart.
  *
- * Returns: the #GMimeObject whose content-id matches the search string,
- * or %NULL if a match cannot be found.
+ * Returns: (transfer none): the #GMimeObject whose content-id matches
+ * the search string, or %NULL if a match cannot be found.
  **/
 GMimeObject *
 g_mime_multipart_get_subpart_from_content_id (GMimeMultipart *multipart, const char *content_id)

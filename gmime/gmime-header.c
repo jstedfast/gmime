@@ -801,7 +801,7 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 /**
  * g_mime_header_list_get_iter:
  * @headers: a #GMimeHeaderList
- * @iter: a #GMimeHeaderIter
+ * @iter: (out): a #GMimeHeaderIter
  *
  * Initializes an iterator for traversing @headers.
  *
@@ -830,7 +830,7 @@ g_mime_header_list_get_iter (GMimeHeaderList *headers, GMimeHeaderIter *iter)
 /**
  * g_mime_header_list_foreach:
  * @headers: A #GMimeHeaderList
- * @func: function to be called for each header.
+ * @func: (scope call): function to be called for each header.
  * @user_data: User data to be passed to the func.
  *
  * Calls @func for each header name/value pair.
@@ -1015,7 +1015,7 @@ g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
  *
  * Gets the raw stream representing @headers.
  *
- * Returns: a #GMimeStream if set or %NULL otherwise.
+ * Returns: (transfer none): a #GMimeStream if set or %NULL otherwise.
  **/
 GMimeStream *
 g_mime_header_list_get_stream (GMimeHeaderList *headers)

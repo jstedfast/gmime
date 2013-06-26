@@ -42,12 +42,14 @@ typedef struct _GMimeFilterClass GMimeFilterClass;
  * GMimeFilter:
  * @parent_object: parent #GObject
  * @priv: private state data
- * @outreal: real malloc'd buffer
- * @outbuf: first writable position allowed (outreal + outpre)
+ * @outreal: (array) (element-type guint8): real malloc'd buffer
+ * @outbuf: (array length=outsize) (element-type guint8): first
+ *   writable position allowed (outreal + outpre)
  * @outptr: current writale position
  * @outsize: current bytes in @outbuf
  * @outpre: current prespace of @outbuf
- * @backbuf: backup buffer
+ * @backbuf: (array length=backsize) (element-type guint8): backup
+ *   buffer
  * @backsize: backup buffer size
  * @backlen: number of bytes backed-up in @backbuf
  *

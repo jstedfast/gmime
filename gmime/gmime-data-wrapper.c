@@ -184,7 +184,7 @@ g_mime_data_wrapper_set_stream (GMimeDataWrapper *wrapper, GMimeStream *stream)
  *
  * Gets a reference to the stream wrapped by @wrapper.
  *
- * Returns: a reference to the internal stream.
+ * Returns: (transfer none): a reference to the internal stream.
  **/
 GMimeStream *
 g_mime_data_wrapper_get_stream (GMimeDataWrapper *wrapper)

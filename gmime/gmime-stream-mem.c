@@ -373,7 +373,7 @@ g_mime_stream_mem_new_with_byte_array (GByteArray *array)
 
 /**
  * g_mime_stream_mem_new_with_buffer:
- * @buffer: stream data
+ * @buffer: (array length=len) (element-type guint8): stream data
  * @len: buffer length
  *
  * Creates a new #GMimeStreamMem object and initializes the stream
@@ -403,7 +403,7 @@ g_mime_stream_mem_new_with_buffer (const char *buffer, size_t len)
  *
  * Gets the byte array from the memory stream.
  *
- * Returns: the byte array from the memory stream.
+ * Returns: (transfer none): the byte array from the memory stream.
  **/
 GByteArray *
 g_mime_stream_mem_get_byte_array (GMimeStreamMem *mem)

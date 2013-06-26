@@ -16,8 +16,12 @@ Object
 Parser
   .construct_message nullable
 
-// G-I doesn't allow non-GObject inheritance
+// G-I doesn't have a time_t type
 utils_header_decode_date type="time_t"
 
-// g_mime_utils_header_decode_phrase transfer_ownership="1"
-// g_mime_utils_header_decode_text transfer_ownership="1"
+// G-I doesn't support annotations on fields (bug #561619)
+Filter
+  .backbuf type="uint8[]" array_length_field="backsize"
+  .outreal type="uint8[]"
+	.outbuf type="unowned uint8[]" array_length_field="outsize"
+  .outptr type="unowned uint8[]"

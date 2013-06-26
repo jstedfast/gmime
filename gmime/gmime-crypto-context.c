@@ -357,8 +357,8 @@ crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *ist
  * @sigstream is assumed to be the signature stream and is used to
  * verify the integirity of the @istream.
  *
- * Returns: a #GMimeSignatureList object containing the status of each
- * signature or %NULL on error.
+ * Returns: (transfer full): a #GMimeSignatureList object containing
+ * the status of each signature or %NULL on error.
  **/
 GMimeSignatureList *
 g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest, GMimeStream *istream,
@@ -388,7 +388,8 @@ crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *userid, GMim
  * @sign: sign as well as encrypt
  * @userid: key id (or email address) to use when signing (assuming @sign is %TRUE)
  * @digest: digest algorithm to use when signing
- * @recipients: an array of recipient key ids and/or email addresses
+ * @recipients: (element-type utf8): an array of recipient key ids
+ *   and/or email addresses
  * @istream: cleartext input stream
  * @ostream: ciphertext output stream
  * @err: a #GError
@@ -439,7 +440,8 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
  * certificates, one for each recipient, that the original encrypted stream
  * was encrypted to.
  *
- * Returns: a #GMimeDecryptResult on success or %NULL on error.
+ * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL
+ * on error.
  **/
 GMimeDecryptResult *
 g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
@@ -498,7 +500,7 @@ crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 /**
  * g_mime_crypto_context_export_keys:
  * @ctx: a #GMimeCryptoContext
- * @keys: an array of key ids
+ * @keys: (element-type utf8): an array of key ids
  * @ostream: output stream
  * @err: a #GError
  *
@@ -630,7 +632,7 @@ g_mime_decrypt_result_set_recipients (GMimeDecryptResult *result, GMimeCertifica
  *
  * Gets the list of certificates that the stream had been encrypted to.
  *
- * Returns: a #GMimeCertificateList.
+ * Returns: (transfer none): a #GMimeCertificateList.
  **/
 GMimeCertificateList *
 g_mime_decrypt_result_get_recipients (GMimeDecryptResult *result)
@@ -673,7 +675,8 @@ g_mime_decrypt_result_set_signatures (GMimeDecryptResult *result, GMimeSignature
  *
  * Gets a list of signatures if the encrypted stream had also been signed.
  *
- * Returns: a #GMimeSignatureList or %NULL if the stream was not signed.
+ * Returns: (transfer none): a #GMimeSignatureList or %NULL if the
+ * stream was not signed.
  **/
 GMimeSignatureList *
 g_mime_decrypt_result_get_signatures (GMimeDecryptResult *result)

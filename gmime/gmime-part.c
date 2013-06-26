@@ -887,7 +887,8 @@ g_mime_part_set_content_object (GMimePart *mime_part, GMimeDataWrapper *content)
  * Gets the internal data-wrapper of the specified mime part, or %NULL
  * on error.
  *
- * Returns: the data-wrapper for the mime part's contents.
+ * Returns: (transfer none): the data-wrapper for the mime part's
+ * contents.
  **/
 GMimeDataWrapper *
 g_mime_part_get_content_object (GMimePart *mime_part)

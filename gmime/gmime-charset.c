@@ -938,7 +938,8 @@ g_mime_set_user_charsets (const char **charsets)
  * Get the list of user-preferred charsets set with
  * g_mime_set_user_charsets().
  *
- * Returns: an array of user-set charsets or %NULL if none set.
+ * Returns: (array zero-terminated=1) (transfer none): an array of
+ * user-set charsets or %NULL if none set.
  **/
 const char **
 g_mime_user_charsets (void)

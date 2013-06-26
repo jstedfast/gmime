@@ -890,7 +890,7 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
  *
  * Creates a new pkcs7 crypto context object.
  *
- * Returns: a new pkcs7 crypto context object.
+ * Returns: (transfer full): a new pkcs7 crypto context object.
  **/
 GMimeCryptoContext *
 g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)

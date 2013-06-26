@@ -496,7 +496,8 @@ internet_address_group_set_members (InternetAddressGroup *group, InternetAddress
  * Gets the #InternetAddressList containing the group members of an
  * rfc822 group address.
  *
- * Returns: a #InternetAddressList containing the members of @group.
+ * Returns: (transfer none): a #InternetAddressList containing the
+ * members of @group.
  **/
 InternetAddressList *
 internet_address_group_get_members (InternetAddressGroup *group)
@@ -926,8 +927,8 @@ internet_address_list_index_of (InternetAddressList *list, InternetAddress *ia)
  *
  * Gets the #InternetAddress at the specified index.
  *
- * Returns: the #InternetAddress at the specified index or %NULL if
- * the index is out of range.
+ * Returns: (transfer none): the #InternetAddress at the specified
+ * index or %NULL if the index is out of range.
  **/
 InternetAddress *
 internet_address_list_get_address (InternetAddressList *list, int index)
@@ -1546,8 +1547,8 @@ decode_address (const char **in)
  *
  * Construct a list of internet addresses from the given string.
  *
- * Returns: a #InternetAddressList or %NULL if the input string does
- * not contain any addresses.
+ * Returns: (transfer full): a #InternetAddressList or %NULL if the
+ * input string does not contain any addresses.
  **/
 InternetAddressList *
 internet_address_list_parse_string (const char *str)

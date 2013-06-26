@@ -145,7 +145,7 @@ filter_copy (GMimeFilter *filter)
  *
  * Copies @filter into a new GMimeFilter object.
  *
- * Returns: a duplicate of @filter.
+ * Returns: (transfer full): a duplicate of @filter.
  **/
 GMimeFilter *
 g_mime_filter_copy (GMimeFilter *filter)
@@ -206,12 +206,13 @@ filter_filter (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace,
 /**
  * g_mime_filter_filter:
  * @filter: filter
- * @inbuf: input buffer
+ * @inbuf: (array length=inlen) (element-type guint8): input buffer
  * @inlen: input buffer length
  * @prespace: prespace buffer length
- * @outbuf: pointer to output buffer
- * @outlen: pointer to output length
- * @outprespace: pointer to output prespace buffer length
+ * @outbuf: (out) (array length=outlen) (element-type guint8) (transfer none):
+ *   pointer to output buffer
+ * @outlen: (out): pointer to output length
+ * @outprespace: (out): pointer to output prespace buffer length
  *
  * Filters the input data and writes it to @out.
  **/
@@ -237,12 +238,13 @@ filter_complete (GMimeFilter *filter, char *inbuf, size_t inlen, size_t prespace
 /**
  * g_mime_filter_complete:
  * @filter: filter
- * @inbuf: input buffer
+ * @inbuf: (array length=inlen) (element-type guint8): input buffer
  * @inlen: input buffer length
  * @prespace: prespace buffer length
- * @outbuf: pointer to output buffer
- * @outlen: pointer to output length
- * @outprespace: pointer to output prespace buffer length
+ * @outbuf: (out) (array length=outlen) (element-type guint8) (transfer none):
+ *   pointer to output buffer
+ * @outlen: (out): pointer to output length
+ * @outprespace: (out): pointer to output prespace buffer length
  *
  * Completes the filtering.
  **/
@@ -286,7 +288,7 @@ g_mime_filter_reset (GMimeFilter *filter)
 /**
  * g_mime_filter_backup:
  * @filter: filter
- * @data: data to backup
+ * @data: (array length=length) (element-type guint8): data to backup
  * @length: length of @data
  *
  * Sets number of bytes backed up on the input, new calls replace

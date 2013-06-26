@@ -1893,7 +1893,8 @@ parser_construct_part (GMimeParser *parser)
  *
  * Constructs a MIME part from @parser.
  *
- * Returns: a MIME part based on @parser or %NULL on fail.
+ * Returns: (transfer full): a MIME part based on @parser or %NULL on
+ * fail.
  **/
 GMimeObject *
 g_mime_parser_construct_part (GMimeParser *parser)
@@ -1977,7 +1978,7 @@ parser_construct_message (GMimeParser *parser)
  *
  * Constructs a MIME message from @parser.
  *
- * Returns: a MIME message or %NULL on fail.
+ * Returns: (transfer full): a MIME message or %NULL on fail.
  **/
 GMimeMessage *
 g_mime_parser_construct_message (GMimeParser *parser)

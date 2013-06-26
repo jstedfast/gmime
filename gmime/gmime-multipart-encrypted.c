@@ -145,7 +145,7 @@ g_mime_multipart_encrypted_new (void)
  * @sign: %TRUE if the content should also be signed or %FALSE otherwise
  * @userid: user id to use for signing (only used if @sign is %TRUE)
  * @digest: digest algorithm to use when signing
- * @recipients: an array of recipients to encrypt to
+ * @recipients: (element-type utf8): an array of recipients to encrypt to
  * @err: a #GError
  *
  * Attempts to encrypt (and conditionally sign) the @content MIME part
@@ -284,9 +284,9 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * status information as well as a list of recipients that the part was
  * encrypted to.
  *
- * Returns: the decrypted MIME part on success or %NULL on fail. If the
- * decryption fails, an exception will be set on @err to provide
- * information as to why the failure occured.
+ * Returns: (transfer full): the decrypted MIME part on success or
+ * %NULL on fail. If the decryption fails, an exception will be set on
+ * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,

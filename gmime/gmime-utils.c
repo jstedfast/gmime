@@ -743,7 +743,7 @@ gmime_datetok_table_init (void)
 /**
  * g_mime_utils_header_decode_date:
  * @str: input date string
- * @tz_offset: timezone offset
+ * @tz_offset: (out): timezone offset
  *
  * Decodes the rfc822 date string and saves the GMT offset into
  * @tz_offset if non-NULL.
@@ -1399,7 +1399,8 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 
 /**
  * g_mime_utils_decode_8bit:
- * @text: input text in unknown 8bit/multibyte character set
+ * @text: (array length=len) (element-type guint8): input text in
+ *   unknown 8bit/multibyte character set
  * @len: input text length
  *
  * Attempts to convert text in an unknown 8bit/multibyte charset into

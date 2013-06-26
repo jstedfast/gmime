@@ -790,8 +790,8 @@ g_mime_certificate_list_index_of (GMimeCertificateList *list, GMimeCertificate *
  *
  * Gets the #GMimeCertificate at the specified index.
  *
- * Returns: the #GMimeCertificate at the specified index or %NULL if
- * the index is out of range.
+ * Returns: (transfer full): the #GMimeCertificate at the specified
+ * index or %NULL if the index is out of range.
  **/
 GMimeCertificate *
 g_mime_certificate_list_get_certificate (GMimeCertificateList *list, int index)

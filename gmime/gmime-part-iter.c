@@ -408,7 +408,7 @@ g_mime_part_iter_prev (GMimePartIter *iter)
  *
  * Gets the toplevel #GMimeObject used to initialize @iter.
  *
- * Returns: the toplevel #GMimeObject.
+ * Returns: (transfer none): the toplevel #GMimeObject.
  **/
 GMimeObject *
 g_mime_part_iter_get_toplevel (GMimePartIter *iter)
@@ -425,8 +425,8 @@ g_mime_part_iter_get_toplevel (GMimePartIter *iter)
  *
  * Gets the #GMimeObject at the current #GMimePartIter position.
  *
- * Returns: the current #GMimeObject or %NULL if the state of @iter is
- * invalid.
+ * Returns: (transfer none): the current #GMimeObject or %NULL if the
+ * state of @iter is invalid.
  **/
 GMimeObject *
 g_mime_part_iter_get_current (GMimePartIter *iter)
@@ -444,8 +444,8 @@ g_mime_part_iter_get_current (GMimePartIter *iter)
  * Gets the parent of the #GMimeObject at the current #GMimePartIter
  * position.
  *
- * Returns: the parent #GMimeObject or %NULL if the state of @iter is
- * invalid.
+ * Returns: (transfer none): the parent #GMimeObject or %NULL if the
+ * state of @iter is invalid.
  **/
 GMimeObject *
 g_mime_part_iter_get_parent (GMimePartIter *iter)

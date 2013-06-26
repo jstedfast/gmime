@@ -216,7 +216,7 @@ g_mime_signature_set_certificate (GMimeSignature *sig, GMimeCertificate *cert)
  *
  * Get the signature's certificate.
  *
- * Returns: the signature's certificate.
+ * Returns: (transfer none): the signature's certificate.
  **/
 GMimeCertificate *
 g_mime_signature_get_certificate (GMimeSignature *sig)
@@ -586,8 +586,8 @@ g_mime_signature_list_index_of (GMimeSignatureList *list, GMimeSignature *sig)
  *
  * Gets the #GMimeSignature at the specified index.
  *
- * Returns: the #GMimeSignature at the specified index or %NULL if
- * the index is out of range.
+ * Returns: (transfer none): the #GMimeSignature at the specified
+ * index or %NULL if the index is out of range.
  **/
 GMimeSignature *
 g_mime_signature_list_get_signature (GMimeSignatureList *list, int index)

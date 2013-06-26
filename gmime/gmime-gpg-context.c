@@ -2192,7 +2192,7 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
  *
  * Creates a new gpg crypto context object.
  *
- * Returns: a new gpg crypto context object.
+ * Returns: (transfer full): a new gpg crypto context object.
  **/
 GMimeCryptoContext *
 g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path)

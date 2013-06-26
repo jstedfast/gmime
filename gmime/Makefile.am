@@ -183,7 +183,11 @@ GMime_2_6_gir_CFLAGS = $(INCLUDES)
 GMime_2_6_gir_LIBS = libgmime-2.6.la
 GMime_2_6_gir_FILES = $(gmimeinclude_HEADERS) $(libgmime_2_6_la_SOURCES)
 GMime_2_6_gir_EXPORT_PACKAGES = gmime-2.6
-GMime_2_6_gir_SCANNERFLAGS = --c-include="gmime/gmime.h" --accept-unprefixed
+GMime_2_6_gir_SCANNERFLAGS = \
+	--c-include="gmime/gmime.h" \
+	--accept-unprefixed \
+	--symbol-prefix "gmime_" \
+	--symbol-prefix "g_mime_"
 INTROSPECTION_GIRS += GMime-2.6.gir
 
 girdir = $(datadir)/gir-1.0

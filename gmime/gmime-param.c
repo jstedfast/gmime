@@ -46,7 +46,6 @@
 
 #define d(x)
 
-
 /**
  * SECTION: gmime-param
  * @title: GMimeParam
