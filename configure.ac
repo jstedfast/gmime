@@ -587,10 +587,8 @@ gacdir=$with_gacdir
 AC_SUBST(gacdir)
 
 dnl Check for GObject introspection and Vala binding generator
-dnl GOBJECT_INTROSPECTION_CHECK([1.30.0])
-dnl VAPIGEN_CHECK
-AM_CONDITIONAL(HAVE_INTROSPECTION, test "x$enable_introspection" = "xyes")
-AM_CONDITIONAL(ENABLE_VAPIGEN, test "x$enable_vapigen" = "xyes")
+GOBJECT_INTROSPECTION_CHECK([1.30.0])
+VAPIGEN_CHECK
 
 dnl Extra libs
 EXTRA_LIBS="$ZLIB"

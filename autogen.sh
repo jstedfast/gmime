@@ -77,7 +77,7 @@ if test -z "$AUTOGEN_SUBDIR_MODE"; then
         fi
 fi
 
-$ACLOCAL $ACLOCAL_FLAGS || exit $?
+$ACLOCAL -I m4/ $ACLOCAL_FLAGS || exit $?
 
 libtoolize --force || exit $?
 gtkdocize || exit $?
