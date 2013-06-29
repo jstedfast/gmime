@@ -586,6 +586,12 @@ AC_ARG_WITH([gacdir], AC_HELP_STRING([--with-gacdir], [Specify the Global Assemb
 gacdir=$with_gacdir
 AC_SUBST(gacdir)
 
+dnl Check for GObject introspection and Vala binding generator
+dnl GOBJECT_INTROSPECTION_CHECK([1.30.0])
+dnl VAPIGEN_CHECK
+AM_CONDITIONAL(HAVE_INTROSPECTION, test "x$enable_introspection" = "xyes")
+AM_CONDITIONAL(ENABLE_VAPIGEN, test "x$enable_vapigen" = "xyes")
+
 dnl Extra libs
 EXTRA_LIBS="$ZLIB"
 if test "x$LIBSOCKET" != "x"; then
@@ -618,9 +624,6 @@ AC_SUBST(GMIME_INCLUDEDIR)
 AC_SUBST(GMIME_LIBS_PRIVATE)
 AC_SUBST(GMIME_CFLAGS)
 AC_SUBST(GMIME_LIBS)
-
-GOBJECT_INTROSPECTION_CHECK([1.30.0])
-VAPIGEN_CHECK
 
 AC_OUTPUT(
 Makefile
