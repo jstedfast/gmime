@@ -412,7 +412,17 @@ static void
 gpg_ctx_set_mode (struct _GpgCtx *gpg, enum _GpgCtxMode mode)
 {
 	gpg->mode = mode;
-	gpg->need_passwd = ((gpg->mode == GPG_CTX_MODE_SIGN) || (gpg->mode == GPG_CTX_MODE_DECRYPT));
+	
+	switch (gpg->mode) {
+	case GPG_CTX_MODE_SIGN_ENCRYPT:
+	case GPG_CTX_MODE_DECRYPT:
+	case GPG_CTX_MODE_SIGN:
+		gpg->need_passwd = TRUE;
+		break;
+	default:
+		gpg->need_passwd = FALSE;
+		break;
+	}
 }
 
 static void
@@ -1561,7 +1571,7 @@ gpg_ctx_op_step (struct _GpgCtx *gpg, GError **err)
 		char buffer[4096];
 		ssize_t nread;
 		
-		d(printf ("reading from gpg's status-fd...\n"));
+		d(printf ("reading gpg's status-fd...\n"));
 		
 		do {
 			nread = read (gpg->status_fd, buffer, sizeof (buffer));

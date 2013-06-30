@@ -1,8 +1,13 @@
-2013-05-05  Jeffrey Stedfast  <fejj@gnome.org>
+2013-06-30  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version
 
 	* configure.ac: Bumped version to 2.6.16
+
+2013-06-30  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_set_mode):
+	GPG_CTX_MODE_SIGN_ENCRYPT also requires a passphrase.
 
 2013-05-05  Jeffrey Stedfast  <fejj@gnome.org>
 

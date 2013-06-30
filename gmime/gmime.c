@@ -229,10 +229,17 @@ g_mime_shutdown (void)
 	g_mime_iconv_shutdown ();
 	
 #ifdef G_THREADS_ENABLED
-	g_mutex_clear (&G_LOCK_NAME (iconv_cache));
-	g_mutex_clear (&G_LOCK_NAME (iconv_utils));
-	g_mutex_clear (&G_LOCK_NAME (charset));
-	g_mutex_clear (&G_LOCK_NAME (msgid));
+	if (glib_check_version (2, 37, 4) == NULL) {
+		/* The implementation of g_mutex_clear() prior
+		 * to glib 2.37.4 did not properly reset the
+		 * internal mutex pointer to NULL, so re-initializing
+		 * GMime would not properly re-initialize the mutexes.
+		 **/
+		g_mutex_clear (&G_LOCK_NAME (iconv_cache));
+		g_mutex_clear (&G_LOCK_NAME (iconv_utils));
+		g_mutex_clear (&G_LOCK_NAME (charset));
+		g_mutex_clear (&G_LOCK_NAME (msgid));
+	}
 #endif
 }
 
