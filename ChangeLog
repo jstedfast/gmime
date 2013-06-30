@@ -1,5 +1,11 @@
 2013-05-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.16
+
+2013-05-05  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-filter-best.c (filter_filter): Reset the linelen
 	state to 0 when we encounter a '\n'.
 

@@ -129,6 +129,8 @@ gboolean g_mime_check_version (guint major, guint minor, guint micro);
  * Initialization flag that hints to the rfc2047 encoder to use only
  * the configured user-charsets (set via g_mime_set_user_charsets())
  * instead of trying to first use iso-8859-1.
+ *
+ * Since: 2.6.16
  **/
 #define GMIME_ENABLE_USE_ONLY_USER_CHARSETS  (1 << 1)
 
