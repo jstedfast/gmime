@@ -48,28 +48,23 @@
 
 
 #ifdef G_THREADS_ENABLED
-static GStaticMutex lock = G_STATIC_MUTEX_INIT;
-#define LOCK()   g_static_mutex_lock (&lock)
-#define UNLOCK() g_static_mutex_unlock (&lock)
+extern void _g_mime_iconv_utils_unlock (void);
+extern void _g_mime_iconv_utils_lock (void);
+#define UNLOCK() _g_mime_iconv_utils_unlock ()
+#define LOCK()   _g_mime_iconv_utils_lock ()
 #else
-#define LOCK()
 #define UNLOCK()
+#define LOCK()
 #endif /* G_THREADS_ENABLED */
 
 static iconv_t utf8_to_locale = (iconv_t) -1;
 static iconv_t locale_to_utf8 = (iconv_t) -1;
 
 
-static void
-iconv_utils_init (void)
+void
+g_mime_iconv_utils_init (void)
 {
-	static gboolean initialized = FALSE;
 	const char *utf8, *locale;
-	
-	if (initialized)
-		return;
-	
-	g_mime_charset_map_init ();
 	
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
@@ -80,8 +75,20 @@ iconv_utils_init (void)
 		utf8_to_locale = iconv_open (locale, utf8);
 		locale_to_utf8 = iconv_open (utf8, locale);
 	}
+}
+
+void
+g_mime_iconv_utils_shutdown (void)
+{
+	if (utf8_to_locale != (iconv_t) -1) {
+		iconv_close (utf8_to_locale);
+		utf8_to_locale = (iconv_t) -1;
+	}
 	
-	initialized = TRUE;
+	if (locale_to_utf8 != (iconv_t) -1) {
+		iconv_close (locale_to_utf8);
+		locale_to_utf8 = (iconv_t) -1;
+	}
 }
 
 
@@ -220,8 +227,6 @@ g_mime_iconv_locale_to_utf8 (const char *str)
 	char *buf;
 	
 	LOCK ();
-	iconv_utils_init ();
-	
 	buf = g_mime_iconv_strdup (locale_to_utf8, str);
 	UNLOCK ();
 	
@@ -246,8 +251,6 @@ g_mime_iconv_locale_to_utf8_length (const char *str, size_t n)
 	char *buf;
 	
 	LOCK ();
-	iconv_utils_init ();
-	
 	buf = g_mime_iconv_strndup (locale_to_utf8, str, n);
 	UNLOCK ();
 	
@@ -271,8 +274,6 @@ g_mime_iconv_utf8_to_locale (const char *str)
 	char *buf;
 	
 	LOCK ();
-	iconv_utils_init ();
-	
 	buf = g_mime_iconv_strdup (utf8_to_locale, str);
 	UNLOCK ();
 	
@@ -297,8 +298,6 @@ g_mime_iconv_utf8_to_locale_length (const char *str, size_t n)
 	char *buf;
 	
 	LOCK ();
-	iconv_utils_init ();
-	
 	buf = g_mime_iconv_strndup (utf8_to_locale, str, n);
 	UNLOCK ();
 	

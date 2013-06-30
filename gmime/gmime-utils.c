@@ -80,6 +80,16 @@
 extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 extern gboolean _g_mime_use_only_user_charsets (void);
 
+#ifdef G_THREADS_ENABLED
+extern void _g_mime_msgid_unlock (void);
+extern void _g_mime_msgid_lock (void);
+#define MSGID_UNLOCK() _g_mime_msgid_unlock ()
+#define MSGID_LOCK()   _g_mime_msgid_lock ()
+#else
+#define MSGID_UNLOCK()
+#define MSGID_LOCK()
+#endif
+
 #define GMIME_FOLD_PREENCODED  (GMIME_FOLD_LEN / 2)
 
 /* date parser macros */
@@ -791,14 +801,6 @@ g_mime_utils_header_decode_date (const char *str, int *tz_offset)
 char *
 g_mime_utils_generate_message_id (const char *fqdn)
 {
-#ifdef G_THREADS_ENABLED
-	static GStaticMutex mutex = G_STATIC_MUTEX_INIT;
-#define MUTEX_LOCK()   g_static_mutex_lock (&mutex)
-#define MUTEX_UNLOCK() g_static_mutex_unlock (&mutex)
-#else
-#define MUTEX_LOCK()
-#define MUTEX_UNLOCK()
-#endif
 	static unsigned long int count = 0;
 	const char *hostname = NULL;
 	char *name = NULL;
@@ -866,10 +868,10 @@ g_mime_utils_generate_message_id (const char *fqdn)
 		fqdn = name != NULL ? name : (hostname[0] ? hostname : "localhost.localdomain");
 	}
 	
-	MUTEX_LOCK ();
+	MSGID_LOCK ();
 	msgid = g_strdup_printf ("%lu.%lu.%lu@%s", (unsigned long int) time (NULL),
 				 (unsigned long int) getpid (), count++, fqdn);
-	MUTEX_UNLOCK ();
+	MSGID_UNLOCK ();
 	
 	g_free (name);
 	

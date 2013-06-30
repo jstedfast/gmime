@@ -49,6 +49,18 @@
 extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 extern gboolean _g_mime_use_only_user_charsets (void);
 
+extern void g_mime_iconv_utils_shutdown (void);
+extern void g_mime_iconv_utils_init (void);
+
+extern void _g_mime_iconv_cache_unlock (void);
+extern void _g_mime_iconv_cache_lock (void);
+extern void _g_mime_iconv_utils_unlock (void);
+extern void _g_mime_iconv_utils_lock (void);
+extern void _g_mime_charset_unlock (void);
+extern void _g_mime_charset_lock (void);
+extern void _g_mime_msgid_unlock (void);
+extern void _g_mime_msgid_lock (void);
+
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
 
@@ -57,6 +69,11 @@ const guint gmime_minor_version = GMIME_MINOR_VERSION;
 const guint gmime_micro_version = GMIME_MICRO_VERSION;
 const guint gmime_interface_age = GMIME_INTERFACE_AGE;
 const guint gmime_binary_age = GMIME_BINARY_AGE;
+
+G_LOCK_DEFINE_STATIC (iconv_cache);
+G_LOCK_DEFINE_STATIC (iconv_utils);
+G_LOCK_DEFINE_STATIC (charset);
+G_LOCK_DEFINE_STATIC (msgid);
 
 static unsigned int initialized = 0;
 static guint32 enable = 0;
@@ -114,7 +131,7 @@ g_mime_init (guint32 flags)
 	g_type_init ();
 	
 	g_mime_charset_map_init ();
-	
+	g_mime_iconv_utils_init ();
 	g_mime_iconv_init ();
 	
 #ifdef ENABLE_SMIME
@@ -124,6 +141,13 @@ g_mime_init (guint32 flags)
 	
 	gmime_gpgme_error_quark = g_quark_from_static_string ("gmime-gpgme");
 	gmime_error_quark = g_quark_from_static_string ("gmime");
+	
+#ifdef G_THREADS_ENABLED
+	g_mutex_init (&G_LOCK_NAME (iconv_cache));
+	g_mutex_init (&G_LOCK_NAME (iconv_utils));
+	g_mutex_init (&G_LOCK_NAME (charset));
+	g_mutex_init (&G_LOCK_NAME (msgid));
+#endif
 	
 	/* register our GObject types with the GType system */
 	g_mime_crypto_context_get_type ();
@@ -201,7 +225,15 @@ g_mime_shutdown (void)
 	
 	g_mime_object_type_registry_shutdown ();
 	g_mime_charset_map_shutdown ();
+	g_mime_iconv_utils_shutdown ();
 	g_mime_iconv_shutdown ();
+	
+#ifdef G_THREADS_ENABLED
+	g_mutex_clear (&G_LOCK_NAME (iconv_cache));
+	g_mutex_clear (&G_LOCK_NAME (iconv_utils));
+	g_mutex_clear (&G_LOCK_NAME (charset));
+	g_mutex_clear (&G_LOCK_NAME (msgid));
+#endif
 }
 
 
@@ -215,4 +247,52 @@ gboolean
 _g_mime_use_only_user_charsets (void)
 {
 	return (enable & GMIME_ENABLE_USE_ONLY_USER_CHARSETS);
+}
+
+void
+_g_mime_iconv_cache_unlock (void)
+{
+	return G_UNLOCK (iconv_cache);
+}
+
+void
+_g_mime_iconv_cache_lock (void)
+{
+	return G_LOCK (iconv_cache);
+}
+
+void
+_g_mime_iconv_utils_unlock (void)
+{
+	return G_UNLOCK (iconv_utils);
+}
+
+void
+_g_mime_iconv_utils_lock (void)
+{
+	return G_LOCK (iconv_utils);
+}
+
+void
+_g_mime_charset_unlock (void)
+{
+	return G_UNLOCK (charset);
+}
+
+void
+_g_mime_charset_lock (void)
+{
+	return G_LOCK (charset);
+}
+
+void
+_g_mime_msgid_unlock (void)
+{
+	return G_UNLOCK (msgid);
+}
+
+void
+_g_mime_msgid_lock (void)
+{
+	return G_LOCK (msgid);
 }

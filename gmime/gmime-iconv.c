@@ -80,12 +80,13 @@ static int shutdown = 0;
 #endif /* GMIME_ICONV_DEBUG */
 
 #ifdef G_THREADS_ENABLED
-static GStaticMutex iconv_cache_lock = G_STATIC_MUTEX_INIT;
-#define ICONV_CACHE_LOCK()   g_static_mutex_lock (&iconv_cache_lock)
-#define ICONV_CACHE_UNLOCK() g_static_mutex_unlock (&iconv_cache_lock)
+extern void _g_mime_iconv_cache_unlock (void);
+extern void _g_mime_iconv_cache_lock (void);
+#define ICONV_CACHE_UNLOCK() _g_mime_iconv_cache_unlock ()
+#define ICONV_CACHE_LOCK()   _g_mime_iconv_cache_lock ()
 #else
-#define ICONV_CACHE_LOCK()
 #define ICONV_CACHE_UNLOCK()
+#define ICONV_CACHE_LOCK()
 #endif /* G_THREADS_ENABLED */
 
 

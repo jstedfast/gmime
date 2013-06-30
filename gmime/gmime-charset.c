@@ -170,12 +170,13 @@ static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 
 #ifdef G_THREADS_ENABLED
-static GStaticMutex charset_lock = G_STATIC_MUTEX_INIT;
-#define CHARSET_LOCK()   g_static_mutex_lock (&charset_lock);
-#define CHARSET_UNLOCK() g_static_mutex_unlock (&charset_lock);
+extern void _g_mime_charset_unlock (void);
+extern void _g_mime_charset_lock (void);
+#define CHARSET_UNLOCK() _g_mime_charset_unlock ()
+#define CHARSET_LOCK()   _g_mime_charset_lock ()
 #else
-#define CHARSET_LOCK()
 #define CHARSET_UNLOCK()
+#define CHARSET_LOCK()
 #endif /* G_THREADS_ENABLED */
 
 
