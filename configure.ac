@@ -52,6 +52,8 @@ cflags_set=${CFLAGS+set}
 
 AM_INIT_AUTOMAKE([1.9 dist-bzip2 tar-ustar no-dist-gzip foreign -Wno-portability])
 AC_SUBST([ACLOCAL_AMFLAGS], ["-I m4 \${ACLOCAL_FLAGS}"])
+m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])],
+         [AC_SUBST([AM_DEFAULT_VERBOSITY], [1])])
 dnl m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES([yes])])
 AM_CONFIG_HEADER([config.h])
 AM_MAINTAINER_MODE
@@ -665,4 +667,5 @@ Configuration:
   Strict parser:        ${enable_strict_parser}
 
   Mono bindings:        ${enable_mono}
+  Vala bindings:        ${enable_vala}
 "
