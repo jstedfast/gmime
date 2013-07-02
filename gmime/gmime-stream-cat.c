@@ -580,6 +580,9 @@ stream_substream (GMimeStream *stream, gint64 start, gint64 end)
 		if ((offset + len) > start)
 			break;
 		
+		if (end != -1 && (offset + len) >= end)
+			break;
+		
 		offset += len;
 		
 		n = n->next;
