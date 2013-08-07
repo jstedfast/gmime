@@ -1,3 +1,15 @@
+2013-08-07  Jeffrey Stedfast  <fejj@gnome.org>
+
+	According to Rfc2046 Section 5.1.1, boundary markers may optionally
+	be followed by lwsp.
+
+	* gmime/gmime-parser.c (is_boundary): New convenience function to
+	check that the text matches a boundary, possibly followed by lwsp.
+	(check_boundary): Use is_boundary().
+	(found_immediate_boundary): Use is_boundary().
+
+	Fixes bug #705612
+
 2013-07-02  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-stream-cat.c (stream_substream): Fixed to properly

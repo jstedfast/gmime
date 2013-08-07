@@ -1353,6 +1353,30 @@ enum {
                          ((scan_from && len >= 5 && !strncmp (start, "From ", 5)) ||  \
 			  (len >= 2 && (start[0] == '-' && start[1] == '-')))
 
+static gboolean
+is_boundary (const char *text, size_t len, const char *boundary, size_t boundary_len)
+{
+	const char *inptr = text + boundary_len;
+	const char *inend = text + len;
+	
+	if (boundary_len > len)
+		return FALSE;
+	
+	/* make sure that the text matches the boundary */
+	if (strncmp (text, boundary, boundary_len) != 0)
+		return FALSE;
+	
+	/* the boundary may be optionally followed by linear whitespace */
+	while (inptr < inend) {
+		if (!is_lwsp (*inptr))
+			return FALSE;
+		
+		inptr++;
+	}
+	
+	return TRUE;
+}
+
 static int
 check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 {
@@ -1368,19 +1392,14 @@ check_boundary (struct _GMimeParserPrivate *priv, const char *start, size_t len)
 		
 		s = priv->bounds;
 		while (s) {
-			/* we use >= here because From lines are > 5 chars */
 			if (offset >= s->content_end &&
-			    len >= s->boundarylenfinal &&
-			    !strncmp (s->boundary, start,
-				      s->boundarylenfinal)) {
+			    is_boundary (start, len, s->boundary, s->boundarylenfinal)) {
 				d(printf ("found %s\n", s->content_end != -1 && offset >= s->content_end ?
 					  "end of content" : "end boundary"));
 				return FOUND_END_BOUNDARY;
 			}
 			
-			if (len == s->boundarylen &&
-			    !strncmp (s->boundary, start,
-				      s->boundarylen)) {
+			if (is_boundary (start, len, s->boundary, s->boundarylen)) {
 				d(printf ("found boundary\n"));
 				return FOUND_BOUNDARY;
 			}
@@ -1398,10 +1417,16 @@ static gboolean
 found_immediate_boundary (struct _GMimeParserPrivate *priv, gboolean end)
 {
 	BoundaryStack *s = priv->bounds;
-	size_t len = end ? s->boundarylenfinal : s->boundarylen;
+	size_t boundary_len = end ? s->boundarylenfinal : s->boundarylen;
+	register char *inptr = priv->inptr;
+	char *inend = priv->inend;
 	
-	return !strncmp (priv->inptr, s->boundary, len)
-		&& (priv->inptr[len] == '\n' || priv->inptr[len] == '\r');
+	/* Note: see optimization comment [1] */
+	*inend = '\n';
+	while (*inptr != '\n')
+		inptr++;
+	
+	return is_boundary (priv->inptr, inptr - priv->inptr, s->boundary, boundary_len);
 }
 
 /* Optimization Notes:
