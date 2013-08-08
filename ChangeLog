@@ -1,5 +1,11 @@
 2013-08-08  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.17
+
+2013-08-08  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-parser.c (parser_content_type): If no Content-Type
 	header exists and the parent is a multipart/digest, default to
 	message/rfc822 instead of text/plain.
