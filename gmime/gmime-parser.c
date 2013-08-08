@@ -1371,6 +1371,9 @@ is_boundary (const char *text, size_t len, const char *boundary, size_t boundary
 	if (strncmp (text, boundary, boundary_len) != 0)
 		return FALSE;
 	
+	if (!strncmp (text, "From ", 5))
+		return TRUE;
+	
 	/* the boundary may be optionally followed by linear whitespace */
 	while (inptr < inend) {
 		if (!is_lwsp (*inptr))
