@@ -1,5 +1,10 @@
 2013-08-08  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/internet-address.c (decode_address): Properly deal with
+	obsolete routing information.
+
+2013-08-08  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* README: Bumped version
 
 	* configure.ac: Bumped version to 2.6.17

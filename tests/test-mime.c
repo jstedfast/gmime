@@ -194,6 +194,14 @@ static struct {
 	{ "sdfasf@wp.pl,c tert@wp.pl,sffdg.rtre@op.pl",
 	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl",
 	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl" },
+	
+	/* obsolete routing address syntax tests */
+	{ "<@route:user@domain.com>",
+	  "user@domain.com",
+	  "user@domain.com" },
+	{ "<@route1,,@route2,,,@route3:user@domain.com>",
+	  "user@domain.com",
+	  "user@domain.com" },
 };
 
 static struct {

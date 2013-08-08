@@ -1417,7 +1417,7 @@ decode_address (const char **in)
 		 *             /  "." / "[" / "]"              ;  within a word.
 		 */
 		if (*inptr == ':') {
-			/* group */
+			/* rfc2822 group */
 			inptr++;
 			addr = decode_group (&inptr);
 			decode_lwsp (&inptr);
@@ -1428,12 +1428,54 @@ decode_address (const char **in)
 				inptr++;
 			break;
 		} else if (*inptr == '<') {
-			/* mailbox route-addr */
+			/* rfc2822 angle-addr */
 			inptr++;
+			
+			/* check for obsolete routing... */
+			if (*inptr == '@') {
+				GString *route = g_string_new ("");
+				
+				do {
+					inptr++;
+					
+					g_string_append_c (route, '@');
+					if (!decode_domain (&inptr, route))
+						break;
+					
+					decode_lwsp (&inptr);
+					if (*inptr == ',') {
+						g_string_append_c (route, ',');
+						inptr++;
+						decode_lwsp (&inptr);
+						
+						/* obs-domain-lists allow commas with nothing between them... */
+						while (*inptr == ',') {
+							inptr++;
+							decode_lwsp (&inptr);
+						}
+					}
+				} while (*inptr == '@');
+				
+				if (*inptr != ':') {
+					w(g_warning ("Invalid obs-angle-addr, missing ':': %.*s", inptr - start, start));
+					
+					while (*inptr && *inptr != '>' && *inptr != ',')
+						inptr++;
+					
+					if (*inptr == '>')
+						inptr++;
+					
+					break;
+				}
+				
+				inptr++;
+			}
+			
+			/* rfc2822 addr-spec */
 			addr = decode_addrspec (&inptr);
 			decode_lwsp (&inptr);
 			if (*inptr != '>') {
-				w(g_warning ("Invalid route-addr, missing closing '>': %.*s",
+				w(g_warning ("Invalid rfc2822 angle-addr, missing closing '>': %.*s",
 					     inptr - start, start));
 				
 				while (*inptr && *inptr != '>' && *inptr != ',')
@@ -1574,6 +1616,13 @@ internet_address_list_parse_string (const char *str)
 		decode_lwsp (&inptr);
 		if (*inptr == ',') {
 			inptr++;
+			decode_lwsp (&inptr);
+			
+			/* obs-mbox-list and obs-addr-list allow for empty members (commas with nothing between them) */
+			while (*inptr == ',') {
+				inptr++;
+				decode_lwsp (&inptr);
+			}
 		} else if (*inptr) {
 			w(g_warning ("Parse error at '%s': expected ','", inptr));
 			/* try skipping to the next address */
