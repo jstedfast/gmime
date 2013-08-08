@@ -1374,6 +1374,62 @@ decode_group (const char **in)
 	return addr;
 }
 
+static gboolean
+decode_route (const char **in)
+{
+	const char *start = *in;
+	const char *inptr = *in;
+	GString *route;
+	
+	route = g_string_new ("");
+	
+	do {
+		inptr++;
+		
+		g_string_append_c (route, '@');
+		if (!decode_domain (&inptr, route))
+			goto error;
+		
+		decode_lwsp (&inptr);
+		if (*inptr == ',') {
+			g_string_append_c (route, ',');
+			inptr++;
+			decode_lwsp (&inptr);
+			
+			/* obs-domain-lists allow commas with nothing between them... */
+			while (*inptr == ',') {
+				inptr++;
+				decode_lwsp (&inptr);
+			}
+		}
+	} while (*inptr == '@');
+	
+	g_string_free (route, TRUE);
+	decode_lwsp (&inptr);
+	
+	if (*inptr != ':') {
+		w(g_warning ("Invalid route domain-list, missing ':': %.*s", inptr - start, start));
+		goto error;
+	}
+	
+	/* eat the ':' */
+	*in = inptr + 1;
+	
+	return TRUE;
+	
+ error:
+	
+	while (*inptr && *inptr != ':' && *inptr != '>')
+		inptr++;
+	
+	if (*inptr == ':')
+		inptr++;
+	
+	*in = inptr;
+	
+	return FALSE;
+}
+
 static InternetAddress *
 decode_address (const char **in)
 {
@@ -1432,47 +1488,11 @@ decode_address (const char **in)
 			inptr++;
 			
 			/* check for obsolete routing... */
-			if (*inptr == '@') {
-				GString *route = g_string_new ("");
-				
-				do {
-					inptr++;
-					
-					g_string_append_c (route, '@');
-					if (!decode_domain (&inptr, route))
-						break;
-					
-					decode_lwsp (&inptr);
-					if (*inptr == ',') {
-						g_string_append_c (route, ',');
-						inptr++;
-						decode_lwsp (&inptr);
-						
-						/* obs-domain-lists allow commas with nothing between them... */
-						while (*inptr == ',') {
-							inptr++;
-							decode_lwsp (&inptr);
-						}
-					}
-				} while (*inptr == '@');
-				
-				if (*inptr != ':') {
-					w(g_warning ("Invalid obs-angle-addr, missing ':': %.*s", inptr - start, start));
-					
-					while (*inptr && *inptr != '>' && *inptr != ',')
-						inptr++;
-					
-					if (*inptr == '>')
-						inptr++;
-					
-					break;
-				}
-				
-				inptr++;
+			if (*inptr != '@' || decode_route (&inptr)) {
+				/* rfc2822 addr-spec */
+				addr = decode_addrspec (&inptr);
 			}
 			
-			/* rfc2822 addr-spec */
-			addr = decode_addrspec (&inptr);
 			decode_lwsp (&inptr);
 			if (*inptr != '>') {
 				w(g_warning ("Invalid rfc2822 angle-addr, missing closing '>': %.*s",
@@ -1483,8 +1503,9 @@ decode_address (const char **in)
 				
 				if (*inptr == '>')
 					inptr++;
-			} else
+			} else {
 				inptr++;
+			}
 			
 			/* if comment is non-NULL, we can check for a comment containing a name */
 			comment = inptr;
@@ -1597,13 +1618,12 @@ internet_address_list_parse_string (const char *str)
 {
 	InternetAddressList *addrlist;
 	const char *inptr = str;
+	InternetAddress *addr;
+	const char *start;
 	
 	addrlist = internet_address_list_new ();
 	
 	while (inptr && *inptr) {
-		InternetAddress *addr;
-		const char *start;
-		
 		start = inptr;
 		
 		if ((addr = decode_address (&inptr))) {
