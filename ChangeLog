@@ -1,3 +1,12 @@
+2013-08-08  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-parser.c (parser_content_type): If no Content-Type
+	header exists and the parent is a multipart/digest, default to
+	message/rfc822 instead of text/plain.
+	(parser_construct_leaf_part): If the Content-Type header didn't
+	exist, use the default content-type values instead of assuming
+	text/plain.
+
 2013-08-07  Jeffrey Stedfast  <fejj@gnome.org>
 
 	According to Rfc2046 Section 5.1.1, boundary markers may optionally
