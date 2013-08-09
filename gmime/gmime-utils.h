@@ -65,7 +65,7 @@ const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 char  *g_mime_utils_structured_header_fold (const char *header);
 char  *g_mime_utils_unstructured_header_fold (const char *header);
 char  *g_mime_utils_header_fold (const char *header);
-char  *g_mime_utils_header_printf (const char *format, ...);
+char  *g_mime_utils_header_printf (const char *format, ...) G_GNUC_PRINTF (1, 2);
 
 char  *g_mime_utils_quote_string (const char *str);
 void   g_mime_utils_unquote_string (char *str);
