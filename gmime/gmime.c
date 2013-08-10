@@ -128,7 +128,9 @@ g_mime_init (guint32 flags)
 	
 	enable = flags;
 	
+#if !GLIB_CHECK_VERSION(2, 35, 1)
 	g_type_init ();
+#endif
 	
 	g_mime_charset_map_init ();
 	g_mime_iconv_utils_init ();
