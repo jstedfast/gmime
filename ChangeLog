@@ -1,5 +1,7 @@
 2013-08-10  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* mono/GMime.metadata: Various fixups to get rid of warnings.
+
 	* gmime/gmime.c (g_mime_init): Don't call g_type_init() if glib >=
 	2.35.1
 

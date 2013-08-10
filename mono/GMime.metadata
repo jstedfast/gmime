@@ -20,10 +20,19 @@
   <remove-node path="/api/namespace/callback[@name='HeaderForeachFunc']"/>
 
   <!-- Charset -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeCharset']/field[@cname='mask']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeCharset']/field[@cname='level']"/>
 
   <!-- Common -->
   <!-- Remove the g_mime_strcase_hash/equal functions - they don't need to be public -->
   <!--<remove-node path="/api/namespace/class[@name='Strcase']"/>-->
+
+  <!-- Encoding -->
+  <remove-node path="/api/namespace/struct[@cname='GMimeEncoding']/field[@cname='encoding']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeEncoding']/field[@cname='encode']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeEncoding']/field[@cname='uubuf']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeEncoding']/field[@cname='state']"/>
+  <remove-node path="/api/namespace/struct[@cname='GMimeEncoding']/field[@cname='save']"/>
 
   <!-- Events -->
   <!-- Remove the g_mime_event* functions - they don't need to be public -->
@@ -102,6 +111,7 @@
   <remove-node path="/api/namespace/object[@cname='GMimeSignatureList']/method[@name='SetSignature']"/>
   
   <!-- CryptoContext -->
+  <remove-node path="/api/namespace/object[@cname='GMimeCryptoContext']/method[@name='SetRequestPassword']"/>
 
   <!-- DataWrapper -->
   <attr path="/api/namespace/object[@cname='GMimeDataWrapper']/method[@name='GetStream']" name="name">GetGMimeStream</attr>
@@ -181,13 +191,17 @@
   <attr path="/api/namespace/object[@cname='GMimeFilterBest']/method[@cname='g_mime_filter_best_encoding']" name="name">GetBestEncoding</attr>
 
   <!-- GpgContext -->
+  <attr path="/api/namespace/object[@name='GpgContext']/constructor[@cname='g_mime_gpg_context_new']/*/parameter[@name='request_passwd']" name="scope">call</attr>
+
+  <!-- Pkcs7Context -->
+  <attr path="/api/namespace/object[@name='Pkcs7Context']/constructor[@cname='g_mime_pkcs7_context_new']/*/parameter[@name='request_passwd']" name="scope">call</attr>
   
   <!-- Header -->
   <remove-node path="/api/namespace/struct[@cname='GMimeHeader']"/>
 
   <!-- HeaderList -->
   <!-- We're going to implement the IEnumerable interface -->
-  <add-node path="/api/namespace/object[@cname='GMimeHeaderList']">
+  <add-node path="/api/namespace/struct[@cname='GMimeHeaderList']">
     <implements>
       <interface name="IEnumerable"/>
     </implements>
@@ -198,6 +212,7 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Get']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='Set']"/>
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='GetIter']"/>
+  <attr path="/api/namespace/struct[@cname='GMimeHeaderList']/method[@name='RegisterWriter']/*/parameter[@name='writer']" name="scope">call</attr>
   
   <!-- HeaderIter -->
   <!-- This should really be made to be internal, but I don't know how to do that... -->
@@ -212,8 +227,16 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeHeaderIter']/field[@cname='cursor']"/>
 
   <!-- iconv -->
-  
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_init']"/>
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_shutdown']"/>
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_open']"/>
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_close']"/>
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_strdup']"/>
+  <remove-node path="/api/namespace/class[@name='Iconv']/method[@cname='g_mime_iconv_strndup']"/>
+
   <!-- iconv-utils -->
+  <attr path="/api/namespace/class[@name='Iconv']/method[@name='LocaleToUtf8Length']" name="name">LocaleToUtf8</attr>
+  <attr path="/api/namespace/class[@name='Iconv']/method[@name='Utf8ToLocaleLength']" name="name">Utf8ToLocale</attr>
 
   <!-- InternetAddress -->
   <attr path="/api/namespace/object[@cname='InternetAddress']" name="abstract">1</attr>
@@ -316,6 +339,7 @@
   <remove-node path="/api/namespace/struct[@cname='GMimeParam']/field[@cname='next']"/>
 
   <!-- Parser -->
+  <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='SetHeaderRegex']/*/parameter[@name='header_cb']" name="scope">call</attr>
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructPart']/return-type" name="owned">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeParser']/method[@name='ConstructMessage']/return-type" name="owned">true</attr>
 
@@ -346,9 +370,13 @@
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Write']/*/parameter[@name='buf']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='Write']/*/parameter[@name='buf']" name="array">true</attr>
   <attr path="/api/namespace/object[@cname='GMimeStream']/method[@name='WriteString']" name="name">Write</attr>
+  <remove-node path="/api/namespace/object[@cname='GMimeStream']/method[@name='Printf']"/>
 
   <!-- StreamFile -->
   <attr path="/api/namespace/object[@cname='GMimeStreamFile']" name="hidden">true</attr>
+
+  <!-- StreamGIO -->
+  <remove-node path="/api/namespace/object[@cname='GMimeStreamGIO']"/>
 
   <!-- StreamMem -->
   <attr path="/api/namespace/object[@cname='GMimeStreamMem']/constructor[@cname='g_mime_stream_mem_new_with_byte_array']" name="hidden">true</attr>
@@ -356,6 +384,7 @@
   <!-- Utils -->
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_decode_8bit']"/>
   <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_text_is_8bit']"/>
+  <remove-node path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_header_printf']"/>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="type">const-guint8*</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='text']" name="array">true</attr>
   <attr path="/api/namespace/class[@name='Utils']/method[@cname='g_mime_utils_best_encoding']/*/parameter[@name='len']" name="name">n_text</attr>
