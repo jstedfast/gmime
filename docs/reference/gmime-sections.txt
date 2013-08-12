@@ -104,6 +104,7 @@ GMIME_STREAM_CAT_GET_CLASS
 GMimeStreamFile
 g_mime_stream_file_new
 g_mime_stream_file_new_with_bounds
+g_mime_stream_file_new_for_path
 g_mime_stream_file_get_owner
 g_mime_stream_file_set_owner
 
@@ -125,6 +126,7 @@ GMIME_STREAM_FILE_GET_CLASS
 GMimeStreamFs
 g_mime_stream_fs_new
 g_mime_stream_fs_new_with_bounds
+g_mime_stream_fs_new_for_path
 g_mime_stream_fs_get_owner
 g_mime_stream_fs_set_owner
 

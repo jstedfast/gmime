@@ -2058,6 +2058,12 @@
           <parameter type="FILE*" name="fp" />
         </parameters>
       </constructor>
+      <constructor cname="g_mime_stream_file_new_for_path">
+        <parameters>
+          <parameter type="const-char*" name="path" />
+          <parameter type="const-char*" name="mode" />
+        </parameters>
+      </constructor>
       <constructor cname="g_mime_stream_file_new_with_bounds">
         <parameters>
           <parameter type="FILE*" name="fp" />
@@ -2109,6 +2115,13 @@
       <constructor cname="g_mime_stream_fs_new">
         <parameters>
           <parameter type="int" name="fd" />
+        </parameters>
+      </constructor>
+      <constructor cname="g_mime_stream_fs_new_for_path">
+        <parameters>
+          <parameter type="const-char*" name="path" />
+          <parameter type="int" name="flags" />
+          <parameter type="int" name="mode" />
         </parameters>
       </constructor>
       <constructor cname="g_mime_stream_fs_new_with_bounds">
@@ -3210,8 +3223,8 @@
       <method name="HeaderPrintf" cname="g_mime_utils_header_printf" shared="true">
         <return-type type="char*" />
         <parameters>
-          <parameter type="const-char*" name="format" />
-          <parameter ellipsis="true" />
+          <parameter type="const-char*" name="format" printf_format="true" />
+          <parameter ellipsis="true" printf_format_args="true" />
         </parameters>
       </method>
       <method name="QuoteString" cname="g_mime_utils_quote_string" shared="true">

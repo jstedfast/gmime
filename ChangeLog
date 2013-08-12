@@ -1,3 +1,11 @@
+2013-08-12  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-stream-file.c (g_mime_stream_file_new_for_path): New
+	convenience function that handles opening the file for you.
+
+	* gmime/gmime-stream-fs.c (g_mime_stream_fs_new_for_path): New
+	convenience function that handles opening the file for you.
+
 2013-08-11  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-message.c (g_mime_message_set_reply_to): Fixed this

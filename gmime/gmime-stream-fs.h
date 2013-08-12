@@ -64,6 +64,8 @@ GType g_mime_stream_fs_get_type (void);
 GMimeStream *g_mime_stream_fs_new (int fd);
 GMimeStream *g_mime_stream_fs_new_with_bounds (int fd, gint64 start, gint64 end);
 
+GMimeStream *g_mime_stream_fs_new_for_path (const char *path, int flags, int mode);
+
 gboolean g_mime_stream_fs_get_owner (GMimeStreamFs *stream);
 void g_mime_stream_fs_set_owner (GMimeStreamFs *stream, gboolean owner);
 

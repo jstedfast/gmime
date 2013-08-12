@@ -13,6 +13,15 @@ GMime 2.8 / 3.0 Planning:
   InternetAddressList to be more consistent with the recipient
   functions as well as being less error-prone.
 
+- Modify GMimeStream APIs to take GCancellable and GError arguments.
+
+- Modify g_mime_parser_construct_message() and
+  g_mime_parser_construct_part() methods take GCancellable and GError
+  arguments.
+
+- Should GMimeStreamGIO be modified to take only a GInputStream or a
+  GOutputStream and do away with the GFile API?
+
 
 GMime 2.6 Planning:
 ===================

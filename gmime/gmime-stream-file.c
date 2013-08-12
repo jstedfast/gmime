@@ -370,6 +370,8 @@ g_mime_stream_file_new (FILE *fp)
 	GMimeStreamFile *fstream;
 	gint64 start;
 	
+	g_return_val_if_fail (fp != NULL, NULL);
+	
 #ifdef G_OS_WIN32
 	_setmode (_fileno (fp), O_BINARY);
 #endif
@@ -405,6 +407,8 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 {
 	GMimeStreamFile *fstream;
 	
+	g_return_val_if_fail (fp != NULL, NULL);
+	
 #ifdef G_OS_WIN32
 	_setmode (_fileno (fp), O_BINARY);
 #endif
@@ -415,6 +419,33 @@ g_mime_stream_file_new_with_bounds (FILE *fp, gint64 start, gint64 end)
 	fstream->fp = fp;
 	
 	return GMIME_STREAM (fstream);
+}
+
+
+/**
+ * g_mime_stream_file_new_for_path:
+ * @path: the path to a file
+ * @mode: as in fopen(3)
+ *
+ * Creates a new #GMimeStreamFile object for the specified @path.
+ *
+ * Returns: a stream using for reading and/or writing to the specified
+ * file path or %NULL on error.
+ *
+ * Since: 2.6.18
+ **/
+GMimeStream *
+g_mime_stream_file_new_for_path (const char *path, const char *mode)
+{
+	FILE *fp;
+	
+	g_return_val_if_fail (path != NULL, NULL);
+	g_return_val_if_fail (mode != NULL, NULL);
+	
+	if (!(fp = fopen (path, mode)))
+		return NULL;
+	
+	return g_mime_stream_file_new (fp);
 }
 
 
