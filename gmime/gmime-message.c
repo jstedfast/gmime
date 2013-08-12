@@ -1054,11 +1054,15 @@ g_mime_message_new (gboolean pretty_headers)
 
 /**
  * g_mime_message_set_sender:
- * @message: MIME Message to change
+ * @message: A #GMimeMessage
  * @sender: The name and address of the sender
  *
  * Set the sender's name and address on the MIME Message.
  * (ex: "\"Joe Sixpack\" &lt;joe@sixpack.org&gt;")
+ *
+ * Note: The @sender string should be the raw encoded email
+ * address. It is probably best to use an #InternetAddress to
+ * construct and encode this value.
  **/
 void
 g_mime_message_set_sender (GMimeMessage *message, const char *sender)
@@ -1089,11 +1093,13 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 
 /**
  * g_mime_message_get_sender:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the email address of the sender from @message.
  *
- * Returns: the sender's name and address of the MIME Message.
+ * Returns: the sender's name and address of the @message in a form
+ * suitable for display or %NULL if no sender is set. If not %NULL,
+ * the returned string will be in UTF-8.
  **/
 const char *
 g_mime_message_get_sender (GMimeMessage *message)
@@ -1106,21 +1112,36 @@ g_mime_message_get_sender (GMimeMessage *message)
 
 /**
  * g_mime_message_set_reply_to:
- * @message: MIME Message to change
+ * @message: A #GMimeMessage
  * @reply_to: The Reply-To address
  *
- * Set the sender's Reply-To address on the MIME Message.
+ * Set the sender's Reply-To address on the @message.
+ *
+ * Note: The @reply_to string should be the raw encoded email
+ * address. It is probably best to use an #InternetAddress to
+ * construct and encode this value.
  **/
 void
 g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 {
+	InternetAddressList *addrlist;
+	char *encoded;
+	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	g_return_if_fail (reply_to != NULL);
 	
 	g_free (message->reply_to);
-	message->reply_to = g_mime_strdup_trim (reply_to);
 	
-	g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", message->reply_to);
+	if ((addrlist = internet_address_list_parse_string (reply_to))) {
+		message->reply_to = internet_address_list_to_string (addrlist, FALSE);
+		encoded = internet_address_list_to_string (addrlist, TRUE);
+		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", encoded);
+		g_object_unref (addrlist);
+		g_free (encoded);
+	} else {
+		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", "");
+		message->reply_to = NULL;
+	}
 	
 	if (message->mime_part)
 		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
@@ -1129,11 +1150,13 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 
 /**
  * g_mime_message_get_reply_to:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the Reply-To address from @message.
  *
- * Returns: the sender's Reply-To address from the MIME Message.
+ * Returns: the sender's Reply-To address in a form suitable for
+ * display or %NULL if no Reply-To address is set. If not %NULL, the
+ * returned string will be in UTF-8.
  **/
 const char *
 g_mime_message_get_reply_to (GMimeMessage *message)
@@ -1187,12 +1210,14 @@ bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *messag
 
 /**
  * g_mime_message_add_recipient:
- * @message: MIME Message to change
+ * @message: A #GMimeMessage
  * @type: A #GMimeRecipientType
  * @name: The recipient's name (or %NULL)
  * @addr: The recipient's address
  *
- * Add a recipient of a chosen type to the MIME Message.
+ * Add a recipient of a chosen type to the MIME message.
+ *
+ * Note: The @name (and @addr) strings should be in UTF-8.
  **/
 void
 g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, const char *name, const char *addr)
@@ -1218,13 +1243,13 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 
 /**
  * g_mime_message_get_recipients:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @type: A #GMimeRecipientType
  *
- * Gets a list of recipients of type @type from @message.
+ * Gets a list of recipients of the specified @type from the @message.
  *
- * Returns: (transfer none): a list of recipients of a chosen type
- * from the MIME Message.
+ * Returns: (transfer none): a list of recipients of the specified
+ * @type from the @message.
  **/
 InternetAddressList *
 g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
@@ -1238,7 +1263,7 @@ g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
 
 /**
  * g_mime_message_get_all_recipients:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the complete list of recipients for @message.
  *
@@ -1272,10 +1297,12 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
 
 /**
  * g_mime_message_set_subject:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @subject: Subject string
  *
- * Set the unencoded UTF-8 Subject field on a MIME Message.
+ * Set the subject of a @message.
+ *
+ * Note: The @subject string should be in UTF-8.
  **/
 void
 g_mime_message_set_subject (GMimeMessage *message, const char *subject)
@@ -1299,11 +1326,13 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 
 /**
  * g_mime_message_get_subject:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
- * Gets the message's subject.
+ * Gets the subject of the @message.
  *
- * Returns: the unencoded UTF-8 Subject field on a MIME Message.
+ * Returns: the subject of the @message in a form suitable for display
+ * or %NULL if no subject is set. If not %NULL, the returned string
+ * will be in UTF-8.
  **/
 const char *
 g_mime_message_get_subject (GMimeMessage *message)
@@ -1316,7 +1345,7 @@ g_mime_message_get_subject (GMimeMessage *message)
 
 /**
  * g_mime_message_set_date:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @date: a date to be used in the Date header
  * @tz_offset: timezone offset (in +/- hours)
  * 
@@ -1343,7 +1372,7 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 
 /**
  * g_mime_message_get_date:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @date: (out): pointer to a date in time_t
  * @tz_offset: (out): pointer to timezone offset (in +/- hours)
  * 
@@ -1366,7 +1395,7 @@ g_mime_message_get_date (GMimeMessage *message, time_t *date, int *tz_offset)
 
 /**
  * g_mime_message_get_date_as_string:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the message's sent-date in string format.
  * 
@@ -1383,7 +1412,7 @@ g_mime_message_get_date_as_string (GMimeMessage *message)
 
 /**
  * g_mime_message_set_date_as_string:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @str: a date string
  *
  * Sets the sent-date of the message.
@@ -1412,7 +1441,7 @@ g_mime_message_set_date_as_string (GMimeMessage *message, const char *str)
 
 /**
  * g_mime_message_set_message_id: 
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @message_id: message-id (addr-spec portion)
  *
  * Set the Message-Id on a message.
@@ -1439,7 +1468,7 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 
 /**
  * g_mime_message_get_message_id: 
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the Message-Id header of @message.
  *
@@ -1456,7 +1485,7 @@ g_mime_message_get_message_id (GMimeMessage *message)
 
 /**
  * g_mime_message_get_mime_part:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Gets the toplevel MIME part contained within @message.
  *
@@ -1476,7 +1505,7 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 
 /**
  * g_mime_message_set_mime_part:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  * @mime_part: The root-level MIME Part
  *
  * Set the root-level MIME part of the message.
@@ -1515,7 +1544,7 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 
 /**
  * g_mime_message_foreach:
- * @message: a #GMimeMessage
+ * @message: A #GMimeMessage
  * @callback: (scope call): function to call on each of the mime parts
  *   contained by the mime message
  * @user_data: user-supplied callback data
@@ -1589,7 +1618,7 @@ multipart_guess_body (GMimeMultipart *multipart)
 
 /**
  * g_mime_message_get_body:
- * @message: MIME Message
+ * @message: A #GMimeMessage
  *
  * Attempts to identify the MIME part containing the body of the
  * message.

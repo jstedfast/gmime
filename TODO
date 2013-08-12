@@ -3,6 +3,16 @@ the GMime library. This list of tasks in no way indicates priority,
 that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
+GMime 2.8 / 3.0 Planning:
+
+- Fix g_mime_message_[g,s]set_sender() to take/return an
+  InternetAddressList to be more consistent with the recipient
+  functions as well as being less error-prone.
+
+- Fix g_mime_message_[g,s]et_reply_to() to take/return an
+  InternetAddressList to be more consistent with the recipient
+  functions as well as being less error-prone.
+
 
 GMime 2.6 Planning:
 ===================

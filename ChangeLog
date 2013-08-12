@@ -1,3 +1,14 @@
+2013-08-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-message.c (g_mime_message_set_reply_to): Fixed this
+	function to parse the reply_to string just like
+	g_mime_message_set_sender() does so that the reply_to field can be
+	guaranteed to be in UTF-8.
+
+	* gmime/*.c: Updated API documentation for functions taking or
+	returning strings to clarify whether the strings should be in
+	UTF-8 or not.
+
 2013-08-10  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* mono/GMime.metadata: Various fixups to get rid of warnings.

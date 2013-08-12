@@ -261,25 +261,28 @@ g_mime_content_disposition_get_params (GMimeContentDisposition *disposition)
 /**
  * g_mime_content_disposition_set_parameter:
  * @disposition: a #GMimeContentDisposition object
- * @attribute: parameter name
+ * @name: parameter name
  * @value: parameter value
  *
  * Sets a parameter on the Content-Disposition.
+ *
+ * Note: The @name should be in US-ASCII while the @value should be in
+ * UTF-8.
  **/
 void
-g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, const char *attribute, const char *value)
+g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, const char *name, const char *value)
 {
 	GMimeParam *param = NULL;
 	
 	g_return_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition));
-	g_return_if_fail (attribute != NULL);
+	g_return_if_fail (name != NULL);
 	g_return_if_fail (value != NULL);
 	
-	if ((param = g_hash_table_lookup (disposition->param_hash, attribute))) {
+	if ((param = g_hash_table_lookup (disposition->param_hash, name))) {
 		g_free (param->value);
 		param->value = g_strdup (value);
 	} else {
-		param = g_mime_param_new (attribute, value);
+		param = g_mime_param_new (name, value);
 		disposition->params = g_mime_param_append_param (disposition->params, param);
 		g_hash_table_insert (disposition->param_hash, param->name, param);
 	}
@@ -291,21 +294,23 @@ g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposition, 
 /**
  * g_mime_content_disposition_get_parameter:
  * @disposition: a #GMimeContentDisposition object
- * @attribute: parameter name
+ * @name: parameter name
  *
- * Gets the value of the parameter @attribute, or %NULL on fail.
+ * Gets the parameter value specified by @name if it's available.
  *
- * Returns: the value of the parameter of name @attribute.
+ * Returns: the value of the requested parameter or %NULL if the
+ * parameter is not set. If the parameter is set, the returned string
+ * will be in UTF-8.
  **/
 const char *
-g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, const char *attribute)
+g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, const char *name)
 {
 	GMimeParam *param;
 	
 	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), NULL);
-	g_return_val_if_fail (attribute != NULL, NULL);
+	g_return_val_if_fail (name != NULL, NULL);
 	
-	if (!(param = g_hash_table_lookup (disposition->param_hash, attribute)))
+	if (!(param = g_hash_table_lookup (disposition->param_hash, name)))
 		return NULL;
 	
 	return param->value;

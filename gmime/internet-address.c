@@ -173,6 +173,8 @@ _internet_address_set_name (InternetAddress *ia, const char *name)
  * @name: the display name for the address group or mailbox
  *
  * Set the display name of the #InternetAddress.
+ *
+ * Note: The @name string should be in UTF-8.
  **/
 void
 internet_address_set_name (InternetAddress *ia, const char *name)
@@ -191,7 +193,9 @@ internet_address_set_name (InternetAddress *ia, const char *name)
  *
  * Gets the display name of the #InternetAddress.
  *
- * Returns: the display name of @ia.
+ * Returns: the name of the mailbox or group in a form suitable for
+ * display if available or %NULL otherwise. If the name is available,
+ * the returned string will be in UTF-8.
  **/
 const char *
 internet_address_get_name (InternetAddress *ia)
@@ -301,10 +305,12 @@ internet_address_mailbox_finalize (GObject *object)
  * @name: person's name
  * @addr: person's address
  *
- * Creates a new #InternetAddress object with name @name and address
+ * Creates a new #InternetAddress object with the specified @name and
  * @addr.
  * 
  * Returns: a new #InternetAddressMailbox object.
+ *
+ * Note: The @name string should be in UTF-8.
  **/
 InternetAddress *
 internet_address_mailbox_new (const char *name, const char *addr)
@@ -440,10 +446,12 @@ internet_address_group_finalize (GObject *object)
  * internet_address_group_new:
  * @name: group name
  *
- * Creates a new #InternetAddressGroup object with a display name of
+ * Creates a new #InternetAddressGroup object with the specified
  * @name.
  * 
  * Returns: a new #InternetAddressGroup object.
+ *
+ * Note: The @name string should be in UTF-8.
  **/
 InternetAddress *
 internet_address_group_new (const char *name)
@@ -1211,7 +1219,7 @@ internet_address_list_to_string (InternetAddressList *list, gboolean encode)
  * @str: string to write to
  *
  * Writes the rfc2047-encoded rfc822 formatted addresses in @list to
- * @string, folding appropriately.
+ * @str, folding appropriately.
  **/
 void
 internet_address_list_writer (InternetAddressList *list, GString *str)

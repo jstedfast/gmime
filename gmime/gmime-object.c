@@ -473,6 +473,9 @@ g_mime_object_get_content_type (GMimeObject *object)
  * @value: param value
  *
  * Sets the content-type param @name to the value @value.
+ *
+ * Note: The @name string should be in US-ASCII while the @value
+ * string should be in UTF-8.
  **/
 void
 g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name, const char *value)
@@ -492,8 +495,9 @@ g_mime_object_set_content_type_parameter (GMimeObject *object, const char *name,
  * Gets the value of the content-type param @name set on the MIME part
  * @object.
  *
- * Returns: the value of the requested content-type param or %NULL on
- * if the param doesn't exist.
+ * Returns: the value of the requested content-type param or %NULL if
+ * the param doesn't exist. If the param is set, the returned string
+ * will be in UTF-8.
  **/
 const char *
 g_mime_object_get_content_type_parameter (GMimeObject *object, const char *name)
@@ -624,49 +628,53 @@ g_mime_object_get_disposition (GMimeObject *object)
 /**
  * g_mime_object_set_content_disposition_parameter:
  * @object: a #GMimeObject
- * @attribute: parameter name
+ * @name: parameter name
  * @value: parameter value
  *
  * Add a content-disposition parameter to the specified mime part.
+ *
+ * Note: The @name string should be in US-ASCII while the @value
+ * string should be in UTF-8.
  **/
 void
-g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *attribute, const char *value)
+g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *name, const char *value)
 {
 	GMimeContentDisposition *disposition;
 	
 	g_return_if_fail (GMIME_IS_OBJECT (object));
-	g_return_if_fail (attribute != NULL);
+	g_return_if_fail (name != NULL);
 	
 	if (!object->disposition) {
 		disposition = g_mime_content_disposition_new ();
 		_g_mime_object_set_content_disposition (object, disposition);
 	}
 	
-	g_mime_content_disposition_set_parameter (object->disposition, attribute, value);
+	g_mime_content_disposition_set_parameter (object->disposition, name, value);
 }
 
 
 /**
  * g_mime_object_get_content_disposition_parameter:
  * @object: a #GMimeObject
- * @attribute: parameter name
+ * @name: parameter name
  *
  * Gets the value of the Content-Disposition parameter specified by
- * @attribute, or %NULL if the parameter does not exist.
+ * @name, or %NULL if the parameter does not exist.
  *
- * Returns: the value of a previously defined content-disposition
- * parameter specified by @attribute.
+ * Returns: the value of the requested content-disposition param or
+ * %NULL if the param doesn't exist. If the param is set, the returned
+ * string will be in UTF-8.
  **/
 const char *
-g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *attribute)
+g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *name)
 {
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), NULL);
-	g_return_val_if_fail (attribute != NULL, NULL);
+	g_return_val_if_fail (name != NULL, NULL);
 	
 	if (!object->disposition)
 		return NULL;
 	
-	return g_mime_content_disposition_get_parameter (object->disposition, attribute);
+	return g_mime_content_disposition_get_parameter (object->disposition, name);
 }
 
 
@@ -777,6 +785,9 @@ object_prepend_header (GMimeObject *object, const char *header, const char *valu
  * @value: header value
  *
  * Prepends a raw, unprocessed header to the MIME object.
+ *
+ * Note: @value should be encoded with a function such as
+ * g_mime_utils_header_encode_text().
  **/
 void
 g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value)
@@ -803,6 +814,9 @@ object_append_header (GMimeObject *object, const char *header, const char *value
  * @value: header value
  *
  * Appends a raw, unprocessed header to the MIME object.
+ *
+ * Note: @value should be encoded with a function such as
+ * g_mime_utils_header_encode_text().
  **/
 void
 g_mime_object_append_header (GMimeObject *object, const char *header, const char *value)
@@ -830,6 +844,9 @@ object_set_header (GMimeObject *object, const char *header, const char *value)
  * @value: header value
  *
  * Sets an arbitrary raw, unprocessed header on the MIME object.
+ *
+ * Note: @value should be encoded with a function such as
+ * g_mime_utils_header_encode_text().
  **/
 void
 g_mime_object_set_header (GMimeObject *object, const char *header, const char *value)
@@ -858,6 +875,9 @@ object_get_header (GMimeObject *object, const char *header)
  *
  * Returns: the raw, unprocessed value of the requested header if it
  * exists or %NULL otherwise.
+ *
+ * Note: The returned value should be decoded with a function such as
+ * g_mime_utils_header_decode_text() before displaying to the user.
  **/
 const char *
 g_mime_object_get_header (GMimeObject *object, const char *header)
@@ -937,6 +957,8 @@ object_get_headers (GMimeObject *object)
  * headers.
  *
  * Returns: an allocated string containing all of the raw MIME headers.
+ *
+ * Note: The returned string will not be suitable for display.
  **/
 char *
 g_mime_object_get_headers (GMimeObject *object)
