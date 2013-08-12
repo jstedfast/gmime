@@ -31,8 +31,8 @@ Find answers to common questions in the GMime manual
         <qandaentry>
           <question><para>How do I port from one GMime version to another?</para></question>
           <answer>
-            <para>See the <link linkend="gmime-changes-2-4">list of
-            incompatible changes from 2.2 to 2.4</link>.</para>
+            <para>See the <link linkend="gmime-changes-2-6">list of
+            incompatible changes from 2.4 to 2.6</link>.</para>
           </answer>
         </qandaentry>
         <qandaentry>
