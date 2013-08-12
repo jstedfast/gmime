@@ -4,6 +4,7 @@ that is to say that there is no rhyme or reason to the order that the
 tasks are presented in.
 
 GMime 2.8 / 3.0 Planning:
+=========================
 
 - Fix g_mime_message_[g,s]set_sender() to take/return an
   InternetAddressList to be more consistent with the recipient
@@ -22,98 +23,18 @@ GMime 2.8 / 3.0 Planning:
 - Should GMimeStreamGIO be modified to take only a GInputStream or a
   GOutputStream and do away with the GFile API?
 
-
-GMime 2.6 Planning:
-===================
-
-- Replace all uses of g_signals with my own event stuff. None of this
-  needs to be public and my events are a lot more performant. [ DONE ]
-
-- Need to add a Changed event to GMimeHeaderList so that GMimeMessage
-  can listen to changes in the toplevel mime_part's headers. When they
-  change, we need to unset the cached header stream on the
-  GMimeMessage. (see the "Note:" comments in message_write_to_stream
-  and message_get_headers, while this hack works, it'd be nicer if we
-  did it based on event callbacks) [ DONE ]
-
-- Get rid of GMimeSession and replace it with
-  GMimePassphraseRequestFunc or something. See GpgMe's passphrase
-  request callback signature for ideas. [ DONE ]
-
-- Consider optionally using GpgMe so that we can support S/MIME?
-  [ DONE: but needs testing ]
-
-- Consider GCancellable and GError for GMimeStreams and
-  GMimeParser... GError being far more important than
-  GCancellable. GCancellable could be nice to have for network
-  streams, though... [ POSTPONED ]
-
-- Add a GIO-backed GMimeStream and bump glib dep to 2.16 [ DONE ]
-
-- Add a g_mime_part_get_best_content_encoding()? [ DONE ]
-
-- Rename GMimeBestEncoding enum to GMimeEncodingConstraint? [ DONE ]
-
-  This might be a better name for the enum to reflect what it's
-  actually meant for. Maybe also move it from gmime-filter-best.h to
-  gmime-encodings.h?
+- Bump the Glib dependency and just use the newer GMutex APIs
+  directly.
 
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
   in UTF-8... [ CONSIDERING ]
 
-- Re-add a g_mime_message_get_body()? [ DONE ]
+- Possibly make the GMime parser incremental. This will be difficult
+  and probably not worth the trouble.
 
-
-Other:
-======
-
-
-- make thread-safe? some stuff already is, like the gmime-iconv code
-and some of the other charset stuff. Streams and other objects,
-however, are not. How can I do this...? And is it really needed?
-
-- Possibly make the GMime parser incremental.
-
-- modify address parser:
-
-<charles> on usenet it's not uncommon to have header like "From: Joe Bob"
-<charles> where people use no address at all to avoid spammers
-<fejj> ok
-<charles> It would be nice if internet-address handled this
-<charles> have ->name == "Joe Bob" and ->value.addr == NULL
-<fejj> oh, so only support writing them? ah, that should be easy
-<charles> It looks like the else clause on line 582 is where a "Joe Bob" string fails
-<fejj> I was pondering how I could possibly parse that as a name :)
-<charles> No, I am asking about parsing
-<fejj> oh
-<charles> It would be nice for internet_address_parse_string() to return an 
-InternetAddress with a name of "Joe Bob" and a NULL addr
-<fejj> ah, okay
-<fejj> I guess I can do that
-<fejj> I'll have to modify my internet_address_to_string code to handle that too
-<fejj> but that should be easy
-
-- S/MIMEv3: http://www.ietf.org/html.charters/smime-charter.html
-
-
-
-
-Ideas for GMime "3.0"
-=====================
-
-- GMimeStream's should take GError args so apps don't have to rely on
-  errno (really needed for apps that implement ssl streams or other
-  stream types which might not map well to libc's errno values)
-
-  - Maybe even drop GMimeStreams and use GIO?
-  - If not, take GCancellables?
-
-- GMimeParser should also take a GError arg and/or return int error
-  codes.
-
-- Would be nice if gmime-sharp could take System.IO.Stream in addition
-  to GMime.Stream.
+- Would be nice if gmime-sharp could take System.IO.Streams in
+  addition to GMime.Stream.
 
 - Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
   both. This could allow g_mime_multipart_encrypted_decrypt() and
