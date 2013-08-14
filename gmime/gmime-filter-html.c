@@ -57,11 +57,17 @@ static struct {
 } patterns[] = {
 	{ CONVERT_WEB_URLS, { "file://",   "",        url_file_start,     url_file_end     } },
 	{ CONVERT_WEB_URLS, { "ftp://",    "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "sftp://",   "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "http://",   "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "https://",  "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "news://",   "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "nntp://",   "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "telnet://", "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "webcal://", "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "mailto:",   "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "callto:",   "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "h323:",     "",        url_web_start,      url_web_end      } },
+	{ CONVERT_WEB_URLS, { "sip:",      "",        url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "www.",      "http://", url_web_start,      url_web_end      } },
 	{ CONVERT_WEB_URLS, { "ftp.",      "ftp://",  url_web_start,      url_web_end      } },
 	{ CONVERT_ADDRSPEC, { "@",         "mailto:", url_addrspec_start, url_addrspec_end } },
@@ -174,7 +180,7 @@ check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 }
 
 static int
-citation_depth (const char *in)
+citation_depth (const char *in, const char *inend)
 {
 	register const char *inptr = in;
 	int depth = 1;
@@ -186,11 +192,11 @@ citation_depth (const char *in)
 	if (!strncmp (inptr, "From", 4))
 		return 0;
 	
-	while (*inptr != '\n') {
+	while (inptr < inend && *inptr != '\n') {
 		if (*inptr == ' ')
 			inptr++;
 		
-		if (*inptr++ != '>')
+		if (inptr >= inend || *inptr++ != '>')
 			break;
 		
 		depth++;
@@ -348,12 +354,12 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		depth = 0;
 		
 		if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
-			if ((depth = citation_depth (start)) > 0) {
+			if ((depth = citation_depth (start, inend)) > 0) {
 				char font[25];
 				
 				/* FIXME: we could easily support multiple colour depths here */
 				
-				g_snprintf (font, 25, "<font color=\"#%06x\">", html->colour);
+				g_snprintf (font, 25, "<font color=\"#%06x\">", (html->colour & 0xffffff));
 				
 				outptr = check_size (filter, outptr, &outend, 25);
 				outptr = g_stpcpy (outptr, font);
@@ -483,17 +489,17 @@ filter_reset (GMimeFilter *filter)
 GMimeFilter *
 g_mime_filter_html_new (guint32 flags, guint32 colour)
 {
-	GMimeFilterHTML *new;
+	GMimeFilterHTML *filter;
 	guint i;
 	
-	new = g_object_newv (GMIME_TYPE_FILTER_HTML, 0, NULL);
-	new->flags = flags;
-	new->colour = colour;
+	filter = g_object_newv (GMIME_TYPE_FILTER_HTML, 0, NULL);
+	filter->flags = flags;
+	filter->colour = colour;
 	
 	for (i = 0; i < NUM_URL_PATTERNS; i++) {
 		if (patterns[i].mask & flags)
-			url_scanner_add (new->scanner, &patterns[i].pattern);
+			url_scanner_add (filter->scanner, &patterns[i].pattern);
 	}
 	
-	return (GMimeFilter *) new;
+	return (GMimeFilter *) filter;
 }
