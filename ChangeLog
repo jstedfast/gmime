@@ -1,3 +1,8 @@
+2013-08-21  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-part.c (write_content): Reset the content stream
+	after writing it.
+
 2013-08-14  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-filter-html.c (citation_depth): Fixed an ABR by

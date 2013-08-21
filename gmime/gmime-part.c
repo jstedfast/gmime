@@ -344,6 +344,7 @@ write_content (GMimePart *part, GMimeStream *stream)
 		content_stream = g_mime_data_wrapper_get_stream (part->content);
 		g_mime_stream_reset (content_stream);
 		nwritten = g_mime_stream_write_to_stream (content_stream, stream);
+		g_mime_stream_reset (content_stream);
 		
 		if (nwritten == -1)
 			return -1;
