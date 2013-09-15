@@ -1,3 +1,9 @@
+2013-09-15  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.18
+
 2013-08-21  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-part.c (write_content): Reset the content stream
