@@ -2743,7 +2743,7 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 					g_string_insert_c (output, tab, '\n');
 					len = (lwsp - tab) + 1;
 				} else if (lwsp != 0) {
-					/* break just before the last lwsp character i*/
+					/* break just before the last lwsp character */
 					g_string_insert_c (output, lwsp, '\n');
 					len = 1;
 				} else if (len > 1) {
@@ -2769,7 +2769,7 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 				g_string_insert_c (output, tab, '\n');
 				len = (lwsp - tab) + 1;
 			} else if (lwsp != 0) {
-				/* break just before the last lwsp character i*/
+				/* break just before the last lwsp character */
 				g_string_insert_c (output, lwsp, '\n');
 				len = 1;
 			} else if (len > 1) {

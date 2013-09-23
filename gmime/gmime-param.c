@@ -396,7 +396,7 @@ rfc2184_param_charset (const char **in, char **langp)
 	if (langp)
 		*langp = NULL;
 	
-	while (*inptr != '\0' && *inptr != '\'')
+	while (*inptr && *inptr != '\'')
 		inptr++;
 	
 	if (*inptr != '\'')
@@ -408,7 +408,7 @@ rfc2184_param_charset (const char **in, char **langp)
 	charset[len] = '\0';
 	
 	lang = ++inptr;
-	while (*inptr != '\0' && *inptr != '\'')
+	while (*inptr && *inptr != '\'')
 		inptr++;
 	
 	if (*inptr == '\'') {
