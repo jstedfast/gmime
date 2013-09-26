@@ -132,6 +132,13 @@ g_mime_init (guint32 flags)
 	g_type_init ();
 #endif
 	
+#ifdef G_THREADS_ENABLED
+	g_mutex_init (&G_LOCK_NAME (iconv_cache));
+	g_mutex_init (&G_LOCK_NAME (iconv_utils));
+	g_mutex_init (&G_LOCK_NAME (charset));
+	g_mutex_init (&G_LOCK_NAME (msgid));
+#endif
+	
 	g_mime_charset_map_init ();
 	g_mime_iconv_utils_init ();
 	g_mime_iconv_init ();
@@ -143,13 +150,6 @@ g_mime_init (guint32 flags)
 	
 	gmime_gpgme_error_quark = g_quark_from_static_string ("gmime-gpgme");
 	gmime_error_quark = g_quark_from_static_string ("gmime");
-	
-#ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (iconv_cache));
-	g_mutex_init (&G_LOCK_NAME (iconv_utils));
-	g_mutex_init (&G_LOCK_NAME (charset));
-	g_mutex_init (&G_LOCK_NAME (msgid));
-#endif
 	
 	/* register our GObject types with the GType system */
 	g_mime_crypto_context_get_type ();
