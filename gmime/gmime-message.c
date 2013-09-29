@@ -642,16 +642,18 @@ write_references (GMimeStream *stream, const char *name, const char *value)
 	reference = references;
 	while (reference != NULL) {
 		n = strlen (reference->msgid);
-		if (len > 1 && len + n + 1 >= GMIME_FOLD_LEN) {
+		if (len > 1 && len + n + 3 >= GMIME_FOLD_LEN) {
 			g_string_append_len (folded, "\n\t", 2);
 			len = 1;
 		} else {
-			g_string_append_len (folded, " ", 1);
+			g_string_append_c (folded, ' ');
 			len++;
 		}
 		
+		g_string_append_c (folded, '<');
 		g_string_append_len (folded, reference->msgid, n);
-		len += n;
+		g_string_append_c (folded, '>');
+		len += n + 2;
 		
 		reference = reference->next;
 	}
