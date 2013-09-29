@@ -67,7 +67,8 @@ static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
 static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
-static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);
+/*static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);*/
+static ssize_t write_references (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
@@ -233,7 +234,7 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	g_mime_header_list_register_writer (headers, "Subject", write_subject);
 	g_mime_header_list_register_writer (headers, "Received", write_received);
 	g_mime_header_list_register_writer (headers, "Message-Id", write_msgid);
-	g_mime_header_list_register_writer (headers, "References", write_structured);
+	g_mime_header_list_register_writer (headers, "References", write_references);
 }
 
 static void
@@ -618,11 +619,53 @@ write_subject (GMimeStream *stream, const char *name, const char *value)
 static ssize_t
 write_msgid (GMimeStream *stream, const char *name, const char *value)
 {
-	/* we don't want to wrap the Message-Id header - seems to
+	/* Note: we don't want to wrap the Message-Id header - seems to
 	   break a lot of clients (and servers) */
 	return g_mime_stream_printf (stream, "%s: %s\n", name, value);
 }
 
+static ssize_t
+write_references (GMimeStream *stream, const char *name, const char *value)
+{
+	GMimeReferences *references, *reference;
+	ssize_t nwritten;
+	GString *folded;
+	size_t len, n;
+	
+	/* Note: we don't want to break in the middle of msgid tokens as
+	   it seems to break a lot of clients (and servers) */
+	references = g_mime_references_decode (value);
+	folded = g_string_new (name);
+	g_string_append_len (folded, ": ", 2);
+	len = folded->len;
+	
+	reference = references;
+	while (reference != NULL) {
+		n = strlen (reference->msgid);
+		if (len > 1 && len + n + 1 >= GMIME_FOLD_LEN) {
+			g_string_append_len (folded, "\n\t", 2);
+			len = 1;
+		} else {
+			g_string_append_len (folded, " ", 1);
+			len++;
+		}
+		
+		g_string_append_len (folded, reference->msgid, n);
+		len += n;
+		
+		reference = reference->next;
+	}
+	
+	g_mime_references_clear (&references);
+	
+	g_string_append_len (folded, "\n", 1);
+	nwritten = g_mime_stream_write (stream, folded->str, folded->len);
+	g_string_free (folded, TRUE);
+	
+	return nwritten;
+}
+
+#if 0
 static ssize_t
 write_structured (GMimeStream *stream, const char *name, const char *value)
 {
@@ -635,6 +678,7 @@ write_structured (GMimeStream *stream, const char *name, const char *value)
 	
 	return n;
 }
+#endif
 
 static ssize_t
 write_addrspec (GMimeStream *stream, const char *name, const char *value)
