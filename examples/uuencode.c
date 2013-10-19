@@ -198,7 +198,9 @@ int main (int argc, char **argv)
 {
 	const char *progname;
 	
+#if !GLIB_CHECK_VERSION(2, 35, 1)
 	g_type_init ();
+#endif
 	
 	if (!(progname = strrchr (argv[0], '/')))
 		progname = argv[0];
