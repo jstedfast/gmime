@@ -1,3 +1,9 @@
+2013-11-02  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-message.c (write_references): Don't write out 2
+	spaces between the ':' and the first message-id. Fixes bug
+	#711305.
+
 2013-10-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

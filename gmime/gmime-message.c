@@ -636,7 +636,7 @@ write_references (GMimeStream *stream, const char *name, const char *value)
 	   it seems to break a lot of clients (and servers) */
 	references = g_mime_references_decode (value);
 	folded = g_string_new (name);
-	g_string_append_len (folded, ": ", 2);
+	g_string_append_c (folded, ':');
 	len = folded->len;
 	
 	reference = references;
