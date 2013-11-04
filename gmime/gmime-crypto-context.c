@@ -440,6 +440,10 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
  * certificates, one for each recipient, that the original encrypted stream
  * was encrypted to.
  *
+ * Note: It *may* be possible to maliciously design an encrypted stream such
+ * that recursively decrypting it will result in ane endless loop, causing
+ * a denial of service attack on your application.
+ *
  * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL
  * on error.
  **/
