@@ -1,3 +1,9 @@
+2013-12-29  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-object.c
+	(g_mime_object_set_content_disposition_parameter): Unref the
+	disposition. Thanks to Mario Theodoridis for this patch.
+
 2013-11-02  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-message.c (write_references): Don't write out 2
