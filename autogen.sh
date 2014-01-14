@@ -88,7 +88,7 @@ $AUTOMAKE --add-missing || exit $?
 autoconf || exit $?
 cd $ORIGDIR || exit $?
 
-if test -z "$AUTOGEN_SUBDIR_MODE"; then
+if test -z "$AUTOGEN_SUBDIR_MODE" && test -z "NOCONFIGURE"; then
         $srcdir/configure --enable-maintainer-mode $AUTOGEN_CONFIGURE_ARGS "$@" || exit $?
 
         echo 
