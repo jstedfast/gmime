@@ -6,7 +6,9 @@ gmimeincludedir = $(includedir)/gmime-$(GMIME_API_VERSION)/gmime
 
 INCLUDES = 				\
 	-I$(top_srcdir) 		\
+	-I$(top_builddir) 		\
 	-I$(top_srcdir)/util		\
+	-I$(top_builddir)/util		\
 	-DG_LOG_DOMAIN=\"gmime\"	\
 	$(GMIME_CFLAGS)			\
 	$(GLIB_CFLAGS)
