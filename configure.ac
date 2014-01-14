@@ -498,12 +498,14 @@ if test "x$enable_cryptography" != "xyes"; then
    enable_smime="no"
 fi
 
-if test "x$enable_smime" = "xyes"; then
+m4_ifdef([AM_PATH_GPGME_PTHREAD], [
+AS_IF([test "x$enable_smime" = "xyes"], [
    AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
    if test "x$enable_smime" != "xno"; then
       AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
    fi
-fi
+])
+])
 
 dnl ****************************
 dnl *** Enable Mono bindings ***
