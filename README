@@ -10,9 +10,15 @@ the Multipurpose Internet Mail Extension (MIME) as defined by the
 following RFCs:
 
  * 0822: Standard for the Format of Arpa Internet Text Messages
+ * 1341: MIME (Multipurpose Internet Mail Extensions): Mechanisms for
+         Specifying and Describing the Format of Internet Message Bodies
+ * 1342: Representation of Non-ASCII Text in Internet Message Headers
  * 1521: MIME (Multipurpose Internet Mail Extensions) Part One:
          Mechanisms for Specifying and Describing the Format of 
-         Internet Message Bodies
+         Internet Message Bodies (Obsoletes rfc1341)
+ * 1522: MIME (Multipurpose Internet Mail Extensions) Part Two: Message
+         Header Extensions for Non-ASCII Text (Obsoletes rfc1342)
+ * 1544: The Content-MD5 Header Field
  * 1847: Security Multiparts for MIME: Multipart/Signed and 
          Multipart/Encrypted
  * 1864: The Content-MD5 Header Field (Obsoletes rfc1544)
@@ -41,6 +47,7 @@ Other RFCs of interest:
 
  * 1872: The MIME Multipart/Related Content-type
  * 1927: Suggested Additional MIME Types for Associating Documents
+ * 2110: MIME E-mail Encapsulation of Aggregate Documents, such as HTML (MHTML)
  * 2111: Content-ID and Message-ID Uniform Resource Locators
  * 2311: S/MIME Version 2 Message Specification
  * 2312: S/MIME Version 2 Certificate Handling
@@ -52,6 +59,14 @@ Other RFCs of interest:
  * 2634: Enhanced Security Services for S/MIME
  * 3280: Internet X.509 Public Key Infrastructure certificate and 
          Certificate Revocation List (CRL) Profile
+ * 3850: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.1
+         Certificate Handling (Obsoletes rfc2632)
+ * 3851: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.1
+         Message Specification (Obsoletes rfc2633)
+ * 5750: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.2
+         Certificate Handling (Obsoletes rfc3850)
+ * 5751: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.2
+         Message Specification (Obsoletes rfc3851)
 
 Cryptography related RFCs:
 
@@ -178,7 +193,14 @@ are:
 
 - Perl: http://search.cpan.org/dist/MIME-Fast/
 
-- .NET (Mono): Included in this distribution.
+- .NET (Mono): Included in this distribution (Obsolete).
+
+
+Note: It is recommended that MimeKit[1] be used in place of GMime-Sharp in
+.NET 4.0 (or later) environments.
+
+
+1. MimeKit: https://github.com/jstedfast/MimeKit
 
 
 REPORTING BUGS
