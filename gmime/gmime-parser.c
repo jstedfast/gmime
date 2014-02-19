@@ -127,7 +127,7 @@ struct _GMimeParserPrivate {
 	gint64 offset;
 	
 	/* i/o buffers */
-	char realbuf[SCAN_HEAD + SCAN_BUF + 1];
+	char realbuf[SCAN_HEAD + SCAN_BUF + 4];
 	char *inbuf;
 	char *inptr;
 	char *inend;
@@ -1455,11 +1455,13 @@ static int
 parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 {
 	struct _GMimeParserPrivate *priv = parser->priv;
+	char *aligned, *start, *inend;
 	register char *inptr;
-	char *start, *inend;
+	register int *dword;
 	size_t nleft, len;
 	size_t atleast;
 	int found = 0;
+	int mask;
 	
 	d(printf ("scan-content\n"));
 	
@@ -1493,10 +1495,25 @@ parser_scan_content (GMimeParser *parser, GByteArray *content, guint *crlf)
 		priv->midline = FALSE;
 		
 		while (inptr < inend) {
+			aligned = (char *) (((long) (inptr + 3)) & ~3);
 			start = inptr;
+			
 			/* Note: see optimization comment [1] */
-			while (*inptr != '\n')
+			while (inptr < aligned && *inptr != '\n')
 				inptr++;
+			
+			if (inptr == aligned) {
+				dword = (int *) inptr;
+				
+				do {
+					mask = *dword++ ^ 0x0A0A0A0A;
+					mask = ((mask - 0x01010101) & (~mask & 0x80808080));
+				} while (mask == 0);
+				
+				inptr = (char *) (dword - 1);
+				while (*inptr != '\n')
+					inptr++;
+			}
 			
 			len = (size_t) (inptr - start);
 			

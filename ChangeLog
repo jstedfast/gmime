@@ -1,5 +1,10 @@
 2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-parser.c (parser_scan_content): Improved performance
+	by using a SIMD hack when scanning for the end of a line.
+
+2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-message.c (message_remove_header): Don't clear the
 	mime_part header stream unless we actually remove a header.
 	(message_write_to_stream): Only add nwritten to the total if we've
