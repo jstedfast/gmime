@@ -1,5 +1,11 @@
 2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.20
+
+2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-parser.c (parser_scan_content): Improved performance
 	by using a SIMD hack when scanning for the end of a line.
 
