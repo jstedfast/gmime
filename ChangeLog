@@ -1,3 +1,10 @@
+2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-message.c (message_remove_header): Don't clear the
+	mime_part header stream unless we actually remove a header.
+	(message_write_to_stream): Only add nwritten to the total if we've
+	written a MIME-Version header.
+
 2013-12-29  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-object.c

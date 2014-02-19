@@ -978,10 +978,14 @@ message_remove_header (GMimeObject *object, const char *header)
 		break;
 	}
 	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+	if (GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header)) {
+		if (message->mime_part)
+			g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+		
+		return TRUE;
+	}
 	
-	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+	return FALSE;
 }
 
 
@@ -1034,9 +1038,9 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream)
 			if (!g_mime_header_list_get (object->headers, "MIME-Version")) {
 				if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
 					return -1;
+				
+				total += nwritten;
 			}
-			
-			total += nwritten;
 		}
 		
 		if ((nwritten = g_mime_object_write_to_stream (message->mime_part, stream)) == -1)
