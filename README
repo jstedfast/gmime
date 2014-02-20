@@ -39,9 +39,20 @@ following RFCs:
          Sets, Languages, and Continuations
  * 2231: MIME Parameter Value and Encoded Word Extensions: Character
          Sets, Languages, and Continuations (Obsoletes rfc2184)
+ * 2311: S/MIME Version 2 Message Specification
+ * 2312: S/MIME Version 2 Certificate Handling
+ * 2315: PKCS #7: Cryptographic Message Syntax
+ * 2630: Cryptographic Message Syntax
+ * 2632: S/MIME Version 3 Certificate Handling (Obsoletes rfc2311)
+ * 2633: S/MIME Version 3 Message Specification (Obsoletes rfc2312)
+ * 2634: Enhanced Security Services for S/MIME
  * 2822: Internet Message Format (Obsoletes rfc822)
  * 3156: MIME Security with OpenPGP (Updates rfc2015)
+ * 3850: S/MIME Version 3.1 Certificate Handling (Obsoletes rfc2632)
+ * 3851: S/MIME Version 3.1 Message Specification (Obsoletes rfc2633)
  * 5322: Internet Message Format (Obsoletes rfc2822)
+ * 5750: S/MIME Version 3.2 Certificate Handling (Obsoletes rfc3850)
+ * 5751: S/MIME Version 3.2 Message Specification (Obsoletes rfc3851)
 
 Other RFCs of interest:
 
@@ -49,38 +60,24 @@ Other RFCs of interest:
  * 1927: Suggested Additional MIME Types for Associating Documents
  * 2110: MIME E-mail Encapsulation of Aggregate Documents, such as HTML (MHTML)
  * 2111: Content-ID and Message-ID Uniform Resource Locators
- * 2311: S/MIME Version 2 Message Specification
- * 2312: S/MIME Version 2 Certificate Handling
  * 2387: The Multipart/Related Content-Type.
+ * 2388: Returning Values from Forms: multipart/form-data
  * 2424: Content Duration MIME Header Definition
- * 2630: Cryptographic Message Syntax
- * 2632: S/MIME Version 3 Certificate Handling
- * 2633: S/MIME Version 3 Message Specification
- * 2634: Enhanced Security Services for S/MIME
  * 3280: Internet X.509 Public Key Infrastructure certificate and 
          Certificate Revocation List (CRL) Profile
- * 3850: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.1
-         Certificate Handling (Obsoletes rfc2632)
- * 3851: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.1
-         Message Specification (Obsoletes rfc2633)
- * 5750: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.2
-         Certificate Handling (Obsoletes rfc3850)
- * 5751: Secure/Multipurpose Internet Mail Extensions (S/MIME) Version 3.2
-         Message Specification (Obsoletes rfc3851)
 
 Cryptography related RFCs:
 
  * 2268: A Description of the RC2(r) Encryption Algorithm
  * 2313: PKCS #1: RSA Encryption
  * 2314: PKCS #10: Certification Request Syntax
- * 2315: PKCS #7: Cryptographic Message Syntax
  * 2631: Diffie-Hellman Key Agreement Method
 
 
 LICENSE INFORMATION
 -------------------
 
-The GMime library is Copyright (C) 2000-2013 Jeffrey Stedfast.
+The GMime library is Copyright (C) 2000-2014 Jeffrey Stedfast.
 
 This library is free software; you can redistribute it and/or
 modify it under the terms of the GNU Lesser General Public
