@@ -514,6 +514,8 @@ g_mime_parser_get_persist_stream (GMimeParser *parser)
  * Note: This attribute only serves as a hint to the @parser. If the
  * underlying stream does not support seeking, then this attribute
  * will be ignored.
+ *
+ * By default, this feature is enabled if the underlying stream is seekable.
  **/
 void
 g_mime_parser_set_persist_stream (GMimeParser *parser, gboolean persist)
@@ -572,6 +574,8 @@ g_mime_parser_get_scan_from (GMimeParser *parser)
  * @scan_from: %TRUE to scan From-lines or %FALSE otherwise
  *
  * Sets whether or not @parser should scan mbox-style From-lines.
+ *
+ * By default, this feature is disabled.
  **/
 void
 g_mime_parser_set_scan_from (GMimeParser *parser, gboolean scan_from)
@@ -612,6 +616,8 @@ g_mime_parser_get_respect_content_length (GMimeParser *parser)
  *
  * Most notably useful when parsing broken Solaris mbox files (See
  * http://www.jwz.org/doc/content-length.html for details).
+ *
+ * By default, this feature is disabled.
  **/
 void
 g_mime_parser_set_respect_content_length (GMimeParser *parser, gboolean respect_content_length)
