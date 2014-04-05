@@ -398,7 +398,7 @@ multipart_add (GMimeMultipart *multipart, GMimeObject *part)
  * @multipart: a #GMimeMultipart object
  * @part: a #GMimeObject
  *
- * Adds a mime part to the multipart.
+ * Appends a mime part to @multipart.
  **/
 void
 g_mime_multipart_add (GMimeMultipart *multipart, GMimeObject *part)
@@ -443,11 +443,10 @@ multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part)
 /**
  * g_mime_multipart_insert:
  * @multipart: a #GMimeMultipart object
- * @part: mime part
- * @index: position to insert the mime part
+ * @part: a #GMimeObject
+ * @index: the 0-based index to insert the part
  *
- * Inserts the specified mime part into the multipart at the position
- * @index.
+ * Inserts @part into @multipart at the specified @index.
  **/
 void
 g_mime_multipart_insert (GMimeMultipart *multipart, int index, GMimeObject *part)
@@ -475,9 +474,9 @@ multipart_remove (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_remove:
  * @multipart: a #GMimeMultipart object
- * @part: mime part
+ * @part: a #GMimeObject
  *
- * Removes the specified mime part from the multipart.
+ * Removes the specified @part from @multipart.
  *
  * Returns: %TRUE if the part was removed or %FALSE otherwise.
  **/
@@ -510,9 +509,9 @@ multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_remove_at:
  * @multipart: a #GMimeMultipart object
- * @index: position of the mime part to remove
+ * @index: the 0-based index of the part to remove
  *
- * Removes the mime part at position @index from the multipart.
+ * Removes the part at the specified @index from @multipart.
  *
  * Returns: (transfer full): the mime part that was removed or %NULL
  * if the part was not contained within the multipart.
@@ -530,13 +529,13 @@ g_mime_multipart_remove_at (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_replace:
  * @multipart: a #GMimeMultipart object
- * @index: position of the mime part to replace
+ * @index: the 0-based index of the part to replace
  * @replacement: a #GMimeObject to use as the replacement
  *
- * Replaces the mime part at position @index within @multipart with
+ * Replaces the part at the specified @index within @multipart with
  * @replacement.
  *
- * Returns: (transfer full): the mime part that was replaced or %NULL
+ * Returns: (transfer full): the part that was replaced or %NULL
  * if the part was not contained within the multipart.
  **/
 GMimeObject *
@@ -576,11 +575,11 @@ multipart_get_part (GMimeMultipart *multipart, int index)
 /**
  * g_mime_multipart_get_part:
  * @multipart: a #GMimeMultipart object
- * @index: position of the mime part
+ * @index: the 0-based index of the part
  *
- * Gets the mime part at position @index within the multipart.
+ * Gets the part at the specified @index within the multipart.
  *
- * Returns: (transfer none): the mime part at position @index.
+ * Returns: (transfer none): the part at position @index.
  **/
 GMimeObject *
 g_mime_multipart_get_part (GMimeMultipart *multipart, int index)
@@ -609,7 +608,7 @@ multipart_contains (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_contains:
  * @multipart: a #GMimeMultipart object
- * @part: mime part
+ * @part: a #GMimeObject
  *
  * Checks if @part is contained within @multipart.
  *
@@ -643,11 +642,11 @@ multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
 /**
  * g_mime_multipart_index_of:
  * @multipart: a #GMimeMultipart object
- * @part: mime part
+ * @part: a #GMimeObject
  *
- * Gets the index of @part within @multipart.
+ * Gets the 0-based index of @part within @multipart.
  *
- * Returns: the index of @part within @multipart or %-1 if not found.
+ * Returns: the 0-based index of @part within @multipart or %-1 if not found.
  **/
 int
 g_mime_multipart_index_of (GMimeMultipart *multipart, GMimeObject *part)
@@ -670,9 +669,9 @@ multipart_get_count (GMimeMultipart *multipart)
  * g_mime_multipart_get_count:
  * @multipart: a #GMimeMultipart object
  *
- * Gets the number of mime parts contained within the multipart.
+ * Gets the number of parts contained within @multipart.
  *
- * Returns: the number of mime parts contained within the multipart.
+ * Returns: the number of parts contained within @multipart.
  **/
 int
 g_mime_multipart_get_count (GMimeMultipart *multipart)
