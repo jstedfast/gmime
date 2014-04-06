@@ -695,7 +695,7 @@ g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const cha
  * @headers: a #GMimeHeaderList
  * @name: header name
  *
- * Gets the value of the first header with the name requested.
+ * Gets the value of the first header with the specified name.
  *
  * Returns: the value of the header requested.
  *
