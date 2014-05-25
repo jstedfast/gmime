@@ -805,6 +805,30 @@ g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstr
 
 
 /**
+ * g_mime_part_is_attachment:
+ * @mime_part: a #GMimePart object
+ *
+ * Determines whether or not the part is an attachment based on the
+ * value of the Content-Disposition header.
+ *
+ * Returns: %TRUE if the part is an attachment, otherwise %FALSE.
+ *
+ * Since: 2.6.21
+ **/
+gboolean
+g_mime_part_is_attachment (GMimePart *mime_part)
+{
+	GMimeContentDisposition *disposition;
+	
+	g_return_val_if_fail (GMIME_IS_PART (mime_part), FALSE);
+	
+	disposition = g_mime_object_get_content_disposition ((GMimeObject *) mime_part);
+	
+	return disposition != null && g_mime_content_disposition_is_attachment (disposition);
+}
+
+
+/**
  * g_mime_part_set_filename:
  * @mime_part: a #GMimePart object
  * @filename: the file name

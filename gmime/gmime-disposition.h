@@ -97,6 +97,8 @@ void g_mime_content_disposition_set_parameter (GMimeContentDisposition *disposit
 const char *g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition,
 						      const char *attribute);
 
+gboolean g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition);
+
 char *g_mime_content_disposition_to_string (GMimeContentDisposition *disposition, gboolean fold);
 
 G_END_DECLS

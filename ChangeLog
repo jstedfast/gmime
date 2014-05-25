@@ -1,3 +1,12 @@
+2014-05-24  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-part.c (g_mime_part_is_attachment): New function to
+	determine if a MIME part is an attachment or not.
+
+	* gmime/gmime-disposition.c (g_mime_content_disposition_is_attachment):
+	New function to determine if the Content-Disposition value matches
+	"attachment".
+
 2014-02-19  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

@@ -96,6 +96,8 @@ GMimeContentEncoding g_mime_part_get_content_encoding (GMimePart *mime_part);
 
 GMimeContentEncoding g_mime_part_get_best_content_encoding (GMimePart *mime_part, GMimeEncodingConstraint constraint);
 
+gboolean g_mime_part_is_attachment (GMimePart *mime_part);
+
 void g_mime_part_set_filename (GMimePart *mime_part, const char *filename);
 const char *g_mime_part_get_filename (GMimePart *mime_part);
 

@@ -318,6 +318,25 @@ g_mime_content_disposition_get_parameter (GMimeContentDisposition *disposition, 
 
 
 /**
+ * g_mime_content_disposition_is_attachment:
+ * @disposition: a #GMimeContentDisposition object
+ *
+ * Determines if a Content-Disposition has a value of "attachment".
+ *
+ * Returns: %TRUE if the value matches "attachment", otherwise %FALSE.
+ *
+ * Since: 2.6.21
+ **/
+gboolean
+g_mime_content_disposition_is_attachment (GMimeContentDisposition *disposition)
+{
+	g_return_val_if_fail (GMIME_IS_CONTENT_DISPOSITION (disposition), FALSE);
+	
+	return !g_ascii_strcasecmp (disposition->disposition, "attachment");
+}
+
+
+/**
  * g_mime_content_disposition_to_string:
  * @disposition: a #GMimeContentDisposition object
  * @fold: fold header if needed
