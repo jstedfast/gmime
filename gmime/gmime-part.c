@@ -824,7 +824,7 @@ g_mime_part_is_attachment (GMimePart *mime_part)
 	
 	disposition = g_mime_object_get_content_disposition ((GMimeObject *) mime_part);
 	
-	return disposition != null && g_mime_content_disposition_is_attachment (disposition);
+	return disposition != NULL && g_mime_content_disposition_is_attachment (disposition);
 }
 
 
