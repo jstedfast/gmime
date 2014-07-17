@@ -1,3 +1,7 @@
+2014-07-17  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-table-private.h: Increased GMIME_FOLD_LEN to 78.
+
 2014-05-24  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-part.c (g_mime_part_is_attachment): New function to

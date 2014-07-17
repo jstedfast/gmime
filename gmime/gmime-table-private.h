@@ -68,4 +68,4 @@ enum {
 #define CHARS_PSPECIAL "!*+-/=_"           /* encoded phrase specials (rfc2047 5.3) */
 #define CHARS_ATTRCHAR "*'% "              /* attribute-char from rfc2184 */
 
-#define GMIME_FOLD_LEN 76
+#define GMIME_FOLD_LEN 78
