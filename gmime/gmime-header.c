@@ -987,11 +987,7 @@ g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, 
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	if (g_hash_table_lookup (headers->writers, name)) {
-		g_hash_table_lookup_extended (headers->writers, name, &okey, &oval);
-		g_hash_table_remove (headers->writers, name);
-		g_free (okey);
-	}
+	g_hash_table_remove (headers->writers, name);
 	
 	if (writer)
 		g_hash_table_insert (headers->writers, g_strdup (name), writer);

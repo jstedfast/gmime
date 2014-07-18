@@ -1,3 +1,9 @@
+2014-07-18  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-header.c (g_mime_header_list_register_writer):
+	g_hash_table_remove() will g_free() the key for us, so don't do it
+	ourselves (will result in a double-free).
+
 2014-07-17  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-table-private.h: Increased GMIME_FOLD_LEN to 78.
