@@ -8,7 +8,7 @@
   <shortdesc xml:lang="en">Glorious MIME Utility Library</shortdesc>
   <homepage rdf:resource="http://spruce.sourceforge.net/gmime/" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/gmime-devel-list" />
-  <category rdf:resource="http://api.gnome.org/doap-extensions#desktop" />
+  <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
 
   <maintainer>
     <foaf:Person>
