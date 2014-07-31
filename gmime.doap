@@ -9,6 +9,7 @@
   <homepage rdf:resource="http://spruce.sourceforge.net/gmime/" />
   <mailing-list rdf:resource="http://mail.gnome.org/mailman/listinfo/gmime-devel-list" />
   <category rdf:resource="http://api.gnome.org/doap-extensions#core" />
+  <programming-language>C</programming-language>
 
   <maintainer>
     <foaf:Person>
