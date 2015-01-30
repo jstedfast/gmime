@@ -36,7 +36,7 @@
  * SECTION: gmime-message-partial
  * @title: GMimeMessagePartial
  * @short_description: Partial MIME parts
- * @se_also:
+ * @see_also:
  *
  * A #GMimeMessagePartial represents the message/partial MIME part.
  **/
