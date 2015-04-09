@@ -4,7 +4,7 @@ SUBDIRS = .
 
 gmimeincludedir = $(includedir)/gmime-$(GMIME_API_VERSION)/gmime
 
-INCLUDES = 				\
+AM_CPPFLAGS = 				\
 	-I$(top_srcdir) 		\
 	-I$(top_builddir) 		\
 	-I$(top_srcdir)/util		\

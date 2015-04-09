@@ -2,7 +2,7 @@
 
 SUBDIRS = .
 
-INCLUDES = 				\
+AM_CPPFLAGS = 				\
 	-I$(top_srcdir) 		\
 	-I$(top_srcdir)/util		\
 	-DG_LOG_DOMAIN=\"gmime-tests\"	\

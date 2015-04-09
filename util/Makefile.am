@@ -4,7 +4,7 @@ SUBDIRS = .
 
 noinst_LTLIBRARIES = libutil.la
 
-INCLUDES = -I$(top_srcdir) 		\
+AM_CPPFLAGS = -I$(top_srcdir) 		\
 	$(VERSION_FLAGS) 		\
 	-DG_LOG_DOMAIN=\"util\"		\
 	$(GMIME_CFLAGS)			\
