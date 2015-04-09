@@ -12,9 +12,21 @@ FILE=configure.ac
 
 DIE=0
 
+LIBTOOLIZE=$(which glibtoolize 2>/dev/null)
+if test -z $LIBTOOLIZE; then
+	LIBTOOLIZE=$(which libtoolize 2>/dev/null)
+fi
+if test -z $LIBTOOLIZE; then
+	echo
+	echo "You must have libtool >= 1.4 installed to compile $PROJECT."
+	echo "Install the appropriate package for your distribution,"
+	echo "or get the source tarball at http://ftp.gnu.org/gnu/libtool/"
+	exit 1
+fi
+
 have_libtool=false
-if libtoolize --version < /dev/null > /dev/null 2>&1 ; then
-	libtool_version=`libtoolize --version | sed '/^$/d;s/([^)]*)//g;s/^[^0-9]*//;s/[- ].*//g;q'`
+if $LIBTOOLIZE --version < /dev/null > /dev/null 2>&1 ; then
+	libtool_version=`$LIBTOOLIZE --version | sed '/^$/d;s/([^)]*)//g;s/^[^0-9]*//;s/[- ].*//g;q'`
 	case $libtool_version in
 	    1.4*|1.5*|2.2*|2.4*)
 		have_libtool=true
@@ -23,7 +35,7 @@ if libtoolize --version < /dev/null > /dev/null 2>&1 ; then
 fi
 if $have_libtool ; then : ; else
 	echo
-	echo "You must have libtool 1.4 installed to compile $PROJECT."
+	echo "You must have libtool >= 1.4 installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
 	echo "or get the source tarball at http://ftp.gnu.org/gnu/libtool/"
 	DIE=1
@@ -45,7 +57,7 @@ fi
 	DIE=1
 }
 
-for automake_version in 1.8 1.9 1.10 1.11 1.12 1.13 1.14; do
+for automake_version in 1.9 1.10 1.11 1.12 1.13 1.14 1.15; do
     if automake-${automake_version} --version < /dev/null > /dev/null 2>&1 ; then
         AUTOMAKE=automake-${automake_version}
         ACLOCAL=aclocal-${automake_version}
@@ -55,7 +67,7 @@ done
 
 if test -z "${AUTOMAKE}"; then
 	echo
-	echo "You must have automake >= 1.8.x installed to compile $PROJECT."
+	echo "You must have automake >= 1.9.x installed to compile $PROJECT."
 	echo "Install the appropriate package for your distribution,"
 	echo "or get the source tarball at http://ftp.gnu.org/gnu/automake/"
 	DIE=1
@@ -79,7 +91,7 @@ fi
 
 $ACLOCAL -I m4/ $ACLOCAL_FLAGS || exit $?
 
-libtoolize --force || exit $?
+$LIBTOOLIZE --force || exit $?
 gtkdocize || exit $?
 
 autoheader || exit $?
