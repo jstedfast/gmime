@@ -421,7 +421,7 @@ g_mime_encoding_base64_encode_close (const unsigned char *inbuf, size_t inlen, u
 size_t
 g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	register unsigned char *outptr;
 	
 	if (inlen == 0)
@@ -507,7 +507,7 @@ g_mime_encoding_base64_encode_step (const unsigned char *inbuf, size_t inlen, un
 size_t
 g_mime_encoding_base64_decode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	register guint32 saved;
@@ -670,7 +670,7 @@ size_t
 g_mime_encoding_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, unsigned char *uubuf, int *state, guint32 *save)
 {
 	register unsigned char *outptr, *bufptr;
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	const unsigned char *inend;
 	unsigned char b0, b1, b2;
 	guint32 saved;
@@ -784,7 +784,7 @@ g_mime_encoding_uuencode_step (const unsigned char *inbuf, size_t inlen, unsigne
 size_t
 g_mime_encoding_uudecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	unsigned char ch;
@@ -940,7 +940,7 @@ g_mime_encoding_quoted_encode_close (const unsigned char *inbuf, size_t inlen, u
 size_t
 g_mime_encoding_quoted_encode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf, int *state, guint32 *save)
 {
-	const register unsigned char *inptr = inbuf;
+	register const unsigned char *inptr = inbuf;
 	const unsigned char *inend = inbuf + inlen;
 	register unsigned char *outptr = outbuf;
 	register guint32 sofar = *save;  /* keeps track of how many chars on a line */

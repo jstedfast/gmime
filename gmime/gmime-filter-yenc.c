@@ -448,7 +448,7 @@ size_t
 g_mime_ydecode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 		     int *state, guint32 *pcrc, guint32 *crc)
 {
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	unsigned char c;
@@ -528,7 +528,7 @@ size_t
 g_mime_yencode_step (const unsigned char *inbuf, size_t inlen, unsigned char *outbuf,
 		     int *state, guint32 *pcrc, guint32 *crc)
 {
-	const register unsigned char *inptr;
+	register const unsigned char *inptr;
 	register unsigned char *outptr;
 	const unsigned char *inend;
 	register int already;
