@@ -1,3 +1,8 @@
+2015-04-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* util/url-scanner.c (url_scanner_table_init): Treat all character
+	values >= 128 as url-safe. Fixes bug #738583.
+
 2014-07-18  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-header.c (g_mime_header_list_register_writer):
