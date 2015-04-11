@@ -436,7 +436,7 @@ g_mime_message_partial_split_message (GMimeMessage *message, size_t max_size, si
 	len = g_mime_stream_length (stream);
 	
 	/* optimization */
-	if (len <= max_size) {
+	if (len <= (gint64) max_size) {
 		g_object_unref (stream);
 		g_object_ref (message);
 		

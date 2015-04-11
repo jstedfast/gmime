@@ -152,7 +152,7 @@ static struct {
 static gboolean
 is_open_brace (char c)
 {
-	int i;
+	unsigned int i;
 	
 	for (i = 0; i < G_N_ELEMENTS (url_braces); i++) {
 		if (c == url_braces[i].open)

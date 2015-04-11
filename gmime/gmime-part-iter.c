@@ -473,7 +473,8 @@ char *
 g_mime_part_iter_get_path (GMimePartIter *iter)
 {
 	GString *path;
-	int i, v;
+	guint i;
+	int v;
 	
 	if (!g_mime_part_iter_is_valid (iter))
 		return NULL;
