@@ -188,6 +188,8 @@ Other developers have been working to make GMime available to
 programmers in other languages. The current list of known bindings
 are:
 
+- Go: https://github.com/sendgrid/go-gmime
+
 - Perl: http://search.cpan.org/dist/MIME-Fast/
 
 - .NET (Mono): Included in this distribution (Obsolete).
