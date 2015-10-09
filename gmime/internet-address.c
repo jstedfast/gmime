@@ -1396,7 +1396,7 @@ decode_route (const char **in)
 		
 		g_string_append_c (route, '@');
 		if (!decode_domain (&inptr, route)) {
-			g_string_free (route);
+			g_string_free (route, TRUE);
 			goto error;
 		}
 		
