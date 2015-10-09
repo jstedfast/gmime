@@ -1,3 +1,10 @@
+2015-10-08  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/internet-address.c (decode_route): Make sure to free the route
+	in error cases to avoid a memory leak.
+
+	Fixes bug #756270
+
 2015-04-11  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* util/url-scanner.c (url_scanner_table_init): Treat all character

@@ -1395,8 +1395,10 @@ decode_route (const char **in)
 		inptr++;
 		
 		g_string_append_c (route, '@');
-		if (!decode_domain (&inptr, route))
+		if (!decode_domain (&inptr, route)) {
+			g_string_free (route);
 			goto error;
+		}
 		
 		decode_lwsp (&inptr);
 		if (*inptr == ',') {
