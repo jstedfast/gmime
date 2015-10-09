@@ -24,6 +24,7 @@
 #endif
 
 #include <glib.h>
+#include <glib/gstdio.h>
 
 #include <sys/types.h>
 #include <sys/stat.h>
