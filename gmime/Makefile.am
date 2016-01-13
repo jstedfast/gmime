@@ -181,7 +181,7 @@ INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 if HAVE_INTROSPECTION
 GMime-2.6.gir: libgmime-2.6.la
 GMime_2_6_gir_INCLUDES = GObject-2.0 Gio-2.0
-GMime_2_6_gir_CFLAGS = $(INCLUDES)
+GMime_2_6_gir_CFLAGS = $(AM_CPPFLAGS)
 GMime_2_6_gir_LIBS = libgmime-2.6.la
 GMime_2_6_gir_FILES = $(gmimeinclude_HEADERS) $(libgmime_2_6_la_SOURCES)
 GMime_2_6_gir_EXPORT_PACKAGES = gmime-2.6
