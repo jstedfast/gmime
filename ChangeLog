@@ -1,3 +1,10 @@
+2016-01-13  Jeffrey STedfast  <fejj@gnome.org>
+
+	* gmime/gmime-pkcs7-context.c (key_list_free): Fixed the logic for freeing
+	a list of keys. Thanks to foudfou for this patch.
+
+	Fixes bug #760573
+
 2015-10-08  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/internet-address.c (decode_route): Make sure to free the route

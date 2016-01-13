@@ -672,7 +672,7 @@ key_list_free (gpgme_key_t *keys)
 {
 	gpgme_key_t *key = keys;
 	
-	while (key != NULL) {
+	while (*key != NULL) {
 		gpgme_key_unref (*key);
 		key++;
 	}
