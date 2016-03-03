@@ -1,3 +1,11 @@
+2016-03-03  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-multipart-signed.c (g_mime_multipart_signed_verify): Fixed
+	a memory leak when verifying S/MIME signatures. Thanks to Minaev Mike for
+	discovering this bug.
+
+	Fixes bug #760681
+
 2016-01-13  Jeffrey STedfast  <fejj@gnome.org>
 
 	* gmime/gmime-pkcs7-context.c (key_list_free): Fixed the logic for freeing

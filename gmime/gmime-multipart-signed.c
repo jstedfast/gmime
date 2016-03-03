@@ -457,6 +457,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *c
 		g_mime_data_wrapper_write_to_stream (wrapper, sigstream);
 	} else {
 		sigstream = g_mime_data_wrapper_get_stream (wrapper);
+		g_object_ref (sigstream);
 	}
 	
 	g_mime_stream_reset (sigstream);
@@ -468,6 +469,7 @@ g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GMimeCryptoContext *c
 	d(printf ("attempted to verify:\n----- BEGIN SIGNED PART -----\n%.*s----- END SIGNED PART -----\n",
 		  (int) GMIME_STREAM_MEM (stream)->buffer->len, GMIME_STREAM_MEM (stream)->buffer->data));
 	
+	g_object_unref (sigstream);
 	g_object_unref (stream);
 	
 	return signatures;
