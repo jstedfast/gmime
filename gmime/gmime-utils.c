@@ -2701,6 +2701,7 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 {
 	rfc2047_token *token, *next;
 	size_t lwsp, tab, len, n;
+	gboolean encoded = FALSE;
 	GString *output;
 	
 	len = strlen (field) + 2;
@@ -2734,8 +2735,10 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 				g_string_append_c (output, structured ? '\t' : ' ');
 				len = 1;
 			}
+			
+			encoded = FALSE;
 		} else if (token->encoding != 0) {
-			n = strlen (token->charset) + 7;
+			n = strlen (token->charset) + 7 + (encoded ? 1 : 0);
 			
 			if (len + token->length + n > GMIME_FOLD_LEN) {
 				if (tab != 0) {
@@ -2751,6 +2754,10 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 					g_string_append (output, structured ? "\n\t" : "\n ");
 					len = 1;
 				}
+			} else if (encoded) {
+				/* the previous token was an encoded-word token, so make sure to add
+				 * whitespace between the two tokens... */
+				g_string_append_c (output, ' ');
 			}
 			
 			/* Note: if the encoded-word token is longer than the fold length, oh well...
@@ -2761,6 +2768,7 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 			g_string_append_len (output, token->text, token->length);
 			g_string_append (output, "?=");
 			len += token->length + n;
+			encoded = TRUE;
 			lwsp = 0;
 			tab = 0;
 		} else if (len + token->length > GMIME_FOLD_LEN) {
@@ -2791,11 +2799,13 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 				len += token->length;
 			}
 			
+			encoded = FALSE;
 			lwsp = 0;
 			tab = 0;
 		} else {
 			g_string_append_len (output, token->text, token->length);
 			len += token->length;
+			encoded = FALSE;
 			lwsp = 0;
 			tab = 0;
 		}
