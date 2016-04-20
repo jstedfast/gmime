@@ -140,6 +140,7 @@ g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 	filter->colour = 0;
 	filter->column = 0;
 	filter->pre_open = FALSE;
+  filter->prev_cit_depth = 0;
 }
 
 static void
@@ -351,10 +352,43 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			break;
 		
 		html->column = 0;
-		depth = 0;
+		depth = citation_depth (start, inend);
 		
-		if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
-			if ((depth = citation_depth (start, inend)) > 0) {
+		if (html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) {
+			if (html->prev_cit_depth < depth) {
+        while (html->prev_cit_depth < depth) {
+          html->prev_cit_depth++;
+
+          char bq[33];
+          int ldepth = html->prev_cit_depth > 999 ? 999 : html->prev_cit_depth;
+
+          g_snprintf (bq, 33, "<blockquote class=\"level_%03d\">", ldepth);
+
+          outptr = check_size (filter, outptr, &outend, 33);
+          outptr = g_stpcpy (outptr, bq);
+        }
+
+        /* remove '>' */
+        while (*start == '>' && start < inend) start++;
+
+        /* remove leading space */
+        if (*start == ' ' && start < inend) start++;
+
+
+      } else if (depth > 0) {
+        /* we are still at the same depth or lower: remove '>' */
+        while (*start == '>' && start < inend) start++;
+
+        /* remove leading space */
+        if (*start == ' ' && start < inend) start++;
+
+			} else if (*start == '>') {
+				/* >From line */
+				start++;
+			}
+
+    } else if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
+			if (depth > 0) {
 				char font[25];
 				
 				/* FIXME: we could easily support multiple colour depths here */
@@ -419,6 +453,15 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		} else {
 			outptr = writeln (filter, start, inptr, outptr, &outend);
 		}
+
+		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) &&
+        (depth < html->prev_cit_depth)) {
+      while (html->prev_cit_depth > depth) {
+        outptr = check_size (filter, outptr, &outend, 14);
+        outptr = g_stpcpy (outptr, "</blockquote>");
+        html->prev_cit_depth--;
+      }
+    }
 		
 		if ((html->flags & GMIME_FILTER_HTML_MARK_CITATION) && depth > 0) {
 			outptr = check_size (filter, outptr, &outend, 8);
@@ -442,6 +485,16 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			outptr = check_size (filter, outptr, &outend, 10);
 			outptr = g_stpcpy (outptr, "</pre>");
 		}
+
+		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) &&
+        (html->prev_cit_depth > 0)) {
+      /* close open blockquotes */
+      while (html->prev_cit_depth > 0) {
+        outptr = check_size (filter, outptr, &outend, 14);
+        outptr = g_stpcpy (outptr, "</blockquote>");
+        html->prev_cit_depth--;
+      }
+    }
 	} else if (start < inend) {
 		/* backup */
 		g_mime_filter_backup (filter, start, (unsigned) (inend - start));
@@ -473,6 +526,7 @@ filter_reset (GMimeFilter *filter)
 	
 	html->column = 0;
 	html->pre_open = FALSE;
+  html->prev_cit_depth = 0;
 }
 
 
