@@ -388,10 +388,10 @@ static struct {
 	  "OT - ich =?iso-8859-1?b?d2Vp3yw=?= trotzdem" },
 	{ "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?=",
 	  "\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96\xd0\x96",
-	  "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2trY=?= =?iso-8859-5?b?tra2tg==?=" },
+	  "=?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2?= =?iso-8859-5?b?tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2tra2?= =?iso-8859-5?b?trY=?=" },
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
-	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
+	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsana?= =?us-ascii?q?lytiker?=" },
 };
 
 static struct {
@@ -401,7 +401,7 @@ static struct {
 } broken_rfc2047_text[] = {
 	{ "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?=alytiker",
 	  "Jobbansökan - duktig researcher/omvärldsbevakare/omvärldsanalytiker",
-	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsan?= =?us-ascii?q?alytiker?=" },
+	  "=?iso-8859-1?q?Jobbans=F6kan?= - duktig =?iso-8859-1?q?researcher=2Fomv=E4rldsbevakare=2Fomv=E4rldsana?= =?us-ascii?q?lytiker?=" },
 	{ "Copy of Rapport fra Norges R=?iso-8859-1?Q?=E5?=fisklag.doc",
 	  "Copy of Rapport fra Norges R\xc3\xa5" "fisklag.doc",
 	  "Copy of Rapport fra Norges =?iso-8859-1?q?R=E5fisklag=2Edoc?=" },
@@ -443,6 +443,10 @@ test_rfc2047 (gboolean test_broken)
 			enc = g_mime_utils_header_encode_text (dec);
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
 				throw (exception_new ("encoded text does not match: %s", enc));
+
+			//dec2 = g_mime_utils_header_decode_text (enc);
+			//if (strcmp (rfc2047_text[i].decoded, dec2) != 0)
+			//	throw (exception_new ("decoded2 text does not match: %s", dec));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
@@ -535,9 +539,9 @@ static struct {
 } rfc2184[] = {
 	{ "this is a really really long filename that should force gmime to rfc2184 encode it - yay!.html",
 	  "Content-Disposition: attachment;\n\t"
-	  "filename*0*=iso-8859-1''this%20is%20a%20really%20really%20long%20filename;\n\t"
-	  "filename*1*=%20that%20should%20force%20gmime%20to%20rfc2184%20encode%20it;\n\t"
-	  "filename*2*=%20-%20yay!.html\n" },
+	  "filename*0*=iso-8859-1''this%20is%20a%20really%20really%20long%20filename%20;\n\t"
+	  "filename*1*=that%20should%20force%20gmime%20to%20rfc2184%20encode%20it%20-;\n\t"
+	  "filename*2*=%20yay!.html\n" },
 };
 
 static void
@@ -563,7 +567,7 @@ test_rfc2184 (void)
 		try {
 			g_mime_param_write_to_string (&param, TRUE, str);
 			if (strcmp (rfc2184[i].encoded, str->str) != 0)
-				throw (exception_new ("encoded param does not match"));
+				throw (exception_new ("encoded param does not match: %s", str->str));
 			
 			if (!(params = g_mime_param_new_from_string (str->str + n + 2)))
 				throw (exception_new ("could not parse encoded param list"));
