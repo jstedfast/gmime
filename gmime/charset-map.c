@@ -56,7 +56,6 @@ static struct {
 	{ "koi8-u",       0, 0 },  /* Ukranian */
 	{ "iso-8859-5",   0, 0 },  /* Least-popular Russian encoding */
 	{ "iso-8859-6",   0, 0 },  /* Arabic */
-	{ "iso-8859-7",   0, 0 },  /* Greek */
 	{ "iso-8859-8",   0, 0 },  /* Hebrew; Visual */
 	{ "iso-8859-9",   0, 0 },  /* Turkish */
 	{ "iso-8859-13",  0, 0 },  /* Baltic again */
