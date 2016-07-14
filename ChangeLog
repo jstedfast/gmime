@@ -1,3 +1,12 @@
+2016-07-14  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-parser.c (parser_construct_part): When parsing individual
+	mime parts, do not treat them as top-level mime parts of a message.
+
+	When decrypting mime parts, for example, we need all headers of the
+	decrypted mime part to be included in the GMimeObject returned,
+	otherwise we end up losing data.
+
 2016-03-03  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-utils.c (header_fold_tokens): Fixed folding logic to add a

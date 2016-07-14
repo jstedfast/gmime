@@ -1933,9 +1933,9 @@ parser_construct_part (GMimeParser *parser)
 	
 	content_type = parser_content_type (parser, NULL);
 	if (content_type_is_type (content_type, "multipart", "*"))
-		object = parser_construct_multipart (parser, content_type, TRUE, &found);
+		object = parser_construct_multipart (parser, content_type, FALSE, &found);
 	else
-		object = parser_construct_leaf_part (parser, content_type, TRUE, &found);
+		object = parser_construct_leaf_part (parser, content_type, FALSE, &found);
 	
 	content_type_destroy (content_type);
 	
