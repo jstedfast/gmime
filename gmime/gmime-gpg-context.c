@@ -608,15 +608,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	g_ptr_array_add (args, "--no-secmem-warning");
 	g_ptr_array_add (args, "--no-greeting");
 	g_ptr_array_add (args, "--no-tty");
-	
-	if (!gpg->need_passwd) {
-		/* only use batch mode if we don't intend on using the
-                   interactive --command-fd option to send it the
-                   user's password */
-		g_ptr_array_add (args, "--batch");
-		g_ptr_array_add (args, "--yes");
-	}
-	
+	g_ptr_array_add (args, "--batch");
 	g_ptr_array_add (args, "--charset=UTF-8");
 	
 	(*strv)[v++] = buf = g_strdup_printf ("--status-fd=%d", status_fd);
