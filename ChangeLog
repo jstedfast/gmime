@@ -1,3 +1,7 @@
+2016-08-30  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-multipart.c (read_random_pool): Only initialized srand() once.
+
 2016-07-19  Jeffrey Stedfast  <jeff@xamarin.com>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): Always use --batch mode and

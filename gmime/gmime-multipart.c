@@ -708,9 +708,13 @@ read_random_pool (unsigned char *buffer, size_t bytes)
 	
 	close (fd);
 #else
+	static gboolean srand_initialized = FALSE;
 	size_t i;
 	
-	srand ((unsigned int) time (NULL));
+	if (!srand_initialized) {
+		srand ((unsigned int) time (NULL));
+		srand_initialized = TRUE;
+	}
 	
 	for (i = 0; i < bytes; i++)
 		buffer[i] = (unsigned char) (rand () % 256);
