@@ -23,6 +23,7 @@
 #include <config.h>
 #endif
 
+#include <stdlib.h>
 #include <time.h>
 
 #ifdef ENABLE_SMIME
@@ -120,6 +121,9 @@ g_mime_init (guint32 flags)
 {
 	if (initialized++)
 		return;
+
+	/* seed the random number generator (needed by boundary generator) */
+	srand ((unsigned int) time (NULL));
 	
 #if defined (HAVE_TIMEZONE) || defined (HAVE__TIMEZONE)
 	/* initialize timezone */
