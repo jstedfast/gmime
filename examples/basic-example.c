@@ -316,6 +316,10 @@ int main (int argc, char **argv)
 	
 	/* parse the message */
 	message = parse_message (fd);
+	if (message == NULL) {
+		printf("Error parsing message");
+		return 1;
+	}
 	
 	/* count the number of parts in the message */
 	count_parts_in_message (message);
