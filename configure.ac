@@ -246,8 +246,8 @@ if test "x$enable_cryptography" = "xyes"; then
 fi
 
 
-dnl We need at *least* glib 2.16.0 for GIO and 2.18.0 for g_set_error_literal
-AM_PATH_GLIB_2_0(2.18.0, ,
+dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, and 2.32.0 for g_mutex_init
+AM_PATH_GLIB_2_0(2.32.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread gio)
 
