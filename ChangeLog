@@ -1,3 +1,13 @@
+2016-12-02  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (g_mime_gpg_context_new): Allow NULL for the gpg path
+	in order to use the default gpg path (i.e. "gpg").
+
+	* tests/test-pgp*.c: Updated unit tests to pass NULL for the gpg path so that
+	running the unit tests don't depend on a specific location of gpg.
+
+	Thanks to Daniel Kahn Gillmor for this patch.
+
 2016-08-30  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-multipart.c (read_random_pool): Only initialized srand() once.

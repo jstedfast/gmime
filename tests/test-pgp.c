@@ -289,7 +289,7 @@ int main (int argc, char **argv)
 	if (system ("/bin/mkdir ./tmp") != 0)
 		return EXIT_FAILURE;
 	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
-	if (system ("/usr/bin/gpg --list-keys > /dev/null 2>&1") != 0)
+	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -304,7 +304,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("GnuPG crypto context");
 	
-	ctx = g_mime_gpg_context_new (request_passwd, "/usr/bin/gpg");
+	ctx = g_mime_gpg_context_new (request_passwd, NULL);
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");

@@ -2190,7 +2190,7 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 /**
  * g_mime_gpg_context_new:
  * @request_passwd: a #GMimePasswordRequestFunc
- * @path: path to gpg binary
+ * @path: path to gpg binary or %NULL for the default
  *
  * Creates a new gpg crypto context object.
  *
@@ -2203,10 +2203,8 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *pat
 	GMimeCryptoContext *crypto;
 	GMimeGpgContext *ctx;
 	
-	g_return_val_if_fail (path != NULL, NULL);
-	
 	ctx = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
-	ctx->path = g_strdup (path);
+	ctx->path = g_strdup (path ? path : "gpg");
 	
 	crypto = (GMimeCryptoContext *) ctx;
 	crypto->request_passwd = request_passwd;
