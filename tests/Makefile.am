@@ -112,7 +112,8 @@ test_smime_DEPENDENCIES = $(DEPS)
 test_smime_LDADD = $(LDADDS)
 endif
 
-EXTRA_DIST = test1.eml test2.eml test3.eml
+EXTRA_DIST = $(wildcard test*.eml empty*.msg message-partial.* rfc2060.msg 	\
+	data/pgp*/gmime.gpg.* data/mbox/*put/substring.mbox)
 
 VERBOSITY=-v
 
