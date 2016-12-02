@@ -346,6 +346,28 @@ g_throw (Exception *ex)
 	longjmp (env->env, 1);
 }
 
+int
+testsuite_setup_gpghome (void)
+{
+	/* reset .gnupg config directory */
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
+	if (system ("/bin/mkdir ./tmp") != 0)
+		return EXIT_FAILURE;
+	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
+		return EXIT_FAILURE;
+	return EXIT_SUCCESS;
+}
+
+int
+testsuite_destroy_gpghome (void)
+{
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
+	return EXIT_SUCCESS;
+}
+
 
 #ifdef BUILD
 int main (int argc, char **argv)

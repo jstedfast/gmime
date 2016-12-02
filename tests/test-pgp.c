@@ -283,13 +283,7 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
-	/* reset .gnupg config directory */
-	if (system ("/bin/rm -rf ./tmp") != 0)
-		return EXIT_FAILURE;
-	if (system ("/bin/mkdir ./tmp") != 0)
-		return EXIT_FAILURE;
-	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
-	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
+	if (testsuite_setup_gpghome () != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -404,7 +398,7 @@ int main (int argc, char **argv)
 	
 	g_mime_shutdown ();
 	
-	if (system ("/bin/rm -rf ./tmp") != 0)
+	if (testsuite_destroy_gpghome () != 0)
 		return EXIT_FAILURE;
 	
 	return testsuite_exit ();
