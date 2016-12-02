@@ -354,9 +354,17 @@ testsuite_setup_gpghome (void)
 		return EXIT_FAILURE;
 	if (system ("/bin/mkdir ./tmp") != 0)
 		return EXIT_FAILURE;
-	setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+	
+	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
+
+	/* disable environment variables that gpg-agent uses for pinentry */
+	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
+	g_unsetenv ("DISPLAY");
+	g_unsetenv ("GPG_TTY");
+	
 	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
 		return EXIT_FAILURE;
+	
 	return EXIT_SUCCESS;
 }
 
