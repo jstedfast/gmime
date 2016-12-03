@@ -354,26 +354,26 @@ static int
 is_gpg_modern (void)
 {
 	const char vheader[] = "gpg (GnuPG) ";
-	char *vstring;
-	size_t vlen;
+	char *vstring = NULL;
+	size_t vlen = 0;
 	FILE *vpipe;
 	int ret;
 	
 	if ((vpipe = popen ("gpg --version", "r")) == NULL)
 		return 0;
 	
-	vlen = 0;
-	vstring = NULL;
-	
 	if (getline (&vstring, &vlen, vpipe) == -1) {
+		free (vstring);
 		pclose (vpipe);
 		return 0;
 	}
 	
 	pclose (vpipe);
 	
-	if (strncmp (vstring, vheader, sizeof (vheader) - 1))
+	if (strncmp (vstring, vheader, sizeof (vheader) - 1)) {
+		free (vstring);
 		return 0;
+	}
 	
 	ret = (vstring[sizeof (vheader) - 1] > '2') ||
 		(vstring[sizeof (vheader) - 1] == '2' &&
