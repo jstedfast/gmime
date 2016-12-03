@@ -1269,7 +1269,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			status = next_token (status, FALSE, NULL);
 			
 			/* this token is the digest algorithm used */
-			gpg->digest = strtoul (status, FALSE, NULL, 10);
+			gpg->digest = strtoul (status, NULL, 10);
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
