@@ -27,6 +27,10 @@
 #ifdef ENABLE_THREADS
 #include <pthread.h>
 #endif
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
 
 #include "testsuite.h"
 
@@ -346,9 +350,46 @@ g_throw (Exception *ex)
 	longjmp (env->env, 1);
 }
 
+static int
+is_gpg_modern (void)
+{
+	const char vheader[] = "gpg (GnuPG) ";
+	char *vstring;
+	size_t vlen;
+	FILE *vpipe;
+	int ret;
+	
+	if ((vpipe = popen ("gpg --version", "r")) == NULL)
+		return 0;
+	
+	vlen = 0;
+	vstring = NULL;
+	
+	if (getline (&vstring, &vlen, vpipe) == -1) {
+		pclose (vpipe);
+		return 0;
+	}
+	
+	pclose (vpipe);
+	
+	if (strncmp (vstring, vheader, sizeof (vheader) - 1))
+		return 0;
+	
+	ret = (vstring[sizeof (vheader) - 1] > '2') ||
+		(vstring[sizeof (vheader) - 1] == '2' &&
+		 vstring[sizeof (vheader)] == '.' &&
+		 vstring[sizeof (vheader) + 1] >= '1');
+	
+	free (vstring);
+	
+	return ret;
+}
+
 int
 testsuite_setup_gpghome (void)
 {
+	const char directive[] = "pinentry-mode loopback\n";
+	
 	/* reset .gnupg config directory */
 	if (system ("/bin/rm -rf ./tmp") != 0)
 		return EXIT_FAILURE;
@@ -356,7 +397,7 @@ testsuite_setup_gpghome (void)
 		return EXIT_FAILURE;
 	
 	g_setenv ("GNUPGHOME", "./tmp/.gnupg", 1);
-
+	
 	/* disable environment variables that gpg-agent uses for pinentry */
 	g_unsetenv ("DBUS_SESSION_BUS_ADDRESS");
 	g_unsetenv ("DISPLAY");
@@ -364,6 +405,22 @@ testsuite_setup_gpghome (void)
 	
 	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
 		return EXIT_FAILURE;
+	
+	if (is_gpg_modern ()) {
+		FILE *fp;
+		
+		if ((fp = fopen ("./tmp/.gnupg/gpg.conf", "w")) == NULL)
+			return EXIT_FAILURE;
+		
+		if (fwrite (directive, sizeof (directive) - 1, 1, fp) != 1) {
+			fclose (fp);
+			return EXIT_FAILURE;
+		}
+		
+		if (fclose (fp))
+			return EXIT_FAILURE;
+	}
+	
 	
 	return EXIT_SUCCESS;
 }
