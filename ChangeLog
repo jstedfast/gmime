@@ -1,3 +1,11 @@
+2016-12-03  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (next_token): Now takes a 'secret' argument to
+	determine if it will overwrite the token within the buffer with '*' to
+	prevent leaking of the secret token.
+	(gpg_ctx_parse_status): Pass TRUE to next_token() when reading the
+	SESSION_KEY token.
+
 2016-12-02  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_free): Free the session_key.

@@ -832,7 +832,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 }
 
 static char *
-next_token (char *in, char **token)
+next_token (char *in, gboolean secret, char **token)
 {
 	char *start, *inptr = in;
 	
@@ -849,8 +849,11 @@ next_token (char *in, char **token)
 	while (*inptr && *inptr != ' ' && *inptr != '\n')
 		inptr++;
 	
-	if (token)
+	if (token != NULL)
 		*token = g_strndup (start, (size_t) (inptr - start));
+	
+	if (secret)
+		memset (start, '*', (size_t) (inptr - start));
 	
 	return inptr;
 }
@@ -878,7 +881,7 @@ gpg_ctx_add_signature (struct _GpgCtx *gpg, GMimeSignatureStatus status, char *i
 	g_object_unref (sig);
 	
 	/* get the key id of the signer */
-	info = next_token (info, &sig->cert->keyid);
+	info = next_token (info, FALSE, &sig->cert->keyid);
 	
 	/* the rest of the string is the signer's name */
 	sig->cert->name = g_strdup (info);
@@ -918,7 +921,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		g_object_unref (sig);
 		
 		/* get the key id of the signer */
-		status = next_token (status, &sig->cert->keyid);
+		status = next_token (status, FALSE, &sig->cert->keyid);
 		
 		/* the second token is the public-key algorithm id */
 		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
@@ -970,10 +973,10 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status += 9;
 		
 		/* the first token is the fingerprint */
-		status = next_token (status, &sig->cert->fingerprint);
+		status = next_token (status, FALSE, &sig->cert->fingerprint);
 		
 		/* the second token is the date the stream was signed YYYY-MM-DD */
-		status = next_token (status, NULL);
+		status = next_token (status, FALSE, NULL);
 		
 		/* the third token is the signature creation date (or 0 for unknown?) */
 		sig->created = strtoul (status, &inend, 10);
@@ -1003,7 +1006,7 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 		status = inend + 1;
 		
 		/* the sixth token is a reserved numeric value (ignore for now) */
-		status = next_token (status, NULL);
+		status = next_token (status, FALSE, NULL);
 		
 		/* the seventh token is the public-key algorithm id */
 		sig->cert->pubkey_algo = strtoul (status, &inend, 10);
@@ -1101,7 +1104,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status += 12;
 		
-		status = next_token (status, &hint);
+		status = next_token (status, FALSE, &hint);
 		if (!hint) {
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 					     _("Failed to parse gpg userid hint."));
@@ -1125,7 +1128,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status += 16;
 		
-		status = next_token (status, &userid);
+		status = next_token (status, FALSE, &userid);
 		if (!userid) {
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 					     _("Failed to parse gpg passphrase request."));
@@ -1139,7 +1142,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 		
 		status += 20;
 		
-		status = next_token (status, &userid);
+		status = next_token (status, FALSE, &userid);
 		if (!userid) {
 			g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 					     _("Failed to parse gpg passphrase request."));
@@ -1176,7 +1179,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			prompt = g_strdup_printf (_("You need a passphrase to unlock the key for\n"
 						    "user: \"%s\""), name);
 		} else {
-			next_token (status, &prompt);
+			next_token (status, FALSE, &prompt);
 			g_set_error (err, GMIME_ERROR, GMIME_ERROR_GENERAL,
 				     _("Unexpected request from GnuPG for `%s'"), prompt);
 			g_free (prompt);
@@ -1260,13 +1263,13 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			status += 12;
 			
 			/* skip the next single-char token ("D" for detached) */
-			status = next_token (status, NULL);
+			status = next_token (status, FALSE, NULL);
 			
 			/* skip the public-key algorithm id token */
-			status = next_token (status, NULL);
+			status = next_token (status, FALSE, NULL);
 			
 			/* this token is the digest algorithm used */
-			gpg->digest = strtoul (status, NULL, 10);
+			gpg->digest = strtoul (status, FALSE, NULL, 10);
 			break;
 		case GPG_CTX_MODE_VERIFY:
 			gpg_ctx_parse_signer_info (gpg, status);
@@ -1319,7 +1322,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				status += 7;
 				
 				/* first token is the recipient's keyid */
-				status = next_token (status, &cert->keyid);
+				status = next_token (status, FALSE, &cert->keyid);
 				
 				/* second token is the recipient's pubkey algo */
 				cert->pubkey_algo = strtoul (status, &inend, 10);
@@ -1338,7 +1341,7 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			} else if (!strncmp (status, "BADMDC", 6)) {
 				/* nothing to do, this will only be sent after DECRYPTION_FAILED */
 			} else if (!strncmp (status, "SESSION_KEY", 11)) {
-				status = next_token (status, &gpg->session_key);
+				status = next_token (status, TRUE, &gpg->session_key);
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
 			}
