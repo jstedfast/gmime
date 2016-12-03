@@ -1,5 +1,19 @@
 2016-12-02  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-gpg-context.c (gpg_ctx_free): Free the session_key.
+	(gpg_ctx_get_argv): Pass --show-session-key to gpg if requested.
+	(gpg_ctx_parse_status): Decode the session-key sent by gpg.
+	(gpg_decrypt): Set the session_key on the decrypt result.
+	(g_mime_gpg_context_get_retrieve_session_key): Added.
+	(g_mime_gpg_context_set_retrieve_session_key): Added.
+
+	* gmime/gmime-crypto-context.c (g_mime_decrypt_result_set_session_key): Added.
+	(g_mime_decryption_result_get_session_key): Added.
+
+	Thanks to Daniel Kahn Gillmor for this patch.
+
+2016-12-02  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-gpg-context.c (g_mime_gpg_context_new): Allow NULL for the gpg path
 	in order to use the default gpg path (i.e. "gpg").
 

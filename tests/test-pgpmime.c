@@ -351,9 +351,15 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 		throw (ex);
 	}
 	
+	if (!result->session_key) {
+		ex = exception_new ("No session key returned!");
+		g_object_unref (cleartext);
+		throw (ex);
+	}
+	
 	if (result->signatures)
 		v(print_verify_results (result->signatures));
-	
+
 	if (sign) {
 		if (!result->signatures || get_sig_status (result->signatures) != GMIME_SIGNATURE_STATUS_GOOD)
 			ex = exception_new ("signature status expected to be GOOD");
@@ -436,6 +442,7 @@ int main (int argc, char *argv[])
 	
 	ctx = g_mime_gpg_context_new (request_passwd, NULL);
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
+	g_mime_gpg_context_set_retrieve_session_key ((GMimeGpgContext *) ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {

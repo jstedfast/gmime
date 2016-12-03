@@ -168,6 +168,7 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 static void
 g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass)
 {
+	ctx->retrieve_session_key = FALSE;
 	ctx->auto_key_retrieve = FALSE;
 	ctx->always_trust = FALSE;
 	ctx->use_agent = FALSE;
@@ -313,6 +314,7 @@ struct _GpgCtx {
 	GMimeCertificateList *encrypted_to;  /* full list of encrypted-to recipients */
 	GMimeSignatureList *signatures;
 	GMimeSignature *signature;
+	char *session_key;
 	
 	int exit_status;
 	
@@ -375,6 +377,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->need_id = NULL;
 	
 	gpg->encrypted_to = NULL;
+	gpg->session_key = NULL;
 	gpg->signatures = NULL;
 	gpg->signature = NULL;
 	
@@ -555,6 +558,11 @@ gpg_ctx_free (struct _GpgCtx *gpg)
 	if (gpg->encrypted_to)
 		g_object_unref (gpg->encrypted_to);
 	
+	if (gpg->session_key) {
+		memset (gpg->session_key, 0, strlen (gpg->session_key));
+		g_free (gpg->session_key);
+	}
+	
 	if (gpg->signatures)
 		g_object_unref (gpg->signatures);
 	
@@ -690,6 +698,9 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	case GPG_CTX_MODE_DECRYPT:
 		if (gpg->use_agent)
 			g_ptr_array_add (args, "--use-agent");
+		
+		if (gpg->ctx->retrieve_session_key)
+			g_ptr_array_add (args, "--show-session-key");
 		
 		g_ptr_array_add (args, "--decrypt");
 		g_ptr_array_add (args, "--output");
@@ -1326,6 +1337,8 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 				/* nothing to do... we'll grab the MDC used in DECRYPTION_INFO */
 			} else if (!strncmp (status, "BADMDC", 6)) {
 				/* nothing to do, this will only be sent after DECRYPTION_FAILED */
+			} else if (!strncmp (status, "SESSION_KEY", 11)) {
+				status = next_token (status, &gpg->session_key);
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
 			}
@@ -2059,10 +2072,12 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	result = g_mime_decrypt_result_new ();
 	result->recipients = gpg->encrypted_to;
 	result->signatures = gpg->signatures;
+	result->session_key = gpg->session_key;
 	result->cipher = gpg->cipher;
 	result->mdc = gpg->digest;
 	gpg->encrypted_to = NULL;
 	gpg->signatures = NULL;
+	gpg->session_key = NULL;
 	
 	gpg_ctx_free (gpg);
 	
@@ -2305,7 +2320,7 @@ g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx)
 /**
  * g_mime_gpg_context_set_use_agent:
  * @ctx: a #GMimeGpgContext
- * @use_agent: always trust flag
+ * @use_agent: use agent flag
  *
  * Sets the @use_agent flag on the gpg context, which indicates that
  * GnuPG should attempt to use gpg-agent for credentials.
@@ -2316,4 +2331,40 @@ g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent)
 	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
 	
 	ctx->use_agent = use_agent;
+}
+
+/**
+ * g_mime_gpg_context_get_retrieve_session_key:
+ * @ctx: a #GMimeGpgContext
+ *
+ * Gets the retrieve_session_key flag on the gpg context.
+ *
+ * Returns: the retrieve_session_key flag on the gpg context, which
+ * indicates that GnuPG should attempt to retrieve the session key for
+ * any encrypted message.
+ **/
+gboolean
+g_mime_gpg_context_get_retrieve_session_key (GMimeGpgContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
+	
+	return ctx->retrieve_session_key;
+}
+
+
+/**
+ * g_mime_gpg_context_set_retrieve_session_key:
+ * @ctx: a #GMimeGpgContext
+ * @retrieve_session_key: retrieve session key flag
+ *
+ * Sets the @retrieve_session_key flag on the gpg context, which
+ * indicates that GnuPG should attempt to retrieve the session key for
+ * any encrypted message.
+ **/
+void
+g_mime_gpg_context_set_retrieve_session_key (GMimeGpgContext *ctx, gboolean retrieve_session_key)
+{
+	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
+	
+	ctx->retrieve_session_key = retrieve_session_key;
 }

@@ -163,6 +163,11 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 			ex = exception_new ("unexpected signature");
 	}
 	
+	/* Did not ask for session_key -- it should not be present.
+	   We test asking for session_key over in test-pgpmime.c */
+	if (ex == NULL && result->session_key)
+		ex = exception_new ("got session_key when not requested");
+	
 	g_object_unref (result);
 	
 	if (ex != NULL) {

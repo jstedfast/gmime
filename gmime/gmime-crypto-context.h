@@ -206,6 +206,7 @@ struct _GMimeDecryptResult {
 	GMimeSignatureList *signatures;
 	GMimeCipherAlgo cipher;
 	GMimeDigestAlgo mdc;
+	char *session_key;
 };
 
 struct _GMimeDecryptResultClass {
@@ -228,6 +229,9 @@ GMimeCipherAlgo g_mime_decrypt_result_get_cipher (GMimeDecryptResult *result);
 
 void g_mime_decrypt_result_set_mdc (GMimeDecryptResult *result, GMimeDigestAlgo mdc);
 GMimeDigestAlgo g_mime_decrypt_result_get_mdc (GMimeDecryptResult *result);
+
+void g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *session_key);
+const char *g_mime_decrypt_result_get_session_key (GMimeDecryptResult *result);
 
 G_END_DECLS
 

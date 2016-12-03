@@ -23,6 +23,8 @@
 #include <config.h>
 #endif
 
+#include <string.h>
+
 #include "gmime-crypto-context.h"
 #include "gmime-error.h"
 
@@ -573,6 +575,7 @@ g_mime_decrypt_result_init (GMimeDecryptResult *result, GMimeDecryptResultClass 
 	result->mdc = GMIME_DIGEST_ALGO_DEFAULT;
 	result->recipients = NULL;
 	result->signatures = NULL;
+	result->session_key = NULL;
 }
 
 static void
@@ -585,6 +588,11 @@ g_mime_decrypt_result_finalize (GObject *object)
 	
 	if (result->signatures)
 		g_object_unref (result->signatures);
+	
+	if (result->session_key) {
+		memset (result->session_key, 0, strlen (result->session_key));
+		g_free (result->session_key);
+	}
 	
 	G_OBJECT_CLASS (result_parent_class)->finalize (object);
 }
@@ -754,4 +762,46 @@ g_mime_decryption_result_get_mdc (GMimeDecryptResult *result)
 	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), GMIME_DIGEST_ALGO_DEFAULT);
 	
 	return result->mdc;
+}
+
+
+/**
+ * g_mime_decrypt_result_set_session_key:
+ * @result: a #GMimeDecryptResult
+ * @session_key: a pointer to a null-terminated string representing the session key
+ *
+ * Set the session_key to be returned by this decryption result.
+ **/
+void
+g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *session_key)
+{
+	g_return_if_fail (GMIME_IS_DECRYPT_RESULT (result));
+	
+	if (result->session_key) {
+		memset (result->session_key, 0, strlen (result->session_key));
+		g_free (result->session_key);
+	}
+	
+	result->session_key = g_strdup (session_key);
+}
+
+
+/**
+ * g_mime_decrypt_result_get_session_key:
+ * @result: a #GMimeDecryptResult
+ *
+ * Get the session_key used for this decryption, if the underlying
+ * crypto context is capable of and (configured to) retrieve session
+ * keys during decryption.  See, for example,
+ * g_mime_gpg_context_set_retrieve_session_key().
+ *
+ * Returns: the session_key digest algorithm used, or NULL if no
+ * session key was requested or found.
+ **/
+const char *
+g_mime_decryption_result_get_session_key (GMimeDecryptResult *result)
+{
+	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), GMIME_DIGEST_ALGO_DEFAULT);
+	
+	return result->session_key;
 }
