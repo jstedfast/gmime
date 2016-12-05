@@ -1,3 +1,12 @@
+2016-12-05  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Advance over the SESSION_KEY
+	identifier before calling next_token() so that next_token() actually gets the
+	sesstion key token that we want. Also fixed to free any existing session_key
+	if gpg somehow sends us multiple SESSION_KEY responses.
+
+	Thanks to Daniel Kahn Gillmor for this patch.
+
 2016-12-03  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-gpg-context.c (next_token): Now takes a 'secret' argument to

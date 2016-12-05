@@ -295,7 +295,10 @@ struct _GpgCtx {
 	int stdout_fd;
 	int stderr_fd;
 	int status_fd;
-	int secret_fd;  /* used for sign/decrypt/verify */
+	int secret_fd;  /* used for exactly one of:
+			 * (a) sending a password to gpg when signing or encrypting
+			 * (b) sending a detatched signature to gpg when verifying
+			 */
 	
 	/* status-fd buffer */
 	char *statusbuf;
@@ -1341,6 +1344,13 @@ gpg_ctx_parse_status (struct _GpgCtx *gpg, GError **err)
 			} else if (!strncmp (status, "BADMDC", 6)) {
 				/* nothing to do, this will only be sent after DECRYPTION_FAILED */
 			} else if (!strncmp (status, "SESSION_KEY", 11)) {
+				if (gpg->session_key) {
+					memset (gpg->session_key, 0, strlen (gpg->session_key));
+					g_free (gpg->session_key);
+				}
+
+				status += 11;
+				
 				status = next_token (status, TRUE, &gpg->session_key);
 			} else {
 				gpg_ctx_parse_signer_info (gpg, status);
