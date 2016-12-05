@@ -1,5 +1,23 @@
 2016-12-05  Jeffrey Stedfast  <fejj@gnome.org>
 
+	* gmime/gmime-multipart-encrypted.c
+	(g_mime_multipart_encrypted_decrypt_session): New function to
+	decrypt a multipart/encrypted using a session_key.
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_context_decrypt_session): New
+	function to decrypt a MIME part using a session_key.
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): Added support for
+	--override-session-key-id for the new decrypt_session() method.
+	(gpg_ctx_op_start): Updated to create the secret_fd when passing a session_key
+	as well.
+	(gpg_ctx_write_session_key): New function to write the session_key to gpg.
+	(gpg_decrypt_session): New function to decrypt a MIME part using a session_key.
+
+	Thanks to Daniel Kahn Gillmor for this patch.
+
+2016-12-05  Jeffrey Stedfast  <fejj@gnome.org>
+
 	* gmime/gmime-gpg-context.c (gpg_ctx_parse_status): Advance over the SESSION_KEY
 	identifier before calling next_token() so that next_token() actually gets the
 	sesstion key token that we want. Also fixed to free any existing session_key

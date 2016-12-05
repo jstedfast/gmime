@@ -107,6 +107,10 @@ static int gpg_encrypt (GMimeCryptoContext *ctx, gboolean sign, const char *user
 static GMimeDecryptResult *gpg_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					GMimeStream *ostream, GError **err);
 
+static GMimeDecryptResult *gpg_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
+						GMimeStream *istream, GMimeStream *ostream,
+						GError **err);
+
 static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
 
@@ -158,6 +162,7 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->verify = gpg_verify;
 	crypto_class->encrypt = gpg_encrypt;
 	crypto_class->decrypt = gpg_decrypt;
+	crypto_class->decrypt_session = gpg_decrypt_session;
 	crypto_class->import_keys = gpg_import_keys;
 	crypto_class->export_keys = gpg_export_keys;
 	crypto_class->get_signature_protocol = gpg_get_signature_protocol;
@@ -333,8 +338,9 @@ struct _GpgCtx {
 	unsigned int need_passwd:1;
 	unsigned int bad_passwds:2;
 	unsigned int decrypt_okay:1;
+	unsigned int override_session_key:1;
 	
-	unsigned int padding:19;
+	unsigned int padding:18;
 };
 
 static struct _GpgCtx *
@@ -364,6 +370,7 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->always_trust = FALSE;
 	gpg->use_agent = FALSE;
 	gpg->armor = FALSE;
+	gpg->override_session_key = FALSE;
 	
 	gpg->stdin_fd = -1;
 	gpg->stdout_fd = -1;
@@ -625,7 +632,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	(*strv)[v++] = buf = g_strdup_printf ("--status-fd=%d", status_fd);
 	g_ptr_array_add (args, buf);
 	
-	if (gpg->need_passwd) {
+	if (gpg->need_passwd && !gpg->override_session_key) {
 		(*strv)[v++] = buf = g_strdup_printf ("--command-fd=%d", secret_fd);
 		g_ptr_array_add (args, buf);
 	}
@@ -705,6 +712,11 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 		if (gpg->ctx->retrieve_session_key)
 			g_ptr_array_add (args, "--show-session-key");
 		
+		if (gpg->override_session_key) {
+			(*strv)[v++] = buf = g_strdup_printf ("--override-session-key-fd=%d", secret_fd);
+			g_ptr_array_add (args, buf);
+		}
+		
 		g_ptr_array_add (args, "--decrypt");
 		g_ptr_array_add (args, "--output");
 		g_ptr_array_add (args, "-");
@@ -744,10 +756,14 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 	char **argv, **strv = NULL;
 	int flags;
 	
-	for (i = 0; i < 10; i++)
+	maxfd = G_N_ELEMENTS (fds);
+	for (i = 0; i < maxfd; i++)
 		fds[i] = -1;
 	
-	maxfd = (gpg->need_passwd || gpg->sigstream) ? 10 : 8;
+	/* don't create the command-fd if we don't need it */
+	if (!(gpg->need_passwd || gpg->sigstream || gpg->override_session_key))
+		maxfd -=2;
+	
 	for (i = 0; i < maxfd; i += 2) {
 		if (pipe (fds + i) == -1)
 			goto exception;
@@ -1055,6 +1071,29 @@ gpg_ctx_parse_signer_info (struct _GpgCtx *gpg, char *status)
 			sig->cert->trust = GMIME_CERTIFICATE_TRUST_UNDEFINED;
 		}
 	}
+}
+
+/* write the session_key to the secret file descriptor and close
+   it.  Returns 0 on success. */
+static int
+gpg_ctx_write_session_key (struct _GpgCtx *gpg, const char *session_key)
+{
+	size_t len = strlen (session_key);
+	ssize_t w, nwritten = 0;
+	
+	do {
+		do {
+			w = write (gpg->secret_fd, session_key + nwritten, len - nwritten);
+		} while (w == -1 && (errno == EINTR || errno == EAGAIN));
+		
+		if (w > 0)
+			nwritten += w;
+	} while (nwritten < len && w != -1);
+	
+	close (gpg->secret_fd);
+	gpg->secret_fd = -1;
+	
+	return (w == -1);
 }
 
 static int
@@ -2040,6 +2079,14 @@ static GMimeDecryptResult *
 gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
+	return gpg_decrypt_session (context, NULL, istream, ostream, err);
+}
+
+static GMimeDecryptResult *
+gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
+		     GMimeStream *istream, GMimeStream *ostream,
+		     GError **err)
+{
 #ifdef ENABLE_CRYPTOGRAPHY
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeDecryptResult *result;
@@ -2052,10 +2099,21 @@ gpg_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	gpg_ctx_set_use_agent (gpg, ctx->use_agent);
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
+	if (session_key)
+		gpg->override_session_key = TRUE;
 	
 	if (gpg_ctx_op_start (gpg) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
+			     errno ? g_strerror (errno) : _("Unknown"));
+		gpg_ctx_free (gpg);
+		
+		return NULL;
+	}
+	
+	if (session_key && gpg_ctx_write_session_key (gpg, session_key)) {
+		g_set_error (err, GMIME_ERROR, errno,
+			     _("Failed to pass session key to gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
 		gpg_ctx_free (gpg);
 		

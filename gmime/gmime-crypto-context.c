@@ -70,6 +70,10 @@ static int crypto_encrypt (GMimeCryptoContext *ctx, gboolean sign,
 static GMimeDecryptResult *crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 					   GMimeStream *ostream, GError **err);
 
+static GMimeDecryptResult *crypto_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
+						   GMimeStream *istream, GMimeStream *ostream,
+						   GError **err);
+
 static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GError **err);
 
@@ -120,6 +124,7 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 	klass->verify = crypto_verify;
 	klass->encrypt = crypto_encrypt;
 	klass->decrypt = crypto_decrypt;
+	klass->decrypt_session = crypto_decrypt_session;
 	klass->import_keys = crypto_import_keys;
 	klass->export_keys = crypto_export_keys;
 	klass->get_signature_protocol = crypto_get_signature_protocol;
@@ -423,6 +428,17 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 	return NULL;
 }
 
+static GMimeDecryptResult *
+crypto_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
+			GMimeStream *istream, GMimeStream *ostream,
+			GError **err)
+{
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     "Decryption with a session key is not supported by this crypto context");
+	
+	return NULL;
+}
+
 
 /**
  * g_mime_crypto_context_decrypt:
@@ -443,7 +459,7 @@ crypto_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
  * was encrypted to.
  *
  * Note: It *may* be possible to maliciously design an encrypted stream such
- * that recursively decrypting it will result in ane endless loop, causing
+ * that recursively decrypting it will result in an endless loop, causing
  * a denial of service attack on your application.
  *
  * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL
@@ -458,6 +474,55 @@ g_mime_crypto_context_decrypt (GMimeCryptoContext *ctx, GMimeStream *istream,
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
 	
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, istream, ostream, err);
+}
+
+/**
+ * g_mime_crypto_context_decrypt_session:
+ * @ctx: a #GMimeCryptoContext
+ * @session_key: session key to use
+ * @istream: input/ciphertext stream
+ * @ostream: output/cleartext stream
+ * @err: a #GError
+ *
+ * Decrypts the ciphertext input stream using a specific session key
+ * and writes the resulting cleartext to the output stream. If
+ * @session_key is non-%NULL, but is not valid for the ciphertext, the
+ * decryption will fail even if other available secret key material
+ * may have been able to decrypt it. If @session_key is %NULL, this
+ * does the same thing as g_mime_crypto_context_decrypt().
+ *
+ * When non-%NULL, @session_key should be a %NULL-terminated string,
+ * such as the one returned by g_mime_decrypt_result_get_session_key()
+ * from a previous decryption.
+ *
+ * If the encrypted input stream was also signed, the returned
+ * #GMimeDecryptResult will have a non-%NULL list of signatures, each with a
+ * #GMimeSignatureStatus (among other details about each signature).
+ *
+ * On success, the returned #GMimeDecryptResult will contain a list of
+ * certificates, one for each recipient, that the original encrypted stream
+ * was encrypted to.
+ *
+ * Note: It *may* be possible to maliciously design an encrypted stream such
+ * that recursively decrypting it will result in an endless loop, causing
+ * a denial of service attack on your application.
+ *
+ * Returns: (transfer full): a #GMimeDecryptResult on success or %NULL
+ * on error.
+ **/
+GMimeDecryptResult *
+g_mime_crypto_context_decrypt_session (GMimeCryptoContext *ctx, const char *session_key,
+				       GMimeStream *istream, GMimeStream *ostream,
+				       GError **err)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (istream), NULL);
+	g_return_val_if_fail (GMIME_IS_STREAM (ostream), NULL);
+	
+	if (session_key == NULL)
+		return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt (ctx, istream, ostream, err);
+	else
+		return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->decrypt_session (ctx, session_key, istream, ostream, err);
 }
 
 

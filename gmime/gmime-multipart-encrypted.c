@@ -292,6 +292,43 @@ GMimeObject *
 g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
 				    GMimeDecryptResult **result, GError **err)
 {
+	return g_mime_multipart_encrypted_decrypt_session (mpe, ctx, NULL, result, err);
+}
+
+/**
+ * g_mime_multipart_encrypted_decrypt_session:
+ * @mpe: multipart/encrypted object
+ * @ctx: decryption context
+ * @session_key: session key to use
+ * @result: a #GMimeDecryptionResult
+ * @err: a #GError
+ *
+ * Attempts to decrypt the encrypted MIME part contained within the
+ * multipart/encrypted object @mpe using the @ctx decryption context
+ * trying only the supplied session key.  If @session_key is
+ * non-%NULL, but is not valid for the ciphertext, the decryption will
+ * fail even if other available secret key material may have been able
+ * to decrypt it. If @session_key is %NULL, this does the same thing
+ * as g_mime_multipart_encrypted_decrypt().
+ *
+ * When non-%NULL, @session_key should be a %NULL-terminated string,
+ * such as the one returned by g_mime_decrypt_result_get_session_key()
+ * from a previous decryption.
+ *
+ * If @result is non-%NULL, then on a successful decrypt operation, it will be
+ * updated to point to a newly-allocated #GMimeDecryptResult with signature
+ * status information as well as a list of recipients that the part was
+ * encrypted to.
+ *
+ * Returns: (transfer full): the decrypted MIME part on success or
+ * %NULL on fail. If the decryption fails, an exception will be set on
+ * @err to provide information as to why the failure occured.
+ **/
+GMimeObject *
+g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
+					    const char *session_key, GMimeDecryptResult **result,
+					    GError **err)
+{
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
 	const char *protocol, *supported;
@@ -367,7 +404,7 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
 	g_object_unref (crlf_filter);
 	
 	/* get the cleartext */
-	if (!(res = g_mime_crypto_context_decrypt (ctx, ciphertext, filtered_stream, err))) {
+	if (!(res = g_mime_crypto_context_decrypt_session (ctx, session_key, ciphertext, filtered_stream, err))) {
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);

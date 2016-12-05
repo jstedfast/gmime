@@ -76,6 +76,12 @@ GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
 						 GMimeDecryptResult **result,
 						 GError **err);
 
+GMimeObject *g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe,
+							 GMimeCryptoContext *ctx,
+							 const char *session_key,
+							 GMimeDecryptResult **result,
+							 GError **err);
+
 G_END_DECLS
 
 #endif /* __GMIME_MULTIPART_ENCRYPTED_H__ */
