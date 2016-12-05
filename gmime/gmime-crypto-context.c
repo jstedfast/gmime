@@ -866,7 +866,7 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
 const char *
 g_mime_decryption_result_get_session_key (GMimeDecryptResult *result)
 {
-	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), GMIME_DIGEST_ALGO_DEFAULT);
+	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), NULL);
 	
 	return result->session_key;
 }
