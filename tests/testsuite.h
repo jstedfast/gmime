@@ -48,6 +48,7 @@ int testsuite_total_errors (void);
 /* GnuPG test suite utility functions */
 int testsuite_setup_gpghome (void);
 int testsuite_destroy_gpghome (void);
+int testsuite_can_safely_override_session_key (void);
 
 /*#if __GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ >= 96)
 #define G_GNUC_NORETURN __attribute__((noreturn))

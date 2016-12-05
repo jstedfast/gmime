@@ -259,18 +259,15 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 #define MULTIPART_ENCRYPTED_CONTENT "This is a test of multipart/encrypted.\n"
 
 static void
-test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
+create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
+			  GMimeStream **cleartext_out, GMimeStream **stream_out)
 {
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
-	GMimeDecryptResult *result;
 	GMimeDataWrapper *content;
-	GMimeObject *decrypted;
 	GPtrArray *recipients;
 	GMimeMessage *message;
 	Exception *ex = NULL;
-	GMimeParser *parser;
-	GByteArray *buf[2];
 	GError *err = NULL;
 	GMimePart *part;
 	
@@ -324,12 +321,34 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	
 	stream = g_mime_stream_mem_new ();
 	g_mime_object_write_to_stream ((GMimeObject *) message, stream);
-	g_mime_stream_reset (stream);
 	g_object_unref (message);
 	
+	*stream_out = stream;
+	*cleartext_out = cleartext;
+}	
+
+static char *
+test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
+			  GMimeStream *cleartext, GMimeStream *stream,
+			  const char *session_key)
+{
+	GMimeStream *test_stream;
+ 	GMimeMultipartEncrypted *mpe;
+	GMimeDecryptResult *result;
+	GMimeDataWrapper *content;
+	GMimeObject *decrypted;
+	GMimeMessage *message;
+	Exception *ex = NULL;
+	GMimeParser *parser;
+	GByteArray *buf[2];
+	GError *err = NULL;
+	GMimePart *part;
+	char *ret = NULL;
+	
+	g_mime_stream_reset (stream);
+	g_mime_stream_reset (cleartext);
 	parser = g_mime_parser_new ();
 	g_mime_parser_init_with_stream (parser, stream);
-	g_object_unref (stream);
 	
 	message = g_mime_parser_construct_message (parser);
 	g_object_unref (parser);
@@ -343,19 +362,18 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, ctx, &result, &err);
+	decrypted = g_mime_multipart_encrypted_decrypt_session (mpe, ctx, session_key, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
-		g_object_unref (cleartext);
 		g_error_free (err);
 		throw (ex);
 	}
 	
 	if (!result->session_key) {
 		ex = exception_new ("No session key returned!");
-		g_object_unref (cleartext);
 		throw (ex);
 	}
+	ret = g_strdup (result->session_key);
 	
 	if (result->signatures)
 		v(print_verify_results (result->signatures));
@@ -371,24 +389,28 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	g_object_unref (result);
 	
 	if (ex != NULL) {
-		g_object_unref (cleartext);
+		g_free (ret);
+		ret = 0;
 		throw (ex);
 	}
 	
-	stream = g_mime_stream_mem_new ();
-	g_mime_object_write_to_stream (decrypted, stream);
+	test_stream = g_mime_stream_mem_new ();
+	g_mime_object_write_to_stream (decrypted, test_stream);
 	
 	buf[0] = GMIME_STREAM_MEM (cleartext)->buffer;
-	buf[1] = GMIME_STREAM_MEM (stream)->buffer;
+	buf[1] = GMIME_STREAM_MEM (test_stream)->buffer;
 	
 	if (buf[0]->len != buf[1]->len || memcmp (buf[0]->data, buf[1]->data, buf[0]->len) != 0)
 		ex = exception_new ("decrypted data does not match original cleartext");
 	
-	g_object_unref (cleartext);
-	g_object_unref (stream);
+	g_object_unref (test_stream);
 	
-	if (ex != NULL)
+	if (ex != NULL) {
+		g_free (ret);
+		ret = 0;
 		throw (ex);
+	}
+	return ret;
 }
 
 static void
@@ -420,6 +442,8 @@ int main (int argc, char *argv[])
 	struct stat st;
 	char *key;
 	int i;
+	GMimeStream *stream = NULL, *cleartext = NULL;
+	char *session_key = NULL;
 	
 	g_mime_init (0);
 	
@@ -470,19 +494,45 @@ int main (int argc, char *argv[])
 	
 	testsuite_check ("multipart/encrypted");
 	try {
-		test_multipart_encrypted (ctx, FALSE);
+		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
+		session_key = test_multipart_encrypted (ctx, FALSE, cleartext, stream, NULL);
+		if (testsuite_can_safely_override_session_key ())
+			g_free (test_multipart_encrypted (ctx, FALSE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted failed: %s", ex->message);
 	} finally;
+	if (cleartext)
+		g_object_unref (cleartext);
+	if (stream)
+		g_object_unref (stream);
+	cleartext = stream = NULL;
+	if (session_key) {
+		memset (session_key, 0, strlen (session_key));
+		g_free (session_key);
+		session_key = NULL;
+	}
 	
 	testsuite_check ("multipart/encrypted+sign");
 	try {
-		test_multipart_encrypted (ctx, TRUE);
+		create_encrypted_message (ctx, TRUE, &cleartext, &stream);
+		session_key = test_multipart_encrypted (ctx, TRUE, cleartext, stream, NULL);
+		if (testsuite_can_safely_override_session_key ())
+			g_free (test_multipart_encrypted (ctx, TRUE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {
 		testsuite_check_failed ("multipart/encrypted+sign failed: %s", ex->message);
 	} finally;
+	if (cleartext)
+		g_object_unref (cleartext);
+	if (stream)
+		g_object_unref (stream);
+	cleartext = stream = NULL;
+	if (session_key) {
+		memset (session_key, 0, strlen (session_key));
+		g_free (session_key);
+		session_key = NULL;
+	}
 	
 	g_object_unref (ctx);
 	

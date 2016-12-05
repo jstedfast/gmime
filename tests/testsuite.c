@@ -350,39 +350,79 @@ g_throw (Exception *ex)
 	longjmp (env->env, 1);
 }
 
-static int
-is_gpg_modern (void)
+static const char *
+get_gpg_version (void)
 {
+	static gboolean found = FALSE;
+	static char version[1024];
 	const char vheader[] = "gpg (GnuPG) ";
 	char *vstring = NULL;
 	size_t vlen = 0;
 	FILE *vpipe;
 	int ret;
 	
+	if (found)
+		return version;
+	
 	if ((vpipe = popen ("gpg --version", "r")) == NULL)
-		return 0;
+		return NULL;
 	
 	if (getline (&vstring, &vlen, vpipe) == -1) {
 		free (vstring);
 		pclose (vpipe);
-		return 0;
+		return NULL;
 	}
 	
 	pclose (vpipe);
 	
 	if (strncmp (vstring, vheader, sizeof (vheader) - 1)) {
 		free (vstring);
-		return 0;
+		return NULL;
 	}
 	
-	ret = (vstring[sizeof (vheader) - 1] > '2') ||
-		(vstring[sizeof (vheader) - 1] == '2' &&
-		 vstring[sizeof (vheader)] == '.' &&
-		 vstring[sizeof (vheader) + 1] >= '1');
-	
+	strncpy (version, vstring + sizeof (vheader) - 1, sizeof (version) - 1);
+	version[sizeof (version) - 1] = '\0';
 	free (vstring);
+	found = TRUE;
 	
-	return ret;
+	return version;
+}
+
+static int
+is_gpg_modern (void)
+{
+	const char *ver = get_gpg_version ();
+
+	if (!ver)
+		return 0;
+	
+	return (ver[0] > '2') ||
+		(ver[0] == '2' &&
+		 ver[1] == '.' &&
+		 ver[2] >= '1');
+}
+
+/* in versions of gpg before 2.1.16, the only mechanism to override
+   the session key was --override-session-key, which leaks its
+   argument to the process table.
+
+   in 2.1.16, gpg introduced --override-session-key-fd, which is what
+   gmime uses to be safe.
+*/
+
+int
+testsuite_can_safely_override_session_key (void)
+{
+	const char *ver = get_gpg_version ();
+	
+	if (!ver)
+		return 0;
+	
+	return (ver[0] > '2') ||
+		((ver[0] == '2' && ver[1] == '.' ) &&
+		 ((ver[2] > '1') ||
+		  ((ver[2] == '1' && ver[3] == '.') &&
+		   (atoi(ver+4) >= 16))));
 }
 
 int
@@ -420,7 +460,6 @@ testsuite_setup_gpghome (void)
 		if (fclose (fp))
 			return EXIT_FAILURE;
 	}
-	
 	
 	return EXIT_SUCCESS;
 }
