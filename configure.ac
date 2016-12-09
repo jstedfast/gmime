@@ -162,7 +162,6 @@ AC_CHECK_HEADERS(netdb.h)
 AC_CHECK_HEADERS(regex.h)
 AC_CHECK_HEADERS(time.h)
 AC_CHECK_HEADERS(poll.h)
-AC_CHECK_HEADERS(zlib.h)
 
 AC_TYPE_OFF_T
 AC_TYPE_SIZE_T
@@ -246,25 +245,99 @@ if test "x$enable_cryptography" = "xyes"; then
   AC_DEFINE(ENABLE_CRYPTOGRAPHY, 1, [Define if cryptography in GMime is enabled.])
 fi
 
+dnl ***********************
+dnl *** Tests for iconv ***
+dnl ***********************
+dnl
+dnl We do this before the gettext checks, to avoid distortion
+
+dnl On Windows we use a native implementation
+
+AS_IF([ test x"$glib_native_win32" = xyes], [
+  with_libiconv=native
+], [
+  AC_ARG_WITH(libiconv,
+	      [AS_HELP_STRING([--with-libiconv=@<:@no/gnu/native@:>@],
+			      [use the libiconv library])],,
+	      [with_libiconv=maybe])
+
+  found_iconv=no
+  case $with_libiconv in
+    maybe)
+      # Check in the C library first
+      AC_CHECK_FUNC(iconv_open, [with_libiconv=no; found_iconv=yes])
+      # Check if we have GNU libiconv
+      if test $found_iconv = "no"; then
+	AC_CHECK_LIB(iconv, libiconv_open, [with_libiconv=gnu; found_iconv=yes])
+      fi
+      # Check if we have a iconv in -liconv, possibly from vendor
+      if test $found_iconv = "no"; then
+	AC_CHECK_LIB(iconv, iconv_open, [with_libiconv=native; found_iconv=yes])
+      fi
+      ;;
+    no)
+      AC_CHECK_FUNC(iconv_open, [with_libiconv=no; found_iconv=yes])
+      ;;
+    gnu|yes)
+      AC_CHECK_LIB(iconv, libiconv_open, [with_libiconv=gnu; found_iconv=yes])
+      ;;
+    native)
+      AC_CHECK_LIB(iconv, iconv_open, [with_libiconv=native; found_iconv=yes])
+      ;;
+  esac
+
+  if test "x$found_iconv" = "xno" ; then
+     AC_MSG_ERROR([*** No iconv() implementation found in C library or libiconv])
+  fi
+])
+
+dnl
+dnl Now we are done with gettext checks, figure out ICONV_LIBS
+dnl
+
+AS_IF([test x"$glib_native_win32" != xyes], [
+  if test x$with_libiconv != xno ; then
+    case " $INTLLIBS " in
+    *[[\ \	]]-liconv[[\ \	]]*) ;;
+    *) ICONV_LIBS="-liconv" ;;
+    esac
+  fi
+])
+AC_SUBST(ICONV_LIBS)
+
+case $with_libiconv in
+  gnu)
+    AC_DEFINE(USE_LIBICONV_GNU, 1, [Using GNU libiconv])
+    AC_DEFINE(ICONV_CONST, const, [GNU libiconv uses const char**])
+    ;;
+  native)
+    AC_DEFINE(USE_LIBICONV_NATIVE, 1, [Using a native implementation of iconv in a separate library])
+    AC_DEFINE(ICONV_CONST, [], [GNU libiconv uses const char**])
+    ;;
+esac
+
+dnl
+dnl zlib support
+dnl
+PKG_CHECK_MODULES([ZLIB], [zlib], [found_zlib=yes], [found_zlib=no])
+AS_IF([test "x$found_zlib" = "xno"], [
+  AC_CHECK_LIB(z, inflate, [AC_CHECK_HEADER(zlib.h, found_zlib=yes)])
+  if test "x$found_zlib" = "xno" ; then
+    AC_MSG_ERROR([*** Working zlib library and headers not found ***])
+  fi
+  ZLIB_LIBS='-lz'
+  AC_SUBST(ZLIB_LIBS)
+])
 
 dnl We need at *least* glib 2.16.0 for GIO, 2.18.0 for g_set_error_literal, and 2.32.0 for g_mutex_init
 AM_PATH_GLIB_2_0(2.32.0, ,
 		 AC_MSG_ERROR(Cannot find GLIB: Is pkg-config in your path?),
 		 gobject gmodule gthread gio)
 
-dnl *****************************
-dnl *** Checks for zlib       ***
-dnl *****************************
-AC_CHECK_HEADERS(zlib.h)
-AC_CHECK_LIB(z, inflate, ZLIB="-lz")
-
-dnl Check for libiconv
-AM_ICONV()
-
 CFLAGS_save="$CFLAGS"
 CFLAGS="$CFLAGS -I$srcdir"
 LIBS_save="$LIBS"
-LIBS="$LIBS $LIBICONV"
+LIBS="$LIBS $ICONV_LIBS"
 
 AC_CACHE_CHECK([preferred charset formats for system iconv], [ac_cv_have_iconv_detect_h], [
 	AC_RUN_IFELSE([AC_LANG_SOURCE([
@@ -596,15 +669,15 @@ GOBJECT_INTROSPECTION_CHECK([1.30.0])
 VAPIGEN_CHECK
 
 dnl Extra libs
-EXTRA_LIBS="$ZLIB"
+EXTRA_LIBS="$ZLIB_LIBS"
 if test "x$LIBSOCKET" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $LIBSOCKET"
 fi
 if test "x$LIBNSL" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $LIBNSL"
 fi
-if test "x$LIBICONV" != "x"; then
-	EXTRA_LIBS="$EXTRA_LIBS $LIBICONV"
+if test "x$ICONV_LIBS" != "x"; then
+	EXTRA_LIBS="$EXTRA_LIBS $ICONV_LIBS"
 fi
 if test "x$GPGME_PTHREAD_LIBS" != "x"; then
 	EXTRA_LIBS="$EXTRA_LIBS $GPGME_PTHREAD_LIBS"
