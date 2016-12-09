@@ -2314,9 +2314,11 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *pat
  * g_mime_gpg_context_get_auto_key_retrieve:
  * @ctx: a #GMimeGpgContext
  *
- * Gets the @auto_key_retrieve flag on the gpg context.
+ * Gets whether or not gpg should auto-retrieve keys from a keyserver
+ * when verifying signatures.
  *
- * Returns: the @auto_key_retrieve flag on the gpg context.
+ * Returns: %TRUE if gpg should auto-retrieve keys from a keyserver or
+ * %FALSE otherwise.
  **/
 gboolean
 g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx)
@@ -2330,10 +2332,10 @@ g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx)
 /**
  * g_mime_gpg_context_set_auto_key_retrieve:
  * @ctx: a #GMimeGpgContext
- * @auto_key_retrieve: auto-retrieve keys from a keys server
+ * @auto_key_retrieve: %TRUE if gpg should auto-retrieve keys from a keys server
  *
- * Sets the @auto_key_retrieve flag on the gpg context which is used
- * for signature verification.
+ * Sets whether or not gpg should auto-retrieve keys from a keyserver
+ * when verifying signatures.
  **/
 void
 g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve)
@@ -2348,9 +2350,10 @@ g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_ke
  * g_mime_gpg_context_get_always_trust:
  * @ctx: a #GMimeGpgContext
  *
- * Gets the always_trust flag on the gpg context.
+ * Gets whther or not gpg should always trust keys when encrypting.
  *
- * Returns: the always_trust flag on the gpg context.
+ * Returns: %TRUE if gpg should always trust keys when encrypting or
+ * %FALSE otherwise.
  **/
 gboolean
 g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
@@ -2364,10 +2367,9 @@ g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
 /**
  * g_mime_gpg_context_set_always_trust:
  * @ctx: a #GMimeGpgContext
- * @always_trust: always trust flag
+ * @always_trust: %TRUE if gpg should always trust keys when encrypting
  *
- * Sets the @always_trust flag on the gpg context which is used for
- * encryption.
+ * Sets whether or not gpg should always trust keys when encrypting.
  **/
 void
 g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust)
@@ -2382,10 +2384,11 @@ g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust
  * g_mime_gpg_context_get_use_agent:
  * @ctx: a #GMimeGpgContext
  *
- * Gets the use_agent flag on the gpg context.
+ * Gets whether or not gpg should attempt to use the gpg-agent when
+ * requesting credentials.
  *
- * Returns: the use_agent flag on the gpg context, which indicates
- * that GnuPG should attempt to use gpg-agent for credentials.
+ * Returns: %TRUE if the gpg-agent should be used when requesting
+ * credentials or %FALSE otherwise.
  **/
 gboolean
 g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx)
@@ -2401,8 +2404,8 @@ g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx)
  * @ctx: a #GMimeGpgContext
  * @use_agent: use agent flag
  *
- * Sets the @use_agent flag on the gpg context, which indicates that
- * GnuPG should attempt to use gpg-agent for credentials.
+ * Sets whether or not gpg should attempt to use the gpg-agent when
+ * requesting credentials.
  **/
 void
 g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent)

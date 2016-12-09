@@ -178,8 +178,11 @@ crypto_get_retrieve_session_key (GMimeCryptoContext *ctx)
  * g_mime_crypto_context_get_retrieve_session_key:
  * @ctx: a #GMimeCryptoContext
  *
- * Returns: an indication of whether @ctx is configured to retrieve a
- * session key during decryption (see g_mime_decrypt_result_get_session_key()).
+ * Gets whether or not the @ctx is configured to retrieve a session
+ * key during decryption (see g_mime_decrypt_result_get_session_key()).
+ *
+ * Returns: %TRUE if the @ctx is configured to retrieve a session key
+ * or %FALSE otherwise.
  **/
 gboolean
 g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx)

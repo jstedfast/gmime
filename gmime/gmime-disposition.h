@@ -60,6 +60,7 @@ typedef struct _GMimeContentDispositionClass GMimeContentDispositionClass;
  * @parent_object: parent #GObject
  * @param_hash: parameter hash table keyed by param name
  * @params: a #GMimeParam list
+ * @priv: private fields
  * @disposition: disposition
  *
  * A data structure representing a Content-Disposition.

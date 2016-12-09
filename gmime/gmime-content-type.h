@@ -44,6 +44,7 @@ typedef struct _GMimeContentTypeClass GMimeContentTypeClass;
  * @parent_object: parent #GObject
  * @param_hash: parameter hash keyed by param name
  * @params: a #GMimeParam list
+ * @priv: private fields
  * @type: media type
  * @subtype: media subtype
  *

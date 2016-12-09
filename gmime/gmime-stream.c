@@ -498,7 +498,7 @@ g_mime_stream_write_string (GMimeStream *stream, const char *str)
  * g_mime_stream_printf:
  * @stream: a #GMimeStream
  * @fmt: format
- * @Varargs: arguments
+ * @...: arguments
  *
  * Write formatted output to a stream.
  *

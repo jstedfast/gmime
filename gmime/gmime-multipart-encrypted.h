@@ -46,8 +46,6 @@ enum {
 /**
  * GMimeMultipartEncrypted:
  * @parent_object: parent #GMimeMultipart
- * @validity: a #GMimeSignatureValidity if the part has been decrypted or %NULL otherwise
- * @decrypted: cached decrypted MIME part
  *
  * A multipart/encrypted MIME part.
  **/

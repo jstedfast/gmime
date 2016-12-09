@@ -2979,7 +2979,7 @@ g_mime_utils_header_fold (const char *header)
 /**
  * g_mime_utils_header_printf:
  * @format: string format
- * @Varargs: arguments
+ * @...: arguments
  *
  * Allocates a buffer containing a formatted header specified by the
  * @Varargs.

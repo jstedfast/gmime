@@ -40,8 +40,11 @@ typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 /**
  * GMimeGpgContext:
  * @parent_object: parent #GMimeCryptoContext
+ * @auto_key_retrieve: %TRUE if gpg should automatically retrieve unknown keys from the web
  * @always_trust: %TRUE if keys should always be trusted
+ * @use_agent: %TRUE if gpg should use the gpg-agent for requesting passphrases
  * @path: path to gpg
+ * @retrieve_session_key: %TRUE if session keys should be retrieved when decrypting
  *
  * A GnuPG crypto context.
  **/

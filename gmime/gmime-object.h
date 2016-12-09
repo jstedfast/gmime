@@ -112,8 +112,8 @@ GMimeContentDisposition *g_mime_object_get_content_disposition (GMimeObject *obj
 void g_mime_object_set_disposition (GMimeObject *object, const char *disposition);
 const char *g_mime_object_get_disposition (GMimeObject *object);
 
-void g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *attribute, const char *value);
-const char *g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *attribute);
+void g_mime_object_set_content_disposition_parameter (GMimeObject *object, const char *name, const char *value);
+const char *g_mime_object_get_content_disposition_parameter (GMimeObject *object, const char *name);
 
 void g_mime_object_set_content_id (GMimeObject *object, const char *content_id);
 const char *g_mime_object_get_content_id (GMimeObject *object);
