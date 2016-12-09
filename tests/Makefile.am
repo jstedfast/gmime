@@ -113,7 +113,7 @@ test_smime_LDADD = $(LDADDS)
 endif
 
 EXTRA_DIST = $(wildcard test*.eml empty*.msg message-partial.* rfc2060.msg 	\
-	data/pgp*/gmime.gpg.* data/mbox/*put/substring.mbox)
+	data/pgp*/gmime.gpg.* data/mbox/*put/jwz.mbox data/mbox/*put/substring.mbox)
 
 VERBOSITY=-v
 
