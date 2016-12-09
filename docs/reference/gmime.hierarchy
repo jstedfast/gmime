@@ -15,6 +15,7 @@ GObject
   InternetAddressList
   GMimeCertificate
   GMimeCertificateList
+  GMimeDecryptResult
   GMimeSignature
   GMimeSignatureList
   GMimeCryptoContext
