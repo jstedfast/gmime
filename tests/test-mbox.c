@@ -86,23 +86,18 @@ print_mime_struct (GMimeStream *stream, GMimeObject *part, int depth)
 	}
 }
 
-
-static void
-header_cb (GMimeParser *parser, const char *header, const char *value, gint64 offset, gpointer user_data)
-{
-	GMimeStream *stream = user_data;
-	
-	g_mime_stream_printf (stream, "%" G_GINT64_FORMAT ": %s: %s\n", offset, header, value);
-}
-
 static void
 test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 {
 	gint64 message_begin, message_end, headers_begin, headers_end;
+	InternetAddressList *list;
 	GMimeMessage *message;
-	const char *exev;
+	char *marker, *buf;
+	const char *subject;
+	const char *sender;
+	int tz_offset;
 	int nmsg = 0;
-	char *from;
+	time_t date;
 	
 	while (!g_mime_parser_eos (parser)) {
 		message_begin = g_mime_parser_tell (parser);
@@ -119,20 +114,44 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		g_mime_stream_printf (summary, "header offsets: %" G_GINT64_FORMAT ", %" G_GINT64_FORMAT "\n",
 				      headers_begin, headers_end);
 		
-		from = g_mime_parser_get_from (parser);
-		g_mime_stream_printf (summary, "%s\n", from);
-		exev = g_mime_object_get_header ((GMimeObject *) message, "X-Evolution");
-		g_mime_stream_printf (summary, "X-Evolution: %s\n", exev ? exev : "None");
+		marker = g_mime_parser_get_from (parser);
+		g_mime_stream_printf (summary, "%s\n", marker);
+		
+		if ((sender = g_mime_message_get_sender (message)) != NULL) {
+			list = internet_address_list_parse_string (sender);
+			buf = internet_address_list_to_string (list, FALSE);
+			g_object_unref (list);
+			
+			g_mime_stream_printf (summary, "From: %s\n", buf);
+			g_free (buf);
+		}
+		
+		if ((list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO)) != NULL &&
+		    internet_address_list_length (list) > 0) {
+			buf = internet_address_list_to_string (list, FALSE);
+			g_mime_stream_printf (summary, "To: %s\n", buf);
+			g_free (buf);
+		}
+		
+		if (!(subject = g_mime_message_get_subject (message)))
+			subject = "";
+		g_mime_stream_printf (summary, "Subject: %s\n", subject);
+		
+		g_mime_message_get_date (message, &date, &tz_offset);
+		buf = g_mime_utils_header_format_date (date, tz_offset);
+		g_mime_stream_printf (summary, "Date: %s\n", buf);
+		g_free (buf);
+		
 		print_mime_struct (summary, message->mime_part, 0);
 		g_mime_stream_write (summary, "\n", 1);
 		
 		if (mbox) {
-			g_mime_stream_printf (mbox, "%s%s\n", nmsg > 0 ? "\n" : "", from);
+			g_mime_stream_printf (mbox, "%s%s\n", nmsg > 0 ? "\n" : "", marker);
 			g_mime_object_write_to_stream ((GMimeObject *) message, mbox);
 		}
 		
 		g_object_unref (message);
-		g_free (from);
+		g_free (marker);
 		nmsg++;
 	}
 }
@@ -332,7 +351,6 @@ int main (int argc, char **argv)
 					g_mime_parser_set_respect_content_length (parser, TRUE);
 				
 				pstream = g_mime_stream_mem_new ();
-				g_mime_parser_set_header_regex (parser, "^Subject$", header_cb, pstream);
 				test_parser (parser, mstream, pstream);
 				
 #ifdef ENABLE_MBOX_MATCH
@@ -402,7 +420,6 @@ int main (int argc, char **argv)
 #endif
 		
 		ostream = g_mime_stream_fs_new (dup (1));
-		g_mime_parser_set_header_regex (parser, "^Subject$", header_cb, ostream);
 		
 		testsuite_check ("user-input mbox: `%s'", path);
 		try {
