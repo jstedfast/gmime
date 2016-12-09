@@ -85,8 +85,8 @@ const char *g_mime_content_type_get_media_subtype (GMimeContentType *mime_type);
 void g_mime_content_type_set_params (GMimeContentType *mime_type, GMimeParam *params);
 const GMimeParam *g_mime_content_type_get_params (GMimeContentType *mime_type);
 
-void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *attribute, const char *value);
-const char *g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *attribute);
+void g_mime_content_type_set_parameter (GMimeContentType *mime_type, const char *name, const char *value);
+const char *g_mime_content_type_get_parameter (GMimeContentType *mime_type, const char *name);
 
 G_END_DECLS
 

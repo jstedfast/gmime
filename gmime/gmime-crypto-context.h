@@ -216,6 +216,7 @@ typedef enum {
  * @signatures: A #GMimeSignatureList if signed or %NULL otherwise.
  * @cipher: The cipher algorithm used to encrypt the stream.
  * @mdc: The MDC digest algorithm used, if any.
+ * @session_key: The session key if requested or %NULL otherwise.
  *
  * An object containing the results from decrypting an encrypted stream.
  **/
