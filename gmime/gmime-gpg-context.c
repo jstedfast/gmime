@@ -86,6 +86,11 @@ static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name)
 
 static const char *gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
+static gboolean gpg_get_retrieve_session_key (GMimeCryptoContext *context);
+
+static int gpg_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
+					 GError **err);
+
 static int gpg_sign (GMimeCryptoContext *ctx, const char *userid,
 		     GMimeDigestAlgo digest, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
@@ -168,6 +173,8 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->get_signature_protocol = gpg_get_signature_protocol;
 	crypto_class->get_encryption_protocol = gpg_get_encryption_protocol;
 	crypto_class->get_key_exchange_protocol = gpg_get_key_exchange_protocol;
+	crypto_class->get_retrieve_session_key = gpg_get_retrieve_session_key;
+	crypto_class->set_retrieve_session_key = gpg_set_retrieve_session_key;
 }
 
 static void
@@ -367,10 +374,10 @@ gpg_ctx_new (GMimeGpgContext *ctx)
 	gpg->recipients = NULL;
 	gpg->cipher = GMIME_CIPHER_ALGO_DEFAULT;
 	gpg->digest = GMIME_DIGEST_ALGO_DEFAULT;
+	gpg->override_session_key = FALSE;
 	gpg->always_trust = FALSE;
 	gpg->use_agent = FALSE;
 	gpg->armor = FALSE;
-	gpg->override_session_key = FALSE;
 	
 	gpg->stdin_fd = -1;
 	gpg->stdout_fd = -1;
@@ -2099,6 +2106,7 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 	gpg_ctx_set_use_agent (gpg, ctx->use_agent);
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
+	
 	if (session_key)
 		gpg->override_session_key = TRUE;
 	
@@ -2404,38 +2412,30 @@ g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent)
 	ctx->use_agent = use_agent;
 }
 
-/**
- * g_mime_gpg_context_get_retrieve_session_key:
- * @ctx: a #GMimeGpgContext
- *
- * Gets the retrieve_session_key flag on the gpg context.
- *
- * Returns: the retrieve_session_key flag on the gpg context, which
- * indicates that GnuPG should attempt to retrieve the session key for
- * any encrypted message.
- **/
-gboolean
-g_mime_gpg_context_get_retrieve_session_key (GMimeGpgContext *ctx)
+static gboolean
+gpg_get_retrieve_session_key (GMimeCryptoContext *context)
 {
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
 	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
 	
 	return ctx->retrieve_session_key;
 }
 
 
-/**
- * g_mime_gpg_context_set_retrieve_session_key:
- * @ctx: a #GMimeGpgContext
- * @retrieve_session_key: retrieve session key flag
- *
- * Sets the @retrieve_session_key flag on the gpg context, which
- * indicates that GnuPG should attempt to retrieve the session key for
- * any encrypted message.
- **/
-void
-g_mime_gpg_context_set_retrieve_session_key (GMimeGpgContext *ctx, gboolean retrieve_session_key)
+static int
+gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key,
+			      GError **err)
 {
-	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
+	if (!GMIME_IS_GPG_CONTEXT (ctx)) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Not a GMimeGpgContext, can't set retrieve_session_key");
+		return -1;
+	}
 	
 	ctx->retrieve_session_key = retrieve_session_key;
+	
+	return 0;
 }

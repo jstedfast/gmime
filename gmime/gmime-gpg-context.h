@@ -74,9 +74,6 @@ void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_
 gboolean g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent);
 
-gboolean g_mime_gpg_context_get_retrieve_session_key (GMimeGpgContext *ctx);
-void g_mime_gpg_context_set_retrieve_session_key (GMimeGpgContext *ctx, gboolean retrieve_session_key);
-
 G_END_DECLS
 
 #endif /* __GMIME_GPG_CONTEXT_H__ */

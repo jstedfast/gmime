@@ -1,3 +1,11 @@
+2016-12-09  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-crypto-context.c (g_mime_crypto_context_set_retrieve_session_key):
+	Moved here from GMimeGpgContext.
+	(g_mime_crypto_context_get_retrieve_session_key): Same.
+
+	Thanks to Daniel Kahn Gillmor for this patch.
+
 2016-12-05  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-multipart-encrypted.c

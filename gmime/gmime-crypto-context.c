@@ -54,6 +54,10 @@ static const char *crypto_get_encryption_protocol (GMimeCryptoContext *ctx);
 
 static const char *crypto_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
+static int crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
+					    GError **err);
+static gboolean crypto_get_retrieve_session_key (GMimeCryptoContext *ctx);
+
 static int crypto_sign (GMimeCryptoContext *ctx, const char *userid,
 			GMimeDigestAlgo digest, GMimeStream *istream,
 			GMimeStream *ostream, GError **err);
@@ -130,6 +134,8 @@ g_mime_crypto_context_class_init (GMimeCryptoContextClass *klass)
 	klass->get_signature_protocol = crypto_get_signature_protocol;
 	klass->get_encryption_protocol = crypto_get_encryption_protocol;
 	klass->get_key_exchange_protocol = crypto_get_key_exchange_protocol;
+	klass->get_retrieve_session_key = crypto_get_retrieve_session_key;
+	klass->set_retrieve_session_key = crypto_set_retrieve_session_key;
 }
 
 static void
@@ -160,6 +166,68 @@ g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswo
 	
 	ctx->request_passwd = request_passwd;
 }
+
+
+static gboolean
+crypto_get_retrieve_session_key (GMimeCryptoContext *ctx)
+{
+	return FALSE;
+}
+
+/**
+ * g_mime_crypto_context_get_retrieve_session_key:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Returns: an indication of whether @ctx is configured to retrieve a
+ * session key during decryption (see g_mime_decrypt_result_get_session_key()).
+ **/
+gboolean
+g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_retrieve_session_key (ctx);
+}
+
+static int
+crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
+				 GError **err)
+{
+	if (!retrieve_session_key)
+		return 0;
+	
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     "Session key retrieval is not supported by this crypto context");
+	
+	return -1;
+}
+
+/**
+ * g_mime_crypto_context_set_retrieve_session_key:
+ * @ctx: a #GMimeCryptoContext
+ * @retrieve_session_key: whether to retrieve session keys during decryption
+ * @err: a #GError
+ *
+ * Configures whether @ctx should produce a session key during future
+ * decryption operations (see
+ * g_mime_decrypt_result_get_session_key()).
+ *
+ * Returns: %0 on success or %-1 on fail.
+ **/
+int
+g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
+						gboolean retrieve_session_key,
+						GError **err)
+{
+	if (!GMIME_IS_CRYPTO_CONTEXT (ctx)) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Not a GMimeCryptoContext, can't set retrieve_session_key");
+		return -1;
+	}
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_retrieve_session_key (ctx, retrieve_session_key, err);
+}
+
 
 
 static GMimeDigestAlgo
@@ -858,7 +926,7 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
  * Get the session_key used for this decryption, if the underlying
  * crypto context is capable of and (configured to) retrieve session
  * keys during decryption.  See, for example,
- * g_mime_gpg_context_set_retrieve_session_key().
+ * g_mime_crypto_context_set_retrieve_session_key().
  *
  * Returns: the session_key digest algorithm used, or NULL if no
  * session key was requested or found.

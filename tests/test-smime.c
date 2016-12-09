@@ -438,6 +438,15 @@ int main (int argc, char *argv[])
 	ctx = g_mime_pkcs7_context_new (request_passwd);
 	g_mime_pkcs7_context_set_always_trust ((GMimePkcs7Context *) ctx, TRUE);
 	
+	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, NULL) == 0) {
+		fprintf (stderr, "GMimePkcs7Context should not have allowed us to set retrieve_session_key to TRUE, since it is not implemented.\n");
+		return EXIT_FAILURE;
+	}
+	if (g_mime_crypto_context_get_retrieve_session_key (ctx)) {
+		fprintf (stderr, "GMimePkcs7Context should have returned FALSE for get_retrieve_session_key.\n");
+		return EXIT_FAILURE;
+	}
+	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {
 		key = g_build_filename (datadir, "gmime-cert.p7", NULL);
