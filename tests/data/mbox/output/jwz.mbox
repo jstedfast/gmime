@@ -1,0 +1,1822 @@
+412: Subject: Star Trek Party!
+message offsets: 0, 177076
+header offsets: 8, 516
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/parallel
+      Content-Type: text/plain
+      Content-Type: audio/basic
+   Content-Type: multipart/mixed
+      Content-Type: image/gif
+      Content-Type: image/gif
+      Content-Type: application/octet-stream
+      Content-Type: application/atomicmail
+   Content-Type: audio/basic
+
+177528: Subject: just testing...
+message offsets: 177076, 312904
+header offsets: 177084, 177632
+From - 
+X-Evolution: None
+Content-Type: audio/basic
+
+313134: Subject: test of =?iso-8859-8?q?=FA=E9=F8=E1=F2?= in mail headers
+message offsets: 312904, 313493
+header offsets: 312912, 313290
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+314119: Subject: MIME & int'l mail
+message offsets: 313493, 319812
+header offsets: 313501, 314146
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+
+320329: Subject: mew-law encoding?
+322066: Subject: mail from Wacky
+message offsets: 319812, 343842
+header offsets: 319820, 320567
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+   Content-Type: message/rfc822
+      Content-Type: multipart/mixed
+         Content-Type: text/plain
+         Content-Type: audio/basic
+         Content-Type: text/plain
+   Content-Type: text/richtext
+
+344433: Subject: Re: MIME example in VIN
+message offsets: 343842, 2108725
+header offsets: 343850, 344567
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+
+2109412: Subject: Re: [95:taka@fxis.fujix] MIME and Header encoding RFC.
+message offsets: 2108725, 2110875
+header offsets: 2108733, 2109748
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+2110993: Subject: Testing Multipart messaging
+2114977: Subject: TV Theme songs
+message offsets: 2110875, 2275729
+header offsets: 2110883, 2111120
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/parallel
+      Content-Type: image/gif
+      Content-Type: audio/basic
+   Content-Type: application/atomicmail
+
+2276326: Subject: Re: near closure on audio stuff
+message offsets: 2275729, 2619750
+header offsets: 2275737, 2276688
+From - 
+X-Evolution: None
+Content-Type: audio/basic
+
+2619792: Subject: A parallel test
+message offsets: 2619750, 2651949
+header offsets: 2619758, 2619891
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/parallel
+      Content-Type: text/plain
+      Content-Type: audio/basic
+
+2652402: Subject: couldn't resist this
+message offsets: 2651949, 2709294
+header offsets: 2651957, 2652513
+From - 
+X-Evolution: None
+Content-Type: image/pbm
+
+2709862: Subject: Re: PS -- Re: mailer error
+message offsets: 2709294, 2741563
+header offsets: 2709302, 2710034
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/xwd
+      Content-Type: text/plain
+
+2742102: Subject: Test MIME message
+message offsets: 2741563, 2747108
+header offsets: 2741571, 2742223
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/plain
+      Content-Type: image/x-xbitmap
+      Content-Type: text/plain
+      Content-Type: image/x-xbitmap
+      Content-Type: text/richtext
+
+2747795: Subject: Re: transparent.el
+message offsets: 2747108, 2749475
+header offsets: 2747116, 2748091
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+2749618: Subject: Please check this out
+message offsets: 2749475, 2749996
+header offsets: 2749483, 2749738
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+2750513: Subject: Re: MIME & int'l mail
+message offsets: 2749996, 2751386
+header offsets: 2750004, 2750660
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+2752349: Subject: AppleDouble example
+message offsets: 2751386, 3183396
+header offsets: 2751394, 2752378
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/appledouble
+      Content-Type: application/applefile
+      Content-Type: application/octet-stream
+
+3184359: Subject: AppleDouble example
+message offsets: 3183396, 3615405
+header offsets: 3183404, 3184388
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/header-set
+      Content-Type: application/applefile
+      Content-Type: application/octet-stream
+
+3615927: Subject: Re: Newsletters & Shows
+message offsets: 3615405, 3616558
+header offsets: 3615413, 3615970
+From - 
+X-Evolution: None
+Content-Type: Message/rfc822
+   Content-Type: text/plain
+
+3616728: Subject: Re: The Once and Future OS
+message offsets: 3616558, 3618691
+header offsets: 3616566, 3617278
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/postscript
+
+3618829: Subject: Returned mail: Host unknown (Name server: maine.link.net: host not found)
+3620298: Subject: Re: 90 Day product Support
+message offsets: 3618691, 3623960
+header offsets: 3618699, 3619237
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+
+3624278: Subject: Re: mailusr1@navstar1 3.0b6gold #1
+3625544: Subject: mailusr1@navstar1 3.0b6gold #1
+message offsets: 3623960, 3625849
+header offsets: 3623968, 3624616
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+
+3626086: Subject: I  DID  IT - I'm a New Entrepreneur  -
+message offsets: 3625849, 3627787
+header offsets: 3625857, 3626366
+From - 
+X-Evolution: None
+Content-Type: Application/octet-stream
+
+3628055: Subject: M2 Screenshots from GO! - 4 Attachments [1/5]
+message offsets: 3627787, 3688112
+header offsets: 3627838, 3628409
+From skyojedi@phoenix.net Mon May  8 15:46:48 1995
+X-Evolution: None
+Content-Type: message/partial
+
+3688380: Subject: M2 Screenshots from GO! - 3dom21.jpg [1/2]
+message offsets: 3688112, 3748540
+header offsets: 3688163, 3688731
+From skyojedi@phoenix.net Mon May  8 15:46:29 1995
+X-Evolution: None
+Content-Type: message/partial
+
+3748993: Subject: another Hebrew test
+message offsets: 3748540, 3749968
+header offsets: 3748548, 3749095
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: text/plain
+
+3750616: Subject: makeitso.gif
+message offsets: 3749968, 3792254
+header offsets: 3749976, 3750722
+From - 
+X-Evolution: None
+Content-Type: image/gif
+
+3793005: Subject: Re: How to see Japanese characters (Re: malformed message)
+message offsets: 3792254, 3801686
+header offsets: 3792262, 3793415
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+
+3803115: Subject: /usr/sbin/sfplay
+message offsets: 3801686, 3909956
+header offsets: 3801694, 3803141
+From - 
+X-Evolution: None
+Content-Type: application/octet-stream
+
+3910053: Subject: Re: attach this, spanky
+3910652: Subject: Re: attach this, spanky
+3911222: Subject: Re: attach this, spanky
+3911764: Subject: attach this, spanky
+3912652: Subject: Test for Bug 4498
+message offsets: 3909956, 3913881
+header offsets: 3909964, 3910562
+From - 
+X-Evolution: None
+Content-Type: message/rfc822
+   Content-Type: message/rfc822
+      Content-Type: message/rfc822
+         Content-Type: multipart/mixed
+            Content-Type: text/plain
+            Content-Type: message/rfc822
+               Content-Type: multipart/mixed
+                  Content-Type: text/plain
+                  Content-Type: text/html
+
+3914445: Subject: A Multi-media test
+3914747: Subject: Image wrapped by /usr/sau/bin/fetch_image
+3992198: Subject: Image wrapped by /usr/sau/bin/fetch_audio
+4095740: Subject: Wrapped by /usr/sau/mgr/demo/misc/annotate
+message offsets: 3913881, 4176063
+header offsets: 3913889, 3914591
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/pbm
+   Content-Type: text/plain
+   Content-Type: audio/basic
+   Content-Type: text/plain
+   Content-Type: application/x-annotate
+   Content-Type: text/plain
+
+4176447: Subject: what's the use
+message offsets: 4176063, 4177729
+header offsets: 4176071, 4176735
+From - 
+X-Evolution: None
+Content-Type: TEXT/PLAIN
+
+4178758: Subject: misdirected chinese mail
+message offsets: 4177729, 4181837
+header offsets: 4177737, 4178792
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/x-xbm
+      Content-Type: text/richtext
+
+4182406: Subject: sending files via email
+message offsets: 4181837, 4187897
+header offsets: 4181845, 4182514
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+
+4188066: Subject: nylon feet by request - ind_111.jpg [1/1]
+message offsets: 4187897, 4199772
+header offsets: 4187905, 4188356
+From - 
+X-Evolution: None
+Content-Type: Image/JPEG
+
+4199932: Subject: I-D ACTION:draft-smith-ipatm-bcast-00.txt
+message offsets: 4199772, 4201647
+header offsets: 4199780, 4200344
+From - 
+X-Evolution: None
+Content-Type: Multipart/Mixed
+   Content-Type: text/plain
+   Content-Type: Multipart/MIXED
+      Content-Type: Message/External-body
+      Content-Type: Message/External-body
+      Content-Type: message/external-body
+      Content-Type: message/external-body
+      Content-Type: message/external-body
+
+4201807: Subject: I-D ACTION:draft-smith-ipatm-bcast-00.txt
+message offsets: 4201647, 4206093
+header offsets: 4201655, 4202219
+From - 
+X-Evolution: None
+Content-Type: Multipart/Mixed
+   Content-Type: text/plain
+   Content-Type: Multipart/Alternative
+      Content-Type: Message/External-body
+      Content-Type: Message/External-body
+
+4206393: Subject: attached image cache test (test 2: inline disposition)
+4207078: Subject: test message one (a message with a text/plain body)
+4210295: Subject: test message two (a message with a text/plain body)
+4210960: Subject: a message which contains a message	(which contains a message, which has a text/plain body)
+4211530: Subject: a message which contains a message	(which has a text/plain body)
+4212041: Subject: a message with a text/plain body
+message offsets: 4206093, 4212327
+header offsets: 4206101, 4206568
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: message/rfc822
+         Content-Type: message/rfc822
+            Content-Type: text/plain
+   Content-Type: text/html
+
+4212626: Subject: attached image cache test (test 1: attachment disposition)
+4213318: Subject: test message one (a message with a text/plain body)
+4216554: Subject: test message two (a message with a text/plain body)
+4217222: Subject: a message which contains a message	(which contains a message, which has a text/plain body)
+4217795: Subject: a message which contains a message	(which has a text/plain body)
+4218309: Subject: a message with a text/plain body
+message offsets: 4212327, 4218599
+header offsets: 4212335, 4212805
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: message/rfc822
+         Content-Type: message/rfc822
+            Content-Type: text/plain
+   Content-Type: text/html
+
+4218703: Subject: posting HTML (was Re: Public News Server)
+4220606: Subject: it's not my damn planet, monkey-boy
+4238868: Subject: msg 1
+4238911: Subject: msg 2
+4238954: Subject: msg 3
+4239115: Subject: msg 5
+4239230: Subject: msg 6
+message offsets: 4218599, 4239313
+header offsets: 4218607, 4219293
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+   Content-Type: text/enriched
+   Content-Type: text/plain
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: multipart/mixed
+         Content-Type: text/html
+         Content-Type: image/unknown
+   Content-Type: image/x-xbitmap
+   Content-Type: image/unknown
+   Content-Type: image/x-xbitmap
+   Content-Type: multipart/digest
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: text/html
+      Content-Type: message/rfc822
+         Content-Type: text/richtext
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+
+4239873: Subject: meta-mail
+4241314: Subject: Image wrapped by /usr/sau/bin/fetch_image
+message offsets: 4239313, 4312776
+header offsets: 4239321, 4239981
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/pbm
+   Content-Type: text/plain
+
+4313590: Subject: Thanks! (part 1 of several)
+message offsets: 4312776, 4562759
+header offsets: 4312784, 4313716
+From - 
+X-Evolution: None
+Content-Type: message/partial
+
+4563579: Subject: MIME example in VIN
+message offsets: 4562759, 4618505
+header offsets: 4562767, 4563694
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+   Content-Type: image/gif
+   Content-Type: text/richtext
+   Content-Type: image/gif
+   Content-Type: text/richtext
+   Content-Type: image/gif
+   Content-Type: text/richtext
+
+4618900: Subject: Car for Sale, 1994 626 LX (NY) - 626lx.jpg [1/1]
+message offsets: 4618505, 4666588
+header offsets: 4618513, 4619331
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: Image/JPEG
+
+4667314: Subject: Welcome to Ishmail
+message offsets: 4666588, 4702359
+header offsets: 4666596, 4667342
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/enriched
+   Content-Type: image/gif
+   Content-Type: text/enriched
+   Content-Type: audio/basic
+   Content-Type: text/enriched
+   Content-Type: message/external-body
+   Content-Type: text/enriched
+   Content-Type: message/external-body
+   Content-Type: text/enriched
+
+4702429: Subject: A multipart with quoted-printable test
+message offsets: 4702359, 4779012
+header offsets: 4702367, 4702527
+From - 
+X-Evolution: None
+Content-Type: Multipart/mixed
+   Content-Type: image/gif
+   Content-Type: text/plain
+
+4779890: Subject: re: more content-charset stuff
+message offsets: 4779012, 4908686
+header offsets: 4779020, 4780234
+From - 
+X-Evolution: None
+Content-Type: MULTIPART/MIXED
+   Content-Type: TEXT/plain
+   Content-Type: AUDIO/basic
+
+4909260: Subject: How MIME looks in AMS (MIME format)
+message offsets: 4908686, 5083312
+header offsets: 4908694, 4909445
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/plain
+      Content-Type: audio/basic
+      Content-Type: text/plain
+      Content-Type: image/x-xwd
+      Content-Type: text/plain
+
+5083877: Subject: Re: I'd like your opinion
+message offsets: 5083312, 5299089
+header offsets: 5083320, 5084005
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+
+5299362: Subject: Re: Happy New Year
+message offsets: 5299089, 5388899
+header offsets: 5299097, 5299488
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+   Content-Type: audio/basic
+   Content-Type: text/plain
+
+5389713: Subject: Thanks! (part 2 of 2)
+message offsets: 5388899, 5440553
+header offsets: 5388907, 5389842
+From - 
+X-Evolution: None
+Content-Type: message/partial
+
+5440729: Subject: Info-Mac Digest V13 #50
+5445777: Subject: [!] HTML directory
+5446535: Subject: [!] Yep -- we're moving files again
+5447432: Subject: [*] AddressBook Updater
+5448243: Subject: [*] ART Music 3.2.1c; converts Finale EPS files
+5448904: Subject: [*] Audio Strip GH 1.2; CD Playing Control Strip Modules
+5449664: Subject: [*] CD Database (FileMaker Pro Database for Compact Discs)
+5451128: Subject: [*] ChangeVer 1.0.1; for CodeWarrior version conversion
+5451704: Subject: [*] Comet 3.1.1, Cornell's MacTCP-based Telnet/TN3270 client
+5452290: Subject: [*] Core Collection 1.7; a collection of XCMDs
+5453113: Subject: [*] Digital Money Developer's Kit
+5454248: Subject: [*] DropURL 1.0; dispatches URLs to appropriate clients
+5455311: Subject: [*] eXpress v1.1.0; access to the Process menu
+5456047: Subject: [*] Fat Free 1.2; removes PPC code
+5456638: Subject: [*] First Lessons In Math v1.7
+5457352: Subject: [*] Golf Picture
+5457674: Subject: [*] Good Times Virus Hoax FAQ
+5458149: Subject: [*] GraficConverter; agraphics utility
+5458980: Subject: [*] Hermes II 3.5; BBS software
+5459239: Subject: [*] HomeMaker 1.0b8 - WWW Personal Home Page Tool
+5460228: Subject: [*] Hot Spot 1.0.1; a tile-placing game
+5460821: Subject: [*] Interactive Museum Tour; North Carolina Museum of Natural Sciences
+5461242: Subject: [*] John's WordPerfect Glossary Macros
+5461804: Subject: [*] Mac*Chat#72/24-Apr-95
+5462863: Subject: [*] MacTravesty; a text utility
+5463313: Subject: [*] Maczine #3--a wonderful e-zine
+5463885: Subject: [*] Marathon_FAQ_2.5
+5464174: Subject: [*] MGSW Library; a Pascal library
+5464513: Subject: [*] namecleaner; cleans up file names
+5465395: Subject: [*] NET/Mac2.3.51; a TCP/IP communications utility
+5466522: Subject: [*] nu2.0clockfix; a Norton's Utilities patcher
+5466937: Subject: [*] O_Pfhortuna1.2; a Marathon map
+5467223: Subject: [*] Oligo Analyzer 1.0 - DNA Oligonucleotide sequence reader and analysis program.
+5468184: Subject: [*] OptiMeme version 2.0.2 updater, a virtual memory utility
+5468776: Subject: [*] Personal Log v2.0 beta 1 PPC
+5470212: Subject: [*] Phatclock; a clock
+5470512: Subject: [*] psych interactive stress buster
+5470974: Subject: [*] Realmz 2.0 to 2.0.1 updater
+5471311: Subject: [*] Resolution XFCN
+5471859: Subject: [*] Scorpio 1.0.1P; a word processor
+5472319: Subject: [*] SerialSpeed 230 Version 1.2; enhances serial speed
+5473121: Subject: [*] Shakespeare Stack --- Comedy_of_Errors-v.1.0.sea.hqx
+5473763: Subject: [*] SMILE the splattering; a frustration reduction tool
+5475129: Subject: [*] Sparkle 2.3.4 A mac-look-and-feel MPEG and QT player and converter
+5475579: Subject: [*] STEREO STORM STRTUP SND
+5475928: Subject: [*] TappyType 2.01; noises for your keyboard
+5476957: Subject: [*] The Talking Multiples Teacher v1.2
+5477829: Subject: [*] TidBITS#274/24-Apr-95
+5478686: Subject: [*] Update of DateView; a Newton app
+5479231: Subject: [*] Wagner's Eudora prefs 1.1 submission
+5480367: Subject: [*] WordPerfect 3.1 PPC Demo - Award Winning Word Processor
+5481014: Subject: [*] WordPerfect3 to PageMaker 5 Import Filter
+5481468: Subject: (Q) PPP modem connect speed?
+5481909: Subject: (Q) Problem with Eudora
+5482701: Subject: (Q) Single Key for Spanish characters in MSWord 5.1
+5485140: Subject: (Q) SLIP and PPP software
+5486070: Subject: [A] CD Inject?
+5486433: Subject: [R] Shutdown problem with 7.5.1
+5487258: Subject: Apollo 1.1x Query
+5489941: Subject: CD-ROM eject buttons
+5491289: Subject: CD-ROM eject buttons
+5493250: Subject: FAT Code Strippers
+5493941: Subject: Hard Drive Problem
+5495419: Subject: hierarchical apple menu
+5497700: Subject: hierarchical apple menu
+5499875: Subject: Info-Mac Digest V13 #48
+5500707: Subject: Mac and Solaris not liking each other?
+5501704: Subject: MacLink Plus 8 (A)
+5502567: Subject: MacX problems.
+5503492: Subject: minicad user group
+5503975: Subject: PS Text Viewer
+5504749: Subject: Q: How to tranfer user data between 2 stand-alone macs ??
+5505285: Subject: Software Distributors
+5505717: Subject: Syquest drives at wonderful prices (Q)
+5506349: Subject: sys 7.5 upgrade
+5506875: Subject: System 7.5.x Rant
+5508328: Subject: System 7.5 patch
+5508778: Subject: What's wrong with System 7.5 Update ?
+message offsets: 5440553, 5509955
+header offsets: 5440561, 5441172
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/digest
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+      Content-Type: message/rfc822
+         Content-Type: text/plain
+
+5510262: Subject: SOLVED: MIME linewrap => A/UX Sendmail 8.6.9 discarding after CRLF.CRLF
+message offsets: 5509955, 5512643
+header offsets: 5509963, 5510770
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+5513207: Subject: problem with MAILCAPS environment variable
+5513582: Subject: Wrapped by /usr/sau/mgr/demo/misc/annotate
+5644497: Subject: Image wrapped by /usr/sau/bin/fetch_image
+5659686: Subject: Image wrapped by /usr/sau/bin/fetch_image
+message offsets: 5512643, 5668008
+header offsets: 5512651, 5513377
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/x-annotate
+   Content-Type: text/plain
+   Content-Type: image/pbm
+   Content-Type: text/plain
+   Content-Type: image/pbm
+   Content-Type: text/plain
+
+5668413: Subject: greek mail
+message offsets: 5668008, 5669108
+header offsets: 5668016, 5668538
+From - 
+X-Evolution: None
+Content-Type: text/richtext
+
+5670223: Subject: Fwd: test of weather
+message offsets: 5669108, 5730567
+header offsets: 5669116, 5670301
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+
+5731095: Subject: Re: Audio
+message offsets: 5730567, 5787039
+header offsets: 5730575, 5731314
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+
+5787313: Subject: Re: Sending a Hebrew message with sendmail
+message offsets: 5787039, 5789879
+header offsets: 5787071, 5788537
+From - Sat Jul 13 10:44:35 1996
+X-Evolution: None
+Content-Type: TEXT/PLAIN
+
+5790561: Subject: [Fwd: Netsurfer Digest: Vol. 02, #14 (HTML)]
+5792231: Subject: Netsurfer Digest: Vol. 02, #14 (HTML)
+message offsets: 5789879, 5816806
+header offsets: 5789887, 5790680
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: text/html
+
+5817075: Subject: Canninefate Settlements Dicovered: Aryan House Boats.....(Summer School)
+message offsets: 5816806, 5839998
+header offsets: 5816814, 5817481
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+
+5840185: Subject: Re: MIME Content-MD5 header
+message offsets: 5839998, 5842389
+header offsets: 5840030, 5840553
+From - Wed Aug 16 17:17:29 1995
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: text/plain
+   Content-Type: text/plain
+
+5843074: Subject: Re:  a response to MIME
+message offsets: 5842389, 6099970
+header offsets: 5842397, 5843190
+From - 
+X-Evolution: None
+Content-Type: audio/basic
+
+6100533: Subject: Re: New richtext generation -- opinions?
+message offsets: 6099970, 6199496
+header offsets: 6099978, 6100829
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/pbm
+
+6199961: Subject: I'd like your opinion
+6201670: Subject: The Simple Times, volume 1, number 3
+message offsets: 6199496, 6282826
+header offsets: 6199504, 6200380
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: multipart/mixed
+         Content-Type: multipart/mixed
+            Content-Type: text/richtext
+            Content-Type: text/richtext
+            Content-Type: text/richtext
+         Content-Type: multipart/mixed
+            Content-Type: text/richtext
+            Content-Type: text/richtext
+            Content-Type: multipart/mixed
+               Content-Type: text/richtext
+               Content-Type: text/richtext
+               Content-Type: text/richtext
+               Content-Type: text/richtext
+               Content-Type: text/richtext
+            Content-Type: multipart/mixed
+               Content-Type: text/richtext
+         Content-Type: multipart/mixed
+            Content-Type: text/richtext
+            Content-Type: text/richtext
+            Content-Type: text/richtext
+
+6283311: Subject: MIME letter with ISO-8859-1
+message offsets: 6282826, 6292836
+header offsets: 6282834, 6283635
+From - 
+X-Evolution: None
+Content-Type: TEXT/PLAIN
+
+6293414: Subject: Re: MIME, how do you pronounce it?
+message offsets: 6292836, 6385848
+header offsets: 6292844, 6293571
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+
+6386338: Subject: Meuf MIME-version
+message offsets: 6385848, 6421276
+header offsets: 6385856, 6386609
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+   Content-Type: image/x-xwd
+   Content-Type: text/richtext
+
+6421374: Subject: Jessica... - jesica.bmp [1/1]
+message offsets: 6421276, 6464496
+header offsets: 6421318, 6421465
+From Cat@Pic.net Mon May  1 19:09:31 1995
+X-Evolution: None
+Content-Type: text/plain
+
+6464667: Subject: Re: Win95, Netscape and File Types
+message offsets: 6464496, 6490368
+header offsets: 6464528, 6465110
+From - Sun Jul 28 17:20:34 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: multipart/alternative
+      Content-Type: text/plain
+      Content-Type: text/html
+   Content-Type: application/octet-stream
+
+6490712: Subject: multipart/alternative 2
+message offsets: 6490368, 6493573
+header offsets: 6490400, 6490805
+From - Sat Jun  1 19:00:50 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/alternative
+      Content-Type: text/plain
+      Content-Type: text/richtext
+      Content-Type: text/enriched
+      Content-Type: text/html
+      Content-Type: text/something-you-dont-know
+   Content-Type: text/plain
+   Content-Type: multipart/alternative
+      Content-Type: text/plain
+      Content-Type: multipart/alternative
+         Content-Type: text/plain
+         Content-Type: text/html
+         Content-Type: text/x-barf
+      Content-Type: application/spankme
+   Content-Type: text/plain
+
+6493917: Subject: multipart/alternative
+message offsets: 6493573, 6844508
+header offsets: 6493605, 6494008
+From - Sat Jun  1 19:00:50 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/alternative
+      Content-Type: text/plain
+      Content-Type: text/html
+      Content-Type: application/postscript
+
+6844718: Subject: Alternative medicine
+6845898: Subject: Re: Alternative Medicine
+message offsets: 6844508, 6846557
+header offsets: 6844516, 6845119
+From - 
+X-Evolution: None
+Content-Type: MULTIPART/MIXED
+   Content-Type: TEXT/PLAIN
+   Content-Type: MESSAGE/RFC822
+      Content-Type: TEXT/PLAIN
+
+6846732: Subject: multipart/related MHTML test case
+message offsets: 6846557, 6858990
+header offsets: 6846565, 6846860
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+6859165: Subject: multipart/related MHTML test case
+message offsets: 6858990, 6871391
+header offsets: 6858998, 6859293
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+6872550: Subject: RE[4]: your generated HTML
+message offsets: 6871391, 6879482
+header offsets: 6871423, 6872925
+From - Mon Jun  3 12:50:27 1996
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/gif
+
+6879832: Subject: Netscape Announces Theme Park Plans
+message offsets: 6879482, 7094538
+header offsets: 6879514, 6879960
+From - Tue Apr  1 16:55:28 1997
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: multipart/related
+      Content-Type: text/html
+      Content-Type: image/gif
+      Content-Type: image/gif
+      Content-Type: image/gif
+      Content-Type: image/gif
+      Content-Type: image/gif
+      Content-Type: image/jpeg
+      Content-Type: image/jpeg
+
+7094712: Subject: multipart/related MHTML test case
+message offsets: 7094538, 7106505
+header offsets: 7094546, 7094840
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7106679: Subject: multipart/related MHTML test case
+message offsets: 7106505, 7118735
+header offsets: 7106513, 7106807
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7118909: Subject: multipart/related MHTML test case
+message offsets: 7118735, 7130874
+header offsets: 7118743, 7119037
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7131048: Subject: multipart/related MHTML test case
+message offsets: 7130874, 7143202
+header offsets: 7130882, 7131176
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7143376: Subject: multipart/related MHTML test case
+message offsets: 7143202, 7155385
+header offsets: 7143210, 7143504
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7155559: Subject: multipart/related MHTML test case
+message offsets: 7155385, 7167783
+header offsets: 7155393, 7155687
+From - 
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/jpeg
+
+7168845: Subject: 3.01 MIME prob message [Fwd: communicator 4.01  a conference problem]
+7170028: Subject: communicator 4.01  a conference problem
+message offsets: 7167783, 7916335
+header offsets: 7167815, 7169048
+From - Mon Aug 18 21:13:21 1997
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: multipart/alternative
+         Content-Type: text/plain
+         Content-Type: multipart/related
+            Content-Type: text/html
+            Content-Type: image/tiff
+
+7917280: Subject: Example of CID linking in a multipart/related MIME message
+message offsets: 7916335, 7964260
+header offsets: 7916367, 7917630
+From - Thu Feb  8 18:49:08 1996
+X-Evolution: None
+Content-Type: multipart/related
+   Content-Type: text/html
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+   Content-Type: image/gif
+
+7964895: Subject: Re: Barbershop MIME
+message offsets: 7964260, 8509626
+header offsets: 7964268, 7965008
+From - 
+X-Evolution: None
+Content-Type: audio/basic
+
+8510397: Subject: More richtext questions/comments
+message offsets: 8509626, 8513125
+header offsets: 8509634, 8510544
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/richtext
+
+8513264: Subject: Re: Layman's explanation for limits on escrowed encryption ...
+message offsets: 8513125, 8515538
+header offsets: 8513157, 8513750
+From - Wed Jun  5 03:37:45 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/pgp-signature
+
+8515791: Subject: Re: New Virus Alert! No
+message offsets: 8515538, 8518092
+header offsets: 8515546, 8516707
+From - 
+X-Evolution: None
+Content-Type: application/pgp
+
+8518277: Subject: Re: Netscape1.1
+message offsets: 8518092, 8519708
+header offsets: 8518100, 8518732
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+8520323: Subject: Barbershop MIME
+message offsets: 8519708, 8523392
+header offsets: 8519716, 8520477
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: message/external-body
+      Content-Type: text/plain
+      Content-Type: message/external-body
+      Content-Type: text/richtext
+
+8524077: Subject: First impressions of metamail release 2
+message offsets: 8523392, 8525601
+header offsets: 8523400, 8524213
+From - 
+X-Evolution: None
+Content-Type: text/richtext
+
+8525674: Subject: GIF image (2/3)
+message offsets: 8525601, 8530433
+header offsets: 8525609, 8525760
+From - 
+X-Evolution: None
+Content-Type: message/partial
+
+8532001: Subject: Re: icons
+message offsets: 8530433, 8543556
+header offsets: 8530441, 8532183
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+      Content-Type: image/x-xwd
+      Content-Type: text/richtext
+
+8544113: Subject: Re: Could you translate (=?iso-8859-8?b?7eXs+SDv4SDp7Oj08A==?=) for me?
+message offsets: 8543556, 8554953
+header offsets: 8543564, 8544291
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+
+8555481: Subject: Audio
+message offsets: 8554953, 8634516
+header offsets: 8554961, 8555606
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: audio/basic
+
+8635086: Subject: Re: Audio
+message offsets: 8634516, 8820550
+header offsets: 8634524, 8635279
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/plain
+
+8821267: Subject: Signed PKCS/MIME Message
+message offsets: 8820550, 8823129
+header offsets: 8820558, 8821394
+From - 
+X-Evolution: None
+Content-Type: application/x-pkcs
+
+8823700: Subject: work space
+8824048: Subject: work file space
+message offsets: 8823129, 8825126
+header offsets: 8823137, 8823766
+From - 
+X-Evolution: None
+Content-Type: MESSAGE/RFC822
+   Content-Type: TEXT/PLAIN
+
+8825546: Subject: Singing today?
+message offsets: 8825126, 8916964
+header offsets: 8825134, 8825578
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: audio/basic
+
+8917235: Subject: An English/Hebrew test
+message offsets: 8916964, 8918605
+header offsets: 8916972, 8917461
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+8919394: Subject: Re: multi-bytes richtext
+message offsets: 8918605, 9013871
+header offsets: 8918613, 8919752
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+   Content-Type: text/plain
+   Content-Type: application/octet-stream
+   Content-Type: application/octet-stream
+   Content-Type: application/octet-stream
+
+9014833: Subject: Multipart/signed message format
+message offsets: 9013871, 9016841
+header offsets: 9013903, 9015055
+From - Thu Apr 25 10:19:58 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9017869: Subject: My encryption certificate for S/MIME testing
+message offsets: 9016841, 9021425
+header offsets: 9016873, 9018014
+From - Fri Nov  8 18:21:51 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-mime
+
+9022385: Subject: My encryption certificate for S/MIME testing
+message offsets: 9021425, 9028449
+header offsets: 9021457, 9022593
+From - Thu Nov 21 13:20:54 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-mime
+
+9028483: Subject: enrypted
+message offsets: 9028449, 9032859
+header offsets: 9028457, 9028664
+From - 
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9033601: Subject: signed frog
+message offsets: 9032859, 9049541
+header offsets: 9032891, 9033790
+From - Wed Dec 11 18:06:10 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: image/jpeg
+   Content-Type: application/x-pkcs7-signature
+
+9050283: Subject: signed frog 2
+message offsets: 9049541, 9067142
+header offsets: 9049573, 9050379
+From - Wed Dec 11 18:06:10 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9067884: Subject: doubly signed frog
+message offsets: 9067142, 9092951
+header offsets: 9067174, 9067985
+From - Wed Dec 11 18:06:10 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9093693: Subject: triply signed frog
+message offsets: 9092951, 9129927
+header offsets: 9092983, 9093794
+From - Wed Dec 11 18:06:10 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9130669: Subject: quadruply signed frog
+message offsets: 9129927, 9182076
+header offsets: 9129959, 9130773
+From - Wed Dec 11 18:06:10 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9183240: Subject: Re: can you send me an encrypted message?
+message offsets: 9182076, 9184931
+header offsets: 9182108, 9183498
+From - Fri Dec 13 15:01:21 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9186078: Subject: Encrypted message
+message offsets: 9184931, 9190709
+header offsets: 9184963, 9186315
+From - Fri Dec 13 15:01:22 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9191620: Subject: Ready for interoperability testing.
+message offsets: 9190709, 9195447
+header offsets: 9190741, 9191950
+From - Mon Apr 22 18:36:56 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9196348: Subject: very cool
+message offsets: 9195447, 9197218
+header offsets: 9195479, 9196555
+From - Thu Dec 19 13:29:25 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9197419: Subject: encrypted and signed
+message offsets: 9197218, 9205239
+header offsets: 9197226, 9197617
+From - 
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9205819: Subject: forwarded encrypted message
+9207219: Subject: Re: can you send me an encrypted message?
+message offsets: 9205239, 9208867
+header offsets: 9205271, 9206053
+From - Fri Mar  7 02:51:22 1997
+X-Evolution: None
+Content-Type: message/rfc822
+   Content-Type: application/x-pkcs7-mime
+
+9209447: Subject: forwarded encrypted message (mult/mixed)
+9211120: Subject: Re: can you send me an encrypted message?
+message offsets: 9208867, 9212798
+header offsets: 9208899, 9209608
+From - Fri Mar  7 02:51:23 1997
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: message/rfc822
+      Content-Type: application/x-pkcs7-mime
+
+9213289: Subject: This is signed
+message offsets: 9212798, 9219507
+header offsets: 9212830, 9213494
+From - Mon Mar 17 17:19:30 1997
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9220374: Subject: testing out some new stuff
+message offsets: 9219507, 9230838
+header offsets: 9219539, 9220600
+From - Mon Mar 24 00:03:37 1997
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9231916: Subject: Re: Obtaining other people's certificates
+message offsets: 9230838, 9235060
+header offsets: 9230870, 9232245
+From - Tue Apr 15 10:42:13 1997
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9235386: Subject: encrypted
+message offsets: 9235060, 9236164
+header offsets: 9235092, 9235639
+From - Wed Apr 16 16:57:13 1997
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9237077: Subject: Re: Hey!
+message offsets: 9236164, 9238421
+header offsets: 9236172, 9237487
+From - 
+X-Evolution: None
+Content-Type: MULTIPART/SIGNED
+   Content-Type: TEXT/PLAIN
+
+9239334: Subject: Re: [Fwd: the one true mail client?]
+9241755: Subject: Re: the one true mail client?
+message offsets: 9238421, 9248590
+header offsets: 9238429, 9239775
+From - 
+X-Evolution: None
+Content-Type: MULTIPART/SIGNED
+   Content-Type: TEXT/PLAIN
+   Content-Type: MULTIPART/MIXED
+      Content-Type: TEXT/PLAIN
+      Content-Type: MESSAGE/RFC822
+         Content-Type: text/plain
+      Content-Type: TEXT/X-VCARD
+   Content-Type: APPLICATION/X-PKCS7-SIGNATURE
+
+9249523: Subject: Deming Software -- ready to go!
+message offsets: 9248590, 9252720
+header offsets: 9248622, 9249836
+From - Sun Apr 28 13:05:40 1996
+X-Evolution: None
+Content-Type: application/x-pkcs7-mime
+
+9253778: Subject: Frontier Technologies testing, here's my cert
+message offsets: 9252720, 9256033
+header offsets: 9252752, 9253909
+From - Tue May 28 11:02:16 1996
+X-Evolution: None
+Content-Type: Application/x-pkcs7-mime
+
+9257010: Subject: Signed Confirmation
+message offsets: 9256033, 9260101
+header offsets: 9256065, 9257142
+From - Mon Jun 10 11:45:25 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9260844: Subject: plase help by returning what gets delivered...
+message offsets: 9260101, 9264051
+header offsets: 9260133, 9261169
+From - Wed Sep 11 08:47:00 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: text/html
+   Content-Type: application/x-pkcs7-signature
+
+9264769: Subject: multipart/signed test
+message offsets: 9264051, 9269687
+header offsets: 9264083, 9265157
+From - Mon Sep 23 13:04:41 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9269972: Subject: A cert from deming software
+message offsets: 9269687, 9274667
+header offsets: 9269695, 9270245
+From - 
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9275513: Subject: S/MIME Cert
+message offsets: 9274667, 9279929
+header offsets: 9274699, 9275862
+From - Fri Oct 18 14:14:37 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/octet-stream
+
+9280920: Subject: Signed SHA1 with VeriSign certification
+message offsets: 9279929, 9285115
+header offsets: 9279961, 9281062
+From - Sat Nov  2 21:56:58 1996
+X-Evolution: None
+Content-Type: multipart/signed
+   Content-Type: text/plain
+   Content-Type: application/x-pkcs7-signature
+
+9285824: Subject: email delivery error
+9287333: Subject: unsubscribe
+message offsets: 9285115, 9287539
+header offsets: 9285147, 9286274
+From - Mon Jul 29 02:26:23 1996
+X-Evolution: None
+Content-Type: multipart/report
+   Content-Type: message/delivery-status
+   Content-Type: message/rfc822
+      Content-Type: text/plain
+
+9287652: Subject: Jumbo Bug Report
+message offsets: 9287539, 9322245
+header offsets: 9287585, 9287749
+From tro@partech.com Fri Apr 28 18:16:52 1995
+X-Evolution: None
+Content-Type: text/plain
+
+9322358: Subject: Jumbo Bug Report
+message offsets: 9322245, 9356944
+header offsets: 9322291, 9322448
+From tro@partech.com Fri Apr 28 18:16:52 1995
+X-Evolution: None
+Content-Type: application/octet-stream
+
+9357490: Subject: Federal EDI - 836 IC open for comments
+message offsets: 9356944, 9358950
+header offsets: 9356952, 9357548
+From - 
+X-Evolution: None
+Content-Type: application/octet-stream
+
+9359545: Subject: re: audio mail
+message offsets: 9358950, 9602013
+header offsets: 9358958, 9359857
+From - 
+X-Evolution: None
+Content-Type: MULTIPART/mixed
+   Content-Type: TEXT/plain
+   Content-Type: AUDIO/basic
+
+9602595: Subject: A picture
+9602734: Subject: Image wrapped by /usr/sau/mgr/demo/mail/bin/fetch_image
+message offsets: 9602013, 9681156
+header offsets: 9602021, 9602614
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: image/pbm
+
+9681229: Subject: GIF image (3/3)
+message offsets: 9681156, 9684877
+header offsets: 9681164, 9681315
+From - 
+X-Evolution: None
+Content-Type: message/partial
+
+9685454: Subject: Re: MIME: Some real world FACTS of life
+message offsets: 9684877, 9715926
+header offsets: 9684885, 9685656
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+      Content-Type: audio/basic
+      Content-Type: text/richtext
+
+9715944: Subject: test of URLs in text/plain messages
+message offsets: 9715926, 9717199
+header offsets: 9715934, 9715989
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+9717355: Subject: uuencoded images
+message offsets: 9717199, 9720491
+header offsets: 9717231, 9717381
+From - Thu Jun 13 23:27:17 1996
+X-Evolution: None
+Content-Type: text/plain
+
+9722038: Subject: RE: problem with relative urls and applets
+message offsets: 9720491, 9727268
+header offsets: 9720523, 9722387
+From - Fri Sep 27 12:03:19 1996
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: application/vcard
+
+9727734: Subject: RFC-XXXX
+message offsets: 9727268, 9844661
+header offsets: 9727276, 9727829
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/pgm
+
+9845374: Subject: Fwd: revised MIME architecture
+message offsets: 9844661, 9870086
+header offsets: 9844669, 9845464
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: message/external-body
+      Content-Type: text/richtext
+      Content-Type: text/SGML
+      Content-Type: text/richtext
+      Content-Type: message/external-body
+      Content-Type: text/richtext
+      Content-Type: image/gif
+      Content-Type: text/richtext
+
+9870899: Subject: Re: MIME & int'l mail
+message offsets: 9870086, 9901797
+header offsets: 9870094, 9871205
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/gif
+   Content-Type: text/plain
+
+9902723: Subject: Object Model Overviews
+message offsets: 9901797, 10086314
+header offsets: 9901805, 9903513
+From - 
+X-Evolution: None
+Content-Type: text/plain
+
+10086878: Subject: A cheap digitizer test
+10087164: Subject: 256 x  Image wrapped by /usr/sau/bin/fetch_video
+message offsets: 10086314, 10171318
+header offsets: 10086322, 10087028
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: image/pgm
+   Content-Type: text/plain
+
+10171867: Subject: Re:  your multipart stuff
+10172175: Subject: Audio wrapped by /usr/sau/mgr/demo/mail/bin/fetch_audio
+10204574: Subject: Image wrapped by /usr/sau/mgr/demo/mail/bin/fetch_image
+10205885: Subject: Wrapped by Annotate
+message offsets: 10171318, 10392020
+header offsets: 10171326, 10171992
+From - 
+X-Evolution: None
+Content-Type: multipart/mixed
+   Content-Type: text/plain
+   Content-Type: audio/basic
+   Content-Type: text/plain
+   Content-Type: image/pbm
+   Content-Type: text/plain
+   Content-Type: application/x-annotate-2
+   Content-Type: text/plain
+
+10392116: Subject: Binary (octet-stream) test
+message offsets: 10392020, 10466951
+header offsets: 10392028, 10392291
+From - 
+X-Evolution: None
+Content-Type: application/octet-stream
+
+10468205: Subject: Another MIME test
+message offsets: 10466951, 10523299
+header offsets: 10466959, 10468232
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/richtext
+      Content-Type: image/xwd
+      Content-Type: text/plain
+      Content-Type: audio/basic
+
+10523372: Subject: GIF image (1/3)
+message offsets: 10523299, 10528263
+header offsets: 10523307, 10523458
+From - 
+X-Evolution: None
+Content-Type: message/partial
+
+10528833: Subject: PS -- Re: RFC-HDR care and feeding
+message offsets: 10528263, 10536315
+header offsets: 10528271, 10529015
+From - 
+X-Evolution: None
+Content-Type: multipart/alternative
+   Content-Type: text/plain
+   Content-Type: multipart/mixed
+      Content-Type: text/plain
+      Content-Type: image/gif
+      Content-Type: text/plain
+
