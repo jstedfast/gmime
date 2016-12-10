@@ -34,7 +34,7 @@
 
 #include "testsuite.h"
 
-#define GPG_PATH "/usr/bin/gpg2"
+#define GPG_PATH "gpg"
 
 extern int verbose;
 

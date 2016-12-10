@@ -416,8 +416,8 @@ testsuite_setup_gpghome (const char *gpg)
 int
 testsuite_destroy_gpghome (void)
 {
-	//if (system ("/bin/rm -rf ./tmp") != 0)
-	//	return EXIT_FAILURE;
+	if (system ("/bin/rm -rf ./tmp") != 0)
+		return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 
