@@ -306,13 +306,11 @@ AS_IF([test x"$glib_native_win32" != xyes], [
 AC_SUBST(ICONV_LIBS)
 
 case $with_libiconv in
-  gnu|no)
+  gnu)
     AC_DEFINE(USE_LIBICONV_GNU, 1, [Using GNU libiconv])
-    AC_DEFINE(ICONV_CONST, [const], [GNU libiconv uses const char**])
     ;;
   native)
     AC_DEFINE(USE_LIBICONV_NATIVE, 1, [Using a native implementation of iconv in a separate library])
-    AC_DEFINE(ICONV_CONST, [], [GNU libiconv uses const char**])
     ;;
 esac
 
