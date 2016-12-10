@@ -615,8 +615,16 @@ gpg_digest_str (GMimeDigestAlgo digest)
 	}
 }
 
+static const char *
+filename (const char *path)
+{
+	const char *slash = strrchr (path, '/');
+	
+	return slash != NULL ? slash + 1 : path;
+}
+
 static char **
-gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***strv)
+gpg_ctx_get_argv (struct _GpgCtx *gpg, const char *path, int status_fd, int secret_fd, char ***strv)
 {
 	const char *digest_str;
 	char **argv, *buf;
@@ -627,13 +635,21 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 	*strv = g_new (char *, 3);
 	
 	args = g_ptr_array_new ();
-	g_ptr_array_add (args, "gpg");
+	g_ptr_array_add (args, (char *) filename (path));
 	
 	g_ptr_array_add (args, "--verbose");
 	g_ptr_array_add (args, "--no-secmem-warning");
 	g_ptr_array_add (args, "--no-greeting");
 	g_ptr_array_add (args, "--no-tty");
-	g_ptr_array_add (args, "--batch");
+	
+	if (!gpg->need_passwd) {
+		/* only use batch mode if we don't intend on using the
+                   interactive --command-fd option to send it the
+                   user's password */
+		g_ptr_array_add (args, "--batch");
+		g_ptr_array_add (args, "--yes");
+	}
+	
 	g_ptr_array_add (args, "--charset=UTF-8");
 	
 	(*strv)[v++] = buf = g_strdup_printf ("--status-fd=%d", status_fd);
@@ -757,7 +773,7 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, int status_fd, int secret_fd, char ***str
 }
 
 static int
-gpg_ctx_op_start (struct _GpgCtx *gpg)
+gpg_ctx_op_start (struct _GpgCtx *gpg, const char *path)
 {
 	int i, maxfd, errnosave, fds[10];
 	char **argv, **strv = NULL;
@@ -776,7 +792,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg)
 			goto exception;
 	}
 	
-	argv = gpg_ctx_get_argv (gpg, fds[7], fds[8], &strv);
+	argv = gpg_ctx_get_argv (gpg, path, fds[7], fds[8], &strv);
 	
 	if (!(gpg->pid = fork ())) {
 		/* child process */
@@ -1904,7 +1920,7 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo diges
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_ostream (gpg, ostream);
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -1966,7 +1982,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	gpg_ctx_set_istream (gpg, istream);
 	gpg_ctx_set_digest (gpg, digest);
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -2039,7 +2055,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	for (i = 0; i < recipients->len; i++)
 		gpg_ctx_add_recipient (gpg, recipients->pdata[i]);
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -2110,7 +2126,7 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 	if (session_key)
 		gpg->override_session_key = TRUE;
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -2179,7 +2195,7 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 	gpg_ctx_set_mode (gpg, GPG_CTX_MODE_IMPORT);
 	gpg_ctx_set_istream (gpg, istream);
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -2238,7 +2254,7 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 		gpg_ctx_add_recipient (gpg, keys->pdata[i]);
 	}
 	
-	if (gpg_ctx_op_start (gpg) == -1) {
+	if (gpg_ctx_op_start (gpg, ctx->path) == -1) {
 		g_set_error (err, GMIME_ERROR, errno,
 			     _("Failed to execute gpg: %s"),
 			     errno ? g_strerror (errno) : _("Unknown"));
@@ -2280,6 +2296,57 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 #endif /* ENABLE_CRYPTOGRAPHY */
 }
 
+int
+_g_mime_get_gpg_version (const char *path)
+{
+	const char vheader[] = "gpg (GnuPG) ";
+	int v, n = 0, version = 0;
+	const char *inptr;
+	char buffer[128];
+	char *command;
+	FILE *gpg;
+	
+	g_return_val_if_fail (path != NULL, -1);
+	
+	command = g_strdup_printf ("%s --version", path);
+	gpg = popen (command, "r");
+	g_free (command);
+	
+	if (gpg == NULL)
+		return -1;
+	
+	inptr = fgets (buffer, 128, gpg);
+	pclose (gpg);
+	
+	if (strncmp (inptr, vheader, sizeof (vheader) - 1) != 0)
+		return -1;
+	
+	inptr += sizeof (vheader) - 1;
+	while (*inptr >= '0' && *inptr <= '9' && n < 4) {
+		v = 0;
+		
+		while (*inptr >= '0' && *inptr <= '9' && (v < 25 || (v == 25 && *inptr < '6'))) {
+			v = (v * 10) + (*inptr - '0');
+			inptr++;
+		}
+		
+		version = (version << 8) + v;
+		n++;
+		
+		if (*inptr != '.')
+			break;
+		
+		inptr++;
+	}
+	
+	if (n == 0)
+		return -1;
+	
+	if (n < 4)
+		version = version << ((4 - n) * 8);
+	
+	return version;
+}
 
 /**
  * g_mime_gpg_context_new:
@@ -2299,6 +2366,8 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *pat
 	
 	ctx = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
 	ctx->path = g_strdup (path ? path : "gpg");
+	
+	ctx->version = _g_mime_get_gpg_version (ctx->path);
 	
 	crypto = (GMimeCryptoContext *) ctx;
 	crypto->request_passwd = request_passwd;

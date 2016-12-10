@@ -36,6 +36,8 @@
 
 #include "testsuite.h"
 
+#define GPG_PATH "/usr/bin/gpg"
+
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -420,7 +422,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome () != 0)
+	if (testsuite_setup_gpghome (GPG_PATH) != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {

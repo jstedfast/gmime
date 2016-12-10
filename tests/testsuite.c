@@ -350,58 +350,6 @@ g_throw (Exception *ex)
 	longjmp (env->env, 1);
 }
 
-static const char *
-get_gpg_version (void)
-{
-	static gboolean found = FALSE;
-	static char version[1024];
-	const char vheader[] = "gpg (GnuPG) ";
-	char *vstring = NULL;
-	size_t vlen = 0;
-	FILE *vpipe;
-	int ret;
-	
-	if (found)
-		return version;
-	
-	if ((vpipe = popen ("gpg --version", "r")) == NULL)
-		return NULL;
-	
-	if (getline (&vstring, &vlen, vpipe) == -1) {
-		free (vstring);
-		pclose (vpipe);
-		return NULL;
-	}
-	
-	pclose (vpipe);
-	
-	if (strncmp (vstring, vheader, sizeof (vheader) - 1)) {
-		free (vstring);
-		return NULL;
-	}
-	
-	strncpy (version, vstring + sizeof (vheader) - 1, sizeof (version) - 1);
-	version[sizeof (version) - 1] = '\0';
-	free (vstring);
-	found = TRUE;
-	
-	return version;
-}
-
-static int
-is_gpg_modern (void)
-{
-	const char *ver = get_gpg_version ();
-
-	if (!ver)
-		return 0;
-	
-	return (ver[0] > '2') ||
-		(ver[0] == '2' &&
-		 ver[1] == '.' &&
-		 ver[2] >= '1');
-}
-
 /* in versions of gpg before 2.1.16, the only mechanism to override
    the session key was --override-session-key, which leaks its
    argument to the process table.
@@ -410,25 +358,21 @@ is_gpg_modern (void)
    gmime uses to be safe.
 */
 
+#define v2_1_16 ((2 << 24) | (1 << 16) | (16 << 8))
+
+int _g_mime_get_gpg_version (const char *gpg);
+
 int
-testsuite_can_safely_override_session_key (void)
+testsuite_can_safely_override_session_key (const char *gpg)
 {
-	const char *ver = get_gpg_version ();
-	
-	if (!ver)
-		return 0;
-	
-	return (ver[0] > '2') ||
-		((ver[0] == '2' && ver[1] == '.' ) &&
-		 ((ver[2] > '1') ||
-		  ((ver[2] == '1' && ver[3] == '.') &&
-		   (atoi(ver+4) >= 16))));
+	return _g_mime_get_gpg_version (gpg) >= v2_1_16;
 }
 
 int
-testsuite_setup_gpghome (void)
+testsuite_setup_gpghome (const char *gpg)
 {
 	const char directive[] = "pinentry-mode loopback\n";
+	char *command;
 	
 	/* reset .gnupg config directory */
 	if (system ("/bin/rm -rf ./tmp") != 0)
@@ -443,10 +387,15 @@ testsuite_setup_gpghome (void)
 	g_unsetenv ("DISPLAY");
 	g_unsetenv ("GPG_TTY");
 	
-	if (system ("gpg --list-keys > /dev/null 2>&1") != 0)
+        command = g_strdup_printf ("%s --list-keys > /dev/null 2>&1", gpg);
+	if (system (command) != 0) {
+		g_free (command);
 		return EXIT_FAILURE;
+	}
 	
-	if (is_gpg_modern ()) {
+	g_free (command);
+	
+	if (_g_mime_get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
 		FILE *fp;
 		
 		if ((fp = fopen ("./tmp/.gnupg/gpg.conf", "w")) == NULL)
@@ -467,8 +416,8 @@ testsuite_setup_gpghome (void)
 int
 testsuite_destroy_gpghome (void)
 {
-	if (system ("/bin/rm -rf ./tmp") != 0)
-		return EXIT_FAILURE;
+	//if (system ("/bin/rm -rf ./tmp") != 0)
+	//	return EXIT_FAILURE;
 	return EXIT_SUCCESS;
 }
 

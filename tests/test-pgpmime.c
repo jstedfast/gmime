@@ -35,6 +35,8 @@
 
 #include "testsuite.h"
 
+#define GPG_PATH "/usr/bin/gpg"
+
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -450,7 +452,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome () != 0)
+	if (testsuite_setup_gpghome (GPG_PATH) != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -465,7 +467,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("PGP/MIME implementation");
 	
-	ctx = g_mime_gpg_context_new (request_passwd, NULL);
+	ctx = g_mime_gpg_context_new (request_passwd, GPG_PATH);
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, &err) != 0) {
 		fprintf (stderr, "Failed to set retrieve_session_key on GMimeGpgContext: %s\n",
@@ -507,7 +509,7 @@ int main (int argc, char *argv[])
 	try {
 		create_encrypted_message (ctx, FALSE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, FALSE, cleartext, stream, NULL);
-		if (testsuite_can_safely_override_session_key ())
+		if (testsuite_can_safely_override_session_key (GPG_PATH))
 			g_free (test_multipart_encrypted (ctx, FALSE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {
@@ -528,7 +530,7 @@ int main (int argc, char *argv[])
 	try {
 		create_encrypted_message (ctx, TRUE, &cleartext, &stream);
 		session_key = test_multipart_encrypted (ctx, TRUE, cleartext, stream, NULL);
-		if (testsuite_can_safely_override_session_key ())
+		if (testsuite_can_safely_override_session_key (GPG_PATH))
 			g_free (test_multipart_encrypted (ctx, TRUE, cleartext, stream, session_key));
 		testsuite_check_passed ();
 	} catch (ex) {

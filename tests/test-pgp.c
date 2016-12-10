@@ -34,6 +34,8 @@
 
 #include "testsuite.h"
 
+#define GPG_PATH "/usr/bin/gpg2"
+
 extern int verbose;
 
 #define v(x) if (verbose > 3) x
@@ -288,7 +290,7 @@ int main (int argc, char **argv)
 	
 	testsuite_init (argc, argv);
 	
-	if (testsuite_setup_gpghome () != 0)
+	if (testsuite_setup_gpghome (GPG_PATH) != 0)
 		return EXIT_FAILURE;
 	
 	for (i = 1; i < argc; i++) {
@@ -303,7 +305,7 @@ int main (int argc, char **argv)
 	
 	testsuite_start ("GnuPG crypto context");
 	
-	ctx = g_mime_gpg_context_new (request_passwd, NULL);
+	ctx = g_mime_gpg_context_new (request_passwd, GPG_PATH);
 	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");

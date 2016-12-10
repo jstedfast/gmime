@@ -45,6 +45,7 @@ typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
  * @use_agent: %TRUE if gpg should use the gpg-agent for requesting passphrases
  * @path: path to gpg
  * @retrieve_session_key: %TRUE if session keys should be retrieved when decrypting
+ * @version: The GnuPG version.
  *
  * A GnuPG crypto context.
  **/
@@ -55,6 +56,7 @@ struct _GMimeGpgContext {
 	gboolean use_agent;
 	char *path;
 	gboolean retrieve_session_key;
+	int version;
 };
 
 struct _GMimeGpgContextClass {

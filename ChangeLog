@@ -1,3 +1,12 @@
+2016-12-10  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): Add back --batch
+	and --yes to fix the unit tests for GnuPG 1.4.x.
+	(gpg_ctx_get_argv): Now also takes a path argument to gpg to use
+	as the first argument instead of hard-coding "gpg".
+	(g_mime_gpg_context_new): Updated to query the GnuPG version in
+	case we need that information (turns out we don't at the moment).
+
 2016-12-09  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-crypto-context.c (g_mime_crypto_context_set_retrieve_session_key):
