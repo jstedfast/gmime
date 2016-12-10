@@ -647,7 +647,6 @@ gpg_ctx_get_argv (struct _GpgCtx *gpg, const char *path, int status_fd, int secr
                    interactive --command-fd option to send it the
                    user's password */
 		g_ptr_array_add (args, "--batch");
-		g_ptr_array_add (args, "--yes");
 	}
 	
 	g_ptr_array_add (args, "--charset=UTF-8");
@@ -785,7 +784,7 @@ gpg_ctx_op_start (struct _GpgCtx *gpg, const char *path)
 	
 	/* don't create the command-fd if we don't need it */
 	if (!(gpg->need_passwd || gpg->sigstream || gpg->override_session_key))
-		maxfd -=2;
+		maxfd -= 2;
 	
 	for (i = 0; i < maxfd; i += 2) {
 		if (pipe (fds + i) == -1)
