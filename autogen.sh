@@ -57,7 +57,7 @@ fi
 	DIE=1
 }
 
-for automake_version in 1.9 1.10 1.11 1.12 1.13 1.14 1.15; do
+for automake_version in 1.9 1.10 1.11 1.12 1.13 1.14 1.15 1.16; do
     if automake-${automake_version} --version < /dev/null > /dev/null 2>&1 ; then
         AUTOMAKE=automake-${automake_version}
         ACLOCAL=aclocal-${automake_version}

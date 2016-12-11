@@ -1,3 +1,13 @@
+2016-12-11  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.21
+
+2016-12-10  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): Don't pass --yes, ever.
+
 2016-12-10  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* gmime/gmime-gpg-context.c (gpg_ctx_get_argv): Add back --batch
