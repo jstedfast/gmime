@@ -1,3 +1,7 @@
+2016-12-12  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* mono/gmime-api.raw: Updated Mono bindings.
+
 2016-12-11  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* README: Bumped version

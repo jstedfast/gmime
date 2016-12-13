@@ -408,9 +408,42 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </virtual_method>
+      <virtual_method name="DecryptSession" cname="decrypt_session">
+        <return-type type="GMimeDecryptResult*" />
+        <parameters>
+          <parameter type="GMimeCryptoContext*" name="ctx" />
+          <parameter type="const-char*" name="session_key" />
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="GetRetrieveSessionKey" cname="get_retrieve_session_key">
+        <return-type type="gboolean" />
+        <parameters>
+          <parameter type="GMimeCryptoContext*" name="ctx" />
+        </parameters>
+      </virtual_method>
+      <virtual_method name="SetRetrieveSessionKey" cname="set_retrieve_session_key">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="GMimeCryptoContext*" name="ctx" />
+          <parameter type="gboolean" name="retrieve_session_key" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </virtual_method>
       <method name="Decrypt" cname="g_mime_crypto_context_decrypt">
         <return-type type="GMimeDecryptResult*" />
         <parameters>
+          <parameter type="GMimeStream*" name="istream" />
+          <parameter type="GMimeStream*" name="ostream" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
+      <method name="DecryptSession" cname="g_mime_crypto_context_decrypt_session">
+        <return-type type="GMimeDecryptResult*" />
+        <parameters>
+          <parameter type="const-char*" name="session_key" />
           <parameter type="GMimeStream*" name="istream" />
           <parameter type="GMimeStream*" name="ostream" />
           <parameter type="GError**" name="err" />
@@ -454,6 +487,9 @@
       <method name="GetKeyExchangeProtocol" cname="g_mime_crypto_context_get_key_exchange_protocol">
         <return-type type="const-char*" />
       </method>
+      <method name="GetRetrieveSessionKey" cname="g_mime_crypto_context_get_retrieve_session_key">
+        <return-type type="gboolean" />
+      </method>
       <method name="GetSignatureProtocol" cname="g_mime_crypto_context_get_signature_protocol">
         <return-type type="const-char*" />
       </method>
@@ -471,6 +507,13 @@
         <return-type type="void" />
         <parameters>
           <parameter type="GMimePasswordRequestFunc" name="request_passwd" />
+        </parameters>
+      </method>
+      <method name="SetRetrieveSessionKey" cname="g_mime_crypto_context_set_retrieve_session_key">
+        <return-type type="int" />
+        <parameters>
+          <parameter type="gboolean" name="retrieve_session_key" />
+          <parameter type="GError**" name="err" />
         </parameters>
       </method>
       <method name="Sign" cname="g_mime_crypto_context_sign">
@@ -543,6 +586,7 @@
       <field name="Signatures" cname="signatures" type="GMimeSignatureList*" />
       <field name="Cipher" cname="cipher" type="GMimeCipherAlgo" />
       <field name="Mdc" cname="mdc" type="GMimeDigestAlgo" />
+      <field name="SessionKey" cname="session_key" type="char*" />
       <method name="GetCipher" cname="g_mime_decrypt_result_get_cipher">
         <return-type type="GMimeCipherAlgo" />
       </method>
@@ -551,6 +595,9 @@
       </method>
       <method name="GetRecipients" cname="g_mime_decrypt_result_get_recipients">
         <return-type type="GMimeCertificateList*" />
+      </method>
+      <method name="GetSessionKey" cname="g_mime_decrypt_result_get_session_key">
+        <return-type type="const-char*" />
       </method>
       <method name="GetSignatures" cname="g_mime_decrypt_result_get_signatures">
         <return-type type="GMimeSignatureList*" />
@@ -575,6 +622,12 @@
         <return-type type="void" />
         <parameters>
           <parameter type="GMimeCertificateList*" name="recipients" />
+        </parameters>
+      </method>
+      <method name="SetSessionKey" cname="g_mime_decrypt_result_set_session_key">
+        <return-type type="void" />
+        <parameters>
+          <parameter type="const-char*" name="session_key" />
         </parameters>
       </method>
       <method name="SetSignatures" cname="g_mime_decrypt_result_set_signatures">
@@ -878,6 +931,8 @@
       <field name="AlwaysTrust" cname="always_trust" type="gboolean" />
       <field name="UseAgent" cname="use_agent" type="gboolean" />
       <field name="Path" cname="path" type="char*" />
+      <field name="RetrieveSessionKey" cname="retrieve_session_key" type="gboolean" />
+      <field name="Version" cname="version" type="int" />
       <method name="GetAlwaysTrust" cname="g_mime_gpg_context_get_always_trust">
         <return-type type="gboolean" />
       </method>
@@ -1281,6 +1336,15 @@
           <parameter type="GError**" name="err" />
         </parameters>
       </method>
+      <method name="DecryptSession" cname="g_mime_multipart_encrypted_decrypt_session">
+        <return-type type="GMimeObject*" />
+        <parameters>
+          <parameter type="GMimeCryptoContext*" name="ctx" />
+          <parameter type="const-char*" name="session_key" />
+          <parameter type="GMimeDecryptResult**" name="result" />
+          <parameter type="GError**" name="err" />
+        </parameters>
+      </method>
       <method name="Encrypt" cname="g_mime_multipart_encrypted_encrypt">
         <return-type type="int" />
         <parameters>
@@ -1403,7 +1467,7 @@
       <method name="GetContentDispositionParameter" cname="g_mime_object_get_content_disposition_parameter">
         <return-type type="const-char*" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
         </parameters>
       </method>
       <method name="GetContentId" cname="g_mime_object_get_content_id">
@@ -1477,7 +1541,7 @@
       <method name="SetContentDispositionParameter" cname="g_mime_object_set_content_disposition_parameter">
         <return-type type="void" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
@@ -1642,6 +1706,9 @@
       </method>
       <method name="GetType" cname="g_mime_part_get_type" shared="true">
         <return-type type="GType" />
+      </method>
+      <method name="IsAttachment" cname="g_mime_part_is_attachment">
+        <return-type type="gboolean" />
       </method>
       <constructor cname="g_mime_part_new" />
       <constructor cname="g_mime_part_new_with_type">
@@ -2273,7 +2340,7 @@
       <method name="GetParameter" cname="g_mime_content_disposition_get_parameter">
         <return-type type="const-char*" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
         </parameters>
       </method>
       <method name="GetParams" cname="g_mime_content_disposition_get_params">
@@ -2281,6 +2348,9 @@
       </method>
       <method name="GetType" cname="g_mime_content_disposition_get_type" shared="true">
         <return-type type="GType" />
+      </method>
+      <method name="IsAttachment" cname="g_mime_content_disposition_is_attachment">
+        <return-type type="gboolean" />
       </method>
       <constructor cname="g_mime_content_disposition_new" />
       <constructor cname="g_mime_content_disposition_new_from_string">
@@ -2297,7 +2367,7 @@
       <method name="SetParameter" cname="g_mime_content_disposition_set_parameter">
         <return-type type="void" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
@@ -2329,7 +2399,7 @@
       <method name="GetParameter" cname="g_mime_content_type_get_parameter">
         <return-type type="const-char*" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
         </parameters>
       </method>
       <method name="GetParams" cname="g_mime_content_type_get_params">
@@ -2371,7 +2441,7 @@
       <method name="SetParameter" cname="g_mime_content_type_set_parameter">
         <return-type type="void" />
         <parameters>
-          <parameter type="const-char*" name="attribute" />
+          <parameter type="const-char*" name="name" />
           <parameter type="const-char*" name="value" />
         </parameters>
       </method>
