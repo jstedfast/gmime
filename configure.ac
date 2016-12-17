@@ -12,7 +12,7 @@ AC_PREREQ(2.54)
 #
 m4_define([gmime_major_version], [2])
 m4_define([gmime_minor_version], [6])
-m4_define([gmime_micro_version], [21])
+m4_define([gmime_micro_version], [22])
 m4_define([gmime_interface_age], [0])
 m4_define([gmime_binary_age],
           [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
@@ -563,8 +563,8 @@ dnl *** Checks for GpgME needed for S/MIME ***
 dnl ******************************************
 AC_ARG_ENABLE([smime], 
 	      AC_HELP_STRING([--enable-smime],
-	      [enable S/MIME support [[default=no]]]),,
-	      [enable_smime="no"])
+	      [enable S/MIME support [[default=yes]]]),,
+	      [enable_smime="yes"])
 
 if test "x$enable_cryptography" != "xyes"; then
    enable_smime="no"

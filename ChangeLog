@@ -1,3 +1,9 @@
+2016-12-17  Jeffrey Stedfast  <fejj@gnome.org>
+
+	* README: Bumped version
+
+	* configure.ac: Bumped version to 2.6.22
+
 2016-12-12  Jeffrey Stedfast  <fejj@gnome.org>
 
 	* mono/gmime-api.raw: Updated Mono bindings.
