@@ -893,7 +893,7 @@ g_mime_decrypt_result_set_mdc (GMimeDecryptResult *result, GMimeDigestAlgo mdc)
  * Returns: the mdc digest algorithm used.
  **/
 GMimeDigestAlgo
-g_mime_decryption_result_get_mdc (GMimeDecryptResult *result)
+g_mime_decrypt_result_get_mdc (GMimeDecryptResult *result)
 {
 	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), GMIME_DIGEST_ALGO_DEFAULT);
 	
@@ -935,7 +935,7 @@ g_mime_decrypt_result_set_session_key (GMimeDecryptResult *result, const char *s
  * session key was requested or found.
  **/
 const char *
-g_mime_decryption_result_get_session_key (GMimeDecryptResult *result)
+g_mime_decrypt_result_get_session_key (GMimeDecryptResult *result)
 {
 	g_return_val_if_fail (GMIME_IS_DECRYPT_RESULT (result), NULL);
 	
