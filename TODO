@@ -6,6 +6,9 @@ tasks are presented in.
 GMime 2.8 / 3.0 Planning:
 =========================
 
+- Drop the use of GMimeHeaderList's stream cache and instead solve
+  this problem by using a per-header cache of the original raw value.
+
 - Fix g_mime_message_[g,s]set_sender() to take/return an
   InternetAddressList to be more consistent with the recipient
   functions as well as being less error-prone.
