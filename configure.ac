@@ -11,8 +11,8 @@ AC_PREREQ(2.54)
 # set gmime_binary_age _and_ gmime_interface_age to 0.
 #
 m4_define([gmime_major_version], [2])
-m4_define([gmime_minor_version], [6])
-m4_define([gmime_micro_version], [23])
+m4_define([gmime_minor_version], [99])
+m4_define([gmime_micro_version], [0])
 m4_define([gmime_interface_age], [0])
 m4_define([gmime_binary_age],
           [m4_eval(100 * gmime_minor_version + gmime_micro_version)])
@@ -20,8 +20,8 @@ m4_define([gmime_version],
           [gmime_major_version.gmime_minor_version.gmime_micro_version])
 
 # the API version is the major.minor since the last API breakage
-m4_define([gmime_api_major], [2])
-m4_define([gmime_api_minor], [6])
+m4_define([gmime_api_major], [3])
+m4_define([gmime_api_minor], [0])
 m4_define([gmime_api_version], [gmime_api_major.gmime_api_minor])
 
 # libtool version related macros
