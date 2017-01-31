@@ -6,6 +6,10 @@ tasks are presented in.
 GMime 2.8 / 3.0 Planning:
 =========================
 
+- Drop GMime-Sharp support? Not sure it's worth maintaining now that
+  I've written MimeKit which will always be a far nicer .NET API
+  than I could make GMime-Sharp.
+
 - Drop the use of GMimeHeaderList's stream cache and instead solve
   this problem by using a per-header cache of the original raw value.
 
