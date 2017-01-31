@@ -38,9 +38,9 @@ static void g_mime_application_pkcs7_mime_init (GMimeApplicationPkcs7Mime *catpa
 static void g_mime_application_pkcs7_mime_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void application_pkcs7_mime_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void application_pkcs7_mime_append_header (GMimeObject *object, const char *header, const char *value);
-static void application_pkcs7_mime_set_header (GMimeObject *object, const char *header, const char *value);
+static void application_pkcs7_mime_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void application_pkcs7_mime_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void application_pkcs7_mime_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static const char *application_pkcs7_mime_get_header (GMimeObject *object, const char *header);
 static gboolean application_pkcs7_mime_remove_header (GMimeObject *object, const char *header);
 static void application_pkcs7_mime_set_content_type (GMimeObject *object, GMimeContentType *content_type);
@@ -105,21 +105,21 @@ g_mime_application_pkcs7_mime_finalize (GObject *object)
 }
 
 static void
-application_pkcs7_mime_prepend_header (GMimeObject *object, const char *header, const char *value)
+application_pkcs7_mime_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
 }
 
 static void
-application_pkcs7_mime_append_header (GMimeObject *object, const char *header, const char *value)
+application_pkcs7_mime_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
 }
 
 static void
-application_pkcs7_mime_set_header (GMimeObject *object, const char *header, const char *value)
+application_pkcs7_mime_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 }
 
 static const char *

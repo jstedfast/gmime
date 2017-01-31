@@ -66,9 +66,9 @@ struct _GMimeObject {
 struct _GMimeObjectClass {
 	GObjectClass parent_class;
 	
-	void         (* prepend_header) (GMimeObject *object, const char *header, const char *value);
-	void         (* append_header)  (GMimeObject *object, const char *header, const char *value);
-	void         (* set_header)     (GMimeObject *object, const char *header, const char *value);
+	void         (* prepend_header) (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+	void         (* append_header)  (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+	void         (* set_header)     (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 	const char * (* get_header)     (GMimeObject *object, const char *header);
 	gboolean     (* remove_header)  (GMimeObject *object, const char *header);
 	
@@ -76,7 +76,7 @@ struct _GMimeObjectClass {
 	
 	char *       (* get_headers)   (GMimeObject *object);
 	
-	ssize_t      (* write_to_stream) (GMimeObject *object, GMimeStream *stream);
+	ssize_t      (* write_to_stream) (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 	
 	void         (* encode) (GMimeObject *object, GMimeEncodingConstraint constraint);
 };

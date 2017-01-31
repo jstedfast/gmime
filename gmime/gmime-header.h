@@ -42,6 +42,14 @@ typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gp
 
 
 /**
+ * GMimeHeader:
+ *
+ * A message/rfc822 header.
+ **/
+typedef struct _GMimeHeader GMimeHeader;
+
+
+/**
  * GMimeHeaderList:
  *
  * A message or mime-part header.
@@ -83,12 +91,16 @@ gboolean g_mime_header_iter_last (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_next (GMimeHeaderIter *iter);
 gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);
 
-/*gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);*/
 const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
+
 gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
 const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);
 
+gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);
+
 gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
+
+ssize_t g_mime_header_iter_write_to_stream (GMimeHeaderIter *iter, GMimeStream *stream);
 
 
 /**
@@ -103,7 +115,6 @@ gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
  * Returns: the number of bytes written or %-1 on error.
  **/
 typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
-
 
 GMimeHeaderList *g_mime_header_list_new (void);
 

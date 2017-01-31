@@ -52,17 +52,21 @@
  * sub-parts).
  **/
 
+extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+
 /* GObject class methods */
 static void g_mime_part_class_init (GMimePartClass *klass);
 static void g_mime_part_init (GMimePart *mime_part, GMimePartClass *klass);
 static void g_mime_part_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void mime_part_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void mime_part_append_header (GMimeObject *object, const char *header, const char *value);
-static void mime_part_set_header (GMimeObject *object, const char *header, const char *value);
+static void mime_part_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void mime_part_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void mime_part_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static gboolean mime_part_remove_header (GMimeObject *object, const char *header);
-static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void mime_part_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimePart class methods */
@@ -216,30 +220,30 @@ process_header (GMimeObject *object, const char *header, const char *value)
 }
 
 static void
-mime_part_prepend_header (GMimeObject *object, const char *header, const char *value)
+mime_part_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_prepend (object->headers, header, value);
+		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
 }
 
 static void
-mime_part_append_header (GMimeObject *object, const char *header, const char *value)
+mime_part_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_append (object->headers, header, value);
+		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
 }
 
 static void
-mime_part_set_header (GMimeObject *object, const char *header, const char *value)
+mime_part_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	if (!process_header (object, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_set (object->headers, header, value);
+		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
 }
 
 static gboolean
@@ -356,22 +360,24 @@ write_content (GMimePart *part, GMimeStream *stream)
 }
 
 static ssize_t
-mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream)
+mime_part_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
 {
 	GMimePart *mime_part = (GMimePart *) object;
 	ssize_t nwritten, total = 0;
 	
-	/* write the content headers */
-	if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* terminate the headers */
-	if (g_mime_stream_write (stream, "\n", 1) == -1)
-		return -1;
-	
-	total++;
+	if (!content_only) {
+		/* write the content headers */
+		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+			return -1;
+		
+		total += nwritten;
+		
+		/* terminate the headers */
+		if (g_mime_stream_write (stream, "\n", 1) == -1)
+			return -1;
+		
+		total++;
+	}
 	
 	if ((nwritten = write_content (mime_part, stream)) == -1)
 		return -1;

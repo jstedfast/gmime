@@ -49,13 +49,16 @@
  **/
 
 
+extern gboolean _g_mime_header_list_has_raw_value (const GMimeHeaderList *headers, const char *name);
+
+
 /* GObject class methods */
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);
 static void g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass);
 static void g_mime_multipart_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void multipart_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /* GMimeMultipart class methods */
@@ -152,7 +155,7 @@ g_mime_multipart_finalize (GObject *object)
 }
 
 static ssize_t
-multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
+multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
 {
 	GMimeMultipart *multipart = (GMimeMultipart *) object;
 	ssize_t nwritten, total = 0;
@@ -160,30 +163,24 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	GMimeObject *part;
 	guint i;
 	
-	/* make sure a boundary is set unless we are writing out a raw
-	 * header (in which case it should already be set... or if
-	 * not, then it's a broken multipart and so we don't want to
-	 * alter it or we'll completely break the output) */
 	boundary = g_mime_object_get_content_type_parameter (object, "boundary");
-	if (!boundary && !g_mime_header_list_get_stream (object->headers)) {
-		g_mime_multipart_set_boundary (multipart, NULL);
-		boundary = g_mime_object_get_content_type_parameter (object, "boundary");
-	}
 	
-	/* write the content headers */
-	if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
-		return -1;
-	
-	total += nwritten;
-	
-	/* write the preface */
-	if (multipart->preface) {
+	if (!content_only) {
+		/* write the content headers */
+		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+			return -1;
+		
+		total += nwritten;
+		
 		/* terminate the headers */
 		if (g_mime_stream_write (stream, "\n", 1) == -1)
 			return -1;
 		
 		total++;
-		
+	}
+	
+	/* write the preface */
+	if (multipart->preface) {
 		if ((nwritten = g_mime_stream_write_string (stream, multipart->preface)) == -1)
 			return -1;
 		
@@ -260,6 +257,8 @@ g_mime_multipart_new (void)
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
 	g_object_unref (content_type);
 	
+	g_mime_multipart_set_boundary (multipart, NULL);
+	
 	return multipart;
 }
 
@@ -285,6 +284,8 @@ g_mime_multipart_new_with_subtype (const char *subtype)
 	content_type = g_mime_content_type_new ("multipart", subtype ? subtype : "mixed");
 	g_mime_object_set_content_type (GMIME_OBJECT (multipart), content_type);
 	g_object_unref (content_type);
+	
+	g_mime_multipart_set_boundary (multipart, NULL);
 	
 	return multipart;
 }

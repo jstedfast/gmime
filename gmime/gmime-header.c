@@ -45,24 +45,13 @@
  * values.
  **/
 
-
-/**
- * GMimeHeader:
- * @next: pointer to the next header
- * @prev: pointer to the previous header
- * @offset: file/stream offset
- * @name: header name
- * @value: header value
- *
- * A message/rfc822 header.
- **/
-
 struct _GMimeHeader {
 	GMimeHeader *next;
 	GMimeHeader *prev;
-	/*gint64 offset;*/
+	gint64 offset;
 	char *name;
 	char *value;
+	char *raw_value;
 };
 
 struct _GMimeHeaderList {
@@ -75,14 +64,11 @@ struct _GMimeHeaderList {
 };
 
 
-static GMimeHeader *g_mime_header_new (const char *name, const char *value, gint64 offset);
-static void g_mime_header_free (GMimeHeader *header);
-
-
 /**
  * g_mime_header_new:
  * @name: header name
  * @value: header value
+ * @raw_value: raw header value
  * @offset: file/stream offset for the start of the header (or %-1 if unknown)
  *
  * Creates a new #GMimeHeader.
@@ -90,14 +76,15 @@ static void g_mime_header_free (GMimeHeader *header);
  * Returns: a new #GMimeHeader with the specified values.
  **/
 static GMimeHeader *
-g_mime_header_new (const char *name, const char *value, gint64 offset)
+g_mime_header_new (const char *name, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeHeader *header;
 	
 	header = g_slice_new (GMimeHeader);
 	header->name = g_strdup (name);
 	header->value = g_strdup (value);
-	/*header->offset = offset;*/
+	header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
+	header->offset = offset;
 	header->next = NULL;
 	header->prev = NULL;
 	
@@ -116,6 +103,7 @@ g_mime_header_free (GMimeHeader *header)
 {
 	g_free (header->name);
 	g_free (header->value);
+	g_free (header->raw_value);
 	
 	g_slice_free (GMimeHeader, header);
 }
@@ -364,7 +352,6 @@ g_mime_header_iter_prev (GMimeHeaderIter *iter)
 }
 
 
-#if 0
 /**
  * g_mime_header_iter_get_offset:
  * @iter: a #GMimeHeaderIter
@@ -383,7 +370,13 @@ g_mime_header_iter_get_offset (GMimeHeaderIter *iter)
 	
 	return iter->cursor->offset;
 }
-#endif
+
+
+void
+_g_mime_header_iter_set_offset (GMimeHeaderIter *iter, gint64 offset)
+{
+	iter->cursor->offset = offset;
+}
 
 
 /**
@@ -430,7 +423,8 @@ g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value)
 	g_free (iter->cursor->value);
 	iter->cursor->value = g_strdup (value);
 	
-	g_mime_header_list_set_stream (iter->hdrlist, NULL);
+	g_free (iter->cursor->raw_value);
+	iter->cursor->raw_value = NULL;
 	
 	return TRUE;
 }
@@ -456,6 +450,18 @@ g_mime_header_iter_get_value (GMimeHeaderIter *iter)
 		return NULL;
 	
 	return iter->cursor->value;
+}
+
+
+const char *
+_g_mime_header_iter_get_raw_value (GMimeHeaderIter *iter)
+{
+	g_return_val_if_fail (iter != NULL, NULL);
+	
+	if (!g_mime_header_iter_is_valid (iter))
+		return NULL;
+	
+	return iter->cursor->raw_value;
 }
 
 
@@ -519,6 +525,71 @@ g_mime_header_iter_remove (GMimeHeaderIter *iter)
 }
 
 
+static ssize_t
+default_writer (GMimeStream *stream, const char *name, const char *value)
+{
+	ssize_t nwritten;
+	char *val;
+	
+	val = g_mime_utils_header_printf ("%s: %s\n", name, value);
+	nwritten = g_mime_stream_write_string (stream, val);
+	g_free (val);
+	
+	return nwritten;
+}
+
+
+static ssize_t
+g_mime_header_write_to_stream (GHashTable *writers, GMimeHeader *header, GMimeStream *stream)
+{
+	ssize_t nwritten, total = 0;
+	GMimeHeaderWriter writer;
+	char *val;
+	
+	if (header->raw_value) {
+		val = g_mime_utils_header_printf ("%s:%s", header->name, header->raw_value);
+		nwritten = g_mime_stream_write_string (stream, val);
+		g_free (val);
+		
+		if (nwritten == -1)
+			return -1;
+		
+		total += nwritten;
+	} else if (header->value) {
+		if (!(writer = g_hash_table_lookup (writers, header->name)))
+			writer = default_writer;
+		
+		if ((nwritten = writer (stream, header->name, header->value)) == -1)
+			return -1;
+		
+		total += nwritten;
+	}
+	
+	return total;
+}
+
+
+/**
+ * g_mime_header_iter_write_to_stream:
+ * @iter: a #GMimeHeaderIter
+ * @stream: a #GMimeStream
+ *
+ * Write the header to a stream.
+ *
+ * Returns: the number of bytes written or %-1 on fail.
+ **/
+ssize_t
+g_mime_header_iter_write_to_stream (GMimeHeaderIter *iter, GMimeStream *stream)
+{
+	g_return_val_if_fail (iter != NULL, -1);
+	
+	if (!g_mime_header_iter_is_valid (iter))
+		return -1;
+	
+	return g_mime_header_write_to_stream (iter->hdrlist->writers, iter->cursor, stream);
+}
+
+
 /**
  * g_mime_header_list_new:
  *
@@ -539,7 +610,6 @@ g_mime_header_list_new (void)
 					  g_mime_strcase_equal);
 	list_init (&headers->list);
 	headers->changed = g_mime_event_new (headers);
-	headers->stream = NULL;
 	headers->version = 0;
 	
 	return headers;
@@ -570,9 +640,6 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 	g_hash_table_destroy (headers->writers);
 	g_hash_table_destroy (headers->hash);
 	
-	if (headers->stream)
-		g_object_unref (headers->stream);
-	
 	g_mime_event_destroy (headers->changed);
 	
 	g_slice_free (GMimeHeaderList, headers);
@@ -601,8 +668,6 @@ g_mime_header_list_clear (GMimeHeaderList *headers)
 	
 	g_hash_table_remove_all (headers->hash);
 	list_init (&headers->list);
-	
-	g_mime_header_list_set_stream (headers, NULL);
 }
 
 
@@ -630,6 +695,29 @@ g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name)
 }
 
 
+gboolean
+_g_mime_header_list_has_raw_value (const GMimeHeaderList *headers, const char *name)
+{
+	const GMimeHeader *header;
+	
+	if (!(header = g_hash_table_lookup (headers->hash, name)))
+		return FALSE;
+	
+	return header->raw_value != NULL;
+}
+
+
+void
+_g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
+{
+	GMimeHeader *header;
+	
+	header = g_mime_header_new (name, value, raw_value, offset);
+	list_prepend (&headers->list, (ListNode *) header);
+	g_hash_table_replace (headers->hash, header->name, header);
+}
+
+
 /**
  * g_mime_header_list_prepend:
  * @headers: a #GMimeHeaderList
@@ -646,16 +734,23 @@ g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name)
 void
 g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value)
 {
-	GMimeHeader *header;
-	
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	header = g_mime_header_new (name, value, -1);
-	list_prepend (&headers->list, (ListNode *) header);
-	g_hash_table_replace (headers->hash, header->name, header);
+	_g_mime_header_list_prepend (headers, name, value, NULL, -1);
+}
+
+
+void
+_g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
+{
+	GMimeHeader *header;
 	
-	g_mime_header_list_set_stream (headers, NULL);
+	header = g_mime_header_new (name, value, raw_value, offset);
+	list_append (&headers->list, (ListNode *) header);
+	
+	if (!g_hash_table_lookup (headers->hash, name))
+		g_hash_table_insert (headers->hash, header->name, header);
 }
 
 
@@ -675,18 +770,10 @@ g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const ch
 void
 g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value)
 {
-	GMimeHeader *header;
-	
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	header = g_mime_header_new (name, value, -1);
-	list_append (&headers->list, (ListNode *) header);
-	
-	if (!g_hash_table_lookup (headers->hash, name))
-		g_hash_table_insert (headers->hash, header->name, header);
-	
-	g_mime_header_list_set_stream (headers, NULL);
+	_g_mime_header_list_append (headers, name, value, NULL, -1);
 }
 
 
@@ -717,6 +804,41 @@ g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
 }
 
 
+void
+_g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset)
+{
+	GMimeHeader *header, *next;
+	
+	if ((header = g_hash_table_lookup (headers->hash, name))) {
+		g_free (header->value);
+		header->value = g_strdup (value);
+		
+		g_free (header->raw_value);
+		header->raw_value = raw_value ? g_strdup (raw_value) : NULL;
+		
+		header->offset = offset;
+		
+		header = header->next;
+		while (header->next) {
+			next = header->next;
+			
+			if (!g_ascii_strcasecmp (header->name, name)) {
+				/* remove/free the header */
+				list_unlink ((ListNode *) header);
+				g_mime_header_free (header);
+				headers->version++;
+			}
+			
+			header = next;
+		}
+	} else {
+		header = g_mime_header_new (name, value, raw_value, offset);
+		list_append (&headers->list, (ListNode *) header);
+		g_hash_table_insert (headers->hash, header->name, header);
+	}
+}
+
+
 /**
  * g_mime_header_list_set:
  * @headers: a #GMimeHeaderList
@@ -738,35 +860,10 @@ g_mime_header_list_get (const GMimeHeaderList *headers, const char *name)
 void
 g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value)
 {
-	GMimeHeader *header, *next;
-	
 	g_return_if_fail (headers != NULL);
 	g_return_if_fail (name != NULL);
 	
-	if ((header = g_hash_table_lookup (headers->hash, name))) {
-		g_free (header->value);
-		header->value = g_strdup (value);
-		
-		header = header->next;
-		while (header->next) {
-			next = header->next;
-			
-			if (!g_ascii_strcasecmp (header->name, name)) {
-				/* remove/free the header */
-				list_unlink ((ListNode *) header);
-				g_mime_header_free (header);
-				headers->version++;
-			}
-			
-			header = next;
-		}
-	} else {
-		header = g_mime_header_new (name, value, -1);
-		list_append (&headers->list, (ListNode *) header);
-		g_hash_table_insert (headers->hash, header->name, header);
-	}
-	
-	g_mime_header_list_set_stream (headers, NULL);
+	_g_mime_header_list_set (headers, name, value, NULL, -1);
 }
 
 
@@ -809,8 +906,6 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 	/* remove/free the header */
 	list_unlink ((ListNode *) header);
 	g_mime_header_free (header);
-	
-	g_mime_header_list_set_stream (headers, NULL);
 	
 	return TRUE;
 }
@@ -870,20 +965,6 @@ g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFu
 }
 
 
-static ssize_t
-default_writer (GMimeStream *stream, const char *name, const char *value)
-{
-	ssize_t nwritten;
-	char *val;
-	
-	val = g_mime_utils_header_printf ("%s: %s\n", name, value);
-	nwritten = g_mime_stream_write_string (stream, val);
-	g_free (val);
-	
-	return nwritten;
-}
-
-
 /**
  * g_mime_header_list_write_to_stream:
  * @headers: a #GMimeHeaderList
@@ -897,31 +978,21 @@ ssize_t
 g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream)
 {
 	ssize_t nwritten, total = 0;
-	GMimeHeaderWriter writer;
 	GHashTable *writers;
 	GMimeHeader *header;
+	char *val;
 	
 	g_return_val_if_fail (headers != NULL, -1);
 	g_return_val_if_fail (stream != NULL, -1);
-	
-	if (headers->stream) {
-		g_mime_stream_reset (headers->stream);
-		return g_mime_stream_write_to_stream (headers->stream, stream);
-	}
 	
 	header = (GMimeHeader *) headers->list.head;
 	writers = headers->writers;
 	
 	while (header->next) {
-		if (header->value) {
-			if (!(writer = g_hash_table_lookup (writers, header->name)))
-				writer = default_writer;
-			
-			if ((nwritten = writer (stream, header->name, header->value)) == -1)
-				return -1;
-			
-			total += nwritten;
-		}
+		if ((nwritten = g_mime_header_write_to_stream (writers, header, stream)) == -1)
+			return -1;
+		
+		total += nwritten;
 		
 		header = header->next;
 	}
@@ -951,14 +1022,7 @@ g_mime_header_list_to_string (const GMimeHeaderList *headers)
 	array = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), array);
-	
-	if (headers->stream) {
-		g_mime_stream_reset (headers->stream);
-		g_mime_stream_write_to_stream (headers->stream, stream);
-	} else {
-		g_mime_header_list_write_to_stream (headers, stream);
-	}
-	
+	g_mime_header_list_write_to_stream (headers, stream);
 	g_object_unref (stream);
 	
 	g_byte_array_append (array, (unsigned char *) "", 1);
@@ -991,52 +1055,6 @@ g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, 
 	
 	if (writer)
 		g_hash_table_insert (headers->writers, g_strdup (name), writer);
-}
-
-
-
-/**
- * g_mime_header_list_set_stream:
- * @headers: a #GMimeHeaderList
- * @stream: a #GMimeStream
- *
- * Set the raw header stream.
- **/
-void
-g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream)
-{
-	g_return_if_fail (stream == NULL || GMIME_IS_STREAM (stream));
-	g_return_if_fail (headers != NULL);
-	
-	if (headers->stream == stream)
-		return;
-	
-	if (stream)
-		g_object_ref (stream);
-	
-	if (headers->stream)
-		g_object_unref (headers->stream);
-	
-	headers->stream = stream;
-	
-	g_mime_event_emit (headers->changed, NULL);
-}
-
-
-/**
- * g_mime_header_list_get_stream:
- * @headers: a #GMimeHeaderList
- *
- * Gets the raw stream representing @headers.
- *
- * Returns: (transfer none): a #GMimeStream if set or %NULL otherwise.
- **/
-GMimeStream *
-g_mime_header_list_get_stream (GMimeHeaderList *headers)
-{
-	g_return_val_if_fail (headers != NULL, NULL);
-	
-	return headers->stream;
 }
 
 

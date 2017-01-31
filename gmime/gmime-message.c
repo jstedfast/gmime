@@ -49,6 +49,16 @@
  * A #GMimeMessage represents an rfc822 message.
  **/
 
+extern void _g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+
+extern void _g_mime_header_iter_set_offset (GMimeHeaderIter *iter, gint64 offset);
+
+extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+
 extern GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
 extern char *_g_mime_utils_unstructured_header_fold (const char *field, const char *value);
 extern char *_g_mime_utils_structured_header_fold (const char *field, const char *value);
@@ -58,13 +68,13 @@ static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass
 static void g_mime_message_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void message_append_header (GMimeObject *object, const char *header, const char *value);
-static void message_set_header (GMimeObject *object, const char *header, const char *value);
+static void message_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void message_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void message_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static const char *message_get_header (GMimeObject *object, const char *header);
 static gboolean message_remove_header (GMimeObject *object, const char *header);
 static char *message_get_headers (GMimeObject *object);
-static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 /*static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);*/
@@ -152,13 +162,6 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 }
 
 static void
-mime_part_headers_changed (GMimeHeaderList *headers, gpointer args, GMimeMessage *message)
-{
-	/* clear the message's header stream */
-	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
-}
-
-static void
 connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
 {
 	InternetAddressList *list;
@@ -241,7 +244,6 @@ static void
 g_mime_message_finalize (GObject *object)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
-	GMimeEvent *changed;
 	guint i;
 	
 	g_free (message->from);
@@ -260,11 +262,8 @@ g_mime_message_finalize (GObject *object)
 	g_free (message->message_id);
 	
 	/* unref child mime part */
-	if (message->mime_part) {
-		changed = _g_mime_header_list_get_changed_event (message->mime_part->headers);
-		g_mime_event_remove (changed, (GMimeEventCallback) mime_part_headers_changed, message);
+	if (message->mime_part)
 		g_object_unref (message->mime_part);
-	}
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -759,7 +758,7 @@ message_add_recipients_from_string (GMimeMessage *message, int action, GMimeReci
 static gboolean
 process_header (GMimeObject *object, int action, const char *header, const char *value)
 {
-	GMimeMessage *message = (GMimeMessage *) object;	
+	GMimeMessage *message = (GMimeMessage *) object;
 	InternetAddressList *addrlist;
 	time_t date;
 	int offset;
@@ -829,66 +828,57 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 }
 
 static void
-message_prepend_header (GMimeObject *object, const char *header, const char *value)
+message_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
 	/* Content-* headers don't belong on the message, they belong on the part. */
 	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (message->mime_part)
-			g_mime_object_prepend_header (message->mime_part, header, value);
+			_g_mime_object_prepend_header (message->mime_part, header, value, raw_value, offset);
 		return;
 	}
 	
 	if (!process_header (object, PREPEND, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_prepend (object->headers, header, value);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
 }
 
 static void
-message_append_header (GMimeObject *object, const char *header, const char *value)
+message_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
 	/* Content-* headers don't belong on the message, they belong on the part. */
 	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (message->mime_part)
-			g_mime_object_append_header (message->mime_part, header, value);
+			_g_mime_object_append_header (message->mime_part, header, value, raw_value, offset);
 		return;
 	}
 	
 	if (!process_header (object, APPEND, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_append (object->headers, header, value);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
 }
 
 static void
-message_set_header (GMimeObject *object, const char *header, const char *value)
+message_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	
 	/* Content-* headers don't belong on the message, they belong on the part. */
 	if (!g_ascii_strncasecmp ("Content-", header, 8)) {
 		if (message->mime_part)
-			g_mime_object_set_header (message->mime_part, header, value);
+			_g_mime_object_set_header (message->mime_part, header, value, raw_value, offset);
 		return;
 	}
 	
 	if (!process_header (object, SET, header, value))
-		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+		GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 	else
-		g_mime_header_list_set (object->headers, header, value);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
 }
 
 static const char *
@@ -978,21 +968,79 @@ message_remove_header (GMimeObject *object, const char *header)
 		break;
 	}
 	
-	if (GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header)) {
-		if (message->mime_part)
-			g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+	return GMIME_OBJECT_CLASS (parent_class)->remove_header (object, header);
+}
+
+
+static ssize_t
+write_headers_to_stream (GMimeObject *object, GMimeStream *stream)
+{
+	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeObject *mime_part = message->mime_part;
+	ssize_t nwritten, total = 0;
+	GMimeHeaderIter mesg, body;
+	
+	if (!g_mime_header_list_get_iter (object->headers, &mesg))
+		return -1;
+	
+	if (message->mime_part && g_mime_header_list_get_iter (mime_part->headers, &body)) {
+		while (g_mime_header_iter_is_valid (&mesg) && g_mime_header_iter_is_valid (&body)) {
+			gint64 mesg_offset, body_offset;
+			
+			if ((body_offset = g_mime_header_iter_get_offset (&body)) < 0)
+				break;
+			
+			mesg_offset = g_mime_header_iter_get_offset (&mesg);
+			
+			if (mesg_offset >= 0 && mesg_offset < body_offset) {
+				if ((nwritten = g_mime_header_iter_write_to_stream (&mesg, stream)) == -1)
+					return -1;
+				
+				total += nwritten;
+				
+				if (!g_mime_header_iter_next (&mesg))
+					break;
+			} else {
+				if ((nwritten = g_mime_header_iter_write_to_stream (&body, stream)) == -1)
+					return -1;
+				
+				total += nwritten;
+				
+				if (!g_mime_header_iter_next (&body))
+					break;
+			}
+		}
 		
-		return TRUE;
+		while (g_mime_header_iter_is_valid (&mesg)) {
+			if ((nwritten = g_mime_header_iter_write_to_stream (&mesg, stream)) == -1)
+				return -1;
+			
+			total += nwritten;
+			
+			if (!g_mime_header_iter_next (&mesg))
+				break;
+		}
+		
+		while (g_mime_header_iter_is_valid (&body)) {
+			if ((nwritten = g_mime_header_iter_write_to_stream (&body, stream)) == -1)
+				return -1;
+			
+			total += nwritten;
+			
+			if (!g_mime_header_iter_next (&body))
+				break;
+		}
+		
+		return total;
 	}
 	
-	return FALSE;
+	return g_mime_header_list_write_to_stream (object->headers, stream);
 }
 
 
 static char *
 message_get_headers (GMimeObject *object)
 {
-	GMimeMessage *message = (GMimeMessage *) object;
 	GMimeStream *stream;
 	GByteArray *ba;
 	char *str;
@@ -1000,20 +1048,7 @@ message_get_headers (GMimeObject *object)
 	ba = g_byte_array_new ();
 	stream = g_mime_stream_mem_new ();
 	g_mime_stream_mem_set_byte_array (GMIME_STREAM_MEM (stream), ba);
-	
-	if (message->mime_part && g_mime_header_list_get_stream (message->mime_part->headers)) {
-		/* if the mime part has raw headers, then it contains the message headers as well */
-		g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
-	} else {
-		g_mime_header_list_write_to_stream (object->headers, stream);
-		if (message->mime_part) {
-			if (g_mime_object_get_header (message->mime_part, "Content-Type") &&
-			    !g_mime_header_list_get (object->headers, "MIME-Version"))
-				g_mime_stream_write_string (stream, "MIME-Version: 1.0\n");
-			g_mime_header_list_write_to_stream (message->mime_part->headers, stream);
-		}
-	}
-	
+	write_headers_to_stream (object, stream);
 	g_object_unref (stream);
 	g_byte_array_append (ba, (unsigned char *) "", 1);
 	str = (char *) ba->data;
@@ -1023,39 +1058,29 @@ message_get_headers (GMimeObject *object)
 }
 
 static ssize_t
-message_write_to_stream (GMimeObject *object, GMimeStream *stream)
+message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
 	ssize_t nwritten, total = 0;
 	
-	if (message->mime_part) {
-		if (!g_mime_header_list_get_stream (message->mime_part->headers)) {
-			if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
-				return -1;
-			
-			total += nwritten;
-			
-			if (!g_mime_header_list_get (object->headers, "MIME-Version")) {
-				if ((nwritten = g_mime_stream_write_string (stream, "MIME-Version: 1.0\n")) == -1)
-					return -1;
-				
-				total += nwritten;
-			}
-		}
-		
-		if ((nwritten = g_mime_object_write_to_stream (message->mime_part, stream)) == -1)
-			return -1;
-	} else {
-		if ((nwritten = g_mime_header_list_write_to_stream (object->headers, stream)) == -1)
+	if (!content_only) {
+		if ((nwritten = write_headers_to_stream (object, stream)) == -1)
 			return -1;
 		
 		total += nwritten;
 		
 		if ((nwritten = g_mime_stream_write (stream, "\n", 1)) == -1)
 			return -1;
+		
+		total += nwritten;
 	}
 	
-	total += nwritten;
+	if (message->mime_part) {
+		if ((nwritten = GMIME_OBJECT_GET_CLASS (object)->write_to_stream (message->mime_part, stream, TRUE)) == -1)
+			return -1;
+		
+		total += nwritten;
+	}
 	
 	return total;
 }
@@ -1135,9 +1160,6 @@ g_mime_message_set_sender (GMimeMessage *message, const char *sender)
 		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "From", "");
 		message->from = NULL;
 	}
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1192,9 +1214,6 @@ g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
 		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", "");
 		message->reply_to = NULL;
 	}
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1234,9 +1253,6 @@ sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
 		/* list should never be NULL... */
 		g_mime_header_list_set (object->headers, name, NULL);
 	}
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 static void
@@ -1283,11 +1299,6 @@ g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, co
 	ia = internet_address_mailbox_new (name, addr);
 	internet_address_list_add (recipients, ia);
 	g_object_unref (ia);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
-	
-	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
 }
 
 
@@ -1368,9 +1379,6 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	encoded = g_mime_utils_header_encode_text (message->subject);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", encoded);
 	g_free (encoded);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1414,9 +1422,6 @@ g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset)
 	str = g_mime_utils_header_format_date (date, tz_offset);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Date", str);
 	g_free (str);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1483,9 +1488,6 @@ g_mime_message_set_date_as_string (GMimeMessage *message, const char *str)
 	buf = g_mime_utils_header_format_date (date, tz_offset);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Date", buf);
 	g_free (buf);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1510,9 +1512,6 @@ g_mime_message_set_message_id (GMimeMessage *message, const char *message_id)
 	msgid = g_strdup_printf ("<%s>", message_id);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Message-Id", msgid);
 	g_free (msgid);
-	
-	if (message->mime_part)
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
 }
 
 
@@ -1563,7 +1562,7 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
-	GMimeEvent *changed;
+	GMimeHeaderIter iter;
 	
 	g_return_if_fail (mime_part == NULL || GMIME_IS_OBJECT (mime_part));
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
@@ -1571,22 +1570,23 @@ g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 	if (message->mime_part == mime_part)
 		return;
 	
-	if (message->mime_part) {
-		changed = _g_mime_header_list_get_changed_event (message->mime_part->headers);
-		g_mime_event_remove (changed, (GMimeEventCallback) mime_part_headers_changed, message);
-		
-		g_mime_header_list_set_stream (message->mime_part->headers, NULL);
+	if (message->mime_part)
 		g_object_unref (message->mime_part);
-	}
 	
 	if (mime_part) {
-		changed = _g_mime_header_list_get_changed_event (mime_part->headers);
-		g_mime_header_list_set_stream (mime_part->headers, NULL);
-		g_mime_event_add (changed, (GMimeEventCallback) mime_part_headers_changed, message);
+		GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
+		
+		if (!g_mime_header_list_contains (headers, "MIME-Version"))
+			g_mime_header_list_append (headers, "MIME-Version", "1.0");
+		
+		if (g_mime_header_list_get_iter (mime_part->headers, &iter)) {
+			do {
+				_g_mime_header_iter_set_offset (&iter, -1);
+			} while (g_mime_header_iter_next (&iter));
+		}
+		
 		g_object_ref (mime_part);
 	}
-	
-	g_mime_header_list_set_stream (((GMimeObject *) message)->headers, NULL);
 	
 	message->mime_part = mime_part;
 }

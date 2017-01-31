@@ -55,6 +55,10 @@ struct _subtype_bucket {
 	GType object_type;
 };
 
+extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
+
 static void _g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition);
 void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
@@ -62,14 +66,14 @@ static void g_mime_object_class_init (GMimeObjectClass *klass);
 static void g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass);
 static void g_mime_object_finalize (GObject *object);
 
-static void object_prepend_header (GMimeObject *object, const char *name, const char *value);
-static void object_append_header (GMimeObject *object, const char *name, const char *value);
-static void object_set_header (GMimeObject *object, const char *name, const char *value);
+static void object_prepend_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
+static void object_append_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
+static void object_set_header (GMimeObject *object, const char *name, const char *value, const char *raw_value, gint64 offset);
 static const char *object_get_header (GMimeObject *object, const char *name);
 static gboolean object_remove_header (GMimeObject *object, const char *name);
 static void object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 static char *object_get_headers (GMimeObject *object);
-static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream);
+static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
 static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
@@ -733,7 +737,7 @@ static char *content_headers[] = {
 };
 
 static gboolean
-process_header (GMimeObject *object, const char *header, const char *value)
+process_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
@@ -766,16 +770,23 @@ process_header (GMimeObject *object, const char *header, const char *value)
 		return FALSE;
 	}
 	
-	g_mime_header_list_set (object->headers, header, value);
+	_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
 	
 	return TRUE;
 }
 
 static void
-object_prepend_header (GMimeObject *object, const char *header, const char *value)
+object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	if (!process_header (object, header, value))
-		g_mime_header_list_prepend (object->headers, header, value);
+	if (!process_header (object, header, value, raw_value, offset))
+		_g_mime_header_list_prepend (object->headers, header, value, raw_value, offset);
+}
+
+
+void
+_g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+{
+	GMIME_OBJECT_GET_CLASS (object)->prepend_header (object, header, value, raw_value, offset);
 }
 
 
@@ -784,6 +795,8 @@ object_prepend_header (GMimeObject *object, const char *header, const char *valu
  * @object: a #GMimeObject
  * @header: header name
  * @value: header value
+ * @raw_value: raw header value
+ * @offset: header offset
  *
  * Prepends a raw, unprocessed header to the MIME object.
  *
@@ -797,14 +810,21 @@ g_mime_object_prepend_header (GMimeObject *object, const char *header, const cha
 	g_return_if_fail (header != NULL);
 	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->prepend_header (object, header, value);
+	GMIME_OBJECT_GET_CLASS (object)->prepend_header (object, header, value, NULL, 0);
 }
 
 static void
-object_append_header (GMimeObject *object, const char *header, const char *value)
+object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	if (!process_header (object, header, value))
-		g_mime_header_list_append (object->headers, header, value);
+	if (!process_header (object, header, value, raw_value, offset))
+		_g_mime_header_list_append (object->headers, header, value, raw_value, offset);
+}
+
+
+void
+_g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+{
+	GMIME_OBJECT_GET_CLASS (object)->append_header (object, header, value, raw_value, offset);
 }
 
 
@@ -826,15 +846,22 @@ g_mime_object_append_header (GMimeObject *object, const char *header, const char
 	g_return_if_fail (header != NULL);
 	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->append_header (object, header, value);
+	GMIME_OBJECT_GET_CLASS (object)->append_header (object, header, value, NULL, 0);
 }
 
 
 static void
-object_set_header (GMimeObject *object, const char *header, const char *value)
+object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
-	if (!process_header (object, header, value))
-		g_mime_header_list_set (object->headers, header, value);
+	if (!process_header (object, header, value, raw_value, offset))
+		_g_mime_header_list_set (object->headers, header, value, raw_value, offset);
+}
+
+
+void
+_g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
+{
+	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value, raw_value, offset);
 }
 
 
@@ -856,7 +883,7 @@ g_mime_object_set_header (GMimeObject *object, const char *header, const char *v
 	g_return_if_fail (header != NULL);
 	g_return_if_fail (value != NULL);
 	
-	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value);
+	GMIME_OBJECT_GET_CLASS (object)->set_header (object, header, value, NULL, 0);
 }
 
 
@@ -971,7 +998,7 @@ g_mime_object_get_headers (GMimeObject *object)
 
 
 static ssize_t
-object_write_to_stream (GMimeObject *object, GMimeStream *stream)
+object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
 {
 	return -1;
 }
@@ -992,7 +1019,7 @@ g_mime_object_write_to_stream (GMimeObject *object, GMimeStream *stream)
 	g_return_val_if_fail (GMIME_IS_OBJECT (object), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
-	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, stream);
+	return GMIME_OBJECT_GET_CLASS (object)->write_to_stream (object, stream, FALSE);
 }
 
 

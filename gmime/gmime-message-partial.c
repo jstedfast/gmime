@@ -41,6 +41,10 @@
  * A #GMimeMessagePartial represents the message/partial MIME part.
  **/
 
+extern const char *_g_mime_header_iter_get_raw_value (GMimeHeaderIter *iter);
+
+extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+
 
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);
@@ -48,9 +52,9 @@ static void g_mime_message_partial_init (GMimeMessagePartial *catpart, GMimeMess
 static void g_mime_message_partial_finalize (GObject *object);
 
 /* GMimeObject class methods */
-static void message_partial_prepend_header (GMimeObject *object, const char *header, const char *value);
-static void message_partial_append_header (GMimeObject *object, const char *header, const char *value);
-static void message_partial_set_header (GMimeObject *object, const char *header, const char *value);
+static void message_partial_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void message_partial_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
+static void message_partial_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 static const char *message_partial_get_header (GMimeObject *object, const char *header);
 static gboolean message_partial_remove_header (GMimeObject *object, const char *header);
 static void message_partial_set_content_type (GMimeObject *object, GMimeContentType *content_type);
@@ -121,33 +125,33 @@ g_mime_message_partial_finalize (GObject *object)
 }
 
 static void
-message_partial_prepend_header (GMimeObject *object, const char *header, const char *value)
+message_partial_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
 	if (!g_ascii_strcasecmp ("Content-MD5", header))
 		return;
 	
-	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->prepend_header (object, header, value, raw_value, offset);
 }
 
 static void
-message_partial_append_header (GMimeObject *object, const char *header, const char *value)
+message_partial_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
 	if (!g_ascii_strcasecmp ("Content-MD5", header))
 		return;
 	
-	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->append_header (object, header, value, raw_value, offset);
 }
 
 static void
-message_partial_set_header (GMimeObject *object, const char *header, const char *value)
+message_partial_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
 	/* RFC 1864 states that you cannot set a Content-MD5 on a message part */
 	if (!g_ascii_strcasecmp ("Content-MD5", header))
 		return;
 	
-	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value);
+	GMIME_OBJECT_CLASS (parent_class)->set_header (object, header, value, raw_value, offset);
 }
 
 static const char *
@@ -372,10 +376,11 @@ g_mime_message_partial_reconstruct_message (GMimeMessagePartial **partials, size
 static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
-	const char *name, *value;
+	const char *name, *value, *raw_value;
 	GMimeMessage *message;
 	GMimeHeaderList *list;
 	GMimeHeaderIter iter;
+	gint64 offset;
 	
 	message = g_mime_message_new (FALSE);
 	
@@ -385,7 +390,10 @@ message_partial_message_new (GMimeMessage *base)
 		do {
 			name = g_mime_header_iter_get_name (&iter);
 			value = g_mime_header_iter_get_value (&iter);
-			g_mime_object_append_header ((GMimeObject *) message, name, value);
+			raw_value = _g_mime_header_iter_get_raw_value (&iter);
+			offset = g_mime_header_iter_get_offset (&iter);
+			
+			_g_mime_object_append_header ((GMimeObject *) message, name, value, raw_value, offset);
 		} while (g_mime_header_iter_next (&iter));
 	}
 	
