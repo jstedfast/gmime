@@ -37,12 +37,6 @@ GMime 2.8 / 3.0 Planning:
   awkward since it depends on the content being text and also encoded
   in UTF-8... [ CONSIDERING ]
 
-- Possibly make the GMime parser incremental. This will be difficult
-  and probably not worth the trouble.
-
-- Would be nice if gmime-sharp could take System.IO.Streams in
-  addition to GMime.Stream.
-
 - Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
   both. This could allow g_mime_multipart_encrypted_decrypt() and
   g_mime_multipart_signed_verify() to set the appropriate protocol on
