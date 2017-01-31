@@ -17,9 +17,9 @@ noinst_PROGRAMS = gen-table charset-map
 
 EXTRA_DIST = gmime-version.h.in gmime-version.h
 
-lib_LTLIBRARIES = libgmime-2.6.la
+lib_LTLIBRARIES = libgmime-3.0.la
 
-libgmime_2_6_la_SOURCES = 		\
+libgmime_3_0_la_SOURCES = 		\
 	gmime.c				\
 	gmime-certificate.c		\
 	gmime-charset.c			\
@@ -156,8 +156,8 @@ install-libtool-import-lib:
 uninstall-libtool-import-lib:
 endif
 
-libgmime_2_6_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
-libgmime_2_6_la_LDFLAGS = \
+libgmime_3_0_la_LIBADD = $(top_builddir)/util/libutil.la $(GLIB_LIBS)
+libgmime_3_0_la_LDFLAGS = \
 	-version-info $(LT_CURRENT):$(LT_REVISION):$(LT_AGE) \
 	-export-dynamic $(no_undefined)
 
@@ -179,18 +179,18 @@ INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir)
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
 if HAVE_INTROSPECTION
-GMime-2.6.gir: libgmime-2.6.la
-GMime_2_6_gir_INCLUDES = GObject-2.0 Gio-2.0
-GMime_2_6_gir_CFLAGS = $(AM_CPPFLAGS)
-GMime_2_6_gir_LIBS = libgmime-2.6.la
-GMime_2_6_gir_FILES = $(gmimeinclude_HEADERS) $(libgmime_2_6_la_SOURCES)
-GMime_2_6_gir_EXPORT_PACKAGES = gmime-2.6
-GMime_2_6_gir_SCANNERFLAGS = \
+GMime-3.0.gir: libgmime-3.0.la
+GMime_3_0_gir_INCLUDES = GObject-2.0 Gio-2.0
+GMime_3_0_gir_CFLAGS = $(AM_CPPFLAGS)
+GMime_3_0_gir_LIBS = libgmime-3.0.la
+GMime_3_0_gir_FILES = $(gmimeinclude_HEADERS) $(libgmime_3_0_la_SOURCES)
+GMime_3_0_gir_EXPORT_PACKAGES = gmime-3.0
+GMime_3_0_gir_SCANNERFLAGS = \
 	--c-include="gmime/gmime.h" \
 	--accept-unprefixed \
 	--symbol-prefix "gmime_" \
 	--symbol-prefix "g_mime_"
-INTROSPECTION_GIRS += GMime-2.6.gir
+INTROSPECTION_GIRS += GMime-3.0.gir
 
 girdir = $(datadir)/gir-1.0
 gir_DATA = $(INTROSPECTION_GIRS)
@@ -204,21 +204,21 @@ endif
 if ENABLE_VAPIGEN
 -include $(VAPIGEN_MAKEFILE)
 
-gmime-2.6.vapi: GMime-2.6.gir GMime-2.6.metadata
+gmime-3.0.vapi: GMime-3.0.gir GMime-3.0.metadata
 
-VAPIGEN_VAPIS = gmime-2.6.vapi
-gmime_2_6_vapi_DEPS = gio-2.0
-gmime_2_6_vapi_METADATADIRS = $(srcdir)
-gmime_2_6_vapi_FILES = GMime-2.6.gir
+VAPIGEN_VAPIS = gmime-3.0.vapi
+gmime_3_0_vapi_DEPS = gio-2.0
+gmime_3_0_vapi_METADATADIRS = $(srcdir)
+gmime_3_0_vapi_FILES = GMime-3.0.gir
 
-gmime-2.6.deps:
-	$(AM_V_GEN) for pkg in $(gmime_2_6_vapi_DEPS); do \
+gmime-3.0.deps:
+	$(AM_V_GEN) for pkg in $(gmime_3_0_vapi_DEPS); do \
 		echo $$pkg >> $@; \
 	done
 
 vapidir = $(datadir)/vala/vapi
 vapi_DATA = $(VAPIGEN_VAPIS) $(VAPIGEN_VAPIS:.vapi=.deps)
 
-EXTRA_DIST += GMime-2.6.metadata
+EXTRA_DIST += GMime-3.0.metadata
 CLEANFILES += $(vapi_DATA)
 endif

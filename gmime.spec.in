@@ -80,7 +80,7 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/lib/*.sh
 %{prefix}/lib/libgmime*
 %{prefix}/lib/pkgconfig/*
-%{prefix}/include/gmime-2.6/gmime/*.h
+%{prefix}/include/gmime-3.0/gmime/*.h
 %if %{enable_gtk_doc}
 %{_datadir}/gtk-doc/html/*/*
 %endif

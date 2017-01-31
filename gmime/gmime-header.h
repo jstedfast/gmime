@@ -27,81 +27,6 @@
 
 G_BEGIN_DECLS
 
-typedef struct _GMimeHeader GMimeHeader;
-
-
-/**
- * GMimeHeaderForeachFunc:
- * @name: The field name.
- * @value: The field value.
- * @user_data: The user-supplied callback data.
- *
- * Function signature for the callback to g_mime_header_list_foreach().
- **/
-typedef void (* GMimeHeaderForeachFunc) (const char *name, const char *value, gpointer user_data);
-
-
-/**
- * GMimeHeader:
- *
- * A message/rfc822 header.
- **/
-typedef struct _GMimeHeader GMimeHeader;
-
-
-/**
- * GMimeHeaderList:
- *
- * A message or mime-part header.
- **/
-typedef struct _GMimeHeaderList GMimeHeaderList;
-
-
-/**
- * GMimeHeaderIter:
- * @hdrlist: a #GMimeHeaderList
- * @cursor: a #GMimeHeader
- * @version: the version of @hdrlist when initialized
- *
- * A message or mime-part header iterator. All members should be
- * considered private.
- **/
-typedef struct _GMimeHeaderIter GMimeHeaderIter;
-
-struct _GMimeHeaderIter {
-	GMimeHeaderList *hdrlist;
-	GMimeHeader *cursor;
-	guint32 version;
-};
-
-
-GMimeHeaderIter *g_mime_header_iter_new (void);
-void g_mime_header_iter_free (GMimeHeaderIter *iter);
-
-GMimeHeaderIter *g_mime_header_iter_copy (GMimeHeaderIter *iter);
-void g_mime_header_iter_copy_to (GMimeHeaderIter *src, GMimeHeaderIter *dest);
-
-gboolean g_mime_header_iter_equal (GMimeHeaderIter *iter1, GMimeHeaderIter *iter2);
-
-gboolean g_mime_header_iter_is_valid (GMimeHeaderIter *iter);
-
-gboolean g_mime_header_iter_first (GMimeHeaderIter *iter);
-gboolean g_mime_header_iter_last (GMimeHeaderIter *iter);
-
-gboolean g_mime_header_iter_next (GMimeHeaderIter *iter);
-gboolean g_mime_header_iter_prev (GMimeHeaderIter *iter);
-
-const char *g_mime_header_iter_get_name (GMimeHeaderIter *iter);
-
-gboolean g_mime_header_iter_set_value (GMimeHeaderIter *iter, const char *value);
-const char *g_mime_header_iter_get_value (GMimeHeaderIter *iter);
-
-gint64 g_mime_header_iter_get_offset (GMimeHeaderIter *iter);
-
-gboolean g_mime_header_iter_remove (GMimeHeaderIter *iter);
-
-ssize_t g_mime_header_iter_write_to_stream (GMimeHeaderIter *iter, GMimeStream *stream);
-
 
 /**
  * GMimeHeaderWriter:
@@ -116,24 +41,45 @@ ssize_t g_mime_header_iter_write_to_stream (GMimeHeaderIter *iter, GMimeStream *
  **/
 typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
 
+
+/**
+ * GMimeHeader:
+ *
+ * A message/rfc822 header.
+ **/
+typedef struct _GMimeHeader GMimeHeader;
+
+const char *g_mime_header_get_name (GMimeHeader *header);
+
+const char *g_mime_header_get_value (GMimeHeader *header);
+void g_mime_header_set_value (GMimeHeader *header, const char *value);
+
+gint64 g_mime_header_get_offset (GMimeHeader *header);
+
+ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream);
+
+
+/**
+ * GMimeHeaderList:
+ *
+ * A list of message or mime-part headers.
+ **/
+typedef struct _GMimeHeaderList GMimeHeaderList;
+
 GMimeHeaderList *g_mime_header_list_new (void);
 
 void g_mime_header_list_destroy (GMimeHeaderList *headers);
 
-void g_mime_header_list_set_stream (GMimeHeaderList *headers, GMimeStream *stream);
-GMimeStream *g_mime_header_list_get_stream (GMimeHeaderList *headers);
-
 void g_mime_header_list_clear (GMimeHeaderList *headers);
+int g_mime_header_list_get_count (GMimeHeaderList *headers);
 gboolean g_mime_header_list_contains (const GMimeHeaderList *headers, const char *name);
 void g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value);
 void g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value);
 const char *g_mime_header_list_get (const GMimeHeaderList *headers, const char *name);
+GMimeHeader *g_mime_header_list_get_header (GMimeHeaderList *headers, int index);
 gboolean g_mime_header_list_remove (GMimeHeaderList *headers, const char *name);
-
-gboolean g_mime_header_list_get_iter (GMimeHeaderList *headers, GMimeHeaderIter *iter);
-
-void g_mime_header_list_foreach (const GMimeHeaderList *headers, GMimeHeaderForeachFunc func, gpointer user_data);
+void g_mime_header_list_remove_at (GMimeHeaderList *headers, int index);
 
 void g_mime_header_list_register_writer (GMimeHeaderList *headers, const char *name, GMimeHeaderWriter writer);
 ssize_t g_mime_header_list_write_to_stream (const GMimeHeaderList *headers, GMimeStream *stream);

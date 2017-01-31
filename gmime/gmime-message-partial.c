@@ -41,7 +41,7 @@
  * A #GMimeMessagePartial represents the message/partial MIME part.
  **/
 
-extern const char *_g_mime_header_iter_get_raw_value (GMimeHeaderIter *iter);
+extern const char *_g_mime_header_get_raw_value (GMimeHeader *header);
 
 extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 
@@ -377,24 +377,26 @@ static GMimeMessage *
 message_partial_message_new (GMimeMessage *base)
 {
 	const char *name, *value, *raw_value;
+	GMimeHeaderList *headers;
 	GMimeMessage *message;
-	GMimeHeaderList *list;
-	GMimeHeaderIter iter;
+	GMimeHeader *header;
 	gint64 offset;
+	int count, i;
 	
 	message = g_mime_message_new (FALSE);
 	
-	list = ((GMimeObject *) base)->headers;
+	headers = ((GMimeObject *) base)->headers;
 	
-	if (g_mime_header_list_get_iter (list, &iter)) {
-		do {
-			name = g_mime_header_iter_get_name (&iter);
-			value = g_mime_header_iter_get_value (&iter);
-			raw_value = _g_mime_header_iter_get_raw_value (&iter);
-			offset = g_mime_header_iter_get_offset (&iter);
-			
-			_g_mime_object_append_header ((GMimeObject *) message, name, value, raw_value, offset);
-		} while (g_mime_header_iter_next (&iter));
+	count = g_mime_header_list_get_count (headers);
+	
+	for (i = 0; i < count; i++) {
+		header = g_mime_header_list_get_header (headers, i);
+		raw_value = _g_mime_header_get_raw_value (header);
+		offset = g_mime_header_get_offset (header);
+		value = g_mime_header_get_value (header);
+		name = g_mime_header_get_name (header);
+		
+		_g_mime_object_append_header ((GMimeObject *) message, name, value, raw_value, offset);
 	}
 	
 	return message;

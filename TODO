@@ -9,6 +9,10 @@ GMime 2.8 / 3.0 Planning:
 - Drop the use of GMimeHeaderList's stream cache and instead solve
   this problem by using a per-header cache of the original raw value.
 
+- Kill off GMimeHeaderIter - that API sucks. Let's provide an
+  index-based accessor for particular GMimeHeaders in GMimeHeaderList.
+  Something like g_mime_header_list_get_header_at(int index).
+
 - Fix g_mime_message_[g,s]set_sender() to take/return an
   InternetAddressList to be more consistent with the recipient
   functions as well as being less error-prone.
