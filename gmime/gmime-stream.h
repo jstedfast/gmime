@@ -130,9 +130,9 @@ void      g_mime_stream_set_bounds (GMimeStream *stream, gint64 start, gint64 en
 ssize_t   g_mime_stream_write_string (GMimeStream *stream, const char *str);
 ssize_t   g_mime_stream_printf       (GMimeStream *stream, const char *fmt, ...) G_GNUC_PRINTF (2, 3);
 
-ssize_t   g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
+gint64    g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest);
 
-ssize_t   g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
+gint64    g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count);
 
 G_END_DECLS
 

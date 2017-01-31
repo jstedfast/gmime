@@ -537,10 +537,11 @@ g_mime_stream_printf (GMimeStream *stream, const char *fmt, ...)
  *
  * Returns: the number of bytes written or %-1 on fail.
  **/
-ssize_t
+gint64
 g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
 {
-	ssize_t nread, nwritten, total = 0;
+	ssize_t nread, nwritten;
+	gint64 total = 0;
 	char buf[4096];
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (src), -1);
@@ -579,10 +580,10 @@ g_mime_stream_write_to_stream (GMimeStream *src, GMimeStream *dest)
  *
  * Returns: the number of bytes written or %-1 on fail.
  **/
-ssize_t
+gint64
 g_mime_stream_writev (GMimeStream *stream, GMimeStreamIOVector *vector, size_t count)
 {
-	ssize_t total = 0;
+	gint64 total = 0;
 	size_t i;
 	
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
