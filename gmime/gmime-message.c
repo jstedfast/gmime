@@ -84,6 +84,9 @@ static ssize_t write_received (GMimeStream *stream, const char *name, const char
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
+static void reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
@@ -207,14 +210,19 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
 	guint i;
 	
-	message->from = NULL;
-	message->reply_to = NULL;
 	message->recipients = g_new (InternetAddressList *, N_RECIPIENT_TYPES);
-	message->subject = NULL;
-	message->date = 0;
-	message->tz_offset = 0;
+	message->reply_to = internet_address_list_new ();
+	message->sender = internet_address_list_new ();
+	message->from = internet_address_list_new ();
 	message->message_id = NULL;
 	message->mime_part = NULL;
+	message->subject = NULL;
+	message->tz_offset = 0;
+	message->date = 0;
+	
+	g_mime_event_add (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+	g_mime_event_add (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+	g_mime_event_add (message->from->priv, (GMimeEventCallback) from_changed, message);
 	
 	/* initialize recipient lists */
 	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
@@ -222,12 +230,14 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 		connect_changed_event (message, i);
 	}
 	
+	g_mime_header_list_register_writer (headers, "Reply-To", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Sender", write_addrspec);
 	g_mime_header_list_register_writer (headers, "From", write_addrspec);
 	g_mime_header_list_register_writer (headers, "To", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Cc", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Bcc", write_addrspec);
 	
+	g_mime_header_list_register_writer (headers, "Resent-Reply-To", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Resent-Sender", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Resent-From", write_addrspec);
 	g_mime_header_list_register_writer (headers, "Resent-To", write_addrspec);
@@ -246,8 +256,13 @@ g_mime_message_finalize (GObject *object)
 	GMimeMessage *message = (GMimeMessage *) object;
 	guint i;
 	
-	g_free (message->from);
-	g_free (message->reply_to);
+	g_mime_event_remove (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+	g_mime_event_remove (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+	g_mime_event_remove (message->from->priv, (GMimeEventCallback) from_changed, message);
+	
+	g_object_unref (message->reply_to);
+	g_object_unref (message->sender);
+	g_object_unref (message->from);
 	
 	/* disconnect changed handlers */
 	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
@@ -256,10 +271,8 @@ g_mime_message_finalize (GObject *object)
 	}
 	
 	g_free (message->recipients);
-	
-	g_free (message->subject);
-	
 	g_free (message->message_id);
+	g_free (message->subject);
 	
 	/* unref child mime part */
 	if (message->mime_part)
@@ -705,6 +718,7 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 }
 
 enum {
+	HEADER_SENDER,
 	HEADER_FROM,
 	HEADER_REPLY_TO,
 	HEADER_TO,
@@ -718,6 +732,7 @@ enum {
 };
 
 static const char *message_headers[] = {
+	"Sender",
 	"From",
 	"Reply-To",
 	"To",
@@ -770,23 +785,32 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 	}
 	
 	switch (i) {
-	case HEADER_FROM:
-		g_free (message->from);
+	case HEADER_SENDER:
+		g_mime_event_block (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		internet_address_list_clear (message->sender);
 		if ((addrlist = internet_address_list_parse_string (value))) {
-			message->from = internet_address_list_to_string (addrlist, FALSE);
+			internet_address_list_append (message->sender, addrlist);
 			g_object_unref (addrlist);
-		} else {
-			message->from = NULL;
 		}
+		g_mime_event_unblock (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		break;
+	case HEADER_FROM:
+		g_mime_event_block (message->from->priv, (GMimeEventCallback) from_changed, message);
+		internet_address_list_clear (message->from);
+		if ((addrlist = internet_address_list_parse_string (value))) {
+			internet_address_list_append (message->from, addrlist);
+			g_object_unref (addrlist);
+		}
+		g_mime_event_unblock (message->from->priv, (GMimeEventCallback) from_changed, message);
 		break;
 	case HEADER_REPLY_TO:
-		g_free (message->reply_to);
+		g_mime_event_block (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+		internet_address_list_clear (message->reply_to);
 		if ((addrlist = internet_address_list_parse_string (value))) {
-			message->reply_to = internet_address_list_to_string (addrlist, FALSE);
+			internet_address_list_append (message->reply_to, addrlist);
 			g_object_unref (addrlist);
-		} else {
-			message->reply_to = NULL;
 		}
+		g_mime_event_unblock (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
 		break;
 	case HEADER_TO:
 		block_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
@@ -923,13 +947,20 @@ message_remove_header (GMimeObject *object, const char *header)
 	}
 	
 	switch (i) {
+	case HEADER_SENDER:
+		g_mime_event_block (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		internet_address_list_clear (message->sender);
+		g_mime_event_unblock (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		break;
 	case HEADER_FROM:
-		g_free (message->from);
-		message->from = NULL;
+		g_mime_event_block (message->from->priv, (GMimeEventCallback) from_changed, message);
+		internet_address_list_clear (message->from);
+		g_mime_event_unblock (message->from->priv, (GMimeEventCallback) from_changed, message);
 		break;
 	case HEADER_REPLY_TO:
-		g_free (message->reply_to);
-		message->reply_to = NULL;
+		g_mime_event_block (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+		internet_address_list_clear (message->reply_to);
+		g_mime_event_unblock (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
 		break;
 	case HEADER_TO:
 		type = GMIME_RECIPIENT_TYPE_TO;
@@ -1127,53 +1158,32 @@ g_mime_message_new (gboolean pretty_headers)
 
 
 /**
- * g_mime_message_set_sender:
+ * g_mime_message_get_sender:
  * @message: A #GMimeMessage
- * @sender: The name and address of the sender
  *
- * Set the sender's name and address on the MIME Message.
- * (ex: "\"Joe Sixpack\" &lt;joe@sixpack.org&gt;")
+ * Gets the parsed list of addresses in the Sender header.
  *
- * Note: The @sender string should be the raw encoded email
- * address. It is probably best to use an #InternetAddress to
- * construct and encode this value.
+ * Returns: the parsed list of addresses in the Sender header.
  **/
-void
-g_mime_message_set_sender (GMimeMessage *message, const char *sender)
+InternetAddressList *
+g_mime_message_get_sender (GMimeMessage *message)
 {
-	InternetAddressList *addrlist;
-	char *encoded;
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (sender != NULL);
-	
-	g_free (message->from);
-	
-	if ((addrlist = internet_address_list_parse_string (sender))) {
-		message->from = internet_address_list_to_string (addrlist, FALSE);
-		encoded = internet_address_list_to_string (addrlist, TRUE);
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "From", encoded);
-		g_object_unref (addrlist);
-		g_free (encoded);
-	} else {
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "From", "");
-		message->from = NULL;
-	}
+	return message->sender;
 }
 
 
 /**
- * g_mime_message_get_sender:
+ * g_mime_message_get_from:
  * @message: A #GMimeMessage
  *
- * Gets the email address of the sender from @message.
+ * Gets the parsed list of addresses in the From header.
  *
- * Returns: the sender's name and address of the @message in a form
- * suitable for display or %NULL if no sender is set. If not %NULL,
- * the returned string will be in UTF-8.
+ * Returns: the parsed list of addresses in the From header.
  **/
-const char *
-g_mime_message_get_sender (GMimeMessage *message)
+InternetAddressList *
+g_mime_message_get_from (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
@@ -1182,51 +1192,14 @@ g_mime_message_get_sender (GMimeMessage *message)
 
 
 /**
- * g_mime_message_set_reply_to:
- * @message: A #GMimeMessage
- * @reply_to: The Reply-To address
- *
- * Set the sender's Reply-To address on the @message.
- *
- * Note: The @reply_to string should be the raw encoded email
- * address. It is probably best to use an #InternetAddress to
- * construct and encode this value.
- **/
-void
-g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to)
-{
-	InternetAddressList *addrlist;
-	char *encoded;
-	
-	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (reply_to != NULL);
-	
-	g_free (message->reply_to);
-	
-	if ((addrlist = internet_address_list_parse_string (reply_to))) {
-		message->reply_to = internet_address_list_to_string (addrlist, FALSE);
-		encoded = internet_address_list_to_string (addrlist, TRUE);
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", encoded);
-		g_object_unref (addrlist);
-		g_free (encoded);
-	} else {
-		g_mime_header_list_set (GMIME_OBJECT (message)->headers, "Reply-To", "");
-		message->reply_to = NULL;
-	}
-}
-
-
-/**
  * g_mime_message_get_reply_to:
  * @message: A #GMimeMessage
  *
- * Gets the Reply-To address from @message.
+ * Gets the parsed list of addresses in the Reply-To header.
  *
- * Returns: the sender's Reply-To address in a form suitable for
- * display or %NULL if no Reply-To address is set. If not %NULL, the
- * returned string will be in UTF-8.
+ * Returns: the parsed list of addresses in the Reply-To header.
  **/
-const char *
+InternetAddressList *
 g_mime_message_get_reply_to (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
@@ -1236,22 +1209,41 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 
 
 static void
-sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
+sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, const char *name)
 {
 	GMimeObject *object = (GMimeObject *) message;
-	const char *name = recipient_types[type].name;
-	InternetAddressList *list;
 	char *string;
 	
-	/* sync the specified recipient header */
-	if ((list = g_mime_message_get_recipients (message, type))) {
-		string = internet_address_list_to_string (list, TRUE);
-		g_mime_header_list_set (object->headers, name, string);
-		g_free (string);
-	} else {
-		/* list should never be NULL... */
-		g_mime_header_list_set (object->headers, name, NULL);
-	}
+	string = internet_address_list_to_string (list, TRUE);
+	g_mime_header_list_set (object->headers, name, string);
+	g_free (string);
+}
+
+static void
+reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_internet_address_list (list, message, "Reply-To");
+}
+
+static void
+sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_internet_address_list (list, message, "Sender");
+}
+
+static void
+from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_internet_address_list (list, message, "From");
+}
+
+static void
+sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
+{
+	InternetAddressList *list = message->recipients[type];
+	const char *name = recipient_types[type].name;
+	
+	sync_internet_address_list (list, message, name);
 }
 
 static void

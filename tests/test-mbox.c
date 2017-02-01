@@ -94,7 +94,6 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 	GMimeMessage *message;
 	char *marker, *buf;
 	const char *subject;
-	const char *sender;
 	int tz_offset;
 	int nmsg = 0;
 	time_t date;
@@ -117,11 +116,9 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 		marker = g_mime_parser_get_from (parser);
 		g_mime_stream_printf (summary, "%s\n", marker);
 		
-		if ((sender = g_mime_message_get_sender (message)) != NULL) {
-			list = internet_address_list_parse_string (sender);
+		if ((list = g_mime_message_get_from (message)) != NULL &&
+		    internet_address_list_length (list) > 0) {
 			buf = internet_address_list_to_string (list, FALSE);
-			g_object_unref (list);
-			
 			g_mime_stream_printf (summary, "From: %s\n", buf);
 			g_free (buf);
 		}

@@ -77,11 +77,12 @@ struct _GMimeMessage {
 	GMimeObject parent_object;
 	
 	InternetAddressList **recipients;
+	InternetAddressList *reply_to;
+	InternetAddressList *sender;
+	InternetAddressList *from;
 	GMimeObject *mime_part;
 	char *message_id;
-	char *reply_to;
 	char *subject;
-	char *from;
 	
 	time_t date;
 	int tz_offset;
@@ -97,13 +98,9 @@ GType g_mime_message_get_type (void);
 
 GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 
-void g_mime_message_set_sender (GMimeMessage *message, const char *sender);
-const char *g_mime_message_get_sender (GMimeMessage *message);
-
-void g_mime_message_set_reply_to (GMimeMessage *message, const char *reply_to);
-const char *g_mime_message_get_reply_to (GMimeMessage *message);
-
-void g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, const char *name, const char *addr);
+InternetAddressList *g_mime_message_get_from (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_sender (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type);
 InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 

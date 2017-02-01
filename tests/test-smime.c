@@ -172,6 +172,8 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	GMimeSignatureList *signatures;
 	GMimeMultipartSigned *mps;
 	GMimeDataWrapper *content;
+	InternetAddressList *list;
+	InternetAddress *mailbox;
 	GMimeMessage *message;
 	GMimeStream *stream;
 	GMimeParser *parser;
@@ -215,11 +217,22 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	}
 	
 	message = g_mime_message_new (TRUE);
-	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
-	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				      "Federico Mena-Quintero",
-				      "federico@helixcode.com");
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_from (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_reply_to (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
@@ -268,6 +281,8 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	GMimeMultipartEncrypted *mpe;
 	GMimeDecryptResult *result;
 	GMimeDataWrapper *content;
+	InternetAddressList *list;
+	InternetAddress *mailbox;
 	GMimeObject *decrypted;
 	GPtrArray *recipients;
 	GMimeMessage *message;
@@ -315,11 +330,22 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	}
 	
 	message = g_mime_message_new (TRUE);
-	g_mime_message_set_sender (message, "\"Jeffrey Stedfast\" <fejj@helixcode.com>");
-	g_mime_message_set_reply_to (message, "fejj@helixcode.com");
-	g_mime_message_add_recipient (message, GMIME_RECIPIENT_TYPE_TO,
-				      "Federico Mena-Quintero",
-				      "federico@helixcode.com");
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_from (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Jeffrey Stedfast", "fejj@helixcode.com");
+	list = g_mime_message_get_reply_to (message);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
+	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
+	list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
+	internet_address_list_add (list, mailbox);
+	g_object_unref (mailbox);
+	
 	g_mime_message_set_subject (message, "This is a test message");
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
