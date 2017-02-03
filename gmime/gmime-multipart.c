@@ -191,7 +191,7 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 		part = multipart->children->pdata[i];
 		
 		/* write the boundary */
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s\n", boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "--%s\n", boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -201,11 +201,16 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 			return -1;
 		
 		total += nwritten;
+		
+		if (g_mime_stream_write (stream, "\n", 1) == -1)
+			return -1;
+		
+		total++;
 	}
 	
 	/* write the end-boundary (but only if a boundary is set) */
 	if (boundary) {
-		if ((nwritten = g_mime_stream_printf (stream, "\n--%s--\n", boundary)) == -1)
+		if ((nwritten = g_mime_stream_printf (stream, "--%s--\n", boundary)) == -1)
 			return -1;
 		
 		total += nwritten;
