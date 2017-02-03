@@ -239,7 +239,7 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
 	g_return_val_if_fail (GMIME_IS_STREAM (stream), -1);
 	
 	if (header->raw_value) {
-		val = g_mime_utils_header_printf ("%s:%s", header->name, header->raw_value);
+		val = g_strdup_printf ("%s:%s", header->name, header->raw_value);
 		nwritten = g_mime_stream_write_string (stream, val);
 		g_free (val);
 		
