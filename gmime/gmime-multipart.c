@@ -185,6 +185,11 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 			return -1;
 		
 		total += nwritten;
+		
+		if (g_mime_stream_write (stream, "\n", 1) == -1)
+			return -1;
+		
+		total++;
 	}
 	
 	for (i = 0; i < multipart->children->len; i++) {
