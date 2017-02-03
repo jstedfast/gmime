@@ -1091,6 +1091,7 @@ static ssize_t
 message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
+	GMimeObject *mime_part = message->mime_part;
 	ssize_t nwritten, total = 0;
 	
 	if (!content_only) {
@@ -1105,8 +1106,8 @@ message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean cont
 		total += nwritten;
 	}
 	
-	if (message->mime_part) {
-		if ((nwritten = GMIME_OBJECT_GET_CLASS (object)->write_to_stream (message->mime_part, stream, TRUE)) == -1)
+	if (mime_part) {
+		if ((nwritten = GMIME_OBJECT_GET_CLASS (mime_part)->write_to_stream (mime_part, stream, TRUE)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -1553,7 +1554,7 @@ g_mime_message_get_mime_part (GMimeMessage *message)
 void
 g_mime_message_set_mime_part (GMimeMessage *message, GMimeObject *mime_part)
 {
-	g_return_if_fail (mime_part == NULL || GMIME_IS_OBJECT (mime_part));
+	g_return_if_fail (GMIME_IS_OBJECT (mime_part));
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
 	
 	if (message->mime_part == mime_part)
