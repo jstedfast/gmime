@@ -29,10 +29,7 @@ GMime 2.8 / 3.0 Planning:
 
 - Modify g_mime_parser_construct_message() and
   g_mime_parser_construct_part() methods take GCancellable and GError
-  arguments.
-
-- Should GMimeStreamGIO be modified to take only a GInputStream or a
-  GOutputStream and do away with the GFile API?
+  arguments?
 
 - Bump the Glib dependency and just use the newer GMutex APIs
   directly.
@@ -40,6 +37,12 @@ GMime 2.8 / 3.0 Planning:
 - How about a g_mime_part_get_best_charset()? This one could be
   awkward since it depends on the content being text and also encoded
   in UTF-8... [ CONSIDERING ]
+
+- Modify header encoder methods to take a charset parameter (NULL for
+  default?) so that users can force gmime to encode with a specific
+  charset.
+
+- GMimeParserOptions like MimeKit's ParserOptions??
 
 - Combine GMimeGpgContext and GMimePkcs7Context by using GpgMe for
   both. This could allow g_mime_multipart_encrypted_decrypt() and
