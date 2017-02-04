@@ -52,6 +52,7 @@ typedef struct _GMimeMultipartClass GMimeMultipartClass;
 struct _GMimeMultipart {
 	GMimeObject parent_object;
 	
+	gboolean write_end_boundary;
 	GPtrArray *children;
 	char *boundary;
 	char *preface;

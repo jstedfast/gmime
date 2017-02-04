@@ -1838,10 +1838,12 @@ parser_construct_multipart (GMimeParser *parser, ContentType *content_type, gboo
 		
 		if (*found == FOUND_END_BOUNDARY && found_immediate_boundary (priv, TRUE)) {
 			/* eat end boundary */
+			multipart->write_end_boundary = TRUE;
 			parser_skip_line (parser);
 			parser_pop_boundary (parser);
 			*found = parser_scan_multipart_postface (parser, multipart);
 		} else {
+			multipart->write_end_boundary = FALSE;
 			parser_pop_boundary (parser);
 		}
 	} else {

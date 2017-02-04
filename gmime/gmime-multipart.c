@@ -133,6 +133,7 @@ static void
 g_mime_multipart_init (GMimeMultipart *multipart, GMimeMultipartClass *klass)
 {
 	multipart->children = g_ptr_array_new ();
+	multipart->write_end_boundary = TRUE;
 	multipart->preface = NULL;
 	multipart->postface = NULL;
 }
@@ -206,15 +207,17 @@ multipart_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean co
 			return -1;
 		
 		total += nwritten;
-		
-		if (g_mime_stream_write (stream, "\n", 1) == -1)
-			return -1;
-		
-		total++;
+
+		if (!GMIME_IS_MULTIPART (part) || ((GMimeMultipart *) part)->write_end_boundary) {
+			if (g_mime_stream_write (stream, "\n", 1) == -1)
+				return -1;
+			
+			total++;
+		}
 	}
 	
 	/* write the end-boundary (but only if a boundary is set) */
-	if (boundary) {
+	if (multipart->write_end_boundary && boundary) {
 		if ((nwritten = g_mime_stream_printf (stream, "--%s--\n", boundary)) == -1)
 			return -1;
 		
