@@ -37,34 +37,6 @@ typedef struct _GMimeGpgContext GMimeGpgContext;
 typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 
 
-/**
- * GMimeGpgContext:
- * @parent_object: parent #GMimeCryptoContext
- * @auto_key_retrieve: %TRUE if gpg should automatically retrieve unknown keys from the web
- * @always_trust: %TRUE if keys should always be trusted
- * @use_agent: %TRUE if gpg should use the gpg-agent for requesting passphrases
- * @path: path to gpg
- * @retrieve_session_key: %TRUE if session keys should be retrieved when decrypting
- * @version: The GnuPG version.
- *
- * A GnuPG crypto context.
- **/
-struct _GMimeGpgContext {
-	GMimeCryptoContext parent_object;
-	gboolean retrieve_session_key;
-	gboolean auto_key_retrieve;
-	gboolean always_trust;
-	gboolean use_agent;
-	int version;
-	char *path;
-};
-
-struct _GMimeGpgContextClass {
-	GMimeCryptoContextClass parent_class;
-	
-};
-
-
 GType g_mime_gpg_context_get_type (void);
 
 
@@ -72,9 +44,6 @@ GMimeCryptoContext *g_mime_gpg_context_new (GMimePasswordRequestFunc request_pas
 
 gboolean g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve);
-
-gboolean g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx);
-void g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust);
 
 gboolean g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent);

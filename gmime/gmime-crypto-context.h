@@ -114,15 +114,18 @@ struct _GMimeCryptoContextClass {
 	int                      (* export_keys) (GMimeCryptoContext *ctx, GPtrArray *keys,
 						  GMimeStream *ostream, GError **err);
 	
-	GMimeDecryptResult *     (* decrypt_session)     (GMimeCryptoContext *ctx, const char *session_key,
-							  GMimeStream *istream, GMimeStream *ostream,
-							  GError **err);
+	GMimeDecryptResult *     (* decrypt_session) (GMimeCryptoContext *ctx, const char *session_key,
+						      GMimeStream *istream, GMimeStream *ostream,
+						      GError **err);
 	
 	gboolean                 (* get_retrieve_session_key) (GMimeCryptoContext *ctx);
 	
 	int                      (* set_retrieve_session_key) (GMimeCryptoContext *ctx,
 							       gboolean retrieve_session_key,
 							       GError **err);
+
+	gboolean                 (* get_always_trust) (GMimeCryptoContext *ctx);
+	void                     (* set_always_trust) (GMimeCryptoContext *ctx, gboolean always_trust);
 };
 
 
@@ -135,6 +138,9 @@ gboolean g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx
 int g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
 						    gboolean retrieve_session_key,
 						    GError **err);
+
+gboolean g_mime_crypto_context_get_always_trust (GMimeCryptoContext *ctx);
+void g_mime_crypto_context_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 
 /* digest algo mapping */
 GMimeDigestAlgo g_mime_crypto_context_digest_id (GMimeCryptoContext *ctx, const char *name);

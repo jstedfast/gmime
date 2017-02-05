@@ -78,27 +78,52 @@ typedef unsigned int nfds_t;
  **/
 
 
+/**
+ * GMimeGpgContext:
+ * @parent_object: parent #GMimeCryptoContext
+ * @auto_key_retrieve: %TRUE if gpg should automatically retrieve unknown keys from the web
+ * @use_agent: %TRUE if gpg should use the gpg-agent for requesting passphrases
+ * @path: path to gpg
+ * @version: The GnuPG version.
+ *
+ * A GnuPG crypto context.
+ **/
+struct _GMimeGpgContext {
+	GMimeCryptoContext parent_object;
+	gboolean retrieve_session_key;
+	gboolean auto_key_retrieve;
+	gboolean always_trust;
+	gboolean use_agent;
+	int version;
+	char *path;
+};
+
+struct _GMimeGpgContextClass {
+	GMimeCryptoContextClass parent_class;
+	
+};
+
+
 static void g_mime_gpg_context_class_init (GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_init (GMimeGpgContext *ctx, GMimeGpgContextClass *klass);
 static void g_mime_gpg_context_finalize (GObject *object);
 
 static GMimeDigestAlgo gpg_digest_id (GMimeCryptoContext *ctx, const char *name);
-
 static const char *gpg_digest_name (GMimeCryptoContext *ctx, GMimeDigestAlgo digest);
 
 static gboolean gpg_get_retrieve_session_key (GMimeCryptoContext *context);
-
 static int gpg_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
 					 GError **err);
+
+static gboolean gpg_get_always_trust (GMimeCryptoContext *context);
+static void gpg_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 
 static int gpg_sign (GMimeCryptoContext *ctx, const char *userid,
 		     GMimeDigestAlgo digest, GMimeStream *istream,
 		     GMimeStream *ostream, GError **err);
 
 static const char *gpg_get_signature_protocol (GMimeCryptoContext *ctx);
-
 static const char *gpg_get_encryption_protocol (GMimeCryptoContext *ctx);
-
 static const char *gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 static GMimeSignatureList *gpg_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
@@ -175,6 +200,8 @@ g_mime_gpg_context_class_init (GMimeGpgContextClass *klass)
 	crypto_class->get_key_exchange_protocol = gpg_get_key_exchange_protocol;
 	crypto_class->get_retrieve_session_key = gpg_get_retrieve_session_key;
 	crypto_class->set_retrieve_session_key = gpg_set_retrieve_session_key;
+	crypto_class->get_always_trust = gpg_get_always_trust;
+	crypto_class->set_always_trust = gpg_set_always_trust;
 }
 
 static void
@@ -2295,6 +2322,42 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 #endif /* ENABLE_CRYPTO */
 }
 
+static gboolean
+gpg_get_retrieve_session_key (GMimeCryptoContext *context)
+{
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
+	return ctx->retrieve_session_key;
+}
+
+
+static int
+gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key, GError **err)
+{
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
+	ctx->retrieve_session_key = retrieve_session_key;
+	
+	return 0;
+}
+
+static gboolean
+gpg_get_always_trust (GMimeCryptoContext *context)
+{
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
+	return ctx->always_trust;
+}
+
+static void
+gpg_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
+{
+	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
+	
+	ctx->always_trust = always_trust;
+}
+
+
 int
 _g_mime_get_gpg_version (const char *path)
 {
@@ -2415,40 +2478,6 @@ g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_ke
 
 
 /**
- * g_mime_gpg_context_get_always_trust:
- * @ctx: a #GMimeGpgContext
- *
- * Gets whther or not gpg should always trust keys when encrypting.
- *
- * Returns: %TRUE if gpg should always trust keys when encrypting or
- * %FALSE otherwise.
- **/
-gboolean
-g_mime_gpg_context_get_always_trust (GMimeGpgContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
-	
-	return ctx->always_trust;
-}
-
-
-/**
- * g_mime_gpg_context_set_always_trust:
- * @ctx: a #GMimeGpgContext
- * @always_trust: %TRUE if gpg should always trust keys when encrypting
- *
- * Sets whether or not gpg should always trust keys when encrypting.
- **/
-void
-g_mime_gpg_context_set_always_trust (GMimeGpgContext *ctx, gboolean always_trust)
-{
-	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
-	
-	ctx->always_trust = always_trust;
-}
-
-
-/**
  * g_mime_gpg_context_get_use_agent:
  * @ctx: a #GMimeGpgContext
  *
@@ -2481,32 +2510,4 @@ g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent)
 	g_return_if_fail (GMIME_IS_GPG_CONTEXT (ctx));
 	
 	ctx->use_agent = use_agent;
-}
-
-static gboolean
-gpg_get_retrieve_session_key (GMimeCryptoContext *context)
-{
-	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	
-	g_return_val_if_fail (GMIME_IS_GPG_CONTEXT (ctx), FALSE);
-	
-	return ctx->retrieve_session_key;
-}
-
-
-static int
-gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_session_key,
-			      GError **err)
-{
-	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
-	
-	if (!GMIME_IS_GPG_CONTEXT (ctx)) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     "Not a GMimeGpgContext, can't set retrieve_session_key");
-		return -1;
-	}
-	
-	ctx->retrieve_session_key = retrieve_session_key;
-	
-	return 0;
 }
