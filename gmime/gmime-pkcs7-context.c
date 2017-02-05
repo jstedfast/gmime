@@ -69,8 +69,9 @@
  **/
 struct _GMimePkcs7Context {
 	GMimeCryptoContext parent_object;
-	gboolean always_trust;
+	
 #ifdef ENABLE_CRYPTO
+	gpgme_encrypt_flags_t encrypt_flags;
 	gpgme_ctx_t ctx;
 #endif
 };
@@ -114,6 +115,9 @@ static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 
 static int pkcs7_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 			      GMimeStream *ostream, GError **err);
+
+static gboolean pkcs7_get_always_trust (GMimeCryptoContext *context);
+static void pkcs7_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 
 
 static GMimeCryptoContextClass *parent_class = NULL;
@@ -170,8 +174,8 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 static void
 g_mime_pkcs7_context_init (GMimePkcs7Context *pkcs7, GMimePkcs7ContextClass *klass)
 {
-	pkcs7->always_trust = FALSE;
 #ifdef ENABLE_CRYPTO
+	pkcs7->encrypt_flags = 0;
 	pkcs7->ctx = NULL;
 #endif
 }
@@ -732,7 +736,7 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	}
 	
 	/* encrypt the input stream */
-	error = gpgme_op_encrypt (pkcs7->ctx, rcpts, GPGME_ENCRYPT_ALWAYS_TRUST, input, output);
+	error = gpgme_op_encrypt (pkcs7->ctx, rcpts, pkcs7->encrypt_flags, input, output);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	key_list_free (rcpts);
@@ -887,6 +891,26 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
 }
 
 
+static gboolean
+pkcs7_get_always_trust (GMimeCryptoContext *context)
+{
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
+	
+	return (pkcs7->encrypt_flags & GPGME_ENCRYPT_ALWAYS_TRUST) != 0;
+}
+
+static void
+pkcs7_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
+{
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
+	
+	if (always_trust)
+		pkcs7->encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
+	else
+		pkcs7->encrypt_flags &= ~GPGME_ENCRYPT_ALWAYS_TRUST;
+}
+
+
 /**
  * g_mime_pkcs7_context_new:
  * @request_passwd: a #GMimePasswordRequestFunc
@@ -923,38 +947,4 @@ g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 #else
 	return NULL;
 #endif /* ENABLE_CRYPTO */
-}
-
-
-/**
- * g_mime_pkcs7_context_get_always_trust:
- * @ctx: a #GMimePkcs7Context
- *
- * Gets the @always_trust flag on the pkcs7 context.
- *
- * Returns: the @always_trust flag on the pkcs7 context.
- **/
-gboolean
-g_mime_pkcs7_context_get_always_trust (GMimePkcs7Context *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx), FALSE);
-	
-	return ctx->always_trust;
-}
-
-
-/**
- * g_mime_pkcs7_context_set_always_trust:
- * @ctx: a #GMimePkcs7Context
- * @always_trust: always trust flag
- *
- * Sets the @always_trust flag on the pkcs7 context which is used for
- * encryption.
- **/
-void
-g_mime_pkcs7_context_set_always_trust (GMimePkcs7Context *ctx, gboolean always_trust)
-{
-	g_return_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx));
-	
-	ctx->always_trust = always_trust;
 }
