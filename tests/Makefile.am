@@ -17,7 +17,7 @@ AUTOMATED_TESTS =	\
 	test-mbox	\
 	test-mime
 
-if ENABLE_CRYPTOGRAPHY
+if ENABLE_CRYPTO
 AUTOMATED_TESTS +=	\
 	test-pgp	\
 	test-pgpmime
@@ -29,7 +29,7 @@ MANUAL_TESTS =		\
 	test-html 	\
 	test-partial
 
-if ENABLE_CRYPTOGRAPHY
+if ENABLE_CRYPTO
 MANUAL_TESTS +=		\
 	test-pkcs7	\
 	test-smime
@@ -90,7 +90,7 @@ test_partial_LDFLAGS =
 test_partial_DEPENDENCIES = $(DEPS)
 test_partial_LDADD = $(LDADDS)
 
-if ENABLE_CRYPTOGRAPHY
+if ENABLE_CRYPTO
 test_pgp_SOURCES = test-pgp.c testsuite.c testsuite.h
 test_pgp_LDFLAGS = 
 test_pgp_DEPENDENCIES = $(DEPS)

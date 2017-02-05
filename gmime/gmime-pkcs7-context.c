@@ -28,17 +28,17 @@
 #include <string.h>
 
 #include "gmime-pkcs7-context.h"
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 #include "gmime-filter-charset.h"
 #include "gmime-stream-filter.h"
 #include "gmime-stream-pipe.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
 #include "gmime-charset.h"
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 #include "gmime-error.h"
 
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 #include <gpgme.h>
 #endif
 
@@ -61,12 +61,24 @@
  * all of the encryption and digital signatures.
  **/
 
-typedef struct _GMimePkcs7ContextPrivate {
+
+/**
+ * GMimePkcs7Context:
+ *
+ * A PKCS7 crypto context.
+ **/
+struct _GMimePkcs7Context {
+	GMimeCryptoContext parent_object;
 	gboolean always_trust;
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 	gpgme_ctx_t ctx;
 #endif
-} Pkcs7Ctx;
+};
+
+struct _GMimePkcs7ContextClass {
+	GMimeCryptoContextClass parent_class;
+	
+};
 
 static void g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass);
 static void g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass);
@@ -156,26 +168,23 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 }
 
 static void
-g_mime_pkcs7_context_init (GMimePkcs7Context *ctx, GMimePkcs7ContextClass *klass)
+g_mime_pkcs7_context_init (GMimePkcs7Context *pkcs7, GMimePkcs7ContextClass *klass)
 {
-	ctx->priv = g_slice_new (Pkcs7Ctx);
-	ctx->priv->always_trust = FALSE;
-#ifdef ENABLE_SMIME
-	ctx->priv->ctx = NULL;
+	pkcs7->always_trust = FALSE;
+#ifdef ENABLE_CRYPTO
+	pkcs7->ctx = NULL;
 #endif
 }
 
 static void
 g_mime_pkcs7_context_finalize (GObject *object)
 {
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) object;
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) object;
 	
-#ifdef ENABLE_SMIME
-	if (ctx->priv->ctx)
-		gpgme_release (ctx->priv->ctx);
+#ifdef ENABLE_CRYPTO
+	if (pkcs7->ctx)
+		gpgme_release (pkcs7->ctx);
 #endif
-	
-	g_slice_free (Pkcs7Ctx, ctx->priv);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
@@ -261,7 +270,7 @@ pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pkcs7-keys";
 }
 
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 static gpgme_error_t
 pkcs7_passphrase_cb (void *hook, const char *uid_hint, const char *passphrase_info, int prev_was_bad, int fd)
 {
@@ -335,7 +344,7 @@ static struct gpgme_data_cbs pkcs7_stream_funcs = {
                           (k)->disabled || (k)->invalid))
 
 static gpgme_key_t
-pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GError **err)
+pkcs7_get_key_by_name (GMimePkcs7Context *pkcs7, const char *name, gboolean secret, GError **err)
 {
 	time_t now = time (NULL);
 	gpgme_key_t key = NULL;
@@ -418,7 +427,7 @@ pkcs7_get_key_by_name (Pkcs7Ctx *pkcs7, const char *name, gboolean secret, GErro
 }
 
 static gboolean
-pkcs7_add_signer (Pkcs7Ctx *pkcs7, const char *signer, GError **err)
+pkcs7_add_signer (GMimePkcs7Context *pkcs7, const char *signer, GError **err)
 {
 	gpgme_key_t key = NULL;
 	
@@ -432,15 +441,14 @@ pkcs7_add_signer (Pkcs7Ctx *pkcs7, const char *signer, GError **err)
 	
 	return TRUE;
 }
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 
 static int
 pkcs7_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo digest,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_sign_result_t result;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
@@ -480,10 +488,10 @@ pkcs7_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo dig
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 static GMimeCertificateTrust
 pkcs7_trust (gpgme_validity_t trust)
 {
@@ -505,7 +513,7 @@ pkcs7_trust (gpgme_validity_t trust)
 }
 
 static GMimeSignatureList *
-pkcs7_get_signatures (Pkcs7Ctx *pkcs7, gboolean verify)
+pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 {
 	GMimeSignatureList *signatures;
 	GMimeSignature *signature;
@@ -533,8 +541,8 @@ pkcs7_get_signatures (Pkcs7Ctx *pkcs7, gboolean verify)
 		else
 			g_mime_signature_set_status (signature, GMIME_SIGNATURE_STATUS_GOOD);
 		
-		g_mime_certificate_set_pubkey_algo (signature->cert, sig->pubkey_algo);
-		g_mime_certificate_set_digest_algo (signature->cert, sig->hash_algo);
+		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
+		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
 		g_mime_certificate_set_fingerprint (signature->cert, sig->fpr);
 		g_mime_signature_set_expires (signature, sig->exp_timestamp);
 		g_mime_signature_set_created (signature, sig->timestamp);
@@ -614,17 +622,16 @@ pkcs7_get_signatures (Pkcs7Ctx *pkcs7, gboolean verify)
 	
 	return signatures;
 }
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 
 static GMimeSignatureList *
 pkcs7_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	      GMimeStream *istream, GMimeStream *sigstream,
 	      GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_data_t message, signature;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
 	gpgme_error_t error;
 	
 	if ((error = gpgme_data_new_from_cbs (&message, &pkcs7_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
@@ -663,10 +670,10 @@ pkcs7_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 static void
 key_list_free (gpgme_key_t *keys)
 {
@@ -679,16 +686,15 @@ key_list_free (gpgme_key_t *keys)
 	
 	g_free (keys);
 }
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 
 static int
 pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	       GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 	       GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
 	gpgme_key_t *rcpts;
@@ -741,12 +747,12 @@ pkcs7_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 static GMimeDecryptResult *
-pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
+pkcs7_get_decrypt_result (GMimePkcs7Context *pkcs7)
 {
 	GMimeDecryptResult *result;
 	gpgme_decrypt_result_t res;
@@ -765,7 +771,7 @@ pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
 		cert = g_mime_certificate_new ();
 		g_mime_certificate_list_add (result->recipients, cert);
 		
-		g_mime_certificate_set_pubkey_algo (cert, recipient->pubkey_algo);
+		g_mime_certificate_set_pubkey_algo (cert, (GMimePubKeyAlgo) recipient->pubkey_algo);
 		g_mime_certificate_set_key_id (cert, recipient->keyid);
 		
 		recipient = recipient->next;
@@ -773,16 +779,15 @@ pkcs7_get_decrypt_result (Pkcs7Ctx *pkcs7)
 	
 	return result;
 }
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 
 static GMimeDecryptResult *
 pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	       GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	GMimeDecryptResult *result;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
 	gpgme_decrypt_result_t res;
 	gpgme_data_t input, output;
 	gpgme_error_t error;
@@ -814,15 +819,14 @@ pkcs7_decrypt (GMimeCryptoContext *context, GMimeStream *istream,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return NULL;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
 static int
 pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_data_t keydata;
 	gpgme_error_t error;
 	
@@ -846,15 +850,14 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
 static int
 pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_SMIME
-	GMimePkcs7Context *ctx = (GMimePkcs7Context *) context;
-	Pkcs7Ctx *pkcs7 = ctx->priv;
+#ifdef ENABLE_CRYPTO
+	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_data_t keydata;
 	gpgme_error_t error;
 	guint i;
@@ -880,7 +883,7 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("S/MIME support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
 
@@ -895,7 +898,7 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
 GMimeCryptoContext *
 g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 {
-#ifdef ENABLE_SMIME
+#ifdef ENABLE_CRYPTO
 	GMimeCryptoContext *crypto;
 	GMimePkcs7Context *pkcs7;
 	gpgme_ctx_t ctx;
@@ -911,7 +914,7 @@ g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 	pkcs7 = g_object_newv (GMIME_TYPE_PKCS7_CONTEXT, 0, NULL);
 	gpgme_set_passphrase_cb (ctx, pkcs7_passphrase_cb, pkcs7);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
-	pkcs7->priv->ctx = ctx;
+	pkcs7->ctx = ctx;
 	
 	crypto = (GMimeCryptoContext *) pkcs7;
 	crypto->request_passwd = request_passwd;
@@ -919,7 +922,7 @@ g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 	return crypto;
 #else
 	return NULL;
-#endif /* ENABLE_SMIME */
+#endif /* ENABLE_CRYPTO */
 }
 
 
@@ -936,7 +939,7 @@ g_mime_pkcs7_context_get_always_trust (GMimePkcs7Context *ctx)
 {
 	g_return_val_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx), FALSE);
 	
-	return ctx->priv->always_trust;
+	return ctx->always_trust;
 }
 
 
@@ -953,5 +956,5 @@ g_mime_pkcs7_context_set_always_trust (GMimePkcs7Context *ctx, gboolean always_t
 {
 	g_return_if_fail (GMIME_IS_PKCS7_CONTEXT (ctx));
 	
-	ctx->priv->always_trust = always_trust;
+	ctx->always_trust = always_trust;
 }

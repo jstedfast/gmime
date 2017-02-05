@@ -48,14 +48,14 @@ typedef unsigned int nfds_t;
 #endif
 
 #include "gmime-gpg-context.h"
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 #include "gmime-filter-charset.h"
 #include "gmime-stream-filter.h"
 #include "gmime-stream-pipe.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-fs.h"
 #include "gmime-charset.h"
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 #include "gmime-error.h"
 
 #ifdef ENABLE_DEBUG
@@ -281,7 +281,7 @@ gpg_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 	return "application/pgp-keys";
 }
 
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 enum _GpgCtxMode {
 	GPG_CTX_MODE_SIGN,
 	GPG_CTX_MODE_VERIFY,
@@ -1900,13 +1900,13 @@ gpg_ctx_op_wait (struct _GpgCtx *gpg)
 	else
 		return -1;
 }
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 
 static int
 gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo digest,
 	  GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	
@@ -1961,7 +1961,7 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo diges
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 
@@ -1970,7 +1970,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	    GMimeStream *istream, GMimeStream *sigstream,
 	    GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeSignatureList *signatures;
 	struct _GpgCtx *gpg;
@@ -2022,7 +2022,7 @@ gpg_verify (GMimeCryptoContext *context, GMimeDigestAlgo digest,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return NULL;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 
@@ -2031,7 +2031,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	     GMimeDigestAlgo digest, GPtrArray *recipients, GMimeStream *istream,
 	     GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	guint i;
@@ -2093,7 +2093,7 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 
@@ -2109,7 +2109,7 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 		     GMimeStream *istream, GMimeStream *ostream,
 		     GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	GMimeDecryptResult *result;
 	const char *diagnostics;
@@ -2180,13 +2180,13 @@ gpg_decrypt_session (GMimeCryptoContext *context, const char *session_key,
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return NULL;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 static int
 gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	
@@ -2233,13 +2233,13 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 static int
 gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	struct _GpgCtx *gpg;
 	guint i;
@@ -2292,7 +2292,7 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED, _("PGP support is not enabled in this build"));
 	
 	return -1;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 int
@@ -2359,7 +2359,7 @@ _g_mime_get_gpg_version (const char *path)
 GMimeCryptoContext *
 g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path)
 {
-#ifdef ENABLE_CRYPTOGRAPHY
+#ifdef ENABLE_CRYPTO
 	GMimeCryptoContext *crypto;
 	GMimeGpgContext *ctx;
 	
@@ -2374,7 +2374,7 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *pat
 	return crypto;
 #else
 	return NULL;
-#endif /* ENABLE_CRYPTOGRAPHY */
+#endif /* ENABLE_CRYPTO */
 }
 
 

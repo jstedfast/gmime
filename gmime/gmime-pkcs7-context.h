@@ -36,26 +36,6 @@ G_BEGIN_DECLS
 typedef struct _GMimePkcs7Context GMimePkcs7Context;
 typedef struct _GMimePkcs7ContextClass GMimePkcs7ContextClass;
 
-
-/**
- * GMimePkcs7Context:
- * @parent_object: parent #GMimeCryptoContext
- * @priv: private context data
- *
- * A PKCS7 crypto context.
- **/
-struct _GMimePkcs7Context {
-	GMimeCryptoContext parent_object;
-	
-	struct _GMimePkcs7ContextPrivate *priv;
-};
-
-struct _GMimePkcs7ContextClass {
-	GMimeCryptoContextClass parent_class;
-	
-};
-
-
 GType g_mime_pkcs7_context_get_type (void);
 
 GMimeCryptoContext *g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd);

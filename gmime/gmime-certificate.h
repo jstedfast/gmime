@@ -65,22 +65,28 @@ typedef struct _GMimeCertificateListClass GMimeCertificateListClass;
  * @GMIME_DIGEST_ALGO_SHA512: The SHA-512 hash algorithm.
  * @GMIME_DIGEST_ALGO_SHA224: The SHA-224 hash algorithm.
  * @GMIME_DIGEST_ALGO_MD4: The MD4 hash algorithm.
+ * @GMIME_DIGEST_ALGO_CRC32: The CRC32 hash algorithm.
+ * @GMIME_DIGEST_ALGO_CRC32_RFC1510: The rfc1510 CRC32 hash algorithm.
+ * @GMIME_DIGEST_ALGO_CRC32_RFC2440: The rfc2440 CRC32 hash algorithm.
  *
  * A hash algorithm.
  **/
 typedef enum {
-	GMIME_DIGEST_ALGO_DEFAULT     = 0,
-	GMIME_DIGEST_ALGO_MD5         = 1,
-	GMIME_DIGEST_ALGO_SHA1        = 2,
-	GMIME_DIGEST_ALGO_RIPEMD160   = 3,
-	GMIME_DIGEST_ALGO_MD2         = 5,
-	GMIME_DIGEST_ALGO_TIGER192    = 6,
-	GMIME_DIGEST_ALGO_HAVAL5160   = 7,
-	GMIME_DIGEST_ALGO_SHA256      = 8,
-	GMIME_DIGEST_ALGO_SHA384      = 9,
-	GMIME_DIGEST_ALGO_SHA512      = 10,
-	GMIME_DIGEST_ALGO_SHA224      = 11,
-	GMIME_DIGEST_ALGO_MD4         = 301
+	GMIME_DIGEST_ALGO_DEFAULT       = 0,
+	GMIME_DIGEST_ALGO_MD5           = 1,
+	GMIME_DIGEST_ALGO_SHA1          = 2,
+	GMIME_DIGEST_ALGO_RIPEMD160     = 3,
+	GMIME_DIGEST_ALGO_MD2           = 5,
+	GMIME_DIGEST_ALGO_TIGER192      = 6,
+	GMIME_DIGEST_ALGO_HAVAL5160     = 7,
+	GMIME_DIGEST_ALGO_SHA256        = 8,
+	GMIME_DIGEST_ALGO_SHA384        = 9,
+	GMIME_DIGEST_ALGO_SHA512        = 10,
+	GMIME_DIGEST_ALGO_SHA224        = 11,
+	GMIME_DIGEST_ALGO_MD4           = 301,
+	GMIME_DIGEST_ALGO_CRC32         = 302,
+	GMIME_DIGEST_ALGO_CRC32_RFC1510 = 303,
+	GMIME_DIGEST_ALGO_CRC32_RFC2440 = 304
 } GMimeDigestAlgo;
 
 /**
@@ -91,7 +97,11 @@ typedef enum {
  * @GMIME_PUBKEY_ALGO_RSA_S: A signature-only RSA algorithm.
  * @GMIME_PUBKEY_ALGO_ELG_E: An encryption-only ElGamal algorithm.
  * @GMIME_PUBKEY_ALGO_DSA: The DSA algorithm.
+ * @GMIME_PUBKEY_ALGO_ECC: The Eliptic Curve algorithm.
  * @GMIME_PUBKEY_ALGO_ELG: The ElGamal algorithm.
+ * @GMIME_PUBKEY_ALGO_ECDSA: The Eliptic Curve + DSA algorithm.
+ * @GMIME_PUBKEY_ALGO_ECDH: The Eliptic Curve + Diffie Helman algorithm.
+ * @GMIME_PUBKEY_ALGO_ECDSA: The Eliptic Curve + DSA algorithm.
  *
  * A public-key algorithm.
  **/
@@ -102,7 +112,11 @@ typedef enum {
 	GMIME_PUBKEY_ALGO_RSA_S    = 3,
 	GMIME_PUBKEY_ALGO_ELG_E    = 16,
 	GMIME_PUBKEY_ALGO_DSA      = 17,
-	GMIME_PUBKEY_ALGO_ELG      = 20
+	GMIME_PUBKEY_ALGO_ECC      = 18,
+	GMIME_PUBKEY_ALGO_ELG      = 20,
+	GMIME_PUBKEY_ALGO_ECDSA    = 301,
+	GMIME_PUBKEY_ALGO_ECDH     = 302,
+	GMIME_PUBKEY_ALGO_EDDSA    = 303
 } GMimePubKeyAlgo;
 
 /**

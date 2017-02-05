@@ -235,16 +235,6 @@ if test "x$enable_strict_parser" = "xyes"; then
   AC_DEFINE(STRICT_PARSER, 1, [Define if GMime should enable stricter parsing rules.])
 fi
 
-dnl Disable cryptography support
-AC_ARG_ENABLE(cryptography,
-              AC_HELP_STRING([--enable-cryptography],
-	      [enable cryptography support [[default=yes]]]),,
-	      [enable_cryptography="yes"])
-AM_CONDITIONAL(ENABLE_CRYPTOGRAPHY, test "x$enable_cryptography" = "xyes")
-if test "x$enable_cryptography" = "xyes"; then
-  AC_DEFINE(ENABLE_CRYPTOGRAPHY, 1, [Define if cryptography in GMime is enabled.])
-fi
-
 dnl ***********************
 dnl *** Tests for iconv ***
 dnl ***********************
@@ -558,26 +548,23 @@ dnl *************************
 LIBNSL=""
 AC_CHECK_LIB(nsl, getaddrinfo, LIBNSL="-lnsl")
 
-dnl ******************************************
-dnl *** Checks for GpgME needed for S/MIME ***
-dnl ******************************************
-AC_ARG_ENABLE([smime], 
-	      AC_HELP_STRING([--enable-smime],
-	      [enable S/MIME support [[default=yes]]]),,
-	      [enable_smime="yes"])
-
-if test "x$enable_cryptography" != "xyes"; then
-   enable_smime="no"
-fi
+dnl **************************************************
+dnl *** Checks for GpgME needed for PGP and S/MIME ***
+dnl **************************************************
+AC_ARG_ENABLE([crypto], 
+	      AC_HELP_STRING([--enable-crypto],
+	      [enable PGP and S/MIME support [[default=yes]]]),,
+	      [enable_crypto="yes"])
 
 m4_ifdef([AM_PATH_GPGME_PTHREAD], [
-AS_IF([test "x$enable_smime" = "xyes"], [
-   AM_PATH_GPGME_PTHREAD(1.1.6, enable_smime="yes (via GpgME)", enable_smime="no")
-   if test "x$enable_smime" != "xno"; then
-      AC_DEFINE(ENABLE_SMIME, 1, [Define if GMime should enable experimental S/MIME support.])
+AS_IF([test "x$enable_crypto" = "xyes"], [
+   AM_PATH_GPGME_PTHREAD(1.1.6, enable_crypto="yes (via GpgME)", enable_crypto="no")
+   if test "x$enable_crypto" != "xno"; then
+      AC_DEFINE(ENABLE_CRYPTO, 1, [Define if GMime should enable GpgME PGP and S/MIME support.])
    fi
 ])
 ])
+AM_CONDITIONAL(ENABLE_CRYPTO, test "x$enable_crypto" != "xno")
 
 dnl ****************************
 dnl *** Enable Mono bindings ***
@@ -736,8 +723,8 @@ Configuration:
 
   Large file support:   ${enable_largefile}
   Console warnings:     ${enable_warnings}
-  PGP/MIME support:     ${enable_cryptography}
-  S/MIME support:       ${enable_smime}
+  PGP/MIME support:     ${enable_crypto}
+  S/MIME support:       ${enable_crypto}
   Strict parser:        ${enable_strict_parser}
 
   Mono bindings:        ${enable_mono}

@@ -51,12 +51,12 @@ typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
  **/
 struct _GMimeGpgContext {
 	GMimeCryptoContext parent_object;
+	gboolean retrieve_session_key;
 	gboolean auto_key_retrieve;
 	gboolean always_trust;
 	gboolean use_agent;
-	char *path;
-	gboolean retrieve_session_key;
 	int version;
+	char *path;
 };
 
 struct _GMimeGpgContextClass {
