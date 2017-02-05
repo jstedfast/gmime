@@ -123,7 +123,7 @@ test_parser (GMimeParser *parser, GMimeStream *mbox, GMimeStream *summary)
 			g_free (buf);
 		}
 		
-		if ((list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO)) != NULL &&
+		if ((list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO)) != NULL &&
 		    internet_address_list_length (list) > 0) {
 			buf = internet_address_list_to_string (list, FALSE);
 			g_mime_stream_printf (summary, "To: %s\n", buf);

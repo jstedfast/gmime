@@ -259,7 +259,7 @@ test_header_sync (void)
 	g_object_unref (part);
 	
 	message = g_mime_message_new (TRUE);
-	list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
+	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	object = (GMimeObject *) message;
 	
 	testsuite_check ("address header synchronization");

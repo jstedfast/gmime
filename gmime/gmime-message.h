@@ -45,25 +45,31 @@ typedef struct _GMimeMessageClass GMimeMessageClass;
 
 
 /**
- * GMimeRecipientType:
- * @GMIME_RECIPIENT_TYPE_TO: Represents the recipients in the To: header.
- * @GMIME_RECIPIENT_TYPE_CC: Represents the recipients in the Cc: header.
- * @GMIME_RECIPIENT_TYPE_BCC: Represents the recipients in the Bcc: header.
+ * GMimeAddressType:
+ * @GMIME_ADDRESS_TYPE_SENDER:
+ * @GMIME_ADDRESS_TYPE_FROM:
+ * @GMIME_ADDRESS_TYPE_REPLY_TO:
+ * @GMIME_ADDRESS_TYPE_TO: Represents the recipients in the To: header.
+ * @GMIME_ADDRESS_TYPE_CC: Represents the recipients in the Cc: header.
+ * @GMIME_ADDRESS_TYPE_BCC: Represents the recipients in the Bcc: header.
  *
- * A message recipient type.
+ * An address type.
  **/
-typedef enum _GMimeRecipientType {
-	GMIME_RECIPIENT_TYPE_TO,
-	GMIME_RECIPIENT_TYPE_CC,
-	GMIME_RECIPIENT_TYPE_BCC
-} GMimeRecipientType;
+typedef enum _GMimeAddressType {
+	GMIME_ADDRESS_TYPE_SENDER,
+	GMIME_ADDRESS_TYPE_FROM,
+	GMIME_ADDRESS_TYPE_REPLY_TO,
+	GMIME_ADDRESS_TYPE_TO,
+	GMIME_ADDRESS_TYPE_CC,
+	GMIME_ADDRESS_TYPE_BCC
+} GMimeAddressType;
 
 
 /**
  * GMimeMessage:
  * @parent_object: parent #GMimeObject
  * @mime_part: toplevel MIME part
- * @recipients: hash table of recipients using recipient header name as the hash key
+ * @addrlists: a table of address lists
  * @message_id: Message-Id string
  * @reply_to: Reply-To string
  * @subject: Subject string
@@ -76,10 +82,7 @@ typedef enum _GMimeRecipientType {
 struct _GMimeMessage {
 	GMimeObject parent_object;
 	
-	InternetAddressList **recipients;
-	InternetAddressList *reply_to;
-	InternetAddressList *sender;
-	InternetAddressList *from;
+	InternetAddressList **addrlists;
 	GMimeObject *mime_part;
 	char *message_id;
 	char *subject;
@@ -101,7 +104,12 @@ GMimeMessage *g_mime_message_new (gboolean pretty_headers);
 InternetAddressList *g_mime_message_get_from (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_sender (GMimeMessage *message);
 InternetAddressList *g_mime_message_get_reply_to (GMimeMessage *message);
-InternetAddressList *g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type);
+InternetAddressList *g_mime_message_get_to (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_cc (GMimeMessage *message);
+InternetAddressList *g_mime_message_get_bcc (GMimeMessage *message);
+
+void g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr);
+InternetAddressList *g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type);
 InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 
 void g_mime_message_set_subject (GMimeMessage *message, const char *subject);

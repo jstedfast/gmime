@@ -229,7 +229,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	g_object_unref (mailbox);
 	
 	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
-	list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
+	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
@@ -342,7 +342,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 	g_object_unref (mailbox);
 	
 	mailbox = internet_address_mailbox_new ("Federico Mena-Quintero", "federico@helixcode.com");
-	list = g_mime_message_get_recipients (message, GMIME_RECIPIENT_TYPE_TO);
+	list = g_mime_message_get_addresses (message, GMIME_ADDRESS_TYPE_TO);
 	internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	

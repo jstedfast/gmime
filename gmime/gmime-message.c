@@ -84,9 +84,10 @@ static ssize_t write_received (GMimeStream *stream, const char *name, const char
 static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
 static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
 
-static void reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+
 static void sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
+static void reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
 static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
@@ -94,17 +95,19 @@ static void bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMes
 
 static GMimeObjectClass *parent_class = NULL;
 
-
 static struct {
 	const char *name;
 	GMimeEventCallback changed_cb;
-} recipient_types[] = {
-	{ "To",  (GMimeEventCallback) to_list_changed  },
-	{ "Cc",  (GMimeEventCallback) cc_list_changed  },
-	{ "Bcc", (GMimeEventCallback) bcc_list_changed }
+} address_types[] = {
+	{ "Sender",   (GMimeEventCallback) sender_changed   },
+	{ "From",     (GMimeEventCallback) from_changed     },
+	{ "Reply-To", (GMimeEventCallback) reply_to_changed },
+	{ "To",       (GMimeEventCallback) to_list_changed  },
+	{ "Cc",       (GMimeEventCallback) cc_list_changed  },
+	{ "Bcc",      (GMimeEventCallback) bcc_list_changed }
 };
 
-#define N_RECIPIENT_TYPES G_N_ELEMENTS (recipient_types)
+#define N_ADDRESS_TYPES G_N_ELEMENTS (address_types)
 
 static char *rfc822_headers[] = {
 	"Return-Path",
@@ -165,43 +168,43 @@ g_mime_message_class_init (GMimeMessageClass *klass)
 }
 
 static void
-connect_changed_event (GMimeMessage *message, GMimeRecipientType type)
+connect_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	InternetAddressList *list;
+	InternetAddressList *addrlist;
 	
-	list = message->recipients[type];
+	addrlist = message->addrlists[type];
 	
-	g_mime_event_add (list->priv, recipient_types[type].changed_cb, message);
+	g_mime_event_add (addrlist->priv, address_types[type].changed_cb, message);
 }
 
 static void
-disconnect_changed_event (GMimeMessage *message, GMimeRecipientType type)
+disconnect_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	InternetAddressList *list;
+	InternetAddressList *addrlist;
 	
-	list = message->recipients[type];
+	addrlist = message->addrlists[type];
 	
-	g_mime_event_remove (list->priv, recipient_types[type].changed_cb, message);
+	g_mime_event_remove (addrlist->priv, address_types[type].changed_cb, message);
 }
 
 static void
-block_changed_event (GMimeMessage *message, GMimeRecipientType type)
+block_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	InternetAddressList *list;
+	InternetAddressList *addrlist;
 	
-	list = message->recipients[type];
+	addrlist = message->addrlists[type];
 	
-	g_mime_event_block (list->priv, recipient_types[type].changed_cb, message);
+	g_mime_event_block (addrlist->priv, address_types[type].changed_cb, message);
 }
 
 static void
-unblock_changed_event (GMimeMessage *message, GMimeRecipientType type)
+unblock_changed_event (GMimeMessage *message, GMimeAddressType type)
 {
-	InternetAddressList *list;
+	InternetAddressList *addrlist;
 	
-	list = message->recipients[type];
+	addrlist = message->addrlists[type];
 	
-	g_mime_event_unblock (list->priv, recipient_types[type].changed_cb, message);
+	g_mime_event_unblock (addrlist->priv, address_types[type].changed_cb, message);
 }
 
 static void
@@ -210,23 +213,16 @@ g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass)
 	GMimeHeaderList *headers = ((GMimeObject *) message)->headers;
 	guint i;
 	
-	message->recipients = g_new (InternetAddressList *, N_RECIPIENT_TYPES);
-	message->reply_to = internet_address_list_new ();
-	message->sender = internet_address_list_new ();
-	message->from = internet_address_list_new ();
+	message->addrlists = g_new (InternetAddressList *, N_ADDRESS_TYPES);
 	message->message_id = NULL;
 	message->mime_part = NULL;
 	message->subject = NULL;
 	message->tz_offset = 0;
 	message->date = 0;
 	
-	g_mime_event_add (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
-	g_mime_event_add (message->sender->priv, (GMimeEventCallback) sender_changed, message);
-	g_mime_event_add (message->from->priv, (GMimeEventCallback) from_changed, message);
-	
 	/* initialize recipient lists */
-	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
-		message->recipients[i] = internet_address_list_new ();
+	for (i = 0; i < N_ADDRESS_TYPES; i++) {
+		message->addrlists[i] = internet_address_list_new ();
 		connect_changed_event (message, i);
 	}
 	
@@ -256,21 +252,13 @@ g_mime_message_finalize (GObject *object)
 	GMimeMessage *message = (GMimeMessage *) object;
 	guint i;
 	
-	g_mime_event_remove (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
-	g_mime_event_remove (message->sender->priv, (GMimeEventCallback) sender_changed, message);
-	g_mime_event_remove (message->from->priv, (GMimeEventCallback) from_changed, message);
-	
-	g_object_unref (message->reply_to);
-	g_object_unref (message->sender);
-	g_object_unref (message->from);
-	
 	/* disconnect changed handlers */
-	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
+	for (i = 0; i < N_ADDRESS_TYPES; i++) {
 		disconnect_changed_event (message, i);
-		g_object_unref (message->recipients[i]);
+		g_object_unref (message->addrlists[i]);
 	}
 	
-	g_free (message->recipients);
+	g_free (message->addrlists);
 	g_free (message->message_id);
 	g_free (message->subject);
 	
@@ -751,22 +739,22 @@ enum {
 };
 
 static void
-message_add_recipients_from_string (GMimeMessage *message, int action, GMimeRecipientType type, const char *str)
+message_add_addresses_from_string (GMimeMessage *message, int action, GMimeAddressType type, const char *str)
 {
-	InternetAddressList *recipients, *addrlist;
+	InternetAddressList *addrlist, *list;
 	
-	recipients = g_mime_message_get_recipients (message, type);
+	addrlist = message->addrlists[type];
 	
 	if (action == SET)
-		internet_address_list_clear (recipients);
+		internet_address_list_clear (addrlist);
 	
-	if ((addrlist = internet_address_list_parse_string (str))) {
+	if ((list = internet_address_list_parse_string (str))) {
 		if (action == PREPEND)
-			internet_address_list_prepend (recipients, addrlist);
+			internet_address_list_prepend (addrlist, list);
 		else
-			internet_address_list_append (recipients, addrlist);
+			internet_address_list_append (addrlist, list);
 		
-		g_object_unref (addrlist);
+		g_object_unref (list);
 	}
 }
 
@@ -786,46 +774,34 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 	
 	switch (i) {
 	case HEADER_SENDER:
-		g_mime_event_block (message->sender->priv, (GMimeEventCallback) sender_changed, message);
-		internet_address_list_clear (message->sender);
-		if ((addrlist = internet_address_list_parse_string (value))) {
-			internet_address_list_append (message->sender, addrlist);
-			g_object_unref (addrlist);
-		}
-		g_mime_event_unblock (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
+		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_SENDER, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		g_mime_event_block (message->from->priv, (GMimeEventCallback) from_changed, message);
-		internet_address_list_clear (message->from);
-		if ((addrlist = internet_address_list_parse_string (value))) {
-			internet_address_list_append (message->from, addrlist);
-			g_object_unref (addrlist);
-		}
-		g_mime_event_unblock (message->from->priv, (GMimeEventCallback) from_changed, message);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
+		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_FROM, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		g_mime_event_block (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
-		internet_address_list_clear (message->reply_to);
-		if ((addrlist = internet_address_list_parse_string (value))) {
-			internet_address_list_append (message->reply_to, addrlist);
-			g_object_unref (addrlist);
-		}
-		g_mime_event_unblock (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
+		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_REPLY_TO, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		block_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
-		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_TO, value);
-		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_TO);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_TO);
+		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_TO, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		block_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
-		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_CC, value);
-		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_CC);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_CC);
+		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_CC, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		block_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
-		message_add_recipients_from_string (message, action, GMIME_RECIPIENT_TYPE_BCC, value);
-		unblock_changed_event (message, GMIME_RECIPIENT_TYPE_BCC);
+		block_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
+		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_BCC, value);
+		unblock_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -925,12 +901,21 @@ message_get_header (GMimeObject *object, const char *header)
 	return NULL;
 }
 
+static void
+remove_address_header (GMimeMessage *message, GMimeAddressType type)
+{
+	InternetAddressList *addrlist;
+	
+	block_changed_event (message, type);
+	addrlist = message->addrlists[type];
+	internet_address_list_clear (addrlist);
+	unblock_changed_event (message, type);
+}
+
 static gboolean
 message_remove_header (GMimeObject *object, const char *header)
 {
 	GMimeMessage *message = (GMimeMessage *) object;
-	InternetAddressList *addrlist;
-	GMimeRecipientType type;
 	guint i;
 	
 	/* Content-* headers don't belong on the message, they belong on the part. */
@@ -948,40 +933,22 @@ message_remove_header (GMimeObject *object, const char *header)
 	
 	switch (i) {
 	case HEADER_SENDER:
-		g_mime_event_block (message->sender->priv, (GMimeEventCallback) sender_changed, message);
-		internet_address_list_clear (message->sender);
-		g_mime_event_unblock (message->sender->priv, (GMimeEventCallback) sender_changed, message);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
-		g_mime_event_block (message->from->priv, (GMimeEventCallback) from_changed, message);
-		internet_address_list_clear (message->from);
-		g_mime_event_unblock (message->from->priv, (GMimeEventCallback) from_changed, message);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
-		g_mime_event_block (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
-		internet_address_list_clear (message->reply_to);
-		g_mime_event_unblock (message->reply_to->priv, (GMimeEventCallback) reply_to_changed, message);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
-		type = GMIME_RECIPIENT_TYPE_TO;
-		block_changed_event (message, type);
-		addrlist = message->recipients[type];
-		internet_address_list_clear (addrlist);
-		unblock_changed_event (message, type);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
-		type = GMIME_RECIPIENT_TYPE_CC;
-		block_changed_event (message, type);
-		addrlist = message->recipients[type];
-		internet_address_list_clear (addrlist);
-		unblock_changed_event (message, type);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
-		type = GMIME_RECIPIENT_TYPE_BCC;
-		block_changed_event (message, type);
-		addrlist = message->recipients[type];
-		internet_address_list_clear (addrlist);
-		unblock_changed_event (message, type);
+		remove_address_header (message, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
@@ -1171,7 +1138,7 @@ g_mime_message_get_sender (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->sender;
+	return message->addrlists[GMIME_ADDRESS_TYPE_SENDER];
 }
 
 
@@ -1188,7 +1155,7 @@ g_mime_message_get_from (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->from;
+	return message->addrlists[GMIME_ADDRESS_TYPE_FROM];
 }
 
 
@@ -1205,7 +1172,58 @@ g_mime_message_get_reply_to (GMimeMessage *message)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	return message->reply_to;
+	return message->addrlists[GMIME_ADDRESS_TYPE_REPLY_TO];
+}
+
+
+/**
+ * g_mime_message_get_to:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the To header(s).
+ *
+ * Returns: the parsed list of addresses in the To header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_to (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_TO];
+}
+
+
+/**
+ * g_mime_message_get_cc:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the Cc header(s).
+ *
+ * Returns: the parsed list of addresses in the Cc header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_cc (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_CC];
+}
+
+
+/**
+ * g_mime_message_get_bcc:
+ * @message: A #GMimeMessage
+ *
+ * Gets combined list of parsed addresses in the Bcc header(s).
+ *
+ * Returns: the parsed list of addresses in the Bcc header(s).
+ **/
+InternetAddressList *
+g_mime_message_get_bcc (GMimeMessage *message)
+{
+	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
+	
+	return message->addrlists[GMIME_ADDRESS_TYPE_BCC];
 }
 
 
@@ -1221,96 +1239,96 @@ sync_internet_address_list (InternetAddressList *list, GMimeMessage *message, co
 }
 
 static void
-reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+sync_address_header (GMimeMessage *message, GMimeAddressType type)
 {
-	sync_internet_address_list (list, message, "Reply-To");
-}
-
-static void
-sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_internet_address_list (list, message, "Sender");
-}
-
-static void
-from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
-{
-	sync_internet_address_list (list, message, "From");
-}
-
-static void
-sync_recipient_header (GMimeMessage *message, GMimeRecipientType type)
-{
-	InternetAddressList *list = message->recipients[type];
-	const char *name = recipient_types[type].name;
+	InternetAddressList *list = message->addrlists[type];
+	const char *name = address_types[type].name;
 	
 	sync_internet_address_list (list, message, name);
 }
 
 static void
+sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_SENDER);
+}
+
+static void
+from_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_FROM);
+}
+
+static void
+reply_to_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
+{
+	sync_address_header (message, GMIME_ADDRESS_TYPE_REPLY_TO);
+}
+
+static void
 to_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
-	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_TO);
+	sync_address_header (message, GMIME_ADDRESS_TYPE_TO);
 }
 
 static void
 cc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
-	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_CC);
+	sync_address_header (message, GMIME_ADDRESS_TYPE_CC);
 }
 
 static void
 bcc_list_changed (InternetAddressList *list, gpointer args, GMimeMessage *message)
 {
-	sync_recipient_header (message, GMIME_RECIPIENT_TYPE_BCC);
+	sync_address_header (message, GMIME_ADDRESS_TYPE_BCC);
 }
 
 
 /**
- * g_mime_message_add_recipient:
+ * g_mime_message_add_mailbox:
  * @message: A #GMimeMessage
- * @type: A #GMimeRecipientType
- * @name: The recipient's name (or %NULL)
- * @addr: The recipient's address
+ * @type: A #GMimeAddressType
+ * @name: The name of the mailbox (or %NULL)
+ * @addr: The address of the mailbox
  *
- * Add a recipient of a chosen type to the MIME message.
+ * Add a mailbox of a chosen type to the MIME message.
  *
  * Note: The @name (and @addr) strings should be in UTF-8.
  **/
 void
-g_mime_message_add_recipient (GMimeMessage *message, GMimeRecipientType type, const char *name, const char *addr)
+g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, const char *name, const char *addr)
 {
-	InternetAddressList *recipients;
+	InternetAddressList *addrlist;
 	InternetAddress *ia;
 	
 	g_return_if_fail (GMIME_IS_MESSAGE (message));
-	g_return_if_fail (type < N_RECIPIENT_TYPES);
+	g_return_if_fail (type < N_ADDRESS_TYPES);
 	g_return_if_fail (addr != NULL);
 	
-	recipients = message->recipients[type];
+	addrlist = message->addrlists[type];
 	ia = internet_address_mailbox_new (name, addr);
-	internet_address_list_add (recipients, ia);
+	internet_address_list_add (addrlist, ia);
 	g_object_unref (ia);
 }
 
 
 /**
- * g_mime_message_get_recipients:
+ * g_mime_message_get_addresses:
  * @message: A #GMimeMessage
- * @type: A #GMimeRecipientType
+ * @type: A #GMimeAddressType
  *
- * Gets a list of recipients of the specified @type from the @message.
+ * Gets a list of addresses of the specified @type from the @message.
  *
- * Returns: (transfer none): a list of recipients of the specified
+ * Returns: (transfer none): a list of addresses of the specified
  * @type from the @message.
  **/
 InternetAddressList *
-g_mime_message_get_recipients (GMimeMessage *message, GMimeRecipientType type)
+g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type)
 {
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
-	g_return_val_if_fail (type < N_RECIPIENT_TYPES, NULL);
+	g_return_val_if_fail (type < N_ADDRESS_TYPES, NULL);
 	
-	return message->recipients[type];
+	return message->addrlists[type];
 }
 
 
@@ -1332,8 +1350,8 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
 	
 	g_return_val_if_fail (GMIME_IS_MESSAGE (message), NULL);
 	
-	for (i = 0; i < N_RECIPIENT_TYPES; i++) {
-		recipients = message->recipients[i];
+	for (i = GMIME_ADDRESS_TYPE_TO; i <= GMIME_ADDRESS_TYPE_BCC; i++) {
+		recipients = message->addrlists[i];
 		
 		if (internet_address_list_length (recipients) == 0)
 			continue;
