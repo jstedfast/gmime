@@ -170,118 +170,6 @@ g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswo
 }
 
 
-static gboolean
-crypto_get_retrieve_session_key (GMimeCryptoContext *ctx)
-{
-	return FALSE;
-}
-
-/**
- * g_mime_crypto_context_get_retrieve_session_key:
- * @ctx: a #GMimeCryptoContext
- *
- * Gets whether or not the @ctx is configured to retrieve a session
- * key during decryption (see g_mime_decrypt_result_get_session_key()).
- *
- * Returns: %TRUE if the @ctx is configured to retrieve a session key
- * or %FALSE otherwise.
- **/
-gboolean
-g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_retrieve_session_key (ctx);
-}
-
-static int
-crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
-				 GError **err)
-{
-	if (!retrieve_session_key)
-		return 0;
-	
-	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-		     "Session key retrieval is not supported by this crypto context");
-	
-	return -1;
-}
-
-/**
- * g_mime_crypto_context_set_retrieve_session_key:
- * @ctx: a #GMimeCryptoContext
- * @retrieve_session_key: whether to retrieve session keys during decryption
- * @err: a #GError
- *
- * Configures whether @ctx should produce a session key during future
- * decryption operations (see
- * g_mime_decrypt_result_get_session_key()).
- *
- * Returns: %0 on success or %-1 on fail.
- **/
-int
-g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
-						gboolean retrieve_session_key,
-						GError **err)
-{
-	if (!GMIME_IS_CRYPTO_CONTEXT (ctx)) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     "Not a GMimeCryptoContext, can't set retrieve_session_key");
-		return -1;
-	}
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_retrieve_session_key (ctx, retrieve_session_key, err);
-}
-
-
-static gboolean
-crypto_get_always_trust (GMimeCryptoContext *ctx)
-{
-	return FALSE;
-}
-
-
-/**
- * g_mime_crypto_context_get_always_trust:
- * @ctx: a #GMimeCryptoContext
- *
- * Gets whther or not keys should always be trusted when encrypting.
- *
- * Returns: %TRUE if keys should always be trusted when encrypting or
- * %FALSE otherwise.
- **/
-gboolean
-g_mime_crypto_context_get_always_trust (GMimeCryptoContext *ctx)
-{
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
-	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_always_trust (ctx);
-}
-
-
-static void
-crypto_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
-{
-}
-
-
-/**
- * g_mime_crypto_context_set_always_trust:
- * @ctx: a #GMimeCryptoContext
- * @always_trust: %TRUE if keys should always be trusted when encrypting
- *
- * Sets whether or not key should always be trusted when encrypting.
- **/
-void
-g_mime_crypto_context_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
-{
-	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
-	
-	GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_always_trust (ctx, always_trust);
-}
-
-
-
 static GMimeDigestAlgo
 crypto_digest_id (GMimeCryptoContext *ctx, const char *name)
 {
@@ -710,6 +598,118 @@ g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 	
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, err);
 }
+
+
+static gboolean
+crypto_get_retrieve_session_key (GMimeCryptoContext *ctx)
+{
+	return FALSE;
+}
+
+/**
+ * g_mime_crypto_context_get_retrieve_session_key:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Gets whether or not the @ctx is configured to retrieve a session
+ * key during decryption (see g_mime_decrypt_result_get_session_key()).
+ *
+ * Returns: %TRUE if the @ctx is configured to retrieve a session key
+ * or %FALSE otherwise.
+ **/
+gboolean
+g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_retrieve_session_key (ctx);
+}
+
+static int
+crypto_set_retrieve_session_key (GMimeCryptoContext *ctx, gboolean retrieve_session_key,
+				 GError **err)
+{
+	if (!retrieve_session_key)
+		return 0;
+	
+	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+		     "Session key retrieval is not supported by this crypto context");
+	
+	return -1;
+}
+
+/**
+ * g_mime_crypto_context_set_retrieve_session_key:
+ * @ctx: a #GMimeCryptoContext
+ * @retrieve_session_key: whether to retrieve session keys during decryption
+ * @err: a #GError
+ *
+ * Configures whether @ctx should produce a session key during future
+ * decryption operations (see
+ * g_mime_decrypt_result_get_session_key()).
+ *
+ * Returns: %0 on success or %-1 on fail.
+ **/
+int
+g_mime_crypto_context_set_retrieve_session_key (GMimeCryptoContext *ctx,
+						gboolean retrieve_session_key,
+						GError **err)
+{
+	if (!GMIME_IS_CRYPTO_CONTEXT (ctx)) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
+			     "Not a GMimeCryptoContext, can't set retrieve_session_key");
+		return -1;
+	}
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_retrieve_session_key (ctx, retrieve_session_key, err);
+}
+
+
+static gboolean
+crypto_get_always_trust (GMimeCryptoContext *ctx)
+{
+	return FALSE;
+}
+
+
+/**
+ * g_mime_crypto_context_get_always_trust:
+ * @ctx: a #GMimeCryptoContext
+ *
+ * Gets whther or not keys should always be trusted when encrypting.
+ *
+ * Returns: %TRUE if keys should always be trusted when encrypting or
+ * %FALSE otherwise.
+ **/
+gboolean
+g_mime_crypto_context_get_always_trust (GMimeCryptoContext *ctx)
+{
+	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), FALSE);
+	
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->get_always_trust (ctx);
+}
+
+
+static void
+crypto_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
+{
+}
+
+
+/**
+ * g_mime_crypto_context_set_always_trust:
+ * @ctx: a #GMimeCryptoContext
+ * @always_trust: %TRUE if keys should always be trusted when encrypting
+ *
+ * Sets whether or not key should always be trusted when encrypting.
+ **/
+void
+g_mime_crypto_context_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
+{
+	g_return_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx));
+	
+	GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->set_always_trust (ctx, always_trust);
+}
+
 
 
 static void g_mime_decrypt_result_class_init (GMimeDecryptResultClass *klass);
