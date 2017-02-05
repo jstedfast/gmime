@@ -1,0 +1,26 @@
+InternetAddress
+  .to_string#method name="to_new_string"
+References struct=false
+
+// G-I can't handle non-boxed types
+PartIter struct=false
+Param struct=false
+  .next#method name="get_next" nullable
+
+// G-I doesn't allow non-nullable return values (bug #660879)
+Message
+  .get_mime_part nullable
+Object
+  .get_content_type_parameter nullable
+Parser
+  .construct_message nullable
+
+// G-I doesn't have a time_t type
+utils_header_decode_date type="time_t"
+
+// G-I doesn't support annotations on fields (bug #561619)
+Filter
+  .backbuf type="uint8[]" array_length_field="backsize"
+  .outreal type="uint8[]"
+	.outbuf type="unowned uint8[]" array_length_field="outsize"
+  .outptr type="unowned uint8[]"
