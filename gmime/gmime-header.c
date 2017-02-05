@@ -162,6 +162,8 @@ g_mime_header_set_value (GMimeHeader *header, const char *value)
 	g_free (header->value);
 	
 	header->value = g_strdup (value);
+	
+	g_mime_event_emit (header->list->changed, NULL);
 }
 
 
@@ -333,6 +335,8 @@ g_mime_header_list_clear (GMimeHeaderList *headers)
 	g_hash_table_remove_all (headers->hash);
 	
 	g_ptr_array_set_size (headers->list, 0);
+	
+	g_mime_event_emit (headers->changed, NULL);
 }
 
 
@@ -411,6 +415,8 @@ _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const c
 	} else {
 		g_ptr_array_add (headers->list, header);
 	}
+	
+	g_mime_event_emit (headers->changed, NULL);
 }
 
 
@@ -447,6 +453,8 @@ _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const ch
 	
 	if (!g_hash_table_lookup (headers->hash, name))
 		g_hash_table_insert (headers->hash, header->name, header);
+	
+	g_mime_event_emit (headers->changed, NULL);
 }
 
 
@@ -527,6 +535,8 @@ _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char 
 			g_ptr_array_remove_index (headers->list, i);
 			g_mime_header_free (hdr);
 		}
+		
+		g_mime_event_emit (headers->changed, NULL);
 	} else {
 		_g_mime_header_list_append (headers, name, value, raw_value, offset);
 	}
@@ -628,6 +638,8 @@ g_mime_header_list_remove (GMimeHeaderList *headers, const char *name)
 		i++;
 	}
 	
+	g_mime_event_emit (headers->changed, NULL);
+	
 	return TRUE;
 }
 
@@ -670,6 +682,8 @@ g_mime_header_list_remove_at (GMimeHeaderList *headers, int index)
 	}
 	
 	g_mime_header_free (header);
+	
+	g_mime_event_emit (headers->changed, NULL);
 }
 
 
