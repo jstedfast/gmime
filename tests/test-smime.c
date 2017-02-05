@@ -464,7 +464,7 @@ int main (int argc, char *argv[])
 	testsuite_start ("S/MIME implementation");
 	
 	ctx = g_mime_pkcs7_context_new (request_passwd);
-	g_mime_pkcs7_context_set_always_trust ((GMimePkcs7Context *) ctx, TRUE);
+	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	
 	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, NULL) == 0) {
 		fprintf (stderr, "GMimePkcs7Context should not have allowed us to set retrieve_session_key to TRUE, since it is not implemented.\n");

@@ -306,7 +306,7 @@ int main (int argc, char **argv)
 	testsuite_start ("GnuPG crypto context");
 	
 	ctx = g_mime_gpg_context_new (request_passwd, GPG_PATH);
-	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
+	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {

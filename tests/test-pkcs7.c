@@ -307,7 +307,7 @@ int main (int argc, char **argv)
 	testsuite_start ("Pkcs7 crypto context");
 	
 	ctx = g_mime_pkcs7_context_new (request_passwd);
-	g_mime_pkcs7_context_set_always_trust ((GMimePkcs7Context *) ctx, TRUE);
+	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	
 	testsuite_check ("GMimePkcs7Context::import");
 	try {

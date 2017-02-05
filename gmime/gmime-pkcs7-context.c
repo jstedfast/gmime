@@ -169,6 +169,8 @@ g_mime_pkcs7_context_class_init (GMimePkcs7ContextClass *klass)
 	crypto_class->get_signature_protocol = pkcs7_get_signature_protocol;
 	crypto_class->get_encryption_protocol = pkcs7_get_encryption_protocol;
 	crypto_class->get_key_exchange_protocol = pkcs7_get_key_exchange_protocol;
+	crypto_class->get_always_trust = pkcs7_get_always_trust;
+	crypto_class->set_always_trust = pkcs7_set_always_trust;
 }
 
 static void
@@ -894,20 +896,26 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
 static gboolean
 pkcs7_get_always_trust (GMimeCryptoContext *context)
 {
+#ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
 	return (pkcs7->encrypt_flags & GPGME_ENCRYPT_ALWAYS_TRUST) != 0;
+#else
+	return FALSE;
+#endif /* ENABLE_CRYPTO */
 }
 
 static void
-pkcs7_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust)
+pkcs7_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
 {
+#ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	
 	if (always_trust)
 		pkcs7->encrypt_flags |= GPGME_ENCRYPT_ALWAYS_TRUST;
 	else
 		pkcs7->encrypt_flags &= ~GPGME_ENCRYPT_ALWAYS_TRUST;
+#endif /* ENABLE_CRYPTO */
 }
 
 

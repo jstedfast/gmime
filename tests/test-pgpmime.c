@@ -494,7 +494,7 @@ int main (int argc, char *argv[])
 	testsuite_start ("PGP/MIME implementation");
 	
 	ctx = g_mime_gpg_context_new (request_passwd, GPG_PATH);
-	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
+	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, &err) != 0) {
 		fprintf (stderr, "Failed to set retrieve_session_key on GMimeGpgContext: %s\n",
 			 err ? err->message : "no error info returned" );
