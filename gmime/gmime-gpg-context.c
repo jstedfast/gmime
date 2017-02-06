@@ -122,7 +122,7 @@ static GMimeDecryptResult *gpg_decrypt_session (GMimeCryptoContext *ctx, const c
 static int gpg_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			    GError **err);
 
-static int gpg_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+static int gpg_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			    GMimeStream *ostream, GError **err);
 
 
@@ -476,15 +476,15 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo diges
 	if (!gpg_add_signer (gpg, userid, err))
 		return -1;
 	
-	gpgme_set_armor (gpg->ctx, FALSE);
-	
 	if ((error = gpgme_data_new_from_cbs (&input, &gpg_stream_funcs, istream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open input stream"));
+		gpgme_signers_clear (gpg->ctx);
 		return -1;
 	}
 	
 	if ((error = gpgme_data_new_from_cbs (&output, &gpg_stream_funcs, ostream)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not open output stream"));
+		gpgme_signers_clear (gpg->ctx);
 		gpgme_data_release (input);
 		return -1;
 	}
@@ -492,11 +492,13 @@ gpg_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo diges
 	/* sign the input stream */
 	if ((error = gpgme_op_sign (gpg->ctx, input, output, GPGME_SIG_MODE_DETACH)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed"));
+		gpgme_signers_clear (gpg->ctx);
 		gpgme_data_release (output);
 		gpgme_data_release (input);
 		return -1;
 	}
 	
+	gpgme_signers_clear (gpg->ctx);
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	
@@ -721,12 +723,6 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	gpgme_key_t key;
 	guint i;
 	
-	if (sign) {
-		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
-			     _("Cannot sign and encrypt a stream at the same time using gpg"));
-		return -1;
-	}
-	
 	/* create an array of recipient keys for GpgMe */
 	rcpts = g_new0 (gpgme_key_t, recipients->len + 1);
 	for (i = 0; i < recipients->len; i++) {
@@ -752,7 +748,21 @@ gpg_encrypt (GMimeCryptoContext *context, gboolean sign, const char *userid,
 	}
 	
 	/* encrypt the input stream */
-	error = gpgme_op_encrypt (gpg->ctx, rcpts, gpg->encrypt_flags, input, output);
+	if (sign) {
+		if (!gpg_add_signer (gpg, userid, err)) {
+			gpgme_data_release (output);
+			gpgme_data_release (input);
+			key_list_free (rcpts);
+			return -1;
+		}
+		
+		error = gpgme_op_encrypt_sign (gpg->ctx, rcpts, gpg->encrypt_flags, input, output);
+		
+		gpgme_signers_clear (gpg->ctx);
+	} else {
+		error = gpgme_op_encrypt (gpg->ctx, rcpts, gpg->encrypt_flags, input, output);
+	}
+	
 	gpgme_data_release (output);
 	gpgme_data_release (input);
 	key_list_free (rcpts);
@@ -882,7 +892,7 @@ gpg_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **err
 }
 
 static int
-gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
+gpg_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimeGpgContext *gpg = (GMimeGpgContext *) context;
@@ -896,12 +906,10 @@ gpg_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostr
 	}
 	
 	/* export the key(s) */
-	for (i = 0; i < keys->len; i++) {
-		if ((error = gpgme_op_export (gpg->ctx, keys->pdata[i], 0, keydata)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data"));
-			gpgme_data_release (keydata);
-			return -1;
-		}
+	if ((error = gpgme_op_export_ext (gpg->ctx, keys, 0, keydata)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data"));
+		gpgme_data_release (keydata);
+		return -1;
 	}
 	
 	gpgme_data_release (keydata);
@@ -987,6 +995,7 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd)
 	gpg = g_object_newv (GMIME_TYPE_GPG_CONTEXT, 0, NULL);
 	gpgme_set_passphrase_cb (ctx, gpg_passphrase_cb, gpg);
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_OpenPGP);
+	gpgme_set_armor (ctx, TRUE);
 	gpg->ctx = ctx;
 	
 	crypto = (GMimeCryptoContext *) gpg;

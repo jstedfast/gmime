@@ -81,7 +81,7 @@ static GMimeDecryptResult *crypto_decrypt_session (GMimeCryptoContext *ctx, cons
 static int crypto_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			       GError **err);
 
-static int crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+static int crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			       GMimeStream *ostream, GError **err);
 
 
@@ -566,7 +566,7 @@ g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream
 
 
 static int
-crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 		    GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
@@ -579,22 +579,24 @@ crypto_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
 /**
  * g_mime_crypto_context_export_keys:
  * @ctx: a #GMimeCryptoContext
- * @keys: (element-type utf8): an array of key ids
+ * @keys: (element-type utf8): an array of key ids, terminated by a %NULL element
  * @ostream: output stream
  * @err: a #GError
  *
  * Exports the keys/certificates in @keys to the stream @ostream from
  * the key/certificate database controlled by @ctx.
  *
+ * If @keys is %NULL or contains only a %NULL element, then all keys
+ * will be exported.
+ *
  * Returns: %0 on success or %-1 on fail.
  **/
 int
-g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 				   GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
-	g_return_val_if_fail (keys != NULL, -1);
 	
 	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->export_keys (ctx, keys, ostream, err);
 }

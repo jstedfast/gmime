@@ -111,7 +111,7 @@ struct _GMimeCryptoContextClass {
 	int                      (* import_keys) (GMimeCryptoContext *ctx, GMimeStream *istream,
 						  GError **err);
 	
-	int                      (* export_keys) (GMimeCryptoContext *ctx, GPtrArray *keys,
+	int                      (* export_keys) (GMimeCryptoContext *ctx, const char *keys[],
 						  GMimeStream *ostream, GError **err);
 	
 	gboolean                 (* get_retrieve_session_key) (GMimeCryptoContext *ctx);
@@ -162,7 +162,7 @@ GMimeDecryptResult *g_mime_crypto_context_decrypt_session (GMimeCryptoContext *c
 /* key/certificate routines */
 int g_mime_crypto_context_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream, GError **err);
 
-int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+int g_mime_crypto_context_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 				       GMimeStream *ostream, GError **err);
 
 gboolean g_mime_crypto_context_get_retrieve_session_key (GMimeCryptoContext *ctx);

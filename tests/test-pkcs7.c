@@ -194,8 +194,8 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	const char *inbuf, *outbuf;
 	size_t inlen, outlen;
 	Exception *ex = NULL;
+	const char *keys[2];
 	GError *err = NULL;
-	GPtrArray *keys;
 	int fd;
 	
 	if ((fd = open (path, O_RDONLY, 0)) == -1)
@@ -207,13 +207,13 @@ test_export (GMimeCryptoContext *ctx, const char *path)
 	g_mime_stream_reset (istream);
 	g_object_unref (ostream);
 	
-	keys = g_ptr_array_new ();
-	g_ptr_array_add (keys, "alice@example.net");
+	keys[0] = "alice@example.net";
+	keys[1] = NULL;
 	
 	ostream = g_mime_stream_mem_new ();
 	
 	g_mime_crypto_context_export_keys (ctx, keys, ostream, &err);
-	g_ptr_array_free (keys, TRUE);
+	
 	if (err != NULL) {
 		ex = exception_new ("%s", err->message);
 		g_object_unref (istream);

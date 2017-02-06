@@ -111,7 +111,7 @@ static GMimeDecryptResult *pkcs7_decrypt (GMimeCryptoContext *ctx, GMimeStream *
 static int pkcs7_import_keys (GMimeCryptoContext *ctx, GMimeStream *istream,
 			      GError **err);
 
-static int pkcs7_export_keys (GMimeCryptoContext *ctx, GPtrArray *keys,
+static int pkcs7_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			      GMimeStream *ostream, GError **err);
 
 static gboolean pkcs7_get_always_trust (GMimeCryptoContext *context);
@@ -858,7 +858,7 @@ pkcs7_import_keys (GMimeCryptoContext *context, GMimeStream *istream, GError **e
 }
 
 static int
-pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *ostream, GError **err)
+pkcs7_export_keys (GMimeCryptoContext *context, const char *keys[], GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
@@ -872,12 +872,10 @@ pkcs7_export_keys (GMimeCryptoContext *context, GPtrArray *keys, GMimeStream *os
 	}
 	
 	/* export the key(s) */
-	for (i = 0; i < keys->len; i++) {
-		if ((error = gpgme_op_export (pkcs7->ctx, keys->pdata[i], 0, keydata)) != GPG_ERR_NO_ERROR) {
-			g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data"));
-			gpgme_data_release (keydata);
-			return -1;
-		}
+	if ((error = gpgme_op_export_ext (pkcs7->ctx, keys, 0, keydata)) != GPG_ERR_NO_ERROR) {
+		g_set_error (err, GMIME_GPGME_ERROR, error, _("Could not export key data"));
+		gpgme_data_release (keydata);
+		return -1;
 	}
 	
 	gpgme_data_release (keydata);
