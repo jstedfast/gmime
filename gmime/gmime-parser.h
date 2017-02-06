@@ -29,6 +29,7 @@
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-message.h>
 #include <gmime/gmime-content-type.h>
+#include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-stream.h>
 
 G_BEGIN_DECLS
@@ -100,8 +101,10 @@ void g_mime_parser_set_header_regex (GMimeParser *parser, const char *regex,
 				     gpointer user_data);
 
 GMimeObject *g_mime_parser_construct_part (GMimeParser *parser);
+GMimeObject *g_mime_parser_construct_part_with_options (GMimeParser *parser, GMimeParserOptions *options);
 
 GMimeMessage *g_mime_parser_construct_message (GMimeParser *parser);
+GMimeMessage *g_mime_parser_construct_message_with_options (GMimeParser *parser, GMimeParserOptions *options);
 
 gint64 g_mime_parser_tell (GMimeParser *parser);
 

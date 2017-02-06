@@ -57,6 +57,7 @@ libgmime_3_0_la_SOURCES = 		\
 	gmime-param.c			\
 	gmime-parse-utils.c		\
 	gmime-parser.c			\
+	gmime-parser-options.c		\
 	gmime-part.c			\
 	gmime-part-iter.c		\
 	gmime-pkcs7-context.c		\
@@ -111,6 +112,7 @@ gmimeinclude_HEADERS = 			\
 	gmime-object.h			\
 	gmime-param.h			\
 	gmime-parser.h			\
+	gmime-parser-options.h		\
 	gmime-part.h			\
 	gmime-part-iter.h		\
 	gmime-pkcs7-context.h		\
