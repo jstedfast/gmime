@@ -57,7 +57,7 @@ fi
 	DIE=1
 }
 
-for automake_version in 1.9 1.10 1.11 1.12 1.13 1.14 1.15 1.16; do
+for automake_version in 1.14 1.15 1.16; do
     if automake-${automake_version} --version < /dev/null > /dev/null 2>&1 ; then
         AUTOMAKE=automake-${automake_version}
         ACLOCAL=aclocal-${automake_version}
@@ -100,7 +100,7 @@ $AUTOMAKE --add-missing || exit $?
 autoconf || exit $?
 cd $ORIGDIR || exit $?
 
-if test -z "$AUTOGEN_SUBDIR_MODE" && test -z "NOCONFIGURE"; then
+if test -z "$AUTOGEN_SUBDIR_MODE"; then
         $srcdir/configure --enable-maintainer-mode $AUTOGEN_CONFIGURE_ARGS "$@" || exit $?
 
         echo 
