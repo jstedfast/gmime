@@ -360,12 +360,62 @@ g_throw (Exception *ex)
 
 #define v2_1_16 ((2 << 24) | (1 << 16) | (16 << 8))
 
-int _g_mime_get_gpg_version (const char *gpg);
+static int
+get_gpg_version (const char *path)
+{
+	const char vheader[] = "gpg (GnuPG) ";
+	int v, n = 0, version = 0;
+	const char *inptr;
+	char buffer[128];
+	char *command;
+	FILE *gpg;
+	
+	g_return_val_if_fail (path != NULL, -1);
+	
+	command = g_strdup_printf ("%s --version", path);
+	gpg = popen (command, "r");
+	g_free (command);
+	
+	if (gpg == NULL)
+		return -1;
+	
+	inptr = fgets (buffer, 128, gpg);
+	pclose (gpg);
+	
+	if (strncmp (inptr, vheader, sizeof (vheader) - 1) != 0)
+		return -1;
+	
+	inptr += sizeof (vheader) - 1;
+	while (*inptr >= '0' && *inptr <= '9' && n < 4) {
+		v = 0;
+		
+		while (*inptr >= '0' && *inptr <= '9' && (v < 25 || (v == 25 && *inptr < '6'))) {
+			v = (v * 10) + (*inptr - '0');
+			inptr++;
+		}
+		
+		version = (version << 8) + v;
+		n++;
+		
+		if (*inptr != '.')
+			break;
+		
+		inptr++;
+	}
+	
+	if (n == 0)
+		return -1;
+	
+	if (n < 4)
+		version = version << ((4 - n) * 8);
+	
+	return version;
+}
 
 int
 testsuite_can_safely_override_session_key (const char *gpg)
 {
-	return _g_mime_get_gpg_version (gpg) >= v2_1_16;
+	return get_gpg_version (gpg) >= v2_1_16;
 }
 
 int
@@ -395,7 +445,7 @@ testsuite_setup_gpghome (const char *gpg)
 	
 	g_free (command);
 	
-	if (_g_mime_get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
+	if (get_gpg_version (gpg) >= ((2 << 24) | (1 << 16))) {
 		FILE *fp;
 		
 		if ((fp = fopen ("./tmp/.gnupg/gpg.conf", "w")) == NULL)

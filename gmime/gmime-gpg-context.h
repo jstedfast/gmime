@@ -40,13 +40,10 @@ typedef struct _GMimeGpgContextClass GMimeGpgContextClass;
 GType g_mime_gpg_context_get_type (void);
 
 
-GMimeCryptoContext *g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd, const char *path);
+GMimeCryptoContext *g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd);
 
 gboolean g_mime_gpg_context_get_auto_key_retrieve (GMimeGpgContext *ctx);
 void g_mime_gpg_context_set_auto_key_retrieve (GMimeGpgContext *ctx, gboolean auto_key_retrieve);
-
-gboolean g_mime_gpg_context_get_use_agent (GMimeGpgContext *ctx);
-void g_mime_gpg_context_set_use_agent (GMimeGpgContext *ctx, gboolean use_agent);
 
 G_END_DECLS
 

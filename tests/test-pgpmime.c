@@ -465,14 +465,14 @@ import_key (GMimeCryptoContext *ctx, const char *path)
 
 int main (int argc, char *argv[])
 {
+	GMimeStream *stream = NULL, *cleartext = NULL;
 	const char *datadir = "data/pgpmime";
+	char *session_key = NULL;
 	GMimeCryptoContext *ctx;
+	GError *err = NULL;
 	struct stat st;
 	char *key;
 	int i;
-	GMimeStream *stream = NULL, *cleartext = NULL;
-	char *session_key = NULL;
-	GError *err = NULL;
 	
 	g_mime_init (0);
 	
@@ -493,7 +493,7 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("PGP/MIME implementation");
 	
-	ctx = g_mime_gpg_context_new (request_passwd, GPG_PATH);
+	ctx = g_mime_gpg_context_new (request_passwd);
 	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, &err) != 0) {
 		fprintf (stderr, "Failed to set retrieve_session_key on GMimeGpgContext: %s\n",

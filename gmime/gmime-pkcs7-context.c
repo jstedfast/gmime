@@ -38,9 +38,7 @@
 #endif /* ENABLE_CRYPTO */
 #include "gmime-error.h"
 
-#ifdef ENABLE_CRYPTO
 #include <gpgme.h>
-#endif
 
 #ifdef ENABLE_DEBUG
 #define d(x) x
