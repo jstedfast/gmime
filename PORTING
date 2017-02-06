@@ -50,6 +50,8 @@ Porting from GMime 2.6 to GMime 3.0
 - Renamed g_mime_gpg_context_[get,set]_always_trust() to
   g_mime_crypto_context_[get,set]_always_trust().
 
+- Removed g_mime_gpg_context_[get,set]_use_agent(). This should no longer be needed.
+
 
 Porting from GMime 2.4 to GMime 2.6
 -----------------------------------
