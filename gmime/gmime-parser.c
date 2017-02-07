@@ -83,8 +83,6 @@ typedef struct _content_type {
 	gboolean exists;
 } ContentType;
 
-extern GMimeParserOptions g_mime_parser_options_default;
-
 extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
 extern void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
@@ -1663,7 +1661,7 @@ parser_construct_leaf_part (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
-	object = g_mime_object_new_type (content_type->type, content_type->subtype);
+	object = g_mime_object_new_type (options, content_type->type, content_type->subtype);
 	
 	if (!content_type->exists) {
 		GMimeContentType *mime_type;
@@ -1808,7 +1806,7 @@ parser_construct_multipart (GMimeParser *parser, GMimeParserOptions *options, Co
 	
 	g_assert (priv->state >= GMIME_PARSER_STATE_HEADERS_END);
 	
-	object = g_mime_object_new_type (content_type->type, content_type->subtype);
+	object = g_mime_object_new_type (options, content_type->type, content_type->subtype);
 	
 	header = priv->headers;
 	while (header) {
@@ -1898,7 +1896,7 @@ g_mime_parser_construct_part (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
-	return parser_construct_part (parser, &g_mime_parser_options_default);
+	return parser_construct_part (parser, g_mime_parser_options_get_default ());
 }
 
 
@@ -1998,7 +1996,7 @@ g_mime_parser_construct_message (GMimeParser *parser)
 {
 	g_return_val_if_fail (GMIME_IS_PARSER (parser), NULL);
 	
-	return parser_construct_message (parser, &g_mime_parser_options_default);
+	return parser_construct_message (parser, g_mime_parser_options_get_default ());
 }
 
 

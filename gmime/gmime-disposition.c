@@ -128,15 +128,16 @@ g_mime_content_disposition_new (void)
 
 
 /**
- * g_mime_content_disposition_new_from_string:
+ * g_mime_content_disposition_parse:
+ * @options: a #GMimeParserOptions
  * @str: Content-Disposition field value or %NULL
  *
- * Creates a new #GMimeContentDisposition object.
+ * Parses the input string into a #GMimeContentDisposition object.
  *
  * Returns: a new #GMimeContentDisposition object.
  **/
 GMimeContentDisposition *
-g_mime_content_disposition_new_from_string (const char *str)
+g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str)
 {
 	GMimeContentDisposition *disposition;
 	const char *inptr = str;
@@ -159,7 +160,7 @@ g_mime_content_disposition_new_from_string (const char *str)
 	
 	/* parse the parameters, if any */
 	if (*inptr++ == ';' && *inptr) {
-		param = disposition->params = g_mime_param_new_from_string (inptr);
+		param = disposition->params = g_mime_param_parse (options, inptr);
 		
 		while (param) {
 			g_hash_table_insert (disposition->param_hash, param->name, param);

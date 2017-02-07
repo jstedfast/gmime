@@ -55,6 +55,11 @@ struct _subtype_bucket {
 	GType object_type;
 };
 
+extern GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
+
+extern GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
+extern void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
+
 extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
@@ -76,8 +81,8 @@ static char *object_get_headers (GMimeObject *object);
 static ssize_t object_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void object_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
-static ssize_t write_content_type (GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_disposition (GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
 
 static void content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject *object);
 static void content_disposition_changed (GMimeContentDisposition *disposition, gpointer args, GMimeObject *object);
@@ -120,7 +125,7 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	
 	parent_class = g_type_class_ref (G_TYPE_OBJECT);
-	
+
 	object_class->finalize = g_mime_object_finalize;
 	
 	klass->prepend_header = object_prepend_header;
@@ -137,7 +142,7 @@ g_mime_object_class_init (GMimeObjectClass *klass)
 static void
 g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 {
-	object->headers = g_mime_header_list_new ();
+	object->headers = g_mime_header_list_new (g_mime_parser_options_get_default ());
 	object->content_type = NULL;
 	object->disposition = NULL;
 	object->content_id = NULL;
@@ -145,6 +150,7 @@ g_mime_object_init (GMimeObject *object, GMimeObjectClass *klass)
 	g_mime_header_list_register_writer (object->headers, "Content-Type", write_content_type);
 	g_mime_header_list_register_writer (object->headers, "Content-Disposition", write_disposition);
 }
+
 
 static void
 g_mime_object_finalize (GObject *object)
@@ -171,7 +177,7 @@ g_mime_object_finalize (GObject *object)
 
 
 static ssize_t
-write_content_type (GMimeStream *stream, const char *name, const char *value)
+write_content_type (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	GMimeContentType *content_type;
 	ssize_t nwritten;
@@ -181,7 +187,7 @@ write_content_type (GMimeStream *stream, const char *name, const char *value)
 	out = g_string_new ("");
 	g_string_printf (out, "%s: ", name);
 	
-	content_type = g_mime_content_type_new_from_string (value);
+	content_type = g_mime_content_type_parse (options, value);
 	
 	val = g_mime_content_type_to_string (content_type);
 	g_string_append (out, val);
@@ -221,7 +227,7 @@ content_type_changed (GMimeContentType *content_type, gpointer args, GMimeObject
 }
 
 static ssize_t
-write_disposition (GMimeStream *stream, const char *name, const char *value)
+write_disposition (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	GMimeContentDisposition *disposition;
 	ssize_t nwritten;
@@ -230,7 +236,7 @@ write_disposition (GMimeStream *stream, const char *name, const char *value)
 	out = g_string_new ("");
 	g_string_printf (out, "%s: ", name);
 	
-	disposition = g_mime_content_disposition_new_from_string (value);
+	disposition = g_mime_content_disposition_parse (options, value);
 	g_string_append (out, disposition->disposition);
 	
 	g_mime_param_write_to_string (disposition->params, TRUE, out);
@@ -296,6 +302,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
 
 /**
  * g_mime_object_new:
+ * @options: a #GMimeParserOptions
  * @content_type: a #GMimeContentType object
  *
  * Performs a lookup of registered #GMimeObject subclasses, registered
@@ -310,7 +317,7 @@ g_mime_object_register_type (const char *type, const char *subtype, GType object
  * parts appropriate for @content_type.
  **/
 GMimeObject *
-g_mime_object_new (GMimeContentType *content_type)
+g_mime_object_new (GMimeParserOptions *options, GMimeContentType *content_type)
 {
 	struct _type_bucket *bucket;
 	struct _subtype_bucket *sub;
@@ -341,6 +348,7 @@ g_mime_object_new (GMimeContentType *content_type)
 	}
 	
 	object = g_object_newv (obj_type, 0, NULL);
+	_g_mime_header_list_set_options (object->headers, options);
 	
 	g_mime_object_set_content_type (object, content_type);
 	
@@ -350,6 +358,7 @@ g_mime_object_new (GMimeContentType *content_type)
 
 /**
  * g_mime_object_new_type:
+ * @options: a #GMimeParserOptions
  * @type: mime type
  * @subtype: mime subtype
  *
@@ -364,10 +373,11 @@ g_mime_object_new (GMimeContentType *content_type)
  * of @type/@subtype.
  **/
 GMimeObject *
-g_mime_object_new_type (const char *type, const char *subtype)
+g_mime_object_new_type (GMimeParserOptions *options, const char *type, const char *subtype)
 {
 	struct _type_bucket *bucket;
 	struct _subtype_bucket *sub;
+	GMimeObject *object;
 	GType obj_type;
 	
 	g_return_val_if_fail (type != NULL, NULL);
@@ -393,7 +403,10 @@ g_mime_object_new_type (const char *type, const char *subtype)
 			return NULL;
 	}
 	
-	return g_object_newv (obj_type, 0, NULL);
+	object = g_object_newv (obj_type, 0, NULL);
+	_g_mime_header_list_set_options (object->headers, options);
+	
+	return object;
 }
 
 
@@ -739,6 +752,7 @@ static char *content_headers[] = {
 static gboolean
 process_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset)
 {
+	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeContentDisposition *disposition;
 	GMimeContentType *content_type;
 	guint i;
@@ -753,12 +767,12 @@ process_header (GMimeObject *object, const char *header, const char *value, cons
 	
 	switch (i) {
 	case HEADER_CONTENT_DISPOSITION:
-		disposition = g_mime_content_disposition_new_from_string (value);
+		disposition = g_mime_content_disposition_parse (options, value);
 		_g_mime_object_set_content_disposition (object, disposition);
 		g_object_unref (disposition);
 		break;
 	case HEADER_CONTENT_TYPE:
-		content_type = g_mime_content_type_new_from_string (value);
+		content_type = g_mime_content_type_parse (options, value);
 		_g_mime_object_set_content_type (object, content_type);
 		g_object_unref (content_type);
 		break;

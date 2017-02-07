@@ -167,15 +167,16 @@ g_mime_content_type_new (const char *type, const char *subtype)
 
 
 /**
- * g_mime_content_type_new_from_string:
+ * g_mime_content_type_parse:
+ * @options: a #GMimeParserOptions
  * @str: input string containing a content-type (and params)
  *
- * Constructs a new Content-Type object based on the input string.
+ * Parses the input string into a #GMimeContentType object.
  *
  * Returns: a new #GMimeContentType object based on the input string.
  **/
 GMimeContentType *
-g_mime_content_type_new_from_string (const char *str)
+g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 {
 	GMimeContentType *mime_type;
 	const char *inptr = str;
@@ -198,7 +199,7 @@ g_mime_content_type_new_from_string (const char *str)
 	if (*inptr++ == ';' && *inptr) {
 		GMimeParam *param;
 		
-		param = mime_type->params = g_mime_param_new_from_string (inptr);
+		param = mime_type->params = g_mime_param_parse (options, inptr);
 		while (param != NULL) {
 			g_hash_table_insert (mime_type->param_hash, param->name, param);
 			param = param->next;

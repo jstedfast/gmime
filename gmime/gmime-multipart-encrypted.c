@@ -56,7 +56,6 @@
  * multipart/encrypted MIME type.
  **/
 
-
 /* GObject class methods */
 static void g_mime_multipart_encrypted_class_init (GMimeMultipartEncryptedClass *klass);
 static void g_mime_multipart_encrypted_init (GMimeMultipartEncrypted *mps, GMimeMultipartEncryptedClass *klass);
@@ -163,6 +162,7 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 				    const char *userid, GMimeDigestAlgo digest,
 				    GPtrArray *recipients, GError **err)
 {
+	GMimeParserOptions *options = g_mime_parser_options_get_default ();
 	GMimeStream *filtered_stream, *ciphertext, *stream;
 	GMimePart *version_part, *encrypted_part;
 	GMimeContentType *content_type;
@@ -206,11 +206,11 @@ g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *c
 	g_mime_stream_reset (ciphertext);
 	
 	/* construct the version part */
-	content_type = g_mime_content_type_new_from_string (protocol);
+	content_type = g_mime_content_type_parse (options, protocol);
 	version_part = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	
-	content_type = g_mime_content_type_new_from_string (protocol);
+	content_type = g_mime_content_type_parse (options, protocol);
 	g_mime_object_set_content_type (GMIME_OBJECT (version_part), content_type);
 	g_mime_part_set_content_encoding (version_part, GMIME_CONTENT_ENCODING_7BIT);
 	stream = g_mime_stream_mem_new_with_buffer ("Version: 1\n", strlen ("Version: 1\n"));

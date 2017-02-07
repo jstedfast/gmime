@@ -227,7 +227,7 @@ static struct {
 };
 
 static void
-test_addrspec (gboolean test_broken)
+test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 {
 	InternetAddressList *addrlist;
 	char *str;
@@ -239,7 +239,7 @@ test_addrspec (gboolean test_broken)
 		
 		testsuite_check ("addrspec[%u]", i);
 		try {
-			if (!(addrlist = internet_address_list_parse_string (addrspec[i].input)))
+			if (!(addrlist = internet_address_list_parse (options, addrspec[i].input)))
 				throw (exception_new ("could not parse addr-spec"));
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
@@ -268,7 +268,7 @@ test_addrspec (gboolean test_broken)
 			
 			testsuite_check ("broken_addrspec[%u]", i);
 			try {
-				if (!(addrlist = internet_address_list_parse_string (broken_addrspec[i].input)))
+				if (!(addrlist = internet_address_list_parse (options, broken_addrspec[i].input)))
 					throw (exception_new ("could not parse addr-spec"));
 				
 				str = internet_address_list_to_string (addrlist, FALSE);
@@ -427,7 +427,7 @@ static struct {
 #endif
 
 static void
-test_rfc2047 (gboolean test_broken)
+test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 {
 	char *enc, *dec;
 	guint i;
@@ -436,7 +436,7 @@ test_rfc2047 (gboolean test_broken)
 		dec = enc = NULL;
 		testsuite_check ("rfc2047_text[%u]", i);
 		try {
-			dec = g_mime_utils_header_decode_text (rfc2047_text[i].input);
+			dec = g_mime_utils_header_decode_text (options, rfc2047_text[i].input);
 			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
@@ -444,7 +444,7 @@ test_rfc2047 (gboolean test_broken)
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
 				throw (exception_new ("encoded text does not match: %s", enc));
 
-			//dec2 = g_mime_utils_header_decode_text (enc);
+			//dec2 = g_mime_utils_header_decode_text (options, enc);
 			//if (strcmp (rfc2047_text[i].decoded, dec2) != 0)
 			//	throw (exception_new ("decoded2 text does not match: %s", dec));
 			
@@ -461,7 +461,7 @@ test_rfc2047 (gboolean test_broken)
 		dec = enc = NULL;
 		testsuite_check ("broken_rfc2047_text[%u]", i);
 		try {
-			dec = g_mime_utils_header_decode_text (broken_rfc2047_text[i].input);
+			dec = g_mime_utils_header_decode_text (options, broken_rfc2047_text[i].input);
 			if (strcmp (broken_rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
@@ -511,7 +511,7 @@ static struct {
 };
 
 static void
-test_header_folding (void)
+test_header_folding (GMimeParserOptions *options)
 {
 	char *folded;
 	guint i;
@@ -520,7 +520,7 @@ test_header_folding (void)
 	        folded = NULL;
 		testsuite_check ("header_folding[%u]", i);
 		try {
-			folded = g_mime_utils_unstructured_header_fold (header_folding[i].input);
+			folded = g_mime_utils_unstructured_header_fold (options, header_folding[i].input);
 			if (strcmp (header_folding[i].folded, folded) != 0)
 				throw (exception_new ("folded text does not match: -->%s<-- vs -->%s<--", header_folding[i].folded, folded));
 			
@@ -545,7 +545,7 @@ static struct {
 };
 
 static void
-test_rfc2184 (void)
+test_rfc2184 (GMimeParserOptions *options)
 {
 	GMimeParam param, *params;
 	GString *str;
@@ -569,7 +569,7 @@ test_rfc2184 (void)
 			if (strcmp (rfc2184[i].encoded, str->str) != 0)
 				throw (exception_new ("encoded param does not match: %s", str->str));
 			
-			if (!(params = g_mime_param_new_from_string (str->str + n + 2)))
+			if (!(params = g_mime_param_parse (options, str->str + n + 2)))
 				throw (exception_new ("could not parse encoded param list"));
 			
 			if (params->next != NULL)
@@ -642,38 +642,50 @@ test_qstring (void)
 
 int main (int argc, char **argv)
 {
+	GMimeParserOptions *options = g_mime_parser_options_new ();
+	
 	g_mime_init (0);
 	
 	testsuite_init (argc, argv);
 	
-	testsuite_start ("addr-spec parser");
-	test_addrspec (FALSE);
+	testsuite_start ("addr-spec parser (strict)");
+	options->rfc2047 = GMIME_RFC_COMPLIANCE_STRICT;
+	test_addrspec (options, FALSE);
+	testsuite_end ();
+	
+	testsuite_start ("addr-spec parser (loose)");
+	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
+	test_addrspec (options, TRUE);
 	testsuite_end ();
 	
 	testsuite_start ("date parser");
 	test_date_parser ();
 	testsuite_end ();
 	
-	testsuite_start ("rfc2047 encoding/decoding");
-	test_rfc2047 (FALSE);
+	testsuite_start ("rfc2047 encoding/decoding (strict)");
+	options->rfc2047 = GMIME_RFC_COMPLIANCE_STRICT;
+	test_rfc2047 (options, FALSE);
+	testsuite_end ();
+	
+	testsuite_start ("rfc2047 encoding/decoding (loose)");
+	options->rfc2047 = GMIME_RFC_COMPLIANCE_LOOSE;
+	test_rfc2047 (options, TRUE);
 	testsuite_end ();
 	
 	testsuite_start ("rfc2184 encoding/decoding");
-	test_rfc2184 ();
+	test_rfc2184 (options);
 	testsuite_end ();
 	
 	testsuite_start ("quoted-strings");
 	test_qstring ();
 	testsuite_end ();
 	
-	g_mime_shutdown ();
-	
-	g_mime_init (GMIME_ENABLE_RFC2047_WORKAROUNDS);
-	testsuite_start ("broken rfc2047 encoding/decoding");
-	test_header_folding ();
-	test_addrspec (TRUE);
-	test_rfc2047 (TRUE);
+	testsuite_start ("header folding");
+	test_header_folding (options);
 	testsuite_end ();
+	
+	g_mime_parser_options_free (options);
+	
 	g_mime_shutdown ();
 	
 	return testsuite_exit ();

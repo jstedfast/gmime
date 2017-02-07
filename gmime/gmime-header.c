@@ -45,6 +45,8 @@
  * values.
  **/
 
+extern GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
+
 struct _GMimeHeader {
 	GMimeHeaderList *list;
 	gint64 offset;
@@ -54,6 +56,7 @@ struct _GMimeHeader {
 };
 
 struct _GMimeHeaderList {
+	GMimeParserOptions *options;
 	GHashTable *writers;
 	GMimeEvent *changed;
 	GHashTable *hash;
@@ -208,12 +211,12 @@ _g_mime_header_set_offset (GMimeHeader *header, gint64 offset)
 }
 
 static ssize_t
-default_writer (GMimeStream *stream, const char *name, const char *value)
+default_writer (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	ssize_t nwritten;
 	char *val;
 	
-	val = g_mime_utils_header_printf ("%s: %s\n", name, value);
+	val = g_mime_utils_header_printf (options, "%s: %s\n", name, value);
 	nwritten = g_mime_stream_write_string (stream, val);
 	g_free (val);
 	
@@ -253,7 +256,7 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
 		if (!(writer = g_hash_table_lookup (header->list->writers, header->name)))
 			writer = default_writer;
 		
-		if ((nwritten = writer (stream, header->name, header->value)) == -1)
+		if ((nwritten = writer (header->list->options, stream, header->name, header->value)) == -1)
 			return -1;
 		
 		total += nwritten;
@@ -265,17 +268,21 @@ g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
 
 /**
  * g_mime_header_list_new:
+ * @options: a #GMimeParserOptions
  *
  * Creates a new #GMimeHeaderList object.
  *
  * Returns: a new header list object.
  **/
 GMimeHeaderList *
-g_mime_header_list_new (void)
+g_mime_header_list_new (GMimeParserOptions *options)
 {
 	GMimeHeaderList *headers;
 	
+	g_return_val_if_fail (options != NULL, NULL);
+	
 	headers = g_slice_new (GMimeHeaderList);
+	headers->options = _g_mime_parser_options_clone (options);
 	headers->writers = g_hash_table_new_full (g_mime_strcase_hash,
 						  g_mime_strcase_equal,
 						  g_free, NULL);
@@ -307,6 +314,7 @@ g_mime_header_list_destroy (GMimeHeaderList *headers)
 	
 	g_ptr_array_free (headers->list, TRUE);
 	
+	g_mime_parser_options_free (headers->options);
 	g_hash_table_destroy (headers->writers);
 	g_hash_table_destroy (headers->hash);
 	
@@ -337,6 +345,20 @@ g_mime_header_list_clear (GMimeHeaderList *headers)
 	g_ptr_array_set_size (headers->list, 0);
 	
 	g_mime_event_emit (headers->changed, NULL);
+}
+
+
+GMimeParserOptions *
+_g_mime_header_list_get_options (GMimeHeaderList *headers)
+{
+	return headers->options;
+}
+
+void
+_g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options)
+{
+	g_mime_parser_options_free (headers->options);
+	headers->options = _g_mime_parser_options_clone (options);
 }
 
 

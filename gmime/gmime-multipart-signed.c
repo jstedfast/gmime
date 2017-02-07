@@ -57,7 +57,6 @@
  * multipart/signed MIME type.
  **/
 
-
 /* GObject class methods */
 static void g_mime_multipart_signed_class_init (GMimeMultipartSignedClass *klass);
 static void g_mime_multipart_signed_init (GMimeMultipartSigned *mps, GMimeMultipartSignedClass *klass);
@@ -217,6 +216,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 			      GMimeCryptoContext *ctx, const char *userid,
 			      GMimeDigestAlgo digest, GError **err)
 {
+	GMimeParserOptions *options = g_mime_parser_options_get_default ();
 	GMimeStream *stream, *filtered, *sigstream;
 	GMimeContentType *content_type;
 	GMimeDataWrapper *wrapper;
@@ -293,7 +293,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	g_object_unref (parser);
 	
 	/* construct the signature part */
-	content_type = g_mime_content_type_new_from_string (protocol);
+	content_type = g_mime_content_type_parse (options, protocol);
 	signature = g_mime_part_new_with_type (content_type->type, content_type->subtype);
 	g_object_unref (content_type);
 	

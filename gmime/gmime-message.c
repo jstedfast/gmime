@@ -55,13 +55,14 @@ extern void _g_mime_object_set_header (GMimeObject *object, const char *header, 
 
 extern void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
 
+extern GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
 extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 
 extern GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
-extern char *_g_mime_utils_unstructured_header_fold (const char *field, const char *value);
-extern char *_g_mime_utils_structured_header_fold (const char *field, const char *value);
+extern char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
+extern char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);
@@ -77,12 +78,12 @@ static char *message_get_headers (GMimeObject *object);
 static ssize_t message_write_to_stream (GMimeObject *object, GMimeStream *stream, gboolean content_only);
 static void message_encode (GMimeObject *object, GMimeEncodingConstraint constraint);
 
-/*static ssize_t write_structured (GMimeStream *stream, const char *name, const char *value);*/
-static ssize_t write_references (GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_addrspec (GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_received (GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_subject (GMimeStream *stream, const char *name, const char *value);
-static ssize_t write_msgid (GMimeStream *stream, const char *name, const char *value);
+/*static ssize_t write_structured (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);*/
+static ssize_t write_references (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_addrspec (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_received (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_subject (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
+static ssize_t write_msgid (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
 
 
 static void sender_changed (InternetAddressList *list, gpointer args, GMimeMessage *message);
@@ -491,7 +492,7 @@ struct _received_part {
 };
 
 static ssize_t
-write_received (GMimeStream *stream, const char *name, const char *value)
+write_received (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	struct _received_part *parts, *part, *tail;
 	const char *inptr, *lwsp = NULL;
@@ -604,12 +605,12 @@ write_received (GMimeStream *stream, const char *name, const char *value)
 }
 
 static ssize_t
-write_subject (GMimeStream *stream, const char *name, const char *value)
+write_subject (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	char *folded;
 	ssize_t n;
 	
-	folded = _g_mime_utils_unstructured_header_fold (name, value);
+	folded = _g_mime_utils_unstructured_header_fold (options, name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	
@@ -617,7 +618,7 @@ write_subject (GMimeStream *stream, const char *name, const char *value)
 }
 
 static ssize_t
-write_msgid (GMimeStream *stream, const char *name, const char *value)
+write_msgid (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	/* Note: we don't want to wrap the Message-Id header - seems to
 	   break a lot of clients (and servers) */
@@ -625,7 +626,7 @@ write_msgid (GMimeStream *stream, const char *name, const char *value)
 }
 
 static ssize_t
-write_references (GMimeStream *stream, const char *name, const char *value)
+write_references (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	GMimeReferences *references, *reference;
 	ssize_t nwritten;
@@ -669,12 +670,12 @@ write_references (GMimeStream *stream, const char *name, const char *value)
 
 #if 0
 static ssize_t
-write_structured (GMimeStream *stream, const char *name, const char *value)
+write_structured (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	char *folded;
 	ssize_t n;
 	
-	folded = _g_mime_utils_structured_header_fold (name, value);
+	folded = _g_mime_utils_structured_header_fold (options, name, value);
 	n = g_mime_stream_write_string (stream, folded);
 	g_free (folded);
 	
@@ -683,7 +684,7 @@ write_structured (GMimeStream *stream, const char *name, const char *value)
 #endif
 
 static ssize_t
-write_addrspec (GMimeStream *stream, const char *name, const char *value)
+write_addrspec (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value)
 {
 	InternetAddressList *addrlist;
 	GString *str;
@@ -692,7 +693,7 @@ write_addrspec (GMimeStream *stream, const char *name, const char *value)
 	str = g_string_new (name);
 	g_string_append (str, ": ");
 	
-	if (value && (addrlist = internet_address_list_parse_string (value))) {
+	if (value && (addrlist = internet_address_list_parse (options, value))) {
 		internet_address_list_writer (addrlist, str);
 		g_object_unref (addrlist);
 	}
@@ -739,7 +740,7 @@ enum {
 };
 
 static void
-message_add_addresses_from_string (GMimeMessage *message, int action, GMimeAddressType type, const char *str)
+message_add_addresses_from_string (GMimeParserOptions *options, GMimeMessage *message, int action, GMimeAddressType type, const char *str)
 {
 	InternetAddressList *addrlist, *list;
 	
@@ -748,7 +749,7 @@ message_add_addresses_from_string (GMimeMessage *message, int action, GMimeAddre
 	if (action == SET)
 		internet_address_list_clear (addrlist);
 	
-	if ((list = internet_address_list_parse_string (str))) {
+	if ((list = internet_address_list_parse (options, str))) {
 		if (action == PREPEND)
 			internet_address_list_prepend (addrlist, list);
 		else
@@ -761,6 +762,7 @@ message_add_addresses_from_string (GMimeMessage *message, int action, GMimeAddre
 static gboolean
 process_header (GMimeObject *object, int action, const char *header, const char *value)
 {
+	GMimeParserOptions *options = _g_mime_header_list_get_options (object->headers);
 	GMimeMessage *message = (GMimeMessage *) object;
 	InternetAddressList *addrlist;
 	time_t date;
@@ -775,37 +777,37 @@ process_header (GMimeObject *object, int action, const char *header, const char 
 	switch (i) {
 	case HEADER_SENDER:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
-		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_SENDER, value);
+		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_SENDER, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_SENDER);
 		break;
 	case HEADER_FROM:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
-		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_FROM, value);
+		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_FROM, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_FROM);
 		break;
 	case HEADER_REPLY_TO:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
-		message_add_addresses_from_string (message, SET, GMIME_ADDRESS_TYPE_REPLY_TO, value);
+		message_add_addresses_from_string (options, message, SET, GMIME_ADDRESS_TYPE_REPLY_TO, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_REPLY_TO);
 		break;
 	case HEADER_TO:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_TO);
-		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_TO, value);
+		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_TO, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_TO);
 		break;
 	case HEADER_CC:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_CC);
-		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_CC, value);
+		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_CC, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_CC);
 		break;
 	case HEADER_BCC:
 		block_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
-		message_add_addresses_from_string (message, action, GMIME_ADDRESS_TYPE_BCC, value);
+		message_add_addresses_from_string (options, message, action, GMIME_ADDRESS_TYPE_BCC, value);
 		unblock_changed_event (message, GMIME_ADDRESS_TYPE_BCC);
 		break;
 	case HEADER_SUBJECT:
 		g_free (message->subject);
-		message->subject = g_mime_utils_header_decode_text (value);
+		message->subject = g_mime_utils_header_decode_text (options, value);
 		break;
 	case HEADER_DATE:
 		if (value) {

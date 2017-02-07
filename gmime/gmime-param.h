@@ -23,6 +23,7 @@
 #define __GMIME_PARAM_H__
 
 #include <glib.h>
+#include <gmime/gmime-parser-options.h>
 
 G_BEGIN_DECLS
 
@@ -44,7 +45,7 @@ struct _GMimeParam {
 };
 
 GMimeParam *g_mime_param_new (const char *name, const char *value);
-GMimeParam *g_mime_param_new_from_string (const char *str);
+GMimeParam *g_mime_param_parse (GMimeParserOptions *options, const char *str);
 void g_mime_param_destroy (GMimeParam *param);
 
 const GMimeParam *g_mime_param_next (const GMimeParam *param);

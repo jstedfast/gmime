@@ -23,6 +23,7 @@
 #define __GMIME_HEADER_H__
 
 #include <glib.h>
+#include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-stream.h>
 
 G_BEGIN_DECLS
@@ -30,6 +31,7 @@ G_BEGIN_DECLS
 
 /**
  * GMimeHeaderWriter:
+ * @options: The #GMimeParserOptions
  * @stream: The output stream.
  * @name: The field name.
  * @value: The field value.
@@ -39,7 +41,7 @@ G_BEGIN_DECLS
  *
  * Returns: the number of bytes written or %-1 on error.
  **/
-typedef ssize_t (* GMimeHeaderWriter) (GMimeStream *stream, const char *name, const char *value);
+typedef ssize_t (* GMimeHeaderWriter) (GMimeParserOptions *options, GMimeStream *stream, const char *name, const char *value);
 
 
 /**
@@ -66,7 +68,7 @@ ssize_t g_mime_header_write_to_stream (GMimeHeader *header, GMimeStream *stream)
  **/
 typedef struct _GMimeHeaderList GMimeHeaderList;
 
-GMimeHeaderList *g_mime_header_list_new (void);
+GMimeHeaderList *g_mime_header_list_new (GMimeParserOptions *options);
 
 void g_mime_header_list_destroy (GMimeHeaderList *headers);
 

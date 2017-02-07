@@ -25,6 +25,7 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-content-type.h>
 #include <gmime/gmime-disposition.h>
 #include <gmime/gmime-encodings.h>
@@ -98,8 +99,8 @@ GType g_mime_object_get_type (void);
 
 void g_mime_object_register_type (const char *type, const char *subtype, GType object_type);
 
-GMimeObject *g_mime_object_new (GMimeContentType *content_type);
-GMimeObject *g_mime_object_new_type (const char *type, const char *subtype);
+GMimeObject *g_mime_object_new (GMimeParserOptions *options, GMimeContentType *content_type);
+GMimeObject *g_mime_object_new_type (GMimeParserOptions *options, const char *type, const char *subtype);
 
 void g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 GMimeContentType *g_mime_object_get_content_type (GMimeObject *object);

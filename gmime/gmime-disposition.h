@@ -85,7 +85,7 @@ GType g_mime_content_disposition_get_type (void);
 
 
 GMimeContentDisposition *g_mime_content_disposition_new (void);
-GMimeContentDisposition *g_mime_content_disposition_new_from_string (const char *str);
+GMimeContentDisposition *g_mime_content_disposition_parse (GMimeParserOptions *options, const char *str);
 
 void g_mime_content_disposition_set_disposition (GMimeContentDisposition *disposition, const char *value);
 const char *g_mime_content_disposition_get_disposition (GMimeContentDisposition *disposition);

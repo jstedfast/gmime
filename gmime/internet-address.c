@@ -1234,14 +1234,14 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 }
 
 static void
-_internet_address_decode_name (InternetAddress *ia, GString *name)
+_internet_address_decode_name (GMimeParserOptions *options, InternetAddress *ia, GString *name)
 {
 	char *value, *buf = NULL;
 	char *phrase;
 	
 	if (!g_utf8_validate (name->str, name->len, NULL)) {
 		/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
-		buf = g_mime_utils_decode_8bit (name->str, name->len);
+		buf = g_mime_utils_decode_8bit (options, name->str, name->len);
 		phrase = buf;
 	} else {
 		phrase = name->str;
@@ -1249,13 +1249,13 @@ _internet_address_decode_name (InternetAddress *ia, GString *name)
 	
 	/* decode the phrase */
 	g_mime_utils_unquote_string (phrase);
-	value = g_mime_utils_header_decode_phrase (phrase);
+	value = g_mime_utils_header_decode_phrase (options, phrase);
 	g_free (ia->name);
 	ia->name = value;
 	g_free (buf);
 }
 
-static InternetAddress *decode_address (const char **in);
+static InternetAddress *decode_address (GMimeParserOptions *options, const char **in);
 
 static void
 skip_lwsp (const char **in)
@@ -1348,7 +1348,7 @@ decode_addrspec (const char **in)
 }
 
 static InternetAddress *
-decode_group (const char **in)
+decode_group (GMimeParserOptions *options, const char **in)
 {
 	InternetAddressGroup *group;
 	InternetAddress *addr;
@@ -1363,14 +1363,14 @@ decode_group (const char **in)
 	while (*inptr && *inptr != ';') {
 		InternetAddress *member;
 		
-		if ((member = decode_address (&inptr)))
+		if ((member = decode_address (options, &inptr)))
 			_internet_address_group_add_member (group, member);
 		
 		decode_lwsp (&inptr);
 		while (*inptr == ',') {
 			inptr++;
 			decode_lwsp (&inptr);
-			if ((member = decode_address (&inptr)))
+			if ((member = decode_address (options, &inptr)))
 				_internet_address_group_add_member (group, member);
 			
 			decode_lwsp (&inptr);
@@ -1441,7 +1441,7 @@ decode_route (const char **in)
 }
 
 static InternetAddress *
-decode_address (const char **in)
+decode_address (GMimeParserOptions *options, const char **in)
 {
 	const char *inptr, *start, *word, *comment = NULL;
 	InternetAddress *addr = NULL;
@@ -1485,7 +1485,7 @@ decode_address (const char **in)
 		if (*inptr == ':') {
 			/* rfc2822 group */
 			inptr++;
-			addr = decode_group (&inptr);
+			addr = decode_group (options, &inptr);
 			decode_lwsp (&inptr);
 			if (*inptr != ';')
 				w(g_warning ("Invalid group spec, missing closing ';': %.*s",
@@ -1604,7 +1604,7 @@ decode_address (const char **in)
 	}
 	
 	if (addr && name->len > 0)
-		_internet_address_decode_name (addr, name);
+		_internet_address_decode_name (options, addr, name);
 	
 	g_string_free (name, TRUE);
 	
@@ -1615,7 +1615,8 @@ decode_address (const char **in)
 
 
 /**
- * internet_address_list_parse_string:
+ * internet_address_list_parse:
+ * @options: a #GMimeParserOptions
  * @str: a string containing internet addresses
  *
  * Construct a list of internet addresses from the given string.
@@ -1624,7 +1625,7 @@ decode_address (const char **in)
  * input string does not contain any addresses.
  **/
 InternetAddressList *
-internet_address_list_parse_string (const char *str)
+internet_address_list_parse (GMimeParserOptions *options, const char *str)
 {
 	InternetAddressList *addrlist;
 	const char *inptr = str;
@@ -1636,7 +1637,7 @@ internet_address_list_parse_string (const char *str)
 	while (inptr && *inptr) {
 		start = inptr;
 		
-		if ((addr = decode_address (&inptr))) {
+		if ((addr = decode_address (options, &inptr))) {
 			_internet_address_list_add (addrlist, addr);
 		} else {
 			w(g_warning ("Invalid or incomplete address: %.*s",

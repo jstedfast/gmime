@@ -71,7 +71,7 @@ GType g_mime_content_type_get_type (void);
 
 
 GMimeContentType *g_mime_content_type_new (const char *type, const char *subtype);
-GMimeContentType *g_mime_content_type_new_from_string (const char *str);
+GMimeContentType *g_mime_content_type_parse (GMimeParserOptions *options, const char *str);
 
 char *g_mime_content_type_to_string (GMimeContentType *mime_type);
 

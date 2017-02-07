@@ -26,6 +26,7 @@
 #include <time.h>
 #include <stdarg.h>
 
+#include <gmime/gmime-parser-options.h>
 #include <gmime/gmime-encodings.h>
 
 G_BEGIN_DECLS
@@ -62,10 +63,9 @@ void g_mime_references_free (GMimeReferences *refs);
 const GMimeReferences *g_mime_references_get_next (const GMimeReferences *ref);
 const char *g_mime_references_get_message_id (const GMimeReferences *ref);
 
-char  *g_mime_utils_structured_header_fold (const char *header);
-char  *g_mime_utils_unstructured_header_fold (const char *header);
-char  *g_mime_utils_header_fold (const char *header);
-char  *g_mime_utils_header_printf (const char *format, ...) G_GNUC_PRINTF (1, 2);
+char  *g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *header);
+char  *g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *header);
+char  *g_mime_utils_header_printf (GMimeParserOptions *options, const char *format, ...) G_GNUC_PRINTF (2, 3);
 
 char  *g_mime_utils_quote_string (const char *str);
 void   g_mime_utils_unquote_string (char *str);
@@ -75,13 +75,13 @@ gboolean g_mime_utils_text_is_8bit (const unsigned char *text, size_t len);
 GMimeContentEncoding g_mime_utils_best_encoding (const unsigned char *text, size_t len);
 
 /* utility function to convert text in an unknown 8bit/multibyte charset to UTF-8 */
-char *g_mime_utils_decode_8bit (const char *text, size_t len);
+char *g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t len);
 
 /* utilities to (de/en)code headers */
-char *g_mime_utils_header_decode_text (const char *text);
+char *g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text);
 char *g_mime_utils_header_encode_text (const char *text);
 
-char *g_mime_utils_header_decode_phrase (const char *phrase);
+char *g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase);
 char *g_mime_utils_header_encode_phrase (const char *phrase);
 
 G_END_DECLS

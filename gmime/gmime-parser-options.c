@@ -30,12 +30,26 @@
 static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
 
 
-GMimeParserOptions g_mime_parser_options_default = {
+static GMimeParserOptions g_mime_parser_options_default = {
 	GMIME_RFC_COMPLIANCE_LOOSE,
 	GMIME_RFC_COMPLIANCE_LOOSE,
 	GMIME_RFC_COMPLIANCE_LOOSE,
 	default_charsets
 };
+
+
+/**
+ * g_mime_parser_options_get_default:
+ *
+ * Gets the default parser options.
+ *
+ * Returns: the default parser options.
+ **/
+GMimeParserOptions *
+g_mime_parser_options_get_default (void)
+{
+	return &g_mime_parser_options_default;
+}
 
 
 /**
@@ -65,6 +79,37 @@ g_mime_parser_options_new (void)
 
 
 /**
+ * _g_mime_parser_options_clone:
+ * @options: a #GMimeParserOptions
+ *
+ * Clones a #GMimeParserOptions.
+ *
+ * Returns: a newly allocated #GMimeParserOptions.
+ **/
+GMimeParserOptions *
+_g_mime_parser_options_clone (GMimeParserOptions *options)
+{
+	GMimeParserOptions *clone;
+	guint i, n = 0;
+	
+	clone = g_slice_new (GMimeParserOptions);
+	clone->addresses = options->addresses;
+	clone->parameters = options->parameters;
+	clone->rfc2047 = options->rfc2047;
+	
+	while (options->charsets[n])
+		n++;
+	
+	clone->charsets = g_malloc (sizeof (char *) * (n + 1));
+	for (i = 0; i < n; i++)
+		clone->charsets[i] = g_strdup (options->charsets[i]);
+	clone->charsets[i] = NULL;
+	
+	return clone;
+}
+
+
+/**
  * g_mime_parser_options_free:
  * @options: a #GMimeParserOptions
  *
@@ -75,7 +120,7 @@ g_mime_parser_options_free (GMimeParserOptions *options)
 {
 	g_return_if_fail (options != NULL);
 	
-	g_str_freev (options->charsets);
+	g_strfreev (options->charsets);
 	g_slice_free (GMimeParserOptions, options);
 }
 
@@ -229,9 +274,9 @@ g_mime_parser_options_set_rfc2047_compliance_mode (GMimeParserOptions *options, 
 const char **
 g_mime_parser_options_get_fallback_charsets (GMimeParserOptions *options)
 {
-	g_return_val_if_fail (options != NULL, default_charsets);
+	g_return_val_if_fail (options != NULL, (const char **) default_charsets);
 	
-	return options->charsets;
+	return (const char **) options->charsets;
 }
 
 
@@ -252,10 +297,10 @@ g_mime_parser_options_set_fallback_charsets (GMimeParserOptions *options, const 
 	
 	g_return_if_fail (options != NULL);
 	
-	g_str_freev (options->charsets);
+	g_strfreev (options->charsets);
 	
 	if (charsets == NULL || *charsets == NULL)
-		charsets = default_charsets;
+		charsets = (const char **) default_charsets;
 	
 	while (charsets[n] != NULL)
 		n++;

@@ -25,6 +25,8 @@
 #include <glib.h>
 #include <glib-object.h>
 
+#include <gmime/gmime-parser-options.h>
+
 G_BEGIN_DECLS
 
 #define INTERNET_ADDRESS_TYPE                  (internet_address_get_type ())
@@ -197,7 +199,7 @@ void internet_address_list_set_address (InternetAddressList *list, int index, In
 
 char *internet_address_list_to_string (InternetAddressList *list, gboolean encode);
 
-InternetAddressList *internet_address_list_parse_string (const char *str);
+InternetAddressList *internet_address_list_parse (GMimeParserOptions *options, const char *str);
 
 void internet_address_list_writer (InternetAddressList *list, GString *str);
 

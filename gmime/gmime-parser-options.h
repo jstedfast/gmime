@@ -54,6 +54,8 @@ typedef struct {
 	char **charsets;
 } GMimeParserOptions;
 
+GMimeParserOptions *g_mime_parser_options_get_default (void);
+
 GMimeParserOptions *g_mime_parser_options_new (void);
 void g_mime_parser_options_free (GMimeParserOptions *options);
 

@@ -284,7 +284,7 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encod
 }
 
 static gboolean
-decode_param (const char **in, char **paramp, char **valuep, int *id, gboolean *encoded)
+decode_param (GMimeParserOptions *options, const char **in, char **paramp, char **valuep, int *id, gboolean *encoded)
 {
 	gboolean is_rfc2184 = FALSE;
 	const char *inptr = *in;
@@ -304,7 +304,7 @@ decode_param (const char **in, char **paramp, char **valuep, int *id, gboolean *
 				 * this, we should handle this case.
 				 */
 				
-				if ((val = g_mime_utils_header_decode_text (value))) {
+				if ((val = g_mime_utils_header_decode_text (options, value))) {
 					g_free (value);
 					value = val;
 				}
@@ -529,7 +529,7 @@ rfc2184_param_new (char *name, char *value, int id, gboolean encoded)
 }
 
 static GMimeParam *
-decode_param_list (const char *in)
+decode_param_list (GMimeParserOptions *options, const char *in)
 {
 	struct _rfc2184_param *rfc2184, *list, *t;
 	GMimeParam *param, *params, *tail;
@@ -553,7 +553,7 @@ decode_param_list (const char *in)
 	
 	do {
 		/* invalid format? */
-		if (!decode_param (&inptr, &name, &value, &id, &encoded)) {
+		if (!decode_param (options, &inptr, &name, &value, &id, &encoded)) {
 			decode_lwsp (&inptr);
 			
 			if (*inptr == ';')
@@ -631,19 +631,20 @@ decode_param_list (const char *in)
 
 
 /**
- * g_mime_param_new_from_string:
+ * g_mime_param_parse:
+ * @options: a #GMimeParserOptions
  * @str: input string
  *
- * Creates a parameter list based on the input string.
+ * Parses the input stringinto a parameter list.
  *
- * Returns: a #GMimeParam structure based on @string.
+ * Returns: a #GMimeParam linked list based on @text.
  **/
 GMimeParam *
-g_mime_param_new_from_string (const char *str)
+g_mime_param_parse (GMimeParserOptions *options, const char *str)
 {
 	g_return_val_if_fail (str != NULL, NULL);
 	
-	return decode_param_list (str);
+	return decode_param_list (options, str);
 }
 
 

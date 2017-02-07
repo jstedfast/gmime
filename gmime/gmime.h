@@ -115,15 +115,6 @@ extern const guint gmime_binary_age;
 
 gboolean g_mime_check_version (guint major, guint minor, guint micro);
 
-
-/**
- * GMIME_ENABLE_RFC2047_WORKAROUNDS:
- *
- * Initialization flag to enable workarounds for badly formed rfc2047
- * encoded-words.
- **/
-#define GMIME_ENABLE_RFC2047_WORKAROUNDS     (1 << 0)
-
 /**
  * GMIME_ENABLE_USE_ONLY_USER_CHARSETS:
  *
@@ -133,7 +124,7 @@ gboolean g_mime_check_version (guint major, guint minor, guint micro);
  *
  * Since: 2.6.16
  **/
-#define GMIME_ENABLE_USE_ONLY_USER_CHARSETS  (1 << 1)
+#define GMIME_ENABLE_USE_ONLY_USER_CHARSETS  (1 << 0)
 
 void g_mime_init (guint32 flags);
 void g_mime_shutdown (void);

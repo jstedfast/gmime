@@ -47,7 +47,6 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
-extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 extern gboolean _g_mime_use_only_user_charsets (void);
 
 extern void g_mime_iconv_utils_shutdown (void);
@@ -249,12 +248,6 @@ g_mime_shutdown (void)
 #endif
 }
 
-
-gboolean
-_g_mime_enable_rfc2047_workarounds (void)
-{
-	return (enable & GMIME_ENABLE_RFC2047_WORKAROUNDS);
-}
 
 gboolean
 _g_mime_use_only_user_charsets (void)

@@ -77,7 +77,6 @@
  * and encodings.
  **/
 
-extern gboolean _g_mime_enable_rfc2047_workarounds (void);
 extern gboolean _g_mime_use_only_user_charsets (void);
 
 #ifdef G_THREADS_ENABLED
@@ -1414,76 +1413,24 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
  * Returns: a UTF-8 string representation of @text.
  **/
 char *
-g_mime_utils_decode_8bit (const char *text, size_t len)
+g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, size_t len)
 {
-	const char **charsets, **user_charsets, *locale, *best;
 	size_t outleft, outlen, min, ninval;
-	unsigned int included = 0;
+	const char *best;
 	iconv_t cd;
 	char *out;
-	int i = 0;
+	int i;
 	
 	g_return_val_if_fail (text != NULL, NULL);
 	
-	locale = g_mime_locale_charset ();
-	if (!g_ascii_strcasecmp (locale, "iso-8859-1") ||
-	    !g_ascii_strcasecmp (locale, "UTF-8")) {
-		/* If the user's locale charset is either of these, we
-		 * don't need to include the locale charset in our list
-		 * of fallback charsets. */
-		included |= USER_CHARSETS_INCLUDE_LOCALE;
-	}
-	
-	if ((user_charsets = g_mime_user_charsets ())) {
-		while (user_charsets[i])
-			i++;
-	}
-	
-	charsets = g_alloca (sizeof (char *) * (i + 4));
-	i = 0;
-	
-	if (user_charsets) {
-		while (user_charsets[i]) {
-			/* keep a record of whether or not the user-supplied
-			 * charsets include UTF-8, Latin1, or the user's locale
-			 * charset so that we avoid doubling our efforts for
-			 * these 3 charsets. We could have used a hash table
-			 * to keep track of unique charsets, but we can
-			 * (hopefully) assume that user_charsets is a unique
-			 * list of charsets with no duplicates. */
-			if (!g_ascii_strcasecmp (user_charsets[i], "iso-8859-1"))
-				included |= USER_CHARSETS_INCLUDE_LATIN1;
-			
-			if (!g_ascii_strcasecmp (user_charsets[i], "UTF-8"))
-				included |= USER_CHARSETS_INCLUDE_UTF8;
-			
-			if (!g_ascii_strcasecmp (user_charsets[i], locale))
-				included |= USER_CHARSETS_INCLUDE_LOCALE;
-			
-			charsets[i] = user_charsets[i];
-			i++;
-		}
-	}
-	
-	if (!(included & USER_CHARSETS_INCLUDE_UTF8))
-		charsets[i++] = "UTF-8";
-	
-	if (!(included & USER_CHARSETS_INCLUDE_LOCALE))
-		charsets[i++] = locale;
-	
-	if (!(included & USER_CHARSETS_INCLUDE_LATIN1))
-		charsets[i++] = "iso-8859-1";
-	
-	charsets[i] = NULL;
-	
+	best = options->charsets[0];
 	min = len;
-	best = charsets[0];
 	
 	outleft = (len * 2) + 16;
 	out = g_malloc (outleft + 1);
 	
-	for (i = 0; charsets[i]; i++) {
-		if ((cd = g_mime_iconv_open ("UTF-8", charsets[i])) == (iconv_t) -1)
+	for (i = 0; options->charsets[i]; i++) {
+		if ((cd = g_mime_iconv_open ("UTF-8", options->charsets[i])) == (iconv_t) -1)
 			continue;
 		
 		outlen = charset_convert (cd, text, len, &out, &outleft, &ninval);
@@ -1494,7 +1441,7 @@ g_mime_utils_decode_8bit (const char *text, size_t len)
 			return g_realloc (out, outlen + 1);
 		
 		if (ninval < min) {
-			best = charsets[i];
+			best = options->charsets[i];
 			min = ninval;
 		}
 	}
@@ -1767,9 +1714,8 @@ rfc2047_token_new_encoded_word (const char *word, size_t len)
 }
 
 static rfc2047_token *
-tokenize_rfc2047_phrase (const char *in, size_t *len)
+tokenize_rfc2047_phrase (GMimeParserOptions *options, const char *in, size_t *len)
 {
-	gboolean enable_rfc2047_workarounds = _g_mime_enable_rfc2047_workarounds ();
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
 	gboolean encoded = FALSE;
@@ -1794,7 +1740,7 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 		word = inptr;
 		ascii = TRUE;
 		if (is_atom (*inptr)) {
-			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
+			if (G_LIKELY (options->rfc2047 == GMIME_RFC_COMPLIANCE_LOOSE)) {
 				/* Make an extra effort to detect and
 				 * separate encoded-word tokens that
 				 * have been merged with other
@@ -1901,9 +1847,8 @@ tokenize_rfc2047_phrase (const char *in, size_t *len)
 }
 
 static rfc2047_token *
-tokenize_rfc2047_text (const char *in, size_t *len)
+tokenize_rfc2047_text (GMimeParserOptions *options, const char *in, size_t *len)
 {
-	gboolean enable_rfc2047_workarounds = _g_mime_enable_rfc2047_workarounds ();
 	rfc2047_token list, *lwsp, *token, *tail;
 	register const char *inptr = in;
 	gboolean encoded = FALSE;
@@ -1929,7 +1874,7 @@ tokenize_rfc2047_text (const char *in, size_t *len)
 			word = inptr;
 			ascii = TRUE;
 			
-			if (G_UNLIKELY (enable_rfc2047_workarounds)) {
+			if (G_LIKELY (options->rfc2047 == GMIME_RFC_COMPLIANCE_LOOSE)) {
 				if (!strncmp (inptr, "=?", 2)) {
 					inptr += 2;
 					
@@ -2035,7 +1980,7 @@ rfc2047_token_decode (rfc2047_token *token, unsigned char *outbuf, int *state, g
 }
 
 static char *
-rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
+rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_t buflen)
 {
 	rfc2047_token *token, *next;
 	size_t outlen, ninval, len;
@@ -2109,7 +2054,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 					     "be corrupt: %s", charset[0] ? charset : "unspecified charset",
 					     g_strerror (errno)));
 				
-				str = g_mime_utils_decode_8bit ((char *) outptr, outlen);
+				str = g_mime_utils_decode_8bit (options, (char *) outptr, outlen);
 				g_string_append (decoded, str);
 				g_free (str);
 			} else {
@@ -2131,7 +2076,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 			}
 		} else if (token->is_8bit) {
 			/* *sigh* I hate broken mailers... */
-			str = g_mime_utils_decode_8bit (token->text, token->length);
+			str = g_mime_utils_decode_8bit (options, token->text, token->length);
 			g_string_append (decoded, str);
 			g_free (str);
 		} else {
@@ -2150,6 +2095,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
 /**
  * g_mime_utils_header_decode_text:
  * @text: header text to decode
+ * @options: a #GMimeParserOptions
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
@@ -2161,7 +2107,7 @@ rfc2047_decode_tokens (rfc2047_token *tokens, size_t buflen)
  * header.
  **/
 char *
-g_mime_utils_header_decode_text (const char *text)
+g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
 {
 	rfc2047_token *tokens;
 	char *decoded;
@@ -2170,8 +2116,8 @@ g_mime_utils_header_decode_text (const char *text)
 	if (text == NULL)
 		return g_strdup ("");
 	
-	tokens = tokenize_rfc2047_text (text, &len);
-	decoded = rfc2047_decode_tokens (tokens, len);
+	tokens = tokenize_rfc2047_text (options, text, &len);
+	decoded = rfc2047_decode_tokens (options, tokens, len);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -2181,6 +2127,7 @@ g_mime_utils_header_decode_text (const char *text)
 /**
  * g_mime_utils_header_decode_phrase:
  * @phrase: header to decode
+ * @options: a #GMimeParserOptions
  *
  * Decodes an rfc2047 encoded 'phrase' header.
  *
@@ -2192,7 +2139,7 @@ g_mime_utils_header_decode_text (const char *text)
  * header.
  **/
 char *
-g_mime_utils_header_decode_phrase (const char *phrase)
+g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase)
 {
 	rfc2047_token *tokens;
 	char *decoded;
@@ -2201,8 +2148,8 @@ g_mime_utils_header_decode_phrase (const char *phrase)
 	if (phrase == NULL)
 		return g_strdup ("");
 	
-	tokens = tokenize_rfc2047_phrase (phrase, &len);
-	decoded = rfc2047_decode_tokens (tokens, len);
+	tokens = tokenize_rfc2047_phrase (options, phrase, &len);
+	decoded = rfc2047_decode_tokens (options, tokens, len);
 	rfc2047_token_list_free (tokens);
 	
 	return decoded;
@@ -2825,13 +2772,14 @@ header_fold_tokens (const char *field, const char *value, size_t vlen, rfc2047_t
 /**
  * g_mime_utils_structured_header_fold:
  * @header: header field and value string
+ * @options: a #GMimeParserOptions
  *
  * Folds a structured header according to the rules in rfc822.
  *
  * Returns: an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_structured_header_fold (const char *header)
+g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *header)
 {
 	rfc2047_token *tokens;
 	const char *value;
@@ -2855,7 +2803,7 @@ g_mime_utils_structured_header_fold (const char *header)
 	while (*value && is_lwsp (*value))
 		value++;
 	
-	tokens = tokenize_rfc2047_phrase (value, &len);
+	tokens = tokenize_rfc2047_phrase (options, value, &len);
 	folded = header_fold_tokens (field, value, len, tokens, TRUE);
 	g_free (field);
 	
@@ -2865,6 +2813,7 @@ g_mime_utils_structured_header_fold (const char *header)
 
 /**
  * _g_mime_utils_structured_header_fold:
+ * @options: a #GMimeParserOptions
  * @field: header field
  * @value: header value
  *
@@ -2873,7 +2822,7 @@ g_mime_utils_structured_header_fold (const char *header)
  * Returns: an allocated string containing the folded header.
  **/
 char *
-_g_mime_utils_structured_header_fold (const char *field, const char *value)
+_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
@@ -2884,7 +2833,7 @@ _g_mime_utils_structured_header_fold (const char *field, const char *value)
 	if (value == NULL)
 		return g_strdup_printf ("%s: \n", field);
 	
-	tokens = tokenize_rfc2047_phrase (value, &len);
+	tokens = tokenize_rfc2047_phrase (options, value, &len);
 	
 	return header_fold_tokens (field, value, len, tokens, TRUE);
 }
@@ -2892,6 +2841,7 @@ _g_mime_utils_structured_header_fold (const char *field, const char *value)
 
 /**
  * g_mime_utils_unstructured_header_fold:
+ * @options: a #GMimeParserOptions
  * @header: header field and value string
  *
  * Folds an unstructured header according to the rules in rfc822.
@@ -2899,7 +2849,7 @@ _g_mime_utils_structured_header_fold (const char *field, const char *value)
  * Returns: an allocated string containing the folded header.
  **/
 char *
-g_mime_utils_unstructured_header_fold (const char *header)
+g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *header)
 {
 	rfc2047_token *tokens;
 	const char *value;
@@ -2923,7 +2873,7 @@ g_mime_utils_unstructured_header_fold (const char *header)
 	while (*value && is_lwsp (*value))
 		value++;
 	
-	tokens = tokenize_rfc2047_text (value, &len);
+	tokens = tokenize_rfc2047_text (options, value, &len);
 	folded = header_fold_tokens (field, value, len, tokens, FALSE);
 	g_free (field);
 	
@@ -2933,6 +2883,7 @@ g_mime_utils_unstructured_header_fold (const char *header)
 
 /**
  * _g_mime_utils_unstructured_header_fold:
+ * @options: a #GMimeParserOptions
  * @field: header field
  * @value: header value
  *
@@ -2941,7 +2892,7 @@ g_mime_utils_unstructured_header_fold (const char *header)
  * Returns: an allocated string containing the folded header.
  **/
 char *
-_g_mime_utils_unstructured_header_fold (const char *field, const char *value)
+_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value)
 {
 	rfc2047_token *tokens;
 	size_t len;
@@ -2952,32 +2903,15 @@ _g_mime_utils_unstructured_header_fold (const char *field, const char *value)
 	if (value == NULL)
 		return g_strdup_printf ("%s: \n", field);
 	
-	tokens = tokenize_rfc2047_text (value, &len);
+	tokens = tokenize_rfc2047_text (options, value, &len);
 	
 	return header_fold_tokens (field, value, len, tokens, FALSE);
 }
 
 
 /**
- * g_mime_utils_header_fold:
- * @header: header field and value string
- *
- * Folds a structured header according to the rules in rfc822.
- *
- * Returns: an allocated string containing the folded header.
- *
- * WARNING: This function is obsolete. Use
- * g_mime_utils_structured_header_fold() instead.
- **/
-char *
-g_mime_utils_header_fold (const char *header)
-{
-	return g_mime_utils_structured_header_fold (header);
-}
-
-
-/**
  * g_mime_utils_header_printf:
+ * @options: a #GMimeParserOptions
  * @format: string format
  * @...: arguments
  *
@@ -2988,7 +2922,7 @@ g_mime_utils_header_fold (const char *header)
  * by @format and the following arguments.
  **/
 char *
-g_mime_utils_header_printf (const char *format, ...)
+g_mime_utils_header_printf (GMimeParserOptions *options, const char *format, ...)
 {
 	char *buf, *ret;
 	va_list ap;
@@ -2997,7 +2931,7 @@ g_mime_utils_header_printf (const char *format, ...)
 	buf = g_strdup_vprintf (format, ap);
 	va_end (ap);
 	
-	ret = g_mime_utils_unstructured_header_fold (buf);
+	ret = g_mime_utils_unstructured_header_fold (options, buf);
 	g_free (buf);
 	
 	return ret;
