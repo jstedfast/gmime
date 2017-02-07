@@ -1358,13 +1358,14 @@ g_mime_message_get_all_recipients (GMimeMessage *message)
  * g_mime_message_set_subject:
  * @message: A #GMimeMessage
  * @subject: Subject string
+ * @charset: The charset to use for encoding the subject or %NULL to use the default
  *
  * Set the subject of a @message.
  *
  * Note: The @subject string should be in UTF-8.
  **/
 void
-g_mime_message_set_subject (GMimeMessage *message, const char *subject)
+g_mime_message_set_subject (GMimeMessage *message, const char *subject, const char *charset)
 {
 	char *encoded;
 	
@@ -1374,7 +1375,7 @@ g_mime_message_set_subject (GMimeMessage *message, const char *subject)
 	g_free (message->subject);
 	message->subject = g_mime_strdup_trim (subject);
 	
-	encoded = g_mime_utils_header_encode_text (message->subject);
+	encoded = g_mime_utils_header_encode_text (message->subject, charset);
 	g_mime_object_set_header (GMIME_OBJECT (message), "Subject", encoded);
 	g_free (encoded);
 }

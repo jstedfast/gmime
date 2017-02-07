@@ -29,7 +29,7 @@ int main (int argc, char **argv)
 	GMimeFilter *html;
 	int i;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	fstream = g_mime_stream_file_new (stdout);
 	ostream = g_mime_stream_filter_new (fstream);

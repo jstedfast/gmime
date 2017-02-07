@@ -337,7 +337,7 @@ test_header_sync (void)
 
 int main (int argc, char **argv)
 {
-	g_mime_init (0);
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	

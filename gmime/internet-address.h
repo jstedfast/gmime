@@ -80,6 +80,7 @@ struct _InternetAddress {
 	GObject parent_object;
 	gpointer priv;
 	
+	char *charset;
 	char *name;
 };
 
@@ -95,6 +96,9 @@ GType internet_address_get_type (void);
 
 void internet_address_set_name (InternetAddress *ia, const char *name);
 const char *internet_address_get_name (InternetAddress *ia);
+
+void internet_address_set_charset (InternetAddress *ia, const char *charset);
+const char *internet_address_get_charset (InternetAddress *ia);
 
 char *internet_address_to_string (InternetAddress *ia, gboolean encode);
 

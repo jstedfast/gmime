@@ -48,8 +48,6 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
-extern gboolean _g_mime_use_only_user_charsets (void);
-
 extern void g_mime_iconv_utils_shutdown (void);
 extern void g_mime_iconv_utils_init (void);
 
@@ -68,7 +66,6 @@ const guint gmime_binary_age = GMIME_BINARY_AGE;
 G_LOCK_DEFINE_STATIC (msgid);
 
 static unsigned int initialized = 0;
-static guint32 enable = 0;
 
 
 /**
@@ -100,15 +97,11 @@ g_mime_check_version (guint major, guint minor, guint micro)
 
 /**
  * g_mime_init:
- * @flags: initialization flags
  *
  * Initializes GMime.
- *
- * Note: Calls g_mime_charset_map_init() and g_mime_iconv_init() as
- * well.
  **/
 void
-g_mime_init (guint32 flags)
+g_mime_init (void)
 {
 	initialized = MAX (initialized, 0);
 	
@@ -123,8 +116,6 @@ g_mime_init (guint32 flags)
 	tzset ();
 #endif
 	
-	enable = flags;
-	
 #if !GLIB_CHECK_VERSION(2, 35, 1)
 	g_type_init ();
 #endif
@@ -133,6 +124,7 @@ g_mime_init (guint32 flags)
 	g_mutex_init (&G_LOCK_NAME (msgid));
 #endif
 	
+	g_mime_parser_options_init ();
 	g_mime_charset_map_init ();
 	g_mime_iconv_utils_init ();
 	g_mime_iconv_init ();
@@ -220,6 +212,7 @@ g_mime_shutdown (void)
 		return;
 	
 	g_mime_object_type_registry_shutdown ();
+	g_mime_parser_options_shutdown ();
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_utils_shutdown ();
 	g_mime_iconv_shutdown ();
@@ -236,12 +229,6 @@ g_mime_shutdown (void)
 #endif
 }
 
-
-gboolean
-_g_mime_use_only_user_charsets (void)
-{
-	return (enable & GMIME_ENABLE_USE_ONLY_USER_CHARSETS);
-}
 
 void
 _g_mime_msgid_unlock (void)

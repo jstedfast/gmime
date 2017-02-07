@@ -38,7 +38,7 @@ int main (int argc, char **argv)
 	if ((fd = open (argv[1], O_RDONLY, 0)) == -1)
 		return 0;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	stream = g_mime_stream_fs_new (fd);
 	istream = g_mime_stream_filter_new (stream);

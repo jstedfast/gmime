@@ -165,7 +165,6 @@ static struct {
 };
 
 static GHashTable *iconv_charsets = NULL;
-static char **user_charsets = NULL;
 static char *locale_charset = NULL;
 static char *locale_lang = NULL;
 static int initialized = 0;
@@ -924,43 +923,4 @@ g_mime_charset_can_encode (GMimeCharset *mask, const char *charset, const char *
 	g_mime_iconv_close (cd);
 	
 	return rc != (size_t) -1;
-}
-
-
-/**
- * g_mime_set_user_charsets:
- * @charsets: an array of user-preferred charsets
- *
- * Set a list of charsets for GMime to use as a hint for encoding and
- * decoding headers. The charset list should be in order of preference
- * (e.g. most preferred first, least preferred last).
- **/
-void
-g_mime_set_user_charsets (const char **charsets)
-{
-	if (user_charsets)
-		g_strfreev (user_charsets);
-	
-	if (charsets == NULL || charsets[0] == NULL) {
-		user_charsets = NULL;
-		return;
-	}
-	
-	user_charsets = g_strdupv ((char **) charsets);
-}
-
-
-/**
- * g_mime_user_charsets:
- *
- * Get the list of user-preferred charsets set with
- * g_mime_set_user_charsets().
- *
- * Returns: (array zero-terminated=1) (transfer none): an array of
- * user-set charsets or %NULL if none set.
- **/
-const char **
-g_mime_user_charsets (void)
-{
-	return (const char **) user_charsets;
 }

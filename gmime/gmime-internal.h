@@ -30,8 +30,8 @@
 G_BEGIN_DECLS
 
 /* GMimeParserOptions */
-G_GNUC_INTERNAL void _g_mime_parser_options_init (void);
-G_GNUC_INTERNAL void _g_mime_parser_options_shutdown (void);
+G_GNUC_INTERNAL void g_mime_parser_options_init (void);
+G_GNUC_INTERNAL void g_mime_parser_options_shutdown (void);
 G_GNUC_INTERNAL GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
 
 /* GMimeHeader */

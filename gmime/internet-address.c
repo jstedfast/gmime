@@ -142,6 +142,7 @@ static void
 internet_address_init (InternetAddress *ia, InternetAddressClass *klass)
 {
 	ia->priv = g_mime_event_new ((GObject *) ia);
+	ia->charset = NULL;
 	ia->name = NULL;
 }
 
@@ -151,6 +152,7 @@ internet_address_finalize (GObject *object)
 	InternetAddress *ia = (InternetAddress *) object;
 	
 	g_mime_event_destroy (ia->priv);
+	g_free (ia->charset);
 	g_free (ia->name);
 	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
@@ -166,6 +168,7 @@ _internet_address_set_name (InternetAddress *ia, const char *name)
 	g_free (ia->name);
 	ia->name = buf;
 }
+
 
 /**
  * internet_address_set_name:
@@ -203,6 +206,46 @@ internet_address_get_name (InternetAddress *ia)
 	g_return_val_if_fail (IS_INTERNET_ADDRESS (ia), NULL);
 	
 	return ia->name;
+}
+
+
+/**
+ * internet_address_set_charset:
+ * @ia: a #InternetAddress
+ * @charset: the charset to use when encoding the name or %NULL to use the defaults
+ *
+ * Set the charset to use for encoding the name of the mailbox or group.
+ **/
+void
+internet_address_set_charset (InternetAddress *ia, const char *charset)
+{
+	char *buf;
+	
+	g_return_if_fail (IS_INTERNET_ADDRESS (ia));
+	
+	buf = g_strdup (charset);
+	g_free (ia->charset);
+	ia->charset = buf;
+	
+	g_mime_event_emit (ia->priv, NULL);
+}
+
+
+/**
+ * internet_address_get_charset:
+ * @ia: a #InternetAddress
+ *
+ * Gets the charset to be used when encoding the name of the mailbox or group.
+ *
+ * Returns: the charset to be used when encoding the name of the mailbox or
+ * group if available or %NULL otherwise.
+ **/
+const char *
+internet_address_get_charset (InternetAddress *ia)
+{
+	g_return_val_if_fail (IS_INTERNET_ADDRESS (ia), NULL);
+	
+	return ia->charset;
 }
 
 
@@ -991,14 +1034,14 @@ internet_address_list_set_address (InternetAddressList *list, int index, Interne
 
 
 static char *
-encoded_name (const char *raw, gboolean rfc2047_encode)
+encoded_name (const char *raw, gboolean rfc2047_encode, const char *charset)
 {
 	char *name;
 	
 	g_return_val_if_fail (raw != NULL, NULL);
 	
 	if (rfc2047_encode) {
-		name = g_mime_utils_header_encode_phrase (raw);
+		name = g_mime_utils_header_encode_phrase (raw, charset);
 	} else {
 		name = g_mime_utils_quote_string (raw);
 	}
@@ -1078,7 +1121,7 @@ mailbox_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString 
 	size_t len;
 	
 	if (ia->name && *ia->name) {
-		name = encoded_name (ia->name, encode);
+		name = encoded_name (ia->name, encode, ia->charset);
 		len = strlen (name);
 		
 		if (fold && (*linelen + len) > GMIME_FOLD_LEN) {
@@ -1158,7 +1201,7 @@ group_to_string (InternetAddress *ia, guint32 flags, size_t *linelen, GString *s
 	size_t len = 0;
 	
 	if (ia->name != NULL) {
-		name = encoded_name (ia->name, encode);
+		name = encoded_name (ia->name, encode, ia->charset);
 		len = strlen (name);
 		
 		if (fold && *linelen > 1 && (*linelen + len + 1) > GMIME_FOLD_LEN) {

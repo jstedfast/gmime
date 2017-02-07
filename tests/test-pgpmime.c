@@ -232,7 +232,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	g_mime_message_set_subject (message, "This is a test message");
+	g_mime_message_set_subject (message, "This is a test message", NULL);
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mps));
 	g_object_unref (mps);
@@ -342,7 +342,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	internet_address_list_add (list, mailbox);
 	g_object_unref (mailbox);
 	
-	g_mime_message_set_subject (message, "This is a test message");
+	g_mime_message_set_subject (message, "This is a test message", NULL);
 	g_mime_object_set_header ((GMimeObject *) message, "X-Mailer", "main.c");
 	g_mime_message_set_mime_part (message, GMIME_OBJECT (mpe));
 	g_object_unref (mpe);
@@ -474,7 +474,7 @@ int main (int argc, char *argv[])
 	char *key;
 	int i;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	

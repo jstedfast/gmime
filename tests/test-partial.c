@@ -73,7 +73,7 @@ int main (int argc, char **argv)
 	if (argc < 2)
 		return 0;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	parser = g_mime_parser_new ();
 	

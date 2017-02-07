@@ -79,10 +79,10 @@ char *g_mime_utils_decode_8bit (GMimeParserOptions *options, const char *text, s
 
 /* utilities to (de/en)code headers */
 char *g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text);
-char *g_mime_utils_header_encode_text (const char *text);
+char *g_mime_utils_header_encode_text (const char *text, const char *charset);
 
 char *g_mime_utils_header_decode_phrase (GMimeParserOptions *options, const char *phrase);
-char *g_mime_utils_header_encode_phrase (const char *phrase);
+char *g_mime_utils_header_encode_phrase (const char *phrase, const char *charset);
 
 G_END_DECLS
 

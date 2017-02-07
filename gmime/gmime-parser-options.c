@@ -33,14 +33,14 @@ static GMimeParserOptions *default_options = NULL;
 
 
 void
-_g_mime_parser_options_init (void)
+g_mime_parser_options_init (void)
 {
 	if (default_options == NULL)
 		default_options = g_mime_parser_options_new ();
 }
 
 void
-_g_mime_parser_options_shutdown (void)
+g_mime_parser_options_shutdown (void)
 {
 	if (default_options == NULL)
 		return;

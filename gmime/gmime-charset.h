@@ -69,10 +69,6 @@ gboolean g_mime_charset_can_encode (GMimeCharset *mask, const char *charset,
 				    const char *text, size_t len);
 
 
-void g_mime_set_user_charsets (const char **charsets);
-const char **g_mime_user_charsets (void);
-
-
 G_END_DECLS
 
 #endif /* __GMIME_CHARSET_H__ */

@@ -233,7 +233,7 @@ int main (int argc, char **argv)
 	GMimeStream *stream;
 	int fd;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	if (argc > 1)
 		filename = argv[1];

@@ -312,7 +312,7 @@ int main (int argc, char **argv)
 	}
 	
 	/* init the gmime library */
-	g_mime_init (0);
+	g_mime_init ();
 	
 	/* parse the message */
 	message = parse_message (fd);

@@ -283,7 +283,7 @@ int main (int argc, char **argv)
 	char *key;
 	int i;
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	

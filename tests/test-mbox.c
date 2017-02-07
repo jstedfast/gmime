@@ -265,7 +265,7 @@ int main (int argc, char **argv)
 		return 0;
 #endif
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	

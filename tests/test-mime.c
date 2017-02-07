@@ -440,9 +440,9 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
-			enc = g_mime_utils_header_encode_text (dec);
+			enc = g_mime_utils_header_encode_text (dec, NULL);
 			if (strcmp (rfc2047_text[i].encoded, enc) != 0)
-				throw (exception_new ("encoded text does not match: %s", enc));
+				throw (exception_new ("encoded text does not match: actual=\"%s\", expected=\"%s\"", enc, rfc2047_text[i].encoded));
 
 			//dec2 = g_mime_utils_header_decode_text (options, enc);
 			//if (strcmp (rfc2047_text[i].decoded, dec2) != 0)
@@ -465,7 +465,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (broken_rfc2047_text[i].decoded, dec) != 0)
 				throw (exception_new ("decoded text does not match: %s", dec));
 			
-			enc = g_mime_utils_header_encode_text (dec);
+			enc = g_mime_utils_header_encode_text (dec, NULL);
 			if (strcmp (broken_rfc2047_text[i].encoded, enc) != 0)
 				throw (exception_new ("encoded text does not match: %s", enc));
 			
@@ -487,7 +487,7 @@ test_rfc2047 (GMimeParserOptions *options, gboolean test_broken)
 			if (strcmp (rfc2047_phrase[i].decoded, dec) != 0)
 				throw (exception_new ("decoded phrase does not match"));
 			
-			enc = g_mime_utils_header_encode_phrase (dec);
+			enc = g_mime_utils_header_encode_phrase (dec, NULL);
 			if (strcmp (rfc2047_phrase[i].encoded, enc) != 0)
 				throw (exception_new ("encoded phrase does not match"));
 			
@@ -644,7 +644,7 @@ int main (int argc, char **argv)
 {
 	GMimeParserOptions *options = g_mime_parser_options_new ();
 	
-	g_mime_init (0);
+	g_mime_init ();
 	
 	testsuite_init (argc, argv);
 	

@@ -77,8 +77,6 @@
  * and encodings.
  **/
 
-extern gboolean _g_mime_use_only_user_charsets (void);
-
 #ifdef G_THREADS_ENABLED
 extern void _g_mime_msgid_unlock (void);
 extern void _g_mime_msgid_lock (void);
@@ -1393,11 +1391,6 @@ charset_convert (iconv_t cd, const char *inbuf, size_t inleft, char **outp, size
 }
 
 
-#define USER_CHARSETS_INCLUDE_UTF8    (1 << 0)
-#define USER_CHARSETS_INCLUDE_LOCALE  (1 << 1)
-#define USER_CHARSETS_INCLUDE_LATIN1  (1 << 2)
-
-
 /**
  * g_mime_utils_decode_8bit:
  * @text: (array length=len) (element-type guint8): input text in
@@ -2099,10 +2092,6 @@ rfc2047_decode_tokens (GMimeParserOptions *options, rfc2047_token *tokens, size_
  *
  * Decodes an rfc2047 encoded 'text' header.
  *
- * Note: See g_mime_set_user_charsets() for details on how charset
- * conversion is handled for unencoded 8bit text and/or wrongly
- * specified rfc2047 encoded-word tokens.
- *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
  **/
@@ -2130,10 +2119,6 @@ g_mime_utils_header_decode_text (GMimeParserOptions *options, const char *text)
  * @options: a #GMimeParserOptions
  *
  * Decodes an rfc2047 encoded 'phrase' header.
- *
- * Note: See g_mime_set_user_charsets() for details on how charset
- * conversion is handled for unencoded 8bit text and/or wrongly
- * specified rfc2047 encoded-word tokens.
  *
  * Returns: a newly allocated UTF-8 string representing the the decoded
  * header.
@@ -2507,23 +2492,20 @@ g_string_append_len_quoted (GString *out, const char *in, size_t len)
 }
 
 static char *
-rfc2047_encode (const char *in, gushort safemask)
+rfc2047_encode (const char *in, gushort safemask, const char *user_charset)
 {
 	rfc822_word *words, *word, *prev = NULL;
-	const char **charsets, *charset;
-	const char *start;
+	const char *charset, *start;
 	GMimeCharset mask;
 	GString *out;
 	char *outstr;
 	size_t len;
-	int i;
+	int i = 0;
 	
 	if (!(words = rfc2047_encode_get_rfc822_words (in, safemask & IS_PSAFE)))
 		return g_strdup (in);
 	
 	rfc2047_encode_merge_rfc822_words (&words);
-	
-	charsets = g_mime_user_charsets ();
 	
 	out = g_string_new ("");
 	
@@ -2564,7 +2546,7 @@ rfc2047_encode (const char *in, gushort safemask)
 				rfc2047_encode_word (out, start, len, "us-ascii", safemask);
 				break;
 			case 1: /* iso-8859-1 */
-				if (!_g_mime_use_only_user_charsets ()) {
+				if (user_charset == NULL) {
 					rfc2047_encode_word (out, start, len, "iso-8859-1", safemask);
 					break;
 				}
@@ -2573,15 +2555,11 @@ rfc2047_encode (const char *in, gushort safemask)
 				g_mime_charset_init (&mask);
 				g_mime_charset_step (&mask, start, len);
 				
-				for (i = 0; charsets && charsets[i]; i++) {
-					if (g_mime_charset_can_encode (&mask, charsets[i], start, len)) {
-						charset = charsets[i];
-						break;
-					}
-				}
-				
-				if (!charset)
+				if (user_charset && g_mime_charset_can_encode (&mask, user_charset, start, len)) {
+					charset = user_charset;
+				} else {
 					charset = g_mime_charset_best_name (&mask);
+				}
 				
 				rfc2047_encode_word (out, start, len, charset, safemask);
 				break;
@@ -2608,6 +2586,7 @@ rfc2047_encode (const char *in, gushort safemask)
 /**
  * g_mime_utils_header_encode_phrase:
  * @phrase: phrase to encode
+ * @charset: the charset to use or %NULL to use the default
  *
  * Encodes a 'phrase' header according to the rules in rfc2047.
  *
@@ -2615,18 +2594,19 @@ rfc2047_encode (const char *in, gushort safemask)
  * addresses.
  **/
 char *
-g_mime_utils_header_encode_phrase (const char *phrase)
+g_mime_utils_header_encode_phrase (const char *phrase, const char *charset)
 {
 	if (phrase == NULL)
 		return NULL;
 	
-	return rfc2047_encode (phrase, IS_PSAFE);
+	return rfc2047_encode (phrase, IS_PSAFE, charset);
 }
 
 
 /**
  * g_mime_utils_header_encode_text:
  * @text: text to encode
+ * @charset: the charset to use or %NULL to use the default
  *
  * Encodes a 'text' header according to the rules in rfc2047.
  *
@@ -2634,12 +2614,12 @@ g_mime_utils_header_encode_phrase (const char *phrase)
  * headers like "Subject".
  **/
 char *
-g_mime_utils_header_encode_text (const char *text)
+g_mime_utils_header_encode_text (const char *text, const char *charset)
 {
 	if (text == NULL)
 		return NULL;
 	
-	return rfc2047_encode (text, IS_ESAFE);
+	return rfc2047_encode (text, IS_ESAFE, charset);
 }
 
 

@@ -112,7 +112,7 @@ void g_mime_message_add_mailbox (GMimeMessage *message, GMimeAddressType type, c
 InternetAddressList *g_mime_message_get_addresses (GMimeMessage *message, GMimeAddressType type);
 InternetAddressList *g_mime_message_get_all_recipients (GMimeMessage *message);
 
-void g_mime_message_set_subject (GMimeMessage *message, const char *subject);
+void g_mime_message_set_subject (GMimeMessage *message, const char *subject, const char *charset);
 const char *g_mime_message_get_subject (GMimeMessage *message);
 
 void g_mime_message_set_date (GMimeMessage *message, time_t date, int tz_offset);
