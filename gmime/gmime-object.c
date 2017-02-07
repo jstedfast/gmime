@@ -29,6 +29,7 @@
 #include "gmime-common.h"
 #include "gmime-object.h"
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-events.h"
 #include "gmime-utils.h"
 
@@ -43,7 +44,6 @@
  * parts are derived.
  **/
 
-
 struct _type_bucket {
 	char *type;
 	GType object_type;
@@ -54,15 +54,6 @@ struct _subtype_bucket {
 	char *subtype;
 	GType object_type;
 };
-
-extern GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
-
-extern GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
-extern void _g_mime_header_list_set_options (GMimeHeaderList *headers, GMimeParserOptions *options);
-
-extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 
 static void _g_mime_object_set_content_disposition (GMimeObject *object, GMimeContentDisposition *disposition);
 void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);

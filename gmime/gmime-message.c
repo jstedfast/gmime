@@ -37,6 +37,7 @@
 #include "gmime-stream-mem.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
+#include "gmime-internal.h"
 #include "gmime-events.h"
 
 
@@ -48,21 +49,6 @@
  *
  * A #GMimeMessage represents an rfc822 message.
  **/
-
-extern void _g_mime_object_prepend_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_object_set_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-
-extern void _g_mime_header_set_offset (GMimeHeader *header, gint64 offset);
-
-extern GMimeParserOptions *_g_mime_header_list_get_options (GMimeHeaderList *headers);
-extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-
-extern GMimeEvent *_g_mime_header_list_get_changed_event (GMimeHeaderList *headers);
-extern char *_g_mime_utils_unstructured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
-extern char *_g_mime_utils_structured_header_fold (GMimeParserOptions *options, const char *field, const char *value);
 
 static void g_mime_message_class_init (GMimeMessageClass *klass);
 static void g_mime_message_init (GMimeMessage *message, GMimeMessageClass *klass);

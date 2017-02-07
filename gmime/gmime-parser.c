@@ -34,6 +34,7 @@
 #include "gmime-parse-utils.h"
 #include "gmime-stream-mem.h"
 #include "gmime-multipart.h"
+#include "gmime-internal.h"
 #include "gmime-common.h"
 #include "gmime-part.h"
 
@@ -82,9 +83,6 @@ typedef struct _content_type {
 	char *type, *subtype;
 	gboolean exists;
 } ContentType;
-
-extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_object_set_content_type (GMimeObject *object, GMimeContentType *content_type);
 
 static void g_mime_parser_class_init (GMimeParserClass *klass);
 static void g_mime_parser_init (GMimeParser *parser, GMimeParserClass *klass);

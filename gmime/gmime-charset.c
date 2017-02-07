@@ -168,12 +168,12 @@ static GHashTable *iconv_charsets = NULL;
 static char **user_charsets = NULL;
 static char *locale_charset = NULL;
 static char *locale_lang = NULL;
+static int initialized = 0;
 
 #ifdef G_THREADS_ENABLED
-extern void _g_mime_charset_unlock (void);
-extern void _g_mime_charset_lock (void);
-#define CHARSET_UNLOCK() _g_mime_charset_unlock ()
-#define CHARSET_LOCK()   _g_mime_charset_lock ()
+G_LOCK_DEFINE_STATIC (lock);
+#define CHARSET_UNLOCK() G_UNLOCK (lock)
+#define CHARSET_LOCK() G_UNLOCK (lock)
 #else
 #define CHARSET_UNLOCK()
 #define CHARSET_LOCK()
@@ -188,8 +188,19 @@ extern void _g_mime_charset_lock (void);
 void
 g_mime_charset_map_shutdown (void)
 {
-	if (!iconv_charsets)
+	if (--initialized)
 		return;
+	
+#ifdef G_THREADS_ENABLED
+	if (glib_check_version (2, 37, 4) == NULL) {
+		/* The implementation of g_mutex_clear() prior
+		 * to glib 2.37.4 did not properly reset the
+		 * internal mutex pointer to NULL, so re-initializing
+		 * GMime would not properly re-initialize the mutexes.
+		 **/
+		g_mutex_clear (&G_LOCK_NAME (lock));
+	}
+#endif
 	
 	g_hash_table_destroy (iconv_charsets);
 	iconv_charsets = NULL;
@@ -256,8 +267,14 @@ g_mime_charset_map_init (void)
 	char *charset, *iconv_name, *locale;
 	int i;
 	
-	if (iconv_charsets)
+	initialized = MAX (initialized, 0);
+	
+	if (initialized++)
 		return;
+
+#ifdef G_THREADS_ENABLED
+	g_mutex_init (&G_LOCK_NAME (lock));
+#endif
 	
 	iconv_charsets = g_hash_table_new_full (g_str_hash, g_str_equal, g_free, g_free);
 	

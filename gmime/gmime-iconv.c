@@ -57,7 +57,6 @@
  * names given as arguments.
  **/
 
-
 #define ICONV_CACHE_SIZE   (16)
 
 typedef struct {
@@ -70,6 +69,7 @@ typedef struct {
 
 static Cache *iconv_cache = NULL;
 static GHashTable *iconv_open_hash = NULL;
+static int initialized = 0;
 
 #ifdef GMIME_ICONV_DEBUG
 static int cache_misses = 0;
@@ -80,10 +80,9 @@ static int shutdown = 0;
 #endif /* GMIME_ICONV_DEBUG */
 
 #ifdef G_THREADS_ENABLED
-extern void _g_mime_iconv_cache_unlock (void);
-extern void _g_mime_iconv_cache_lock (void);
-#define ICONV_CACHE_UNLOCK() _g_mime_iconv_cache_unlock ()
-#define ICONV_CACHE_LOCK()   _g_mime_iconv_cache_lock ()
+G_LOCK_DEFINE_STATIC (lock);
+#define ICONV_CACHE_UNLOCK() G_UNLOCK (lock)
+#define ICONV_CACHE_LOCK()   G_LOCK (lock)
 #else
 #define ICONV_CACHE_UNLOCK()
 #define ICONV_CACHE_LOCK()
@@ -181,13 +180,24 @@ iconv_open_node_free (gpointer key, gpointer value, gpointer user_data)
 void
 g_mime_iconv_shutdown (void)
 {
-	if (!iconv_cache)
+	if (--initialized)
 		return;
 	
 #ifdef GMIME_ICONV_DEBUG
 	fprintf (stderr, "There were %d iconv cache misses\n", cache_misses);
 	fprintf (stderr, "The following %d iconv cache buckets are still open:\n", iconv_cache->size);
 	shutdown = 1;
+#endif
+	
+#ifdef G_THREADS_ENABLED
+	if (glib_check_version (2, 37, 4) == NULL) {
+		/* The implementation of g_mutex_clear() prior
+		 * to glib 2.37.4 did not properly reset the
+		 * internal mutex pointer to NULL, so re-initializing
+		 * GMime would not properly re-initialize the mutexes.
+		 **/
+		g_mutex_clear (&G_LOCK_NAME (lock));
+	}
 #endif
 	
 	g_hash_table_foreach (iconv_open_hash, iconv_open_node_free, NULL);
@@ -210,8 +220,14 @@ g_mime_iconv_shutdown (void)
 void
 g_mime_iconv_init (void)
 {
-	if (iconv_cache)
+	initialized = MAX (initialized, 0);
+	
+	if (initialized++)
 		return;
+	
+#ifdef G_THREADS_ENABLED
+	g_mutex_init (&G_LOCK_NAME (lock));
+#endif
 	
 	g_mime_charset_map_init ();
 	

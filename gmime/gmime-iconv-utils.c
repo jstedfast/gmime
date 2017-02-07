@@ -48,10 +48,9 @@
 
 
 #ifdef G_THREADS_ENABLED
-extern void _g_mime_iconv_utils_unlock (void);
-extern void _g_mime_iconv_utils_lock (void);
-#define UNLOCK() _g_mime_iconv_utils_unlock ()
-#define LOCK()   _g_mime_iconv_utils_lock ()
+G_LOCK_DEFINE_STATIC (iconv_utils);
+#define UNLOCK() G_UNLOCK (iconv_utils)
+#define LOCK()   G_LOCK (iconv_utils)
 #else
 #define UNLOCK()
 #define LOCK()
@@ -59,12 +58,22 @@ extern void _g_mime_iconv_utils_lock (void);
 
 static iconv_t utf8_to_locale = (iconv_t) -1;
 static iconv_t locale_to_utf8 = (iconv_t) -1;
+static int initialized = 0;
 
 
 void
 g_mime_iconv_utils_init (void)
 {
 	const char *utf8, *locale;
+	
+	initialized = MAX (initialized, 0);
+	
+	if (initialized++)
+		return;
+	
+#ifdef G_THREADS_ENABLED
+	g_mutex_init (&G_LOCK_NAME (iconv_utils));
+#endif
 	
 	utf8 = g_mime_charset_iconv_name ("UTF-8");
 	
@@ -80,6 +89,20 @@ g_mime_iconv_utils_init (void)
 void
 g_mime_iconv_utils_shutdown (void)
 {
+	if (--initialized)
+		return;
+	
+#ifdef G_THREADS_ENABLED
+	if (glib_check_version (2, 37, 4) == NULL) {
+		/* The implementation of g_mutex_clear() prior
+		 * to glib 2.37.4 did not properly reset the
+		 * internal mutex pointer to NULL, so re-initializing
+		 * GMime would not properly re-initialize the mutexes.
+		 **/
+		g_mutex_clear (&G_LOCK_NAME (iconv_utils));
+	}
+#endif
+	
 	if (utf8_to_locale != (iconv_t) -1) {
 		iconv_close (utf8_to_locale);
 		utf8_to_locale = (iconv_t) -1;

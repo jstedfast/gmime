@@ -30,6 +30,7 @@
 #include "gmime-part.h"
 #include "gmime-utils.h"
 #include "gmime-common.h"
+#include "gmime-internal.h"
 #include "gmime-stream-mem.h"
 #include "gmime-stream-null.h"
 #include "gmime-stream-filter.h"
@@ -51,10 +52,6 @@
  * A #GMimePart represents any MIME leaf part (meaning it has no
  * sub-parts).
  **/
-
-extern void _g_mime_header_list_prepend (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_append (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
-extern void _g_mime_header_list_set (GMimeHeaderList *headers, const char *name, const char *value, const char *raw_value, gint64 offset);
 
 /* GObject class methods */
 static void g_mime_part_class_init (GMimePartClass *klass);

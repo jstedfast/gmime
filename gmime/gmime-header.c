@@ -27,6 +27,7 @@
 #include <ctype.h>
 
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-common.h"
 #include "gmime-header.h"
 #include "gmime-events.h"
@@ -44,8 +45,6 @@
  * A #GMimeHeader is a collection of rfc822 header fields and their
  * values.
  **/
-
-extern GMimeParserOptions *_g_mime_parser_options_clone (GMimeParserOptions *options);
 
 struct _GMimeHeader {
 	GMimeHeaderList *list;

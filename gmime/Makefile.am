@@ -136,6 +136,7 @@ noinst_HEADERS = 			\
 	gmime-charset-map-private.h	\
 	gmime-table-private.h		\
 	gmime-parse-utils.h		\
+	gmime-internal.h		\
 	gmime-common.h			\
 	gmime-events.h
 

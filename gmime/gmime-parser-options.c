@@ -29,13 +29,26 @@
 
 static char *default_charsets[3] = { "utf-8", "iso-8859-1", NULL };
 
+static GMimeParserOptions *default_options = NULL;
 
-static GMimeParserOptions g_mime_parser_options_default = {
-	GMIME_RFC_COMPLIANCE_LOOSE,
-	GMIME_RFC_COMPLIANCE_LOOSE,
-	GMIME_RFC_COMPLIANCE_LOOSE,
-	default_charsets
-};
+
+void
+_g_mime_parser_options_init (void)
+{
+	if (default_options == NULL)
+		default_options = g_mime_parser_options_new ();
+}
+
+void
+_g_mime_parser_options_shutdown (void)
+{
+	if (default_options == NULL)
+		return;
+	
+	g_strfreev (default_options->charsets);
+	g_slice_free (GMimeParserOptions, default_options);
+	default_options = NULL;
+}
 
 
 /**
@@ -48,7 +61,7 @@ static GMimeParserOptions g_mime_parser_options_default = {
 GMimeParserOptions *
 g_mime_parser_options_get_default (void)
 {
-	return &g_mime_parser_options_default;
+	return default_options;
 }
 
 
@@ -120,8 +133,10 @@ g_mime_parser_options_free (GMimeParserOptions *options)
 {
 	g_return_if_fail (options != NULL);
 	
-	g_strfreev (options->charsets);
-	g_slice_free (GMimeParserOptions, options);
+	if (options != default_options) {
+		g_strfreev (options->charsets);
+		g_slice_free (GMimeParserOptions, options);
+	}
 }
 
 

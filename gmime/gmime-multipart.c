@@ -33,6 +33,7 @@
 #include <time.h>
 
 #include "gmime-multipart.h"
+#include "gmime-internal.h"
 #include "gmime-utils.h"
 
 
@@ -47,10 +48,6 @@
  *
  * A #GMimeMultipart represents all multipart MIME container parts.
  **/
-
-
-extern gboolean _g_mime_header_list_has_raw_value (const GMimeHeaderList *headers, const char *name);
-
 
 /* GObject class methods */
 static void g_mime_multipart_class_init (GMimeMultipartClass *klass);

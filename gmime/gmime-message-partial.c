@@ -29,6 +29,7 @@
 #include "gmime-message-partial.h"
 #include "gmime-stream-cat.h"
 #include "gmime-stream-mem.h"
+#include "gmime-internal.h"
 #include "gmime-parser.h"
 
 
@@ -40,11 +41,6 @@
  *
  * A #GMimeMessagePartial represents the message/partial MIME part.
  **/
-
-extern const char *_g_mime_header_get_raw_value (GMimeHeader *header);
-
-extern void _g_mime_object_append_header (GMimeObject *object, const char *header, const char *value, const char *raw_value, gint64 offset);
-
 
 /* GObject class methods */
 static void g_mime_message_partial_class_init (GMimeMessagePartialClass *klass);

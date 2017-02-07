@@ -31,6 +31,7 @@
 #endif
 
 #include "gmime.h"
+#include "gmime-internal.h"
 
 #ifdef ENABLE_CRYPTOGRAPHY
 #include "gmime-pkcs7-context.h"
@@ -52,12 +53,6 @@ extern gboolean _g_mime_use_only_user_charsets (void);
 extern void g_mime_iconv_utils_shutdown (void);
 extern void g_mime_iconv_utils_init (void);
 
-extern void _g_mime_iconv_cache_unlock (void);
-extern void _g_mime_iconv_cache_lock (void);
-extern void _g_mime_iconv_utils_unlock (void);
-extern void _g_mime_iconv_utils_lock (void);
-extern void _g_mime_charset_unlock (void);
-extern void _g_mime_charset_lock (void);
 extern void _g_mime_msgid_unlock (void);
 extern void _g_mime_msgid_lock (void);
 
@@ -70,9 +65,6 @@ const guint gmime_micro_version = GMIME_MICRO_VERSION;
 const guint gmime_interface_age = GMIME_INTERFACE_AGE;
 const guint gmime_binary_age = GMIME_BINARY_AGE;
 
-G_LOCK_DEFINE_STATIC (iconv_cache);
-G_LOCK_DEFINE_STATIC (iconv_utils);
-G_LOCK_DEFINE_STATIC (charset);
 G_LOCK_DEFINE_STATIC (msgid);
 
 static unsigned int initialized = 0;
@@ -118,6 +110,8 @@ g_mime_check_version (guint major, guint minor, guint micro)
 void
 g_mime_init (guint32 flags)
 {
+	initialized = MAX (initialized, 0);
+	
 	if (initialized++)
 		return;
 
@@ -136,9 +130,6 @@ g_mime_init (guint32 flags)
 #endif
 	
 #ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (iconv_cache));
-	g_mutex_init (&G_LOCK_NAME (iconv_utils));
-	g_mutex_init (&G_LOCK_NAME (charset));
 	g_mutex_init (&G_LOCK_NAME (msgid));
 #endif
 	
@@ -240,9 +231,6 @@ g_mime_shutdown (void)
 		 * internal mutex pointer to NULL, so re-initializing
 		 * GMime would not properly re-initialize the mutexes.
 		 **/
-		g_mutex_clear (&G_LOCK_NAME (iconv_cache));
-		g_mutex_clear (&G_LOCK_NAME (iconv_utils));
-		g_mutex_clear (&G_LOCK_NAME (charset));
 		g_mutex_clear (&G_LOCK_NAME (msgid));
 	}
 #endif
@@ -253,42 +241,6 @@ gboolean
 _g_mime_use_only_user_charsets (void)
 {
 	return (enable & GMIME_ENABLE_USE_ONLY_USER_CHARSETS);
-}
-
-void
-_g_mime_iconv_cache_unlock (void)
-{
-	return G_UNLOCK (iconv_cache);
-}
-
-void
-_g_mime_iconv_cache_lock (void)
-{
-	return G_LOCK (iconv_cache);
-}
-
-void
-_g_mime_iconv_utils_unlock (void)
-{
-	return G_UNLOCK (iconv_utils);
-}
-
-void
-_g_mime_iconv_utils_lock (void)
-{
-	return G_LOCK (iconv_utils);
-}
-
-void
-_g_mime_charset_unlock (void)
-{
-	return G_UNLOCK (charset);
-}
-
-void
-_g_mime_charset_lock (void)
-{
-	return G_LOCK (charset);
 }
 
 void
