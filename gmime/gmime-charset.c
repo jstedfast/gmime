@@ -270,7 +270,7 @@ g_mime_charset_map_init (void)
 	
 	if (initialized++)
 		return;
-
+	
 #ifdef G_THREADS_ENABLED
 	g_mutex_init (&G_LOCK_NAME (lock));
 #endif
@@ -361,11 +361,6 @@ g_mime_charset_map_init (void)
 const char *
 g_mime_locale_charset (void)
 {
-	CHARSET_LOCK ();
-	if (!iconv_charsets)
-		g_mime_charset_map_init ();
-	CHARSET_UNLOCK ();
-	
 	return locale_charset ? locale_charset : "iso-8859-1";
 }
 
@@ -380,11 +375,6 @@ g_mime_locale_charset (void)
 const char *
 g_mime_locale_language (void)
 {
-	CHARSET_LOCK ();
-	if (!iconv_charsets)
-		g_mime_charset_map_init ();
-	CHARSET_UNLOCK ();
-	
 	return locale_lang;
 }
 
@@ -452,8 +442,6 @@ g_mime_charset_iconv_name (const char *charset)
 	strdown (name);
 	
 	CHARSET_LOCK ();
-	if (!iconv_charsets)
-		g_mime_charset_map_init ();
 	
 	iconv_name = g_hash_table_lookup (iconv_charsets, name);
 	if (iconv_name) {
