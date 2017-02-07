@@ -28,6 +28,39 @@
 #include "gmime-table-private.h"
 #include "gmime-common.h"
 
+void
+g_mime_read_random_pool (unsigned char *buffer, size_t bytes)
+{
+#ifdef __unix__
+	size_t nread = 0;
+	ssize_t n;
+	int fd;
+	
+	if ((fd = open ("/dev/urandom", O_RDONLY)) == -1) {
+		if ((fd = open ("/dev/random", O_RDONLY)) == -1)
+			return;
+	}
+	
+	do {
+		do {
+			n = read (fd, (char *) buffer + nread, bytes - nread);
+		} while (n == -1 && errno == EINTR);
+		
+		if (n == -1 || n == 0)
+			break;
+		
+		nread += n;
+	} while (nread < bytes);
+	
+	close (fd);
+#else
+	size_t i;
+	
+	for (i = 0; i < bytes; i++)
+		buffer[i] = (unsigned char) (rand () % 256);
+#endif
+}
+
 #ifndef g_tolower
 #define g_tolower(x) (((x) >= 'A' && (x) <= 'Z') ? (x) - 'A' + 'a' : (x))
 #endif

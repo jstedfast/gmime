@@ -22,9 +22,15 @@
 #ifndef __GMIME_COMMON_H__
 #define __GMIME_COMMON_H__
 
+#include <sys/types.h>
+#include <string.h>
+#include <stdlib.h>
+
 #include <glib.h>
 
 G_BEGIN_DECLS
+
+G_GNUC_INTERNAL void g_mime_read_random_pool (unsigned char *buffer, size_t bytes);
 
 G_GNUC_INTERNAL int g_mime_strcase_equal (gconstpointer v, gconstpointer v2);
 

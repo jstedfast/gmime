@@ -694,39 +694,6 @@ g_mime_multipart_get_count (GMimeMultipart *multipart)
 
 
 static void
-read_random_pool (unsigned char *buffer, size_t bytes)
-{
-#ifdef __unix__
-	size_t nread = 0;
-	ssize_t n;
-	int fd;
-	
-	if ((fd = open ("/dev/urandom", O_RDONLY)) == -1) {
-		if ((fd = open ("/dev/random", O_RDONLY)) == -1)
-			return;
-	}
-	
-	do {
-		do {
-			n = read (fd, (char *) buffer + nread, bytes - nread);
-		} while (n == -1 && errno == EINTR);
-		
-		if (n == -1 || n == 0)
-			break;
-		
-		nread += n;
-	} while (nread < bytes);
-	
-	close (fd);
-#else
-	size_t i;
-	
-	for (i = 0; i < bytes; i++)
-		buffer[i] = (unsigned char) (rand () % 256);
-#endif
-}
-
-static void
 multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 {
 	char bbuf[35];
@@ -737,7 +704,7 @@ multipart_set_boundary (GMimeMultipart *multipart, const char *boundary)
 		guint32 save = 0;
 		int state = 0;
 		
-		read_random_pool (digest, 16);
+		g_mime_read_random_pool (digest, 16);
 		
 		strcpy (bbuf, "=-");
 		p = (unsigned char *) bbuf + 2;

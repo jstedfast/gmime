@@ -51,6 +51,7 @@
 #include <errno.h>
 
 #include "gmime-utils.h"
+#include "gmime-common.h"
 #include "gmime-table-private.h"
 #include "gmime-parse-utils.h"
 #include "gmime-part.h"
@@ -76,16 +77,6 @@
  * Utility functions to parse, encode and decode various MIME tokens
  * and encodings.
  **/
-
-#ifdef G_THREADS_ENABLED
-extern void _g_mime_msgid_unlock (void);
-extern void _g_mime_msgid_lock (void);
-#define MSGID_UNLOCK() _g_mime_msgid_unlock ()
-#define MSGID_LOCK()   _g_mime_msgid_lock ()
-#else
-#define MSGID_UNLOCK()
-#define MSGID_LOCK()
-#endif
 
 #define GMIME_FOLD_PREENCODED  (GMIME_FOLD_LEN / 2)
 
@@ -798,10 +789,14 @@ g_mime_utils_header_decode_date (const char *str, int *tz_offset)
 char *
 g_mime_utils_generate_message_id (const char *fqdn)
 {
+	const char base36[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 	static unsigned long int count = 0;
 	const char *hostname = NULL;
+	unsigned char block[8];
+	unsigned long value;
 	char *name = NULL;
-	char *msgid;
+	GString *msgid;
+	int i;
 	
 	if (!fqdn) {
 #ifdef HAVE_UTSNAME_DOMAINNAME
@@ -865,14 +860,32 @@ g_mime_utils_generate_message_id (const char *fqdn)
 		fqdn = name != NULL ? name : (hostname[0] ? hostname : "localhost.localdomain");
 	}
 	
-	MSGID_LOCK ();
-	msgid = g_strdup_printf ("%lu.%lu.%lu@%s", (unsigned long int) time (NULL),
-				 (unsigned long int) getpid (), count++, fqdn);
-	MSGID_UNLOCK ();
+	value = (unsigned long) time (NULL);
+	g_mime_read_random_pool (block, 8);
+	msgid = g_string_new ("");
+	
+	do {
+		g_string_append_c (msgid, base36[(int) (value % 36)]);
+		value /= 36;
+	} while (value != 0);
+	
+	g_string_append_c (msgid, '.');
+	
+	value = 0;
+	for (i = 0; i < 8; i++)
+		value = (value << 8) | block[i];
+	
+	do {
+		g_string_append_c (msgid, base36[(int) (value % 36)]);
+		value /= 36;
+	} while (value != 0);
+	
+	g_string_append_c (msgid, '@');
+	g_string_append (msgid, fqdn);
 	
 	g_free (name);
 	
-	return msgid;
+	return g_string_free (msgid, FALSE);
 }
 
 static char *

@@ -51,9 +51,6 @@
 extern void g_mime_iconv_utils_shutdown (void);
 extern void g_mime_iconv_utils_init (void);
 
-extern void _g_mime_msgid_unlock (void);
-extern void _g_mime_msgid_lock (void);
-
 GQuark gmime_gpgme_error_quark;
 GQuark gmime_error_quark;
 
@@ -62,8 +59,6 @@ const guint gmime_minor_version = GMIME_MINOR_VERSION;
 const guint gmime_micro_version = GMIME_MICRO_VERSION;
 const guint gmime_interface_age = GMIME_INTERFACE_AGE;
 const guint gmime_binary_age = GMIME_BINARY_AGE;
-
-G_LOCK_DEFINE_STATIC (msgid);
 
 static unsigned int initialized = 0;
 
@@ -118,10 +113,6 @@ g_mime_init (void)
 	
 #if !GLIB_CHECK_VERSION(2, 35, 1)
 	g_type_init ();
-#endif
-	
-#ifdef G_THREADS_ENABLED
-	g_mutex_init (&G_LOCK_NAME (msgid));
 #endif
 	
 	g_mime_parser_options_init ();
@@ -216,28 +207,4 @@ g_mime_shutdown (void)
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_utils_shutdown ();
 	g_mime_iconv_shutdown ();
-	
-#ifdef G_THREADS_ENABLED
-	if (glib_check_version (2, 37, 4) == NULL) {
-		/* The implementation of g_mutex_clear() prior
-		 * to glib 2.37.4 did not properly reset the
-		 * internal mutex pointer to NULL, so re-initializing
-		 * GMime would not properly re-initialize the mutexes.
-		 **/
-		g_mutex_clear (&G_LOCK_NAME (msgid));
-	}
-#endif
-}
-
-
-void
-_g_mime_msgid_unlock (void)
-{
-	return G_UNLOCK (msgid);
-}
-
-void
-_g_mime_msgid_lock (void)
-{
-	return G_LOCK (msgid);
 }
