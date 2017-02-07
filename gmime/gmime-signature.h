@@ -50,46 +50,42 @@ typedef struct _GMimeSignatureListClass GMimeSignatureListClass;
 
 /**
  * GMimeSignatureStatus:
- * @GMIME_SIGNATURE_STATUS_GOOD: Good signature.
- * @GMIME_SIGNATURE_STATUS_ERROR: An error occurred.
- * @GMIME_SIGNATURE_STATUS_BAD: Bad signature.
+ * @GMIME_SIGNATURE_STATUS_VALID: The signature is fully valid.
+ * @GMIME_SIGNATURE_STATUS_GREEN: The signature is good.
+ * @GMIME_SIGNATURE_STATUS_RED: The signature is bad.
+ * @GMIME_SIGNATURE_STATUS_KEY_REVOKED: The key has been revoked.
+ * @GMIME_SIGNATURE_STATUS_KEY_EXPIRED: The key has expired.
+ * @GMIME_SIGNATURE_STATUS_SIG_EXPIRED: The signature has expired.
+ * @GMIME_SIGNATURE_STATUS_KEY_MISSING: Can't verify due to missing key.
+ * @GMIME_SIGNATURE_STATUS_CRL_MISSING: CRL not available.
+ * @GMIME_SIGNATURE_STATUS_CRL_TOO_OLD: Available CRL is too old.
+ * @GMIME_SIGNATURE_STATUS_BAD_POLICY: A policy was not met.
+ * @GMIME_SIGNATURE_STATUS_SYS_ERROR: A system error occurred.
+ * @GMIME_SIGNATURE_STATUS_TOFU_CONFLICT: Tofu conflict detected.
  *
- * A value representing the signature status for a particular
+ * A value representing the signature status flags for a particular
  * #GMimeSignature.
  **/
 typedef enum {
-	GMIME_SIGNATURE_STATUS_GOOD,
-	GMIME_SIGNATURE_STATUS_ERROR,
-	GMIME_SIGNATURE_STATUS_BAD
+	GMIME_SIGNATURE_STATUS_VALID         = 0x0001,
+	GMIME_SIGNATURE_STATUS_GREEN         = 0x0002,
+	GMIME_SIGNATURE_STATUS_RED           = 0x0004,
+	GMIME_SIGNATURE_STATUS_KEY_REVOKED   = 0x0010,
+	GMIME_SIGNATURE_STATUS_KEY_EXPIRED   = 0x0020,
+	GMIME_SIGNATURE_STATUS_SIG_EXPIRED   = 0x0040,
+	GMIME_SIGNATURE_STATUS_KEY_MISSING   = 0x0080,
+	GMIME_SIGNATURE_STATUS_CRL_MISSING   = 0x0100,
+	GMIME_SIGNATURE_STATUS_CRL_TOO_OLD   = 0x0200,
+	GMIME_SIGNATURE_STATUS_BAD_POLICY    = 0x0400,
+	GMIME_SIGNATURE_STATUS_SYS_ERROR     = 0x0800,
+	GMIME_SIGNATURE_STATUS_TOFU_CONFLICT = 0x1000
 } GMimeSignatureStatus;
-
-
-/**
- * GMimeSignatureError:
- * @GMIME_SIGNATURE_ERROR_NONE: No error.
- * @GMIME_SIGNATURE_ERROR_EXPSIG: Expired signature.
- * @GMIME_SIGNATURE_ERROR_NO_PUBKEY: No public key found.
- * @GMIME_SIGNATURE_ERROR_EXPKEYSIG: Expired signature key.
- * @GMIME_SIGNATURE_ERROR_REVKEYSIG: Revoked signature key.
- * @GMIME_SIGNATURE_ERROR_UNSUPP_ALGO: Unsupported algorithm.
- *
- * Possible errors that a #GMimeSignature could have.
- **/
-typedef enum {
-	GMIME_SIGNATURE_ERROR_NONE        = 0,
-	GMIME_SIGNATURE_ERROR_EXPSIG      = (1 << 0),  /* expired signature */
-	GMIME_SIGNATURE_ERROR_NO_PUBKEY   = (1 << 1),  /* no public key */
-	GMIME_SIGNATURE_ERROR_EXPKEYSIG   = (1 << 2),  /* expired key */
-	GMIME_SIGNATURE_ERROR_REVKEYSIG   = (1 << 3),  /* revoked key */
-	GMIME_SIGNATURE_ERROR_UNSUPP_ALGO = (1 << 4)   /* unsupported algorithm */
-} GMimeSignatureError;
 
 
 /**
  * GMimeSignature:
  * @parent_object: parent #GObject
- * @status: A #GMimeSignatureStatus.
- * @errors: A bitfield of #GMimeSignatureError values.
+ * @status: A bitfield of #GMimeSignatureStatus values.
  * @cert: The #GMimeCertificate used in the signature.
  * @created: The creation date of the signature.
  * @expires: The expiration date of the signature.
@@ -100,7 +96,6 @@ struct _GMimeSignature {
 	GObject parent_object;
 	
 	GMimeSignatureStatus status;
-	GMimeSignatureError errors;
 	GMimeCertificate *cert;
 	time_t created;
 	time_t expires;
@@ -121,9 +116,6 @@ GMimeCertificate *g_mime_signature_get_certificate (GMimeSignature *sig);
 
 void g_mime_signature_set_status (GMimeSignature *sig, GMimeSignatureStatus status);
 GMimeSignatureStatus g_mime_signature_get_status (GMimeSignature *sig);
-
-void g_mime_signature_set_errors (GMimeSignature *sig, GMimeSignatureError errors);
-GMimeSignatureError g_mime_signature_get_errors (GMimeSignature *sig);
 
 void g_mime_signature_set_created (GMimeSignature *sig, time_t created);
 time_t g_mime_signature_get_created (GMimeSignature *sig);

@@ -522,8 +522,8 @@ pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 	GMimeSignatureList *signatures;
 	GMimeSignature *signature;
 	gpgme_verify_result_t result;
-	gpgme_subkey_t subkey;
 	gpgme_signature_t sig;
+	gpgme_subkey_t subkey;
 	gpgme_user_id_t uid;
 	gpgme_key_t key;
 	
@@ -539,23 +539,13 @@ pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 	while (sig != NULL) {
 		signature = g_mime_signature_new ();
 		g_mime_signature_list_add (signatures, signature);
-		
-		if (sig->status != GPG_ERR_NO_ERROR)
-			g_mime_signature_set_status (signature, GMIME_SIGNATURE_STATUS_ERROR);
-		else
-			g_mime_signature_set_status (signature, GMIME_SIGNATURE_STATUS_GOOD);
+		g_mime_signature_set_status (signature, (GMimeSignatureStatus) sig->summary);
+		g_mime_signature_set_expires (signature, sig->exp_timestamp);
+		g_mime_signature_set_created (signature, sig->timestamp);
 		
 		g_mime_certificate_set_pubkey_algo (signature->cert, (GMimePubKeyAlgo) sig->pubkey_algo);
 		g_mime_certificate_set_digest_algo (signature->cert, (GMimeDigestAlgo) sig->hash_algo);
 		g_mime_certificate_set_fingerprint (signature->cert, sig->fpr);
-		g_mime_signature_set_expires (signature, sig->exp_timestamp);
-		g_mime_signature_set_created (signature, sig->timestamp);
-		
-		if (sig->exp_timestamp != 0 && sig->exp_timestamp <= time (NULL)) {
-			/* signature expired, automatically results in a BAD signature */
-			signature->errors |= GMIME_SIGNATURE_ERROR_EXPSIG;
-			signature->status = GMIME_SIGNATURE_STATUS_BAD;
-		}
 		
 		if (gpgme_get_key (pkcs7->ctx, sig->fpr, &key, 0) == GPG_ERR_NO_ERROR && key) {
 			/* get more signer info from their signing key */
@@ -589,25 +579,6 @@ pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 			if (subkey) {
 				g_mime_certificate_set_created (signature->cert, subkey->timestamp);
 				g_mime_certificate_set_expires (signature->cert, subkey->expires);
-				
-				if (subkey->revoked) {
-					/* signer's key has been revoked, automatic BAD status */
-					signature->errors |= GMIME_SIGNATURE_ERROR_REVKEYSIG;
-					signature->status = GMIME_SIGNATURE_STATUS_BAD;
-				}
-				
-				if (subkey->expired) {
-					/* signer's key has expired, automatic BAD status */
-					signature->errors |= GMIME_SIGNATURE_ERROR_EXPKEYSIG;
-					signature->status = GMIME_SIGNATURE_STATUS_BAD;
-				}
-			} else {
-				/* If we don't have the subkey used by the signer, then we can't
-				 * tell what the status is, so set to ERROR if it hasn't already
-				 * been designated as BAD. */
-				if (signature->status != GMIME_SIGNATURE_STATUS_BAD)
-					signature->status = GMIME_SIGNATURE_STATUS_ERROR;
-				signature->errors |= GMIME_SIGNATURE_ERROR_NO_PUBKEY;
 			}
 			
 			gpgme_key_unref (key);
@@ -616,9 +587,6 @@ pkcs7_get_signatures (GMimePkcs7Context *pkcs7, gboolean verify)
 			 * the status is, so set it to ERROR if it hasn't already been
 			 * designated as BAD. */
 			g_mime_certificate_set_trust (signature->cert, GMIME_CERTIFICATE_TRUST_UNDEFINED);
-			if (signature->status != GMIME_SIGNATURE_STATUS_BAD)
-				signature->status = GMIME_SIGNATURE_STATUS_ERROR;
-			signature->errors |= GMIME_SIGNATURE_ERROR_NO_PUBKEY;
 		}
 		
 		sig = sig->next;

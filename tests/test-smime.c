@@ -53,16 +53,16 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 static GMimeSignatureStatus
 get_sig_status (GMimeSignatureList *signatures)
 {
-	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
+	GMimeSignatureStatus status = 0;
 	GMimeSignature *sig;
 	int i;
 	
 	if (!signatures || signatures->array->len == 0)
-		return GMIME_SIGNATURE_STATUS_ERROR;
+		return GMIME_SIGNATURE_STATUS_RED;
 	
 	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
 		sig = g_mime_signature_list_get_signature (signatures, i);
-		status = MAX (status, sig->status);
+		status |= sig->status;
 	}
 	
 	return status;
@@ -71,23 +71,18 @@ get_sig_status (GMimeSignatureList *signatures)
 static void
 print_verify_results (GMimeSignatureList *signatures)
 {
+	GMimeSignatureStatus status;
 	GMimeSignature *sig;
 	int count, i;
 	
-	switch (get_sig_status (signatures)) {
-	case GMIME_SIGNATURE_STATUS_GOOD:
-		fputs ("GOOD\n", stdout);
-		break;
-	case GMIME_SIGNATURE_STATUS_BAD:
+	status = get_sig_status (signatures);
+	
+	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
 		fputs ("BAD\n", stdout);
-		break;
-	case GMIME_SIGNATURE_STATUS_ERROR:
-		fputs ("ERROR status\n", stdout);
-		break;
-	default:
-		fputs ("Unknown enum value\n", stdout);
-		break;
-	}
+	else if ((status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
+		fputs ("GOOD\n", stdout);
+	else
+		fputs ("UNKNOWN\n", stdout);
 	
 	fputs ("\nSignatures:\n", stdout);
 	count = g_mime_signature_list_length (signatures);
@@ -121,17 +116,12 @@ print_verify_results (GMimeSignatureList *signatures)
 		}
 		
 		fprintf (stdout, "\tStatus: ");
-		switch (sig->status) {
-		case GMIME_SIGNATURE_STATUS_GOOD:
-			fputs ("GOOD\n", stdout);
-			break;
-		case GMIME_SIGNATURE_STATUS_BAD:
+		if ((sig->status & GMIME_SIGNATURE_STATUS_RED) != 0)
 			fputs ("BAD\n", stdout);
-			break;
-		case GMIME_SIGNATURE_STATUS_ERROR:
-			fputs ("ERROR\n", stdout);
-			break;
-		}
+		else if ((sig->status & GMIME_SIGNATURE_STATUS_GREEN) != 0)
+			fputs ("GOOD\n", stdout);
+		else
+			fputs ("UNKNOWN\n", stdout);
 		
 		fprintf (stdout, "\tSignature made on %s", ctime (&sig->created));
 		if (sig->expires != (time_t) 0)
@@ -139,20 +129,16 @@ print_verify_results (GMimeSignatureList *signatures)
 		else
 			fprintf (stdout, "\tSignature never expires\n");
 		
-		if (sig->errors) {
-			fprintf (stdout, "\tErrors: ");
-			if (sig->errors & GMIME_SIGNATURE_ERROR_EXPSIG)
-				fputs ("Expired, ", stdout);
-			if (sig->errors & GMIME_SIGNATURE_ERROR_NO_PUBKEY)
-				fputs ("No Pub Key, ", stdout);
-			if (sig->errors & GMIME_SIGNATURE_ERROR_EXPKEYSIG)
-				fputs ("Key Expired, ", stdout);
-			if (sig->errors & GMIME_SIGNATURE_ERROR_REVKEYSIG)
-				fputs ("Key Revoked", stdout);
-			fputc ('\n', stdout);
-		} else {
-			fprintf (stdout, "\tNo errors for this signer\n");
-		}
+		fprintf (stdout, "\tErrors: ");
+		if (sig->status & GMIME_SIGNATURE_STATUS_SIG_EXPIRED)
+			fputs ("Expired, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_MISSING)
+			fputs ("No Pub Key, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_EXPIRED)
+			fputs ("Key Expired, ", stdout);
+		if (sig->status & GMIME_SIGNATURE_STATUS_KEY_REVOKED)
+			fputs ("Key Revoked", stdout);
+		fputc ('\n', stdout);
 		
 		if (i + 1 < count)
 			fputc ('\n', stdout);
@@ -277,6 +263,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 static void
 test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 {
+	GMimeSignatureStatus status;
 	GMimeStream *cleartext, *stream;
 	GMimeMultipartEncrypted *mpe;
 	GMimeDecryptResult *result;
@@ -384,7 +371,9 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign)
 		v(print_verify_results (result->signatures));
 	
 	if (sign) {
-		if (!result->signatures || get_sig_status (result->signatures) != GMIME_SIGNATURE_STATUS_GOOD)
+		status = get_sig_status (result->signatures);
+		
+		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
 			ex = exception_new ("signature status expected to be GOOD");
 	} else {
 		if (result->signatures)

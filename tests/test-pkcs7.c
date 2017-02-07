@@ -52,16 +52,16 @@ request_passwd (GMimeCryptoContext *ctx, const char *user_id, const char *prompt
 static GMimeSignatureStatus
 get_sig_status (GMimeSignatureList *signatures)
 {
-	GMimeSignatureStatus status = GMIME_SIGNATURE_STATUS_GOOD;
+	GMimeSignatureStatus status = 0;
 	GMimeSignature *sig;
 	int i;
 	
 	if (!signatures || signatures->array->len == 0)
-		return GMIME_SIGNATURE_STATUS_ERROR;
+		return GMIME_SIGNATURE_STATUS_RED;
 	
 	for (i = 0; i < g_mime_signature_list_length (signatures); i++) {
 		sig = g_mime_signature_list_get_signature (signatures, i);
-		status = MAX (status, sig->status);
+		status |= sig->status;
 	}
 	
 	return status;
@@ -94,6 +94,7 @@ static void
 test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
 	GMimeSignatureList *signatures;
+	GMimeSignatureStatus status;
 	GError *err = NULL;
 	Exception *ex;
 	
@@ -105,8 +106,10 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 		g_error_free (err);
 		throw (ex);
 	}
+
+	status = get_sig_status (signatures);
 	
-	if (get_sig_status (signatures) != GMIME_SIGNATURE_STATUS_GOOD) {
+	if ((status & GMIME_SIGNATURE_STATUS_RED) != 0) {
 		g_object_unref (signatures);
 		throw (exception_new ("signature BAD"));
 	}
@@ -144,6 +147,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 static void
 test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GMimeStream *ciphertext)
 {
+	GMimeSignatureStatus status;
 	GMimeDecryptResult *result;
 	Exception *ex = NULL;
 	GMimeStream *stream;
@@ -160,7 +164,9 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	}
 	
 	if (sign) {
-		if (!result->signatures || get_sig_status (result->signatures) != GMIME_SIGNATURE_STATUS_GOOD)
+		status = get_sig_status (result->signatures);
+		
+		if ((status & GMIME_SIGNATURE_STATUS_RED) != 0)
 			ex = exception_new ("expected GOOD signature");
 	} else {
 		if (result->signatures)

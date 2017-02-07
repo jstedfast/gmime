@@ -83,11 +83,10 @@ g_mime_signature_class_init (GMimeSignatureClass *klass)
 static void
 g_mime_signature_init (GMimeSignature *sig, GMimeSignatureClass *klass)
 {
-	sig->status = GMIME_SIGNATURE_STATUS_GOOD;
-	sig->errors = GMIME_SIGNATURE_ERROR_NONE;
 	sig->cert = g_mime_certificate_new ();
 	sig->created = (time_t) -1;
 	sig->expires = (time_t) -1;
+	sig->status = 0;
 }
 
 static void
@@ -143,44 +142,9 @@ g_mime_signature_set_status (GMimeSignature *sig, GMimeSignatureStatus status)
 GMimeSignatureStatus
 g_mime_signature_get_status (GMimeSignature *sig)
 {
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), GMIME_SIGNATURE_STATUS_BAD);
+	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), 0);
 	
 	return sig->status;
-}
-
-
-/**
- * g_mime_signature_set_errors:
- * @sig: a #GMimeSignature
- * @errors: a #GMimeSignatureError
- *
- * Set the errors on the signature.
- **/
-void
-g_mime_signature_set_errors (GMimeSignature *sig, GMimeSignatureError errors)
-{
-	g_return_if_fail (GMIME_IS_SIGNATURE (sig));
-	
-	sig->errors = errors;
-}
-
-
-/**
- * g_mime_signature_get_errors:
- * @sig: a #GMimeSignature
- *
- * Get the signature errors. If the #GMimeSignatureStatus returned from
- * g_mime_signature_get_status() is not #GMIME_SIGNATURE_STATUS_GOOD, then the
- * errors may provide a clue as to why.
- *
- * Returns: a bitfield of errors.
- **/
-GMimeSignatureError
-g_mime_signature_get_errors (GMimeSignature *sig)
-{
-	g_return_val_if_fail (GMIME_IS_SIGNATURE (sig), GMIME_SIGNATURE_ERROR_NONE);
-	
-	return sig->errors;
 }
 
 
