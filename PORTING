@@ -34,6 +34,15 @@ Porting from GMime 2.6 to GMime 3.0
   due to the fact that it can now be used to add mailbox addresses to the
   Sender, From, and Reply-To headers as well.
 
+- g_mime_message_set_subject() now takes a charset argument used when encoding
+  the subject into rfc2047 encoded-word tokens (if needed). Use `NULL` to
+  get the old behavior of using a best-fit charset.
+
+- g_mime_set_user_charsets() and g_mime_user_charsets() have been removed.
+  All encoding API's now have a way to specify a charset to use and all
+  decoder API's take a GMimeParserOptions argument that allows for
+  specifying fallback charsets.
+
 - GMimeObject's prepend_header(), append_header(), and set_header() virtual
   methods now all take a const char *raw_value and gint64 offset arguments.
   The raw_value is the raw header value cloned exactly as the parser found
@@ -66,6 +75,9 @@ Porting from GMime 2.6 to GMime 3.0
   g_mime_crypto_context_[get,set]_always_trust().
 
 - Removed g_mime_gpg_context_[get,set]_use_agent(). This should no longer be needed.
+
+- GMimeSignatureStatus and GMimeSignatureErrors have been merged into a
+  single bitfield (GMimeSignatureStatus) which mirrors gpgme_sigsum_t.
 
 
 Porting from GMime 2.4 to GMime 2.6
