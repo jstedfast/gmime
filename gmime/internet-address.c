@@ -1635,32 +1635,24 @@ mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, I
 static gboolean address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group);
 
 static gboolean
-group_parse (GMimeParserOptions *options, const char **in, const char *name, InternetAddress **address)
+group_parse (InternetAddressGroup *group, GMimeParserOptions *options, const char **in)
 {
-	InternetAddressGroup *group;
 	const char *inptr = *in;
 	
 	/* skip over the ':' */
 	inptr++;
 	
-	if (*inptr == '\0') {
-		*address = NULL;
-		*in = inptr;
+	if (*inptr != '\0') {
+		address_list_parse (group->members, options, &inptr, TRUE);
 		
-		return FALSE;
-	}
-	
-	group = (InternetAddressGroup *) internet_address_group_new (name);
-	address_list_parse (group->members, options, &inptr, TRUE);
-	
-	if (*inptr != ';') {
-		while (*inptr && *inptr != ';')
+		if (*inptr != ';') {
+			while (*inptr && *inptr != ';')
+				inptr++;
+		} else {
 			inptr++;
-	} else {
-		inptr++;
+		}
 	}
 	
-	*address = (InternetAddress *) group;
 	*in = inptr;
 	
 	return TRUE;
@@ -1774,6 +1766,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	
 	if (*inptr == ':') {
 		/* rfc2822 group address */
+		InternetAddressGroup *group;
 		const char *phrase = start;
 		gboolean retval;
 		char *name;
@@ -1792,8 +1785,11 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 			name = g_strdup ("");
 		}
 		
-		retval = group_parse (options, &inptr, name, address);
+		group = (InternetAddressGroup *) internet_address_group_new (name);
+		*address = (InternetAddress *) group;
 		g_free (name);
+		
+		retval = group_parse (group, options, &inptr);
 		*in = inptr;
 		
 		return retval;

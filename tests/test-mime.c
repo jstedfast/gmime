@@ -241,12 +241,12 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)
-				throw (exception_new ("display addr-spec %s does not match: %s", addrspec[i].display, str));
+				throw (exception_new ("display strings do not match.\ninput: %s\nexpected: %s\nactual: %s", addrspec[i].input, addrspec[i].display, str));
 			g_free (str);
 			
 			str = internet_address_list_to_string (addrlist, TRUE);
 			if (strcmp (addrspec[i].encoded, str) != 0)
-				throw (exception_new ("encoded addr-spec %s does not match: %s", addrspec[i].encoded, str));
+				throw (exception_new ("encoded strings do not match.\nexpected: %s\nactual: %s", addrspec[i].encoded, str));
 			
 			testsuite_check_passed ();
 		} catch (ex) {
@@ -266,16 +266,16 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 			testsuite_check ("broken_addrspec[%u]", i);
 			try {
 				if (!(addrlist = internet_address_list_parse (options, broken_addrspec[i].input)))
-					throw (exception_new ("could not parse addr-spec"));
+					throw (exception_new ("could not parse: %s", broken_addrspec[i].input));
 				
 				str = internet_address_list_to_string (addrlist, FALSE);
 				if (strcmp (broken_addrspec[i].display, str) != 0)
-					throw (exception_new ("display addr-spec %s does not match: %s", broken_addrspec[i].display, str));
+					throw (exception_new ("display strings do not match.\ninput: %s\nexpected: %s\nactual: %s", broken_addrspec[i].input, broken_addrspec[i].display, str));
 				g_free (str);
 				
 				str = internet_address_list_to_string (addrlist, TRUE);
 				if (strcmp (broken_addrspec[i].encoded, str) != 0)
-					throw (exception_new ("encoded addr-spec %s does not match: %s", broken_addrspec[i].encoded, str));
+					throw (exception_new ("encoded strings do not match.\nexpected: %s\nactual: %s", broken_addrspec[i].encoded, str));
 				
 				testsuite_check_passed ();
 			} catch (ex) {

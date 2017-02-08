@@ -102,7 +102,7 @@ g_mime_init (void)
 	
 	if (initialized++)
 		return;
-
+	
 	/* seed the random number generator (needed by boundary generator) */
 	srand ((unsigned int) time (NULL));
 	
