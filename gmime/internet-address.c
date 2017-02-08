@@ -1666,6 +1666,7 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 	const char *inptr = *in;
 	const char *start;
 	size_t length;
+	int words = 0;
 	
 	if (!skip_cfws (&inptr) || *inptr == '\0')
 		goto error;
@@ -1708,7 +1709,21 @@ address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char
 				break;
 			
 			inptr++;
+			
+			length = (size_t) (inptr - start);
 		} while (TRUE);
+		
+		words++;
+		
+		/* Note: some clients don't quote commas in the name */
+		if (*inptr == ',' && words > 1) {
+			inptr++;
+
+			length = (size_t) (inptr - start);
+			
+			if (!skip_cfws (&inptr))
+				goto error;
+		}
 	}
 	
 	if (!skip_cfws (&inptr))
