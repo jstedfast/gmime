@@ -120,9 +120,6 @@ static struct {
 	{ "Charles,, likes illegal commas <charles@superpimp.org>",
 	  "Charles, likes illegal commas <charles@superpimp.org>",
 	  "Charles, likes illegal commas <charles@superpimp.org>" },
-	{ "<charles@>",
-	  "charles",
-	  "charles" },
 	{ "<charles@broken.host.com.>",
 	  "charles@broken.host.com",
 	  "charles@broken.host.com" },
@@ -150,15 +147,6 @@ static struct {
 	{ "undisclosed-recipients",
 	  "undisclosed-recipients",
 	  "undisclosed-recipients" },
-	/* The following 2 addr-specs are invalid according to the
-	 * spec, but apparently some japanese cellphones use them?
-	 * See Evolution bug #547969 */
-	{ "some...dots@hocus.pocus.net",
-	  "some...dots@hocus.pocus.net",
-	  "some...dots@hocus.pocus.net" },
-	{ "some.dots..@hocus.pocus.net",
-	  "some.dots..@hocus.pocus.net",
-	  "some.dots..@hocus.pocus.net" },
 	/* The following test case is to check that we properly handle
 	 * mailbox addresses that do not have any lwsp between the
 	 * name component and the addr-spec. See Evolution bug
