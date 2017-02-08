@@ -265,87 +265,25 @@ struct _received_token {
 	token_skip_t skip;
 };
 
-static void skip_atom     (const char **in);
-static void skip_domain   (const char **in);
-static void skip_addr     (const char **in);
-static void skip_msgid    (const char **in);
+static void skip_cfws_atom (const char **in);
+static void skip_domain    (const char **in);
+static void skip_addr      (const char **in);
+static void skip_msgid     (const char **in);
 
 static struct _received_token received_tokens[] = {
-	{ "from ", 5, skip_domain   },
-	{ "by ",   3, skip_domain   },
-	{ "via ",  4, skip_atom     },
-	{ "with ", 5, skip_atom     },
-	{ "id ",   3, skip_msgid    },
-	{ "for ",  4, skip_addr     }
+	{ "from ", 5, skip_domain    },
+	{ "by ",   3, skip_domain    },
+	{ "via ",  4, skip_cfws_atom },
+	{ "with ", 5, skip_cfws_atom },
+	{ "id ",   3, skip_msgid     },
+	{ "for ",  4, skip_addr      }
 };
 
 static void
-skip_atom (const char **in)
+skip_cfws_atom (const char **in)
 {
-	register const char *inptr;
-	
-	decode_lwsp (in);
-	inptr = *in;
-	while (is_atom (*inptr))
-		inptr++;
-	*in = inptr;
-}
-
-static void
-skip_comment (const char **in)
-{
-	register const char *inptr = *in;
-	int depth = 1;
-	
-	if (*inptr == '(')
-		inptr++;
-	
-	while (*inptr && depth > 0) {
-		if (*inptr == '(')
-			depth++;
-		else if (*inptr == ')')
-			depth--;
-		inptr++;
-	}
-	
-	if (*inptr == ')')
-		inptr++;
-	
-	*in = inptr;
-}
-
-static void
-skip_quoted_string (const char **in)
-{
-	const char *inptr = *in;
-	
-	decode_lwsp (&inptr);
-	if (*inptr == '"') {
-		inptr++;
-		while (*inptr && *inptr != '"') {
-			if (*inptr == '\\')
-				inptr++;
-			
-			if (*inptr)
-				inptr++;
-		}
-		
-		if (*inptr == '"')
-			inptr++;
-	}
-	
-	*in = inptr;
-}
-
-static void
-skip_word (const char **in)
-{
-	decode_lwsp (in);
-	if (**in == '"') {
-		skip_quoted_string (in);
-	} else {
-		skip_atom (in);
-	}
+	skip_cfws (in);
+	skip_atom (in);
 }
 
 static void
@@ -357,7 +295,7 @@ skip_domain_subliteral (const char **in)
 		if (is_dtext (*inptr)) {
 			inptr++;
 		} else if (is_lwsp (*inptr)) {
-			decode_lwsp (&inptr);
+			skip_cfws (&inptr);
 		} else {
 			break;
 		}
@@ -371,7 +309,7 @@ skip_domain_literal (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	while (*inptr && *inptr != ']') {
 		skip_domain_subliteral (&inptr);
 		if (*inptr && *inptr != ']')
@@ -387,7 +325,7 @@ skip_domain (const char **in)
 	const char *save, *inptr = *in;
 	
 	while (inptr && *inptr) {
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr == '[') {
 			/* domain literal */
 			inptr++;
@@ -399,7 +337,7 @@ skip_domain (const char **in)
 		}
 		
 		save = inptr;
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr != '.') {
 			inptr = save;
 			break;
@@ -416,14 +354,15 @@ skip_addrspec (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	skip_word (&inptr);
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	while (*inptr == '.') {
 		inptr++;
+		skip_cfws (&inptr);
 		skip_word (&inptr);
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 	}
 	
 	if (*inptr == '@') {
@@ -439,7 +378,7 @@ skip_addr (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	if (*inptr == '<') {
 		inptr++;
 		skip_addrspec (&inptr);
@@ -457,7 +396,7 @@ skip_msgid (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	if (*inptr == '<') {
 		inptr++;
 		skip_addrspec (&inptr);

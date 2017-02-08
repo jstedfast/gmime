@@ -56,7 +56,7 @@ g_mime_parse_content_type (const char **in, char **type, char **subtype)
 	register const char *inptr;
 	const char *start = *in;
 	
-	decode_lwsp (&start);
+	skip_cfws (&start);
 	inptr = start;
 	
 	/* decode the type */
@@ -66,7 +66,7 @@ g_mime_parse_content_type (const char **in, char **type, char **subtype)
 	*type = g_strndup (start, (size_t) (inptr - start));
 	
 	start = inptr;
-	decode_lwsp (&start);
+	skip_cfws (&start);
 	
 	/* check for type/subtype delimeter */
 	if (*start++ != '/') {
@@ -76,7 +76,7 @@ g_mime_parse_content_type (const char **in, char **type, char **subtype)
 		return FALSE;
 	}
 	
-	decode_lwsp (&start);
+	skip_cfws (&start);
 	inptr = start;
 	
 	/* decode the subtype */
@@ -101,40 +101,177 @@ g_mime_parse_content_type (const char **in, char **type, char **subtype)
 
 
 /**
- * g_mime_decode_lwsp:
- * @in: address of input text string
+ * g_mime_skip_comment:
+ * @in: address of input string
  *
- * Skips past any LWSP or rfc822 comments in *@in and updates @in.
+ * Skips a comment.
+ *
+ * Returns: %TRUE on success or %FALSE otherwise.
  **/
-void
-g_mime_decode_lwsp (const char **in)
+gboolean
+g_mime_skip_comment (const char **in)
 {
-	const char *inptr = *in;
+	register const char *inptr = *in;
+	int depth = 1;
 	
-	while (*inptr && (*inptr == '(' || is_lwsp (*inptr))) {
-		while (*inptr && is_lwsp (*inptr))
+	/* skip over the '(' */
+	inptr++;
+	while (*inptr && depth) {
+		if (*inptr == '\\' && *(inptr + 1))
 			inptr++;
+		else if (*inptr == '(')
+			depth++;
+		else if (*inptr == ')')
+			depth--;
 		
-		/* skip over any comments */
-		if (*inptr == '(') {
-			int depth = 1;
-			
-			inptr++;
-			while (*inptr && depth) {
-				if (*inptr == '\\' && *(inptr + 1))
-					inptr++;
-				else if (*inptr == '(')
-					depth++;
-				else if (*inptr == ')')
-					depth--;
-				
-				inptr++;
-			}
-		}
+		inptr++;
 	}
 	
 	*in = inptr;
+	
+	return depth == 0;
 }
+
+
+/**
+ * g_mime_skip_lwsp:
+ * @in: address of input string
+ *
+ * Skips whitespace.
+ *
+ * Returns: %TRUE if any input was skipped or %FALSE otherwise.
+ **/
+gboolean
+g_mime_skip_lwsp (const char **in)
+{
+	register const char *inptr = *in;
+	const char *start = inptr;
+	
+	while (is_lwsp (*inptr))
+		inptr++;
+	
+	*in = inptr;
+	
+	return inptr > start;
+}
+
+
+/**
+ * g_mime_skip_cfws:
+ * @in: address of input string
+ *
+ * Skips comments and whitespace.
+ *
+ * Returns: %TRUE on success or %FALSE on error.
+ **/
+gboolean
+g_mime_skip_cfws (const char **in)
+{
+	const char *inptr = *in;
+	
+	skip_lwsp (&inptr);
+	
+	while (*inptr == '(') {
+		if (!skip_comment (&inptr))
+			return FALSE;
+		
+		skip_lwsp (&inptr);
+	}
+	
+	*in = inptr;
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_skip_quoted:
+ * @in: address of input string
+ *
+ * Skips a quoted string.
+ *
+ * Returns: %TRUE on success or %FALSE on error.
+ **/
+gboolean
+g_mime_skip_quoted (const char **in)
+{
+	register const char *inptr = *in;
+	gboolean escaped = FALSE;
+	
+	/* skip over leading '"' */
+	inptr++;
+	
+	while (*inptr) {
+		if (*inptr == '\\') {
+			escaped = !escaped;
+		} else if (!escaped) {
+			if (*inptr == '"')
+				break;
+		} else {
+			escaped = FALSE;
+		}
+		
+		inptr++;
+	}
+	
+	if (*inptr == '\0') {
+		*in = inptr;
+		
+		return FALSE;
+	}
+	
+	/* skip over the closing '"' */
+	inptr++;
+	
+	*in = inptr;
+	
+	return TRUE;
+}
+
+
+/**
+ * g_mime_skip_atom:
+ * @in: address of input string
+ *
+ * Skips an atom.
+ *
+ * Returns: %TRUE if any input was skipped or %FALSE otherwise.
+ **/
+gboolean
+g_mime_skip_atom (const char **in)
+{
+	register const char *inptr = *in;
+	const char *start = inptr;
+	
+	while (is_atom (*inptr))
+		inptr++;
+	
+	*in = inptr;
+	
+	return inptr > start;
+}
+
+
+/**
+ * g_mime_skip_word:
+ * @in: address of input string
+ *
+ * Skips a word token.
+ *
+ * Returns: %TRUE on success or %FALSE otherwise.
+ **/
+gboolean
+g_mime_skip_word (const char **in)
+{
+	if (**in == '"')
+		return skip_quoted (in);
+	
+	if (is_atom (**in))
+		return skip_atom (in);
+	
+	return FALSE;
+}
+
 
 static const char *
 decode_quoted_string (const char **in)
@@ -195,7 +332,7 @@ g_mime_decode_word (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	if (*inptr == '"') {
 		*in = inptr;
 		return decode_quoted_string (in);
@@ -216,10 +353,11 @@ decode_subliteral (const char **in, GString *domain)
 			g_string_append_c (domain, *inptr);
 			inptr++;
 			got = TRUE;
-		} else if (is_lwsp (*inptr))
-			decode_lwsp (&inptr);
-		else
+		} else if (is_lwsp (*inptr)) {
+			skip_cfws (&inptr);
+		} else {
 			break;
+		}
 	}
 	
 	*in = inptr;
@@ -232,7 +370,7 @@ decode_domain_literal (const char **in, GString *domain)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	while (*inptr && *inptr != ']') {
 		if (decode_subliteral (&inptr, domain) && *inptr == '.') {
 			g_string_append_c (domain, *inptr);
@@ -268,7 +406,7 @@ g_mime_decode_domain (const char **in, GString *domain)
 	
 	inptr = *in;
 	while (inptr && *inptr) {
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr == '[') {
 			/* domain literal */
 			g_string_append_c (domain, '[');
@@ -294,7 +432,7 @@ g_mime_decode_domain (const char **in, GString *domain)
 		}
 		
 		save = inptr;
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr != '.') {
 			inptr = save;
 			break;

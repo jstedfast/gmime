@@ -94,7 +94,7 @@ decode_int (const char **in)
 	const unsigned char *inptr;
 	int digit, n = 0;
 	
-	decode_lwsp (in);
+	skip_cfws (in);
 	
 	inptr = (const unsigned char *) *in;
 	while (isdigit ((int) *inptr)) {
@@ -122,7 +122,7 @@ decode_quoted_string (const char **in)
 	char *outptr, *out = NULL;
 	gboolean unescape = FALSE;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	if (*inptr != '"') {
 		*in = inptr;
@@ -169,7 +169,7 @@ decode_token (const char **in)
 	const char *inptr = *in;
 	const char *start;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	start = inptr;
 #ifdef STRICT_PARSER
@@ -200,7 +200,7 @@ decode_value (const char **in)
 {
 	const char *inptr = *in;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	*in = inptr;
 	
 	if (*inptr == '"') {
@@ -225,7 +225,7 @@ decode_param_token (const char **in)
 	const char *inptr = *in;
 	const char *start;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	start = inptr;
 	while (is_ttoken (*inptr) && *inptr != '*')
@@ -250,13 +250,13 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encod
 	
 	param = decode_param_token (&inptr);
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	if (*inptr == '*') {
 		is_rfc2184 = TRUE;
 		inptr++;
 		
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr == '=') {
 			/* form := param*=value */
 			*encoded = TRUE;
@@ -264,12 +264,12 @@ decode_rfc2184_param (const char **in, char **paramp, int *part, gboolean *encod
 			/* form := param*#=value or param*#*=value */
 			*part = decode_int (&inptr);
 			
-			decode_lwsp (&inptr);
+			skip_cfws (&inptr);
 			if (*inptr == '*') {
 				/* form := param*#*=value */
 				inptr++;
 				*encoded = TRUE;
-				decode_lwsp (&inptr);
+				skip_cfws (&inptr);
 			}
 		}
 	}
@@ -549,12 +549,12 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 	t = (struct _rfc2184_param *) &list;
 	rfc2184_hash = g_hash_table_new (g_mime_strcase_hash, g_mime_strcase_equal);
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	do {
 		/* invalid format? */
 		if (!decode_param (options, &inptr, &name, &value, &id, &encoded)) {
-			decode_lwsp (&inptr);
+			skip_cfws (&inptr);
 			
 			if (*inptr == ';')
 				continue;
@@ -596,7 +596,7 @@ decode_param_list (GMimeParserOptions *options, const char *in)
 			tail = param;
 		}
 		
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 	} while (*inptr++ == ';');
 	
 	g_hash_table_destroy (rfc2184_hash);

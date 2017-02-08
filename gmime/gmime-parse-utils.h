@@ -26,8 +26,24 @@ G_BEGIN_DECLS
 
 G_GNUC_INTERNAL gboolean g_mime_parse_content_type (const char **in, char **type, char **subtype);
 
-G_GNUC_INTERNAL void g_mime_decode_lwsp (const char **in);
-#define decode_lwsp(in) g_mime_decode_lwsp (in)
+G_GNUC_INTERNAL gboolean g_mime_skip_comment (const char **in);
+#define skip_comment(in) g_mime_skip_comment (in)
+
+G_GNUC_INTERNAL gboolean g_mime_skip_lwsp (const char **in);
+#define skip_lwsp(in) g_mime_skip_lwsp (in)
+
+G_GNUC_INTERNAL gboolean g_mime_skip_cfws (const char **in);
+#define skip_cfws(in) g_mime_skip_cfws (in)
+
+G_GNUC_INTERNAL gboolean g_mime_skip_quoted (const char **in);
+#define skip_quoted(in) g_mime_skip_quoted (in)
+
+G_GNUC_INTERNAL gboolean g_mime_skip_atom (const char **in);
+#define skip_atom(in) g_mime_skip_atom (in)
+
+G_GNUC_INTERNAL gboolean g_mime_skip_word (const char **in);
+#define skip_word(in) g_mime_skip_word (in)
+
 
 G_GNUC_INTERNAL const char *g_mime_decode_word (const char **in);
 #define decode_word(in) g_mime_decode_word (in)

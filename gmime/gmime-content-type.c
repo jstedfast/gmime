@@ -192,7 +192,7 @@ g_mime_content_type_parse (GMimeParserOptions *options, const char *str)
 	mime_type->type = type;
 	
 	/* skip past any remaining junk that shouldn't be here... */
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	while (*inptr && *inptr != ';')
 		inptr++;
 	

@@ -69,9 +69,6 @@ static struct {
 	{ "fejj@helixcode.com",
 	  "fejj@helixcode.com",
 	  "fejj@helixcode.com" },
-	{ "this is\n\ta folded name <folded@name.com>",
-	  "this is a folded name <folded@name.com>",
-	  "this is a folded name <folded@name.com>" },
 	{ "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>",
 	  "Jeffrey Stedfast <fejj@helixcode.com>" },
@@ -118,8 +115,8 @@ static struct {
 	  "Charles Kerr <charles@[127.0.0.1]>",
 	  "Charles Kerr <charles@[127.0.0.1]>" },
 	{ "Charles <charles@[127..0.1]>",
-	  "Charles <charles@[127.0.1]>",
-	  "Charles <charles@[127.0.1]>" },
+	  "Charles <charles@[127..0.1]>",
+	  "Charles <charles@[127..0.1]>" },
 	{ "Charles,, likes illegal commas <charles@superpimp.org>",
 	  "Charles, likes illegal commas <charles@superpimp.org>",
 	  "Charles, likes illegal commas <charles@superpimp.org>" },
@@ -192,8 +189,8 @@ static struct {
 	  "TEST <p@p.org>",
 	  "TEST <p@p.org>" },
 	{ "sdfasf@wp.pl,c tert@wp.pl,sffdg.rtre@op.pl",
-	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl",
-	  "sdfasf@wp.pl, c, sffdg.rtre@op.pl" },
+	  "sdfasf@wp.pl, sffdg.rtre@op.pl",
+	  "sdfasf@wp.pl, sffdg.rtre@op.pl" },
 	
 	/* obsolete routing address syntax tests */
 	{ "<@route:user@domain.com>",
@@ -210,7 +207,7 @@ static struct {
 	const char *encoded;
 } broken_addrspec[] = {
 	{ "\"Biznes=?ISO-8859-2?Q?_?=INTERIA.PL\"=?ISO-8859-2?Q?_?=<biuletyny@firma.interia.pl>",
-	  "\"Biznes INTERIA.PL \" <biuletyny@firma.interia.pl>",
+	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>",
 	  "\"Biznes INTERIA.PL\" <biuletyny@firma.interia.pl>", },
 	/* UTF-8 sequence split between multiple encoded-word tokens */
 	{ "=?utf-8?Q?{#D=C3=A8=C3=A9=C2=A3=C3=A5=C3=BD_M$=C3=A1=C3?= =?utf-8?Q?=AD.=C3=A7=C3=B8m@#}?= <user@domain.com>",
@@ -240,7 +237,7 @@ test_addrspec (GMimeParserOptions *options, gboolean test_broken)
 		testsuite_check ("addrspec[%u]", i);
 		try {
 			if (!(addrlist = internet_address_list_parse (options, addrspec[i].input)))
-				throw (exception_new ("could not parse addr-spec"));
+				throw (exception_new ("could not parse: %s", addrspec[i].input));
 			
 			str = internet_address_list_to_string (addrlist, FALSE);
 			if (strcmp (addrspec[i].display, str) != 0)

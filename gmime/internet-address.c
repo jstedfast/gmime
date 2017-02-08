@@ -1276,154 +1276,34 @@ internet_address_list_writer (InternetAddressList *list, GString *str)
 	_internet_address_list_to_string (list, flags, &linelen, str);
 }
 
-static void
-_internet_address_decode_name (GMimeParserOptions *options, InternetAddress *ia, GString *name)
+
+static char *
+decode_name (GMimeParserOptions *options, const char *name, size_t len)
 {
 	char *value, *buf = NULL;
-	char *phrase;
 	
-	if (!g_utf8_validate (name->str, name->len, NULL)) {
+	if (!g_utf8_validate (name, len, NULL)) {
 		/* A (broken) mailer has sent us raw 8bit/multibyte text data... */
-		buf = g_mime_utils_decode_8bit (options, name->str, name->len);
-		phrase = buf;
+		buf = g_mime_utils_decode_8bit (options, name, len);
 	} else {
-		phrase = name->str;
+		buf = g_strndup (name, len);
 	}
 	
 	/* decode the phrase */
-	g_mime_utils_unquote_string (phrase);
-	value = g_mime_utils_header_decode_phrase (options, phrase);
-	g_free (ia->name);
-	ia->name = value;
+	g_mime_utils_unquote_string (buf);
+	value = g_mime_utils_header_decode_phrase (options, buf);
+	g_strstrip (value);
 	g_free (buf);
+	
+	return value;
 }
 
-static InternetAddress *decode_address (GMimeParserOptions *options, const char **in);
 
-static void
-skip_lwsp (const char **in)
-{
-	register const char *inptr = *in;
-	
-	while (*inptr && is_lwsp (*inptr))
-		inptr++;
-	
-	*in = inptr;
-}
-
-static InternetAddress *
-decode_addrspec (const char **in)
-{
-	InternetAddress *mailbox = NULL;
-	const char *start, *inptr, *word;
-	gboolean got_local = FALSE;
-	GString *addr;
-	size_t len;
-	
-	addr = g_string_new ("");
-	inptr = *in;
-	
-	decode_lwsp (&inptr);
-	
-	/* some spam bots set their addresses to stuff like: ).ORHH@em.ca */
-	while (*inptr && !(*inptr == '"' || is_atom (*inptr)))
-		inptr++;
-	
-	start = inptr;
-	
-	/* extract the first word of the local-part */
-	if ((word = decode_word (&inptr))) {
-		g_string_append_len (addr, word, (size_t) (inptr - word));
-		decode_lwsp (&inptr);
-		got_local = TRUE;
-	}
-	
-	/* extract the rest of the local-part */
-	while (word && *inptr == '.') {
-		/* Note: According to the spec, only a single '.' is
-		 * allowed between word tokens in the local-part of an
-		 * addr-spec token, but according to Evolution bug
-		 * #547969, some Japanese cellphones have email
-		 * addresses that look like x..y@somewhere.jp */
-		do {
-			inptr++;
-			decode_lwsp (&inptr);
-			g_string_append_c (addr, '.');
-		} while (*inptr == '.');
-		
-		if ((word = decode_word (&inptr)))
-			g_string_append_len (addr, word, (size_t) (inptr - word));
-		
-		decode_lwsp (&inptr);
-	}
-	
-	if (*inptr == '@') {
-		len = addr->len;
-		
-		g_string_append_c (addr, '@');
-		inptr++;
-		
-		if (!decode_domain (&inptr, addr)) {
-			/* drop the @domain and continue as if it weren't there */
-			w(g_warning ("Missing domain in addr-spec: %.*s",
-				     inptr - start, start));
-			g_string_truncate (addr, len);
-		}
-	} else if (got_local) {
-		w(g_warning ("Missing '@' and domain in addr-spec: %.*s",
-			     inptr - start, start));
-	}
-	
-	*in = inptr;
-	
-	if (!got_local) {
-		w(g_warning ("Invalid addr-spec, missing local-part: %.*s",
-			     inptr - start, start));
-		g_string_free (addr, TRUE);
-		return NULL;
-	}
-	
-	mailbox = g_object_newv (INTERNET_ADDRESS_TYPE_MAILBOX, 0, NULL);
-	((InternetAddressMailbox *) mailbox)->addr = addr->str;
-	g_string_free (addr, FALSE);
-	
-	return mailbox;
-}
-
-static InternetAddress *
-decode_group (GMimeParserOptions *options, const char **in)
-{
-	InternetAddressGroup *group;
-	InternetAddress *addr;
-	const char *inptr;
-	
-	inptr = *in;
-	
-	addr = internet_address_group_new (NULL);
-	group = (InternetAddressGroup *) addr;
-	
-	decode_lwsp (&inptr);
-	while (*inptr && *inptr != ';') {
-		InternetAddress *member;
-		
-		if ((member = decode_address (options, &inptr)))
-			_internet_address_group_add_member (group, member);
-		
-		decode_lwsp (&inptr);
-		while (*inptr == ',') {
-			inptr++;
-			decode_lwsp (&inptr);
-			if ((member = decode_address (options, &inptr)))
-				_internet_address_group_add_member (group, member);
-			
-			decode_lwsp (&inptr);
-		}
-	}
-	
-	*in = inptr;
-	
-	return addr;
-}
+typedef enum {
+	ALLOW_MAILBOX = 1 << 0,
+	ALLOW_GROUP   = 1 << 1,
+	ALLOW_ANY     = ALLOW_MAILBOX | ALLOW_GROUP
+} AddressParserFlags;
 
 static gboolean
 decode_route (const char **in)
@@ -1443,30 +1323,29 @@ decode_route (const char **in)
 			goto error;
 		}
 		
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr == ',') {
 			g_string_append_c (route, ',');
 			inptr++;
-			decode_lwsp (&inptr);
+			skip_cfws (&inptr);
 			
 			/* obs-domain-lists allow commas with nothing between them... */
 			while (*inptr == ',') {
 				inptr++;
-				decode_lwsp (&inptr);
+				skip_cfws (&inptr);
 			}
 		}
 	} while (*inptr == '@');
 	
 	g_string_free (route, TRUE);
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	
 	if (*inptr != ':') {
 		w(g_warning ("Invalid route domain-list, missing ':': %.*s", inptr - start, start));
 		goto error;
 	}
 	
-	/* eat the ':' */
-	*in = inptr + 1;
+	*in = inptr;
 	
 	return TRUE;
 	
@@ -1475,185 +1354,605 @@ decode_route (const char **in)
 	while (*inptr && *inptr != ':' && *inptr != '>')
 		inptr++;
 	
-	if (*inptr == ':')
-		inptr++;
-	
 	*in = inptr;
 	
 	return FALSE;
 }
 
-static InternetAddress *
-decode_address (GMimeParserOptions *options, const char **in)
+static gboolean
+localpart_parse (GString *localpart, const char **in)
 {
-	const char *inptr, *start, *word, *comment = NULL;
-	InternetAddress *addr = NULL;
-	gboolean has_lwsp = FALSE;
-	gboolean is_word;
-	GString *name;
+	const char *inptr = *in;
+	const char *start = *in;
+	const char *word;
 	
-	decode_lwsp (in);
-	start = inptr = *in;
-	
-	name = g_string_new ("");
-	
-	/* Both groups and mailboxes can begin with a phrase (denoting
-	 * the display name for the address). Collect all of the
-	 * tokens that make up this name phrase.
-	 */
-	while (*inptr) {
-		if ((word = decode_word (&inptr))) {
-			g_string_append_len (name, word, (size_t) (inptr - word));
-			
-		check_lwsp:
-			word = inptr;
-			skip_lwsp (&inptr);
-			
-			/* is the next token a word token? */
-			is_word = *inptr == '"' || is_atom (*inptr);
-			
-			if (inptr > word && is_word) {
-				g_string_append_c (name, ' ');
-				has_lwsp = TRUE;
-			}
-			
-			if (is_word)
-				continue;
-		}
+	do {
+		word = inptr;
 		
-		/* specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
-		 *             /  "," / ";" / ":" / "\" / <">  ;  string, to use
-		 *             /  "." / "[" / "]"              ;  within a word.
-		 */
-		if (*inptr == ':') {
-			/* rfc2822 group */
-			inptr++;
-			addr = decode_group (options, &inptr);
-			decode_lwsp (&inptr);
-			if (*inptr != ';')
-				w(g_warning ("Invalid group spec, missing closing ';': %.*s",
-					     inptr - start, start));
-			else
-				inptr++;
+		if (!skip_word (&inptr))
+			goto error;
+		
+		if (!g_utf8_validate (word, (size_t) (inptr - word), NULL))
+			goto error;
+		
+		g_string_append_len (localpart, word, (size_t) (inptr - word));
+		
+		if (!skip_cfws (&inptr))
+			goto error;
+		
+		if (*inptr != '.')
 			break;
-		} else if (*inptr == '<') {
-			/* rfc2822 angle-addr */
-			inptr++;
-			
-			/* check for obsolete routing... */
-			if (*inptr != '@' || decode_route (&inptr)) {
-				/* rfc2822 addr-spec */
-				addr = decode_addrspec (&inptr);
-			}
-			
-			decode_lwsp (&inptr);
-			if (*inptr != '>') {
-				w(g_warning ("Invalid rfc2822 angle-addr, missing closing '>': %.*s",
-					     inptr - start, start));
-				
-				while (*inptr && *inptr != '>' && *inptr != ',')
-					inptr++;
-				
-				if (*inptr == '>')
-					inptr++;
-			} else {
-				inptr++;
-			}
-			
-			/* if comment is non-NULL, we can check for a comment containing a name */
-			comment = inptr;
-			break;
-		} else if (*inptr == '(') {
-			/* beginning of a comment, use decode_lwsp() to skip past it */
-			decode_lwsp (&inptr);
-		} else if (*inptr && strchr ("@,;", *inptr)) {
-			if (name->len == 0) {
-				if (*inptr == '@') {
-					GString *domain;
-					
-					w(g_warning ("Unexpected address: %s: skipping.", start));
-					
-					/* skip over @domain? */
-					inptr++;
-					domain = g_string_new ("");
-					decode_domain (&inptr, domain);
-					g_string_free (domain, TRUE);
-				} else {
-					/* empty address */
-				}
-				break;
-			} else if (has_lwsp) {
-				/* assume this is just an unquoted special that we should
-				   treat as part of the name */
-				w(g_warning ("Unquoted '%c' in address name: %s: ignoring.", *inptr, start));
-				g_string_append_c (name, *inptr);
-				inptr++;
-				
-				goto check_lwsp;
-			}
-			
-		addrspec:
-			/* what we thought was a name was actually an addrspec? */
-			g_string_truncate (name, 0);
-			inptr = start;
-			
-			addr = decode_addrspec (&inptr);
-			
-			/* if comment is non-NULL, we can check for a comment containing a name */
-			comment = inptr;
-			break;
-		} else if (*inptr == '.') {
-			/* This would normally signify that we are
-			 * decoding the local-part of an addr-spec,
-			 * but sadly, it is common for broken mailers
-			 * to forget to quote/encode .'s in the name
-			 * phrase. */
-			g_string_append_c (name, *inptr);
-			inptr++;
-			
-			goto check_lwsp;
-		} else if (*inptr) {
-			/* Technically, these are all invalid tokens
-			 * but in the interest of being liberal in
-			 * what we accept, we'll ignore them. */
-			w(g_warning ("Unexpected char '%c' in address: %s: ignoring.", *inptr, start));
-			g_string_append_c (name, *inptr);
-			inptr++;
-			
-			goto check_lwsp;
-		} else {
-			goto addrspec;
-		}
-	}
-	
-	/* Note: will also skip over any comments */
-	decode_lwsp (&inptr);
-	
-	if (name->len == 0 && comment && inptr > comment) {
-		/* missing a name, look for a trailing comment */
-		if ((comment = memchr (comment, '(', inptr - comment))) {
-			const char *cend;
-			
-			/* find the end of the comment */
-			cend = inptr - 1;
-			while (cend > comment && is_lwsp (*cend))
-				cend--;
-			
-			if (*cend == ')')
-				cend--;
-			
-			g_string_append_len (name, comment + 1, (size_t) (cend - comment));
-		}
-	}
-	
-	if (addr && name->len > 0)
-		_internet_address_decode_name (options, addr, name);
-	
-	g_string_free (name, TRUE);
+		
+		g_string_append_c (localpart, *inptr++);
+		
+		if (!skip_cfws (&inptr))
+			goto error;
+		
+		if (*inptr == '\0')
+			goto error;
+	} while (TRUE);
 	
 	*in = inptr;
 	
-	return addr;
+	return TRUE;
+	
+ error:
+	*in = inptr;
+	
+	return FALSE;
+}
+
+#define COMMA_GREATER_THAN_OR_SEMICOLON ",>;"
+
+static gboolean
+dotatom_parse (GString *str, const char **in, const char *sentinels)
+{
+	const char *atom, *comment;
+	const char *inptr = *in;
+	const char *start = *in;
+	
+	do {
+		if (!is_atom (*inptr))
+			goto error;
+		
+		atom = inptr;
+		while (is_atom (*inptr))
+			inptr++;
+		
+		if (!g_utf8_validate (atom, (size_t) (inptr - atom), NULL))
+			goto error;
+		
+		g_string_append_len (str, atom, (size_t) (inptr - atom));
+		
+		comment = inptr;
+		if (!skip_cfws (&inptr))
+			goto error;
+		
+		if (*inptr != '.') {
+			inptr = comment;
+			break;
+		}
+		
+		/* skip over the '.' */
+		inptr++;
+		
+		if (!skip_cfws (&inptr))
+			goto error;
+		
+		/* allow domains to end with a '.', but strip it off */
+		if (*inptr == '\0' || strchr (sentinels, *inptr))
+			break;
+		
+		g_string_append_c (str, '.');
+	} while (TRUE);
+	
+	*in = inptr;
+	
+	return TRUE;
+	
+ error:
+	*in = inptr;
+	
+	return FALSE;
+}
+
+static gboolean
+domain_literal_parse (GString *str, const char **in)
+{
+	const char *inptr = *in;
+	
+	g_string_append_c (str, '[');
+	inptr++;
+	
+	skip_lwsp (&inptr);
+	
+	do {
+		while (is_dtext (*inptr))
+			g_string_append_c (str, *inptr++);
+		
+		skip_lwsp (&inptr);
+		
+		if (*inptr == '\0')
+			goto error;
+		
+		if (*inptr == ']')
+			break;
+		
+		if (!is_dtext (*inptr))
+			goto error;
+	} while (TRUE);
+	
+	g_string_append_c (str, ']');
+	*in = inptr + 1;
+	
+	return TRUE;
+	
+ error:
+	*in = inptr;
+	
+	return FALSE;
+}
+
+static gboolean
+domain_parse (GString *str, const char **in, const char *sentinels)
+{
+	if (**in == '[')
+		return domain_literal_parse (str, in);
+	
+	return dotatom_parse (str, in, sentinels);
+}
+
+static gboolean
+addrspec_parse (const char **in, const char *sentinels, char **addrspec)
+{
+	const char *inptr = *in;
+	const char *start = *in;
+	GString *str;
+	
+	str = g_string_new ("");
+	
+	if (!localpart_parse (str, &inptr))
+		goto error;
+	
+	if (*inptr == '\0' || strchr (sentinels, *inptr)) {
+		*addrspec = g_string_free (str, FALSE);
+		*in = inptr;
+		return TRUE;
+	}
+	
+	if (*inptr != '@')
+		goto error;
+	
+	g_string_append_c (str, *inptr++);
+	
+	if (*inptr == '\0')
+		goto error;
+	
+	if (!skip_cfws (&inptr))
+		goto error;
+	
+	if (*inptr == '\0')
+		goto error;
+	
+	if (!domain_parse (str, &inptr, sentinels))
+		goto error;
+	
+	*addrspec = g_string_free (str, FALSE);
+	*in = inptr;
+	
+	return TRUE;
+	
+ error:
+	g_string_free (str, TRUE);
+	*addrspec = NULL;
+	*in = inptr;
+	
+	return FALSE;
+}
+
+// TODO: rename to angleaddr_parse??
+static gboolean
+mailbox_parse (GMimeParserOptions *options, const char **in, const char *name, InternetAddress **address)
+{
+	const char *inptr = *in;
+	char *addrspec = NULL;
+	
+	/* skip over the '<' */
+	inptr++;
+	
+	/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
+	if (*inptr == '<') {
+		if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+			goto error;
+		
+		do {
+			inptr++;
+		} while (*inptr == '<');
+	}
+	
+	if (*inptr == '\0')
+		goto error;
+	
+	if (!skip_cfws (&inptr))
+		goto error;
+	
+	if (*inptr == '@') {
+		if (!decode_route (&inptr))
+			goto error;
+		
+		if (*inptr != ':')
+			goto error;
+		
+		inptr++;
+		
+		if (!skip_cfws (&inptr))
+			goto error;
+	}
+	
+	// Note: The only syntactically correct sentinel token here is the '>', but alas... to deal with the first example
+	// in section 7.1.5 of rfc7103, we need to at least handle ',' as a sentinel and might as well handle ';' as well
+	// in case the mailbox is within a group address.
+	//
+	// Example: <third@example.net, fourth@example.net>
+	if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec))
+		goto error;
+	
+	if (!skip_cfws (&inptr))
+		goto error;
+	
+	if (*inptr != '>') {
+		if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+			goto error;
+	} else {
+		/* skip over the '>' */
+		inptr++;
+		
+		/* Note: check for excessive angle brackets like the example described in section 7.1.2 of rfc7103... */
+		if (*inptr == '>') {
+			if (options->addresses != GMIME_RFC_COMPLIANCE_LOOSE)
+				goto error;
+			
+			do {
+				inptr++;
+			} while (*inptr == '>');
+		}
+	}
+	
+	*address = internet_address_mailbox_new (name, addrspec);
+	g_free (addrspec);
+	*in = inptr;
+	
+	return TRUE;
+	
+ error:
+	g_free (addrspec);
+	*address = NULL;
+	*in = inptr;
+	
+	return FALSE;
+}
+
+static gboolean address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group);
+
+static gboolean
+group_parse (GMimeParserOptions *options, const char **in, const char *name, InternetAddress **address)
+{
+	InternetAddressGroup *group;
+	const char *inptr = *in;
+	
+	/* skip over the ':' */
+	inptr++;
+	
+	if (*inptr == '\0') {
+		*address = NULL;
+		*in = inptr;
+		
+		return FALSE;
+	}
+	
+	group = (InternetAddressGroup *) internet_address_group_new (name);
+	address_list_parse (group->members, options, &inptr, TRUE);
+	
+	if (*inptr != ';') {
+		while (*inptr && *inptr != ';')
+			inptr++;
+	} else {
+		inptr++;
+	}
+	
+	*address = (InternetAddress *) group;
+	*in = inptr;
+	
+	return TRUE;
+}
+
+static gboolean
+address_parse (GMimeParserOptions *options, AddressParserFlags flags, const char **in, InternetAddress **address)
+{
+	gboolean strict = options->addresses != GMIME_RFC_COMPLIANCE_LOOSE;
+	gboolean trim_leading_quote = FALSE;
+	const char *inptr = *in;
+	const char *start;
+	size_t length;
+	
+	if (!skip_cfws (&inptr) || *inptr == '\0')
+		goto error;
+	
+	/* keep track of the start & length of the phrase */
+	start = inptr;
+	length = 0;
+	
+	while (*inptr) {
+		if (strict) {
+			if (!skip_word (&inptr))
+				break;
+		} else if (*inptr == '"') {
+			const char *qstring = inptr;
+			
+			if (!skip_quoted (&inptr)) {
+				inptr = qstring + 1;
+				
+				skip_lwsp (&inptr);
+				
+				if (!skip_atom (&inptr))
+					break;
+				
+				if (start == qstring)
+					trim_leading_quote = TRUE;
+			}
+		} else {
+			if (!skip_atom (&inptr))
+				break;
+		}
+		
+		length = (size_t) (inptr - start);
+		
+		do {
+			if (!skip_cfws (&inptr))
+				goto error;
+			
+			/* Note: some clients don't quote dots in the name */
+			if (*inptr != '.')
+				break;
+			
+			inptr++;
+		} while (TRUE);
+	}
+	
+	if (!skip_cfws (&inptr))
+		goto error;
+	
+	// specials    =  "(" / ")" / "<" / ">" / "@"  ; Must be in quoted-
+	//             /  "," / ";" / ":" / "\" / <">  ;  string, to use
+	//             /  "." / "[" / "]"              ;  within a word.
+	
+	if (*inptr == '\0' || *inptr == ',' || *inptr == '>' || *inptr == ';') {
+		/* we've completely gobbled up an addr-spec w/o a domain */
+		char sentinel = *inptr != '\0' ? *inptr : ',';
+		char sentinels[2] = { sentinel, 0 };
+		char *name, *addrspec;
+		
+		/* rewind back to the beginning of the local-part */
+		inptr = start;
+		
+		if (!(flags & ALLOW_MAILBOX))
+			goto error;
+		
+		if (!addrspec_parse (&inptr, sentinels, &addrspec))
+			goto error;
+		
+		skip_lwsp (&inptr);
+		
+		if (*inptr == '(') {
+			const char *comment = inptr;
+			char *buf;
+			
+			if (!skip_comment (&inptr))
+				goto error;
+			
+			comment++;
+			
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment));
+		} else {
+			name = g_strdup ("");
+		}
+		
+		if (*inptr == '>') {
+			if (strict)
+				goto error;
+			
+			inptr++;
+		}
+		
+		*address = internet_address_mailbox_new (name, addrspec);
+		g_free (addrspec);
+		g_free (name);
+		*in = inptr;
+		
+		return TRUE;
+	}
+	
+	if (*inptr == ':') {
+		/* rfc2822 group address */
+		const char *phrase = start;
+		gboolean retval;
+		char *name;
+		
+		if (!(flags & ALLOW_GROUP))
+			goto error;
+		
+		if (trim_leading_quote) {
+			phrase++;
+			length--;
+		}
+		
+		if (length > 0) {
+			name = decode_name (options, phrase, length);
+		} else {
+			name = g_strdup ("");
+		}
+		
+		retval = group_parse (options, &inptr, name, address);
+		g_free (name);
+		*in = inptr;
+		
+		return retval;
+	}
+	
+	if (!(flags & ALLOW_MAILBOX))
+		goto error;
+	
+	if (*inptr == '@') {
+		/* we're either in the middle of an addr-spec token or we completely gobbled up an addr-spec w/o a domain */
+		char *name, *addrspec;
+		
+		/* rewind back to the beginning of the local-part */
+		inptr = start;
+		
+		if (!addrspec_parse (&inptr, COMMA_GREATER_THAN_OR_SEMICOLON, &addrspec))
+			goto error;
+		
+		skip_lwsp (&inptr);
+		
+		if (*inptr == '(') {
+			const char *comment = inptr;
+			char *buf;
+			
+			if (!skip_comment (&inptr))
+				goto error;
+			
+			comment++;
+			
+			name = decode_name (options, comment, (size_t) ((inptr - 1) - comment));
+		} else {
+			name = g_strdup ("");
+		}
+		
+		if (!skip_cfws (&inptr)) {
+			g_free (addrspec);
+			g_free (name);
+			goto error;
+		}
+		
+		if (*inptr == '\0') {
+			*address = internet_address_mailbox_new (name, addrspec);
+			g_free (addrspec);
+			g_free (name);
+			*in = inptr;
+			
+			return TRUE;
+		}
+		
+		if (*inptr == '<') {
+			/* We have an address like "user@example.com <user@example.com>"; i.e. the name is an unquoted string with an '@'. */
+			const char *end;
+			
+			if (strict)
+				goto error;
+			
+			end = inptr;
+			while (end > start && is_lwsp (*(end - 1)))
+				end--;
+			
+			length = (size_t) (end - start);
+			g_free (addrspec);
+			g_free (name);
+			
+			/* fall through to the rfc822 angle-addr token case... */
+		} else {
+			// Note: since there was no '<', there should not be a '>'... but we handle it anyway in order to
+			// deal with the second Unbalanced Angle Brackets example in section 7.1.3: second@example.org>
+			if (*inptr == '>') {
+				if (strict)
+					goto error;
+				
+				inptr++;
+			}
+			
+			*address = internet_address_mailbox_new (name, addrspec);
+			g_free (addrspec);
+			g_free (name);
+			*in = inptr;
+			
+			return TRUE;
+		}
+	}
+	
+	if (*inptr == '<') {
+		/* rfc2822 angle-addr token */
+		const char *phrase = start;
+		gboolean retval;
+		char *name;
+		
+		if (trim_leading_quote) {
+			phrase++;
+			length--;
+		}
+		
+		if (length > 0) {
+			name = decode_name (options, phrase, length);
+		} else {
+			name = g_strdup ("");
+		}
+		
+		retval = mailbox_parse (options, &inptr, name, address);
+		g_free (name);
+		*in = inptr;
+		
+		return retval;
+	}
+	
+ error:
+	*address = NULL;
+	*in = inptr;
+	
+	return FALSE;
+}
+
+static gboolean
+address_list_parse (InternetAddressList *list, GMimeParserOptions *options, const char **in, gboolean is_group)
+{
+	InternetAddress *address;
+	const char *inptr;
+	
+	if (!skip_cfws (in))
+		return FALSE;
+	
+	inptr = *in;
+	
+	if (*inptr == '\0')
+		return FALSE;
+	
+	while (*inptr) {
+		if (is_group && *inptr ==  ';')
+			break;
+		
+		if (!address_parse (options, ALLOW_ANY, &inptr, &address)) {
+			/* skip this address... */
+			while (*inptr && *inptr != ',' && (!is_group || *inptr != ';'))
+				inptr++;
+		} else {
+			_internet_address_list_add (list, address);
+		}
+		
+		/* Note: we loop here in case there are any null addresses between commas */
+		do {
+			if (!skip_cfws (&inptr)) {
+				*in = inptr;
+				
+				return FALSE;
+			}
+			
+			if (*inptr != ',')
+				break;
+			
+			inptr++;
+		} while (TRUE);
+	}
+	
+	*in = inptr;
+	
+	return TRUE;
 }
 
 
@@ -1670,45 +1969,16 @@ decode_address (GMimeParserOptions *options, const char **in)
 InternetAddressList *
 internet_address_list_parse (GMimeParserOptions *options, const char *str)
 {
-	InternetAddressList *addrlist;
+	InternetAddressList *list;
 	const char *inptr = str;
-	InternetAddress *addr;
-	const char *start;
 	
-	addrlist = internet_address_list_new ();
+	g_return_val_if_fail (str != NULL, NULL);
 	
-	while (inptr && *inptr) {
-		start = inptr;
-		
-		if ((addr = decode_address (options, &inptr))) {
-			_internet_address_list_add (addrlist, addr);
-		} else {
-			w(g_warning ("Invalid or incomplete address: %.*s",
-				     inptr - start, start));
-		}
-		
-		decode_lwsp (&inptr);
-		if (*inptr == ',') {
-			inptr++;
-			decode_lwsp (&inptr);
-			
-			/* obs-mbox-list and obs-addr-list allow for empty members (commas with nothing between them) */
-			while (*inptr == ',') {
-				inptr++;
-				decode_lwsp (&inptr);
-			}
-		} else if (*inptr) {
-			w(g_warning ("Parse error at '%s': expected ','", inptr));
-			/* try skipping to the next address */
-			if ((inptr = strchr (inptr, ',')))
-				inptr++;
-		}
+	list = internet_address_list_new ();
+	if (!address_list_parse (list, options, &inptr, FALSE) || list->array->len == 0) {
+		g_object_unref (list);
+		return NULL;
 	}
 	
-	if (addrlist->array->len == 0) {
-		g_object_unref (addrlist);
-		addrlist = NULL;
-	}
-	
-	return addrlist;
+	return list;
 }

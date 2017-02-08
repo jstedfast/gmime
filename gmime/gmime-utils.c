@@ -902,7 +902,7 @@ decode_addrspec (const char **in)
 	GString *addrspec;
 	char *str;
 	
-	decode_lwsp (in);
+	skip_cfws (in);
 	inptr = *in;
 	
 	if (!(word = decode_word (&inptr))) {
@@ -914,12 +914,12 @@ decode_addrspec (const char **in)
 	g_string_append_len (addrspec, word, (size_t) (inptr - word));
 	
 	/* get the rest of the local-part */
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	while (*inptr == '.') {
 		g_string_append_c (addrspec, *inptr++);
 		if ((word = decode_word (&inptr))) {
 			g_string_append_len (addrspec, word, (size_t) (inptr - word));
-			decode_lwsp (&inptr);
+			skip_cfws (&inptr);
 		} else {
 			w(g_warning ("Invalid local-part in addr-spec: %s", *in));
 			goto exception;
@@ -958,16 +958,16 @@ decode_msgid (const char **in)
 	const char *inptr = *in;
 	char *msgid = NULL;
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	if (*inptr != '<') {
 		w(g_warning ("Invalid msg-id; missing '<': %s", *in));
 	} else {
 		inptr++;
 	}
 	
-	decode_lwsp (&inptr);
+	skip_cfws (&inptr);
 	if ((msgid = decode_addrspec (&inptr))) {
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr != '>') {
 			w(g_warning ("Invalid msg-id; missing '>': %s", *in));
 		} else {
@@ -1028,7 +1028,7 @@ g_mime_references_decode (const char *text)
 	refs.next = NULL;
 	
 	while (*inptr) {
-		decode_lwsp (&inptr);
+		skip_cfws (&inptr);
 		if (*inptr == '<') {
 			/* looks like a msg-id */
 			if ((msgid = decode_msgid (&inptr))) {
