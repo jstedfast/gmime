@@ -57,6 +57,7 @@ char *g_mime_utils_decode_message_id (const char *message_id);
 
 /* decode a References or In-Reply-To header */
 GMimeReferences *g_mime_references_decode (const char *text);
+GMimeReferences *g_mime_references_copy (GMimeReferences *references);
 void g_mime_references_append (GMimeReferences **refs, const char *msgid);
 void g_mime_references_clear (GMimeReferences **refs);
 void g_mime_references_free (GMimeReferences *refs);

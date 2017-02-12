@@ -1055,6 +1055,39 @@ g_mime_references_decode (const char *text)
 
 
 /**
+ * g_mime_references_copy:
+ * @references: the list of references to copy
+ *
+ * Copies a #GMimeReferences linked list.
+ *
+ * Returns: a newly allocated linked list that contains
+ * an identical list of items as @references.
+ **/
+GMimeReferences *
+g_mime_references_copy (GMimeReferences *references)
+{
+	GMimeReferences *ref, *node, *copy = NULL;
+	
+	ref = references;
+	while (ref != NULL) {
+		if (copy == NULL) {
+			copy = node = g_new (GMimeReferences, 1);
+		} else {
+			node->next = g_new (GMimeReferences, 1);
+			node = node->next;
+		}
+		
+		node->msgid = g_strdup (ref->msgid);
+		node->next = NULL;
+		
+		ref = ref->next;
+	}
+	
+	return copy;
+}
+
+
+/**
  * g_mime_references_append:
  * @refs: the address of a #GMimeReferences list
  * @msgid: a message-id string
