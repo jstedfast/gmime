@@ -185,20 +185,29 @@ check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 static int
 citation_depth (const char *in, const char *inend)
 {
-       register char *inptr = in;
-       /* check that it isn't an escaped From line */
-       if (!strncmp (inptr, ">From", 5))
-               return inptr;
-       while (inptr < inend && *inptr != '\n') {
-               if (*inptr == ' ')
-                       inptr++;
-               if (inptr >= inend || *inptr != '>')
-                       break;
-               inptr++;
-       }
-       return inptr;
-}
+	register const char *inptr = in;
+	int depth = 0;
 
+  if (in >= inend) return 0;
+
+	/* check that it isn't an escaped From line */
+	if (!strncmp (inptr, ">From", 5))
+		return 0;
+
+	while (inptr < inend && *inptr != '\n') {
+
+    /* remove an arbitrary number of spaces between '>' and next '>' */
+		while (*inptr == ' ' && inptr < inend)
+			inptr++;
+
+		if (inptr >= inend || *inptr++ != '>')
+			break;
+
+		depth++;
+	}
+
+	return depth;
+}
 
 static char *
 citation_cut (char *in, const char *inend)
