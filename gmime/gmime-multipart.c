@@ -23,17 +23,11 @@
 #include <config.h>
 #endif
 
-#include <stdlib.h>
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <string.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <time.h>
 
 #include "gmime-multipart.h"
 #include "gmime-internal.h"
+#include "gmime-common.h"
 #include "gmime-utils.h"
 
 
