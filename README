@@ -1,101 +1,11 @@
-                            GMime, version 2.6.23
-                   by Jeffrey Stedfast <fejj@gnome.org>
+# GMime
 
+## What is GMime?
 
-WHAT IS GMIME
--------------
+GMime is a C/C++ library which may be used for the creation and parsing of messages using the Multipurpose
+Internet Mail Extension (MIME) as defined by [numerous IETF specifications](https://github.com/jstedfast/gmime/blob/master/RFCs.md).
 
-GMime is a C/C++ library for parsing and creating messages using
-the Multipurpose Internet Mail Extension (MIME) as defined by the
-following RFCs:
-
- * 0822: Standard for the Format of Arpa Internet Text Messages
- * 1341: MIME (Multipurpose Internet Mail Extensions): Mechanisms for
-         Specifying and Describing the Format of Internet Message Bodies
- * 1342: Representation of Non-ASCII Text in Internet Message Headers
- * 1521: MIME (Multipurpose Internet Mail Extensions) Part One:
-         Mechanisms for Specifying and Describing the Format of 
-         Internet Message Bodies (Obsoletes rfc1341)
- * 1522: MIME (Multipurpose Internet Mail Extensions) Part Two: Message
-         Header Extensions for Non-ASCII Text (Obsoletes rfc1342)
- * 1544: The Content-MD5 Header Field
- * 1847: Security Multiparts for MIME: Multipart/Signed and 
-         Multipart/Encrypted
- * 1864: The Content-MD5 Header Field (Obsoletes rfc1544)
- * 2015: MIME Security with Pretty Good Privacy (PGP)
- * 2045: Multipurpose Internet Mail Extensions (MIME) Part One:
-         Format of Internet Message Bodies
- * 2046: Multipurpose Internet Mail Extensions (MIME) Part Two:
-         Media Types
- * 2047: Multipurpose Internet Mail Extensions (MIME) Part Three:
-         Message Header Extensions for Non-ASCII Text
- * 2048: Multipurpose Internet Mail Extensions (MIME) Part Four:
-         Registration Procedures
- * 2049: Multipurpose Internet Mail Extensions (MIME) Part Five:
-         Conformance Criteria and Examples
- * 2183: Communicating Presentation Information in Internet Messages:
-         The Content-Disposition Header Field
- * 2184: MIME Parameter Value and Encoded Word Extensions: Character
-         Sets, Languages, and Continuations
- * 2231: MIME Parameter Value and Encoded Word Extensions: Character
-         Sets, Languages, and Continuations (Obsoletes rfc2184)
- * 2311: S/MIME Version 2 Message Specification
- * 2312: S/MIME Version 2 Certificate Handling
- * 2315: PKCS #7: Cryptographic Message Syntax
- * 2630: Cryptographic Message Syntax
- * 2632: S/MIME Version 3 Certificate Handling (Obsoletes rfc2311)
- * 2633: S/MIME Version 3 Message Specification (Obsoletes rfc2312)
- * 2634: Enhanced Security Services for S/MIME
- * 2822: Internet Message Format (Obsoletes rfc822)
- * 3156: MIME Security with OpenPGP (Updates rfc2015)
- * 3850: S/MIME Version 3.1 Certificate Handling (Obsoletes rfc2632)
- * 3851: S/MIME Version 3.1 Message Specification (Obsoletes rfc2633)
- * 5322: Internet Message Format (Obsoletes rfc2822)
- * 5750: S/MIME Version 3.2 Certificate Handling (Obsoletes rfc3850)
- * 5751: S/MIME Version 3.2 Message Specification (Obsoletes rfc3851)
-
-Other RFCs of interest:
-
- * 1872: The MIME Multipart/Related Content-type
- * 1927: Suggested Additional MIME Types for Associating Documents
- * 2110: MIME E-mail Encapsulation of Aggregate Documents, such as HTML (MHTML)
- * 2111: Content-ID and Message-ID Uniform Resource Locators
- * 2387: The Multipart/Related Content-Type.
- * 2388: Returning Values from Forms: multipart/form-data
- * 2424: Content Duration MIME Header Definition
- * 3280: Internet X.509 Public Key Infrastructure certificate and 
-         Certificate Revocation List (CRL) Profile
-
-Cryptography related RFCs:
-
- * 2268: A Description of the RC2(r) Encryption Algorithm
- * 2313: PKCS #1: RSA Encryption
- * 2314: PKCS #10: Certification Request Syntax
- * 2631: Diffie-Hellman Key Agreement Method
-
-
-LICENSE INFORMATION
--------------------
-
-The GMime library is Copyright (C) 2000-2014 Jeffrey Stedfast.
-
-This library is free software; you can redistribute it and/or
-modify it under the terms of the GNU Lesser General Public
-License as published by the Free Software Foundation; either
-version 2.1 of the License, or (at your option) any later version.
-
-This library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-Lesser General Public License for more details.
-
-You should have received a copy of the GNU Lesser General Public
-License along with this library; if not, write to the Free Software
-Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
-
-
-HISTORY
--------
+## History
 
 As a developer and user of Electronic Mail clients, I had come to
 realize that the vast majority of E-Mail client (and server) software
@@ -107,31 +17,46 @@ this issue by following the MIME specification as closely as possible
 while also providing programmers with an extremely easy to use
 high-level application programming interface (API).
 
+## License Information
 
-OBTAINING GMIME
----------------
+The GMime library is Copyright (C) 2000-2017 Jeffrey Stedfast and is licensed under the LGPL v2.1
 
-Sources to GMime may be obtained from:
-  http://download.gnome.org/pub/GNOME/sources/gmime/
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
+
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
+
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+
+
+## Getting the Source Code
+
+You can download either official public release tarballs of GMime at
+[http://download.gnome.org/pub/GNOME/sources/gmime/](http://download.gnome.org/pub/GNOME/sources/gmime/)
 or
-  ftp://ftp.gnome.org/pub/GNOME/sources/gmime/
+[ftp://ftp.gnome.org/pub/GNOME/sources/gmime/](ftp://ftp.gnome.org/pub/GNOME/sources/gmime/).
 
-Information regarding GMime may be obtained from the Spruce home page:
-  http://spruce.sourceforge.net/gmime/
+If you would like to contribute to the GMime project, it is recommended that you grab the
+source code from the official GitHub repository at
+[http://github.com/jstedfast/gmime](https://github.com/jstedfast/gmime). Cloning this repository
+can be done using the following command:
 
-Experimental versions of GMime may be obtained by following the
-directions at http://developer.gnome.org/tools/svn.html
-
-  git clone git://git.gnome.org/gmime
+    git clone https://github.com/jstedfast/gmime.git
 
 
-REQUIREMENTS
-------------
+## Requirements
 
 For proper compilation and functionality of GMime, the following packages
 are REQUIRED:
 
-  - Glib version >= 2.18.0
+  - Glib version >= 2.32.0
 
     Glib provides a number of portability-enhancing functions and types.
     Glib is included in most GMime-supported operating system
@@ -139,10 +64,9 @@ are REQUIRED:
       ftp://ftp.gtk.org/pub/glib
 
 
-DOCUMENTATION
--------------
+## Documentation
 
-This is the README file for GMime.  Additional documentation related to
+This is the README file for GMime. Additional documentation related to
 development using GMime has been included within the source release
 of GMime.
 
@@ -172,21 +96,18 @@ You can find online developer documentation at
 http://library.gnome.org/devel/gmime/stable/
 
 
-MAILING-LIST
-------------
+# Mailing Lists
 
 For discussion of GMime development (either of GMime itself or using
 GMime in your own application), you may find the GMime-Devel
 mailing-list helpful. To subscribe, please see
-http://mail.gnome.org/mailman/listinfo/gmime-devel-list
+[http://mail.gnome.org/mailman/listinfo/gmime-devel-list](http://mail.gnome.org/mailman/listinfo/gmime-devel-list)
 
 
-BINDINGS
---------
+# Bindings
 
-Other developers have been working to make GMime available to
-programmers in other languages. The current list of known bindings
-are:
+Other developers have been working to make GMime available to programmers in other languages.
+The current list of known bindings are:
 
 - Go: https://github.com/sendgrid/go-gmime
 
@@ -195,15 +116,11 @@ are:
 - .NET (Mono): Included in this distribution (Obsolete).
 
 
-Note: It is recommended that MimeKit[1] be used in place of GMime-Sharp in
+Note: It is recommended that [MimeKit](https://github.com/jstedfast/MimeKit) be used in place of GMime-Sharp in
 .NET 4.0 (or later) environments.
 
 
-1. MimeKit: https://github.com/jstedfast/MimeKit
+# Reporting Bugs
 
-
-REPORTING BUGS
---------------
-
-Bugs may be reported to the GMime development team by submitting a bug
-report for the gmime module at http://bugzilla.gnome.org/
+Bugs may be reported to the GMime development team by creating a new
+[issue](https://github.com/jstedfast/gmime/issues).
