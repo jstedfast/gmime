@@ -95,7 +95,7 @@ GType
 g_mime_filter_html_get_type (void)
 {
 	static GType type = 0;
-
+	
 	if (!type) {
 		static const GTypeInfo info = {
 			sizeof (GMimeFilterHTMLClass),
@@ -121,7 +121,7 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 	GMimeFilterClass *filter_class = GMIME_FILTER_CLASS (klass);
-
+	
 	parent_class = g_type_class_ref (GMIME_TYPE_FILTER);
 	
 	object_class->finalize = g_mime_filter_html_finalize;
@@ -135,14 +135,13 @@ g_mime_filter_html_class_init (GMimeFilterHTMLClass *klass)
 static void
 g_mime_filter_html_init (GMimeFilterHTML *filter, GMimeFilterHTMLClass *klass)
 {
-  (void) (klass);
 	filter->scanner = url_scanner_new ();
-
+	
 	filter->flags = 0;
 	filter->colour = 0;
 	filter->column = 0;
 	filter->pre_open = FALSE;
-  filter->prev_cit_depth = 0;
+	filter->prev_cit_depth = 0;
 }
 
 static void
@@ -151,7 +150,7 @@ g_mime_filter_html_finalize (GObject *object)
 	GMimeFilterHTML *html = (GMimeFilterHTML *) object;
 	
 	url_scanner_free (html->scanner);
-
+	
 	G_OBJECT_CLASS (parent_class)->finalize (object);
 }
 
@@ -169,16 +168,16 @@ check_size (GMimeFilter *filter, char *outptr, char **outend, size_t len)
 {
 	size_t outleft = (size_t) (*outend - outptr);
 	size_t offset;
-
+	
 	if (outleft >= len)
 		return outptr;
-
+	
 	offset = outptr - filter->outbuf;
-
+	
 	g_mime_filter_set_size (filter, filter->outsize + len, TRUE);
-
+	
 	*outend = filter->outbuf + filter->outsize;
-
+	
 	return filter->outbuf + offset;
 }
 
@@ -187,25 +186,25 @@ citation_depth (const char *in, const char *inend)
 {
 	register const char *inptr = in;
 	int depth = 0;
-
-  if (in >= inend) return 0;
-
+	
+	if (in >= inend)
+		return 0;
+	
 	/* check that it isn't an escaped From line */
 	if (!strncmp (inptr, ">From", 5))
 		return 0;
-
+	
 	while (inptr < inend && *inptr != '\n') {
-
-    /* remove an arbitrary number of spaces between '>' and next '>' */
-		while (*inptr == ' ' && inptr < inend)
+		/* remove an arbitrary number of spaces between '>' and next '>' */
+		while (inptr < inend && *inptr == ' ')
 			inptr++;
-
+		
 		if (inptr >= inend || *inptr++ != '>')
 			break;
-
+		
 		depth++;
 	}
-
+	
 	return depth;
 }
 
@@ -213,27 +212,31 @@ static char *
 citation_cut (char *in, const char *inend)
 {
 	register char *inptr = in;
-  register char *start;
-
+	register char *start;
+	
 	/* check that it isn't an escaped From line */
 	if (!strncmp (inptr, ">From", 5))
 		return inptr;
-
+	
 	while (inptr < inend && *inptr != '\n') {
-
-    /* remove an arbitrary number of spaces between '>' and next '>' */
-    start = inptr;
-		while (*inptr == ' ' && inptr < inend)
+		/* remove an arbitrary number of spaces between '>' and next '>' */
+		start = inptr;
+		
+		while (inptr < inend && *inptr == ' ')
 			inptr++;
-
+		
 		if (inptr >= inend || *inptr != '>') {
-      if (*start == ' ' && start < inend) start++;
-      inptr = start; // not followed by '>', revert.
+			if (start < inend && *start == ' ')
+				start++;
+			
+			/* not followed by '>', revert. */
+			inptr = start;
 			break;
-    }
-
+		}
+		
 		inptr++;
 	}
+	
 	return inptr;
 }
 
@@ -243,10 +246,10 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 	register const unsigned char *inptr = *in;
 	register unsigned char c, r;
 	register gunichar u, m;
-
+	
 	if (inptr == inend)
 		return 0;
-
+	
 	while (inptr < inend) {
 		r = *inptr++;
 	loop:
@@ -259,26 +262,26 @@ html_utf8_getc (const unsigned char **in, const unsigned char *inend)
 			do {
 				if (inptr >= inend)
 					return 0xffff;
-
+				
 				c = *inptr++;
 				if ((c & 0xc0) != 0x80) {
 					r = c;
 					goto loop;
 				}
-
+				
 				u = (u << 6) | (c & 0x3f);
 				r <<= 1;
 				m <<= 5;
 			} while (r & 0x40);
-
+			
 			*in = inptr;
-
+			
 			u &= ~m;
-
+			
 			return u;
 		}
 	}
-
+	
 	return 0xffff;
 }
 
@@ -289,12 +292,12 @@ writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, cha
 	const unsigned char *instart = (const unsigned char *) in;
 	const unsigned char *inend = (const unsigned char *) end;
 	const unsigned char *inptr = instart;
-
+	
 	while (inptr < inend) {
 		gunichar u;
-
+		
 		outptr = check_size (filter, outptr, outend, 16);
-
+		
 		u = html_utf8_getc (&inptr, inend);
 		switch (u) {
 		case 0xffff:
@@ -349,7 +352,7 @@ writeln (GMimeFilter *filter, const char *in, const char *end, char *outptr, cha
 			break;
 		}
 	}
-
+	
 	return outptr;
 }
 
@@ -357,78 +360,72 @@ static void
 html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 	      char **out, size_t *outlen, size_t *outprespace, gboolean flush)
 {
-  (void) (prespace);
 	GMimeFilterHTML *html = (GMimeFilterHTML *) filter;
 	register char *inptr, *outptr;
 	char *start, *outend;
 	const char *inend;
 	int depth;
-
+	
 	g_mime_filter_set_size (filter, inlen * 2 + 6, FALSE);
-
+	
 	start = inptr = in;
 	inend = in + inlen;
 	outptr = filter->outbuf;
 	outend = filter->outbuf + filter->outsize;
-
+	
 	if (html->flags & GMIME_FILTER_HTML_PRE && !html->pre_open) {
 		outptr = g_stpcpy (outptr, "<pre>");
 		html->pre_open = TRUE;
 	}
-
+	
 	do {
 		while (inptr < inend && *inptr != '\n')
 			inptr++;
-
+		
 		if (inptr == inend && !flush)
 			break;
-
+		
 		html->column = 0;
 		depth = citation_depth (start, inend);
-
+		
 		if (html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) {
 			if (html->prev_cit_depth < depth) {
-        while (html->prev_cit_depth < depth) {
-          html->prev_cit_depth++;
-
-          char bq[33];
-          int ldepth = html->prev_cit_depth > 999 ? 999 : html->prev_cit_depth;
-
-          g_snprintf (bq, 31, "<blockquote class=\"level_%03d\">", ldepth);
-
-          outptr = check_size (filter, outptr, &outend, 31);
-          outptr = g_stpcpy (outptr, bq);
-        }
-
-        start = citation_cut(start, inptr);
-
-      } else if (html->prev_cit_depth > depth) {
-
-        /* close quotes */
-        while (html->prev_cit_depth > depth) {
-          outptr = check_size (filter, outptr, &outend, 14);
-          outptr = g_stpcpy (outptr, "</blockquote>");
-          html->prev_cit_depth--;
-        }
-
-        start = citation_cut(start, inptr);
-
-      } else if (depth > 0) {
-        start = citation_cut(start, inptr);
-
+				while (html->prev_cit_depth < depth) {
+					char tag[33];
+					int ldepth;
+					
+					html->prev_cit_depth++;
+					
+					ldepth = MIN (html->prev_cit_depth, 999);
+					
+					g_snprintf (tag, 31, "<blockquote class=\"level_%03d\">", ldepth);
+					
+					outptr = check_size (filter, outptr, &outend, 31);
+					outptr = g_stpcpy (outptr, tag);
+				}
+				
+				start = citation_cut (start, inptr);
+			} else if (html->prev_cit_depth > depth) {
+				/* close quotes */
+				while (html->prev_cit_depth > depth) {
+					outptr = check_size (filter, outptr, &outend, 14);
+					outptr = g_stpcpy (outptr, "</blockquote>");
+					html->prev_cit_depth--;
+				}
+				
+				start = citation_cut (start, inptr);
+			} else if (depth > 0) {
+				start = citation_cut (start, inptr);
 			} else if (start < inptr && *start == '>') {
 				/* >From line */
 				start++;
 			}
-
-    } else if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
+		} else if (html->flags & GMIME_FILTER_HTML_MARK_CITATION) {
 			if (depth > 0) {
 				char font[25];
-
+				
 				/* FIXME: we could easily support multiple colour depths here */
-
 				g_snprintf (font, 25, "<font color=\"#%06x\">", (html->colour & 0xffffff));
-
 				outptr = check_size (filter, outptr, &outend, 25);
 				outptr = g_stpcpy (outptr, font);
 			} else if (*start == '>') {
@@ -440,42 +437,42 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 			outptr = g_stpcpy (outptr, "&gt; ");
 			html->column += 2;
 		}
-
+		
 #define CONVERT_URLS_OR_ADDRESSES (GMIME_FILTER_HTML_CONVERT_URLS | GMIME_FILTER_HTML_CONVERT_ADDRESSES)
 		if (html->flags & CONVERT_URLS_OR_ADDRESSES) {
 			size_t matchlen, buflen, len;
 			urlmatch_t match;
-
+			
 			len = inptr - start;
-
+			
 			do {
 				if (url_scanner_scan (html->scanner, start, len, &match)) {
 					/* write out anything before the first regex match */
 					outptr = writeln (filter, start, start + match.um_so,
 							  outptr, &outend);
-
+					
 					start += match.um_so;
 					len -= match.um_so;
-
+					
 					matchlen = match.um_eo - match.um_so;
-
+					
 					buflen = 20 + strlen (match.prefix) + matchlen + matchlen;
 					outptr = check_size (filter, outptr, &outend, buflen);
-
+					
 					/* write out the href tag */
 					outptr = g_stpcpy (outptr, "<a href=\"");
 					outptr = g_stpcpy (outptr, match.prefix);
 					memcpy (outptr, start, matchlen);
 					outptr += matchlen;
 					outptr = g_stpcpy (outptr, "\">");
-
+					
 					/* now write the matched string */
 					memcpy (outptr, start, matchlen);
 					html->column += matchlen;
 					outptr += matchlen;
 					start += matchlen;
 					len -= matchlen;
-
+					
 					/* close the href tag */
 					outptr = g_stpcpy (outptr, "</a>");
 				} else {
@@ -487,45 +484,44 @@ html_convert (GMimeFilter *filter, char *in, size_t inlen, size_t prespace,
 		} else {
 			outptr = writeln (filter, start, inptr, outptr, &outend);
 		}
-
+		
 		if (!(html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) &&
-         (html->flags & GMIME_FILTER_HTML_MARK_CITATION) && (depth > 0)) {
+		    (html->flags & GMIME_FILTER_HTML_MARK_CITATION) && depth > 0) {
 			outptr = check_size (filter, outptr, &outend, 8);
 			outptr = g_stpcpy (outptr, "</font>");
 		}
-
+		
 		if (html->flags & GMIME_FILTER_HTML_CONVERT_NL) {
 			outptr = check_size (filter, outptr, &outend, 5);
 			outptr = g_stpcpy (outptr, "<br>");
 		}
-
+		
 		if (inptr < inend)
 			*outptr++ = '\n';
-
+		
 		start = ++inptr;
 	} while (inptr < inend);
-
+	
 	if (flush) {
 		if (html->pre_open) {
 			/* close the pre-tag */
 			outptr = check_size (filter, outptr, &outend, 10);
 			outptr = g_stpcpy (outptr, "</pre>");
 		}
-
-		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) &&
-        (html->prev_cit_depth > 0)) {
-      /* close open blockquotes */
-      while (html->prev_cit_depth > 0) {
-        outptr = check_size (filter, outptr, &outend, 14);
-        outptr = g_stpcpy (outptr, "</blockquote>");
-        html->prev_cit_depth--;
-      }
-    }
+		
+		if ((html->flags & GMIME_FILTER_HTML_BLOCKQUOTE_CITATION) && html->prev_cit_depth > 0) {
+			/* close open blockquotes */
+			while (html->prev_cit_depth > 0) {
+				outptr = check_size (filter, outptr, &outend, 14);
+				outptr = g_stpcpy (outptr, "</blockquote>");
+				html->prev_cit_depth--;
+			}
+		}
 	} else if (start < inend) {
 		/* backup */
 		g_mime_filter_backup (filter, start, (unsigned) (inend - start));
 	}
-
+	
 	*out = filter->outbuf;
 	*outlen = outptr - filter->outbuf;
 	*outprespace = filter->outpre;
@@ -552,7 +548,7 @@ filter_reset (GMimeFilter *filter)
 	
 	html->column = 0;
 	html->pre_open = FALSE;
-  html->prev_cit_depth = 0;
+	html->prev_cit_depth = 0;
 }
 
 
@@ -575,11 +571,11 @@ g_mime_filter_html_new (guint32 flags, guint32 colour)
 	filter = g_object_newv (GMIME_TYPE_FILTER_HTML, 0, NULL);
 	filter->flags = flags;
 	filter->colour = colour;
-
+	
 	for (i = 0; i < NUM_URL_PATTERNS; i++) {
 		if (patterns[i].mask & flags)
 			url_scanner_add (filter->scanner, &patterns[i].pattern);
 	}
-
+	
 	return (GMimeFilter *) filter;
 }
