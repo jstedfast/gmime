@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 8; indent-tabs-mode: t; c-basic-offset: 8 -*- */
 /*  GMime
  *  Copyright (C) 2000-2014 Jeffrey Stedfast
+ *  Copyright (C) 2016      Gaute Hope
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public License
@@ -42,7 +43,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Wrap stream in &lt;pre&gt; tags.
  **/
-#define GMIME_FILTER_HTML_PRE               (1 << 0)
+#define GMIME_FILTER_HTML_PRE                 (1 << 0)
 
 
 /**
@@ -50,7 +51,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Convert new-lines ('\n') into &lt;br&gt; tags.
  **/
-#define GMIME_FILTER_HTML_CONVERT_NL        (1 << 1)
+#define GMIME_FILTER_HTML_CONVERT_NL          (1 << 1)
 
 
 /**
@@ -59,7 +60,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  * Preserve whitespace by converting spaces into their appropriate
  * html entities.
  **/
-#define GMIME_FILTER_HTML_CONVERT_SPACES    (1 << 2)
+#define GMIME_FILTER_HTML_CONVERT_SPACES      (1 << 2)
 
 
 /**
@@ -67,7 +68,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Wrap detected URLs in &lt;a href=...&gt; tags.
  **/
-#define GMIME_FILTER_HTML_CONVERT_URLS      (1 << 3)
+#define GMIME_FILTER_HTML_CONVERT_URLS        (1 << 3)
 
 
 /**
@@ -75,7 +76,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Change the colour of citation text.
  **/
-#define GMIME_FILTER_HTML_MARK_CITATION     (1 << 4)
+#define GMIME_FILTER_HTML_MARK_CITATION       (1 << 4)
 
 
 /**
@@ -83,7 +84,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Wrap email addresses in "mailto:" href tags.
  **/
-#define GMIME_FILTER_HTML_CONVERT_ADDRESSES (1 << 5)
+#define GMIME_FILTER_HTML_CONVERT_ADDRESSES   (1 << 5)
 
 
 /**
@@ -91,7 +92,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Converts 8bit characters to '?'.
  **/
-#define GMIME_FILTER_HTML_ESCAPE_8BIT       (1 << 6)
+#define GMIME_FILTER_HTML_ESCAPE_8BIT         (1 << 6)
 
 
 /**
@@ -99,7 +100,14 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  *
  * Cites text by prepending "&gt; " to each cited line.
  **/
-#define GMIME_FILTER_HTML_CITE              (1 << 7)
+#define GMIME_FILTER_HTML_CITE                (1 << 7)
+
+/**
+ * GMIME_FILTER_HTML_MARK_CITATION_BLOCKQUOTE:
+ *
+ * Enclose citation text in blockquotes.
+ **/
+#define GMIME_FILTER_HTML_BLOCKQUOTE_CITATION (1 << 8)
 
 
 /**
@@ -110,6 +118,7 @@ typedef struct _GMimeFilterHTMLClass GMimeFilterHTMLClass;
  * @colour: cite colour
  * @column: current column
  * @pre_open: currently inside of a 'pre' tag.
+ * @prev_cit_depth: current citation depth level.
  *
  * A filter for converting text/plain into text/html.
  **/
@@ -123,6 +132,7 @@ struct _GMimeFilterHTML {
 	
 	guint32 column       : 31;
 	guint32 pre_open     : 1;
+  guint32 prev_cit_depth : 31;
 };
 
 struct _GMimeFilterHTMLClass {

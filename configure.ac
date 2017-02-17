@@ -40,9 +40,9 @@ m4_define([gmime_debug_default],
 
 
 AC_INIT(gmime, [gmime_version],
-        [http://bugzilla.gnome.org/enter_bug.cgi?product=gmime])
+        [https://github.com/jstedfast/gmime/issues])
 
-AC_CONFIG_SRCDIR([README])
+AC_CONFIG_SRCDIR([README.md])
 AC_CONFIG_MACRO_DIR([m4])
 AC_CANONICAL_SYSTEM
 AC_CANONICAL_HOST
