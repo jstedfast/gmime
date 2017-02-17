@@ -184,6 +184,8 @@ g_mime_init (void)
 	/* register our default mime object types */
 	g_mime_object_type_registry_init ();
 	g_mime_object_register_type ("*", "*", g_mime_part_get_type ());
+	g_mime_object_register_type ("application", "x-pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
+	g_mime_object_register_type ("application", "pkcs7-mime", g_mime_application_pkcs7_mime_get_type ());
 	g_mime_object_register_type ("multipart", "*", g_mime_multipart_get_type ());
 	g_mime_object_register_type ("multipart", "encrypted", g_mime_multipart_encrypted_get_type ());
 	g_mime_object_register_type ("multipart", "signed", g_mime_multipart_signed_get_type ());

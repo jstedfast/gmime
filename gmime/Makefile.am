@@ -21,6 +21,7 @@ lib_LTLIBRARIES = libgmime-3.0.la
 
 libgmime_3_0_la_SOURCES = 		\
 	gmime.c				\
+	gmime-application-pkcs7-mime.c	\
 	gmime-certificate.c		\
 	gmime-charset.c			\
 	gmime-common.c			\
@@ -78,6 +79,7 @@ libgmime_3_0_la_SOURCES = 		\
 
 gmimeinclude_HEADERS = 			\
 	gmime.h				\
+	gmime-application-pkcs7-mime.h	\
 	gmime-certificate.h		\
 	gmime-charset.h			\
 	gmime-content-type.h		\
