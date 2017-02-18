@@ -904,9 +904,8 @@ gpg_get_retrieve_session_key (GMimeCryptoContext *context)
 	const char *value;
 	
 	value = gpgme_get_ctx_flag (ctx->ctx, "export-session-key");
-	fprintf (stderr, "export-session-key = %s\n", value);
 	
-	return value && *value;
+	return value && *value && *value != '0';
 }
 
 
@@ -916,14 +915,11 @@ gpg_set_retrieve_session_key (GMimeCryptoContext *context, gboolean retrieve_ses
 	GMimeGpgContext *ctx = (GMimeGpgContext *) context;
 	gpgme_error_t error;
 	
-	if ((error = gpgme_set_ctx_flag (ctx->ctx, "export-session-key", retrieve_session_key ? "true" : NULL)) != 0) {
+	if ((error = gpgme_set_ctx_flag (ctx->ctx, "export-session-key", retrieve_session_key ? "1" : "0")) != 0) {
 		g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
 			     _("Session key retrieval is not supported by this crypto context"));
-		fprintf (stderr, "setting export-session-key failed: %s\n", gpgme_strerror (error));
 		return -1;
 	}
-	
-	fprintf (stderr, "set export-session-key = %s\n", retrieve_session_key ? "true" : NULL);
 	
 	return 0;
 }
