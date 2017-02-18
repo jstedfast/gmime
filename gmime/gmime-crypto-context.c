@@ -177,8 +177,6 @@ g_mime_crypto_context_shutdown (void)
 void
 g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback)
 {
-	GMimeCryptoContextNewFunc func;
-	
 	g_return_if_fail (protocol != NULL);
 	g_return_if_fail (callback != NULL);
 	

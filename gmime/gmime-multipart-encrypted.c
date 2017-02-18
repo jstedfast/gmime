@@ -272,12 +272,11 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
 /**
  * g_mime_multipart_encrypted_decrypt:
  * @mpe: multipart/encrypted object
- * @ctx: decryption context
  * @result: a #GMimeDecryptionResult
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
- * multipart/encrypted object @mpe using the @ctx decryption context.
+ * multipart/encrypted object @mpe.
  *
  * If @result is non-%NULL, then on a successful decrypt operation, it will be
  * updated to point to a newly-allocated #GMimeDecryptResult with signature
@@ -289,27 +288,24 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
-				    GMimeDecryptResult **result, GError **err)
+g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptResult **result, GError **err)
 {
-	return g_mime_multipart_encrypted_decrypt_session (mpe, ctx, NULL, result, err);
+	return g_mime_multipart_encrypted_decrypt_session (mpe, NULL, result, err);
 }
 
 /**
  * g_mime_multipart_encrypted_decrypt_session:
  * @mpe: multipart/encrypted object
- * @ctx: decryption context
  * @session_key: session key to use
  * @result: a #GMimeDecryptionResult
  * @err: a #GError
  *
  * Attempts to decrypt the encrypted MIME part contained within the
- * multipart/encrypted object @mpe using the @ctx decryption context
- * trying only the supplied session key.  If @session_key is
- * non-%NULL, but is not valid for the ciphertext, the decryption will
- * fail even if other available secret key material may have been able
- * to decrypt it. If @session_key is %NULL, this does the same thing
- * as g_mime_multipart_encrypted_decrypt().
+ * multipart/encrypted object @mpe trying only the supplied session key.
+ * If @session_key is non-%NULL, but is not valid for the ciphertext,
+ * the decryption will fail even if other available secret key material
+ * may have been able to decrypt it. If @session_key is %NULL, this does
+ * the same thing as g_mime_multipart_encrypted_decrypt().
  *
  * When non-%NULL, @session_key should be a %NULL-terminated string,
  * such as the one returned by g_mime_decrypt_result_get_session_key()
@@ -325,9 +321,8 @@ g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeCryptoCon
  * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeCryptoContext *ctx,
-					    const char *session_key, GMimeDecryptResult **result,
-					    GError **err)
+g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, const char *session_key,
+					    GMimeDecryptResult **result, GError **err)
 {
 	GMimeObject *decrypted, *version, *encrypted;
 	GMimeStream *stream, *ciphertext;
@@ -337,33 +332,38 @@ g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeC
 	GMimeDataWrapper *wrapper;
 	GMimeFilter *crlf_filter;
 	GMimeDecryptResult *res;
+	GMimeCryptoContext *ctx;
 	GMimeParser *parser;
 	char *content_type;
 	
 	g_return_val_if_fail (GMIME_IS_MULTIPART_ENCRYPTED (mpe), NULL);
-	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), NULL);
 	
 	if (result)
 		*result = NULL;
 	
-	protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mpe), "protocol");
-	supported = g_mime_crypto_context_get_encryption_protocol (ctx);
-	
-	if (protocol) {
-		/* make sure the protocol matches the crypto encrypt protocol */
-		if (!supported || g_ascii_strcasecmp (supported, protocol) != 0) {
-			g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
-				     _("Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'."),
-				     protocol);
-			
-			return NULL;
-		}
-	} else if (supported != NULL) {
-		/* *shrug* - I guess just go on as if they match? */
-		protocol = supported;
-	} else {
+	if (!(protocol = g_mime_object_get_content_type_parameter (GMIME_OBJECT (mpe), "protocol"))) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: unspecified encryption protocol."));
+		
+		return NULL;
+	}
+	
+	if (!(ctx = g_mime_crypto_context_new (protocol))) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot verify multipart/encrypted part: unregistered encryption protocol '%s'."),
+			     protocol);
+		
+		return NULL;
+	}
+	
+	supported = g_mime_crypto_context_get_encryption_protocol (ctx);
+	
+	/* make sure the protocol matches the crypto encrypt protocol */
+	if (!supported || g_ascii_strcasecmp (supported, protocol) != 0) {
+		g_set_error (err, GMIME_ERROR, GMIME_ERROR_PROTOCOL_ERROR,
+			     _("Cannot decrypt multipart/encrypted part: unsupported encryption protocol '%s'."),
+			     protocol);
+		g_object_unref (ctx);
 		
 		return NULL;
 	}
@@ -377,6 +377,7 @@ g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeC
 				     _("Cannot decrypt multipart/encrypted part: content-type does not match protocol."));
 		
 		g_free (content_type);
+		g_object_unref (ctx);
 		
 		return NULL;
 	}
@@ -388,6 +389,7 @@ g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeC
 	if (!g_mime_content_type_is_type (mime_type, "application", "octet-stream")) {
 		g_set_error_literal (err, GMIME_ERROR, GMIME_ERROR_PARSE_ERROR,
 				     _("Cannot decrypt multipart/encrypted part: unexpected content type."));
+		g_object_unref (ctx);
 		
 		return NULL;
 	}
@@ -408,6 +410,7 @@ g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeC
 		g_object_unref (filtered_stream);
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
+		g_object_unref (ctx);
 		
 		return NULL;
 	}
@@ -415,6 +418,7 @@ g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe, GMimeC
 	g_mime_stream_flush (filtered_stream);
 	g_object_unref (filtered_stream);
 	g_object_unref (ciphertext);
+	g_object_unref (ctx);
 	
 	g_mime_stream_reset (stream);
 	parser = g_mime_parser_new ();

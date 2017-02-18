@@ -68,9 +68,7 @@ int g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *conten
 				  GMimeCryptoContext *ctx, const char *userid,
 				  GMimeDigestAlgo digest, GError **err);
 
-GMimeSignatureList *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps,
-						    GMimeCryptoContext *ctx,
-						    GError **err);
+GMimeSignatureList *g_mime_multipart_signed_verify (GMimeMultipartSigned *mps, GError **err);
 
 G_END_DECLS
 

@@ -139,8 +139,6 @@ count_parts_in_message (GMimeMessage *message)
 static void
 verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_data)
 {
-	GMimeCryptoContext *ctx = user_data;
-	
 	if (GMIME_IS_MULTIPART_SIGNED (part)) {
 		/* this is a multipart/signed part, so we can verify the pgp signature */
 		GMimeMultipartSigned *mps = (GMimeMultipartSigned *) part;
@@ -150,7 +148,7 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 		const char *str;
 		int i;
 		
-		if (!(signatures = g_mime_multipart_signed_verify (mps, ctx, &err))) {
+		if (!(signatures = g_mime_multipart_signed_verify (mps, &err))) {
 			/* an error occured - probably couldn't start gpg? */
 			
 			/* for more information about GError, see:
@@ -178,10 +176,10 @@ verify_foreach_callback (GMimeObject *parent, GMimeObject *part, gpointer user_d
 }
 
 static void
-verify_signed_parts (GMimeMessage *message, GMimeCryptoContext *ctx)
+verify_signed_parts (GMimeMessage *message)
 {
 	/* descend the mime tree and verify any signed parts */
-	g_mime_message_foreach (message, verify_foreach_callback, ctx);
+	g_mime_message_foreach (message, verify_foreach_callback, NULL);
 }
 #endif
 
@@ -306,18 +304,8 @@ int main (int argc, char **argv)
 	
 #ifndef G_OS_WIN32
 #ifdef ENABLE_CRYPTOGRAPHY
-	/* create our crypto context */
-	ctx = g_mime_gpg_context_new (request_passwd, path);
-	
-	/* don't allow auto key-retrival */
-	g_mime_gpg_context_set_auto_key_retrieve ((GMimeGpgContext *) ctx, FALSE);
-	
-	/* set the always_trust flag so that gpg will be spawned with `gpg --always-trust` */
-	g_mime_gpg_context_set_always_trust ((GMimeGpgContext *) ctx, TRUE);
-	
 	/* verify any signed parts */
-	verify_signed_parts (message, ctx);
-	g_object_unref (ctx);
+	verify_signed_parts (message);
 #endif
 #endif
 	

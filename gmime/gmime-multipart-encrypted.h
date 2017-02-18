@@ -70,12 +70,10 @@ int g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObjec
 					GPtrArray *recipients, GError **err);
 
 GMimeObject *g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe,
-						 GMimeCryptoContext *ctx,
 						 GMimeDecryptResult **result,
 						 GError **err);
 
 GMimeObject *g_mime_multipart_encrypted_decrypt_session (GMimeMultipartEncrypted *mpe,
-							 GMimeCryptoContext *ctx,
 							 const char *session_key,
 							 GMimeDecryptResult **result,
 							 GError **err);
