@@ -160,7 +160,7 @@ g_mime_multipart_encrypted_new (void)
 int
 g_mime_multipart_encrypted_encrypt (GMimeMultipartEncrypted *mpe, GMimeObject *content,
 				    GMimeCryptoContext *ctx, gboolean sign, const char *userid,
-				    GMimeDigestAlgo digest, GMimeEncryptFLags flags,
+				    GMimeDigestAlgo digest, GMimeEncryptFlags flags,
 				    GPtrArray *recipients, GError **err)
 {
 	GMimeParserOptions *options = g_mime_parser_options_get_default ();
@@ -296,7 +296,7 @@ g_mime_data_wrapper_get_decoded_stream (GMimeDataWrapper *wrapper)
  * @err to provide information as to why the failure occured.
  **/
 GMimeObject *
-g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFLags flags,
+g_mime_multipart_encrypted_decrypt (GMimeMultipartEncrypted *mpe, GMimeDecryptFlags flags,
 				    const char *session_key, GMimeDecryptResult **result,
 				    GError **err)
 {

@@ -244,7 +244,7 @@ test_multipart_signed (GMimeCryptoContext *ctx)
 	mps = (GMimeMultipartSigned *) message->mime_part;
 	
 	v(fputs ("Trying to verify signature... ", stdout));
-	if (!(signatures = g_mime_multipart_signed_verify (mps, &err))) {
+	if (!(signatures = g_mime_multipart_signed_verify (mps, 0, &err))) {
 		ex = exception_new ("%s", err->message);
 		v(fputs ("failed.\n", stdout));
 		g_error_free (err);
@@ -299,7 +299,7 @@ create_encrypted_message (GMimeCryptoContext *ctx, gboolean sign,
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	g_mime_multipart_encrypted_encrypt (mpe, GMIME_OBJECT (part), ctx, sign,
 					    "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
-					    recipients, &err);
+					    GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, &err);
 	g_ptr_array_free (recipients, TRUE);
 	g_object_unref (part);
 	
@@ -377,7 +377,7 @@ test_multipart_encrypted (GMimeCryptoContext *ctx, gboolean sign,
 	mpe = (GMimeMultipartEncrypted *) message->mime_part;
 	
 	/* okay, now to test our decrypt function... */
-	decrypted = g_mime_multipart_encrypted_decrypt (mpe, session_key, &result, &err);
+	decrypted = g_mime_multipart_encrypted_decrypt (mpe, GMIME_DECRYPT_FLAGS_EXPORT_SESSION_KEY, session_key, &result, &err);
 	if (!decrypted || err != NULL) {
 		ex = exception_new ("decryption failed: %s", err->message);
 		g_error_free (err);
@@ -484,20 +484,6 @@ int main (int argc, char *argv[])
 	
 	ctx = g_mime_gpg_context_new ();
 	g_mime_crypto_context_set_request_password (ctx, request_passwd);
-	g_mime_crypto_context_set_always_trust (ctx, TRUE);
-	
-	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, &err) != 0) {
-		fprintf (stderr, "Failed to set retrieve_session_key on GMimeGpgContext: %s\n",
-			 err ? err->message : "no error info returned" );
-		if (err)
-			g_error_free (err);
-		return EXIT_FAILURE;
-	}
-	
-	if (!g_mime_crypto_context_get_retrieve_session_key (ctx)) {
-		fprintf (stderr, "We set retrieve_session_key on GMimeGpgContext, but it did not stay set.\n");
-		return EXIT_FAILURE;
-	}
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {

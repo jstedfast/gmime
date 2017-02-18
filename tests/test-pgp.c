@@ -97,7 +97,7 @@ test_verify (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphe
 	GError *err = NULL;
 	Exception *ex;
 	
-	signatures = g_mime_crypto_context_verify (ctx, GMIME_DIGEST_ALGO_DEFAULT,
+	signatures = g_mime_crypto_context_verify (ctx, 0, GMIME_DIGEST_ALGO_DEFAULT,
 						   cleartext, ciphertext, &err);
 	
 	if (signatures == NULL) {
@@ -127,7 +127,7 @@ test_encrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	g_ptr_array_add (recipients, "no.user@no.domain");
 	
 	g_mime_crypto_context_encrypt (ctx, sign, "no.user@no.domain", GMIME_DIGEST_ALGO_SHA256,
-				       recipients, cleartext, ciphertext, &err);
+				       GMIME_ENCRYPT_FLAGS_ALWAYS_TRUST, recipients, cleartext, ciphertext, &err);
 	
 	g_ptr_array_free (recipients, TRUE);
 	
@@ -154,7 +154,7 @@ test_decrypt (GMimeCryptoContext *ctx, gboolean sign, GMimeStream *cleartext, GM
 	
 	stream = g_mime_stream_mem_new ();
 	
-	if (!(result = g_mime_crypto_context_decrypt (ctx, NULL, ciphertext, stream, &err))) {
+	if (!(result = g_mime_crypto_context_decrypt (ctx, 0, NULL, ciphertext, stream, &err))) {
 		g_object_unref (stream);
 		ex = exception_new ("%s", err->message);
 		g_error_free (err);
@@ -313,7 +313,6 @@ int main (int argc, char **argv)
 	
 	ctx = g_mime_gpg_context_new ();
 	g_mime_crypto_context_set_request_password (ctx, request_passwd);
-	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	
 	testsuite_check ("GMimeGpgContext::import");
 	try {
