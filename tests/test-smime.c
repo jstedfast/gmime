@@ -452,7 +452,8 @@ int main (int argc, char *argv[])
 	
 	testsuite_start ("S/MIME implementation");
 	
-	ctx = g_mime_pkcs7_context_new (request_passwd);
+	ctx = g_mime_pkcs7_context_new ();
+	g_mime_crypto_context_set_request_password (ctx, request_passwd);
 	g_mime_crypto_context_set_always_trust (ctx, TRUE);
 	
 	if (g_mime_crypto_context_set_retrieve_session_key (ctx, TRUE, NULL) == 0) {

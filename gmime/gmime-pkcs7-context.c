@@ -887,17 +887,15 @@ pkcs7_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
 
 /**
  * g_mime_pkcs7_context_new:
- * @request_passwd: a #GMimePasswordRequestFunc
  *
  * Creates a new pkcs7 crypto context object.
  *
  * Returns: (transfer full): a new pkcs7 crypto context object.
  **/
 GMimeCryptoContext *
-g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
+g_mime_pkcs7_context_new (void)
 {
 #ifdef ENABLE_CRYPTO
-	GMimeCryptoContext *crypto;
 	GMimePkcs7Context *pkcs7;
 	gpgme_ctx_t ctx;
 	
@@ -914,10 +912,7 @@ g_mime_pkcs7_context_new (GMimePasswordRequestFunc request_passwd)
 	gpgme_set_protocol (ctx, GPGME_PROTOCOL_CMS);
 	pkcs7->ctx = ctx;
 	
-	crypto = (GMimeCryptoContext *) pkcs7;
-	crypto->request_passwd = request_passwd;
-	
-	return crypto;
+	return (GMimeCryptoContext *) pkcs7;
 #else
 	return NULL;
 #endif /* ENABLE_CRYPTO */

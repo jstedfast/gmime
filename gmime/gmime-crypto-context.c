@@ -26,6 +26,7 @@
 #include <string.h>
 
 #include "gmime-crypto-context.h"
+#include "gmime-common.h"
 #include "gmime-error.h"
 
 
@@ -86,6 +87,8 @@ static int crypto_export_keys (GMimeCryptoContext *ctx, const char *keys[],
 			       GMimeStream *ostream, GError **err);
 
 
+static GHashTable *type_hash = NULL;
+
 static GObjectClass *parent_class = NULL;
 
 
@@ -108,6 +111,8 @@ g_mime_crypto_context_get_type (void)
 		};
 		
 		type = g_type_register_static (G_TYPE_OBJECT, "GMimeCryptoContext", &info, 0);
+		
+		type_hash = g_hash_table_new_full (g_mime_strcase_hash, g_mime_strcase_equal, g_free, NULL);
 	}
 	
 	return type;
@@ -151,6 +156,55 @@ static void
 g_mime_crypto_context_finalize (GObject *object)
 {
 	G_OBJECT_CLASS (parent_class)->finalize (object);
+}
+
+
+void
+g_mime_crypto_context_shutdown (void)
+{
+	g_hash_table_destroy (type_hash);
+	type_hash = NULL;
+}
+
+
+/**
+ * g_mime_crypto_context_register:
+ * @protocol: crypto protocol
+ * @callback: a #GMimeCryptoContextNewFunc
+ *
+ * Registers the callback for the specified @protocol.
+ **/
+void
+g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback)
+{
+	GMimeCryptoContextNewFunc func;
+	
+	g_return_if_fail (protocol != NULL);
+	g_return_if_fail (callback != NULL);
+	
+	g_hash_table_replace (type_hash, g_strdup (protocol), callback);
+}
+
+
+/**
+ * g_mime_crypto_context_new:
+ * @protocol: the crypto protocol
+ *
+ * Creates a new crypto context for the specified @protocol.
+ *
+ * Returns: a newly allocated #GMimeCryptoContext.
+ **/
+GMimeCryptoContext *
+g_mime_crypto_context_new (const char *protocol)
+{
+	GMimeCryptoContextNewFunc func;
+	
+	g_return_val_if_fail (protocol != NULL, NULL);
+	
+	if (!(func = g_hash_table_lookup (type_hash, protocol)))
+		return NULL;
+	
+	return func ();
 }
 
 

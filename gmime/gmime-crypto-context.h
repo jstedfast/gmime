@@ -67,6 +67,16 @@ typedef gboolean (* GMimePasswordRequestFunc) (GMimeCryptoContext *ctx, const ch
 
 
 /**
+ * GMimeCryptoContextNewFunc:
+ *
+ * A callback used to create a new instance of a #GMimeCryptoContext subclass.
+ *
+ * Returns: a new #GMimeCryptoContext instance.
+ **/
+typedef GMimeCryptoContext * (* GMimeCryptoContextNewFunc) (void);
+
+
+/**
  * GMimeCryptoContext:
  * @parent_object: parent #GObject
  * @request_passwd: a callback for requesting a password
@@ -127,6 +137,9 @@ struct _GMimeCryptoContextClass {
 
 
 GType g_mime_crypto_context_get_type (void);
+
+void g_mime_crypto_context_register (const char *protocol, GMimeCryptoContextNewFunc callback);
+GMimeCryptoContext *g_mime_crypto_context_new (const char *protocol);
 
 void g_mime_crypto_context_set_request_password (GMimeCryptoContext *ctx, GMimePasswordRequestFunc request_passwd);
 

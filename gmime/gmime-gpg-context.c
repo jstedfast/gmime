@@ -947,17 +947,15 @@ gpg_set_always_trust (GMimeCryptoContext *context, gboolean always_trust)
 
 /**
  * g_mime_gpg_context_new:
- * @request_passwd: a #GMimePasswordRequestFunc
  *
  * Creates a new gpg crypto context object.
  *
  * Returns: (transfer full): a new gpg crypto context object.
  **/
 GMimeCryptoContext *
-g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd)
+g_mime_gpg_context_new (void)
 {
 #ifdef ENABLE_CRYPTO
-	GMimeCryptoContext *crypto;
 	GMimeGpgContext *gpg;
 	gpgme_ctx_t ctx;
 	
@@ -975,10 +973,7 @@ g_mime_gpg_context_new (GMimePasswordRequestFunc request_passwd)
 	gpgme_set_armor (ctx, TRUE);
 	gpg->ctx = ctx;
 	
-	crypto = (GMimeCryptoContext *) gpg;
-	crypto->request_passwd = request_passwd;
-	
-	return crypto;
+	return (GMimeCryptoContext *) gpg;
 #else
 	return NULL;
 #endif /* ENABLE_CRYPTO */

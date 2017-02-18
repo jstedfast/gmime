@@ -48,6 +48,7 @@
  * Initialization, shutdown, and version-check functions.
  **/
 
+extern void g_mime_crypto_context_shutdown (void);
 extern void g_mime_iconv_utils_shutdown (void);
 extern void g_mime_iconv_utils_init (void);
 
@@ -193,6 +194,18 @@ g_mime_init (void)
 	g_mime_object_register_type ("message", "rfc2822", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "news", g_mime_message_part_get_type ());
 	g_mime_object_register_type ("message", "partial", g_mime_message_partial_get_type ());
+	
+	g_mime_crypto_context_register ("application/x-pgp-signature", g_mime_gpg_context_new);
+	g_mime_crypto_context_register ("application/pgp-signature", g_mime_gpg_context_new);
+	g_mime_crypto_context_register ("application/x-pgp-encrypted", g_mime_gpg_context_new);
+	g_mime_crypto_context_register ("application/pgp-encrypted", g_mime_gpg_context_new);
+	g_mime_crypto_context_register ("application/pgp-keys", g_mime_gpg_context_new);
+	
+	g_mime_crypto_context_register ("application/x-pkcs7-signature", g_mime_pkcs7_context_new);
+	g_mime_crypto_context_register ("application/pkcs7-signature", g_mime_pkcs7_context_new);
+	g_mime_crypto_context_register ("application/x-pkcs7-mime", g_mime_pkcs7_context_new);
+	g_mime_crypto_context_register ("application/pkcs7-mime", g_mime_pkcs7_context_new);
+	g_mime_crypto_context_register ("application/pkcs7-keys", g_mime_pkcs7_context_new);
 }
 
 
@@ -209,6 +222,7 @@ g_mime_shutdown (void)
 		return;
 	
 	g_mime_object_type_registry_shutdown ();
+	g_mime_crypto_context_shutdown ();
 	g_mime_parser_options_shutdown ();
 	g_mime_charset_map_shutdown ();
 	g_mime_iconv_utils_shutdown ();
