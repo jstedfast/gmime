@@ -457,7 +457,7 @@ g_mime_application_pkcs7_mime_sign (GMimePkcs7Context *ctx, GMimeObject *entity,
 	
 	/* sign the content stream */
 	ciphertext = g_mime_stream_mem_new ();
-	if (g_mime_crypto_context_sign ((GMimeCryptoContext *) ctx, userid, digest, stream, ciphertext, err) == -1) {
+	if (g_mime_crypto_context_sign ((GMimeCryptoContext *) ctx, FALSE, userid, digest, stream, ciphertext, err) == -1) {
 		g_object_unref (ciphertext);
 		g_object_unref (stream);
 		return NULL;

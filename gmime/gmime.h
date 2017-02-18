@@ -35,6 +35,7 @@
 #include <gmime/gmime-object.h>
 #include <gmime/gmime-part.h>
 #include <gmime/gmime-part-iter.h>
+#include <gmime/gmime-application-pkcs7-mime.h>
 #include <gmime/gmime-multipart.h>
 #include <gmime/gmime-multipart-encrypted.h>
 #include <gmime/gmime-multipart-signed.h>

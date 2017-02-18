@@ -93,9 +93,10 @@ static const char *pkcs7_get_encryption_protocol (GMimeCryptoContext *ctx);
 
 static const char *pkcs7_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
-static int pkcs7_sign (GMimeCryptoContext *ctx, const char *userid,
-		       GMimeDigestAlgo digest, GMimeStream *istream,
-		       GMimeStream *ostream, GError **err);
+static int pkcs7_sign (GMimeCryptoContext *ctx, gboolean detach,
+		       const char *userid, GMimeDigestAlgo digest,
+		       GMimeStream *istream, GMimeStream *ostream,
+		       GError **err);
 	
 static GMimeSignatureList *pkcs7_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
 					 GMimeStream *istream, GMimeStream *sigstream,
@@ -448,10 +449,11 @@ pkcs7_add_signer (GMimePkcs7Context *pkcs7, const char *signer, GError **err)
 #endif /* ENABLE_CRYPTO */
 
 static int
-pkcs7_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo digest,
+pkcs7_sign (GMimeCryptoContext *context, gboolean detach, const char *userid, GMimeDigestAlgo digest,
 	    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 #ifdef ENABLE_CRYPTO
+	gpgme_sig_mode_t mode = detach ? GPGME_SIG_MODE_DETACH : GPGME_SIG_MODE_NORMAL;
 	GMimePkcs7Context *pkcs7 = (GMimePkcs7Context *) context;
 	gpgme_sign_result_t result;
 	gpgme_data_t input, output;
@@ -474,7 +476,7 @@ pkcs7_sign (GMimeCryptoContext *context, const char *userid, GMimeDigestAlgo dig
 	}
 	
 	/* sign the input stream */
-	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, GPGME_SIG_MODE_DETACH)) != GPG_ERR_NO_ERROR) {
+	if ((error = gpgme_op_sign (pkcs7->ctx, input, output, mode)) != GPG_ERR_NO_ERROR) {
 		g_set_error (err, GMIME_GPGME_ERROR, error, _("Signing failed"));
 		gpgme_data_release (output);
 		gpgme_data_release (input);

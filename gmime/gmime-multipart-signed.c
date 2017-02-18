@@ -268,7 +268,7 @@ g_mime_multipart_signed_sign (GMimeMultipartSigned *mps, GMimeObject *content,
 	sigstream = g_mime_stream_mem_new ();
 	
 	/* sign the content stream */
-	if ((rv = g_mime_crypto_context_sign (ctx, userid, digest, filtered, sigstream, err)) == -1) {
+	if ((rv = g_mime_crypto_context_sign (ctx, TRUE, userid, digest, filtered, sigstream, err)) == -1) {
 		g_object_unref (sigstream);
 		g_object_unref (filtered);
 		g_object_unref (stream);

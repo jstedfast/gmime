@@ -58,9 +58,10 @@ static gboolean crypto_get_retrieve_session_key (GMimeCryptoContext *ctx);
 static void crypto_set_always_trust (GMimeCryptoContext *ctx, gboolean always_trust);
 static gboolean crypto_get_always_trust (GMimeCryptoContext *ctx);
 
-static int crypto_sign (GMimeCryptoContext *ctx, const char *userid,
-			GMimeDigestAlgo digest, GMimeStream *istream,
-			GMimeStream *ostream, GError **err);
+static int crypto_sign (GMimeCryptoContext *ctx, gboolean detach,
+			const char *userid, GMimeDigestAlgo digest,
+			GMimeStream *istream, GMimeStream *ostream,
+			GError **err);
 	
 static GMimeSignatureList *crypto_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
 					  GMimeStream *istream, GMimeStream *sigstream,
@@ -312,7 +313,7 @@ g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx)
 
 
 static int
-crypto_sign (GMimeCryptoContext *ctx, const char *userid, GMimeDigestAlgo digest,
+crypto_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, GMimeDigestAlgo digest,
 	     GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_set_error (err, GMIME_ERROR, GMIME_ERROR_NOT_SUPPORTED,
@@ -325,6 +326,7 @@ crypto_sign (GMimeCryptoContext *ctx, const char *userid, GMimeDigestAlgo digest
 /**
  * g_mime_crypto_context_sign:
  * @ctx: a #GMimeCryptoContext
+ * @detach: %TRUE if @ostream should be the detached signature; otherwise, %FALSE
  * @userid: private key to use to sign the stream
  * @digest: digest algorithm to use
  * @istream: input stream
@@ -337,14 +339,14 @@ crypto_sign (GMimeCryptoContext *ctx, const char *userid, GMimeDigestAlgo digest
  * specified as #GMIME_DIGEST_ALGO_DEFAULT) or %-1 on fail.
  **/
 int
-g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid, GMimeDigestAlgo digest,
+g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach, const char *userid, GMimeDigestAlgo digest,
 			    GMimeStream *istream, GMimeStream *ostream, GError **err)
 {
 	g_return_val_if_fail (GMIME_IS_CRYPTO_CONTEXT (ctx), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (istream), -1);
 	g_return_val_if_fail (GMIME_IS_STREAM (ostream), -1);
 	
-	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->sign (ctx, userid, digest, istream, ostream, err);
+	return GMIME_CRYPTO_CONTEXT_GET_CLASS (ctx)->sign (ctx, detach, userid, digest, istream, ostream, err);
 }
 
 

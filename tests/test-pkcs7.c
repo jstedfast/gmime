@@ -74,7 +74,7 @@ test_sign (GMimeCryptoContext *ctx, GMimeStream *cleartext, GMimeStream *ciphert
 	Exception *ex;
 	int rv;
 	
-	rv = g_mime_crypto_context_sign (ctx, "alice@example.net",
+	rv = g_mime_crypto_context_sign (ctx, TRUE, "alice@example.net",
 					 GMIME_DIGEST_ALGO_SHA256,
 					 cleartext, ciphertext, &err);
 	

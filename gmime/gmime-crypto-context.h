@@ -89,9 +89,10 @@ struct _GMimeCryptoContextClass {
 	const char *             (* get_encryption_protocol) (GMimeCryptoContext *ctx);
 	const char *             (* get_key_exchange_protocol) (GMimeCryptoContext *ctx);
 	
-	int                      (* sign)        (GMimeCryptoContext *ctx, const char *userid,
-						  GMimeDigestAlgo digest, GMimeStream *istream,
-						  GMimeStream *ostream, GError **err);
+	int                      (* sign)        (GMimeCryptoContext *ctx, gboolean detach,
+						  const char *userid, GMimeDigestAlgo digest,
+						  GMimeStream *istream, GMimeStream *ostream,
+						  GError **err);
 	
 	GMimeSignatureList *     (* verify)      (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
 						  GMimeStream *istream, GMimeStream *sigstream,
@@ -139,9 +140,10 @@ const char *g_mime_crypto_context_get_encryption_protocol (GMimeCryptoContext *c
 const char *g_mime_crypto_context_get_key_exchange_protocol (GMimeCryptoContext *ctx);
 
 /* crypto routines */
-int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, const char *userid,
-				GMimeDigestAlgo digest, GMimeStream *istream,
-				GMimeStream *ostream, GError **err);
+int g_mime_crypto_context_sign (GMimeCryptoContext *ctx, gboolean detach,
+				const char *userid, GMimeDigestAlgo digest,
+				GMimeStream *istream, GMimeStream *ostream,
+				GError **err);
 
 GMimeSignatureList *g_mime_crypto_context_verify (GMimeCryptoContext *ctx, GMimeDigestAlgo digest,
 						  GMimeStream *istream, GMimeStream *sigstream,
